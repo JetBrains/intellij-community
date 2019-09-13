@@ -3,8 +3,8 @@ package com.intellij.diagnostic.startUpPerformanceReporter
 
 import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonGenerator
-import com.intellij.diagnostic.ActivityImpl
 import com.intellij.diagnostic.ActivityCategory
+import com.intellij.diagnostic.ActivityImpl
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.diagnostic.Logger
@@ -100,7 +100,7 @@ internal class IdeaFormatWriter(private val activities: Map<String, MutableList<
       val list = activities.getValue(name)
       StartUpPerformanceReporter.sortItems(list)
 
-      if (name.endsWith("Component") || name.endsWith("Service")) {
+      if (name.endsWith("Service") || name.endsWith("Component")) {
         computeOwnTime(list, ownDurations)
       }
 
@@ -125,7 +125,7 @@ internal class IdeaFormatWriter(private val activities: Map<String, MutableList<
         val duration = if (computedOwnDuration == -1L) item.end - item.start else computedOwnDuration
 
         item.pluginId?.let {
-          StartUpMeasurer.doAddPluginCost(it, item.parallelActivity?.name ?: "unknown", duration, pluginCostMap)
+          StartUpMeasurer.doAddPluginCost(it, item.category?.name ?: "unknown", duration, pluginCostMap)
         }
 
         if (duration <= measureThreshold) {
@@ -162,8 +162,10 @@ internal class IdeaFormatWriter(private val activities: Map<String, MutableList<
 }
 
 private fun activityNameToJsonFieldName(name: String): String {
-  return when {
-    name.last() == 'y' -> name.substring(0, name.length - 1) + "ies"
+  val last = name.last()
+  return when (last) {
+    'y' -> name.substring(0, name.length - 1) + "ies"
+    's' -> name
     else -> name.substring(0) + 's'
   }
 }

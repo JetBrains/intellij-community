@@ -17,10 +17,16 @@ internal class MyComponentAdapter(private val componentKey: Class<*>,
                                   val isWorkspaceComponent: Boolean = false) : BaseComponentAdapter(componentManager, pluginDescriptor, null, implementationClass) {
   override fun getComponentKey() = componentKey
 
-  override fun getParallelActivity(): ActivityCategory? {
+  override fun getActivityCategory(componentManager: PlatformComponentManagerImpl): ActivityCategory? {
+    if (componentManager.activityNamePrefix() == null) {
+      return null
+    }
+
+    val parent = componentManager.picoContainer.parent
     return when {
-      componentManager.activityNamePrefix() == null -> null
-      else -> ActivityCategory.COMPONENT
+      parent == null -> ActivityCategory.APP_COMPONENT
+      parent.parent == null -> ActivityCategory.PROJECT_COMPONENT
+      else -> ActivityCategory.MODULE_COMPONENT
     }
   }
 

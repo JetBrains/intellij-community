@@ -15,12 +15,12 @@ import com.intellij.util.ArrayFactory;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.OpenTHashSet;
-import com.intellij.util.pico.DefaultPicoContainer;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.picocontainer.PicoContainer;
 
 import java.util.*;
 import java.util.function.BiConsumer;
@@ -447,9 +447,23 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
     }
 
     // don't count ProcessCanceledException as valid action to measure (later special category can be introduced if needed)
-    StartUpMeasurer.Level level = DefaultPicoContainer.getActivityLevel(myComponentManager.getPicoContainer());
-    StartUpMeasurer.addCompletedActivity(startTime, extensionClass, ActivityCategory.EXTENSION, level, /* pluginId = */ null);
+    ActivityCategory category = getActivityCategory(myComponentManager.getPicoContainer());
+    StartUpMeasurer.addCompletedActivity(startTime, extensionClass, category, /* pluginId = */ null);
     return result;
+  }
+
+  @NotNull
+  public static ActivityCategory getActivityCategory(@NotNull PicoContainer picoContainer) {
+    PicoContainer parent = picoContainer.getParent();
+    if (parent == null) {
+      return ActivityCategory.APP_EXTENSION;
+    }
+    else if (parent.getParent() == null) {
+      return ActivityCategory.PROJECT_EXTENSION;
+    }
+    else {
+      return ActivityCategory.MODULE_EXTENSION;
+    }
   }
 
   private T processAdapter(@NotNull ExtensionComponentAdapter adapter) {
@@ -508,6 +522,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
 
   // used in upsource
   // remove extensions for which implementation class is not available
+  @SuppressWarnings("unused")
   public synchronized void removeUnloadableExtensions() {
     List<ExtensionComponentAdapter> adapters = myAdapters;
     for (int i = adapters.size() - 1; i >= 0; i--) {

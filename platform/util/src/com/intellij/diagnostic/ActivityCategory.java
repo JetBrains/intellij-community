@@ -8,7 +8,19 @@ public enum ActivityCategory {
   MAIN("item"),
   APP_INIT("prepareAppInitActivity"), PRELOAD_ACTIVITY("preloadActivity"),
   APP_OPTIONS_TOP_HIT_PROVIDER("appOptionsTopHitProvider"), PROJECT_OPTIONS_TOP_HIT_PROVIDER("projectOptionsTopHitProvider"),
-  COMPONENT("component"), SERVICE("service"), EXTENSION("extension"),
+
+  APP_COMPONENT("appComponents"),
+  PROJECT_COMPONENT("projectComponents"),
+  MODULE_COMPONENT("moduleComponents"),
+
+  APP_SERVICE("appServices"),
+  PROJECT_SERVICE("projectServices"),
+  MODULE_SERVICE("moduleServices"),
+
+  APP_EXTENSION("appExtensions"),
+  PROJECT_EXTENSION("projectExtensions"),
+  MODULE_EXTENSION("moduleExtensions"),
+
   PROJECT_OPEN_HANDLER("openHandler"),
 
   POST_STARTUP_ACTIVITY("projectPostStartupActivity"),

@@ -1,8 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.serviceContainer
 
-import com.intellij.diagnostic.LoadingPhase
 import com.intellij.diagnostic.ActivityCategory
+import com.intellij.diagnostic.LoadingPhase
 import com.intellij.diagnostic.PluginException
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.Disposable
@@ -92,8 +92,8 @@ internal abstract class BaseComponentAdapter(internal val componentManager: Plat
         val implementationClass = getImplementationClass()
         @Suppress("UNCHECKED_CAST")
         instance = doCreateInstance(componentManager, implementationClass as Class<T>, indicator)
-        getParallelActivity()?.let { category ->
-          StartUpMeasurer.addCompletedActivity(startTime, implementationClass, category, componentManager.getActivityLevel(), pluginId.idString)
+        getActivityCategory(componentManager)?.let { category ->
+          StartUpMeasurer.addCompletedActivity(startTime, implementationClass, category, pluginId.idString)
         }
 
         initializedInstance = instance
@@ -111,7 +111,7 @@ internal abstract class BaseComponentAdapter(internal val componentManager: Plat
     }
   }
 
-  protected abstract fun getParallelActivity(): ActivityCategory?
+  protected abstract fun getActivityCategory(componentManager: PlatformComponentManagerImpl): ActivityCategory?
 
   protected abstract fun <T : Any> doCreateInstance(componentManager: PlatformComponentManagerImpl, implementationClass: Class<T>, indicator: ProgressIndicator?): T
 

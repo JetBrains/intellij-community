@@ -1319,7 +1319,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
     if (topic == ProjectManager.TOPIC) {
       long start = StartUpMeasurer.getCurrentTime() - duration;
-      StartUpMeasurer.addCompletedActivity(start, handler.getClass(), ActivityCategory.PROJECT_OPEN_HANDLER, StartUpMeasurer.Level.PROJECT, null);
+      StartUpMeasurer.addCompletedActivity(start, handler.getClass(), ActivityCategory.PROJECT_OPEN_HANDLER, null);
     }
     else if (topic == VirtualFileManager.VFS_CHANGES) {
       if (TimeUnit.NANOSECONDS.toMillis(duration) > 50) {

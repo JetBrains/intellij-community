@@ -84,7 +84,7 @@ public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvid
       result = ((OptionsTopHitProvider)provider).getOptions(project);
     }
     ActivityCategory category = project == null ? ActivityCategory.APP_OPTIONS_TOP_HIT_PROVIDER : ActivityCategory.PROJECT_OPTIONS_TOP_HIT_PROVIDER;
-    StartUpMeasurer.addCompletedActivity(startTime, clazz, category, null, pluginDescriptor == null ? null : pluginDescriptor.getPluginId().getIdString());
+    StartUpMeasurer.addCompletedActivity(startTime, clazz, category, pluginDescriptor == null ? null : pluginDescriptor.getPluginId().getIdString());
     Collection<OptionDescription> prevValue = cache.map.putIfAbsent(clazz, result);
     return prevValue == null ? result : prevValue;
   }

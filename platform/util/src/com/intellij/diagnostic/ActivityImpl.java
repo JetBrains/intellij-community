@@ -21,26 +21,19 @@ public final class ActivityImpl implements Activity {
   private final ActivityImpl parent;
 
   @Nullable
-  private final StartUpMeasurer.Level level;
+  private ActivityCategory category;
 
-  @Nullable
-  private ActivityCategory parallelActivity;
   @Nullable
   private final String pluginId;
 
-  ActivityImpl(@Nullable String name, @Nullable StartUpMeasurer.Level level, @Nullable String pluginId) {
-    this(name, System.nanoTime(), null, level, pluginId);
+  ActivityImpl(@Nullable String name, @Nullable String pluginId) {
+    this(name, StartUpMeasurer.getCurrentTime(), null, pluginId);
   }
 
-  ActivityImpl(@Nullable String name,
-               long start,
-               @Nullable ActivityImpl parent,
-               @Nullable StartUpMeasurer.Level level,
-               @Nullable String pluginId) {
+  ActivityImpl(@Nullable String name, long start, @Nullable ActivityImpl parent, @Nullable String pluginId) {
     this.name = name;
     this.start = start;
     this.parent = parent;
-    this.level = level;
     this.pluginId = pluginId;
 
     Thread thread = Thread.currentThread();
@@ -63,17 +56,12 @@ public final class ActivityImpl implements Activity {
   }
 
   @Nullable
-  public StartUpMeasurer.Level getLevel() {
-    return level;
-  }
-
-  @Nullable
-  public ActivityCategory getParallelActivity() {
-    return parallelActivity;
+  public ActivityCategory getCategory() {
+    return category;
   }
 
   void setCategory(@Nullable ActivityCategory value) {
-    parallelActivity = value;
+    category = value;
   }
 
   // and how do we can sort correctly, when parent item equals to child (start and end), also there is another child with start equals to end?
@@ -81,7 +69,7 @@ public final class ActivityImpl implements Activity {
   @Override
   @NotNull
   public ActivityImpl startChild(@NotNull String name) {
-    return new ActivityImpl(name, System.nanoTime(), this, null, pluginId);
+    return new ActivityImpl(name, System.nanoTime(), this, pluginId);
   }
 
   @NotNull
@@ -92,10 +80,6 @@ public final class ActivityImpl implements Activity {
   @Nullable
   public String getDescription() {
     return description;
-  }
-
-  void setDescription(String value) {
-    description = value;
   }
 
   @Nullable
@@ -130,8 +114,8 @@ public final class ActivityImpl implements Activity {
   @NotNull
   public Activity endAndStart(@NotNull String name) {
     end();
-    ActivityImpl activity = new ActivityImpl(name, /* start = */end, parent, /* level = */null, pluginId);
-    activity.setCategory(parallelActivity);
+    ActivityImpl activity = new ActivityImpl(name, /* start = */end, parent, /* level = */ pluginId);
+    activity.setCategory(category);
     return activity;
   }
 

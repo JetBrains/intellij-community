@@ -87,17 +87,12 @@ class StartUpPerformanceReporter : StartupActivity.DumbAware {
         instantEvents.add(item)
       }
       else {
-        val parallelActivity = item.parallelActivity
-        if (parallelActivity == null) {
+        val category = item.category
+        if (category == null) {
           items.add(item)
         }
         else {
-          val level = item.level
-          var name = parallelActivity.jsonName
-          if (level != null) {
-            name = "${level.jsonFieldNamePrefix}${name.capitalize()}"
-          }
-          activities.getOrPut(name) { mutableListOf() }.add(item)
+          activities.getOrPut(category.jsonName) { mutableListOf() }.add(item)
         }
       }
     })
@@ -115,7 +110,7 @@ class StartUpPerformanceReporter : StartupActivity.DumbAware {
     val startTime = items.first().start
     for (item in items) {
       val pluginId = item.pluginId ?: continue
-      StartUpMeasurer.doAddPluginCost(pluginId, item.parallelActivity?.name ?: "unknown", item.end - item.start, pluginCostMap)
+      StartUpMeasurer.doAddPluginCost(pluginId, item.category?.name ?: "unknown", item.end - item.start, pluginCostMap)
     }
 
     w.write(startTime, items, instantEvents, end)

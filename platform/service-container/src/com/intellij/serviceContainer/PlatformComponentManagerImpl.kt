@@ -2,7 +2,6 @@
 package com.intellij.serviceContainer
 
 import com.intellij.diagnostic.LoadingPhase
-import com.intellij.diagnostic.ActivityCategory
 import com.intellij.diagnostic.PluginException
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.ide.plugins.*
@@ -28,7 +27,6 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.storage.HeavyProcessLatch
 import com.intellij.util.messages.*
 import com.intellij.util.messages.impl.MessageBusImpl
-import com.intellij.util.pico.DefaultPicoContainer
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
@@ -440,7 +438,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
 
     initializeComponent(result, null)
     val pluginClassLoader = serviceClass.classLoader as? PluginClassLoader
-    StartUpMeasurer.addCompletedActivity(startTime, serviceClass, ActivityCategory.SERVICE, getActivityLevel(), pluginClassLoader?.pluginIdString)
+    StartUpMeasurer.addCompletedActivity(startTime, serviceClass, getServiceActivityCategory(this), pluginClassLoader?.pluginIdString)
     return result
   }
 
@@ -583,9 +581,6 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
   }
 
   final override fun createError(message: String, pluginId: PluginId) = PluginException(message, pluginId)
-
-  @Internal
-  fun getActivityLevel(): StartUpMeasurer.Level = DefaultPicoContainer.getActivityLevel(myPicoContainer)
 
   @Internal
   fun unloadServices(containerDescriptor: ContainerDescriptor): List<Any> {

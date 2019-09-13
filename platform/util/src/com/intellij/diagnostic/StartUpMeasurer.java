@@ -46,22 +46,6 @@ public final class StartUpMeasurer {
     measuringPluginStartupCosts = false;
   }
 
-  // ExtensionAreas not available for ExtensionPointImpl
-  public enum Level {
-    APPLICATION("app"), PROJECT("project"), MODULE("module");
-
-    private final String jsonFieldNamePrefix;
-
-    Level(@NotNull String jsonFieldNamePrefix) {
-      this.jsonFieldNamePrefix = jsonFieldNamePrefix;
-    }
-
-    @NotNull
-    public String getJsonFieldNamePrefix() {
-      return jsonFieldNamePrefix;
-    }
-  }
-
   private static long startTime = System.nanoTime();
 
   private static final ConcurrentLinkedQueue<ActivityImpl> items = new ConcurrentLinkedQueue<>();
@@ -94,7 +78,7 @@ public final class StartUpMeasurer {
    * Scope is not supported — reported as global.
    */
   public static void addInstantEvent(@NotNull String name) {
-    ActivityImpl activity = new ActivityImpl(name, null, null);
+    ActivityImpl activity = new ActivityImpl(name, null);
     activity.setEnd(-1);
     add(activity);
   }
@@ -111,46 +95,46 @@ public final class StartUpMeasurer {
 
   @NotNull
   public static Activity startActivity(@NotNull String name, @NotNull ActivityCategory category, @Nullable String pluginId) {
-    ActivityImpl activity = new ActivityImpl(name, getCurrentTime(), /* parent = */ null, /* level = */ null, pluginId);
+    ActivityImpl activity = new ActivityImpl(name, getCurrentTime(), /* parent = */ null, /* level = */  pluginId);
     activity.setCategory(category);
     return activity;
   }
 
   @NotNull
   public static Activity startMainActivity(@NotNull String name) {
-    return new ActivityImpl(name, null, null);
+    return new ActivityImpl(name, null);
   }
 
   /**
    * Default threshold is applied.
    */
-  public static long addCompletedActivity(long start, @NotNull Class<?> clazz, @NotNull ActivityCategory category, @Nullable StartUpMeasurer.Level level, String pluginId) {
+  public static long addCompletedActivity(long start, @NotNull Class<?> clazz, @NotNull ActivityCategory category, String pluginId) {
     long end = getCurrentTime();
     long duration = end - start;
     if (duration <= MEASURE_THRESHOLD) {
       return duration;
     }
 
-    addCompletedActivity(start, end, clazz.getName(), category, level, pluginId);
+    addCompletedActivity(start, end, clazz.getName(), category, pluginId);
     return duration;
   }
 
   /**
    * Default threshold is applied.
    */
-  public static long addCompletedActivity(long start, @NotNull String name, @NotNull ActivityCategory category, @Nullable StartUpMeasurer.Level level, String pluginId) {
+  public static long addCompletedActivity(long start, @NotNull String name, @NotNull ActivityCategory category, String pluginId) {
     long end = getCurrentTime();
     long duration = end - start;
     if (duration <= MEASURE_THRESHOLD) {
       return duration;
     }
 
-    addCompletedActivity(start, end, name, category, level, pluginId);
+    addCompletedActivity(start, end, name, category, pluginId);
     return duration;
   }
 
-  private static void addCompletedActivity(long start, long end, @NotNull String name, @NotNull ActivityCategory category, @Nullable StartUpMeasurer.Level level, String pluginId) {
-    ActivityImpl item = new ActivityImpl(name, start, /* parent = */ null, level, pluginId);
+  private static void addCompletedActivity(long start, long end, @NotNull String name, @NotNull ActivityCategory category, String pluginId) {
+    ActivityImpl item = new ActivityImpl(name, start, /* parent = */ null, pluginId);
     item.setCategory(category);
     item.setEnd(end);
     add(item);
@@ -191,7 +175,7 @@ public final class StartUpMeasurer {
 
     List<Map.Entry<String, Long>> entries = new ArrayList<>(timings.entrySet());
 
-    ActivityImpl parent = new ActivityImpl(groupName, entries.get(0).getValue(), null, Level.APPLICATION, null);
+    ActivityImpl parent = new ActivityImpl(groupName, entries.get(0).getValue(), null, null);
     parent.setEnd(getCurrentTime());
 
     for (int i = 0; i < entries.size(); i++) {
@@ -200,7 +184,7 @@ public final class StartUpMeasurer {
         startTime = start;
       }
 
-      ActivityImpl activity = new ActivityImpl(entries.get(i).getKey(), start, parent, Level.APPLICATION, null);
+      ActivityImpl activity = new ActivityImpl(entries.get(i).getKey(), start, parent, null);
       activity.setEnd(i == entries.size() - 1 ? parent.getEnd() : entries.get(i + 1).getValue());
       items.add(activity);
     }

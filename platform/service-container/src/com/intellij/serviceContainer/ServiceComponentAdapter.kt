@@ -22,7 +22,7 @@ internal class ServiceComponentAdapter(val descriptor: ServiceDescriptor,
 
   override fun getComponentKey(): String = descriptor.getInterface()
 
-  override fun getParallelActivity() = ActivityCategory.SERVICE
+  override fun getActivityCategory(componentManager: PlatformComponentManagerImpl) = getServiceActivityCategory(componentManager)
 
   override fun <T : Any> doCreateInstance(componentManager: PlatformComponentManagerImpl, implementationClass: Class<T>, indicator: ProgressIndicator?): T {
     if (LOG.isDebugEnabled) {
@@ -60,4 +60,13 @@ internal class ServiceComponentAdapter(val descriptor: ServiceDescriptor,
   override fun getAssignableToClassName(): String = descriptor.getInterface()
 
   override fun toString() = "ServiceAdapter(descriptor=$descriptor, pluginDescriptor=$pluginDescriptor)"
+}
+
+internal fun getServiceActivityCategory(componentManager: PlatformComponentManagerImpl): ActivityCategory {
+  val parent = componentManager.picoContainer.parent
+  return when {
+    parent == null -> ActivityCategory.APP_SERVICE
+    parent.parent == null -> ActivityCategory.PROJECT_SERVICE
+    else -> ActivityCategory.MODULE_SERVICE
+  }
 }
