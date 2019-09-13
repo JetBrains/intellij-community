@@ -1663,7 +1663,13 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
         if (event instanceof VFileDeleteEvent) {
           beforeFileDeletion((VFileDeleteEvent)event);
         }
-        else if (event instanceof VFilePropertyChangeEvent) {
+      }
+    }
+
+    @Override
+    public void after(@NotNull List<? extends VFileEvent> events) {
+      for (VFileEvent event : events) {
+        if (event instanceof VFilePropertyChangeEvent) {
           propertyChanged((VFilePropertyChangeEvent)event);
         }
         else if (event instanceof VFileMoveEvent) {
