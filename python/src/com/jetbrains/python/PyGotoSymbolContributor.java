@@ -15,7 +15,7 @@ import com.intellij.util.indexing.FindSymbolParameters;
 import com.intellij.util.indexing.IdFilter;
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.search.PyProjectScopeBuilder;
+import com.jetbrains.python.psi.search.PySearchUtilBase;
 import com.jetbrains.python.psi.stubs.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,7 +42,7 @@ public class PyGotoSymbolContributor implements GotoClassContributor, ChooseByNa
                                       @NotNull Processor<NavigationItem> processor,
                                       @NotNull FindSymbolParameters parameters) {
     Project project = parameters.getProject();
-    GlobalSearchScope scope = PyProjectScopeBuilder.excludeSdkTestScope(parameters.getSearchScope());
+    GlobalSearchScope scope = PySearchUtilBase.excludeSdkTestScope(parameters.getSearchScope());
     IdFilter filter = parameters.getIdFilter();
     FileBasedIndex fileIndex = FileBasedIndex.getInstance();
     StubIndex stubIndex = StubIndex.getInstance();

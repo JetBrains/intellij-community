@@ -23,7 +23,6 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.FilePropertyPusher;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
-import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -286,7 +285,7 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLev
         if (project.isDisposed()) return;
         final PerformanceWatcher.Snapshot snapshot = PerformanceWatcher.takeSnapshot();
         final List<Runnable> tasks = ReadAction.compute(() -> getRootUpdateTasks(project, sdks));
-        PushedFilePropertiesUpdaterImpl.invokeConcurrentlyIfPossible(tasks);
+        PushedFilePropertiesUpdater.getInstance(project).runConcurrentlyIfPossible(tasks);
         if (!ApplicationManager.getApplication().isUnitTestMode()) {
           snapshot.logResponsivenessSinceCreation("Pushing Python language level to " + tasks.size() + " roots in " + sdks.size() +
                                                   " SDKs");

@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.impl.references;
 
-import com.intellij.codeInsight.completion.CompletionUtil;
+import com.intellij.codeInsight.completion.CompletionUtilCoreImpl;
 import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -87,7 +87,7 @@ public class PyImportReference extends PyReferenceImpl {
 
     PyExpression qualifier = myElement.getQualifier();
     final TypeEvalContext context = TypeEvalContext.codeCompletion(myElement.getProject(),
-                                                                   CompletionUtil.getOriginalOrSelf(myElement).getContainingFile());
+                                                                   CompletionUtilCoreImpl.getOriginalOrSelf(myElement).getContainingFile());
     if (qualifier != null) {
       // qualifier's type must be module, it should know how to complete
       PyType type = context.getType(qualifier);

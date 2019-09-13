@@ -7,6 +7,7 @@ import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.completion.JavaMethodCallElement;
 import com.intellij.codeInsight.daemon.impl.analysis.LambdaHighlightingUtil;
 import com.intellij.codeInsight.hints.ParameterHintsPass;
+import com.intellij.codeInsight.lookup.CommaTailType;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -1132,7 +1133,7 @@ public class ExpectedTypesProvider {
         PsiCall completedOuterCall = getCompletedOuterCall(argument);
         if (completedOuterCall != null) return new CommaTailTypeWithSyncHintUpdate(completedOuterCall);
       }
-      return TailType.COMMA;
+      return CommaTailType.INSTANCE;
     }
 
     @Nullable
@@ -1383,12 +1384,12 @@ public class ExpectedTypesProvider {
 
     @Override
     public boolean isApplicable(@NotNull InsertionContext context) {
-      return TailType.COMMA.isApplicable(context);
+      return CommaTailType.INSTANCE.isApplicable(context);
     }
 
     @Override
     public int processTail(Editor editor, int tailOffset) {
-      int result = TailType.COMMA.processTail(editor, tailOffset);
+      int result = CommaTailType.INSTANCE.processTail(editor, tailOffset);
       if (myOriginalCall.isValid()) {
         PsiDocumentManager.getInstance(myOriginalCall.getProject()).commitDocument(editor.getDocument());
         if (myOriginalCall.isValid()) ParameterHintsPass.syncUpdate(myOriginalCall, editor);

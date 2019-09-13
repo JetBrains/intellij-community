@@ -13,7 +13,7 @@ import com.intellij.psi.stubs.StringStubIndexExtension;
 import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.stubs.StubIndexKey;
 import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.search.PyProjectScopeBuilder;
+import com.jetbrains.python.psi.search.PySearchUtilBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,7 +34,7 @@ public class PyClassNameIndex extends StringStubIndexExtension<PyClass> {
 
   public static Collection<PyClass> find(String name, Project project, boolean includeNonProjectItems) {
     final GlobalSearchScope scope = includeNonProjectItems
-                                    ? PyProjectScopeBuilder.excludeSdkTestsScope(project)
+                                    ? PySearchUtilBase.excludeSdkTestsScope(project)
                                     : GlobalSearchScope.projectScope(project);
     return find(name, project, scope);
   }

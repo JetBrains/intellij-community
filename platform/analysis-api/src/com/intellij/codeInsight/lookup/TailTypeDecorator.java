@@ -1,9 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.lookup;
 
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.InsertionContext;
-import com.intellij.psi.impl.source.PostprocessReformattingAspect;
+import com.intellij.psi.PsiDocumentManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,7 +34,7 @@ public abstract class TailTypeDecorator<T extends LookupElement> extends LookupE
 
     getDelegate().handleInsert(context);
     if (tailType != null && tailType.isApplicable(context)) {
-      PostprocessReformattingAspect.getInstance(context.getProject()).doPostponedFormatting();
+      PsiDocumentManager.getInstance(context.getProject()).doPostponedOperationsAndUnblockDocument(context.getDocument());
       int tailOffset = context.getTailOffset();
       if (tailOffset < 0) {
         throw new AssertionError("tailOffset < 0: delegate=" + getDelegate() + "; this=" + this + "; tail=" + tailType);

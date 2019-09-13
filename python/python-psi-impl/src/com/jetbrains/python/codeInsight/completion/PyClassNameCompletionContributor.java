@@ -20,7 +20,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.search.PyProjectScopeBuilder;
+import com.jetbrains.python.psi.search.PySearchUtilBase;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
 import com.jetbrains.python.psi.stubs.PyVariableNameIndex;
@@ -112,11 +112,11 @@ public class PyClassNameCompletionContributor extends PyExtendedCompletionContri
                                                                        @NotNull Class<T> elementClass,
                                                                        @NotNull Function<LookupElement, LookupElement> elementHandler) {
     final Project project = targetFile.getProject();
-    final GlobalSearchScope scope = PyProjectScopeBuilder.excludeSdkTestsScope(targetFile);
+    final GlobalSearchScope scope = PySearchUtilBase.excludeSdkTestsScope(targetFile);
     final Map<String, LookupElement> uniqueResults = new HashMap<>();
 
     final Collection<String> keys = StubIndex.getInstance().getAllKeys(key, project);
-    for (final String elementName : CompletionUtil.sortMatching(resultSet.getPrefixMatcher(), keys)) {
+    for (final String elementName : resultSet.getPrefixMatcher().sortMatching(keys)) {
       for (T element : StubIndex.getElements(key, elementName, project, scope, elementClass)) {
         if (condition.value(element)) {
           final String name = element.getName();

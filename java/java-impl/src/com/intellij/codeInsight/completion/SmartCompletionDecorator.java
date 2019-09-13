@@ -114,7 +114,7 @@ public class SmartCompletionDecorator extends LookupElementDecorator<LookupEleme
     }
     TailTypeDecorator.withTail(getDelegate(), tailType).handleInsert(context);
 
-    if (tailType == TailType.COMMA) {
+    if (tailType == CommaTailType.INSTANCE) {
       AutoPopupController.getInstance(context.getProject()).autoPopupParameterInfo(context.getEditor(), null);
     }
   }

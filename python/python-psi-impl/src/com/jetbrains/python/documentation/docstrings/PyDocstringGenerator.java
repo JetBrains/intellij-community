@@ -305,7 +305,7 @@ public class PyDocstringGenerator {
   }
 
   @Nullable
-  private PyStringLiteralExpression getDocStringExpression() {
+  public PyStringLiteralExpression getDocStringExpression() {
     Preconditions.checkNotNull(myDocStringOwner, "For this action docstring owner must be supplied");
     return myDocStringOwner.getDocStringExpression();
   }
@@ -313,48 +313,6 @@ public class PyDocstringGenerator {
   @Nullable
   private StructuredDocString getStructuredDocString() {
     return myDocStringText == null ? null : DocStringUtil.parseDocString(myDocStringFormat, myDocStringText);
-  }
-
-  public void startTemplate() {
-    Preconditions.checkNotNull(myDocStringOwner, "For this action docstring owner must be supplied");
-    final PyStringLiteralExpression docStringExpression = getDocStringExpression();
-    assert docStringExpression != null;
-
-    final TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(docStringExpression);
-
-    if (myAddedParams.size() > 1) {
-      throw new IllegalArgumentException("TemplateBuilder can be created only for one parameter");
-    }
-
-    final DocstringParam paramToEdit = getParamToEdit();
-    final DocStringFormat format = myDocStringFormat;
-    if (format == DocStringFormat.PLAIN) {
-      return;
-    }
-    final StructuredDocString parsed = DocStringUtil.parseDocString(format, docStringExpression);
-    final Substring substring;
-    if (paramToEdit.isReturnValue()) {
-      substring = parsed.getReturnTypeSubstring();
-    }
-    else {
-      final String paramName = paramToEdit.getName();
-      substring = parsed.getParamTypeSubstring(paramName);
-    }
-    if (substring == null) {
-      return;
-    }
-    builder.replaceRange(substring.getTextRange(), getDefaultType(getParamToEdit()));
-    Template template = PyUtil.updateDocumentUnblockedAndCommitted(myDocStringOwner, document -> {
-      return ((TemplateBuilderImpl)builder).buildInlineTemplate();
-    });
-    final VirtualFile virtualFile = myDocStringOwner.getContainingFile().getVirtualFile();
-    if (virtualFile == null) return;
-    final Project project = myDocStringOwner.getProject();
-    final Editor targetEditor = PsiUtilBase.findEditor(myDocStringOwner);
-    if (targetEditor != null && template != null) {
-      targetEditor.getCaretModel().moveToOffset(docStringExpression.getTextOffset());
-      TemplateManager.getInstance(project).startTemplate(targetEditor, template);
-    }
   }
 
   @NotNull
@@ -367,7 +325,7 @@ public class PyDocstringGenerator {
 
 
   @NotNull
-  private static String getDefaultType(@NotNull DocstringParam param) {
+  public static String getDefaultType(@NotNull DocstringParam param) {
     if (StringUtil.isEmpty(param.getType())) {
       return PyNames.OBJECT;
     }
@@ -499,7 +457,7 @@ public class PyDocstringGenerator {
     return myQuotes + '\n' + myDocStringIndent + myQuotes;
   }
 
-  private DocstringParam getParamToEdit() {
+  public DocstringParam getParamToEdit() {
     if (myAddedParams.size() == 0) {
       throw new IllegalStateException("We should have at least one param to edit");
     }
@@ -640,6 +598,15 @@ public class PyDocstringGenerator {
       return "";
     }
 
+  }
+
+  @Nullable
+  public PyDocStringOwner getDocStringOwner() {
+    return myDocStringOwner;
+  }
+
+  public List<DocstringParam> getAddedParams() {
+    return myAddedParams;
   }
 }
 

@@ -15,7 +15,7 @@
  */
 package com.jetbrains.python.psi.impl;
 
-import com.intellij.codeInsight.completion.CompletionUtil;
+import com.intellij.codeInsight.completion.CompletionUtilCoreImpl;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -42,7 +42,7 @@ public class PyKeywordArgumentReference extends PsiReferenceBase.Poly<PyKeywordA
   @NotNull
   @Override
   public Object[] getVariants() {
-    final PyKeywordArgument originalElement = CompletionUtil.getOriginalElement(myElement);
+    final PyKeywordArgument originalElement = CompletionUtilCoreImpl.getOriginalElement(myElement);
     if (originalElement != null) {
       final List<LookupElement> ret = new ArrayList<>();
       final TypeEvalContext evalCtx = TypeEvalContext.codeCompletion(originalElement.getProject(), originalElement.getContainingFile());

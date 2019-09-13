@@ -14,7 +14,7 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.psi.PyFile;
-import com.jetbrains.python.psi.search.PyProjectScopeBuilder;
+import com.jetbrains.python.psi.search.PySearchUtilBase;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -87,7 +87,7 @@ public class PyModuleNameIndex extends ScalarIndexExtension<String> {
   public static List<PyFile> find(@NotNull String name, @NotNull Project project, boolean includeNonProjectItems) {
     final List<PyFile> results = new ArrayList<>();
     final GlobalSearchScope scope = includeNonProjectItems
-                                    ? PyProjectScopeBuilder.excludeSdkTestsScope(project)
+                                    ? PySearchUtilBase.excludeSdkTestsScope(project)
                                     : GlobalSearchScope.projectScope(project);
     final Collection<VirtualFile> files = FileBasedIndex.getInstance().getContainingFiles(NAME, name, scope);
     for (VirtualFile virtualFile : files) {
