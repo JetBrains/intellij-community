@@ -45,7 +45,14 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.newvfs.BulkFileListener;
+import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.WindowManager;
@@ -127,6 +134,8 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
   static final ModificationTracker OPEN_FILE_SET_MODIFICATION_COUNT = ourOpenFilesSetModificationCount::get;
   private final List<EditorComposite> myOpenedEditors = new CopyOnWriteArrayList<>();
+
+  private final MessageListenerList<FileEditorManagerListener> myListenerList;
 
   public FileEditorManagerImpl(@NotNull Project project) {
     myProject = project;
@@ -1416,8 +1425,6 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     }
   }
 
-  private final MessageListenerList<FileEditorManagerListener> myListenerList;
-
   @Override
   public void addFileEditorManagerListener(@NotNull FileEditorManagerListener listener) {
     myListenerList.add(listener);
@@ -1437,29 +1444,24 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     //myFocusWatcher.install(myWindows.getComponent ());
     getMainSplitters().startListeningFocus();
 
-    final FileStatusManager fileStatusManager = FileStatusManager.getInstance(myProject);
+    FileStatusManager fileStatusManager = FileStatusManager.getInstance(myProject);
     if (fileStatusManager != null) {
-      /*
-        Updates tabs colors
-       */
-      final MyFileStatusListener myFileStatusListener = new MyFileStatusListener();
-      fileStatusManager.addFileStatusListener(myFileStatusListener, myProject);
+      // updates tabs colors
+      fileStatusManager.addFileStatusListener(new MyFileStatusListener(), myProject);
     }
     connection.subscribe(FileTypeManager.TOPIC, new MyFileTypeListener());
     connection.subscribe(ProjectTopics.PROJECT_ROOTS, new MyRootsListener());
 
-    /*
-      Updates tabs names
-     */
-    final MyVirtualFileListener myVirtualFileListener = new MyVirtualFileListener();
-    VirtualFileManager.getInstance().addVirtualFileListener(myVirtualFileListener, myProject);
-    /*
-      Extends/cuts number of opened tabs. Also updates location of tabs.
-     */
+    // updates tabs names
+    connection.subscribe(VirtualFileManager.VFS_CHANGES, new MyVirtualFileListener());
+
+    // extends/cuts number of opened tabs. Also updates location of tabs
     connection.subscribe(UISettingsListener.TOPIC, new MyUISettingsListener());
 
     StartupManager.getInstance(myProject).registerPostStartupActivity((DumbAwareRunnable)() -> {
-      if (myProject.isDisposed()) return;
+      if (myProject.isDisposed()) {
+        return;
+      }
 
       ToolWindowManager.getInstance(myProject).invokeLater(() -> {
         if (!myProject.isDisposed()) {
@@ -1651,18 +1653,30 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     }
   }
 
-  //================== Listeners =====================
-
   /**
    * Closes deleted files. Closes file which are in the deleted directories.
    */
-  private final class MyVirtualFileListener implements VirtualFileListener {
+  private final class MyVirtualFileListener implements BulkFileListener {
     @Override
-    public void beforeFileDeletion(@NotNull VirtualFileEvent e) {
+    public void before(@NotNull List<? extends VFileEvent> events) {
+      for (VFileEvent event : events) {
+        if (event instanceof VFileDeleteEvent) {
+          beforeFileDeletion((VFileDeleteEvent)event);
+        }
+        else if (event instanceof VFilePropertyChangeEvent) {
+          propertyChanged((VFilePropertyChangeEvent)event);
+        }
+        else if (event instanceof VFileMoveEvent) {
+          fileMoved((VFileMoveEvent)event);
+        }
+      }
+    }
+
+    private void beforeFileDeletion(@NotNull VFileDeleteEvent event) {
       assertDispatchThread();
 
-      final VirtualFile file = e.getFile();
-      final VirtualFile[] openFiles = getOpenFiles();
+      VirtualFile file = event.getFile();
+      VirtualFile[] openFiles = getOpenFiles();
       for (int i = openFiles.length - 1; i >= 0; i--) {
         if (VfsUtilCore.isAncestor(file, openFiles[i], false)) {
           closeFile(openFiles[i],true, true);
@@ -1670,26 +1684,25 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
       }
     }
 
-    @Override
-    public void propertyChanged(@NotNull VirtualFilePropertyEvent e) {
-      if (VirtualFile.PROP_NAME.equals(e.getPropertyName())) {
+    private void propertyChanged(@NotNull VFilePropertyChangeEvent event) {
+      if (VirtualFile.PROP_NAME.equals(event.getPropertyName())) {
         assertDispatchThread();
-        final VirtualFile file = e.getFile();
+        final VirtualFile file = event.getFile();
         if (isFileOpen(file)) {
           updateFileName(file);
           updateFileIcon(file); // file type can change after renaming
           updateFileBackgroundColor(file);
         }
       }
-      else if (VirtualFile.PROP_WRITABLE.equals(e.getPropertyName()) || VirtualFile.PROP_ENCODING.equals(e.getPropertyName())) {
+      else if (VirtualFile.PROP_WRITABLE.equals(event.getPropertyName()) || VirtualFile.PROP_ENCODING.equals(event.getPropertyName())) {
         // TODO: message bus?
-        updateIconAndStatusBar(e);
+        updateIconAndStatusBar(event);
       }
     }
 
-    private void updateIconAndStatusBar(final VirtualFilePropertyEvent e) {
+    private void updateIconAndStatusBar(@NotNull VFilePropertyChangeEvent event) {
       assertDispatchThread();
-      final VirtualFile file = e.getFile();
+      final VirtualFile file = event.getFile();
       if (isFileOpen(file)) {
         updateFileIcon(file);
         if (file.equals(getSelectedFiles()[0])) { // update "write" status
@@ -1700,11 +1713,9 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
       }
     }
 
-    @Override
-    public void fileMoved(@NotNull VirtualFileMoveEvent e) {
-      final VirtualFile file = e.getFile();
-      final VirtualFile[] openFiles = getOpenFiles();
-      for (final VirtualFile openFile : openFiles) {
+    private void fileMoved(@NotNull VFileMoveEvent e) {
+      VirtualFile file = e.getFile();
+      for (VirtualFile openFile : getOpenFiles()) {
         if (VfsUtilCore.isAncestor(file, openFile, false)) {
           updateFileName(openFile);
           updateFileBackgroundColor(openFile);
