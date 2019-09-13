@@ -2,9 +2,12 @@
 package com.intellij.idea;
 
 import com.intellij.ide.customize.CustomizeIDEWizardStepsProvider;
+import com.intellij.ide.plugins.MainRunner;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 @SuppressWarnings({"UnusedDeclaration"})
@@ -12,10 +15,12 @@ public final class MainImpl {
   private MainImpl() { }
 
   /** Called via reflection from {@code MainRunner#start}. */
-  public static void start(@NotNull String[] args) throws Exception {
-    System.setProperty(PlatformUtils.PLATFORM_PREFIX_KEY, PlatformUtils.getPlatformPrefix(PlatformUtils.IDEA_CE_PREFIX));
+  public static void start(String[] args,
+                           @NotNull CompletableFuture<?> initUiTask,
+                           @NotNull Logger logger,
+                           boolean configImportNeeded) throws Exception {
+    StartupUtil.startApp(initUiTask, logger, configImportNeeded, new StartupUtil.AppStarter() {
 
-    StartupUtil.prepareAndStart(args, new StartupUtil.AppStarter() {
       @Override
       public void start(@NotNull CompletionStage<?> initUiTask) {
         ApplicationLoader.initApplication(args, initUiTask);

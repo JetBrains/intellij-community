@@ -6,7 +6,7 @@ import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.ide.actions.MaximizeActiveDialogAction;
 import com.intellij.ide.dnd.DnDManager;
 import com.intellij.ide.dnd.DnDManagerImpl;
-import com.intellij.ide.plugins.MainRunner;
+import com.intellij.ide.plugins.StartupAbortedException;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -631,7 +631,7 @@ public final class IdeEventQueue extends EventQueue {
 
   private void processException(@NotNull Throwable t) {
     if (!myToolkitBugsProcessor.process(t)) {
-      MainRunner.processException(t);
+      StartupAbortedException.processException(t);
     }
   }
 

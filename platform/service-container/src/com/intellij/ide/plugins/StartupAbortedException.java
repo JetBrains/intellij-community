@@ -1,9 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
-import com.intellij.diagnostic.*;
-import com.intellij.ide.WindowsCommandLineListener;
-import com.intellij.ide.WindowsCommandLineProcessor;
+import com.intellij.diagnostic.ImplementationConflictException;
+import com.intellij.diagnostic.LoadingPhase;
+import com.intellij.diagnostic.PluginException;
 import com.intellij.idea.Main;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -15,49 +15,27 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.lang.reflect.Method;
-import java.util.LinkedHashMap;
 import java.util.stream.Collectors;
 
-public final class MainRunner {
-  @SuppressWarnings("StaticNonFinalField") public static WindowsCommandLineListener LISTENER;
-  @SuppressWarnings("StaticNonFinalField") public static Activity startupStart;
+public final class StartupAbortedException extends RuntimeException {
+  private int exitCode = Main.STARTUP_EXCEPTION;
 
-  /** Called via reflection from {@link com.intellij.ide.Bootstrap#main}. */
-  @SuppressWarnings("UnusedDeclaration")
-  private static void start(@NotNull String mainClass,
-                            @NotNull String methodName,
-                            @NotNull String[] args,
-                            @NotNull LinkedHashMap<String, Long> startupTimings) {
-    StartUpMeasurer.addTimings(startupTimings, "bootstrap");
+  public StartupAbortedException(Throwable cause) {
+    super(cause);
+  }
 
-    startupStart = StartUpMeasurer.start(StartUpMeasurer.Phases.PREPARE_TO_INIT_APP);
+  public StartupAbortedException(String message, Throwable cause) {
+    super(message, cause);
+  }
 
-    Main.setFlags(args);
+  public int exitCode() {
+    return exitCode;
+  }
 
-    ThreadGroup threadGroup = new ThreadGroup("Idea Thread Group") {
-      @Override
-      public void uncaughtException(Thread t, Throwable e) {
-        processException(e);
-      }
-    };
-
-    Runnable runnable = () -> {
-      try {
-        Activity activity = startupStart.startChild(StartUpMeasurer.Phases.LOAD_MAIN_CLASS);
-        Class<?> aClass = Class.forName(mainClass);
-        Method method = aClass.getDeclaredMethod(methodName, String[].class);
-        method.setAccessible(true);
-        Object[] argsArray = {args};
-        activity.end();
-        method.invoke(null, argsArray);
-      }
-      catch (Throwable t) {
-        throw new StartupAbortedException(t);
-      }
-    };
-
-    new Thread(threadGroup, runnable, "Idea Main Thread").start();
+  @NotNull
+  public StartupAbortedException exitCode(int exitCode) {
+    this.exitCode = exitCode;
+    return this;
   }
 
   public static void processException(@NotNull Throwable t) {
@@ -137,33 +115,5 @@ public final class MainRunner {
       t = t.getCause();
     }
     return null;
-  }
-
-  static class StartupAbortedException extends RuntimeException {
-    private int exitCode = Main.STARTUP_EXCEPTION;
-
-    StartupAbortedException(Throwable cause) {
-      super(cause);
-    }
-
-    StartupAbortedException(String message, Throwable cause) {
-      super(message, cause);
-    }
-
-    public int exitCode() {
-      return exitCode;
-    }
-
-    @NotNull
-    public StartupAbortedException exitCode(int exitCode) {
-      this.exitCode = exitCode;
-      return this;
-    }
-  }
-
-  /** Called via reflection from {@link WindowsCommandLineProcessor#processWindowsLauncherCommandLine}. */
-  @SuppressWarnings("UnusedDeclaration")
-  public static int processWindowsLauncherCommandLine(final String currentDirectory, final String[] args) {
-    return LISTENER != null ? LISTENER.processWindowsLauncherCommandLine(currentDirectory, args) : 1;
   }
 }

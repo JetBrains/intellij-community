@@ -12,8 +12,8 @@ import com.intellij.ide.customize.AbstractCustomizeWizardStep;
 import com.intellij.ide.customize.CustomizeIDEWizardDialog;
 import com.intellij.ide.customize.CustomizeIDEWizardStepsProvider;
 import com.intellij.ide.gdpr.EndUserAgreement;
-import com.intellij.ide.plugins.MainRunner;
 import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.ide.plugins.StartupAbortedException;
 import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.ide.ui.laf.IntelliJLaf;
 import com.intellij.jna.JnaLoader;
@@ -85,7 +85,7 @@ public final class StartupUtil {
 
   private StartupUtil() { }
 
-  private static final Thread.UncaughtExceptionHandler HANDLER = (t, e) -> MainRunner.processException(e);
+  private static final Thread.UncaughtExceptionHandler HANDLER = (t, e) -> StartupAbortedException.processException(e);
 
   /* called by the app after startup */
   public static synchronized void addExternalInstanceListener(@Nullable Function<List<String>, Future<CliResult>> processor) {
@@ -147,7 +147,9 @@ public final class StartupUtil {
     }
   }
 
-  static void prepareAndStart(@NotNull String[] args, @NotNull AppStarter appStarter) throws Exception {
+  public static void prepareApp(@NotNull String[] args,
+                                @NotNull String mainClass,
+                                @NotNull String methodName) throws Exception {
     Activity fjp = StartUpMeasurer.start("configure ForkJoin CommonPool");
     IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(Main.isHeadless(args));
     fjp.end();
@@ -155,7 +157,18 @@ public final class StartupUtil {
     LoadingPhase.setStrictMode();
 
     Activity scheduleLafInitActivity = StartUpMeasurer.start("schedule LaF init");
-    CompletableFuture<?> initUiTask = scheduleInitUi(args);
+    ExecutorService executorService = AppExecutorUtil.getAppExecutorService();
+
+    Future<Method> mainStartFuture = executorService.submit(() -> {
+      Activity activity = ParallelActivity.APP_INIT.start(Phases.LOAD_MAIN_CLASS);
+      Class<?> aClass = Class.forName(mainClass);
+      Method method = aClass.getDeclaredMethod(methodName, String[].class, CompletableFuture.class, Logger.class, boolean.class);
+      method.setAccessible(true);
+      activity.end();
+      return method;
+    });
+
+    CompletableFuture<?> initUiTask = scheduleInitUi(args, executorService);
     scheduleLafInitActivity.end();
 
     configureLog4j();
@@ -176,8 +189,6 @@ public final class StartupUtil {
     dirsAndLogs = dirsAndLogs.endAndStart("configure file logger");
     Logger log = setupLogger();  // log initialization should happen only after locking the system directory
     dirsAndLogs.end();
-
-    ExecutorService executorService = AppExecutorUtil.getAppExecutorService();
 
     executorService.execute(() -> {
       ApplicationInfo appInfo = ApplicationInfoImpl.getShadowInstance();
@@ -207,6 +218,16 @@ public final class StartupUtil {
     waitTaskActivity.end();
     futures.clear();
 
+    Method method = mainStartFuture.get();
+    Object[] argsArray = {args, initUiTask, log, configImportNeeded};
+
+    method.invoke(null, argsArray);
+  }
+
+  static void startApp(@NotNull CompletableFuture<?> initUiTask, 
+                       @NotNull Logger log,  
+                       boolean configImportNeeded,
+                       @NotNull AppStarter appStarter) throws Exception {
     if (!Main.isHeadless()) {
       Activity activity = StartUpMeasurer.start(Phases.IMPORT_CONFIGS);
 
@@ -236,11 +257,10 @@ public final class StartupUtil {
   }
 
   @NotNull
-  private static CompletableFuture<?> scheduleInitUi(@NotNull String[] args) {
+  private static CompletableFuture<?> scheduleInitUi(@NotNull String[] args, @NotNull ExecutorService executor) {
     // mainly call sun.util.logging.PlatformLogger.getLogger - it takes enormous time (up to 500 ms)
     // Before lockDirsAndConfigureLogger can be executed only tasks that do not require log,
     // because we don't want to complicate logging. It is OK, because lockDirsAndConfigureLogger is not so heavy-weight as UI tasks.
-    ExecutorService executor = AppExecutorUtil.getAppExecutorService();
     CompletableFuture<Void> future = new CompletableFuture<>();
     executor.execute(() -> {
       try {

@@ -584,7 +584,7 @@ private fun processProgramArguments(args: Array<String>): List<String> {
 private fun CompletableFuture<*>.thenRunOrHandleError(handler: () -> Unit): CompletableFuture<Void>? {
   return thenRun(handler)
     .exceptionally {
-      MainRunner.processException(it)
+      StartupAbortedException.processException(it)
       null
     }
 }
