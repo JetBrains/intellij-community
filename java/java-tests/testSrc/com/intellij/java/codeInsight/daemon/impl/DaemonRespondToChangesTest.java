@@ -5,7 +5,6 @@ import com.intellij.application.UtilKt;
 import com.intellij.application.options.editor.CodeFoldingConfigurable;
 import com.intellij.codeHighlighting.*;
 import com.intellij.codeInsight.EditorInfo;
-import com.intellij.codeInsight.completion.CompletionContributor;
 import com.intellij.codeInsight.daemon.*;
 import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase;
@@ -27,16 +26,17 @@ import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspectionB
 import com.intellij.codeInspection.varScopeCanBeNarrowed.FieldCanBeLocalInspection;
 import com.intellij.configurationStore.StorageUtilKt;
 import com.intellij.configurationStore.StoreUtil;
-import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.highlighter.JavaFileType;
-import com.intellij.idea.HardwareAgentRequired;
 import com.intellij.javaee.ExternalResourceManagerExImpl;
-import com.intellij.lang.*;
+import com.intellij.lang.CompositeLanguage;
+import com.intellij.lang.ExternalLanguageAnnotators;
+import com.intellij.lang.LanguageAnnotators;
+import com.intellij.lang.LanguageFilter;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.annotation.ExternalAnnotator;
@@ -77,7 +77,6 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
@@ -99,7 +98,6 @@ import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.ui.HintListener;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.*;
-import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.ref.GCWatcher;
@@ -118,16 +116,15 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+
+import static com.intellij.java.codeInsight.daemon.impl.DaemonRespondToChangesPerformanceTest.dumpThreadsToConsole;
 
 /**
  * @author cdr
  */
 @SuppressWarnings("StringConcatenationInsideStringBufferAppend")
-@HardwareAgentRequired
 @SkipSlowTestLocally
 public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/typing/";
@@ -666,7 +663,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertFalse(errors.isEmpty());
 
     for (LanguageFilter extension : extensions) {
-      ((CompositeLanguage)XMLLanguage.INSTANCE).registerLanguageExtension(extension);
+      XMLLanguage.INSTANCE.registerLanguageExtension(extension);
     }
   }
 
@@ -1210,61 +1207,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   }
 
 
-  public void testSOEInEndlessAppendChainPerformance() {
-    StringBuilder text = new StringBuilder("class S { String ffffff =  new StringBuilder()\n");
-    for (int i=0; i<2000; i++) {
-      text.append(".append(").append(i).append(")\n");
-    }
-    text.append(".toString();<caret>}");
-    configureByText(StdFileTypes.JAVA, text.toString());
 
-    PlatformTestUtil.startPerformanceTest("highlighting deep call chain", 60_000, () -> {
-      List<HighlightInfo> infos = highlightErrors();
-      assertEmpty(infos);
-      type("k");
-      assertNotEmpty(highlightErrors());
-      backspace();
-    }).usesAllCPUCores().assertTiming();
-  }
-
-  public void testExpressionListsWithManyStringLiteralsHighlightingPerformance() {
-    String listBody = StringUtil.join(Collections.nCopies(2000, "\"foo\""), ",\n");
-    String text = "class S { " +
-                  "String[] s = {" + listBody + "};\n" +
-                  "void foo(String... s) { foo(" + listBody + "); }\n" +
-                  "}";
-    configureByText(StdFileTypes.JAVA, text);
-
-    PlatformTestUtil.startPerformanceTest("highlighting many string literals", 10_000, () -> {
-      assertEmpty(highlightErrors());
-
-      type("k");
-      assertNotEmpty(highlightErrors());
-
-      backspace();
-    }).usesAllCPUCores().assertTiming();
-  }
-
-  public void testPerformanceOfHighlightingLongCallChainWithHierarchyAndGenerics() {
-    String text = "class Foo { native Foo foo(); }\n" +
-                  "class Bar<T extends Foo> extends Foo {\n" +
-                  "  native Bar<T> foo();" +
-                  "}\n" +
-                  "class Goo extends Bar<Goo> {}\n" +
-                  "class S { void x(Goo g) { g\n" +
-                  StringUtil.repeat(".foo()\n", 2000) +
-                  ".toString(); } }";
-    configureByText(StdFileTypes.JAVA, text);
-
-    PlatformTestUtil.startPerformanceTest("highlighting deep call chain", 90_000, () -> {
-      assertEmpty(highlightErrors());
-
-      type("k");
-      assertNotEmpty(highlightErrors());
-
-      backspace();
-    }).usesAllCPUCores().assertTiming();
-  }
 
 
   public void testBulbAppearsAfterType() {
@@ -1586,194 +1529,6 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertEquals(1, errors.size());
   }
 
-  public void testReactivityPerformance() throws Throwable {
-    @NonNls String filePath = "/psi/resolve/Thinlet.java";
-    configureByFile(filePath);
-    type(' ');
-    CompletionContributor.forLanguage(getFile().getLanguage());
-    highlightErrors();
-
-    final DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject());
-    int N = Math.max(5, Timings.adjustAccordingToMySpeed(80, false));
-    LOG.debug("N = " + N);
-    final long[] interruptTimes = new long[N];
-    for (int i = 0; i < N; i++) {
-      codeAnalyzer.restart();
-      final int finalI = i;
-      final long start = System.currentTimeMillis();
-      final AtomicLong typingStart = new AtomicLong();
-      final AtomicReference<RuntimeException> exception = new AtomicReference<>();
-      Thread watcher = new Thread("reactivity watcher") {
-        @Override
-        public void run() {
-          while (true) {
-            final long start1 = typingStart.get();
-            if (start1 == -1) break;
-            if (start1 == 0) {
-              try {
-                Thread.sleep(5);
-              }
-              catch (InterruptedException e1) {
-                throw new RuntimeException(e1);
-              }
-              continue;
-            }
-            long elapsed = System.currentTimeMillis() - start1;
-            if (elapsed > 500) {
-              // too long, see WTF
-              String message = "Too long interrupt: " + elapsed +
-                               "; Progress: " + codeAnalyzer.getUpdateProgress() +
-                               "\n----------------------------";
-              dumpThreadsToConsole();
-              exception.set(new RuntimeException(message));
-              throw exception.get();
-            }
-          }
-        }
-      };
-      try {
-        PsiFile file = getFile();
-        Editor editor = getEditor();
-        Project project = file.getProject();
-        CodeInsightTestFixtureImpl.ensureIndexesUpToDate(project);
-        TextEditor textEditor = TextEditorProvider.getInstance().getTextEditor(editor);
-        PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-        watcher.start();
-        Runnable interrupt = () -> {
-          long now = System.currentTimeMillis();
-          if (now - start < 100) {
-            // wait to engage all highlighting threads
-            return;
-          }
-          typingStart.set(System.currentTimeMillis());
-          type(' ');
-          long end = System.currentTimeMillis();
-          long interruptTime = end - now;
-          interruptTimes[finalI] = interruptTime;
-          assertTrue(codeAnalyzer.getUpdateProgress().isCanceled());
-          System.out.println(interruptTime);
-          throw new ProcessCanceledException();
-        };
-        long hiStart = System.currentTimeMillis();
-        codeAnalyzer
-          .runPasses(file, editor.getDocument(), Collections.singletonList(textEditor), ArrayUtilRt.EMPTY_INT_ARRAY, false, interrupt);
-        long hiEnd = System.currentTimeMillis();
-        DaemonProgressIndicator progress = codeAnalyzer.getUpdateProgress();
-        String message = "Should have been interrupted: " + progress + "; Elapsed: " + (hiEnd - hiStart) + "ms";
-        dumpThreadsToConsole();
-        throw new RuntimeException(message);
-      }
-      catch (ProcessCanceledException ignored) {
-      }
-      finally {
-        typingStart.set(-1); // cancel watcher
-        watcher.join();
-        if (exception.get() != null) {
-          throw exception.get();
-        }
-      }
-    }
-
-    long ave = ArrayUtil.averageAmongMedians(interruptTimes, 3);
-    System.out.println("Average among the N/3 median times: " + ave + "ms");
-    assertTrue(ave < 300);
-  }
-
-  private static void dumpThreadsToConsole() {
-    System.err.println("----all threads---");
-    for (Thread thread : Thread.getAllStackTraces().keySet()) {
-
-      boolean canceled = CoreProgressManager.isCanceledThread(thread);
-      if (canceled) {
-        System.err.println("Thread " + thread + " indicator is canceled");
-      }
-    }
-    PerformanceWatcher.dumpThreadsToConsole("");
-    System.err.println("----///////---");
-  }
-
-  public void testTypingLatencyPerformance() throws Throwable {
-    boolean debug = false;
-
-    @NonNls String filePath = "/psi/resolve/ThinletBig.java";
-
-    configureByFile(filePath);
-
-    type(' ');
-    CompletionContributor.forLanguage(getFile().getLanguage());
-    long s = System.currentTimeMillis();
-    highlightErrors();
-    if (debug) {
-      System.out.println("Hi elapsed: "+(System.currentTimeMillis() - s));
-    }
-
-    List<String> dumps = new ArrayList<>();
-
-    final DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject());
-    int N = Math.max(5, Timings.adjustAccordingToMySpeed(80, false));
-    LOG.debug("N = " + N);
-    final long[] interruptTimes = new long[N];
-    for (int i = 0; i < N; i++) {
-      codeAnalyzer.restart();
-      final int finalI = i;
-      final long start = System.currentTimeMillis();
-      Runnable interrupt = () -> {
-        long now = System.currentTimeMillis();
-        if (now - start < 100) {
-          // wait to engage all highlighting threads
-          return;
-        }
-        // uncomment to debug what's causing pauses
-        AtomicBoolean finished = new AtomicBoolean();
-        if (debug) {
-          AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> {
-            if (!finished.get()) {
-              dumps.add(ThreadDumper.dumpThreadsToString());
-            }
-          }, 10, TimeUnit.MILLISECONDS);
-        }
-        type(' ');
-        long end = System.currentTimeMillis();
-        finished.set(true);
-        long interruptTime = end - now;
-        interruptTimes[finalI] = interruptTime;
-        assertTrue(codeAnalyzer.getUpdateProgress().isCanceled());
-        throw new ProcessCanceledException();
-      };
-      try {
-        PsiFile file = getFile();
-        Editor editor = getEditor();
-        Project project = file.getProject();
-        CodeInsightTestFixtureImpl.ensureIndexesUpToDate(project);
-        TextEditor textEditor = TextEditorProvider.getInstance().getTextEditor(editor);
-        PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-        codeAnalyzer
-          .runPasses(file, editor.getDocument(), Collections.singletonList(textEditor), ArrayUtilRt.EMPTY_INT_ARRAY, false, interrupt);
-
-        throw new RuntimeException("should have been interrupted");
-      }
-      catch (ProcessCanceledException ignored) {
-      }
-      backspace();
-      //highlightErrors();
-    }
-
-    System.out.println("Interrupt times: " + Arrays.toString(interruptTimes));
-
-    if (debug) {
-      for (String dump : dumps) {
-        System.out.println("\n\n-----------------------------\n\n" + dump);
-      }
-    }
-
-    long mean = ArrayUtil.averageAmongMedians(interruptTimes, 3);
-    long avg = Arrays.stream(interruptTimes).sum() / interruptTimes.length;
-    long max = Arrays.stream(interruptTimes).max().getAsLong();
-    long min = Arrays.stream(interruptTimes).min().getAsLong();
-    System.out.println("Average among the N/3 median times: " + mean + "ms; max: "+max+"; min:"+min+"; avg: "+avg);
-    assertTrue(String.valueOf(mean), mean < 10);
-  }
-
   public void testPostHighlightingPassRunsOnEveryPsiModification() throws Exception {
     PsiFile x = createFile("X.java", "public class X { public static void ffffffffffffff(){} }");
     PsiFile use = createFile("Use.java", "public class Use { { <caret>X.ffffffffffffff(); } }");
@@ -1910,35 +1665,6 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       return;
     }
     fail("PCE must have been thrown");
-  }
-
-  public void testAllPassesFinishAfterInterruptOnTyping_Performance() throws Throwable {
-    @NonNls String filePath = "/psi/resolve/Thinlet.java";
-    configureByFile(filePath);
-    highlightErrors();
-
-    final DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject());
-    type(' ');
-    for (int i=0; i<100; i++) {
-      backspace();
-      codeAnalyzer.restart();
-      try {
-        PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-
-        PsiFile file = getFile();
-        Editor editor = getEditor();
-        Project project = file.getProject();
-        CodeInsightTestFixtureImpl.ensureIndexesUpToDate(project);
-        TextEditor textEditor = TextEditorProvider.getInstance().getTextEditor(editor);
-        Runnable callbackWhileWaiting = () -> type(' ');
-        codeAnalyzer.runPasses(file, editor.getDocument(), Collections.singletonList(textEditor), ArrayUtilRt.EMPTY_INT_ARRAY, true, callbackWhileWaiting);
-      }
-      catch (ProcessCanceledException ignored) {
-        codeAnalyzer.waitForTermination();
-        continue;
-      }
-      fail("PCE must have been thrown");
-    }
   }
 
   public void testCodeFoldingInSplittedWindowAppliesToAllEditors() {
