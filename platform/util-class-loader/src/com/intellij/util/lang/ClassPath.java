@@ -118,7 +118,9 @@ public class ClassPath {
         resource = loader.getResource(s);
         if (resource != null) {
           if (myJarAccessLog != null) {
-            myJarAccessLog.add(loader.getBaseURL().toString());
+            synchronized (myJarAccessLog) {
+              myJarAccessLog.add(loader.getBaseURL().toString());
+            }
           }
           return resource;
         }
@@ -182,7 +184,11 @@ public class ClassPath {
 
   @NotNull
   public Collection<String> getJarAccessLog() {
-    return myJarAccessLog == null ? Collections.<String>emptySet() : myJarAccessLog;
+    if (myJarAccessLog == null) return Collections.emptySet();
+    
+    synchronized (myJarAccessLog) {
+      return new LinkedHashSet<String>(myJarAccessLog);
+    }
   }
 
   private void initLoaders(@NotNull URL url, int index) throws IOException {
@@ -364,7 +370,9 @@ public class ClassPath {
       Resource resource = loader.getResource(s);
       if (resource != null) {
         if (classPath.myJarAccessLog != null) {
-          classPath.myJarAccessLog.add(loader.getBaseURL().toString());
+          synchronized (classPath.myJarAccessLog) {
+            classPath.myJarAccessLog.add(loader.getBaseURL().toString());
+          }
         }
         if (ourResourceLoadingLogger != null) {
           long resourceSize;
