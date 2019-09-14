@@ -20,7 +20,6 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationUtil;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
@@ -173,17 +172,8 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     if (manager != null) {
       final boolean[] canClose = {true};
       try {
-        Runnable task = () -> {
-          if (!manager.closeAndDisposeAllProjects(checkCanCloseProject)) {
-            canClose[0] = false;
-          }
-        };
-        CommandProcessor commandProcessor = ApplicationManager.getApplication().getServiceIfCreated(CommandProcessor.class);
-        if (commandProcessor == null) {
-          task.run();
-        }
-        else {
-          commandProcessor.executeCommand(null, task, ApplicationBundle.message("command.exit"), null);
+        if (!manager.closeAndDisposeAllProjects(checkCanCloseProject)) {
+          canClose[0] = false;
         }
       }
       catch (Throwable e) {
