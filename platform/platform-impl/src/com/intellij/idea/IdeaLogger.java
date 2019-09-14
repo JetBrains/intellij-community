@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Mike
  */
-public class IdeaLogger extends Log4jBasedLogger {
+public final class IdeaLogger extends Log4jBasedLogger {
   @SuppressWarnings("StaticNonFinalField") public static String ourLastActionId = "";
   @SuppressWarnings("StaticNonFinalField") public static Exception ourErrorsOccurred;  // when not null, holds the first of errors that occurred
 
@@ -128,7 +128,7 @@ public class IdeaLogger extends Log4jBasedLogger {
         myLogger.error("Last Action: " + lastPreformedActionId);
       }
 
-      CommandProcessor commandProcessor = CommandProcessor.getInstance();
+      CommandProcessor commandProcessor = application.getServiceIfCreated(CommandProcessor.class);
       if (commandProcessor != null) {
         String currentCommandName = commandProcessor.getCurrentCommandName();
         if (currentCommandName != null) {
