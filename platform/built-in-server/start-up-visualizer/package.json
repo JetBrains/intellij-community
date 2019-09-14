@@ -35,8 +35,5 @@
     "last 2 versions",
     "not ie <= 8",
     "not dead"
-  ],
-  "resolutions": {
-    "webpack": "4.39"
-  }
+  ]
 }
