@@ -61,8 +61,9 @@ class RemoteTargetsMasterDetails @JvmOverloads constructor(private val project: 
 
   private fun addTargetNode(config: RemoteTargetConfiguration): MyNode {
     val configurable = RemoteTargetDetailsConfigurable(project, config)
-    val result = MyNode(configurable)
-    addNode(result, myRoot)
+    val node = MyNode(configurable)
+    addNode(node, myRoot)
+    selectNodeInTree(node)
     return myRoot
   }
 
@@ -90,7 +91,7 @@ class RemoteTargetsMasterDetails @JvmOverloads constructor(private val project: 
   }
 
   private inner class CreateNewTargetGroup : ActionGroup("Add", "", IconUtil.getAddIcon()),
-                                             MasterDetailsComponent.ActionGroupWithPreselection, DumbAware {
+                                             ActionGroupWithPreselection, DumbAware {
     init {
       registerCustomShortcutSet(CommonShortcuts.INSERT, myTree)
     }
