@@ -161,7 +161,7 @@ class ProductModulesLayout {
    * @see #setPluginPublishingSpec
    * @see org.jetbrains.intellij.build.PluginPublishingSpec#includeInCustomPluginRepository
    */
-  boolean prepareCustomPluginRepositoryForPublishedPlugins = false
+  boolean prepareCustomPluginRepositoryForPublishedPlugins = true
   
 
   /**
