@@ -1,8 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.remoteServer.ir.config
+package com.intellij.execution.remote
 
+import com.intellij.execution.remote.BaseExtendableConfiguration.Companion.getTypeImpl
 import com.intellij.openapi.components.BaseState
-import com.intellij.remoteServer.ir.config.BaseExtendableConfiguration.Companion.getTypeImpl
 import com.intellij.util.xmlb.XmlSerializer
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.Tag

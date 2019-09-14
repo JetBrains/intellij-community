@@ -1,15 +1,13 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.remoteServer.ir.target
+package com.intellij.execution.remote
 
+import com.intellij.execution.remote.BaseExtendableConfiguration.Companion.getTypeImpl
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.NamedConfigurable
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
-import com.intellij.remoteServer.ir.config.BaseExtendableConfiguration
-import com.intellij.remoteServer.ir.config.BaseExtendableConfiguration.Companion.getTypeImpl
-import com.intellij.remoteServer.ir.runtime.LanguageRuntimeType
 import com.intellij.ui.HyperlinkLabel
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.panels.VerticalLayout

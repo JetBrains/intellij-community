@@ -1,9 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.remoteServer.ir.target
+package com.intellij.execution.remote
 
 import com.intellij.openapi.components.*
-import com.intellij.remoteServer.ir.config.BaseExtendableList
-import com.intellij.remoteServer.ir.config.BaseExtendableState
 import com.intellij.util.xmlb.annotations.Property
 import com.intellij.util.xmlb.annotations.Tag
 import com.intellij.util.xmlb.annotations.XCollection
@@ -13,7 +11,7 @@ class RemoteTargetsManager : PersistentStateComponent<RemoteTargetsManager.Targe
 
   val targets: BaseExtendableList<RemoteTargetConfiguration, RemoteTargetType<*>> = TargetsList()
 
-  override fun getState(): RemoteTargetsManager.TargetsListState {
+  override fun getState(): TargetsListState {
     val result = TargetsListState()
     for (next in this.targets.state.configs) {
       result.targets.add(next as OneTargetState)
@@ -21,16 +19,17 @@ class RemoteTargetsManager : PersistentStateComponent<RemoteTargetsManager.Targe
     return result
   }
 
-  override fun loadState(state: RemoteTargetsManager.TargetsListState) {
+  override fun loadState(state: TargetsListState) {
     targets.loadState(state.targets)
   }
 
   companion object {
     @JvmStatic
-    val instance: RemoteTargetsManager = service()
+    val instance: RemoteTargetsManager = ServiceManager.getService(RemoteTargetsManager::class.java)
   }
 
-  internal class TargetsList : BaseExtendableList<RemoteTargetConfiguration, RemoteTargetType<*>>(RemoteTargetType.EXTENSION_NAME) {
+  internal class TargetsList : BaseExtendableList<RemoteTargetConfiguration, RemoteTargetType<*>>(
+    RemoteTargetType.EXTENSION_NAME) {
     override fun toBaseState(config: RemoteTargetConfiguration): OneTargetState =
       OneTargetState().also {
         it.loadFromConfiguration(config)

@@ -2,13 +2,13 @@
 package com.intellij.remoteServer.ir.runtime.sample
 
 import com.intellij.execution.RunnerAndConfigurationSettings
+import com.intellij.execution.remote.BaseExtendableConfiguration.Companion.getTypeImpl
+import com.intellij.execution.remote.LanguageRuntimeType
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
-import com.intellij.remoteServer.ir.config.BaseExtendableConfiguration.Companion.getTypeImpl
-import com.intellij.remoteServer.ir.runtime.LanguageRuntimeType
 import com.intellij.ui.layout.*
 
 class SampleLanguageRuntimeType : LanguageRuntimeType<SampleLanguageRuntimeConfiguration>(TYPE_ID) {

@@ -10,9 +10,9 @@
     <extensionPoint name="remoteServer.runConfigurationExtension"
                     interface="com.intellij.remoteServer.impl.configuration.deployment.DeployToServerRunConfigurationExtension"/>
     <extensionPoint name="ir.targetType"
-                    interface="com.intellij.remoteServer.ir.target.RemoteTargetType"/>
+                    interface="com.intellij.execution.remote.RemoteTargetType"/>
     <extensionPoint name="ir.languageRuntime"
-                    interface="com.intellij.remoteServer.ir.runtime.LanguageRuntimeType"/>
+                    interface="com.intellij.execution.remote.LanguageRuntimeType"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -42,10 +42,10 @@
     <projectService serviceImplementation="com.intellij.remoteServer.impl.runtime.ui.RemoteServersDeploymentManager"/>
     <serviceViewContributor implementation="com.intellij.remoteServer.impl.runtime.ui.DefaultRemoteServersServiceViewContributor"/>
 
-    <projectConfigurable groupId="build" instance="com.intellij.remoteServer.ir.target.RemoteTargetsListConfigurable"/>
-    <executionTargetProvider implementation="com.intellij.remoteServer.ir.target.RemoteRunnersExecutionTargetProvider"/>
-
-    <applicationService serviceImplementation="com.intellij.remoteServer.ir.target.RemoteTargetsManager"/>
+    <!--todo[remoteServers]: move to platform-lang-->
+    <projectConfigurable groupId="build" instance="com.intellij.execution.remote.RemoteTargetsListConfigurable"/>
+    <executionTargetProvider implementation="com.intellij.execution.remote.RemoteRunnersExecutionTargetProvider"/>
+    <applicationService serviceImplementation="com.intellij.execution.remote.RemoteTargetsManager"/>
 
     <ir.languageRuntime implementation="com.intellij.remoteServer.ir.runtime.sample.SampleLanguageRuntimeType" />
   </extensions>
