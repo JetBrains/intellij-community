@@ -240,15 +240,18 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
   }
 
   private void performWriteCommandAction(@NotNull RunResult<T> result) {
-    if (!FileModificationService.getInstance().preparePsiElementsForWrite(Arrays.asList(myPsiFiles))) return;
+    if (myPsiFiles.length > 0 && !FileModificationService.getInstance().preparePsiElementsForWrite(Arrays.asList(myPsiFiles))) {
+      return;
+    }
 
     // this is needed to prevent memory leak, since the command is put into undo queue
-    final RunResult[] results = {result};
-
-    doExecuteCommand(() -> ApplicationManager.getApplication().runWriteAction(() -> {
-      results[0].run();
-      results[0] = null;
-    }));
+    Ref<RunResult<?>> resultRef = new Ref<>(result);
+    doExecuteCommand(() -> {
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        resultRef.get().run();
+        resultRef.set(null);
+      });
+    });
   }
 
   /**
