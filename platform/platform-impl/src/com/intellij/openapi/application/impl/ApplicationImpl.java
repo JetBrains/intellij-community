@@ -166,23 +166,20 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     return myLock.isInImpatientReader();
   }
 
-  private boolean disposeSelf(final boolean checkCanCloseProject) {
+  private boolean disposeSelf(boolean checkCanCloseProject) {
     ProjectManagerEx manager = ProjectManagerEx.getInstanceExIfCreated();
-    SaveAndSyncHandler.getInstance().saveSettingsUnderModalProgress(this, /* isSaveAppAlso = */ false);
     if (manager != null) {
-      final boolean[] canClose = {true};
       try {
         if (!manager.closeAndDisposeAllProjects(checkCanCloseProject)) {
-          canClose[0] = false;
+          return false;
         }
       }
       catch (Throwable e) {
         LOG.error(e);
       }
-      if (!canClose[0]) {
-        return false;
-      }
     }
+
+    myContainerState = ContainerState.DISPOSE_IN_PROGRESS;
     runWriteAction(() -> Disposer.dispose(this));
 
     Disposer.assertIsEmpty();
@@ -645,14 +642,14 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       AppLifecycleListener lifecycleListener = getMessageBus().syncPublisher(AppLifecycleListener.TOPIC);
       lifecycleListener.appClosing();
 
-      myContainerState = ContainerState.DISPOSE_IN_PROGRESS;
-
       if (!force && !canExit()) {
         return;
       }
 
       lifecycleListener.appWillBeClosed(restart);
       LifecycleUsageTriggerCollector.onIdeClose(restart);
+
+      SaveAndSyncHandler.getInstance().saveSettingsUnderModalProgress(this, /* isSaveAppAlso = */ false);
 
       boolean success = disposeSelf(!force);
       if (!success || isUnitTestMode() || Boolean.getBoolean("idea.test.guimode")) {
@@ -772,7 +769,11 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       }
     }
 
-    ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
+    ProjectManagerEx projectManager = ProjectManagerEx.getInstanceExIfCreated();
+    if (projectManager == null) {
+      return true;
+    }
+
     Project[] projects = projectManager.getOpenProjects();
     for (Project project : projects) {
       if (!projectManager.canClose(project)) {
