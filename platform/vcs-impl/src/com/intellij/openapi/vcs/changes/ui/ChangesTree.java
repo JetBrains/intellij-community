@@ -39,7 +39,10 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
-import javax.swing.tree.*;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeNode;
+import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.*;
 import java.beans.PropertyChangeListener;
@@ -322,10 +325,6 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     else if (myCheckBoxClickHandler != null) {
       myCheckBoxClickHandler.uninstall(this);
       myCheckBoxClickHandler = null;
-    }
-    TreeCellRenderer renderer = getCellRenderer();
-    if (renderer instanceof ChangesTreeCellRenderer) {
-      ((ChangesTreeCellRenderer)renderer).updateLayout(isShowCheckboxes());
     }
     repaint();
   }

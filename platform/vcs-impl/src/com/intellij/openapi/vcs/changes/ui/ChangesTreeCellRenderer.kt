@@ -3,30 +3,23 @@ package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.util.ui.ThreeStateCheckBox
 import com.intellij.util.ui.accessibility.AccessibleContextDelegate
-import net.miginfocom.layout.LC
-import net.miginfocom.swing.MigLayout
+import com.intellij.util.ui.components.BorderLayoutPanel
 import java.awt.Component
 import java.awt.Container
 import javax.accessibility.AccessibleContext
 import javax.accessibility.AccessibleRole
-import javax.swing.JPanel
 import javax.swing.JTree
 import javax.swing.tree.TreeCellRenderer
 
 private class ChangesTreeCellRenderer(private val textRenderer: ChangesBrowserNodeRenderer) :
-  JPanel(MigLayout()), TreeCellRenderer {
+  BorderLayoutPanel(), TreeCellRenderer {
 
   private val checkBox = ThreeStateCheckBox()
 
   init {
-    add(checkBox)
-    add(textRenderer)
+    addToLeft(checkBox)
+    addToCenter(textRenderer)
     isOpaque = false
-  }
-
-  fun updateLayout(showCheckBoxes: Boolean) {
-    val defaultConstraints = LC().insetsAll("0").gridGap("0", "0")
-    (layout as MigLayout).layoutConstraints = defaultConstraints.hideMode(if (showCheckBoxes) 0 else 3)
   }
 
   override fun getTreeCellRendererComponent(
