@@ -20,6 +20,15 @@ open class BaseExtendableList<C, T>(private val extPoint: ExtensionPointName<T>)
     unresolvedInstances.clear()
   }
 
+  fun findConfig(name: String): C? {
+    for (resolvedInstance in resolvedInstances) {
+      if (resolvedInstance.displayName == name) {
+        return resolvedInstance
+      }
+    }
+    return null
+  }
+
   fun resolvedConfigs(): List<C> = resolvedInstances.toList()
 
   fun addConfig(config: C) = resolvedInstances.add(config)

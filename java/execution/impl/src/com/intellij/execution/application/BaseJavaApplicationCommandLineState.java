@@ -2,14 +2,13 @@
 package com.intellij.execution.application;
 
 import com.intellij.execution.*;
-import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.configurations.JavaCommandLineState;
-import com.intellij.execution.configurations.JavaParameters;
-import com.intellij.execution.configurations.RunConfigurationBase;
+import com.intellij.execution.configurations.*;
 import com.intellij.execution.process.KillableColoredProcessHandler;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.execution.remote.IR;
+import com.intellij.execution.remote.RemoteTargetConfiguration;
+import com.intellij.execution.remote.RemoteTargetsManager;
 import com.intellij.execution.remote.target.IRExecutionTarget;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.util.JavaParametersUtil;
@@ -44,9 +43,7 @@ public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigura
   @Override
   protected OSProcessHandler startProcess() throws ExecutionException {
     //todo[remoteServers]: pull up and support all implementations of JavaCommandLineState
-    ExecutionEnvironment environment = getEnvironment();
-    ExecutionTarget target = environment.getExecutionTarget();
-    IR.RemoteRunner runner = target instanceof IRExecutionTarget ? ((IRExecutionTarget)target).getRemoteRunner() : new IR.LocalRunner();
+    IR.RemoteRunner runner = getRemoteRunner(myConfiguration);
     IR.RemoteEnvironmentRequest request = runner.createRequest();
     IR.NewCommandLine newCommandLine = createNewCommandLine(request);
 
@@ -66,6 +63,25 @@ public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigura
     ProcessTerminatedListener.attach(handler);
     JavaRunConfigurationExtensionManager.getInstance().attachExtensionsToProcess(getConfiguration(), handler, getRunnerSettings());
     return handler;
+  }
+
+  @NotNull
+  private static IR.RemoteRunner getRemoteRunner(RunProfile runConfiguration) throws ExecutionException {
+    ExecutionTarget target = runConfiguration instanceof CommandLineState ? ((CommandLineState)runConfiguration).getExecutionTarget() : null;
+    if (target instanceof IRExecutionTarget) {
+      return ((IRExecutionTarget)target).getRemoteRunner();
+    }
+    if (runConfiguration instanceof RemoteTargetAwareRunProfile) {
+      String targetName = ((RemoteTargetAwareRunProfile)runConfiguration).getDefaultTargetName();
+      if (targetName != null) {
+        RemoteTargetConfiguration config = RemoteTargetsManager.getInstance().getTargets().findConfig(targetName);
+        if (config == null) {
+          throw new ExecutionException("Cannot find target " + targetName);
+        }
+        //todo[remoteServers]: create runner from target configuration
+      }
+    }
+    return new IR.LocalRunner();
   }
 
   @Override
