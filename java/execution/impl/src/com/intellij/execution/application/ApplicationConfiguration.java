@@ -49,8 +49,6 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
   @Deprecated public String ALTERNATIVE_JRE_PATH;
   /* */
 
-  private String myDefaultTargetName;
-
   public ApplicationConfiguration(String name, @NotNull Project project, @NotNull ApplicationConfigurationType configurationType) {
     this(name, project, configurationType.getConfigurationFactories()[0]);
   }
@@ -274,12 +272,12 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
   @Nullable
   @Override
   public String getDefaultTargetName() {
-    return myDefaultTargetName;
+    return getOptions().getRemoteTarget();
   }
 
   @Override
   public void setDefaultTargetName(@Nullable String targetName) {
-    myDefaultTargetName = targetName;
+    getOptions().setRemoteTarget(targetName);
   }
 
   public static void onAlternativeJreChanged(boolean changed, Project project) {
