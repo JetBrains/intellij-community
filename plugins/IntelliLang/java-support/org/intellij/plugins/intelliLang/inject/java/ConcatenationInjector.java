@@ -13,6 +13,7 @@ import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl;
 import com.intellij.psi.injection.ReferenceInjector;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -20,6 +21,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.intellij.plugins.intelliLang.Configuration;
@@ -372,7 +374,8 @@ public final class ConcatenationInjector implements ConcatenationAwareInjector {
         }
         else {
           if (curHost instanceof PsiLiteralExpression) {
-            List<TextRange> injectedArea = injection.getInjectedArea(curHost);
+            List<TextRange> textBlockInjectedArea = getTextBlockInjectedArea(curHost);
+            List<TextRange> injectedArea = (textBlockInjectedArea == null) ? injection.getInjectedArea(curHost) : textBlockInjectedArea;
             for (int j = 0, injectedAreaSize = injectedArea.size(); j < injectedAreaSize; j++) {
               TextRange textRange = injectedArea.get(j);
               TextRange.assertProperRange(textRange, injection);
@@ -412,6 +415,37 @@ public final class ConcatenationInjector implements ConcatenationAwareInjector {
         }
       }
       return res;
+    }
+
+    private static List<TextRange> getTextBlockInjectedArea(PsiLanguageInjectionHost host) {
+      if (!(host instanceof PsiLiteralExpressionImpl)) {
+        return null;
+      }
+      final PsiLiteralExpressionImpl literalExpression = (PsiLiteralExpressionImpl)host;
+      if (literalExpression.getLiteralElementType() != JavaTokenType.TEXT_BLOCK_LITERAL) {
+        return null;
+      }
+      final TextRange textRange = ElementManipulators.getValueTextRange(host);
+      final int indent = literalExpression.getTextBlockIndent();
+      if (indent <= 0) {
+        return Collections.singletonList(textRange);
+      }
+
+      final String text = literalExpression.getText();
+      int startOffset = textRange.getStartOffset() + indent;
+      int endOffset = text.indexOf('\n', startOffset);
+      final List<TextRange> result = new SmartList<>();
+      while (endOffset > 0) {
+        endOffset++;
+        result.add(new TextRange(startOffset, endOffset));
+        startOffset = endOffset + indent;
+        endOffset = text.indexOf('\n', startOffset);
+      }
+      endOffset = textRange.getEndOffset();
+      if (startOffset < endOffset) {
+        result.add(new TextRange(startOffset, endOffset));
+      }
+      return result;
     }
 
     private static boolean isReferenceInject(Language language) {
