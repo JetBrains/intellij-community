@@ -6,6 +6,8 @@ import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.junit.RefactoringListeners;
+import com.intellij.execution.remote.LanguageRuntimeConfiguration;
+import com.intellij.execution.remote.RemoteTargetConfiguration;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ProgramParametersUtil;
@@ -33,7 +35,7 @@ import java.util.Objects;
 
 public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunConfigurationModule, Element>
   implements CommonJavaRunConfigurationParameters, ConfigurationWithCommandLineShortener, SingleClassConfiguration,
-             RefactoringListenerProvider, InputRedirectAware {
+             RefactoringListenerProvider, InputRedirectAware, RemoteTargetAwareRunProfile {
   /* deprecated, but 3rd-party used variables */
   @SuppressWarnings({"DeprecatedIsStillUsed", "MissingDeprecatedAnnotation"})
   @Deprecated public String MAIN_CLASS_NAME;
@@ -46,6 +48,8 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
   @SuppressWarnings({"DeprecatedIsStillUsed", "MissingDeprecatedAnnotation"})
   @Deprecated public String ALTERNATIVE_JRE_PATH;
   /* */
+
+  private String myDefaultTargetName;
 
   public ApplicationConfiguration(String name, @NotNull Project project, @NotNull ApplicationConfigurationType configurationType) {
     this(name, project, configurationType.getConfigurationFactories()[0]);
@@ -257,6 +261,25 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
     ALTERNATIVE_JRE_PATH = path;
     getOptions().setAlternativeJrePath(path);
     onAlternativeJreChanged(changed, getProject());
+  }
+
+  @Override
+  public boolean canRunOn(@NotNull RemoteTargetConfiguration target) {
+    for (LanguageRuntimeConfiguration config : target.getRuntimes().resolvedConfigs()) {
+      //todo[remoteServers]: find Java config
+    }
+    return true;
+  }
+
+  @Nullable
+  @Override
+  public String getDefaultTargetName() {
+    return myDefaultTargetName;
+  }
+
+  @Override
+  public void setDefaultTargetName(@Nullable String targetName) {
+    myDefaultTargetName = targetName;
   }
 
   public static void onAlternativeJreChanged(boolean changed, Project project) {

@@ -10,11 +10,8 @@ abstract class BaseExtendableConfiguration(val typeId: String, internal val exte
   companion object {
     @JvmStatic
     @Suppress("UNCHECKED_CAST")
-    fun <C : BaseExtendableConfiguration, T : BaseExtendableType<C>> C.getTypeImpl(): T =
+    internal fun <C : BaseExtendableConfiguration, T : BaseExtendableType<C>> C.getTypeImpl(): T =
       this.extensionPoint.extensionList.find { it.id == typeId } as T?
       ?: throw IllegalStateException("for type: $typeId, name: $displayName")
   }
 }
-
-
-
