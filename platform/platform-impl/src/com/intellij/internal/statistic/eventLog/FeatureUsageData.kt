@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog
 
-import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.execution.Executor
 import com.intellij.internal.statistic.eventLog.StatisticsEventEscaper.escapeFieldName
 import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext
@@ -70,6 +69,7 @@ class FeatureUsageData {
     return this
   }
 
+  @FeatureUsageDataBuilder(additionalDataFields = ["version:regexp#version"])
   fun addVersionByString(version: String?): FeatureUsageData {
     if (version == null) {
       data["version"] = "unknown"
@@ -80,6 +80,7 @@ class FeatureUsageData {
     return this
   }
 
+  @FeatureUsageDataBuilder(additionalDataFields = ["version:regexp#version"])
   fun addVersion(version: Version?): FeatureUsageData {
     data["version"] = if (version != null) "${version.major}.${version.minor}" else "unknown.format"
     return this
@@ -89,6 +90,7 @@ class FeatureUsageData {
    * Group by OS will be available without adding OS explicitly to event data.
    */
   @Deprecated("Don't add OS to event data")
+  @FeatureUsageDataBuilder(additionalDataFields = ["os:enum#os"])
   fun addOS(): FeatureUsageData {
     data["os"] = getOS()
     return this
@@ -100,6 +102,7 @@ class FeatureUsageData {
     return if (SystemInfo.isLinux) "Linux" else "Other"
   }
 
+  @FeatureUsageDataBuilder(additionalDataFields = ["plugin:util#plugin", "plugin_type:util#plugin_type"])
   fun addPluginInfo(info: PluginInfo?): FeatureUsageData {
     info?.let {
       addPluginInfoTo(info, data)
@@ -107,6 +110,7 @@ class FeatureUsageData {
     return this
   }
 
+  @FeatureUsageDataBuilder(additionalDataFields = ["lang:util#lang"])
   fun addLanguage(id: String?): FeatureUsageData {
     id?.let {
       addLanguage(Language.findLanguageByID(id))
@@ -114,10 +118,12 @@ class FeatureUsageData {
     return this
   }
 
+  @FeatureUsageDataBuilder(additionalDataFields = ["lang:util#lang"])
   fun addLanguage(language: Language?): FeatureUsageData {
     return addLanguageInternal("lang", language)
   }
 
+  @FeatureUsageDataBuilder(additionalDataFields = ["current_file:util#current_file"])
   fun addCurrentFile(language: Language?): FeatureUsageData {
     return addLanguageInternal("current_file", language)
   }
@@ -135,6 +141,7 @@ class FeatureUsageData {
     return this
   }
 
+  @FeatureUsageDataBuilder(additionalDataFields = ["input_event:util#shortcut"])
   fun addInputEvent(event: InputEvent?, place: String?): FeatureUsageData {
     val inputEvent = ShortcutDataProvider.getInputEventText(event, place)
     if (inputEvent != null && StringUtil.isNotEmpty(inputEvent)) {
@@ -143,6 +150,7 @@ class FeatureUsageData {
     return this
   }
 
+  @FeatureUsageDataBuilder(additionalDataFields = ["input_event:util#shortcut"])
   fun addInputEvent(event: AnActionEvent?): FeatureUsageData {
     val inputEvent = ShortcutDataProvider.getActionEventText(event)
     if (inputEvent != null && StringUtil.isNotEmpty(inputEvent)) {
@@ -151,6 +159,7 @@ class FeatureUsageData {
     return this
   }
 
+  @FeatureUsageDataBuilder(additionalDataFields = ["input_event:util#shortcut"])
   fun addInputEvent(event: KeyEvent): FeatureUsageData {
     val inputEvent = ShortcutDataProvider.getKeyEventText(event)
     if (inputEvent != null && StringUtil.isNotEmpty(inputEvent)) {
@@ -159,6 +168,7 @@ class FeatureUsageData {
     return this
   }
 
+  @FeatureUsageDataBuilder(additionalDataFields = ["input_event:util#shortcut"])
   fun addInputEvent(event: MouseEvent): FeatureUsageData {
     val inputEvent = ShortcutDataProvider.getMouseEventText(event)
     if (inputEvent != null && StringUtil.isNotEmpty(inputEvent)) {
@@ -167,6 +177,7 @@ class FeatureUsageData {
     return this
   }
 
+  @FeatureUsageDataBuilder(additionalDataFields = ["place:util#place"])
   fun addPlace(place: String?): FeatureUsageData {
     if (place == null) return this
 
@@ -185,15 +196,18 @@ class FeatureUsageData {
     return ActionPlaces.isCommonPlace(place) || ActionPlaces.TOOLWINDOW_POPUP == place
   }
 
+  @FeatureUsageDataBuilder(additionalDataFields = ["executor:util#run_config_executor"])
   fun addExecutor(executor: Executor): FeatureUsageData {
     return addData("executor", executor.id)
   }
 
+  @FeatureUsageDataBuilder(additionalDataFields = ["file_path:util#hash"])
   fun addAnonymizedPath(path: String): FeatureUsageData {
     data["file_path"] = EventLogConfiguration.anonymize(path)
     return this
   }
 
+  @FeatureUsageDataBuilder(additionalDataFields = ["value"])
   fun addValue(value: Any): FeatureUsageData {
     if (value is String || value is Boolean || value is Int || value is Long || value is Float || value is Double) {
       return addDataInternal("value", value)
@@ -201,10 +215,12 @@ class FeatureUsageData {
     return addData("value", value.toString())
   }
 
+  @FeatureUsageDataBuilder(additionalDataFields = ["enabled:enum#boolean"])
   fun addEnabled(enabled: Boolean): FeatureUsageData {
     return addData("enabled", enabled)
   }
 
+  @FeatureUsageDataBuilder(additionalDataFields = ["count:regexp#integer"])
   fun addCount(count: Int): FeatureUsageData {
     return addData("count", count)
   }
