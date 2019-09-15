@@ -4,6 +4,7 @@ package com.intellij.execution.remote.java;
 import com.intellij.openapi.options.BoundConfigurable;
 import org.jetbrains.annotations.NotNull;
 
+//todo[remoteServers]: should be eliminated
 public interface JavaLanguageRuntimeUIFactory {
   @NotNull
   BoundConfigurable create(@NotNull JavaLanguageRuntimeConfiguration config);

@@ -72,7 +72,7 @@ public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigura
   private static IR.RemoteRunner getRemoteRunner(@NotNull Project project, @NotNull RunProfile runConfiguration) throws ExecutionException {
     ExecutionTarget target = ObjectUtils.doIfCast(runConfiguration, CommandLineState.class, c -> c.getExecutionTarget());
     if (target instanceof IRExecutionTarget) {
-      return ((IRExecutionTarget)target).getRemoteRunner();
+      return ((IRExecutionTarget)target).createRemoteRunner();
     }
     if (runConfiguration instanceof RemoteTargetAwareRunProfile) {
       String targetName = ((RemoteTargetAwareRunProfile)runConfiguration).getDefaultTargetName();

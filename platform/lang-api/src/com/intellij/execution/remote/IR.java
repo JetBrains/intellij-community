@@ -22,6 +22,8 @@ public class IR {
     //static Process runSimpleProcess(String commandLine, ProgressIndicator indicator) {
     //  return null;
     //}
+    @Nullable
+    RemoteTargetConfiguration getTargetConfiguration();
 
     @NotNull
     RemotePlatform getRemotePlatform();
@@ -255,6 +257,11 @@ public class IR {
   }
 
   public static class LocalRunner implements RemoteRunner {
+    @Nullable
+    @Override
+    public RemoteTargetConfiguration getTargetConfiguration() {
+      return null;
+    }
 
     @NotNull
     @Override
