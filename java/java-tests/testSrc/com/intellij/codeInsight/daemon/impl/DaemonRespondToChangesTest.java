@@ -76,6 +76,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
@@ -115,6 +116,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -2318,6 +2320,42 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertSame(dumbFac, f);
     TextEditorHighlightingPassFactory f2 = assertOneElement(applied);
     assertSame(dumbFac, f2);
+  }
+
+  public void testIntentionActionIsAvailableMustBeQueriedOnlyOncePerHighlightingSession() {
+    Map<ProgressIndicator, Throwable> isAvailableCalled = new ConcurrentHashMap<>();
+    IntentionAction action = new AbstractIntentionAction() {
+      @Nls(capitalization = Nls.Capitalization.Sentence)
+      @NotNull
+      @Override
+      public String getText() {
+        return "My";
+      }
+
+      @Override
+      public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+        DaemonProgressIndicator indicator = (DaemonProgressIndicator)ProgressManager.getGlobalProgressIndicator();
+        Throwable alreadyCalled = isAvailableCalled.put(indicator, new Throwable());
+        if (alreadyCalled != null) {
+          throw new IllegalStateException(" .isAvailable() already called in:\n---------------\n"+ExceptionUtil.getThrowableText(alreadyCalled)+"\n-----------");
+        }
+        return true;
+      }
+
+      @Override
+      public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+      }
+    };
+    IntentionManager.getInstance().addAction(action);
+    Disposer.register(getTestRootDisposable(), () -> IntentionManager.getInstance().unregisterIntention(action));
+
+    @Language("JAVA")
+    String text = "class X { }";
+    configureByText(JavaFileType.INSTANCE, text);
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> myEditor.getDocument().setText(text));
+    doHighlighting();
+    myDaemonCodeAnalyzer.restart();
+    doHighlighting();
   }
 }
 
