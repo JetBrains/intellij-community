@@ -16,7 +16,6 @@ import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.io.BaseOutputReader;
 import org.jetbrains.annotations.NotNull;
 
@@ -46,7 +45,7 @@ public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigura
   @Override
   protected OSProcessHandler startProcess() throws ExecutionException {
     //todo[remoteServers]: pull up and support all implementations of JavaCommandLineState
-    IR.RemoteRunner runner = getRemoteRunner(myConfiguration.getProject(), myConfiguration);
+    IR.RemoteRunner runner = getRemoteRunner(myConfiguration.getProject(), getEnvironment(), myConfiguration);
     IR.RemoteEnvironmentRequest request = runner.createRequest();
     IR.NewCommandLine newCommandLine = createNewCommandLine(request);
 
@@ -69,8 +68,10 @@ public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigura
   }
 
   @NotNull
-  private static IR.RemoteRunner getRemoteRunner(@NotNull Project project, @NotNull RunProfile runConfiguration) throws ExecutionException {
-    ExecutionTarget target = ObjectUtils.doIfCast(runConfiguration, CommandLineState.class, c -> c.getExecutionTarget());
+  private static IR.RemoteRunner getRemoteRunner(@NotNull Project project,
+                                                 @NotNull ExecutionEnvironment environment,
+                                                 @NotNull RunProfile runConfiguration) throws ExecutionException {
+    ExecutionTarget target = environment.getExecutionTarget();
     if (target instanceof IRExecutionTarget) {
       return ((IRExecutionTarget)target).createRemoteRunner();
     }
