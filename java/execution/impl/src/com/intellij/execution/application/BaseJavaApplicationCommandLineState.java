@@ -2,6 +2,7 @@
 package com.intellij.execution.application;
 
 import com.intellij.execution.*;
+import com.intellij.execution.configuration.RemoteTargetAwareRunProfile;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.process.KillableColoredProcessHandler;
 import com.intellij.execution.process.OSProcessHandler;
@@ -13,7 +14,9 @@ import com.intellij.execution.remote.target.IRExecutionTarget;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.io.BaseOutputReader;
 import org.jetbrains.annotations.NotNull;
 
@@ -43,7 +46,7 @@ public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigura
   @Override
   protected OSProcessHandler startProcess() throws ExecutionException {
     //todo[remoteServers]: pull up and support all implementations of JavaCommandLineState
-    IR.RemoteRunner runner = getRemoteRunner(myConfiguration);
+    IR.RemoteRunner runner = getRemoteRunner(myConfiguration.getProject(), myConfiguration);
     IR.RemoteEnvironmentRequest request = runner.createRequest();
     IR.NewCommandLine newCommandLine = createNewCommandLine(request);
 
@@ -66,8 +69,8 @@ public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigura
   }
 
   @NotNull
-  private static IR.RemoteRunner getRemoteRunner(RunProfile runConfiguration) throws ExecutionException {
-    ExecutionTarget target = runConfiguration instanceof CommandLineState ? ((CommandLineState)runConfiguration).getExecutionTarget() : null;
+  private static IR.RemoteRunner getRemoteRunner(@NotNull Project project, @NotNull RunProfile runConfiguration) throws ExecutionException {
+    ExecutionTarget target = ObjectUtils.doIfCast(runConfiguration, CommandLineState.class, c -> c.getExecutionTarget());
     if (target instanceof IRExecutionTarget) {
       return ((IRExecutionTarget)target).getRemoteRunner();
     }
@@ -78,7 +81,7 @@ public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigura
         if (config == null) {
           throw new ExecutionException("Cannot find target " + targetName);
         }
-        //todo[remoteServers]: create runner from target configuration
+        return config.createRunner(project);
       }
     }
     return new IR.LocalRunner();

@@ -10,6 +10,7 @@ abstract class RemoteTargetType<C : RemoteTargetConfiguration>(id: String) : Bas
 
   abstract fun createExecutionTarget(project: Project, config: C): ExecutionTarget?
 
+  abstract fun createRunner(project: Project, config: C): IR.RemoteRunner
 
   companion object {
     @JvmStatic
