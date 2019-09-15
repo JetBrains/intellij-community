@@ -1,12 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.java.codeInsight.daemon.impl;
+package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.application.UtilKt;
 import com.intellij.application.options.editor.CodeFoldingConfigurable;
 import com.intellij.codeHighlighting.*;
 import com.intellij.codeInsight.EditorInfo;
 import com.intellij.codeInsight.daemon.*;
-import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase;
 import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.codeInsight.folding.JavaCodeFoldingSettings;
@@ -32,8 +31,8 @@ import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.java.codeInsight.daemon.impl.DaemonRespondToChangesPerformanceTest;
 import com.intellij.javaee.ExternalResourceManagerExImpl;
-import com.intellij.lang.CompositeLanguage;
 import com.intellij.lang.ExternalLanguageAnnotators;
 import com.intellij.lang.LanguageAnnotators;
 import com.intellij.lang.LanguageFilter;
@@ -119,12 +118,6 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static com.intellij.java.codeInsight.daemon.impl.DaemonRespondToChangesPerformanceTest.dumpThreadsToConsole;
-
-/**
- * @author cdr
- */
-@SuppressWarnings("StringConcatenationInsideStringBufferAppend")
 @SkipSlowTestLocally
 public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/typing/";
@@ -632,9 +625,9 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
 
   public void testChangeXmlIncludeLeadsToRehighlight() {
-    LanguageFilter[] extensions = ((CompositeLanguage)XMLLanguage.INSTANCE).getLanguageExtensions();
+    LanguageFilter[] extensions = XMLLanguage.INSTANCE.getLanguageExtensions();
     for (LanguageFilter extension : extensions) {
-      ((CompositeLanguage)XMLLanguage.INSTANCE).unregisterLanguageExtension(extension);
+      XMLLanguage.INSTANCE.unregisterLanguageExtension(extension);
     }
 
     final String location = getTestName(false) + ".xsd";
@@ -884,22 +877,19 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertSize(1, highlightErrors());
   }
 
+  @SuppressWarnings("StringConcatenationInsideStringBufferAppend")
   public void testLineMarkersClearWhenTypingAtTheEndOfPsiComment() {
     configureByText(JavaFileType.INSTANCE, "class S {\n//ddd<caret>\n}");
     StringBuffer log = new StringBuffer();
-    final LineMarkerProvider provider = new LineMarkerProvider() {
-      @Nullable
-      @Override
-      public LineMarkerInfo getLineMarkerInfo(@NotNull PsiElement element) {
-        String msg = "provider.getLineMarkerInfo(" + element + ") called\n";
-        LineMarkerInfo<PsiComment> info = null;
-        if (element instanceof PsiComment) {
-          info = new LineMarkerInfo<>((PsiComment)element, element.getTextRange(), null, Pass.LINE_MARKERS, null, null, GutterIconRenderer.Alignment.LEFT);
-          msg += " provider info: "+info + "\n";
-        }
-        log.append(msg);
-        return info;
+    final LineMarkerProvider provider = element -> {
+      String msg = "provider.getLineMarkerInfo(" + element + ") called\n";
+      LineMarkerInfo<PsiComment> info = null;
+      if (element instanceof PsiComment) {
+        info = new LineMarkerInfo<>((PsiComment)element, element.getTextRange(), null, Pass.LINE_MARKERS, null, null, GutterIconRenderer.Alignment.LEFT);
+        msg += " provider info: "+info + "\n";
       }
+      log.append(msg);
+      return info;
     };
     LineMarkerProviders.getInstance().addExplicitExtension(JavaLanguage.INSTANCE, provider, getTestRootDisposable());
     myDaemonCodeAnalyzer.restart();
@@ -2058,7 +2048,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     }
     while (daemonIsWorkingOrPending()) {
       if (System.currentTimeMillis() > deadline) {
-        dumpThreadsToConsole();
+        DaemonRespondToChangesPerformanceTest.dumpThreadsToConsole();
         fail("Too long waiting for daemon to finish");
       }
       PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();

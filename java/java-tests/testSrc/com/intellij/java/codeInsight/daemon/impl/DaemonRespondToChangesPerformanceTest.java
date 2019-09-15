@@ -188,7 +188,7 @@ public class DaemonRespondToChangesPerformanceTest extends DaemonAnalyzerTestCas
     assertTrue(ave < 300);
   }
 
-  static void dumpThreadsToConsole() {
+  public static void dumpThreadsToConsole() {
     System.err.println("----all threads---");
     for (Thread thread : Thread.getAllStackTraces().keySet()) {
 
