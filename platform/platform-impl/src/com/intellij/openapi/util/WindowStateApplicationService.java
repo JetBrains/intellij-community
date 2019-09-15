@@ -20,13 +20,13 @@ final class WindowStateApplicationService extends WindowStateServiceImpl {
   @Override
   Point getDefaultLocationFor(@NotNull String key) {
     //  backward compatibility when this service is used instead of DimensionService
-    return DimensionService.getInstance().getLocation(key);
+    return null;//DimensionService.getInstance().getLocation(key);
   }
 
   @Override
   Dimension getDefaultSizeFor(@NotNull String key) {
     //  backward compatibility when this service is used instead of DimensionService
-    return DimensionService.getInstance().getSize(key);
+    return null;//DimensionService.getInstance().getSize(key);
   }
 
   @Override

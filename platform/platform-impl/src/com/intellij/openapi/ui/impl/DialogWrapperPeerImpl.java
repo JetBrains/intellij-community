@@ -663,9 +663,9 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
         if (myDimensionServiceKey != null) {
           final Project projectGuess = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(this));
           location = getWindowStateService(projectGuess).getLocation(myDimensionServiceKey);
-          if (location == null) location = DimensionService.getInstance().getLocation(myDimensionServiceKey, projectGuess);
+          //if (location == null) location = DimensionService.getInstance().getLocation(myDimensionServiceKey, projectGuess);
           Dimension size = getWindowStateService(projectGuess).getSize(myDimensionServiceKey);
-          if (size == null) size = DimensionService.getInstance().getSize(myDimensionServiceKey, projectGuess);
+          //if (size == null) size = DimensionService.getInstance().getSize(myDimensionServiceKey, projectGuess);
           if (size != null) {
             myInitialSize = new Dimension(size);
             _setSizeForLocation(myInitialSize.width, myInitialSize.height, location);

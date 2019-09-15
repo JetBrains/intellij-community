@@ -2014,14 +2014,14 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
   private Point getStoredLocation() {
     if (myDimensionServiceKey == null) return null;
     Point location = getWindowStateService(myProject).getLocation(myDimensionServiceKey);
-    return location != null ? location : DimensionService.getInstance().getLocation(myDimensionServiceKey, myProject);
+    return location/* != null ? location : DimensionService.getInstance().getLocation(myDimensionServiceKey, myProject)*/;
   }
 
   @Nullable
   private Dimension getStoredSize() {
     if (myDimensionServiceKey == null) return null;
     Dimension size = getWindowStateService(myProject).getSize(myDimensionServiceKey);
-    return size != null ? size : DimensionService.getInstance().getSize(myDimensionServiceKey, myProject);
+    return size/* != null ? size : DimensionService.getInstance().getSize(myDimensionServiceKey, myProject)*/;
   }
 
   @NotNull
