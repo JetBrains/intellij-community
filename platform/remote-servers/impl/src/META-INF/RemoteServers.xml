@@ -42,12 +42,12 @@
     <projectService serviceImplementation="com.intellij.remoteServer.impl.runtime.ui.RemoteServersDeploymentManager"/>
     <serviceViewContributor implementation="com.intellij.remoteServer.impl.runtime.ui.DefaultRemoteServersServiceViewContributor"/>
 
-    <!--todo[remoteServers]: move to platform-lang-->
+    <!--todo[remoteServers]: move to lang-impl-->
     <projectConfigurable groupId="build" instance="com.intellij.execution.remote.RemoteTargetsListConfigurable"/>
     <executionTargetProvider implementation="com.intellij.execution.remote.RemoteRunnersExecutionTargetProvider"/>
     <applicationService serviceImplementation="com.intellij.execution.remote.RemoteTargetsManager"/>
+    <ir.languageRuntime implementation="com.intellij.execution.remote.SampleLanguageRuntimeType" />
 
-    <ir.languageRuntime implementation="com.intellij.remoteServer.ir.runtime.sample.SampleLanguageRuntimeType" />
   </extensions>
 
   <actions>

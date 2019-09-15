@@ -1,9 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.remoteServer.ir.runtime.sample
+package com.intellij.execution.remote
 
 import com.intellij.execution.RunnerAndConfigurationSettings
-import com.intellij.execution.remote.LanguageRuntimeType
-import com.intellij.execution.remote.getRuntimeType
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.options.BoundConfigurable
@@ -12,7 +10,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.layout.*
 
-class SampleLanguageRuntimeType : LanguageRuntimeType<SampleLanguageRuntimeConfiguration>(TYPE_ID) {
+class SampleLanguageRuntimeType : LanguageRuntimeType<SampleLanguageRuntimeConfiguration>(
+  TYPE_ID) {
   override val icon = AllIcons.FileTypes.Java
 
   override val displayName = "Java"
