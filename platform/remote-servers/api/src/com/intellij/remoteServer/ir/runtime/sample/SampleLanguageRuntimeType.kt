@@ -2,8 +2,8 @@
 package com.intellij.remoteServer.ir.runtime.sample
 
 import com.intellij.execution.RunnerAndConfigurationSettings
-import com.intellij.execution.remote.*
-import com.intellij.execution.remote.getTargetType
+import com.intellij.execution.remote.LanguageRuntimeType
+import com.intellij.execution.remote.getRuntimeType
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.options.BoundConfigurable
@@ -34,7 +34,7 @@ class SampleLanguageRuntimeType : LanguageRuntimeType<SampleLanguageRuntimeConfi
   }
 
   private class SampleLanguageRuntimeUI(val config: SampleLanguageRuntimeConfiguration)
-    : BoundConfigurable(config.displayName, config.getTypeImpl().helpTopic) {
+    : BoundConfigurable(config.displayName, config.getRuntimeType().helpTopic) {
 
     override fun createPanel(): DialogPanel {
       return panel {

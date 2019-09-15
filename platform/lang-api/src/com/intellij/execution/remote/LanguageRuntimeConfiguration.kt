@@ -7,4 +7,4 @@ abstract class LanguageRuntimeConfiguration(typeId: String)
   : BaseExtendableConfiguration(typeId, LanguageRuntimeType.EXTENSION_NAME) {
 }
 
-fun <C : LanguageRuntimeConfiguration, T : LanguageRuntimeType<C>> C.getTargetType(): T = this.getTypeImpl()
+fun <C : LanguageRuntimeConfiguration, T : LanguageRuntimeType<C>> C.getRuntimeType(): T = this.getTypeImpl()

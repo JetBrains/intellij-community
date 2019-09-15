@@ -20,5 +20,3 @@ abstract class LanguageRuntimeType<C : LanguageRuntimeConfiguration>(id: String)
     fun allTypes() = EXTENSION_NAME.extensionList.toArray(emptyArray<LanguageRuntimeType<*>>())
   }
 }
-
-fun <C : LanguageRuntimeConfiguration, T : LanguageRuntimeType<C>> C.getRuntimeType(): T = this.getTypeImpl()
