@@ -20,10 +20,19 @@ open class BaseExtendableList<C, T>(private val extPoint: ExtensionPointName<T>)
     unresolvedInstances.clear()
   }
 
-  fun findConfig(name: String): C? {
+  fun findByName(name: String): C? {
     for (resolvedInstance in resolvedInstances) {
       if (resolvedInstance.displayName == name) {
         return resolvedInstance
+      }
+    }
+    return null
+  }
+
+  fun <T> findByType(type: Class<T>): T? where T : C {
+    for (resolvedInstance in resolvedInstances) {
+      if (resolvedInstance.javaClass == type) {
+        return type.cast(resolvedInstance)
       }
     }
     return null
@@ -35,7 +44,7 @@ open class BaseExtendableList<C, T>(private val extPoint: ExtensionPointName<T>)
 
   fun removeConfig(config: C) = resolvedInstances.remove(config)
 
-  override fun getState(): ListState = ListState().also {
+  override fun getState(): ListState = ListState().also { it ->
     it.configs.addAll(resolvedInstances.map { toBaseState(it) })
     it.configs.addAll(unresolvedInstances)
   }

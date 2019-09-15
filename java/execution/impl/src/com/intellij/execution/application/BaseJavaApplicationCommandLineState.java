@@ -47,7 +47,7 @@ public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigura
     //todo[remoteServers]: pull up and support all implementations of JavaCommandLineState
     IR.RemoteRunner runner = getRemoteRunner(myConfiguration.getProject(), getEnvironment(), myConfiguration);
     IR.RemoteEnvironmentRequest request = runner.createRequest();
-    IR.NewCommandLine newCommandLine = createNewCommandLine(request);
+    IR.NewCommandLine newCommandLine = createNewCommandLine(request, runner.getTargetConfiguration());
 
     File inputFile = InputRedirectAware.getInputFile(myConfiguration);
     if (inputFile != null) {
@@ -78,7 +78,7 @@ public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigura
     if (runConfiguration instanceof RemoteTargetAwareRunProfile) {
       String targetName = ((RemoteTargetAwareRunProfile)runConfiguration).getDefaultTargetName();
       if (targetName != null) {
-        RemoteTargetConfiguration config = RemoteTargetsManager.getInstance().getTargets().findConfig(targetName);
+        RemoteTargetConfiguration config = RemoteTargetsManager.getInstance().getTargets().findByName(targetName);
         if (config == null) {
           throw new ExecutionException("Cannot find target " + targetName);
         }

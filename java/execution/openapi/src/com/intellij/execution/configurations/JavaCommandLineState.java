@@ -4,11 +4,13 @@ package com.intellij.execution.configurations;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.remote.IR;
+import com.intellij.execution.remote.RemoteTargetConfiguration;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class JavaCommandLineState extends CommandLineState implements JavaCommandLine {
   private JavaParameters myParams;
@@ -41,20 +43,22 @@ public abstract class JavaCommandLineState extends CommandLineState implements J
 
   protected abstract JavaParameters createJavaParameters() throws ExecutionException;
 
-  protected IR.NewCommandLine createNewCommandLine(@NotNull IR.RemoteEnvironmentRequest request) throws ExecutionException {
+  protected IR.NewCommandLine createNewCommandLine(@NotNull IR.RemoteEnvironmentRequest request,
+                                                   @Nullable RemoteTargetConfiguration configuration) throws ExecutionException {
     SimpleJavaParameters javaParameters = getJavaParameters();
     if (!javaParameters.isDynamicClasspath()) {
       javaParameters.setUseDynamicClasspath(getEnvironment().getProject());
     }
-    return javaParameters.toCommandLine(request);
+    return javaParameters.toCommandLine(request, configuration);
   }
 
   protected GeneralCommandLine createCommandLine() throws ExecutionException {
     IR.LocalRunner runner = new IR.LocalRunner();
     boolean redirectErrorStream = Registry.is("run.processes.with.redirectedErrorStream", false);
     IR.RemoteEnvironmentRequest request = runner.createRequest();
+    IR.NewCommandLine newCommandLine = createNewCommandLine(request, runner.getTargetConfiguration());
     return runner.prepareRemoteEnvironment(request, new EmptyProgressIndicator())
-      .createGeneralCommandLine(createNewCommandLine(request))
+      .createGeneralCommandLine(newCommandLine)
       .withRedirectErrorStream(redirectErrorStream);
   }
 

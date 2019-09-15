@@ -4,11 +4,14 @@ package com.intellij.openapi.projectRoots;
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.CommandLineWrapperUtil;
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.Platform;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.GeneralCommandLine.ParentEnvironmentType;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.execution.configurations.SimpleJavaParameters;
 import com.intellij.execution.remote.IR;
+import com.intellij.execution.remote.RemoteTargetConfiguration;
+import com.intellij.execution.remote.java.JavaLanguageRuntimeConfiguration;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
@@ -143,10 +146,11 @@ public class JdkUtil {
   @ApiStatus.Internal
   @NotNull
   public static IR.NewCommandLine setupJVMCommandLine(@NotNull SimpleJavaParameters javaParameters,
-                                                      @NotNull IR.RemoteEnvironmentRequest request)
+                                                      @NotNull IR.RemoteEnvironmentRequest request,
+                                                      @Nullable RemoteTargetConfiguration targetConfiguration)
     throws CantRunException {
     IR.NewCommandLine commandLine = new IR.NewCommandLine();
-    if (request instanceof IR.LocalRunner.LocalEnvironmentRequest) {
+    if (request instanceof IR.LocalRunner.LocalEnvironmentRequest || targetConfiguration == null) {
       Sdk jdk = javaParameters.getJdk();
       if (jdk == null) throw new CantRunException(ExecutionBundle.message("run.configuration.error.no.jdk.specified"));
       SdkTypeId type = jdk.getSdkType();
@@ -156,8 +160,12 @@ public class JdkUtil {
       commandLine.setExePath(exePath);
     }
     else {
-      //todo[remoteServers]: get from server settings
-      commandLine.setExePath("java");
+      JavaLanguageRuntimeConfiguration javaConfiguration = targetConfiguration.getRuntimes().findByType(JavaLanguageRuntimeConfiguration.class);
+      if (javaConfiguration == null) {
+        throw new CantRunException("Cannot find Java configuration in " + targetConfiguration.getDisplayName() + " target");
+      }
+      String java = request.getRemotePlatform().getPlatform() == Platform.WINDOWS ? "java.exe" : "java";
+      commandLine.setExePath(javaConfiguration.getHomePath() + "/bin/" + java);
     }
     setupCommandLine(commandLine, request, javaParameters);
     return commandLine;
@@ -168,7 +176,7 @@ public class JdkUtil {
     IR.LocalRunner runner = new IR.LocalRunner();
     IR.RemoteEnvironmentRequest request = runner.createRequest();
     return runner.prepareRemoteEnvironment(request, new EmptyProgressIndicator())
-      .createGeneralCommandLine(setupJVMCommandLine(javaParameters, request));
+      .createGeneralCommandLine(setupJVMCommandLine(javaParameters, request, null));
   }
 
   private static void setupCommandLine(@NotNull IR.NewCommandLine commandLine,
