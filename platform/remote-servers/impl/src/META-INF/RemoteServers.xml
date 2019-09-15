@@ -46,8 +46,9 @@
     <projectConfigurable groupId="build" instance="com.intellij.execution.remote.RemoteTargetsListConfigurable"/>
     <executionTargetProvider implementation="com.intellij.execution.remote.RemoteRunnersExecutionTargetProvider"/>
     <applicationService serviceImplementation="com.intellij.execution.remote.RemoteTargetsManager"/>
-    <ir.languageRuntime implementation="com.intellij.execution.remote.JavaLanguageRuntimeType" />
-
+    <ir.languageRuntime implementation="com.intellij.execution.remote.java.JavaLanguageRuntimeType" />
+    <applicationService serviceInterface="com.intellij.execution.remote.java.JavaLanguageRuntimeUIFactory"
+                        serviceImplementation="com.intellij.execution.remote.java.JavaLanguageRuntimeUIFactoryImpl"/>
   </extensions>
 
   <actions>

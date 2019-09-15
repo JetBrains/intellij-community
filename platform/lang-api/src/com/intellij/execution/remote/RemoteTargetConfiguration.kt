@@ -4,8 +4,7 @@ package com.intellij.execution.remote
 import com.intellij.execution.remote.BaseExtendableConfiguration.Companion.getTypeImpl
 import com.intellij.openapi.project.Project
 
-abstract class RemoteTargetConfiguration(typeId: String)
-  : BaseExtendableConfiguration(typeId, RemoteTargetType.EXTENSION_NAME) {
+abstract class RemoteTargetConfiguration(typeId: String) : BaseExtendableConfiguration(typeId, RemoteTargetType.EXTENSION_NAME) {
 
   val runtimes = BaseExtendableList(LanguageRuntimeType.EXTENSION_NAME)
 
