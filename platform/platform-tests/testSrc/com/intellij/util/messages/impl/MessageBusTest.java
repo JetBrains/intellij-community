@@ -20,6 +20,7 @@ import com.intellij.util.messages.MessageBusFactory;
 import com.intellij.util.messages.Topic;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
@@ -122,6 +123,24 @@ public class MessageBusTest extends LightPlatformTestCase {
 
     myBus.syncPublisher(TOPIC1).t11();
     assertEvents("c1:t11", "c2:t11");
+  }
+
+  public void testSameTopicInOneConnection() {
+    MessageBusConnection connection = myBus.connect();
+    connection.subscribe(TOPIC1, new T1Handler("c1"));
+    connection.subscribe(TOPIC1, new T1Handler("c2"));
+
+    myBus.syncPublisher(TOPIC1).t11();
+    assertEvents("c1:t11", "c2:t11");
+  }
+
+  public void testSameTopicInOneConnectionForList() {
+    MessageBusConnectionImpl connection = myBus.connect();
+    connection.subscribe(TOPIC1, new T1Handler("c1"));
+    connection.subscribe(TOPIC1, Arrays.asList(new T1Handler("c2"), new T1Handler("c3")));
+
+    myBus.syncPublisher(TOPIC1).t11();
+    assertEvents("c1:t11", "c2:t11", "c3:t11");
   }
 
   public void testTwoMessagesWithSingleSubscription() {
