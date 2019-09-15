@@ -25,7 +25,8 @@ class RemoteTargetsManager : PersistentStateComponent<RemoteTargetsManager.Targe
 
   companion object {
     @JvmStatic
-    val instance: RemoteTargetsManager = ServiceManager.getService(RemoteTargetsManager::class.java)
+    val instance: RemoteTargetsManager = ServiceManager.getService(
+      RemoteTargetsManager::class.java)
   }
 
   internal class TargetsList : BaseExtendableList<RemoteTargetConfiguration, RemoteTargetType<*>>(

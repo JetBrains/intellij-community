@@ -11,8 +11,10 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.ui.HyperlinkLabel
+import com.intellij.ui.TitledSeparator
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.panels.VerticalLayout
+import com.intellij.ui.layout.*
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -62,7 +64,6 @@ internal class RemoteTargetDetailsConfigurable(private val project: Project, pri
   }
 
   private fun createRuntimePanel(runtime: LanguageRuntimeConfiguration): JPanel {
-    /*
     return panel {
       row {
         val separator = TitledSeparator(runtime.getRuntimeType().configurableDescription)
@@ -78,8 +79,6 @@ internal class RemoteTargetDetailsConfigurable(private val project: Project, pri
         languageUI(CCFlags.growX, CCFlags.pushX)
       }
     }
-    */
-    throw IllegalStateException("uncomment the code above")
   }
 
   private fun createAddRuntimeHyperlink(): HyperlinkLabel {

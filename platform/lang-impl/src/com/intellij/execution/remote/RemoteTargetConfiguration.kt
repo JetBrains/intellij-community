@@ -2,6 +2,7 @@
 package com.intellij.execution.remote
 
 import com.intellij.execution.remote.BaseExtendableConfiguration.Companion.getTypeImpl
+import com.intellij.openapi.project.Project
 
 abstract class RemoteTargetConfiguration(typeId: String)
   : BaseExtendableConfiguration(typeId, RemoteTargetType.EXTENSION_NAME) {
@@ -11,6 +12,8 @@ abstract class RemoteTargetConfiguration(typeId: String)
   fun addLanguageRuntime(runtime: LanguageRuntimeConfiguration) = runtimes.addConfig(runtime)
 
   fun removeLanguageRuntime(runtime: LanguageRuntimeConfiguration) = runtimes.removeConfig(runtime)
+
+  fun createRunner(project: Project): IR.RemoteRunner = getTargetType().createRunner(project, this)
 }
 
 fun <C : RemoteTargetConfiguration, T : RemoteTargetType<C>> C.getTargetType(): T = this.getTypeImpl()
