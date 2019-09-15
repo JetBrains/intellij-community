@@ -62,10 +62,11 @@ class ChangesViewCommitWorkflowHandler(
     return commitOptions
   }
 
-  private fun isDefaultCommitEnabled() = workflow.vcses.isNotEmpty() && !isCommitEmpty()
+  private fun isDefaultCommitEnabled() = workflow.vcses.isNotEmpty() && !workflow.isExecuting && !isCommitEmpty()
 
   override fun vcsesChanged() {
-    updateDefaultCommitAction()
+    ui.defaultCommitActionName = getDefaultCommitActionName(workflow.vcses)
+    updateDefaultCommitActionEnabled()
 
     initCommitHandlers()
     workflow.initCommitExecutors(getCommitExecutors(project, workflow.vcses))
@@ -73,8 +74,14 @@ class ChangesViewCommitWorkflowHandler(
     ui.setCustomCommitActions(createCommitExecutorActions())
   }
 
-  private fun updateDefaultCommitAction() {
-    ui.defaultCommitActionName = getDefaultCommitActionName(workflow.vcses)
+  override fun executionStarted() = updateDefaultCommitActionEnabled()
+  override fun executionEnded() {
+    // Local Changes tree is not yet updated here. So calling `updateDefaultCommitActionEnabled()` leads to button blinking.
+    // Next `inclusionChanged()` (likely because of `synchronizeInclusion()` after committed changes refresh) will set correct button
+    // state without blinking.
+  }
+
+  private fun updateDefaultCommitActionEnabled() {
     ui.isDefaultCommitActionEnabled = isDefaultCommitEnabled()
   }
 
@@ -145,7 +152,7 @@ class ChangesViewCommitWorkflowHandler(
       knownActiveChanges = activeChanges
     }
 
-    ui.isDefaultCommitActionEnabled = isDefaultCommitEnabled()
+    updateDefaultCommitActionEnabled()
     super.inclusionChanged()
   }
 

@@ -86,48 +86,54 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
 
   override fun inclusionChanged() = commitHandlers.forEachLoggingErrors(LOG) { it.includedChangesChanged() }
 
-  override fun executorCalled(executor: CommitExecutor?) = executor?.let { execute(it) } ?: executeDefault(null)
-
   override fun getExecutor(executorId: String): CommitExecutor? = workflow.commitExecutors.find { it.id == executorId }
   override fun isExecutorEnabled(executor: CommitExecutor): Boolean =
     executor in workflow.commitExecutors && (!isCommitEmpty() || (executor is CommitExecutorBase && !executor.areChangesRequired()))
-  override fun execute(executor: CommitExecutor) {
-    val session = executor.createCommitSession(commitContext)
 
-    if (session === CommitSession.VCS_COMMIT) {
-      executeDefault(executor)
+  override fun execute(executor: CommitExecutor) = executorCalled(executor)
+  override fun executorCalled(executor: CommitExecutor?) =
+    workflow.startExecution {
+      val session = executor?.createCommitSession(commitContext)
+
+      if (session == null || session === CommitSession.VCS_COMMIT) executeDefault(executor)
+      else executeCustom(executor, session)
     }
-    else {
-      executeCustom(executor, session)
-    }
-  }
+
+  override fun executionStarted() = Unit
+  override fun executionEnded() = Unit
 
   override fun beforeCommitChecksStarted() = ui.startBeforeCommitChecks()
   override fun beforeCommitChecksEnded(isDefaultCommit: Boolean, result: CheckinHandler.ReturnResult) = ui.endBeforeCommitChecks(result)
 
-  private fun executeDefault(executor: CommitExecutor?) {
-    if (!addUnversionedFiles()) return
-    if (!checkEmptyCommitMessage()) return
-    if (!saveCommitOptions()) return
-    saveCommitMessage(true)
-
-    refreshChanges {
-      updateWorkflow()
-      doExecuteDefault(executor)
+  private fun executeDefault(executor: CommitExecutor?): Boolean =
+    addUnversionedFiles() &&
+    checkEmptyCommitMessage() &&
+    saveCommitOptions() &&
+    run {
+      saveCommitMessage(true)
+      refreshChanges {
+        workflow.continueExecution {
+          updateWorkflow()
+          doExecuteDefault(executor)
+        }
+      }
+      true
     }
-  }
 
-  private fun executeCustom(executor: CommitExecutor, session: CommitSession) {
-    if (!canExecute(executor)) return
-    if (!checkEmptyCommitMessage()) return
-    if (!saveCommitOptions()) return
-    saveCommitMessage(true)
-
-    refreshChanges {
-      updateWorkflow()
-      doExecuteCustom(executor, session)
+  private fun executeCustom(executor: CommitExecutor, session: CommitSession): Boolean =
+    canExecute(executor) &&
+    checkEmptyCommitMessage() &&
+    saveCommitOptions() &&
+    run {
+      saveCommitMessage(true)
+      refreshChanges {
+        workflow.continueExecution {
+          updateWorkflow()
+          doExecuteCustom(executor, session)
+        }
+      }
+      true
     }
-  }
 
   protected open fun updateWorkflow() = Unit
 
@@ -136,15 +142,16 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
   protected fun addUnversionedFiles(changeList: LocalChangeList): Boolean =
     workflow.addUnversionedFiles(changeList, getIncludedUnversionedFiles()) { changes -> ui.includeIntoCommit(changes) }
 
-  private fun doExecuteDefault(executor: CommitExecutor?) = try {
+  private fun doExecuteDefault(executor: CommitExecutor?): Boolean = try {
     workflow.executeDefault(executor)
   }
   catch (e: InputException) { // TODO Looks like this catch is unnecessary - check
     e.show()
+    false
   }
 
   private fun canExecute(executor: CommitExecutor): Boolean = workflow.canExecute(executor, getIncludedChanges())
-  private fun doExecuteCustom(executor: CommitExecutor, session: CommitSession) = workflow.executeCustom(executor, session)
+  private fun doExecuteCustom(executor: CommitExecutor, session: CommitSession): Boolean = workflow.executeCustom(executor, session)
 
   private fun checkEmptyCommitMessage(): Boolean =
     getCommitMessage().isNotEmpty() || !vcsConfiguration.FORCE_NON_EMPTY_COMMENT || ui.confirmCommitWithEmptyMessage()
