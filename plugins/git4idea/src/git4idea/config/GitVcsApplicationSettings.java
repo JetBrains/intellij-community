@@ -11,10 +11,10 @@ import org.jetbrains.annotations.Nullable;
  * The application wide settings for the git
  */
 @State(name = "Git.Application.Settings", storages = @Storage(value = "git.xml", roamingType = RoamingType.PER_OS))
-public class GitVcsApplicationSettings implements PersistentStateComponent<GitVcsApplicationSettings.State> {
+public final class GitVcsApplicationSettings implements PersistentStateComponent<GitVcsApplicationSettings.State> {
   private State myState = new State();
 
-  public static class State {
+  public static final class State {
     public String myPathToGit = null;
 
     public boolean ANNOTATE_IGNORE_SPACES = true;
