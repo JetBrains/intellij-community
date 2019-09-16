@@ -77,7 +77,7 @@ fun newMetric(eventId: String, value: Enum<*>?, data: FeatureUsageData?): Metric
  *
  * "allowed.connections" -> "value":3
  */
-@StatisticsEventProvider(eventIdIndex = 0, additionalDataFields = ["value"])
+@StatisticsEventProvider(eventIdIndex = 0, additionalDataFields = ["value:regexp#integer"])
 fun newMetric(eventId: String, value: Int): MetricEvent {
   return newMetric(eventId, value, null)
 }
@@ -87,7 +87,7 @@ fun newMetric(eventId: String, value: Int): MetricEvent {
  *
  * "allowed.connections" -> "value":3
  */
-@StatisticsEventProvider(eventIdIndex = 0, dataIndex = 2, additionalDataFields = ["value"])
+@StatisticsEventProvider(eventIdIndex = 0, dataIndex = 2, additionalDataFields = ["value:regexp#integer"])
 fun newMetric(eventId: String, value: Int, data: FeatureUsageData?): MetricEvent {
   val newData = data?.copy() ?: FeatureUsageData()
   return MetricEvent(eventId, newData.addValue(value))
@@ -98,7 +98,7 @@ fun newMetric(eventId: String, value: Int, data: FeatureUsageData?): MetricEvent
  *
  * "line.spacing" -> "value":1.2
  */
-@StatisticsEventProvider(eventIdIndex = 0, additionalDataFields = ["value"])
+@StatisticsEventProvider(eventIdIndex = 0, additionalDataFields = ["value:regexp#float"])
 fun newMetric(eventId: String, value: Float): MetricEvent {
   return newMetric(eventId, value, null)
 }
@@ -108,7 +108,7 @@ fun newMetric(eventId: String, value: Float): MetricEvent {
  *
  * "line.spacing" -> "value":1.2
  */
-@StatisticsEventProvider(eventIdIndex = 0, dataIndex = 2, additionalDataFields = ["value"])
+@StatisticsEventProvider(eventIdIndex = 0, dataIndex = 2, additionalDataFields = ["value:regexp#float"])
 fun newMetric(eventId: String, value: Float, data: FeatureUsageData?): MetricEvent {
   val newData = data?.copy() ?: FeatureUsageData()
   return MetricEvent(eventId, newData.addValue(value))
@@ -119,7 +119,7 @@ fun newMetric(eventId: String, value: Float, data: FeatureUsageData?): MetricEve
  *
  * "font.ligatures" -> "enabled":true
  */
-@StatisticsEventProvider(eventIdIndex = 0, additionalDataFields = ["enabled"])
+@StatisticsEventProvider(eventIdIndex = 0, additionalDataFields = ["enabled:enum#boolean"])
 fun newBooleanMetric(eventId: String, enabled: Boolean): MetricEvent {
   return newBooleanMetric(eventId, enabled, null)
 }
@@ -129,7 +129,7 @@ fun newBooleanMetric(eventId: String, enabled: Boolean): MetricEvent {
  *
  * "font.ligatures" -> "enabled":true
  */
-@StatisticsEventProvider(eventIdIndex = 0, dataIndex = 2, additionalDataFields = ["enabled"])
+@StatisticsEventProvider(eventIdIndex = 0, dataIndex = 2, additionalDataFields = ["enabled:enum#boolean"])
 fun newBooleanMetric(eventId: String, enabled: Boolean, data: FeatureUsageData?): MetricEvent {
   val newData = data?.copy() ?: FeatureUsageData()
   return MetricEvent(eventId, newData.addEnabled(enabled))
@@ -140,7 +140,7 @@ fun newBooleanMetric(eventId: String, enabled: Boolean, data: FeatureUsageData?)
  *
  * "tool.is.under.project.root" -> "value":true
  */
-@StatisticsEventProvider(eventIdIndex = 0, additionalDataFields = ["value"])
+@StatisticsEventProvider(eventIdIndex = 0, additionalDataFields = ["value:enum#boolean"])
 fun newMetric(eventId: String, value: Boolean): MetricEvent {
   return newMetric(eventId, value, null)
 }
@@ -150,7 +150,7 @@ fun newMetric(eventId: String, value: Boolean): MetricEvent {
  *
  * "tool.is.under.project.root" -> "value":true
  */
-@StatisticsEventProvider(eventIdIndex = 0, dataIndex = 2, additionalDataFields = ["value"])
+@StatisticsEventProvider(eventIdIndex = 0, dataIndex = 2, additionalDataFields = ["value:enum#boolean"])
 fun newMetric(eventId: String, value: Boolean, data: FeatureUsageData? = null): MetricEvent {
   val newData = data?.copy() ?: FeatureUsageData()
   return MetricEvent(eventId, newData.addValue(value))
@@ -161,7 +161,7 @@ fun newMetric(eventId: String, value: Boolean, data: FeatureUsageData? = null): 
  *
  * "source_roots" -> "count":3
  */
-@StatisticsEventProvider(eventIdIndex = 0, additionalDataFields = ["count"])
+@StatisticsEventProvider(eventIdIndex = 0, additionalDataFields = ["count:regexp#integer"])
 fun newCounterMetric(eventId: String, count: Int): MetricEvent {
   return newCounterMetric(eventId, count, null)
 }
@@ -171,7 +171,7 @@ fun newCounterMetric(eventId: String, count: Int): MetricEvent {
  *
  * "source_roots" -> "count":3
  */
-@StatisticsEventProvider(eventIdIndex = 0, dataIndex = 2, additionalDataFields = ["count"])
+@StatisticsEventProvider(eventIdIndex = 0, dataIndex = 2, additionalDataFields = ["count:regexp#integer"])
 fun newCounterMetric(eventId: String, count: Int, data: FeatureUsageData?): MetricEvent {
   val newData = data?.copy() ?: FeatureUsageData()
   return MetricEvent(eventId, newData.addCount(count))
@@ -185,7 +185,7 @@ fun newCounterMetric(eventId: String, count: Int, data: FeatureUsageData?): Metr
  * @see newCounterMetric(java.lang.String, int)
  */
 @Deprecated("Only for existing counter metrics, new metrics should report absolute counter value")
-@StatisticsEventProvider(eventIdIndex = 0, dataIndex = 2, additionalDataFields = ["count", "count_group"])
+@StatisticsEventProvider(eventIdIndex = 0, dataIndex = 2, additionalDataFields = ["count:regexp#integer", "count_group"])
 fun newCounterRangeMetric(eventId: String, count: Int, data: FeatureUsageData? = null): MetricEvent {
   val newData = data?.copy() ?: FeatureUsageData()
   newData.addCount(count).addData("count_group", getCountingUsage(count))
@@ -200,7 +200,7 @@ fun newCounterRangeMetric(eventId: String, count: Int, data: FeatureUsageData? =
  * @see newCounterMetric(java.lang.String, int)
  */
 @Deprecated("Only for existing counter metrics, new metrics should report absolute counter value")
-@StatisticsEventProvider(eventIdIndex = 0, dataIndex = 3, additionalDataFields = ["count", "count_group"])
+@StatisticsEventProvider(eventIdIndex = 0, dataIndex = 3, additionalDataFields = ["count:regexp#integer", "count_group"])
 fun newCounterRangeMetric(eventId: String, count: Int, steps: List<Int>, data: FeatureUsageData? = null): MetricEvent {
   val newData = data?.copy() ?: FeatureUsageData()
   newData.addCount(count).addData("count_group", getCountingUsage(count, steps))
