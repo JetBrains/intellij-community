@@ -74,8 +74,9 @@ class JdkUtils {
       String jbrBaseUrl = JRT_PROTOCOL + SCHEME_SEPARATOR +
                           FileUtil.toSystemIndependentName(jbrBaseDir.absolutePath) +
                           JAR_SEPARATOR
-      return StringUtil
-        .split(StringUtil.unquoteString(p.getProperty("MODULES")), " ")
+      def modules = p.getProperty("MODULES")
+      return modules == null ? Collections.<String>emptyList() : StringUtil
+        .split(StringUtil.unquoteString(modules), " ")
         .collect { jbrBaseUrl + it }
     }
   }

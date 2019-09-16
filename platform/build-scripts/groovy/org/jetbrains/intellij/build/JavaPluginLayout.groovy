@@ -78,7 +78,8 @@ class JavaPluginLayout {
         withGeneratedResources(new ResourcesGenerator() {
           @Override
           File generateResources(BuildContext context) {
-            return new File(context.paths.jdkHome, "lib/tools.jar")
+            def tools = new File(context.paths.jdkHome, "lib/tools.jar")
+            return tools.exists() ? tools : null
           }
         }, "lib")
       }

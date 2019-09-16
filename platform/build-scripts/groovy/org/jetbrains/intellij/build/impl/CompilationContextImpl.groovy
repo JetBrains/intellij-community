@@ -107,13 +107,11 @@ class CompilationContextImpl implements CompilationContext {
       }
       if (sdkHome != null) {
         JdkUtils.defineJdk(model.global, sdkName, sdkHome, messages)
-        if (sdkName == '11') {
-          def jbr11 = model.global.libraryCollection.findLibrary(sdkName)
-          def urls = jbr11.getRoots(JpsOrderRootType.COMPILED).collect { it.url }
-          JdkUtils.readModulesFromReleaseFile(new File(sdkHome)).each {
-            if (!urls.contains(it)) {
-              jbr11.addRoot(it, JpsOrderRootType.COMPILED)
-            }
+        def additionalSdk = model.global.libraryCollection.findLibrary(sdkName)
+        def urls = additionalSdk.getRoots(JpsOrderRootType.COMPILED).collect { it.url }
+        JdkUtils.readModulesFromReleaseFile(new File(sdkHome)).each {
+          if (!urls.contains(it)) {
+            additionalSdk.addRoot(it, JpsOrderRootType.COMPILED)
           }
         }
       }
