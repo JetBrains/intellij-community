@@ -93,6 +93,11 @@ public class ScrollableSingleRowLayout extends SingleRowLayout {
 
   @Override
   protected void recomputeToLayout(SingleRowPassInfo data) {
+    TabInfo info = myTabs.getSelectedInfo();
+    if (info != null && myScrollSelectionInViewPending) {
+      TabLabel label = myTabs.getTabLabel(info);
+      label.setActionPanelVisible(true);
+    }
     calculateRequiredLength(data);
     clampScrollOffsetToBounds(data);
     if (myScrollSelectionInViewPending || myLastSingRowLayout == null || !data.layoutSize.equals(myLastSingRowLayout.layoutSize)) {
@@ -119,9 +124,11 @@ public class ScrollableSingleRowLayout extends SingleRowLayout {
                                   ? data.toFitLength - data.position - moreRectSize : 0;
         super.applyTabLayout(data, label, clippedLength);
         label.setAlignmentToCenter(false);
+        label.setActionPanelVisible(false);
         return false;
       }
     }
+    label.setActionPanelVisible(true);
     return super.applyTabLayout(data, label, length);
   }
 

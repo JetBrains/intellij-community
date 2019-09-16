@@ -351,18 +351,14 @@ public class JBTabsImpl extends JComponent
 
   @Override
   public void uiSettingsChanged(UISettings uiSettings) {
-    updateTabLabelLayout();
+    for (Map.Entry<TabInfo, TabLabel> entry : myInfo2Label.entrySet()) {
+      entry.getKey().revalidate();
+      entry.getValue().updateActionLabelPosition();
+    }
     boolean oldHideTabsIfNeeded = mySingleRowLayout instanceof ScrollableSingleRowLayout;
     boolean newHideTabsIfNeeded = UISettings.getInstance().getHideTabsIfNeeded();
     if (oldHideTabsIfNeeded != newHideTabsIfNeeded) {
       updateRowLayout();
-    }
-  }
-
-  private void updateTabLabelLayout() {
-    for (Map.Entry<TabInfo, TabLabel> entry : myInfo2Label.entrySet()) {
-      entry.getKey().revalidate();
-      entry.getValue().handleUISettingsChange();
     }
   }
 
@@ -2556,7 +2552,6 @@ public class JBTabsImpl extends JComponent
     } else if (divider.getParent() == this){
       remove(divider);
     }
-    updateTabLabelLayout();
     relayout(true, false);
     return this;
   }

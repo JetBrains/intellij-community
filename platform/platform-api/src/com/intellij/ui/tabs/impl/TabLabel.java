@@ -11,7 +11,6 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.tabs.JBTabsEx;
-import com.intellij.ui.tabs.JBTabsPosition;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.UiDecorator;
 import com.intellij.ui.tabs.impl.themes.TabTheme;
@@ -19,7 +18,6 @@ import com.intellij.util.ui.Centerizer;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
-import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.Nullable;
 
 import javax.accessibility.Accessible;
@@ -56,10 +54,10 @@ public class TabLabel extends JPanel implements Accessible, Disposable {
     // navigate through the other tabs using the LEFT/RIGHT keys.
     setFocusable(ScreenReader.isActive());
     setOpaque(false);
-    setLayout(new MigLayout("gap 0 0,novisualpadding,ins 0,aligny center"));
+    setLayout(new BorderLayout());
 
     myLabelPlaceholder.setOpaque(false);
-    addLabelPlaceholder();
+    add(myLabelPlaceholder, BorderLayout.CENTER);
 
     setAlignmentToCenter(true);
 
@@ -149,12 +147,6 @@ public class TabLabel extends JPanel implements Accessible, Disposable {
         }
       });
     }
-  }
-
-  private void addLabelPlaceholder() {
-    JBTabsPosition position = myTabs.getTabsPosition();
-    String labelAlignment = position.isSide() ? "ax left" : "ax center";
-    add(myLabelPlaceholder, "pushx, " + labelAlignment);
   }
 
   @Override
@@ -401,17 +393,9 @@ public class TabLabel extends JPanel implements Accessible, Disposable {
     myActionPanel.setBorder(JBUI.Borders.empty(1, 0));
     toggleShowActions(false);
 
-    addActionPanel();
+    add(myActionPanel, UISettings.getShadowInstance().getCloseTabButtonOnTheRight() ? BorderLayout.EAST : BorderLayout.WEST);
 
     myTabs.revalidateAndRepaint(false);
-  }
-
-  private void addActionPanel() {
-    boolean closeOnRight = UISettings.getShadowInstance().getCloseTabButtonOnTheRight();
-    add(myActionPanel);
-    if (!closeOnRight) {
-      setComponentZOrder(myActionPanel, 0);
-    }
   }
 
   private void removeOldActionPanel() {
@@ -554,18 +538,17 @@ public class TabLabel extends JPanel implements Accessible, Disposable {
         myActionPanel.update();
       }
 
-      handleUISettingsChange();
+      updateActionLabelPosition();
     }
   }
 
-  void handleUISettingsChange() {
-    addLabelPlaceholder();
+  void updateActionLabelPosition() {
     if (myActionPanel != null) {
       if (!myActionPanel.isVisible()) {
         remove(myActionPanel);
       }
       else {
-        addActionPanel();
+        add(myActionPanel, UISettings.getShadowInstance().getCloseTabButtonOnTheRight() ? BorderLayout.EAST : BorderLayout.WEST);
       }
     }
   }
