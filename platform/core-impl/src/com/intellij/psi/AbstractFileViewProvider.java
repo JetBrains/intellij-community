@@ -62,14 +62,11 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
   private final boolean myPhysical;
   private volatile Content myContent;
   private volatile Reference<Document> myDocument;
-  @NotNull
-  private final FileType myFileType;
   private final PsiLock myPsiLock = new PsiLock();
 
   protected AbstractFileViewProvider(@NotNull PsiManager manager,
                                      @NotNull VirtualFile virtualFile,
-                                     boolean eventSystemEnabled,
-                                     @NotNull FileType type) {
+                                     boolean eventSystemEnabled) {
     myManager = (PsiManagerEx)manager;
     myVirtualFile = virtualFile;
     myEventSystemEnabled = eventSystemEnabled;
@@ -78,7 +75,6 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
                  !(virtualFile instanceof LightVirtualFile) &&
                  !(virtualFile.getFileSystem() instanceof NonPhysicalFileSystem);
     virtualFile.putUserData(FREE_THREADED, isFreeThreaded(this));
-    myFileType = type;
     if (virtualFile instanceof VirtualFileWindow && !(this instanceof FreeThreadedFileViewProvider)) {
       throw new IllegalArgumentException("Must not create "+getClass()+" for injected file "+virtualFile+"; InjectedFileViewProvider must be used instead");
     }
@@ -206,7 +202,7 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
   @Override
   public FileViewProvider clone() {
     VirtualFile origFile = getVirtualFile();
-    LightVirtualFile copy = new LightVirtualFile(origFile.getName(), myFileType, getContents(), origFile.getCharset(), getModificationStamp());
+    LightVirtualFile copy = new LightVirtualFile(origFile.getName(), origFile.getFileType(), getContents(), origFile.getCharset(), getModificationStamp());
     origFile.copyCopyableDataTo(copy);
     copy.setOriginalFile(origFile);
     copy.putUserData(UndoConstants.DONT_RECORD_UNDO, Boolean.TRUE);
@@ -535,6 +531,6 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
   @NotNull
   @Override
   public final FileType getFileType() {
-    return myFileType;
+    return myVirtualFile.getFileType();
   }
 }
