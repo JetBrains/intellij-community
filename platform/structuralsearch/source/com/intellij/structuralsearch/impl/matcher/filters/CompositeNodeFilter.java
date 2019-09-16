@@ -3,7 +3,7 @@ package com.intellij.structuralsearch.impl.matcher.filters;
 import com.intellij.dupLocator.util.NodeFilter;
 import com.intellij.psi.PsiElement;
 
-public class CompositeFilter implements NodeFilter {
+public class CompositeNodeFilter implements NodeFilter {
   private final NodeFilter first;
   private final NodeFilter second;
 
@@ -13,7 +13,7 @@ public class CompositeFilter implements NodeFilter {
            second.accepts(element);
   }
 
-  public CompositeFilter(NodeFilter _first, NodeFilter _second) {
+  public CompositeNodeFilter(NodeFilter _first, NodeFilter _second) {
     first = _first;
     second = _second;
   }

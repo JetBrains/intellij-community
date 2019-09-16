@@ -7,7 +7,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.MalformedPatternException;
 import com.intellij.structuralsearch.StructuralSearchProfile;
 import com.intellij.structuralsearch.StructuralSearchUtil;
-import com.intellij.structuralsearch.impl.matcher.filters.CompositeFilter;
+import com.intellij.structuralsearch.impl.matcher.filters.CompositeNodeFilter;
 import com.intellij.structuralsearch.impl.matcher.filters.LexicalNodesFilter;
 import com.intellij.structuralsearch.impl.matcher.handlers.LiteralWithSubstitutionHandler;
 import com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler;
@@ -96,7 +96,7 @@ public class GlobalCompilingVisitor {
   public static void setFilter(MatchingHandler handler, NodeFilter filter) {
     if (handler.getFilter() != null && handler.getFilter().getClass() != filter.getClass()) {
       // for constructor we will have the same handler for class and method and tokens itself
-      handler.setFilter(new CompositeFilter(filter, handler.getFilter()));
+      handler.setFilter(new CompositeNodeFilter(filter, handler.getFilter()));
     }
     else {
       handler.setFilter(filter);
