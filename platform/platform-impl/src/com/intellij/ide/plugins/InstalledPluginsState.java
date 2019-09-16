@@ -129,5 +129,6 @@ public final class InstalledPluginsState {
 
   public void resetChangesAppliedWithoutRestart() {
     myInstalledWithoutRestartPlugins.clear();
+    myUninstalledWithoutRestartPlugins.clear();
   }
 }
