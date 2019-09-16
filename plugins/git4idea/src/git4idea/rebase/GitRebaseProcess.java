@@ -162,7 +162,7 @@ public class GitRebaseProcess {
           customMode = myCustomMode == null ? GitRebaseResumeMode.CONTINUE : myCustomMode;
         }
 
-        Collection<Change> changes = collectFutureChanges(repository);
+        Hash startHash = getHead(repository);
 
         GitRebaseStatus rebaseStatus = rebaseSingleRoot(repository, customMode, getSuccessfulRepositories(statuses));
         repository.update(); // make the repo state info actual ASAP
@@ -173,7 +173,7 @@ public class GitRebaseProcess {
         latestRepository = repository;
         statuses.put(repository, rebaseStatus);
         if (shouldBeRefreshed(rebaseStatus)) {
-          refreshVfs(repository.getRoot(), changes);
+          refreshChangedVfs(repository, startHash);
         }
         if (rebaseStatus.getType() != GitRebaseStatus.Type.SUCCESS) {
           break;
@@ -198,28 +198,6 @@ public class GitRebaseProcess {
       myRepositoryManager.setOngoingRebaseSpec(null);
       ExceptionUtil.rethrowUnchecked(e);
     }
-  }
-
-  @Nullable
-  private Collection<Change> collectFutureChanges(@NotNull GitRepository repository) {
-    GitRebaseParams params = myRebaseSpec.getParams();
-    if (params == null) return null;
-
-    Collection<Change> changes = new ArrayList<>();
-    String branch = params.getBranch();
-    if (branch != null) {
-      Collection<Change> changesFromCheckout = GitChangeUtils.getDiff(repository, HEAD, branch, false);
-      if (changesFromCheckout == null) return null;
-      changes.addAll(changesFromCheckout);
-    }
-
-    String rev1 = coalesce(params.getNewBase(), branch, HEAD);
-    String rev2 = params.getUpstream();
-    Collection<Change> changesFromRebase = GitChangeUtils.getDiff(repository, rev1, rev2, false);
-    if (changesFromRebase == null) return null;
-
-    changes.addAll(changesFromRebase);
-    return changes;
   }
 
   private void saveUpdatedSpec(@NotNull Map<GitRepository, GitRebaseStatus> statuses) {
