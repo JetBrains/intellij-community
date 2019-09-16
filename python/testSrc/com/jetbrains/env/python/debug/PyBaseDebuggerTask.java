@@ -28,6 +28,7 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.breakpoints.SuspendPolicy;
@@ -338,6 +339,39 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
         }
       }
     }
+  }
+
+  protected static XBreakpoint addExceptionBreakpoint(IdeaProjectTestFixture fixture, PyExceptionBreakpointProperties properties) {
+    return XDebuggerTestUtil.addBreakpoint(fixture.getProject(), PyExceptionBreakpointType.class, properties);
+  }
+
+  public static void createExceptionBreak(IdeaProjectTestFixture fixture,
+                                          boolean notifyOnTerminate,
+                                          boolean notifyOnFirst,
+                                          boolean ignoreLibraries,
+                                          @Nullable String condition,
+                                          @Nullable String logExpression) {
+    XDebuggerTestUtil.removeAllBreakpoints(fixture.getProject());
+    XDebuggerTestUtil.setDefaultBreakpointEnabled(fixture.getProject(), PyExceptionBreakpointType.class, false);
+
+    PyExceptionBreakpointProperties properties = new PyExceptionBreakpointProperties("BaseException");
+    properties.setNotifyOnTerminate(notifyOnTerminate);
+    properties.setNotifyOnlyOnFirst(notifyOnFirst);
+    properties.setIgnoreLibraries(ignoreLibraries);
+    XBreakpoint exceptionBreakpoint = addExceptionBreakpoint(fixture, properties);
+    if (condition != null) {
+      exceptionBreakpoint.setCondition(condition);
+    }
+    if (logExpression != null) {
+      exceptionBreakpoint.setLogExpression(logExpression);
+    }
+  }
+
+  public static void createExceptionBreak(IdeaProjectTestFixture fixture,
+                                          boolean notifyOnTerminate,
+                                          boolean notifyOnFirst,
+                                          boolean ignoreLibraries) {
+    createExceptionBreak(fixture, notifyOnTerminate, notifyOnFirst, ignoreLibraries, null, null);
   }
 
   public String getRunningThread() {

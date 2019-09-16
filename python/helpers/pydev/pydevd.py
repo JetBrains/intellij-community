@@ -20,7 +20,7 @@ from collections import defaultdict
 from _pydevd_bundle.pydevd_constants import IS_JYTH_LESS25, IS_PYCHARM, get_thread_id, get_current_thread_id, \
     dict_keys, dict_iter_items, DebugInfoHolder, PYTHON_SUSPEND, STATE_SUSPEND, STATE_RUN, get_frame, xrange, \
     clear_cached_thread_id, INTERACTIVE_MODE_AVAILABLE, SHOW_DEBUG_INFO_ENV, IS_PY34_OR_GREATER, IS_PY36_OR_GREATER, \
-    IS_PY2, NULL, NO_FTRACE
+    IS_PY2, NULL, NO_FTRACE, dummy_excepthook
 from _pydev_bundle import fix_getpass
 from _pydev_bundle import pydev_imports, pydev_log
 from _pydev_bundle._pydev_filesystem_encoding import getfilesystemencoding
@@ -33,7 +33,7 @@ import pydevd_tracing
 from _pydevd_bundle import pydevd_utils
 from _pydevd_bundle import pydevd_vars
 from _pydev_bundle.pydev_override import overrides
-from _pydevd_bundle.pydevd_breakpoints import ExceptionBreakpoint
+from _pydevd_bundle.pydevd_breakpoints import ExceptionBreakpoint, set_fallback_excepthook, disable_excepthook
 from _pydevd_bundle.pydevd_comm import CMD_SET_BREAK, CMD_SET_NEXT_STATEMENT, CMD_STEP_INTO, CMD_STEP_OVER, \
     CMD_STEP_RETURN, CMD_STEP_INTO_MY_CODE, CMD_THREAD_SUSPEND, CMD_RUN_TO_LINE, \
     CMD_ADD_EXCEPTION_BREAK, CMD_SMART_STEP_INTO, InternalConsoleExec, NetCommandFactory, \
@@ -473,6 +473,7 @@ class PyDB(object):
         `PyDB.enable_tracing` is called with a `thread_trace_func`, the given function will
         be the default for the given thread.
         '''
+        set_fallback_excepthook()
         if self.frame_eval_func is not None:
             self.frame_eval_func()
             pydevd_tracing.SetTrace(self.dummy_trace_dispatch)
@@ -1182,7 +1183,8 @@ class PyDB(object):
         pydevd_vars.add_additional_frame_by_id(thread_id, frames_byid)
         exctype, value, tb = arg
         tb = pydevd_utils.get_top_level_trace_in_project_scope(tb)
-        original_excepthook(exctype, value, tb)
+        if sys.excepthook != dummy_excepthook:
+            original_excepthook(exctype, value, tb)
         disable_excepthook()  # Avoid printing the exception for the second time.
         try:
             try:
@@ -1479,10 +1481,6 @@ def dump_threads(stream=None):
     Helper to dump thread info (default is printing to stderr).
     '''
     pydevd_utils.dump_threads(stream)
-
-
-def disable_excepthook():
-    sys.excepthook = lambda exctype, value, tb: None
 
 
 def usage(doExit=0):
