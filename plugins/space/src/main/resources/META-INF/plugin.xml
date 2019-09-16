@@ -11,7 +11,7 @@
     </change-notes>
 
     <!-- please see https://confluence.jetbrains.com/display/IDEADEV/Build+Number+Ranges for description -->
-    <idea-version since-build="182.2371.4"/>
+    <idea-version since-build="183.2153.8"/>
 
     <!-- please see https://confluence.jetbrains.com/display/IDEADEV/Plugin+Compatibility+with+IntelliJ+Platform+Products
          on how to target different products -->
