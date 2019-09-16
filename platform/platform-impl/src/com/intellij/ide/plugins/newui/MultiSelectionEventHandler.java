@@ -253,7 +253,16 @@ public class MultiSelectionEventHandler extends EventHandler {
   @Override
   public void initialSelection(boolean scrollAndFocus) {
     if (!myComponents.isEmpty() && mySelectionLength == 0) {
-      singleSelection(myComponents.get(0), 0, scrollAndFocus);
+      try {
+        //noinspection AssignmentToStaticFieldFromInstanceMethod
+        ListPluginComponent.HANDLE_FOCUS_ON_SELECTION = false;
+
+        singleSelection(myComponents.get(0), 0, scrollAndFocus);
+      }
+      finally {
+        //noinspection AssignmentToStaticFieldFromInstanceMethod
+        ListPluginComponent.HANDLE_FOCUS_ON_SELECTION = true;
+      }
     }
   }
 
