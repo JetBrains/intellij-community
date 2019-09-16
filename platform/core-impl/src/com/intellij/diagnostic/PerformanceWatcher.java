@@ -231,7 +231,7 @@ public final class PerformanceWatcher implements Disposable {
         myFreezeDuringStartup = !LoadingPhase.isStartupComplete();
         getPublisher().uiFreezeStarted();
       }
-      dumpThreads(ThreadDumper.getThreadInfos());
+      dumpThreads();
     }
   }
 
@@ -242,7 +242,7 @@ public final class PerformanceWatcher implements Disposable {
     myDumpTask = new SamplingTask(getDumpInterval(), getMaxDumpDuration()) {
       @Override
       protected void dumpedThreads(ThreadInfo[] infos) {
-        dumpThreads(infos);
+        dumpThreads(getFreezeFolderName(myFreezeStart) + "/", false, infos);
       }
     };
   }
@@ -320,9 +320,9 @@ public final class PerformanceWatcher implements Disposable {
     return "";
   }
 
-  private void dumpThreads(ThreadInfo[] infos) {
+  private void dumpThreads() {
     if (myFreezeStart != 0 && System.currentTimeMillis() - myFreezeStart <= getMaxDumpDuration()) {
-      dumpThreads(getFreezeFolderName(myFreezeStart) + "/", false, infos);
+      dumpThreads(getFreezeFolderName(myFreezeStart) + "/", false);
     }
     else {
       stopDumping();

@@ -29,7 +29,7 @@ public class SamplingTask {
 
   public SamplingTask(int intervalMs, int maxDurationMs) {
     myDumpInterval = intervalMs;
-    myMaxDumps = maxDurationMs * 1000 / myDumpInterval;
+    myMaxDumps = maxDurationMs / intervalMs;
     myCurrentTime = myStartTime = System.currentTimeMillis();
     myGcCurrentTime = myGcStartTime = currentGcTime();
     ScheduledExecutorService executor = PerformanceWatcher.getInstance().getExecutor();
