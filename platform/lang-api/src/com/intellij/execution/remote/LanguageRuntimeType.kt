@@ -4,6 +4,7 @@ package com.intellij.execution.remote
 import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.util.containers.toArray
+import org.jetbrains.annotations.Nls
 
 abstract class LanguageRuntimeType<C : LanguageRuntimeConfiguration>(id: String) : BaseExtendableType<C>(id) {
 
@@ -12,7 +13,15 @@ abstract class LanguageRuntimeType<C : LanguageRuntimeConfiguration>(id: String)
   /**
    * Description of type's Configurable, e.g : "Configure GO"
    */
+  @get: Nls
   abstract val configurableDescription: String
+
+  /**
+   * Description of the launch of the given run configuration, e.g : "Run Java application"
+   */
+  @get: Nls
+  abstract val launchDescription: String
+
 
   companion object {
     val EXTENSION_NAME = ExtensionPointName.create<LanguageRuntimeType<*>>("com.intellij.ir.languageRuntime")

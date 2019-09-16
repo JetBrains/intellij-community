@@ -16,6 +16,8 @@ class JavaLanguageRuntimeType : LanguageRuntimeType<JavaLanguageRuntimeConfigura
 
   override val configurableDescription = "Configure Java"
 
+  override val launchDescription = "Run Java application"
+
   override fun isApplicableTo(runConfig: RunnerAndConfigurationSettings) = true
 
   override fun createDefaultConfig() = JavaLanguageRuntimeConfiguration()

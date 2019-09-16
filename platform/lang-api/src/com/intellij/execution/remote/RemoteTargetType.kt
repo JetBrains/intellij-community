@@ -12,7 +12,8 @@ abstract class RemoteTargetType<C : RemoteTargetConfiguration>(id: String) : Bas
 
   open fun providesNewWizard(project: Project, runtimeType: LanguageRuntimeType<*>?): Boolean = false
 
-  open fun createStepsForNewWizard(project: Project, runtimeType: LanguageRuntimeType<*>?): List<AbstractWizardStepEx>? = null
+  open fun createStepsForNewWizard(project: Project, configToConfigure: C, runtimeType: LanguageRuntimeType<*>?)
+    : List<AbstractWizardStepEx>? = null
 
   abstract fun createRunner(project: Project, config: C): IR.RemoteRunner
 
