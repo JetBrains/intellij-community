@@ -13,6 +13,8 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer
 import com.intellij.ui.ComponentUtil
+import com.intellij.util.ui.JBEmptyBorder
+import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import java.awt.BorderLayout
@@ -112,8 +114,11 @@ class GitConflictsView(
 
       updateButtonPresentation(button, presentation)
 
-      return JBUI.Panels.simplePanel(button)
-        .withBorder(JBUI.Borders.empty(4, if (SystemInfo.isWindows) 4 else 6))
+      val buttonInsets = button.insets
+      val leftRight = JBUI.scale(if (SystemInfo.isWindows) 4 else 6) - (buttonInsets.left + buttonInsets.right) / 2
+      val topBottom = JBUI.scale(4) - (buttonInsets.top + buttonInsets.bottom) / 2
+      val border = JBEmptyBorder(JBInsets.create(topBottom.coerceAtLeast(0), leftRight.coerceAtLeast(0)))
+      return JBUI.Panels.simplePanel(button).withBorder(border)
     }
 
     fun updateButtonPresentation(e: AnActionEvent) {
