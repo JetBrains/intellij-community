@@ -12,6 +12,7 @@ import com.intellij.ui.content.ContentFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
+import git4idea.merge.GitDefaultMergeDialogCustomizer;
 import git4idea.repo.GitConflictsHolder;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
@@ -49,7 +50,8 @@ public class GitConflictsToolWindowManager {
     boolean hasConflicts = ContainerUtil.exists(GitRepositoryManager.getInstance(myProject).getRepositories(),
                                                 repo -> !repo.getConflictsHolder().getConflicts().isEmpty());
     if (hasConflicts && myContent == null) {
-      GitConflictsView panel = new GitConflictsView(myProject);
+      GitDefaultMergeDialogCustomizer mergeDialogCustomizer = new GitDefaultMergeDialogCustomizer(myProject);
+      GitConflictsView panel = new GitConflictsView(myProject, mergeDialogCustomizer);
       myContent = ContentFactory.SERVICE.getInstance().createContent(panel.getComponent(), TAB_NAME, false);
       myContent.putUserData(ChangesViewContentManager.ORDER_WEIGHT_KEY,
                             ChangesViewContentManager.TabOrderWeight.REPOSITORY.getWeight() + 1);

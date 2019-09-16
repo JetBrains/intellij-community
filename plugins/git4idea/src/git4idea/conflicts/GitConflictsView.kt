@@ -21,6 +21,7 @@ import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.Companion.DIRECTORY_GROUPING
 import com.intellij.openapi.vcs.impl.BackgroundableActionLock
+import com.intellij.openapi.vcs.merge.MergeDialogCustomizer
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.ComponentUtil
@@ -49,8 +50,12 @@ import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.tree.DefaultTreeModel
 
-class GitConflictsView(private val project: Project) : Disposable {
-  private val mergeHandler: GitMergeHandler = GitMergeHandler(project)
+class GitConflictsView(
+  private val project: Project,
+  mergeDialogCustomizer: MergeDialogCustomizer
+) : Disposable {
+
+  private val mergeHandler: GitMergeHandler = GitMergeHandler(project, mergeDialogCustomizer)
 
   private val panel: SimpleToolWindowPanel
   private val descriptionLabel: JLabel

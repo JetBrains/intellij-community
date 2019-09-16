@@ -10,10 +10,10 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.merge.MergeData;
+import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import git4idea.merge.GitDefaultMergeDialogCustomizer;
 import git4idea.merge.GitMergeUtil;
 import git4idea.repo.GitConflict;
 import git4idea.repo.GitConflict.ConflictSide;
@@ -35,11 +35,11 @@ public class GitMergeHandler {
   private static final Logger LOG = Logger.getInstance(GitMergeHandler.class);
 
   @NotNull private final Project myProject;
-  @NotNull private final GitDefaultMergeDialogCustomizer myDialogCustomizer;
+  @NotNull private final MergeDialogCustomizer myDialogCustomizer;
 
-  public GitMergeHandler(@NotNull Project project) {
+  public GitMergeHandler(@NotNull Project project, @NotNull MergeDialogCustomizer mergeDialogCustomizer) {
     myProject = project;
-    myDialogCustomizer = new GitDefaultMergeDialogCustomizer(project);
+    myDialogCustomizer = mergeDialogCustomizer;
   }
 
   @NotNull
