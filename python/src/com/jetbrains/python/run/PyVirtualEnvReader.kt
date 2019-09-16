@@ -21,7 +21,7 @@ class PyVirtualEnvReader(val virtualEnvSdkPath: String) : EnvironmentUtil.ShellE
     private val virtualEnvVars = listOf("PATH", "PS1", "VIRTUAL_ENV", "PYTHONHOME", "PROMPT", "_OLD_VIRTUAL_PROMPT",
                                         "_OLD_VIRTUAL_PYTHONHOME", "_OLD_VIRTUAL_PATH", "CONDA_SHLVL", "CONDA_PROMPT_MODIFIER",
                                         "CONDA_PREFIX", "CONDA_DEFAULT_ENV",
-                                        "GDAL_DATA", "PROJ_LIB")
+                                        "GDAL_DATA", "PROJ_LIB", "JAVA_HOME", "JAVA_LD_LIBRARY_PATH")
 
     /**
      * Filter envs that are setup by the activate script, adding other variables from the different shell can break the actual shell.
