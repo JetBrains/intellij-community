@@ -4,6 +4,7 @@
 import os
 import socket
 import struct
+import subprocess
 import sys
 
 # see com.intellij.idea.SocketLock for the server side of this interface
@@ -124,7 +125,7 @@ def start_new_instance(args):
     if sys.platform == 'darwin':
         if len(args) > 0:
             args.insert(0, '--args')
-        os.execvp('/usr/bin/open', ['-a', RUN_PATH] + args)
+        subprocess.call(['/usr/bin/open', '-na', RUN_PATH] + args)
     else:
         bin_file = os.path.split(RUN_PATH)[1]
         os.execv(RUN_PATH, [bin_file] + args)
