@@ -42,6 +42,11 @@ public class GitMergeHandler {
     myDialogCustomizer = new GitDefaultMergeDialogCustomizer(project);
   }
 
+  @NotNull
+  public String loadMergeDescription() {
+    return myDialogCustomizer.getMultipleFileMergeDescription(emptyList());
+  }
+
   public boolean canResolveConflict(@NotNull GitConflict conflict) {
     VirtualFile file = conflict.getFilePath().getVirtualFile();
     if (file == null) return false;

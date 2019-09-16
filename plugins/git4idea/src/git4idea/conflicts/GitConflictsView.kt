@@ -44,6 +44,7 @@ import java.awt.BorderLayout
 import java.beans.PropertyChangeListener
 import javax.swing.JButton
 import javax.swing.JComponent
+import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.tree.DefaultTreeModel
 
@@ -51,6 +52,7 @@ class GitConflictsView(private val project: Project) : Disposable {
   private val mergeHandler: GitMergeHandler = GitMergeHandler(project)
 
   private val panel: SimpleToolWindowPanel
+  private val descriptionLabel: JLabel
   private val conflictsTree: MyChangesTree
 
   private val conflicts: MutableList<GitConflict> = ArrayList()
@@ -74,7 +76,15 @@ class GitConflictsView(private val project: Project) : Disposable {
     toolbar.setTargetComponent(conflictsTree)
 
     val mainPanel = MainPanel()
+
+    descriptionLabel = JLabel("Loading merge conflicts...")
+    descriptionLabel.border = JBUI.Borders.empty(2, 5)
+    descriptionLabel.foreground = UIUtil.getContextHelpForeground()
+    descriptionLabel.background = UIUtil.getTreeBackground()
+    mainPanel.background = UIUtil.getTreeBackground()
+
     mainPanel.add(ScrollPaneFactory.createScrollPane(conflictsTree), BorderLayout.CENTER)
+    mainPanel.add(descriptionLabel, BorderLayout.SOUTH)
 
     panel = SimpleToolWindowPanel(true, true)
     panel.toolbar = toolbar.component
@@ -102,6 +112,8 @@ class GitConflictsView(private val project: Project) : Disposable {
 
   private fun updateConflicts() {
     updateQueue.queue(Update.create("update") {
+      val description = mergeHandler.loadMergeDescription()
+
       val newConflicts = ArrayList<GitConflict>()
       val newReversedRoots = ArrayList<VirtualFile>()
 
@@ -112,6 +124,8 @@ class GitConflictsView(private val project: Project) : Disposable {
       }
 
       runInEdt {
+        descriptionLabel.text = description
+
         conflicts.clear()
         conflicts.addAll(newConflicts)
 
