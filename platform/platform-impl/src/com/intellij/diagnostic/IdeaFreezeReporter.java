@@ -27,7 +27,7 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
   private static final String REPORT_PREFIX = "report";
   private static final String DUMP_PREFIX = "dump";
 
-  private volatile SamplingTask myDumpTask;
+  private SamplingTask myDumpTask;
   final List<ThreadDump> myCurrentDumps = new ArrayList<>();
   List<StackTraceElement> myStacktraceCommonPart = null;
 
@@ -50,6 +50,7 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
       if (myDumpTask != null) {
         myDumpTask.stop();
       }
+      reset();
       myDumpTask = new SamplingTask(Registry.intValue("freeze.reporter.dump.interval.ms"),
                                     Registry.intValue("freeze.reporter.dump.duration.s") * 1000);
     }
@@ -104,6 +105,10 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
       }
     }
     myDumpTask = null;
+    reset();
+  }
+
+  private void reset() {
     myCurrentDumps.clear();
     myStacktraceCommonPart = null;
   }
