@@ -416,18 +416,20 @@ public class JdkUtil {
       Set<IR.RemoteValue<String>> classpath = new LinkedHashSet<>();
       classpath.add(request.createUpload(PathUtil.getJarPathForClass(commandLineWrapper)));
       if (isUrlClassloader(vmParameters)) {
-        classpath.add(request.createUpload(PathUtil.getJarPathForClass(UrlClassLoader.class)));
-        classpath.add(request.createUpload(PathUtil.getJarPathForClass(StringUtilRt.class)));
-        classpath.add(request.createUpload(PathUtil.getJarPathForClass(THashMap.class)));
+        if (!(request instanceof IR.LocalRunner.LocalEnvironmentRequest)) {
+          throw new CantRunException("Cannot run application with UrlClassPath on the remote target.");
+        }
+        classpath.add(new IR.FixedValue<>(PathUtil.getJarPathForClass(UrlClassLoader.class)));
+        classpath.add(new IR.FixedValue<>(PathUtil.getJarPathForClass(StringUtilRt.class)));
+        classpath.add(new IR.FixedValue<>(PathUtil.getJarPathForClass(THashMap.class)));
         //explicitly enumerate jdk classes as UrlClassLoader doesn't delegate to parent classloader when loading resources
         //which leads to exceptions when coverage instrumentation tries to instrument loader class and its dependencies
         Sdk jdk = javaParameters.getJdk();
         if (jdk != null) {
           for (VirtualFile file : jdk.getRootProvider().getFiles(OrderRootType.CLASSES)) {
-            //todo[remoteServers]: get jars from the remote target
             String path = PathUtil.getLocalPath(file);
             if (StringUtil.isNotEmpty(path)) {
-              classpath.add(request.createUpload(path));
+              classpath.add(new IR.FixedValue<>(path));
             }
           }
         }
