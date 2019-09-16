@@ -77,7 +77,6 @@ class GitConflictsView(
     toolbarGroup.addAction(ResolveAction())
     toolbarGroup.addAction(AcceptSideAction(false))
     toolbarGroup.addAction(AcceptSideAction(true))
-    toolbarGroup.addAction(actionManager.getAction("ChangesView.Refresh"))
     toolbarGroup.addAction(Separator.getInstance())
     toolbarGroup.addAction(actionManager.getAction(ChangesTree.GROUP_BY_ACTION_GROUP))
     val toolbar = actionManager.createActionToolbar("GitConflictsView", toolbarGroup, false)
