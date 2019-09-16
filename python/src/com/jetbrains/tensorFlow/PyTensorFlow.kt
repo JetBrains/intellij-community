@@ -5,9 +5,9 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.QualifiedName
+import com.jetbrains.python.PyPsiPackageUtil
 import com.jetbrains.python.packaging.PyPackage
 import com.jetbrains.python.packaging.PyPackageManager
-import com.jetbrains.python.packaging.PyPackageUtil
 import com.jetbrains.python.packaging.pyRequirementVersionSpec
 import com.jetbrains.python.packaging.requirement.PyRequirementRelation
 import com.jetbrains.python.psi.resolve.PyQualifiedNameResolveContext
@@ -97,7 +97,7 @@ private fun getTensorFlowPackage(sdk: Sdk?): PyPackage? {
   val pkgManager = PyPackageManager.getInstance(sdk)
 
   val packages = if (unitTestMode) pkgManager.refreshAndGetPackages(false) else pkgManager.packages ?: return null
-  return PyPackageUtil.findPackage(packages, "tensorflow")
+  return PyPsiPackageUtil.findPackage(packages, "tensorflow")
 }
 
 private fun getTensorFlowPathConfig(version: String, old: Boolean): Pair<Map<String, String>, String> {
