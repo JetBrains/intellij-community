@@ -531,8 +531,7 @@ public class UsageViewImpl implements UsageViewEx {
 
   private int getVisibleRowCount() {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    // myTree.getVisibleRowCount returns 20
-    return TreeUtil.getVisibleRowCountForFixedRowHeight(myTree);
+    return TreeUtil.getVisibleRowCount(myTree);
   }
 
   private void setupCentralPanel() {
