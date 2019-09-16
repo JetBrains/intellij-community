@@ -112,6 +112,8 @@ internal abstract class BaseComponentAdapter(internal val componentManager: Plat
   }
 
   private fun checkContainerIsActive(componentManager: PlatformComponentManagerImpl, indicator: ProgressIndicator?) {
+    indicator?.checkCanceled()
+
     if (componentManager.isContainerDisposedOrDisposeInProgress()) {
       val error = PluginException("Cannot create ${toString()} because container is already disposed (container=${componentManager})", pluginId)
       if (indicator == null) {
@@ -121,8 +123,6 @@ internal abstract class BaseComponentAdapter(internal val componentManager: Plat
         throw ProcessCanceledException(error)
       }
     }
-
-    indicator?.checkCanceled()
   }
 
   protected abstract fun getActivityCategory(componentManager: PlatformComponentManagerImpl): ActivityCategory?
