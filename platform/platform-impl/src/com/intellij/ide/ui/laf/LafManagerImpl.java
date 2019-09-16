@@ -567,7 +567,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     if (SystemInfo.isMacOSElCapitan) {
       // Text family should be used for relatively small sizes (<20pt), don't change to Display
       // see more about SF https://medium.com/@mach/the-secret-of-san-francisco-fonts-4b5295d9a745#.2ndr50z2v
-      Font font = new Font(".SF NS Text", style, size);
+      Font font = new Font(SystemInfo.isMacOSCatalina ? ".AppleSystemUIFont" : ".SF NS Text", style, size);
       if (!StartupUiUtil.isDialogFont(font)) {
         return new FontUIResource(font);
       }
