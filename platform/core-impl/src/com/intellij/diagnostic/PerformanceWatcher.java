@@ -245,6 +245,9 @@ public final class PerformanceWatcher implements Disposable {
         dumpThreads(getFreezeFolderName(myFreezeStart) + "/", false, infos);
       }
     };
+    if (Thread.interrupted()) { // already finished
+      edtResponds(System.currentTimeMillis());
+    }
   }
 
   @NotNull
@@ -298,7 +301,7 @@ public final class PerformanceWatcher implements Disposable {
   public void edtEventFinished() {
     Future<?> currentChecker = myCurrentEDTEventChecker;
     if (currentChecker != null) {
-      if (!currentChecker.cancel(false)) {
+      if (!currentChecker.cancel(true)) {
         long end = System.currentTimeMillis();
         stopDumping(); // stop sampling as early as possible
         try {
