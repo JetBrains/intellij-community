@@ -15,7 +15,9 @@
  */
 package com.intellij.execution.rmi;
 
+import com.intellij.execution.rmi.ssl.SslKeyStore;
 import com.intellij.execution.rmi.ssl.SslSocketFactory;
+import com.intellij.execution.rmi.ssl.SslTrustStore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,7 +38,6 @@ import java.rmi.registry.Registry;
 import java.rmi.server.ExportException;
 import java.rmi.server.RMISocketFactory;
 import java.rmi.server.UnicastRemoteObject;
-import java.security.Security;
 import java.util.Hashtable;
 import java.util.Random;
 
@@ -140,7 +141,8 @@ public class RemoteServer {
     boolean clientCert = System.getProperty(SslSocketFactory.SSL_CLIENT_CERT_PATH) != null;
     boolean clientKey = System.getProperty(SslSocketFactory.SSL_CLIENT_KEY_PATH) != null;
     if (caCert || clientCert && clientKey) {
-      Security.setProperty("ssl.SocketFactory.provider", "com.intellij.execution.rmi.ssl.SslSocketFactory");
+      if (caCert) SslTrustStore.setDefault();
+      if (clientCert && clientKey) SslKeyStore.setDefault();
     }
   }
 
