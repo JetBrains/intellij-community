@@ -20,6 +20,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.PyNumericLiteralExpression;
 import org.jetbrains.annotations.NotNull;
@@ -41,7 +42,8 @@ public class RemoveTrailingLQuickFix implements LocalQuickFix {
     if (numericLiteralExpression instanceof PyNumericLiteralExpression) {
       PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
       String text = numericLiteralExpression.getText();
-      numericLiteralExpression.replace(elementGenerator.createExpressionFromText(text.substring(0, text.length() - 1)));
+      final LanguageLevel level = LanguageLevel.forElement(numericLiteralExpression);
+      numericLiteralExpression.replace(elementGenerator.createExpressionFromText(level, text.substring(0, text.length() - 1)));
     }
   }
 }

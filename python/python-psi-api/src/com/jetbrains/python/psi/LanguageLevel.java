@@ -92,13 +92,13 @@ public enum LanguageLevel {
     );
 
   private static final LanguageLevel DEFAULT2 = PYTHON27;
-  private static final LanguageLevel DEFAULT3 = PYTHON37;
+  private static final LanguageLevel DEFAULT3 = PYTHON38;
 
   public static LanguageLevel FORCE_LANGUAGE_LEVEL = null;
 
   @NotNull
   public static LanguageLevel getDefault() {
-    return DEFAULT2;
+    return getLatest();
   }
 
   private final int myVersion;
@@ -213,7 +213,6 @@ public enum LanguageLevel {
 
   @NotNull
   public static LanguageLevel getLatest() {
-    //noinspection ConstantConditions
     return ArrayUtil.getLastElement(values());
   }
 

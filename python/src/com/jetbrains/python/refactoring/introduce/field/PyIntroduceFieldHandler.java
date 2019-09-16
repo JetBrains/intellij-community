@@ -204,7 +204,7 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
   protected PyExpression createExpression(Project project, String name, PsiElement declaration) {
     final String text = declaration.getText();
     final String self_name = text.substring(0, text.indexOf('.'));
-    return PyElementGenerator.getInstance(project).createExpressionFromText(self_name + "." + name);
+    return PyElementGenerator.getInstance(project).createExpressionFromText(LanguageLevel.forElement(declaration), self_name + "." + name);
   }
 
   @Override

@@ -18,10 +18,7 @@ package com.jetbrains.python;
 import com.intellij.idea.RecordExecution;
 import com.intellij.openapi.util.io.FileUtil;
 import com.jetbrains.python.fixtures.PyTestCase;
-import com.jetbrains.python.psi.PyElementGenerator;
-import com.jetbrains.python.psi.PyExpression;
-import com.jetbrains.python.psi.PyFile;
-import com.jetbrains.python.psi.PyTargetExpression;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPathEvaluator;
 
 import java.util.List;
@@ -57,7 +54,8 @@ public class PyPathEvaluatorTest extends PyTestCase {
   }
 
   public void testList() {
-    final PyExpression expression = PyElementGenerator.getInstance(myFixture.getProject()).createExpressionFromText("['a' + 'b'] + ['c']");
+    final PyElementGenerator generator = PyElementGenerator.getInstance(myFixture.getProject());
+    final PyExpression expression = generator.createExpressionFromText(LanguageLevel.getLatest(), "['a' + 'b'] + ['c']");
     List<Object> result = (List<Object>) new PyPathEvaluator("").evaluate(expression);
     assertEquals(2, result.size());
     assertEquals("ab", result.get(0));
@@ -69,7 +67,8 @@ public class PyPathEvaluatorTest extends PyTestCase {
   }
 
   private String doEvaluate(final String text, final String file) {
-    final PyExpression expression = PyElementGenerator.getInstance(myFixture.getProject()).createExpressionFromText(text);
+    final PyElementGenerator generator = PyElementGenerator.getInstance(myFixture.getProject());
+    final PyExpression expression = generator.createExpressionFromText(LanguageLevel.getLatest(), text);
     return FileUtil.toSystemIndependentName((String) new PyPathEvaluator(file).evaluate(expression));
   }
 }

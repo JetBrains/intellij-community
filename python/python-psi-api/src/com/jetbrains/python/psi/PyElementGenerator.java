@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -66,6 +67,7 @@ public abstract class PyElementGenerator {
    * @deprecated use the overload with language level specified
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
   public abstract PyExpression createExpressionFromText(String text);
 
   @NotNull

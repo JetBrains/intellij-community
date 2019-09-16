@@ -179,8 +179,9 @@ public class PyInlineLocalHandler extends InlineActionHandler {
 
         final PsiElement[] exprs = new PsiElement[refsToInline.length];
         final PyExpression value = prepareValue(def, localName, project);
+        final LanguageLevel level = LanguageLevel.forElement(value);
         final PyExpression withParenthesis =
-          PyElementGenerator.getInstance(project).createExpressionFromText("(" + value.getText() + ")");
+          PyElementGenerator.getInstance(project).createExpressionFromText(level, "(" + value.getText() + ")");
         final PsiElement lastChild = def.getLastChild();
         if (lastChild != null && lastChild.getNode().getElementType() == PyTokenTypes.END_OF_LINE_COMMENT) {
           final PsiElement parent = def.getParent();
@@ -294,7 +295,8 @@ public class PyInlineLocalHandler extends InlineActionHandler {
       final PsiElement operation = expression.getOperation();
       assert operation != null;
       final String op = operation.getText().replace('=', ' ');
-      return PyElementGenerator.getInstance(project).createExpressionFromText(localName + " " + op + value.getText() + ")");
+      final LanguageLevel level = LanguageLevel.forElement(value);
+      return PyElementGenerator.getInstance(project).createExpressionFromText(level, localName + " " + op + value.getText() + ")");
     }
     return value;
   }

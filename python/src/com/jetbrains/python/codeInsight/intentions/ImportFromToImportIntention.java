@@ -236,6 +236,7 @@ public class ImportFromToImportIntention extends PyBaseIntentionAction {
 
       // add qualifiers
       PyElementGenerator generator = PyElementGenerator.getInstance(project);
+      final LanguageLevel level = LanguageLevel.forElement(file);
       for (Map.Entry<PsiReference, PyImportElement> entry : references.entrySet()) {
         PsiElement referring_elt = entry.getKey().getElement();
         assert referring_elt.isValid(); // else we won't add it
@@ -247,7 +248,7 @@ public class ImportFromToImportIntention extends PyBaseIntentionAction {
           PyReferenceExpression refex = ielt.getImportReferenceExpression();
           assert refex != null; // else we won't resolve to this ielt
           String real_name = refex.getReferencedName();
-          ASTNode new_qualifier = generator.createExpressionFromText(real_name).getNode();
+          ASTNode new_qualifier = generator.createExpressionFromText(level, real_name).getNode();
           assert new_qualifier != null;
           //ASTNode first_under_target = target_node.getFirstChildNode();
           //if (first_under_target != null) new_qualifier.addChildren(first_under_target, null, null); // save the children if any
@@ -266,10 +267,10 @@ public class ImportFromToImportIntention extends PyBaseIntentionAction {
       // transform the import statement
       PyStatement new_import;
       if (info.myRelativeLevel == 0) {
-        new_import = sure(generator.createFromText(LanguageLevel.getDefault(), PyImportStatement.class, "import " + info.myModuleName));
+        new_import = sure(generator.createFromText(level, PyImportStatement.class, "import " + info.myModuleName));
       }
       else {
-        new_import = sure(generator.createFromText(LanguageLevel.getDefault(), PyFromImportStatement.class, "from " + relative_names[0] +  " import " + relative_names[1]));
+        new_import = sure(generator.createFromText(level, PyFromImportStatement.class, "from " + relative_names[0] + " import " + relative_names[1]));
       }
       ASTNode parent = sure(info.myFromImportStatement.getParent().getNode());
       ASTNode old_node = sure(info.myFromImportStatement.getNode());

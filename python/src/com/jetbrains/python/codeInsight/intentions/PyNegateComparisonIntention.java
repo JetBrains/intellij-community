@@ -90,7 +90,8 @@ public class PyNegateComparisonIntention extends PyBaseIntentionAction {
           parent.replace(newElement);
         }
         else {
-          binaryExpression.replace(elementGenerator.createExpressionFromText("not " + newElement.getText()));
+          final LanguageLevel level = LanguageLevel.forElement(file);
+          binaryExpression.replace(elementGenerator.createExpressionFromText(level, "not " + newElement.getText()));
         }
         return;
       }
