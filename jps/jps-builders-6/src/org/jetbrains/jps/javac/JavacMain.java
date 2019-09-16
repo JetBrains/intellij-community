@@ -100,7 +100,10 @@ public class JavacMain {
       if (!classpath.isEmpty()) {
         try {
           fileManager.setLocation(StandardLocation.CLASS_PATH, classpath);
-          if (!usingJavac && isAnnotationProcessingEnabled(_options) && !_options.contains("-processorpath")) {
+          if (!usingJavac &&
+              isAnnotationProcessingEnabled(_options) &&
+              !_options.contains("-processorpath") &&
+              (javacBefore9 || !_options.contains("--processor-module-path"))) {
             // for non-javac file manager ensure annotation processor path defaults to classpath
             fileManager.setLocation(StandardLocation.ANNOTATION_PROCESSOR_PATH, classpath);
           }
@@ -135,7 +138,9 @@ public class JavacMain {
       if (!modulePath.isEmpty()) {
         try {
           setLocation(fileManager, "MODULE_PATH", modulePath);
-          if (isAnnotationProcessingEnabled(_options) && getLocation(fileManager, "ANNOTATION_PROCESSOR_MODULE_PATH") == null) {
+          if (isAnnotationProcessingEnabled(_options) &&
+            getLocation(fileManager, "ANNOTATION_PROCESSOR_MODULE_PATH") == null &&
+            fileManager.getLocation(StandardLocation.ANNOTATION_PROCESSOR_PATH) == null) {
             // default annotation processing discovery path to module path if not explicitly set
             setLocation(fileManager, "ANNOTATION_PROCESSOR_MODULE_PATH", modulePath);
           }
