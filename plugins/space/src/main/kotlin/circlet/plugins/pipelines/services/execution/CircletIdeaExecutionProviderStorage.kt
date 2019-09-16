@@ -110,12 +110,17 @@ class CircletIdeaExecutionProviderStorage(private val task: ProjectTask) : Execu
         }
 
         private val hooks = mutableListOf<suspend () -> Unit>()
+        private var executed = false
 
         override fun afterTransaction(priority: CallbackPriority, body: suspend () -> Unit) {
+            if (executed) {
+                error("transaction has been already executed")
+            }
             hooks.add(body)
         }
 
         suspend fun executeAfterTransaction() {
+            executed = true
             hooks.forEach { it() }
         }
     }
