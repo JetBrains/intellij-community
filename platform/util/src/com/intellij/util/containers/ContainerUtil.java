@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.*;
 import com.intellij.util.*;
 import gnu.trove.*;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -64,7 +65,7 @@ public class ContainerUtil extends ContainerUtilRt {
   @Contract(pure=true)
   public static <K, V> Map<K, V> newHashMap(@NotNull List<? extends K> keys, @NotNull List<? extends V> values) {
     if (keys.size() != values.size()) {
-      throw new IllegalArgumentException(keys + " should have same length as " + values);
+      throw new IllegalArgumentException(keys + " must have same length as " + values);
     }
 
     Map<K, V> map = new HashMap<>(keys.size());
@@ -219,8 +220,10 @@ public class ContainerUtil extends ContainerUtilRt {
   @Deprecated
   @NotNull
   @Contract(pure=true)
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
   public static <E> ArrayList<E> newArrayList(@NotNull Collection<? extends E> iterable) {
-    throw new IncorrectOperationException("Use `new ArrayList(Collection)` instead. "+iterable.getClass());
+    DeprecatedMethodException.report("Use `new ArrayList(Collection)` instead. "+iterable.getClass());
+    return new ArrayList<>(iterable);
   }
   @NotNull
   @Contract(pure=true)
@@ -413,8 +416,10 @@ public class ContainerUtil extends ContainerUtilRt {
   @Deprecated
   @NotNull
   @Contract(pure=true)
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
   public static <T> LinkedHashSet<T> newLinkedHashSet(@NotNull Collection<? extends T> elements) {
-    throw new IncorrectOperationException("Use `new LinkedHashSet(Collection)` instead. "+elements.getClass());
+    DeprecatedMethodException.report("Use `new LinkedHashSet(Collection)` instead. "+elements.getClass());
+    return new LinkedHashSet<>(elements);
   }
 
   @SafeVarargs
@@ -831,8 +836,10 @@ public class ContainerUtil extends ContainerUtilRt {
    * @deprecated Use {@link Collection#addAll(Collection)} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
   public static <T> void addAll(@NotNull Collection<? super T> collection, @NotNull Collection<? extends T> elements) {
-    throw new IncorrectOperationException("Use `collection.addAll(elements)` instead. "+collection.getClass()+"."+elements.getClass());
+    DeprecatedMethodException.report("Use `collection.addAll(elements)` instead. "+collection.getClass()+"."+elements.getClass());
+    collection.addAll(elements);
   }
 
   public static <T> void addAll(@NotNull Collection<? super T> collection, @NotNull Iterable<? extends T> appendix) {
