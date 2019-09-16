@@ -108,7 +108,8 @@
     </extensionPoint>
 
     <extensionPoint name="lang.syntaxHighlighterFactory"
-                    beanClass="com.intellij.openapi.fileTypes.SyntaxHighlighterFactoryEP">
+                    beanClass="com.intellij.openapi.fileTypes.SyntaxHighlighterFactoryEP"
+                    dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.openapi.fileTypes.SyntaxHighlighterFactory"/>
     </extensionPoint>
 

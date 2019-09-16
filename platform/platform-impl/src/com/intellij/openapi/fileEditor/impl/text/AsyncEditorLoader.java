@@ -153,10 +153,7 @@ public class AsyncEditorLoader {
       continuation.run();
     }
 
-    if (myEditorComponent.isLoading()) {
-      myEditorComponent.stopLoading();
-    }
-    myEditorComponent.getContentPanel().setVisible(true);
+    myEditorComponent.loadingFinished();
 
     if (myDelayedState != null && PsiDocumentManager.getInstance(myProject).isCommitted(myEditor.getDocument())) {
       TextEditorState state = new TextEditorState();

@@ -145,7 +145,8 @@
     </extensionPoint>
 
     <extensionPoint name="lang.syntaxHighlighter"
-                    beanClass="com.intellij.lang.LanguageExtensionPoint">
+                    beanClass="com.intellij.lang.LanguageExtensionPoint"
+                    dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.openapi.fileTypes.SyntaxHighlighter"/>
     </extensionPoint>
 
