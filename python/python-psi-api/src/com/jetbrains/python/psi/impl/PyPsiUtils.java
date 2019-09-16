@@ -532,7 +532,7 @@ public final class PyPsiUtils {
   }
 
   @Nullable
-  protected static QualifiedName asQualifiedName(@NotNull PyQualifiedExpression expr) {
+  public static QualifiedName asQualifiedName(@NotNull PyQualifiedExpression expr) {
     final List<String> path = new LinkedList<>();
     final String firstName = expr.getReferencedName();
     if (firstName == null) {
