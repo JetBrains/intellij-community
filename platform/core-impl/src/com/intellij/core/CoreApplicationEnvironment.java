@@ -105,7 +105,7 @@ public class CoreApplicationEnvironment {
 
     registerApplicationService(EncodingManager.class, new CoreEncodingRegistry());
     registerApplicationService(VirtualFilePointerManager.class, createVirtualFilePointerManager());
-    registerApplicationService(DefaultASTFactory.class, new CoreASTFactory());
+    registerApplicationService(DefaultASTFactory.class, new DefaultASTFactoryImpl());
     registerApplicationService(PsiBuilderFactory.class, new PsiBuilderFactoryImpl());
     registerApplicationService(ReferenceProvidersRegistry.class, new ReferenceProvidersRegistryImpl());
     registerApplicationService(StubTreeLoader.class, new CoreStubTreeLoader());
