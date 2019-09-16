@@ -75,7 +75,7 @@ public class CompilingEvaluatorImpl extends CompilingEvaluator {
           platformClasspath.add(new File(s));
         }
       }
-      JavaBuilder.addAnnotationProcessingOptions(options, profile, false);
+      JavaBuilder.addAnnotationProcessingOptions(options, profile);
 
       Pair<Sdk, JavaSdkVersion> runtime = BuildManager.getJavacRuntimeSdk(myProject);
       JavaSdkVersion buildRuntimeVersion = runtime.getSecond();
