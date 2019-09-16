@@ -84,7 +84,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     "FileChooser.listViewActionLabelText", "FileChooser.detailsViewActionLabelText", "FileChooser.refreshActionLabelText"};
 
   private final EventDispatcher<LafManagerListener> myEventDispatcher = EventDispatcher.create(LafManagerListener.class);
-  private UIManager.LookAndFeelInfo[] myLaFs;
+  private List<UIManager.LookAndFeelInfo> myLaFs;
   private final UIManager.LookAndFeelInfo myDefaultLightTheme;
   private final UIManager.LookAndFeelInfo myDefaultDarkTheme;
   private final UIDefaults ourDefaults;
@@ -129,16 +129,16 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       }
     }
 
-    lafList.add(myDefaultDarkTheme = new DarculaLookAndFeelInfo());
+    myDefaultDarkTheme = new DarculaLookAndFeelInfo();
+    lafList.add(myDefaultDarkTheme);
 
-
-    for (UIThemeProvider provider : UIThemeProvider.EP_NAME.getExtensionList()) {
-      UITheme x = provider.createTheme();
-      if (x != null) {
-        lafList.add(new UIThemeBasedLookAndFeelInfo(x));
+    for (UIThemeProvider provider : UIThemeProvider.EP_NAME.getIterable()) {
+      UITheme theme = provider.createTheme();
+      if (theme != null) {
+        lafList.add(new UIThemeBasedLookAndFeelInfo(theme));
       }
     }
-    myLaFs = lafList.toArray(new UIManager.LookAndFeelInfo[0]);
+    myLaFs = lafList;
 
     sortThemesIfNecessary();
 
@@ -146,16 +146,17 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   }
 
   private void sortThemesIfNecessary() {
-    if (!SystemInfo.isMac) {
-      // do not sort LaFs on mac - the order is determined as Default, Darcula.
-      // when we leave only system LaFs on other OSes, the order also should be determined as Default, Darcula
-
-      Arrays.sort(myLaFs, (obj1, obj2) -> {
-        String name1 = obj1.getName();
-        String name2 = obj2.getName();
-        return name1.compareToIgnoreCase(name2);
-      });
+    // do not sort LaFs on mac - the order is determined as Default, Darcula.
+    // when we leave only system LaFs on other OSes, the order also should be determined as Default, Darcula
+    if (SystemInfo.isMac) {
+      return;
     }
+
+    myLaFs.sort((obj1, obj2) -> {
+      String name1 = obj1.getName();
+      String name2 = obj2.getName();
+      return name1.compareToIgnoreCase(name2);
+    });
   }
 
   @Override
@@ -201,16 +202,17 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
         }
         UITheme theme = provider.createTheme();
         if (theme != null) {
-          UIManager.LookAndFeelInfo[] newLafs = new UIManager.LookAndFeelInfo[myLaFs.length + 1];
-          System.arraycopy(myLaFs, 0, newLafs, 0, myLaFs.length);
+          List<UIManager.LookAndFeelInfo> newLaFs = new ArrayList<>(myLaFs.size() + 1);
+          newLaFs.addAll(myLaFs);
           String editorScheme = theme.getEditorScheme();
           if (editorScheme != null) {
             ((EditorColorsManagerImpl)EditorColorsManager.getInstance()).getSchemeManager()
               .loadBundledScheme(editorScheme, theme);
           }
+
           UIThemeBasedLookAndFeelInfo newTheme = new UIThemeBasedLookAndFeelInfo(theme);
-          newLafs[newLafs.length - 1] = newTheme;
-          myLaFs = newLafs;
+          newLaFs.add(newTheme);
+          myLaFs = newLaFs;
           sortThemesIfNecessary();
           setCurrentLookAndFeel(newTheme);
           updateUI();
@@ -220,7 +222,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       @Override
       public void extensionRemoved(@NotNull UIThemeProvider provider, @NotNull PluginDescriptor pluginDescriptor) {
         UIManager.LookAndFeelInfo switchLafTo = null;
-        ArrayList<UIManager.LookAndFeelInfo> lafs = new ArrayList<>();
+        List<UIManager.LookAndFeelInfo> list = new ArrayList<>();
         for (UIManager.LookAndFeelInfo lookAndFeel : getInstalledLookAndFeels()) {
           if (lookAndFeel instanceof UIThemeBasedLookAndFeelInfo && ((UIThemeBasedLookAndFeelInfo)lookAndFeel).getTheme().getId().equals(provider.id)) {
             if (lookAndFeel == getCurrentLookAndFeel()) {
@@ -228,9 +230,9 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
             }
             continue;
           }
-          lafs.add(lookAndFeel);
+          list.add(lookAndFeel);
         }
-        myLaFs = lafs.toArray(new UIManager.LookAndFeelInfo[0]);
+        myLaFs = list;
         if (switchLafTo != null) {
           setCurrentLookAndFeel(switchLafTo);
           updateUI();
@@ -240,15 +242,17 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   }
 
   public void updateWizardLAF(boolean wasUnderDarcula) {
-    if (WelcomeWizardUtil.getWizardLAF() != null) {
-      if (StartupUiUtil.isUnderDarcula()) {
-        DarculaInstaller.install();
-      }
-      else if (wasUnderDarcula) {
-        DarculaInstaller.uninstall();
-      }
-      WelcomeWizardUtil.setWizardLAF(null);
+    if (WelcomeWizardUtil.getWizardLAF() == null) {
+      return;
     }
+
+    if (StartupUiUtil.isUnderDarcula()) {
+      DarculaInstaller.install();
+    }
+    else if (wasUnderDarcula) {
+      DarculaInstaller.uninstall();
+    }
+    WelcomeWizardUtil.setWizardLAF(null);
   }
 
   @Override
@@ -256,7 +260,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   }
 
   @Override
-  public void loadState(@NotNull final Element element) {
+  public void loadState(@NotNull Element element) {
     String className = null;
     UIManager.LookAndFeelInfo laf = null;
     Element lafElement = element.getChild(ELEMENT_LAF);
@@ -268,9 +272,12 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
       String themeId = lafElement.getAttributeValue(ATTRIBUTE_THEME_NAME);
       if (themeId != null) {
-        laf = Arrays.stream(myLaFs).
-          filter(l -> l instanceof UIThemeBasedLookAndFeelInfo && ((UIThemeBasedLookAndFeelInfo)l).getTheme().getId().equals(themeId)).
-          findFirst().orElse(null);
+        for (UIManager.LookAndFeelInfo l : myLaFs) {
+          if (l instanceof UIThemeBasedLookAndFeelInfo && ((UIThemeBasedLookAndFeelInfo)l).getTheme().getId().equals(themeId)) {
+            laf = l;
+            break;
+          }
+        }
       }
     }
 
@@ -310,7 +317,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   @NotNull
   @Override
   public UIManager.LookAndFeelInfo[] getInstalledLookAndFeels() {
-    return myLaFs.clone();
+    return myLaFs.toArray(new UIManager.LookAndFeelInfo[0]);
   }
 
   @Override
@@ -348,10 +355,12 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
   @Nullable
   private UIManager.LookAndFeelInfo findLaf(@Nullable String className) {
-    return Arrays.stream(myLaFs).
-      filter(l -> !(l instanceof UIThemeBasedLookAndFeelInfo) && Comparing.equal(l.getClassName(), className)).
-      findFirst().
-      orElse(null);
+    for (UIManager.LookAndFeelInfo l : myLaFs) {
+      if (!(l instanceof UIThemeBasedLookAndFeelInfo) && Comparing.equal(l.getClassName(), className)) {
+        return l;
+      }
+    }
+    return null;
   }
 
   /**
