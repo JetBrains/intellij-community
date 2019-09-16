@@ -2,6 +2,7 @@
 package com.intellij.ui.mac;
 
 import com.apple.eawt.*;
+import com.intellij.ide.ActiveWindowsWatcher;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.application.ApplicationManager;
@@ -30,7 +31,6 @@ import java.util.EventListener;
 import java.util.LinkedList;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static com.intellij.ide.IdeEventQueue.updateActivatedWindowSet;
 import static com.intellij.ui.mac.foundation.Foundation.invoke;
 
 public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettingsListener {
@@ -231,7 +231,7 @@ public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettin
             // We can get the notification when the frame has been disposed
             if (myFrame == null/* || ORACLE_BUG_ID_8003173*/) return;
             exitFullscreen();
-            updateActivatedWindowSet();
+            ActiveWindowsWatcher.addActiveWindow(frame);
             myFrame.validate();
           }
         });

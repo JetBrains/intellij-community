@@ -33,7 +33,6 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.IdeFrameEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.FocusManagerImpl;
-import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.mac.touchbar.TouchBarsManager;
 import com.intellij.util.Alarm;
@@ -75,59 +74,6 @@ public final class IdeEventQueue extends EventQueue {
   private static final boolean JAVA11_ON_MAC = SystemInfo.isMac && SystemInfo.isJavaVersionAtLeast(11, 0, 0);
   private static TransactionGuardImpl ourTransactionGuard;
   private static ProgressManager ourProgressManager;
-
-  private final static LinkedHashSet<Window> activatedWindows = new LinkedHashSet<>();
-
-  public boolean isTheCurrentWindowOnTheActivatedList(@NotNull Window w) {
-    updateActivatedWindowSet();
-    return activatedWindows.contains(w);
-  }
-
-  public static void updateActivatedWindowSet() {
-    for (Iterator<Window> iter = activatedWindows.iterator(); iter.hasNext(); ) {
-      Window window = iter.next();
-      if (!window.isVisible() || UIUtil.isMinimized(window) || AppUIUtil.isInFullscreen(window)) {
-        iter.remove();
-      }
-    }
-    // The list can be empty if all windows are in fullscreen or minimized state
-  }
-
-  public Window nextWindowAfter (@NotNull Window w) {
-    assert activatedWindows.contains(w);
-
-    Window[] windows = activatedWindows.toArray(new Window[0]);
-
-    if (w.equals(windows[windows.length - 1])) {
-      return windows[0];
-    }
-
-    for (int i = (windows.length - 2); i >= 0; i--) {
-      if (w.equals(windows[i])) {
-        return windows[i + 1];
-      }
-    }
-
-    throw new IllegalArgumentException("The window after "  + w.getName() +  " has not been found");
-  }
-
-  public Window nextWindowBefore (@NotNull Window w) {
-      assert activatedWindows.contains(w);
-
-    Window[] windows = activatedWindows.toArray(new Window[0]);
-
-      if (w.equals(windows[0])) {
-        return windows[windows.length - 1];
-      }
-
-      for (int i = 1; i < windows.length; i++) {
-        if (w.equals(windows[i])) {
-          return windows[i - 1];
-        }
-      }
-
-      throw new IllegalArgumentException("The window after "  + w.getName() +  " has not been found");
-    }
 
   /**
    * Adding/Removing of "idle" listeners should be thread safe.
@@ -410,8 +356,8 @@ public final class IdeEventQueue extends EventQueue {
   public void dispatchEvent(@NotNull AWTEvent e) {
 
     if (e.getID() == WindowEvent.WINDOW_ACTIVATED) {
-      activatedWindows.add((Window)e.getSource());
-      updateActivatedWindowSet();
+      ActiveWindowsWatcher.addActiveWindow((Window)e.getSource());
+
     }
 
     long startedAt = System.currentTimeMillis();
