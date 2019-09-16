@@ -8,7 +8,9 @@ import com.intellij.execution.configurations.*;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.junit.RefactoringListeners;
 import com.intellij.execution.remote.LanguageRuntimeConfiguration;
+import com.intellij.execution.remote.LanguageRuntimeType;
 import com.intellij.execution.remote.RemoteTargetConfiguration;
+import com.intellij.execution.remote.java.JavaLanguageRuntimeType;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ProgramParametersUtil;
@@ -268,6 +270,12 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
       //todo[remoteServers]: find Java config
     }
     return true;
+  }
+
+  @Nullable
+  @Override
+  public LanguageRuntimeType<?> getDefaultLanguageRuntimeType() {
+    return LanguageRuntimeType.Companion.getEXTENSION_NAME().findExtension(JavaLanguageRuntimeType.class);
   }
 
   @Nullable
