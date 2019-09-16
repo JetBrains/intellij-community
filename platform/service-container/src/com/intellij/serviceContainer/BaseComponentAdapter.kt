@@ -8,7 +8,9 @@ import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Disposer
 import org.picocontainer.ComponentAdapter
 import org.picocontainer.PicoContainer
@@ -67,12 +69,12 @@ internal abstract class BaseComponentAdapter(internal val componentManager: Plat
     if (instance != null || !createIfNeeded) {
       return instance
     }
-    return getInstanceUncached(componentManager, indicator)
+    return getInstanceUncached(componentManager, indicator ?: ProgressManager.getGlobalProgressIndicator())
   }
 
   private fun <T : Any> getInstanceUncached(componentManager: PlatformComponentManagerImpl, indicator: ProgressIndicator?): T? {
     LoadingPhase.COMPONENT_REGISTERED.assertAtLeast()
-    checkContainerIsActive(componentManager)
+    checkContainerIsActive(componentManager, indicator)
 
     synchronized(this) {
       @Suppress("UNCHECKED_CAST")
@@ -91,6 +93,10 @@ internal abstract class BaseComponentAdapter(internal val componentManager: Plat
         val startTime = StartUpMeasurer.getCurrentTime()
         @Suppress("UNCHECKED_CAST")
         val implementationClass = getImplementationClass() as Class<T>
+
+        // check after loading class once again
+        checkContainerIsActive(componentManager, indicator)
+
         instance = doCreateInstance(componentManager, implementationClass, indicator)
         getActivityCategory(componentManager)?.let { category ->
           StartUpMeasurer.addCompletedActivity(startTime, implementationClass, category, pluginId.idString)
@@ -105,10 +111,18 @@ internal abstract class BaseComponentAdapter(internal val componentManager: Plat
     }
   }
 
-  private fun checkContainerIsActive(componentManager: PlatformComponentManagerImpl) {
+  private fun checkContainerIsActive(componentManager: PlatformComponentManagerImpl, indicator: ProgressIndicator?) {
     if (componentManager.isContainerDisposedOrDisposeInProgress()) {
-      throw PluginException("Cannot create ${toString()} because container is already disposed (container=${componentManager})", pluginId)
+      val error = PluginException("Cannot create ${toString()} because container is already disposed (container=${componentManager})", pluginId)
+      if (indicator == null) {
+        throw error
+      }
+      else {
+        throw ProcessCanceledException(error)
+      }
     }
+
+    indicator?.checkCanceled()
   }
 
   protected abstract fun getActivityCategory(componentManager: PlatformComponentManagerImpl): ActivityCategory?
