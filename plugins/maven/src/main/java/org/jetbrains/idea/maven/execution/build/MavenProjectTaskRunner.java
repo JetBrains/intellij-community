@@ -6,9 +6,8 @@ import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.execution.configurations.RunConfigurationModule;
 import com.intellij.execution.configurations.RunProfile;
-import com.intellij.execution.process.ProcessAdapter;
-import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.ui.RunContentManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
@@ -16,9 +15,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactProperties;
 import com.intellij.packaging.artifacts.ArtifactPropertiesProvider;
@@ -29,14 +26,12 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.execution.MavenRunner;
 import org.jetbrains.idea.maven.execution.MavenRunnerParameters;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
-import org.jetbrains.idea.maven.project.MavenConsole;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.tasks.TasksBundle;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static java.util.Collections.emptyList;
@@ -226,44 +221,18 @@ public class MavenProjectTaskRunner extends ProjectTaskRunner {
                               @NotNull List<MavenRunnerParameters> commands,
                               @NotNull ProjectTaskContext context,
                               @Nullable ProjectTaskNotification callback) {
+
     ApplicationManager.getApplication().invokeAndWait(() -> {
       AtomicInteger errors = new AtomicInteger();
       AtomicInteger warnings = new AtomicInteger();
-      MavenConsole console = MavenConsole.createGuiMavenConsole(project, title, project.getBasePath(), ToolWindowId.BUILD, 0);
-
-      console.addProcessListener(new ProcessAdapter() {
-
-        @Override
-        public void processTerminated(@NotNull ProcessEvent event) {
-          super.processTerminated(event);
-        }
-
-        @Override
-        public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
-          String line = event.getText();
-
-          Matcher errorsMatcher = ERRORS_NUMBER_PATTERN.matcher(line);
-          if (errorsMatcher.matches()) {
-            try {
-              errors.addAndGet(Integer.parseInt(errorsMatcher.group(1)));
-            }
-            catch (NumberFormatException ignore) {
-            }
-          }
-
-          Matcher warningMatcher = WARNING_PATTERN.matcher(line);
-          if (warningMatcher.find()) {
-            warnings.incrementAndGet();
-          }
-        }
-      });
 
       FileDocumentManager.getInstance().saveAllDocuments();
+      preinitRunContentManager(project);
 
       new Task.Backgroundable(project, TasksBundle.message("maven.tasks.executing"), true) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
-          mavenRunner.runBatch(commands, null, null, TasksBundle.message("maven.tasks.executing"), indicator, console);
+          mavenRunner.runBatch(commands, null, null, TasksBundle.message("maven.tasks.executing"), indicator, null, true);
         }
 
         @Override
@@ -298,6 +267,10 @@ public class MavenProjectTaskRunner extends ProjectTaskRunner {
         }
       }.queue();
     });
+  }
+
+  private static void preinitRunContentManager(Project project) {
+    RunContentManager.getInstance(project);
   }
 
   private static void buildModuleFiles(@NotNull Project project,

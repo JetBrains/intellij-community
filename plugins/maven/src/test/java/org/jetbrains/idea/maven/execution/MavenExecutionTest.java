@@ -166,7 +166,7 @@ public class MavenExecutionTest extends MavenImportingTestCase {
             }
           });
         }
-      }));
+      }, false));
     sema.waitFor();
   }
 }
