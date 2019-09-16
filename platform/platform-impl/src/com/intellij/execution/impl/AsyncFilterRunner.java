@@ -137,6 +137,7 @@ class AsyncFilterRunner {
   }
 
   private void runTasks() {
+    ApplicationManager.getApplication().assertReadAccessAllowed();
     if (myEditor.isDisposed()) return;
 
     while (!myQueue.isEmpty()) {

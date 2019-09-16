@@ -29,6 +29,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.localVcs.UpToDateLineNumberProvider;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Trinity;
@@ -100,7 +101,7 @@ class VcsContentAnnotationExceptionFilter implements Filter, FilterMixin {
       final int lineEndOffset = copiedFragment.getLineEndOffset(i);
       final ExceptionWorker worker = new ExceptionWorker(myCache);
       final String lineText = copiedFragment.getText(new TextRange(lineStartOffset, lineEndOffset));
-      if (ReadAction.compute(() -> worker.execute(lineText, lineEndOffset)) != null) {
+      if (ReadAction.compute(() -> DumbService.isDumb(myProject) ? null : worker.execute(lineText, lineEndOffset)) != null) {
         VirtualFile vf = worker.getFile().getVirtualFile();
         if (vf.getFileSystem().isReadOnly()) continue;
 
