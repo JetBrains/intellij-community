@@ -733,8 +733,11 @@ public final class TreeUtil {
     int lastRow;
     int rowHeight = tree.getRowHeight();
     if (rowHeight > 0) {
-      firstRow = visible.y / rowHeight;
-      lastRow = Math.min((visible.y + visible.height) / rowHeight, rowCount - 1);
+      Insets insets = tree.getInsets();
+      int top = visible.y - insets.top;
+      int bottom = visible.y + visible.height - insets.top;
+      firstRow = Math.max(0, Math.min(top / rowHeight, rowCount - 1));
+      lastRow = Math.max(0, Math.min(bottom / rowHeight, rowCount - 1));
     } else {
       firstRow = tree.getClosestRowForLocation(visible.x, visible.y);
       lastRow = tree.getClosestRowForLocation(visible.x, visible.y + visible.height);
