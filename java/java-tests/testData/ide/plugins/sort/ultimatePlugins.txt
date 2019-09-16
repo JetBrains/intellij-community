@@ -124,6 +124,7 @@
 + com.intellij.spring.ws
 + com.intellij.stats.completion
 + com.intellij.struts2
++ com.intellij.swagger
 + com.intellij.tapestry
 + com.intellij.tasks
 + com.intellij.tasks.timeTracking
