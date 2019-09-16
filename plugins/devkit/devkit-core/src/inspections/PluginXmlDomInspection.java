@@ -407,8 +407,8 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
                            DevKitBundle.message("inspections.plugin.xml.plugin.should.have.jetbrains.vendor"),
                            new AddMissingMainTag("Specify JetBrains as vendor", vendor, PluginManagerMain.JETBRAINS_VENDOR));
     }
-    else if (!PluginManagerMain.isDevelopedByJetBrains(vendor.getValue())) {
-      holder.createProblem(vendor, DevKitBundle.message("inspections.plugin.xml.plugin.should.include.jetbrains.vendor"));
+    else if (!PluginManagerMain.JETBRAINS_VENDOR.equals(vendor.getValue())) {
+      holder.createProblem(vendor, DevKitBundle.message("inspections.plugin.xml.plugin.should.have.jetbrains.vendor"));
     }
     else {
       final String url = vendor.getUrl().getStringValue();
