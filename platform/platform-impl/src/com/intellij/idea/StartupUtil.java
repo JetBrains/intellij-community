@@ -121,7 +121,7 @@ public final class StartupUtil {
 
   public interface AppStarter {
     /* called from IDE init thread */
-    void start(@NotNull CompletionStage<?> initUiTask);
+    void start(@NotNull List<String> args, @NotNull CompletionStage<?> initUiTask);
 
     /* called from IDE init thread */
     default void beforeImportConfigs() {}
@@ -155,29 +155,27 @@ public final class StartupUtil {
     }
   }
 
-  public static void prepareApp(@NotNull String[] args,
-                                @NotNull String mainClass,
-                                @NotNull String methodName) throws Exception {
+  public static void prepareApp(@NotNull String[] args, @NotNull String mainClass) throws Exception {
     Activity fjp = StartUpMeasurer.startMainActivity("ForkJoin CommonPool configuration");
     IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(Main.isHeadless(args));
     fjp.end();
 
     LoadingPhase.setStrictMode();
 
-    Activity scheduleLafInitActivity = StartUpMeasurer.startMainActivity("LaF init scheduling");
+    Activity activity = StartUpMeasurer.startMainActivity("main class loading scheduling");
     ExecutorService executorService = AppExecutorUtil.getAppExecutorService();
 
-    Future<Method> mainStartFuture = executorService.submit(() -> {
-      Activity activity = StartUpMeasurer.startActivity("main class loading");
-      Class<?> aClass = Class.forName(mainClass);
-      Method method = aClass.getDeclaredMethod(methodName, String[].class, CompletableFuture.class, Logger.class, boolean.class);
-      method.setAccessible(true);
-      activity.end();
-      return method;
+    Future<Class<AppStarter>> mainStartFuture = executorService.submit(() -> {
+      Activity subActivity = StartUpMeasurer.startActivity("main class loading");
+      @SuppressWarnings("unchecked")
+      Class<AppStarter> aClass = (Class<AppStarter>)Class.forName(mainClass);
+      subActivity.end();
+      return aClass;
     });
 
+    activity = activity.endAndStart("LaF init scheduling");
     CompletableFuture<?> initUiTask = scheduleInitUi(args, executorService);
-    scheduleLafInitActivity.end();
+    activity.end();
 
     configureLog4j();
 
@@ -188,30 +186,32 @@ public final class StartupUtil {
     // this check must be performed before system directories are locked
     boolean configImportNeeded = !Main.isHeadless() && !Files.exists(Paths.get(PathManager.getConfigPath()));
 
-    Activity dirsAndLogs = StartUpMeasurer.startMainActivity("system dirs checking");
-    if (!checkSystemDirs()) {  // note: uses config directory!
+    activity = StartUpMeasurer.startMainActivity("system dirs checking");
+    // note: uses config directory
+    if (!checkSystemDirs()) {
       System.exit(Main.DIR_CHECK_FAILED);
     }
-    dirsAndLogs = dirsAndLogs.endAndStart("system dirs locking");
+    activity = activity.endAndStart("system dirs locking");
     lockSystemDirs(args);
-    dirsAndLogs = dirsAndLogs.endAndStart("file logger configuration");
-    Logger log = setupLogger();  // log initialization should happen only after locking the system directory
-    dirsAndLogs.end();
+    activity = activity.endAndStart("file logger configuration");
+    // log initialization should happen only after locking the system directory
+    Logger log = setupLogger();
+    activity.end();
 
     executorService.execute(() -> {
       ApplicationInfo appInfo = ApplicationInfoImpl.getShadowInstance();
-      Activity activity = StartUpMeasurer.startActivity("essential IDE info logging");
+      Activity subActivity = StartUpMeasurer.startActivity("essential IDE info logging");
       logEssentialInfoAboutIde(log, appInfo);
-      activity.end();
+      subActivity.end();
     });
 
     List<Future<?>> futures = new ArrayList<>();
     futures.add(executorService.submit(() -> {
-      Activity activity = StartUpMeasurer.startActivity("system libs setup");
+      Activity subActivity = StartUpMeasurer.startActivity("system libs setup");
       setupSystemLibraries();
-      activity = activity.endAndStart("process env fixing");
+      subActivity = subActivity.endAndStart("process env fixing");
       fixProcessEnvironment(log);
-      activity.end();
+      subActivity.end();
     }));
 
     if (!configImportNeeded) {
@@ -222,20 +222,21 @@ public final class StartupUtil {
     executorService.execute(() -> loadSystemLibraries(log));
 
     Activity waitTaskActivity = StartUpMeasurer.startMainActivity("tasks waiting");
-    for (Future<?> future : futures) future.get();
+    for (Future<?> future : futures) {
+      future.get();
+    }
     waitTaskActivity.end();
     futures.clear();
 
-    Method method = mainStartFuture.get();
-    Object[] argsArray = {args, initUiTask, log, configImportNeeded};
-
-    method.invoke(null, argsArray);
+    Class<AppStarter> aClass = mainStartFuture.get();
+    startApp(args, initUiTask, log, configImportNeeded, aClass.newInstance());
   }
 
-  static void startApp(@NotNull CompletableFuture<?> initUiTask,
-                       @NotNull Logger log,
-                       boolean configImportNeeded,
-                       @NotNull AppStarter appStarter) throws Exception {
+  private static void startApp(@NotNull String[] args,
+                               @NotNull CompletableFuture<?> initUiTask,
+                               @NotNull Logger log,
+                               boolean configImportNeeded,
+                               @NotNull AppStarter appStarter) throws Exception {
     if (!Main.isHeadless()) {
       Activity activity = StartUpMeasurer.startMainActivity("config importing");
 
@@ -261,7 +262,7 @@ public final class StartupUtil {
       public void invokeAndWait(@NotNull Runnable task) {
         runInEdtAndWait(log, task, initUiTask);
       }
-    }, () -> appStarter.start(initUiTask));
+    }, () -> appStarter.start(Arrays.asList(args), initUiTask));
   }
 
   @NotNull

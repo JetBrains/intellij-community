@@ -65,7 +65,7 @@ public final class Main {
     }
 
     try {
-      Bootstrap.main(args, Main.class.getName() + "Impl", "start", startupTimings);
+      Bootstrap.main(args, Main.class.getName() + "Impl", startupTimings);
     }
     catch (Throwable t) {
       showMessage("Start Failed", t);

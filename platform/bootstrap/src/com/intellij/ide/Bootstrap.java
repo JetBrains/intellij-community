@@ -6,15 +6,12 @@ import com.intellij.openapi.application.PathManager;
 import java.lang.reflect.Method;
 import java.util.LinkedHashMap;
 
-/**
- * @author max
- */
 public final class Bootstrap {
   private static final String MAIN_RUNNER = "com.intellij.ide.plugins.MainRunner";
 
   private Bootstrap() { }
 
-  public static void main(String[] args, String mainClass, String methodName, LinkedHashMap<String, Long> startupTimings) throws Exception {
+  public static void main(String[] args, String mainClass, LinkedHashMap<String, Long> startupTimings) throws Exception {
     startupTimings.put("properties loading", System.nanoTime());
     PathManager.loadProperties();
 
@@ -25,8 +22,8 @@ public final class Bootstrap {
     startupTimings.put("MainRunner search", System.nanoTime());
     Class<?> klass = Class.forName(MAIN_RUNNER, true, newClassLoader);
     WindowsCommandLineProcessor.ourMainRunnerClass = klass;
-    Method startMethod = klass.getDeclaredMethod("start", String.class, String.class, String[].class, LinkedHashMap.class);
+    Method startMethod = klass.getDeclaredMethod("start", String.class, String[].class, LinkedHashMap.class);
     startMethod.setAccessible(true);
-    startMethod.invoke(null, mainClass, methodName, args, startupTimings);
+    startMethod.invoke(null, mainClass, args, startupTimings);
   }
 }

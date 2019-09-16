@@ -302,7 +302,7 @@ private fun addActivateAndWindowsCliListeners(app: ApplicationImpl) {
 }
 
 @JvmOverloads
-fun initApplication(rawArgs: Array<String>, initUiTask: CompletionStage<*> = CompletableFuture.completedFuture(null)) {
+fun initApplication(rawArgs: List<String>, initUiTask: CompletionStage<*> = CompletableFuture.completedFuture(null)) {
   val initAppActivity = MainRunner.startupStart.endAndStart(Phases.INIT_APP)
   val pluginDescriptorsFuture = CompletableFuture<List<IdeaPluginDescriptor>>()
   initUiTask
@@ -559,17 +559,16 @@ private fun invokeLaterWithAnyModality(name: String, task: () -> Unit) {
  * @see SAFE_JAVA_ENV_PARAMETERS
  */
 @Suppress("SpellCheckingInspection")
-private fun processProgramArguments(args: Array<String>): List<String> {
+private fun processProgramArguments(args: List<String>): List<String> {
   if (args.isEmpty()) {
     return emptyList()
   }
 
   val arguments = mutableListOf<String>()
-  val safeKeys = SAFE_JAVA_ENV_PARAMETERS.toList()
   for (arg in args) {
     if (arg.startsWith("-D")) {
       val keyValue = arg.substring(2).split('=')
-      if (keyValue.size == 2 && safeKeys.contains(keyValue[0])) {
+      if (keyValue.size == 2 && SAFE_JAVA_ENV_PARAMETERS.contains(keyValue[0])) {
         System.setProperty(keyValue[0], keyValue[1])
         continue
       }

@@ -11,14 +11,13 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedHashMap;
 
-public final class MainRunner {
+public final class MainRunner  {
   @SuppressWarnings("StaticNonFinalField") public static WindowsCommandLineListener LISTENER;
   @SuppressWarnings("StaticNonFinalField") public static Activity startupStart;
 
   /** Called via reflection from {@link com.intellij.ide.Bootstrap#main}. */
   @SuppressWarnings("UnusedDeclaration")
   private static void start(@NotNull String mainClass,
-                            @NotNull String methodName,
                             @NotNull String[] args,
                             @NotNull LinkedHashMap<String, Long> startupTimings) {
     StartUpMeasurer.addTimings(startupTimings, "bootstrap");
@@ -34,16 +33,14 @@ public final class MainRunner {
       }
     };
 
-    Runnable runnable = () -> {
+    new Thread(threadGroup, () -> {
       try {
-        StartupUtil.prepareApp(args, mainClass, methodName);
+        StartupUtil.prepareApp(args, mainClass);
       }
       catch (Throwable t) {
         throw new StartupAbortedException(t);
       }
-    };
-
-    new Thread(threadGroup, runnable, "Idea Main Thread").start();
+    }, "Idea Main Thread").start();
   }
 
   /** Called via reflection from {@link WindowsCommandLineProcessor#processWindowsLauncherCommandLine}. */
