@@ -489,12 +489,18 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
       Point point = e.getPoint();
       int index = myList.locationToIndex(point);
 
-      if (index != myLastSelectedIndex && isSelectableAt(index)) {
-        if (!isMultiSelectionEnabled() || !UIUtil.isSelectionButtonDown(e) && myList.getSelectedIndices().length <= 1) {
-          myList.setSelectedIndex(index);
+      if (isSelectableAt(index)) {
+        if (index != myLastSelectedIndex) {
+          if (!isMultiSelectionEnabled() || !UIUtil.isSelectionButtonDown(e) && myList.getSelectedIndices().length <= 1) {
+            myList.setSelectedIndex(index);
+          }
+          restartTimer();
+          myLastSelectedIndex = index;
         }
-        restartTimer();
-        myLastSelectedIndex = index;
+      }
+      else {
+        myList.clearSelection();
+        myLastSelectedIndex = -1;
       }
 
       notifyParentOnChildSelection();
