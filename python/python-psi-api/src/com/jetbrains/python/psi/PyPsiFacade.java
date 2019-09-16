@@ -78,4 +78,7 @@ public abstract class PyPsiFacade {
 
   @Nullable
   public abstract String findShortestImportableName(@NotNull VirtualFile targetFile, @NotNull PsiElement anchor);
+
+  @NotNull
+  public abstract LanguageLevel getLanguageLevel(@NotNull PsiElement element);
 }

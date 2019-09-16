@@ -18,7 +18,6 @@ package com.jetbrains.python.psi;
 import com.google.common.collect.ImmutableList;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -204,11 +203,7 @@ public enum LanguageLevel {
 
   @NotNull
   public static LanguageLevel forElement(@NotNull PsiElement element) {
-    final PsiFile containingFile = element.getContainingFile();
-    if (containingFile instanceof PyFile) {
-      return ((PyFile)containingFile).getLanguageLevel();
-    }
-    return getDefault();
+    return PyPsiFacade.getInstance(element.getProject()).getLanguageLevel(element);
   }
 
   @NotNull

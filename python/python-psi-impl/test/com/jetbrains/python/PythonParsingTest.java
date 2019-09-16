@@ -22,6 +22,8 @@ import com.intellij.testFramework.ParsingTestCase;
 import com.intellij.testFramework.TestDataPath;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyPsiFacade;
+import com.jetbrains.python.psi.impl.PyPsiFacadeImpl;
 import com.jetbrains.python.psi.impl.PythonASTFactory;
 import org.jetbrains.annotations.NotNull;
 
@@ -50,6 +52,7 @@ public class PythonParsingTest extends ParsingTestCase {
     registerExtension(PythonDialectsTokenSetContributor.EP_NAME, new PythonTokenSetContributor());
     addExplicitExtension(LanguageASTFactory.INSTANCE, PythonLanguage.getInstance(), new PythonASTFactory());
     PythonDialectsTokenSetProvider.reset();
+    getProject().registerService(PyPsiFacade.class, PyPsiFacadeImpl.class);
   }
 
   @Override

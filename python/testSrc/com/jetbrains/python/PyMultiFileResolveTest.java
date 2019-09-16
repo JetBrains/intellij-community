@@ -534,9 +534,14 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
 
   // PY-19989
   public void testAmbiguousImplicitRelativeImport() {
-    prepareTestDirectory();
-    assertSameElements(doMultiResolveAndGetFileUrls("pkg2/__init__.py"), "pkg2/mod.py");
-    assertSameElements(doMultiResolveAndGetFileUrls("pkg/__init__.py"), "pkg/mod.py");
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON27,
+      () -> {
+        prepareTestDirectory();
+        assertSameElements(doMultiResolveAndGetFileUrls("pkg2/__init__.py"), "pkg2/mod.py");
+        assertSameElements(doMultiResolveAndGetFileUrls("pkg/__init__.py"), "pkg/mod.py");
+      }
+    );
   }
 
   // PY-21088

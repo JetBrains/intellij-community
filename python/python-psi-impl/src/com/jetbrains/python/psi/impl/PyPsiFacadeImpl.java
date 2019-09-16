@@ -19,11 +19,12 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ObjectUtils;
-import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyPsiFacade;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyQualifiedNameResolveContext;
 import com.jetbrains.python.psi.resolve.PyResolveImportUtil;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
@@ -35,6 +36,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
+
+import static com.jetbrains.python.psi.LanguageLevel.getDefault;
 
 /**
  * @author yole
@@ -112,5 +115,21 @@ public class PyPsiFacadeImpl extends PyPsiFacade {
   @Override
   public String findShortestImportableName(@NotNull VirtualFile targetFile, @NotNull PsiElement anchor) {
     return QualifiedNameFinder.findShortestImportableName(anchor, targetFile);
+  }
+
+  @NotNull
+  @Override
+  public LanguageLevel getLanguageLevel(@NotNull PsiElement element) {
+    if (element instanceof PsiDirectory) {
+      final PsiDirectory directory = (PsiDirectory)element;
+      return PyUtil.getLanguageLevelForVirtualFile(directory.getProject(), directory.getVirtualFile());
+    }
+
+    final PsiFile containingFile = element.getContainingFile();
+    if (containingFile instanceof PyFile) {
+      return ((PyFile)containingFile).getLanguageLevel();
+    }
+
+    return getDefault();
   }
 }
