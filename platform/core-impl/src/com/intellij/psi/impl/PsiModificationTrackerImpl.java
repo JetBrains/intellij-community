@@ -33,7 +33,7 @@ public class PsiModificationTrackerImpl implements PsiModificationTracker, PsiTr
 
   private final SimpleModificationTracker myAllLanguagesTracker = new SimpleModificationTracker();
   private final Map<Language, SimpleModificationTracker> myLanguageTrackers =
-    ConcurrentFactoryMap.createMap(language -> new SimpleModificationTracker());
+    ConcurrentFactoryMap.createWeakMap(language -> new SimpleModificationTracker());
 
   private final Listener myPublisher;
 
