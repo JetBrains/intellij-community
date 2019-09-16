@@ -5,7 +5,6 @@
  */
 package com.intellij.lang;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.KeyedExtensionCollector;
@@ -37,22 +36,12 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
     this(epName, null);
   }
 
-  public LanguageExtension(@NotNull final ExtensionPointName<KeyedLazyInstance<T>> epName, @Nullable final T defaultImplementation) {
-    this(epName.getName(), defaultImplementation, null);
+  public LanguageExtension(@NotNull final ExtensionPointName<KeyedLazyInstance<T>> epName, @Nullable T defaultImplementation) {
+    this(epName.getName(), defaultImplementation);
   }
 
-  public LanguageExtension(@NotNull @NonNls final String epName, @Nullable final T defaultImplementation) {
-    this(epName, defaultImplementation, null);
-  }
-
-  public LanguageExtension(@NotNull final ExtensionPointName<KeyedLazyInstance<T>> epName,
-                           @Nullable T defaultImplementation,
-                           @Nullable Disposable parentDisposable) {
-    this(epName.getName(), defaultImplementation, parentDisposable);
-  }
-
-  public LanguageExtension(@NonNls String epName, @Nullable T defaultImplementation, @Nullable Disposable parentDisposable) {
-    super(epName, parentDisposable);
+  public LanguageExtension(@NonNls String epName, @Nullable T defaultImplementation) {
+    super(epName);
     myDefaultImplementation = defaultImplementation;
     myCacheKey = Key.create("EXTENSIONS_IN_LANGUAGE_" + epName);
   }

@@ -25,8 +25,6 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
   private static final Logger LOG = Logger.getInstance(KeyedExtensionCollector.class);
 
   protected final String myLock;
-  @Nullable
-  private final Disposable myParentDisposable;
 
   /** Guarded by {@link #myLock} */
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
@@ -39,21 +37,12 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
   protected final AtomicBoolean myEpListenerAdded = new AtomicBoolean();
 
   public KeyedExtensionCollector(@NotNull ExtensionPointName<KeyedLazyInstance<T>> epName) {
-    this(epName.getName(), null);
+    this(epName.getName());
   }
 
   public KeyedExtensionCollector(@NotNull String epName) {
-    this(epName, null);
-  }
-
-  public KeyedExtensionCollector(@NotNull ExtensionPointName<KeyedLazyInstance<T>> epName, @Nullable Disposable parentDisposable) {
-    this(epName.getName(), parentDisposable);
-  }
-
-  public KeyedExtensionCollector(@NotNull String epName, @Nullable Disposable parentDisposable) {
     myEpName = epName;
     myLock = "lock for KeyedExtensionCollector " + epName;
-    myParentDisposable = parentDisposable;
   }
 
   @TestOnly
@@ -90,7 +79,7 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
         myCache.clear();
         myTracker.incModificationCount();
       }
-    }, false, myParentDisposable);
+    }, false, null);
   }
 
   protected void invalidateCacheForExtension(String key) {
