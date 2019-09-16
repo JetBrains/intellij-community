@@ -1038,6 +1038,11 @@ public class GitUtil {
     }
   }
 
+  public static void updateAndRefreshChangedVfs(@NotNull GitRepository repository, @Nullable Hash startHash) {
+    repository.update();
+    refreshChangedVfs(repository, startHash);
+  }
+
   public static void refreshChangedVfs(@NotNull GitRepository repository, @Nullable Hash startHash) {
     Collection<Change> changes = null;
     if (startHash != null) {
