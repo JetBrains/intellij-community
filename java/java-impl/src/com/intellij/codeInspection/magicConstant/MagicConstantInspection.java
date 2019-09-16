@@ -7,6 +7,7 @@ import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
@@ -22,7 +23,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.psi.impl.cache.impl.id.IdIndex;
-import com.intellij.psi.impl.source.tree.injected.InjectedFileViewProvider;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -103,7 +103,7 @@ public class MagicConstantInspection extends AbstractBaseJavaLocalInspectionTool
     return new JavaElementVisitor() {
       @Override
       public void visitJavaFile(PsiJavaFile file) {
-        if (!(file.getViewProvider() instanceof InjectedFileViewProvider)) {
+        if (!InjectedLanguageManager.getInstance(file.getProject()).isInjectedFragment(file)) {
           Runnable fix = getAttachAnnotationsJarFix(file.getProject());
           if (fix != null) {
             fix.run(); // try to attach automatically
