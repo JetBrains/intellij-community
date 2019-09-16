@@ -1,14 +1,14 @@
 <component name="libraryTable">
   <library name="bouncy-castle-provider" type="repository">
-    <properties maven-id="org.bouncycastle:bcpkix-jdk15on:1.62" />
+    <properties maven-id="org.bouncycastle:bcpkix-jdk15on:1.63" />
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/bouncycastle/bcpkix-jdk15on/1.62/bcpkix-jdk15on-1.62.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/bouncycastle/bcprov-jdk15on/1.62/bcprov-jdk15on-1.62.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/bouncycastle/bcpkix-jdk15on/1.63/bcpkix-jdk15on-1.63.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/bouncycastle/bcprov-jdk15on/1.63/bcprov-jdk15on-1.63.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/bouncycastle/bcpkix-jdk15on/1.62/bcpkix-jdk15on-1.62-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/bouncycastle/bcprov-jdk15on/1.62/bcprov-jdk15on-1.62-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/bouncycastle/bcpkix-jdk15on/1.63/bcpkix-jdk15on-1.63-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/bouncycastle/bcprov-jdk15on/1.63/bcprov-jdk15on-1.63-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

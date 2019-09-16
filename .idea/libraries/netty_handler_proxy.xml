@@ -1,6 +1,6 @@
 <component name="libraryTable">
   <library name="netty-handler-proxy" type="repository">
-    <properties maven-id="io.netty:netty-handler-proxy:4.1.38.Final">
+    <properties maven-id="io.netty:netty-handler-proxy:4.1.41.Final">
       <exclude>
         <dependency maven-id="io.netty:netty-common" />
         <dependency maven-id="io.netty:netty-buffer" />
@@ -10,8 +10,8 @@
       </exclude>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-handler-proxy/4.1.38.Final/netty-handler-proxy-4.1.38.Final.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-codec-socks/4.1.38.Final/netty-codec-socks-4.1.38.Final.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-handler-proxy/4.1.41.Final/netty-handler-proxy-4.1.41.Final.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-codec-socks/4.1.41.Final/netty-codec-socks-4.1.41.Final.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />
