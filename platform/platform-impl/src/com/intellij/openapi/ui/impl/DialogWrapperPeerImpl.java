@@ -749,8 +749,6 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       DialogWrapper wrapper = getDialogWrapper();
       if (wrapper != null) wrapper.disposeIfNeeded();
 
-      DialogWrapper.cleanupWindowListeners(this);
-
       final BufferStrategy strategy = getBufferStrategy();
       if (strategy != null) {
         strategy.dispose();
@@ -759,6 +757,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
       removeAll();
       DialogWrapper.cleanupRootPane(rootPane);
+      DialogWrapper.cleanupWindowListeners(this);
       rootPane = null;
 
     }
