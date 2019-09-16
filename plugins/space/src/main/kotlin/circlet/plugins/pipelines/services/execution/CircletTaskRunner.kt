@@ -71,23 +71,7 @@ class CircletTaskRunner(val project: Project) {
             storage,
             CircletIdeaAutomationBootstrapper(),
             automationGraphEngineCommon,
-            object : JobExecutionParameters {
-                override fun set(taskExecutionId: Long, key: String, value: String, constValue: Boolean) {
-                    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-                }
-                override fun get(taskExecutionId: Long, key: String): String? {
-                    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-                }
-                override fun delete(taskExecutionId: Long, key: String) {
-                    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-                }
-                override fun deleteAll(taskExecutionId: Long) {
-                    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-                }
-                override fun initSystemParams(taskExecutionId: Long, taskContext: TaskStartContext) {
-                    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-                }
-            },
+            JobExecutionParametersImpl(),
             tracer
         )
 
