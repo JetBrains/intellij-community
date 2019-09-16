@@ -79,7 +79,7 @@ public class UITheme {
   }
 
   @NotNull
-  public static UITheme loadFromJson(InputStream stream, @NotNull String themeId, @Nullable ClassLoader provider) throws IllegalStateException {
+  public static UITheme loadFromJson(@NotNull InputStream stream, @NotNull String themeId, @Nullable ClassLoader provider) throws IllegalStateException {
     return loadFromJson(stream, themeId, provider, s -> s);
   }
 
