@@ -91,6 +91,11 @@ public class SuspiciousPackagePrivateAccessInspection extends AbstractBaseUastLo
     }
 
     @Override
+    public void processMethodOverriding(@NotNull UMethod method, @NotNull PsiMethod targetElement) {
+      checkOverridePackageLocal(method, targetElement);
+    }
+
+    @Override
     public void processConstructorInvocation(@NotNull UElement sourceNode,
                                              @NotNull PsiClass instantiatedClass,
                                              @Nullable PsiMethod constructor,
@@ -140,6 +145,30 @@ public class SuspiciousPackagePrivateAccessInspection extends AbstractBaseUastLo
             IntentionWrapper.wrapToQuickFixes(fixes.toArray(IntentionAction.EMPTY_ARRAY), targetElement.getContainingFile());
           myProblemsHolder.registerProblem(sourcePsi, elementDescription + " is " + accessType + ", but declared in a different module '"
                                                       + targetModule.getName() + "'",
+                                           ArrayUtil.append(quickFixes,
+                                                            new MarkModulesAsLoadedTogetherFix(sourceModule.getName(),
+                                                                                               targetModule.getName())));
+        }
+      }
+    }
+
+    private void checkOverridePackageLocal(@NotNull UMethod sourceNode, @NotNull PsiJvmMember targetElement) {
+      PsiMethod sourcePsi = sourceNode.getPsi();
+      if (targetElement.hasModifier(JvmModifier.PACKAGE_LOCAL)) {
+        Module targetModule = ModuleUtilCore.findModuleForPsiElement(targetElement);
+        Module sourceModule = ModuleUtilCore.findModuleForPsiElement(sourcePsi);
+        if (isPackageLocalAccessSuspicious(sourceModule, targetModule)) {
+          List<IntentionAction> fixes =
+            JvmElementActionFactories.createModifierActions(targetElement, MemberRequestsKt.modifierRequest(JvmModifier.PUBLIC, true));
+          String elementDescription =
+            StringUtil.removeHtmlTags(StringUtil.capitalize(RefactoringUIUtil.getDescription(targetElement, false)));
+          final String classDescription =
+            StringUtil.removeHtmlTags(RefactoringUIUtil.getDescription(targetElement.getParent(), false));
+          LocalQuickFix[] quickFixes =
+            IntentionWrapper.wrapToQuickFixes(fixes.toArray(IntentionAction.EMPTY_ARRAY), targetElement.getContainingFile());
+          String problem = elementDescription + " overrides a package-private method from " + classDescription +
+                           " which is declared in a different module '" + targetModule.getName() + "'";
+          myProblemsHolder.registerProblem(sourcePsi.getNameIdentifier(), problem,
                                            ArrayUtil.append(quickFixes,
                                                             new MarkModulesAsLoadedTogetherFix(sourceModule.getName(),
                                                                                                targetModule.getName())));
