@@ -25,6 +25,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
 import com.intellij.util.execution.ParametersListUtil;
@@ -201,6 +202,9 @@ public class JdkUtil {
 
     // copies 'javaagent' .jar files to the beginning of the classpath to load agent classes faster
     if (isUrlClassloader(vmParameters)) {
+      if (!(request instanceof IR.LocalRunner.LocalEnvironmentRequest)) {
+        throw new CantRunException("Cannot run application with UrlClassPath on the remote target.");
+      }
       for (String parameter : vmParameters.getParameters()) {
         if (parameter.startsWith(JAVAAGENT)) {
           int agentArgsIdx = parameter.indexOf("=", JAVAAGENT.length());
@@ -318,7 +322,7 @@ public class JdkUtil {
               fileArgs.addAll(vmParameters.getList());
             }
             else {
-              commandLine.addParameters(vmParameters.getList());
+              appendVmParameters(commandLine, request, vmParameters);
             }
             if (classPathParameter != null) {
               fileArgs.add("-classpath");
@@ -373,16 +377,15 @@ public class JdkUtil {
             toWrite.add(param);
           }
           else {
-            commandLine.addParameter(param);
-          }
-        }
-        if (!toWrite.isEmpty()) {
+            appendVmParameter(commandLine, request, param);
+            }
+          }if (!toWrite.isEmpty()) {
           vmParamsFile = FileUtil.createTempFile("idea_vm_params" + pseudoUniquePrefix, null);
           CommandLineWrapperUtil.writeWrapperFile(vmParamsFile, toWrite, cs);
         }
       }
       else {
-        commandLine.addParameters(vmParameters.getList());
+        appendVmParameters(commandLine, request, vmParameters);
       }
 
       appendEncoding(javaParameters, commandLine, vmParameters);
@@ -483,14 +486,14 @@ public class JdkUtil {
             properties.add(param);
           }
           else {
-            commandLine.addParameter(param);
+            appendVmParameter(commandLine, request, param);
           }
         }
         manifest.getMainAttributes().putValue("VM-Options", ParametersListUtil.join(properties));
         manifestText += "VM-Options: " + ParametersListUtil.join(properties) + "\n";
       }
       else {
-        commandLine.addParameters(vmParameters.getList());
+        appendVmParameters(commandLine, request, vmParameters);
       }
 
       appendEncoding(javaParameters, commandLine, vmParameters);
@@ -558,12 +561,8 @@ public class JdkUtil {
                                                     @Nullable JavaLanguageRuntimeConfiguration runtimeConfiguration,
                                                     @NotNull SimpleJavaParameters javaParameters,
                                                     @NotNull ParametersList vmParameters) {
-    for (String vmParameter : vmParameters.getList()) {
-      commandLine.addParameter(vmParameter);
-    }
-
+    appendVmParameters(commandLine, request, vmParameters);
     appendEncoding(javaParameters, commandLine, vmParameters);
-
     PathsList classPath = javaParameters.getClassPath();
     if (!classPath.isEmpty() && !explicitClassPath(vmParameters)) {
       commandLine.addParameter("-classpath");
@@ -578,21 +577,47 @@ public class JdkUtil {
     }
   }
 
+  private static void appendVmParameters(@NotNull IR.NewCommandLine commandLine,
+                                         @NotNull IR.RemoteEnvironmentRequest request,
+                                         @NotNull ParametersList vmParameters) {
+    for (String vmParameter : vmParameters.getList()) {
+      appendVmParameter(commandLine, request, vmParameter);
+    }
+  }
+
+  private static void appendVmParameter(@NotNull IR.NewCommandLine commandLine,
+                                        @NotNull IR.RemoteEnvironmentRequest request,
+                                        @NotNull String vmParameter) {
+    if (vmParameter.startsWith("-agentpath:")) {
+      String value = StringUtil.trimStart(vmParameter, "-agentpath:");
+      int equalsSign = value.indexOf('=');
+      String path = equalsSign > -1 ? value.substring(0, equalsSign) : value;
+      commandLine.addParameter(new IR.MapValue<>(request.createUpload(path), v -> "-agentpath:" + v + value.substring(equalsSign)));
+    }
+    else if (vmParameter.startsWith("-javaagent:")) {
+      String path = StringUtil.trimStart(vmParameter, "-javaagent:");
+      commandLine.addParameter(new IR.MapValue<>(request.createUpload(path), v -> "-javaagent:" + v));
+    }
+    else {
+      commandLine.addParameter(vmParameter);
+    }
+  }
+
   @NotNull
   private static List<IR.RemoteValue<String>> getClassPathValues(@NotNull IR.RemoteEnvironmentRequest request,
                                                                  @Nullable JavaLanguageRuntimeConfiguration runtimeConfiguration,
                                                                  @NotNull SimpleJavaParameters javaParameters) {
+    String localJdkPath = ObjectUtils.doIfNotNull(javaParameters.getJdk(), jdk -> jdk.getHomePath());
+    String remoteJdkPath = runtimeConfiguration != null ? runtimeConfiguration.getHomePath() : "";
+
     ArrayList<IR.RemoteValue<String>> result = new ArrayList<>();
-    Sdk jdk = javaParameters.getJdk();
-    String homePath = jdk != null ? jdk.getHomePath() : null;
-    String remoteHomePath = runtimeConfiguration != null ? runtimeConfiguration.getHomePath() : "";
     for (String path : javaParameters.getClassPath().getPathList()) {
-      if (homePath == null || !path.startsWith(homePath)) {
+      if (localJdkPath == null || !path.startsWith(localJdkPath)) {
         result.add(request.createUpload(path));
       }
       else {
         //todo[remoteServers]: use path separator from remote platform
-        result.add(new IR.FixedValue<>(FileUtil.join(remoteHomePath, path)));
+        result.add(new IR.FixedValue<>(FileUtil.join(remoteJdkPath, StringUtil.trimStart(path, localJdkPath))));
       }
     }
     return result;
