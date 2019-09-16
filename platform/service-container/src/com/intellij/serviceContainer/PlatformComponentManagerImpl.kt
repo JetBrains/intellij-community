@@ -136,7 +136,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
       activity = activity.endAndStart("${activityNamePrefix}extension registration")
     }
 
-    val notifyListeners = LoadingPhase.isStartupComplete()
+    val notifyListeners = LoadingPhase.PROJECT_OPENED.isComplete
     for (descriptor in plugins) {
       descriptor.registerExtensions(extensionArea, this, notifyListeners)
     }
