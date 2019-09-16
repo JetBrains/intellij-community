@@ -18,6 +18,7 @@ import java.util.List;
 /**
  * Provides custom titles and messages used in the MultipleFileMergeDialog and DiffTools invoked from it.
  */
+@ApiStatus.OverrideOnly
 public class MergeDialogCustomizer {
 
   /**
