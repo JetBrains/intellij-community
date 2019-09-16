@@ -19,7 +19,7 @@ import com.intellij.vcs.log.graph.EdgePrintElement;
 import com.intellij.vcs.log.graph.PrintElement;
 import com.intellij.vcs.log.paint.GraphCellPainter;
 import com.intellij.vcs.log.paint.PaintParameters;
-import com.intellij.vcs.log.ui.table.GraphTableModel;
+import com.intellij.vcs.log.ui.table.LogTableColumn;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -88,14 +88,14 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
   }
 
   private int getReferencesWidth(int row) {
-    return getReferencesWidth(row, getValue(myGraphTable.getModel().getValueAt(row, GraphTableModel.COMMIT_COLUMN)));
+    return getReferencesWidth(row, getValue(myGraphTable.getModel().getValueAt(row, LogTableColumn.COMMIT)));
   }
 
   private int getReferencesWidth(int row, @NotNull GraphCommitCell cell) {
     Collection<VcsRef> refs = cell.getRefsToThisCommit();
     if (!refs.isEmpty()) {
       myTemplateComponent.customize(cell, myGraphTable.isRowSelected(row), myGraphTable.hasFocus(),
-                                    row, GraphTableModel.COMMIT_COLUMN);
+                                    row, LogTableColumn.COMMIT.ordinal());
       return myTemplateComponent.getReferencePainter().getSize().width;
     }
 
@@ -103,7 +103,7 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
   }
 
   private int getGraphWidth(int row) {
-    GraphCommitCell cell = getValue(myGraphTable.getModel().getValueAt(row, GraphTableModel.COMMIT_COLUMN));
+    GraphCommitCell cell = getValue(myGraphTable.getModel().getValueAt(row, LogTableColumn.COMMIT));
     return myTemplateComponent.getGraphWidth(cell.getPrintElements());
   }
 

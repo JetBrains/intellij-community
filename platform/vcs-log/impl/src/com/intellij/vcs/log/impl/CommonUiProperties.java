@@ -2,7 +2,7 @@
 package com.intellij.vcs.log.impl;
 
 import com.intellij.vcs.log.impl.VcsLogUiProperties.VcsLogUiProperty;
-import com.intellij.vcs.log.ui.table.GraphTableModel;
+import com.intellij.vcs.log.ui.table.LogTableColumn;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
@@ -12,40 +12,46 @@ import java.util.Map;
 public class CommonUiProperties {
   public static final VcsLogUiProperty<Boolean> SHOW_DETAILS = new VcsLogUiProperty<>("Window.ShowDetails");
   public static final VcsLogUiProperty<Boolean> SHOW_DIFF_PREVIEW = new VcsLogUiProperty<>("Window.ShowDiffPreview");
-  public static final Map<Integer, VcsLogUiProperty<Integer>> COLUMN_WIDTH = new HashMap<>();
+  public static final Map<LogTableColumn, VcsLogUiProperty<Integer>> COLUMN_WIDTH = new HashMap<>();
   public static final VcsLogUiProperty<List<Integer>> COLUMN_ORDER = new VcsLogUiProperty<>("Table.ColumnOrder");
   public static final VcsLogUiProperty<Boolean> SHOW_ROOT_NAMES = new VcsLogUiProperty<>("Table.ShowRootNames");
 
   static {
-    for (int columnIndex : GraphTableModel.DYNAMIC_COLUMNS) {
-      COLUMN_WIDTH.put(columnIndex, new TableColumnProperty(GraphTableModel.COLUMN_NAMES[columnIndex], columnIndex));
+    for (LogTableColumn column : LogTableColumn.DYNAMIC_COLUMNS) {
+      COLUMN_WIDTH.put(column, new TableColumnProperty(column));
     }
   }
 
-  public static void saveColumnWidth(@NotNull VcsLogUiProperties properties, int column, int width) {
-    if (properties.exists(COLUMN_WIDTH.get(column))) {
-      if (properties.get(COLUMN_WIDTH.get(column)) != width) {
-        properties.set(COLUMN_WIDTH.get(column), width);
+  public static void saveColumnWidth(@NotNull VcsLogUiProperties properties, LogTableColumn column, int width) {
+    VcsLogUiProperty<Integer> property = COLUMN_WIDTH.get(column);
+    if (properties.exists(property)) {
+      if (properties.get(property) != width) {
+        properties.set(property, width);
       }
     }
   }
 
-  public static int getColumnWidth(@NotNull VcsLogUiProperties properties, int column) {
-    if (properties.exists(COLUMN_WIDTH.get(column))) {
-      return properties.get(COLUMN_WIDTH.get(column));
+  public static int getColumnWidth(@NotNull VcsLogUiProperties properties, LogTableColumn column) {
+    VcsLogUiProperty<Integer> property = COLUMN_WIDTH.get(column);
+    if (properties.exists(property)) {
+      return properties.get(property);
     }
     return -1;
   }
 
   public static class TableColumnProperty extends VcsLogUiProperty<Integer> {
-    private final int myColumn;
+    private final LogTableColumn myColumn;
 
-    public TableColumnProperty(@NotNull String name, int column) {
-      super("Table." + name + "ColumnWidth");
+    public TableColumnProperty(@NotNull LogTableColumn column) {
+      super("Table." + column.getName() + "ColumnWidth");
       myColumn = column;
     }
 
-    public int getColumn() {
+    public int getColumnIndex() {
+      return myColumn.ordinal();
+    }
+
+    public LogTableColumn getColumn() {
       return myColumn;
     }
   }

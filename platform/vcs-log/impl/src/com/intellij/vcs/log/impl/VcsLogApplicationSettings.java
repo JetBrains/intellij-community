@@ -5,7 +5,7 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.log.ui.table.LogTableColumn;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,7 +17,6 @@ import java.util.Set;
 import static com.intellij.vcs.log.impl.CommonUiProperties.COLUMN_ORDER;
 import static com.intellij.vcs.log.impl.CommonUiProperties.SHOW_DIFF_PREVIEW;
 import static com.intellij.vcs.log.impl.MainVcsLogUiProperties.*;
-import static com.intellij.vcs.log.ui.table.GraphTableModel.*;
 
 @State(name = "Vcs.Log.App.Settings", storages = {@Storage("vcs.xml")})
 public class VcsLogApplicationSettings implements PersistentStateComponent<VcsLogApplicationSettings.State>, VcsLogUiProperties {
@@ -57,7 +56,7 @@ public class VcsLogApplicationSettings implements PersistentStateComponent<VcsLo
     else if (COLUMN_ORDER.equals(property)) {
       List<Integer> order = myState.COLUMN_ORDER;
       if (order == null || order.isEmpty()) {
-        order = ContainerUtil.newArrayList(ROOT_COLUMN, COMMIT_COLUMN, AUTHOR_COLUMN, DATE_COLUMN);
+        order = LogTableColumn.getDefaultOrder();
       }
       return (T)order;
     }
