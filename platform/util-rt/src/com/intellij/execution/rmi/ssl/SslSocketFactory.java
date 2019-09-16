@@ -54,14 +54,26 @@ public class SslSocketFactory extends SSLSocketFactory {
 
   @NotNull
   public static TrustManager[] createTrustManagers(@NotNull String caCertPath) throws Exception {
+    List<X509Certificate> certs = loadCertificates(caCertPath);
+    List<TrustManager> result = new ArrayList<TrustManager>(certs.size());
+    for (X509Certificate cert : certs) {
+      result.add(new MyTrustManager(cert));
+    }
+
+    return new TrustManager[]{new CompositeX509TrustManager(result.toArray(new TrustManager[0]))};
+  }
+
+  @NotNull
+  public static List<X509Certificate> loadCertificates(@NotNull String caCertPath)
+    throws IOException, CertificateException {
     String string = FileUtilRt.loadFile(new File(caCertPath));
     String[] tokens = string.split(END_CERTIFICATE);
-    List<TrustManager> result = new ArrayList<TrustManager>(tokens.length);
+    List<X509Certificate> certs = new ArrayList<X509Certificate>(tokens.length);
     for (String token : tokens) {
       if (token == null || token.trim().length() == 0) continue;
-      result.add(new MyTrustManager(readCertificate(stringStream(token + END_CERTIFICATE))));
+      certs.add(readCertificate(stringStream(token + END_CERTIFICATE)));
     }
-    return new TrustManager[]{new CompositeX509TrustManager(result.toArray(new TrustManager[0]))};
+    return certs;
   }
 
   @NotNull
