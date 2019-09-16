@@ -40,16 +40,18 @@ public class DuplicateKeyInspection extends LocalInspectionTool {
         Map<String, PsiElement> existingKeys = new HashMap<>();
         Set<PsiElement> markedElements = new HashSet<>();
         for(KeyValuePsiElement keyValue : visitor.getCollectedItems()) {
-            if(existingKeys.containsKey(keyValue.getKey())) {
+            final String key = keyValue.getKey();
+
+            if(existingKeys.containsKey(key)) {
                 problemsHolder.registerProblem(keyValue.getElement(), "Duplicate key");
 
-                PsiElement markedElement = existingKeys.get(keyValue.getKey());
+                PsiElement markedElement = existingKeys.get(key);
                 if(!markedElements.contains(markedElement)) {
                     problemsHolder.registerProblem(markedElement, "Duplicate key");
                     markedElements.add(markedElement);
                 }
             } else {
-                existingKeys.put(keyValue.getKey(), keyValue.getElement());
+                existingKeys.put(key, keyValue.getElement());
             }
         }
 

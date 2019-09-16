@@ -25,9 +25,10 @@ class _DotEnvLexer implements FlexLexer {
 
   /** lexical states */
   public static final int YYINITIAL = 0;
-  public static final int WAITING_VALUE = 2;
-  public static final int WAITING_QUOTED_VALUE = 4;
-  public static final int WAITING_COMMENT = 6;
+  public static final int WAITING_KEY = 2;
+  public static final int WAITING_VALUE = 4;
+  public static final int WAITING_QUOTED_VALUE = 6;
+  public static final int WAITING_COMMENT = 8;
 
   /**
    * ZZ_LEXSTATE[l] is the state in the DFA for the lexical state l
@@ -36,7 +37,7 @@ class _DotEnvLexer implements FlexLexer {
    * l is of the form l = 2*k, k a non negative integer
    */
   private static final int ZZ_LEXSTATE[] = { 
-     0,  0,  1,  1,  2,  2,  3, 3
+     0,  0,  1,  1,  2,  2,  3,  3,  4, 4
   };
 
   /** 
@@ -58,8 +59,9 @@ class _DotEnvLexer implements FlexLexer {
 
   /* The ZZ_CMAP_A table has 320 entries */
   static final char ZZ_CMAP_A[] = zzUnpackCMap(
-    "\11\0\1\4\1\2\1\1\1\5\1\3\22\0\1\7\1\0\1\6\1\11\26\0\1\12\2\0\1\12\36\0\1"+
-    "\10\50\0\1\1\242\0\2\1\26\0");
+    "\11\0\1\4\1\2\1\1\1\5\1\3\22\0\1\7\1\0\1\6\1\11\26\0\1\12\2\0\1\12\7\0\1\13"+
+    "\11\0\1\16\1\15\1\0\1\17\1\0\1\20\3\0\1\14\3\0\1\10\10\0\1\13\11\0\1\16\1"+
+    "\15\1\0\1\17\1\0\1\20\3\0\1\14\14\0\1\1\242\0\2\1\26\0");
 
   /** 
    * Translates DFA states to action switch labels.
@@ -67,12 +69,13 @@ class _DotEnvLexer implements FlexLexer {
   private static final int [] ZZ_ACTION = zzUnpackAction();
 
   private static final String ZZ_ACTION_PACKED_0 =
-    "\4\0\2\1\1\2\1\3\1\4\1\5\2\6\2\7"+
-    "\1\10\1\7\1\3\1\11\2\12\1\13\1\12\3\11"+
-    "\1\0\2\4\1\2\1\6\1\2";
+    "\5\0\2\1\1\2\1\3\1\4\1\5\1\1\1\3"+
+    "\2\6\2\7\1\10\1\7\1\3\1\11\2\12\1\13"+
+    "\1\12\3\11\1\0\2\4\1\1\1\2\1\6\1\2"+
+    "\4\1\1\14";
 
   private static int [] zzUnpackAction() {
-    int [] result = new int[31];
+    int [] result = new int[40];
     int offset = 0;
     offset = zzUnpackAction(ZZ_ACTION_PACKED_0, offset, result);
     return result;
@@ -97,13 +100,14 @@ class _DotEnvLexer implements FlexLexer {
   private static final int [] ZZ_ROWMAP = zzUnpackRowMap();
 
   private static final String ZZ_ROWMAP_PACKED_0 =
-    "\0\0\0\13\0\26\0\41\0\54\0\67\0\102\0\115"+
-    "\0\130\0\143\0\156\0\171\0\204\0\102\0\143\0\217"+
-    "\0\232\0\143\0\245\0\260\0\143\0\273\0\306\0\321"+
-    "\0\334\0\115\0\347\0\362\0\171\0\375\0\321";
+    "\0\0\0\21\0\42\0\63\0\104\0\125\0\146\0\167"+
+    "\0\210\0\231\0\252\0\273\0\252\0\314\0\335\0\356"+
+    "\0\167\0\252\0\377\0\u0110\0\252\0\u0121\0\u0132\0\252"+
+    "\0\u0143\0\u0154\0\u0165\0\u0176\0\210\0\u0187\0\u0198\0\u01a9"+
+    "\0\335\0\u01ba\0\u0165\0\u01cb\0\u01dc\0\u01ed\0\u01fe\0\u020f";
 
   private static int [] zzUnpackRowMap() {
-    int [] result = new int[31];
+    int [] result = new int[40];
     int offset = 0;
     offset = zzUnpackRowMap(ZZ_ROWMAP_PACKED_0, offset, result);
     return result;
@@ -126,28 +130,39 @@ class _DotEnvLexer implements FlexLexer {
   private static final int [] ZZ_TRANS = zzUnpackTrans();
 
   private static final String ZZ_TRANS_PACKED_0 =
-    "\1\5\1\6\1\7\1\6\2\7\1\5\1\7\1\10"+
-    "\1\11\1\12\1\13\1\14\2\7\1\15\1\16\1\17"+
-    "\1\20\1\21\1\22\1\13\1\23\1\24\2\7\2\24"+
-    "\1\25\1\24\1\26\2\23\1\27\1\30\2\7\1\31"+
-    "\1\30\1\27\1\31\3\27\2\5\1\0\1\5\2\0"+
-    "\1\5\1\0\1\32\1\5\1\0\1\5\1\6\1\7"+
-    "\1\6\2\7\1\5\1\7\1\32\1\5\2\0\5\7"+
-    "\1\0\1\7\12\0\1\5\3\0\2\11\1\0\1\5"+
-    "\2\33\1\11\1\33\1\34\1\11\1\33\13\0\2\13"+
-    "\2\0\5\13\1\0\2\13\1\35\2\7\2\35\1\13"+
-    "\1\35\1\13\1\0\2\13\1\36\2\7\2\15\1\13"+
-    "\1\15\1\13\1\0\1\13\1\0\3\7\2\20\1\0"+
-    "\1\20\3\0\1\13\3\0\1\13\1\0\5\13\2\23"+
-    "\2\0\2\23\1\0\1\23\1\26\3\23\1\24\2\7"+
-    "\2\24\1\0\1\24\1\26\4\23\2\0\4\23\1\26"+
-    "\2\23\2\27\2\0\10\27\1\37\2\7\2\37\1\27"+
-    "\1\37\4\27\1\31\2\7\2\31\1\27\1\31\3\27"+
-    "\2\33\2\0\11\33\2\0\3\33\1\11\3\33\1\13"+
-    "\1\36\2\7\2\36\1\13\1\36\1\13\1\0\1\13";
+    "\1\6\1\7\1\10\1\7\2\10\1\6\1\10\1\11"+
+    "\1\12\1\13\1\14\6\6\1\7\1\10\1\7\2\10"+
+    "\1\6\1\10\1\11\1\6\1\15\6\6\1\16\1\17"+
+    "\2\10\1\20\1\21\1\22\1\23\1\24\1\25\7\16"+
+    "\1\26\1\27\2\10\2\27\1\30\1\27\1\31\10\26"+
+    "\1\32\1\33\2\10\1\34\1\33\1\32\1\34\11\32"+
+    "\2\6\1\0\1\6\2\0\1\6\1\0\1\35\1\6"+
+    "\1\0\7\6\1\7\1\10\1\7\2\10\1\6\1\10"+
+    "\1\35\1\6\1\0\6\6\1\0\5\10\1\0\1\10"+
+    "\20\0\1\6\11\0\2\12\1\0\1\6\2\36\1\12"+
+    "\1\36\1\37\1\12\1\36\6\12\21\0\2\6\1\0"+
+    "\1\6\2\0\1\6\1\0\1\35\1\6\1\0\1\6"+
+    "\1\40\4\6\2\16\2\0\5\16\1\0\10\16\1\41"+
+    "\2\10\2\41\1\16\1\41\1\16\1\0\10\16\1\42"+
+    "\2\10\2\20\1\16\1\20\1\16\1\0\7\16\1\0"+
+    "\3\10\2\23\1\0\1\23\11\0\1\16\3\0\1\16"+
+    "\1\0\13\16\2\26\2\0\2\26\1\0\1\26\1\31"+
+    "\11\26\1\27\2\10\2\27\1\0\1\27\1\31\12\26"+
+    "\2\0\4\26\1\31\10\26\2\32\2\0\16\32\1\43"+
+    "\2\10\2\43\1\32\1\43\12\32\1\34\2\10\2\34"+
+    "\1\32\1\34\11\32\2\36\2\0\17\36\2\0\3\36"+
+    "\1\12\11\36\2\6\1\0\1\6\2\0\1\6\1\0"+
+    "\1\35\1\6\1\0\2\6\1\44\3\6\1\16\1\42"+
+    "\2\10\2\42\1\16\1\42\1\16\1\0\7\16\2\6"+
+    "\1\0\1\6\2\0\1\6\1\0\1\35\1\6\1\0"+
+    "\3\6\1\45\4\6\1\0\1\6\2\0\1\6\1\0"+
+    "\1\35\1\6\1\0\4\6\1\46\3\6\1\0\1\6"+
+    "\2\0\1\6\1\0\1\35\1\6\1\0\5\6\1\47"+
+    "\2\6\1\0\1\6\2\0\1\6\1\50\1\35\1\6"+
+    "\1\0\6\6\7\0\1\50\11\0";
 
   private static int [] zzUnpackTrans() {
-    int [] result = new int[264];
+    int [] result = new int[544];
     int offset = 0;
     offset = zzUnpackTrans(ZZ_TRANS_PACKED_0, offset, result);
     return result;
@@ -185,11 +200,11 @@ class _DotEnvLexer implements FlexLexer {
   private static final int [] ZZ_ATTRIBUTE = zzUnpackAttribute();
 
   private static final String ZZ_ATTRIBUTE_PACKED_0 =
-    "\4\0\5\1\1\11\4\1\1\11\2\1\1\11\2\1"+
-    "\1\11\4\1\1\0\5\1";
+    "\5\0\5\1\1\11\1\1\1\11\4\1\1\11\2\1"+
+    "\1\11\2\1\1\11\4\1\1\0\13\1";
 
   private static int [] zzUnpackAttribute() {
-    int [] result = new int[31];
+    int [] result = new int[40];
     int offset = 0;
     offset = zzUnpackAttribute(ZZ_ATTRIBUTE_PACKED_0, offset, result);
     return result;
@@ -493,57 +508,62 @@ class _DotEnvLexer implements FlexLexer {
             { yybegin(YYINITIAL); return DotEnvTypes.KEY_CHARS;
             } 
             // fall through
-          case 12: break;
+          case 13: break;
           case 2: 
             { yybegin(YYINITIAL); return TokenType.WHITE_SPACE;
             } 
             // fall through
-          case 13: break;
+          case 14: break;
           case 3: 
             { return TokenType.BAD_CHARACTER;
             } 
             // fall through
-          case 14: break;
+          case 15: break;
           case 4: 
             { yybegin(YYINITIAL); return DotEnvTypes.COMMENT;
             } 
             // fall through
-          case 15: break;
+          case 16: break;
           case 5: 
             { yybegin(WAITING_VALUE); return DotEnvTypes.SEPARATOR;
             } 
             // fall through
-          case 16: break;
+          case 17: break;
           case 6: 
             { yybegin(YYINITIAL); return DotEnvTypes.VALUE_CHARS;
             } 
             // fall through
-          case 17: break;
+          case 18: break;
           case 7: 
             { yybegin(WAITING_VALUE); return TokenType.WHITE_SPACE;
             } 
             // fall through
-          case 18: break;
+          case 19: break;
           case 8: 
             { yybegin(WAITING_QUOTED_VALUE); return DotEnvTypes.QUOTE;
             } 
             // fall through
-          case 19: break;
+          case 20: break;
           case 9: 
             { yybegin(WAITING_COMMENT); return DotEnvTypes.COMMENT;
             } 
             // fall through
-          case 20: break;
+          case 21: break;
           case 10: 
             { yybegin(WAITING_QUOTED_VALUE); return DotEnvTypes.VALUE_CHARS;
             } 
             // fall through
-          case 21: break;
+          case 22: break;
           case 11: 
             { yybegin(WAITING_COMMENT); return DotEnvTypes.QUOTE;
             } 
             // fall through
-          case 22: break;
+          case 23: break;
+          case 12: 
+            { yybegin(WAITING_KEY); return DotEnvTypes.EXPORT;
+            } 
+            // fall through
+          case 24: break;
           default:
             zzScanError(ZZ_NO_MATCH);
           }

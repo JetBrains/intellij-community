@@ -27,7 +27,9 @@ SEPARATOR=[:=]
 KEY_CHARACTER=[^:=\ \n\t\f\\] | "\\ "
 QUOTE=[\"]
 COMMENT=["#"]
+EXPORT_PREFIX=[eE][xX][pP][oO][rR][tT](" ")+
 
+%state WAITING_KEY
 %state WAITING_VALUE
 %state WAITING_QUOTED_VALUE
 %state WAITING_COMMENT
@@ -39,6 +41,10 @@ COMMENT=["#"]
 <YYINITIAL> {KEY_CHARACTER}+                                { yybegin(YYINITIAL); return DotEnvTypes.KEY_CHARS; }
 
 <YYINITIAL> {SEPARATOR}                                     { yybegin(WAITING_VALUE); return DotEnvTypes.SEPARATOR; }
+
+<YYINITIAL> {EXPORT_PREFIX}                                 { yybegin(WAITING_KEY); return DotEnvTypes.EXPORT; }
+
+<WAITING_KEY> {KEY_CHARACTER}+                              { yybegin(YYINITIAL); return DotEnvTypes.KEY_CHARS; }
 
 <WAITING_VALUE> {CRLF}({CRLF}|{WHITE_SPACE})+               { yybegin(YYINITIAL); return TokenType.WHITE_SPACE; }
 

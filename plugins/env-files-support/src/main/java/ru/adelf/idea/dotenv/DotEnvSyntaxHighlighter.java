@@ -46,7 +46,7 @@ class DotEnvSyntaxHighlighter extends SyntaxHighlighterBase {
             return KEY_KEYS;
         } else if (tokenType.equals(DotEnvTypes.VALUE_CHARS)) {
             return VALUE_KEYS;
-        } else if (tokenType.equals(DotEnvTypes.COMMENT)) {
+        } else if (tokenType.equals(DotEnvTypes.COMMENT) || tokenType.equals(DotEnvTypes.EXPORT)) {
             return COMMENT_KEYS;
         } else if (tokenType.equals(TokenType.BAD_CHARACTER)) {
             return BAD_CHAR_KEYS;

@@ -17,7 +17,7 @@
 
 dotEnvFile ::= item_*
 
-private item_ ::= (property|COMMENT|CRLF)
+private item_ ::= (EXPORT? property|COMMENT|CRLF)
 
 key ::= KEY_CHARS
 
