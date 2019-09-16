@@ -24,6 +24,7 @@ import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.platform.ProjectFrameAllocatorKt;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.sun.jna.platform.WindowUtils;
 import gnu.trove.THashMap;
@@ -37,10 +38,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.List;
+import java.util.*;
 
 @State(
   name = "WindowManager",
@@ -150,19 +149,23 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
     return ideFrames.toArray(new ProjectFrameHelper[0]);
   }
 
+  @NotNull
+  @Override
+  public List<ProjectFrameHelper> getProjectFrameHelpers() {
+    return new ArrayList<>(myProjectToFrame.values());
+  }
+
   @Override
   public JFrame findVisibleFrame() {
-    ProjectFrameHelper[] frames = getAllProjectFrames();
-    return frames.length > 0 ? frames[0].getFrame() : (JFrame)WelcomeFrame.getInstance();
+    List<ProjectFrameHelper> frames = WindowManagerEx.getInstanceEx().getProjectFrameHelpers();
+    return frames.isEmpty() ? (JFrame)WelcomeFrame.getInstance() : frames.get(0).getFrame();
   }
 
   @Override
   @Nullable
   public IdeFrameEx findFirstVisibleFrameHelper() {
-    ProjectFrameHelper[] frames = getAllProjectFrames();
-    return frames.length > 0 ? frames[0] : null;
+    return ContainerUtil.getFirstItem(myProjectToFrame.values());
   }
-
 
   @Override
   public void addListener(final WindowManagerListener listener) {

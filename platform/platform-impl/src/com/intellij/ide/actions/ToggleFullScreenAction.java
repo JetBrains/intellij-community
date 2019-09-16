@@ -33,7 +33,11 @@ final class ToggleFullScreenAction extends DumbAwareAction {
     Presentation p = e.getPresentation();
 
     IdeFrameEx frame = null;
-    boolean isApplicable = WindowManager.getInstance().isFullScreenSupportedInCurrentOS() && (frame = getFrameHelper(e.getProject())) != null;
+    boolean isApplicable = WindowManager.getInstance().isFullScreenSupportedInCurrentOS();
+    if (isApplicable) {
+      frame = getFrameHelper(e.getProject());
+      isApplicable = frame != null;
+    }
 
     if (e.getPlace() != ActionPlaces.MAIN_TOOLBAR) {
       p.setVisible(isApplicable);

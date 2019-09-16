@@ -32,8 +32,8 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.win32.IdeaWin32;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.openapi.wm.impl.X11UiUtil;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.IconManager;
@@ -736,17 +736,15 @@ public final class StartupUtil {
 
     EventQueue.invokeLater(() -> {
       try {
-        final IdeFrame[] allFrames = WindowManager.getInstance().getAllProjectFrames();
-        for (IdeFrame ideFrame : allFrames)
-          disableIMRecursively(SwingUtilities.getRoot(ideFrame.getComponent()));
+        for (ProjectFrameHelper frameHelper : WindowManagerEx.getInstanceEx().getProjectFrameHelpers()) {
+          disableIMRecursively(SwingUtilities.getRoot(frameHelper.getFrame()));
+        }
 
-        Class componentClass = ReflectionUtil.forName("java.awt.Component");
-        if (componentClass == null)
+        Class<?> componentClass = ReflectionUtil.forName("java.awt.Component");
+        Method method = ReflectionUtil.getMethod(componentClass, "disableInputMethodSupport");
+        if (method == null) {
           return;
-
-        final Method method = ReflectionUtil.getMethod(componentClass, "disableInputMethodSupport");
-        if (method == null)
-          return;
+        }
 
         method.invoke(componentClass);
         Logger.getInstance(Main.class).info("InputMethods was disabled");

@@ -30,9 +30,9 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.FocusManagerImpl;
+import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.mac.touchbar.TouchBarsManager;
 import com.intellij.util.Alarm;
@@ -877,22 +877,23 @@ public final class IdeEventQueue extends EventQueue {
   }
 
   private static void storeLastFocusedComponent(@NotNull WindowEvent we) {
-    final Window eventWindow = we.getWindow();
+    if (we.getID() != WindowEvent.WINDOW_DEACTIVATED && we.getID() != WindowEvent.WINDOW_LOST_FOCUS) {
+      return;
+    }
 
-    if (we.getID() == WindowEvent.WINDOW_DEACTIVATED || we.getID() == WindowEvent.WINDOW_LOST_FOCUS) {
-      Component frame = ComponentUtil.findUltimateParent(eventWindow);
-      Component focusOwnerInDeactivatedWindow = eventWindow.getMostRecentFocusOwner();
-      IdeFrame[] allProjectFrames = WindowManager.getInstance().getAllProjectFrames();
+    Window eventWindow = we.getWindow();
+    Component focusOwnerInDeactivatedWindow = eventWindow.getMostRecentFocusOwner();
+    if (focusOwnerInDeactivatedWindow == null) {
+      return;
+    }
 
-      if (focusOwnerInDeactivatedWindow != null) {
-        for (IdeFrame ideFrame : allProjectFrames) {
-          JFrame aFrame = WindowManager.getInstance().getFrame(ideFrame.getProject());
-          if (aFrame.equals(frame)) {
-            IdeFocusManager focusManager = IdeFocusManager.getGlobalInstance();
-            if (focusManager instanceof FocusManagerImpl) {
-              ((FocusManagerImpl)focusManager).setLastFocusedAtDeactivation(ideFrame, focusOwnerInDeactivatedWindow);
-            }
-          }
+    Component frame = ComponentUtil.findUltimateParent(eventWindow);
+    for (ProjectFrameHelper frameHelper : WindowManagerEx.getInstanceEx().getProjectFrameHelpers()) {
+      JFrame aFrame = frameHelper.getFrame();
+      if (aFrame.equals(frame)) {
+        IdeFocusManager focusManager = IdeFocusManager.getGlobalInstance();
+        if (focusManager instanceof FocusManagerImpl) {
+          ((FocusManagerImpl)focusManager).setLastFocusedAtDeactivation(frameHelper, focusOwnerInDeactivatedWindow);
         }
       }
     }

@@ -346,6 +346,12 @@ public final class TestWindowManager extends WindowManagerEx {
     frameHelper.getFrame().dispose();
   }
 
+  @NotNull
+  @Override
+  public List<ProjectFrameHelper> getProjectFrameHelpers() {
+    return Collections.emptyList();
+  }
+
   @Nullable
   @Override
   public IdeFrameEx findFirstVisibleFrameHelper() {

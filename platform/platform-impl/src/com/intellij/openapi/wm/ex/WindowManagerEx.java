@@ -16,6 +16,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ComponentEvent;
+import java.util.List;
 
 /**
  * @author Anton Katilin
@@ -129,4 +130,8 @@ public abstract class WindowManagerEx extends WindowManager {
 
   @ApiStatus.Internal
   public abstract void releaseFrame(@NotNull ProjectFrameHelper frameHelper);
+
+  @NotNull
+  @ApiStatus.Internal
+  public abstract List<ProjectFrameHelper> getProjectFrameHelpers();
 }

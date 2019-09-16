@@ -30,9 +30,9 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameDecorator;
-import com.intellij.openapi.wm.impl.ProjectFrameHelper;
-import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
+import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
+import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomFrameDialogContent;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.*;
@@ -93,10 +93,9 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
         }
       }
       if (window == null) {
-        IdeFrame[] frames = myWindowManager.getAllProjectFrames();
-        for (IdeFrame frame : frames) {
-          if (frame instanceof ProjectFrameHelper && ((ProjectFrameHelper)frame).getFrame().isActive()) {
-            window = ((ProjectFrameHelper)frame).getFrame();
+        for (ProjectFrameHelper frameHelper : myWindowManager.getProjectFrameHelpers()) {
+          if (frameHelper.getFrame().isActive()) {
+            window = frameHelper.getFrame();
             break;
           }
         }

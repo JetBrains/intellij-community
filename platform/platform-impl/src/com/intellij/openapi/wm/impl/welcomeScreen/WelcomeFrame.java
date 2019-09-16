@@ -19,7 +19,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.openapi.wm.impl.IdeMenuBar;
-import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.openapi.wm.impl.WindowManagerImpl;
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl;
 import com.intellij.ui.AppUIUtil;
@@ -192,8 +191,7 @@ public final class WelcomeFrame extends JFrame implements IdeFrame, AccessibleCo
     ApplicationManager.getApplication().invokeLater(() -> {
       WindowManagerImpl windowManager = (WindowManagerImpl)WindowManager.getInstance();
       windowManager.disposeRootFrame();
-      ProjectFrameHelper[] frames = windowManager.getAllProjectFrames();
-      if (frames.length == 0) {
+      if (windowManager.getProjectFrameHelpers().isEmpty()) {
         showNow();
       }
     }, ModalityState.NON_MODAL);
