@@ -38,7 +38,7 @@ public final class MainRunner  {
         StartupUtil.prepareApp(args, mainClass);
       }
       catch (Throwable t) {
-        throw new StartupAbortedException(t);
+        StartupAbortedException.processException(t);
       }
     }, "Idea Main Thread").start();
   }

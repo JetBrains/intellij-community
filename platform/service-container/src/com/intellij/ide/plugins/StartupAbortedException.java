@@ -18,24 +18,8 @@ import java.io.StringWriter;
 import java.util.stream.Collectors;
 
 public final class StartupAbortedException extends RuntimeException {
-  private int exitCode = Main.STARTUP_EXCEPTION;
-
-  public StartupAbortedException(Throwable cause) {
-    super(cause);
-  }
-
-  public StartupAbortedException(String message, Throwable cause) {
+  public StartupAbortedException(@NotNull String message, @NotNull Throwable cause) {
     super(message, cause);
-  }
-
-  public int exitCode() {
-    return exitCode;
-  }
-
-  @NotNull
-  public StartupAbortedException exitCode(int exitCode) {
-    this.exitCode = exitCode;
-    return this;
   }
 
   public static void processException(@NotNull Throwable t) {
@@ -55,8 +39,6 @@ public final class StartupAbortedException extends RuntimeException {
       System.exit(Main.INSTALLATION_CORRUPTED);
     }
 
-    StartupAbortedException startupException = findCause(t, StartupAbortedException.class);
-    if (startupException == null) startupException = new StartupAbortedException(t);
     PluginException pluginException = findCause(t, PluginException.class);
     PluginId pluginId = pluginException != null ? pluginException.getPluginId() : null;
 
@@ -94,7 +76,7 @@ public final class StartupAbortedException extends RuntimeException {
     }
     else {
       Main.showMessage("Start Failed", t);
-      System.exit(startupException.exitCode());
+      System.exit(Main.STARTUP_EXCEPTION);
     }
   }
 
