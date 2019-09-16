@@ -30,7 +30,7 @@ import java.util.stream.Stream;
 /**
  * @author max
  */
-public class PyPsiUtils {
+public final class PyPsiUtils {
 
   private static final Logger LOG = Logger.getInstance(PyPsiUtils.class.getName());
 
@@ -38,7 +38,7 @@ public class PyPsiUtils {
   }
 
   @NotNull
-  protected static <T extends PyElement> T[] nodesToPsi(ASTNode[] nodes, T[] array) {
+  static <T extends PyElement> T[] nodesToPsi(ASTNode[] nodes, T[] array) {
     T[] psiElements = ArrayUtil.newArray(ArrayUtil.getComponentType(array), nodes.length);
     for (int i = 0; i < nodes.length; i++) {
       //noinspection unchecked
