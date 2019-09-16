@@ -577,12 +577,12 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
     extractContributor(contributorModel, contributorView, true);
   }
 
-  public List<Object> getChildrenSafe(@NotNull Object value) {
+  public List<Object> getChildrenSafe(@NotNull List<Object> valueSubPath) {
     Content content = myContentManager.getSelectedContent();
     ServiceView serviceView = content == null ? null : getServiceView(content);
     if (serviceView == null) return Collections.emptyList();
 
-    return serviceView.getChildrenSafe(value);
+    return serviceView.getChildrenSafe(valueSubPath);
   }
 
   private class MyContentMangerListener extends ContentManagerAdapter {
