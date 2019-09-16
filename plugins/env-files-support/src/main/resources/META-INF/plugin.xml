@@ -1,10 +1,10 @@
 <idea-plugin>
-  <id>ru.adelf.idea.dotenv</id>
-  <name>.env files support</name>
-  <version>0.8</version>
-  <vendor email="adel.faiz@gmail.com" url="https://adelf.tech">Adel Fayzrakhmanov</vendor>
+    <id>ru.adelf.idea.dotenv</id>
+    <name>.env files support</name>
+    <version>0.8</version>
+    <vendor email="adel.faiz@gmail.com" url="https://adelf.tech">Adel Fayzrakhmanov</vendor>
 
-  <description><![CDATA[
+    <description><![CDATA[
       <a href="https://plugins.jetbrains.com/plugin/9525--env-files-support">Homepage</a> | <a href="https://github.com/adelf/idea-php-dotenv-plugin/">Github</a> | <a href="https://github.com/adelf/idea-php-dotenv-plugin/issues">Issues</a>.<br />
       <br/>
       Features
@@ -16,7 +16,7 @@
       </ul>
     ]]></description>
 
-  <change-notes><![CDATA[
+    <change-notes><![CDATA[
       0.8
       <ul>
         <li>Improved performance by removing additional indexing</li>
@@ -24,50 +24,54 @@
       </ul>
   ]]></change-notes>
 
-  <idea-version since-build="191" until-build="192.*"/>
+    <idea-version since-build="191" until-build="192.*"/>
 
-  <extensionPoints>
-    <extensionPoint qualifiedName="ru.adelf.idea.dotenv.environmentVariablesProvider" interface="ru.adelf.idea.dotenv.api.EnvironmentVariablesProvider"/>
-    <extensionPoint qualifiedName="ru.adelf.idea.dotenv.environmentVariablesUsagesProvider" interface="ru.adelf.idea.dotenv.api.EnvironmentVariablesUsagesProvider"/>
-  </extensionPoints>
+    <extensionPoints>
+        <extensionPoint interface="ru.adelf.idea.dotenv.api.EnvironmentVariablesProvider"
+                        name="environmentVariablesProvider"/>
+        <extensionPoint interface="ru.adelf.idea.dotenv.api.EnvironmentVariablesUsagesProvider"
+                        name="environmentVariablesUsagesProvider"/>
+    </extensionPoints>
 
-  <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.modules.platform</depends>
 
-  <depends optional="true" config-file="php.xml">com.jetbrains.php</depends>
-  <depends optional="true" config-file="ruby.xml">com.intellij.modules.ruby</depends>
-  <depends optional="true" config-file="python.xml">com.intellij.modules.python</depends>
-  <depends optional="true" config-file="js.xml">JavaScript</depends>
-  <depends optional="true" config-file="go.xml">org.jetbrains.plugins.go</depends>
+    <depends optional="true" config-file="php.xml">com.jetbrains.php</depends>
+    <depends optional="true" config-file="ruby.xml">com.intellij.modules.ruby</depends>
+    <depends optional="true" config-file="python.xml">com.intellij.modules.python</depends>
+    <depends optional="true" config-file="js.xml">JavaScript</depends>
+    <depends optional="true" config-file="go.xml">org.jetbrains.plugins.go</depends>
 
-  <depends optional="true" config-file="docker.xml">Docker</depends>
-  <depends optional="true" config-file="yaml.xml">org.jetbrains.plugins.yaml</depends>
+    <depends optional="true" config-file="docker.xml">Docker</depends>
+    <depends optional="true" config-file="yaml.xml">org.jetbrains.plugins.yaml</depends>
 
-  <extensions defaultExtensionNs="com.intellij">
-    <gotoDeclarationHandler implementation="ru.adelf.idea.dotenv.extension.DotEnvKeyGotoHandler"/>
+    <extensions defaultExtensionNs="com.intellij">
+        <gotoDeclarationHandler implementation="ru.adelf.idea.dotenv.extension.DotEnvKeyGotoHandler"/>
 
-    <fileBasedIndex implementation="ru.adelf.idea.dotenv.indexing.DotEnvKeysIndex"/>
-    <fileBasedIndex implementation="ru.adelf.idea.dotenv.indexing.DotEnvKeyValuesIndex"/>
+        <fileBasedIndex implementation="ru.adelf.idea.dotenv.indexing.DotEnvKeysIndex"/>
+        <fileBasedIndex implementation="ru.adelf.idea.dotenv.indexing.DotEnvKeyValuesIndex"/>
 
-    <fileTypeFactory implementation="ru.adelf.idea.dotenv.DotEnvFileTypeFactory"/>
-    <lang.parserDefinition language="DotEnv" implementationClass="ru.adelf.idea.dotenv.DotEnvParserDefinition"/>
-    <lang.commenter language="DotEnv" implementationClass="ru.adelf.idea.dotenv.extension.DotEnvCommenter"/>
+        <fileType name=".env file" extensions="env" fileNames=".env" patterns=".env.*" fieldName="INSTANCE" language="DotEnv"
+                  implementationClass="ru.adelf.idea.dotenv.DotEnvFileType"/>
+        <lang.parserDefinition language="DotEnv" implementationClass="ru.adelf.idea.dotenv.DotEnvParserDefinition"/>
+        <lang.commenter language="DotEnv" implementationClass="ru.adelf.idea.dotenv.extension.DotEnvCommenter"/>
 
-    <localInspection language="DotEnv"
-                     groupName="DotEnv"
-                     shortName="DotEnvDuplicateKeyInspection"
-                     displayName="Duplicate keys"
-                     enabledByDefault="true"
-                     level="WARNING"
-                     implementationClass="ru.adelf.idea.dotenv.inspections.DuplicateKeyInspection"/>
+        <localInspection language="DotEnv"
+                         groupName="DotEnv"
+                         shortName="DotEnvDuplicateKeyInspection"
+                         displayName="Duplicate keys"
+                         enabledByDefault="true"
+                         level="WARNING"
+                         implementationClass="ru.adelf.idea.dotenv.inspections.DuplicateKeyInspection"/>
 
-    <lang.syntaxHighlighterFactory language="DotEnv" implementationClass="ru.adelf.idea.dotenv.DotEnvSyntaxHighlighterFactory"/>
-  </extensions>
+        <lang.syntaxHighlighterFactory language="DotEnv"
+                                       implementationClass="ru.adelf.idea.dotenv.DotEnvSyntaxHighlighterFactory"/>
+    </extensions>
 
-  <extensions defaultExtensionNs="ru.adelf.idea.dotenv">
-    <environmentVariablesProvider implementation="ru.adelf.idea.dotenv.DotEnvVariablesProvider"/>
-  </extensions>
+    <extensions defaultExtensionNs="ru.adelf.idea.dotenv">
+        <environmentVariablesProvider implementation="ru.adelf.idea.dotenv.DotEnvVariablesProvider"/>
+    </extensions>
 
-  <actions>
-  </actions>
+    <actions>
+    </actions>
 
 </idea-plugin>
