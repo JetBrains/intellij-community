@@ -690,7 +690,6 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     int rowHeight = value instanceof Integer ? (Integer)value : 0;
     if (rowHeight <= 0) {
       LOG.warn(key + " = " + value + " in " + UIManager.getLookAndFeel().getName() + "; it may lead to performance degradation");
-      rowHeight = Registry.intValue("ide.laf.manager.default.row.height", 0); // use default row height to increase performance
     }
     defaults.put(key, rowHeight <= 0 ? 0 : JBUIScale.scale((int)(rowHeight / prevScale)));
   }
