@@ -221,14 +221,15 @@ public final class StartupUtil {
 
     executorService.execute(() -> loadSystemLibraries(log));
 
-    Activity waitTaskActivity = StartUpMeasurer.startMainActivity("tasks waiting");
+    activity = StartUpMeasurer.startMainActivity("tasks waiting");
     for (Future<?> future : futures) {
       future.get();
     }
-    waitTaskActivity.end();
     futures.clear();
+    activity = activity.endAndStart("main class loading waiting");
 
     Class<AppStarter> aClass = mainStartFuture.get();
+    activity.end();
     startApp(args, initUiTask, log, configImportNeeded, aClass.newInstance());
   }
 

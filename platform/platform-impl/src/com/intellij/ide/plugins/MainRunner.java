@@ -15,9 +15,8 @@ public final class MainRunner  {
   @SuppressWarnings("StaticNonFinalField") public static WindowsCommandLineListener LISTENER;
   @SuppressWarnings("StaticNonFinalField") public static Activity startupStart;
 
-  /** Called via reflection from {@link com.intellij.ide.Bootstrap#main}. */
-  @SuppressWarnings("UnusedDeclaration")
-  private static void start(@NotNull String mainClass,
+  /** Called via reflection from {@link Main#bootstrap}. */
+  public static void start(@NotNull String mainClass,
                             @NotNull String[] args,
                             @NotNull LinkedHashMap<String, Long> startupTimings) {
     StartUpMeasurer.addTimings(startupTimings, "bootstrap");

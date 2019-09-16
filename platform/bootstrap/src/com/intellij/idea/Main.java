@@ -1,8 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.idea;
 
-import com.intellij.ide.Bootstrap;
+import com.intellij.ide.BootstrapClassLoaderUtil;
+import com.intellij.ide.WindowsCommandLineProcessor;
 import com.intellij.openapi.application.JetBrainsProtocolHandler;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
 
@@ -11,6 +13,7 @@ import java.awt.*;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -65,12 +68,28 @@ public final class Main {
     }
 
     try {
-      Bootstrap.main(args, Main.class.getName() + "Impl", startupTimings);
+      bootstrap(args, startupTimings);
     }
     catch (Throwable t) {
       showMessage("Start Failed", t);
       System.exit(STARTUP_EXCEPTION);
     }
+  }
+
+  private static void bootstrap(String[] args, LinkedHashMap<String, Long> startupTimings) throws Exception {
+    startupTimings.put("properties loading", System.nanoTime());
+    PathManager.loadProperties();
+
+    startupTimings.put("classloader init", System.nanoTime());
+    ClassLoader newClassLoader = BootstrapClassLoaderUtil.initClassLoader();
+    Thread.currentThread().setContextClassLoader(newClassLoader);
+
+    startupTimings.put("MainRunner search", System.nanoTime());
+    Class<?> klass = Class.forName("com.intellij.ide.plugins.MainRunner", true, newClassLoader);
+    WindowsCommandLineProcessor.ourMainRunnerClass = klass;
+    Method startMethod = klass.getMethod("start", String.class, String[].class, LinkedHashMap.class);
+    startMethod.setAccessible(true);
+    startMethod.invoke(null, Main.class.getName() + "Impl", args, startupTimings);
   }
 
   public static boolean isHeadless() {
