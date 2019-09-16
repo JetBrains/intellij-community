@@ -1038,17 +1038,14 @@ public class GitUtil {
     }
   }
 
-  public static void refreshChangedVfs(@NotNull GitRepository repository, @NotNull Hash startHash) {
-    Collection<Change> changes;
-    try {
+  public static void refreshChangedVfs(@NotNull GitRepository repository, @Nullable Hash startHash) {
+    Collection<Change> changes = null;
+    if (startHash != null) {
       Hash currentHash = getHead(repository);
-      changes = GitChangeUtils.getDiff(repository, startHash.asString(), currentHash.asString(), false);
+      if (currentHash != null) {
+        changes = GitChangeUtils.getDiff(repository, startHash.asString(), currentHash.asString(), false);
+      }
     }
-    catch (VcsException e) {
-      LOG.warn(e);
-      changes = null;
-    }
-
     refreshVfs(repository.getRoot(), changes);
   }
 
@@ -1130,10 +1127,14 @@ public class GitUtil {
     return handler;
   }
 
-  @NotNull
-  public static Hash getHead(@NotNull GitRepository repository) throws VcsException {
+  @Nullable
+  public static Hash getHead(@NotNull GitRepository repository) {
     GitCommandResult result = Git.getInstance().tip(repository, HEAD);
-    String head = result.getOutputOrThrow();
+    if (!result.success()) {
+      LOG.warn("Couldn't identify the HEAD for " + repository + ": " + result.getErrorOutputAsJoinedString());
+      return null;
+    }
+    String head = result.getOutputAsJoinedString();
     return HashImpl.build(head);
   }
 }
