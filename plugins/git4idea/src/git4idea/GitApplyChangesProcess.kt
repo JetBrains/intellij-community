@@ -17,14 +17,11 @@ import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.history.VcsRevisionNumber
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer
-import com.intellij.openapi.vcs.update.RefreshVFsSynchronously
-import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.VcsFullCommitDetails
 import com.intellij.vcs.log.util.VcsUserUtil
-import com.intellij.vcsUtil.VcsUtil
-import git4idea.changes.GitChangeUtils
+import git4idea.GitUtil.refreshChangedVfs
 import git4idea.commands.GitCommandResult
 import git4idea.commands.GitLineHandlerListener
 import git4idea.commands.GitSimpleEventDetector
@@ -100,14 +97,12 @@ class GitApplyChangesProcess(private val project: Project,
                              listOf(conflictDetector, localChangesOverwrittenDetector, untrackedFilesDetector))
 
         if (result.success()) {
+          refreshChangedVfs(repository, startHash)
           if (autoCommit) {
             successfulCommits.add(commit)
-            val currentHash = GitUtil.getHead(repository)
-            val changes = GitChangeUtils.getDiff(repository, startHash.asString(), currentHash.asString(), false)
-            if (changes != null) refreshVfsAndMarkDirty(changes) else refreshVfsAndMarkDirty(repository)
           }
           else {
-            refreshVfsAndMarkDirty(repository)
+            VcsDirtyScopeManager.getInstance(project).dirDirtyRecursively(repository.root)
             changeListManager.waitForUpdate(operationName)
             val committed = commit(repository, commit, commitMessage, changeList, successfulCommits,
                                    alreadyPicked)
@@ -118,7 +113,7 @@ class GitApplyChangesProcess(private val project: Project,
           val mergeCompleted = ConflictResolver(project, repository.root, commit.id.toShortString(),
                                                 VcsUserUtil.getShortPresentation(commit.author), commit.subject,
                                                 operationName).merge()
-          refreshVfsAndMarkDirty(repository)
+          VcsDirtyScopeManager.getInstance(project).dirDirtyRecursively(repository.root)
           changeListManager.waitForUpdate(operationName)
 
           if (mergeCompleted) {
@@ -188,7 +183,7 @@ class GitApplyChangesProcess(private val project: Project,
     LOG.debug("Showing commit dialog for changes: ${changes}")
     val committed = showCommitDialogAndWaitForCommit(repository, changeList, commitMessage, changes)
     if (committed) {
-      refreshVfsAndMarkDirty(changes)
+      markDirty(changes)
       changeListManager.waitForUpdate(operationName)
 
       successfulCommits.add(commit)
@@ -203,13 +198,7 @@ class GitApplyChangesProcess(private val project: Project,
   private fun getAllChangesInLogFriendlyPresentation(changeListManagerEx: ChangeListManagerEx) =
     changeListManagerEx.changeLists.map { "[${it.name}] ${it.changes}" }
 
-  private fun refreshVfsAndMarkDirty(repository: GitRepository) {
-    VfsUtil.markDirtyAndRefresh(false, true, false, repository.root)
-    VcsDirtyScopeManager.getInstance(project).filePathsDirty(null, listOf(VcsUtil.getFilePath(repository.root)))
-  }
-
-  private fun refreshVfsAndMarkDirty(changes: Collection<Change>) {
-    RefreshVFsSynchronously.updateChanges(changes)
+  private fun markDirty(changes: Collection<Change>) {
     VcsDirtyScopeManager.getInstance(project).filePathsDirty(ChangesUtil.getPaths(changes), null)
   }
 

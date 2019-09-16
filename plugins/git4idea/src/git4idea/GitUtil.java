@@ -1038,6 +1038,20 @@ public class GitUtil {
     }
   }
 
+  public static void refreshChangedVfs(@NotNull GitRepository repository, @NotNull Hash startHash) {
+    Collection<Change> changes;
+    try {
+      Hash currentHash = getHead(repository);
+      changes = GitChangeUtils.getDiff(repository, startHash.asString(), currentHash.asString(), false);
+    }
+    catch (VcsException e) {
+      LOG.warn(e);
+      changes = null;
+    }
+
+    refreshVfs(repository.getRoot(), changes);
+  }
+
   public static void updateAndRefreshVfs(@NotNull GitRepository repository, @Nullable Collection<? extends Change> changes) {
     repository.update();
     refreshVfs(repository.getRoot(), changes);
