@@ -592,7 +592,8 @@ public class JdkUtil {
       String value = StringUtil.trimStart(vmParameter, "-agentpath:");
       int equalsSign = value.indexOf('=');
       String path = equalsSign > -1 ? value.substring(0, equalsSign) : value;
-      commandLine.addParameter(new IR.MapValue<>(request.createUpload(path), v -> "-agentpath:" + v + value.substring(equalsSign)));
+      String suffix = equalsSign > -1 ? value.substring(equalsSign) : "";
+      commandLine.addParameter(new IR.MapValue<>(request.createUpload(path), v -> "-agentpath:" + v + suffix));
     }
     else if (vmParameter.startsWith("-javaagent:")) {
       String path = StringUtil.trimStart(vmParameter, "-javaagent:");
