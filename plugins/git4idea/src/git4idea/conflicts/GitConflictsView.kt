@@ -30,6 +30,7 @@ import com.intellij.util.Alarm
 import com.intellij.util.FontUtil.spaceAndThinSpace
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
 import git4idea.GitUtil
@@ -62,6 +63,8 @@ class GitConflictsView(private val project: Project) : Disposable {
 
   init {
     conflictsTree = MyChangesTree(project)
+    conflictsTree.setKeepTreeState(true)
+
     updateQueue = MergingUpdateQueue("GitConflictsView", 300, true, conflictsTree, this, null, Alarm.ThreadToUse.POOLED_THREAD)
 
     val actionManager = ActionManager.getInstance()
@@ -133,13 +136,13 @@ class GitConflictsView(private val project: Project) : Disposable {
         reversedRoots.clear()
         reversedRoots.addAll(newReversedRoots)
 
-        rebuildTree()
+        conflictsTree.setChangesToDisplay(conflicts)
+
+        if (conflictsTree.selectionCount == 0) {
+          TreeUtil.promiseSelectFirstLeaf(conflictsTree)
+        }
       }
     })
-  }
-
-  private fun rebuildTree() {
-    conflictsTree.setChangesToDisplay(conflicts)
   }
 
   private fun showMergeWindowForSelection() {
