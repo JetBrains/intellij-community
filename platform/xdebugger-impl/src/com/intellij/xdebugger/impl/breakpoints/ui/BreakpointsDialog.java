@@ -17,6 +17,7 @@ import com.intellij.ui.popup.util.DetailController;
 import com.intellij.ui.popup.util.DetailViewImpl;
 import com.intellij.ui.popup.util.ItemWrapper;
 import com.intellij.ui.popup.util.MasterController;
+import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.util.SingleAlarm;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
@@ -155,7 +156,18 @@ public class BreakpointsDialog extends DialogWrapper {
       }
     }
     else {
-      TreeUtil.expandAll(myTreeController.getTreeView());
+      TreeUtil.expand(myTreeController.getTreeView(),
+        path -> {
+          Object lastPathComponent = path.getLastPathComponent();
+          if (!(lastPathComponent instanceof BreakpointsGroupNode)) {
+            return TreeVisitor.Action.CONTINUE;
+          }
+          return ((BreakpointsGroupNode) lastPathComponent).shouldBeExpandedByDefault() ?
+            TreeVisitor.Action.CONTINUE :
+            TreeVisitor.Action.SKIP_CHILDREN;
+        },
+        treePath -> {
+        });
       myTreeController.selectFirstBreakpointItem();
     }
     selectBreakpoint(myInitialBreakpoint);
