@@ -323,6 +323,11 @@ public class PyIntroduceVariableTest extends PyIntroduceTestCase {
     doTestInplace(null);
   }
 
+  // PY-37555
+  public void testArgumentToUnnamedParameter() {
+    doTestSuggestions(PyStringLiteralExpression.class, "value");
+  }
+
   @Override
   protected String getTestDataPath() {
     return super.getTestDataPath() + "/refactoring/introduceVariable";
