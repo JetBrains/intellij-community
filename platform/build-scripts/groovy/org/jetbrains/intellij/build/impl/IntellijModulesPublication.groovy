@@ -130,7 +130,8 @@ class IntellijModulesPublication {
 
   private File mavenSettings() {
     def server = ''
-    if (options.repositoryPassword != null && options.repositoryUser != null) {
+    if (options.repositoryPassword != null && options.repositoryUser != null &&
+        !options.repositoryPassword.isEmpty() && !options.repositoryUser.isEmpty()) {
       server = '''<server>
         <id>server-id</id>
         <username>${options.repositoryUser}</username>
