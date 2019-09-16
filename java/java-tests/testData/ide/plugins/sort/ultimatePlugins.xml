@@ -815,6 +815,13 @@
     <depends>com.intellij.modules.ultimate</depends>
     <depends>com.intellij.microservices</depends>
   </idea-plugin>
+  <idea-plugin url="file://out/intellij.swagger/META-INF/plugin.xml">
+    <id>com.intellij.swagger</id>
+    <name>Swagger</name>
+    <depends>com.intellij.modules.java</depends>
+    <depends>com.intellij.modules.ultimate</depends>
+    <depends>com.intellij.modules.microservices</depends>
+  </idea-plugin>
   <idea-plugin url="file://out/intellij.puppet/META-INF/plugin.xml">
     <id>com.intellij.lang.puppet</id>
     <name>Puppet</name>
