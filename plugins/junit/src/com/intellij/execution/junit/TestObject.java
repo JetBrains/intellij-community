@@ -304,9 +304,9 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
 
       if (!hasPackageWithDirectories(psiFacade, "org.junit.vintage", globalSearchScope) &&
           hasPackageWithDirectories(psiFacade, "junit.framework", globalSearchScope)) {
-        String version = StringUtil.compareVersionNumbers(launcherVersion, "1.1.0") < 0
-                         ? "4.12." + StringUtil.getShortName(launcherVersion)
-                         : jupiterVersion;
+        String version = VersionComparatorUtil.compare(launcherVersion, "1.1.0") >= 0
+                         ? jupiterVersion
+                         : "4.12." + StringUtil.getShortName(launcherVersion);
         downloadDependenciesWhenRequired(project, classPath,
                                          new RepositoryLibraryProperties("org.junit.vintage", "junit-vintage-engine", version));
       }
