@@ -197,6 +197,8 @@ public class PyNamedTupleStubImpl implements PyNamedTupleStub {
     // fields = ["x", "y"]
     // Point = namedtuple(..., fields)
 
+    // Point = namedtuple(..., field_names=["x", "y"])
+
     // Point = namedtuple(..., "x y")
 
     // Point = namedtuple(..., ("x y"))
@@ -205,7 +207,7 @@ public class PyNamedTupleStubImpl implements PyNamedTupleStub {
 
     // Point = namedtuple(..., ["x", "y"])
 
-    final PyExpression fields = PyPsiUtils.flattenParens(callExpression.getArgument(1, PyExpression.class));
+    final PyExpression fields = getSecondArgumentValue(callExpression, "field_names");
 
     final PyExpression resolvedFields = fields instanceof PyReferenceExpression
                                         ? PyResolveUtil.fullResolveLocally((PyReferenceExpression)fields)
@@ -232,23 +234,38 @@ public class PyNamedTupleStubImpl implements PyNamedTupleStub {
     // fields = [("x", str), ("y", int)]
     // Point = NamedTuple(..., fields)
 
+    // Point = NamedTuple(..., fields=[("x", str), ("y", int)])
+
     // Point = NamedTuple(..., [("x", str), ("y", int)])
 
     // Point = NamedTuple(..., x=str, y=int)
 
-    final PyExpression secondArgument = PyPsiUtils.flattenParens(callExpression.getArgument(1, PyExpression.class));
+    final PyExpression secondArgumentValue = getSecondArgumentValue(callExpression, "fields");
 
-    if (secondArgument instanceof PyKeywordArgument) {
+    if (secondArgumentValue instanceof PyKeywordArgument) {
       final PyExpression[] arguments = callExpression.getArguments();
       return getTypingNTFieldsFromKwArguments(Arrays.asList(arguments).subList(1, arguments.length));
     } else {
-      final PyExpression resolvedFields = secondArgument instanceof PyReferenceExpression
-                                          ? PyResolveUtil.fullResolveLocally((PyReferenceExpression)secondArgument)
-                                          : secondArgument;
+      final PyExpression resolvedFields = secondArgumentValue instanceof PyReferenceExpression
+                                          ? PyResolveUtil.fullResolveLocally((PyReferenceExpression)secondArgumentValue)
+                                          : secondArgumentValue;
       if (!(resolvedFields instanceof PySequenceExpression)) return null;
 
       return getTypingNTFieldsFromIterable((PySequenceExpression)resolvedFields);
     }
+  }
+
+  @Nullable
+  private static PyExpression getSecondArgumentValue(@NotNull PyCallExpression callExpression, @NotNull String possibleKeyword) {
+    final PyExpression secondArgument = callExpression.getArgument(1, PyExpression.class);
+    final PyExpression secondArgumentValue;
+    if (secondArgument instanceof PyKeywordArgument && possibleKeyword.equals(((PyKeywordArgument)secondArgument).getKeyword())) {
+      secondArgumentValue = ((PyKeywordArgument)secondArgument).getValueExpression();
+    }
+    else {
+      secondArgumentValue = secondArgument;
+    }
+    return PyPsiUtils.flattenParens(secondArgumentValue);
   }
 
   @Nullable
