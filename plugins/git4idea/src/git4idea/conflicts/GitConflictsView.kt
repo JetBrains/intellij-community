@@ -98,6 +98,7 @@ class GitConflictsView(private val project: Project) : Disposable {
     connection.subscribe(GitRepository.GIT_REPO_CHANGE, GitRepositoryChangeListener { updateConflicts() })
 
     updateConflicts()
+    updateQueue.sendFlush()
   }
 
   val component: JComponent? get() = panel
