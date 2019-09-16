@@ -24,6 +24,7 @@ public class SslSocketFactory extends SSLSocketFactory {
   public static final String SSL_CLIENT_CERT_PATH = "sslClientCertPath";
   public static final String SSL_CLIENT_KEY_PATH = "sslClientKeyPath";
   public static final String SSL_TRUST_EVERYBODY = "sslTrustEverybody";
+  public static final String SSL_USE_FACTORY = "sslUseFactory";
   private static final String END_CERTIFICATE = "-----END CERTIFICATE-----";
   private final SSLSocketFactory myFactory;
 

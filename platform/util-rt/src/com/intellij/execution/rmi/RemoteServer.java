@@ -38,6 +38,7 @@ import java.rmi.registry.Registry;
 import java.rmi.server.ExportException;
 import java.rmi.server.RMISocketFactory;
 import java.rmi.server.UnicastRemoteObject;
+import java.security.Security;
 import java.util.Hashtable;
 import java.util.Random;
 
@@ -140,7 +141,13 @@ public class RemoteServer {
     boolean caCert = System.getProperty(SslSocketFactory.SSL_CA_CERT_PATH) != null;
     boolean clientCert = System.getProperty(SslSocketFactory.SSL_CLIENT_CERT_PATH) != null;
     boolean clientKey = System.getProperty(SslSocketFactory.SSL_CLIENT_KEY_PATH) != null;
-    if (caCert || clientCert && clientKey) {
+    boolean useFactory = "true".equals(System.getProperty(SslSocketFactory.SSL_USE_FACTORY));
+    if (useFactory) {
+      if (caCert || clientCert && clientKey) {
+        Security.setProperty("ssl.SocketFactory.provider", SslSocketFactory.class.getName());
+      }
+    }
+    else {
       if (caCert) SslTrustStore.setDefault();
       if (clientCert && clientKey) SslKeyStore.setDefault();
     }
