@@ -722,7 +722,12 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
   // true if added
   private synchronized boolean addListener(@NotNull ExtensionPointListener<T> listener) {
     if (ArrayUtil.indexOf(myListeners, listener) != -1) return false;
-    myListeners = ArrayUtil.append(myListeners, listener, listenerArrayFactory());
+    if (listener instanceof ExtensionPointPriorityListener) {
+      myListeners = ArrayUtil.prepend(listener, myListeners, listenerArrayFactory());
+    }
+    else {
+      myListeners = ArrayUtil.append(myListeners, listener, listenerArrayFactory());
+    }
     return true;
   }
 
