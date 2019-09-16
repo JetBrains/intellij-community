@@ -345,7 +345,6 @@ public abstract class JavaTestFrameworkRunnableState<T extends
   }
 
   protected void configureClasspath(final JavaParameters javaParameters) throws CantRunException {
-    configureRTClasspath(javaParameters);
     RunConfigurationModule configurationModule = getConfiguration().getConfigurationModule();
     final String jreHome = getConfiguration().isAlternativeJrePathEnabled() ? getConfiguration().getAlternativeJrePath() : null;
     final int pathType = JavaParameters.JDK_AND_CLASSES_AND_TESTS;
@@ -360,6 +359,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     else {
       JavaParametersUtil.configureProject(getConfiguration().getProject(), javaParameters, pathType, jreHome);
     }
+    configureRTClasspath(javaParameters);
   }
 
   private static void configureModulePath(JavaParameters javaParameters, @NotNull Module module) {

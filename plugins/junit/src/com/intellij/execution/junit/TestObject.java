@@ -52,6 +52,7 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.BaseOutputReader;
+import com.intellij.util.text.VersionComparatorUtil;
 import com.siyeh.ig.junit.JUnitCommonClassNames;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -276,6 +277,15 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     if (!hasPackageWithDirectories(psiFacade, "org.junit.platform.launcher", globalSearchScope)) {
       downloadDependenciesWhenRequired(project, classPath,
                                        new RepositoryLibraryProperties("org.junit.platform", "junit-platform-launcher", launcherVersion));
+    }
+    //for modularized junit ensure launcher is included in the module graph
+    else if (VersionComparatorUtil.compare(launcherVersion, "1.5.0") >= 0) {
+      ParametersList vmParametersList = javaParameters.getVMParametersList();
+      String launcherModuleName = "org.junit.platform.launcher";
+      if (!vmParametersList.hasParameter(launcherModuleName)) {
+        vmParametersList.add("--add-modules");
+        vmParametersList.add(launcherModuleName);
+      }
     }
 
     //add standard engines only if no engine api is present
