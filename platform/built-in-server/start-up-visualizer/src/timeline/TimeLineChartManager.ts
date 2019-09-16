@@ -218,14 +218,14 @@ export class TimelineChartManager extends XYChartManager {
     const colorSet = new am4core.ColorSet()
     const items = transformToTimeLineItems(data.items || [])
     this.maxRowIndex = 0
-    this.computeRowIndex(items, colorSet)
+    this.computeRowIndexForMainActivities(items, colorSet)
 
     items.sort((a, b) => a.rowIndex - b.rowIndex)
 
     return items.concat(this.transformParallelToTimeLineItems(data.prepareAppInitActivities, colorSet))
   }
 
-  private computeRowIndex(items: Array<TimeLineItem>, colorSet: am4core.ColorSet) {
+  private computeRowIndexForMainActivities(items: Array<TimeLineItem>, colorSet: am4core.ColorSet) {
     // we cannot use actual level as row index because in this case labels will be overlapped, so,
     // row index simply incremented till empirical limit
     const offset = this.maxRowIndex
@@ -235,8 +235,12 @@ export class TimelineChartManager extends XYChartManager {
       if (rowIndex > 5 && item.level === 0) {
         rowIndex = offset
       }
-      else if (i !== 0 && item.duration >= LABEL_DURATION_THRESHOLD) {
-        rowIndex++
+      else {
+        // do not append label-less and insignificant activities to significant ones to avoid confusion
+        // (all child activities have the same color)
+        if (i !== 0 && (item.duration >= LABEL_DURATION_THRESHOLD || (items[i - 1].duration >= LABEL_DURATION_THRESHOLD))) {
+          rowIndex++
+        }
       }
 
       item.rowIndex = rowIndex
