@@ -109,7 +109,7 @@ class CommunityLibraryLicenses {
                        license: "Apache 2.0", url: "http://source.android.com/"),
     new LibraryLicense(name: "Ant", version: "1.9", license: "Apache 2.0", url: "http://ant.apache.org/",
                        licenseUrl: "http://ant.apache.org/license.html"),
-    new LibraryLicense(name: "ANTLR 4 Runtime", libraryName: "antlr-runtime-4.1.jar", version: "4.1", license: "BSD",
+    new LibraryLicense(name: "ANTLR 4 Runtime", libraryName: "antlr4-runtime-4.1.jar", version: "4.1", license: "BSD",
                        url: "http://www.antlr.org", licenseUrl: "http://www.antlr.org/license.html"),
     new LibraryLicense(name: "Apache Axis", libraryName: "axis-1.4", version: "1.4", license: "Apache 2.0",
                        url: "http://ws.apache.org/axis/", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.html"),
