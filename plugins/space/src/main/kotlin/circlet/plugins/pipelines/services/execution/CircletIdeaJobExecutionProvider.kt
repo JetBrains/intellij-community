@@ -62,11 +62,14 @@ class CircletIdeaJobExecutionProvider(
         }
 
         jobLifetimeSource.add {
-            runningJobs.remove(jobExec.id)?.lifetimeSource?.terminate()
+            runningJobs.remove(jobExec.id)
             timer.cancel()
             logCallback("stop: image=$image, id=$jobExec")
-
-            changeState(this, jobEntity, generateFinalState(image))
+            lifetime.launch(Ui) {
+                db("start-execution") {
+                    changeState(this, jobEntity, generateFinalState(image))
+                }
+            }
         }
     }
 
