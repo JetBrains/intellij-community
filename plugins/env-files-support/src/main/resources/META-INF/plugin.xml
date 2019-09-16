@@ -1,8 +1,8 @@
 <idea-plugin>
     <id>ru.adelf.idea.dotenv</id>
     <name>.env files support</name>
-    <version>0.8</version>
-    <vendor email="adel.faiz@gmail.com" url="https://adelf.tech">Adel Fayzrakhmanov</vendor>
+    <version>2019.3</version>
+    <vendor email="adel.faiz@gmail.com" url="https://adelf.tech">Adel F</vendor>
 
     <description><![CDATA[
       <a href="https://plugins.jetbrains.com/plugin/9525--env-files-support">Homepage</a> | <a href="https://github.com/adelf/idea-php-dotenv-plugin/">Github</a> | <a href="https://github.com/adelf/idea-php-dotenv-plugin/issues">Issues</a>.<br />
@@ -17,14 +17,15 @@
     ]]></description>
 
     <change-notes><![CDATA[
-      0.8
+      2019.3
       <ul>
-        <li>Improved performance by removing additional indexing</li>
-        <li>.env syntax fix</li>
+        <li>2019.3 IDE versions support</li>
+        <li>"export" keyword support(some .env libraries allow to use files with linux style "export VAR=...")</li>
+        <li>Some deprecated API usages removed</li>
       </ul>
   ]]></change-notes>
 
-    <idea-version since-build="191" until-build="192.*"/>
+    <idea-version since-build="192" until-build="193.*"/>
 
     <extensionPoints>
         <extensionPoint interface="ru.adelf.idea.dotenv.api.EnvironmentVariablesProvider"

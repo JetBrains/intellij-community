@@ -3,7 +3,7 @@ package ru.adelf.idea.dotenv.tests;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.util.indexing.FileBasedIndexImpl;
 import com.intellij.util.indexing.ID;
 import org.jetbrains.annotations.NotNull;
@@ -17,7 +17,7 @@ import java.util.HashSet;
 /**
  * Copy of LaravelLightCodeInsightFixtureTestCase from laravel plugin
  */
-public abstract class DotEnvLightCodeInsightFixtureTestCase extends LightCodeInsightFixtureTestCase {
+public abstract class DotEnvLightCodeInsightFixtureTestCase extends BasePlatformTestCase {
 
     protected String basePath = "src/test/java/ru/adelf/idea/dotenv/tests/";
 
