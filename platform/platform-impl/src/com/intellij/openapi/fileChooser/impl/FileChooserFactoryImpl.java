@@ -33,7 +33,10 @@ public class FileChooserFactoryImpl extends FileChooserFactory {
     if (useNativeMacChooser(descriptor)) {
       return new MacPathChooserDialog(descriptor, parent, project);
     }
-    if (parent != null) {
+    else if (useNativeWinChooser(descriptor)) {
+      return new WinPathChooserDialog(descriptor, parent, project);
+    }
+    else if (parent != null) {
       return new FileChooserDialogImpl(descriptor, parent, project);
     }
     else {
