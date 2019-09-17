@@ -21,6 +21,7 @@ package com.intellij.openapi.keymap.impl;
 
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.PlatformUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -28,6 +29,9 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
+/** @deprecated Use {@link BundledKeymapBean} instead. */
+@ApiStatus.ScheduledForRemoval
+@Deprecated
 public class DefaultBundledKeymaps implements BundledKeymapProvider {
   @NotNull
   @Override
