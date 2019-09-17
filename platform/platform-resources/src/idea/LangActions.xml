@@ -1146,7 +1146,6 @@
               text="Stop" icon="AllIcons.Actions.Suspend"
               use-shortcut-of="Stop"/>
     </group>
-    <group id="RunDashboardTreeToolbar"/>
     <group id="RunDashboardPopup">
       <action id="RunDashboard.EditConfiguration" class="com.intellij.execution.dashboard.actions.EditConfigurationAction"
               text="Edit Configuration" icon="AllIcons.Actions.EditSource"
@@ -1154,9 +1153,6 @@
       <action id="RunDashboard.CopyConfiguration" class="com.intellij.execution.dashboard.actions.CopyConfigurationAction"
               text="Copy Configuration" icon="AllIcons.Actions.Copy"
               use-shortcut-of="EditorDuplicate"/>
-      <action id="RunDashboard.RemoveConfiguration" class="com.intellij.execution.dashboard.actions.RemoveConfigurationAction"
-              text="Remove Configuration" icon="AllIcons.General.Remove"
-              use-shortcut-of="$Delete"/>
       <separator/>
       <action id="RunDashboard.ClearContent" class="com.intellij.execution.dashboard.actions.ClearContentAction"
               text="Clear Content" icon="AllIcons.Actions.Cancel"/>

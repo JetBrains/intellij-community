@@ -16,33 +16,19 @@
 package com.intellij.execution.dashboard;
 
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.ide.util.treeView.smartTree.TreeAction;
-import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.ide.util.treeView.smartTree.ActionPresentation;
+import com.intellij.ide.util.treeView.smartTree.ActionPresentationData;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Comparator;
 
 /**
- * Action for grouping items in a run dashboard tree.
+ * Action for grouping items in a run dashboard (services) tree.
  * Grouping rules are applied to dashboard nodes according to their order defined in plug-in configuration.
- *
- * @author konstantin.aleev
  */
-public interface RunDashboardGroupingRule extends TreeAction {
-  ExtensionPointName<RunDashboardGroupingRule> EP_NAME = ExtensionPointName.create("com.intellij.runDashboardGroupingRule");
-
-  Comparator<RunDashboardGroup> GROUP_NAME_COMPARATOR = Comparator.comparing(RunDashboardGroup::getName);
-
-  /**
-   * @return {@code true} if grouping rule should always be applied to dashboard nodes.
-   */
-  boolean isAlwaysEnabled();
-
-  /**
-   * @return {@code false} if groups with single node should not added to the dashboard tree keeping such nodes ungrouped.
-   */
-  boolean shouldGroupSingleNodes();
-
+public interface RunDashboardGroupingRule {
   /**
    * @param node node which should be grouped by this grouping rule.
    * @return a group which node belongs to or {@code null} if node could not be grouped by this rule.
@@ -50,7 +36,59 @@ public interface RunDashboardGroupingRule extends TreeAction {
   @Nullable
   RunDashboardGroup getGroup(AbstractTreeNode<?> node);
 
+  /**
+   * @deprecated not applicable for Services tool window
+   * @return {@code true} if grouping rule should always be applied to dashboard nodes.
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
+  default boolean isAlwaysEnabled() {
+    return false;
+  }
+
+  /**
+   * @deprecated not applicable for Services tool window
+   * @return {@code false} if groups with single node should not added to the dashboard tree keeping such nodes ungrouped.
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
+  default boolean shouldGroupSingleNodes() {
+    return true;
+  }
+
+  /**
+   * @deprecated not applicable for Services tool window
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
+  Comparator<RunDashboardGroup> GROUP_NAME_COMPARATOR = Comparator.comparing(RunDashboardGroup::getName);
+
+  /**
+   * @deprecated not applicable for Services tool window
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
   default Comparator<RunDashboardGroup> getGroupComparator() {
     return GROUP_NAME_COMPARATOR;
+  }
+
+  /**
+   * @deprecated not applicable for Services tool window
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
+  @NotNull
+  default ActionPresentation getPresentation() {
+    return new ActionPresentationData("", "", null);
+  }
+
+  /**
+   * @deprecated not applicable for Services tool window
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
+  @NotNull
+  default String getName() {
+    return "";
   }
 }
