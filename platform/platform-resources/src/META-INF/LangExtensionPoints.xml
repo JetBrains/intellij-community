@@ -245,7 +245,7 @@
       <with attribute="implementationClass" implements="com.intellij.codeInsight.unwrap.UnwrapDescriptor"/>
     </extensionPoint>
 
-    <extensionPoint name="lang.parserDefinition" beanClass="com.intellij.lang.LanguageExtensionPoint">
+    <extensionPoint name="lang.parserDefinition" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.lang.ParserDefinition"/>
     </extensionPoint>
 

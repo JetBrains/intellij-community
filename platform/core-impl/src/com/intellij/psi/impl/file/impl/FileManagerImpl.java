@@ -65,12 +65,12 @@ public final class FileManagerImpl implements FileManager {
     myConnection.subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
       @Override
       public void enteredDumbMode() {
-        processFileTypesChanged();
+        processFileTypesChanged(false);
       }
 
       @Override
       public void exitDumbMode() {
-        processFileTypesChanged();
+        processFileTypesChanged(false);
       }
     });
   }
@@ -263,7 +263,7 @@ public final class FileManagerImpl implements FileManager {
 
   private boolean myProcessingFileTypesChange;
 
-  void processFileTypesChanged() {
+  void processFileTypesChanged(boolean updateLanguage) {
     if (myProcessingFileTypesChange) return;
     myProcessingFileTypesChange = true;
     DebugUtil.performPsiModification(null, () -> {
@@ -273,7 +273,7 @@ public final class FileManagerImpl implements FileManager {
           event.setPropertyName(PsiTreeChangeEvent.PROP_FILE_TYPES);
           myManager.beforePropertyChange(event);
 
-          possiblyInvalidatePhysicalPsi();
+          possiblyInvalidatePhysicalPsi(updateLanguage);
 
           myManager.propertyChanged(event);
         });
@@ -284,11 +284,14 @@ public final class FileManagerImpl implements FileManager {
     });
   }
 
-  void possiblyInvalidatePhysicalPsi() {
+  void possiblyInvalidatePhysicalPsi(boolean updateLanguage) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     removeInvalidDirs();
     for (FileViewProvider provider : getVFileToViewProviderMap().values()) {
       markPossiblyInvalidated(provider);
+      if (updateLanguage && provider instanceof AbstractFileViewProvider) {
+        ((AbstractFileViewProvider) provider).updateLanguage();
+      }
     }
   }
 

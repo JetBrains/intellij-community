@@ -38,6 +38,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -97,6 +98,10 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
       }
     }
     return true;
+  }
+
+  @ApiStatus.Internal
+  public void updateLanguage() {
   }
 
   public static boolean isFreeThreaded(@NotNull FileViewProvider provider) {
