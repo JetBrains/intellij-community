@@ -310,10 +310,6 @@ public class HintManagerImpl extends HintManager {
 
     updateLastEditor(editor);
 
-    if (hintInfo.isHideOnCaretMove()) {
-      flags |= HintManager.HIDE_BY_CARET_MOVE;
-    }
-
     getPublisher().hintShown(editor.getProject(), hint, flags);
 
     Component component = hint.getComponent();

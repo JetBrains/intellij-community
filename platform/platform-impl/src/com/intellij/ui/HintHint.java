@@ -55,7 +55,6 @@ public class HintHint {
   private boolean myShowImmediately = false;
   private boolean myAnimationEnabled;
   private boolean myRequestFocus;
-  private boolean myHideOnCaretMove;
   
 
   public HintHint() {
@@ -310,15 +309,6 @@ public class HintHint {
 
   public HintHint setRequestFocus(boolean requestFocus) {
     myRequestFocus = requestFocus;
-    return this;
-  }
-
-  public boolean isHideOnCaretMove() {
-    return myHideOnCaretMove;
-  }
-
-  public HintHint setHideOnCaretMove(boolean hideOnCaretMove) {
-    myHideOnCaretMove = hideOnCaretMove;
     return this;
   }
 }
