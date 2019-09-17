@@ -108,10 +108,18 @@ public final class StartUpMeasurer {
   /**
    * Default threshold is applied.
    */
-  public static long addCompletedActivity(long start, @NotNull Class<?> clazz, @NotNull ActivityCategory category, String pluginId) {
+  public static long addCompletedActivity(long start, @NotNull Class<?> clazz, @NotNull ActivityCategory category, @Nullable String pluginId) {
+    return addCompletedActivity(start, clazz, category, pluginId, -1);
+  }
+
+  public static long addCompletedActivity(long start, @NotNull Class<?> clazz, @NotNull ActivityCategory category, @Nullable String pluginId, long threshold) {
+    if (!isEnabled) {
+      return -1;
+    }
+
     long end = getCurrentTime();
     long duration = end - start;
-    if (duration <= MEASURE_THRESHOLD) {
+    if (duration <= threshold) {
       return duration;
     }
 

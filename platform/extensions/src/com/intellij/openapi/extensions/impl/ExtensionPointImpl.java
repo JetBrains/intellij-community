@@ -448,7 +448,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
 
     // don't count ProcessCanceledException as valid action to measure (later special category can be introduced if needed)
     ActivityCategory category = getActivityCategory(myComponentManager.getPicoContainer());
-    StartUpMeasurer.addCompletedActivity(startTime, extensionClass, category, /* pluginId = */ null);
+    StartUpMeasurer.addCompletedActivity(startTime, extensionClass, category, /* pluginId = */ null, StartUpMeasurer.MEASURE_THRESHOLD);
     return result;
   }
 

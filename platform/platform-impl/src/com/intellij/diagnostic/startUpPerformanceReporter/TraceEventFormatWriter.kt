@@ -4,11 +4,12 @@ package com.intellij.diagnostic.startUpPerformanceReporter
 import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonGenerator
 import com.intellij.diagnostic.ActivityImpl
-import com.intellij.diagnostic.ActivityCategory
 import com.intellij.util.io.jackson.array
 import com.intellij.util.io.jackson.obj
 import java.io.OutputStreamWriter
 import java.util.concurrent.TimeUnit
+
+private const val VERSION = "1"
 
 // https://docs.google.com/document/d/1CvAClvFfyA5R-PhYUmn5OOQtYMH4h6I0nSsKchNAySU/edit#
 // ph - phase
@@ -28,23 +29,27 @@ internal class TraceEventFormatWriter(private val timeOffset: Long,
     }
   }
 
-  fun write(events: List<ActivityImpl>, activities: Map<String, List<ActivityImpl>>, outputWriter: OutputStreamWriter) {
+  fun write(mainEvents: List<ActivityImpl>, categoryToActivity: Map<String, List<ActivityImpl>>, outputWriter: OutputStreamWriter) {
     val writer = JsonFactory().createGenerator(outputWriter)
     writer.prettyPrinter = MyJsonPrettyPrinter()
     writer.use {
       writer.obj {
+        writer.writeStringField("version", VERSION)
         writer.array("traceEvents") {
           writeInstantEvents(writer)
 
-          for (event in events) {
+          for (event in mainEvents) {
             writer.obj {
               writeCompleteEvent(event, writer)
             }
           }
 
-          for (event in activities.get(ActivityCategory.APP_INIT.jsonName) ?: emptyList()) {
-            writer.obj {
-              writeCompleteEvent(event, writer)
+          for ((category, events) in categoryToActivity) {
+            for (event in events) {
+              writer.obj {
+                writeCompleteEvent(event, writer)
+                writer.writeStringField("cat", category)
+              }
             }
           }
         }
