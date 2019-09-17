@@ -9,10 +9,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
-import javax.xml.bind.DatatypeConverter;
 import java.io.File;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -27,7 +24,7 @@ import static org.jetbrains.jps.model.java.JavaSourceRootType.TEST_SOURCE;
 public class JpsCachesUtils {
   private static final List<JpsModuleSourceRootType<?>> PRODUCTION_SOURCE_ROOTS = Arrays.asList(SOURCE, RESOURCE);
   private static final List<JpsModuleSourceRootType<?>> TEST_SOURCE_ROOTS = Arrays.asList(TEST_SOURCE, TEST_RESOURCE);
-  private static final String PLUGIN_NAME = "jpsCachePlugin";
+  private static final String PLUGIN_NAME = "jps-cache-loader";
 
   private JpsCachesUtils() {}
 
@@ -36,12 +33,11 @@ public class JpsCachesUtils {
                                                                                                    Function.identity()));
   }
 
-  public static String getPluginStorageDir(Project project) throws NoSuchAlgorithmException {
+  public static String getPluginStorageDir(Project project) {
     File pluginsDir = new File(PathManager.getPluginsPath());
-    MessageDigest messageDigest = MessageDigest.getInstance("MD5");
-    messageDigest.update(project.getBasePath().getBytes());
-    String projectPathHash = DatatypeConverter.printHexBinary(messageDigest.digest());
-    return FileUtil.join(pluginsDir.getPath(), PLUGIN_NAME, project.getName() + "_" + projectPathHash);
+    String projectPath = project.getBasePath();
+    return projectPath != null ? FileUtil.join(pluginsDir.getPath(), PLUGIN_NAME, project.getName() + "_" + Integer.toHexString(projectPath.hashCode()))
+                               : FileUtil.join(pluginsDir.getPath(), PLUGIN_NAME, project.getName());
   }
 
 
