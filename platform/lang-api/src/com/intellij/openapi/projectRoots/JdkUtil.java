@@ -28,6 +28,7 @@ import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.lang.UrlClassLoader;
@@ -588,6 +589,11 @@ public class JdkUtil {
   private static void appendVmParameter(@NotNull IR.NewCommandLine commandLine,
                                         @NotNull IR.RemoteEnvironmentRequest request,
                                         @NotNull String vmParameter) {
+    if (SystemProperties.getBooleanProperty("remote.servers.ignore.vm.parameter", false)) {
+      commandLine.addParameter(vmParameter);
+      return;
+    }
+
     if (vmParameter.startsWith("-agentpath:")) {
       String value = StringUtil.trimStart(vmParameter, "-agentpath:");
       int equalsSign = value.indexOf('=');
@@ -596,8 +602,11 @@ public class JdkUtil {
       commandLine.addParameter(new IR.MapValue<>(request.createUpload(path), v -> "-agentpath:" + v + suffix));
     }
     else if (vmParameter.startsWith("-javaagent:")) {
-      String path = StringUtil.trimStart(vmParameter, "-javaagent:");
-      commandLine.addParameter(new IR.MapValue<>(request.createUpload(path), v -> "-javaagent:" + v));
+      String value = StringUtil.trimStart(vmParameter, "-javaagent:");
+      int equalsSign = value.indexOf('=');
+      String path = equalsSign > -1 ? value.substring(0, equalsSign) : value;
+      String suffix = equalsSign > -1 ? value.substring(equalsSign) : "";
+      commandLine.addParameter(new IR.MapValue<>(request.createUpload(path), v -> "-javaagent:" + v + suffix));
     }
     else {
       commandLine.addParameter(vmParameter);
