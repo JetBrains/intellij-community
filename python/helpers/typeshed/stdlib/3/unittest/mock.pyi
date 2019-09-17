@@ -33,14 +33,14 @@ class Base:
 # TODO: Defining this and other mock classes as classes in this stub causes
 #       many false positives with mypy and production code. See if we can
 #       improve mypy somehow and use a class with an "Any" base class.
-NonCallableMock: Any
+NonCallableMock = Any
 
 class CallableMixin(Base):
     side_effect: Any
     def __init__(self, spec: Optional[Any] = ..., side_effect: Optional[Any] = ..., return_value: Any = ..., wraps: Optional[Any] = ..., name: Optional[Any] = ..., spec_set: Optional[Any] = ..., parent: Optional[Any] = ..., _spec_state: Optional[Any] = ..., _new_name: Any = ..., _new_parent: Optional[Any] = ..., **kwargs: Any) -> None: ...
     def __call__(_mock_self, *args: Any, **kwargs: Any) -> Any: ...
 
-Mock: Any
+Mock = Any
 
 class _patch:
     attribute_name: Any
@@ -94,8 +94,8 @@ patch: _patcher
 class MagicMixin:
     def __init__(self, *args: Any, **kw: Any) -> None: ...
 
-NonCallableMagicMock: Any
-MagicMock: Any
+NonCallableMagicMock = Any
+MagicMock = Any
 
 class MagicProxy:
     name: Any
@@ -140,7 +140,7 @@ class _SpecState:
 
 def mock_open(mock: Optional[Any] = ..., read_data: Any = ...) -> Any: ...
 
-PropertyMock: Any
+PropertyMock = Any
 
 if sys.version_info >= (3, 7):
     def seal(mock: Any) -> None: ...

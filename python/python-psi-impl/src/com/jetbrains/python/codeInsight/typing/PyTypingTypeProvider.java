@@ -79,6 +79,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   private static final String LIST = "typing.List";
   private static final String DICT = "typing.Dict";
   private static final String DEFAULT_DICT = "typing.DefaultDict";
+  private static final String ORDERED_DICT = "typing.OrderedDict";
   private static final String SET = "typing.Set";
   private static final String FROZEN_SET = "typing.FrozenSet";
   private static final String COUNTER = "typing.Counter";
@@ -110,6 +111,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
 
   private static final ImmutableMap<String, String> COLLECTIONS_CLASSES = ImmutableMap.<String, String>builder()
     .put(DEFAULT_DICT, "collections.defaultdict")
+    .put(ORDERED_DICT, "collections.OrderedDict")
     .put(COUNTER, "collections.Counter")
     .put(DEQUE, "collections.deque")
     .put(CHAIN_MAP, "collections.ChainMap")
@@ -126,7 +128,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     // special forms
     .add(TUPLE, GENERIC, PROTOCOL, CALLABLE, TYPE, CLASS_VAR, FINAL)
     // type aliases
-    .add(UNION, OPTIONAL, LIST, DICT, DEFAULT_DICT, SET, FROZEN_SET, COUNTER, DEQUE, CHAIN_MAP)
+    .add(UNION, OPTIONAL, LIST, DICT, DEFAULT_DICT, ORDERED_DICT, SET, FROZEN_SET, COUNTER, DEQUE, CHAIN_MAP)
     .add(PROTOCOL_EXT, FINAL_EXT)
     .build();
 
@@ -149,6 +151,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     .add(LIST)
     .add(DICT)
     .add(DEFAULT_DICT)
+    .add(ORDERED_DICT)
     .add(SET)
     .add(FROZEN_SET)
     .add(PROTOCOL, PROTOCOL_EXT)

@@ -4,7 +4,13 @@
 import sys
 
 from . import (
+    AsyncIterable as AsyncIterable,
+    AsyncIterator as AsyncIterator,
+    Awaitable as Awaitable,
+    ByteString as ByteString,
     Container as Container,
+    Coroutine as Coroutine,
+    Generator as Generator,
     Hashable as Hashable,
     Iterable as Iterable,
     Iterator as Iterator,
@@ -21,16 +27,6 @@ from . import (
     KeysView as KeysView,
     ValuesView as ValuesView,
 )
-
-if sys.version_info >= (3, 5):
-    from . import (
-        Generator as Generator,
-        ByteString as ByteString,
-        Awaitable as Awaitable,
-        Coroutine as Coroutine,
-        AsyncIterable as AsyncIterable,
-        AsyncIterator as AsyncIterator,
-    )
 
 if sys.version_info >= (3, 6):
     from . import (

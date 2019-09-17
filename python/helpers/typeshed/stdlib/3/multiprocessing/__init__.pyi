@@ -2,9 +2,10 @@
 
 from typing import (
     Any, Callable, ContextManager, Iterable, Mapping, Optional, Dict, List,
-    Union, Sequence, Tuple
+    Union, Sequence, Tuple, Type
 )
 
+from ctypes import _CData
 from logging import Logger
 from multiprocessing import connection, pool, spawn, synchronize
 from multiprocessing.context import (
@@ -68,7 +69,7 @@ class Process():
 
 class Value():
     value: Any = ...
-    def __init__(self, typecode_or_type: str, *args: Any, lock: Union[bool, _LockLike] = ...) -> None: ...
+    def __init__(self, typecode_or_type: Union[str, Type[_CData]], *args: Any, lock: Union[bool, _LockLike] = ...) -> None: ...
     def get_lock(self) -> _LockLike: ...
 
 # ----- multiprocessing function stubs -----
