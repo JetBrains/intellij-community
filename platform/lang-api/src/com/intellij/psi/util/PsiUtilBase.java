@@ -44,17 +44,19 @@ public class PsiUtilBase extends PsiUtilCore implements PsiEditorUtil {
     return host != null && isUnderPsiRoot(root, host);
   }
 
-  @NotNull
+  @Nullable
   public static Language getLanguageInEditor(@NotNull final Editor editor, @NotNull final Project project) {
     return getLanguageInEditor(editor.getCaretModel().getCurrentCaret(), project);
   }
 
-  @NotNull
+  @Nullable
   public static Language getLanguageInEditor(@NotNull Caret caret, @NotNull final Project project) {
     Editor editor = caret.getEditor();
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
 
-    assert file != null;
+    if (file == null) {
+      return null;
+    }
 
     int caretOffset = caret.getOffset();
     int mostProbablyCorrectLanguageOffset = caretOffset == caret.getSelectionEnd() ? caret.getSelectionStart() : caretOffset;
