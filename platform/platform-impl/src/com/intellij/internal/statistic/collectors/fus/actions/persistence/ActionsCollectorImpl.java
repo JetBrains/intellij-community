@@ -13,8 +13,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.keymap.Keymap;
-import com.intellij.openapi.keymap.impl.BundledKeymapProvider;
-import com.intellij.openapi.keymap.impl.DefaultKeymapImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -25,7 +23,6 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -37,25 +34,13 @@ public class ActionsCollectorImpl extends ActionsCollector {
   private static final String GROUP = "actions";
   public static final String DEFAULT_ID = "third.party";
 
-  private final Set<String> myXmlActionIds = new HashSet<>();
+  private static final ActionsBuiltInWhitelist ourWhitelist = new ActionsBuiltInWhitelist();
+
   private final Map<AnAction, String> myOtherActions = ContainerUtil.createWeakMap();
-
-  private static final Set<String> ourCustomActionWhitelist = ContainerUtil.newHashSet(
-    "regexp.help", "ShowUsagesPopup.showSettings",
-    "Reload Classes", "DialogCancelAction", "DialogOkAction", "DoubleShortcut"
-  );
-
-  public static boolean isCustomAllowedAction(@NotNull String actionId) {
-    return DEFAULT_ID.equals(actionId) || ourCustomActionWhitelist.contains(actionId);
-  }
-
-  public boolean isWhitelistedActionId(@NotNull String actionId) {
-    return isCustomAllowedAction(actionId) || myXmlActionIds.contains(actionId);
-  }
 
   @Override
   public void record(@Nullable String actionId, @Nullable InputEvent event, @NotNull Class context) {
-    String recorded = StringUtil.isNotEmpty(actionId) && ourCustomActionWhitelist.contains(actionId) ? actionId : DEFAULT_ID;
+    String recorded = StringUtil.isNotEmpty(actionId) && ourWhitelist.isCustomAllowedAction(actionId) ? actionId : DEFAULT_ID;
     FeatureUsageData data = new FeatureUsageData().addData("action_id", recorded);
     if (event instanceof KeyEvent) {
       data.addInputEvent((KeyEvent)event);
@@ -140,8 +125,8 @@ public class ActionsCollectorImpl extends ActionsCollector {
     return actionId != null ? actionId : action.getClass().getName();
   }
 
-  private boolean canReportActionId(@NotNull String actionId) {
-    return myXmlActionIds.contains(actionId);
+  public static boolean canReportActionId(@NotNull String actionId) {
+    return ourWhitelist.isWhitelistedActionId(actionId);
   }
 
   @Override
@@ -152,20 +137,11 @@ public class ActionsCollectorImpl extends ActionsCollector {
   }
 
   /** @noinspection unused*/
-  public void onActionLoadedFromXml(@NotNull AnAction action, @NotNull String actionId, @Nullable PluginId pluginId) {
-    PluginInfo pluginInfo = PluginInfoDetectorKt.getPluginInfoById(pluginId);
-    if (pluginInfo.isSafeToReport()) {
-      myXmlActionIds.add(actionId);
-    }
+  public static void onActionLoadedFromXml(@NotNull AnAction action, @NotNull String actionId, @Nullable PluginId pluginId) {
+    ourWhitelist.addActionLoadedFromXml(actionId, pluginId);
   }
 
-  @Override
-  public void onActionsLoadedFromKeymapXml(@NotNull Keymap keymap, @NotNull Set<String> actionIds) {
-    if (keymap instanceof DefaultKeymapImpl) {
-      Class<BundledKeymapProvider> provider = ((DefaultKeymapImpl)keymap).getProviderClass();
-      if (PluginInfoDetectorKt.getPluginInfo(provider).isDevelopedByJetBrains()) {
-        myXmlActionIds.addAll(actionIds);
-      }
-    }
+  public static void onActionsLoadedFromKeymapXml(@NotNull Keymap keymap, @NotNull Set<String> actionIds) {
+    ourWhitelist.addActionsLoadedFromKeymapXml(keymap, actionIds);
   }
 }

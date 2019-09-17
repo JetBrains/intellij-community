@@ -3,7 +3,7 @@ package com.intellij.openapi.keymap.impl
 
 import com.intellij.configurationStore.SchemeDataHolder
 import com.intellij.configurationStore.SerializableScheme
-import com.intellij.ide.actions.ActionsCollector
+import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import com.intellij.openapi.application.ApplicationManager
@@ -536,7 +536,7 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
       }
     }
 
-    ActionsCollector.getInstance().onActionsLoadedFromKeymapXml(this, actionIds)
+    ActionsCollectorImpl.onActionsLoadedFromKeymapXml(this, actionIds)
     cleanShortcutsCache()
   }
 
