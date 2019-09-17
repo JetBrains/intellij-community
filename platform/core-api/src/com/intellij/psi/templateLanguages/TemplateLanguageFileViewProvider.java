@@ -42,8 +42,14 @@ public interface TemplateLanguageFileViewProvider extends FileViewProvider {
   @NotNull
   Language getTemplateDataLanguage();
 
+  /**
+   * Should return content type that is used to override file content type for template data language.
+   * It is required for template language injections to override non-base language content type properly
+   * @param language for which we want to create a file
+   * @return content element type for non-base language, null otherwise
+   */
   @ApiStatus.Experimental
-  default IElementType getContentElementType(Language language, PsiFile file) {
+  default IElementType getContentElementType(@NotNull Language language) {
     return null;
   }
 }
