@@ -19,6 +19,7 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,5 +56,10 @@ public abstract class ProjectTaskRunner {
                                                          @NotNull ExecuteRunConfigurationTask task,
                                                          @Nullable Executor executor) {
     return null;
+  }
+
+  @ApiStatus.Experimental
+  public boolean isFileGeneratedEventsSupported() {
+    return false;
   }
 }
