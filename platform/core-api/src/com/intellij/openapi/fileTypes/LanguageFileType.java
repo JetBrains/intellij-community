@@ -21,7 +21,7 @@ public abstract class LanguageFileType implements FileType {
    * Creates a language file type for the specified language.
    * @param language The language used in the files of the type.
    */
-  protected LanguageFileType(@Nullable Language language) {
+  protected LanguageFileType(@NotNull Language language) {
     this(language, false);
   }
 
@@ -31,7 +31,10 @@ public abstract class LanguageFileType implements FileType {
    * @param secondary If true, this language file type will never be returned as the associated file type for the language.
    *                  (Used when a file type is reusing the language of another file type, e.g. XML).
    */
-  protected LanguageFileType(@Nullable Language language, boolean secondary) {
+  protected LanguageFileType(@NotNull Language language, boolean secondary) {
+    // passing Language instead of lazy resolve on getLanguage call (like LazyRunConfigurationProducer), is ok because:
+    // 1. Usage of FileType nearly always requires Language
+    // 2. FileType is created only on demand (if deprecated FileTypeFactory is not used).
     myLanguage = language;
     mySecondary = secondary;
   }
@@ -41,7 +44,7 @@ public abstract class LanguageFileType implements FileType {
    * @return The language instance.
    */
   @NotNull
-  public Language getLanguage() {
+  public final Language getLanguage() {
     return myLanguage;
   }
 

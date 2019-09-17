@@ -15,7 +15,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
 public abstract class XmlLikeFileType extends LanguageFileType {
-  protected XmlLikeFileType(@Nullable Language language) {
+  protected XmlLikeFileType(@NotNull Language language) {
     super(language);
   }
 
