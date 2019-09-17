@@ -265,7 +265,7 @@ public class GraphTableController {
           int c2 =
             myTable.columnAtPoint(new Point(e.getPoint().x + (useLeftBorder ? 1 : -1) * JBUIScale.scale(BORDER_THICKNESS), e.getPoint().y));
           LogTableColumn column2 = myTable.getLogTableColumn(c2);
-          if (column2 != null && (useLeftBorder ? isOnLeftBorder(e, c2) : isOnRightBorder(e, c2)) && column.isDynamic()) {
+          if (column2 != null && (useLeftBorder ? isOnLeftBorder(e, c2) : isOnRightBorder(e, c2)) && column2.isDynamic()) {
             myTable.resetColumnWidth(column2);
           }
         }
