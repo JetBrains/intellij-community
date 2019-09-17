@@ -288,7 +288,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
       return adapter.getInstance(this, createIfNeeded)
     }
 
-    ProgressManager.checkCanceled()
+    checkCanceledIfNotInClassInit()
 
     if (parent != null) {
       val result = parent.getService(serviceClass, createIfNeeded)
@@ -443,16 +443,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
   }
 
   final override fun <T : Any> instantiateClass(aClass: Class<T>, pluginId: PluginId?): T {
-    try {
-      ProgressManager.checkCanceled()
-    }
-    catch (e: ProcessCanceledException) {
-      // otherwise ExceptionInInitializerError happens and the class is screwed forever
-      @Suppress("SpellCheckingInspection")
-      if (!e.stackTrace.any { it.methodName == "<clinit>" }) {
-        throw e
-      }
-    }
+    checkCanceledIfNotInClassInit()
 
     try {
       if (parent == null) {
@@ -646,4 +637,17 @@ private fun createPluginExceptionIfNeeded(error: Throwable, pluginId: PluginId):
 
 internal fun <T> isLightService(serviceClass: Class<T>): Boolean {
   return Modifier.isFinal(serviceClass.modifiers) && serviceClass.isAnnotationPresent(Service::class.java)
+}
+
+internal fun checkCanceledIfNotInClassInit() {
+  try {
+    ProgressManager.checkCanceled()
+  }
+  catch (e: ProcessCanceledException) {
+    // otherwise ExceptionInInitializerError happens and the class is screwed forever
+    @Suppress("SpellCheckingInspection")
+    if (!e.stackTrace.any { it.methodName == "<clinit>" }) {
+      throw e
+    }
+  }
 }

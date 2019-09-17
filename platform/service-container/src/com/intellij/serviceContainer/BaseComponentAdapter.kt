@@ -112,7 +112,7 @@ internal abstract class BaseComponentAdapter(internal val componentManager: Plat
   }
 
   private fun checkContainerIsActive(componentManager: PlatformComponentManagerImpl, indicator: ProgressIndicator?) {
-    indicator?.checkCanceled()
+    checkCanceledIfNotInClassInit()
 
     if (componentManager.isContainerDisposedOrDisposeInProgress()) {
       val error = PluginException("Cannot create ${toString()} because container is already disposed (container=${componentManager})", pluginId)
