@@ -12,6 +12,7 @@ import io.netty.bootstrap.ServerBootstrap
 import io.netty.channel.*
 import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.oio.OioEventLoopGroup
+import io.netty.util.concurrent.FastThreadLocalThread
 import io.netty.util.internal.logging.InternalLoggerFactory
 import java.net.InetAddress
 import java.net.InetSocketAddress
@@ -40,6 +41,8 @@ class BuiltInServer private constructor(val eventLoopGroup: EventLoopGroup, val 
       // https://youtrack.jetbrains.com/issue/IDEA-208908
       setSystemPropertyIfNotConfigured("io.netty.allocator.numDirectArenas", "1")
       setSystemPropertyIfNotConfigured("io.netty.allocator.numHeapArenas", "1")
+      setSystemPropertyIfNotConfigured("io.netty.allocator.useCacheForAllThreads", "false")
+      setSystemPropertyIfNotConfigured("io.netty.allocation.cacheTrimIntervalMillis", "600000")
 
       val logger = IdeaNettyLogger()
       InternalLoggerFactory.setDefaultFactory(object : InternalLoggerFactory() {
@@ -154,7 +157,7 @@ private class BuiltInServerThreadFactory : ThreadFactory {
   private val counter = AtomicInteger()
 
   override fun newThread(r: Runnable): Thread {
-    return Thread(r, "Netty Builtin Server " + counter.incrementAndGet())
+    return FastThreadLocalThread(r, "Netty Builtin Server " + counter.incrementAndGet())
   }
 }
 
