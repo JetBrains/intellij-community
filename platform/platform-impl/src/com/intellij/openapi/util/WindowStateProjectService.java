@@ -7,33 +7,9 @@ import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
-
 @State(name = "WindowStateProjectService", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 final class WindowStateProjectService extends WindowStateServiceImpl {
   WindowStateProjectService(@NotNull Project project) {
     super(project);
-  }
-
-  @Override
-  Point getDefaultLocationFor(@NotNull String key) {
-    Rectangle bounds = getDefaultBoundsFor(key);
-    return bounds == null ? null : bounds.getLocation();
-  }
-
-  @Override
-  Dimension getDefaultSizeFor(@NotNull String key) {
-    Rectangle bounds = getDefaultBoundsFor(key);
-    return bounds == null ? null : bounds.getSize();
-  }
-
-  @Override
-  Rectangle getDefaultBoundsFor(@NotNull String key) {
-    return null;
-  }
-
-  @Override
-  boolean getDefaultMaximizedFor(Object object, @NotNull String key) {
-    return false;
   }
 }

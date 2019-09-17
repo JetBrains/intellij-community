@@ -37,14 +37,6 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
     super(project);
   }
 
-  abstract Point getDefaultLocationFor(@NotNull String key);
-
-  abstract Dimension getDefaultSizeFor(@NotNull String key);
-
-  abstract Rectangle getDefaultBoundsFor(@NotNull String key);
-
-  abstract boolean getDefaultMaximizedFor(Object object, @NotNull String key);
-
   @Override
   public final Element getState() {
     Element element = new Element(STATE);
@@ -119,14 +111,6 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
       size = state.mySize;
       maximized = state.myMaximized;
     }
-    if (location == null && size == null) {
-      location = getDefaultLocationFor(key);
-      size = getDefaultSizeFor(key);
-      if (!isVisible(location, size)) {
-        return false;
-      }
-      maximized = getDefaultMaximizedFor(object, key);
-    }
     Frame frame = component instanceof Frame ? (Frame)component : null;
     if (frame != null && Frame.NORMAL != frame.getExtendedState()) {
       frame.setExtendedState(Frame.NORMAL);
@@ -156,8 +140,7 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
 
   @Override
   public Point getLocationFor(Object object, @NotNull String key) {
-    Point location = getFor(object, key, Point.class);
-    return location != null ? location : getDefaultLocationFor(key);
+    return getFor(object, key, Point.class);
   }
 
   @Override
@@ -167,8 +150,7 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
 
   @Override
   public Dimension getSizeFor(Object object, @NotNull String key) {
-    Dimension size = getFor(object, key, Dimension.class);
-    return size != null ? size : getDefaultSizeFor(key);
+    return getFor(object, key, Dimension.class);
   }
 
   @Override
@@ -178,8 +160,7 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
 
   @Override
   public Rectangle getBoundsFor(Object object, @NotNull String key) {
-    Rectangle bounds = getFor(object, key, Rectangle.class);
-    return bounds != null ? bounds : getDefaultBoundsFor(key);
+    return getFor(object, key, Rectangle.class);
   }
 
   @Override
