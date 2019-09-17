@@ -409,8 +409,8 @@ public abstract class VcsVFSListener implements Disposable {
   }
 
   protected boolean isEventIgnored(@NotNull VFileEvent event) {
-    FilePath filePath = VcsUtil.getFilePath(event.getPath());
     if (event.isFromRefresh()) return true;
+    FilePath filePath = VcsUtil.getFilePath(event.getPath());
     return !isUnderMyVcs(filePath) && !myVcsIgnoreManager.isPotentiallyIgnoredFile(filePath);
   }
 
