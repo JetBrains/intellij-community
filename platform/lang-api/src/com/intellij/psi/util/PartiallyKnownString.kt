@@ -14,8 +14,14 @@ sealed class StringEntry {
   abstract val sourcePsi: PsiElement? // maybe it should be PsiLanguageInjectionHost and only for `Known` values
   abstract val range: TextRange
 
-  class Known(val value: String, override val sourcePsi: PsiElement?, override val range: TextRange) : StringEntry()
-  class Unknown(override val sourcePsi: PsiElement?, override val range: TextRange) : StringEntry()
+  class Known(val value: String, override val sourcePsi: PsiElement?, override val range: TextRange) : StringEntry() {
+    override fun toString(): String = "StringEntry.Known('$value' at $range in $sourcePsi)"
+  }
+
+  class Unknown(override val sourcePsi: PsiElement?, override val range: TextRange) : StringEntry() {
+    override fun toString(): String = "StringEntry.Unknown(at $range in $sourcePsi)"
+  }
+
 
   val rangeAlignedToHost: Pair<PsiLanguageInjectionHost, TextRange>?
     get() {
@@ -88,15 +94,14 @@ class PartiallyKnownString(val segments: List<StringEntry>) {
           else {
             val leftPart = segment.value.substring(0, splitAt - accumulated)
             val rightPart = segment.value.substring(splitAt - accumulated)
-            left.add(StringEntry.Known(leftPart, segment.sourcePsi,  /* TODO: should also be splitted */
-                                       segment.range))
+            left.add(StringEntry.Known(leftPart, segment.sourcePsi, TextRange.from(segment.range.startOffset, leftPart.length)))
 
             return PartiallyKnownString(left) to PartiallyKnownString(
               ArrayList<StringEntry>(segments.lastIndex - i + 1).apply {
                 if (rightPart.isNotEmpty())
-                  add(StringEntry.Known(rightPart, segment.sourcePsi, /* TODO: should also be splitted */
-                                        segment.range))
-                addAll(segments.subList(i, segments.size))
+                  add(StringEntry.Known(rightPart, segment.sourcePsi,
+                                        TextRange.from(segment.range.startOffset + leftPart.length, rightPart.length)))
+                addAll(segments.subList(i + 1, segments.size))
               }
             )
           }
