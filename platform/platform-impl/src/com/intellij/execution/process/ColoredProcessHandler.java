@@ -74,7 +74,7 @@ public class ColoredProcessHandler extends KillableProcessHandler implements Ans
   }
 
   /**
-   * @deprecated override {@link #notifyTextAvailable(String, Key)} instead
+   * @deprecated override {@link #coloredTextAvailable(String, Key)} instead
    */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021")
