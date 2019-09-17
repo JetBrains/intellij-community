@@ -209,6 +209,8 @@ public abstract class LongRangeSet {
     return null;
   }
 
+  public abstract boolean isCardinalityBigger(long cutoff);
+
   public abstract LongRangeSet castTo(PsiPrimitiveType type);
 
   /**
@@ -904,6 +906,11 @@ public abstract class LongRangeSet {
     }
 
     @Override
+    public boolean isCardinalityBigger(long cutoff) {
+      return cutoff < 0;
+    }
+
+    @Override
     public LongRangeSet castTo(PsiPrimitiveType type) {
       if (TypeConversionUtil.isIntegralNumberType(type)) {
         return this;
@@ -976,6 +983,11 @@ public abstract class LongRangeSet {
     @Override
     public String getPresentationText(PsiType type) {
       return formatNumber(myValue);
+    }
+
+    @Override
+    public boolean isCardinalityBigger(long cutoff) {
+      return cutoff < 1;
     }
 
     @Override
@@ -1262,6 +1274,12 @@ public abstract class LongRangeSet {
         return myFrom + " or " + myTo;
       }
       return "in " + toString();
+    }
+
+    @Override
+    public boolean isCardinalityBigger(long cutoff) {
+      long diff = myTo - myFrom;
+      return diff < 0 || diff >= cutoff;
     }
 
     @Override
@@ -1611,6 +1629,25 @@ public abstract class LongRangeSet {
         }
       }
       return "in " + super.toString() + "; " + getSuffix();
+    }
+
+    @Override
+    public boolean isCardinalityBigger(long cutoff) {
+      long bottom = myFrom - 1 - remainder(myFrom - 1, myMod) + myMod;
+      long top = myTo - remainder(myTo, myMod);
+      if (bottom >= myFrom && top > bottom && myTo >= top) {
+        int count = Long.bitCount(myBits);
+        long wholeCount = (top / myMod - bottom / myMod) * count;
+        if (wholeCount < 0 || wholeCount > cutoff) return true;
+        for (long i = myFrom; i < bottom; i++) {
+          if (isSet(myBits, remainder(i, myMod))) wholeCount++;
+        }
+        for (long i = top; i <= myTo; i++) {
+          if (isSet(myBits, remainder(i, myMod))) wholeCount++;
+        }
+        return wholeCount < 0 || wholeCount > cutoff;
+      }
+      return stream().limit(Math.max(0, cutoff + 1)).count() > cutoff;
     }
 
     @Override
@@ -2013,6 +2050,18 @@ public abstract class LongRangeSet {
         return myRanges[0] + " or " + myRanges[2];
       }
       return "in " + toString();
+    }
+
+    @Override
+    public boolean isCardinalityBigger(long cutoff) {
+      long totalDiff = 0;
+      for (int i = 0; i < myRanges.length; i += 2) {
+        long diff = myRanges[i + 1] - myRanges[i];
+        if (diff < 0) return true;
+        totalDiff += diff + 1;
+        if (totalDiff < 0 || totalDiff > cutoff) return true;
+      }
+      return false;
     }
 
     @Override

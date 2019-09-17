@@ -252,7 +252,7 @@ public class DfaExpressionFactory {
     PsiExpression[] elements = ExpressionUtils.getConstantArrayElements((PsiVariable)arrayPsiVar);
     if (elements == null || elements.length == 0) return DfaUnknownValue.getInstance();
     indexSet = indexSet.intersect(LongRangeSet.range(0, elements.length - 1));
-    if (indexSet.isEmpty() || indexSet.max() - indexSet.min() > 100) return DfaUnknownValue.getInstance();
+    if (indexSet.isEmpty() || indexSet.isCardinalityBigger(100)) return DfaUnknownValue.getInstance();
     return LongStreamEx.of(indexSet.stream())
                 .mapToObj(idx -> getAdvancedExpressionDfaValue(elements[(int)idx], targetType))
                 .prefix(DfaValue::unite)
