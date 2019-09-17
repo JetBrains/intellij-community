@@ -1,6 +1,4 @@
-// "Replace loop with 'Arrays.fill()' method call" "true"
-
-import java.util.Arrays;
+// "Delete element" "true"
 
 public class Test {
 
@@ -8,9 +6,7 @@ public class Test {
     int[] data = new int[n];
     int i = 0;
     while (i < 3) {
-        Arrays.fill(data, 0);
-      if (i < 2) data[n - 1] = 6;
-      i++;
+        i++;
     }
     return data;
   }

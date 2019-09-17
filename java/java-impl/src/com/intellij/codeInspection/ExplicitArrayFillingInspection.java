@@ -6,14 +6,13 @@ import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.controlFlow.DefUseUtil;
+import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -23,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -61,9 +61,8 @@ public class ExplicitArrayFillingInspection extends AbstractBaseJavaLocalInspect
         PsiExpression rValue = assignment.getRExpression();
         if (rValue == null) return;
         if (!isChangedInLoop(loop, rValue)) {
-          if (!ControlFlowUtils.isInLoop(statement) &&
-              isDefaultValueAssigned(assignment, rValue) &&
-              isFilledWithDefaultValues(container.getQualifier(), statement)) {
+          Object defaultValue = PsiTypesUtil.getDefaultValue(assignment.getType());
+          if (isDefaultValue(rValue, defaultValue) && isFilledWithDefaultValues(container.getQualifier(), statement, defaultValue)) {
             holder.registerProblem(statement, getRange(statement, ProblemHighlightType.WARNING),
                                    InspectionsBundle.message("inspection.explicit.array.filling.redundant.loop.description"),
                                    QuickFixFactory.getInstance().createDeleteFix(statement));
@@ -88,88 +87,98 @@ public class ExplicitArrayFillingInspection extends AbstractBaseJavaLocalInspect
           .anyMatch(call -> !ClassUtils.isImmutable(call.getType()) && !ConstructionUtils.isEmptyArrayInitializer(call));
       }
 
-      private boolean isDefaultValueAssigned(@NotNull PsiAssignmentExpression assignment, @NotNull PsiExpression rhs) {
-        Object defaultValue = PsiTypesUtil.getDefaultValue(assignment.getType());
-        if (ExpressionUtils.isNullLiteral(rhs) && defaultValue == null) return true;
-        Object constantValue = ExpressionUtils.computeConstantExpression(rhs);
+      private boolean isDefaultValue(@NotNull PsiExpression expression, @Nullable Object defaultValue) {
+        if (ExpressionUtils.isNullLiteral(expression) && defaultValue == null) return true;
+        Object constantValue = ExpressionUtils.computeConstantExpression(expression);
         return constantValue != null && constantValue.equals(defaultValue);
       }
 
-      private boolean isFilledWithDefaultValues(@NotNull PsiExpression expression, @NotNull PsiForStatement forStatement) {
+      private boolean isFilledWithDefaultValues(@NotNull PsiExpression expression,
+                                                @NotNull PsiForStatement statement,
+                                                @Nullable Object defaultValue) {
         PsiReferenceExpression arrayRef = tryCast(PsiUtil.skipParenthesizedExprDown(expression), PsiReferenceExpression.class);
         if (arrayRef == null) return false;
         PsiVariable arrayVar = tryCast(arrayRef.resolve(), PsiVariable.class);
         if (arrayVar == null) return false;
         PsiCodeBlock block = tryCast(PsiUtil.getVariableCodeBlock(arrayVar, null), PsiCodeBlock.class);
         if (block == null) return false;
-        Set<PsiStatement> defs = getDefsStatements(DefUseUtil.getDefs(block, arrayVar, arrayRef));
+        ControlFlow flow = createControlFlow(block);
+        if (flow == null) return false;
+        int statementStart = flow.getStartOffset(statement);
+        if (statementStart == -1) return false;
+        int statementEnd = flow.getEndOffset(statement);
+        if (statementEnd == -1) return false;
+        PsiElement[] defs = getDefs(block, arrayVar, arrayRef, defaultValue);
         if (defs == null) return false;
-        return !isUsedBetween(forStatement, defs, arrayVar, block);
-      }
-
-      private boolean isUsedBetween(@NotNull PsiElement ref, @NotNull Set<PsiStatement> defs,
-                                    @NotNull PsiVariable arrayVar, @NotNull PsiCodeBlock block) {
-        Ref<Boolean> isUsed = Ref.create(false);
-
-        block.accept(new JavaRecursiveElementWalkingVisitor() {
-
-          boolean inContext;
-
-          @Override
-          public void visitStatement(PsiStatement statement) {
-            if (defs.contains(statement)) {
-              inContext = true;
-            }
-            else {
-              if (statement == ref) {
-                inContext = false;
-                stopWalking();
-              }
-              super.visitStatement(statement);
-            }
-          }
-
-          @Override
-          public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
-            if (inContext && reference.isReferenceTo(arrayVar)) {
-              isUsed.set(true);
-              stopWalking();
-            }
-            super.visitReferenceElement(reference);
-          }
-        });
-        return isUsed.get();
+        Set<Integer> exclude = getDefsOffsets(flow, defs);
+        if (exclude == null) return false;
+        for (int i = statementStart; i < statementEnd; i++) {
+          exclude.add(i);
+        }
+        return Arrays.stream(defs)
+          .map(def -> flow.getEndOffset(def))
+          .noneMatch(offset -> ControlFlowUtils.isVariableReferencedBeforeStatementEntry(flow, offset + 1, statement, arrayVar, exclude));
       }
 
       @Nullable
-      private Set<PsiStatement> getDefsStatements(@NotNull PsiElement[] defs) {
-        Set<PsiStatement> statements = new HashSet<>();
-        for (PsiElement def : defs) {
+      private ControlFlow createControlFlow(@NotNull PsiCodeBlock block) {
+        try {
+          return ControlFlowFactory.getInstance(block.getProject())
+            .getControlFlow(block, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance());
+        }
+        catch (AnalysisCanceledException ignored) {
+          return null;
+        }
+      }
+
+      @Nullable
+      private PsiElement[] getDefs(@NotNull PsiCodeBlock block,
+                                   @NotNull PsiVariable arrayVar,
+                                   @NotNull PsiReferenceExpression arrayRef,
+                                   @Nullable Object defaultValue) {
+        PsiElement[] defs = DefUseUtil.getDefs(block, arrayVar, arrayRef);
+        PsiExpression[] expressions = new PsiExpression[defs.length];
+        for (int i = 0; i < defs.length; i++) {
+          PsiElement def = defs[i];
           PsiVariable variable = tryCast(def, PsiVariable.class);
           if (variable != null) {
             PsiExpression initializer = variable.getInitializer();
-            if (initializer == null || !isNewArrayCreation(initializer)) return null;
-            PsiDeclarationStatement declaration = PsiTreeUtil.getParentOfType(initializer, PsiDeclarationStatement.class);
-            if (declaration == null) return null;
-            statements.add(declaration);
+            if (!isNewArrayCreation(initializer, defaultValue)) return null;
+            expressions[i] = initializer;
             continue;
           }
           PsiAssignmentExpression assignment = PsiTreeUtil.getParentOfType(def, PsiAssignmentExpression.class);
           if (assignment != null) {
-            if (!isNewArrayCreation(assignment.getRExpression())) return null;
-            PsiExpressionStatement expressionStatement = PsiTreeUtil.getParentOfType(assignment, PsiExpressionStatement.class);
-            if (expressionStatement == null) return null;
-            statements.add(expressionStatement);
+            if (!isNewArrayCreation(assignment.getRExpression(), defaultValue)) return null;
+            expressions[i] = assignment;
             continue;
           }
           return null;
         }
-        return statements;
+        return expressions;
       }
 
-      private boolean isNewArrayCreation(@Nullable PsiExpression expression) {
-        expression = PsiUtil.skipParenthesizedExprDown(expression);
-        return expression == null || expression instanceof PsiNewExpression;
+      private boolean isNewArrayCreation(@Nullable PsiExpression expression, @Nullable Object defaultValue) {
+        PsiNewExpression newExpression = tryCast(PsiUtil.skipParenthesizedExprDown(expression), PsiNewExpression.class);
+        if (newExpression == null) return false;
+        PsiArrayInitializerExpression initializer = newExpression.getArrayInitializer();
+        if (initializer == null) return true;
+        return Arrays.stream(initializer.getInitializers()).allMatch(init -> isDefaultValue(init, defaultValue));
+      }
+
+      @Nullable
+      private Set<Integer> getDefsOffsets(@NotNull ControlFlow flow, @NotNull PsiElement[] defs) {
+        Set<Integer> set = new HashSet<>();
+        for (PsiElement def : defs) {
+          int start = flow.getStartOffset(def);
+          if (start == -1) return null;
+          int end = flow.getEndOffset(def);
+          if (end == -1) return null;
+          for (int i = start; i < end; i++) {
+            set.add(i);
+          }
+        }
+        return set;
       }
 
       private void registerProblem(@NotNull PsiForStatement statement, boolean isSetAll) {
