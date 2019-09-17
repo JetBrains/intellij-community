@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2019 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,11 @@
  */
 package com.siyeh.ipp.junit;
 
+import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.testIntegration.TestFramework;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.ComparisonUtils;
@@ -26,6 +29,8 @@ import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Set;
 
 public class CreateAssertIntention extends Intention {
 
@@ -44,8 +49,7 @@ public class CreateAssertIntention extends Intention {
       newStatement = buildNewStatement("assertFalse", element, BoolUtils.getNegatedExpressionText(expression));
     }
     else if (ComparisonUtils.isNullComparison(expression)) {
-      final PsiBinaryExpression binaryExpression =
-        (PsiBinaryExpression)expression;
+      final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)expression;
       final PsiExpression comparedExpression = ExpressionUtils.getValueComparedWithNull(binaryExpression);
       assert comparedExpression != null;
       if (JavaTokenType.EQEQ.equals(binaryExpression.getOperationTokenType())) {
@@ -56,8 +60,7 @@ public class CreateAssertIntention extends Intention {
       }
     }
     else if (isEqualityComparison(expression)) {
-      final PsiBinaryExpression binaryExpression =
-        (PsiBinaryExpression)expression;
+      final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)expression;
       final PsiExpression lhs = binaryExpression.getLOperand();
       final PsiExpression rhs = binaryExpression.getROperand();
       final PsiExpression comparedExpression;
@@ -84,12 +87,9 @@ public class CreateAssertIntention extends Intention {
       }
     }
     else if (isEqualsExpression(expression)) {
-      final PsiMethodCallExpression call =
-        (PsiMethodCallExpression)expression;
-      final PsiReferenceExpression methodExpression =
-        call.getMethodExpression();
-      final PsiExpression comparedExpression =
-        methodExpression.getQualifierExpression();
+      final PsiMethodCallExpression call = (PsiMethodCallExpression)expression;
+      final PsiReferenceExpression methodExpression = call.getMethodExpression();
+      final PsiExpression comparedExpression = methodExpression.getQualifierExpression();
       assert comparedExpression != null;
       final PsiExpressionList argList = call.getArgumentList();
       final PsiExpression comparingExpression = argList.getExpressions()[0];
@@ -123,14 +123,28 @@ public class CreateAssertIntention extends Intention {
     builder.append(')');
     final String text = builder.toString();
 
+    final String qualifier = isJUnit5(context) ? "org.junit.jupiter.api.Assertions" : "org.junit.Assert";
     final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)factory.createExpressionFromText(text, context);
     final PsiMethod method = methodCallExpression.resolveMethod();
-    if (isJUnitMethod(method) || hasStaticImports(context) && ImportUtils.addStaticImport("org.junit.Assert", memberName, context)) {
+    if (isJUnitMethod(method) || hasStaticImports(context) && ImportUtils.addStaticImport(qualifier, memberName, context)) {
       return text + ';';
     }
     else {
-      return "org.junit.Assert." + text + ';';
+      return qualifier + '.' + text + ';';
     }
+  }
+
+  private static boolean isJUnit5(PsiElement context) {
+    PsiMethod method = PsiTreeUtil.getParentOfType(context, PsiMethod.class);
+    if (method == null) {
+      return false;
+    }
+    final PsiClass aClass = method.getContainingClass();
+    if (aClass == null) {
+      return false;
+    }
+    final Set<TestFramework> frameworks = TestFrameworks.detectApplicableFrameworks(aClass);
+    return frameworks.stream().anyMatch(framework -> framework.getName().equals("JUnit5") && framework.isTestMethod(method, false));
   }
 
   private static boolean isJUnitMethod(PsiMethod method) {
@@ -159,16 +173,13 @@ public class CreateAssertIntention extends Intention {
     if (!(expression instanceof PsiMethodCallExpression)) {
       return false;
     }
-    final PsiMethodCallExpression call =
-      (PsiMethodCallExpression)expression;
-    final PsiReferenceExpression methodExpression =
-      call.getMethodExpression();
+    final PsiMethodCallExpression call = (PsiMethodCallExpression)expression;
+    final PsiReferenceExpression methodExpression = call.getMethodExpression();
     @NonNls final String methodName = methodExpression.getReferenceName();
     if (!"equals".equals(methodName)) {
       return false;
     }
-    final PsiExpression qualifier =
-      methodExpression.getQualifierExpression();
+    final PsiExpression qualifier = methodExpression.getQualifierExpression();
     if (qualifier == null) {
       return false;
     }
@@ -181,8 +192,7 @@ public class CreateAssertIntention extends Intention {
     if (!(expression instanceof PsiBinaryExpression)) {
       return false;
     }
-    final PsiBinaryExpression binaryExpression =
-      (PsiBinaryExpression)expression;
+    final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)expression;
     final IElementType tokenType = binaryExpression.getOperationTokenType();
     return JavaTokenType.EQEQ.equals(tokenType);
   }
