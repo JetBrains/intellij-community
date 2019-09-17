@@ -526,8 +526,13 @@ open class IdeStarter : ApplicationStarter {
 
           val keymap = KeymapManager.getInstance().activeKeymap
           SystemShortcuts().checkConflictsAndNotify(keymap)
-
-          StartupUtil.disableInputMethodsIfPossible()
+        }
+      }
+    }
+    else if (SystemInfo.isXWindow && SystemInfo.isJetBrainsJvm) {
+      AppExecutorUtil.getAppExecutorService().execute {
+        runActivity("input method disabling on Linux") {
+          disableInputMethodsIfPossible()
         }
       }
     }
