@@ -52,13 +52,6 @@ public enum LogTableColumn {
     return myContentClass;
   }
 
-  /**
-   * @return list of indexes which correspond to default column order
-   */
-  public static List<Integer> getDefaultOrder() {
-    return StreamEx.of(ROOT, AUTHOR, DATE, COMMIT).map(LogTableColumn::ordinal).toImmutableList();
-  }
-
   static boolean isValidColumnOrder(@NotNull List<Integer> columnOrder) {
     int columnCount = count();
     if (!columnOrder.contains(ROOT.ordinal())) return false;

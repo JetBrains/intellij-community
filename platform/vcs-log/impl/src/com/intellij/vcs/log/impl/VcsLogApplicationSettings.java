@@ -5,14 +5,12 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.ui.table.LogTableColumn;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static com.intellij.vcs.log.impl.CommonUiProperties.COLUMN_ORDER;
 import static com.intellij.vcs.log.impl.CommonUiProperties.SHOW_DIFF_PREVIEW;
@@ -56,7 +54,8 @@ public class VcsLogApplicationSettings implements PersistentStateComponent<VcsLo
     else if (COLUMN_ORDER.equals(property)) {
       List<Integer> order = myState.COLUMN_ORDER;
       if (order == null || order.isEmpty()) {
-        order = LogTableColumn.getDefaultOrder();
+        order = ContainerUtil.map(Arrays.asList(LogTableColumn.ROOT, LogTableColumn.COMMIT, LogTableColumn.AUTHOR, LogTableColumn.DATE),
+                                  LogTableColumn::ordinal);
       }
       return (T)order;
     }

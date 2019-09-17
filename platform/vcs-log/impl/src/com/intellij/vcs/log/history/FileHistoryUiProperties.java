@@ -1,11 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.history;
 
-
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.table.LogTableColumn;
 import org.jetbrains.annotations.NotNull;
@@ -43,7 +43,8 @@ public class FileHistoryUiProperties implements VcsLogUiProperties, PersistentSt
     else if (COLUMN_ORDER.equals(property)) {
       List<Integer> order = myState.COLUMN_ORDER;
       if (order == null || order.isEmpty()) {
-        order = LogTableColumn.getDefaultOrder();
+        order = ContainerUtil.map(Arrays.asList(LogTableColumn.ROOT, LogTableColumn.AUTHOR, LogTableColumn.DATE, LogTableColumn.COMMIT),
+                                  LogTableColumn::ordinal);
       }
       return (T)order;
     }
