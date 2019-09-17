@@ -162,7 +162,7 @@ public class BreakpointsDialog extends DialogWrapper {
           if (!(lastPathComponent instanceof BreakpointsGroupNode)) {
             return TreeVisitor.Action.CONTINUE;
           }
-          return ((BreakpointsGroupNode) lastPathComponent).shouldBeExpandedByDefault() ?
+          return ((BreakpointsGroupNode) lastPathComponent).getGroup().expandedByDefault() ?
             TreeVisitor.Action.CONTINUE :
             TreeVisitor.Action.SKIP_CHILDREN;
         },

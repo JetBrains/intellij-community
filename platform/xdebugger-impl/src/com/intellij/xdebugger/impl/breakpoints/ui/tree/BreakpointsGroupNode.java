@@ -17,7 +17,6 @@ package com.intellij.xdebugger.impl.breakpoints.ui.tree;
 
 import com.intellij.ui.CheckedTreeNode;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroup;
-import com.intellij.xdebugger.impl.breakpoints.ui.grouping.XBreakpointCustomExpandGroup;
 
 public class BreakpointsGroupNode<G extends XBreakpointGroup> extends CheckedTreeNode {
   private final G myGroup;
@@ -37,12 +36,5 @@ public class BreakpointsGroupNode<G extends XBreakpointGroup> extends CheckedTre
   @Override
   public int getLevel() {
     return myLevel;
-  }
-
-  public boolean shouldBeExpandedByDefault() {
-    if (!(myGroup instanceof XBreakpointCustomExpandGroup)) {
-      return true;
-    }
-    return ((XBreakpointCustomExpandGroup)myGroup).shouldBeExpandedByDefault();
   }
 }
