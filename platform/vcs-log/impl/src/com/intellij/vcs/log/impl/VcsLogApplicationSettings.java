@@ -6,7 +6,7 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.ui.table.LogTableColumn;
+import com.intellij.vcs.log.ui.table.VcsLogColumn;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,8 +54,8 @@ public class VcsLogApplicationSettings implements PersistentStateComponent<VcsLo
     else if (COLUMN_ORDER.equals(property)) {
       List<Integer> order = myState.COLUMN_ORDER;
       if (order == null || order.isEmpty()) {
-        order = ContainerUtil.map(Arrays.asList(LogTableColumn.ROOT, LogTableColumn.COMMIT, LogTableColumn.AUTHOR, LogTableColumn.DATE),
-                                  LogTableColumn::ordinal);
+        order = ContainerUtil.map(Arrays.asList(VcsLogColumn.ROOT, VcsLogColumn.COMMIT, VcsLogColumn.AUTHOR, VcsLogColumn.DATE),
+                                  VcsLogColumn::ordinal);
       }
       return (T)order;
     }

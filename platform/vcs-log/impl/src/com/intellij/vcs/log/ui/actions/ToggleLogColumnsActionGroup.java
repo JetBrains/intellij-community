@@ -11,7 +11,7 @@ import com.intellij.vcs.log.impl.CommonUiProperties;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
-import com.intellij.vcs.log.ui.table.LogTableColumn;
+import com.intellij.vcs.log.ui.table.VcsLogColumn;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,7 +35,7 @@ public class ToggleLogColumnsActionGroup extends ActionGroup implements DumbAwar
   @Override
   public AnAction[] getChildren(@Nullable AnActionEvent e) {
     List<AnAction> actions = new ArrayList<>();
-    for (LogTableColumn column : LogTableColumn.DYNAMIC_COLUMNS) {
+    for (VcsLogColumn column : VcsLogColumn.DYNAMIC_COLUMNS) {
       actions.add(new ToggleColumnAction(column));
     }
 
@@ -50,7 +50,7 @@ public class ToggleLogColumnsActionGroup extends ActionGroup implements DumbAwar
   private static class ToggleColumnAction extends ToggleAction implements DumbAware {
     private final int myIndex;
 
-    private ToggleColumnAction(@NotNull LogTableColumn column) {
+    private ToggleColumnAction(@NotNull VcsLogColumn column) {
       super(column.getName());
       myIndex = column.ordinal();
     }
