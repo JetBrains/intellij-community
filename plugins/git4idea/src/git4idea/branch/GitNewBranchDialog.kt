@@ -21,6 +21,7 @@ import com.intellij.ui.components.JBCheckBox
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil.DEFAULT_HGAP
 import com.intellij.util.ui.UIUtil.DEFAULT_VGAP
+import git4idea.repo.GitRepository
 import git4idea.validators.GitNewBranchNameValidator
 import java.awt.BorderLayout
 import java.awt.event.KeyEvent
@@ -28,8 +29,11 @@ import javax.swing.JComponent
 
 data class GitNewBranchOptions(val name: String, @get:JvmName("shouldCheckout") val checkout: Boolean)
 
-internal class GitNewBranchDialog(project: Project, dialogTitle: String, initialName: String?, validator: GitNewBranchNameValidator) :
-  Messages.InputDialog(project, "New branch name:", dialogTitle, null, initialName, validator) {
+internal class GitNewBranchDialog(project: Project,
+                                  repositories: Collection<GitRepository>,
+                                  dialogTitle: String,
+                                  initialName: String?) :
+  Messages.InputDialog(project, "New branch name:", dialogTitle, null, initialName, GitNewBranchNameValidator.newInstance(repositories)) {
 
   private lateinit var checkoutCheckbox : JBCheckBox
 

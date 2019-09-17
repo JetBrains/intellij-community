@@ -13,6 +13,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
@@ -33,7 +34,7 @@ import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import git4idea.stash.GitStashUtils;
 import git4idea.util.GitUIUtil;
-import git4idea.validators.GitNewBranchNameValidator;
+import git4idea.validators.GitBranchValidatorKt;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -208,9 +209,9 @@ public class GitUnstashDialog extends DialogWrapper {
       myReinstateIndexCheckBox.setSelected(true);
       GitRepository repository = GitUtil.getRepositoryManager(myProject).getRepositoryForRoot(getGitRoot());
       if (repository != null) {
-        GitNewBranchNameValidator branchNameValidator = GitNewBranchNameValidator.newInstance(singletonList(repository));
-        if (!branchNameValidator.checkInput(branch)) {
-          setErrorText(branchNameValidator.getErrorText(branch));
+        ValidationInfo branchValidationInfo = GitBranchValidatorKt.validateName(singletonList(repository), branch);
+        if (branchValidationInfo != null) {
+          setErrorText(branchValidationInfo.message, myBranchTextField);
           setOKActionEnabled(false);
           return;
         }
