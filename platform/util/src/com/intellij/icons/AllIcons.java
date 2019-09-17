@@ -2745,6 +2745,7 @@ public class AllIcons {
     /** 16x16 */ public static final Icon Azure = load("/providers/azure.svg");
     /** 16x16 */ public static final Icon Cassandra = load("/providers/cassandra.svg");
     /** 16x16 */ public static final Icon ClickHouse = load("/providers/clickHouse.svg");
+    /** 16x16 */ public static final Icon CockroachDB = load("/providers/cockroachDB.svg");
     /** 16x16 */ public static final Icon DB2 = load("/providers/DB2.svg");
     /** 16x16 */ public static final Icon Eclipse = load("/providers/eclipse.svg");
     /** 16x16 */ public static final Icon Exasol = load("/providers/exasol.svg");
