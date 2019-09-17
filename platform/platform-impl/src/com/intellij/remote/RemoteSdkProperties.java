@@ -36,46 +36,6 @@ public interface RemoteSdkProperties {
 
   String getDefaultHelpersName();
 
-  /**
-   * Use getPathMappings() instead
-   * To be removed in IDEA 15
-   *
-   * @deprecated
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2015")
-  void addRemoteRoot(String remoteRoot);
-
-  /**
-   * Use getPathMappings() instead
-   * To be removed in IDEA 15
-   *
-   * @deprecated
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2015")
-  void clearRemoteRoots();
-
-  /**
-   * Use getPathMappings() instead
-   * To be removed in IDEA 15
-   *
-   * @deprecated
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2015")
-  List<String> getRemoteRoots();
-
-  /**
-   * Use setPathMappings() instead
-   * To be removed in IDEA 15
-   *
-   * @deprecated
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2015")
-  void setRemoteRoots(List<String> remoteRoots);
-
   @NotNull
   PathMappingSettings getPathMappings();
 
