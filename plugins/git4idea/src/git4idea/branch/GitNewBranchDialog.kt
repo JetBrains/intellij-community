@@ -16,37 +16,45 @@
 package git4idea.branch
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.Messages
-import com.intellij.ui.components.JBCheckBox
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil.DEFAULT_HGAP
-import com.intellij.util.ui.UIUtil.DEFAULT_VGAP
+import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.ui.layout.*
 import git4idea.repo.GitRepository
-import git4idea.validators.GitNewBranchNameValidator
-import java.awt.BorderLayout
+import git4idea.validators.validateName
 import java.awt.event.KeyEvent
-import javax.swing.JComponent
 
 data class GitNewBranchOptions(val name: String, @get:JvmName("shouldCheckout") val checkout: Boolean)
 
 internal class GitNewBranchDialog(project: Project,
-                                  repositories: Collection<GitRepository>,
+                                  private val repositories: Collection<GitRepository>,
                                   dialogTitle: String,
-                                  initialName: String?) :
-  Messages.InputDialog(project, "New branch name:", dialogTitle, null, initialName, GitNewBranchNameValidator.newInstance(repositories)) {
+                                  initialName: String?,
+                                  private val showCheckOutOption: Boolean) : DialogWrapper(project, true) {
+  private var checkout = true
+  private var branchName = initialName.orEmpty()
 
-  private lateinit var checkoutCheckbox : JBCheckBox
-
-  fun showAndGetOptions(): GitNewBranchOptions? {
-    return if (showAndGet()) GitNewBranchOptions(inputString!!.trim(), checkoutCheckbox.isSelected) else null
+  init {
+    title = dialogTitle
+    init()
   }
 
-  override fun createCenterPanel(): JComponent? {
-    checkoutCheckbox = JBCheckBox("Checkout branch", true)
-    checkoutCheckbox.mnemonic = KeyEvent.VK_C
+  fun showAndGetOptions() = if (showAndGet()) GitNewBranchOptions(branchName.trim(), checkout) else null
 
-    val panel = JBUI.Panels.simplePanel(DEFAULT_HGAP, DEFAULT_VGAP)
-    panel.add(checkoutCheckbox, BorderLayout.WEST)
-    return panel
+  override fun createCenterPanel() = panel {
+    row {
+      label("New branch name:")
+    }
+    row {
+      textField(::branchName, { branchName = it }).focused().withValidationOnInput {
+        validateName(repositories, it.text.orEmpty())?.forComponent(it)
+      }
+    }
+    if (showCheckOutOption) {
+      row {
+        checkBox("Checkout branch", ::checkout).component.apply {
+          mnemonic = KeyEvent.VK_C
+        }
+      }
+    }
+
   }
 }
