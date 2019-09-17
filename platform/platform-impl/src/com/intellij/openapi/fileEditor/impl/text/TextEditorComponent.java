@@ -125,7 +125,12 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider, Dispos
     FileType fileType = myFile.getFileType();
     if (fileType.getName().equals(key) ||
         (fileType instanceof LanguageFileType && ((LanguageFileType)fileType).getLanguage().getID().equals(key))) {
-      updateHighlightersSynchronously();
+      if (ApplicationManager.getApplication().isDispatchThread()) {
+        updateHighlightersSynchronously();
+      }
+      else {
+        updateHighlighters();
+      }
     }
   }
 
