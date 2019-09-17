@@ -14,6 +14,7 @@ import com.intellij.sh.ShSupport;
 import com.intellij.sh.highlighting.ShTextOccurrencesUtil;
 import com.intellij.sh.lexer.ShTokenTypes;
 import com.intellij.sh.psi.ShFile;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class ShRenameHandler implements RenameHandler {
@@ -28,7 +29,7 @@ public class ShRenameHandler implements RenameHandler {
   }
 
   private static boolean isRenameAvailable(@NotNull Editor editor, @NotNull DataContext dataContext) {
-    ShFile file = (ShFile)dataContext.getData(CommonDataKeys.PSI_FILE);
+    ShFile file = ObjectUtils.tryCast(dataContext.getData(CommonDataKeys.PSI_FILE), ShFile.class);
     if (file == null) {
       return false;
     }
