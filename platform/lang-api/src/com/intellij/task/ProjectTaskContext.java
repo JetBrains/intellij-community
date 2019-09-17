@@ -138,7 +138,7 @@ public class ProjectTaskContext extends UserDataHolderBase {
    * The method should be used ONLY if the {@link ProjectTaskRunner} doesn't support {@link #fileGenerated} events.
    */
   @ApiStatus.Experimental
-  public void dirtyOutputPathsProvider(@NotNull Supplier<List<String>> outputPathsProvider) {
+  public void addDirtyOutputPathsProvider(@NotNull Supplier<List<String>> outputPathsProvider) {
     if (myCollectGeneratedFiles) {
       myDirtyOutputPaths.add(outputPathsProvider);
     }
