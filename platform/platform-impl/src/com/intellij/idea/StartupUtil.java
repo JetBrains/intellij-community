@@ -192,7 +192,7 @@ public final class StartupUtil {
     // log initialization should happen only after locking the system directory
     Logger log = setupLogger();
     activity.end();
-    
+
     executorService.execute(() -> {
       ApplicationInfo appInfo = ApplicationInfoImpl.getShadowInstance();
       Activity subActivity = StartUpMeasurer.startActivity("essential IDE info logging");
