@@ -7,7 +7,10 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.stream.JsonReader;
 import com.intellij.ide.BrowserUtil;
-import com.intellij.ide.plugins.*;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.PluginManagerConfigurable;
+import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.ide.plugins.RepositoryHelper;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationDisplayType;
@@ -27,7 +30,6 @@ import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.PlatformUtils;
@@ -85,54 +87,52 @@ public final class PluginsAdvertiser {
   }
 
   static void loadSupportedExtensions(@NotNull List<? extends IdeaPluginDescriptor> allPlugins) throws IOException {
-    final Map<String, IdeaPluginDescriptor> availableIds = new HashMap<>();
+    Map<String, IdeaPluginDescriptor> availableIds = new HashMap<>();
     for (IdeaPluginDescriptor plugin : allPlugins) {
       availableIds.put(plugin.getPluginId().getIdString(), plugin);
     }
-    processFeatureRequest(
-      ImmutableMap.of("featureType", FileTypeFactory.FILE_TYPE_FACTORY_EP.getName()),
-      request -> {
-        final JsonReader jsonReader = new JsonReader(request.getReader());
-        jsonReader.setLenient(true);
-        final JsonElement jsonRootElement = new JsonParser().parse(jsonReader);
-        final Map<String, Set<Plugin>> result = new HashMap<>();
-        for (JsonElement jsonElement : jsonRootElement.getAsJsonArray()) {
-          final JsonObject jsonObject = jsonElement.getAsJsonObject();
+    @SuppressWarnings("deprecation") Map<String, String> params = ImmutableMap.of("featureType", FileTypeFactory.FILE_TYPE_FACTORY_EP.getName());
+    processFeatureRequest(params, request -> {
+      JsonReader jsonReader = new JsonReader(request.getReader());
+      jsonReader.setLenient(true);
+      JsonElement jsonRootElement = new JsonParser().parse(jsonReader);
+      Map<String, Set<Plugin>> result = new HashMap<>();
+      for (JsonElement jsonElement : jsonRootElement.getAsJsonArray()) {
+        JsonObject jsonObject = jsonElement.getAsJsonObject();
 
-          final String pluginId = StringUtil.unquoteString(jsonObject.get("pluginId").toString());
-          final JsonElement bundledExt = jsonObject.get("bundled");
-          boolean isBundled = Boolean.parseBoolean(bundledExt.toString());
-          final IdeaPluginDescriptor fromServerPluginDescription = availableIds.get(pluginId);
-          if (fromServerPluginDescription == null && !isBundled) continue;
+        String pluginId = StringUtil.unquoteString(jsonObject.get("pluginId").toString());
+        JsonElement bundledExt = jsonObject.get("bundled");
+        boolean isBundled = Boolean.parseBoolean(bundledExt.toString());
+        IdeaPluginDescriptor fromServerPluginDescription = availableIds.get(pluginId);
+        if (fromServerPluginDescription == null && !isBundled) continue;
 
-          final IdeaPluginDescriptor loadedPlugin = PluginManagerCore.getPlugin(PluginId.getId(pluginId));
-          if (loadedPlugin != null && loadedPlugin.isEnabled()) continue;
+        IdeaPluginDescriptor loadedPlugin = PluginManagerCore.getPlugin(PluginId.getId(pluginId));
+        if (loadedPlugin != null && loadedPlugin.isEnabled()) continue;
 
-          if (loadedPlugin != null && fromServerPluginDescription != null &&
-              StringUtil.compareVersionNumbers(loadedPlugin.getVersion(), fromServerPluginDescription.getVersion()) >= 0) {
-            continue;
-          }
-
-          if (fromServerPluginDescription != null && PluginManagerCore.isBrokenPlugin(fromServerPluginDescription)) continue;
-
-          final JsonElement ext = jsonObject.get("implementationName");
-          final String extension = StringUtil.unquoteString(ext.toString());
-          Set<Plugin> pluginIds = result.get(extension);
-          if (pluginIds == null) {
-            pluginIds = new HashSet<>();
-            result.put(extension, pluginIds);
-          }
-          final JsonElement pluginNameElement = jsonObject.get("pluginName");
-          String pluginName = pluginNameElement != null ? StringUtil.unquoteString(pluginNameElement.toString()) : null;
-          pluginIds.add(new Plugin(PluginId.getId(pluginId), pluginName, isBundled));
+        if (loadedPlugin != null && fromServerPluginDescription != null &&
+            StringUtil.compareVersionNumbers(loadedPlugin.getVersion(), fromServerPluginDescription.getVersion()) >= 0) {
+          continue;
         }
-        saveExtensions(result);
-        return result;
-      });
+
+        if (fromServerPluginDescription != null && PluginManagerCore.isBrokenPlugin(fromServerPluginDescription)) continue;
+
+        JsonElement ext = jsonObject.get("implementationName");
+        String extension = StringUtil.unquoteString(ext.toString());
+        Set<Plugin> pluginIds = result.get(extension);
+        if (pluginIds == null) {
+          pluginIds = new HashSet<>();
+          result.put(extension, pluginIds);
+        }
+        JsonElement pluginNameElement = jsonObject.get("pluginName");
+        String pluginName = pluginNameElement != null ? StringUtil.unquoteString(pluginNameElement.toString()) : null;
+        pluginIds.add(new Plugin(PluginId.getId(pluginId), pluginName, isBundled));
+      }
+      saveExtensions(result);
+      return result;
+    });
   }
 
-  private static <K> K processFeatureRequest(Map<String, String> params, HttpRequests.RequestProcessor<K> requestProcessor)
-    throws IOException {
+  private static <K> K processFeatureRequest(Map<String, String> params, HttpRequests.RequestProcessor<K> requestProcessor) throws IOException {
     String baseUrl = ApplicationInfoImpl.getShadowInstance().getPluginManagerUrl() + "/feature/getImplementations?";
     Url url = Urls.parseEncoded(baseUrl);
     if (url == null) {
@@ -142,11 +142,11 @@ public final class PluginsAdvertiser {
     return HttpRequests.request(url.addParameters(params)).productNameAsUserAgent().connect(requestProcessor);
   }
 
-  public static void ensureDeleted() {
-    FileUtilRt.delete(getExtensionsFile());
+  static void ensureDeleted() {
+    FileUtil.delete(getExtensionsFile());
   }
 
-  public static KnownExtensions loadExtensions() {
+  public static @Nullable KnownExtensions loadExtensions() {
     KnownExtensions knownExtensions = ourKnownExtensions.get();
     if (knownExtensions != null) return knownExtensions;
     try {
@@ -245,6 +245,7 @@ public final class PluginsAdvertiser {
   }
 
   @Tag("exts")
+  @SuppressWarnings("SpellCheckingInspection")
   public static class KnownExtensions {
     @OptionTag
     @XMap
@@ -261,10 +262,7 @@ public final class PluginsAdvertiser {
 
     public Set<Plugin> find(String extension) {
       final PluginSet pluginSet = myExtensions.get(extension);
-      if (pluginSet != null) {
-        return pluginSet.myPlugins;
-      }
-      return null;
+      return pluginSet != null ? pluginSet.myPlugins : null;
     }
   }
 
@@ -292,8 +290,7 @@ public final class PluginsAdvertiser {
       myPluginName = pluginName;
     }
 
-    public Plugin() {
-    }
+    public Plugin() { }
 
     @Override
     public boolean equals(Object o) {
