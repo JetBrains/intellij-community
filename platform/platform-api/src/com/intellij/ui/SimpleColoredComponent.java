@@ -203,16 +203,6 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     }
   }
 
-  /**
-   * fragment width isn't a right name, it is actually a padding
-   * @deprecated remove in IDEA 16
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2016")
-  @Deprecated
-  public void appendFixedTextFragmentWidth(int width) {
-    appendTextPadding(width);
-  }
-
   public void appendTextPadding(int padding) {
     appendTextPadding(padding, SwingConstants.LEFT);
   }
