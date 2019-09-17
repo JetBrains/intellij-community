@@ -78,14 +78,15 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
   }
 
   private void printText(@NotNull String text, @Nullable ConsoleViewContentType contentType) throws IOException {
-    if (contentType != null) {
-      myDataStream.append(encodeColor(contentType.getAttributes().getForegroundColor()));
+    Color foregroundColor = contentType != null ? contentType.getAttributes().getForegroundColor() : null;
+    if (foregroundColor != null) {
+      myDataStream.append(encodeColor(foregroundColor));
     }
 
     myDataStream.append(text);
 
-    if (contentType != null) {
-      myDataStream.append((char)CharUtils.ESC + "[39m"); //restore color
+    if (foregroundColor != null) {
+      myDataStream.append((char)CharUtils.ESC + "[39m"); //restore default foreground color
     }
     myContentHelper.onContentTypePrinted(ObjectUtils.notNull(contentType, ConsoleViewContentType.NORMAL_OUTPUT));
   }
@@ -95,7 +96,8 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
     myContentHelper.addChangeListener(listener, parent);
   }
 
-  private static String encodeColor(Color color) {
+  @NotNull
+  private static String encodeColor(@NotNull Color color) {
     return ((char)CharUtils.ESC) + "[" + "38;2;" + color.getRed() + ";" + color.getGreen() + ";" +
            color.getBlue() + "m";
   }
