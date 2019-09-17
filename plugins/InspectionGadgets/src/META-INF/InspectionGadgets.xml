@@ -771,27 +771,6 @@
                      bundle="com.siyeh.InspectionGadgetsBundle" key="unnecessary.conditional.expression.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.control.flow.issues" enabledByDefault="true"
                      level="WARNING" implementationClass="com.siyeh.ig.controlflow.UnnecessaryConditionalExpressionInspection" cleanupTool="true"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="UnnecessaryBreak" bundle="com.siyeh.InspectionGadgetsBundle" key="unnecessary.break.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.verbose.or.redundant.code.constructs" enabledByDefault="true"
-                     level="WARNING" implementationClass="com.siyeh.ig.controlflow.UnnecessaryBreakInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="UnnecessaryContinue" bundle="com.siyeh.InspectionGadgetsBundle" key="unnecessary.continue.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.verbose.or.redundant.code.constructs" enabledByDefault="true"
-                     level="WARNING" implementationClass="com.siyeh.ig.controlflow.UnnecessaryContinueInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="UnnecessaryDefault" bundle="com.siyeh.InspectionGadgetsBundle" key="unnecessary.default.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.verbose.or.redundant.code.constructs" enabledByDefault="true"
-                     level="WARNING" implementationClass="com.siyeh.ig.controlflow.UnnecessaryDefaultInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="UnnecessaryLabelOnBreakStatement" bundle="com.siyeh.InspectionGadgetsBundle"
-                     key="unnecessary.label.on.break.statement.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.verbose.or.redundant.code.constructs" enabledByDefault="true" level="WARNING"
-                     implementationClass="com.siyeh.ig.controlflow.UnnecessaryLabelOnBreakStatementInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="UnnecessaryLabelOnContinueStatement" bundle="com.siyeh.InspectionGadgetsBundle"
-                     key="unnecessary.label.on.continue.statement.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.verbose.or.redundant.code.constructs" enabledByDefault="true" level="WARNING"
-                     implementationClass="com.siyeh.ig.controlflow.UnnecessaryLabelOnContinueStatementInspection"/>
-    <localInspection groupPath="Java" language="JAVA" suppressId="UnnecessaryReturnStatement" shortName="UnnecessaryReturn" bundle="com.siyeh.InspectionGadgetsBundle"
-                     key="unnecessary.return.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.verbose.or.redundant.code.constructs" enabledByDefault="true" level="WARNING"
-                     implementationClass="com.siyeh.ig.controlflow.UnnecessaryReturnInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="AssertionCanBeIf" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="assertion.can.be.if.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.control.flow.issues" enabledByDefault="true" level="INFORMATION"
@@ -1546,7 +1525,7 @@
     <localInspection groupPath="Java" language="JAVA" suppressId="CallToThreadDumpStack" shortName="ThreadDumpStack" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="dumpstack.call.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.code.maturity.issues"
                      enabledByDefault="false" level="WARNING" implementationClass="com.siyeh.ig.maturity.ThreadDumpStackInspection"/>
-   <localInspection groupPath="Java" language="JAVA"  shortName="ThrowablePrintedToSystemOut" bundle="com.siyeh.InspectionGadgetsBundle"
+    <localInspection groupPath="Java" language="JAVA"  shortName="ThrowablePrintedToSystemOut" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="throwable.printed.to.system.out.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.maturity.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.maturity.ThrowablePrintedToSystemOutInspection"/>
@@ -2029,15 +2008,6 @@
                      bundle="com.siyeh.InspectionGadgetsBundle" key="string.replaceable.by.string.buffer.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.performance.issues" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.performance.StringReplaceableByStringBufferInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="StringOperationCanBeSimplified" bundle="com.siyeh.InspectionGadgetsBundle"
-                     key="inspection.redundant.string.operation.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.verbose.or.redundant.code.constructs"
-                     enabledByDefault="true" level="WARNING" cleanupTool="true" implementationClass="com.siyeh.ig.redundancy.RedundantStringOperationInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="RedundantClassCall" bundle="com.siyeh.InspectionGadgetsBundle"
-                     key="inspection.redundant.class.call.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.verbose.or.redundant.code.constructs"
-                     enabledByDefault="true" level="WARNING" cleanupTool="true" implementationClass="com.siyeh.ig.redundancy.RedundantClassCallInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="RedundantCollectionOperation" bundle="com.siyeh.InspectionGadgetsBundle"
-                     key="inspection.redundant.collection.operation.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.verbose.or.redundant.code.constructs"
-                     enabledByDefault="true" level="WARNING" cleanupTool="true" implementationClass="com.siyeh.ig.redundancy.RedundantCollectionOperationInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="TailRecursion" bundle="com.siyeh.InspectionGadgetsBundle" key="tail.recursion.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.performance.issues" enabledByDefault="true"
                      level="INFORMATION" implementationClass="com.siyeh.ig.performance.TailRecursionInspection"/>
@@ -2395,10 +2365,6 @@
                      key="simplifiable.equals.expression.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.controlflow.SimplifiableEqualsExpressionInspection" cleanupTool="true"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="StringBufferReplaceableByString" bundle="com.siyeh.InspectionGadgetsBundle"
-                     key="string.buffer.replaceable.by.string.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.verbose.or.redundant.code.constructs" enabledByDefault="true" level="WARNING"
-                     implementationClass="com.siyeh.ig.style.StringBufferReplaceableByStringInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="TypeParameterExplicitlyExtendsObject" shortName="TypeParameterExtendsObject"
                      bundle="com.siyeh.InspectionGadgetsBundle" key="type.parameter.extends.object.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.code.style.issues" enabledByDefault="true"
@@ -2423,11 +2389,6 @@
                      key="unnecessary.tostring.call.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="false" level="WARNING" cleanupTool="true"
                      implementationClass="com.siyeh.ig.style.UnnecessaryToStringCallInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="RedundantCompareCall"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.verbose.or.redundant.code.constructs"
-                     enabledByDefault="true" level="WARNING"
-                     key="inspection.redundant.compare.call.display.name" bundle="com.siyeh.InspectionGadgetsBundle"
-                     implementationClass="com.intellij.codeInspection.RedundantCompareCallInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="RedundantNoArgConstructor" shortName="UnnecessaryConstructor" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="unnecessary.constructor.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="false" level="WARNING"
@@ -2740,6 +2701,47 @@
                      bundle="com.siyeh.InspectionGadgetsBundle" key="static.initializer.references.subclass.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.threading.issues" enabledByDefault="true"
                      level="WARNING" implementationClass="com.siyeh.ig.threading.StaticInitializerReferencesSubClassInspection"/>
+
+    <!-- group.names.verbose.or.redundant.code.constructs -->
+    <localInspection groupPath="Java" language="JAVA" shortName="RedundantCompareCall"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.verbose.or.redundant.code.constructs"
+                     enabledByDefault="true" level="WARNING"
+                     key="inspection.redundant.compare.call.display.name" bundle="com.siyeh.InspectionGadgetsBundle"
+                     implementationClass="com.intellij.codeInspection.RedundantCompareCallInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="RedundantClassCall" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="inspection.redundant.class.call.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.verbose.or.redundant.code.constructs"
+                     enabledByDefault="true" level="WARNING" cleanupTool="true" implementationClass="com.siyeh.ig.redundancy.RedundantClassCallInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="RedundantCollectionOperation" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="inspection.redundant.collection.operation.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.verbose.or.redundant.code.constructs"
+                     enabledByDefault="true" level="WARNING" cleanupTool="true" implementationClass="com.siyeh.ig.redundancy.RedundantCollectionOperationInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="StringOperationCanBeSimplified" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="inspection.redundant.string.operation.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.verbose.or.redundant.code.constructs"
+                     enabledByDefault="true" level="WARNING" cleanupTool="true" implementationClass="com.siyeh.ig.redundancy.RedundantStringOperationInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="StringBufferReplaceableByString" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="string.buffer.replaceable.by.string.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.verbose.or.redundant.code.constructs" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.siyeh.ig.style.StringBufferReplaceableByStringInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="UnnecessaryBreak" bundle="com.siyeh.InspectionGadgetsBundle" key="unnecessary.break.display.name"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.verbose.or.redundant.code.constructs" enabledByDefault="true"
+                     level="WARNING" implementationClass="com.siyeh.ig.controlflow.UnnecessaryBreakInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="UnnecessaryContinue" bundle="com.siyeh.InspectionGadgetsBundle" key="unnecessary.continue.display.name"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.verbose.or.redundant.code.constructs" enabledByDefault="true"
+                     level="WARNING" implementationClass="com.siyeh.ig.controlflow.UnnecessaryContinueInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="UnnecessaryDefault" bundle="com.siyeh.InspectionGadgetsBundle" key="unnecessary.default.display.name"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.verbose.or.redundant.code.constructs" enabledByDefault="true"
+                     level="WARNING" implementationClass="com.siyeh.ig.controlflow.UnnecessaryDefaultInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="UnnecessaryLabelOnBreakStatement" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="unnecessary.label.on.break.statement.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.verbose.or.redundant.code.constructs" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.siyeh.ig.controlflow.UnnecessaryLabelOnBreakStatementInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="UnnecessaryLabelOnContinueStatement" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="unnecessary.label.on.continue.statement.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.verbose.or.redundant.code.constructs" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.siyeh.ig.controlflow.UnnecessaryLabelOnContinueStatementInspection"/>
+    <localInspection groupPath="Java" language="JAVA" suppressId="UnnecessaryReturnStatement" shortName="UnnecessaryReturn" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="unnecessary.return.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.verbose.or.redundant.code.constructs" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.siyeh.ig.controlflow.UnnecessaryReturnInspection"/>
 
     <!--group.names.visibility.issues-->
     <localInspection groupPath="Java" language="JAVA" shortName="AmbiguousMethodCall" bundle="com.siyeh.InspectionGadgetsBundle" key="ambiguous.method.call.display.name"
