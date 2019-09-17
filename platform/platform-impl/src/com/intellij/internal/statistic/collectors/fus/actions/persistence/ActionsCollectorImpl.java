@@ -116,6 +116,9 @@ public class ActionsCollectorImpl extends ActionsCollector {
       return DEFAULT_ID;
     }
     String actionId = ActionManager.getInstance().getId(action);
+    if (actionId == null && action instanceof ActionIdProvider) {
+      actionId = ((ActionIdProvider)action).getId();
+    }
     if (actionId != null && !canReportActionId(actionId)) {
       return action.getClass().getName();
     }
