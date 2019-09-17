@@ -1,20 +1,22 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileTypes.impl;
 
-import com.intellij.openapi.extensions.AbstractExtensionPointBean;
+import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.extensions.RequiredElement;
 import com.intellij.openapi.fileTypes.FileNameMatcher;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.serviceContainer.BaseKeyedLazyInstance;
 import com.intellij.util.SmartList;
 import com.intellij.util.xmlb.annotations.Attribute;
-import com.intellij.openapi.extensions.RequiredElement;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class FileTypeBean extends AbstractExtensionPointBean {
+public final class FileTypeBean extends BaseKeyedLazyInstance<FileType> {
   private final List<FileNameMatcher> myMatchers = new SmartList<>();
 
   /**
@@ -83,5 +85,16 @@ public class FileTypeBean extends AbstractExtensionPointBean {
   @ApiStatus.Internal
   public List<FileNameMatcher> getMatchers() {
     return new ArrayList<>(myMatchers);
+  }
+
+  @Nullable
+  @Override
+  protected String getImplementationClassName() {
+    return implementationClass;
+  }
+
+  @Nullable
+  public PluginId getPluginId() {
+    return getPluginDescriptor().getPluginId();
   }
 }

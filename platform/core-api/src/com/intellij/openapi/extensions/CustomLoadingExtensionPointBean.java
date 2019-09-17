@@ -15,7 +15,7 @@ public abstract class CustomLoadingExtensionPointBean<T> extends BaseKeyedLazyIn
 
   @NotNull
   @Override
-  protected final T createInstance(@NotNull ComponentManager componentManager) {
+  public final T createInstance(@NotNull ComponentManager componentManager) {
     T instance;
     if (factoryClass == null) {
       instance = super.createInstance(componentManager);
