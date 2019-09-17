@@ -27,15 +27,21 @@ import java.net.UnknownHostException;
 import java.util.*;
 
 final class PluginsAdvertiserStartupActivity implements StartupActivity.Background {
+  private final Object myListRefreshLock = new Object();
+  private boolean myListRefreshed = false;
+
   @Override
   public void runActivity(@NotNull Project project) {
     Application app = ApplicationManager.getApplication();
-    if (app.isUnitTestMode() || app.isHeadlessEnvironment()) {
+    if (app.isUnitTestMode() || app.isHeadlessEnvironment() || !UpdateSettings.getInstance().isCheckNeeded()) {
       return;
     }
 
-    if (!UpdateSettings.getInstance().isCheckNeeded()) {
-      return;
+    synchronized (myListRefreshLock) {
+      if (!myListRefreshed) {
+        myListRefreshed = true;
+        PluginsAdvertiser.ensureDeleted();
+      }
     }
 
     try {
