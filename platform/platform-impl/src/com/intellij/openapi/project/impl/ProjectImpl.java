@@ -34,7 +34,6 @@ import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
@@ -267,28 +266,34 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     Application application = ApplicationManager.getApplication();
 
     // before components
+    CompletableFuture<?> preloadServiceFuture;
     //noinspection TestOnlyProblems
-    if (!isDefault() && !isLight()) {
+    if (isLight()) {
+      preloadServiceFuture = CompletableFuture.completedFuture(null);
+    }
+    else {
       Activity activity = StartUpMeasurer.startActivity("project services preloading");
-      CompletableFuture<?> future = preloadServices(PluginManagerCore.getLoadedPlugins())
+      preloadServiceFuture = preloadServices(PluginManagerCore.getLoadedPlugins())
         .whenComplete((o, throwable) -> {
           if (throwable != null) {
             LOG.error(throwable);
           }
           activity.end();
         });
-
-      if (SystemInfo.isWindows && System.getenv("TEAMCITY_VERSION") != null) {
-        try {
-          future.get();
-        }
-        catch (InterruptedException | ExecutionException e) {
-          throw new RuntimeException(e);
-        }
-      }
     }
 
     createComponents(indicator);
+
+    // if preloading of services will be not awaited, then service must subscribe to events using declarative way (because otherwise such events may be skipped),
+    // but declarative way is not so short as programmatic one — What if you subscribe to 3-4 topic - create/ wrapper (separate static class, that will simply delegate to your service) for each one?
+    // Even if such events will be fired in any case, so, obvious question — what for so complicate things?!
+    // So, until we don't have performance problems with this activity, simply await after component creation and do no complicate without a reason.
+    try {
+      preloadServiceFuture.get();
+    }
+    catch (InterruptedException | ExecutionException e) {
+      throw new RuntimeException(e);
+    }
 
     if (indicator != null && !application.isHeadlessEnvironment()) {
       distributeProgress(indicator);
