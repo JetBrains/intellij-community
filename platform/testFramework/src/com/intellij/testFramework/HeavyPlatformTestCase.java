@@ -234,8 +234,6 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
     myEditorListenerTracker = new EditorListenerTracker();
     myThreadTracker = new ThreadTracker();
 
-    setUpProject();
-
     boolean isTrackCodeStyleChanges = !(isStressTest() ||
                                         ApplicationManager.getApplication() == null ||
                                         ApplicationManager.getApplication() instanceof MockApplication);
