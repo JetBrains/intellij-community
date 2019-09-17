@@ -654,12 +654,10 @@ private fun readProjectName(path: String): String {
       return result
     }
   }
-  catch (ignore: NoSuchFileException) {
-    // ignore not found
-  }
-  catch (ignored: IOException) {
-  }
-  return file.fileName.toString()
+  catch (ignore: NoSuchFileException) { }
+  catch (ignored: IOException) { }
+
+  return file.fileName?.toString() ?: "<unknown>"
 }
 
 private fun getLastProjectFrameInfoFile() = appSystemDir.resolve("lastProjectFrameInfo")
