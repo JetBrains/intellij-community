@@ -344,14 +344,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   }
 
   @Override
-  @Nullable
-  protected ProgressIndicator getProgressIndicator() {
-    // could be called before full initialization
-    ProgressManager progressManager = (ProgressManager)getPicoContainer().getComponentInstance(ProgressManager.class.getName());
-    return progressManager == null ? null : progressManager.getProgressIndicator();
-  }
-
-  @Override
   public void dispose() {
     fireApplicationExiting();
 
