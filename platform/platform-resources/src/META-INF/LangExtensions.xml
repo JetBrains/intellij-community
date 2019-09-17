@@ -1098,6 +1098,7 @@
 
     <fileIndentOptionsProvider implementation="com.intellij.psi.codeStyle.DetectableIndentOptionsProvider" order="last"/>
     <statusBarWidgetProvider implementation="com.intellij.psi.codeStyle.statusbar.CodeStyleStatusBarWidgetProvider"/>
+    <statusBarWidgetProvider implementation="com.intellij.openapi.wm.impl.status.TogglePopupHintsPanelProvider" />
     <lang.formatter.restriction implementation="com.intellij.formatting.ExcludedFileFormattingRestriction"/>
 
     <codeInsight.lineMarkerProvider language="" implementationClass="com.intellij.execution.lineMarker.RunLineMarkerProvider"/>
@@ -1249,6 +1250,12 @@
     <joinLinesHandler implementation="com.intellij.codeInsight.editorActions.CommentJoinLinesHandler" order="last"/>
 
     <editorFactoryListener implementation="com.intellij.codeInsight.daemon.impl.EditorTracker$MyAppLevelEditorFactoryListener"/>
+
+    <projectService serviceInterface="com.intellij.openapi.wm.impl.status.TogglePopupHintsPanelFactory"
+                    serviceImplementation="com.intellij.openapi.wm.impl.status.TogglePopupHintsPanelFactoryImpl"/>
+
+    <projectService serviceInterface="com.intellij.codeInsight.daemon.impl.HectorComponentFactory"
+                    serviceImplementation="com.intellij.codeInsight.daemon.impl.HectorComponentFactoryImpl"/>
   </extensions>
 </idea-plugin>
 

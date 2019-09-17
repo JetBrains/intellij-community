@@ -15,6 +15,7 @@ import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.impl.RedBlackTree;
 import com.intellij.openapi.editor.impl.SweepProcessor;
 import com.intellij.openapi.editor.markup.*;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.psi.PsiDocumentManager;
@@ -32,6 +33,9 @@ import java.util.List;
 import java.util.*;
 
 public class UpdateHighlightersUtil {
+
+  public final static ExtensionPointName<HighlightInfoPostFilter> EP_NAME = ExtensionPointName.create("com.intellij.highlightInfoPostFilter");
+
   private static final Comparator<HighlightInfo> BY_START_OFFSET_NODUPS = (o1, o2) -> {
     int d = o1.getActualStartOffset() - o2.getActualStartOffset();
     if (d != 0) return d;
@@ -74,6 +78,10 @@ public class UpdateHighlightersUtil {
                                                   final int group,
                                                   @NotNull Map<TextRange, RangeMarker> ranges2markersCache) {
     ApplicationManager.getApplication().assertIsDispatchThread();
+
+    if (!accept(project, info))
+      return;
+
     if (isFileLevelOrGutterAnnotation(info)) return;
     if (info.getStartOffset() < startOffset || info.getEndOffset() > endOffset) return;
 
@@ -98,9 +106,19 @@ public class UpdateHighlightersUtil {
     }
   }
 
+  private static boolean accept(@NotNull Project project, HighlightInfo info) {
+    for (HighlightInfoPostFilter filter : EP_NAME.getExtensions(project)) {
+      if (!filter.accept(info))
+        return false;
+    }
+
+    return true;
+  }
+
   public static boolean isFileLevelOrGutterAnnotation(HighlightInfo info) {
     return info.isFileLevelAnnotation() || info.getGutterIconRenderer() != null;
   }
+
 
   public static void setHighlightersToEditor(@NotNull Project project,
                                              @NotNull Document document,
@@ -122,6 +140,15 @@ public class UpdateHighlightersUtil {
     setHighlightersInRange(project, document, range, colorsScheme, new ArrayList<>(highlights), (MarkupModelEx)markup, group);
   }
 
+  private static ArrayList<HighlightInfo> applyPostFilter(Project project, Collection<? extends HighlightInfo> highlightInfos) {
+    ArrayList<HighlightInfo> result = new ArrayList<>();
+    for (HighlightInfo info : highlightInfos) {
+      if (accept(project, info))
+        result.add(info);
+    }
+    return result;
+  }
+
   // set highlights inside startOffset,endOffset but outside priorityRange
   static void setHighlightersOutsideRange(@NotNull final Project project,
                                           @NotNull final Document document,
@@ -133,6 +160,7 @@ public class UpdateHighlightersUtil {
                                           final int endOffset,
                                           @NotNull final ProperTextRange priorityRange,
                                           final int group) {
+    ArrayList<HighlightInfo> filteredInfos = applyPostFilter(project, infos);
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     final DaemonCodeAnalyzerEx codeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(project);
@@ -145,8 +173,8 @@ public class UpdateHighlightersUtil {
 
     final SeverityRegistrar severityRegistrar = SeverityRegistrar.getSeverityRegistrar(project);
     final HighlightersRecycler infosToRemove = new HighlightersRecycler();
-    ContainerUtil.quickSort(infos, BY_START_OFFSET_NODUPS);
-    Set<HighlightInfo> infoSet = new THashSet<>(infos);
+    ContainerUtil.quickSort(filteredInfos, BY_START_OFFSET_NODUPS);
+    Set<HighlightInfo> infoSet = new THashSet<>(filteredInfos);
 
     Processor<HighlightInfo> processor = info -> {
       if (info.getGroup() == group) {
@@ -227,12 +255,13 @@ public class UpdateHighlightersUtil {
         return true;
       });
 
-    ContainerUtil.quickSort(infos, BY_START_OFFSET_NODUPS);
+    final ArrayList<HighlightInfo> filteredInfos = applyPostFilter(project, infos);
+    ContainerUtil.quickSort(filteredInfos, BY_START_OFFSET_NODUPS);
     final Map<TextRange, RangeMarker> ranges2markersCache = new THashMap<>(10);
     final PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
     final DaemonCodeAnalyzerEx codeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(project);
     final boolean[] changed = {false};
-    SweepProcessor.Generator<HighlightInfo> generator = (Processor<HighlightInfo> processor) -> ContainerUtil.process(infos, processor);
+    SweepProcessor.Generator<HighlightInfo> generator = (Processor<HighlightInfo> processor) -> ContainerUtil.process(filteredInfos, processor);
     SweepProcessor.sweep(generator, (offset, info, atStart, overlappingIntervals) -> {
       if (!atStart) {
         return true;
