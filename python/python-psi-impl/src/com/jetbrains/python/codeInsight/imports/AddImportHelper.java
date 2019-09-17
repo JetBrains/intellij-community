@@ -9,6 +9,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -29,6 +30,7 @@ import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.pyi.PyiFile;
 import com.jetbrains.python.pyi.PyiUtil;
 import com.jetbrains.python.sdk.PythonSdkUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -514,14 +516,35 @@ public class AddImportHelper {
                                                        @Nullable String asName,
                                                        @Nullable ImportPriority priority,
                                                        @Nullable PsiElement anchor) {
-    final List<PyFromImportStatement> existingImports = ((PyFile)file).getFromImports();
+    final PyFile pyFile = (PyFile)file;
+    final List<PyFromImportStatement> existingImports = pyFile.getFromImports();
+
+    int relativeLevel = 0;
+    PyRelativeImportData importData = null;
+    if (priority == ImportPriority.PROJECT) {
+      importData = PyRelativeImportData.fromString(from, pyFile);
+      if (importData != null) {
+        relativeLevel = importData.getRelativeLevel();
+      }
+    }
+
     if (!PythonCodeStyleService.getInstance().isOptimizeImportsAlwaysSplitFromImports(file)) {
       for (PyFromImportStatement existingImport : existingImports) {
         if (existingImport.isStarImport()) {
           continue;
         }
         final String existingSource = Objects.toString(existingImport.getImportSourceQName(), "");
-        if (from.equals(existingSource) && existingImport.getRelativeLevel() == 0) {
+
+        boolean updateExisting = false;
+        final int currentRelativeLevel = existingImport.getRelativeLevel();
+        if (currentRelativeLevel == 0) {
+          updateExisting = from.equals(existingSource);
+        }
+        else if (relativeLevel != 0) {
+          updateExisting = currentRelativeLevel == relativeLevel && existingSource.equals(importData.getRelativeLocation());
+        }
+
+        if (updateExisting) {
           for (PyImportElement el : existingImport.getImportElements()) {
             final String existingName = Objects.toString(el.getImportedQName(), "");
             if (name.equals(existingName) && Comparing.equal(asName, el.getAsName())) {
@@ -537,6 +560,21 @@ public class AddImportHelper {
         }
       }
     }
+
+    if (!PyUtil.hasIfNameEqualsMain(pyFile)) {
+      final int maxRelativeLevelInFile = StreamEx.of(pyFile.getFromImports())
+        .mapToInt(PyFromImportStatement::getRelativeLevel)
+        .max()
+        .orElse(0);
+
+      if (maxRelativeLevelInFile > 0 && relativeLevel > 0) {
+        int maxAllowedDepth = Math.max(maxRelativeLevelInFile, Registry.intValue("python.relative.import.depth"));
+        if (maxAllowedDepth >= relativeLevel) {
+          from = importData.getLocationWithDots();
+        }
+      }
+    }
+
     addFromImportStatement(file, from, name, asName, priority, anchor);
     return true;
   }

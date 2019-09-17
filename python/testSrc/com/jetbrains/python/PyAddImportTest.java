@@ -132,6 +132,41 @@ public class PyAddImportTest extends PyTestCase {
     doAddFromImport("collections", "OrderedDict", BUILTIN);
   }
 
+  // PY-6054
+  public void testRelativeImportFromSamePackage() {
+    doTestRelativeImport("foo.baz", "baz_func", "foo/test");
+  }
+
+  // PY-6054
+  public void testRelativeImportFromAlreadyImportedModule() {
+    doTestRelativeImport("foo.bar", "no", "foo/test");
+  }
+
+  // PY-6054
+  public void testRelativeImportInInitFile() {
+    doTestRelativeImport("foo.src.baz", "func", "foo/test/__init__");
+  }
+
+  // PY-6054
+  public void testRelativeImportInFileWithMain() {
+    doTestRelativeImport("foo.baz", "baz_func", "foo/test");
+  }
+
+  // PY-6054
+  public void testRelativeImportTooDeep() {
+    doTestRelativeImport("pkg1.foo", "foo_func", "pkg1/pkg2/pkg3/pkg4/test");
+  }
+
+  // PY-6054
+  public void testRelativeImportTooDeepWithSameLevelUsed() {
+    doTestRelativeImport("pkg1.foo", "foo_func", "pkg1/pkg2/pkg3/pkg4/test");
+  }
+
+  // PY-6054
+  public void testRelativeImportWithDotsOnly() {
+    doTestRelativeImport("foo", "lib", "foo/bar/test");
+  }
+
   private void doAddOrUpdateFromImport(final String path, final String name, final ImportPriority priority) {
     myFixture.configureByFile(getTestName(true) + ".py");
     WriteCommandAction.runWriteCommandAction(myFixture.getProject(), () -> {
@@ -182,6 +217,16 @@ public class PyAddImportTest extends PyTestCase {
       }
     });
     myFixture.checkResultByFile(getTestName(true) + ".after.py");
+  }
+
+  private void doTestRelativeImport(final @NotNull String from, final @NotNull String name, final @NotNull String file) {
+    final String testName = getTestName(true);
+    myFixture.copyDirectoryToProject(testName, "");
+    myFixture.configureByFile(file + ".py");
+    WriteCommandAction.runWriteCommandAction(myFixture.getProject(), () -> {
+      AddImportHelper.addOrUpdateFromImportStatement(myFixture.getFile(), from, name, null, PROJECT, null);
+    });
+    myFixture.checkResultByFile(testName + "/" + file + ".after.py");
   }
 
   @Override

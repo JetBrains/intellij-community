@@ -1,0 +1,1 @@
+from .baz import baz_func
