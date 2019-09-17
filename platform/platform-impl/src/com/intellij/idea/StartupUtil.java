@@ -177,7 +177,6 @@ public final class StartupUtil {
 
     activity = activity.endAndStart("main class loading waiting");
     Class<AppStarter> aClass = mainStartFuture.get();
-    activity.end();
     activity = activity.endAndStart("LaF init scheduling");
     CompletableFuture<?> initUiTask = scheduleInitUi(args, executorService);
     activity.end();
@@ -229,6 +228,7 @@ public final class StartupUtil {
       future.get();
     }
     futures.clear();
+    activity.end();
 
     startApp(args, initUiTask, log, configImportNeeded, aClass.newInstance());
   }
