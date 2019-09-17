@@ -297,12 +297,8 @@ public class HgVFSListener extends VcsVFSListener {
 
   @Override
   protected void performDeletion(@NotNull final List<FilePath> filesToDelete) {
-    final ArrayList<HgFile> deletes = new ArrayList<>();
+    List<HgFile> deletes = new ArrayList<>();
     for (FilePath file : filesToDelete) {
-      if (file.isDirectory()) {
-        continue;
-      }
-
       VirtualFile root = VcsUtil.getVcsRootFor(myProject, file);
       if (root != null) {
         deletes.add(new HgFile(root, file));
@@ -376,6 +372,11 @@ public class HgVFSListener extends VcsVFSListener {
   @Override
   protected boolean isDirectoryVersioningSupported() {
     return false;
+  }
+
+  @Override
+  protected boolean isRecursiveDeleteSupported() {
+    return true;
   }
 
   private static class ProcessedFilePathsDialog extends SelectFilePathsDialog {
