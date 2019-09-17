@@ -17,6 +17,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.ui.JBImageIcon;
@@ -200,15 +201,23 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   static final String IDEA_PLUGINS_HOST_PROPERTY = "idea.plugins.host";
 
   ApplicationInfoImpl() {
-    String resource = IDEA_PATH + ApplicationNamesInfo.getComponentName() + XML_EXTENSION;
     try {
-      loadState(JDOMUtil.load(ApplicationInfoImpl.class, resource));
+      loadState(JDOMUtil.load(ApplicationInfoImpl.class, getApplicationInfoPath()));
     }
     catch (Exception e) {
-      throw new RuntimeException("Cannot load resource: " + resource, e);
+      //this class can be loaded before MainImpl so fix the prefix manually 
+      PlatformUtils.setDefaultPrefixForCE();
+      try {
+        loadState(JDOMUtil.load(ApplicationInfoImpl.class, getApplicationInfoPath()));
+        return;
+      }
+      catch (Exception ex) {
+        e = ex;
+      }
+      throw new RuntimeException("Cannot load resource: " + getApplicationInfoPath(), e);
     }
   }
-
+  
   @Override
   public Calendar getBuildDate() {
     return myBuildDate;
@@ -928,6 +937,11 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
     }
   }
 
+  @NotNull
+  private static String getApplicationInfoPath() {
+    return IDEA_PATH + ApplicationNamesInfo.getComponentName() + XML_EXTENSION;
+  }
+  
   @NotNull
   private static List<Element> getChildren(Element parentNode, String name) {
     return parentNode.getChildren(name, parentNode.getNamespace());

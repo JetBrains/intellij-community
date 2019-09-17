@@ -11,7 +11,7 @@ import java.util.concurrent.CompletionStage;
 @SuppressWarnings({"UnusedDeclaration"})
 public final class MainImpl implements StartupUtil.AppStarter {
   public MainImpl() {
-    System.setProperty(PlatformUtils.PLATFORM_PREFIX_KEY, PlatformUtils.getPlatformPrefix(PlatformUtils.IDEA_CE_PREFIX));
+    PlatformUtils.setDefaultPrefixForCE();
   }
 
   @Override

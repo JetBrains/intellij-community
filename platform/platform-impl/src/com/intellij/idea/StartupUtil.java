@@ -166,10 +166,9 @@ public final class StartupUtil {
       return aClass;
     });
 
+    activity = activity.endAndStart("Configure log4j");
     configureLog4j();
 
-    activity = activity.endAndStart("main class loading waiting");
-    Class<AppStarter> aClass = mainStartFuture.get();
     activity = activity.endAndStart("LaF init scheduling");
     CompletableFuture<?> initUiTask = scheduleInitUi(args, executorService);
     activity.end();
@@ -221,8 +220,11 @@ public final class StartupUtil {
       future.get();
     }
     futures.clear();
+    
+    activity = activity.endAndStart("main class loading waiting");
+    Class<AppStarter> aClass = mainStartFuture.get();
     activity.end();
-
+    
     startApp(args, initUiTask, log, configImportNeeded, aClass.newInstance());
   }
 
