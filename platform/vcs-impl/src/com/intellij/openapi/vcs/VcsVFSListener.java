@@ -261,7 +261,7 @@ public abstract class VcsVFSListener implements Disposable {
     }
 
     private void processDeletedFile(@NotNull VirtualFile file) {
-      if (file.isDirectory() && file instanceof NewVirtualFile && !isDirectoryVersioningSupported()) {
+      if (file.isDirectory() && file instanceof NewVirtualFile && !isDirectoryVersioningSupported() && !isRecursiveDeleteSupported()) {
         for (VirtualFile child : ((NewVirtualFile)file).getCachedChildren()) {
           ProgressManager.checkCanceled();
           if (!myChangeListManager.isIgnoredFile(child)) {
@@ -574,6 +574,10 @@ public abstract class VcsVFSListener implements Disposable {
   protected abstract void performMoveRename(@NotNull List<MovedFileInfo> movedFiles);
 
   protected abstract boolean isDirectoryVersioningSupported();
+
+  protected boolean isRecursiveDeleteSupported() {
+    return false;
+  }
 
   @SuppressWarnings("unchecked")
   private ExternallyAddedFilesProcessorImpl createExternalFilesProcessor() {

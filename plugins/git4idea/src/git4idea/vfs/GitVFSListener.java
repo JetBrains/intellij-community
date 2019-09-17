@@ -8,7 +8,10 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.ObjectsConvertor;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsVFSListener;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.update.RefreshVFsSynchronously;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -230,7 +233,7 @@ public class GitVFSListener extends VcsVFSListener {
 
   private Set<File> executeDeletion(@NotNull VirtualFile root, @NotNull List<? extends FilePath> files)
     throws VcsException {
-    GitFileUtils.deletePaths(myProject, root, files, "--ignore-unmatch", "--cached");
+    GitFileUtils.deletePaths(myProject, root, files, "--ignore-unmatch", "--cached", "-r");
     Set<File> filesToRefresh = new HashSet<>();
     File rootFile = new File(root.getPath());
     for (FilePath p : files) {
@@ -262,6 +265,11 @@ public class GitVFSListener extends VcsVFSListener {
   @Override
   protected boolean isDirectoryVersioningSupported() {
     return false;
+  }
+
+  @Override
+  protected boolean isRecursiveDeleteSupported() {
+    return true;
   }
 
   @Override
