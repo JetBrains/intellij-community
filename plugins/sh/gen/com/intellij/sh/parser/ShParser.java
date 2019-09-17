@@ -2066,48 +2066,29 @@ public class ShParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // ('<' '<'?| '>') '(' list ')'
+  // ('<(' | '>(') list ')'
   public static boolean process_substitution(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "process_substitution")) return false;
-    if (!nextTokenIs(b, "<process substitution>", GT, LT)) return false;
+    if (!nextTokenIs(b, "<process substitution>", INPUT_PROCESS_SUBSTITUTION, OUTPUT_PROCESS_SUBSTITUTION)) return false;
     boolean r, p;
     Marker m = enter_section_(b, l, _NONE_, PROCESS_SUBSTITUTION, "<process substitution>");
     r = process_substitution_0(b, l + 1);
     p = r; // pin = 1
-    r = r && report_error_(b, consumeToken(b, LEFT_PAREN));
-    r = p && report_error_(b, list(b, l + 1)) && r;
+    r = r && report_error_(b, list(b, l + 1));
     r = p && consumeToken(b, RIGHT_PAREN) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
   }
 
-  // '<' '<'?| '>'
+  // '<(' | '>('
   private static boolean process_substitution_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "process_substitution_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = process_substitution_0_0(b, l + 1);
-    if (!r) r = consumeToken(b, GT);
+    r = consumeToken(b, INPUT_PROCESS_SUBSTITUTION);
+    if (!r) r = consumeToken(b, OUTPUT_PROCESS_SUBSTITUTION);
     exit_section_(b, m, null, r);
     return r;
-  }
-
-  // '<' '<'?
-  private static boolean process_substitution_0_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "process_substitution_0_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, LT);
-    r = r && process_substitution_0_0_1(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // '<'?
-  private static boolean process_substitution_0_0_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "process_substitution_0_0_1")) return false;
-    consumeToken(b, LT);
-    return true;
   }
 
   /* ********************************************************** */
@@ -2148,7 +2129,7 @@ public class ShParser implements PsiParser, LightPsiParser {
 
   /* ********************************************************** */
   // ('<&' | '>&') (number | '-')
-  //                             | ('>' | '<' | '>>' | '<<<' | '<<' | '<&' | '>&' | '&>>' | '<>' | '>|') w+
+  //                             | ('>' | '<' | '>>' | '<<<' | '<<' | '<&' | '>&' | '&>>' | '<>' | '>|') (process_substitution | w+ )
   static boolean redirection_inner(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "redirection_inner")) return false;
     boolean r;
@@ -2192,7 +2173,7 @@ public class ShParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // ('>' | '<' | '>>' | '<<<' | '<<' | '<&' | '>&' | '&>>' | '<>' | '>|') w+
+  // ('>' | '<' | '>>' | '<<<' | '<<' | '<&' | '>&' | '&>>' | '<>' | '>|') (process_substitution | w+ )
   private static boolean redirection_inner_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "redirection_inner_1")) return false;
     boolean r;
@@ -2222,16 +2203,27 @@ public class ShParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // w+
+  // process_substitution | w+
   private static boolean redirection_inner_1_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "redirection_inner_1_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = process_substitution(b, l + 1);
+    if (!r) r = redirection_inner_1_1_1(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // w+
+  private static boolean redirection_inner_1_1_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "redirection_inner_1_1_1")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = w(b, l + 1);
     while (r) {
       int c = current_position_(b);
       if (!w(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "redirection_inner_1_1", c)) break;
+      if (!empty_element_parsed_guard_(b, "redirection_inner_1_1_1", c)) break;
     }
     exit_section_(b, m, null, r);
     return r;

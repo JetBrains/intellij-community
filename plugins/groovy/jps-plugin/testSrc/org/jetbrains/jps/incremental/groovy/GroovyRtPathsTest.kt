@@ -41,6 +41,32 @@ class GroovyRtPathsTest {
     assertSameFiles(roots, File(lib, "groovy-rt-193.239.jar"), File(lib, "groovy-constants-rt-193.239.jar"))
   }
 
+  @Test
+  fun mavenArtifactsInRepository() {
+    val repo = directoryContent {
+      dir("com") {
+        dir("jetbrains") {
+          dir("intellij") {
+            dir("groovy") {
+              dir("groovy-constants-rt") {
+                dir("193.239") { file("groovy-constants-rt-193.239.jar") }
+              }
+              dir("groovy-jps") {
+                dir("193.239") { file("groovy-jps-193.239.jar") }
+              }
+              dir("groovy-rt") {
+                dir("193.239") { file("groovy-rt-193.239.jar") }
+              }
+            }
+          }
+        }
+      }
+    }.generateInTempDir()
+    val roots = GroovyBuilder.getGroovyRtRoots(File(repo, "com/jetbrains/intellij/groovy/groovy-jps/193.239/groovy-jps-193.239.jar"))
+    assertSameFiles(roots, File(repo, "com/jetbrains/intellij/groovy/groovy-rt/193.239/groovy-rt-193.239.jar"),
+                    File(repo, "com/jetbrains/intellij/groovy/groovy-constants-rt/193.239/groovy-constants-rt-193.239.jar"))
+  }
+
   private fun assertSameFiles(paths: List<String>, vararg file: File) {
     val actualPaths = paths.mapTo(HashSet()) { FileUtil.toSystemIndependentName(it) }
     val expectedPaths = file.mapTo(HashSet()) { FileUtil.toSystemIndependentName(it.absolutePath) }

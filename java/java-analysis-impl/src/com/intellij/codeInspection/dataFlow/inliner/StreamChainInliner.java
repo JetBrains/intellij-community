@@ -665,7 +665,9 @@ public class StreamChainInliner implements CallInliner {
       if (myMerger != null) {
         builder.pushUnknown()
                .ifConditionIs(true)
+               .pop()
                .push(builder.getFactory().getFactValue(DfaFactType.NULLABILITY, DfaNullability.NOT_NULL))
+               .dup()
                .invokeFunction(2, myMerger)
                .end();
       }

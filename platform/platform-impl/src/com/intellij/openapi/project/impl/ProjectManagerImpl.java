@@ -498,8 +498,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   }
 
   void updateTheOnlyProjectField() {
+    boolean isDefaultInitialized = isDefaultProjectInitialized();
     synchronized (lock) {
-      ProjectCoreUtil.theProject = myOpenProjects.length == 1 && !isDefaultProjectInitialized() ? myOpenProjects[0] : null;
+      ProjectCoreUtil.theProject = myOpenProjects.length == 1 && !isDefaultInitialized ? myOpenProjects[0] : null;
     }
   }
 

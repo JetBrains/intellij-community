@@ -249,4 +249,7 @@ public interface Git {
 
   @NotNull
   GitCommandResult getObjectType(@NotNull GitRepository repository, @NotNull String object);
+
+  @Nullable
+  GitObjectType getObjectTypeEnum(@NotNull GitRepository repository, @NotNull String object);
 }

@@ -134,7 +134,7 @@ public class XLineBreakpointManager {
   private void updateBreakpoints(@NotNull Document document) {
     Collection<XLineBreakpointImpl> breakpoints = getDocumentBreakpoints(document);
 
-    if (breakpoints.isEmpty()) {
+    if (breakpoints.isEmpty() || ApplicationManager.getApplication().isUnitTestMode()) {
       return;
     }
 

@@ -190,9 +190,7 @@ public class NewMappings implements Disposable {
       myMappedRoots = newMappedRoots.mappedRoots;
       myFilePointerDisposable = newMappedRoots.filePointerDisposable;
 
-      if (LOG.isDebugEnabled()) {
-        dumpMappedRootsToLog();
-      }
+      dumpMappedRootsToLog();
     }
 
     if (fireMappingsChangedEvent) mappingsChanged();
@@ -372,8 +370,13 @@ public class NewMappings implements Disposable {
   }
 
   private void dumpMappedRootsToLog() {
-    for (MappedRoot root : myMappedRoots) {
-      LOG.info(String.format("Mapped Root: [%s] - [%s]", root.vcs, root.rootPath));
+    if (LOG.isDebugEnabled()) {
+      for (MappedRoot root : myMappedRoots) {
+        LOG.debug(String.format("Mapped Root: [%s] - [%s]", root.vcs, root.rootPath));
+      }
+    }
+    else if (haveDefaultMapping() != null) {
+      LOG.info("Mapped Roots: " + myMappedRoots.size());
     }
   }
 

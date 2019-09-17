@@ -3,6 +3,7 @@ package com.intellij.openapi.externalSystem.util;
 
 import com.intellij.execution.rmi.RemoteUtil;
 import com.intellij.ide.highlighter.ArchiveFileType;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.externalSystem.ExternalSystemAutoImportAware;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
@@ -680,7 +681,15 @@ public class ExternalSystemApiUtil {
                                @NotNull ProjectSystemId systemId,
                                @NotNull ExternalSystemSettingsListener listener) {
     //noinspection unchecked
-    getSettings(project, systemId).subscribe(listener);
+    getSettings(project, systemId).subscribe(listener, project);
+  }
+
+  public static void subscribe(@NotNull Project project,
+                               @NotNull ProjectSystemId systemId,
+                               @NotNull ExternalSystemSettingsListener listener,
+                               @NotNull Disposable parentDisposable) {
+    //noinspection unchecked
+    getSettings(project, systemId).subscribe(listener, parentDisposable);
   }
 
   @NotNull

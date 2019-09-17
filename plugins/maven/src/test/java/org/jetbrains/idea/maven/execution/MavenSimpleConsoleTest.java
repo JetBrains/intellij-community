@@ -104,6 +104,21 @@ public class MavenSimpleConsoleTest extends UsefulTestCase {
     );
   }
 
+  public void testFilterSpySeveralTimesIdea221227() {
+    doTest(false, new String[]{
+             "fi",
+             "rst\n",
+             "second\n",
+             "[IJ]",
+             "-spy-output-",
+             "\n",
+             "[IJ]-spy-output-3\n",
+             "third\n"
+           },
+           "first\nsecond\nthird\n"
+    );
+  }
+
   public void testDoNotFilterSpy() {
     doTest(true, new String[]{
              "fi",

@@ -75,6 +75,16 @@ public class GradientViewport extends JBViewport {
     }
   }
 
+  @Override
+  public void scrollRectToVisible(Rectangle bounds) {
+    Component header = getHeader();
+    if (header != null) {
+      int h = header.getPreferredSize().height;
+      bounds.y -= h;
+    }
+    super.scrollRectToVisible(bounds);
+  }
+
   private void paintGradient(Graphics2D g2d, Color background, int x1, int y1) {
     Component view = getView();
     if (background != null && view != null) {

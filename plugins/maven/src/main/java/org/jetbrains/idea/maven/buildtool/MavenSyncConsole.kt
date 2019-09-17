@@ -7,6 +7,7 @@ import com.intellij.build.DefaultBuildDescriptor
 import com.intellij.build.FilePosition
 import com.intellij.build.events.EventResult
 import com.intellij.build.events.MessageEvent
+import com.intellij.build.events.MessageEventResult
 import com.intellij.build.events.impl.*
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
@@ -28,6 +29,8 @@ class MavenSyncConsole(private val myProject: Project) {
   private var finished = false
   private var started = false
   private var hasErrors = false
+
+  private val JAVADOC_AND_SOURCE_CLASSIFIERS = setOf("javadoc", "sources", "test-javadoc", "test-sources")
 
   private var myStartedSet = LinkedHashSet<Pair<Any, String>>()
 
@@ -172,14 +175,39 @@ class MavenSyncConsole(private val myProject: Project) {
   @Synchronized
   private fun downloadEventFailed(keyPrefix: String, dependency: String, error: String, stackTrace: String?) = doIfImportInProcess{
     val downloadString = SyncBundle.message("${keyPrefix}.download")
+
     val downloadArtifactString = SyncBundle.message("${keyPrefix}.artifact.download", dependency)
-    if (stackTrace != null && Registry.`is`("maven.spy.events.debug")) {
-      addText(downloadArtifactString, stackTrace, false)
+    if (isJavadocOrSource(dependency)) {
+      addText(downloadArtifactString, "$dependency not found", true)
+      completeTask(downloadString, downloadArtifactString, object : MessageEventResult {
+        override fun getKind(): MessageEvent.Kind {
+          return MessageEvent.Kind.WARNING
+        }
+
+        override fun getDetails(): String? {
+          return "$dependency not found"
+        }
+      })
+
     }
     else {
-      addText(downloadArtifactString, error, true)
+      if (stackTrace != null && Registry.`is`("maven.spy.events.debug")) {
+        addText(downloadArtifactString, stackTrace, false)
+      }
+      else {
+        addText(downloadArtifactString, error, true)
+      }
+      completeTask(downloadString, downloadArtifactString, FailureResultImpl(error))
     }
-    completeTask(downloadString, downloadArtifactString, FailureResultImpl(error))
+  }
+
+  private fun isJavadocOrSource(dependency: String): Boolean {
+    val split = dependency.split(':')
+    if (split.size < 4) {
+      return false
+    }
+    val classifier = split.get(2)
+    return JAVADOC_AND_SOURCE_CLASSIFIERS.contains(classifier)
   }
 
   private inline fun doIfImportInProcess(action: () -> Unit) {

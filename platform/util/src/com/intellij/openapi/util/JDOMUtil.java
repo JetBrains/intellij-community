@@ -273,7 +273,7 @@ public class JDOMUtil {
 
   @NotNull
   public static Element load(@NotNull Path file) throws JDOMException, IOException {
-    return loadUsingStaX(new BufferedReader(new InputStreamReader(Files.newInputStream(file), StandardCharsets.UTF_8)), null);
+    return loadUsingStaX(new InputStreamReader(CharsetToolkit.inputStreamSkippingBOM(new BufferedInputStream(Files.newInputStream(file))), StandardCharsets.UTF_8), null);
   }
 
   /**
@@ -282,7 +282,7 @@ public class JDOMUtil {
   @ApiStatus.Internal
   @NotNull
   public static Element load(@NotNull File file, @Nullable SafeJdomFactory factory) throws JDOMException, IOException {
-    return loadUsingStaX(new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8)), factory);
+    return loadUsingStaX(new InputStreamReader(CharsetToolkit.inputStreamSkippingBOM(new BufferedInputStream(new FileInputStream(file))), StandardCharsets.UTF_8), factory);
   }
 
   /**

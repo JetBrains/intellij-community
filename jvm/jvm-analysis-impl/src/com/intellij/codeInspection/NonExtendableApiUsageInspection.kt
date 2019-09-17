@@ -10,6 +10,7 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiModifierListOwner
+import com.intellij.psi.util.PsiTypesUtil
 import com.intellij.psi.util.PsiUtilCore
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.*
@@ -34,15 +35,15 @@ class NonExtendableApiUsageInspection : LocalInspectionTool() {
       return virtualFile != null && ProjectFileIndex.getInstance(element.project).isInLibraryClasses(virtualFile)
     }
 
-    private fun isSuperClassReferenceInSubclassDeclaration(sourceNode: UElement, subclassDeclaration: UClass) =
-      subclassDeclaration.uastSuperTypes.any { isPsiAncestor(it, sourceNode) }
+    private fun isSuperClassReferenceInSubclassDeclaration(subclassDeclaration: UClass, superClass: PsiClass) =
+      subclassDeclaration.uastSuperTypes.any { superClass.manager.areElementsEquivalent(superClass, PsiTypesUtil.getPsiClass(it.type)) }
 
     override fun processReference(sourceNode: UElement, target: PsiModifierListOwner, qualifier: UExpression?) {
       if (target !is PsiClass || !target.hasAnnotation(ANNOTATION_NAME)) {
         return
       }
       val classDeclaration = sourceNode.sourcePsi.findContaining(UClass::class.java)
-      if (classDeclaration == null || !isSuperClassReferenceInSubclassDeclaration(sourceNode, classDeclaration)) {
+      if (classDeclaration == null || !isSuperClassReferenceInSubclassDeclaration(classDeclaration, target)) {
         return
       }
 
@@ -52,7 +53,8 @@ class NonExtendableApiUsageInspection : LocalInspectionTool() {
         val description = if (target.isInterface) {
           if (classDeclaration.isInterface) {
             JvmAnalysisBundle.message("jvm.inspections.api.no.extension.interface.extend.description", className)
-          } else {
+          }
+          else {
             JvmAnalysisBundle.message("jvm.inspections.api.no.extension.interface.implement.description", className)
           }
         }

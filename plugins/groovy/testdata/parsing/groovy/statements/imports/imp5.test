@@ -14,7 +14,8 @@ Groovy script
         PsiElement(.)('.')
         PsiElement(identifier)('b')
       PsiElement(.)('.')
-      PsiElement(new line)('\n')
-      PsiErrorElement:identifier expected, got '*'
+      PsiErrorElement:identifier expected
         <empty list>
-  PsiElement(*)('*')
+  PsiElement(new line)('\n')
+  PsiErrorElement:';', <statement> or new line expected, got '*'
+    PsiElement(*)('*')

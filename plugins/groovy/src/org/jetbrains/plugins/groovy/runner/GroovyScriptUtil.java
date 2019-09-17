@@ -58,4 +58,8 @@ public class GroovyScriptUtil {
     GroovyScriptType scriptType = GroovyScriptTypeDetector.getScriptType(script);
     return scriptType == null ? DEFAULT_TYPE : (GroovyRunnableScriptType)scriptType;
   }
+
+  public static boolean isPlainGroovyScript(@NotNull GroovyFile script) {
+    return GroovyScriptTypeDetector.getScriptType(script) == null;
+  }
 }

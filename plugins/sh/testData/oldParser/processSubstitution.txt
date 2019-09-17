@@ -10,8 +10,7 @@ SHELL_SCRIPT
           SIMPLE_COMMAND_ELEMENT
             REDIRECTION
               PROCESS_SUBSTITUTION
-                PsiElement(<)('<')
-                PsiElement(()('(')
+                PsiElement(<()('<(')
                 COMPOUND_LIST
                   PIPELINE_COMMAND
                     PIPELINE
@@ -85,11 +84,10 @@ SHELL_SCRIPT
               PsiElement(done)('done')
           PsiWhiteSpace(' ')
           REDIRECTION
+            PsiElement(<)('<')
+            PsiWhiteSpace(' ')
             PROCESS_SUBSTITUTION
-              PsiElement(<)('<')
-              PsiWhiteSpace(' ')
-              PsiElement(<)('<')
-              PsiElement(()('(')
+              PsiElement(<()('<(')
               COMPOUND_LIST
                 PIPELINE_COMMAND
                   PIPELINE
@@ -113,8 +111,7 @@ SHELL_SCRIPT
           SIMPLE_COMMAND_ELEMENT
             REDIRECTION
               PROCESS_SUBSTITUTION
-                PsiElement(<)('<')
-                PsiElement(()('(')
+                PsiElement(<()('<(')
                 COMPOUND_LIST
                   PIPELINE_COMMAND
                     PIPELINE

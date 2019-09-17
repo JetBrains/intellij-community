@@ -100,6 +100,39 @@ class VarargArgumentMapping(
     return positionalApplicabilities + varargApplicabilities
   }
 
+  fun compare(right: VarargArgumentMapping): Int {
+    val sizeDiff = varargs.size - right.varargs.size
+    if (sizeDiff != 0) return sizeDiff
+    val leftDistance = distance
+    val rightDistance = right.distance
+    return when {
+      distance == 0L -> -1
+      right.distance == 0L -> 1
+      else -> leftDistance.compareTo(rightDistance)
+    }
+  }
+
+  /**
+   * Used only in comparing with VarargArgumentMapping witch contains same count of varargs
+   *
+   * @see org.codehaus.groovy.runtime.MetaClassHelper.calculateParameterDistance
+   */
+  private val distance: Long
+    get() {
+      val map = requireNotNull(mapping) {
+        "#distance should not be accessed on inapplicable mapping"
+      }
+      val (positional, varargs) = map
+      var distance = positionalParametersDistance(positional, context)
+
+      for (vararg in varargs) {
+        val argumentType = vararg.runtimeType ?: continue
+        distance += parameterDistance(argumentType, varargType, context)
+      }
+
+      return distance
+    }
+
   val varargs: Collection<Argument>
     get() = requireNotNull(mapping) {
       "#varargs should not be accessed on inapplicable mapping"

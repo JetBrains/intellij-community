@@ -11,6 +11,9 @@ import junit.framework.TestCase;
 import org.junit.Assume;
 import org.junit.Test;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class TouchBarSettingsTest extends TestCase {
   private static final String testAppID = "com.apple.terminal";
 
@@ -47,7 +50,17 @@ public class TouchBarSettingsTest extends TestCase {
   public void testTouchBarSettingsWrite() {
     Assume.assumeTrue("NST-unsupported OS", NST.isSupportedOS());
 
-    Assume.assumeTrue(NSDefaults.ourTouchBarDomain +" doesn't exist", NSDefaults.isDomainExists(NSDefaults.ourTouchBarDomain));
+    if (NSDefaults.isDomainExists(NSDefaults.ourTouchBarDomain)) {
+      NSDefaults.removePersistentDomain(NSDefaults.ourTouchBarDomain);
+      Assume.assumeTrue("can't delete domain: " + NSDefaults.ourTouchBarDomain, !NSDefaults.isDomainExists(NSDefaults.ourTouchBarDomain));
+    }
+
+    final Map<String, Object> vals = new HashMap<>();
+    vals.put("TestNSDefaultsKey", "TestNSDefaultsValue");
+    vals.put("PresentationModePerApp", new HashMap<>());
+    NSDefaults.createPersistentDomain(NSDefaults.ourTouchBarDomain, vals);
+
+    Assume.assumeTrue("can't create domain: " + NSDefaults.ourTouchBarDomain, NSDefaults.isDomainExists(NSDefaults.ourTouchBarDomain));
 
     final boolean enabled = NSDefaults.isShowFnKeysEnabled(testAppID);
     NSDefaults.setShowFnKeysEnabled(testAppID, !enabled);

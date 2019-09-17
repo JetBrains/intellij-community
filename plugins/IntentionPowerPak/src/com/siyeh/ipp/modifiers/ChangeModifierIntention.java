@@ -16,6 +16,7 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorFontType;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
@@ -132,6 +133,7 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
         if (PsiUtil.isLanguageLevel9OrHigher(member)) {
           return PUBLIC_PRIVATE;
         }
+        return Collections.singletonList(AccessModifier.PUBLIC);
       }
       AccessModifier minAccess = getMinAccess((PsiMethod)member);
       if (minAccess != AccessModifier.PRIVATE) {
@@ -235,40 +237,41 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
         public void onClosed(@NotNull LightweightWindowEvent event) {
           highlighter.dispose();
           model.moveToOffset(cursorMarker.getStartOffset());
+          FinishMarkAction.finish(project, editor, markAction);
           if (!event.isOk()) {
-            FinishMarkAction.finish(project, editor, markAction);
-            updater.undoChange(true);
+            updater.undoChange();
           }
         }
       })
       .setNamerForFiltering(AccessModifier::toString)
       .setItemChosenCallback(t -> {
-        updater.undoChange(false);
-        PsiDocumentManager.getInstance(project).commitDocument(document);
-        updater.setModifier(t);
-        // do not commit document now: checkForConflicts should have original content
-        // while the editor should display the updated content to prevent flicker
-        PsiMember m = memberPointer.getElement();
-        if (m == null) return;
-        PsiModifierList modifierList = m.getModifierList();
-        if (modifierList == null) return;
-        final MultiMap<PsiElement, String> conflicts = checkForConflicts(m, t);
+        if (editor instanceof EditorImpl) {
+          ((EditorImpl)editor).startDumb();
+        }
+        MultiMap<PsiElement, String> conflicts;
+        PsiModifierList modifierList;
+        try {
+          updater.undoChange();
+          PsiDocumentManager.getInstance(project).commitDocument(document);
+          if (t == current) return;
+          PsiMember m = memberPointer.getElement();
+          if (m == null) return;
+          modifierList = m.getModifierList();
+          if (modifierList == null) return;
+          conflicts = checkForConflicts(m, t);
+        }
+        finally {
+          if (editor instanceof EditorImpl) {
+            ((EditorImpl)editor).stopDumbLater();
+          }
+        }
         if (conflicts == null) {
-          //canceled by user
-          FinishMarkAction.finish(project, editor, markAction);
-          updater.undoChange(true);
           return;
         }
         if (!conflicts.isEmpty()) {
-          FinishMarkAction.finish(project, editor, markAction);
-          updater.undoChange(true);
-          PsiDocumentManager.getInstance(project).commitDocument(document);
           processWithConflicts(modifierList, t, conflicts);
         } else {
-          updater.undoChange(false);
-          PsiDocumentManager.getInstance(project).commitDocument(document);
           changeModifier(modifierList, t, false);
-          FinishMarkAction.finish(project, editor, markAction);
         }
       })
       .createPopup();
@@ -296,12 +299,12 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
       myMarker.setGreedyToLeft(true);
     }
 
-    void undoChange(boolean viaUndoManager) {
+    void undoChange() {
       Project project = myFile.getProject();
       FileEditorManager fileEditorManager = FileEditorManager.getInstance(project);
       FileEditor fileEditor = fileEditorManager.getSelectedEditor(myFile.getVirtualFile());
       UndoManager manager = UndoManager.getInstance(project);
-      if (viaUndoManager && manager.isUndoAvailable(fileEditor)) {
+      if (manager.isUndoAvailable(fileEditor)) {
         manager.undo(fileEditor);
       }
       else {

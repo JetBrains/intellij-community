@@ -546,15 +546,21 @@ class PyDB(object):
         return pydevd_utils.is_ignored_by_filter(filename)
 
     def is_exception_trace_in_project_scope(self, trace):
-        if trace is None or not self.in_project_scope(trace.tb_frame.f_code.co_filename):
+        if trace is None:
             return False
+        elif self.in_project_scope(trace.tb_frame.f_code.co_filename):
+            return True
         else:
-            trace = trace.tb_next
             while trace is not None:
                 if not self.in_project_scope(trace.tb_frame.f_code.co_filename):
                     return False
                 trace = trace.tb_next
             return True
+
+    def is_top_level_trace_in_project_scope(self, trace):
+        if trace is not None and trace.tb_next is not None:
+            return self.is_exception_trace_in_project_scope(trace) and not self.is_exception_trace_in_project_scope(trace.tb_next)
+        return self.is_exception_trace_in_project_scope(trace)
 
     def has_threads_alive(self):
         for t in pydevd_utils.get_non_pydevd_threads():

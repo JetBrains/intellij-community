@@ -81,6 +81,11 @@ public class CacheDiffRequestChainProcessor extends CacheDiffRequestProcessor<Di
     return myRequestChain;
   }
 
+  public void setCurrentRequest(int index) {
+    myIndex = index;
+    updateRequest();
+  }
+
   //
   // Navigation
   //
@@ -123,8 +128,7 @@ public class CacheDiffRequestChainProcessor extends CacheDiffRequestProcessor<Di
   private AnAction createGoToChangeAction() {
     AnAction action = GoToChangePopupBuilder.create(myRequestChain, index -> {
       if (index >= 0 && index < myRequestChain.getRequests().size() && index != myIndex) {
-        myIndex = index;
-        updateRequest();
+        setCurrentRequest(index);
       }
     }, myIndex);
     if (DiffUtil.isUserDataFlagSet(DiffUserDataKeysEx.DIFF_IN_EDITOR, getContext())) {

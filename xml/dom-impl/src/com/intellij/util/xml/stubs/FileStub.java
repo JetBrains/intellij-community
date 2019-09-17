@@ -17,8 +17,8 @@ package com.intellij.util.xml.stubs;
 
 import com.intellij.psi.stubs.ObjectStubSerializer;
 import com.intellij.psi.stubs.Stub;
-import com.intellij.util.io.StringRef;
 import com.intellij.util.xml.XmlFileHeader;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -30,16 +30,13 @@ public class FileStub extends ElementStub {
 
   private final XmlFileHeader myHeader;
 
-  public FileStub(StringRef tagName, StringRef tagNamespace, StringRef publicId, StringRef systemId) {
+  FileStub(@NotNull String tagName, @Nullable String tagNamespace, @Nullable String publicId, @Nullable String systemId) {
     super(null, tagName, tagNamespace, 0, false, null, "");
-    myHeader = new XmlFileHeader(tagName.getString(),
-                                 tagNamespace == null ? null : tagNamespace.getString(),
-                                 publicId == null ? null : publicId.getString(),
-                                 systemId == null ? null : systemId.getString());
+    myHeader = new XmlFileHeader(tagName, tagNamespace, publicId, systemId);
   }
 
   public FileStub(XmlFileHeader header) {
-    super(null, StringRef.fromString(header.getRootTagLocalName()), StringRef.fromString(header.getRootTagNamespace()), 0, false, null, "");
+    super(null, header.getRootTagLocalName(), header.getRootTagNamespace(), 0, false, null, "");
     myHeader = header;
   }
 
@@ -54,7 +51,7 @@ public class FileStub extends ElementStub {
   }
 
   @Override
-  public ObjectStubSerializer getStubType() {
+  public ObjectStubSerializer<?,?> getStubType() {
     return DomElementTypeHolder.FileStubSerializer;
   }
 }

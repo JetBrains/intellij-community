@@ -28,11 +28,6 @@ import java.util.stream.Collector;
 
 @ApiStatus.Experimental
 public class OfflineSearchService implements DependencyCompletionProvider {
-
-  private static final DeduplicationCollector<MavenDependencyCompletionItem> GROUP_COLLECTOR =
-    new DeduplicationCollector<>(m -> m.getGroupId());
-  private static final DeduplicationCollector<MavenDependencyCompletionItem> ARTIFACT_COLLECTOR =
-    new DeduplicationCollector<>(m -> m.getGroupId() + ":" + m.getArtifactId());
   private static final DeduplicationCollector VERSION_COLLECTOR =
     new DeduplicationCollector<>(m -> m.getGroupId() + ":" + m.getArtifactId() + ":" + m.getVersion());
   private final List<DependencyCompletionProvider> myProviders;
@@ -76,7 +71,7 @@ public class OfflineSearchService implements DependencyCompletionProvider {
 
   @Override
   public List<MavenDependencyCompletionItem> findGroupCandidates(@NotNull MavenCoordinate template, @NotNull SearchParameters parameters) {
-    return doQuery(parameters, template, (p, s) -> p.findGroupCandidates(s, parameters), GROUP_COLLECTOR, groupMatch(template.getGroupId()),
+    return doQuery(parameters, template, (p, s) -> p.findGroupCandidates(s, parameters), VERSION_COLLECTOR, groupMatch(template.getGroupId()),
                    localFirstComparator());
   }
 
@@ -90,7 +85,7 @@ public class OfflineSearchService implements DependencyCompletionProvider {
   @Override
   public List<MavenDependencyCompletionItem> findArtifactCandidates(@NotNull MavenCoordinate template,
                                                                     @NotNull SearchParameters parameters) {
-    return doQuery(parameters, template, (p, s) -> p.findArtifactCandidates(s, parameters), ARTIFACT_COLLECTOR,
+    return doQuery(parameters, template, (p, s) -> p.findArtifactCandidates(s, parameters), VERSION_COLLECTOR,
                    groupMatch(template.getGroupId()).and(artifactMatch(template.getArtifactId())), localFirstComparator());
   }
 

@@ -9,7 +9,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PatternCondition;
 import com.intellij.patterns.PsiElementPattern;
-import com.intellij.patterns.StandardPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.position.FilterPattern;
@@ -31,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 import static com.intellij.patterns.PlatformPatterns.psiFile;
+import static com.intellij.patterns.StandardPatterns.not;
 import static com.intellij.patterns.StandardPatterns.or;
 
 /**
@@ -323,11 +323,11 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
   private static final PsiElementPattern.Capture<PsiElement> AFTER_TRY = afterStatement(psiElement(PyTryExceptStatement.class));
 
   private static final PsiElementPattern.Capture<PsiElement> AFTER_LOOP_NO_ELSE =
-    afterStatement(psiElement(PyLoopStatement.class).withLastChild(StandardPatterns.not(psiElement(PyElsePart.class))));
+    afterStatement(psiElement(PyLoopStatement.class).withLastChild(not(psiElement(PyElsePart.class))));
 
   private static final PsiElementPattern.Capture<PsiElement> AFTER_COND_STMT_NO_ELSE =
     afterStatement(psiElement().withChild(psiElement(PyConditionalStatementPart.class))
-      .withLastChild(StandardPatterns.not(psiElement(PyElsePart.class))));
+      .withLastChild(not(psiElement(PyElsePart.class))));
 
   private static <T extends PsiElement> PsiElementPattern.Capture<PsiElement> afterStatement(final PsiElementPattern.Capture<T> statementPattern) {
     return psiElement().atStartOf(psiElement(PyExpressionStatement.class)
@@ -455,7 +455,7 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
       .andNot(AFTER_QUALIFIER)
       .andNot(IN_PARAM_LIST)
       .andNot(IN_ARG_LIST)
-      .andNot(IN_FINALLY_NO_LOOP)
+      .andOr(not(IN_FINALLY_NO_LOOP), new FilterPattern(new LanguageLevelAtLeastFilter(LanguageLevel.PYTHON38)))
       .and(IN_LOOP)
       ,
       new PyKeywordCompletionProvider(TailType.NONE, PyNames.CONTINUE)

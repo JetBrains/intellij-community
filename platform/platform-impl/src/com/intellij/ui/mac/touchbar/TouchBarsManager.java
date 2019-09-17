@@ -29,6 +29,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.ui.mac.TouchbarDataKeys;
+import com.intellij.ui.mac.foundation.NSDefaults;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.Predicate;
@@ -52,6 +53,7 @@ public final class TouchBarsManager {
   private static final Map<Container, BarContainer> ourTemporaryBars = new HashMap<>();
 
   private static volatile boolean isInitialized;
+  private static volatile boolean isEnabled = true;
 
   public static void onApplicationInitialized() {
     if (!isTouchBarAvailable()) {
@@ -69,6 +71,16 @@ public final class TouchBarsManager {
     }
 
     isInitialized = true;
+
+    { // calculate isEnabled
+      final String appId = Utils.getAppId();
+      if (appId == null || appId.isEmpty()) {
+        LOG.debug("can't obtain application id from NSBundle");
+      } else if (NSDefaults.isShowFnKeysEnabled(appId)) {
+        LOG.info("nst library was loaded, but user enabled fn-keys in touchbar");
+        isEnabled = false;
+      }
+    }
 
     EditorFactory.getInstance().addEditorFactoryListener(new EditorFactoryListener() {
       @Override
@@ -159,8 +171,12 @@ public final class TouchBarsManager {
     return SystemInfo.isMac && NST.isAvailable();
   }
 
+  public static boolean isTouchBarEnabled() {
+    return isTouchBarAvailable() && isEnabled;
+  }
+
   public static void reloadAll() {
-    if (!isInitialized || !isTouchBarAvailable()) {
+    if (!isInitialized || !isTouchBarEnabled()) {
       return;
     }
 
@@ -171,7 +187,7 @@ public final class TouchBarsManager {
   }
 
   public static void onInputEvent(InputEvent e) {
-    if (!isInitialized || !isTouchBarAvailable()) {
+    if (!isInitialized || !isTouchBarEnabled()) {
       return;
     }
 
@@ -185,7 +201,7 @@ public final class TouchBarsManager {
   }
 
   public static void onFocusEvent(AWTEvent e) {
-    if (!isTouchBarAvailable())
+    if (!isTouchBarEnabled())
       return;
 
     if (!(e.getSource() instanceof Container))
@@ -315,7 +331,7 @@ public final class TouchBarsManager {
   }
 
   public static void onUpdateEditorHeader(@NotNull Editor editor, JComponent header) {
-    if (!isInitialized || !isTouchBarAvailable()) {
+    if (!isInitialized || !isTouchBarEnabled()) {
       return;
     }
 
@@ -366,7 +382,7 @@ public final class TouchBarsManager {
   }
 
   public static @Nullable Disposable showPopupBar(@NotNull JBPopup popup, @NotNull JComponent popupComponent) {
-    if (!isTouchBarAvailable())
+    if (!isTouchBarEnabled())
       return null;
 
     if (!(popup instanceof ListPopupImpl))
@@ -386,7 +402,7 @@ public final class TouchBarsManager {
   }
 
   public static @Nullable Disposable showDialogWrapperButtons(@NotNull Container contentPane) {
-    if (!isTouchBarAvailable()) {
+    if (!isTouchBarEnabled()) {
       return null;
     }
 

@@ -1,6 +1,16 @@
 import java.util.*;
 
 class Testcase {
+  // IDEA-219122
+  public static void boxWithCast() {
+    Double d = 1D;
+    Long l = 1L;
+    if (<warning descr="Condition 'd.equals(Double.valueOf(l))' is always 'true'">d.equals(Double.valueOf(l))</warning>) {
+      System.out.println("e. d: " + d + " l: " + l);
+    } else {
+      System.out.println("ne. d: " + d + " l: " + l);
+    }
+  }
 
   void intToLong() {
     Integer i = 2;

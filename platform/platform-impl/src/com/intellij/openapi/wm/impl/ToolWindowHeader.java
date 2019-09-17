@@ -16,7 +16,7 @@ import com.intellij.ui.PopupHandler;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.tabs.JBTabsFactory;
-import com.intellij.ui.tabs.newImpl.TabLabel;
+import com.intellij.ui.tabs.newImpl.SingleHeightTabs;
 import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -215,7 +215,7 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
   public Dimension getPreferredSize() {
     Dimension size = super.getPreferredSize();
     Insets insets = getInsets();
-    int height = JBUI.scale(TabLabel.UNSCALED_PREF_HEIGHT) - insets.top - insets.bottom;
+    int height = JBUI.scale(SingleHeightTabs.getUNSCALED_PREF_HEIGHT()) - insets.top - insets.bottom;
     return new Dimension(size.width, height);
   }
 

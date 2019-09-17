@@ -9,9 +9,22 @@ import javax.swing.*;
 import java.awt.*;
 
 public class Centerizer extends JPanel {
+  public enum TYPE {
+    HORIZONTAL,
+    VERTICAL,
+    BOTH
+  }
+
+  private TYPE type;
 
   public Centerizer(@NotNull JComponent comp) {
+    this(comp, TYPE.BOTH);
+  }
+
+  public Centerizer(@NotNull JComponent comp, @NotNull TYPE type) {
     super(false);
+    this.type = type;
+
     setOpaque(false);
     setBorder(null);
 
@@ -33,8 +46,8 @@ public class Centerizer extends JPanel {
 
     final Dimension size = getSize();
 
-    final Couple<Integer> x = getFit(compSize.width, size.width);
-    final Couple<Integer> y = getFit(compSize.height, size.height);
+    final Couple<Integer> x = (type == TYPE.BOTH || type == TYPE.HORIZONTAL) ? getFit(compSize.width, size.width) : Couple.of(0, compSize.width);
+    final Couple<Integer> y = (type == TYPE.BOTH || type == TYPE.VERTICAL) ? getFit(compSize.height, size.height) : Couple.of(0, compSize.height);
 
     c.setBounds(x.first.intValue(), y.first.intValue(), x.second.intValue(), y.second.intValue());
   }

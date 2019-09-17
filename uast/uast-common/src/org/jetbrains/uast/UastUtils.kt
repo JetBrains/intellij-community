@@ -182,6 +182,7 @@ tailrec fun UElement.getUastContext(): UastContext {
   return (uastParent ?: error("PsiElement should exist at least for UFile")).getUastContext()
 }
 
+@Deprecated("could unexpectedly throw exception", ReplaceWith("UastFacade.findPlugin"))
 tailrec fun UElement.getLanguagePlugin(): UastLanguagePlugin {
   val psi = this.sourcePsi
   if (psi != null) {

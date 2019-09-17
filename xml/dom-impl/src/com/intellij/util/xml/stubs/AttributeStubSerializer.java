@@ -22,6 +22,7 @@ import com.intellij.psi.stubs.StubOutputStream;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.util.Objects;
 
 /**
  * @author Dmitry Avdeev
@@ -38,13 +39,15 @@ public class AttributeStubSerializer implements ObjectStubSerializer<AttributeSt
   public void serialize(@NotNull AttributeStub stub, @NotNull StubOutputStream dataStream) throws IOException {
     dataStream.writeName(stub.getName());
     dataStream.writeName(stub.getNamespaceKey());
-    dataStream.writeUTFFast(stub.getValue() == null ? "" : stub.getValue());
+    dataStream.writeUTFFast(stub.getValue());
   }
 
   @NotNull
   @Override
   public AttributeStub deserialize(@NotNull StubInputStream dataStream, ElementStub parentStub) throws IOException {
-    return new AttributeStub(parentStub, dataStream.readName(), dataStream.readName(), dataStream.readUTFFast());
+    return new AttributeStub(parentStub,
+                             Objects.requireNonNull(dataStream.readNameString()),
+                             dataStream.readNameString(), dataStream.readUTFFast());
   }
 
   @Override

@@ -20,14 +20,12 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.stubs.ObjectStubBase;
 import com.intellij.psi.stubs.Stub;
 import com.intellij.util.SmartList;
-import com.intellij.util.io.StringRef;
 import com.intellij.util.xml.EvaluatedXmlNameImpl;
 import com.intellij.util.xml.XmlName;
 import com.intellij.util.xml.impl.CollectionElementInvocationHandler;
 import com.intellij.util.xml.impl.DomChildDescriptionImpl;
 import com.intellij.util.xml.impl.DomInvocationHandler;
 import com.intellij.util.xml.impl.DomManagerImpl;
-import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,31 +36,33 @@ import java.util.List;
  * @author Dmitry Avdeev
  */
 public abstract class DomStub extends ObjectStubBase<DomStub> {
-
-  protected final StringRef myLocalName;
-  private final StringRef myNamespace;
+  @NotNull private final String myName;
+  @NotNull private final String myLocalName;
+  @Nullable private final String myNamespace;
   private DomInvocationHandler myHandler;
 
-  public DomStub(DomStub parent, @NotNull StringRef localName, StringRef namespace) {
+  DomStub(DomStub parent, @NotNull String name, @Nullable String namespace) {
     super(parent);
     myNamespace = namespace;
     if (parent != null) {
       ((ElementStub)parent).addChild(this);
     }
-    myLocalName = localName;
+    myName = name;
+    myLocalName = StringUtil.getShortName(myName, ':');
   }
 
+  @NotNull
   public String getName() {
-    return myLocalName.getString();
+    return myName;
   }
 
   @Nullable
   public String getNamespaceKey() {
-    return myNamespace == null ? null : myNamespace.getString();
+    return myNamespace;
   }
 
   public boolean matches(XmlName name) {
-    return name.getLocalName().contentEquals(XmlUtil.getLocalName(getName())) &&
+    return name.getLocalName().equals(myLocalName) &&
            StringUtil.notNullize(name.getNamespaceKey()).equals(getNamespaceKey());
   }
 
@@ -151,8 +151,8 @@ public abstract class DomStub extends ObjectStubBase<DomStub> {
 
   @Override
   public int hashCode() {
-    int result = myLocalName.hashCode();
-    result = 31 * result + myNamespace.hashCode();
+    int result = myName.hashCode();
+    result = 31 * result + (myNamespace == null ? 0 : myNamespace.hashCode());
     result = 31 * result + getIndex();
     result = 31 * result + (isCustom() ? 1 : 0);
     return result;

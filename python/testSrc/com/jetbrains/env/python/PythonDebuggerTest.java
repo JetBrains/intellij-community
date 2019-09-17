@@ -580,6 +580,32 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
+  @StagingOn(os = TestEnv.WINDOWS)
+  public void testExceptionBreakpointIgnoreInUnittestModule() {
+    runPythonTest(new PyDebuggerTask("/debug", "test_ignore_exceptions_in_unittest.py") {
+
+      @Override
+      public void before() {
+        createExceptionBreak(myFixture, false, true, true);
+        toggleBreakpoint(getFilePath(getScriptName()), 2);
+      }
+
+      @Override
+      public void testing() throws Exception {
+        waitForPause();
+        resume();
+        waitForTerminate();
+      }
+
+      @NotNull
+      @Override
+      public Set<String> getTags() {
+        return ImmutableSet.of("-jython");
+      }
+    });
+  }
+
+  @Test
   public void testExceptionBreakpointIgnoreLibrariesOnTerminate() {
     runPythonTest(new PyDebuggerTask("/debug", "test_ignore_lib.py") {
 

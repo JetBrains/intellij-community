@@ -1,4 +1,4 @@
 class X {
 
-    <caret>protected class Y {}
+    protected class <caret>Y {}
 }

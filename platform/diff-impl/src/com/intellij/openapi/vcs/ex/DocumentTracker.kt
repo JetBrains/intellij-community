@@ -139,7 +139,8 @@ class DocumentTracker : Disposable {
     if (!forceInFrozen && freezeHelper.isFrozen()) return
 
     LOCK.write {
-      if (!blocks.isEmpty() &&
+      if (tracker.isDirty &&
+          blocks.isNotEmpty() &&
           StringUtil.equals(document1.immutableCharSequence, document2.immutableCharSequence)) {
         tracker.setRanges(emptyList(), false)
         return
@@ -504,7 +505,8 @@ private class LineTracker(private val handler: Handler,
   var blocks: List<Block> = originalChanges.map { Block(it, false, false) }
     private set
 
-  private var isDirty: Boolean = false
+  var isDirty: Boolean = false
+    private set
 
 
   fun setRanges(ranges: List<Range>, dirty: Boolean) {

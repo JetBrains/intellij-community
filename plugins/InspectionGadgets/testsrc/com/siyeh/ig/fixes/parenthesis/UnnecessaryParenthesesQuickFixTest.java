@@ -34,6 +34,7 @@ public class UnnecessaryParenthesesQuickFixTest extends IGQuickFixesTestCase {
   public void testLambdaCast() { doTest(); }
   public void testLambdaBody() { doTest(); }
   public void testDivision() { doTest(); }
+  public void testDivision2() { doTest(); }
   public void testSwitchExpression() { doTest(); }
 
   @Override

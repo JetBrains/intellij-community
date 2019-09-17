@@ -15,10 +15,10 @@
  */
 package com.intellij.util.xml.stubs.builder;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.io.StringRef;
 import com.intellij.util.xml.Stubbed;
 import com.intellij.util.xml.StubbedOccurrence;
 import com.intellij.util.xml.impl.DomInvocationHandler;
@@ -31,7 +31,6 @@ import com.intellij.util.xml.stubs.ElementStub;
 import com.intellij.util.xml.stubs.XIncludeStub;
 import com.intellij.xml.util.XmlIncludeHandler;
 
-import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -63,15 +62,14 @@ class DomStubBuilderVisitor {
 
       String elementClass = null;
       if (handler.getAnnotation(StubbedOccurrence.class) != null) {
-        final Type type = description.getType();
-        elementClass = ((Class)type).getName();
+        elementClass = ((Class<?>)description.getType()).getName();
       }
       ElementStub stub = new ElementStub(parent,
-                                         StringRef.fromString(tag.getName()),
-                                         StringRef.fromNullableString(nsKey),
+                                         tag.getName(),
+                                         StringUtil.notNullize(nsKey),
                                          index,
                                          description instanceof CustomDomChildrenDescription,
-                                         elementClass == null ? null : StringRef.fromNullableString(elementClass),
+                                         elementClass,
                                          tag.getSubTags().length == 0 ? tag.getValue().getTrimmedText() : "");
 
       for (XmlAttribute attribute : tag.getAttributes()) {
@@ -86,9 +84,9 @@ class DomStubBuilderVisitor {
         indices.put(name, i);
       }
     } else if (element instanceof XmlAttribute) {
-      new AttributeStub(parent, StringRef.fromString(((XmlAttribute)element).getLocalName()), 
-                        StringRef.fromNullableString(nsKey), 
-                        ((XmlAttribute)element).getValue());
+      new AttributeStub(parent, ((XmlAttribute)element).getLocalName(),
+                        StringUtil.notNullize(nsKey),
+                        StringUtil.notNullize(((XmlAttribute)element).getValue()));
     }
   }
 

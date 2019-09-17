@@ -2,6 +2,7 @@
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.CommonBundle;
+import com.intellij.build.BuildProgressListener;
 import com.intellij.build.SyncViewManager;
 import com.intellij.configurationStore.SettingsSavingComponentJavaAdapter;
 import com.intellij.ide.startup.StartupManagerEx;
@@ -43,6 +44,7 @@ import com.intellij.util.io.PathKt;
 import com.intellij.util.ui.update.Update;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -107,13 +109,14 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     EventDispatcher.create(MavenProjectsTree.Listener.class);
   private final List<Listener> myManagerListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final ModificationTracker myModificationTracker;
-  private final SyncViewManager mySyncViewManager;
+  private BuildProgressListener myProgressListener;
 
   private MavenWorkspaceSettings myWorkspaceSettings;
 
   private MavenSyncConsole mySyncConsole;
   private final MavenMergingUpdateQueue mySaveQueue;
   private static final int SAVE_DELAY = 1000;
+  private volatile AsyncPromise<List<Module>> myRunningImportPromise;
 
   public static MavenProjectsManager getInstance(@NotNull Project project) {
     return project.getComponent(MavenProjectsManager.class);
@@ -126,7 +129,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     myModificationTracker = new MavenModificationTracker(this);
     myInitializationAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
     mySaveQueue = new MavenMergingUpdateQueue("Maven save queue", SAVE_DELAY, !isUnitTestMode(), this);
-    mySyncViewManager = ServiceManager.getService(myProject, SyncViewManager.class);
+    myProgressListener = ServiceManager.getService(myProject, SyncViewManager.class);
   }
 
   @Override
@@ -148,6 +151,11 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
 
   @Override
   public void dispose() {
+  }
+
+  @ApiStatus.Experimental
+  AsyncPromise<List<Module>> getRunningImportPromise() {
+    return myRunningImportPromise;
   }
 
   public ModificationTracker getModificationTracker() {
@@ -870,10 +878,17 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   public Promise<List<Module>> scheduleImportAndResolve(boolean fromAutoImport) {
-    getSyncConsole().startImport(mySyncViewManager, fromAutoImport);
+    Promise<List<Module>> toCheck = myRunningImportPromise;
+    if(toCheck != null){
+      return toCheck;
+    }
+    getSyncConsole().startImport(myProgressListener, fromAutoImport);
     MavenSyncConsole console = getSyncConsole();
     AsyncPromise<List<Module>> promise = scheduleResolve();
-    promise.onProcessed(m -> completeMavenSyncOnImportCompletion(console));
+    myRunningImportPromise = promise;
+    promise.onProcessed(m -> {
+      completeMavenSyncOnImportCompletion(console);
+    });
     fireImportAndResolveScheduled();
     return promise;
   }
@@ -900,6 +915,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
                                   myPostProcessor.waitForCompletion();
                                 }
                                 console.finishImport();
+                                myRunningImportPromise = null;
                               });
   }
 
@@ -1300,6 +1316,11 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   @TestOnly
   public void fireActivatedInTests() {
     fireActivated();
+  }
+
+  @TestOnly
+  public void replaceProgressListener(BuildProgressListener newProgressListener){
+    myProgressListener = newProgressListener;
   }
 
   private void fireActivated() {

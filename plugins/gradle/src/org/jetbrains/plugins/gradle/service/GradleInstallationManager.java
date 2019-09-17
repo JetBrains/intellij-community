@@ -568,7 +568,7 @@ public class GradleInstallationManager {
     if (distributionType == DistributionType.LOCAL) {
       String gradleVersion = getGradleVersion(settings.getGradleHome());
       if (gradleVersion != null) {
-        version = GradleVersion.version(gradleVersion);
+        version = getGradleVersionSafe(gradleVersion);
       }
     }
     else if (distributionType == DistributionType.BUNDLED) {
@@ -581,23 +581,45 @@ public class GradleInstallationManager {
       if (gradleHome != null) {
         String gradleVersion = getGradleVersion(settings.getGradleHome());
         if (gradleVersion != null) {
-          version = GradleVersion.version(gradleVersion);
+          version = getGradleVersionSafe(gradleVersion);
         }
       }
       if (version == null && wrapperConfiguration != null) {
         URI uri = wrapperConfiguration.getDistribution();
-        if (uri != null && uri.getRawPath() != null) {
-          String s = StringUtil.substringAfterLast(uri.getRawPath(), "/gradle-");
-          if (s != null) {
-            int i = s.lastIndexOf('-');
-            if (i > 0) {
-              String gradleVersion = s.substring(0, i);
-              version = GradleVersion.version(gradleVersion);
-            }
+        if (uri != null) {
+          String path = uri.getRawPath();
+          if (path != null) {
+            version = parseDistributionVersion(path);
           }
         }
       }
     }
     return version;
+  }
+
+  @Nullable
+  public static GradleVersion parseDistributionVersion(@NotNull String path) {
+    path = StringUtil.substringAfterLast(path, "/");
+    if (path == null) return null;
+
+    path = StringUtil.substringAfterLast(path, "gradle-");
+    if (path == null) return null;
+
+    int i = path.lastIndexOf('-');
+    if (i <= 0) return null;
+
+    return  getGradleVersionSafe(path.substring(0, i));
+  }
+
+  @Nullable
+  private static GradleVersion getGradleVersionSafe(String gradleVersion) {
+    try {
+      return GradleVersion.version(gradleVersion);
+    }
+    catch (IllegalArgumentException e) {
+      // GradleVersion.version(gradleVersion) might throw exception for custom Gradle versions
+      // https://youtrack.jetbrains.com/issue/IDEA-216892
+      return null;
+    }
   }
 }

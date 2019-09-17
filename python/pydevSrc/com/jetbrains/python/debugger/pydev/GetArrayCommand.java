@@ -54,7 +54,11 @@ public class GetArrayCommand extends GetFrameCommand {
   @Override
   protected void processResponse(@NotNull final ProtocolFrame response) throws PyDebuggerException {
     if (response.getCommand() >= 900 && response.getCommand() < 1000) {
-      throw new PyDebuggerException(response.getPayload());
+      final String payload = response.getPayload();
+      if (payload.contains("ExceedingArrayDimensionsException")) {
+        throw new IllegalArgumentException(myVariableName + " has more than two dimensions");
+      }
+      throw new PyDebuggerException(payload);
     }
     myChunk = ProtocolParser.parseArrayValues(response.getPayload(), myDebugProcess);
   }

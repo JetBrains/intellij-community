@@ -161,7 +161,7 @@ class SheetMessage implements Disposable {
   }
 
   private void _showTouchBar() {
-    if (!TouchBarsManager.isTouchBarAvailable()) {
+    if (!TouchBarsManager.isTouchBarEnabled()) {
       return;
     }
 

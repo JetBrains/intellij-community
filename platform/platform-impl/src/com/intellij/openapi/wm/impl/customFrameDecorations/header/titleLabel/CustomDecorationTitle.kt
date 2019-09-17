@@ -41,7 +41,6 @@ class CustomDecorationTitle(val frame: JFrame, private val onBoundsChanged: () -
 
   }
 
-
   private fun checkProject() {
     if(project == null) {
       if(frame is IdeFrame) {
@@ -69,7 +68,7 @@ class CustomDecorationTitle(val frame: JFrame, private val onBoundsChanged: () -
 
   private fun createCustomDecoration(it: Project) {
     val title = CustomDecorationPath(frame, onBoundsChanged)
-    title.setProject(it)
+    title.project = it
 
     pane.remove(titleLabel)
     pane.add(title.getView(), "growx, wmin 0")

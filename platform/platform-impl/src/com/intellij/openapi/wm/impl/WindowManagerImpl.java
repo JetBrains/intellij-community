@@ -458,12 +458,14 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
   @NotNull
   private static Rectangle validateFrameBounds(@Nullable Rectangle frameBounds) {
     Rectangle bounds = frameBounds != null ? frameBounds.getBounds() : null;
-    if (bounds == null || !ScreenUtil.isVisible(bounds)) {
+    if (bounds == null) {
       bounds = ScreenUtil.getMainScreenBounds();
       int xOff = bounds.width / 8;
       int yOff = bounds.height / 8;
       //noinspection UseDPIAwareInsets
       JBInsets.removeFrom(bounds, new Insets(yOff, xOff, yOff, xOff));
+    } else {
+      ScreenUtil.fitToScreen(bounds);
     }
     return bounds;
   }

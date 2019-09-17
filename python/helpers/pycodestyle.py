@@ -78,7 +78,7 @@ try:
 except ImportError:
     from ConfigParser import RawConfigParser
 
-__version__ = '2.5.0'  # patched #836
+__version__ = '2.5.0'  # patched #836, PY-37054
 
 DEFAULT_EXCLUDE = '.svn,CVS,.bzr,.hg,.git,__pycache__,.tox'
 DEFAULT_IGNORE = 'E121,E123,E126,E226,E24,E704,W503,W504'
@@ -1725,7 +1725,7 @@ else:
 
     def stdin_get_value():
         """Read the value from stdin."""
-        return TextIOWrapper(sys.stdin.buffer, errors='ignore').read()
+        return TextIOWrapper(sys.stdin.buffer, encoding='utf-8', errors='ignore').read()
 
 noqa = lru_cache(512)(re.compile(r'# no(?:qa|pep8)\b', re.I).search)
 

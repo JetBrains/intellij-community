@@ -30,8 +30,7 @@ fun compare(left: ArgumentMapping, right: ArgumentMapping): Int {
   }
 
   if (left is VarargArgumentMapping && right is VarargArgumentMapping) {
-    // prefer which one has less varargs
-    return left.varargs.size - right.varargs.size
+    return left.compare(right)
   }
   else if (left is VarargArgumentMapping) {
     // prefer right

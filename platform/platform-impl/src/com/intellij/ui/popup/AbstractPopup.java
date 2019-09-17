@@ -713,11 +713,11 @@ public class AbstractPopup implements JBPopup, ScreenAreaTracker.ScreenAreaConsu
       }
 
       disposePopup();
+    }
 
-      if (myListeners != null) {
-        for (JBPopupListener each : myListeners) {
-          each.onClosed(new LightweightWindowEvent(this, myOk));
-        }
+    if (myListeners != null) {
+      for (JBPopupListener each : myListeners) {
+        each.onClosed(new LightweightWindowEvent(this, myOk));
       }
     }
 

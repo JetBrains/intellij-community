@@ -175,7 +175,7 @@ public class InspectionTestUtil {
   @NotNull
   public static List<InspectionProfileEntry> instantiateTools(Set<String> classNames) {
     List<InspectionProfileEntry> tools = JBIterable.of(LocalInspectionEP.LOCAL_INSPECTION, InspectionEP.GLOBAL_INSPECTION)
-      .flatten((o) -> Arrays.asList(o.getExtensions()))
+      .flatten((o) -> o.getExtensionList())
       .filter((o) -> classNames.contains(o.implementationClass))
       .transform(InspectionEP::instantiateTool)
       .toList();

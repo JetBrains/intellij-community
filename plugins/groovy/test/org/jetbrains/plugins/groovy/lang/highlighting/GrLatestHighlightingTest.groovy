@@ -611,4 +611,70 @@ int mmm(Closeable cc) {
 }
 '''
   }
+
+  void 'test IDEA-216095'() {
+    testHighlighting '''\
+import groovy.transform.CompileStatic
+@CompileStatic
+class AmbigousProblem {
+
+    class A{
+    }
+
+    void methodA(Object[] objects){
+    }
+
+    void methodA(Class... classes){}
+
+    void ambigous(){
+        methodA(A)
+    }
+}
+'''
+  }
+
+  void 'test IDEA-216095-2'() {
+    testHighlighting '''\
+import groovy.transform.CompileStatic
+@CompileStatic
+class AmbigousProblem {
+    class A{
+    }
+
+    void methodA(Object o, Object... objects){
+    }
+
+    void methodA(String s, Object... classes){}
+
+    void ambigous(){
+        methodA("", A)
+    }
+}
+'''
+  }
+
+  void 'test IDEA-216095-3'() {
+    testHighlighting '''\
+void foo(Integer i, Object... objects){
+}
+
+void foo(Object i, Integer... objects){
+}
+
+foo<warning descr="Method call is ambiguous">(1, 1)</warning>
+'''
+  }
+
+  void 'test IDEA-219842'() {
+    testHighlighting '''\
+import groovy.transform.CompileStatic
+
+@CompileStatic
+def m() {
+    ["a"]*.trim().findAll {
+        String line -> !line.isEmpty()
+    }
+}
+'''
+  }
 }

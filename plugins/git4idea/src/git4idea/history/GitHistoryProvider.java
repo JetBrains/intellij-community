@@ -18,11 +18,11 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Processor;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.vcs.history.VcsHistoryProviderEx;
-import com.intellij.vcs.log.Hash;
 import git4idea.GitContentRevision;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
-import git4idea.changes.GitChangeUtils;
+import git4idea.commands.Git;
+import git4idea.commands.GitObjectType;
 import git4idea.log.GitShowCommitInLogAction;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
@@ -133,12 +133,10 @@ public class GitHistoryProvider implements VcsHistoryProviderEx,
     GitRepository repository = GitRepositoryManager.getInstance(myProject).getRepositoryForFile(filePath);
     if (repository == null) return false;
 
-    Hash hash = GitChangeUtils.commitExists(myProject, repository.getRoot(), beforeVersionId, null, "HEAD");
-    if (hash == null) {
-      throw new VcsException("Can not apply patch to " + filePath.getPath() + ".\nCan not find revision '" + beforeVersionId + "'.");
-    }
+    GitObjectType objectType = Git.getInstance().getObjectTypeEnum(repository, beforeVersionId);
+    if (!GitObjectType.COMMIT.equals(objectType)) return false;
 
-    final ContentRevision content = GitContentRevision.createRevision(filePath, new GitRevisionNumber(hash.asString()), myProject);
+    final ContentRevision content = GitContentRevision.createRevision(filePath, new GitRevisionNumber(beforeVersionId), myProject);
     return !processor.process(content.getContent());
   }
 

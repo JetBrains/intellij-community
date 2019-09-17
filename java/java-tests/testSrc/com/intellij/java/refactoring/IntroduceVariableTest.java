@@ -209,15 +209,27 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
   public void testWhileCondition2() {
     doTest(new MockIntroduceVariableHandler("temp", true, false, false, "Node"));
   }
-  
+
   public void testWhileConditionIncomplete() {
     doTest(new MockIntroduceVariableHandler("temp", true, false, false, "boolean"));
+  }
+
+  public void testWhileConditionNoBrace() {
+    doTest(new MockIntroduceVariableHandler("temp", true, false, false, "int"));
+  }
+
+  public void testWhileConditionPlusNormal() {
+    doTest(new MockIntroduceVariableHandler("temp", true, false, false, "int"));
+  }
+
+  public void testWhileConditionPlusNormal2() {
+    doTest(new MockIntroduceVariableHandler("temp", true, false, false, "int"));
   }
 
   public void testField() {
     doTest(new MockIntroduceVariableHandler("temp", false, false, false, CommonClassNames.JAVA_LANG_STRING));
   }
-  
+
   public void testFieldAll() {
     doTest(new MockIntroduceVariableHandler("temp", true, false, false, CommonClassNames.JAVA_LANG_STRING));
   }
@@ -264,11 +276,11 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
   public void testReturnOrChain() {
     doTest(new MockIntroduceVariableHandler("temp", true, false, false, CommonClassNames.JAVA_LANG_STRING));
   }
-  
+
   public void testReturnTernary() {
     doTest(new MockIntroduceVariableHandler("temp", true, false, false, CommonClassNames.JAVA_LANG_STRING));
   }
-  
+
   public void testAssignTernary() {
     doTest(new MockIntroduceVariableHandler("temp", true, false, false, CommonClassNames.JAVA_LANG_STRING));
   }
@@ -678,7 +690,7 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
   public void testCapturedWildcardUpperBoundSuggestedAsType() {
     doTest(new MockIntroduceVariableHandler("m", false, false, false, "I"));
   }
-  
+
   public void testArrayOfCapturedWildcardUpperBoundSuggestedAsType() {
     doTest(new MockIntroduceVariableHandler("m", false, false, false, "I[]"));
   }
@@ -732,7 +744,7 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
       JavaRefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_VAR_TYPE = asVarType;
     }
   }
-  
+
   private void doTest(IntroduceVariableBase testMe) {
     String baseName = "/refactoring/introduceVariable/" + getTestName(false);
     configureByFile(baseName + ".java");

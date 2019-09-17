@@ -13,6 +13,8 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.messages.MessageBus;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -73,8 +75,35 @@ public abstract class AbstractExternalSystemSettings<
    * That's why this method allows to wrap given 'generic listener' into external system-specific one.
    *
    * @param listener  target generic listener to wrap to external system-specific implementation
+   * @param parentDisposable is a disposable to unsubscribe from external system settings events
+   * @note lifetime of parentDisposable must be shorter of project lifetime
+   *
+   * @abstract at 2021
    */
+  public void subscribe(@NotNull ExternalSystemSettingsListener<PS> listener, @NotNull Disposable parentDisposable) {
+    subscribe(listener); // Api backward compatibility
+  }
+
+  /**
+   * @deprecated use/implements {@link AbstractExternalSystemSettings#subscribe(ExternalSystemSettingsListener, Disposable)} instead
+   * @remove at 2021
+   *
+   * @see AbstractExternalSystemSettings#subscribe(ExternalSystemSettingsListener, Disposable)
+   */
+  @Deprecated
   public abstract void subscribe(@NotNull ExternalSystemSettingsListener<PS> listener);
+
+  /**
+   * Generic subscribe implementation
+   *
+   * @see AbstractExternalSystemSettings#subscribe(ExternalSystemSettingsListener, Disposable)
+   */
+  protected void doSubscribe(@NotNull L listener, @NotNull Disposable parentDisposable) {
+    Project project = getProject();
+    MessageBus messageBus = project.getMessageBus();
+    MessageBusConnection connection = messageBus.connect(parentDisposable);
+    connection.subscribe(getChangesTopic(), listener);
+  }
 
   public void copyFrom(@NotNull SS settings) {
     for (PS projectSettings : settings.getLinkedProjectsSettings()) {

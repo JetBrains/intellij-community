@@ -33,6 +33,7 @@ import java.awt.*;
 public class TooltipWithClickableLinks extends IdeTooltip {
   public TooltipWithClickableLinks(JComponent component, String htmlText, HyperlinkListener hyperlinkListener) {
     super(component, new Point(), createTipComponent(htmlText, hyperlinkListener), component, htmlText);
+    setHint(true);//Avoid hiding this kind of tooltips when mouse leaves component
   }
 
   private static JComponent createTipComponent(String text, HyperlinkListener hyperlinkListener) {

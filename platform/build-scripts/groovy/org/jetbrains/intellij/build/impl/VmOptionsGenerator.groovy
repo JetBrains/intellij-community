@@ -25,6 +25,7 @@ Android Studio: removed by Change Ie7351d92 */
 Android Studio: removed by Change Ie7351d92 */
       '-Djdk.attach.allowAttachSelf',
       '-Dkotlinx.coroutines.debug=off',
+      '-Djdk.module.illegalAccess.silent=true',
       '-Djna.nosys=true',  // Android Studio: added by Change Ie7351d92
       '-Djna.boot.library.path=',  // Android Studio: added by Change Ie7351d92
     ]

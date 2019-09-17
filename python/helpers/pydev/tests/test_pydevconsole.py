@@ -3,7 +3,7 @@ import threading
 import unittest
 
 import pydevconsole
-from _pydev_comm.rpc import make_rpc_client, start_rpc_server_and_make_client, start_rpc_server
+from _pydev_comm.pydev_rpc import make_rpc_client, start_rpc_server_and_make_client, start_rpc_server
 from _pydevd_bundle import pydevd_io
 from pydev_console.protocol import PythonConsoleFrontendService, PythonConsoleBackendService
 from pydevconsole import enable_thrift_logging, create_server_handler_factory

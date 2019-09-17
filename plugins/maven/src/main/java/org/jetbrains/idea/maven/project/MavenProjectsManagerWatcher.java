@@ -269,6 +269,15 @@ public class MavenProjectsManagerWatcher {
                                       boolean force,
                                       final boolean forceImportAndResolve) {
     final AsyncPromise<Void> promise = new AsyncPromise<>();
+    if (!forceImportAndResolve) {
+      AsyncPromise<List<Module>> runningPromise = myManager.getRunningImportPromise();
+      if (runningPromise != null) {
+        runningPromise.onSuccess(ignore -> promise.setResult(null)).onError(e -> promise.setError(e));
+        return promise;
+      }
+    }
+
+
     Runnable onCompletion = createScheduleImportAction(forceImportAndResolve, promise);
 
     if (LOG.isDebugEnabled()) {

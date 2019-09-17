@@ -251,6 +251,8 @@ public class IdeTooltipManager implements Disposable, AWTEventListener, BaseComp
           return true;
         }
       }.setToCenter(toCenter).setCalloutShift(shift).setPositionChangeShift(posChangeX, posChangeY).setLayer(Balloon.Layer.top);
+    } else if (myCurrentTooltip == tooltip) {
+      return;//Don't re-show the same custom tooltip on every mouse movement
     }
 
     show(tooltip, false);
