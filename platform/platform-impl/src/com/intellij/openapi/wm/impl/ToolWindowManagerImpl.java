@@ -227,7 +227,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
       .bind(myProject);
 
     Toolkit.getDefaultToolkit().addAWTEventListener(awtFocusListener, AWTEvent.FOCUS_EVENT_MASK);
-    checkInvariants();
+    checkInvariants("");
   }
 
   private static void focusDefaultElementInSelectedEditor() {
@@ -440,7 +440,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
         }
         return result.iterator();
       });
-    checkInvariants();
+    checkInvariants("");
   }
 
   private void initAll(List<? super FinalizableCommand> commandsList) {
@@ -725,7 +725,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     }
     info.setActive(false);
     appendApplyWindowInfoCmd(info, commandsList);
-    checkInvariants();
+    checkInvariants("Info: "+info+"; shouldHide: "+shouldHide);
   }
 
   @NotNull
@@ -1006,7 +1006,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     }
 
     appendApplyWindowInfoCmd(toBeShownInfo, commandsList);
-    checkInvariants();
+    checkInvariants("Id: " + id + "; dirtyMode: " + dirtyMode);
   }
 
   @NotNull
@@ -1287,7 +1287,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     }
 
     execute(commandList);
-    checkInvariants();
+    checkInvariants("");
   }
 
   @Override
@@ -1969,7 +1969,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
 
     @NotNull
     @Override
-    public Condition getExpireCondition() {
+    public Condition<?> getExpireCondition() {
       return ApplicationManager.getApplication().getDisposed();
     }
   }
@@ -2073,7 +2073,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
 
     @NotNull
     @Override
-    public Condition getExpireCondition() {
+    public Condition<?> getExpireCondition() {
       return ApplicationManager.getApplication().getDisposed();
     }
   }
@@ -2349,7 +2349,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     }
   }
 
-  private void checkInvariants() {
+  private void checkInvariants(String additionalMessage) {
     if (!ApplicationManager.getApplication().isEAP() && !ApplicationManager.getApplication().isInternal()) {
       return;
     }
@@ -2375,7 +2375,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
       }
     }
     if (!violations.isEmpty()) {
-      LOG.error("Invariants failed: \n" + String.join("\n", violations));
+      LOG.error("Invariants failed: \n" + String.join("\n", violations) + "\nContext: " + additionalMessage);
     }
   }
 }
