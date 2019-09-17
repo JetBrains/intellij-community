@@ -47,6 +47,14 @@ public class ShRenameTest extends LightPlatformCodeInsightTestCase {
     doTest("4]]");
   }
 
+  public void testKeyword1() {
+    doTest(null);
+  }
+
+  public void testKeyword2() {
+    doTest(null);
+  }
+
   private void doTest(@Nullable String newName) {
     configureByFile(getTestName(true) + "-before.sh");
     TemplateManagerImpl.setTemplateTesting(getTestRootDisposable());

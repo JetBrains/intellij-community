@@ -5,10 +5,14 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.rename.RenameHandler;
 import com.intellij.sh.ShSupport;
+import com.intellij.sh.highlighting.ShTextOccurrencesUtil;
+import com.intellij.sh.lexer.ShTokenTypes;
 import com.intellij.sh.psi.ShFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -19,7 +23,24 @@ public class ShRenameHandler implements RenameHandler {
     return editor != null
            && ShSupport.getInstance().isRenameEnabled()
            && ShRenameAllOccurrencesHandler.INSTANCE.isEnabled(editor, editor.getCaretModel().getPrimaryCaret(), dataContext)
-           && dataContext.getData(CommonDataKeys.PSI_FILE) instanceof ShFile;
+           && isRenameAvailable(editor, dataContext)
+      ;
+  }
+
+  private static boolean isRenameAvailable(@NotNull Editor editor, @NotNull DataContext dataContext) {
+    ShFile file = (ShFile)dataContext.getData(CommonDataKeys.PSI_FILE);
+    if (file == null) {
+      return false;
+    }
+    if (editor.getCaretModel().getPrimaryCaret().hasSelection()) return true;
+    TextRange textRange = ShTextOccurrencesUtil.findTextRangeOfIdentifierAtCaret(editor);
+    if (textRange != null) {
+      PsiElement element = file.findElementAt(textRange.getStartOffset());
+      if (element != null && ShTokenTypes.keywords.contains(PsiUtilCore.getElementType(element))) {
+        return false;
+      }
+    }
+    return true;
   }
 
   @Override
