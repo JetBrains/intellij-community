@@ -29,12 +29,14 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Supplier;
 
 public class SettingsImpl implements EditorSettings {
   private static final Logger LOG = Logger.getInstance(SettingsImpl.class);
 
   @Nullable private final EditorEx myEditor;
   @Nullable private Language myLanguage;
+  @Nullable private Supplier<Language> myLanguageSupplier;
   private Boolean myIsCamelWords;
 
   // This group of settings does not have UI
@@ -216,16 +218,16 @@ public class SettingsImpl implements EditorSettings {
   public int getRightMargin(Project project) {
     if (myRightMargin != null) return myRightMargin.intValue();
     return myEditor != null
-           ? CodeStyle.getSettings(myEditor).getRightMargin(myLanguage)
-           : CodeStyle.getProjectOrDefaultSettings(project).getRightMargin(myLanguage);
+           ? CodeStyle.getSettings(myEditor).getRightMargin(getLanguage())
+           : CodeStyle.getProjectOrDefaultSettings(project).getRightMargin(getLanguage());
   }
 
   @Override
   public boolean isWrapWhenTypingReachesRightMargin(Project project) {
     if (myWrapWhenTypingReachesRightMargin != null) return myWrapWhenTypingReachesRightMargin.booleanValue();
     return myEditor == null ?
-           CodeStyle.getDefaultSettings().isWrapOnTyping(myLanguage) :
-           CodeStyle.getSettings(myEditor).isWrapOnTyping(myLanguage);
+           CodeStyle.getDefaultSettings().isWrapOnTyping(getLanguage()) :
+           CodeStyle.getSettings(myEditor).isWrapOnTyping(getLanguage());
   }
 
   @Override
@@ -247,8 +249,8 @@ public class SettingsImpl implements EditorSettings {
     if (mySoftMargins != null) return mySoftMargins;
     return
       myEditor == null ?
-      CodeStyle.getDefaultSettings().getSoftMargins(myLanguage) :
-      CodeStyle.getSettings(myEditor).getSoftMargins(myLanguage);
+      CodeStyle.getDefaultSettings().getSoftMargins(getLanguage()) :
+      CodeStyle.getSettings(myEditor).getSoftMargins(getLanguage());
   }
 
   @Override
@@ -732,8 +734,24 @@ public class SettingsImpl implements EditorSettings {
     myShowIntentionBulb = show; 
   }
 
+  @Nullable
+  public Language getLanguage() {
+    if (myLanguage != null) {
+      return myLanguage;
+    }
+    if (myLanguageSupplier != null) {
+      return myLanguageSupplier.get();
+    }
+    return null;
+  }
+
   @Override
   public void setLanguage(@Nullable Language language) {
     myLanguage = language;
+  }
+
+  @Override
+  public void setLanguageSupplier(@Nullable Supplier<Language> languageSupplier) {
+    myLanguageSupplier = languageSupplier;
   }
 }
