@@ -344,7 +344,7 @@
   <action id="tasks.switch">
     <keyboard-shortcut first-keystroke="meta F9"/>
   </action>
-  <action id="RunDashboard.ShowConfigurations">
+  <action id="ServiceView.ShowServices">
     <keyboard-shortcut first-keystroke="alt meta H"/>
   </action>
 

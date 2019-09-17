@@ -419,7 +419,7 @@
     <keyboard-shortcut first-keystroke="control meta SPACE"/>
   </action>
 
-  <action id="RunDashboard.ShowConfigurations">
+  <action id="ServiceView.ShowServices">
     <keyboard-shortcut first-keystroke="shift meta T"/>
   </action>
 

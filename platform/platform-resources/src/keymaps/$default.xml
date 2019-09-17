@@ -1128,7 +1128,7 @@
     <keyboard-shortcut first-keystroke="control ENTER"/>
   </action>
 
-  <action id="RunDashboard.ShowConfigurations">
+  <action id="ServiceView.ShowServices">
     <keyboard-shortcut first-keystroke="control shift T"/>
   </action>
 

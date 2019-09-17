@@ -1145,9 +1145,6 @@
       <action id="RunDashboard.Stop" class="com.intellij.execution.dashboard.actions.StopAction"
               text="Stop" icon="AllIcons.Actions.Suspend"
               use-shortcut-of="Stop"/>
-      <separator/>
-      <action id="RunDashboard.ShowConfigurations" class="com.intellij.execution.dashboard.actions.ShowConfigurationsAction"
-              text="Show Configurations" icon="AllIcons.Actions.ShowAsTree"/>
     </group>
     <group id="RunDashboardTreeToolbar"/>
     <group id="RunDashboardPopup">
@@ -1211,7 +1208,7 @@
               text="Jump to Services" use-shortcut-of="ShowNavBar"/>
     </group>
     <action id="ServiceView.ShowServices" class="com.intellij.execution.services.ShowServicesAction"
-            text="Show Services Tree" icon="AllIcons.Actions.ShowAsTree" use-shortcut-of="RunDashboard.ShowConfigurations"/>
+            text="Show Services Tree" icon="AllIcons.Actions.ShowAsTree"/>
     <group id="RunDashboard.GroupBy" popup="true" text="Configuration" class="com.intellij.ide.actions.NonEmptyActionGroup">
       <action id="RunDashboard.GroupByType" class="com.intellij.execution.dashboard.actions.GroupByConfigurationTypeAction"
               text="Type"/>

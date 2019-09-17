@@ -638,7 +638,7 @@
     <keyboard-shortcut first-keystroke="alt DOWN"/>
   </action>
 
-  <action id="RunDashboard.ShowConfigurations">
+  <action id="ServiceView.ShowServices">
     <keyboard-shortcut first-keystroke="shift meta T"/>
   </action>
 
