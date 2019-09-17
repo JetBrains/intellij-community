@@ -23,8 +23,11 @@ import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspec
 import com.intellij.codeInspection.unusedImport.UnusedImportInspection;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.ui.ColorUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
@@ -1043,16 +1046,21 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
 
   public void testTooltipTypesAgree() {
     doTest();
+    String toolTipForeground = ColorUtil.toHtmlColor(UIUtil.getToolTipForeground());
+    String greyed = ColorUtil.toHtmlColor(UIUtil.getContextHelpForeground());
+    String red = ColorUtil.toHtmlColor(DialogWrapper.ERROR_FOREGROUND_COLOR);
+    String expected = "<html><body><table>" +
+                      "<tr>" +
+                      "<td style='padding: 0px 16px 8px 0px;color: " + greyed + "'>Required type:</td>" +
+                      "<td style='padding: 0px 4px 8px 0px;'><font color='" + toolTipForeground + "'>Generic</font></td><td style='padding: 0px 0px 8px 0px;'>&lt;<font color='" + toolTipForeground + "'>? extends Number</font>,</td><td style='padding: 0px 0px 8px 0px;'><font color='" + toolTipForeground + "'>Number</font>,</td><td style='padding: 0px 0px 8px 0px;'><font color='" + toolTipForeground + "'>Integer</font>&gt;</td></tr>" +
+                      "<tr><td style='padding: 0px 16px 0px 0px;color: " + greyed + "'>Provided:</td>" +
+                      "<td style='padding: 0px 4px 0px 0px;'><font color='" + toolTipForeground + "'>Generic</font></td><td style='padding: 0px 0px 0px 0px;'>&lt;<font color='" + toolTipForeground + "'>Integer</font>,</td><td style='padding: 0px 0px 0px 0px;'><font color='" + red + "'>Integer</font>,</td><td style='padding: 0px 0px 0px 0px;'><font color='" + toolTipForeground + "'>Integer</font>&gt;</td></tr>" +
+                      "</table></body></html>";
+
     doHighlighting()
       .stream()
       .filter(info -> info.type == HighlightInfoType.ERROR)
-      .forEach(info -> Assert.assertEquals("<html><body>Incompatible types." +
-                                           "<table><tr><td>Required:</td>" +
-                                           "<td>Generic</td><td>&lt;? extends Number,</td><td><font color='red'><b>java.lang.Number</b></font>,</td><td>Integer&gt;</td></tr>" +
-                                           "<tr><td>Found:</td>" +
-                                           "<td>Generic</td><td>&lt;Integer,</td><td><font color='red'><b>java.lang.Integer</b></font>,</td><td>Integer&gt;</td></tr>" +
-                                           "</table></body></html>",
-                                           info.getToolTip()));
+      .forEach(info -> Assert.assertEquals(expected, info.getToolTip()));
   }
 
   public void testBridgeMethodOverriding() { doTest(); }
