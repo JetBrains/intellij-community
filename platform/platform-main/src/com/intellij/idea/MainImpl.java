@@ -2,6 +2,7 @@
 package com.intellij.idea;
 
 import com.intellij.ide.customize.CustomizeIDEWizardStepsProvider;
+import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -9,6 +10,10 @@ import java.util.concurrent.CompletionStage;
 
 @SuppressWarnings({"UnusedDeclaration"})
 public final class MainImpl implements StartupUtil.AppStarter {
+  public MainImpl() {
+    System.setProperty(PlatformUtils.PLATFORM_PREFIX_KEY, PlatformUtils.getPlatformPrefix(PlatformUtils.IDEA_CE_PREFIX));
+  }
+
   @Override
   public void start(@NotNull List<String> args, @NotNull CompletionStage<?> initUiTask) {
     ApplicationLoader.initApplication(args, initUiTask);

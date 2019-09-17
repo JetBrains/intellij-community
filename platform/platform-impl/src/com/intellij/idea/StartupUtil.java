@@ -173,11 +173,12 @@ public final class StartupUtil {
       return aClass;
     });
 
+    configureLog4j();
+    
+    Class<AppStarter> aClass = mainStartFuture.get();
     activity = activity.endAndStart("LaF init scheduling");
     CompletableFuture<?> initUiTask = scheduleInitUi(args, executorService);
     activity.end();
-
-    configureLog4j();
 
     if (!checkJdkVersion()) {
       System.exit(Main.JDK_CHECK_FAILED);
@@ -197,7 +198,7 @@ public final class StartupUtil {
     // log initialization should happen only after locking the system directory
     Logger log = setupLogger();
     activity.end();
-
+    
     executorService.execute(() -> {
       ApplicationInfo appInfo = ApplicationInfoImpl.getShadowInstance();
       Activity subActivity = StartUpMeasurer.startActivity("essential IDE info logging");
@@ -228,7 +229,7 @@ public final class StartupUtil {
     futures.clear();
     activity = activity.endAndStart("main class loading waiting");
 
-    Class<AppStarter> aClass = mainStartFuture.get();
+    
     activity.end();
     startApp(args, initUiTask, log, configImportNeeded, aClass.newInstance());
   }
