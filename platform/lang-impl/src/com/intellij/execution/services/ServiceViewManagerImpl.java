@@ -67,10 +67,19 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
     Disposer.register(myProject, myModel);
     myModelFilter = new ServiceModelFilter();
     myProject.getMessageBus().connect(myModel).subscribe(ServiceEventListener.TOPIC, e -> myModel.refresh(e).onSuccess(o -> {
-      updateToolWindow(!myModel.getRoots().isEmpty(), true);
+      List<? extends ServiceViewItem> roots = myModel.getRoots();
+      ServiceViewItem eventRoot = ContainerUtil.find(roots, root -> e.contributorClass.isInstance(root.getRootContributor()));
+      updateToolWindow(!roots.isEmpty(),
+                       eventRoot != null && !(eventRoot.getViewDescriptor() instanceof ServiceViewNonActivatingDescriptor),
+                       false);
       processAllModels(viewModel -> viewModel.eventProcessed(e));
     }));
-    myModel.initRoots().onSuccess(o -> updateToolWindow(!myModel.getRoots().isEmpty(), false));
+    myModel.initRoots().onSuccess(o -> {
+      List<? extends ServiceViewItem> roots = myModel.getRoots();
+      updateToolWindow(!roots.isEmpty(),
+                       roots.stream().anyMatch(root -> !(root.getViewDescriptor() instanceof ServiceViewNonActivatingDescriptor)),
+                       true);
+    });
   }
 
   void createToolWindowContent(@NotNull ToolWindow toolWindow) {
@@ -291,14 +300,14 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
       });
   }
 
-  private void updateToolWindow(boolean available, boolean show) {
+  private void updateToolWindow(boolean available, boolean show, boolean onInit) {
     ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
     if (toolWindowManager == null) return;
 
     toolWindowManager.invokeLater(() -> {
       if (myProject.isDisposed()) return;
 
-      boolean doShow = available && (show || myContentManager != null);
+      boolean doShow = available && (!onInit || myContentManager != null);
       ToolWindow toolWindow = toolWindowManager.getToolWindow(ToolWindowId.SERVICES);
       if (toolWindow == null) {
         toolWindow = createToolWindow(toolWindowManager, available);
@@ -308,7 +317,7 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
         return;
       }
 
-      doShow = !toolWindow.isAvailable() && doShow;
+      doShow = show && !toolWindow.isAvailable() && doShow;
       toolWindow.setAvailable(available, null);
       if (doShow) {
         toolWindow.show(null);
