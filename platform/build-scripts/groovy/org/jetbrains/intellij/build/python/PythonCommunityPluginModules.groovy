@@ -15,6 +15,7 @@ class PythonCommunityPluginModules {
     "intellij.python.configure",
     "intellij.python.community.plugin.minor",
     "intellij.python.psi",
+    "intellij.python.psi.impl",
     "intellij.python.pydev",
     "intellij.python.community.impl",
   ]
