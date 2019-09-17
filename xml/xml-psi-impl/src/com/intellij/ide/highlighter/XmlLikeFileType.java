@@ -15,9 +15,10 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
 public abstract class XmlLikeFileType extends LanguageFileType {
-  protected XmlLikeFileType(Language language) {
+  protected XmlLikeFileType(@Nullable Language language) {
     super(language);
   }
+
   @Override
   public String getCharset(@NotNull VirtualFile file, @NotNull final byte[] content) {
     LoadTextUtil.DetectResult guessed = LoadTextUtil.guessFromContent(file, content);
