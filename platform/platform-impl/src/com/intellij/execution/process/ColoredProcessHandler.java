@@ -55,6 +55,7 @@ public class ColoredProcessHandler extends KillableProcessHandler implements Ans
    */
   @Override
   public void coloredTextAvailable(@NotNull String text, @NotNull Key attributes) {
+    textAvailable(text, attributes);
     notifyColoredListeners(text, attributes);
   }
 
@@ -70,5 +71,17 @@ public class ColoredProcessHandler extends KillableProcessHandler implements Ans
 
   public void removeColoredTextListener(AnsiEscapeDecoder.ColoredTextAcceptor listener) {
     myColoredTextListeners.remove(listener);
+  }
+
+  /**
+   * @deprecated Inheritors should override coloredTextAvailable method
+   * or implement {@link com.intellij.execution.process.AnsiEscapeDecoder.ColoredChunksAcceptor}
+   * and override method coloredChunksAvailable to process colored chunks.
+   * To be removed in IDEA 14.
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2014")
+  protected void textAvailable(final String text, final Key attributes) {
+    super.notifyTextAvailable(text, attributes);
   }
 }
