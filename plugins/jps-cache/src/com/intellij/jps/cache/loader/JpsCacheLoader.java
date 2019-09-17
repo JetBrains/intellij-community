@@ -57,6 +57,7 @@ class JpsCacheLoader implements JpsOutputLoader {
       if (timestamps.exists()) {
         try {
           File newTimestampFolder = new File(myTmpCacheFolder, TIMESTAMPS_FOLDER_NAME);
+          if (newTimestampFolder.exists()) FileUtil.delete(newTimestampFolder);
           newTimestampFolder.mkdirs();
           FileUtil.copyDir(timestamps, newTimestampFolder);
         }
