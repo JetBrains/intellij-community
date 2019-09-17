@@ -185,7 +185,7 @@ final class ImmutableText extends ImmutableCharSequence implements CharArrayExte
     if (start > end) {
       throw new IndexOutOfBoundsException();
     }
-    return ensureChunked().subtext(0, start).concat(subtext(end));
+    return subtext(0, start).concat(subtext(end));
   }
 
   @Override
@@ -295,6 +295,9 @@ final class ImmutableText extends ImmutableCharSequence implements CharArrayExte
     }
     if (start == end) {
       return EMPTY;
+    }
+    if (end - start > BLOCK_SIZE) {
+      ensureChunked();
     }
 
     return new ImmutableText(myNode.subNode(start, end));
