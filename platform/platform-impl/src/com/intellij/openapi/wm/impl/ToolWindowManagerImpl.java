@@ -1816,6 +1816,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
         myLayoutToRestoreLater.readExternal(e);
       }
     }
+    checkInvariants("");
   }
 
   public void setDefaultState(@NotNull final ToolWindowImpl toolWindow,
