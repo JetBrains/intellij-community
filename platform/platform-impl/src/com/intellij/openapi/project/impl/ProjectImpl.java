@@ -64,10 +64,11 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   private final boolean myLight;
   static boolean ourClassesAreLoaded;
   private final String creationTrace;
+  private ProjectStoreFactory myProjectStoreFactory;
 
   private final AtomicNotNullLazyValue<IComponentStore> myComponentStore = AtomicNotNullLazyValue.createValue(() -> {
-    //noinspection CodeBlock2Expr
-    return ServiceManager.getService(ProjectStoreFactory.class).createStore(this);
+    ProjectStoreFactory factory = myProjectStoreFactory != null ? myProjectStoreFactory : ServiceManager.getService(ProjectStoreFactory.class);
+    return factory.createStore(this);
   });
 
   protected ProjectImpl(@NotNull Path filePath, @Nullable String projectName) {
@@ -126,6 +127,15 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   @TestOnly
   boolean isTemporarilyDisposed() {
     return temporarilyDisposed;
+  }
+
+  /**
+   * This method is temporary introduced to allow overriding project store class for a specific project. Overriding ProjectStoreFactory
+   * service won't work because a service may be overridden in a single plugin only.
+   */
+  @ApiStatus.Internal
+  public void setProjectStoreFactory(ProjectStoreFactory projectStoreFactory) {
+    myProjectStoreFactory = projectStoreFactory;
   }
 
   @Override
