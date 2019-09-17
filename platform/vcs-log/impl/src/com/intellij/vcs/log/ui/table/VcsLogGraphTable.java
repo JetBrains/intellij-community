@@ -134,7 +134,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     setTableHeader(new InvisibleResizableHeader() {
       @Override
       protected boolean canMoveOrResizeColumn(int modelIndex) {
-        return modelIndex != LogTableColumn.ROOT.ordinal();
+        return modelIndex != VcsLogColumn.ROOT.ordinal();
       }
     });
 
@@ -162,7 +162,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     setRootColumnSize();
 
     for (TableColumn column : myTableColumns) {
-      column.setResizable(column.getModelIndex() != LogTableColumn.ROOT.ordinal());
+      column.setResizable(column.getModelIndex() != VcsLogColumn.ROOT.ordinal());
     }
   }
 
@@ -226,7 +226,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     if (!myProperties.exists(CommonUiProperties.COLUMN_ORDER)) return null;
 
     List<Integer> columnOrder = myProperties.get(CommonUiProperties.COLUMN_ORDER);
-    if (LogTableColumn.isValidColumnOrder(columnOrder)) return columnOrder;
+    if (VcsLogColumn.isValidColumnOrder(columnOrder)) return columnOrder;
 
     LOG.debug("Incorrect column order was saved in properties " + columnOrder + ", replacing it with default order.");
     saveColumnOrderToSettings();
@@ -261,8 +261,8 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     }
   }
 
-  public void forceReLayout(@NotNull LogTableColumn column) {
-    if (column == LogTableColumn.AUTHOR) myAuthorColumnInitialized = false;
+  public void forceReLayout(@NotNull VcsLogColumn column) {
+    if (column == VcsLogColumn.AUTHOR) myAuthorColumnInitialized = false;
     reLayout();
   }
 
@@ -274,7 +274,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     super.doLayout();
   }
 
-  public void resetColumnWidth(@NotNull LogTableColumn column) {
+  public void resetColumnWidth(@NotNull VcsLogColumn column) {
     VcsLogUsageTriggerCollector.triggerUsage(VcsLogUsageTriggerCollector.VcsLogEvent.COLUMN_RESET, null);
     if (CommonUiProperties.getColumnWidth(myProperties, column) != -1) {
       CommonUiProperties.saveColumnWidth(myProperties, column, -1);
@@ -285,13 +285,13 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   }
 
   private void updateDynamicColumnsWidth() {
-    for (LogTableColumn logColumn : LogTableColumn.DYNAMIC_COLUMNS) {
+    for (VcsLogColumn logColumn : VcsLogColumn.DYNAMIC_COLUMNS) {
       TableColumn column = getTableColumn(logColumn);
       if (column == null) continue;
 
       int width = CommonUiProperties.getColumnWidth(myProperties, logColumn);
       if (width <= 0 || width > getWidth()) {
-        if (logColumn != LogTableColumn.AUTHOR || !myAuthorColumnInitialized) {
+        if (logColumn != VcsLogColumn.AUTHOR || !myAuthorColumnInitialized) {
           width = getColumnWidthFromData(column);
         }
         else {
@@ -309,7 +309,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
   private int getColumnWidthFromData(@NotNull TableColumn column) {
     int index = column.getModelIndex();
-    LogTableColumn logColumn = LogTableColumn.fromOrdinal(index);
+    VcsLogColumn logColumn = VcsLogColumn.fromOrdinal(index);
 
     Font tableFont = getTableFont();
     switch (logColumn) {
@@ -360,29 +360,29 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   }
 
   @Nullable
-  public LogTableColumn getLogTableColumn(int viewIndex) {
+  public VcsLogColumn getVcsLogColumn(int viewIndex) {
     int index = convertColumnIndexToModel(viewIndex);
-    return index < 0 ? null : LogTableColumn.fromOrdinal(index);
+    return index < 0 ? null : VcsLogColumn.fromOrdinal(index);
   }
 
-  public final int getColumnViewIndex(@NotNull LogTableColumn column) {
+  public final int getColumnViewIndex(@NotNull VcsLogColumn column) {
     return convertColumnIndexToView(column.ordinal());
   }
 
   @Nullable
-  public TableColumn getTableColumn(@NotNull LogTableColumn column) {
+  public TableColumn getTableColumn(@NotNull VcsLogColumn column) {
     int viewIndex = getColumnViewIndex(column);
     return viewIndex != -1 ? getColumnModel().getColumn(viewIndex) : null;
   }
 
   @NotNull
   public TableColumn getRootColumn() {
-    return Objects.requireNonNull(getTableColumn(LogTableColumn.ROOT));
+    return Objects.requireNonNull(getTableColumn(VcsLogColumn.ROOT));
   }
 
   @NotNull
   public TableColumn getCommitColumn() {
-    return Objects.requireNonNull(getTableColumn(LogTableColumn.COMMIT));
+    return Objects.requireNonNull(getTableColumn(VcsLogColumn.COMMIT));
   }
 
   static Font getTableFont() {
@@ -391,8 +391,8 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
   private void updateCommitColumnWidth() {
     int size = getWidth();
-    for (LogTableColumn logColumn : LogTableColumn.values()) {
-      if (logColumn == LogTableColumn.COMMIT) continue;
+    for (VcsLogColumn logColumn : VcsLogColumn.values()) {
+      if (logColumn == VcsLogColumn.COMMIT) continue;
       TableColumn column = getTableColumn(logColumn);
       if (column != null) size -= column.getPreferredWidth();
     }
@@ -433,11 +433,11 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   @Override
   public String getToolTipText(@NotNull MouseEvent event) {
     int row = rowAtPoint(event.getPoint());
-    LogTableColumn column = getLogTableColumn(columnAtPoint(event.getPoint()));
+    VcsLogColumn column = getVcsLogColumn(columnAtPoint(event.getPoint()));
     if (column == null || row < 0) {
       return null;
     }
-    if (column == LogTableColumn.ROOT) {
+    if (column == VcsLogColumn.ROOT) {
       Object path = getValueAt(row, column.ordinal());
       if (path instanceof FilePath) {
         return "<html><b>" +
@@ -494,7 +494,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
       StringBuilder sb = new StringBuilder();
       for (int i = 0; i < Math.min(VcsLogUtil.MAX_SELECTED_COMMITS, selectedRows.length); i++) {
-        sb.append(getModel().getValueAt(selectedRows[i], LogTableColumn.COMMIT).toString());
+        sb.append(getModel().getValueAt(selectedRows[i], VcsLogColumn.COMMIT).toString());
         if (i != selectedRows.length - 1) sb.append("\n");
       }
       return sb.toString();
@@ -511,7 +511,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     for (int i = 0; i < Math.min(VcsLogUtil.MAX_SELECTED_COMMITS, selectedRows.length); i++) {
       int row = selectedRows[i];
       sb.append(StringUtil.join(visibleColumns, j -> {
-        if (j == LogTableColumn.ROOT.ordinal()) {
+        if (j == VcsLogColumn.ROOT.ordinal()) {
           return "";
         }
         else {
@@ -604,7 +604,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
       AbstractTableModel model = getModel();
       Couple<Integer> visibleRows = ScrollingUtil.getVisibleRows(this);
       if (visibleRows.first >= 0) {
-        TableModelEvent evt = new TableModelEvent(model, visibleRows.first, visibleRows.second, LogTableColumn.ROOT.ordinal());
+        TableModelEvent evt = new TableModelEvent(model, visibleRows.first, visibleRows.second, VcsLogColumn.ROOT.ordinal());
         model.fireTableChanged(evt);
       }
       mySelection = null;
@@ -684,10 +684,10 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   protected void paintFooter(@NotNull Graphics g, int x, int y, int width, int height) {
     int lastRow = getRowCount() - 1;
     if (lastRow >= 0) {
-      g.setColor(getStyle(lastRow, getColumnViewIndex(LogTableColumn.COMMIT), hasFocus(), false).getBackground());
+      g.setColor(getStyle(lastRow, getColumnViewIndex(VcsLogColumn.COMMIT), hasFocus(), false).getBackground());
       g.fillRect(x, y, width, height);
       if (myColorManager.hasMultiplePaths()) {
-        g.setColor(getPathBackgroundColor((FilePath)getModel().getValueAt(lastRow, LogTableColumn.ROOT), myColorManager));
+        g.setColor(getPathBackgroundColor((FilePath)getModel().getValueAt(lastRow, VcsLogColumn.ROOT), myColorManager));
 
         int rootWidth = getRootColumn().getWidth();
         if (!isShowRootNames()) rootWidth -= JBUIScale.scale(ROOT_INDICATOR_WHITE_WIDTH);
@@ -696,7 +696,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
       }
     }
     else {
-      g.setColor(getBaseStyle(lastRow, getColumnViewIndex(LogTableColumn.COMMIT), hasFocus(), false).getBackground());
+      g.setColor(getBaseStyle(lastRow, getColumnViewIndex(VcsLogColumn.COMMIT), hasFocus(), false).getBackground());
       g.fillRect(x, y, width, height);
     }
   }
@@ -724,7 +724,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
         return;
       }
       append(value.toString(), applyHighlighters(this, row, column, hasFocus, selected));
-      if (column == getColumnViewIndex(LogTableColumn.COMMIT) || column == getColumnViewIndex(LogTableColumn.AUTHOR)) {
+      if (column == getColumnViewIndex(VcsLogColumn.COMMIT) || column == getColumnViewIndex(VcsLogColumn.AUTHOR)) {
         SpeedSearchUtil.applySpeedSearchHighlighting(table, this, false, selected);
       }
     }
@@ -803,7 +803,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
       // and TableColumnModelListener.columnMarginChanged does not provide any information which column was changed
       if (getTableHeader().getResizingColumn() == null) return;
       if ("width".equals(evt.getPropertyName())) {
-        for (LogTableColumn logColumn : LogTableColumn.DYNAMIC_COLUMNS) {
+        for (VcsLogColumn logColumn : VcsLogColumn.DYNAMIC_COLUMNS) {
           TableColumn column = getTableColumn(logColumn);
           if (evt.getSource().equals(column)) {
             CommonUiProperties.saveColumnWidth(myProperties, logColumn, column.getWidth());
@@ -815,7 +815,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
     @Override
     public void moveColumn(int columnIndex, int newIndex) {
-      if (getLogTableColumn(columnIndex) == LogTableColumn.ROOT || getLogTableColumn(newIndex) == LogTableColumn.ROOT) return;
+      if (getVcsLogColumn(columnIndex) == VcsLogColumn.ROOT || getVcsLogColumn(newIndex) == VcsLogColumn.ROOT) return;
       super.moveColumn(columnIndex, newIndex);
       saveColumnOrderToSettings();
     }

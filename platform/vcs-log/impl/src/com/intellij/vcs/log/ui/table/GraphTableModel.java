@@ -32,7 +32,7 @@ import java.util.List;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 
 /**
- * Columns correspond exactly to {@link LogTableColumn} enum
+ * Columns correspond exactly to {@link VcsLogColumn} enum
  */
 public class GraphTableModel extends AbstractTableModel {
   private static final int UP_PRELOAD_COUNT = 20;
@@ -106,7 +106,7 @@ public class GraphTableModel extends AbstractTableModel {
 
   @Override
   public final int getColumnCount() {
-    return LogTableColumn.count();
+    return VcsLogColumn.count();
   }
 
   /**
@@ -122,11 +122,11 @@ public class GraphTableModel extends AbstractTableModel {
   @NotNull
   @Override
   public final Object getValueAt(int rowIndex, int columnIndex) {
-    return getValueAt(rowIndex, LogTableColumn.fromOrdinal(columnIndex));
+    return getValueAt(rowIndex, VcsLogColumn.fromOrdinal(columnIndex));
   }
 
   @NotNull
-  public final Object getValueAt(int rowIndex, @NotNull LogTableColumn column) {
+  public final Object getValueAt(int rowIndex, @NotNull VcsLogColumn column) {
     if (rowIndex >= getRowCount() - 1 && canRequestMore()) {
       requestToLoadMore(EmptyRunnable.INSTANCE);
     }
@@ -200,12 +200,12 @@ public class GraphTableModel extends AbstractTableModel {
 
   @Override
   public Class<?> getColumnClass(int column) {
-    return LogTableColumn.fromOrdinal(column).getContentClass();
+    return VcsLogColumn.fromOrdinal(column).getContentClass();
   }
 
   @Override
   public String getColumnName(int column) {
-    return LogTableColumn.fromOrdinal(column).getName();
+    return VcsLogColumn.fromOrdinal(column).getName();
   }
 
   public void setVisiblePack(@NotNull VisiblePack visiblePack) {

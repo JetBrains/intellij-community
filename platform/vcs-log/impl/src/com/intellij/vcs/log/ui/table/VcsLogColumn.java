@@ -4,7 +4,6 @@ package com.intellij.vcs.log.ui.table;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.ui.render.GraphCommitCell;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -15,26 +14,26 @@ import java.util.Locale;
  * If you want to tweak the order of dynamic columns in menus, change {@link #DYNAMIC_COLUMNS} list.
  * If you want to tweak the default order of columns, change the corresponding implementation of {@link com.intellij.vcs.log.impl.VcsLogUiProperties}.
  */
-public enum LogTableColumn {
+public enum VcsLogColumn {
   ROOT("", FilePath.class),
   COMMIT("Subject", GraphCommitCell.class),
   AUTHOR("Author", String.class),
   DATE("Date", String.class),
   HASH("Hash", String.class);
 
-  public static final List<LogTableColumn> DYNAMIC_COLUMNS = ContainerUtil.immutableList(AUTHOR, DATE, HASH);
-  private static final LogTableColumn[] COLUMNS = values(); // to reduce copying overhead
+  public static final @NotNull List<VcsLogColumn> DYNAMIC_COLUMNS = ContainerUtil.immutableList(AUTHOR, DATE, HASH);
+  private static final VcsLogColumn[] COLUMNS = values(); // to reduce copying overhead
 
   @NotNull private final String myName;
   @NotNull private final Class<?> myContentClass;
 
-  LogTableColumn(@NotNull String name, @NotNull Class<?> contentClass) {
+  VcsLogColumn(@NotNull String name, @NotNull Class<?> contentClass) {
     myName = name;
     myContentClass = contentClass;
   }
 
   public boolean isDynamic() {
-    return compareTo(COMMIT) > 0;
+    return DYNAMIC_COLUMNS.contains(this);
   }
 
   @NotNull
@@ -66,7 +65,7 @@ public enum LogTableColumn {
   }
 
   @NotNull
-  public static LogTableColumn fromOrdinal(int index) {
+  public static VcsLogColumn fromOrdinal(int index) {
     return COLUMNS[index];
   }
 
