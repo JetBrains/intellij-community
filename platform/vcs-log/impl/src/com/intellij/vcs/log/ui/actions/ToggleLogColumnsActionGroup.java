@@ -50,7 +50,7 @@ public class ToggleLogColumnsActionGroup extends ActionGroup implements DumbAwar
   private static class ToggleColumnAction extends ToggleAction implements DumbAware {
     private final int myIndex;
 
-    private ToggleColumnAction(LogTableColumn column) {
+    private ToggleColumnAction(@NotNull LogTableColumn column) {
       super(column.getName());
       myIndex = column.ordinal();
     }

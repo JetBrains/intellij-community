@@ -13,7 +13,7 @@ import java.util.Locale;
 /**
  * Do not reorder: this might affect serialization. Add new columns at the end only.
  * If you want to tweak the order of dynamic columns in menus, change {@link #DYNAMIC_COLUMNS} list.
- * If you want to tweak the default order of columns, change {@link #getDefaultOrder()} method.
+ * If you want to tweak the default order of columns, change the corresponding implementation of {@link com.intellij.vcs.log.impl.VcsLogUiProperties}.
  */
 public enum LogTableColumn {
   ROOT("", FilePath.class),
@@ -25,10 +25,10 @@ public enum LogTableColumn {
   public static final List<LogTableColumn> DYNAMIC_COLUMNS = ContainerUtil.immutableList(AUTHOR, DATE, HASH);
   private static final LogTableColumn[] COLUMNS = values(); // to reduce copying overhead
 
-  private final String myName;
-  private final Class<?> myContentClass;
+  @NotNull private final String myName;
+  @NotNull private final Class<?> myContentClass;
 
-  LogTableColumn(String name, Class<?> contentClass) {
+  LogTableColumn(@NotNull String name, @NotNull Class<?> contentClass) {
     myName = name;
     myContentClass = contentClass;
   }
@@ -37,6 +37,7 @@ public enum LogTableColumn {
     return compareTo(COMMIT) > 0;
   }
 
+  @NotNull
   public String getName() {
     return myName;
   }
@@ -44,10 +45,12 @@ public enum LogTableColumn {
   /**
    * @return stable name (to identify column in statistics)
    */
+  @NotNull
   public String getStableName() {
     return myName.toLowerCase(Locale.ROOT);
   }
 
+  @NotNull
   Class<?> getContentClass() {
     return myContentClass;
   }

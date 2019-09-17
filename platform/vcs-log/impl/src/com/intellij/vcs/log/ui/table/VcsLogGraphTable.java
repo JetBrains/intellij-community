@@ -261,7 +261,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     }
   }
 
-  public void forceReLayout(LogTableColumn column) {
+  public void forceReLayout(@NotNull LogTableColumn column) {
     if (column == LogTableColumn.AUTHOR) myAuthorColumnInitialized = false;
     reLayout();
   }
@@ -274,7 +274,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     super.doLayout();
   }
 
-  public void resetColumnWidth(LogTableColumn column) {
+  public void resetColumnWidth(@NotNull LogTableColumn column) {
     VcsLogUsageTriggerCollector.triggerUsage(VcsLogUsageTriggerCollector.VcsLogEvent.COLUMN_RESET, null);
     if (CommonUiProperties.getColumnWidth(myProperties, column) != -1) {
       CommonUiProperties.saveColumnWidth(myProperties, column, -1);
@@ -370,7 +370,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   }
 
   @Nullable
-  public TableColumn getTableColumn(LogTableColumn column) {
+  public TableColumn getTableColumn(@NotNull LogTableColumn column) {
     int viewIndex = getColumnViewIndex(column);
     return viewIndex != -1 ? getColumnModel().getColumn(viewIndex) : null;
   }

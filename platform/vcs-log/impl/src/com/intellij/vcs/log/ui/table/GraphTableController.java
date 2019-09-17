@@ -175,7 +175,7 @@ public class GraphTableController {
     VcsLogUiUtil.showTooltip(myTable, new Point(e.getX() + 5, e.getY()), Balloon.Position.atRight, text);
   }
 
-  private void showOrHideCommitTooltip(int row, LogTableColumn column, @NotNull MouseEvent e) {
+  private void showOrHideCommitTooltip(int row, @NotNull LogTableColumn column, @NotNull MouseEvent e) {
     if (!showTooltip(row, column, e.getPoint(), false)) {
       if (IdeTooltipManager.getInstance().hasCurrent()) {
         IdeTooltipManager.getInstance().hideCurrent(e);
@@ -183,7 +183,7 @@ public class GraphTableController {
     }
   }
 
-  private boolean showTooltip(int row, LogTableColumn column, @NotNull Point point, boolean now) {
+  private boolean showTooltip(int row, @NotNull LogTableColumn column, @NotNull Point point, boolean now) {
     JComponent tipComponent =
       myCommitRenderer.getTooltip(myTable.getValueAt(row, myTable.getColumnViewIndex(column)), calcPoint4Graph(point), row);
 
@@ -265,7 +265,7 @@ public class GraphTableController {
           int c2 =
             myTable.columnAtPoint(new Point(e.getPoint().x + (useLeftBorder ? 1 : -1) * JBUIScale.scale(BORDER_THICKNESS), e.getPoint().y));
           LogTableColumn column2 = myTable.getLogTableColumn(c2);
-          if ((useLeftBorder ? isOnLeftBorder(e, c2) : isOnRightBorder(e, c2)) && column.isDynamic()) {
+          if (column2 != null && (useLeftBorder ? isOnLeftBorder(e, c2) : isOnRightBorder(e, c2)) && column.isDynamic()) {
             myTable.resetColumnWidth(column2);
           }
         }

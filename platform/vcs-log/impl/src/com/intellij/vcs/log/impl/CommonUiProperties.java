@@ -22,7 +22,7 @@ public class CommonUiProperties {
     }
   }
 
-  public static void saveColumnWidth(@NotNull VcsLogUiProperties properties, LogTableColumn column, int width) {
+  public static void saveColumnWidth(@NotNull VcsLogUiProperties properties, @NotNull LogTableColumn column, int width) {
     VcsLogUiProperty<Integer> property = COLUMN_WIDTH.get(column);
     if (properties.exists(property)) {
       if (properties.get(property) != width) {
@@ -31,7 +31,7 @@ public class CommonUiProperties {
     }
   }
 
-  public static int getColumnWidth(@NotNull VcsLogUiProperties properties, LogTableColumn column) {
+  public static int getColumnWidth(@NotNull VcsLogUiProperties properties, @NotNull LogTableColumn column) {
     VcsLogUiProperty<Integer> property = COLUMN_WIDTH.get(column);
     if (properties.exists(property)) {
       return properties.get(property);
