@@ -29,7 +29,6 @@ import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -105,17 +104,6 @@ public class ServersToolWindowContent extends JPanel implements Disposable, Serv
   private final Project myProject;
   private final RemoteServersViewContribution myContribution;
   private final Splitter mySplitter;
-
-  /**
-   * @deprecatedLeft for compatibility with 172 stream, will be removed after 173.
-   * Every remoteServers-like view is now expected to explicitly specify its set if Action Group IDs using
-   * {@link #ServersToolWindowContent(Project, RemoteServersViewContribution, ActionGroups)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2017.3")
-  public ServersToolWindowContent(@NotNull Project project, @NotNull RemoteServersViewContribution contribution) {
-    this(project, contribution, ActionGroups.SHARED_ACTION_GROUPS);
-  }
 
   /**
    * @param actionGroups allows to customize action groups bound to view toolbars and tree' poup menu.
