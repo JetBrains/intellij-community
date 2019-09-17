@@ -1076,8 +1076,6 @@
                               id="status" order="after type"/>
     <runDashboardGroupingRule implementation="com.intellij.execution.dashboard.tree.FolderDashboardGroupingRule"
                               id="folder" order="after status"/>
-    <runDashboardGroupingRule implementation="com.intellij.execution.dashboard.tree.RunConfigurationDashboardGroupingRule"
-                              id="runConfiguration" order="after folder"/>
     <actionPromoter implementation="com.intellij.execution.dashboard.actions.RunDashboardActionPromoter"/>
     <actionPromoter implementation="com.intellij.execution.services.ServiceViewActionPromoter"/>
     <serviceViewContributor implementation="com.intellij.execution.dashboard.RunDashboardServiceViewContributor"/>
