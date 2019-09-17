@@ -8,8 +8,10 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 /**
- * A listener for VFS events, invoked inside write-action. For a non-blocking alternative,
- * see {@link com.intellij.openapi.vfs.AsyncFileListener}.
+ * A listener for VFS events, invoked inside write-action.
+ * To register this listener, use e.g. {@code project.getMessageBus().connect(disposable).subscribe(VirtualFileManager.VFS_CHANGES, listener)}
+ *
+ * For a non-blocking alternative please see {@link com.intellij.openapi.vfs.AsyncFileListener}.
  */
 public interface BulkFileListener {
   /** @deprecated obsolete, implement {@link BulkFileListener} directly */
