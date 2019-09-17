@@ -701,7 +701,7 @@ class DistributionJARsBuilder {
       def nonBundledPluginsArtifacts = "$buildContext.paths.artifacts/$pluginsDirectoryName"
 
       def pluginsToIncludeInCustomRepository = new ArrayList<PluginRepositorySpec>()
-      def whiteList = new File("$buildContext.paths.projectHome/build/plugins-autoupload-whitelist.txt").readLines()
+      def whiteList = new File("$buildContext.paths.communityHome/../build/plugins-autoupload-whitelist.txt").readLines()
         .stream().map { it.trim() }.filter { !it.isEmpty() && !it.startsWith("//") }.collect(Collectors.toSet())
 
       pluginsToPublish.each { pluginAndPublishing ->
