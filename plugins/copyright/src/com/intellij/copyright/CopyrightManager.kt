@@ -214,7 +214,7 @@ class CopyrightManager @JvmOverloads constructor(private val project: Project, s
 }
 
 private class CopyrightManagerDocumentListener : BulkFileListener {
-  private val newFiles = ContainerUtil.newConcurrentSet<VirtualFile>()
+  private val newFilePaths = ContainerUtil.newConcurrentSet<String>()
 
   private val isDocumentListenerAdded = AtomicBoolean()
 
@@ -225,7 +225,7 @@ private class CopyrightManagerDocumentListener : BulkFileListener {
       }
 
       if (event is VFileCreateEvent || event is VFileMoveEvent) {
-        newFiles.add(event.file ?: continue)
+        newFilePaths.add(event.path)
         if (isDocumentListenerAdded.compareAndSet(false, true)) {
           addDocumentListener()
         }
@@ -236,12 +236,12 @@ private class CopyrightManagerDocumentListener : BulkFileListener {
   private fun addDocumentListener() {
     EditorFactory.getInstance().eventMulticaster.addDocumentListener(object : DocumentListener {
       override fun documentChanged(e: DocumentEvent) {
-        if (newFiles.isEmpty()) {
+        if (newFilePaths.isEmpty()) {
           return
         }
 
         val virtualFile = FileDocumentManager.getInstance().getFile(e.document) ?: return
-        if (!newFiles.remove(virtualFile)) {
+        if (!newFilePaths.remove(virtualFile.path)) {
           return
         }
 
