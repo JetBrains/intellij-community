@@ -536,7 +536,9 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
       }
     }
 
-    ActionsCollector.getInstance().onActionsLoadedFromKeymapXml(this, actionIds)
+    if (ApplicationManager.getApplication() != null) {
+      ActionsCollector.getInstance().onActionsLoadedFromKeymapXml(this, actionIds)
+    }
     cleanShortcutsCache()
   }
 
