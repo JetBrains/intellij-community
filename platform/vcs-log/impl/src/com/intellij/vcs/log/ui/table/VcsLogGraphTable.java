@@ -22,8 +22,6 @@ import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.text.DateFormatUtil;
-import com.intellij.util.text.JBDateFormat;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsCommitStyleFactory;
@@ -311,52 +309,48 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     int index = column.getModelIndex();
     VcsLogColumn logColumn = VcsLogColumn.fromOrdinal(index);
 
-    Font tableFont = getTableFont();
-    switch (logColumn) {
-      case AUTHOR:
-        if (getModel().getRowCount() <= 0) {
-          return column.getPreferredWidth();
-        }
-
-        // detect author with the longest name
-        int maxRowsToCheck = Math.min(MAX_ROWS_TO_CALC_WIDTH, getRowCount());
-        int maxAuthorWidth = 0;
-        int unloaded = 0;
-        for (int row = 0; row < maxRowsToCheck; row++) {
-          String value = getModel().getValueAt(row, logColumn).toString();
-          if (value.isEmpty()) {
-            unloaded++;
-            continue;
-          }
-          Font font = tableFont;
-          VcsLogHighlighter.TextStyle style = getStyle(row, getColumnViewIndex(logColumn), false, false).getTextStyle();
-          if (BOLD.equals(style)) {
-            font = tableFont.deriveFont(Font.BOLD);
-          }
-          else if (ITALIC.equals(style)) {
-            font = tableFont.deriveFont(Font.ITALIC);
-          }
-          maxAuthorWidth = Math.max(getFontMetrics(font).stringWidth(value + "*"), maxAuthorWidth);
-        }
-
-        int width = Math.min(maxAuthorWidth + VcsLogUiUtil.getHorizontalTextPadding(myStringCellRenderer),
-                             JBUIScale.scale(MAX_DEFAULT_AUTHOR_COLUMN_WIDTH));
-        if (unloaded * 2 <= maxRowsToCheck) myAuthorColumnInitialized = true;
-        return width;
-      case DATE:
-        // all dates have nearly equal sizes
-        String dateSample = JBDateFormat.getFormatter("vcs.log").formatDateTime(DateFormatUtil.getSampleDateTime());
-        return getFontMetrics(getTableFont().deriveFont(Font.BOLD)).stringWidth(dateSample) +
-               VcsLogUiUtil.getHorizontalTextPadding(myStringCellRenderer);
-      case HASH:
-        // all hashes have nearly equal sizes
-        String hashSample = StringUtil.repeat("e", VcsLogUtil.SHORT_HASH_LENGTH);
-        return getFontMetrics(getTableFont().deriveFont(Font.BOLD)).stringWidth(hashSample) +
-               VcsLogUiUtil.getHorizontalTextPadding(myStringCellRenderer);
-      default:
-        LOG.error("Can only calculate author, hash or date columns width from data, yet given column " + logColumn);
+    if (logColumn == VcsLogColumn.AUTHOR) {
+      if (getModel().getRowCount() <= 0) {
         return column.getPreferredWidth();
+      }
+      return estimateAuthorColumnWidth(logColumn);
     }
+    String contentSample = logColumn.getContentSample();
+    if (contentSample != null) {
+      return getFontMetrics(getTableFont().deriveFont(Font.BOLD)).stringWidth(contentSample) +
+             VcsLogUiUtil.getHorizontalTextPadding(myStringCellRenderer);
+    }
+    LOG.error("Cannot estimate the content width for " + logColumn);
+    return column.getPreferredWidth();
+  }
+
+  private int estimateAuthorColumnWidth(@NotNull VcsLogColumn logColumn) {
+    Font tableFont = getTableFont();
+    // detect author with the longest name
+    int maxRowsToCheck = Math.min(MAX_ROWS_TO_CALC_WIDTH, getRowCount());
+    int maxAuthorWidth = 0;
+    int unloaded = 0;
+    for (int row = 0; row < maxRowsToCheck; row++) {
+      String value = getModel().getValueAt(row, logColumn).toString();
+      if (value.isEmpty()) {
+        unloaded++;
+        continue;
+      }
+      Font font = tableFont;
+      VcsLogHighlighter.TextStyle style = getStyle(row, getColumnViewIndex(logColumn), false, false).getTextStyle();
+      if (BOLD.equals(style)) {
+        font = tableFont.deriveFont(Font.BOLD);
+      }
+      else if (ITALIC.equals(style)) {
+        font = tableFont.deriveFont(Font.ITALIC);
+      }
+      maxAuthorWidth = Math.max(getFontMetrics(font).stringWidth(value + "*"), maxAuthorWidth);
+    }
+
+    int width = Math.min(maxAuthorWidth + VcsLogUiUtil.getHorizontalTextPadding(myStringCellRenderer),
+                         JBUIScale.scale(MAX_DEFAULT_AUTHOR_COLUMN_WIDTH));
+    if (unloaded * 2 <= maxRowsToCheck) myAuthorColumnInitialized = true;
+    return width;
   }
 
   @Nullable
