@@ -33,20 +33,10 @@ import java.util.List;
 public class SyntaxHighlighterLanguageFactory extends LanguageExtension<SyntaxHighlighterFactory> {
   public static final ExtensionPointName<KeyedLazyInstance<SyntaxHighlighterFactory>> EP_NAME = ExtensionPointName.create("com.intellij.lang.syntaxHighlighterFactory");
 
+  private boolean myEPListenerAdded = false;
+
   SyntaxHighlighterLanguageFactory() {
     super(EP_NAME, new PlainSyntaxHighlighterFactory());
-
-    LanguageSyntaxHighlighters.EP_NAME.addExtensionPointListener(new ExtensionPointListener<KeyedLazyInstance<SyntaxHighlighter>>() {
-      @Override
-      public void extensionAdded(@NotNull KeyedLazyInstance<SyntaxHighlighter> extension, @NotNull PluginDescriptor pluginDescriptor) {
-        invalidateCacheForExtension(extension.getKey());
-      }
-
-      @Override
-      public void extensionRemoved(@NotNull KeyedLazyInstance<SyntaxHighlighter> extension, @NotNull PluginDescriptor pluginDescriptor) {
-        invalidateCacheForExtension(extension.getKey());
-      }
-    }, null);
   }
 
   @NotNull
@@ -56,6 +46,7 @@ public class SyntaxHighlighterLanguageFactory extends LanguageExtension<SyntaxHi
     if (fromEP.isEmpty()) {
       SyntaxHighlighter highlighter = LanguageSyntaxHighlighters.INSTANCE.forLanguage(key);
       if (highlighter != null) {
+        checkAddEPListener();
         SyntaxHighlighterFactory defaultFactory = new SingleLazyInstanceSyntaxHighlighterFactory() {
           @NotNull
           @Override
@@ -67,5 +58,23 @@ public class SyntaxHighlighterLanguageFactory extends LanguageExtension<SyntaxHi
       }
     }
     return fromEP;
+  }
+
+  private synchronized void checkAddEPListener() {
+    if (!myEPListenerAdded) {
+      myEPListenerAdded = true;
+
+      LanguageSyntaxHighlighters.EP_NAME.addExtensionPointListener(new ExtensionPointListener<KeyedLazyInstance<SyntaxHighlighter>>() {
+        @Override
+        public void extensionAdded(@NotNull KeyedLazyInstance<SyntaxHighlighter> extension, @NotNull PluginDescriptor pluginDescriptor) {
+          invalidateCacheForExtension(extension.getKey());
+        }
+
+        @Override
+        public void extensionRemoved(@NotNull KeyedLazyInstance<SyntaxHighlighter> extension, @NotNull PluginDescriptor pluginDescriptor) {
+          invalidateCacheForExtension(extension.getKey());
+        }
+      }, null);
+    }
   }
 }
