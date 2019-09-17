@@ -115,11 +115,6 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     myComponentConfigCount = -1;
   }
 
-  @Nullable
-  protected ProgressIndicator getProgressIndicator() {
-    return ProgressManager.getInstance().getProgressIndicator();
-  }
-
   @SuppressWarnings("deprecation")
   @Override
   @NotNull
