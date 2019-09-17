@@ -16,6 +16,7 @@ import com.intellij.notification.impl.IdeNotificationArea;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
@@ -23,7 +24,6 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter;
 import com.intellij.openapi.ui.popup.StackingPopupDispatcher;
 import com.intellij.openapi.util.*;
@@ -467,9 +467,11 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           ActionGroup configureGroup = (ActionGroup)ActionManager.getInstance().getAction(groupId);
-          final PopupFactoryImpl.ActionGroupPopup popup = (PopupFactoryImpl.ActionGroupPopup)JBPopupFactory.getInstance()
-            .createActionGroupPopup(null, new IconsFreeActionGroup(configureGroup), e.getDataContext(), JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false,
-                                    ActionPlaces.WELCOME_SCREEN);
+          PopupFactoryImpl.ActionGroupPopup popup = new PopupFactoryImpl.ActionGroupPopup(
+            null, configureGroup, e.getDataContext(),
+            false, false, false, false, null, -1, null,
+            ActionPlaces.WELCOME_SCREEN,
+            new MenuItemPresentationFactory(true), false);
           popup.showUnderneathOfLabel(ref.get());
         }
       };
@@ -776,64 +778,6 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     @Override
     public void dispose() {
 
-    }
-
-    private class IconsFreeActionGroup extends ActionGroup {
-      private final ActionGroup myGroup;
-
-      IconsFreeActionGroup(ActionGroup group) {
-        super(group.getTemplatePresentation().getText(), group.getTemplatePresentation().getDescription(), null);
-        myGroup = group;
-      }
-
-      @Override
-      public boolean isPopup() {
-        return myGroup.isPopup();
-      }
-
-      @NotNull
-      @Override
-      public AnAction[] getChildren(@Nullable AnActionEvent e) {
-        AnAction[] children = myGroup.getChildren(e);
-        AnAction[] patched = new AnAction[children.length];
-        for (int i = 0; i < children.length; i++) {
-          patched[i] = patch(children[i]);
-        }
-        return patched;
-      }
-
-      private AnAction patch(final AnAction child) {
-        if (child instanceof ActionGroup) {
-          return new IconsFreeActionGroup((ActionGroup)child);
-        }
-
-        Presentation presentation = child.getTemplatePresentation();
-        return new AnAction(presentation.getText(),
-                            presentation.getDescription(),
-                            null) {
-
-          @Override
-          public boolean startInTransaction() {
-            return child.startInTransaction();
-          }
-
-          @Override
-          public void actionPerformed(@NotNull AnActionEvent e) {
-            child.actionPerformed(e);
-          }
-
-          @Override
-          public void update(@NotNull AnActionEvent e) {
-            child.update(e);
-            e.getPresentation().setIcon(null);
-          }
-
-          @Override
-          public boolean isDumbAware() {
-            return child.isDumbAware();
-          }
-        };
-      }
     }
   }
 
