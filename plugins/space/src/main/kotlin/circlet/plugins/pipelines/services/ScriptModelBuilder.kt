@@ -88,7 +88,7 @@ object ScriptModelBuilder : KLogging() {
                 scriptDefFile.absolutePath)
 
             val metadata = ScriptResolveResultMetadataUtil.tryReadFromFile(metadataPath) ?: ScriptResolveResultMetadataUtil.empty()
-            val config = DslScriptExecutor().evaluateModel(targetJar, metadata.classpath,"", "", "")
+            val config = DslScriptExecutor().evaluateModel(targetJar, metadata.classpath,"", "")
 
             return ScriptViewModelFactory.create(lifetime, config)
         }
