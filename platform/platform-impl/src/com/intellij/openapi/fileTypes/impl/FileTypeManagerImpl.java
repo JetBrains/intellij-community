@@ -464,15 +464,16 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   private FileType instantiateFileTypeBean(@NotNull FileTypeBean fileTypeBean) {
     FileType fileType;
     try {
+      @SuppressWarnings("unchecked")
+      Class<FileType> beanClass = (Class<FileType>)Class.forName(fileTypeBean.implementationClass, true, fileTypeBean.getPluginDescriptor().getPluginClassLoader());
       if (fileTypeBean.fieldName != null) {
-        Class<?> fileTypeBeanClass = Class.forName(fileTypeBean.getImplementationClassName(), true, fileTypeBean.getLoaderForClass());
-        Field field = fileTypeBeanClass.getDeclaredField(fileTypeBean.fieldName);
+        Field field = beanClass.getDeclaredField(fileTypeBean.fieldName);
         field.setAccessible(true);
         fileType = (FileType)field.get(null);
       }
       else {
         // uncached - cached by FileTypeManagerImpl and not by bean
-        fileType = fileTypeBean.createInstance(ApplicationManager.getApplication());
+        fileType = ReflectionUtil.newInstance(beanClass, false);
       }
     }
     catch (ClassNotFoundException | NoSuchFieldException | IllegalAccessException e) {
