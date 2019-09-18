@@ -121,8 +121,7 @@ class PartiallyKnownString(val segments: List<StringEntry>) {
                              segments: List<StringEntry>): MutableList<PartiallyKnownString> {
 
       val (head, tail) = segments.toHeadAndTail() ?: return result.apply {
-        add(
-          PartiallyKnownString(pending))
+        add(PartiallyKnownString(pending))
       }
 
       when (head) {
@@ -140,14 +139,14 @@ class PartiallyKnownString(val segments: List<StringEntry>) {
                 add(PartiallyKnownString(
                   pending.apply {
                     add(StringEntry.Known(stringPaths.first().substring(value), head.sourcePsi,
-                                          stringPaths.first()))
+                                          stringPaths.first().shiftRight(head.range.startOffset)))
                   }))
                 addAll(stringPaths.subList(1, stringPaths.size - 1).map {
-                  PartiallyKnownString(it.substring(value), head.sourcePsi, it)
+                  PartiallyKnownString(it.substring(value), head.sourcePsi, it.shiftRight(head.range.startOffset))
                 })
               },
               mutableListOf(StringEntry.Known(stringPaths.last().substring(value), head.sourcePsi,
-                                              stringPaths.last())),
+                                              stringPaths.last().shiftRight(head.range.startOffset))),
               tail
             )
           }
@@ -159,6 +158,12 @@ class PartiallyKnownString(val segments: List<StringEntry>) {
 
     return collectPaths(SmartList(), mutableListOf(), segments)
 
+  }
+
+  fun getRangeInHost(originalHost: PsiElement): TextRange? {
+    val ranges = segments.asSequence().mapNotNull { it.rangeAlignedToHost?.takeIf { it.first == originalHost } }.map { it.second }.toList()
+    if (ranges.isEmpty()) return null
+    return ranges.reduce(TextRange::union)
   }
 
   companion object {
