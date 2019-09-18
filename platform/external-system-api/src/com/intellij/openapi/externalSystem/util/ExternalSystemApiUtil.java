@@ -21,7 +21,6 @@ import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsListener;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ExternalProjectSystemRegistry;
 import com.intellij.openapi.roots.OrderRootType;
@@ -435,10 +434,11 @@ public class ExternalSystemApiUtil {
    *
    * @param ideProject  target ide project
    * @param projectData target external project
+   * @param modules     the list of modules to check (during import this contains uncommitted modules from the modifiable model)
    * @return {@code true} if given ide project has 1-1 mapping to the given external project;
    * {@code false} otherwise
    */
-  public static boolean isOneToOneMapping(@NotNull Project ideProject, @NotNull ProjectData projectData) {
+  public static boolean isOneToOneMapping(@NotNull Project ideProject, @NotNull ProjectData projectData, Module[] modules) {
     String linkedExternalProjectPath = null;
     for (ExternalSystemManager<?, ?, ?, ?, ?> manager : ExternalSystemManager.EP_NAME.getIterable()) {
       ProjectSystemId externalSystemId = manager.getSystemId();
@@ -465,7 +465,7 @@ public class ExternalSystemApiUtil {
       return false;
     }
 
-    for (Module module : ModuleManager.getInstance(ideProject).getModules()) {
+    for (Module module : modules) {
       if (!isExternalSystemAwareModule(projectData.getOwner(), module)) {
         return false;
       }
