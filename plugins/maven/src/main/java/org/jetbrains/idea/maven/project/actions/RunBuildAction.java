@@ -62,6 +62,8 @@ public class RunBuildAction extends MavenAction {
                                                                    explicitProfiles.getEnabledProfiles(),
                                                                    explicitProfiles.getDisabledProfiles());
 
+    //    MavenRunner mavenRunner = MavenRunner.getInstance(project);
+    //  mavenRunner.run(params, mavenRunner.getSettings(), null);
     MavenRunConfigurationType.runConfiguration(project, params, null);
 
 

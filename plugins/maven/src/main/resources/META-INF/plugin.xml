@@ -84,9 +84,7 @@
     <configurationProducer implementation="org.jetbrains.idea.maven.execution.MavenConfigurationProducer"/>
     <orderEnumerationHandlerFactory implementation="org.jetbrains.idea.maven.execution.MavenOrderEnumeratorHandler$FactoryImpl"/>
 
-    <junitPatcher implementation="org.jetbrains.idea.maven.execution.MavenJUnitPatcher"/>
-
-    <programRunner implementation="org.jetbrains.idea.maven.execution.build.DelegateBuildRunner" id="mavenDelegateBuildRunner"/>
+    <junitPatcher implementation="org.jetbrains.idea.maven.execution.MavenJUnitPatcher" />
 
     <compileServer.plugin classpath="maven-jps-plugin.jar"/>
 

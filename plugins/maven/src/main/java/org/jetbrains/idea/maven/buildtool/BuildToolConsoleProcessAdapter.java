@@ -30,11 +30,12 @@ public class BuildToolConsoleProcessAdapter extends ProcessAdapter {
     else {
       myMavenSpyEventsBuffer = null;
     }
+
   }
 
   @Override
   public void startNotified(@NotNull ProcessEvent event) {
-    myEventParser.start();
+    myEventParser.start(null, null);
   }
 
   @Override
