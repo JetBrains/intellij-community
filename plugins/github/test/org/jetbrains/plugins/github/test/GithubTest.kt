@@ -81,7 +81,7 @@ abstract class GithubTest : GitPlatformTest() {
       .append(ThrowableRunnable { deleteRepos(secondaryAccount, secondaryRepos) })
       .append(ThrowableRunnable { deleteRepos(mainAccount, mainRepos) })
       .append(ThrowableRunnable { setCurrentAccount(null) })
-      .append(ThrowableRunnable { if (wasInit { authenticationManager }) authenticationManager.clearAccounts() })
+      .append(ThrowableRunnable { if (::authenticationManager.isInitialized) authenticationManager.clearAccounts() })
       .append(ThrowableRunnable { super.tearDown() })
       .run()
   }

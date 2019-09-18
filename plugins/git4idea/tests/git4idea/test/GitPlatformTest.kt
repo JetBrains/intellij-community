@@ -83,9 +83,9 @@ abstract class GitPlatformTest : VcsPlatformTest() {
     RunAll()
       .append(ThrowableRunnable { restoreCredentialHelpers() })
       .append(ThrowableRunnable { restoreGlobalSslVerify() })
-      .append(ThrowableRunnable { if (wasInit { dialogManager }) dialogManager.cleanup() })
-      .append(ThrowableRunnable { if (wasInit { git }) git.reset() })
-      .append(ThrowableRunnable { if (wasInit { settings }) settings.appSettings.setPathToGit(null) })
+      .append(ThrowableRunnable { if (::dialogManager.isInitialized) dialogManager.cleanup() })
+      .append(ThrowableRunnable { if (::git.isInitialized) git.reset() })
+      .append(ThrowableRunnable { if (::settings.isInitialized) settings.appSettings.setPathToGit(null) })
       .append(ThrowableRunnable { super.tearDown() })
       .run()
   }

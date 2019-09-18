@@ -37,7 +37,7 @@ class VcsRootProblemNotifierTest : VcsPlatformTest() {
 
   override fun tearDown() {
     try {
-      if (wasInit { vcs }) vcsManager.unregisterVcs(vcs)
+      if (::vcs.isInitialized) vcsManager.unregisterVcs(vcs)
       Registry.get("vcs.root.auto.add.nofity").resetToDefault()
     }
     finally {

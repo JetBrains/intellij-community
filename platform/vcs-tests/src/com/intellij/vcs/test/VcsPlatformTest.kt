@@ -81,7 +81,7 @@ abstract class VcsPlatformTest : HeavyPlatformTestCase() {
       RunAll()
         .append(ThrowableRunnable { AsyncVfsEventsPostProcessorImpl.waitEventsProcessed() })
         .append(ThrowableRunnable { changeListManager.waitEverythingDoneInTestMode() })
-        .append(ThrowableRunnable { if (wasInit { vcsNotifier }) vcsNotifier.cleanup() })
+        .append(ThrowableRunnable { if (::vcsNotifier.isInitialized) vcsNotifier.cleanup() })
         .append(ThrowableRunnable { waitForPendingTasks() })
         .run()
     }
@@ -125,16 +125,6 @@ abstract class VcsPlatformTest : HeavyPlatformTestCase() {
       name = name.substring(1)
     }
     return name
-  }
-
-  protected inline fun wasInit(f: () -> Unit): Boolean {
-    try {
-      f()
-    }
-    catch(e: UninitializedPropertyAccessException) {
-      return false
-    }
-    return true
   }
 
   @JvmOverloads
