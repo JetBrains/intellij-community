@@ -82,6 +82,7 @@ public class FileChooserFactoryImpl extends FileChooserFactory {
 
   private static boolean useNativeMacChooser(FileChooserDescriptor descriptor) {
     return SystemInfo.isMac &&
+           !SystemInfo.isMacOSCatalina && // temp solution (wait for OS stabilization), see IDEA-222937 Disable native file chooser for macOS Catalina
            SystemInfo.isJetBrainsJvm &&
            !descriptor.isForcedToUseIdeaFileChooser() &&
            Registry.is("ide.mac.file.chooser.native");
