@@ -102,31 +102,24 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
 
   @Override
   public boolean loadStateFor(Object object, @NotNull String key, @NotNull Component component) {
-    Point location = null;
-    Dimension size = null;
-    boolean maximized = false;
     WindowState state = getFor(object, key, WindowState.class);
-    if (state != null) {
-      location = state.myLocation;
-      size = state.mySize;
-      maximized = state.myMaximized;
-    }
+    if (state == null) return false;
     Frame frame = component instanceof Frame ? (Frame)component : null;
     if (frame != null && Frame.NORMAL != frame.getExtendedState()) {
       frame.setExtendedState(Frame.NORMAL);
     }
     Rectangle bounds = component.getBounds();
-    if (location != null) {
-      bounds.setLocation(location);
+    if (state.myLocation != null) {
+      bounds.setLocation(state.myLocation);
     }
-    if (size != null) {
-      bounds.setSize(size);
+    if (state.mySize != null) {
+      bounds.setSize(state.mySize);
     }
     if (bounds.isEmpty()) {
       bounds.setSize(component.getPreferredSize());
     }
     component.setBounds(bounds);
-    if (maximized && frame != null) {
+    if (frame != null && state.myMaximized) {
       frame.setExtendedState(Frame.MAXIMIZED_BOTH);
     }
     return true;
