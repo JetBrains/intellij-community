@@ -1,8 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.copyright
 
 import com.intellij.configurationStore.schemeManager.SchemeManagerFactoryBase
-import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.rules.InMemoryFsRule
@@ -12,7 +11,7 @@ import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
 
-class CopyrightManagerTest {
+internal class CopyrightManagerTest {
   companion object {
     @JvmField
     @ClassRule
@@ -56,18 +55,13 @@ class CopyrightManagerTest {
     val schemeManagerFactory = SchemeManagerFactoryBase.TestSchemeManagerFactory(fsRule.fs.getPath(""))
     val profileManager = CopyrightManager(projectRule.project, schemeManagerFactory,
                                           isSupportIprProjects = false /* otherwise scheme will be not loaded from our memory fs */)
-    try {
-      profileManager.loadSchemes()
+    profileManager.loadSchemes()
 
-      val copyrights = profileManager.getCopyrights()
-      assertThat(copyrights).hasSize(1)
-      val scheme = copyrights.first()
-      assertThat(scheme.schemeState).isEqualTo(null)
-      assertThat(scheme.name).isEqualTo("openapi")
-    }
-    finally {
-      Disposer.dispose(profileManager)
-    }
+    val copyrights = profileManager.getCopyrights()
+    assertThat(copyrights).hasSize(1)
+    val scheme = copyrights.first()
+    assertThat(scheme.schemeState).isEqualTo(null)
+    assertThat(scheme.name).isEqualTo("openapi")
   }
 
   @Test
@@ -83,14 +77,9 @@ class CopyrightManagerTest {
     val schemeManagerFactory = SchemeManagerFactoryBase.TestSchemeManagerFactory(fsRule.fs.getPath(""))
     val profileManager = CopyrightManager(projectRule.project, schemeManagerFactory,
                                           isSupportIprProjects = false /* otherwise scheme will be not loaded from our memory fs */)
-    try {
-      profileManager.loadSchemes()
-      val copyrights = profileManager.getCopyrights()
-      assertThat(copyrights).hasSize(1)
-      assertThat(copyrights.first().name).isEqualTo("FooBar")
-    }
-    finally {
-      Disposer.dispose(profileManager)
-    }
+    profileManager.loadSchemes()
+    val copyrights = profileManager.getCopyrights()
+    assertThat(copyrights).hasSize(1)
+    assertThat(copyrights.first().name).isEqualTo("FooBar")
   }
 }
