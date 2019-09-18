@@ -30,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class MyPsiUtil {
-    private static final Logger LOG = Logger.getInstance("org.intellij.plugins.xpathView.util.MyPsiUtil");
+    private static final Logger LOG = Logger.getInstance(MyPsiUtil.class);
 
     private MyPsiUtil() {
     }

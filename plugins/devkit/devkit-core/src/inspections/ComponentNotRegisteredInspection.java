@@ -38,10 +38,11 @@ import java.util.Objects;
 import java.util.Set;
 
 public class ComponentNotRegisteredInspection extends DevKitJvmInspection {
+  private static final Logger LOG = Logger.getInstance(ComponentNotRegisteredInspection.class);
+
   public boolean CHECK_ACTIONS = true;
   public boolean IGNORE_NON_PUBLIC = true;
 
-  private static final Logger LOG = Logger.getInstance("org.jetbrains.idea.devkit.inspections.ComponentNotRegisteredInspection");
   private static final Map<ComponentType, RegistrationCheckerUtil.RegistrationType> COMPONENT_TYPE_TO_REGISTRATION_TYPE =
     ContainerUtil.<ComponentType, RegistrationCheckerUtil.RegistrationType>immutableMapBuilder()
       .put(ComponentType.APPLICATION, RegistrationCheckerUtil.RegistrationType.APPLICATION_COMPONENT)

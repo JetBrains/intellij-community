@@ -83,11 +83,12 @@ import static java.util.Collections.emptyList;
 import static java.util.function.Function.identity;
 
 public class SvnVcs extends AbstractVcs {
+  private static final Logger LOG = wrapLogger(Logger.getInstance(SvnVcs.class));
+
   private static final String DO_NOT_LISTEN_TO_WC_DB = "svn.do.not.listen.to.wc.db";
   private static final Logger REFRESH_LOG = Logger.getInstance("#svn_refresh");
   public static boolean ourListenToWcDb = !Boolean.getBoolean(DO_NOT_LISTEN_TO_WC_DB);
 
-  private static final Logger LOG = wrapLogger(Logger.getInstance("org.jetbrains.idea.svn.SvnVcs"));
   @NonNls public static final String VCS_NAME = "svn";
   public static final String VCS_DISPLAY_NAME = "Subversion";
 

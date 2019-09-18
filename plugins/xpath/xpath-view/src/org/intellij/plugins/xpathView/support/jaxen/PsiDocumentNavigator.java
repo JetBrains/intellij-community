@@ -41,8 +41,8 @@ import java.util.Iterator;
  * Not all of the required functionality is implemented yet. See the TODO comments...
  */
 public class PsiDocumentNavigator extends DefaultNavigator {
+    private static final Logger LOG = Logger.getInstance(PsiDocumentNavigator.class);
 
-    private static final Logger LOG = Logger.getInstance("org.intellij.plugins.xpathView.support.jaxen.PsiDocumentNavigator");
     private final XmlFile file;
 
     public PsiDocumentNavigator(XmlFile file) {

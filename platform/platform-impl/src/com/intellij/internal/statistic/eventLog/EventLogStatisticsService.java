@@ -22,7 +22,8 @@ import java.util.List;
 import java.util.zip.GZIPOutputStream;
 
 public class EventLogStatisticsService implements StatisticsService {
-  private static final Logger LOG = Logger.getInstance("com.intellij.internal.statistic.eventLog.EventLogStatisticsService");
+  private static final Logger LOG = Logger.getInstance(EventLogStatisticsService.class);
+
   private static final int MAX_FILES_TO_SEND = 20;
 
   private final String myRecorder;

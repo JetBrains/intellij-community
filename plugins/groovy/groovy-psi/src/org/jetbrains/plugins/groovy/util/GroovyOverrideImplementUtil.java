@@ -39,7 +39,7 @@ import java.io.IOException;
 import java.util.*;
 
 public class GroovyOverrideImplementUtil {
-  private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.util.GroovyOverrideImplementUtil");
+  private static final Logger LOG = Logger.getInstance(GroovyOverrideImplementUtil.class);
 
   private GroovyOverrideImplementUtil() {
   }

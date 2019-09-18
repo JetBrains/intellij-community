@@ -30,7 +30,7 @@ import java.awt.event.ActionListener;
 import java.lang.ref.WeakReference;
 
 public class DnDManagerImpl extends DnDManager implements Disposable {
-  private static final Logger LOG = Logger.getInstance("com.intellij.ide.dnd.DnDManager");
+  private static final Logger LOG = Logger.getInstance(DnDManagerImpl.class);
 
   @NonNls private static final String SOURCE_KEY = "DnD Source";
   @NonNls private static final String TARGET_KEY = "DnD Target";

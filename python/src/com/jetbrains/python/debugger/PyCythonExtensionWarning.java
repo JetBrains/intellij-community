@@ -36,7 +36,8 @@ import java.io.IOException;
 import java.util.*;
 
 public class PyCythonExtensionWarning {
-  private static final Logger LOG = Logger.getInstance("com.jetbrains.python.debugger.PyCythonExtensionWarning");
+  private static final Logger LOG = Logger.getInstance(PyCythonExtensionWarning.class);
+
   public static final String ERROR_TITLE = "Compile Cython Extensions Error";
   private static final String CYTHON_WARNING_GROUP_ID = "CythonWarning";
   private static final String WARNING_MESSAGE = "Cython extension speeds up Python debugging";

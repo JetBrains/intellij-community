@@ -37,7 +37,7 @@ import java.util.List;
 import java.util.Map;
 
 class XPathSupportImpl extends XPathSupport {
-    private static final Logger LOG = Logger.getInstance("org.intellij.plugins.xpathView.support.jaxen.XPathSupportImpl");
+    private static final Logger LOG = Logger.getInstance(XPathSupportImpl.class);
 
     @Override
     public XPath createXPath(@NotNull XmlFile file, String expression) throws JaxenException {

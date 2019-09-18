@@ -55,7 +55,7 @@ import java.util.List;
 import java.util.Set;
 
 public class WrapReturnValueProcessor extends FixableUsagesRefactoringProcessor {
-  private static final Logger LOG = Logger.getInstance("com.siyeh.rpp.wrapreturnvalue.WrapReturnValueProcessor");
+  private static final Logger LOG = Logger.getInstance(WrapReturnValueProcessor.class);
 
   private final MoveDestination myMoveDestination;
   private final PsiMethod myMethod;

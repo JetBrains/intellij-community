@@ -29,7 +29,7 @@ import java.util.List;
  * @author ven
  */
 public class JavaCoverageEnabledConfiguration extends CoverageEnabledConfiguration {
-  private static final Logger LOG = Logger.getInstance("com.intellij.execution.configurations.coverage.JavaCoverageEnabledConfiguration");
+  private static final Logger LOG = Logger.getInstance(JavaCoverageEnabledConfiguration.class);
 
   private ClassFilter[] myCoveragePatterns;
 

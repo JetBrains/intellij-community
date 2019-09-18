@@ -45,7 +45,8 @@ import org.jetbrains.annotations.Nullable;
  * @author Mike
  */
 public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightVisitor, IdeValidationHost {
-  private static final Logger LOG = Logger.getInstance("com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor");
+  private static final Logger LOG = Logger.getInstance(XmlHighlightVisitor.class);
+
   private static boolean ourDoJaxpTesting;
 
   private static final TextAttributes NONEMPTY_TEXT_ATTRIBUTES = new TextAttributes() {

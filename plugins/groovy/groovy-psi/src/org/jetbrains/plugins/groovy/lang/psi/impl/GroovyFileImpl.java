@@ -47,7 +47,7 @@ import static org.jetbrains.plugins.groovy.lang.resolve.bindings.BindingsKt.proc
  */
 public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile, PsiModifiableCodeBlock {
 
-  private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl");
+  private static final Logger LOG = Logger.getInstance(GroovyFileImpl.class);
 
   private static final String SYNTHETIC_PARAMETER_NAME = "args";
 

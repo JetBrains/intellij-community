@@ -37,7 +37,7 @@ import static org.jetbrains.idea.svn.SvnUtil.getRelativePath;
 import static org.jetbrains.idea.svn.history.SvnLazyPropertyContentRevision.getPropertyList;
 
 class SvnChangeProviderContext implements StatusReceiver {
-  private static final Logger LOG = Logger.getInstance("org.jetbrains.idea.svn.SvnChangeProviderContext");
+  private static final Logger LOG = Logger.getInstance(SvnChangeProviderContext.class);
 
   @NotNull private final ChangelistBuilder myChangelistBuilder;
   @NotNull private final List<SvnChangedFile> myCopiedFiles = new ArrayList<>();

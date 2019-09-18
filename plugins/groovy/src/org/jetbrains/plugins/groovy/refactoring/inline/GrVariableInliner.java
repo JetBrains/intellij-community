@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.refactoring.inline;
 
 import com.intellij.lang.refactoring.InlineHandler;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
@@ -39,7 +40,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase;
@@ -48,6 +48,8 @@ import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase
  * @author Max Medvedev
  */
 public class GrVariableInliner implements InlineHandler.Inliner {
+  private static final Logger LOG = Logger.getInstance(GrVariableInliner.class);
+
   private final GrExpression myTempExpr;
 
   public GrVariableInliner(GrVariable variable, InlineHandler.Settings settings) {
@@ -57,7 +59,7 @@ public class GrVariableInliner implements InlineHandler.Inliner {
     }
     else {
       initializer = variable.getInitializerGroovy();
-      PsiUtil.LOG.assertTrue(initializer != null);
+      LOG.assertTrue(initializer != null);
     }
 
     myTempExpr = GrIntroduceHandlerBase.insertExplicitCastIfNeeded(variable, initializer);

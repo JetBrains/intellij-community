@@ -21,7 +21,8 @@ import java.util.stream.Collectors;
 import static com.intellij.openapi.util.io.FileUtil.toSystemIndependentName;
 
 public class PathRelativizerService {
-  private static final Logger LOG = Logger.getInstance("org.jetbrains.jps.incremental.relativizer.PathRelativizerService");
+  private static final Logger LOG = Logger.getInstance(PathRelativizerService.class);
+
   private static final String PROJECT_DIR_IDENTIFIER = "$PROJECT_DIR$";
   private static final String BUILD_DIR_IDENTIFIER = "$BUILD_DIR$";
 
