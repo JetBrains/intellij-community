@@ -159,6 +159,8 @@
         implementation="com.intellij.util.ui.cloneDialog.RepositoryUrlCloneDialogExtension"
         order="first"/>
 
+    <openapi.vcs.changes.vcsPreservingExecutor implementation="com.intellij.openapi.vcs.changes.DefaultPreservingExecutor" order="last" />
+
     <postStartupActivity implementation="com.intellij.platform.PlatformVcsDetector"/>
   </extensions>
 
