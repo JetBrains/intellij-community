@@ -314,11 +314,17 @@ public class MagicConstantUtils {
       return values;
     }
 
-    public boolean isCanBeOred() {
+    /**
+     * @return true if values represent a flag set, so can be combined via bitwise or
+     */
+    public boolean isFlagSet() {
       return canBeOred;
     }
 
-    public boolean isResolvesToZero() {
+    /**
+     * @return true if at least one of values equals to integer 0
+     */
+    public boolean hasZeroValue() {
       return resolvesToZero;
     }
   }

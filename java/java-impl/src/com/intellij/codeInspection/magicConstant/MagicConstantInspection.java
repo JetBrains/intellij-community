@@ -21,7 +21,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
-import com.intellij.psi.impl.source.tree.injected.InjectedFileViewProvider;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.tree.IElementType;
@@ -300,7 +299,7 @@ public class MagicConstantInspection extends AbstractBaseJavaLocalInspectionTool
       return value.getText();
     };
     String values = StreamEx.of(allowedValues.getValues()).map(formatter).collect(Joining.with(", ").cutAfterDelimiter().maxCodePoints(100));
-    String message = "Should be one of: " + values + (allowedValues.isCanBeOred() ? " or their combination" : "");
+    String message = "Should be one of: " + values + (allowedValues.isFlagSet() ? " or their combination" : "");
     holder.registerProblem(argument, message, suggestMagicConstant(argument, allowedValues));
   }
 
@@ -310,7 +309,7 @@ public class MagicConstantInspection extends AbstractBaseJavaLocalInspectionTool
     Object argumentValue = JavaConstantExpressionEvaluator.computeConstantExpression(argument, null, false);
     if (argumentValue == null) return null;
 
-    if (!allowedValues.isCanBeOred()) {
+    if (!allowedValues.isFlagSet()) {
       for (PsiAnnotationMemberValue value : allowedValues.getValues()) {
         if (value instanceof PsiExpression) {
           Object constantValue = JavaConstantExpressionEvaluator.computeConstantExpression((PsiExpression)value, null, false);
@@ -399,12 +398,12 @@ public class MagicConstantInspection extends AbstractBaseJavaLocalInspectionTool
 
     if (isOneOf(expression, allowedValues, manager)) return true;
 
-    if (allowedValues.isCanBeOred()) {
+    if (allowedValues.isFlagSet()) {
       PsiExpression zero = getLiteralExpression(expression, manager, "0");
       if (MagicConstantUtils.same(expression, zero, manager)
           // if for some crazy reason the constant with value "0" is included to allowed values for flags, do not treat literal "0" as allowed value anymore
           // see e.g. Font.BOLD=1, Font.ITALIC=2, Font.PLAIN=0
-          && !allowedValues.isResolvesToZero()) return true;
+          && !allowedValues.hasZeroValue()) return true;
       PsiExpression minusOne = getLiteralExpression(expression, manager, "-1");
       if (MagicConstantUtils.same(expression, minusOne, manager)) return true;
       if (expression instanceof PsiPolyadicExpression) {

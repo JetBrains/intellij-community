@@ -193,7 +193,7 @@ public class MagicCompletionContributor extends CompletionContributor {
         return parameters.getOriginalFile().getManager().areElementsEquivalent(o1, o2);
       }
     });
-    if (allowedValues.isCanBeOred()) {
+    if (allowedValues.isFlagSet()) {
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(pos.getProject());
       PsiExpression zero = factory.createExpressionFromText("0", pos);
       result.addElement(PrioritizedLookupElement.withPriority(LookupElementBuilder.create(zero, "0"), PRIORITY - 1));
