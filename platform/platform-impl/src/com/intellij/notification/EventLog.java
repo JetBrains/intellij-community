@@ -560,7 +560,7 @@ public final class EventLog {
     return DEFAULT_CATEGORY;
   }
 
-  static ProjectTracker getProjectComponent(Project project) {
+  static ProjectTracker getProjectComponent(@NotNull Project project) {
     return project.getComponent(ProjectTracker.class);
   }
 
@@ -630,13 +630,15 @@ public final class EventLog {
     @Override
     public void notify(@NotNull Notification notification) {
       ProjectManager projectManager = ProjectManager.getInstanceIfCreated();
-      Project[] openProjects = projectManager == null ? null : ProjectManager.getInstance().getOpenProjects();
+      Project[] openProjects = projectManager == null ? null : projectManager.getOpenProjects();
       if (openProjects == null || openProjects.length == 0) {
         getApplicationService().myModel.addNotification(notification);
       }
       else {
         for (Project p : openProjects) {
-          getProjectComponent(p).printNotification(notification);
+          if (!p.isDisposedOrDisposeInProgress()) {
+            getProjectComponent(p).printNotification(notification);
+          }
         }
       }
     }
