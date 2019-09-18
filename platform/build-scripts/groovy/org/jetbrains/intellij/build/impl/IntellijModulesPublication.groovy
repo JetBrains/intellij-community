@@ -79,8 +79,14 @@ class IntellijModulesPublication {
       if (jar.exists()) {
         deployJar(jar, pom)
       }
+      else {
+        context.messages.warning("$it.name jar is not found")
+      }
       if (sources.exists()) {
         deploySources(sources, coordinates)
+      }
+      else {
+        context.messages.warning("$it.name sources is not found")
       }
     }
   }
