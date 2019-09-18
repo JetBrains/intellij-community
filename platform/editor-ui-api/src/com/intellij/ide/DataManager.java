@@ -25,6 +25,10 @@ public abstract class DataManager {
     return ApplicationManager.getApplication().getService(DataManager.class);
   }
 
+  public static DataManager getInstanceIfCreated() {
+    return ApplicationManager.getApplication().getServiceIfCreated(DataManager.class);
+  }
+
   public static final String CLIENT_PROPERTY_DATA_PROVIDER = "DataProvider";
 
   /**
