@@ -30,7 +30,7 @@ internal class DelegatingHttpRequestHandler : DelegatingHttpRequestHandlerBase()
       prevHandlerAttribute.set(null)
     }
 
-    HttpRequestHandler.EP_NAME.findFirstSafe { handler ->
+    return HttpRequestHandler.EP_NAME.findFirstSafe { handler ->
       if (handler.checkAndProcess()) {
         prevHandlerAttribute.set(handler)
         true
@@ -38,8 +38,7 @@ internal class DelegatingHttpRequestHandler : DelegatingHttpRequestHandlerBase()
       else {
         false
       }
-    }
-    return false
+    } != null
   }
 
   @Suppress("OverridingDeprecatedMember")
