@@ -37,7 +37,7 @@ abstract class AbstractGithubUrlGroupingAction(text: String?, description: Strin
 
     return if (coordinates.size > 1) {
       coordinates.map {
-        object : DumbAwareAction(GithubUrlUtil.removeProtocolPrefix(it.url)) {
+        object : DumbAwareAction(it.remote.name + ": " + GithubUrlUtil.removeProtocolPrefix(it.url)) {
           override fun actionPerformed(e: AnActionEvent) {
             actionPerformed(e, project, it.repository, it.remote, it.url)
           }
