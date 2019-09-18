@@ -2,6 +2,7 @@
 package com.intellij.copyright
 
 import com.intellij.configurationStore.schemeManager.SchemeManagerFactoryBase
+import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.rules.InMemoryFsRule
@@ -11,7 +12,7 @@ import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
 
-internal class CopyrightManagerTest {
+class CopyrightManagerTest {
   companion object {
     @JvmField
     @ClassRule
@@ -55,13 +56,18 @@ internal class CopyrightManagerTest {
     val schemeManagerFactory = SchemeManagerFactoryBase.TestSchemeManagerFactory(fsRule.fs.getPath(""))
     val profileManager = CopyrightManager(projectRule.project, schemeManagerFactory,
                                           isSupportIprProjects = false /* otherwise scheme will be not loaded from our memory fs */)
-    profileManager.loadSchemes()
+    try {
+      profileManager.loadSchemes()
 
-    val copyrights = profileManager.getCopyrights()
-    assertThat(copyrights).hasSize(1)
-    val scheme = copyrights.first()
-    assertThat(scheme.schemeState).isEqualTo(null)
-    assertThat(scheme.name).isEqualTo("openapi")
+      val copyrights = profileManager.getCopyrights()
+      assertThat(copyrights).hasSize(1)
+      val scheme = copyrights.first()
+      assertThat(scheme.schemeState).isEqualTo(null)
+      assertThat(scheme.name).isEqualTo("openapi")
+    }
+    finally {
+      Disposer.dispose(profileManager)
+    }
   }
 
   @Test
@@ -77,9 +83,14 @@ internal class CopyrightManagerTest {
     val schemeManagerFactory = SchemeManagerFactoryBase.TestSchemeManagerFactory(fsRule.fs.getPath(""))
     val profileManager = CopyrightManager(projectRule.project, schemeManagerFactory,
                                           isSupportIprProjects = false /* otherwise scheme will be not loaded from our memory fs */)
-    profileManager.loadSchemes()
-    val copyrights = profileManager.getCopyrights()
-    assertThat(copyrights).hasSize(1)
-    assertThat(copyrights.first().name).isEqualTo("FooBar")
+    try {
+      profileManager.loadSchemes()
+      val copyrights = profileManager.getCopyrights()
+      assertThat(copyrights).hasSize(1)
+      assertThat(copyrights.first().name).isEqualTo("FooBar")
+    }
+    finally {
+      Disposer.dispose(profileManager)
+    }
   }
 }

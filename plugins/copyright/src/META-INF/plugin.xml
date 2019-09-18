@@ -34,9 +34,6 @@
       <with attribute="implementationClass" implements="com.maddyhome.idea.copyright.pattern.CopyrightVariablesProvider"/>
     </extensionPoint>
   </extensionPoints>
-  <applicationListeners>
-    <listener class="com.intellij.copyright.CopyrightManagerDocumentListener" topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
-  </applicationListeners>
 
   <actions>
     <action id="UpdateCopyright" class="com.maddyhome.idea.copyright.actions.UpdateCopyrightAction" text="Update Copyright..."

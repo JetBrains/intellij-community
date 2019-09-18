@@ -2,6 +2,7 @@
 package com.intellij.copyright
 
 import com.intellij.configurationStore.*
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
@@ -19,6 +20,7 @@ import com.intellij.openapi.util.InvalidDataException
 import com.intellij.openapi.util.WriteExternalException
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
@@ -36,7 +38,6 @@ import com.maddyhome.idea.copyright.util.FileTypeUtil
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
 import java.util.*
-import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Function
 
 private const val DEFAULT = "default"
@@ -48,7 +49,7 @@ private const val MODULE = "module"
 private val LOG = Logger.getInstance(CopyrightManager::class.java)
 
 @State(name = "CopyrightManager", storages = [(Storage(value = "copyright/profiles_settings.xml", exclusive = true))])
-class CopyrightManager @JvmOverloads constructor(private val project: Project, schemeManagerFactory: SchemeManagerFactory = SchemeManagerFactory.getInstance(project), isSupportIprProjects: Boolean = true) : PersistentStateComponent<Element> {
+class CopyrightManager @JvmOverloads constructor(private val project: Project, schemeManagerFactory: SchemeManagerFactory = SchemeManagerFactory.getInstance(project), isSupportIprProjects: Boolean = true) : PersistentStateComponent<Element>, Disposable {
   companion object {
     @JvmStatic
     fun getInstance(project: Project) = project.service<CopyrightManager>()
@@ -93,10 +94,16 @@ class CopyrightManager @JvmOverloads constructor(private val project: Project, s
   }, schemeNameToFileName = OLD_NAME_CONVERTER, streamProvider = schemeManagerIprProvider)
 
   init {
-    val app = ApplicationManager.getApplication()
-    if (project.isDirectoryBased || !app.isUnitTestMode) {
+    if (project.isDirectoryBased || !ApplicationManager.getApplication().isUnitTestMode) {
       schemeManager.loadSchemes()
     }
+    val listener = CopyrightManagerDocumentListener()
+    listener.addDocumentListener(this)
+    project.getMessageBus().connect(this).subscribe(VirtualFileManager.VFS_CHANGES, listener)
+  }
+
+  override fun dispose() {
+    var i = 0;
   }
 
   @TestOnly
@@ -216,8 +223,6 @@ class CopyrightManager @JvmOverloads constructor(private val project: Project, s
 private class CopyrightManagerDocumentListener : BulkFileListener {
   private val newFilePaths = ContainerUtil.newConcurrentSet<String>()
 
-  private val isDocumentListenerAdded = AtomicBoolean()
-
   override fun after(events: List<VFileEvent>) {
     for (event in events) {
       if (event.isFromRefresh) {
@@ -226,14 +231,11 @@ private class CopyrightManagerDocumentListener : BulkFileListener {
 
       if (event is VFileCreateEvent || event is VFileMoveEvent) {
         newFilePaths.add(event.path)
-        if (isDocumentListenerAdded.compareAndSet(false, true)) {
-          addDocumentListener()
-        }
       }
     }
   }
 
-  private fun addDocumentListener() {
+  fun addDocumentListener(disposable: Disposable) {
     EditorFactory.getInstance().eventMulticaster.addDocumentListener(object : DocumentListener {
       override fun documentChanged(e: DocumentEvent) {
         if (newFilePaths.isEmpty()) {
@@ -254,7 +256,7 @@ private class CopyrightManagerDocumentListener : BulkFileListener {
           handleEvent(virtualFile, project)
         }
       }
-    }, ApplicationManager.getApplication())
+    }, disposable)
   }
 
   private fun handleEvent(virtualFile: VirtualFile, project: Project) {
