@@ -260,7 +260,7 @@ public class PyResolveUtil {
   }
 
   @Nullable
-  public static String resolveFirstStrArgument(@NotNull PyCallExpression callExpression) {
+  public static String resolveStrArgument(@NotNull PyCallExpression callExpression, int index, @NotNull String keyword) {
     // SUPPORTED CASES:
 
     // name = "Point"
@@ -270,20 +270,15 @@ public class PyResolveUtil {
 
     // Point = namedtuple(("Point"), ...)
 
-    // name = "Point"
-    // Point = NamedTuple(name, ...)
+    // Point = namedtuple(typename="Point", ...)
 
-    // Point = NamedTuple("Point", ...)
+    final PyExpression expression = PyPsiUtils.flattenParens(callExpression.getArgument(index, keyword, PyExpression.class));
 
-    // Point = NamedTuple(("Point"), ...)
-
-    final PyExpression nameExpression = PyPsiUtils.flattenParens(callExpression.getArgument(0, PyExpression.class));
-
-    if (nameExpression instanceof PyReferenceExpression) {
-      return PyPsiUtils.strValue(fullResolveLocally((PyReferenceExpression)nameExpression));
+    if (expression instanceof PyReferenceExpression) {
+      return PyPsiUtils.strValue(fullResolveLocally((PyReferenceExpression)expression));
     }
 
-    return PyPsiUtils.strValue(nameExpression);
+    return PyPsiUtils.strValue(expression);
   }
 
   /**

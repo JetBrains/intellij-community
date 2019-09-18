@@ -50,7 +50,9 @@ public class PyNamedTupleStubImpl implements PyNamedTupleStub {
   @NotNull
   private final LinkedHashMap<String, Optional<String>> myFields;
 
-  private PyNamedTupleStubImpl(@Nullable QualifiedName calleeName, @NotNull String name, @NotNull LinkedHashMap<String, Optional<String>> fields) {
+  private PyNamedTupleStubImpl(@Nullable QualifiedName calleeName,
+                               @NotNull String name,
+                               @NotNull LinkedHashMap<String, Optional<String>> fields) {
     myCalleeName = calleeName;
     myName = name;
     myFields = fields;
@@ -78,7 +80,7 @@ public class PyNamedTupleStubImpl implements PyNamedTupleStub {
     final Pair<QualifiedName, NamedTupleModule> calleeNameAndModule = getCalleeNameAndNTModule(calleeReference);
 
     if (calleeNameAndModule != null) {
-      final String name = PyResolveUtil.resolveFirstStrArgument(expression);
+      final String name = PyResolveUtil.resolveStrArgument(expression, 0, "typename");
 
       if (name == null) {
         return null;
@@ -163,7 +165,8 @@ public class PyNamedTupleStubImpl implements PyNamedTupleStub {
   }
 
   @Nullable
-  private static LinkedHashMap<String, Optional<String>> resolveTupleFields(@NotNull PyCallExpression callExpression, @NotNull NamedTupleModule module) {
+  private static LinkedHashMap<String, Optional<String>> resolveTupleFields(@NotNull PyCallExpression callExpression,
+                                                                            @NotNull NamedTupleModule module) {
     switch (module) {
       case TYPING:
         return resolveTypingNTFields(callExpression);
@@ -175,7 +178,8 @@ public class PyNamedTupleStubImpl implements PyNamedTupleStub {
   }
 
   @NotNull
-  private static LinkedHashMap<String, Optional<String>> deserializeFields(@NotNull StubInputStream stream, int fieldsSize) throws IOException {
+  private static LinkedHashMap<String, Optional<String>> deserializeFields(@NotNull StubInputStream stream, int fieldsSize)
+    throws IOException {
     final LinkedHashMap<String, Optional<String>> fields = new LinkedHashMap<>(fieldsSize);
 
     for (int i = 0; i < fieldsSize; i++) {
@@ -207,7 +211,7 @@ public class PyNamedTupleStubImpl implements PyNamedTupleStub {
 
     // Point = namedtuple(..., ["x", "y"])
 
-    final PyExpression fields = getSecondArgumentValue(callExpression, "field_names");
+    final PyExpression fields = getFieldsArgumentValue(callExpression, "field_names");
 
     final PyExpression resolvedFields = fields instanceof PyReferenceExpression
                                         ? PyResolveUtil.fullResolveLocally((PyReferenceExpression)fields)
@@ -240,15 +244,16 @@ public class PyNamedTupleStubImpl implements PyNamedTupleStub {
 
     // Point = NamedTuple(..., x=str, y=int)
 
-    final PyExpression secondArgumentValue = getSecondArgumentValue(callExpression, "fields");
+    final PyExpression fields = getFieldsArgumentValue(callExpression, "fields");
 
-    if (secondArgumentValue instanceof PyKeywordArgument) {
+    if (fields instanceof PyKeywordArgument) {
       final PyExpression[] arguments = callExpression.getArguments();
       return getTypingNTFieldsFromKwArguments(Arrays.asList(arguments).subList(1, arguments.length));
-    } else {
-      final PyExpression resolvedFields = secondArgumentValue instanceof PyReferenceExpression
-                                          ? PyResolveUtil.fullResolveLocally((PyReferenceExpression)secondArgumentValue)
-                                          : secondArgumentValue;
+    }
+    else {
+      final PyExpression resolvedFields = fields instanceof PyReferenceExpression
+                                          ? PyResolveUtil.fullResolveLocally((PyReferenceExpression)fields)
+                                          : fields;
       if (!(resolvedFields instanceof PySequenceExpression)) return null;
 
       return getTypingNTFieldsFromIterable((PySequenceExpression)resolvedFields);
@@ -256,16 +261,8 @@ public class PyNamedTupleStubImpl implements PyNamedTupleStub {
   }
 
   @Nullable
-  private static PyExpression getSecondArgumentValue(@NotNull PyCallExpression callExpression, @NotNull String possibleKeyword) {
-    final PyExpression secondArgument = callExpression.getArgument(1, PyExpression.class);
-    final PyExpression secondArgumentValue;
-    if (secondArgument instanceof PyKeywordArgument && possibleKeyword.equals(((PyKeywordArgument)secondArgument).getKeyword())) {
-      secondArgumentValue = ((PyKeywordArgument)secondArgument).getValueExpression();
-    }
-    else {
-      secondArgumentValue = secondArgument;
-    }
-    return PyPsiUtils.flattenParens(secondArgumentValue);
+  private static PyExpression getFieldsArgumentValue(@NotNull PyCallExpression callExpression, @NotNull String possibleKeyword) {
+    return PyPsiUtils.flattenParens(callExpression.getArgument(1, possibleKeyword, PyExpression.class));
   }
 
   @Nullable

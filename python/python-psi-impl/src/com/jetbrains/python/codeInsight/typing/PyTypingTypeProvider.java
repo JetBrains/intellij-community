@@ -463,7 +463,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   @Nullable
   private static PyType getNewTypeForCallExpression(@NotNull PyCallExpression callExpression, @NotNull TypeEvalContext context) {
     if (PyTypingNewType.Companion.isTypingNewType(callExpression)) {
-      final String className = PyResolveUtil.resolveFirstStrArgument(callExpression);
+      final String className = PyResolveUtil.resolveStrArgument(callExpression, 0, "name");
       if (className != null) {
         PyExpression secondArg = PyPsiUtils.flattenParens(callExpression.getArgument(1, PyExpression.class));
         if (secondArg != null) {
