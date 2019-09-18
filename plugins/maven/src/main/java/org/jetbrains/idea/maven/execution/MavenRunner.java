@@ -1,24 +1,25 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.execution;
 
-import com.intellij.execution.process.ProcessAdapter;
-import com.intellij.execution.process.ProcessEvent;
-import com.intellij.execution.process.ProcessHandler;
-import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.Consumer;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.ToolWindowId;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.project.MavenConsole;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenLog;
 
-import java.text.MessageFormat;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -56,85 +57,116 @@ public class MavenRunner implements PersistentStateComponent<MavenRunnerSettings
   public void run(final MavenRunnerParameters parameters, final MavenRunnerSettings settings, final Runnable onComplete) {
     FileDocumentManager.getInstance().saveAllDocuments();
 
-    ProgramRunner.Callback callback = descriptor -> {
-      ProcessHandler handler = descriptor.getProcessHandler();
-      if (handler == null) return;
-      handler.addProcessListener(new ProcessAdapter() {
+    final MavenConsole console = createConsole(myProject, parameters.getWorkingDirPath(), StringUtil.join(parameters.getGoals(), ", "), 0);
+    try {
+      final MavenExecutor executor = createExecutor(parameters, null, settings, console);
+
+      ProgressManager.getInstance().run(new Task.Backgroundable(myProject, executor.getCaption(), true) {
         @Override
-        public void processTerminated(@NotNull ProcessEvent event) {
-          if (event.getExitCode() == 0) {
-            onComplete.run();
+        public void run(@NotNull ProgressIndicator indicator) {
+          try {
+            try {
+              if (executor.execute(indicator)) {
+                if (onComplete != null) onComplete.run();
+              }
+            }
+            catch (ProcessCanceledException ignore) {
+            }
+
+            updateTargetFolders();
+          }
+          finally {
+            console.finish();
           }
         }
+
+        @NotNull
+        @Override
+        public NotificationInfo getNotificationInfo() {
+          return new NotificationInfo("Maven", "Maven Task Finished", "");
+        }
+
+        @Override
+        public boolean shouldStartInBackground() {
+          return settings.isRunMavenInBackground();
+        }
+
+        @Override
+        public void processSentToBackground() {
+          settings.setRunMavenInBackground(true);
+        }
+
+        public void processRestoredToForeground() {
+          settings.setRunMavenInBackground(false);
+        }
       });
-    };
-
-    MavenRunConfigurationType.runConfiguration(myProject, parameters, null, settings, callback, false);
+    }
+    catch (Exception e) {
+      console.printException(e);
+      console.finish();
+      MavenLog.LOG.warn(e);
+    }
   }
-
 
   public boolean runBatch(List<MavenRunnerParameters> commands,
                           @Nullable MavenGeneralSettings coreSettings,
                           @Nullable MavenRunnerSettings runnerSettings,
                           @Nullable final String action,
                           @Nullable ProgressIndicator indicator) {
-    return runBatch(commands, coreSettings, runnerSettings, action, indicator, null);
-  }
 
-  public boolean runBatch(List<MavenRunnerParameters> commands,
-                          @Nullable MavenGeneralSettings coreSettings,
-                          @Nullable MavenRunnerSettings runnerSettings,
-                          @Nullable final String action,
-                          @Nullable ProgressIndicator indicator,
-                          @Nullable Consumer<? super ProcessHandler> onAttach) {
-    return runBatch(commands, coreSettings, runnerSettings, action, indicator, onAttach, false);
-  }
-
-  public boolean runBatch(List<MavenRunnerParameters> commands,
-                          @Nullable MavenGeneralSettings coreSettings,
-                          @Nullable MavenRunnerSettings runnerSettings,
-                          @Nullable final String action,
-                          @Nullable ProgressIndicator indicator,
-                          @Nullable Consumer<? super ProcessHandler> onAttach,
-                          boolean isDelegateBuild) {
     if (commands.isEmpty()) return true;
+
+    return runBatch(commands, coreSettings, runnerSettings, action, indicator, createConsole(myProject, myProject.getBasePath(), "Maven Batch", 0));
+  }
+
+  public boolean runBatch(List<MavenRunnerParameters> commands,
+                          @Nullable MavenGeneralSettings coreSettings,
+                          @Nullable MavenRunnerSettings runnerSettings,
+                          @Nullable final String action,
+                          @Nullable ProgressIndicator indicator,
+                          @NotNull MavenConsole mavenConsole) {
     LOG.assertTrue(!ApplicationManager.getApplication().isReadAccessAllowed());
 
-    int count = 0;
-    for (MavenRunnerParameters command : commands) {
-      if (indicator != null) {
-        indicator.setFraction(((double)count++) / commands.size());
-        indicator.setText(MessageFormat.format("{0} {1}", action != null ? action : RunnerBundle.message("maven.running"),
-                                               command.getWorkingDirPath()));
-        indicator.setText2(command.getGoals().toString());
-      }
-      AtomicReference<ProcessHandler> buildHandler = new AtomicReference<>();
-      AtomicReference<ProcessEvent> terminatedEvent = new AtomicReference<>();
-      ProgramRunner.Callback callback = descriptor -> {
-        buildHandler.set(descriptor.getProcessHandler());
-        ProcessHandler handler = descriptor.getProcessHandler();
-        if (handler == null) return;
-        handler.addProcessListener(new ProcessAdapter() {
-          @Override
-          public void processTerminated(@NotNull ProcessEvent event) {
-            terminatedEvent.set(event);
-          }
-        });
-        if (onAttach != null) {
-          onAttach.consume(descriptor.getProcessHandler());
-        }
-      };
+    if (commands.isEmpty()) return true;
 
-      MavenRunConfigurationType.runConfiguration(myProject, command, coreSettings, runnerSettings, callback, isDelegateBuild);
-      buildHandler.get().waitFor();
-      if (terminatedEvent.get().getExitCode() != 0) {
-        MavenLog.LOG.error(terminatedEvent.get().getText());
-        updateTargetFolders();
-        return false;
+    try {
+      int count = 0;
+      for (MavenRunnerParameters command : commands) {
+        if (indicator != null) {
+          indicator.setFraction(((double)count++) / commands.size());
+        }
+
+        MavenExecutor executor = ReadAction.compute(() -> {
+          if (myProject.isDisposed()) return null;
+          return createExecutor(command, coreSettings, runnerSettings, mavenConsole);
+        });
+        if (executor == null) break;
+
+        executor.setAction(action);
+        if (!executor.execute(indicator)) {
+          updateTargetFolders();
+          return false;
+        }
       }
+
+      updateTargetFolders();
     }
-    updateTargetFolders();
+    finally {
+      mavenConsole.finish();
+    }
+
     return true;
+  }
+
+  public static MavenConsole createConsole(@NotNull Project project,
+                                           @NotNull String workingDirPath,
+                                           @NotNull String title,
+                                           long executionId) {
+    boolean isDisposed = ReadAction.compute(() -> project.isDisposed());
+    if (isDisposed) {
+      return null;
+    }
+    return doCreateConsole(title, workingDirPath, project, executionId);
   }
 
   private void updateTargetFolders() {
@@ -142,4 +174,21 @@ public class MavenRunner implements PersistentStateComponent<MavenRunnerSettings
     MavenProjectsManager.getInstance(myProject).updateProjectTargetFolders();
   }
 
+  private static MavenConsole doCreateConsole(@NotNull String title, @NotNull String workingDirPath, Project project, long executionId) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return new SoutMavenConsole();
+    }
+    AtomicReference<MavenConsole> result = new AtomicReference<>();
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      result.set(MavenConsole.createGuiMavenConsole(project, title, workingDirPath, ToolWindowId.RUN, executionId));
+    });
+    return result.get();
+  }
+
+  private MavenExecutor createExecutor(MavenRunnerParameters taskParameters,
+                                       @Nullable MavenGeneralSettings coreSettings,
+                                       @Nullable MavenRunnerSettings runnerSettings,
+                                       @NotNull MavenConsole console) {
+    return new MavenExternalExecutor(myProject, taskParameters, coreSettings, runnerSettings, console);
+  }
 }

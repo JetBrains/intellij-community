@@ -210,9 +210,6 @@ public class MavenResumeAction extends AnAction {
       e.getPresentation().setEnabled(true);
       e.getPresentation().setText("Resume build from \"" + myResumeFromModuleName + "\"");
     }
-    else {
-      e.getPresentation().setEnabled(false);
-    }
   }
 
   @Override

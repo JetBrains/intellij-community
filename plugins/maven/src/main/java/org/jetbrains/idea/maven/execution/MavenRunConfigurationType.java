@@ -22,7 +22,6 @@ import icons.MavenIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.execution.build.DelegateBuildRunner;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
@@ -35,7 +34,6 @@ import java.util.List;
  * @author Vladislav.Kaznacheev
  */
 public final class MavenRunConfigurationType extends AbstractExternalSystemTaskConfigurationType implements ConfigurationType {
-  private static final Key<Boolean> IS_DELEGATE_BUILD = new Key<>("IS_DELEGATE_BUILD");
   private final ConfigurationFactory myFactory;
   private static final int MAX_NAME_LENGTH = 40;
 
@@ -131,11 +129,6 @@ public final class MavenRunConfigurationType extends AbstractExternalSystemTaskC
     return null;
   }
 
-  public static boolean isDelegate(ExecutionEnvironment environment) {
-    Boolean res = IS_DELEGATE_BUILD.get(environment);
-    return res != null && res;
-  }
-
 
   public static void runConfiguration(Project project,
                                       MavenRunnerParameters params,
@@ -143,39 +136,30 @@ public final class MavenRunConfigurationType extends AbstractExternalSystemTaskC
     runConfiguration(project, params, null, null, callback);
   }
 
-
   public static void runConfiguration(Project project,
                                       @NotNull MavenRunnerParameters params,
                                       @Nullable MavenGeneralSettings settings,
-                                      @Nullable MavenRunnerSettings runnerSettings,
+                                      @Nullable  MavenRunnerSettings runnerSettings,
                                       @Nullable ProgramRunner.Callback callback) {
-    runConfiguration(project, params, settings, runnerSettings, callback, false);
-  }
 
-  public static void runConfiguration(Project project,
-                                      @NotNull MavenRunnerParameters params,
-                                      @Nullable MavenGeneralSettings settings,
-                                      @Nullable MavenRunnerSettings runnerSettings,
-                                      @Nullable ProgramRunner.Callback callback,
-                                      boolean isDelegateBuild) {
-
+    /*if (MavenUtil.isExternalBuildSystem()){
+      new MavenExternalSystemTaskRunner(project).runMavenTask(params, settings, runnerSettings);
+      return;
+    }*/
     RunnerAndConfigurationSettings configSettings = createRunnerAndConfigurationSettings(settings,
                                                                                          runnerSettings,
                                                                                          params,
                                                                                          project);
 
-    ProgramRunner runner = isDelegateBuild ? DelegateBuildRunner.getDelegateRunner() : DefaultJavaProgramRunner.getInstance();
+    ProgramRunner runner = DefaultJavaProgramRunner.getInstance();
     Executor executor = DefaultRunExecutor.getRunExecutorInstance();
-    ExecutionEnvironment environment = new ExecutionEnvironment(executor, runner, configSettings, project);
-    environment.putUserData(IS_DELEGATE_BUILD, isDelegateBuild);
     try {
-      runner.execute(environment, callback);
+      runner.execute(new ExecutionEnvironment(executor, runner, configSettings, project), callback);
     }
     catch (ExecutionException e) {
       MavenUtil.showError(project, "Failed to execute Maven goal", e);
     }
   }
-
 
   @NotNull
   public static RunnerAndConfigurationSettings createRunnerAndConfigurationSettings(@Nullable MavenGeneralSettings generalSettings,

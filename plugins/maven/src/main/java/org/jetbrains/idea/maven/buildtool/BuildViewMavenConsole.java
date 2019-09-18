@@ -49,11 +49,6 @@ import static com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskT
  * </ul>
  */
 @ApiStatus.Experimental
-@Deprecated
-/*
- * used only in MavenExternalExecutor
- * To be removed in IDEA-216278
- */
 public class BuildViewMavenConsole extends MavenConsole {
   private final MavenBuildEventProcessor myEventParser;
   @NotNull
@@ -90,7 +85,7 @@ public class BuildViewMavenConsole extends MavenConsole {
     else {
       throw new AssertionError("Unsupported toolwindow id: " + toolWindowId);
     }
-    myEventParser = new MavenBuildEventProcessor(project, workingDir, buildProgressListener, descriptor, taskId, null);
+    myEventParser = new MavenBuildEventProcessor(project, workingDir, buildProgressListener, descriptor, taskId);
   }
 
   @Override
@@ -184,6 +179,22 @@ public class BuildViewMavenConsole extends MavenConsole {
                                           @NotNull ExecutionConsole console,
                                           @NotNull BuildDescriptor descriptor) {
 
-    return null;
+    return new BuildView(project, console, descriptor, "build.toolwindow.run.selection.state",
+                         new ViewManager() {
+                           @Override
+                           public boolean isConsoleEnabledByDefault() {
+                             return true;
+                           }
+
+                           @Override
+                           public boolean isBuildContentView() {
+                             return true;
+                           }
+                         }){
+      @Override
+      public void dispose() {
+        super.dispose();
+      }
+    };
   }
 }
