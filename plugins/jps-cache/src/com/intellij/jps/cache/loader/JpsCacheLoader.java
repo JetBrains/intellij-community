@@ -53,11 +53,12 @@ class JpsCacheLoader implements JpsOutputLoader {
     }
     File currentDirForBuildCache = myBuildManager.getProjectSystemDirectory(myProject);
     if (currentDirForBuildCache != null) {
+      File newTimestampFolder = new File(myTmpCacheFolder, TIMESTAMPS_FOLDER_NAME);
+      if (newTimestampFolder.exists()) FileUtil.delete(newTimestampFolder);
+
       File timestamps = new File(currentDirForBuildCache, TIMESTAMPS_FOLDER_NAME);
       if (timestamps.exists()) {
         try {
-          File newTimestampFolder = new File(myTmpCacheFolder, TIMESTAMPS_FOLDER_NAME);
-          if (newTimestampFolder.exists()) FileUtil.delete(newTimestampFolder);
           newTimestampFolder.mkdirs();
           FileUtil.copyDir(timestamps, newTimestampFolder);
         }
