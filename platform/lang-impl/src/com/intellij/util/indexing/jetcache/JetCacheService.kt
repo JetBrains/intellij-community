@@ -48,7 +48,7 @@ class JetCacheService {
           if (hashAndId != null) {
             val id = hashAndId.second
             val contentHash = hashAndId.first
-            getStorage(id).put(contentHash, ByteArraySequence(bytes))
+            getStorage(id)?.put(contentHash, ByteArraySequence(bytes))
           }
         }, onFinished = { success ->
           if (!success) {
@@ -59,8 +59,8 @@ class JetCacheService {
     })
   }
 
-  fun <K, V> getStorage(indexId: ID<K, V>): JetCacheLocalStorage<K, V> {
-    return myStorages[indexId] as JetCacheLocalStorage<K, V>
+  fun <K, V> getStorage(indexId: ID<K, V>): JetCacheLocalStorage<K, V>? {
+    return myStorages[indexId] as JetCacheLocalStorage<K, V>?
   }
 
   companion object {
