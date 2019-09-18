@@ -374,24 +374,14 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
     final Ref<Module> moduleRef = new Ref<>();
     VirtualFile virtualFile = ProjectUtil.getFileAndRefresh(baseDir);
     LOG.assertTrue(virtualFile != null);
-    for (DirectoryProjectConfigurator configurator: DirectoryProjectConfigurator.EP_NAME.getIterable()) {
-      try {
-        configurator.configureProject(project, virtualFile, moduleRef);
-      }
-      catch (Exception e) {
-        LOG.error(e);
-      }
-    }
+    DirectoryProjectConfigurator.EP_NAME.forEachExtensionSafe(configurator -> {
+      configurator.configureProject(project, virtualFile, moduleRef);
+    });
     return moduleRef.get();
   }
 
   public static boolean attachToProject(Project project, @NotNull Path projectDir, @Nullable ProjectOpenedCallback callback) {
-    for (ProjectAttachProcessor processor : ProjectAttachProcessor.EP_NAME.getIterable()) {
-      if (processor.attachToProject(project, projectDir, callback)) {
-        return true;
-      }
-    }
-    return false;
+    return ProjectAttachProcessor.EP_NAME.findFirstSafe(processor -> processor.attachToProject(project, projectDir, callback)) != null;
   }
 
   private static void openFileFromCommandLine(@NotNull Project project, @NotNull Path file, int line) {

@@ -84,15 +84,20 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
     files = new ArrayList<>(realFiles);
 
     if (!myProject.isDefault()) {
-      for (final WritingAccessProvider accessProvider : WritingAccessProvider.EP_NAME.getIterable(myProject)) {
-        Collection<VirtualFile> denied = ContainerUtil.filter(files, virtualFile -> !accessProvider.isPotentiallyWritable(virtualFile));
+      Collection<? extends VirtualFile> finalFiles = files;
+      OperationStatusImpl status = WritingAccessProvider.EP.computeSafeIfAny(myProject, provider -> {
+        Collection<VirtualFile> denied = ContainerUtil.filter(finalFiles, virtualFile -> !provider.isPotentiallyWritable(virtualFile));
 
         if (denied.isEmpty()) {
-          denied = accessProvider.requestWriting(files);
+          denied = provider.requestWriting(finalFiles);
         }
         if (!denied.isEmpty()) {
-          return new OperationStatusImpl(VfsUtilCore.toVirtualFileArray(denied), accessProvider.getReadOnlyMessage());
+          return new OperationStatusImpl(VfsUtilCore.toVirtualFileArray(denied), provider.getReadOnlyMessage());
         }
+        return null;
+      });
+      if (status != null) {
+        return status;
       }
     }
 

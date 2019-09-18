@@ -168,10 +168,8 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
       return false;
     }
 
-    for (Condition<RefMethod> extension : CAN_BE_EMPTY_EP.getIterable()) {
-      if (extension.value(refMethod)) {
-        return false;
-      }
+    if (CAN_BE_EMPTY_EP.findFirstSafe(condition -> condition.value(refMethod)) != null) {
+      return false;
     }
 
     if (commentsAreContent && PsiTreeUtil.findChildOfType(owner, PsiComment.class) != null) {

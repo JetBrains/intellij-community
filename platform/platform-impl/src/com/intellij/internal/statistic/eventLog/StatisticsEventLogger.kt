@@ -76,7 +76,7 @@ fun getEventLogProviders(): List<StatisticsEventLoggerProvider> {
 
 fun getEventLogProvider(recorderId: String): StatisticsEventLoggerProvider {
   if (ApplicationManager.getApplication().extensionArea.hasExtensionPoint(EP_NAME.name)) {
-    EP_NAME.iterable.firstOrNull { it.recorderId == recorderId }?.let { return it }
+    EP_NAME.findFirstSafe { it.recorderId == recorderId }?.let { return it }
   }
   LOG.warn("Cannot find event log provider with recorder-id=${recorderId}")
   return EmptyStatisticsEventLoggerProvider(recorderId)

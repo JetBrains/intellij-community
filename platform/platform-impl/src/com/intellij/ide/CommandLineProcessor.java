@@ -111,23 +111,24 @@ public final class CommandLineProcessor {
     if (args.isEmpty()) return pair(null, CliResult.OK_FUTURE);
 
     String command = args.get(0);
-    for (ApplicationStarter starter : ApplicationStarter.EP_NAME.getIterable()) {
-      if (starter == null) {
-        break;
+    Pair<Project, Future<CliResult>> result = ApplicationStarter.EP_NAME.computeSafeIfAny(starter -> {
+      if (!command.equals(starter.getCommandName())) {
+        return null;
       }
 
-      if (command.equals(starter.getCommandName())) {
-        if (starter.canProcessExternalCommandLine()) {
-          LOG.info("Processing command with " + starter);
-          return pair(null, starter.processExternalCommandLineAsync(args, currentDirectory));
-        }
-        else {
-          String title = "Cannot execute command '" + command + "'";
-          String message = "Only one instance of " + ApplicationNamesInfo.getInstance().getProductName() + " can be run at a time.";
-          Messages.showErrorDialog(message, title);
-          return pair(null, error(1, message));
-        }
+      if (starter.canProcessExternalCommandLine()) {
+        LOG.info("Processing command with " + starter);
+        return pair(null, starter.processExternalCommandLineAsync(args, currentDirectory));
       }
+      else {
+        String title = "Cannot execute command '" + command + "'";
+        String message = "Only one instance of " + ApplicationNamesInfo.getInstance().getProductName() + " can be run at a time.";
+        Messages.showErrorDialog(message, title);
+        return pair(null, error(1, message));
+      }
+    });
+    if (result != null) {
+      return result;
     }
 
     if (command.startsWith(JetBrainsProtocolHandler.PROTOCOL)) {

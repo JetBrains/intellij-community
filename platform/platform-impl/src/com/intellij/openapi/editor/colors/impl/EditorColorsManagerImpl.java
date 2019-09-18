@@ -197,9 +197,9 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
 
   private void loadBundledSchemes() {
     if (!isUnitTestOrHeadlessMode()) {
-      for (BundledSchemeEP ep : BUNDLED_EP_NAME.getIterable()) {
+      BUNDLED_EP_NAME.forEachExtensionSafe(ep -> {
         mySchemeManager.loadBundledScheme(ep.getPath() + ".xml", ep);
-      }
+      });
     }
   }
 

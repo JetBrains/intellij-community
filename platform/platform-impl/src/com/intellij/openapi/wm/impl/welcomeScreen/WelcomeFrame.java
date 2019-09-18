@@ -174,13 +174,8 @@ public final class WelcomeFrame extends JFrame implements IdeFrame, AccessibleCo
 
   @NotNull
   private static IdeFrame createWelcomeFrame() {
-    for (WelcomeFrameProvider provider : EP.getIterable()) {
-      IdeFrame frame = provider.createFrame();
-      if (frame != null) {
-        return frame;
-      }
-    }
-    return new WelcomeFrame();
+    IdeFrame frame = EP.computeSafeIfAny(provider -> provider.createFrame());
+    return frame == null ? new WelcomeFrame() : frame;
   }
 
   public static void showIfNoProjectOpened() {

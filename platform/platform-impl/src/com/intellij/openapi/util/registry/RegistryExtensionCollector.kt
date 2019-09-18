@@ -23,7 +23,7 @@ class RegistryKeyBean : PluginAware {
   companion object {
     @JvmStatic
     fun addKeysFromPlugins() {
-      Registry.addKeys(EP_NAME.iterable.map(::createRegistryKeyDescriptor))
+      Registry.addKeys(EP_NAME.iterable.map { createRegistryKeyDescriptor(it) })
 
       EP_NAME.addExtensionPointListener(object : ExtensionPointListener<RegistryKeyBean> {
         override fun extensionAdded(extension: RegistryKeyBean, pluginDescriptor: PluginDescriptor) {

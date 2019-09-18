@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.io
 
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.io.isWriteFromBrowserWithoutOrigin
 import io.netty.channel.ChannelHandler
 import io.netty.channel.ChannelHandlerContext
@@ -31,15 +30,13 @@ internal class DelegatingHttpRequestHandler : DelegatingHttpRequestHandlerBase()
       prevHandlerAttribute.set(null)
     }
 
-    for (handler in HttpRequestHandler.EP_NAME.iterable) {
-      try {
-        if (handler.checkAndProcess()) {
-          prevHandlerAttribute.set(handler)
-          return true
-        }
+    HttpRequestHandler.EP_NAME.findFirstSafe { handler ->
+      if (handler.checkAndProcess()) {
+        prevHandlerAttribute.set(handler)
+        true
       }
-      catch (e: Throwable) {
-        logger<BuiltInServer>().error(e)
+      else {
+        false
       }
     }
     return false

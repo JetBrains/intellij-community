@@ -172,12 +172,7 @@ public class ExternalSystemApiUtil {
 
   @Nullable
   public static ExternalSystemManager<?, ?, ?, ?, ?> getManager(@NotNull ProjectSystemId externalSystemId) {
-    for (ExternalSystemManager manager : ExternalSystemManager.EP_NAME.getIterable()) {
-      if (externalSystemId.equals(manager.getSystemId())) {
-        return manager;
-      }
-    }
-    return null;
+    return ExternalSystemManager.EP_NAME.findFirstSafe(manager -> externalSystemId.equals(manager.getSystemId()));
   }
 
   @NotNull

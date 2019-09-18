@@ -1,44 +1,57 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions;
 
+import com.intellij.openapi.extensions.impl.ExtensionProcessingHelper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
-public final class ProjectExtensionPointName<T> extends BaseExtensionPointName {
+public final class ProjectExtensionPointName<T> extends BaseExtensionPointName<T> {
   public ProjectExtensionPointName(@NotNull String name) {
     super(name);
   }
 
   @NotNull
   public ExtensionPoint<T> getPoint(@NotNull AreaInstance areaInstance) {
-    return areaInstance.getExtensionArea().getExtensionPoint(getName());
+    return getPointImpl(areaInstance);
   }
 
   @NotNull
   public List<T> getExtensions(@NotNull AreaInstance areaInstance) {
-    return getPoint(areaInstance).getExtensionList();
+    return getPointImpl(areaInstance).getExtensionList();
   }
 
   @NotNull
   public Stream<T> extensions(@NotNull AreaInstance areaInstance) {
-    return getPoint(areaInstance).extensions();
+    return getPointImpl(areaInstance).extensions();
   }
 
   @Nullable
   public <V extends T> V findExtension(@NotNull Class<V> instanceOf, @NotNull AreaInstance areaInstance) {
-    return findExtension(this, instanceOf, areaInstance, false);
+    return findExtension(instanceOf, areaInstance, false);
   }
 
   @NotNull
   public <V extends T> V findExtensionOrFail(@NotNull Class<V> instanceOf, @NotNull AreaInstance areaInstance) {
     //noinspection ConstantConditions
-    return findExtension(this, instanceOf, areaInstance, true);
+    return findExtension(instanceOf, areaInstance, true);
   }
 
   public boolean hasAnyExtensions(@NotNull AreaInstance areaInstance) {
-    return getPoint(areaInstance).hasAnyExtensions();
+    return getPointImpl(areaInstance).hasAnyExtensions();
+  }
+
+  @Nullable
+  public T findFirstSafe(@NotNull AreaInstance areaInstance, @NotNull Predicate<? super T> predicate) {
+    return ExtensionProcessingHelper.findFirstSafe(predicate, getPointImpl(areaInstance));
+  }
+
+  @Nullable
+  public <R> R computeSafeIfAny(@NotNull AreaInstance areaInstance, @NotNull Function<T, R> processor) {
+    return ExtensionProcessingHelper.computeSafeIfAny(processor, getPointImpl(areaInstance));
   }
 }

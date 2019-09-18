@@ -6,7 +6,7 @@ import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class BaseExtensionPointName {
+public abstract class BaseExtensionPointName<T> {
   private final String myName;
 
   public BaseExtensionPointName(@NotNull String name) {
@@ -23,10 +23,17 @@ public abstract class BaseExtensionPointName {
     return myName;
   }
 
+  @NotNull
+  protected final ExtensionPointImpl<T> getPointImpl(@Nullable AreaInstance areaInstance) {
+    ExtensionsAreaImpl area = (ExtensionsAreaImpl)(areaInstance == null ? Extensions.getRootArea() : areaInstance.getExtensionArea());
+    return area.getExtensionPoint(getName());
+  }
+
   @Nullable
-  protected static <T> T findExtension(@NotNull BaseExtensionPointName pointName, @NotNull Class<T> instanceOf, @Nullable AreaInstance areaInstance, boolean isRequired) {
-    ExtensionPointImpl<T> point = ((ExtensionsAreaImpl)(areaInstance == null ? Extensions.getRootArea() : areaInstance.getExtensionArea())).getExtensionPoint(pointName.getName());
+  protected <V extends T> V findExtension(@NotNull Class<V> instanceOf, @Nullable AreaInstance areaInstance, boolean isRequired) {
+    ExtensionPointImpl<T> point = getPointImpl(areaInstance);
     // find by isAssignableFrom to preserve old behaviour
-    return point.findExtension(instanceOf, isRequired, false);
+    //noinspection unchecked
+    return (V)point.findExtension(instanceOf, isRequired, false);
   }
 }

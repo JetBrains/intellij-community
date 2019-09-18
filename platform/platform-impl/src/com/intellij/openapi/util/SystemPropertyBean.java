@@ -17,13 +17,11 @@ public final class SystemPropertyBean implements PluginAware {
   private PluginDescriptor myPluginDescriptor;
 
   public static void initSystemProperties() {
-    for (SystemPropertyBean bean : EP_NAME.getIterable()) {
-      if (System.getProperty(bean.name) != null) {
-        continue;
+    EP_NAME.forEachExtensionSafe(bean -> {
+      if (System.getProperty(bean.name) == null) {
+        System.setProperty(bean.name, bean.value);
       }
-
-      System.setProperty(bean.name, bean.value);
-    }
+    });
   }
 
   @Attribute("name")

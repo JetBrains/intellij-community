@@ -25,18 +25,19 @@ import org.picocontainer.PicoContainer;
 import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.BiPredicate;
-import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
-@SuppressWarnings({"SynchronizeOnThis", "NonPrivateFieldAccessedInSynchronizedContext"})
+@SuppressWarnings({"SynchronizeOnThis"})
 public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterable<T> {
-  protected static final Logger LOG = Logger.getInstance("#com.intellij.openapi.extensions.impl.ExtensionPointImpl");
+  static final Logger LOG = Logger.getInstance("#com.intellij.openapi.extensions.impl.ExtensionPointImpl");
 
   // test-only
   private static Set<ExtensionPointImpl<?>> POINTS_IN_READONLY_MODE;
 
   private static volatile Predicate<? super Class<?>> TYPE_CHECKER;
+
+  private static final ArrayFactory<ExtensionPointListener<?>> LISTENER_ARRAY_FACTORY = n -> n == 0 ? ExtensionPointListener.EMPTY_ARRAY : new ExtensionPointListener[n];
 
   private final String myName;
   private final String myClassName;
@@ -276,22 +277,6 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
       }
     }
     return array.length == 0 ? array : array.clone();
-  }
-
-  @Override
-  public void forEachExtensionSafe(@NotNull Consumer<? super T> extensionConsumer) {
-    for (T t : this) {
-      if (t == null) break;
-      try {
-        extensionConsumer.accept(t);
-      }
-      catch (ProcessCanceledException e) {
-        throw e;
-      }
-      catch (Exception e) {
-        LOG.error(e);
-      }
-    }
   }
 
   /**
@@ -558,6 +543,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
     List<T> oldList = myExtensionsCache;
     T[] oldArray = myExtensionsCacheAsArray;
     // any read access will use supplied list, any write access can lead to unpredictable results - asserted in clearCache
+    //noinspection unchecked
     myExtensionsCache = (List<T>)list;
     myExtensionsCacheAsArray = list.toArray(ArrayUtil.newArray(getExtensionClass(), 0));
     POINTS_IN_READONLY_MODE.add(this);
@@ -710,8 +696,6 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
       Disposer.register(parentDisposable, () -> removeExtensionPointListener(listener));
     }
   }
-
-  private static final ArrayFactory<ExtensionPointListener<?>> LISTENER_ARRAY_FACTORY = n -> n == 0 ? ExtensionPointListener.EMPTY_ARRAY : new ExtensionPointListener[n];
 
   @NotNull
   private static <T> ArrayFactory<ExtensionPointListener<T>> listenerArrayFactory() {

@@ -132,12 +132,12 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     myDefaultDarkTheme = new DarculaLookAndFeelInfo();
     lafList.add(myDefaultDarkTheme);
 
-    for (UIThemeProvider provider : UIThemeProvider.EP_NAME.getIterable()) {
+    UIThemeProvider.EP_NAME.forEachExtensionSafe(provider -> {
       UITheme theme = provider.createTheme();
       if (theme != null) {
         lafList.add(new UIThemeBasedLookAndFeelInfo(theme));
       }
-    }
+    });
     myLaFs = lafList;
 
     sortThemesIfNecessary();

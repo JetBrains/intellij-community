@@ -8,6 +8,9 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPoint;
+import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
+import com.intellij.openapi.extensions.impl.ExtensionProcessingHelper;
+import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.KeyedExtensionCollector;
 import com.intellij.openapi.vfs.*;
@@ -35,8 +38,8 @@ public class  VirtualFileManagerImpl extends VirtualFileManagerEx implements Dis
   protected static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.VirtualFileManagerImpl");
 
   // do not use extension point name to avoid map lookup on each event publishing
-  private static final ExtensionPoint<VirtualFileManagerListener>
-    MANAGER_LISTENER_EP = ApplicationManager.getApplication().getExtensionArea().getExtensionPoint("com.intellij.virtualFileManagerListener");
+  private static final ExtensionPointImpl<VirtualFileManagerListener>
+    MANAGER_LISTENER_EP = ((ExtensionsAreaImpl)ApplicationManager.getApplication().getExtensionArea()).getExtensionPoint("com.intellij.virtualFileManagerListener");
 
   private static class VirtualFileSystemBean extends KeyedLazyInstanceEP<VirtualFileSystem> {
     @Attribute
@@ -246,7 +249,7 @@ public class  VirtualFileManagerImpl extends VirtualFileManagerEx implements Dis
       }
     }
 
-    MANAGER_LISTENER_EP.forEachExtensionSafe(listener -> listener.beforeRefreshStart(asynchronous));
+    ExtensionProcessingHelper.forEachExtensionSafe(listener -> listener.beforeRefreshStart(asynchronous), MANAGER_LISTENER_EP);
   }
 
   @Override
@@ -264,7 +267,7 @@ public class  VirtualFileManagerImpl extends VirtualFileManagerEx implements Dis
       }
     }
 
-    MANAGER_LISTENER_EP.forEachExtensionSafe(listener -> listener.afterRefreshFinish(asynchronous));
+    ExtensionProcessingHelper.forEachExtensionSafe(listener -> listener.afterRefreshFinish(asynchronous), MANAGER_LISTENER_EP);
   }
 
   @Override

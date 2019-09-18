@@ -318,7 +318,7 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
 
   private Set<VirtualFile> registerWriteAccessProvider(final VirtualFile... filesToDeny) {
     final Set<VirtualFile> requested = new LinkedHashSet<>();
-    ServiceContainerUtil.registerExtension(getProject(), WritingAccessProvider.EP_NAME, new WritingAccessProvider() {
+    ServiceContainerUtil.registerExtension(getProject(), WritingAccessProvider.EP, new WritingAccessProvider() {
       @NotNull
       @Override
       public Collection<VirtualFile> requestWriting(@NotNull Collection<? extends VirtualFile> files) {

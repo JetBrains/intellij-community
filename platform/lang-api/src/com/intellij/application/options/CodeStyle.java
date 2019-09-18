@@ -76,11 +76,9 @@ public class CodeStyle {
       return tempSettings;
     }
 
-    for (FileCodeStyleProvider provider : FileCodeStyleProvider.EP_NAME.getIterable()) {
-      CodeStyleSettings fileSettings = provider.getSettings(file);
-      if (fileSettings != null) {
-        return fileSettings;
-      }
+    CodeStyleSettings result = FileCodeStyleProvider.EP_NAME.computeSafeIfAny(provider -> provider.getSettings(file));
+    if (result != null) {
+      return result;
     }
 
     if (!file.isPhysical()) {

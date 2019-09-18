@@ -69,13 +69,7 @@ public final class Experiments {
     if (!LoadingPhase.COMPONENT_REGISTERED.isComplete()) {
       return null;
     }
-
-    for (ExperimentalFeature feature : EP_NAME.getIterable()) {
-      if (feature.id.equals(featureId)) {
-        return feature;
-      }
-    }
-    return null;
+    return EP_NAME.findFirstSafe(feature -> feature.id.equals(featureId));
   }
 
   public boolean isChanged(@NotNull String featureId) {
