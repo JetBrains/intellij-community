@@ -25,6 +25,8 @@ import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryValue;
+import com.intellij.openapi.util.registry.RegistryValueListener;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.actions.ShowDiffPreviewAction;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
@@ -252,6 +254,8 @@ public class ChangesViewManager implements ChangesViewEx,
   }
 
   private static class ChangesViewToolWindowPanel extends SimpleToolWindowPanel implements Disposable {
+    @NotNull private static final RegistryValue isToolbarHorizontalSetting = Registry.get("vcs.local.changes.toolbar.horizontal");
+
     @NotNull private final Project myProject;
     @NotNull private final ChangesViewManager myChangesViewManager;
     @NotNull private final VcsConfiguration myVcsConfiguration;
@@ -298,6 +302,13 @@ public class ChangesViewManager implements ChangesViewEx,
 
       myToolbarActions = createChangesToolbarActions(treeExpander);
       registerShortcuts(this);
+
+      isToolbarHorizontalSetting.addListener(new RegistryValueListener.Adapter() {
+        @Override
+        public void afterValueChanged(@NotNull RegistryValue value) {
+          if (myCommitPanel != null) myCommitPanel.setToolbarHorizontal(value.asBoolean());
+        }
+      }, this);
 
       ActionToolbar changesToolbar = ActionManager.getInstance()
         .createActionToolbar(ActionPlaces.CHANGES_VIEW_TOOLBAR, new DefaultActionGroup(myToolbarActions), false);
@@ -363,6 +374,7 @@ public class ChangesViewManager implements ChangesViewEx,
       if (isNonModal) {
         if (myCommitPanel == null) {
           myCommitPanel = new ChangesViewCommitPanel(myView, this);
+          myCommitPanel.setToolbarHorizontal(isToolbarHorizontalSetting.asBoolean());
           myCommitWorkflowHandler = new ChangesViewCommitWorkflowHandler(new ChangesViewCommitWorkflow(myProject), myCommitPanel);
           Disposer.register(this, myCommitPanel);
 
