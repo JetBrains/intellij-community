@@ -58,6 +58,16 @@ public abstract class ProjectTaskRunner {
     return null;
   }
 
+  /**
+   * The flag indicates if the {@link ProjectTaskRunner} supports reporting an information about generated files during execution or not.
+   * The fine-grained events per generated files allow greatly improve IDE performance for some activities like fast hotswap reload after incremental compilation.
+   * <p/>
+   * The support means responsibility to send {@link ProjectTaskContext#fileGenerated} events per each generated file
+   * or at least supply effective output roots containing generated files using the {@link ProjectTaskContext#addDirtyOutputPathsProvider} method
+   * if per-file events are not possible.
+   *
+   * @return true if the {@link ProjectTaskRunner} supports reporting an information about generated files during this runner tasks execution, false otherwise
+   */
   @ApiStatus.Experimental
   public boolean isFileGeneratedEventsSupported() {
     return false;
