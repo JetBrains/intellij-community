@@ -59,7 +59,7 @@ class JetCacheService {
     })
   }
 
-  internal fun <K, V> getStorage(indexId: ID<K, V>): JetCacheLocalStorage<K, V> {
+  fun <K, V> getStorage(indexId: ID<K, V>): JetCacheLocalStorage<K, V> {
     return myStorages[indexId] as JetCacheLocalStorage<K, V>
   }
 

@@ -16,9 +16,9 @@ public class JetCacheIndexImporter implements IndexImporterFactory {
   @Nullable
   @Override
   public <Key, Value, Input> SnapshotInputMappingIndex<Key, Value, Input> createImporter(@NotNull IndexExtension<Key, Value, Input> extension) {
-    if (!JetCacheService.IS_ENABLED) return null;
+    if (!JetCacheService.Companion.getIS_ENABLED()) return null;
 
-    JetCacheService jetCacheService = JetCacheService.getInstance();
+    JetCacheService jetCacheService = JetCacheService.Companion.getInstance();
     JetCacheLocalStorage<Key, Value> storage = jetCacheService.getStorage(((FileBasedIndexExtension<Key, Value>)extension).getName());
     if (storage == null) return null;
     return new SnapshotInputMappingIndex<Key, Value, Input>() {
