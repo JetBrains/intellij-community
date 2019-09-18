@@ -15,7 +15,6 @@ import kotlin.test.*
 
 
 class TestProjectExecutor(override val listener: ProjectElementListener) : ProjectExecutor {
-    override val vcsRevision: String = "revision.0"
     override val vcsBranch: String = "test"
 }
 
