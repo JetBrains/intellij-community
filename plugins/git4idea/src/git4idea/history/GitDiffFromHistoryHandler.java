@@ -142,7 +142,7 @@ public final class GitDiffFromHistoryHandler extends BaseDiffFromHistoryHandler<
                                                                @NotNull final Collection<String> parentHashes,
                                                                @Nullable final List<? extends VcsFileRevision> revisions,
                                                                @NotNull final Consumer<? super MergeCommitPreCheckInfo> resultHandler) {
-    new Task.Backgroundable(myProject, "Loading changes...", true) {
+    new Task.Backgroundable(myProject, "Loading Changes...", true) {
       private MergeCommitPreCheckInfo myInfo;
 
       @Override
@@ -223,7 +223,7 @@ public final class GitDiffFromHistoryHandler extends BaseDiffFromHistoryHandler<
                          @NotNull Collection<? extends GitFileRevision> parents) {
     ActionGroup parentActions = createActionGroup(rev, filePath, parents);
     DataContext dataContext = SimpleDataContext.getProjectContext(myProject);
-    ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup("Choose parent to compare", parentActions, dataContext,
+    ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup("Choose Parent to Compare", parentActions, dataContext,
                                                                           JBPopupFactory.ActionSelectionAid.NUMBERING, true);
     showPopupInBestPosition(popup, event, dataContext);
   }

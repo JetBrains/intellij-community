@@ -39,7 +39,7 @@ public class GitResetAction extends GitOneCommitPerRepoLogAction {
     if (dialog.showAndGet()) {
       final GitResetMode selectedMode = dialog.getResetMode();
       settings.setResetMode(selectedMode);
-      new Task.Backgroundable(project, "Git reset", true) {
+      new Task.Backgroundable(project, "Git Reset", true) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           Map<GitRepository, Hash> hashes = commits.keySet().stream().collect(
