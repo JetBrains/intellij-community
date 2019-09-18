@@ -371,8 +371,7 @@ public abstract class MavenBuildToolLogTestUtils extends UsefulTestCase {
       throw new UnsupportedOperationException();
     }
 
-    @Override
-    public String getCurrentLine() {
+    private String getCurrentLine() {
       if (myPosition >= myLines.size() || myPosition < 0) {
         return null;
       }
