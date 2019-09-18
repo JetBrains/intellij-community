@@ -2469,7 +2469,7 @@ public final class FileBasedIndexImpl extends FileBasedIndex implements Disposab
         indexRoot.mkdirs();
         // serialization manager is initialized before and use removed index root so we need to reinitialize it
         SerializationManagerEx.getInstanceEx().reinitializeNameStorage();
-        ID.reinitializeDiskStorage();
+        //ID.reinitializeDiskStorage();
         PersistentIndicesConfiguration.saveConfiguration();
         FileUtil.delete(corruptionMarker);
       }

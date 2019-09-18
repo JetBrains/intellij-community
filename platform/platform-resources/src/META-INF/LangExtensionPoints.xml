@@ -410,6 +410,7 @@
 
     <!-- File-Based Index-->
     <extensionPoint name="fileBasedIndex" interface="com.intellij.util.indexing.FileBasedIndexExtension"/>
+    <extensionPoint name="projectStateHashGenerator" interface="com.intellij.util.indexing.jetcache.ProjectStateHashGenerator"/>
     <extensionPoint name="stubIndex" interface="com.intellij.psi.stubs.StubIndexExtension"/>
     <extensionPoint name="indexedRootsProvider" interface="com.intellij.util.indexing.IndexableSetContributor"/>
     <extensionPoint name="include.provider" interface="com.intellij.psi.impl.include.FileIncludeProvider"/>

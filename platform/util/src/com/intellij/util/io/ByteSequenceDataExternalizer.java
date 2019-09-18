@@ -26,7 +26,7 @@ import java.io.InputStream;
 /**
  * @author Maxim.Mossienko
  */
-public class ByteSequenceDataExternalizer implements DataExternalizer<ByteArraySequence> {
+public class ByteSequenceDataExternalizer implements KeyDescriptor<ByteArraySequence> {
   public static final ByteSequenceDataExternalizer INSTANCE = new ByteSequenceDataExternalizer();
 
   @Override
@@ -39,5 +39,15 @@ public class ByteSequenceDataExternalizer implements DataExternalizer<ByteArrayS
     byte[] buf = new byte[((InputStream)in).available()]; // todo fix double copying
     in.readFully(buf);
     return new ByteArraySequence(buf);
+  }
+
+  @Override
+  public int getHashCode(ByteArraySequence value) {
+    return value.hashCode();
+  }
+
+  @Override
+  public boolean isEqual(ByteArraySequence val1, ByteArraySequence val2) {
+    return val1.equals(val2);
   }
 }

@@ -17,7 +17,7 @@ public class InputData<Key, Value> {
   @NotNull
   private final Map<Key, Value> myKeyValues;
 
-  protected InputData(@NotNull Map<Key, Value> values) {
+  public InputData(@NotNull Map<Key, Value> values) {
     myKeyValues = values;
   }
 

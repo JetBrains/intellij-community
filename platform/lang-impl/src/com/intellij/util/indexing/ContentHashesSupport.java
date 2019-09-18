@@ -73,6 +73,12 @@ public class ContentHashesSupport {
     return result;
   }
 
+  public static byte[] shortenHash(@NotNull byte[] contentHash) {
+    byte[] result = new byte[12];
+    System.arraycopy(contentHash, 0, result, 0, 12);
+    return result;
+  }
+
   private static int fromByteArray(byte[] bytes) {
     return ((bytes[0] & 0xFF) << 24) |
            ((bytes[1] & 0xFF) << 16) |
