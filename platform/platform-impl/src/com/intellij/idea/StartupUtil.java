@@ -124,7 +124,7 @@ public final class StartupUtil {
     }
   }
 
-  private static void runPreAppClass(Logger log) {
+  private static void runPreAppClass(@NotNull Logger log) {
     String classBeforeAppProperty = System.getProperty(IDEA_CLASS_BEFORE_APPLICATION_PROPERTY);
     if (classBeforeAppProperty != null) {
       try {
@@ -139,13 +139,12 @@ public final class StartupUtil {
   }
 
   public static void prepareApp(@NotNull String[] args, @NotNull String mainClass) throws Exception {
-    Activity fjp = StartUpMeasurer.startMainActivity("ForkJoin CommonPool configuration");
-    IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(Main.isHeadless(args));
-    fjp.end();
-
     LoadingPhase.setStrictMode();
 
-    Activity activity = StartUpMeasurer.startMainActivity("main class loading scheduling");
+    Activity activity = StartUpMeasurer.startMainActivity("ForkJoin CommonPool configuration");
+    IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(Main.isHeadless(args));
+
+    activity = activity.endAndStart("main class loading scheduling");
     ExecutorService executorService = AppExecutorUtil.getAppExecutorService();
 
     Future<Class<AppStarter>> mainStartFuture = executorService.submit(() -> {
@@ -156,7 +155,7 @@ public final class StartupUtil {
       return aClass;
     });
 
-    activity = activity.endAndStart("Configure log4j");
+    activity = activity.endAndStart("log4j configuration");
     configureLog4j();
 
     activity = activity.endAndStart("LaF init scheduling");
@@ -167,10 +166,14 @@ public final class StartupUtil {
       System.exit(Main.JDK_CHECK_FAILED);
     }
 
-    // this check must be performed before system directories are locked
-    boolean configImportNeeded = !Main.isHeadless() && !Files.exists(Paths.get(PathManager.getConfigPath()));
+    activity = StartUpMeasurer.startMainActivity("config path computing");
+    String configPath = PathManager.getConfigPath();
+    activity = activity.endAndStart("config path existence check");
 
-    activity = StartUpMeasurer.startMainActivity("system dirs checking");
+    // this check must be performed before system directories are locked
+    boolean configImportNeeded = !Main.isHeadless() && !Files.exists(Paths.get(configPath));
+
+    activity = activity.endAndStart("system dirs checking");
     // note: uses config directory
     if (!checkSystemDirs()) {
       System.exit(Main.DIR_CHECK_FAILED);
@@ -189,14 +192,13 @@ public final class StartupUtil {
       subActivity.end();
     });
 
-    List<Future<?>> futures = new ArrayList<>();
-    futures.add(executorService.submit(() -> {
+    Future<?> extraTaskFuture = executorService.submit(() -> {
       Activity subActivity = StartUpMeasurer.startActivity("system libs setup");
       setupSystemLibraries();
       subActivity = subActivity.endAndStart("process env fixing");
       fixProcessEnvironment(log);
       subActivity.end();
-    }));
+    });
 
     if (!configImportNeeded) {
       installPluginUpdates();
@@ -206,10 +208,7 @@ public final class StartupUtil {
     executorService.execute(() -> loadSystemLibraries(log));
 
     activity = StartUpMeasurer.startMainActivity("tasks waiting");
-    for (Future<?> future : futures) {
-      future.get();
-    }
-    futures.clear();
+    extraTaskFuture.get();
 
     activity = activity.endAndStart("main class loading waiting");
     Class<AppStarter> aClass = mainStartFuture.get();
@@ -496,9 +495,10 @@ public final class StartupUtil {
     }
   }
 
+  @NotNull
   private static Logger setupLogger() {
     Logger.setFactory(new LoggerFactory());
-    Logger log = Logger.getInstance(Main.class);
+    Logger log = Logger.getInstance("#com.intellij.idea.Main");
     log.info("------------------------------------------------------ IDE STARTED ------------------------------------------------------");
     ShutDownTracker.getInstance().registerShutdownTask(() -> {
       log.info("------------------------------------------------------ IDE SHUTDOWN ------------------------------------------------------");
