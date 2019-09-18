@@ -422,6 +422,7 @@
 
     <applicationService serviceImplementation="com.intellij.codeInspection.ex.AppInspectionProfilesVisibleTreeState"/>
     <projectService serviceImplementation="com.intellij.codeInspection.ex.ProjectInspectionProfilesVisibleTreeState"/>
+    <projectService serviceImplementation="com.intellij.codeInspection.ui.ExternalProblemFilter"/>
 
     <!-- Editor -->
     <search.topHitProvider implementation="com.intellij.application.options.editor.EditorOptionsTopHitProvider"/>
