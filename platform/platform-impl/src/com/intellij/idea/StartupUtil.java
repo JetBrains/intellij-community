@@ -14,7 +14,6 @@ import com.intellij.ide.customize.CustomizeIDEWizardDialog;
 import com.intellij.ide.customize.CustomizeIDEWizardStepsProvider;
 import com.intellij.ide.gdpr.EndUserAgreement;
 import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.ide.plugins.StartupAbortedException;
 import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.ide.ui.laf.IntelliJLaf;
 import com.intellij.jna.JnaLoader;
@@ -72,9 +71,6 @@ import java.util.function.Function;
 import static com.intellij.diagnostic.LoadingPhase.LAF_INITIALIZED;
 import static java.nio.file.attribute.PosixFilePermission.*;
 
-/**
- * @author yole
- */
 public final class StartupUtil {
   public static final String FORCE_PLUGIN_UPDATES = "idea.force.plugin.updates";
   public static final String IDEA_CLASS_BEFORE_APPLICATION_PROPERTY = "idea.class.before.app";
@@ -85,8 +81,6 @@ public final class StartupUtil {
   private static final AtomicBoolean ourSystemPatched = new AtomicBoolean();
 
   private StartupUtil() { }
-
-  private static final Thread.UncaughtExceptionHandler HANDLER = (t, e) -> StartupAbortedException.processException(e);
 
   /* called by the app after startup */
   public static synchronized void addExternalInstanceListener(@Nullable Function<List<String>, Future<CliResult>> processor) {
@@ -106,10 +100,6 @@ public final class StartupUtil {
   public static synchronized CompletableFuture<BuiltInServer> getServerFuture() {
     CompletableFuture<BuiltInServer> serverFuture = ourSocketLock == null ? null : ourSocketLock.getServerFuture();
     return serverFuture == null ? CompletableFuture.completedFuture(null) : serverFuture;
-  }
-
-  public static void installExceptionHandler() {
-    Thread.currentThread().setUncaughtExceptionHandler(HANDLER);
   }
 
   public interface AppStarter {
@@ -220,11 +210,11 @@ public final class StartupUtil {
       future.get();
     }
     futures.clear();
-    
+
     activity = activity.endAndStart("main class loading waiting");
     Class<AppStarter> aClass = mainStartFuture.get();
     activity.end();
-    
+
     startApp(args, initUiTask, log, configImportNeeded, aClass.newInstance());
   }
 
