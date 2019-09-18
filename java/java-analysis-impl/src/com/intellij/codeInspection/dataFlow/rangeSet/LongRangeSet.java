@@ -783,7 +783,8 @@ public abstract class LongRangeSet {
   @NotNull
   public static LongRangeSet fromPsiElement(PsiModifierListOwner owner) {
     if (owner == null) return all();
-    return StreamEx.ofNullable(AnnotationUtil.findAnnotation(owner, JETBRAINS_RANGE))
+    return StreamEx.of(AnnotationUtil.findAnnotation(owner, JETBRAINS_RANGE), owner.getAnnotation(JETBRAINS_RANGE))
+                   .nonNull()
                    .append(AnnotationUtil.findAnnotations(owner, ANNOTATIONS))
                    .map(LongRangeSet::fromAnnotation).foldLeft(all(), LongRangeSet::intersect);
   }
