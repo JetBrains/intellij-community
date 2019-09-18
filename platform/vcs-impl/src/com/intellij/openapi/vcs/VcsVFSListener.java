@@ -3,7 +3,6 @@
 package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandListener;
@@ -18,21 +17,15 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.VcsIgnoreManager;
 import com.intellij.openapi.vcs.changes.ignore.IgnoreFilesProcessorImpl;
-import com.intellij.openapi.vfs.AsyncFileListener;
-import com.intellij.openapi.vfs.VFileProperty;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.newvfs.BulkFileListener;
+import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SmartHashSet;
 import com.intellij.vcsUtil.VcsUtil;
-import com.intellij.vfs.AsyncVfsEventsListener;
-import com.intellij.vfs.AsyncVfsEventsPostProcessor;
 import kotlin.Unit;
-import org.jetbrains.annotations.CalledInAwt;
+import org.jetbrains.annotations.CalledInBackground;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -87,6 +80,7 @@ public abstract class VcsVFSListener implements Disposable {
   protected final StateProcessor myProcessor = new StateProcessor();
   private final ProjectConfigurationFilesProcessorImpl myProjectConfigurationFilesProcessor;
   protected final ExternallyAddedFilesProcessorImpl myExternalFilesProcessor;
+  private final List<VFileEvent> myEventsToProcess = new SmartList<>();
 
   protected enum VcsDeleteType {SILENT, CONFIRM, IGNORE}
 
@@ -192,8 +186,9 @@ public abstract class VcsVFSListener implements Disposable {
       myDeletedWithoutConfirmFiles.removeIf(path -> copiedAddedMoved.contains(FileUtil.toSystemIndependentName(path.getPath())));
     }
 
-    @CalledInAwt
-    private void process() {
+    @CalledInBackground
+    private void process(@NotNull List<VFileEvent> events) {
+      processEvents(events);
       runUnderLock(PROCESSING_LOCK.writeLock(), () -> {
         if (!myAddedFiles.isEmpty() || !myDeletedFiles.isEmpty() || !myDeletedWithoutConfirmFiles.isEmpty() || !myMovedFiles.isEmpty()) {
           doNotDeleteAddedCopiedOrMovedFiles();
@@ -353,6 +348,23 @@ public abstract class VcsVFSListener implements Disposable {
         }
       }
     }
+
+    private void processEvents(@NotNull List<VFileEvent> events) {
+      for (VFileEvent event : events) {
+        ProgressManager.checkCanceled();
+        if (isEventIgnored(event)) continue;
+
+        if (event instanceof VFileCreateEvent) {
+          processFileCreated((VFileCreateEvent)event);
+        }
+        else if (event instanceof VFileCopyEvent) {
+          processFileCopied((VFileCopyEvent)event);
+        }
+        else if (event instanceof VFileMoveEvent) {
+          processFileMoved((VFileMoveEvent)event);
+        }
+      }
+    }
   }
 
   /**
@@ -384,18 +396,6 @@ public abstract class VcsVFSListener implements Disposable {
   }
 
   protected void installListeners() {
-    MyVirtualFileListener listener = new MyVirtualFileListener();
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      myProject.getMessageBus().connect(myProject).subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
-        @Override
-        public void after(@NotNull List<? extends VFileEvent> events) {
-          listener.filesChanged(events);
-        }
-      });
-    }
-    else {
-      AsyncVfsEventsPostProcessor.getInstance().addListener(listener, this);
-    }
     VirtualFileManager.getInstance().addAsyncFileListener(new MyAsyncVfsListener(), this);
     myProject.getMessageBus().connect(this).subscribe(CommandListener.TOPIC, new MyCommandAdapter());
 
@@ -408,8 +408,11 @@ public abstract class VcsVFSListener implements Disposable {
   public void dispose() {
   }
 
+  protected boolean isEventAccepted(@NotNull VFileEvent event) {
+    return !event.isFromRefresh() && (event.getFileSystem() instanceof LocalFileSystem);
+  }
+
   protected boolean isEventIgnored(@NotNull VFileEvent event) {
-    if (event.isFromRefresh()) return true;
     FilePath filePath = VcsUtil.getFilePath(event.getPath());
     return !isUnderMyVcs(filePath) && !myVcsIgnoreManager.isPotentiallyIgnoredFile(filePath);
   }
@@ -422,7 +425,7 @@ public abstract class VcsVFSListener implements Disposable {
     return filePath != null && ReadAction.compute(() -> !myProject.isDisposed() && myVcsManager.getVcsFor(filePath) == myVcs);
   }
 
-  @CalledInAwt
+  @CalledInBackground
   protected void executeAdd() {
     List<VirtualFile> addedFiles = myProcessor.acquireAddedFiles();
     LOG.debug("executeAdd. addedFiles: ", addedFiles);
@@ -466,13 +469,14 @@ public abstract class VcsVFSListener implements Disposable {
     executeAddCallback.executeAdd(addedFiles, copyFromMap);
   }
 
+  @CalledInBackground
   private void executeMoveRename() {
     List<MovedFileInfo> movedFiles = myProcessor.acquireMovedFiles();
     LOG.debug("executeMoveRename " + movedFiles);
     performMoveRename(movedFiles);
   }
 
-  @CalledInAwt
+  @CalledInBackground
   protected void executeDelete() {
     AllDeletedFiles allFiles = myProcessor.acquireAllDeletedFiles();
     List<FilePath> filesToDelete = allFiles.deletedWithoutConfirmFiles;
@@ -604,59 +608,59 @@ public abstract class VcsVFSListener implements Disposable {
                                                       });
   }
 
-  private class MyVirtualFileListener implements AsyncVfsEventsListener {
-
-    @Override
-    public void filesChanged(@NotNull List<? extends VFileEvent> events) {
-      doProcessEvents(events);
-    }
-
-    private void doProcessEvents(@NotNull List<? extends VFileEvent> events) {
-      for (VFileEvent event : events) {
-        if (isEventIgnored(event)) continue;
-
-        if (event instanceof VFileCreateEvent) {
-          myProcessor.processFileCreated((VFileCreateEvent)event);
-        }
-        else if (event instanceof VFileCopyEvent) {
-          myProcessor.processFileCopied((VFileCopyEvent)event);
-        }
-        else if (event instanceof VFileMoveEvent) {
-          myProcessor.processFileMoved((VFileMoveEvent)event);
-        }
-      }
-    }
-  }
-
   private class MyAsyncVfsListener implements AsyncFileListener {
+
+    private boolean isBeforeEvent(@NotNull VFileEvent event) {
+      return event instanceof VFileContentChangeEvent
+             || event instanceof VFileDeleteEvent
+             || event instanceof VFileMoveEvent
+             || event instanceof VFilePropertyChangeEvent;
+    }
+
+    private boolean isAfterEvent(@NotNull VFileEvent event) {
+      return event instanceof VFileCreateEvent
+             || event instanceof VFileCopyEvent
+             || event instanceof VFileMoveEvent;
+    }
 
     @Nullable
     @Override
     public ChangeApplier prepareChange(@NotNull List<? extends VFileEvent> events) {
-      List<VFileEvent> filtered = new ArrayList<>();
+      List<VFileEvent> beforeEvents = new ArrayList<>();
+      List<VFileEvent> afterEvents = new ArrayList<>();
       for (VFileEvent event : events) {
         ProgressManager.checkCanceled();
         if (event instanceof VFileContentChangeEvent) {
           VirtualFile file = Objects.requireNonNull(event.getFile());
           if (isUnderMyVcs(file)) {
-            filtered.add(event);
+            beforeEvents.add(event);
           }
         }
-        else if (!isEventIgnored(event)) {
-          filtered.add(event);
+        else if (isEventAccepted(event)) {
+          if (isBeforeEvent(event)) {
+            beforeEvents.add(event);
+          }
+          if (isAfterEvent(event)) {
+            afterEvents.add(event);
+          }
         }
       }
-      return filtered.isEmpty() ? null : new ChangeApplier() {
+      return beforeEvents.isEmpty() && afterEvents.isEmpty() ? null : new ChangeApplier() {
         @Override
         public void beforeVfsChange() {
-          for (VFileEvent event : filtered) {
+          for (VFileEvent event : beforeEvents) {
             if (event instanceof VFileContentChangeEvent) {
               VirtualFile file = event.getFile();
               if (file == null) continue;
 
               beforeContentsChange((VFileContentChangeEvent)event, file);
             }
-            else if (event instanceof VFileDeleteEvent) {
+
+            if (isEventIgnored(event)) {
+              continue;
+            }
+
+            if (event instanceof VFileDeleteEvent) {
               myProcessor.processBeforeFileDeletion((VFileDeleteEvent)event);
             }
             else if (event instanceof VFileMoveEvent) {
@@ -667,6 +671,11 @@ public abstract class VcsVFSListener implements Disposable {
             }
           }
         }
+
+        @Override
+        public void afterVfsChange() {
+          myEventsToProcess.addAll(afterEvents);
+        }
       };
     }
   }
@@ -676,7 +685,12 @@ public abstract class VcsVFSListener implements Disposable {
       public void commandFinished(@NotNull CommandEvent event) {
         if (myProject != event.getProject()) return;
 
-        myProcessor.process();
+        List<VFileEvent> events = ContainerUtil.copyList(myEventsToProcess);
+        myEventsToProcess.clear();
+
+        ProgressManager.getInstance()
+          .runProcessWithProgressSynchronously(() -> myProcessor.process(events),
+                                               "Version Control: Processing Changed Files", true, myProject);
       }
     }
 
