@@ -4,7 +4,6 @@ package git4idea.history;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
@@ -34,7 +33,6 @@ import git4idea.changes.GitChangeUtils;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
 import git4idea.repo.GitRepository;
-import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,17 +51,11 @@ import java.util.List;
  *
  * @author Kirill Likhodedov
  */
-public class GitDiffFromHistoryHandler extends BaseDiffFromHistoryHandler<GitFileRevision> {
-
+public final class GitDiffFromHistoryHandler extends BaseDiffFromHistoryHandler<GitFileRevision> {
   private static final Logger LOG = Logger.getInstance(GitDiffFromHistoryHandler.class);
-
-  @NotNull private final Git myGit;
-  @NotNull private final GitRepositoryManager myRepositoryManager;
 
   public GitDiffFromHistoryHandler(@NotNull Project project) {
     super(project);
-    myGit = ServiceManager.getService(project, Git.class);
-    myRepositoryManager = GitUtil.getRepositoryManager(project);
   }
 
   @Override
@@ -115,7 +107,7 @@ public class GitDiffFromHistoryHandler extends BaseDiffFromHistoryHandler<GitFil
 
   @NotNull
   private GitRepository getRepository(@NotNull FilePath path) {
-    GitRepository repository = myRepositoryManager.getRepositoryForFile(path);
+    GitRepository repository = GitUtil.getRepositoryManager(myProject).getRepositoryForFile(path);
     LOG.assertTrue(repository != null, "Repository is null for " + path);
     return repository;
   }
@@ -278,8 +270,8 @@ public class GitDiffFromHistoryHandler extends BaseDiffFromHistoryHandler<GitFil
     return new GitFileRevision(myProject, filePath, new GitRevisionNumber(hash));
   }
 
-  private boolean wasFileTouched(@NotNull GitRepository repository, @NotNull GitFileRevision rev) throws VcsException {
-    GitCommandResult result = myGit.show(repository, rev.getHash());
+  private static boolean wasFileTouched(@NotNull GitRepository repository, @NotNull GitFileRevision rev) throws VcsException {
+    GitCommandResult result = Git.getInstance().show(repository, rev.getHash());
     if (result.success()) {
       return isFilePresentInOutput(repository, rev.getPath(), result.getOutput());
     }
