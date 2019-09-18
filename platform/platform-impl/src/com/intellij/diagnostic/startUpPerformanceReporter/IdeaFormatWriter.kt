@@ -8,6 +8,7 @@ import com.intellij.diagnostic.ActivityImpl
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.icons.IconLoadMeasurer
 import com.intellij.util.containers.ObjectLongHashMap
 import com.intellij.util.io.jackson.array
@@ -43,6 +44,8 @@ internal class IdeaFormatWriter(private val activities: Map<String, MutableList<
         writer.writeStringField("build", ApplicationInfo.getInstance().build.asStringWithoutProductCode())
         writer.writeStringField("productCode", ApplicationInfo.getInstance().build.productCode)
         writer.writeStringField("generated", ZonedDateTime.now().format(DateTimeFormatter.RFC_1123_DATE_TIME))
+        writer.writeStringField("os", SystemInfo.getOsNameAndVersion())
+        writer.writeStringField("runtime", SystemInfo.JAVA_VENDOR + " " + SystemInfo.JAVA_VERSION + " " + SystemInfo.JAVA_RUNTIME_VERSION)
         writeServiceStats(writer)
         writeIcons(writer)
 
