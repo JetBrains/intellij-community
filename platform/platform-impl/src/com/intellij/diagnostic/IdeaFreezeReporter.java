@@ -33,14 +33,14 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
 
   IdeaFreezeReporter() {
     Application app = ApplicationManager.getApplication();
-    if (!app.isEAP() || PluginManagerCore.isRunningFromSources()) {
-      throw ExtensionNotApplicableException.INSTANCE;
-    }
+    //if (!app.isEAP() || PluginManagerCore.isRunningFromSources()) {
+    //  throw ExtensionNotApplicableException.INSTANCE;
+    //}
   }
 
   @Override
   public void uiFreezeStarted() {
-    if (!DebugAttachDetector.isAttached()) {
+    if (true) {
       if (myDumpTask != null) {
         myDumpTask.stop();
       }
@@ -169,6 +169,7 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
     boolean allInEdt = causeThreads.stream().allMatch(ThreadDumper::isEDT);
 
     CallTreeNode root = CallTreeNode.buildTree(causeThreads, time);
+    int classLoadingRatio = countClassLoading(causeThreads) * 100 / causeThreads.size();
     CallTreeNode commonStackNode = root.findDominantCommonStack(causeThreads.size() * time / 2);
     List<StackTraceElement> commonStack = commonStackNode != null ? commonStackNode.getStack() : null;
 
@@ -199,7 +200,7 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
       String message = "Freeze " + edtNote + "for " + lengthInSeconds + " seconds\n" +
                        "Sampled time: " + sampled + "ms, sampling rate: " + dumpTask.getDumpInterval() + "ms";
       if (sampled > 0) {
-        message += ", GC time: " + gcTime + "ms (" + gcTime * 100 / sampled + "%)";
+        message += ", GC time: " + gcTime + "ms (" + gcTime * 100 / sampled + "%), Class loading: " + classLoadingRatio + "%";
       }
       if (DebugAttachDetector.isDebugEnabled()) {
         message += ", debug agent: on";
@@ -210,6 +211,14 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
       return LogMessage.createEvent(new Freeze(commonStack), message, attachments);
     }
     return null;
+  }
+
+  private static int countClassLoading(List<ThreadInfo> causeThreads) {
+    return (int)causeThreads.stream().filter(t -> Arrays.stream(t.getStackTrace()).anyMatch(IdeaFreezeReporter::isClassLoading)).count();
+  }
+
+  private static boolean isClassLoading(StackTraceElement stackTraceElement) {
+    return "loadClass".equals(stackTraceElement.getMethodName()) && "java.lang.ClassLoader".equals(stackTraceElement.getClassName());
   }
 
   private static final class CallTreeNode {
