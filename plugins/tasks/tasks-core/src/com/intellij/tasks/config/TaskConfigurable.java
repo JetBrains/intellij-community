@@ -25,7 +25,6 @@ import com.intellij.tasks.impl.BaseRepositoryImpl;
 import com.intellij.tasks.impl.TaskManagerImpl;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.ExtendableEditorSupport;
-import com.intellij.ui.GuiUtils;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
 import com.intellij.util.ArrayUtilRt;
@@ -104,7 +103,8 @@ public class TaskConfigurable extends BindableConfigurable implements Searchable
   }
 
   private void enableCachePanel() {
-    GuiUtils.enableChildren(myCacheSettings, myUpdateCheckBox.isSelected());
+    myUpdateCount.setEnabled(myUpdateCheckBox.isSelected());
+    myUpdateInterval.setEnabled(myUpdateCheckBox.isSelected());
   }
 
   @Override
