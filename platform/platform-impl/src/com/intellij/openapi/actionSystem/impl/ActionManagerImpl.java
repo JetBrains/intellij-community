@@ -1155,8 +1155,11 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
         pluginActions.remove(actionId);
       }
       if (removeFromGroups) {
+        CustomActionsSchema customActionSchema = ApplicationManager.getApplication().getServiceIfCreated(CustomActionsSchema.class);
         for (String groupId : myId2GroupId.get(actionId)) {
-          CustomActionsSchema.getInstance().invalidateCustomizedActionGroup(groupId);
+          if (customActionSchema != null) {
+            customActionSchema.invalidateCustomizedActionGroup(groupId);
+          }
           DefaultActionGroup group = ObjectUtils.assertNotNull((DefaultActionGroup)getActionOrStub(groupId));
           group.remove(oldValue, actionId);
         }
