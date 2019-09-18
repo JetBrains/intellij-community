@@ -77,18 +77,25 @@ public class JCEFHtmlPanel implements Disposable {
         }
       }
     });
-    if (USE_SIZE_WORKAROUND) {
-      ourCefClient.addLoadHandler(new CefLoadHandlerAdapter() {
-        @Override
-        public void onLoadEnd(CefBrowser browser, CefFrame frame, int i) {
+    ourCefClient.addLoadHandler(new CefLoadHandlerAdapter() {
+      @Override
+      public void onLoadEnd(CefBrowser browser, CefFrame frame, int i) {
+        if (USE_SIZE_WORKAROUND) {
           JCEFHtmlPanel panel = ourCefBrowser2Panel.get(browser);
           if (panel != null && browser.getURL() != null && panel.isHtmlLoaded()) {
             browser.getUIComponent().setSize(panel.myPanelWrapper.getSize());
             panel.myPanelWrapper.revalidate();
           }
         }
-      });
-    }
+      }
+      @Override
+      public void onLoadingStateChange(CefBrowser browser, boolean isLoading, boolean canGoBack, boolean canGoForward) {
+        JCEFHtmlPanel panel = ourCefBrowser2Panel.get(browser);
+        if (panel != null) {
+          panel.onLoadingStateChange(browser, isLoading, canGoBack, canGoForward);
+        }
+      }
+    });
     ourCefClient.addFocusHandler(new CefFocusHandlerAdapter() {
       @Override
       public boolean onSetFocus(CefBrowser browser, FocusSource source) {
@@ -168,6 +175,9 @@ public class JCEFHtmlPanel implements Disposable {
   @Nullable
   protected URL getStyle(boolean isDarcula) {
     return null;
+  }
+
+  protected void onLoadingStateChange(CefBrowser browser, boolean isLoading, boolean canGoBack, boolean canGoForward) {
   }
 
   @Override
