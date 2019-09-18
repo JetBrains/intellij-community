@@ -9,7 +9,6 @@ import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.event.EditorMouseListener;
 import com.intellij.openapi.editor.event.EditorMouseMotionListener;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.TimerUtil;
 import org.jetbrains.annotations.NonNls;
@@ -24,7 +23,7 @@ import java.awt.event.ActionListener;
 /**
  * @author spleaner
  */
-public class ContextMenuImpl extends JPanel implements Disposable {
+public final class ContextMenuImpl extends JPanel implements Disposable {
   @NonNls
   public static final String ACTION_GROUP = "EditorContextBarMenu";
   private final JComponent myComponent;
@@ -215,7 +214,7 @@ public class ContextMenuImpl extends JPanel implements Disposable {
   }
 
   private JComponent createComponent() {
-    myActionToolbar = new ActionToolbarImpl(ActionPlaces.CONTEXT_TOOLBAR, myActionGroup, true, KeymapManagerEx.getInstanceEx());
+    myActionToolbar = new ActionToolbarImpl(ActionPlaces.CONTEXT_TOOLBAR, myActionGroup, true);
     myActionToolbar.setTargetComponent(myEditor.getContentComponent());
     myActionToolbar.setMinimumButtonSize(new Dimension(22, 22));
     myActionToolbar.setReservePlaceAutoPopupIcon(false);

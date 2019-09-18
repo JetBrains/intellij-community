@@ -133,7 +133,9 @@
 
     <applicationService serviceInterface="com.intellij.openapi.editor.EditorCopyPasteHelper"
                         serviceImplementation="com.intellij.openapi.editor.impl.EditorCopyPasteHelperImpl"/>
-    <applicationService serviceImplementation="com.intellij.openapi.actionSystem.ex.QuickListsManager" preload="true"/>
+
+    <applicationService serviceImplementation="com.intellij.openapi.actionSystem.ex.QuickListsManager"/>
+    <actionConfigurationCustomizer implementation="com.intellij.openapi.actionSystem.ex.QuickListsManager$QuickListActionCustomizer"/>
 
     <applicationService serviceImplementation="com.intellij.diagnostic.ErrorReportConfigurable"/>
     <applicationService serviceInterface="com.intellij.openapi.vfs.impl.http.RemoteFileManager"
