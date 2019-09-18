@@ -7,13 +7,11 @@ import com.intellij.psi.PsiElement;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
 import de.plushnikov.intellij.plugin.problem.LombokProblem;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
+import de.plushnikov.intellij.plugin.problem.ProblemEmptyBuilder;
 import de.plushnikov.intellij.plugin.processor.clazz.AbstractClassProcessor;
 import de.plushnikov.intellij.plugin.processor.handler.SuperBuilderHandler;
-import de.plushnikov.intellij.plugin.psi.LombokLightClassBuilder;
 import de.plushnikov.intellij.plugin.settings.ProjectSettings;
-import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
@@ -45,35 +43,31 @@ public abstract class AbstractSuperBuilderPreDefinedInnerClassProcessor extends 
     final Optional<PsiClass> parentClass = getSupportedParentClass(psiClass);
     final Optional<PsiAnnotation> psiAnnotation = parentClass.map(this::getSupportedAnnotation);
     if (psiAnnotation.isPresent()) {
-      return processAnnotation(parentClass.get(), psiAnnotation.get(), psiClass);
+      final PsiClass psiParentClass = parentClass.get();
+      final PsiAnnotation psiBuilderAnnotation = psiAnnotation.get();
+      // use parent class as source!
+      if (validate(psiBuilderAnnotation, psiParentClass, ProblemEmptyBuilder.getInstance())) {
+        return processAnnotation(psiParentClass, psiBuilderAnnotation, psiClass);
+      }
     }
     return Collections.emptyList();
-  }
-
-  private Optional<PsiClass> getSupportedParentClass(PsiClass psiClass) {
-    final PsiElement parentElement = psiClass.getParent();
-    if (parentElement instanceof PsiClass && !(parentElement instanceof LombokLightClassBuilder)) {
-      return Optional.of((PsiClass) parentElement);
-    }
-    return Optional.empty();
-  }
-
-  @Nullable
-  private PsiAnnotation getSupportedAnnotation(@NotNull PsiClass psiParentClass) {
-    return PsiAnnotationSearchUtil.findAnnotation(psiParentClass, getSupportedAnnotationClasses());
   }
 
   private List<? super PsiElement> processAnnotation(@NotNull PsiClass psiParentClass, @NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass) {
     // use parent class as source!
     final String builderBaseClassName = builderHandler.getBuilderClassName(psiParentClass);
-    final String builderImplClassName = builderHandler.getBuilderImplClassName(psiParentClass);
 
     List<? super PsiElement> result = new ArrayList<>();
     // apply only to inner BuilderClass
-    if (builderBaseClassName.equals(psiClass.getName())) {
+    final String psiClassName = psiClass.getName();
+    if (builderBaseClassName.equals(psiClassName)) {
       result.addAll(generatePsiElementsOfBaseBuilderClass(psiParentClass, psiAnnotation, psiClass));
-    } else if (builderImplClassName.equals(psiClass.getName())) {
-      result.addAll(generatePsiElementsOfImplBuilderClass(psiParentClass, psiAnnotation, psiClass));
+    } else {
+      // use parent class as source!
+      final String builderImplClassName = builderHandler.getBuilderImplClassName(psiParentClass);
+      if (builderImplClassName.equals(psiClassName)) {
+        result.addAll(generatePsiElementsOfImplBuilderClass(psiParentClass, psiAnnotation, psiClass));
+      }
     }
     return result;
   }
@@ -91,8 +85,7 @@ public abstract class AbstractSuperBuilderPreDefinedInnerClassProcessor extends 
 
   @Override
   protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
-    //do nothing
-    return true;
+    return builderHandler.validate(psiClass, psiAnnotation, builder);
   }
 
   @Override

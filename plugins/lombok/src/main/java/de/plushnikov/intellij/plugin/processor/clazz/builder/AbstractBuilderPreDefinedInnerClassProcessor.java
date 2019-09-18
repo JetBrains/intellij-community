@@ -8,9 +8,9 @@ import com.intellij.psi.PsiMethod;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
 import de.plushnikov.intellij.plugin.problem.LombokProblem;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
+import de.plushnikov.intellij.plugin.problem.ProblemEmptyBuilder;
 import de.plushnikov.intellij.plugin.processor.clazz.AbstractClassProcessor;
 import de.plushnikov.intellij.plugin.processor.handler.BuilderHandler;
-import de.plushnikov.intellij.plugin.psi.LombokLightClassBuilder;
 import de.plushnikov.intellij.plugin.settings.ProjectSettings;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 public abstract class AbstractBuilderPreDefinedInnerClassProcessor extends AbstractClassProcessor {
 
@@ -43,38 +44,39 @@ public abstract class AbstractBuilderPreDefinedInnerClassProcessor extends Abstr
   @NotNull
   @Override
   public List<? super PsiElement> process(@NotNull PsiClass psiClass) {
-    List<? super PsiElement> result = Collections.emptyList();
-
-    final PsiElement parentElement = psiClass.getParent();
-    if (parentElement instanceof PsiClass && !(parentElement instanceof LombokLightClassBuilder)) {
-      result = new ArrayList<>();
-
-      final PsiClass psiParentClass = (PsiClass) parentElement;
-      PsiAnnotation psiAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiParentClass, getSupportedAnnotationClasses());
-      if (null == psiAnnotation) {
-        final Collection<PsiMethod> psiMethods = PsiClassUtil.collectClassMethodsIntern(psiParentClass);
-        for (PsiMethod psiMethod : psiMethods) {
-          psiAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiMethod, getSupportedAnnotationClasses());
-          if (null != psiAnnotation) {
-            processAnnotation(psiParentClass, psiMethod, psiAnnotation, psiClass, result);
-          }
+    final Optional<PsiClass> parentClass = getSupportedParentClass(psiClass);
+    final Optional<PsiAnnotation> builderAnnotation = parentClass.map(this::getSupportedAnnotation);
+    if (builderAnnotation.isPresent()) {
+      final PsiClass psiParentClass = parentClass.get();
+      final PsiAnnotation psiBuilderAnnotation = builderAnnotation.get();
+      // use parent class as source!
+      if (validate(psiBuilderAnnotation, psiParentClass, ProblemEmptyBuilder.getInstance())) {
+        return processAnnotation(psiParentClass, null, psiBuilderAnnotation, psiClass);
+      }
+    } else if (parentClass.isPresent()) {
+      final PsiClass psiParentClass = parentClass.get();
+      final Collection<PsiMethod> psiMethods = PsiClassUtil.collectClassMethodsIntern(psiParentClass);
+      for (PsiMethod psiMethod : psiMethods) {
+        final PsiAnnotation psiBuilderAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiMethod, getSupportedAnnotationClasses());
+        if (null != psiBuilderAnnotation) {
+          return processAnnotation(psiParentClass, psiMethod, psiBuilderAnnotation, psiClass);
         }
-      } else {
-        processAnnotation(psiParentClass, null, psiAnnotation, psiClass, result);
       }
     }
-
-    return result;
+    return Collections.emptyList();
   }
 
-  private void processAnnotation(PsiClass psiParentClass, PsiMethod psiParentMethod, PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, List<? super PsiElement> result) {
+  private List<? super PsiElement> processAnnotation(@NotNull PsiClass psiParentClass, @Nullable PsiMethod psiParentMethod,
+                                                     @NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass) {
     // use parent class as source!
     final String builderClassName = builderHandler.getBuilderClassName(psiParentClass, psiAnnotation, psiParentMethod);
 
+    List<? super PsiElement> result = new ArrayList<>();
     // apply only to inner BuilderClass
     if (builderClassName.equals(psiClass.getName())) {
       result.addAll(generatePsiElements(psiParentClass, psiParentMethod, psiAnnotation, psiClass));
     }
+    return result;
   }
 
   protected abstract Collection<? extends PsiElement> generatePsiElements(@NotNull PsiClass psiParentClass, @Nullable PsiMethod psiParentMethod, @NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiBuilderClass);
@@ -88,8 +90,7 @@ public abstract class AbstractBuilderPreDefinedInnerClassProcessor extends Abstr
 
   @Override
   protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
-    //do nothing
-    return true;
+    return builderHandler.validate(psiClass, psiAnnotation, builder);
   }
 
   @Override
