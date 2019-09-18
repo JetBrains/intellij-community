@@ -77,7 +77,7 @@ public class ContentHashesUtil {
     }
   }
 
-  private static class ContentHashesDescriptor implements KeyDescriptor<byte[]>, DifferentSerializableBytesImplyNonEqualityPolicy {
+  public static class ContentHashesDescriptor implements KeyDescriptor<byte[]>, DifferentSerializableBytesImplyNonEqualityPolicy {
     @Override
     public void save(@NotNull DataOutput out, byte[] value) throws IOException {
       out.write(value);

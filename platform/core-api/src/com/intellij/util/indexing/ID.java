@@ -16,6 +16,7 @@
 
 package com.intellij.util.indexing;
 
+import com.google.common.hash.Hashing;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.IntObjectMap;
@@ -25,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 
 /**
  * @author Eugene Zhuravlev
@@ -34,90 +36,27 @@ public class ID<K, V> extends IndexId<K,V> {
   private static final TObjectIntHashMap<String> ourNameToIdRegistry = new TObjectIntHashMap<>();
   static final int MAX_NUMBER_OF_INDICES = Short.MAX_VALUE;
 
-  private final short myUniqueId;
-
-  static {
-    final File indices = getEnumFile();
-    try {
-      TObjectIntHashMap<String> nameToIdRegistry = new TObjectIntHashMap<>();
-      try (BufferedReader reader = new BufferedReader(new FileReader(indices))) {
-        for (int cnt = 1; ; cnt++) {
-          final String name = reader.readLine();
-          if (name == null) break;
-          nameToIdRegistry.put(name, cnt);
-        }
-      }
-
-      synchronized (ourNameToIdRegistry) {
-        ourNameToIdRegistry.ensureCapacity(nameToIdRegistry.size());
-        nameToIdRegistry.forEachEntry((name, index) -> {
-          ourNameToIdRegistry.put(name, index);
-          return true;
-        });
-      }
-    }
-    catch (IOException e) {
-      synchronized (ourNameToIdRegistry) {
-        ourNameToIdRegistry.clear();
-        writeEnumFile();
-      }
-    }
-  }
-
-  @NotNull
-  private static File getEnumFile() {
-    final File indexFolder = PathManager.getIndexRoot();
-    return new File(indexFolder, "indices.enum");
-  }
+  private final int myUniqueId;
 
   protected ID(@NotNull String name) {
     super(name);
     myUniqueId = stringToId(name);
 
     final ID old = ourRegistry.put(myUniqueId, this);
-    assert old == null : "ID with name '" + name + "' is already registered";
+    if (old != null) {
+      throw new AssertionError("ID with name '" + name + "' is already registered");
+    }
   }
 
-  private static short stringToId(@NotNull String name) {
+  private static int stringToId(@NotNull String name) {
     synchronized (ourNameToIdRegistry) {
       if (ourNameToIdRegistry.containsKey(name)) {
-        return (short)ourNameToIdRegistry.get(name);
+        return ourNameToIdRegistry.get(name);
       }
 
-      int n = ourNameToIdRegistry.size() + 1;
-      assert n <= MAX_NUMBER_OF_INDICES : "Number of indices exceeded: "+n;
-
-      ourNameToIdRegistry.put(name, n);
-      writeEnumFile();
-      return (short)n;
-    }
-  }
-
-  static void reinitializeDiskStorage() {
-    synchronized (ourNameToIdRegistry) {
-      writeEnumFile();
-    }
-  }
-
-  private static void writeEnumFile() {
-    try {
-      final File f = getEnumFile();
-      try (BufferedWriter w = new BufferedWriter(new FileWriter(f))) {
-        final String[] names = new String[ourNameToIdRegistry.size()];
-
-        ourNameToIdRegistry.forEachEntry((key, value) -> {
-          names[value - 1] = key;
-          return true;
-        });
-
-        for (String name : names) {
-          w.write(name);
-          w.newLine();
-        }
-      }
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
+      int uniqieId = Hashing.murmur3_32().hashString(name, StandardCharsets.UTF_8).asInt();
+      ourNameToIdRegistry.put(name, uniqieId);
+      return uniqieId;
     }
   }
 
@@ -130,6 +69,11 @@ public class ID<K, V> extends IndexId<K,V> {
   @Nullable
   public static <K, V> ID<K, V> findByName(@NotNull String name) {
     return (ID<K, V>)findById(stringToId(name));
+  }
+
+  @Nullable
+  public static <K, V> ID<K, V> findByHash(int hash) {
+    return (ID<K, V>)findById(hash);
   }
 
   @Override

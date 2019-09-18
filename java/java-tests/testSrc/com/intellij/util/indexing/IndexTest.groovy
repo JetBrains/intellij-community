@@ -16,11 +16,13 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.CurrentEditorProvider
 import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.fileTypes.StdFileTypes
+import com.intellij.openapi.fileTypes.UnknownFileType
 import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.roots.ContentIterator
+import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
@@ -1122,5 +1124,15 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     stamp = ((FileBasedIndexImpl)FileBasedIndex.instance).getIndexModificationStamp(StubUpdatingIndex.INDEX_ID, project)
     VfsUtil.saveText(vFile, "class Foo { void m() { int k = 0; } }")
     assertTrue(stamp == ((FileBasedIndexImpl)FileBasedIndex.instance).getIndexModificationStamp(StubUpdatingIndex.INDEX_ID, project))
+  }
+
+  void "test content-id hash"() {
+    def hash = ContentHashesSupport.calcContentHash("qwerty".getBytes(), UnknownFileType.INSTANCE)
+    def compositeHash = ContentHashesSupport.calcContentIdHash(hash, StubUpdatingIndex.INDEX_ID)
+    def pair = ContentHashesSupport.splitHashAndId(compositeHash)
+    assert pair.second == StubUpdatingIndex.INDEX_ID
+    for (int i = 0; i < 12; i++) {
+      assert pair.first[i] == hash[i]
+    }
   }
 }

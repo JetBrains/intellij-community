@@ -16,6 +16,7 @@
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.vfs.newvfs.persistent.ContentHashesUtil;
 import com.intellij.openapi.vfs.newvfs.persistent.FlushingDaemon;
@@ -31,7 +32,7 @@ import java.security.MessageDigest;
 /**
  * @author Maxim.Mossienko
  */
-class ContentHashesSupport {
+public class ContentHashesSupport {
   private static volatile ContentHashesUtil.HashEnumerator ourHashesWithFileType;
 
   static void initContentHashesEnumerator() throws IOException {
@@ -54,6 +55,37 @@ class ContentHashesSupport {
 
   static void flushContentHashes() {
     if (ourHashesWithFileType != null && ourHashesWithFileType.isDirty()) ourHashesWithFileType.force();
+  }
+
+  public static Pair<byte[], ID<?, ?>> splitHashAndId(@NotNull byte[] compositeHash) {
+    ID<Object, Object> indexId = ID.findByHash(fromByteArray(compositeHash));
+    if (indexId == null) return null;
+    byte[] hash = new byte[12];
+    System.arraycopy(compositeHash, 4, hash, 0, hash.length);
+    return Pair.create(hash, indexId);
+  }
+
+  public static byte[] calcContentIdHash(@NotNull byte[] contentHash, @NotNull ID<?, ?> indexID) {
+    byte[] result = new byte[16];
+    System.arraycopy(contentHash, 0, result, 4, 12);
+    byte[] bytes = toByteArray(indexID.getUniqueId());
+    System.arraycopy(bytes, 0, result, 0, 4);
+    return result;
+  }
+
+  private static int fromByteArray(byte[] bytes) {
+    return ((bytes[0] & 0xFF) << 24) |
+           ((bytes[1] & 0xFF) << 16) |
+           ((bytes[2] & 0xFF) << 8 ) |
+           ((bytes[3] & 0xFF) << 0 );
+  }
+
+  private static byte[] toByteArray(int value) {
+    return new byte[] {
+      (byte)(value >> 24),
+      (byte)(value >> 16),
+      (byte)(value >> 8),
+      (byte)value };
   }
 
   static byte[] calcContentHash(@NotNull byte[] bytes, @NotNull FileType fileType) {
