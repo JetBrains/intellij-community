@@ -43,7 +43,7 @@ class JetCacheService {
           LOG.error(u)
         }
         val keys = t!!
-        jetCache.get(keys = keys, onReceived = { jcKey, bytes ->
+        jetCache.get(keys = null!!, onReceived = { jcKey, bytes ->
           val hashAndId = ContentHashesSupport.splitHashAndId(jcKey.serialized)
           if (hashAndId != null) {
             val id = hashAndId.second

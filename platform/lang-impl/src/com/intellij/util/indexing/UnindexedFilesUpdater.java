@@ -53,8 +53,8 @@ public class UnindexedFilesUpdater extends DumbModeTask {
   private void updateUnindexedFiles(ProgressIndicator indicator) {
     if (!IndexInfrastructure.hasIndices()) return;
 
-    if (JetCacheService.IS_ENABLED) {
-      JetCacheService.getInstance().tryGetIndexes(myProject);
+    if (JetCacheService.Companion.getIS_ENABLED()) {
+      JetCacheService.Companion.getInstance().tryGetIndexes(myProject);
     }
 
     PerformanceWatcher.Snapshot snapshot = PerformanceWatcher.takeSnapshot();
