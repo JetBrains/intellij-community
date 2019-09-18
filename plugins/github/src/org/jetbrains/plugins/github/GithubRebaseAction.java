@@ -40,7 +40,7 @@ import java.util.List;
 import static git4idea.commands.GitLocalChangesWouldBeOverwrittenDetector.Operation.CHECKOUT;
 import static git4idea.fetch.GitFetchSupport.fetchSupport;
 
-public class GithubRebaseAction extends AbstractGithubUrlGroupingAction {
+public class GithubRebaseAction extends AbstractAuthenticatingGithubUrlGroupingAction {
   private static final Logger LOG = GithubUtil.LOG;
   private static final String CANNOT_PERFORM_GITHUB_REBASE = "Can't perform GitHub rebase";
   private static final String UPSTREAM_REMOTE = "upstream";

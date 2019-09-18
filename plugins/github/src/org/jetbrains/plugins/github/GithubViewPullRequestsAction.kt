@@ -12,7 +12,8 @@ import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.pullrequest.GHPRToolWindowManager
 import org.jetbrains.plugins.github.util.GitRemoteUrlCoordinates
 
-class GithubViewPullRequestsAction : AbstractGithubUrlGroupingAction("View Pull Requests", null, AllIcons.Vcs.Vendors.Github) {
+class GithubViewPullRequestsAction :
+  AbstractAuthenticatingGithubUrlGroupingAction("View Pull Requests", null, AllIcons.Vcs.Vendors.Github) {
 
   override fun actionPerformed(e: AnActionEvent,
                                project: Project,
