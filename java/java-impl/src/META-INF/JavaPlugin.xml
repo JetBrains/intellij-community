@@ -1952,6 +1952,8 @@
     <codeInsight.inlayProvider language="JAVA" implementationClass="com.intellij.codeInsight.daemon.impl.JavaLensProvider"/>
 
     <fileBasedIndex.providedLocator implementation="com.intellij.index.BasicProvidedExtensionLocator"/>
+
+    <commandLineInspectionProjectConfigurator implementation="com.intellij.codeInspection.JavaCommandLineInspectionProjectConfigurator"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">
