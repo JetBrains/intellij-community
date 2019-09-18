@@ -40,7 +40,7 @@ public class ProjectTaskContext extends UserDataHolderBase {
   private final RunConfiguration myRunConfiguration;
   private final boolean myAutoRun;
   private final MultiMap<String, String> myGeneratedFiles;
-  private final List<Supplier<List<String>>> myDirtyOutputPaths;
+  private final List<Supplier<? extends Collection<String>>> myDirtyOutputPaths;
   private volatile boolean myCollectGeneratedFiles;
 
   public ProjectTaskContext() {
@@ -87,6 +87,11 @@ public class ProjectTaskContext extends UserDataHolderBase {
   @ApiStatus.Experimental
   public void enableCollectionOfGeneratedFiles() {
     myCollectGeneratedFiles = true;
+  }
+
+  @ApiStatus.Experimental
+  public boolean isCollectionOfGeneratedFilesEnabled() {
+    return myCollectGeneratedFiles;
   }
 
   /**
@@ -138,7 +143,7 @@ public class ProjectTaskContext extends UserDataHolderBase {
    * The method should be used ONLY if the {@link ProjectTaskRunner} doesn't support {@link #fileGenerated} events.
    */
   @ApiStatus.Experimental
-  public void addDirtyOutputPathsProvider(@NotNull Supplier<List<String>> outputPathsProvider) {
+  public void addDirtyOutputPathsProvider(@NotNull Supplier<? extends Collection<String>> outputPathsProvider) {
     if (myCollectGeneratedFiles) {
       myDirtyOutputPaths.add(outputPathsProvider);
     }
