@@ -16,11 +16,13 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.xmlb.JDOMXIncluder;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -33,10 +35,16 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.Assert.*;
 
 public class PluginManagerTest {
+
+  private static String getTestDataPath() {
+    return PathManagerEx.getTestDataPath() + "/ide/plugins/sort";
+  }
+
   @Test
   public void compatibilityBranchBased() {
     assertCompatible("145.2", null, null);
@@ -125,38 +133,6 @@ public class PluginManagerTest {
   @Test
   public void testUltimatePlugins() throws Exception {
     doPluginSortTest("ultimatePlugins");
-    /*
-StringBuilder sb = new StringBuilder("<root>");
-for (IdeaPluginDescriptorImpl d : descriptors) {
-  sb.append("\n  <idea-plugin url=\"file://out/" + d.getPath().getName() + "/META-INF/plugin.xml\">");
-  sb.append("\n    <id>" + d.getPluginId() + "</id>");
-  sb.append("\n    <name>" + StringUtil.escapeXmlEntities(d.getName()) + "</name>");
-  for (String module : d.getModules()) {
-    sb.append("\n    <module value=\"" + module + "\"/>");
-  }
-  PluginId[] optIds = d.getOptionalDependentPluginIds();
-  Map<PluginId, List<IdeaPluginDescriptorImpl>> optMap = d.getOptionalDescriptors();
-  for (PluginId depId : d.getDependentPluginIds()) {
-    if (ArrayUtil.indexOf(optIds, depId) == -1) {
-      sb.append("\n    <depends>" + depId + "</depends>");
-    }
-    else {
-      List<IdeaPluginDescriptorImpl> opt = optMap != null ? optMap.get(depId) : null;
-      if (opt == null || opt.isEmpty()) {
-        sb.append("\n    <depends optional=\"true\" config-file=\"???\">" + depId + "</depends>");
-      }
-      else {
-        for (IdeaPluginDescriptorImpl dd : opt) {
-          sb.append("\n    <depends optional=\"true\" config-file=\"" + dd.getPath().getName() + "\">" + depId + "</depends>");
-        }
-      }
-    }
-  }
-  sb.append("\n  </idea-plugin>");
-}
-sb.append("\n</root>");
-sb.toString()
-     */
   }
 
   private static void doPluginSortTest(@NotNull String testDataName) throws IOException, JDOMException {
@@ -199,7 +175,38 @@ sb.toString()
     return result;
   }
 
-  private static String getTestDataPath() {
-    return PathManagerEx.getTestDataPath() + "/ide/plugins/sort";
+  /** @noinspection unused */
+  private static String dumpDescriptors(@NotNull IdeaPluginDescriptorImpl[] descriptors) {
+    StringBuilder sb = new StringBuilder("<root>");
+    for (IdeaPluginDescriptorImpl d : descriptors) {
+      sb.append("\n  <idea-plugin url=\"file://out/").append(d.getPath().getName()).append("/META-INF/plugin.xml\">");
+      sb.append("\n    <id>").append(d.getPluginId()).append("</id>");
+      sb.append("\n    <name>").append(StringUtil.escapeXmlEntities(d.getName())).append("</name>");
+      for (String module : d.getModules()) {
+        sb.append("\n    <module value=\"").append(module).append("\"/>");
+      }
+      PluginId[] optIds = d.getOptionalDependentPluginIds();
+      Map<PluginId, List<IdeaPluginDescriptorImpl>> optMap = d.getOptionalDescriptors();
+      for (PluginId depId : d.getDependentPluginIds()) {
+        if (ArrayUtil.indexOf(optIds, depId) == -1) {
+          sb.append("\n    <depends>").append(depId).append("</depends>");
+        }
+        else {
+          List<IdeaPluginDescriptorImpl> opt = optMap != null ? optMap.get(depId) : null;
+          if (opt == null || opt.isEmpty()) {
+            sb.append("\n    <depends optional=\"true\" config-file=\"???\">").append(depId).append("</depends>");
+          }
+          else {
+            for (IdeaPluginDescriptorImpl dd : opt) {
+              sb.append("\n    <depends optional=\"true\" config-file=\"")
+                .append(dd.getPath().getName()).append("\">").append(depId).append("</depends>");
+            }
+          }
+        }
+      }
+      sb.append("\n  </idea-plugin>");
+    }
+    sb.append("\n</root>");
+    return sb.toString();
   }
 }

@@ -980,7 +980,7 @@ public class PluginManagerCore {
   }
 
   private static void prepareLoadingPluginsErrorMessage(@NotNull Map<PluginId, String> disabledIds,
-                                                        @NotNull Set<PluginId> faultyIds,
+                                                        @NotNull Set<PluginId> disabledRequiredIds,
                                                         @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idMap,
                                                         @NotNull List<String> errors) {
     List<String> actions = new ArrayList<>();
@@ -994,9 +994,9 @@ public class PluginManagerCore {
         text += "not loaded plugins";
       }
       actions.add(text + "</a>");
-      boolean possibleToEnable = JBIterable.from(faultyIds).find(o -> !disabledIds.containsKey(o)) == null;
-      if (possibleToEnable) {
-        String name = faultyIds.size() == 1 ? disabledIds.get(faultyIds.iterator().next()) : " all necessary plugins";
+      boolean disabledRequired = JBIterable.from(disabledRequiredIds).find(o -> !disabledIds.containsKey(o)) == null;
+      if (disabledRequired) {
+        String name = disabledRequiredIds.size() == 1 ? disabledIds.get(disabledRequiredIds.iterator().next()) : " all necessary plugins";
         actions.add("<a href=\"" + ENABLE + "\">Enable " + name + "</a>");
       }
       actions.add("<a href=\"" + EDIT + "\">Open plugin manager</a>");
@@ -1355,7 +1355,7 @@ public class PluginManagerCore {
     PluginId coreId = PluginId.getId(CORE_PLUGIN_ID);
 
     Map<PluginId, String> disabledIds = new LinkedHashMap<>();
-    Set<PluginId> faultyIds = new LinkedHashSet<>();
+    Set<PluginId> disabledRequiredIds = new LinkedHashSet<>();
     Set<PluginId> brokenIds = new LinkedHashSet<>();
     Set<PluginId> enabledIds = new LinkedHashSet<>();
 
@@ -1371,7 +1371,7 @@ public class PluginManagerCore {
 
     for (IdeaPluginDescriptorImpl descriptor : sortedRequired.filterMap(idMap::get).unique()) {
       boolean wasEnabled = descriptor.isEnabled();
-      if (wasEnabled && computePluginEnabled(descriptor, enabledIds, idMap, faultyIds, errors)) {
+      if (wasEnabled && computePluginEnabled(descriptor, enabledIds, idMap, disabledRequiredIds, errors)) {
         enabledIds.add(descriptor.getPluginId());
         for (String module : descriptor.getModules()) {
           enabledIds.add(PluginId.getId(module));
@@ -1405,7 +1405,7 @@ public class PluginManagerCore {
       .filter(IdeaPluginDescriptorImpl::isEnabled)
       .addAllTo(new ArrayList<>());
 
-    prepareLoadingPluginsErrorMessage(disabledIds, faultyIds, idMap, errors);
+    prepareLoadingPluginsErrorMessage(disabledIds, disabledRequiredIds, idMap, errors);
 
     fixDependencies(enabledPlugins, idMap);
     for (IdeaPluginDescriptorImpl pluginDescriptor : enabledPlugins) {
@@ -1419,7 +1419,7 @@ public class PluginManagerCore {
     if (disabledAndPossibleToEnableConsumer != null) {
       disabledAndPossibleToEnableConsumer.consume(
         JBIterable.from(disabledIds.keySet()).map(PluginId::getIdString).toSet(),
-        JBIterable.from(faultyIds).map(PluginId::getIdString).toSet());
+        JBIterable.from(disabledRequiredIds).map(PluginId::getIdString).toSet());
     }
     return allPlugins.toArray(IdeaPluginDescriptorImpl.EMPTY_ARRAY);
   }
@@ -1463,7 +1463,7 @@ public class PluginManagerCore {
   private static boolean computePluginEnabled(@NotNull IdeaPluginDescriptorImpl descriptor,
                                               @NotNull Set<PluginId> loadedIds,
                                               @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idMap,
-                                              @NotNull Set<PluginId> faultyIds,
+                                              @NotNull Set<PluginId> disabledRequiredIds,
                                               @NotNull List<String> errors) {
     if (descriptor.getPluginId().getIdString().equals(CORE_PLUGIN_ID)) return true;
     boolean result = true;
@@ -1476,7 +1476,7 @@ public class PluginManagerCore {
       if (descriptor.isImplementationDetail()) continue;
       IdeaPluginDescriptorImpl dep = idMap.get(depId);
       if (dep != null) {
-        faultyIds.add(dep.getPluginId());
+        disabledRequiredIds.add(dep.getPluginId());
       }
       String name = descriptor.getName();
       String depName = dep == null ? null : dep.getName();
