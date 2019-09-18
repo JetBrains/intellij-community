@@ -19,12 +19,16 @@ public class JetCacheLocalStorage<K, V> implements KeyValueStore<byte[], ByteArr
   private final File myFile;
 
   public JetCacheLocalStorage(FileBasedIndexExtension<K, V> extension) {
-    myFile = new File(IndexInfrastructure.getIndexRootDir(extension.getName()), ".jetcache");
+    this(new File(IndexInfrastructure.getIndexRootDir(extension.getName()), ".jetcache"));
+  }
+
+  protected JetCacheLocalStorage(File file) {
+    myFile = file;
 
     PersistentHashMap<byte[], ByteArraySequence> map = null;
     for (int i = 0; i < 10; i++) {
       try {
-        map = new PersistentHashMap<>(myFile, new ContentHashesUtil.ContentHashesDescriptor(), ByteSequenceDataExternalizer.INSTANCE);
+        map = new PersistentHashMap<>(myFile, new ContentHashesUtil.ContentHashesDescriptor(16), ByteSequenceDataExternalizer.INSTANCE);
       } catch (IOException e) {
         LOG.error(e);
       }

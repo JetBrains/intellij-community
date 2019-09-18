@@ -40,7 +40,7 @@ public class ContentHashesUtil {
     }
 
     public HashEnumerator(@NotNull File contentsHashesFile, @Nullable PagedFileStorage.StorageLockContext storageLockContext) throws IOException {
-      super(contentsHashesFile, new ContentHashesDescriptor(), 64 * 1024, storageLockContext);
+      super(contentsHashesFile, new ContentHashesDescriptor(SIGNATURE_LENGTH), 64 * 1024, storageLockContext);
     }
 
     @Override
@@ -78,6 +78,10 @@ public class ContentHashesUtil {
   }
 
   public static class ContentHashesDescriptor implements KeyDescriptor<byte[]>, DifferentSerializableBytesImplyNonEqualityPolicy {
+    private final int myHashLength;
+
+    public ContentHashesDescriptor(int hashLength) {myHashLength = hashLength;}
+
     @Override
     public void save(@NotNull DataOutput out, byte[] value) throws IOException {
       out.write(value);
@@ -85,7 +89,7 @@ public class ContentHashesUtil {
 
     @Override
     public byte[] read(@NotNull DataInput in) throws IOException {
-      byte[] b = new byte[SIGNATURE_LENGTH];
+      byte[] b = new byte[myHashLength];
       in.readFully(b);
       return b;
     }
