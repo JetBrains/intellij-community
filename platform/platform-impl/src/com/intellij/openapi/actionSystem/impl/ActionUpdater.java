@@ -59,6 +59,8 @@ class ActionUpdater {
   private final UpdateStrategy myRealUpdateStrategy;
   private final UpdateStrategy myCheapStrategy;
 
+  private boolean myAllowPartialExpand = true;
+
   ActionUpdater(boolean isInModalContext,
                 PresentationFactory presentationFactory,
                 DataContext dataContext,
@@ -136,6 +138,21 @@ class ActionUpdater {
     }
   }
 
+  /**
+   * @return actions from the given and nested non-popup groups that are visible after updating
+   * don't check progress.isCanceled (to obtain full list of actions)
+   */
+  List<AnAction> expandActionGroupFull(ActionGroup group, boolean hideDisabled) {
+    try {
+      myAllowPartialExpand = false;
+      return expandActionGroup(group, hideDisabled, myRealUpdateStrategy);
+    }
+    finally {
+      myAllowPartialExpand = true;
+      applyPresentationChanges();
+    }
+  }
+
   private List<AnAction> expandActionGroup(ActionGroup group, boolean hideDisabled, UpdateStrategy strategy) {
     return removeUnnecessarySeparators(doExpandActionGroup(group, hideDisabled, strategy));
   }
@@ -206,7 +223,8 @@ class ActionUpdater {
     if (group instanceof ActionGroupStub) {
       throw new IllegalStateException("Trying to expand non-unstubbed group");
     }
-    ProgressManager.checkCanceled();
+    if (myAllowPartialExpand)
+      ProgressManager.checkCanceled();
     Presentation presentation = update(group, strategy);
     if (presentation == null || !presentation.isVisible()) { // don't process invisible groups
       return Collections.emptyList();
