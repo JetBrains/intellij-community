@@ -2301,7 +2301,7 @@ public class AllIcons {
     /** 16x16 */ public static final Icon TabAlert = load("/nodes/tabAlert.svg");
     /** 16x16 */ public static final Icon TabPin = load("/nodes/tabPin.svg");
     /** 16x16 */ public static final Icon Tag = load("/nodes/tag.svg");
-    /** 13x13 */ public static final Icon Target = load("/nodes/target.svg");
+    /** 16x16 */ public static final Icon Target = load("/nodes/target.svg");
     /** 16x16 */ public static final Icon Test = load("/nodes/test.svg");
     /** 16x16 */ public static final Icon TestGroup = load("/nodes/testGroup.svg");
     /** 16x16 */ public static final Icon TestIgnored = load("/nodes/testIgnored.svg");
