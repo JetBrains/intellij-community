@@ -77,7 +77,7 @@ public final class GitDiffFromHistoryHandler extends BaseDiffFromHistoryHandler<
   @Override
   protected List<Change> getChangesBetweenRevisions(@NotNull FilePath path, @NotNull GitFileRevision rev1, @Nullable GitFileRevision rev2)
     throws VcsException {
-    GitRepository repository = getRepository(path);
+    GitRepository repository = GitUtil.getRepositoryForFile(myProject, path);
     String hash1 = rev1.getHash();
 
     if (rev2 == null) {
@@ -93,7 +93,7 @@ public final class GitDiffFromHistoryHandler extends BaseDiffFromHistoryHandler<
   @NotNull
   @Override
   protected List<Change> getAffectedChanges(@NotNull FilePath path, @NotNull GitFileRevision rev) throws VcsException {
-    GitRepository repository = getRepository(path);
+    GitRepository repository = GitUtil.getRepositoryForFile(myProject, path);
 
     return new ArrayList<>(
       GitChangeUtils.getRevisionChanges(repository.getProject(), repository.getRoot(), rev.getHash(), false, true, true).getChanges());
@@ -103,13 +103,6 @@ public final class GitDiffFromHistoryHandler extends BaseDiffFromHistoryHandler<
   @Override
   protected String getPresentableName(@NotNull GitFileRevision revision) {
     return DvcsUtil.getShortHash(revision.getHash());
-  }
-
-  @NotNull
-  private GitRepository getRepository(@NotNull FilePath path) {
-    GitRepository repository = GitUtil.getRepositoryManager(myProject).getRepositoryForFile(path);
-    LOG.assertTrue(repository != null, "Repository is null for " + path);
-    return repository;
   }
 
   private void showDiffForMergeCommit(@NotNull final AnActionEvent event, @NotNull final FilePath filePath,
@@ -155,7 +148,7 @@ public final class GitDiffFromHistoryHandler extends BaseDiffFromHistoryHandler<
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {
-          GitRepository repository = getRepository(filePath);
+          GitRepository repository = GitUtil.getRepositoryForFile(GitDiffFromHistoryHandler.this.myProject, filePath);
           boolean fileTouched = wasFileTouched(repository, rev);
           Collection<GitFileRevision> parents = findParentRevisions(repository, rev, parentHashes, revisions);
           myInfo = new MergeCommitPreCheckInfo(fileTouched, parents);
