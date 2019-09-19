@@ -536,6 +536,10 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     TreeUtil.expandAll(this);
   }
 
+  @NotNull
+  public TreeExpander getTreeExpander() {
+    return myTreeExpander;
+  }
 
   public void setTreeExpander(@NotNull TreeExpander expander) {
     myTreeExpander = expander;

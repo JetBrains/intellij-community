@@ -4,7 +4,6 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
-import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.TreeExpander;
 import com.intellij.ide.dnd.DnDEvent;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
@@ -33,10 +32,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.ProblemListener;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.JBColor;
-import com.intellij.ui.SideBorder;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.content.Content;
-import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
@@ -56,17 +53,18 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
-import java.util.*;
+import java.util.Set;
 import java.util.function.Function;
 
 import static com.intellij.openapi.actionSystem.EmptyAction.registerWithShortcutSet;
 import static com.intellij.openapi.vcs.changes.ui.ChangesTree.DEFAULT_GROUPING_KEYS;
 import static com.intellij.openapi.vcs.changes.ui.ChangesTree.GROUP_BY_ACTION_GROUP;
-import static com.intellij.ui.IdeBorderFactory.createBorder;
-import static com.intellij.ui.ScrollPaneFactory.createScrollPane;
 import static com.intellij.util.containers.ContainerUtil.set;
 import static com.intellij.util.ui.JBUI.Panels.simplePanel;
+import static java.util.Arrays.asList;
 
 @State(
   name = "ChangesViewManager",
@@ -256,8 +254,8 @@ public class ChangesViewManager implements ChangesViewEx,
     @NotNull private final ChangesViewManager myChangesViewManager;
     @NotNull private final VcsConfiguration myVcsConfiguration;
 
+    @NotNull private final ChangesViewPanel myChangesPanel;
     @NotNull private final ChangesListView myView;
-    @NotNull private final List<AnAction> myToolbarActions;
 
     @NotNull private final ChangesViewCommitPanelSplitter myCommitPanelSplitter;
     @NotNull private final PreviewDiffSplitterComponent myDiffPreviewSplitter;
@@ -281,9 +279,8 @@ public class ChangesViewManager implements ChangesViewEx,
       myVcsConfiguration = VcsConfiguration.getInstance(myProject);
       myTreeUpdateAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
 
-      myView = new ChangesListView(project, false);
-      TreeExpander treeExpander = new MyTreeExpander(myView);
-      myView.setTreeExpander(treeExpander);
+      myChangesPanel = new ChangesViewPanel(project);
+      myView = myChangesPanel.getChangesView();
       myView.installPopupHandler((DefaultActionGroup)ActionManager.getInstance().getAction("ChangesViewPopupMenu"));
       myView.getGroupingSupport().setGroupingKeysOrSkip(myChangesViewManager.myState.groupingKeys);
       myView.addTreeSelectionListener(e -> {
@@ -296,31 +293,29 @@ public class ChangesViewManager implements ChangesViewEx,
       });
       ChangesDnDSupport.install(myProject, myView);
 
-      myToolbarActions = createChangesToolbarActions(treeExpander);
+      myChangesPanel.getToolbarActionGroup().addAll(createChangesToolbarActions(myView.getTreeExpander()));
+      myChangesPanel.setToolbarHorizontal(isToolbarHorizontalSetting.asBoolean());
       registerShortcuts(this);
 
       isToolbarHorizontalSetting.addListener(new RegistryValueListener.Adapter() {
         @Override
         public void afterValueChanged(@NotNull RegistryValue value) {
-          if (myCommitPanel != null) myCommitPanel.setToolbarHorizontal(value.asBoolean());
+          boolean isToolbarHorizontal = value.asBoolean();
+
+          myChangesPanel.setToolbarHorizontal(isToolbarHorizontal);
+          if (myCommitPanel != null) myCommitPanel.setToolbarHorizontal(isToolbarHorizontal);
         }
       }, this);
 
-      ActionToolbar changesToolbar = ActionManager.getInstance()
-        .createActionToolbar(ActionPlaces.CHANGES_VIEW_TOOLBAR, new DefaultActionGroup(myToolbarActions), false);
-      changesToolbar.setTargetComponent(myView);
-      JComponent toolbarComponent = simplePanel(changesToolbar.getComponent())
-        .withBorder(createBorder(JBColor.border(), SideBorder.RIGHT));
-
-      BorderLayoutPanel changesPanel = simplePanel(createScrollPane(myView)).addToLeft(toolbarComponent);
-
       myCommitPanelSplitter = new ChangesViewCommitPanelSplitter();
-      myCommitPanelSplitter.setFirstComponent(changesPanel);
+      myCommitPanelSplitter.setFirstComponent(myChangesPanel);
 
       BorderLayoutPanel contentPanel = new BorderLayoutPanel() {
         @Override
         public Dimension getMinimumSize() {
-          return isMinimumSizeSet() ? super.getMinimumSize() : toolbarComponent.getPreferredSize();
+          return isMinimumSizeSet() || myChangesPanel.isToolbarHorizontal()
+                 ? super.getMinimumSize()
+                 : myChangesPanel.getToolbar().getComponent().getPreferredSize();
         }
       };
       contentPanel.addToCenter(myCommitPanelSplitter);
@@ -402,7 +397,7 @@ public class ChangesViewManager implements ChangesViewEx,
     @NotNull
     @Override
     public List<AnAction> getActions(boolean originalProvider) {
-      return Collections.unmodifiableList(myToolbarActions);
+      return asList(myChangesPanel.getToolbarActionGroup().getChildren(null));
     }
 
     @Nullable
@@ -601,22 +596,6 @@ public class ChangesViewManager implements ChangesViewEx,
         }
       }
     }
-
-    private static class MyTreeExpander extends DefaultTreeExpander {
-      @NotNull private final Tree myTree;
-
-      MyTreeExpander(@NotNull Tree tree) {
-        super(tree);
-        myTree = tree;
-      }
-
-      @Override
-      public void collapseAll() {
-        TreeUtil.collapseAll(myTree, 2);
-        TreeUtil.expand(myTree, 1);
-      }
-    }
-
 
     private class ToggleShowIgnoredAction extends ToggleAction implements DumbAware {
       ToggleShowIgnoredAction() {
