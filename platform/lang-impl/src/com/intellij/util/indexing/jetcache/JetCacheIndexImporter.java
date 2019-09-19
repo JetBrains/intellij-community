@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.Map;
 
 public class JetCacheIndexImporter implements IndexImporterFactory {
   @Nullable
@@ -21,7 +22,31 @@ public class JetCacheIndexImporter implements IndexImporterFactory {
     JetCacheService jetCacheService = JetCacheService.Companion.getInstance();
     JetCacheLocalStorage<Key, Value> storage = jetCacheService.getStorage(((FileBasedIndexExtension<Key, Value>)extension).getName());
     if (storage == null) return null;
-    return new SnapshotInputMappingIndex<Key, Value, Input>() {
+    return new UpdatableSnapshotInputMappingIndex<Key, Value, Input>() {
+      @NotNull
+      @Override
+      public Map<Key, Value> readData(int hashId) throws IOException {
+        throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public InputData<Key, Value> putData(@NotNull Input content, @NotNull InputData<Key, Value> data) throws IOException {
+        byte[] mixedHash = ContentHashesSupport
+          .calcContentIdHash(calculateHash((FileContent)content), ((FileBasedIndexExtension<Key, Value>)extension).getName());
+        jetCacheService.getJetCache().put(mixedHash, AbstractForwardIndexAccessor.serializeToByteSeq(data.getKeyValues(), myMapExternalizer, 8).toBytes());
+        return null;
+      }
+
+      @Override
+      public void flush() throws IOException {
+
+      }
+
+      @Override
+      public void clear() throws IOException {
+
+      }
+
       private final InputMapExternalizer<Key, Value> myMapExternalizer = new InputMapExternalizer<>(extension);
 
       @Nullable

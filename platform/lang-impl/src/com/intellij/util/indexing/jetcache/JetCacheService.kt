@@ -9,17 +9,14 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.ByteArraySequence
 import com.intellij.util.indexing.*
 import com.intellij.util.indexing.jetcache.local.IntellijLocalJetCache
-import com.jetbrains.jetcache.model.JetCacheModel
-import org.jetbrains.jetcache.JcHash
-//import org.jetbrains.jetcache.JcKey
-//import org.jetbrains.jetcache.JcValue
 import org.jetbrains.jetcache.JetCache
 import java.io.File
 
 import java.util.concurrent.ConcurrentHashMap
-import java.util.function.BiConsumer
 
 class JetCacheService: Disposable {
+  val jetCache: JetCache? = IntellijLocalJetCache()
+
   override fun dispose() {
     groupIdMap?.close()
   }
@@ -41,6 +38,7 @@ class JetCacheService: Disposable {
     Disposer.register(FileBasedIndex.getInstance() as FileBasedIndexImpl, this)
   }
 
+
   fun tryGetIndexes(project: Project) {
     if (!IS_ENABLED) {
       LOG.error("JetCache service is disabled")
@@ -48,7 +46,6 @@ class JetCacheService: Disposable {
     val hash = ProjectStateHashGenerator.generateHashFor(project)
 
     //TODO use remote implementation
-    val jetCache: JetCache? = IntellijLocalJetCache()
     jetCache?.getMultiple(hash)?.whenComplete { keys, u ->
       if (u == null) {
         jetCache.get(keys, { key, value ->
