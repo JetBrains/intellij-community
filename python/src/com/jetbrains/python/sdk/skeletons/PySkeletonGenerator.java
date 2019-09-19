@@ -6,7 +6,8 @@ import com.google.gson.*;
 import com.google.gson.annotations.SerializedName;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.process.*;
+import com.intellij.execution.process.CapturingProcessHandler;
+import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -25,14 +26,10 @@ import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.flavors.IronPythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.*;
-
-import static com.jetbrains.python.sdk.skeleton.PySkeletonHeader.fromVersionString;
 import java.util.*;
 
 /**
@@ -88,9 +85,6 @@ import java.util.*;
 public class PySkeletonGenerator {
   protected static final Logger LOG = Logger.getInstance(PySkeletonGenerator.class);
   protected static final String GENERATOR3 = "generator3/__main__.py";
-
-  @NonNls public static final String BUILTIN_NAME = "(built-in)"; // version required for built-ins
-  @NonNls public static final String PREGENERATED = "(pre-generated)"; // pre-generated skeleton
 
   // Some flavors need current folder to be passed as param. Here are they.
   private static final Map<Class<? extends PythonSdkFlavor>, String> ENV_PATH_PARAM =
@@ -422,23 +416,5 @@ public class PySkeletonGenerator {
     public boolean isBuiltin() {
       return myModuleOrigin.equals("(built-in)");
     }
-  }
-
-  /**
-   * Transforms a string like "1.2" into an integer representing it.
-   * @param input
-   * @return an int representing the version: major number shifted 8 bit and minor number added. or 0 if version can't be parsed.
-   */
-  public static int fromVersionString(final String input) {
-    int dot_pos = input.indexOf('.');
-    try {
-      if (dot_pos > 0) {
-        int major = Integer.parseInt(input.substring(0, dot_pos));
-        int minor = Integer.parseInt(input.substring(dot_pos+1));
-        return (major << 8) + minor;
-      }
-    }
-    catch (NumberFormatException ignore) { }
-    return 0;
   }
 }
