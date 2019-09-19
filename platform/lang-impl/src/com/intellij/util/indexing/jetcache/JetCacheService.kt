@@ -5,7 +5,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.ByteArraySequence
 import com.intellij.util.indexing.*
 import com.intellij.util.indexing.jetcache.local.IntellijLocalJetCache
@@ -48,7 +47,7 @@ class JetCacheService: Disposable {
       } else {
         val client = Client(InetAddress.getByName("172.30.163.59"), 8888)
         spinUntil { client.connected.value }
-        val networkJetCache = NetworkJetCache(client.lifetime, client.model)
+        val networkJetCache = NetworkJetCache(client.lifetime, client.model, client.scheduler)
         jetCache = networkJetCache
       }
     } else {
@@ -72,14 +71,14 @@ class JetCacheService: Disposable {
     //TODO use remote implementation
     jetCache?.getMultiple(hash)?.whenComplete { keys, u ->
       if (u == null) {
-        jetCache.get(keys, { key, value ->
+        jetCache.get(keys) { key, value ->
           val hashAndId = ContentHashesSupport.splitHashAndId(key)
           if (hashAndId != null) {
             val id = hashAndId.second
             val contentHash = hashAndId.first
             getStorage(id)?.put(contentHash, ByteArraySequence(value))
           }
-        })
+        }
       } else {
         LOG.error(u)
       }

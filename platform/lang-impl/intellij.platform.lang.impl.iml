@@ -39,9 +39,9 @@
     <orderEntry type="module" module-name="intellij.platform.serviceContainer" />
     <orderEntry type="module-library">
       <library name="jetcache-api" type="repository">
-        <properties maven-id="com.jetbrains:jetcache:36" />
+        <properties maven-id="com.jetbrains:jetcache:43" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/jetcache/36/jetcache-36.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/jetcache/43/jetcache-43.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/commons-net/commons-net/3.6/commons-net-3.6.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-core/0.193.5/rd-core-0.193.5.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-core-common/0.193.5/rd-core-common-0.193.5.jar!/" />

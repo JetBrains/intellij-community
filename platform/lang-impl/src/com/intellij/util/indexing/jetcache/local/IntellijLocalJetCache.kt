@@ -12,6 +12,14 @@ import java.lang.UnsupportedOperationException
 import java.util.concurrent.CompletableFuture
 
 class IntellijLocalJetCache : JetCache {
+  override fun contains(keys: Array<JcHash>): CompletableFuture<Array<ByteArray>> {
+    throw UnsupportedOperationException()
+  }
+
+  override fun isReadOnly(): Boolean {
+    return true
+  }
+
   val executor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("jetcache local executor")
 
   override fun get(keys: Array<JcHash>, onReceived: (JcHash, ByteArray) -> Unit) {
