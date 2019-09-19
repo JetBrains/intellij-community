@@ -13,7 +13,22 @@ import java.util.concurrent.CompletableFuture
 
 class IntellijLocalJetCache : JetCache {
   override fun contains(keys: Array<JcHash>): CompletableFuture<Array<ByteArray>> {
-    throw UnsupportedOperationException()
+    val result = CompletableFuture<Array<ByteArray>>()
+    executor.submit {
+      val filtered = mutableListOf<ByteArray>()
+      for (key in keys) {
+        val hashAndId = ContentHashesSupport.splitHashAndId(key)
+        if (hashAndId != null) {
+          val storage = JetCacheService.instance.getStorage(hashAndId.second)
+          val contains = storage?.contains(hashAndId.first) ?: false
+          if (contains) {
+            filtered.add(key)
+          }
+        }
+      }
+      result.complete(filtered.toTypedArray())
+    }
+    return result
   }
 
   override fun isReadOnly(): Boolean {

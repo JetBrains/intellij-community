@@ -51,6 +51,12 @@ public class JetCacheLocalStorage<K, V> implements KeyValueStore<byte[], ByteArr
     return myPersistentHashMap.get(key);
   }
 
+
+  public boolean contains(byte[] key) throws IOException {
+    return myPersistentHashMap.containsMapping(key);
+  }
+
+
   @Override
   public void put(byte[] key, ByteArraySequence value) throws IOException {
     myPersistentHashMap.put(key, value);
