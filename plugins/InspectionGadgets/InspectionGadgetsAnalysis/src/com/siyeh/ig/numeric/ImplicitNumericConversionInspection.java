@@ -304,7 +304,6 @@ public class ImplicitNumericConversionInspection extends BaseInspection {
           }
         }
       }
-      if (ignoreWideningConversions) return;
       if (ignoreConstantConversions) {
         PsiExpression rootExpression = expression;
         while (rootExpression instanceof PsiParenthesizedExpression) {
