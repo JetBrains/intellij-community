@@ -263,7 +263,10 @@ public abstract class VcsVFSListener implements Disposable {
     private void processDeletedFile(@NotNull VirtualFile file) {
       if (file.isDirectory() && file instanceof NewVirtualFile && !isDirectoryVersioningSupported()) {
         for (VirtualFile child : ((NewVirtualFile)file).getCachedChildren()) {
-          processDeletedFile(child);
+          ProgressManager.checkCanceled();
+          if (!myChangeListManager.isIgnoredFile(child)) {
+            processDeletedFile(child);
+          }
         }
       }
       else {
@@ -308,27 +311,6 @@ public abstract class VcsVFSListener implements Disposable {
           myDeletedFiles.remove(VcsUtil.getFilePath(newPath));
         }
       });
-    }
-
-    private void processBeforeFileDeletion(@NotNull VFileDeleteEvent event) {
-      VirtualFile file = event.getFile();
-      // files are checked for being ignored, directories are handled recursively
-      if (!file.isDirectory()) {
-        ProgressManager.checkCanceled();
-        if (!myChangeListManager.isIgnoredFile(file)) {
-          myProcessor.processDeletedFile(file);
-        }
-      }
-      else {
-        List<VirtualFile> list = new ArrayList<>();
-        VcsUtil.collectFiles(file, list, true, isDirectoryVersioningSupported());
-        for (VirtualFile child : list) {
-          ProgressManager.checkCanceled();
-          if (!myChangeListManager.isIgnoredFile(child)) {
-            myProcessor.processDeletedFile(child);
-          }
-        }
-      }
     }
 
     private void processBeforeFileMovement(@NotNull VFileMoveEvent event) {
@@ -668,7 +650,7 @@ public abstract class VcsVFSListener implements Disposable {
             }
 
             if (event instanceof VFileDeleteEvent) {
-              myProcessor.processBeforeFileDeletion((VFileDeleteEvent)event);
+              myProcessor.processDeletedFile(((VFileDeleteEvent)event).getFile());
             }
             else if (event instanceof VFileMoveEvent) {
               myProcessor.processBeforeFileMovement((VFileMoveEvent)event);
