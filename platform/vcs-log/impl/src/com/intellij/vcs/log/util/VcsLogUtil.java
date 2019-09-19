@@ -6,10 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.VcsRoot;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.TextRevisionNumber;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
@@ -349,5 +346,13 @@ public class VcsLogUtil {
   @NotNull
   public static String getProvidersMapText(@NotNull Map<VirtualFile, VcsLogProvider> providers) {
     return "[" + StringUtil.join(providers.keySet(), file -> file.getPresentableUrl(), ", ") + "]";
+  }
+
+  @NotNull
+  public static String getVcsDisplayName(@NotNull Project project, @NotNull Collection<VcsLogProvider> logProviders) {
+    Set<AbstractVcs> vcs = ContainerUtil.map2SetNotNull(logProviders,
+                                                        provider -> VcsUtil.findVcsByKey(project, provider.getSupportedVcs()));
+    if (vcs.size() != 1) return "Vcs";
+    return notNull(getFirstItem(vcs)).getDisplayName();
   }
 }

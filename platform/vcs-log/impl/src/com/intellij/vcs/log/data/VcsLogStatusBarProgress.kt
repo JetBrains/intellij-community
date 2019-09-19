@@ -15,12 +15,14 @@ import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.vcs.log.VcsLogProvider
 import com.intellij.vcs.log.data.index.VcsLogBigRepositoriesList
 import com.intellij.vcs.log.data.index.VcsLogPersistentIndex
+import com.intellij.vcs.log.util.VcsLogUtil
 import org.jetbrains.annotations.CalledInAwt
 
 class VcsLogStatusBarProgress(project: Project, logProviders: Map<VirtualFile, VcsLogProvider>,
                               vcsLogProgress: VcsLogProgress) : Disposable {
   private val LOG = Logger.getInstance(VcsLogStatusBarProgress::class.java)
   private val roots = VcsLogPersistentIndex.getRootsForIndexing(logProviders)
+  private val vcsName = VcsLogUtil.getVcsDisplayName(project, roots.mapNotNull { logProviders[it] })
   private val statusBar: StatusBarEx by lazy {
     (WindowManager.getInstance() as WindowManagerEx).findFrameFor(project)!!.statusBar as StatusBarEx
   }
@@ -84,8 +86,8 @@ class VcsLogStatusBarProgress(project: Project, logProviders: Map<VirtualFile, V
     }
   }
 
-  class MyTaskInfo : TaskInfo {
-    override fun getTitle(): String = "Vcs log indexing..."
+  inner class MyTaskInfo : TaskInfo {
+    override fun getTitle(): String = "$vcsName log indexing..."
 
     override fun getCancelText(): String = CommonBundle.getCancelButtonText()
 
