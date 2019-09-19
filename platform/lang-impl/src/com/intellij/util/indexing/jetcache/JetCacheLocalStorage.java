@@ -22,7 +22,7 @@ public class JetCacheLocalStorage<K, V> implements KeyValueStore<byte[], ByteArr
     this(new File(IndexInfrastructure.getIndexRootDir(extension.getName()), ".jetcache"));
   }
 
-  protected JetCacheLocalStorage(File file) {
+  public JetCacheLocalStorage(File file) {
     myFile = file;
 
     PersistentHashMap<byte[], ByteArraySequence> map = null;
