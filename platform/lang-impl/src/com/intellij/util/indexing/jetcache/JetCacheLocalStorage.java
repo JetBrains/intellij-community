@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing.jetcache;
 
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.openapi.vfs.newvfs.persistent.ContentHashesUtil;
@@ -14,12 +15,14 @@ import java.io.File;
 import java.io.IOException;
 
 public class JetCacheLocalStorage<K, V> implements KeyValueStore<byte[], ByteArraySequence> {
+  public static final String LOCAL_JET_CACHE_ROOT = System.getProperty("local.jet.cache.root");
+
   private static final Logger LOG = Logger.getInstance(JetCacheLocalStorage.class);
   private final PersistentHashMap<byte[], ByteArraySequence> myPersistentHashMap;
   private final File myFile;
 
   public JetCacheLocalStorage(FileBasedIndexExtension<K, V> extension) {
-    this(new File(new File(IndexInfrastructure.getPersistentIndexRoot(), "LocalJetCache"), extension.getName().getName()));
+    this(new File(new File(LOCAL_JET_CACHE_ROOT == null ? IndexInfrastructure.getPersistentIndexRoot() : new File(LOCAL_JET_CACHE_ROOT), ".LocalJetCache"), extension.getName().getName()));
   }
 
   public JetCacheLocalStorage(File file) {
