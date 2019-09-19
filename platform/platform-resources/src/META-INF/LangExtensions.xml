@@ -561,7 +561,7 @@
 
     <fileBasedIndex implementation="com.intellij.psi.impl.include.FileIncludeIndex"/>
 
-    <indexImporterFactory implementation="com.intellij.util.indexing.jetcache.JetCacheIndexImporter"/>
+<!--    <indexImporterFactory implementation="com.intellij.util.indexing.jetcache.JetCacheIndexImporter"/>-->
 
     <syntaxHighlighter factoryClass="com.intellij.openapi.fileTypes.LanguageFileTypeHighlighterProvider"/>
     <structureViewBuilder factoryClass="com.intellij.ide.highlighter.LanguageFileTypeStructureViewBuilderProvider"/>

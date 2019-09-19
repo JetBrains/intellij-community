@@ -16,9 +16,11 @@ import com.intellij.util.indexing.impl.DebugAssertions;
 import com.intellij.util.indexing.impl.InputData;
 import com.intellij.util.indexing.impl.forward.AbstractForwardIndexAccessor;
 import com.intellij.util.indexing.impl.forward.PersistentMapBasedForwardIndex;
+import com.intellij.util.indexing.jetcache.JetCacheService;
 import com.intellij.util.io.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jetcache.JetCache;
 
 import java.io.*;
 import java.nio.charset.Charset;
@@ -27,7 +29,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Stream;
 
-class SnapshotInputMappings<Key, Value, Input> implements UpdatableSnapshotInputMappingIndex<Key, Value, Input> {
+public class SnapshotInputMappings<Key, Value, Input> implements UpdatableSnapshotInputMappingIndex<Key, Value, Input> {
   private static final Logger LOG = Logger.getInstance(SnapshotInputMappings.class);
   private static final boolean doReadSavedPersistentData = SystemProperties.getBooleanProperty("idea.read.saved.persistent.index", true);
 
@@ -35,13 +37,17 @@ class SnapshotInputMappings<Key, Value, Input> implements UpdatableSnapshotInput
   private final InputMapExternalizer<Key, Value> myMapExternalizer;
   private final DataIndexer<Key, Value, Input> myIndexer;
   private final PersistentMapBasedForwardIndex myContents;
+  private final JetCache myJetCache;
+  private final JetCacheService myJetCacheService;
   private volatile PersistentHashMap<Integer, String> myIndexingTrace;
 
   private final HashIdForwardIndexAccessor<Key, Value, Input> myHashIdForwardIndexAccessor;
 
   private final boolean myIsPsiBackedIndex;
 
-  SnapshotInputMappings(IndexExtension<Key, Value, Input> indexExtension) throws IOException {
+  public SnapshotInputMappings(IndexExtension<Key, Value, Input> indexExtension) throws IOException {
+    myJetCacheService = JetCacheService.getInstance();
+    myJetCache = myJetCacheService.getJetCache();
     myIndexId = (ID<Key, Value>)indexExtension.getName();
     myIsPsiBackedIndex = FileBasedIndexImpl.isPsiDependentIndex(indexExtension);
     myMapExternalizer = new InputMapExternalizer<>(indexExtension);
@@ -112,18 +118,29 @@ class SnapshotInputMappings<Key, Value, Input> implements UpdatableSnapshotInput
       hashId = getHashId(content);
       result = hashId == 0 ? InputData.empty() : new HashedInputData<>(data.getKeyValues(), hashId);
     }
-    boolean saved = savePersistentData(data.getKeyValues(), hashId);
-    if (DebugAssertions.EXTRA_SANITY_CHECKS) {
-      if (saved) {
-        try {
-          myIndexingTrace.put(hashId, getContentDebugData(content) + "," + ExceptionUtil.getThrowableText(new Throwable()));
-        }
-        catch (IOException ex) {
-          LOG.error(ex);
+
+    if (content != null) {
+      boolean saved = savePersistentData(data.getKeyValues(), hashId, ((FileContentImpl)content).getHash(), myJetCacheService.getProjectHash(
+        ((FileContentImpl)content).getProject()));
+      if (DebugAssertions.EXTRA_SANITY_CHECKS) {
+        if (saved) {
+          try {
+            myIndexingTrace.put(hashId, getContentDebugData(content) + "," + ExceptionUtil.getThrowableText(new Throwable()));
+          }
+          catch (IOException ex) {
+            LOG.error(ex);
+          }
         }
       }
     }
+
     return result;
+  }
+
+  @Override
+  public void putData(byte[] hash, @NotNull ByteArraySequence data, byte[] project) throws IOException {
+    int hashId = ContentHashesSupport.enumerateHash(hash);
+    saveContents(hashId, data);
   }
 
   @NotNull
@@ -327,10 +344,18 @@ class SnapshotInputMappings<Key, Value, Input> implements UpdatableSnapshotInput
     return moreInfo;
   }
 
-  private boolean savePersistentData(Map<Key, Value> data, int id) {
+  private boolean savePersistentData(Map<Key, Value> data, int id, byte[] hash, byte[] project) {
     try {
       if (myContents != null && myContents.isBusyReading() && myContents.containsMapping(id)) return false;
-      saveContents(id, AbstractForwardIndexAccessor.serializeToByteSeq(data, myMapExternalizer, data.size()));
+      ByteArraySequence seq = AbstractForwardIndexAccessor.serializeToByteSeq(data, myMapExternalizer, data.size());
+      saveContents(id, seq);
+
+      if (myJetCache != null) {
+        byte[] coolHash = ContentHashesSupport.calcContentIdHash(hash, myIndexId);
+        myJetCache.put(coolHash, seq.toBytes());
+        myJetCache.merge(project, new byte[][] { coolHash });
+      }
+
     } catch (IOException ex) {
       throw new RuntimeException(ex);
     }

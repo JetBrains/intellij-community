@@ -94,6 +94,10 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
            IdIndex.ourSnapshotMappingsEnabled;
   }
 
+  public SnapshotInputMappingIndex<Key, Value, Input> getSnapshotInputMappings() {
+    return mySnapshotInputMappings;
+  }
+
   @NotNull
   @Override
   protected InputData<Key, Value> mapInput(@Nullable Input content) {

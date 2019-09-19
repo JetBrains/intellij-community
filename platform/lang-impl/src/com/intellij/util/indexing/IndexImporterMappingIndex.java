@@ -3,6 +3,8 @@ package com.intellij.util.indexing;
 
 import com.intellij.index.IndexImporterFactory;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.util.indexing.impl.InputData;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,6 +39,11 @@ final class IndexImporterMappingIndex<Key, Value, Input> implements UpdatableSna
   }
 
   @Override
+  public void putData(byte[] hash, @NotNull ByteArraySequence data, byte[] project) throws IOException {
+
+  }
+
+  @Override
   public void flush() throws IOException {
     for (SnapshotInputMappingIndex<Key, Value, Input> importer : myImporters) {
       if (importer instanceof UpdatableSnapshotInputMappingIndex<?, ?, ?>) {
@@ -59,6 +66,7 @@ final class IndexImporterMappingIndex<Key, Value, Input> implements UpdatableSna
                                                                                @NotNull IndexExtension<Key, Value, Input> indexExtension) {
     UpdatableSnapshotInputMappingIndex<Key, Value, Input> indexImporterMappingIndex = createImportersWrapper(indexExtension);
     if (indexImporterMappingIndex == null) return index;
+    if (true) throw new UnsupportedOperationException();
     if (index == null) return indexImporterMappingIndex;
     if (index instanceof UpdatableSnapshotInputMappingIndex) {
       UpdatableSnapshotInputMappingIndex<Key, Value, Input> updatableIndex = (UpdatableSnapshotInputMappingIndex<Key, Value, Input>)index;
@@ -74,6 +82,12 @@ final class IndexImporterMappingIndex<Key, Value, Input> implements UpdatableSna
           indexImporterMappingIndex.putData(content, data);
           return updatableIndex.putData(content, data);
         }
+
+        @Override
+        public void putData(byte[] hash, @NotNull ByteArraySequence data, byte[] project) throws IOException {
+
+        }
+
 
         @Override
         public void flush() throws IOException {

@@ -28,6 +28,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.security.MessageDigest;
+import java.util.Arrays;
 
 /**
  * @author Maxim.Mossienko
@@ -58,24 +59,18 @@ public class ContentHashesSupport {
   }
 
   public static Pair<byte[], ID<?, ?>> splitHashAndId(@NotNull byte[] compositeHash) {
+    //byte[] id = Arrays.copyOfRange(compositeHash, 0, 4);
     ID<Object, Object> indexId = ID.findByHash(fromByteArray(compositeHash));
     if (indexId == null) return null;
-    byte[] hash = new byte[12];
-    System.arraycopy(compositeHash, 4, hash, 0, hash.length);
+    byte[] hash = Arrays.copyOfRange(compositeHash, 4, 24);
     return Pair.create(hash, indexId);
   }
 
   public static byte[] calcContentIdHash(@NotNull byte[] contentHash, @NotNull ID<?, ?> indexID) {
-    byte[] result = new byte[16];
-    System.arraycopy(contentHash, 0, result, 4, 12);
+    byte[] result = new byte[24];
+    System.arraycopy(contentHash, 0, result, 4, 20);
     byte[] bytes = toByteArray(indexID.getUniqueId());
     System.arraycopy(bytes, 0, result, 0, 4);
-    return result;
-  }
-
-  public static byte[] shortenHash(@NotNull byte[] contentHash) {
-    byte[] result = new byte[12];
-    System.arraycopy(contentHash, 0, result, 0, 12);
     return result;
   }
 
