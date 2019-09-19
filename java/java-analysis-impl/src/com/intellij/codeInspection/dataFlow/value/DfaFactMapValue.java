@@ -21,7 +21,8 @@ public class DfaFactMapValue extends DfaValue {
   }
 
   public <T> DfaValue withFact(@NotNull DfaFactType<T> factType, @Nullable T value) {
-    return getFactory().getFactFactory().createValue(myFacts.with(factType, value));
+    DfaFactMap newFacts = myFacts.with(factType, value);
+    return newFacts == myFacts ? this : getFactory().getFactFactory().createValue(newFacts);
   }
 
   public DfaFactMap getFacts() {
