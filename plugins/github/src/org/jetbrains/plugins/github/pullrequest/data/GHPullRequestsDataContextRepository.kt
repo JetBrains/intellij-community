@@ -56,14 +56,16 @@ internal class GHPullRequestsDataContextRepository(private val project: Project)
                       ?: throw IllegalArgumentException(
                         "Repository $fullPath does not exist at ${account.server} or you don't have access.")
 
+    val repositoryCoordinates = GHRepositoryCoordinates(account.server, repoDetails.fullPath)
+
     val messageBus = messageBusFactory.createMessageBus(this)
 
     val listModel = CollectionListModel<GHPullRequestShort>()
     val searchHolder = GithubPullRequestSearchQueryHolderImpl()
     val listLoader = GHPRListLoaderImpl(progressManager, requestExecutor, account.server, repoDetails.fullPath, listModel, searchHolder)
-    val dataLoader = GithubPullRequestsDataLoaderImpl(project, progressManager, git, requestExecutor,
-                                                      gitRemoteCoordinates.repository, gitRemoteCoordinates.remote,
-                                                      account.server, repoDetails.fullPath)
+    val dataLoader = GithubPullRequestsDataLoaderImpl {
+      GithubPullRequestDataProviderImpl(project, progressManager, git, requestExecutor, gitRemoteCoordinates, repositoryCoordinates, it)
+    }
     messageBus.connect().subscribe(PULL_REQUEST_EDITED_TOPIC, object : PullRequestEditedListener {
       override fun onPullRequestEdited(number: Long) {
         runInEdt {
@@ -81,7 +83,7 @@ internal class GHPullRequestsDataContextRepository(private val project: Project)
                                                           busyStateTracker,
                                                           requestExecutor, account.server, repoDetails.fullPath)
 
-    return GHPullRequestsDataContext(gitRemoteCoordinates, GHRepositoryCoordinates(account.server, repoDetails.fullPath), account,
+    return GHPullRequestsDataContext(gitRemoteCoordinates, repositoryCoordinates, account,
                                      requestExecutor, messageBus, listModel, searchHolder, listLoader, dataLoader, securityService,
                                      busyStateTracker, metadataService, stateService)
   }

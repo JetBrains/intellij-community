@@ -14,10 +14,10 @@ import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineIt
 
 object GHGQLRequests {
   object PullRequest {
-    fun findOne(server: GithubServerPath, repoOwner: String, repoName: String, number: Long): GQLQuery<GHPullRequest?> {
-      return GQLQuery.OptionalTraversedParsed(server.toGraphQLUrl(), GHGQLQueries.findPullRequest,
-                                              mapOf("repoOwner" to repoOwner,
-                                                    "repoName" to repoName,
+    fun findOne(repository: GHRepositoryCoordinates, number: Long): GQLQuery<GHPullRequest?> {
+      return GQLQuery.OptionalTraversedParsed(repository.serverPath.toGraphQLUrl(), GHGQLQueries.findPullRequest,
+                                              mapOf("repoOwner" to repository.repositoryPath.owner,
+                                                    "repoName" to repository.repositoryPath.repository,
                                                     "number" to number),
                                               GHPullRequest::class.java,
                                               "repository", "pullRequest")
@@ -36,14 +36,11 @@ object GHGQLRequests {
     private class PRSearch(search: SearchConnection<GHPullRequestShort>)
       : GHGQLSearchQueryResponse<GHPullRequestShort>(search)
 
-    fun reviewThreads(server: GithubServerPath,
-                      repoOwner: String,
-                      repoName: String,
-                      number: Long,
+    fun reviewThreads(repository: GHRepositoryCoordinates, number: Long,
                       pagination: GHGQLRequestPagination? = null): GQLQuery<GHGQLPagedRequestResponse<GHPullRequestReviewThread>> {
-      return GQLQuery.TraversedParsed(server.toGraphQLUrl(), GHGQLQueries.pullRequestReviewThreads,
-                                      mapOf("repoOwner" to repoOwner,
-                                            "repoName" to repoName,
+      return GQLQuery.TraversedParsed(repository.serverPath.toGraphQLUrl(), GHGQLQueries.pullRequestReviewThreads,
+                                      mapOf("repoOwner" to repository.repositoryPath.owner,
+                                            "repoName" to repository.repositoryPath.repository,
                                             "number" to number,
                                             "pageSize" to pagination?.pageSize,
                                             "cursor" to pagination?.afterCursor),

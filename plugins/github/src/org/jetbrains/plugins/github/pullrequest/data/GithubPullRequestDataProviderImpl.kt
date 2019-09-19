@@ -13,19 +13,18 @@ import git4idea.GitCommit
 import git4idea.commands.Git
 import git4idea.history.GitCommitRequirements
 import git4idea.history.GitLogUtil
-import git4idea.repo.GitRemote
-import git4idea.repo.GitRepository
 import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.plugins.github.api.GHGQLRequests
+import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequests
-import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
 import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader
 import org.jetbrains.plugins.github.api.util.SimpleGHGQLPagesLoader
 import org.jetbrains.plugins.github.pullrequest.GHNotFoundException
 import org.jetbrains.plugins.github.pullrequest.comment.GHPRCommentsUtil
 import org.jetbrains.plugins.github.pullrequest.data.model.GHPRDiffReviewThreadMapping
+import org.jetbrains.plugins.github.util.GitRemoteUrlCoordinates
 import org.jetbrains.plugins.github.util.GithubAsyncUtil
 import org.jetbrains.plugins.github.util.LazyCancellableBackgroundProcessValue
 import java.util.concurrent.CancellationException
@@ -36,11 +35,8 @@ internal class GithubPullRequestDataProviderImpl(private val project: Project,
                                                  private val progressManager: ProgressManager,
                                                  private val git: Git,
                                                  private val requestExecutor: GithubApiRequestExecutor,
-                                                 private val repository: GitRepository,
-                                                 private val remote: GitRemote,
-                                                 private val serverPath: GithubServerPath,
-                                                 private val username: String,
-                                                 private val repositoryName: String,
+                                                 private val gitRemote: GitRemoteUrlCoordinates,
+                                                 private val repository: GHRepositoryCoordinates,
                                                  override val number: Long) : GithubPullRequestDataProvider {
 
   private val requestsChangesEventDispatcher = EventDispatcher.create(GithubPullRequestDataProvider.RequestsChangedListener::class.java)
@@ -48,7 +44,7 @@ internal class GithubPullRequestDataProviderImpl(private val project: Project,
   private var lastKnownHeadSha: String? = null
 
   private val detailsRequestValue = backingValue {
-    val details = requestExecutor.execute(it, GHGQLRequests.PullRequest.findOne(serverPath, username, repositoryName, number))
+    val details = requestExecutor.execute(it, GHGQLRequests.PullRequest.findOne(repository, number))
                   ?: throw GHNotFoundException("Pull request $number does not exist")
     invokeAndWaitIfNeeded {
       lastKnownHeadSha?.run { if (this != details.headRefOid) reloadCommits() }
@@ -60,14 +56,14 @@ internal class GithubPullRequestDataProviderImpl(private val project: Project,
     get() = GithubAsyncUtil.futureOfMutable { invokeAndWaitIfNeeded { detailsRequestValue.value } }
 
   private val branchFetchRequestValue = backingValue {
-    git.fetch(repository, remote, emptyList(), "refs/pull/${number}/head:").throwOnError()
+    git.fetch(gitRemote.repository, gitRemote.remote, emptyList(), "refs/pull/${number}/head:").throwOnError()
   }
   override val branchFetchRequest
     get() = GithubAsyncUtil.futureOfMutable { invokeAndWaitIfNeeded { branchFetchRequestValue.value } }
 
   private val apiCommitsRequestValue = backingValue {
     GithubApiPagesLoader.loadAll(requestExecutor, it,
-                                 GithubApiRequests.Repos.PullRequests.Commits.pages(serverPath, username, repositoryName, number))
+                                 GithubApiRequests.Repos.PullRequests.Commits.pages(repository, number))
 
   }
   override val apiCommitsRequest
@@ -79,7 +75,7 @@ internal class GithubPullRequestDataProviderImpl(private val project: Project,
     val gitCommits = mutableListOf<GitCommit>()
     val requirements = GitCommitRequirements(diffRenameLimit = GitCommitRequirements.DiffRenameLimit.INFINITY,
                                              includeRootChanges = false)
-    GitLogUtil.readFullDetailsForHashes(project, repository.root, commitHashes, requirements) {
+    GitLogUtil.readFullDetailsForHashes(project, gitRemote.repository.root, commitHashes, requirements) {
       gitCommits.add(it)
     }
 
@@ -89,18 +85,18 @@ internal class GithubPullRequestDataProviderImpl(private val project: Project,
     get() = GithubAsyncUtil.futureOfMutable { invokeAndWaitIfNeeded { logCommitsRequestValue.value } }
 
   private val diffFileRequestValue = backingValue {
-    requestExecutor.execute(it, GithubApiRequests.Repos.PullRequests.getDiff(serverPath, username, repositoryName, number))
+    requestExecutor.execute(it, GithubApiRequests.Repos.PullRequests.getDiff(repository, number))
   }
   private val reviewThreadsRequestValue = backingValue {
     SimpleGHGQLPagesLoader(requestExecutor, { p ->
-      GHGQLRequests.PullRequest.reviewThreads(serverPath, username, repositoryName, number, p)
+      GHGQLRequests.PullRequest.reviewThreads(repository, number, p)
     }).loadAll(it)
   }
   override val reviewThreadsRequest: CompletableFuture<List<GHPullRequestReviewThread>>
     get() = GithubAsyncUtil.futureOfMutable { invokeAndWaitIfNeeded { reviewThreadsRequestValue.value } }
 
   private val filesReviewThreadsRequestValue = backingValue {
-    GHPRCommentsUtil.buildThreadsAndMapLines(repository,
+    GHPRCommentsUtil.buildThreadsAndMapLines(gitRemote.repository,
                                              logCommitsRequestValue.value.joinCancellable(),
                                              diffFileRequestValue.value.joinCancellable(),
                                              reviewThreadsRequestValue.value.joinCancellable())

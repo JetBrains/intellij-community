@@ -289,8 +289,8 @@ object GithubApiRequests {
     object PullRequests : Entity("/pulls") {
 
       @JvmStatic
-      fun getDiff(serverPath: GithubServerPath, username: String, repoName: String, number: Long) =
-        object : Get<String>(getUrl(serverPath, Repos.urlSuffix, "/$username/$repoName", urlSuffix, "/$number"),
+      fun getDiff(repository: GHRepositoryCoordinates, number: Long) =
+        object : Get<String>(getUrl(repository, urlSuffix, "/$number"),
                              GithubApiContentHelper.V3_DIFF_JSON_MIME_TYPE) {
           override fun extractResult(response: GithubApiResponse): String {
             return response.handleBody(ThrowableConvertor {
@@ -370,16 +370,16 @@ object GithubApiRequests {
 
       object Commits : Entity("/commits") {
         @JvmStatic
-        fun pages(server: GithubServerPath, username: String, repoName: String, number: Long) =
-          GithubApiPagesLoader.Request(get(server, username, repoName, number), ::get)
+        fun pages(repository: GHRepositoryCoordinates, number: Long) =
+          GithubApiPagesLoader.Request(get(repository, number), ::get)
 
         @JvmStatic
         fun pages(url: String) = GithubApiPagesLoader.Request(get(url), ::get)
 
         @JvmStatic
-        fun get(server: GithubServerPath, username: String, repoName: String, number: Long,
+        fun get(repository: GHRepositoryCoordinates, number: Long,
                 pagination: GithubRequestPagination? = null) =
-          get(getUrl(server, Repos.urlSuffix, "/$username/$repoName", PullRequests.urlSuffix, "/$number", urlSuffix,
+          get(getUrl(repository, PullRequests.urlSuffix, "/$number", urlSuffix,
                      GithubApiUrlQueryBuilder.urlQuery { param(pagination) }))
 
         @JvmStatic
@@ -483,6 +483,9 @@ object GithubApiRequests {
   abstract class Entity(val urlSuffix: String)
 
   private fun getUrl(server: GithubServerPath, suffix: String) = server.toApiUrl() + suffix
+
+  private fun getUrl(repository: GHRepositoryCoordinates, vararg suffixes: String) =
+    getUrl(repository.serverPath, Repos.urlSuffix, "/", repository.repositoryPath.toString(), *suffixes)
 
   fun getUrl(server: GithubServerPath, vararg suffixes: String) = StringBuilder(server.toApiUrl()).append(*suffixes).toString()
 
