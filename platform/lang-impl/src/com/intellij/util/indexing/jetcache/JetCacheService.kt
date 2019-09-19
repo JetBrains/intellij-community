@@ -20,6 +20,7 @@ class JetCacheService: Disposable {
 
   override fun dispose() {
     groupIdMap?.close()
+    myStorages.values.forEach { it.close() }
   }
 
   private val myStorages = ConcurrentHashMap<ID<*, *>, JetCacheLocalStorage<*, *>>()
