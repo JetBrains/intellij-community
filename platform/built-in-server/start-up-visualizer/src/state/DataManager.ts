@@ -1,8 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-import {InputData, Item} from "./data"
+import {CompleteTraceEvent, InputData, InputDataV11AndLess, Item} from "./data"
 import {markerNames} from "./StateStorageManager"
 import * as semver from "semver"
 import {SemVer} from "semver"
+import {serviceSourceNames} from "@/charts/ActivityChartDescriptor"
 
 const markerNameToRangeTitle = new Map<string, string>([["app initialized callback", "app initialized"], ["module loading", "project initialized"]])
 
@@ -13,6 +14,7 @@ export interface ItemStats {
 
 const statSupportMinVersion = semver.coerce("3")!!
 const instantEventSupportMinVersion = semver.coerce("11")!!
+const isNewServiceFormat = semver.coerce("12")!!
 
 export class DataManager {
   private readonly version: SemVer | null
@@ -22,6 +24,7 @@ export class DataManager {
   }
 
   private _markerItems: Array<Item | null> | null = null
+  private _serviceEvents: Array<CompleteTraceEvent> | null = null
 
   get isStatSupported(): boolean {
     const version = this.version
@@ -33,12 +36,67 @@ export class DataManager {
     return version != null && semver.gte(version, instantEventSupportMinVersion)
   }
 
+  private get isNewServiceFormat(): boolean {
+    const version = this.version
+    return version != null && semver.gte(version, isNewServiceFormat)
+  }
+
   get itemStats(): ItemStats {
-    const data = this.data
-    return {
-      reportedServiceCount: getListLength(data.appComponents) + getListLength(data.projectComponents) + getListLength(data.moduleComponents),
-      reportedComponentCount: getListLength(data.appServices) + getListLength(data.projectServices) + getListLength(data.moduleServices),
+    const serviceEvents = this.serviceEvents
+    let aC = 0
+    let pC = 0
+    let mC = 0
+    let aS = 0
+    let pS = 0
+    let mS = 0
+    for (const event of serviceEvents) {
+      switch (event.cat) {
+        case "appComponents":
+          aC++;
+          break;
+        case "projectComponents":
+          pC++;
+          break;
+        case "moduleComponents":
+          mC++;
+          break;
+        case "appServices":
+          aS++;
+          break;
+        case "projectServices":
+          pS++;
+          break;
+        case "moduleServices":
+          mS++;
+          break;
+      }
     }
+    return {
+      reportedServiceCount: aS + pS + mS,
+      reportedComponentCount: aC + pC + mC,
+    }
+  }
+
+  get serviceEvents(): Array<CompleteTraceEvent> {
+    if (this._serviceEvents != null) {
+      return this._serviceEvents
+    }
+
+    if (this.isNewServiceFormat) {
+      this._serviceEvents = this.data.traceEvents.filter(value => value.cat != null && serviceSourceNames.includes(value.cat)) as Array<CompleteTraceEvent>
+      return this._serviceEvents
+    }
+
+    const list: Array<CompleteTraceEvent> = []
+    const data = this.data as InputDataV11AndLess
+    convertToTraceEvent(data.appComponents, "appComponents", list)
+    convertToTraceEvent(data.projectComponents, "projectComponents", list)
+    convertToTraceEvent(data.moduleComponents, "moduleComponents", list)
+    convertToTraceEvent(data.appServices, "appServices", list)
+    convertToTraceEvent(data.projectServices, "projectServices", list)
+    convertToTraceEvent(data.moduleServices, "moduleServices", list)
+    this._serviceEvents = list
+    return list
   }
 
   get markerItems(): Array<Item | null> {
@@ -86,13 +144,13 @@ export class DataManager {
       for (let i = 0; i < this.markerItems.length; i++) {
         if (rangeItems[i] == null) {
           const markerItem = this.markerItems[i]
-          if (markerItem != null && item.start >= markerItem.end) {
+          if (markerItem != null && getItemStartInMs(item) >= markerItem.end) {
             rangeItems[i] = item
           }
         }
       }
 
-      if (outOfReady == null && item.start >= this.data.totalDurationActual) {
+      if (outOfReady == null && getItemStartInMs(item) >= this.data.totalDurationActual) {
         outOfReady = item
       }
 
@@ -125,11 +183,37 @@ export class DataManager {
   }
 }
 
+function getItemStartInMs(item: any): number {
+  if (item.ts === undefined) {
+    return item.start
+  }
+  else {
+    // trace event format
+    return item.ts / 1000
+  }
+}
+
 export interface GuideLineDescriptor {
   readonly item: Item
   readonly label: string
 }
 
-function getListLength(list: Array<any> | null | undefined): number {
-  return list == null ? 0 : list.length
+function convertToTraceEvent(odlList: Array<Item> | null | undefined, category: string, list: Array<CompleteTraceEvent>) {
+  if (odlList == null) {
+    return
+  }
+
+  for (const item of odlList) {
+    list.push({
+      ...item,
+      ph: "X",
+      ts: item.start * 1000,
+      dur: (item.end - item.start) * 1000,
+      args: {
+        ownDur: item.duration * 1000,
+      },
+      tid: item.thread,
+      cat: category,
+    })
+  }
 }

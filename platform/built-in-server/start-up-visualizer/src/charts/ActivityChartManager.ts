@@ -3,15 +3,15 @@ import * as am4charts from "@amcharts/amcharts4/charts"
 import * as am4core from "@amcharts/amcharts4/core"
 import {XYChartManager} from "@/charts/ChartManager"
 import {DataManager} from "@/state/DataManager"
-import {Item} from "@/state/data"
+import {CommonItem, Item} from "@/state/data"
 import {ActivityChartDescriptor} from "@/charts/ActivityChartDescriptor"
 
 export class ActivityChartManager extends XYChartManager {
-  private legendHitHandler: ((item: LegendItem, isActive: boolean) => void) | null = null
+  protected legendHitHandler: ((item: LegendItem, isActive: boolean) => void) | null = null
 
   // isUseYForName - if true, names are more readable, but not possible to see all components because layout from top to bottom (so, opposite from left to right some data can be out of current screen)
-  constructor(container: HTMLElement, private readonly sourceNames: Array<string>, private readonly descriptor: ActivityChartDescriptor) {
-    super(container, module.hot)
+  constructor(container: HTMLElement, protected readonly sourceNames: Array<string>, protected readonly descriptor: ActivityChartDescriptor) {
+    super(container)
 
     this.configureNameAxis()
     this.configureDurationAxis()
@@ -77,7 +77,7 @@ export class ActivityChartManager extends XYChartManager {
     nameAxis.cursorTooltipEnabled = false
   }
 
-  private configureDurationAxis(): void {
+  protected configureDurationAxis(): am4charts.DurationAxis {
     const durationAxis = this.chart.yAxes.push(new am4charts.DurationAxis())
     durationAxis.title.text = "Duration"
     durationAxis.baseUnit = "millisecond"
@@ -95,6 +95,8 @@ export class ActivityChartManager extends XYChartManager {
     // default value 40 makes distribution not good
     // but for other charts default value suits better...
     // decided to not do anything - if you don't like that extremes makes chart not readable - fix these extremes or select desired area (cursor is supported)
+
+    return durationAxis
   }
 
   protected configureSeries(): void {
@@ -111,36 +113,27 @@ export class ActivityChartManager extends XYChartManager {
     if (descriptor.sourceHasPluginInformation !== false) {
       result += "\nplugin: {plugin}"
     }
-
-    if (this.isShowTotalDuration()) {
-      result += "\ntotal duration: {totalDuration} ms"
-    }
     return result
   }
 
   // https://www.amcharts.com/docs/v4/concepts/series/#Note_about_Series_data_and_Category_axis
-  render(data: DataManager): void {
-    const concatenatedData: Array<ClassItem> = []
-    let colorIndex = 0
-    const legendData: Array<LegendItem> = []
-    const applicableSources = new Set<string>()
-
+  render(dataManager: DataManager): void {
     let sourceNames = this.sourceNames
 
     let getItemListBySourceName: (name: string) => Array<Item> | null | undefined = name => {
       // @ts-ignore
-      return data.data[name]
+      return dataManager.data[name]
     }
 
-    let sourceNameToLegendName: (sourceName: string, itemCount: number) => string = this.sourceNameToLegendName.bind(this)
+    let sourceNameToLegendNameFunction: (sourceName: string, itemCount: number) => string = sourceNameToLegendName
 
     if (this.descriptor.groupByThread === true) {
       if (sourceNames.length !== 1) {
-        throw Error("groupByThread is supported only for single source")
+        throw new Error("groupByThread is supported only for single source")
       }
 
       // @ts-ignore
-      const items = data.data[this.sourceNames[0]] as Array<Item>
+      const items = dataManager.data[this.sourceNames[0]] as Array<Item>
       if (items == null || items.length === 0) {
         sourceNames = []
       }
@@ -158,12 +151,24 @@ export class ActivityChartManager extends XYChartManager {
         sourceNames = Array.from(threadToItems.keys())
         sourceNames.sort()
         getItemListBySourceName = name => threadToItems.get(name)
-        sourceNameToLegendName = (sourceName, _itemCount) => sourceName
+        sourceNameToLegendNameFunction = (sourceName, _itemCount) => sourceName
         if (sourceNames.length > 1 && this.chart.legend == null) {
           this.createLegend()
         }
       }
     }
+
+    this.doRenderData(sourceNames, getItemListBySourceName, sourceNameToLegendNameFunction, dataManager)
+  }
+
+  private doRenderData(sourceNames: Array<string>,
+                         getItemListBySourceName: (name: string) => Array<Item> | null | undefined,
+                         sourceNameToLegendName: (sourceName: string, itemCount: number) => string,
+                         data: DataManager) {
+    let colorIndex = 0
+    const legendData: Array<LegendItem> = []
+    const applicableSources = new Set<string>()
+    const concatenatedData: Array<ClassItem> = []
 
     for (const sourceName of sourceNames) {
       // see XYChart.handleSeriesAdded method - fill and stroke are required to be set, and stroke is set to fill if not set otherwise (in our case fill and stroke are equals)
@@ -190,10 +195,11 @@ export class ActivityChartManager extends XYChartManager {
       applicableSources.add(sourceName)
 
       for (const item of items) {
-        concatenatedData.push(this.transformDataItem(item, chartConfig, sourceName, items))
+        concatenatedData.push(this.transformDataItem(item, chartConfig, sourceName))
       }
     }
 
+    // noinspection DuplicatedCode
     if (this.chart.legend != null) {
       this.chart.legend.data = legendData
       this.legendHitHandler = (legendItem, isActive) => {
@@ -213,7 +219,7 @@ export class ActivityChartManager extends XYChartManager {
     this.chart.data = concatenatedData
   }
 
-  protected transformDataItem(item: Item, chartConfig: ClassItemChartConfig, sourceName: string, _items: Array<Item>): ClassItem {
+  protected transformDataItem(item: CommonItem, chartConfig: ClassItemChartConfig, sourceName: string): ClassItem {
     const nameTransformer = this.descriptor.shortNameProducer
     const result: any = {
       ...item,
@@ -221,32 +227,13 @@ export class ActivityChartManager extends XYChartManager {
       chartConfig,
       sourceName,
     }
-
-    if (this.isShowTotalDuration()) {
-      result.totalDuration = item.end - item.start
-    }
-
     return result
   }
 
-  private sourceNameToLegendName(sourceName: string, itemCount: number): string {
-    let prefix
-    if (sourceName.startsWith("app")) {
-      prefix = "Application"
-    }
-    else if (sourceName.startsWith("project")) {
-      prefix = "Project"
-    }
-    else if (sourceName.startsWith("module")) {
-      prefix = "Module"
-    }
-    return `${prefix}-level (${itemCount})`
-  }
-
-  protected computeRangeMarkers(data: DataManager, items: Array<ClassItem>): void {
+  protected computeRangeMarkers(dataManager: DataManager, items: Array<ClassItem>): void {
     const nameAxis = this.nameAxis
     nameAxis.axisRanges.clear()
-    for (const guideLineDescriptor of data.computeGuides(items)) {
+    for (const guideLineDescriptor of dataManager.computeGuides(items)) {
       // do not add range marker if equals to first item - it means that all items beyond of phase (e.g. project post-startup activities)
       if (guideLineDescriptor.item !== items[0]) {
         const range = nameAxis.axisRanges.create()
@@ -256,13 +243,23 @@ export class ActivityChartManager extends XYChartManager {
       }
     }
   }
-
-  private isShowTotalDuration() {
-    return this.descriptor.id === "components" || this.descriptor.id === "services"
-  }
 }
 
-interface LegendItem {
+function sourceNameToLegendName(sourceName: string, itemCount: number): string {
+  let prefix
+  if (sourceName.startsWith("app")) {
+    prefix = "Application"
+  }
+  else if (sourceName.startsWith("project")) {
+    prefix = "Project"
+  }
+  else if (sourceName.startsWith("module")) {
+    prefix = "Module"
+  }
+  return `${prefix}-level (${itemCount})`
+}
+
+export interface LegendItem {
   readonly name: string
   readonly sourceName: string
   readonly fill: am4core.Color

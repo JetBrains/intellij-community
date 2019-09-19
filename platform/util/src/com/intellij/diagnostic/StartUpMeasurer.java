@@ -140,7 +140,7 @@ public final class StartUpMeasurer {
     return duration;
   }
 
-  private static void addCompletedActivity(long start, long end, @NotNull String name, @NotNull ActivityCategory category, String pluginId) {
+  public static void addCompletedActivity(long start, long end, @NotNull String name, @NotNull ActivityCategory category, String pluginId) {
     ActivityImpl item = new ActivityImpl(name, start, /* parent = */ null, pluginId);
     item.setCategory(category);
     item.setEnd(end);

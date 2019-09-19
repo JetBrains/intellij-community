@@ -52,7 +52,7 @@ export abstract class BaseChartManager<T extends am4charts.Chart> implements Cha
 }
 
 export abstract class XYChartManager extends BaseChartManager<am4charts.XYChart> {
-  protected constructor(container: HTMLElement, _childHot: __WebpackModuleApi.Hot | null | undefined) {
+  protected constructor(container: HTMLElement) {
     super(am4core.create(container, am4charts.XYChart))
 
     configureCommonChartSettings(this.chart)

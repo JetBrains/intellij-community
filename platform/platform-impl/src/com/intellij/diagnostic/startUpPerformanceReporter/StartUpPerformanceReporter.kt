@@ -2,6 +2,7 @@
 package com.intellij.diagnostic.startUpPerformanceReporter
 
 import com.fasterxml.jackson.core.JsonGenerator
+import com.intellij.diagnostic.ActivityCategory
 import com.intellij.diagnostic.ActivityImpl
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
@@ -76,6 +77,7 @@ class StartUpPerformanceReporter : StartupActivity.DumbAware {
     val items = mutableListOf<ActivityImpl>()
     val instantEvents = mutableListOf<ActivityImpl>()
     val activities = THashMap<String, MutableList<ActivityImpl>>()
+    val services = mutableListOf<ActivityImpl>()
 
     val threadNameManager = ThreadNameManager()
 
@@ -90,6 +92,15 @@ class StartUpPerformanceReporter : StartupActivity.DumbAware {
         val category = item.category
         if (category == null) {
           items.add(item)
+        }
+        else if (category == ActivityCategory.APP_COMPONENT ||
+                 category == ActivityCategory.PROJECT_COMPONENT ||
+                 category == ActivityCategory.MODULE_COMPONENT ||
+                 category == ActivityCategory.APP_SERVICE ||
+                 category == ActivityCategory.PROJECT_SERVICE ||
+                 category == ActivityCategory.MODULE_SERVICE ||
+                 category == ActivityCategory.SERVICE_WAITING) {
+          services.add(item)
         }
         else {
           activities.getOrPut(category.jsonName) { mutableListOf() }.add(item)
@@ -113,7 +124,7 @@ class StartUpPerformanceReporter : StartupActivity.DumbAware {
       StartUpMeasurer.doAddPluginCost(pluginId, item.category?.name ?: "unknown", item.end - item.start, pluginCostMap)
     }
 
-    w.write(startTime, items, instantEvents, end)
+    w.write(startTime, items, services, instantEvents, end)
 
     val currentReport = w.toByteBuffer()
     lastReport = currentReport
@@ -132,7 +143,7 @@ class StartUpPerformanceReporter : StartupActivity.DumbAware {
     if (!traceFilePath.isNullOrBlank()) {
       val traceEventFormat = TraceEventFormatWriter(startTime, instantEvents, threadNameManager)
       Paths.get(traceFilePath).outputStream().writer().use {
-        traceEventFormat.write(items, activities, it)
+        traceEventFormat.write(items, activities, services, it)
       }
     }
   }
@@ -191,7 +202,7 @@ internal fun isSubItem(item: ActivityImpl, itemIndex: Int, list: List<ActivityIm
   }
 }
 
-private fun compareTime(o1: ActivityImpl, o2: ActivityImpl): Int {
+internal fun compareTime(o1: ActivityImpl, o2: ActivityImpl): Int {
   return when {
     o1.start > o2.start -> 1
     o1.start < o2.start -> -1

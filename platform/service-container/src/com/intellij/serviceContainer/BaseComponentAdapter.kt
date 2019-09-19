@@ -76,10 +76,20 @@ internal abstract class BaseComponentAdapter(internal val componentManager: Plat
     LoadingPhase.COMPONENT_REGISTERED.assertAtLeast()
     checkContainerIsActive(componentManager, indicator)
 
+    val activityCategory = if (StartUpMeasurer.isEnabled()) getActivityCategory(componentManager) else null
+    val beforeLockTime = if (activityCategory == null) -1 else StartUpMeasurer.getCurrentTime()
+
     synchronized(this) {
       @Suppress("UNCHECKED_CAST")
       var instance = initializedInstance as T?
       if (instance != null) {
+        if (activityCategory != null) {
+          val end = StartUpMeasurer.getCurrentTime()
+          if ((end - beforeLockTime) > 100) {
+            // do not report plugin id - not clear who calls us and how we should interpret this delay - total duration vs own duration is enough for plugin cost measurement
+            StartUpMeasurer.addCompletedActivity(beforeLockTime, end, implementationClassName, ActivityCategory.SERVICE_WAITING, /* pluginId = */ null)
+          }
+        }
         return instance
       }
 
@@ -98,8 +108,8 @@ internal abstract class BaseComponentAdapter(internal val componentManager: Plat
         checkContainerIsActive(componentManager, indicator)
 
         instance = doCreateInstance(componentManager, implementationClass, indicator)
-        getActivityCategory(componentManager)?.let { category ->
-          StartUpMeasurer.addCompletedActivity(startTime, implementationClass, category, pluginId.idString)
+        activityCategory?.let { category ->
+          StartUpMeasurer.addCompletedActivity(startTime, StartUpMeasurer.getCurrentTime(), implementationClassName, category, pluginId.idString)
         }
 
         initializedInstance = instance

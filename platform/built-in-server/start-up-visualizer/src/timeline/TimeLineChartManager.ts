@@ -19,7 +19,7 @@ export class TimelineChartManager extends XYChartManager {
   private readonly threadFirstRowIndexSet = new Set<number>()
 
   constructor(container: HTMLElement) {
-    super(container, module.hot)
+    super(container)
 
     this.configureDurationAxis()
     const levelAxis = this.configureLevelAxis()
@@ -28,10 +28,6 @@ export class TimelineChartManager extends XYChartManager {
 
     this.statsLabel = this.chart.createChild(am4core.Label)
     this.statsLabel.selectable = true
-    // cannot be placed on chart because overlaps data
-    // this.statLabel.isMeasured = false
-    // this.statLabel.x = 5
-    // this.statLabel.y = 40
   }
 
   private configureLevelAxis() {
@@ -89,7 +85,7 @@ export class TimelineChartManager extends XYChartManager {
     // series.columns.template.width = am4core.percent(80)
     // https://github.com/amcharts/amcharts4/issues/989#issuecomment-467862120
     series.columns.template.tooltipText = "{name}: {duration}\nlevel: {level}\nrange: {start}-{end}\nthread: {thread}"
-    // series.columns.template.tooltipText += "\nrowIndex: {rowIndex}"
+    // series.columns.template.tooltipText += "\n" + "rowIndex: {rowIndex}"
     series.columns.template.adapter.add("tooltipText", (value, target, _key) => {
       const item = this.getItemByColumn(target)
       if (item == null || item.description == null || item.description.length === 0) {
@@ -122,6 +118,7 @@ export class TimelineChartManager extends XYChartManager {
       }
     })
     valueLabel.label.truncate = false
+    valueLabel.stroke = am4core.color("#ff0000")
     valueLabel.label.hideOversized = false
     valueLabel.label.horizontalCenter = "left"
     valueLabel.locationX = 1
@@ -199,8 +196,8 @@ export class TimelineChartManager extends XYChartManager {
     const itemStats = data.itemStats
     const statsLabelData = [
       "Plugin count", stats.plugin, "",
-      "Component count", stats.component.app + stats.component.project + stats.component.module, `(${itemStats.reportedComponentCount} of them took more than 10ms)`,
-      "Service count", stats.service.app + stats.service.project + stats.service.module, `(${itemStats.reportedServiceCount} created and each took more than 10ms)`,
+      "Component count", stats.component.app + stats.component.project + stats.component.module, `(${itemStats.reportedComponentCount} created)`,
+      "Service count", stats.service.app + stats.service.project + stats.service.module, `(${itemStats.reportedServiceCount} created)`,
     ]
 
     let result = "<table>"

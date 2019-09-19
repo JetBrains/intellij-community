@@ -25,7 +25,7 @@ private class ExposingCharArrayWriter : CharArrayWriter(8192) {
   }
 }
 
-private const val VERSION = "11"
+private const val VERSION = "12"
 
 internal class IdeaFormatWriter(private val activities: Map<String, MutableList<ActivityImpl>>,
                                 private val pluginCostMap: MutableMap<String, ObjectLongHashMap<String>>,
@@ -34,7 +34,7 @@ internal class IdeaFormatWriter(private val activities: Map<String, MutableList<
 
   private val stringWriter = ExposingCharArrayWriter()
 
-  fun write(timeOffset: Long, items: List<ActivityImpl>, instantEvents: List<ActivityImpl>, end: Long) {
+  fun write(timeOffset: Long, items: List<ActivityImpl>, services: List<ActivityImpl>, instantEvents: List<ActivityImpl>, end: Long) {
     stringWriter.write(logPrefix)
 
     val writer = JsonFactory().createGenerator(stringWriter)
@@ -49,7 +49,14 @@ internal class IdeaFormatWriter(private val activities: Map<String, MutableList<
         writeIcons(writer)
 
         writer.array("traceEvents") {
-          TraceEventFormatWriter(timeOffset, instantEvents, threadNameManager).writeInstantEvents(writer)
+          val traceEventFormatWriter = TraceEventFormatWriter(timeOffset, instantEvents, threadNameManager)
+          traceEventFormatWriter.writeInstantEvents(writer)
+
+          val ownDurations = ObjectLongHashMap<ActivityImpl>()
+
+          ownDurations.clear()
+          computeOwnTime(services, ownDurations, threadNameManager)
+          traceEventFormatWriter.writeServiceEvents(writer, services, ownDurations, pluginCostMap)
         }
 
         var totalDuration = 0L
@@ -91,21 +98,13 @@ internal class IdeaFormatWriter(private val activities: Map<String, MutableList<
   }
 
   private fun writeParallelActivities(startTime: Long, writer: JsonGenerator) {
-    val ownDurations = ObjectLongHashMap<ActivityImpl>()
-
     // sorted to get predictable JSON
     for (name in activities.keys.sorted()) {
-      ownDurations.clear()
-
       val list = activities.getValue(name)
       StartUpPerformanceReporter.sortItems(list)
 
-      if (name.endsWith("Service") || name.endsWith("Component")) {
-        computeOwnTime(list, ownDurations)
-      }
-
       val measureThreshold = if (name == ActivityCategory.APP_INIT.jsonName || name == ActivityCategory.REOPENING_EDITOR.jsonName) -1 else StartUpMeasurer.MEASURE_THRESHOLD
-      writeActivities(list, startTime, writer, activityNameToJsonFieldName(name), ownDurations, measureThreshold = measureThreshold)
+      writeActivities(list, startTime, writer, activityNameToJsonFieldName(name), ObjectLongHashMap(), measureThreshold = measureThreshold)
     }
   }
 
@@ -162,8 +161,7 @@ internal class IdeaFormatWriter(private val activities: Map<String, MutableList<
 }
 
 private fun activityNameToJsonFieldName(name: String): String {
-  val last = name.last()
-  return when (last) {
+  return when (name.last()) {
     'y' -> name.substring(0, name.length - 1) + "ies"
     's' -> name
     else -> name.substring(0) + 's'

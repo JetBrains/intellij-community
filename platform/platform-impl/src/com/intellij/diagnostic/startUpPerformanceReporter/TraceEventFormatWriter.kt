@@ -4,6 +4,8 @@ package com.intellij.diagnostic.startUpPerformanceReporter
 import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonGenerator
 import com.intellij.diagnostic.ActivityImpl
+import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.util.containers.ObjectLongHashMap
 import com.intellij.util.io.jackson.array
 import com.intellij.util.io.jackson.obj
 import java.io.OutputStreamWriter
@@ -29,7 +31,25 @@ internal class TraceEventFormatWriter(private val timeOffset: Long,
     }
   }
 
-  fun write(mainEvents: List<ActivityImpl>, categoryToActivity: Map<String, List<ActivityImpl>>, outputWriter: OutputStreamWriter) {
+  fun writeServiceEvents(writer: JsonGenerator, services: List<ActivityImpl>, ownDurations: ObjectLongHashMap<ActivityImpl>, pluginCostMap: MutableMap<String, ObjectLongHashMap<String>>) {
+    for (event in services) {
+      writer.obj {
+        @Suppress("DuplicatedCode")
+        val computedOwnDuration = ownDurations.get(event)
+        val duration = if (computedOwnDuration == -1L) event.end - event.start else computedOwnDuration
+
+        writeCompleteEvent(event, writer, extraArgWriter = {
+          writer.writeNumberField("ownDur", TimeUnit.NANOSECONDS.toMicros(duration))
+        })
+
+        event.pluginId?.let {
+          StartUpMeasurer.doAddPluginCost(it, event.category?.name ?: "unknown", duration, pluginCostMap)
+        }
+      }
+    }
+  }
+
+  fun write(mainEvents: List<ActivityImpl>, categoryToActivity: Map<String, List<ActivityImpl>>, services: List<ActivityImpl>, outputWriter: OutputStreamWriter) {
     val writer = JsonFactory().createGenerator(outputWriter)
     writer.prettyPrinter = MyJsonPrettyPrinter()
     writer.use {
@@ -44,11 +64,17 @@ internal class TraceEventFormatWriter(private val timeOffset: Long,
             }
           }
 
-          for ((category, events) in categoryToActivity) {
+          for (event in services) {
+            writer.obj {
+              writeCompleteEvent(event, writer)
+              writer.writeStringField("cat", event.category!!.jsonName)
+            }
+          }
+
+          for (events in categoryToActivity.values) {
             for (event in events) {
               writer.obj {
                 writeCompleteEvent(event, writer)
-                writer.writeStringField("cat", category)
               }
             }
           }
@@ -57,13 +83,20 @@ internal class TraceEventFormatWriter(private val timeOffset: Long,
     }
   }
 
-  private fun writeCompleteEvent(event: ActivityImpl, writer: JsonGenerator) {
+  private fun writeCompleteEvent(event: ActivityImpl, writer: JsonGenerator, extraArgWriter: (() -> Unit)? = null) {
     writeCommonFields(event, writer)
     writer.writeStringField("ph", "X")
     writer.writeNumberField("dur", TimeUnit.NANOSECONDS.toMicros(event.end - event.start))
-    if (event.description != null) {
+    if (event.description != null || event.pluginId != null || extraArgWriter != null) {
       writer.obj("args") {
-        writer.writeStringField("description", event.description)
+        event.description?.let {
+          writer.writeStringField("description", it)
+        }
+        event.pluginId?.let {
+          writer.writeStringField("plugin", it)
+        }
+
+        extraArgWriter?.invoke()
       }
     }
   }
@@ -73,5 +106,10 @@ internal class TraceEventFormatWriter(private val timeOffset: Long,
     writer.writeNumberField("ts", TimeUnit.NANOSECONDS.toMicros(event.start - timeOffset))
     writer.writeNumberField("pid", 1)
     writer.writeStringField("tid", threadNameManager.getThreadName(event))
+
+    val category = event.category
+    if (category != null) {
+      writer.writeStringField("cat", category.jsonName)
+    }
   }
 }

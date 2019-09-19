@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 import * as am4charts from "@amcharts/amcharts4/charts"
 import {DataManager} from "@/state/DataManager"
-import {IconData, Item} from "@/state/data"
+import {IconData, InputDataV11AndLess, Item} from "@/state/data"
 import {getShortName} from "@/charts/ActivityChartDescriptor"
 import {BaseTreeMapChartManager} from "@/charts/BaseTreeMapChartManager"
 
@@ -46,30 +46,31 @@ export class TreeMapChartManager extends BaseTreeMapChartManager {
     this.chart.data = items
   }
 
-  private addServicesOrComponents(data: DataManager, items: Array<any>, statName: "component" | "service", appFieldName: "appServices" | "appComponents", projectFieldName: "projectComponents" | "projectServices") {
+  private addServicesOrComponents(dataManager: DataManager, items: Array<any>, statName: "component" | "service", appFieldName: "appServices" | "appComponents", projectFieldName: "projectComponents" | "projectServices") {
     const components: Array<any> = []
+    const data = dataManager.data as InputDataV11AndLess
     components.push({
       name: "app",
-      children: toTreeMapItem(data.data[appFieldName]),
+      children: toTreeMapItem(data[appFieldName]),
     })
     components.push({
       name: "project",
-      children: toTreeMapItem(data.data[projectFieldName]),
+      children: toTreeMapItem(data[projectFieldName]),
     })
 
     let duration = 0
     const durationComputer = (it: Item) => duration += it.duration
-    const v = data.data[appFieldName]
+    const v = data[appFieldName]
     if (v != null) {
       v.forEach(durationComputer)
     }
 
-    const p = data.data[projectFieldName]
+    const p = data[projectFieldName]
     if (p != null) {
       p.forEach(durationComputer)
     }
 
-    const stats = data.data.stats[statName]
+    const stats = data.stats[statName]
     items.push({
       name: statName + "s",
       children: components,
