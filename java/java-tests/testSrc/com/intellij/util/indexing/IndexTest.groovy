@@ -81,6 +81,7 @@ import kotlin.jvm.functions.Function2
 import org.jetbrains.annotations.NotNull
 
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * @author Eugene Zhuravlev
@@ -1146,7 +1147,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     def text = "class Some { void awesome() {}}"
     def file = myFixture.addFileToProject("Some.java", text)
 
-    def fileContent = new FileContentImpl(file.virtualFile)
+    def fileContent = new FileContentImpl(file.virtualFile, file.virtualFile.contentsToByteArray())
 
     def service = JetCacheService.getInstance()
 
@@ -1156,19 +1157,25 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
 
     def semaphore = new Semaphore()
     semaphore.down()
+    AtomicBoolean success = new AtomicBoolean()
+    AtomicBoolean valueFound = new AtomicBoolean()
     service.jetCache.get(hashes, new Function2<byte[], byte[], Unit>() {
       @Override
       Unit invoke(byte[] key, byte[] value) {
+        valueFound.set(true)
         semaphore.up()
         return null
       }
     }, new Function1<Boolean, Unit>() {
       @Override
-      Unit invoke(Boolean success) {
+      Unit invoke(Boolean ok) {
+        success.set(ok)
         semaphore.up()
         return null
       }
     })
     assertTrue(semaphore.waitFor(1000))
+    assertTrue(success.get())
+    assertTrue(valueFound.get())
   }
 }

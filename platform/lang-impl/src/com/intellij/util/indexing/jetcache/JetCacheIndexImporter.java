@@ -66,13 +66,13 @@ public class JetCacheIndexImporter implements IndexImporterFactory {
   private static final Key<byte[]> HASH_KEY = Key.create("file.content.hash");
 
   @NotNull
-  public static byte[] calculateHash(FileContent content) {
+  public static byte[] calculateHash(@NotNull FileContent content) {
     byte[] hash = content.getUserData(HASH_KEY);
     if (hash == null) {
       byte[] fullHash = ((FileContentImpl)content).getHash();
       if (fullHash == null) {
         fullHash = FileBasedIndexImpl
-          .calculateHash(content.getContent(), content.getPsiFile().getVirtualFile().getCharset(),
+          .calculateHash(content.getContent(), content.getFile().getCharset(),
                          content.getFileType(), content.getFileType());
         ((FileContentImpl)content).setHash(fullHash);
       }

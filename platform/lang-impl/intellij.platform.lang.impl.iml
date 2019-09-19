@@ -44,21 +44,10 @@
           <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/jetcache/22/jetcache-22.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-core/0.193.5/rd-core-0.193.5.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-core-common/0.193.5/rd-core-common-0.193.5.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-reflect/1.3.50/kotlin-reflect-1.3.50.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/commons-logging/commons-logging/1.2/commons-logging-1.2.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-common/1.3.50/kotlin-stdlib-common-1.3.50.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-core/1.1.0/kotlinx-coroutines-core-1.1.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-core-common/1.1.0/kotlinx-coroutines-core-common-1.1.0.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-framework/0.193.5/rd-framework-0.193.5.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-framework-common/0.193.5/rd-framework-common-0.193.5.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-gen/0.193.5/rd-gen-0.193.5.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib/1.3.50/kotlin-stdlib-1.3.50.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/annotations/13.0/annotations-13.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler/1.3.50/kotlin-compiler-1.3.50.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-script-runtime/1.3.50/kotlin-script-runtime-1.3.50.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/trove4j/1.0.20181211/trove4j-1.0.20181211.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-jdk8/1.3.50/kotlin-stdlib-jdk8-1.3.50.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-jdk7/1.3.50/kotlin-stdlib-jdk7-1.3.50.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/com/google/code/gson/gson/2.8.5/gson-2.8.5.jar!/" />
         </CLASSES>
         <JAVADOC />
