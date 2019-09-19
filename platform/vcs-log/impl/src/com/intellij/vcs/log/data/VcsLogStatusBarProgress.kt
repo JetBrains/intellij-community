@@ -1,17 +1,26 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.data
 
+import com.intellij.CommonBundle
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.TaskInfo
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.StatusBarEx
 import com.intellij.openapi.wm.ex.WindowManagerEx
+import com.intellij.vcs.log.VcsLogProvider
+import com.intellij.vcs.log.data.index.VcsLogBigRepositoriesList
 import com.intellij.vcs.log.data.index.VcsLogPersistentIndex
 import org.jetbrains.annotations.CalledInAwt
 
-class VcsLogStatusBarProgress(project: Project, vcsLogProgress: VcsLogProgress) : Disposable {
+class VcsLogStatusBarProgress(project: Project, logProviders: Map<VirtualFile, VcsLogProvider>,
+                              vcsLogProgress: VcsLogProgress) : Disposable {
+  private val LOG = Logger.getInstance(VcsLogStatusBarProgress::class.java)
+  private val roots = VcsLogPersistentIndex.getRootsForIndexing(logProviders)
   private val statusBar: StatusBarEx by lazy {
     (WindowManager.getInstance() as WindowManagerEx).findFrameFor(project)!!.statusBar as StatusBarEx
   }
@@ -59,22 +68,29 @@ class VcsLogStatusBarProgress(project: Project, vcsLogProgress: VcsLogProgress) 
     }
   }
 
-  class MyProgressIndicator : AbstractProgressIndicatorExBase() {
+  inner class MyProgressIndicator : AbstractProgressIndicatorExBase() {
     internal val taskInfo = MyTaskInfo()
 
     init {
       setOwnerTask(taskInfo)
       dontStartActivity()
     }
+
+    override fun cancel() {
+      val bigRepositoriesList = service<VcsLogBigRepositoriesList>()
+      roots.forEach { bigRepositoriesList.addRepository(it) }
+      LOG.info("Indexing for ${roots.map { it.presentableUrl }} was cancelled from the status bar.")
+      super.cancel()
+    }
   }
 
   class MyTaskInfo : TaskInfo {
     override fun getTitle(): String = "Vcs log indexing..."
 
-    override fun getCancelText(): String = ""
+    override fun getCancelText(): String = CommonBundle.getCancelButtonText()
 
-    override fun getCancelTooltipText(): String = ""
+    override fun getCancelTooltipText(): String = "Cancel indexing. Indexing could be restarted manually from Vcs Log toolbar."
 
-    override fun isCancellable(): Boolean = false
+    override fun isCancellable(): Boolean = true
   }
 }

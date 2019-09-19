@@ -155,7 +155,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
 
       if (myBigRepositoriesList.isBig(root)) {
         myCommitsToIndex.put(root, commits); // put commits back in order to be able to reindex
-        LOG.info("Indexing repository " + root.getName() + " is skipped since it is too big");
+        LOG.info("Indexing repository " + root.getName() + " is skipped");
         continue;
       }
 
@@ -466,7 +466,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
 
     public void run(@NotNull ProgressIndicator indicator) {
       if (myBigRepositoriesList.isBig(myRoot)) {
-        LOG.info("Indexing repository " + myRoot.getName() + " is skipped since it is too big");
+        LOG.info("Indexing repository " + myRoot.getName() + " is skipped");
         markCommits();
         myNumberOfTasks.get(myRoot).decrementAndGet();
         return;
@@ -572,7 +572,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
           storeDetail(detail);
           myNewIndexedCommits.incrementAndGet();
 
-          checkRunningTooLong(indicator);
+          checkShouldCancel(indicator);
         });
       });
     }
@@ -583,19 +583,22 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
 
         if (myNewIndexedCommits.incrementAndGet() % FLUSHED_COMMITS_NUMBER == 0) flush();
 
-        checkRunningTooLong(indicator);
+        checkShouldCancel(indicator);
       });
     }
 
-    private void checkRunningTooLong(@NotNull ProgressIndicator indicator) {
+    private void checkShouldCancel(@NotNull ProgressIndicator indicator) {
       long time = myIndexingTime.get(myRoot).get() + (getCurrentTimeMillis() - myStartTime);
       int limit = myIndexingLimit.get(myRoot).get();
-      if (time >= Math.max(limit, 1L) * 60 * 1000 && !myBigRepositoriesList.isBig(myRoot)) {
+      boolean isOvertime = time >= (Math.max(limit, 1L) * 60 * 1000) && !myBigRepositoriesList.isBig(myRoot);
+      if (isOvertime || (myBigRepositoriesList.isBig(myRoot) && !indicator.isCanceled())) {
         LOG.warn("Indexing " + myRoot.getName() + " was cancelled after " + StopWatch.formatTime(time));
-        myBigRepositoriesList.addRepository(myRoot);
-        myIndexingLimit.get(myRoot).compareAndSet(limit,
-                                                  Math.max(limit + getIndexingLimit(),
-                                                           (int)((time / (getIndexingLimit() * 60000) + 1) * getIndexingLimit())));
+        if (isOvertime) {
+          myBigRepositoriesList.addRepository(myRoot);
+          myIndexingLimit.get(myRoot).compareAndSet(limit,
+                                                    Math.max(limit + getIndexingLimit(),
+                                                             (int)((time / (getIndexingLimit() * 60000) + 1) * getIndexingLimit())));
+        }
         indicator.cancel();
       }
     }
