@@ -15,6 +15,7 @@ import java.io.File
 import java.util.concurrent.ConcurrentHashMap
 
 class JetCacheService: Disposable {
+  val projectCurrentVersion = ConcurrentHashMap<Project, ByteArray>()
   val jetCache: JetCache? = IntellijLocalJetCache()
 
   override fun dispose() {
@@ -38,12 +39,16 @@ class JetCacheService: Disposable {
     Disposer.register(FileBasedIndex.getInstance() as FileBasedIndexImpl, this)
   }
 
+  fun getProjectHash(project: Project): ByteArray {
+    return projectCurrentVersion.get(project)!!
+  }
 
   fun tryGetIndexes(project: Project) {
     if (!IS_ENABLED) {
       LOG.error("JetCache service is disabled")
     }
     val hash = ProjectStateHashGenerator.generateHashFor(project)
+    projectCurrentVersion.put(project, hash)
 
     //TODO use remote implementation
     jetCache?.getMultiple(hash)?.whenComplete { keys, u ->
