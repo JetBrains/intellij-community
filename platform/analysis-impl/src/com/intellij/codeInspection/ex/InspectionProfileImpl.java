@@ -885,4 +885,14 @@ public class InspectionProfileImpl extends NewInspectionProfile {
       setToolEnabled(entry.getShortName(), false, project);
     }
   }
+
+  public static void setToolEnabled(boolean newState,
+                                    @NotNull InspectionProfileImpl profile,
+                                    @NotNull String shortName,
+                                    @NotNull Project project) {
+    profile.setToolEnabled(shortName, newState, project, false);
+    for (ScopeToolState scopeToolState : profile.getTools(shortName, project).getTools()) {
+      scopeToolState.setEnabled(newState);
+    }
+  }
 }
