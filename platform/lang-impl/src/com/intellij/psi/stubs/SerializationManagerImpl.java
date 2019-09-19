@@ -20,10 +20,10 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
   private static final Logger LOG = Logger.getInstance(SerializationManagerImpl.class);
 
   private final AtomicBoolean myNameStorageCrashed = new AtomicBoolean(false);
-  private final File myFile;
+  //private final File myFile;
   private final boolean myUnmodifiable;
   private final AtomicBoolean myShutdownPerformed = new AtomicBoolean(false);
-  private PersistentStringEnumerator myNameStorage;
+  //private PersistentStringEnumerator myNameStorage;
   private StubSerializationHelper myStubSerializationHelper;
 
   @SuppressWarnings("unused") // used from componentSets/Lang.xml:14
@@ -32,25 +32,25 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
   }
 
   public SerializationManagerImpl(@NotNull File nameStorageFile, boolean unmodifiable) {
-    myFile = nameStorageFile;
-    myFile.getParentFile().mkdirs();
+    //myFile = nameStorageFile;
+    //myFile.getParentFile().mkdirs();
     myUnmodifiable = unmodifiable;
-    try {
+    //try {
       // we need to cache last id -> String mappings due to StringRefs and stubs indexing that initially creates stubs (doing enumerate on String)
       // and then index them (valueOf), also similar string items are expected to be enumerated during stubs processing
-      myNameStorage = new PersistentStringEnumerator(myFile, true);
-      myStubSerializationHelper = new StubSerializationHelper(myNameStorage, unmodifiable, this);
-    }
-    catch (IOException e) {
-      nameStorageCrashed();
-      LOG.info(e);
-      repairNameStorage(); // need this in order for myNameStorage not to be null
-      nameStorageCrashed();
-    }
-    finally {
+      //myNameStorage = new PersistentStringEnumerator(myFile, true);
+      myStubSerializationHelper = new StubSerializationHelper(unmodifiable, this);
+    //}
+    //catch (Exception e) {
+      //nameStorageCrashed();
+      //LOG.info(e);
+      //repairNameStorage(); // need this in order for myNameStorage not to be null
+      //nameStorageCrashed();
+    //}
+    //finally {
       registerSerializer(PsiFileStubImpl.TYPE);
       ShutDownTracker.getInstance().registerShutdownTask(this::performShutdown);
-    }
+    //}
   }
 
   @Override
@@ -60,35 +60,35 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
 
   @Override
   public void repairNameStorage() {
-    if (myNameStorageCrashed.getAndSet(false)) {
-      try {
-        LOG.info("Name storage is repaired");
-        if (myNameStorage != null) {
-          myNameStorage.close();
-        }
-
-        StubSerializationHelper prevHelper = myStubSerializationHelper;
-        if (myUnmodifiable) {
-          LOG.error("Data provided by unmodifiable serialization manager can be invalid after repair");
-        }
-
-        IOUtil.deleteAllFilesStartingWith(myFile);
-        myNameStorage = new PersistentStringEnumerator(myFile, true);
-        myStubSerializationHelper = new StubSerializationHelper(myNameStorage, myUnmodifiable, this);
-        myStubSerializationHelper.copyFrom(prevHelper);
-      }
-      catch (IOException e) {
-        LOG.info(e);
-        nameStorageCrashed();
-      }
-    }
+    //if (myNameStorageCrashed.getAndSet(false)) {
+    //  try {
+    //    LOG.info("Name storage is repaired");
+    //    if (myNameStorage != null) {
+    //      myNameStorage.close();
+    //    }
+    //
+    //    StubSerializationHelper prevHelper = myStubSerializationHelper;
+    //    if (myUnmodifiable) {
+    //      LOG.error("Data provided by unmodifiable serialization manager can be invalid after repair");
+    //    }
+    //
+    //    //IOUtil.deleteAllFilesStartingWith(myFile);
+    //    //myNameStorage = new PersistentStringEnumerator(myFile, true);
+    //    myStubSerializationHelper = new StubSerializationHelper(myUnmodifiable, this);
+    //    myStubSerializationHelper.copyFrom(prevHelper);
+    //  }
+    //  catch (IOException e) {
+    //    LOG.info(e);
+    //    nameStorageCrashed();
+    //  }
+    //}
   }
 
   @Override
   public void flushNameStorage() {
-    if (myNameStorage.isDirty()) {
-      myNameStorage.force();
-    }
+    //if (myNameStorage.isDirty()) {
+    //  myNameStorage.force();
+    //}
   }
 
   @Override
@@ -115,14 +115,14 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
     if (!myShutdownPerformed.compareAndSet(false, true)) {
       return; // already shut down
     }
-    LOG.info("START StubSerializationManager SHUTDOWN");
-    try {
-      myNameStorage.close();
-      LOG.info("END StubSerializationManager SHUTDOWN");
-    }
-    catch (IOException e) {
-      LOG.error(e);
-    }
+    //LOG.info("START StubSerializationManager SHUTDOWN");
+    //try {
+    //  //myNameStorage.close();
+    //  LOG.info("END StubSerializationManager SHUTDOWN");
+    //}
+    //catch (IOException e) {
+    //  LOG.error(e);
+    //}
   }
 
   @Override

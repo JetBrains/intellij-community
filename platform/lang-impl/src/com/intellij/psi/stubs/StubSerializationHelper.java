@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.stubs;
 
+import com.google.common.hash.Hashing;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.LogUtil;
 import com.intellij.openapi.diagnostic.Logger;
@@ -20,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 /**
@@ -27,8 +29,6 @@ import java.util.*;
  */
 class StubSerializationHelper {
   private static final Logger LOG = Logger.getInstance(StubSerializationHelper.class);
-
-  private final PersistentStringEnumerator myNameStorage;
 
   private final TIntObjectHashMap<String> myIdToName = new TIntObjectHashMap<>();
   private final TObjectIntHashMap<String> myNameToId = new TObjectIntHashMap<>();
@@ -40,8 +40,7 @@ class StubSerializationHelper {
   private final boolean myUnmodifiable;
   private final RecentStringInterner myStringInterner;
 
-  StubSerializationHelper(@NotNull PersistentStringEnumerator nameStorage, boolean unmodifiable, @NotNull Disposable parentDisposable) {
-    myNameStorage = nameStorage;
+  StubSerializationHelper(boolean unmodifiable, @NotNull Disposable parentDisposable) {
     myUnmodifiable = unmodifiable;
     myStringInterner = new RecentStringInterner(parentDisposable);
   }
@@ -58,17 +57,18 @@ class StubSerializationHelper {
       return;
     }
 
-    int id;
-    if (myUnmodifiable) {
-      id = myNameStorage.tryEnumerate(name);
-      if (id == 0) {
-        LOG.debug("serialized " + name + " is ignored in unmodifiable stub serialization manager");
-        return;
-      }
-    }
-    else {
-      id = myNameStorage.enumerate(name);
-    }
+    int id = Hashing.murmur3_32().hashString(name, StandardCharsets.UTF_8).asInt();
+    //
+    //if (myUnmodifiable) {
+    //  id = myNameStorage.tryEnumerate(name);
+    //  if (id == 0) {
+    //    LOG.debug("serialized " + name + " is ignored in unmodifiable stub serialization manager");
+    //    return;
+    //  }
+    //}
+    //else {
+    //  id = myNameStorage.enumerate(name);
+    //}
     myIdToName.put(id, name);
     myNameToId.put(name, id);
   }
@@ -356,21 +356,21 @@ class StubSerializationHelper {
     Computable<ObjectStubSerializer> lazy = name == null ? null : myNameToLazySerializer.get(name);
     ObjectStubSerializer serializer = lazy == null ? null : lazy.compute();
     if (serializer == null) {
-      throw reportMissingSerializer(id, parentStub);
+      //throw reportMissingSerializer(id, parentStub);
     }
     return serializer;
   }
 
-  private SerializerNotFoundException reportMissingSerializer(int id, @Nullable Stub parentStub) {
-    String externalId = null;
-    try {
-      externalId = myNameStorage.valueOf(id);
-    } catch (Throwable ignore) {}
-    return new SerializerNotFoundException(
-      brokenStubFormat(ourRootStubSerializer.get()) +
-      "Internal details, no serializer registered for stub: ID=" + id + ", externalId:" + externalId +
-      "; parent stub class=" + (parentStub != null? parentStub.getClass().getName() +", parent stub type:" + parentStub.getStubType() : "null"));
-  }
+  //private SerializerNotFoundException reportMissingSerializer(int id, @Nullable Stub parentStub) {
+  //  String externalId = null;
+  //  try {
+  //    externalId = myNameStorage.valueOf(id);
+  //  } catch (Throwable ignore) {}
+  //  return new SerializerNotFoundException(
+  //    brokenStubFormat(ourRootStubSerializer.get()) +
+  //    "Internal details, no serializer registered for stub: ID=" + id + ", externalId:" + externalId +
+  //    "; parent stub class=" + (parentStub != null? parentStub.getClass().getName() +", parent stub type:" + parentStub.getStubType() : "null"));
+  //}
 
   static String brokenStubFormat(ObjectStubSerializer root) {
     return "Broken stub format, most likely version of " + root + " was not updated after serialization changes\n";
