@@ -6,14 +6,15 @@ import com.intellij.util.io.DataInputOutputUtil
 import com.intellij.util.io.KeyDescriptor
 import com.intellij.util.io.PersistentHashMap
 import org.jetbrains.jetcache.JcHash
-import java.io.DataInput
-import java.io.DataOutput
-import java.io.File
-import java.io.InputStream
+import java.io.*
 import java.util.*
 import kotlin.experimental.and
 
-class GroupIdMap(file: File) {
+class GroupIdMap(file: File): Closeable {
+  override fun close() {
+    map.close()
+  }
+
   val map = PersistentHashMap<JcHash, Array<ByteArray>>(file, JcHashExternalizer, ArrayOfBytesExternalizer)
 
   fun getMultiple(jcHash: JcHash): Array<ByteArray> {

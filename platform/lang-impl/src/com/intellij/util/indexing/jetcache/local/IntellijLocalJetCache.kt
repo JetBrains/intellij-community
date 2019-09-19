@@ -4,17 +4,13 @@ package com.intellij.util.indexing.jetcache.local
 import com.intellij.openapi.util.io.ByteArraySequence
 import com.intellij.util.concurrency.SequentialTaskExecutor
 import com.intellij.util.indexing.ContentHashesSupport
-import com.intellij.util.indexing.IndexInfrastructure
-import com.intellij.util.indexing.jetcache.GroupIdMap
 import com.intellij.util.indexing.jetcache.JetCacheService
 import org.jetbrains.jetcache.JcHash
 import org.jetbrains.jetcache.JetCache
-import java.io.File
 import java.lang.UnsupportedOperationException
 import java.util.concurrent.CompletableFuture
 
 class IntellijLocalJetCache : JetCache {
-  val groupIdMap = GroupIdMap(File(IndexInfrastructure.getPersistentIndexRoot(), "group_id_map"))
   val executor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("jetcache local executor")
 
   override fun get(keys: Array<JcHash>, onReceived: (JcHash, ByteArray) -> Unit, onFinished: (success: Boolean) -> Unit) {
@@ -39,7 +35,7 @@ class IntellijLocalJetCache : JetCache {
     val completableFuture = CompletableFuture<Array<ByteArray>>()
     executor.submit {
       try {
-        completableFuture.complete(groupIdMap.getMultiple(key))
+        completableFuture.complete(JetCacheService.instance.groupIdMap!!.getMultiple(key))
       }
       catch (e: Exception) {
         completableFuture.completeExceptionally(e)

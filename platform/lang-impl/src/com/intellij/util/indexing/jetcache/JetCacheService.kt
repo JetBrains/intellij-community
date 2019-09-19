@@ -1,26 +1,31 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing.jetcache
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.ByteArraySequence
-import com.intellij.util.indexing.ContentHashesSupport
-import com.intellij.util.indexing.FileBasedIndexExtension
-import com.intellij.util.indexing.ID
+import com.intellij.util.indexing.*
 import com.intellij.util.indexing.jetcache.local.IntellijLocalJetCache
 import com.jetbrains.jetcache.model.JetCacheModel
 import org.jetbrains.jetcache.JcHash
 //import org.jetbrains.jetcache.JcKey
 //import org.jetbrains.jetcache.JcValue
 import org.jetbrains.jetcache.JetCache
+import java.io.File
 
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function.BiConsumer
 
-class JetCacheService {
+class JetCacheService: Disposable {
+  override fun dispose() {
+    groupIdMap?.close()
+  }
 
   private val myStorages = ConcurrentHashMap<ID<*, *>, JetCacheLocalStorage<*, *>>()
+  val groupIdMap: GroupIdMap?
 
   init {
     if (IS_ENABLED) {
@@ -29,7 +34,11 @@ class JetCacheService {
           myStorages[extension.name] = JetCacheLocalStorage(extension)
         }
       }
+      groupIdMap = GroupIdMap(File(IndexInfrastructure.getPersistentIndexRoot(), "group_id_map"))
+    } else {
+      groupIdMap = null
     }
+    Disposer.register(FileBasedIndex.getInstance() as FileBasedIndexImpl, this)
   }
 
   fun tryGetIndexes(project: Project) {
