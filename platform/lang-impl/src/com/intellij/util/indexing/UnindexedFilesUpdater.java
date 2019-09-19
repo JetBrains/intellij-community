@@ -6,7 +6,6 @@ import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -53,8 +52,8 @@ public class UnindexedFilesUpdater extends DumbModeTask {
   private void updateUnindexedFiles(ProgressIndicator indicator) {
     if (!IndexInfrastructure.hasIndices()) return;
 
-    if (JetCacheService.Companion.getIS_ENABLED()) {
-      JetCacheService.Companion.getInstance().tryGetIndexes(myProject);
+    if (JetCacheService.getIS_ENABLED()) {
+      JetCacheService.getInstance().tryGetIndexes(myProject);
     }
 
     PerformanceWatcher.Snapshot snapshot = PerformanceWatcher.takeSnapshot();

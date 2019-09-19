@@ -72,8 +72,11 @@ class JetCacheService: Disposable {
 
   companion object {
     private val LOG = Logger.getInstance(JetCacheService::class.java)
-    var IS_ENABLED = System.getProperty("jet.cache.is.enabled") != null
 
+    @JvmStatic
+    val IS_ENABLED = System.getProperty("jet.cache.is.enabled") != null
+
+    @JvmStatic
     val instance: JetCacheService
       get() = ServiceManager.getService(JetCacheService::class.java)
   }
