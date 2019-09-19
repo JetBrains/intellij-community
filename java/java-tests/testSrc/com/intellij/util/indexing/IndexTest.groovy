@@ -61,6 +61,7 @@ import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
 import com.intellij.testFramework.exceptionCases.IllegalArgumentExceptionCase
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import com.intellij.util.*
+import com.intellij.util.concurrency.Semaphore
 import com.intellij.util.indexing.*
 import com.intellij.util.indexing.impl.MapIndexStorage
 import com.intellij.util.indexing.impl.MapReduceIndex
@@ -1152,16 +1153,22 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     def hash = ContentHashesSupport.calcContentIdHash(JetCacheIndexImporter.calculateHash(fileContent), IdIndex.NAME)
     def hashes = new byte[1][]
     hashes[0] = hash
+
+    def semaphore = new Semaphore()
+    semaphore.down()
     service.jetCache.get(hashes, new Function2<byte[], byte[], Unit>() {
       @Override
       Unit invoke(byte[] key, byte[] value) {
+        semaphore.up()
         return null
       }
     }, new Function1<Boolean, Unit>() {
       @Override
       Unit invoke(Boolean success) {
+        semaphore.up()
         return null
       }
     })
+    assertTrue(semaphore.waitFor(1000))
   }
 }
