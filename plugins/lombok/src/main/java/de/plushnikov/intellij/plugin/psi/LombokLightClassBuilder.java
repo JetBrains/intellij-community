@@ -8,13 +8,13 @@ import com.intellij.psi.impl.light.LightPsiClassBuilder;
 import com.intellij.psi.impl.source.ClassInnerStuffCache;
 import com.intellij.psi.impl.source.PsiExtensibleClass;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.util.containers.ContainerUtil;
 import de.plushnikov.intellij.plugin.icon.LombokIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -26,7 +26,7 @@ public class LombokLightClassBuilder extends LightPsiClassBuilder implements Psi
   private final String myQualifiedName;
   private final Icon myBaseIcon;
   private final LombokLightModifierList myModifierList;
-  private Collection<PsiField> myFields = ContainerUtil.newArrayList();
+  private Collection<PsiField> myFields = new ArrayList<>();
   private ClassInnerStuffCache myInnerCache = new ClassInnerStuffCache(this);
 
   public LombokLightClassBuilder(@NotNull PsiElement context, @NotNull String simpleName, @NotNull String qualifiedName) {
