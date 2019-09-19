@@ -64,6 +64,8 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
 
     "NextWindow",
     "PreviousWindow",
+    "NextProjectWindow",
+    "PreviousProjectWindow",
 
     "ShowBookmarks",
     "GotoBookmark0",
