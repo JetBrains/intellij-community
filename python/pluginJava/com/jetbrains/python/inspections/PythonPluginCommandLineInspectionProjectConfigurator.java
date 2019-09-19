@@ -1,18 +1,22 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections;
 
+import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.CommandLineInspectionProjectConfigurator;
 import com.intellij.facet.FacetManager;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.facet.PythonFacetType;
-import com.jetbrains.python.sdk.*;
+import com.jetbrains.python.sdk.PySdkExtKt;
+import com.jetbrains.python.sdk.PythonSdkUpdater;
+import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -65,14 +69,20 @@ public class PythonPluginCommandLineInspectionProjectConfigurator implements Com
   }
 
   @Override
-  public void configureProject(@NotNull Project project) {
+  public void configureProject(@NotNull Project project, AnalysisScope scope) {
     List<Sdk> sdks = PythonSdkUtil.getAllSdks();
     if (!sdks.isEmpty()) {
-      for (Module m : ModuleManager.getInstance(project).getModules()) {
-        PythonFacetType facetType = PythonFacetType.getInstance();
-        ApplicationManager.getApplication().runWriteAction(() -> {
-          FacetManager.getInstance(m).addFacet(facetType, facetType.getPresentableName(), null);
-        });
+      PythonFacetType facetType = PythonFacetType.getInstance();
+      for (VirtualFile f: scope.getFiles()) {
+        if (FileTypeRegistry.getInstance().isFileOfType(f, PythonFileType.INSTANCE)) {
+
+          Module m = ModuleUtilCore.findModuleForFile(f, project);
+          if (m != null && FacetManager.getInstance(m).getFacetByType(facetType.getId()) == null) {
+            ApplicationManager.getApplication().runWriteAction(() -> {
+              FacetManager.getInstance(m).addFacet(facetType, facetType.getPresentableName(), null);
+            });
+          }
+        }
       }
     }
   }
