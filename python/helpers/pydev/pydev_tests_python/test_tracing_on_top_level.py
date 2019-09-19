@@ -1,6 +1,6 @@
 from pydevd import PyDB
 import pytest
-from tests_python.debugger_unittest import IS_CPYTHON
+from pydev_tests_python.debugger_unittest import IS_CPYTHON
 
 DEBUG = False
 
@@ -75,7 +75,7 @@ class _TraceTopLevel(object):
 
     def add_unhandled_exception_breakpoint(self):
         from _pydevd_bundle.pydevd_process_net_command import process_net_command
-        from tests_python.debugger_unittest import CMD_ADD_EXCEPTION_BREAK
+        from pydev_tests_python.debugger_unittest import CMD_ADD_EXCEPTION_BREAK
         for exc_name in ('AssertionError', 'RuntimeError'):
             process_net_command(
                 self.py_db,

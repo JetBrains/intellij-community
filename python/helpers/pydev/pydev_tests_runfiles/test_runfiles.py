@@ -1,6 +1,6 @@
 import os.path
 import sys
-from tests_python.test_debugger import IS_PY26
+from pydev_tests_python.test_debugger import IS_PY26
 
 IS_JYTHON = sys.platform.find('java') != -1
 

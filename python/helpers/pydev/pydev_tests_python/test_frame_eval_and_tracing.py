@@ -4,11 +4,11 @@ import pytest
 import time
 
 from contextlib import contextmanager
-from tests_python.debugger_unittest import IS_PY36_OR_GREATER, IS_CPYTHON
-from tests_python.debug_constants import TEST_CYTHON
+from pydev_tests_python.debugger_unittest import IS_PY36_OR_GREATER, IS_CPYTHON
+from pydev_tests_python.debug_constants import TEST_CYTHON
 
 pytest_plugins = [
-    str('tests_python.debugger_fixtures'),
+    str('pydev_tests_python.debugger_fixtures'),
 ]
 
 pytestmark = pytest.mark.skipif(not IS_PY36_OR_GREATER or not IS_CPYTHON or not TEST_CYTHON, reason='Requires CPython >= 3.6')
@@ -188,7 +188,7 @@ def test_add_termination_exc_break(case_setup_force_frame_eval):
 
 
 def test_frame_eval_whitebox_test(case_setup_force_frame_eval):
-    from tests_python.debugger_unittest import CMD_STEP_INTO, CMD_STEP_RETURN, CMD_STEP_OVER
+    from pydev_tests_python.debugger_unittest import CMD_STEP_INTO, CMD_STEP_RETURN, CMD_STEP_OVER
 
     with case_setup_force_frame_eval.test_file('_debugger_case_frame_eval.py') as writer:
         line_on_global = writer.get_line_index_with_content('break on global')
