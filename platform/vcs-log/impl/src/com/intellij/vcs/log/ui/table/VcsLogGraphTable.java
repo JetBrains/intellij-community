@@ -83,6 +83,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   public static final String CHANGES_LOG_TEXT = "Changes log";
 
   @NotNull private final VcsLogData myLogData;
+  @NotNull private final String myId;
   @NotNull private final VcsLogUiProperties myProperties;
   @NotNull private final VcsLogColorManager myColorManager;
   @NotNull private final MyDummyTableCellEditor myDummyEditor = new MyDummyTableCellEditor();
@@ -105,6 +106,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
                           @NotNull Consumer<Runnable> requestMore) {
     super(new GraphTableModel(initialDataPack, logData, requestMore));
     myLogData = logData;
+    myId = ui.getId();
     myProperties = ui.getProperties();
     myColorManager = ui.getColorManager();
 
@@ -771,11 +773,17 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   private class MyProgressListener implements VcsLogProgress.ProgressListener {
     @Override
     public void progressStarted(@NotNull Collection<? extends VcsLogProgress.ProgressKey> keys) {
-      getEmptyText().setText(LOADING_COMMITS_TEXT);
+      progressChanged(keys);
     }
 
     @Override
     public void progressChanged(@NotNull Collection<? extends VcsLogProgress.ProgressKey> keys) {
+      if (VcsLogUiUtil.isProgressVisible(keys, myId)) {
+        getEmptyText().setText(LOADING_COMMITS_TEXT);
+      }
+      else {
+        updateEmptyText();
+      }
     }
 
     @Override
