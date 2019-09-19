@@ -18,10 +18,12 @@
 
 package org.jetbrains.uast
 
+import com.intellij.codeInsight.completion.CompletionUtilCoreImpl
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.annotations.ApiStatus
 import java.io.File
 
 inline fun <reified T : UElement> UElement.getParentOfType(strict: Boolean = true): T? = getParentOfType(T::class.java, strict)
@@ -222,6 +224,7 @@ fun UCallExpression.getParameterForArgument(arg: UExpression): PsiParameter? {
   }?.value
 }
 
+@ApiStatus.Experimental
 tailrec fun UElement.isLastElementInControlFlow(scopeElement: UElement? = null): Boolean =
   when (val parent = this.uastParent) {
     scopeElement -> true
@@ -229,3 +232,7 @@ tailrec fun UElement.isLastElementInControlFlow(scopeElement: UElement? = null):
     is UElement -> parent.isLastElementInControlFlow(scopeElement)
     else -> false
   }
+
+@ApiStatus.Experimental
+inline fun <reified T : UElement> toOriginalUElementOrSelf(uExpression: T) =
+  uExpression.sourcePsi?.let(CompletionUtilCoreImpl::getOriginalElement)?.toUElementOfType<T>() ?: uExpression
