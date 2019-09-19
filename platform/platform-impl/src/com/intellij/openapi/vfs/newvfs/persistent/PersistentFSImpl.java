@@ -373,7 +373,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     if (childData != null) {
       String oldChildName = childName;
       childName = fs.getCanonicallyCasedName(new FakeVirtualFile(parent, oldChildName));
-      if (childName.isEmpty()) return 0;
+      if (StringUtil.isEmptyOrSpaces(childName)) return 0;
 
       if (!childName.equals(oldChildName)) {
         childId = findExistingId(childName, children, fs);

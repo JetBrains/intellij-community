@@ -722,7 +722,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
       // behaviour of this code.
       return canonicalFileName;
     }
-    catch (IOException e) {
+    catch (IOException | InvalidPathException e) {
       return originalFileName;
     }
     finally {
