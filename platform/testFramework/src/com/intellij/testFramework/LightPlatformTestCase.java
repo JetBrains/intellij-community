@@ -301,13 +301,13 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     IdeaLogger.ourErrorsOccurred = null;
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    myOldSdks = new SdkLeakTracker();
-
     boolean reusedProject = true;
     if (ourProject == null || ourProjectDescriptor == null || !ourProjectDescriptor.equals(descriptor)) {
       initProject(descriptor);
       reusedProject = false;
     }
+
+    myOldSdks = new SdkLeakTracker();
 
     ProjectManagerEx projectManagerEx = ProjectManagerEx.getInstanceEx();
     Project project = ourProject;
