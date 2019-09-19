@@ -26,6 +26,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.Value;
+import lombok.With;
 import lombok.experimental.Wither;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,7 +41,7 @@ public class WitherFieldProcessor extends AbstractFieldProcessor {
 
   public WitherFieldProcessor(@NotNull ConfigDiscovery configDiscovery,
                               @NotNull RequiredArgsConstructorProcessor requiredArgsConstructorProcessor) {
-    super(configDiscovery, PsiMethod.class, Wither.class);
+    super(configDiscovery, PsiMethod.class, Wither.class, With.class);
     this.requiredArgsConstructorProcessor = requiredArgsConstructorProcessor;
   }
 
@@ -186,7 +187,7 @@ public class WitherFieldProcessor extends AbstractFieldProcessor {
         .withNavigationElement(psiField)
         .withModifier(methodModifier);
 
-      PsiAnnotation witherAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiField, Wither.class);
+      PsiAnnotation witherAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiField, Wither.class, With.class);
       addOnXAnnotations(witherAnnotation, methodBuilder.getModifierList(), "onMethod");
 
       final LombokLightParameter methodParameter = new LombokLightParameter(psiFieldName, psiFieldType, methodBuilder, JavaLanguage.INSTANCE);

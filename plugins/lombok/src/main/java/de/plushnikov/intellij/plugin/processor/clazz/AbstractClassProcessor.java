@@ -50,6 +50,13 @@ public abstract class AbstractClassProcessor extends AbstractProcessor implement
     super(configDiscovery, supportedClass, supportedAnnotationClass);
   }
 
+  protected AbstractClassProcessor(@NotNull ConfigDiscovery configDiscovery,
+                                   @NotNull Class<? extends PsiElement> supportedClass,
+                                   @NotNull Class<? extends Annotation> supportedAnnotationClass,
+                                   @NotNull Class<? extends Annotation> equivalentAnnotationClass) {
+    super(configDiscovery, supportedClass, supportedAnnotationClass, equivalentAnnotationClass);
+  }
+
   @NotNull
   @Override
   public List<? super PsiElement> process(@NotNull PsiClass psiClass) {

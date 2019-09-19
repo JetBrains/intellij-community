@@ -111,6 +111,7 @@ copy {
     include 'lombok/ToString.java'
     include 'lombok/SneakyThrows.java'
     include 'lombok/Value.java'
+    include 'lombok/With.java'
     include 'lombok/val.java'
     include 'lombok/var.java'
     include 'lombok/Singular.java'

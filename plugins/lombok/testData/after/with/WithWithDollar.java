@@ -1,0 +1,3 @@
+class WithWithDollar {
+	int $i;
+}
