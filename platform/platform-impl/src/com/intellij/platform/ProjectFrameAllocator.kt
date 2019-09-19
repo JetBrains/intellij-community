@@ -75,7 +75,7 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask, pri
         }
 
         task.run()
-      }, "Loading Project '" + projectFile.fileName + "'...", true, null, frame.rootPane)
+      }, "Loading " + projectFile.fileName + " Project", true, null, frame.rootPane)
     }
     return completed
   }
