@@ -386,4 +386,9 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
       });
     }
   }
+
+  @Override
+  public String toString() {
+    return "index \"" + getExtension().getName().getName() + "\"";
+  }
 }
