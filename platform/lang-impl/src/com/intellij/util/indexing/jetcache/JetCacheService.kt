@@ -8,7 +8,9 @@ import com.intellij.openapi.util.io.ByteArraySequence
 import com.intellij.util.indexing.ContentHashesSupport
 import com.intellij.util.indexing.FileBasedIndexExtension
 import com.intellij.util.indexing.ID
+import com.intellij.util.indexing.jetcache.local.IntellijLocalJetCache
 import com.jetbrains.jetcache.model.JetCacheModel
+import org.jetbrains.jetcache.JcHash
 //import org.jetbrains.jetcache.JcKey
 //import org.jetbrains.jetcache.JcValue
 import org.jetbrains.jetcache.JetCache
@@ -36,28 +38,26 @@ class JetCacheService {
     }
     val hash = ProjectStateHashGenerator.generateHashFor(project)
 
-    //TODO start from here
-    val jetCache: JetCache? = null
-    //jetCache!!.getMuliple(JcKey(hash)).whenComplete(object : BiConsumer<Array<JcValue>?, Throwable?> {
-    //  override fun accept(t: Array<JcValue>?, u: Throwable?) {
-    //    if (u != null) {
-    //      LOG.error(u)
-    //    }
-    //    val keys = t!!
-    //    jetCache.get(keys = null!!, onReceived = { jcKey, bytes ->
-    //      val hashAndId = ContentHashesSupport.splitHashAndId(jcKey.serialized)
-    //      if (hashAndId != null) {
-    //        val id = hashAndId.second
-    //        val contentHash = hashAndId.first
-    //        getStorage(id)?.put(contentHash, ByteArraySequence(bytes))
-    //      }
-    //    }, onFinished = { success ->
-    //      if (!success) {
-    //        LOG.error("Can't load keys")
-    //      }
-    //    })
-    //  }
-    //})
+    //TODO use remote implementation
+    val jetCache: JetCache? = IntellijLocalJetCache()
+    jetCache?.getMultiple(hash)?.whenComplete { keys, u ->
+      if (u == null) {
+        jetCache.get(keys, { key, value ->
+          val hashAndId = ContentHashesSupport.splitHashAndId(key)
+          if (hashAndId != null) {
+            val id = hashAndId.second
+            val contentHash = hashAndId.first
+            getStorage(id)?.put(contentHash, ByteArraySequence(value))
+          }
+        }, { success ->
+          if (!success) {
+            LOG.error("Can't load k-v pairs")
+          }
+        })
+      } else {
+        LOG.error(u)
+      }
+    }
   }
 
   fun <K, V> getStorage(indexId: ID<K, V>): JetCacheLocalStorage<K, V>? {
