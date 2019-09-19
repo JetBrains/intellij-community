@@ -60,10 +60,6 @@ class JetCacheService: Disposable {
             val contentHash = hashAndId.first
             getStorage(id)?.put(contentHash, ByteArraySequence(value))
           }
-        }, { success ->
-          if (!success) {
-            LOG.error("Can't load k-v pairs")
-          }
         })
       } else {
         LOG.error(u)

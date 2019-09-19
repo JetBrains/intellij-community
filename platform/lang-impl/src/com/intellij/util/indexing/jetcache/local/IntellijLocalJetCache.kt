@@ -14,7 +14,7 @@ import java.util.concurrent.CompletableFuture
 class IntellijLocalJetCache : JetCache {
   val executor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("jetcache local executor")
 
-  override fun get(keys: Array<JcHash>, onReceived: (JcHash, ByteArray) -> Unit, onFinished: (success: Boolean) -> Unit) {
+  override fun get(keys: Array<JcHash>, onReceived: (JcHash, ByteArray) -> Unit) {
     executor.submit {
       try {
         for (key in keys) {
@@ -24,10 +24,10 @@ class IntellijLocalJetCache : JetCache {
             storage?.get(hashAndId.first)?.toBytes()?.let { onReceived(key, it) }
           }
         }
-        onFinished(true)
+        //onFinished(true)
       }
       catch (e: Exception) {
-        onFinished(false)
+        //onFinished(false)
       }
     }
   }
