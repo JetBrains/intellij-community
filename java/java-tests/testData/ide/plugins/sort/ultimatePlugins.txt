@@ -43,7 +43,6 @@
 + org.jetbrains.plugins.remote-run
 + Docker
 + Emma
-+ Tomcat
 + Git4Idea
 + GlassFish
 + Heroku
@@ -62,6 +61,7 @@
 + Refactor-X
 + Resin
 + Subversion
++ Tomcat
 + W3Validators
 + WebSphere
 + Weblogic
