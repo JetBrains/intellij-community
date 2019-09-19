@@ -32,10 +32,8 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.buildout.BuildoutFacet;
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
-import com.jetbrains.python.psi.resolve.PythonSdkPathCache;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
 import com.jetbrains.python.remote.PyRemoteSkeletonGeneratorFactory;
-import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import com.jetbrains.python.sdk.InvalidSdkException;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.PythonSdkUtil;
@@ -45,11 +43,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.io.*;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static com.jetbrains.python.sdk.skeleton.PySkeletonHeader.fromVersionString;
 
@@ -64,11 +61,6 @@ public class PySkeletonRefresher {
   private static final Logger LOG = Logger.getInstance(PySkeletonRefresher.class);
 
   @NonNls public static final String BLACKLIST_FILE_NAME = ".blacklist";
-  // Path (the first component) may contain spaces, this header spec is deprecated
-  private static final Pattern VERSION_LINE_V1 = Pattern.compile("# from (\\S+) by generator (\\S+)\\s*");
-  // Skeleton header spec v2
-  private static final Pattern FROM_LINE_V2 = Pattern.compile("# from (.*)$");
-  private static final Pattern BY_LINE_V2 = Pattern.compile("# by generator (.*)$");
 
   private static int ourGeneratingCount = 0;
 
@@ -195,7 +187,7 @@ public class PySkeletonRefresher {
       return null;
     });
     final boolean builtinsUpdated = ContainerUtil.exists(results,
-                                                         result -> result.getModuleOrigin().equals(PySkeletonGenerator.BUILTIN_NAME));
+                                                         result -> result.getModuleOrigin().equals(PySkeletonHeader.BUILTIN_NAME));
 
     indicate(PyBundle.message("sdk.gen.reloading"));
     mySkeletonsGenerator.refreshGeneratedSkeletons();
