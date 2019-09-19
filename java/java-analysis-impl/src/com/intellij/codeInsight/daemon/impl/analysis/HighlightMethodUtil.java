@@ -41,7 +41,9 @@ import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.text.MessageFormat;
+import java.util.List;
 import java.util.*;
 import java.util.stream.Stream;
 
@@ -990,12 +992,16 @@ public class HighlightMethodUtil {
     s.append("<td style='color: ").append(greyedColor).append("; padding-right: 28px;'>Provided</td>");
     s.append("</tr>");
 
-    String parameterNameStyle = String.format("color: %s; background-color: %s; font-size:%dpt; padding:1px 4px 1px 4px;",
+    String parameterNameStyle = String.format("color: %s; font-size:%dpt; padding:1px 4px 1px 4px;",
                                               greyedColor,
-                                              ColorUtil.toHtmlColor(EditorColorsUtil.getGlobalOrDefaultColorScheme()
-                                                                      .getAttributes(DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT)
-                                                                      .getBackgroundColor()),
                                               StartupUiUtil.getLabelFont().getSize() - (SystemInfo.isWindows ? 0 : 1));
+
+    Color paramBgColor = EditorColorsUtil.getGlobalOrDefaultColorScheme()
+      .getAttributes(DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT)
+      .getBackgroundColor();
+    if (paramBgColor != null) {
+      parameterNameStyle += "background-color: " + ColorUtil.toHtmlColor(paramBgColor) + ";";
+    }
 
     for (int i = 0; i < Math.max(parameters.length, expressions.length); i++) {
       PsiParameter parameter = i < parameters.length ? parameters[i] : null;
