@@ -10,6 +10,7 @@ import com.intellij.util.indexing.IndexInfrastructure;
 import com.intellij.util.io.ByteSequenceDataExternalizer;
 import com.intellij.util.io.KeyValueStore;
 import com.intellij.util.io.PersistentHashMap;
+import com.intellij.util.io.PersistentHashMapValueStorage;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -34,13 +35,19 @@ public class JetCacheLocalStorage<K, V> implements KeyValueStore<byte[], ByteArr
   public JetCacheLocalStorage(File file) {
     myFile = file;
 
+    PersistentHashMapValueStorage.CreationTimeOptions.DO_COMPRESSION.set(false);
     PersistentHashMap<byte[], ByteArraySequence> map = null;
-    for (int i = 0; i < 10; i++) {
-      try {
-        map = new PersistentHashMap<>(myFile, new ContentHashesUtil.ContentHashesDescriptor(16), ByteSequenceDataExternalizer.INSTANCE);
-      } catch (IOException e) {
-        LOG.error(e);
+    try {
+      for (int i = 0; i < 10; i++) {
+        try {
+          map = new PersistentHashMap<>(myFile, new ContentHashesUtil.ContentHashesDescriptor(16), ByteSequenceDataExternalizer.INSTANCE);
+        }
+        catch (IOException e) {
+          LOG.error(e);
+        }
       }
+    } finally {
+      PersistentHashMapValueStorage.CreationTimeOptions.DO_COMPRESSION.set(true);
     }
     if (map == null) throw new RuntimeException("Can't initiate JetCacheLocalStorage");
     myPersistentHashMap = map;

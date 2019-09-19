@@ -46,8 +46,7 @@ public class PersistentHashMapValueStorage {
     public static final ThreadLocal<Boolean> READONLY = new ThreadLocal<>();
     public static final ThreadLocal<Boolean> COMPACT_CHUNKS_WITH_VALUE_DESERIALIZATION = new ThreadLocal<>();
     public static final ThreadLocal<Boolean> HAS_NO_CHUNKS = new ThreadLocal<>();
-
-    static final ThreadLocal<Boolean> DO_COMPRESSION = new ThreadLocal<Boolean>() {
+    public static final ThreadLocal<Boolean> DO_COMPRESSION = new ThreadLocal<Boolean>() {
       @Override
       protected Boolean initialValue() {
         return COMPRESSION_ENABLED;
