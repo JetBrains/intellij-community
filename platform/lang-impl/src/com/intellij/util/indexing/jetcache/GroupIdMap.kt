@@ -18,7 +18,7 @@ class GroupIdMap(file: File): Closeable {
   val map = PersistentHashMap<JcHash, Array<ByteArray>>(file, JcHashExternalizer, ArrayOfBytesExternalizer)
 
   fun getMultiple(jcHash: JcHash): Array<ByteArray> {
-    return map.get(jcHash)
+    return map.get(jcHash) ?: emptyArray()
   }
 
   fun append(jcHash: JcHash, values: Array<ByteArray>) {

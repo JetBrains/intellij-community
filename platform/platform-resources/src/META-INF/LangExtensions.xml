@@ -207,6 +207,8 @@
 
     <applicationService serviceImplementation="com.intellij.lang.IdeLanguageCustomization"/>
 
+    <applicationService serviceImplementation="com.intellij.util.indexing.jetcache.JetCacheService"/>
+
     <rearranger.ui implementation="com.intellij.application.options.codeStyle.arrangement.component.DefaultArrangementUiComponentFactory"/>
 
     <applicationService serviceInterface="com.intellij.ui.EditorTextFieldProvider"
