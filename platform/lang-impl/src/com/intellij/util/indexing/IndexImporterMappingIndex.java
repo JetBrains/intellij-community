@@ -14,15 +14,50 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-final class IndexImporterMappingIndex<Key, Value, Input> implements SnapshotInputMappingIndex<Key, Value, Input> {
+final class IndexImporterMappingIndex<Key, Value, Input> implements UpdatableSnapshotInputMappingIndex<Key, Value, Input> {
   private static final Logger LOG = Logger.getInstance(IndexImporterMappingIndex.class);
 
   private final List<SnapshotInputMappingIndex<Key, Value, Input>> myImporters;
 
+  @NotNull
+  @Override
+  public Map<Key, Value> readData(int hashId) throws IOException {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public InputData<Key, Value> putData(@NotNull Input content, @NotNull InputData<Key, Value> data) throws IOException {
+    for (SnapshotInputMappingIndex<Key, Value, Input> importer : myImporters) {
+      if (importer instanceof UpdatableSnapshotInputMappingIndex<?, ?, ?>) {
+        ((UpdatableSnapshotInputMappingIndex<Key, Value, Input>)importer).putData(content, data);
+      }
+    }
+
+    return null;
+  }
+
+  @Override
+  public void flush() throws IOException {
+    for (SnapshotInputMappingIndex<Key, Value, Input> importer : myImporters) {
+      if (importer instanceof UpdatableSnapshotInputMappingIndex<?, ?, ?>) {
+        ((UpdatableSnapshotInputMappingIndex<Key, Value, Input>)importer).flush();
+      }
+    }
+  }
+
+  @Override
+  public void clear() throws IOException {
+    for (SnapshotInputMappingIndex<Key, Value, Input> importer : myImporters) {
+      if (importer instanceof UpdatableSnapshotInputMappingIndex<?, ?, ?>) {
+        ((UpdatableSnapshotInputMappingIndex<Key, Value, Input>)importer).clear();
+      }
+    }
+  }
+
   @Nullable
   static <Key, Value, Input> SnapshotInputMappingIndex<Key, Value, Input> wrap(@Nullable SnapshotInputMappingIndex<Key, Value, Input> index,
                                                                                @NotNull IndexExtension<Key, Value, Input> indexExtension) {
-    SnapshotInputMappingIndex<Key, Value, Input> indexImporterMappingIndex = createImportersWrapper(indexExtension);
+    UpdatableSnapshotInputMappingIndex<Key, Value, Input> indexImporterMappingIndex = createImportersWrapper(indexExtension);
     if (indexImporterMappingIndex == null) return index;
     if (index == null) return indexImporterMappingIndex;
     if (index instanceof UpdatableSnapshotInputMappingIndex) {
@@ -36,6 +71,7 @@ final class IndexImporterMappingIndex<Key, Value, Input> implements SnapshotInpu
 
         @Override
         public InputData<Key, Value> putData(@NotNull Input content, @NotNull InputData<Key, Value> data) throws IOException {
+          indexImporterMappingIndex.putData(content, data);
           return updatableIndex.putData(content, data);
         }
 
@@ -101,7 +137,7 @@ final class IndexImporterMappingIndex<Key, Value, Input> implements SnapshotInpu
   }
 
   @Nullable
-  private static <Key, Value, Input> SnapshotInputMappingIndex<Key, Value, Input> createImportersWrapper(@NotNull IndexExtension<Key, Value, Input> indexExtension) {
+  private static <Key, Value, Input> UpdatableSnapshotInputMappingIndex<Key, Value, Input> createImportersWrapper(@NotNull IndexExtension<Key, Value, Input> indexExtension) {
     List<SnapshotInputMappingIndex<Key, Value, Input>> importers;
     try {
       importers = IndexImporterFactory

@@ -2,6 +2,7 @@
 package com.intellij.util.indexing.jetcache.local
 
 import com.intellij.openapi.util.io.ByteArraySequence
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.concurrency.SequentialTaskExecutor
 import com.intellij.util.indexing.ContentHashesSupport
 import com.intellij.util.indexing.jetcache.JetCacheService
@@ -53,7 +54,7 @@ class IntellijLocalJetCache : JetCache {
       val hashAndId = ContentHashesSupport.splitHashAndId(key)
       if (hashAndId != null) {
         val storage = JetCacheService.instance.getStorage(hashAndId.second)
-        storage?.put(key, ByteArraySequence(hashAndId.first))
+        storage?.put(hashAndId.first, ByteArraySequence(value))
       }
     }
   }

@@ -13,6 +13,8 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.Map;
 
+import static com.intellij.openapi.util.text.StringUtil.toHexString;
+
 public class JetCacheIndexImporter implements IndexImporterFactory {
   @Nullable
   @Override

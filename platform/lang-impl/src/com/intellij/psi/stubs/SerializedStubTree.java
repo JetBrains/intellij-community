@@ -255,7 +255,7 @@ public class SerializedStubTree {
              ". Hashing algorithm = " + HASHER.getValue().getAlgorithm() + "." + oldTreeDump + newTreeDump, new Exception());
   }
 
-  private static String toHexString(byte[] hash, int length) {
+  public static String toHexString(byte[] hash, int length) {
     return IntStreamEx.of(hash).limit(length).mapToObj(b -> String.format("%02x", b & 0xFF)).joining();
   }
 }

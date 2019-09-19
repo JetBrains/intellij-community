@@ -115,6 +115,9 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
     data = super.mapInput(content);
     if (!containsSnapshotData && !UpdatableSnapshotInputMappingIndex.ignoreMappingIndexUpdate(content)) {
       try {
+        if (LOG.isTraceEnabled()) {
+          LOG.trace("update " + getExtension().getName() + " with " + ((FileContent)content).getFileName() + " data " + data.getKeyValues());
+        }
         return ((UpdatableSnapshotInputMappingIndex)mySnapshotInputMappings).putData(content, data);
       }
       catch (IOException e) {

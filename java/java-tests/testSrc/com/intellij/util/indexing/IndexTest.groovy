@@ -1144,10 +1144,11 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
   }
 
   void "test simple JetCache operations"() {
-    def text = "class Some { void awesome() {}}"
-    def file = myFixture.addFileToProject("Some.java", text)
+    def text = "class Some { void awesome() { Runnable r = () -> {}; }}"
+    def file = myFixture.addClass(text).getContainingFile().virtualFile
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments()
 
-    def fileContent = new FileContentImpl(file.virtualFile, file.virtualFile.contentsToByteArray())
+    def fileContent = new FileContentImpl(file, file.contentsToByteArray())
 
     def service = JetCacheService.getInstance()
 
