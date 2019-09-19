@@ -21,6 +21,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.KeyWithDefaultValue;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -38,7 +39,6 @@ import org.jetbrains.jps.util.JpsPathUtil;
 import java.io.File;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class HotSwapUIImpl extends HotSwapUI {
   /**
@@ -108,7 +108,7 @@ public class HotSwapUIImpl extends HotSwapUI {
 
   private void hotSwapSessions(@NotNull final List<DebuggerSession> sessions,
                                @Nullable final Map<String, Collection<String>> generatedPaths,
-                               @Nullable final Stream<String> outputPaths,
+                               @Nullable final NotNullLazyValue<? extends List<String>> outputPaths,
                                @Nullable final HotSwapStatusListener callback) {
     final boolean shouldAskBeforeHotswap = myAskBeforeHotswap;
     myAskBeforeHotswap = true;
@@ -283,7 +283,7 @@ public class HotSwapUIImpl extends HotSwapUI {
 
   @NotNull
   private static Map<DebuggerSession, Map<String, HotSwapFile>> scanForModifiedClassesWithProgress(@NotNull List<DebuggerSession> sessions,
-                                                                                                   @Nullable Stream<String> outputPaths,
+                                                                                                   @Nullable NotNullLazyValue<? extends List<String>> outputPaths,
                                                                                                    @NotNull HotSwapProgressImpl progress) {
     return ProgressManager.getInstance().runProcess(() -> {
       try {
@@ -399,8 +399,9 @@ public class HotSwapUIImpl extends HotSwapUI {
           }
 
           HotSwapStatusListener callback = context.getUserData(HOT_SWAP_CALLBACK_KEY);
-          Stream<String> dirtyOutputRoots = context.getDirtyOutputPaths().orElse(null);
-          hotSwapSessions(sessions, generatedPaths, dirtyOutputRoots, callback);
+          NotNullLazyValue<? extends List<String>> outputRoots = context.getDirtyOutputPaths()
+            .map(stream -> NotNullLazyValue.createValue(() -> stream.collect(Collectors.toCollection(SmartList::new)))).orElse(null);
+          hotSwapSessions(sessions, generatedPaths, outputRoots, callback);
         }
       }
     }
