@@ -817,7 +817,7 @@ public class PsiImplUtil {
 
   public static void replaceExpression(@NotNull String newExpression, @NotNull GrExpression expression) throws IncorrectOperationException {
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(expression.getProject());
-    final GrExpression newCall = factory.createExpressionFromText(newExpression);
+    final GrExpression newCall = factory.createExpressionFromText(newExpression, expression.getContext());
     expression.replaceWithExpression(newCall, true);
   }
 
