@@ -106,7 +106,7 @@ public class PythonSdkUpdater implements StartupActivity.Background {
                                @Nullable final Component ownerComponent) {
 
     final Application application = ApplicationManager.getApplication();
-    assert !application.isWriteAccessAllowed() : "write actions are not allowed in non-EDT threads";
+    assert !application.isWriteAccessAllowed() : "sdk update should not be run in edt neither under write action";
 
     final String key = PythonSdkType.getSdkKey(sdk);
     synchronized (ourLock) {

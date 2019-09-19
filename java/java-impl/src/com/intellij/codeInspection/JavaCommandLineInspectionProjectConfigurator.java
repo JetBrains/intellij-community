@@ -9,12 +9,25 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 
 /**
  * @author yole
  */
 public class JavaCommandLineInspectionProjectConfigurator implements CommandLineInspectionProjectConfigurator {
+  @Override
+  public boolean isApplicable(Path projectPath) {
+    try {
+      return Files.walk(projectPath).anyMatch(f -> f.toString().endsWith(".java"));
+    }
+    catch (IOException e) {
+      return false;
+    }
+  }
+
   @Override
   public void configureEnvironment() {
     JavaSdk javaSdk = JavaSdk.getInstance();
