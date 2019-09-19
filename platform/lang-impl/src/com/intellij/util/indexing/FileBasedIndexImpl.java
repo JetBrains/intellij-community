@@ -1452,6 +1452,7 @@ public final class FileBasedIndexImpl extends FileBasedIndex implements Disposab
 
   @Override
   public void requestRebuild(@NotNull final ID<?, ?> indexId, final Throwable throwable) {
+    LOG.error(throwable);
     if (!myExtensionsRelatedDataWasLoaded) {
       IndexInfrastructure.submitGenesisTask(() -> {
         waitUntilIndicesAreInitialized(); // should be always true here since the genesis pool is sequential

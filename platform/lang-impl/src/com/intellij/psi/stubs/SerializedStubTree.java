@@ -127,6 +127,12 @@ public class SerializedStubTree {
 
   @NotNull
   public Map<StubIndexKey, Map<Object, StubIdList>> getStubIndicesValueMap() {
+    try {
+      restoreIndexedStubs(StubForwardIndexExternalizer.IdeStubForwardIndexesExternalizer.INSTANCE);
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
     return myIndexedStubs;
   }
 
