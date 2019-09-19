@@ -65,6 +65,8 @@ import com.intellij.util.indexing.*
 import com.intellij.util.indexing.impl.MapIndexStorage
 import com.intellij.util.indexing.impl.MapReduceIndex
 import com.intellij.util.indexing.impl.UpdatableValueContainer
+import com.intellij.util.indexing.jetcache.JetCacheIndexImporter
+import com.intellij.util.indexing.jetcache.JetCacheService
 import com.intellij.util.io.CaseInsensitiveEnumeratorStringDescriptor
 import com.intellij.util.io.EnumeratorStringDescriptor
 import com.intellij.util.io.PersistentHashMap
@@ -72,6 +74,9 @@ import com.intellij.util.ref.GCUtil
 import com.intellij.util.ref.GCWatcher
 import com.siyeh.ig.JavaOverridingMethodUtil
 import groovy.transform.CompileStatic
+import kotlin.Unit
+import kotlin.jvm.functions.Function1
+import kotlin.jvm.functions.Function2
 import org.jetbrains.annotations.NotNull
 
 import java.util.concurrent.CountDownLatch
@@ -1134,5 +1139,29 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     for (int i = 0; i < 12; i++) {
       assert pair.first[i] == hash[i]
     }
+  }
+
+  void "test simple JetCache operations"() {
+    def text = "class Some { void awesome() {}}"
+    def file = myFixture.addFileToProject("Some.java", text)
+
+    def fileContent = new FileContentImpl(file.virtualFile)
+
+    def service = JetCacheService.getInstance()
+
+    def hash = ContentHashesSupport.calcContentIdHash(JetCacheIndexImporter.calculateHash(fileContent), IdIndex.NAME)
+    def hashes = new byte[1][]
+    hashes[0] = hash
+    service.jetCache.get(hashes, new Function2<byte[], byte[], Unit>() {
+      @Override
+      Unit invoke(byte[] key, byte[] value) {
+        return null
+      }
+    }, new Function1<Boolean, Unit>() {
+      @Override
+      Unit invoke(Boolean success) {
+        return null
+      }
+    })
   }
 }
