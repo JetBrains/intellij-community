@@ -46,7 +46,7 @@ class IntellijLocalJetCache : JetCache {
   }
 
   override fun merge(key: JcHash, values: Array<ByteArray>) {
-    throw UnsupportedOperationException()
+    JetCacheService.instance.groupIdMap!!.append(key, values)
   }
 
   override fun put(key: JcHash, value: ByteArray) {
