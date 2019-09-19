@@ -7,7 +7,6 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.changes.Change
 import com.intellij.util.EventDispatcher
 import git4idea.GitCommit
 import git4idea.commands.Git
@@ -23,13 +22,14 @@ import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader
 import org.jetbrains.plugins.github.api.util.SimpleGHGQLPagesLoader
 import org.jetbrains.plugins.github.pullrequest.GHNotFoundException
 import org.jetbrains.plugins.github.pullrequest.comment.GHPRCommentsUtil
-import org.jetbrains.plugins.github.pullrequest.data.model.GHPRDiffReviewThreadMapping
 import org.jetbrains.plugins.github.util.GitRemoteUrlCoordinates
 import org.jetbrains.plugins.github.util.GithubAsyncUtil
 import org.jetbrains.plugins.github.util.LazyCancellableBackgroundProcessValue
 import java.util.concurrent.CancellationException
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletionException
+import kotlin.properties.ReadOnlyProperty
+import kotlin.reflect.KProperty
 
 internal class GithubPullRequestDataProviderImpl(private val project: Project,
                                                  private val progressManager: ProgressManager,
@@ -52,22 +52,19 @@ internal class GithubPullRequestDataProviderImpl(private val project: Project,
     }
     details
   }
-  override val detailsRequest
-    get() = GithubAsyncUtil.futureOfMutable { invokeAndWaitIfNeeded { detailsRequestValue.value } }
+  override val detailsRequest by backgroundProcessValue(detailsRequestValue)
 
   private val branchFetchRequestValue = backingValue {
     git.fetch(gitRemote.repository, gitRemote.remote, emptyList(), "refs/pull/${number}/head:").throwOnError()
   }
-  override val branchFetchRequest
-    get() = GithubAsyncUtil.futureOfMutable { invokeAndWaitIfNeeded { branchFetchRequestValue.value } }
+  override val branchFetchRequest by backgroundProcessValue(branchFetchRequestValue)
 
   private val apiCommitsRequestValue = backingValue {
     GithubApiPagesLoader.loadAll(requestExecutor, it,
                                  GithubApiRequests.Repos.PullRequests.Commits.pages(repository, number))
 
   }
-  override val apiCommitsRequest
-    get() = GithubAsyncUtil.futureOfMutable { invokeAndWaitIfNeeded { apiCommitsRequestValue.value } }
+  override val apiCommitsRequest by backgroundProcessValue(apiCommitsRequestValue)
 
   private val logCommitsRequestValue = backingValue<List<GitCommit>> {
     branchFetchRequestValue.value.joinCancellable()
@@ -81,8 +78,7 @@ internal class GithubPullRequestDataProviderImpl(private val project: Project,
 
     gitCommits
   }
-  override val logCommitsRequest
-    get() = GithubAsyncUtil.futureOfMutable { invokeAndWaitIfNeeded { logCommitsRequestValue.value } }
+  override val logCommitsRequest by backgroundProcessValue(logCommitsRequestValue)
 
   private val diffFileRequestValue = backingValue {
     requestExecutor.execute(it, GithubApiRequests.Repos.PullRequests.getDiff(repository, number))
@@ -92,8 +88,7 @@ internal class GithubPullRequestDataProviderImpl(private val project: Project,
       GHGQLRequests.PullRequest.reviewThreads(repository, number, p)
     }).loadAll(it)
   }
-  override val reviewThreadsRequest: CompletableFuture<List<GHPullRequestReviewThread>>
-    get() = GithubAsyncUtil.futureOfMutable { invokeAndWaitIfNeeded { reviewThreadsRequestValue.value } }
+  override val reviewThreadsRequest: CompletableFuture<List<GHPullRequestReviewThread>> by backgroundProcessValue(reviewThreadsRequestValue)
 
   private val filesReviewThreadsRequestValue = backingValue {
     GHPRCommentsUtil.buildThreadsAndMapLines(gitRemote.repository,
@@ -101,8 +96,7 @@ internal class GithubPullRequestDataProviderImpl(private val project: Project,
                                              diffFileRequestValue.value.joinCancellable(),
                                              reviewThreadsRequestValue.value.joinCancellable())
   }
-  override val filesReviewThreadsRequest: CompletableFuture<Map<Change, List<GHPRDiffReviewThreadMapping>>>
-    get() = GithubAsyncUtil.futureOfMutable { invokeAndWaitIfNeeded { filesReviewThreadsRequestValue.value } }
+  override val filesReviewThreadsRequest by backgroundProcessValue(filesReviewThreadsRequestValue)
 
   @CalledInAwt
   override fun reloadDetails() {
@@ -144,6 +138,12 @@ internal class GithubPullRequestDataProviderImpl(private val project: Project,
   private fun <T> backingValue(supplier: (ProgressIndicator) -> T) =
     object : LazyCancellableBackgroundProcessValue<T>(progressManager) {
       override fun compute(indicator: ProgressIndicator) = supplier(indicator)
+    }
+
+  private fun <T> backgroundProcessValue(backingValue: LazyCancellableBackgroundProcessValue<T>) =
+    object : ReadOnlyProperty<Any?, CompletableFuture<T>> {
+      override fun getValue(thisRef: Any?, property: KProperty<*>) =
+        GithubAsyncUtil.futureOfMutable { invokeAndWaitIfNeeded { backingValue.value } }
     }
 
   override fun addRequestsChangesListener(listener: GithubPullRequestDataProvider.RequestsChangedListener) =
