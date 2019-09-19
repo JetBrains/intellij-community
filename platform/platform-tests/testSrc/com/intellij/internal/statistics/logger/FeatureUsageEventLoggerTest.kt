@@ -1,10 +1,13 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.internal.statistics
+package com.intellij.internal.statistics.logger
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.LogEvent
 import com.intellij.internal.statistic.eventLog.StatisticsEventLogWriter
 import com.intellij.internal.statistic.eventLog.StatisticsFileEventLogger
+import com.intellij.internal.statistics.StatisticsTestEventFactory.DEFAULT_SESSION_ID
+import com.intellij.internal.statistics.StatisticsTestEventFactory.newEvent
+import com.intellij.internal.statistics.StatisticsTestEventFactory.newStateEvent
 import com.intellij.testFramework.HeavyPlatformTestCase
 import org.junit.Test
 import java.io.File
@@ -191,7 +194,7 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
 
   @Test
   fun testLoggerWithCustomRecorderVersion() {
-    val custom = TestFeatureUsageFileEventLogger("session-id", "999.999", "-1", "99", TestFeatureUsageEventWriter())
+    val custom = TestFeatureUsageFileEventLogger(DEFAULT_SESSION_ID, "999.999", "0", "99", TestFeatureUsageEventWriter())
     testLoggerInternal(
       custom,
       { logger ->
@@ -205,7 +208,7 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
 
   @Test
   fun testLoggerWithCustomSessionId() {
-    val custom = TestFeatureUsageFileEventLogger("test.session", "999.999", "-1", "1", TestFeatureUsageEventWriter())
+    val custom = TestFeatureUsageFileEventLogger("test.session", "999.999", "0", "1", TestFeatureUsageEventWriter())
     testLoggerInternal(
       custom,
       { logger ->
@@ -219,7 +222,7 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
 
   @Test
   fun testLoggerWithCustomBuildNumber() {
-    val custom = TestFeatureUsageFileEventLogger("session-id", "123.456", "-1", "1", TestFeatureUsageEventWriter())
+    val custom = TestFeatureUsageFileEventLogger(DEFAULT_SESSION_ID, "123.456", "0", "1", TestFeatureUsageEventWriter())
     testLoggerInternal(
       custom,
       { logger ->
@@ -233,7 +236,7 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
 
   @Test
   fun testLoggerWithCustomBucket() {
-    val custom = TestFeatureUsageFileEventLogger("session-id", "999.999", "215", "1", TestFeatureUsageEventWriter())
+    val custom = TestFeatureUsageFileEventLogger(DEFAULT_SESSION_ID, "999.999", "215", "1", TestFeatureUsageEventWriter())
     testLoggerInternal(
       custom,
       { logger ->
@@ -255,12 +258,16 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
         logger.log(EventLogGroup("group.id", 2), "test.action", false)
         logger.log(EventLogGroup("group.id", 2), "test.action", false)
       },
-      newEvent("group.id", "test.action", groupVersion = "2", count = 3, session= "my-test.session", build = "123.00.1", bucket = "128", recorderVersion = "29")
+      newEvent(
+        recorderVersion = "29", groupId = "group.id", groupVersion = "2",
+        session = "my-test.session", build = "123.00.1", bucket = "128",
+        eventId = "test.action", count = 3
+      )
     )
   }
 
   private fun testLogger(callback: (TestFeatureUsageFileEventLogger) -> Unit, vararg expected: LogEvent) {
-    val logger = TestFeatureUsageFileEventLogger("session-id", "999.999", "-1", "1", TestFeatureUsageEventWriter())
+    val logger = TestFeatureUsageFileEventLogger( DEFAULT_SESSION_ID, "999.999", "0", "1", TestFeatureUsageEventWriter())
     testLoggerInternal(logger, callback, *expected)
   }
 
