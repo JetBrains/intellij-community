@@ -4,7 +4,7 @@ import sys
 import traceback
 
 from _pydevd_bundle.pydevd_collect_try_except_info import collect_try_except_info
-from tests_python.debugger_unittest import IS_CPYTHON
+from pydev_tests_python.debugger_unittest import IS_CPYTHON
 
 
 def _method_call_with_error():

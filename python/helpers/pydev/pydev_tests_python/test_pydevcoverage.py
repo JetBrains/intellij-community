@@ -20,7 +20,7 @@ class Test(unittest.TestCase):
     def setUp(self):
         unittest.TestCase.setUp(self)
         project_path = os.path.dirname(os.path.dirname(__file__))
-        self._resources_path = os.path.join(project_path, "tests_python", "resources")
+        self._resources_path = os.path.join(project_path, "pydev_tests_python", "resources")
         self._coverage_file = os.path.join(project_path, "pydev_coverage.py")
 
     def _do_analyze(self, files):

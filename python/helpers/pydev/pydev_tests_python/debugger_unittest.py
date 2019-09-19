@@ -13,7 +13,7 @@ import sys
 import threading
 import time
 import traceback
-from tests_python.debug_constants import *
+from pydev_tests_python.debug_constants import *
 
 from _pydev_bundle import pydev_localhost
 

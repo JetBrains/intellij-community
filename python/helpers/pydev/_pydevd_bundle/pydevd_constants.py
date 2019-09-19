@@ -275,7 +275,7 @@ if sys.version_info[:2] in ((3, 3), (3, 4), (3, 5)) or sys.version_info < (2, 7,
     def NO_FTRACE(frame, event, arg):
         # In Python < 2.7.12 and <= 3.5, if we're tracing a method, frame.f_trace may not be set
         # to None, it must always be set to a tracing function.
-        # See: tests_python.test_tracing_gotchas.test_tracing_gotchas
+        # See: pydev_tests_python.test_tracing_gotchas.test_tracing_gotchas
         return None
 
 

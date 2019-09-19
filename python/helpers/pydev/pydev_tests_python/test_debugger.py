@@ -10,23 +10,23 @@ import time
 
 import pytest
 
-from tests_python import debugger_unittest
-from tests_python.debugger_unittest import (CMD_SET_PROPERTY_TRACE, REASON_CAUGHT_EXCEPTION,
-    REASON_UNCAUGHT_EXCEPTION, REASON_STOP_ON_BREAKPOINT, REASON_THREAD_SUSPEND, overrides, CMD_THREAD_CREATE,
-    CMD_GET_THREAD_STACK, REASON_STEP_INTO_MY_CODE, CMD_GET_EXCEPTION_DETAILS, IS_IRONPYTHON, IS_JYTHON, IS_CPYTHON,
-    IS_APPVEYOR, wait_for_condition, CMD_GET_FRAME, CMD_GET_BREAKPOINT_EXCEPTION,
-    CMD_THREAD_SUSPEND, CMD_STEP_OVER, REASON_STEP_OVER, CMD_THREAD_SUSPEND_SINGLE_NOTIFICATION,
-    CMD_THREAD_RESUME_SINGLE_NOTIFICATION, IS_PY37_OR_GREATER)
+from pydev_tests_python import debugger_unittest
+from pydev_tests_python.debugger_unittest import (CMD_SET_PROPERTY_TRACE, REASON_CAUGHT_EXCEPTION,
+                                                  REASON_UNCAUGHT_EXCEPTION, REASON_STOP_ON_BREAKPOINT, REASON_THREAD_SUSPEND, overrides, CMD_THREAD_CREATE,
+                                                  CMD_GET_THREAD_STACK, REASON_STEP_INTO_MY_CODE, CMD_GET_EXCEPTION_DETAILS, IS_IRONPYTHON, IS_JYTHON, IS_CPYTHON,
+                                                  IS_APPVEYOR, wait_for_condition, CMD_GET_FRAME, CMD_GET_BREAKPOINT_EXCEPTION,
+                                                  CMD_THREAD_SUSPEND, CMD_STEP_OVER, REASON_STEP_OVER, CMD_THREAD_SUSPEND_SINGLE_NOTIFICATION,
+                                                  CMD_THREAD_RESUME_SINGLE_NOTIFICATION, IS_PY37_OR_GREATER)
 from _pydevd_bundle.pydevd_constants import IS_WINDOWS
 try:
     from urllib import unquote
 except ImportError:
     from urllib.parse import unquote
 
-from tests_python.debug_constants import *
+from pydev_tests_python.debug_constants import *
 
 pytest_plugins = [
-    str('tests_python.debugger_fixtures'),
+    str('pydev_tests_python.debugger_fixtures'),
 ]
 
 try:
@@ -1742,11 +1742,11 @@ def test_path_translation(case_setup):
         return env
 
     with case_setup.test_file('_debugger_case_path_translation.py', get_environ=get_environ) as writer:
-        from tests_python.debugger_unittest import CMD_LOAD_SOURCE
+        from pydev_tests_python.debugger_unittest import CMD_LOAD_SOURCE
         writer.write_start_redirect()
 
         file_in_client = get_file_in_client(writer)
-        assert 'tests_python' not in file_in_client
+        assert 'pydev_tests_python' not in file_in_client
         writer.write_add_breakpoint(2, 'main', filename=file_in_client)
         writer.write_make_initial_run()
 
@@ -1916,7 +1916,7 @@ def test_case_get_thread_stack(case_setup):
 
 def test_case_dump_threads_to_stderr(case_setup):
 
-    from tests_python.debugger_unittest import wait_for_condition
+    from pydev_tests_python.debugger_unittest import wait_for_condition
 
     def additional_output_checks(writer, stdout, stderr):
         assert is_stderr_ok(stderr), make_error_msg(stderr)
@@ -2081,7 +2081,7 @@ def test_debug_zip_files(case_setup, tmpdir):
 @pytest.mark.skipif(not IS_CPYTHON, reason='CPython only test.')
 def test_multiprocessing(case_setup_multiprocessing):
     import threading
-    from tests_python.debugger_unittest import AbstractWriterThread
+    from pydev_tests_python.debugger_unittest import AbstractWriterThread
     with case_setup_multiprocessing.test_file('_debugger_case_multiprocessing.py') as writer:
         break1_line = writer.get_line_index_with_content('break 1 here')
         break2_line = writer.get_line_index_with_content('break 2 here')
@@ -2099,7 +2099,7 @@ def test_multiprocessing(case_setup_multiprocessing):
         class SecondaryProcessThreadCommunication(threading.Thread):
 
             def run(self):
-                from tests_python.debugger_unittest import ReaderThread
+                from pydev_tests_python.debugger_unittest import ReaderThread
                 server_socket.listen(1)
                 self.server_socket = server_socket
                 new_sock, addr = server_socket.accept()
@@ -2229,7 +2229,7 @@ def test_remote_debugger_multi_proc(case_setup_remote):
             self.sock, addr = self.server_socket.accept()
             print('accepted second process')
 
-            from tests_python.debugger_unittest import ReaderThread
+            from pydev_tests_python.debugger_unittest import ReaderThread
             self.reader_thread = ReaderThread(self.sock)
             self.reader_thread.start()
 
@@ -2343,7 +2343,7 @@ def test_trace_dispatch_correct(case_setup):
 
 @pytest.mark.skipif(IS_PY26, reason='Failing on Python 2.6 on travis (needs investigation).')
 def test_case_single_notification_on_step(case_setup):
-    from tests_python.debugger_unittest import REASON_STEP_INTO
+    from pydev_tests_python.debugger_unittest import REASON_STEP_INTO
     with case_setup.test_file('_debugger_case_import_main.py') as writer:
         writer.write_multi_threads_single_notification(True)
         writer.write_add_breakpoint(writer.get_line_index_with_content('break here'), '')
@@ -2390,7 +2390,7 @@ def test_return_value(case_setup):
 @pytest.mark.skipif(IS_JYTHON, reason='Jython can only have one thread stopped at each time.')
 @pytest.mark.parametrize('check_single_notification', [True, False])
 def test_run_pause_all_threads_single_notification(case_setup, check_single_notification):
-    from tests_python.debugger_unittest import TimeoutError
+    from pydev_tests_python.debugger_unittest import TimeoutError
     with case_setup.test_file('_debugger_case_multiple_threads.py') as writer:
         # : :type writer: AbstractWriterThread
         writer.write_multi_threads_single_notification(True)
