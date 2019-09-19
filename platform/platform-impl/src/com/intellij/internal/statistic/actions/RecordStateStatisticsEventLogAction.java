@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.actions;
 
+import com.intellij.internal.statistic.eventLog.EventLogFile;
 import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger;
 import com.intellij.internal.statistic.service.fus.collectors.FUStateUsagesLogger;
 import com.intellij.notification.Notification;
@@ -18,8 +19,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
-
 public class RecordStateStatisticsEventLogAction extends AnAction {
   private static final FUStateUsagesLogger myStatesLogger = new FUStateUsagesLogger();
 
@@ -34,8 +33,8 @@ public class RecordStateStatisticsEventLogAction extends AnAction {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         FeatureUsageLogger.INSTANCE.rollOver();
-        File logFile = FeatureUsageLogger.INSTANCE.getConfig().getActiveLogFile();
-        VirtualFile logVFile = logFile != null ? LocalFileSystem.getInstance().findFileByIoFile(logFile) : null;
+        EventLogFile logFile = FeatureUsageLogger.INSTANCE.getConfig().getActiveLogFile();
+        VirtualFile logVFile = logFile != null ? LocalFileSystem.getInstance().findFileByIoFile(logFile.getFile()) : null;
         myStatesLogger.logApplicationStates();
         myStatesLogger.logProjectStates(project, indicator);
 

@@ -2,6 +2,7 @@
 package com.intellij.internal.statistic.actions;
 
 import com.intellij.ide.gdpr.ConsentConfigurable;
+import com.intellij.internal.statistic.eventLog.EventLogFile;
 import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
@@ -15,8 +16,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
-
 public class OpenEventLogFileAction extends AnAction {
 
   @Override
@@ -26,8 +25,8 @@ public class OpenEventLogFileAction extends AnAction {
       return;
     }
 
-    final File logFile = FeatureUsageLogger.INSTANCE.getConfig().getActiveLogFile();
-    final VirtualFile logVFile = logFile != null ? LocalFileSystem.getInstance().findFileByIoFile(logFile) : null;
+    final EventLogFile logFile = FeatureUsageLogger.INSTANCE.getConfig().getActiveLogFile();
+    final VirtualFile logVFile = logFile != null ? LocalFileSystem.getInstance().findFileByIoFile(logFile.getFile()) : null;
     if (logVFile == null) {
       showNotification(
         project, NotificationType.WARNING,

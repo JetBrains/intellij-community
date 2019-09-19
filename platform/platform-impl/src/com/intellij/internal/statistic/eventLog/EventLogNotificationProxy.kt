@@ -2,7 +2,6 @@
 package com.intellij.internal.statistic.eventLog
 
 import com.intellij.util.containers.ConcurrentMultiMap
-import java.io.File
 
 class EventLogNotificationProxy(private val writer: StatisticsEventLogWriter,
                                 private val recorderId: String) : StatisticsEventLogWriter {
@@ -11,9 +10,9 @@ class EventLogNotificationProxy(private val writer: StatisticsEventLogWriter,
     writer.log(logEvent)
   }
 
-  override fun getActiveFile(): File? = writer.getActiveFile()
+  override fun getActiveFile(): EventLogFile? = writer.getActiveFile()
 
-  override fun getFiles(): List<File> = writer.getFiles()
+  override fun getFiles(): List<EventLogFile> = writer.getFiles()
 
   override fun cleanup() = writer.cleanup()
 

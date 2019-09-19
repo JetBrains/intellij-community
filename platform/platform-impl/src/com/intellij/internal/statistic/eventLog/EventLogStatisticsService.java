@@ -8,6 +8,7 @@ import com.intellij.internal.statistic.connect.StatisticsService;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.HttpRequests;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,9 +43,9 @@ public class EventLogStatisticsService implements StatisticsService {
   public static StatisticsResult send(@NotNull String recorder, @NotNull EventLogSettingsService settings, @NotNull EventLogResultDecorator decorator) {
     final StatisticsEventLoggerProvider config = StatisticsEventLoggerKt.getEventLogProvider(recorder);
 
-    final List<File> logs = getLogFiles(config);
+    final List<EventLogFile> logs = getLogFiles(config);
     if (!config.isSendEnabled()) {
-      cleanupFiles(logs);
+      cleanupEventLogFiles(logs);
       return new StatisticsResult(ResultCode.NOTHING_TO_SEND, "Event Log collector is not enabled");
     }
 
@@ -58,7 +59,7 @@ public class EventLogStatisticsService implements StatisticsService {
     }
 
     if (!isSendLogsEnabled(settings.getPermittedTraffic())) {
-      cleanupFiles(logs);
+      cleanupEventLogFiles(logs);
       return new StatisticsResult(StatisticsResult.ResultCode.NOT_PERMITTED_SERVER, "NOT_PERMITTED");
     }
 
@@ -68,7 +69,7 @@ public class EventLogStatisticsService implements StatisticsService {
       final List<File> toRemove = new ArrayList<>(logs.size());
       int size = Math.min(MAX_FILES_TO_SEND, logs.size());
       for (int i = 0; i < size; i++) {
-        final File file = logs.get(i);
+        final File file = logs.get(i).getFile();
         final LogEventRecordRequest recordRequest = LogEventRecordRequest.Companion.create(file, config.getRecorderId(), filter, settings.isInternal());
         final String error = validate(recordRequest, file);
         if (StringUtil.isNotEmpty(error) || recordRequest == null) {
@@ -174,7 +175,7 @@ public class EventLogStatisticsService implements StatisticsService {
   }
 
   @NotNull
-  protected static List<File> getLogFiles(StatisticsEventLoggerProvider config) {
+  protected static List<EventLogFile> getLogFiles(StatisticsEventLoggerProvider config) {
     try {
       return config.getLogFiles();
     }
@@ -184,7 +185,11 @@ public class EventLogStatisticsService implements StatisticsService {
     return Collections.emptyList();
   }
 
-  private static void cleanupFiles(@NotNull List<? extends File> toRemove) {
+  private static void cleanupEventLogFiles(@NotNull List<EventLogFile> toRemove) {
+    cleanupFiles(ContainerUtil.map(toRemove, logFile -> logFile.getFile()));
+  }
+
+  private static void cleanupFiles(@NotNull List<File> toRemove) {
     for (File file : toRemove) {
       if (!file.delete()) {
         LOG.warn("Failed deleting event log: " + file.getName());

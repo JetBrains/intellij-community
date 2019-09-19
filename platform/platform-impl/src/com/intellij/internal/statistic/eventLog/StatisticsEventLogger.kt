@@ -5,7 +5,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.Disposer
-import java.io.File
 import java.util.concurrent.TimeUnit
 
 private val LOG = Logger.getInstance("#com.intellij.internal.statistic.eventLog.StatisticsEventLogger")
@@ -14,8 +13,8 @@ private val EP_NAME = ExtensionPointName.create<StatisticsEventLoggerProvider>("
 interface StatisticsEventLogger {
   fun log(group: EventLogGroup, eventId: String, isState: Boolean)
   fun log(group: EventLogGroup, eventId: String, data: Map<String, Any>, isState: Boolean)
-  fun getActiveLogFile(): File?
-  fun getLogFiles(): List<File>
+  fun getActiveLogFile(): EventLogFile?
+  fun getLogFiles(): List<EventLogFile>
   fun cleanup()
   fun rollOver()
 }
@@ -29,11 +28,11 @@ abstract class StatisticsEventLoggerProvider(val recorderId: String,
   abstract fun isRecordEnabled() : Boolean
   abstract fun isSendEnabled() : Boolean
 
-  fun getActiveLogFile(): File? {
+  fun getActiveLogFile(): EventLogFile? {
     return logger.getActiveLogFile()
   }
 
-  fun getLogFiles(): List<File> {
+  fun getLogFiles(): List<EventLogFile> {
     return logger.getLogFiles()
   }
 
@@ -42,8 +41,10 @@ abstract class StatisticsEventLoggerProvider(val recorderId: String,
       return EmptyStatisticsEventLogger()
     }
 
+    val app = ApplicationManager.getApplication()
+    val isEap = app != null && app.isEAP
     val config = EventLogConfiguration
-    val writer = EventLogNotificationProxy(StatisticsEventLogFileWriter(recorderId, maxFileSize), recorderId)
+    val writer = EventLogNotificationProxy(StatisticsEventLogFileWriter(recorderId, maxFileSize, isEap, config.build), recorderId)
     val logger = StatisticsFileEventLogger(recorderId, config.sessionId, config.build, config.bucket.toString(), version.toString(), writer)
     Disposer.register(ApplicationManager.getApplication(), logger)
     return logger
@@ -64,8 +65,8 @@ class EmptyStatisticsEventLoggerProvider(recorderId: String): StatisticsEventLog
 class EmptyStatisticsEventLogger : StatisticsEventLogger {
   override fun log(group: EventLogGroup, eventId: String, isState: Boolean) = Unit
   override fun log(group: EventLogGroup, eventId: String, data: Map<String, Any>, isState: Boolean) = Unit
-  override fun getActiveLogFile(): File? = null
-  override fun getLogFiles(): List<File> = emptyList()
+  override fun getActiveLogFile(): EventLogFile? = null
+  override fun getLogFiles(): List<EventLogFile> = emptyList()
   override fun cleanup() = Unit
   override fun rollOver() = Unit
 }

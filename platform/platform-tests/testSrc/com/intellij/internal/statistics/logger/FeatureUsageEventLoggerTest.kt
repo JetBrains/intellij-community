@@ -1,10 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistics.logger
 
-import com.intellij.internal.statistic.eventLog.EventLogGroup
-import com.intellij.internal.statistic.eventLog.LogEvent
-import com.intellij.internal.statistic.eventLog.StatisticsEventLogWriter
-import com.intellij.internal.statistic.eventLog.StatisticsFileEventLogger
+import com.intellij.internal.statistic.eventLog.*
 import com.intellij.internal.statistics.StatisticsTestEventFactory.DEFAULT_SESSION_ID
 import com.intellij.internal.statistics.StatisticsTestEventFactory.newEvent
 import com.intellij.internal.statistics.StatisticsTestEventFactory.newStateEvent
@@ -330,8 +327,8 @@ class TestFeatureUsageEventWriter : StatisticsEventLogWriter {
     logged.add(logEvent)
   }
 
-  override fun getActiveFile(): File? = null
-  override fun getFiles(): List<File> = emptyList()
+  override fun getActiveFile(): EventLogFile? = null
+  override fun getFiles(): List<EventLogFile> = emptyList()
   override fun cleanup() = Unit
   override fun rollOver() = Unit
 }
