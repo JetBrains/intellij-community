@@ -408,7 +408,7 @@ public final class PythonSdkType extends SdkType {
   }
 
   public static String getSkeletonsRootPath(String basePath) {
-    return basePath + File.separator + SKELETON_DIR_NAME;
+    return basePath + File.separator + PythonSdkUtil.SKELETON_DIR_NAME;
   }
 
   @NotNull
