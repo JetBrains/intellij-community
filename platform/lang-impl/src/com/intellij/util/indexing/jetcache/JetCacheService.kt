@@ -9,14 +9,29 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.ByteArraySequence
 import com.intellij.util.indexing.*
 import com.intellij.util.indexing.jetcache.local.IntellijLocalJetCache
+import com.jetbrains.rd.util.spinUntil
+import org.jetbrains.jetcache.Client
 import org.jetbrains.jetcache.JetCache
+import org.jetbrains.jetcache.NetworkJetCache
 import java.io.File
+import java.net.InetAddress
 
 import java.util.concurrent.ConcurrentHashMap
 
 class JetCacheService: Disposable {
   val projectCurrentVersion = ConcurrentHashMap<Project, ByteArray>()
-  val jetCache: JetCache? = IntellijLocalJetCache()
+  val jetCache: JetCache?
+
+  init {
+    if (false) {
+      jetCache = IntellijLocalJetCache()
+    } else {
+      val client = Client(InetAddress.getByName("172.30.163.59"), 8888)
+      spinUntil { client.connected.value }
+      val networkJetCache = NetworkJetCache(client.lifetime, client.model)
+      jetCache = networkJetCache
+    }
+  }
 
   override fun dispose() {
     groupIdMap?.close()
