@@ -33,14 +33,14 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
 
   IdeaFreezeReporter() {
     Application app = ApplicationManager.getApplication();
-    //if (!app.isEAP() || PluginManagerCore.isRunningFromSources()) {
-    //  throw ExtensionNotApplicableException.INSTANCE;
-    //}
+    if (!app.isEAP() || PluginManagerCore.isRunningFromSources()) {
+      throw ExtensionNotApplicableException.INSTANCE;
+    }
   }
 
   @Override
   public void uiFreezeStarted() {
-    if (true) {
+    if (!DebugAttachDetector.isAttached()) {
       if (myDumpTask != null) {
         myDumpTask.stop();
       }
