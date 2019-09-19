@@ -38,7 +38,7 @@ public class JetCacheIndexImporter implements IndexImporterFactory {
         jetCacheService.getJetCache().put(mixedHash, AbstractForwardIndexAccessor.serializeToByteSeq(data.getKeyValues(), myMapExternalizer, 8).toBytes());
         byte[] projectHash = jetCacheService.getProjectHash(((FileContent)content).getProject());
         jetCacheService.getJetCache().merge(projectHash, new byte[][] { mixedHash });
-        return null;
+        return data;
       }
 
       @Override

@@ -33,7 +33,7 @@ final class IndexImporterMappingIndex<Key, Value, Input> implements UpdatableSna
       }
     }
 
-    return null;
+    return data;
   }
 
   @Override
