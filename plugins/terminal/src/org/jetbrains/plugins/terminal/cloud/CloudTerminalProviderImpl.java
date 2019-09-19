@@ -15,8 +15,9 @@ public class CloudTerminalProviderImpl extends CloudTerminalProvider {
   public TerminalHandlerBase createTerminal(@NotNull String presentableName,
                                             @NotNull Project project,
                                             @NotNull InputStream terminalOutput,
-                                            @NotNull OutputStream terminalInput) {
-    return new TerminalHandlerImpl(presentableName, project, terminalOutput, terminalInput);
+                                            @NotNull OutputStream terminalInput,
+                                            boolean deferTerminalSessionUntilFirstShown) {
+    return new TerminalHandlerImpl(presentableName, project, terminalOutput, terminalInput, deferTerminalSessionUntilFirstShown);
   }
 
   @Override
