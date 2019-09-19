@@ -26,6 +26,8 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewStat
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineEvent
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineItem
 import org.jetbrains.plugins.github.pullrequest.avatars.GHAvatarIconsProvider
+import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRReviewThreadCommentsPanel
+import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRReviewThreadModel
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import org.jetbrains.plugins.github.util.GithubUIUtil
 import java.util.*
@@ -70,7 +72,7 @@ class GHPRTimelineItemComponentFactory(private val avatarIconsProvider: GHAvatar
         })
       }
       add(Box.createRigidArea(JBDimension(0, 6)))
-      add(GHPRReviewThreadsPanel(threads, avatarIconsProvider, reviewDiffComponentFactory).apply {
+      add(GHPRReviewThreadsPanel(threads, ::createReviewThread).apply {
         border = JBUI.Borders.empty(2, 0)
       })
     }
@@ -91,6 +93,11 @@ class GHPRTimelineItemComponentFactory(private val avatarIconsProvider: GHAvatar
 
     return Item(icon, actionTitle(avatarIconsProvider, review.author, actionText, review.createdAt), reviewPanel)
   }
+
+  private fun createReviewThread(thread: GHPRReviewThreadModel) =
+    JBUI.Panels.simplePanel(GHPRReviewThreadCommentsPanel(thread, avatarIconsProvider))
+      .addToTop(reviewDiffComponentFactory.createComponent(thread.filePath, thread.diffHunk))
+      .andTransparent()
 
   private fun userAvatar(user: GHActor?): JLabel {
     return userAvatar(avatarIconsProvider, user)

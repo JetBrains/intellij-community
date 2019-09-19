@@ -2,17 +2,12 @@
 package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
 import com.intellij.ui.components.panels.VerticalBox
-import com.intellij.util.ui.JBUI
-import org.jetbrains.plugins.github.pullrequest.avatars.GHAvatarIconsProvider
-import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRReviewThreadCommentsPanel
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRReviewThreadModel
 import javax.swing.JComponent
 import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
 
-class GHPRReviewThreadsPanel(model: GHPRReviewThreadsModel,
-                             private val avatarIconsProvider: GHAvatarIconsProvider,
-                             private val reviewDiffComponentFactory: GHPRReviewThreadDiffComponentFactory)
+class GHPRReviewThreadsPanel(model: GHPRReviewThreadsModel, private val threadComponentFactory: (GHPRReviewThreadModel) -> JComponent)
   : VerticalBox() {
 
   init {
@@ -27,7 +22,7 @@ class GHPRReviewThreadsPanel(model: GHPRReviewThreadsModel,
 
       override fun intervalAdded(e: ListDataEvent) {
         for (i in e.index0..e.index1) {
-          add(createComponent(model.getElementAt(i)), i)
+          add(threadComponentFactory(model.getElementAt(i)), i)
         }
         revalidate()
         repaint()
@@ -40,13 +35,7 @@ class GHPRReviewThreadsPanel(model: GHPRReviewThreadsModel,
     })
 
     for (i in 0 until model.size) {
-      add(createComponent(model.getElementAt(i)), i)
+      add(threadComponentFactory(model.getElementAt(i)), i)
     }
-  }
-
-  private fun createComponent(thread: GHPRReviewThreadModel): JComponent {
-    return JBUI.Panels.simplePanel(reviewDiffComponentFactory.createComponent(thread.filePath, thread.diffHunk))
-      .addToBottom(GHPRReviewThreadCommentsPanel(thread, avatarIconsProvider))
-      .andTransparent()
   }
 }
