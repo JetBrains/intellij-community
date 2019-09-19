@@ -14,7 +14,6 @@ import java.util.function.Consumer;
 public final class StartUpMeasurer {
   public static final long MEASURE_THRESHOLD = TimeUnit.MILLISECONDS.toNanos(10);
 
-  // Use constants for better overview of existing phases (and preserve consistent naming).
   // `what + noun` is used as scheme for name to make analyzing easier (to visually group - `components loading/initialization/etc`,
   // not to put common part of name to end of).
   // It is not serves only display purposes - it is IDs. Visualizer and another tools to analyze data uses phase IDs,

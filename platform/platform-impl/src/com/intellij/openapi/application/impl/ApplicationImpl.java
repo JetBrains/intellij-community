@@ -125,7 +125,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
     gatherStatistics = LOG.isDebugEnabled() || isUnitTestMode() || isInternal();
 
-    Activity activity = StartUpMeasurer.startMainActivity("AppDelayQueue instantiation");
+    Activity activity = StartUpMeasurer.startActivity("AppDelayQueue instantiation");
     Ref<Thread> result = new Ref<>();
     Runnable runnable = () -> {
       // instantiate AppDelayQueue which starts "Periodic task thread" which we'll mark busy to prevent this EDT to die
@@ -320,7 +320,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     List<IdeaPluginDescriptor> plugins = PluginManagerCore.getLoadedPlugins();
     registerComponents(plugins);
     ApplicationLoader.initConfigurationStore(this, configPath);
-    preloadServices(plugins);
+    preloadServices(plugins).getSyncPreloadedServices().join();
     loadComponents(null);
     ApplicationLoader.callAppInitialized(this);
   }

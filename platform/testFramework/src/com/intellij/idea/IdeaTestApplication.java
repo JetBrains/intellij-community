@@ -6,6 +6,7 @@ import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.impl.HeadlessDataManager;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -96,19 +97,32 @@ public final class IdeaTestApplication implements Disposable {
     StartupUtil.replaceSystemEventQueue(Logger.getInstance(IdeaTestApplication.class));
     ApplicationImpl app = new ApplicationImpl(true, true, true, true);
     IconManager.activate();
+    List<IdeaPluginDescriptorImpl> plugins;
     try {
-      ApplicationLoader.registerRegistryAndInitStore(ApplicationLoader.registerAppComponents(loadedPluginFuture, app), app)
-        .thenCompose(it -> app.preloadServices(it))
+      plugins = ApplicationLoader.registerRegistryAndInitStore(ApplicationLoader.registerAppComponents(loadedPluginFuture, app), app)
         .get(20, TimeUnit.SECONDS);
     }
     catch (TimeoutException e) {
       throw new RuntimeException("Cannot load plugin descriptors in 20 seconds: " + ThreadDumper.dumpThreadsToString(), e);
     }
     catch (ExecutionException | InterruptedException e) {
+      Throwable t = e.getCause() == null ? e : e.getCause();
+      ExceptionUtil.rethrowUnchecked(t);
+      throw new RuntimeException(t);
+    }
+
+    CompletableFuture<Void> preloadServiceFuture = ApplicationLoader.preloadServices(plugins, app, "");
+    app.loadComponents(null);
+    try {
+      preloadServiceFuture.get(20, TimeUnit.SECONDS);
+    }
+    catch (TimeoutException e) {
+      throw new RuntimeException("Cannot preload services in 20 seconds: " + ThreadDumper.dumpThreadsToString(), e);
+    }
+    catch (ExecutionException | InterruptedException e) {
       ExceptionUtil.rethrow(e.getCause() == null ? e : e.getCause());
     }
 
-    app.loadComponents(null);
     ApplicationLoader.callAppInitialized(app);
 
     isBootstrappingAppNow = false;

@@ -41,6 +41,7 @@ import com.intellij.openapi.wm.impl.SystemDock
 import com.intellij.openapi.wm.impl.WindowManagerImpl
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.platform.PlatformProjectOpenProcessor
+import com.intellij.serviceContainer.PlatformComponentManagerImpl
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.AppIcon
 import com.intellij.ui.AppUIUtil
@@ -67,9 +68,9 @@ import java.nio.file.Paths
 import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletionStage
+import java.util.concurrent.Executor
 import java.util.concurrent.Future
 import java.util.concurrent.atomic.AtomicReference
-import java.util.function.BiConsumer
 import javax.swing.JFrame
 import javax.swing.JOptionPane
 import kotlin.system.exitProcess
@@ -140,16 +141,9 @@ private fun startApp(app: ApplicationImpl,
   }
 
   // preload services only after icon activation
-  registerRegistryAndInitStoreFuture
-    .thenAccept {
-      val preloadServiceActivity = StartUpMeasurer.startActivity("preload services")
-      app.preloadServices(it)
-        .whenComplete(BiConsumer { _, error ->
-          preloadServiceActivity.end()
-          if (error != null) {
-            LOG.warn(error)
-          }
-        })
+  val preloadSyncServiceFuture = registerRegistryAndInitStoreFuture
+    .thenCompose {
+      preloadServices(it, app, activityPrefix = "")
     }
 
   if (!headless) {
@@ -179,32 +173,27 @@ private fun startApp(app: ApplicationImpl,
   }
 
   CompletableFuture.allOf(registerRegistryAndInitStoreFuture, StartupUtil.getServerFuture())
-    .thenRunOrHandleError {
+    .thenCompose {
       // `invokeLater()` is needed to place the app starting code on a freshly minted `IdeEventQueue` instance
       val placeOnEventQueueActivity = initAppActivity.startChild(Phases.PLACE_ON_EVENT_QUEUE)
 
-      val task = {
+      val loadComponentInEdtFuture = CompletableFuture.runAsync({
         placeOnEventQueueActivity.end()
-
         app.loadComponents(SplashManager.getProgressIndicator())
-      }
+      }, { EventQueue.invokeLater(it) })
 
-      if (EventQueue.isDispatchThread()) {
-        task()
-      }
-      else {
-        EventQueue.invokeAndWait(task)
-      }
-
-      val activity = initAppActivity.startChild(Phases.APP_INITIALIZED_CALLBACK)
-      callAppInitialized(app)
-      activity.end()
-
+      CompletableFuture.allOf(loadComponentInEdtFuture, preloadSyncServiceFuture)
+    }
+    .thenRunAsync(Runnable {
       // execute in parallel to loading components - this functionality should be used only by plugin functionality,
       // that used after start-up
       runActivity("init system properties") {
         SystemPropertyBean.initSystemProperties()
       }
+
+      val activity = initAppActivity.startChild(Phases.APP_INITIALIZED_CALLBACK)
+      callAppInitialized(app)
+      activity.end()
 
       if (!headless) {
         addActivateAndWindowsCliListeners(app)
@@ -223,7 +212,44 @@ private fun startApp(app: ApplicationImpl,
           }
         }
       }
+    }, Executor {
+      when {
+        EventQueue.isDispatchThread() -> AppExecutorUtil.getAppExecutorService().execute(it)
+        else -> it.run()
+      }
+    })
+    .exceptionally {
+      StartupAbortedException.processException(it)
+      null
     }
+}
+
+@ApiStatus.Internal
+fun preloadServices(plugins: List<IdeaPluginDescriptorImpl>, container: PlatformComponentManagerImpl, activityPrefix: String): CompletableFuture<Void?> {
+  val preloadServiceActivity = StartUpMeasurer.startActivity("${activityPrefix}service preloading")
+  val syncActivity = preloadServiceActivity.startChild("${activityPrefix}service sync preloading")
+  val asyncActivity = preloadServiceActivity.startChild(" ${activityPrefix}service async preloading")
+  val result = container.preloadServices(plugins)
+
+  fun endActivityAndLogError(future: CompletableFuture<Void?>, activity: Activity): CompletableFuture<Void?> {
+    return future
+      .whenComplete { _, error ->
+        activity.end()
+        if (error != null && error !is ProcessCanceledException) {
+          StartupAbortedException.processException(error)
+        }
+      }
+  }
+
+  val asyncFuture = endActivityAndLogError(result.asyncPreloadedServices, asyncActivity)
+  val syncFuture = endActivityAndLogError(result.syncPreloadedServices, syncActivity)
+
+  CompletableFuture.allOf(asyncFuture, syncFuture)
+    .whenComplete { _, _ ->
+      preloadServiceActivity.end()
+    }
+
+  return syncFuture
 }
 
 private fun scheduleIconPreloading() {

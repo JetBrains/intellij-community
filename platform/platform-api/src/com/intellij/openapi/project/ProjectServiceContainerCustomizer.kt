@@ -2,13 +2,9 @@
 package com.intellij.openapi.project
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import org.jetbrains.annotations.ApiStatus
-
-@ApiStatus.Internal
-val EP_NAME = ExtensionPointName<ProjectServiceContainerCustomizer>("com.intellij.projectServiceContainerCustomizer")
 
 /**
  * Usage requires IJ Platform team approval (including plugin into white-list).

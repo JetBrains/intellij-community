@@ -13,6 +13,9 @@ import org.jetbrains.annotations.Nullable;
  * <a href="http://www.jetbrains.org/intellij/sdk/docs/basics/plugin_structure/plugin_services.html">Plugin Services</a>
  */
 public final class ServiceDescriptor {
+  public enum PreloadMode {
+    TRUE, FALSE, AWAIT
+  }
 
   @Attribute
   public String serviceInterface;
@@ -36,13 +39,13 @@ public final class ServiceDescriptor {
   public String configurationSchemaKey;
 
   /**
-   * Preload service (before component creation). Applicable for application level only.
+   * Preload service (before component creation). Not applicable for module level.
    *
    * Loading order and thread are not guaranteed, service should be decoupled as much as possible.
    */
   @Attribute
-  @ApiStatus.Experimental
-  public boolean preload;
+  @ApiStatus.Internal
+  public PreloadMode preload = ServiceDescriptor.PreloadMode.FALSE;
 
   public String getInterface() {
     return serviceInterface != null ? serviceInterface : getImplementation();

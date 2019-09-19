@@ -9,6 +9,7 @@ import com.intellij.ide.plugins.ContainerDescriptor;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.startup.StartupManagerEx;
+import com.intellij.idea.ApplicationLoader;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -47,8 +48,8 @@ import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 
 public class ProjectImpl extends PlatformComponentManagerImpl implements ProjectEx, ProjectStoreOwner {
   private static final Logger LOG = Logger.getInstance("#com.intellij.project.impl.ProjectImpl");
@@ -276,34 +277,19 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     Application application = ApplicationManager.getApplication();
 
     // before components
-    CompletableFuture<?> preloadServiceFuture;
+    CompletableFuture<?> servicePreloadingFuture;
     //noinspection TestOnlyProblems
     if (isLight()) {
-      preloadServiceFuture = CompletableFuture.completedFuture(null);
+      servicePreloadingFuture = CompletableFuture.completedFuture(null);
     }
     else {
-      Activity activity = StartUpMeasurer.startActivity("project services preloading");
-      preloadServiceFuture = preloadServices(PluginManagerCore.getLoadedPlugins())
-        .whenComplete((o, throwable) -> {
-          if (throwable != null) {
-            LOG.error(throwable);
-          }
-          activity.end();
-        });
+      //noinspection unchecked,rawtypes
+      servicePreloadingFuture = ApplicationLoader.preloadServices((List)PluginManagerCore.getLoadedPlugins(), this, /* activityPrefix = */ "project ");
     }
 
     createComponents(indicator);
 
-    // if preloading of services will be not awaited, then service must subscribe to events using declarative way (because otherwise such events may be skipped),
-    // but declarative way is not so short as programmatic one — What if you subscribe to 3-4 topic - create/ wrapper (separate static class, that will simply delegate to your service) for each one?
-    // Even if such events will be fired in any case, so, obvious question — what for so complicate things?!
-    // So, until we don't have performance problems with this activity, simply await after component creation and do no complicate without a reason.
-    try {
-      preloadServiceFuture.get();
-    }
-    catch (InterruptedException | ExecutionException e) {
-      throw new RuntimeException(e);
-    }
+    servicePreloadingFuture.join();
 
     if (indicator != null && !application.isHeadlessEnvironment()) {
       distributeProgress(indicator);

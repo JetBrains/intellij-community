@@ -10,7 +10,7 @@ import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.ProgressIndicatorProvider
 import com.intellij.openapi.util.Disposer
 import org.picocontainer.ComponentAdapter
 import org.picocontainer.PicoContainer
@@ -69,7 +69,7 @@ internal abstract class BaseComponentAdapter(internal val componentManager: Plat
     if (instance != null || !createIfNeeded) {
       return instance
     }
-    return getInstanceUncached(componentManager, indicator ?: ProgressManager.getGlobalProgressIndicator())
+    return getInstanceUncached(componentManager, indicator ?: ProgressIndicatorProvider.getGlobalProgressIndicator())
   }
 
   private fun <T : Any> getInstanceUncached(componentManager: PlatformComponentManagerImpl, indicator: ProgressIndicator?): T? {

@@ -69,7 +69,9 @@ public final class ActivityImpl implements Activity {
   @Override
   @NotNull
   public ActivityImpl startChild(@NotNull String name) {
-    return new ActivityImpl(name, System.nanoTime(), this, pluginId);
+    ActivityImpl activity = new ActivityImpl(name, StartUpMeasurer.getCurrentTime(), this, pluginId);
+    activity.category = category;
+    return activity;
   }
 
   @NotNull

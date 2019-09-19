@@ -4,8 +4,8 @@ package com.intellij.openapi.fileTypes.impl;
 import com.google.common.annotations.VisibleForTesting;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.highlighter.custom.SyntaxTable;
-import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.ide.plugins.StartupAbortedException;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
@@ -31,6 +31,7 @@ import com.intellij.openapi.options.NonLazySchemeProcessor;
 import com.intellij.openapi.options.SchemeManager;
 import com.intellij.openapi.options.SchemeManagerFactory;
 import com.intellij.openapi.options.SchemeState;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.ByteArraySequence;
@@ -356,14 +357,21 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       }
     };
 
-    for (FileTypeFactory factory : FileTypeFactory.FILE_TYPE_FACTORY_EP.getExtensionList()) {
+    //noinspection deprecation
+    FileTypeFactory.FILE_TYPE_FACTORY_EP.processWithPluginDescriptor((factory, pluginDescriptor) -> {
       try {
         factory.createFileTypes(consumer);
       }
-      catch (Throwable e) {
-        PluginManager.handleComponentError(e, factory.getClass().getName(), null);
+      catch (ProcessCanceledException e) {
+        throw e;
       }
-    }
+      catch (StartupAbortedException e) {
+        throw e;
+      }
+      catch (Throwable e) {
+        throw new StartupAbortedException("Cannot create file types", new PluginException(e, pluginDescriptor.getPluginId()));
+      }
+    });
 
     for (StandardFileType pair : myStandardFileTypes.values()) {
       registerFileTypeWithoutNotification(pair.fileType, pair.matchers, true);

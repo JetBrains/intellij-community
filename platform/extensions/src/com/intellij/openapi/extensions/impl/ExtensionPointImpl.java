@@ -296,7 +296,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
     return result == null ? createIterator() : result.iterator();
   }
 
-  public void processWithPluginDescriptor(@NotNull BiConsumer<? super T, ? super PluginDescriptor> consumer) {
+  public final void processWithPluginDescriptor(@NotNull BiConsumer<? super T, ? super PluginDescriptor> consumer) {
     if (isInReadOnlyMode()) {
       for (T extension : myExtensionsCache) {
         consumer.accept(extension, myDescriptor /* doesn't matter for tests */);

@@ -23,18 +23,18 @@ public final class StartupAbortedException extends RuntimeException {
   }
 
   public static void processException(@NotNull Throwable t) {
-    if (LoadingPhase.COMPONENT_LOADED.isComplete()) {
+    if (LoadingPhase.COMPONENT_LOADED.isComplete() && !(t instanceof StartupAbortedException)) {
       if (!(t instanceof ProcessCanceledException)) {
         PluginManagerCore.getLogger().error(t);
       }
       return;
     }
 
-    PluginManagerCore.EssentialPluginMissingException pme = findCause(t, PluginManagerCore.EssentialPluginMissingException.class);
-    if (pme != null && pme.pluginIds != null) {
+    PluginManagerCore.EssentialPluginMissingException essentialPluginMissingException = findCause(t, PluginManagerCore.EssentialPluginMissingException.class);
+    if (essentialPluginMissingException != null && essentialPluginMissingException.pluginIds != null) {
       Main.showMessage("Corrupted Installation",
-                       "Missing essential " + (pme.pluginIds.size() == 1 ? "plugin" : "plugins") + ":\n\n" +
-                       pme.pluginIds.stream().sorted().collect(Collectors.joining("\n  ", "  ", "\n\n")) +
+                       "Missing essential " + (essentialPluginMissingException.pluginIds.size() == 1 ? "plugin" : "plugins") + ":\n\n" +
+                       essentialPluginMissingException.pluginIds.stream().sorted().collect(Collectors.joining("\n  ", "  ", "\n\n")) +
                        "Please reinstall " + getProductNameSafe() + " from scratch.", true);
       System.exit(Main.INSTALLATION_CORRUPTED);
     }
@@ -57,7 +57,7 @@ public final class StartupAbortedException extends RuntimeException {
     if (LoadingPhase.COMPONENT_REGISTERED.isComplete()) {
       ImplementationConflictException conflictException = findCause(t, ImplementationConflictException.class);
       if (conflictException != null) {
-        PluginConflictReporter pluginConflictReporter = ApplicationManager.getApplication().getService(PluginConflictReporter.class, true);
+        PluginConflictReporter pluginConflictReporter = ApplicationManager.getApplication().getService(PluginConflictReporter.class);
         pluginConflictReporter.reportConflictByClasses(conflictException.getConflictingClasses());
       }
     }

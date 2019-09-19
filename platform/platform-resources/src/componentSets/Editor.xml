@@ -12,6 +12,6 @@
   </application-components>
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceInterface="com.intellij.openapi.fileEditor.ex.IdeDocumentHistory"
-                    serviceImplementation="com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl" preload="true"/>
+                    serviceImplementation="com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl" preload="await"/>
   </extensions>
 </idea-plugin>

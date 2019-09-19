@@ -10,6 +10,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
+import com.intellij.openapi.components.ServiceDescriptor.PreloadMode
 import com.intellij.openapi.components.impl.ComponentManagerImpl
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.diagnostic.ControlFlowException
@@ -166,8 +167,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
       indicator.isIndeterminate = false
     }
 
-    val activityNamePrefix = activityNamePrefix()
-    val activity = when (activityNamePrefix) {
+    val activity = when (val activityNamePrefix = activityNamePrefix()) {
       null -> null
       else -> StartUpMeasurer.startMainActivity("$activityNamePrefix${StartUpMeasurer.Phases.CREATE_COMPONENTS_SUFFIX}")
     }
@@ -590,26 +590,45 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
   @Internal
   open fun activityNamePrefix(): String? = null
 
+  data class ServicePreloadingResult(val asyncPreloadedServices: CompletableFuture<Void?>, val syncPreloadedServices: CompletableFuture<Void?>)
+
   @ApiStatus.Internal
-  fun preloadServices(plugins: List<IdeaPluginDescriptor>): CompletableFuture<*> {
+  fun preloadServices(plugins: List<IdeaPluginDescriptor>): ServicePreloadingResult {
     @Suppress("UNCHECKED_CAST")
     plugins as List<IdeaPluginDescriptorImpl>
 
-    val futures = mutableListOf<CompletableFuture<Void>>()
-    val executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("preload services", Runtime.getRuntime().availableProcessors(), false)
+    val asyncPreloadedServices = mutableListOf<CompletableFuture<Void>>()
+    val syncPreloadedServices = mutableListOf<CompletableFuture<Void>>()
+    val executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("preload services", Runtime.getRuntime().availableProcessors(), /* changeThreadName = */ false)
     for (plugin in plugins) {
       for (service in getContainerDescriptor(plugin).services) {
-        if (service.preload) {
-          futures.add(CompletableFuture.runAsync(Runnable {
-            if (!isServicePreloadingCancelled && !isContainerDisposedOrDisposeInProgress()) {
-              (myPicoContainer.getServiceAdapter(service.getInterface()) as ServiceComponentAdapter?)?.getInstance<Any>(this)
+        if (service.preload == PreloadMode.FALSE) {
+          continue
+        }
+
+        val future = CompletableFuture.runAsync(Runnable {
+          if (!isServicePreloadingCancelled && !isContainerDisposedOrDisposeInProgress()) {
+            val adapter = myPicoContainer.getServiceAdapter(service.getInterface()) as ServiceComponentAdapter? ?: return@Runnable
+            try {
+              adapter.getInstance<Any>(this)
             }
-          }, executor))
+            catch (e: StartupAbortedException) {
+              isServicePreloadingCancelled = true
+              throw e
+            }
+          }
+        }, executor)
+
+        @Suppress("NON_EXHAUSTIVE_WHEN")
+        when (service.preload) {
+          PreloadMode.TRUE -> asyncPreloadedServices.add(future)
+          PreloadMode.AWAIT -> syncPreloadedServices.add(future)
         }
       }
     }
     executor.shutdown()
-    return CompletableFuture.allOf(*futures.toTypedArray())
+    return ServicePreloadingResult(asyncPreloadedServices = CompletableFuture.allOf(*asyncPreloadedServices.toTypedArray()),
+                                   syncPreloadedServices = CompletableFuture.allOf(*syncPreloadedServices.toTypedArray()))
   }
 
   // this method is required because of ProjectImpl.temporarilyDisposed (a lot of failed tests if check temporarilyDisposed)

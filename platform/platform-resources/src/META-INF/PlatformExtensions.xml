@@ -13,7 +13,7 @@
     <appStarter implementation="com.intellij.ide.plugins.BundledPluginsLister"/>
     <appStarter implementation="com.intellij.ide.plugins.JarOrderStarter"/>
 
-    <applicationService serviceImplementation="com.intellij.util.net.ssl.CertificateManager" preload="true"/>
+    <applicationService serviceImplementation="com.intellij.util.net.ssl.CertificateManager" preload="await"/>
 
     <applicationService serviceInterface="com.intellij.ide.plugins.PluginConflictReporter" serviceImplementation="com.intellij.diagnostic.GuiPluginConflictReporter"/>
     <applicationService serviceImplementation="com.intellij.diagnostic.DebugLogManager" preload="true"/>
@@ -29,7 +29,7 @@
                         serviceImplementation="com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl"/>
     <vfs.asyncListener implementation="com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl$MyAsyncFileListener"/>
 
-    <applicationService serviceImplementation="com.intellij.util.net.HttpConfigurable" preload="true"/>
+    <applicationService serviceImplementation="com.intellij.util.net.HttpConfigurable" preload="await"/>
     <applicationService serviceImplementation="com.intellij.ide.ClipboardSynchronizer" preload="true"/>
     <applicationService serviceInterface="com.intellij.openapi.keymap.KeymapManager" preload="true"
                         serviceImplementation="com.intellij.openapi.keymap.impl.KeymapManagerImpl"/>
@@ -44,11 +44,11 @@
                         serviceImplementation="com.intellij.openapi.project.impl.ProjectManagerImpl"/>
 
     <applicationService serviceInterface="com.intellij.openapi.fileTypes.FileTypeManager"
-                        serviceImplementation="com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl" preload="true"/>
+                        serviceImplementation="com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl" preload="await"/>
 
     <!-- listen VFS_CHANGES - it is core service, so, don't want use lazy message bus listener without a reason -->
     <applicationService serviceInterface="com.intellij.openapi.command.undo.DocumentReferenceManager"
-                        serviceImplementation="com.intellij.openapi.command.impl.DocumentReferenceManagerImpl" preload="true"/>
+                        serviceImplementation="com.intellij.openapi.command.impl.DocumentReferenceManagerImpl" preload="await"/>
 
     <applicationService serviceImplementation="com.intellij.execution.wsl.WSLDistributionService"/>
     <experimentalFeature id="wsl.close.process.input" percentOfUsers="0">
