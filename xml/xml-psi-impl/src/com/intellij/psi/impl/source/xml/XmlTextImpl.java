@@ -532,8 +532,7 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
   @Override
   @NotNull
   public LiteralTextEscaper<XmlTextImpl> createLiteralTextEscaper() {
-    XmlTag tag = getParentTag();
-    return tag instanceof HtmlTag && HtmlUtil.isScriptTag(tag) ?
+    return getParentTag() instanceof HtmlTag ?
            LiteralTextEscaper.createSimple(this) :
            new XmlTextLiteralEscaper(this);
   }
