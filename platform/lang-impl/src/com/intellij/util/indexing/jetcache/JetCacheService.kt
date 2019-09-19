@@ -23,14 +23,7 @@ class JetCacheService: Disposable {
   val jetCache: JetCache?
 
   init {
-    if (false) {
-      jetCache = IntellijLocalJetCache()
-    } else {
-      val client = Client(InetAddress.getByName("172.30.163.59"), 8888)
-      spinUntil { client.connected.value }
-      val networkJetCache = NetworkJetCache(client.lifetime, client.model)
-      jetCache = networkJetCache
-    }
+
   }
 
   override fun dispose() {
@@ -49,10 +42,20 @@ class JetCacheService: Disposable {
         }
       }
       groupIdMap = GroupIdMap(File(File(JetCacheLocalStorage.getRoot(), ".LocalJetCache"), "group_id_map"))
+
+      if (false) {
+        jetCache = IntellijLocalJetCache()
+      } else {
+        val client = Client(InetAddress.getByName("172.30.163.59"), 8888)
+        spinUntil { client.connected.value }
+        val networkJetCache = NetworkJetCache(client.lifetime, client.model)
+        jetCache = networkJetCache
+      }
     } else {
+      jetCache = null
       groupIdMap = null
     }
-    Disposer.register(FileBasedIndex.getInstance() as FileBasedIndexImpl, this)
+    //Disposer.register(FileBasedIndex.getInstance() as FileBasedIndexImpl, this)
   }
 
   fun getProjectHash(project: Project): ByteArray {
