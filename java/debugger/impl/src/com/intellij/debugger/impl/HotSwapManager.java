@@ -8,6 +8,7 @@ import com.intellij.ide.actions.ActionsCollector;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEnumerator;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -19,8 +20,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class HotSwapManager {
   private final Map<DebuggerSession, Long> myTimeStamps = new HashMap<>();
@@ -52,14 +51,14 @@ public class HotSwapManager {
   }
 
   public Map<String, HotSwapFile> scanForModifiedClasses(@NotNull DebuggerSession session,
-                                                         @Nullable Stream<String> outputPaths,
+                                                         @Nullable NotNullLazyValue<? extends List<String>> outputPaths,
                                                          @NotNull HotSwapProgress progress) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
 
     final long timeStamp = getTimeStamp(session);
     final Map<String, HotSwapFile> modifiedClasses = new HashMap<>();
 
-    List<String> paths = outputPaths != null ? outputPaths.collect(Collectors.toList()) :
+    List<String> paths = outputPaths != null ? outputPaths.getValue() :
                          ReadAction.compute(() -> JBIterable.of(OrderEnumerator.orderEntries(myProject).classes().getRoots())
                            .filterMap(o -> o.isDirectory() && !o.getFileSystem().isReadOnly() ? o.getPath() : null)
                            .toList()
@@ -146,7 +145,7 @@ public class HotSwapManager {
 
   @NotNull
   public static Map<DebuggerSession, Map<String, HotSwapFile>> scanForModifiedClasses(@NotNull List<? extends DebuggerSession> sessions,
-                                                                                      @Nullable Stream<String> outputPaths,
+                                                                                      @Nullable NotNullLazyValue<? extends List<String>> outputPaths,
                                                                                       @NotNull HotSwapProgress swapProgress) {
     final Map<DebuggerSession, Map<String, HotSwapFile>> modifiedClasses = new THashMap<>();
     final MultiProcessCommand scanClassesCommand = new MultiProcessCommand();
