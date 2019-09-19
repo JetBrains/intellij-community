@@ -82,6 +82,7 @@ import org.jetbrains.annotations.NotNull
 
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.function.BiConsumer
 
 /**
  * @author Eugene Zhuravlev
@@ -1175,8 +1176,31 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
         return null
       }
     })
+
     assertTrue(semaphore.waitFor(1000))
     assertTrue(success.get())
     assertTrue(valueFound.get())
+
+    AtomicBoolean exceptionHappen = new AtomicBoolean()
+    AtomicBoolean hashFoundInGroup = new AtomicBoolean()
+    semaphore.down()
+    service.jetCache.getMultiple(JetCacheService.instance.getProjectHash(getProject())).whenComplete(new BiConsumer<byte[][], Throwable>() {
+      @Override
+      void accept(byte[][] keys, Throwable throwable) {
+        if (throwable != null) {
+          exceptionHappen.set(true)
+        }
+        for (byte[] key in keys) {
+          if (Arrays.equals(key, hash)) {
+            hashFoundInGroup.set(true)
+          }
+        }
+        semaphore.up()
+      }
+    })
+
+    assertTrue(semaphore.waitFor(1000))
+    assertTrue(!exceptionHappen.get())
+    assertTrue(hashFoundInGroup.get())
   }
 }
