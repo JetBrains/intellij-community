@@ -180,7 +180,7 @@ public class PySkeletonRefresher {
     final String builtinsFileName = PythonSdkType.getBuiltinsFileName(mySdk);
     final File builtinsFile = new File(skeletonsPath, builtinsFileName);
 
-    final SkeletonHeader oldHeader = readSkeletonHeader(builtinsFile);
+    final PySkeletonHeader oldHeader = PySkeletonHeader.readSkeletonHeader(builtinsFile);
     final boolean oldOrNonExisting = oldHeader == null || oldHeader.getVersion() == 0;
 
     if (preGeneratedSkeletons != null && oldOrNonExisting) {
@@ -203,7 +203,7 @@ public class PySkeletonRefresher {
     indicate(PyBundle.message("sdk.gen.cleaning.$0", readablePath));
     cleanUpSkeletons(skeletonsDir);
 
-    if ((builtinsUpdated || PySdkUtil.isRemote(mySdk)) && myProject != null) {
+    if ((builtinsUpdated || PythonSdkUtil.isRemote(mySdk)) && myProject != null) {
       ApplicationManager.getApplication().invokeLater(() -> DaemonCodeAnalyzer.getInstance(myProject).restart(), myProject.getDisposed());
     }
 
