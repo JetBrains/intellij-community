@@ -1159,7 +1159,6 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
 
     def semaphore = new Semaphore()
     semaphore.down()
-    AtomicBoolean success = new AtomicBoolean()
     AtomicBoolean valueFound = new AtomicBoolean()
     service.jetCache.get(hashes, new Function2<byte[], byte[], Unit>() {
       @Override
@@ -1168,17 +1167,9 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
         semaphore.up()
         return null
       }
-    }, new Function1<Boolean, Unit>() {
-      @Override
-      Unit invoke(Boolean ok) {
-        success.set(ok)
-        semaphore.up()
-        return null
-      }
     })
 
     assertTrue(semaphore.waitFor(1000))
-    assertTrue(success.get())
     assertTrue(valueFound.get())
 
     AtomicBoolean exceptionHappen = new AtomicBoolean()
