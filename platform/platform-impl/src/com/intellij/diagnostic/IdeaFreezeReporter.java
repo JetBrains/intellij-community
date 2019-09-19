@@ -27,20 +27,22 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
   private static final String REPORT_PREFIX = "report";
   private static final String DUMP_PREFIX = "dump";
 
+  @SuppressWarnings("FieldMayBeFinal") private static boolean DEBUG = false;
+
   private SamplingTask myDumpTask;
   final List<ThreadDump> myCurrentDumps = new ArrayList<>();
   List<StackTraceElement> myStacktraceCommonPart = null;
 
   IdeaFreezeReporter() {
     Application app = ApplicationManager.getApplication();
-    if (!app.isEAP() || PluginManagerCore.isRunningFromSources()) {
+    if (!DEBUG && (!app.isEAP() || PluginManagerCore.isRunningFromSources())) {
       throw ExtensionNotApplicableException.INSTANCE;
     }
   }
 
   @Override
   public void uiFreezeStarted() {
-    if (!DebugAttachDetector.isAttached()) {
+    if (DEBUG || !DebugAttachDetector.isAttached()) {
       if (myDumpTask != null) {
         myDumpTask.stop();
       }
