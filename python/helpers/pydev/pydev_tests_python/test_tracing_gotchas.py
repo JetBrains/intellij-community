@@ -1,8 +1,8 @@
 import pytest
 import sys
-from tests_python.test_debugger import IS_PY26, IS_PY34
+from pydev_tests_python.test_debugger import IS_PY26, IS_PY34
 from _pydevd_bundle.pydevd_constants import NO_FTRACE
-from tests_python.debugger_unittest import IS_JYTHON
+from pydev_tests_python.debugger_unittest import IS_JYTHON
 
 
 class Tracer(object):

@@ -81,22 +81,22 @@ public class PythonDebuggerTest extends PyEnvTestCase {
 
   @Test
   public void testPydevTests_Debugger() {
-    pytests("tests_python/test_debugger.py", Sets.newHashSet("pytest", "-iron", "untangle"));
+    pytests("pydev_tests_python/test_debugger.py", Sets.newHashSet("pytest", "-iron", "untangle"));
   }
 
   @Test
   public void testPydevMonkey() {
-    unittests("tests_python/test_pydev_monkey.py", null);
+    unittests("pydev_tests_python/test_pydev_monkey.py", null);
   }
 
   @Test
   public void testBytecodeModification() {
-    unittests("tests_python/test_bytecode_modification.py", Sets.newHashSet("python3.6", "pytest"));
+    unittests("pydev_tests_python/test_bytecode_modification.py", Sets.newHashSet("python3.6", "pytest"));
   }
 
   @Test
   public void testFrameEvalAndTracing() {
-    pytests("tests_python/test_frame_eval_and_tracing.py", Sets.newHashSet("pytest", "-iron"));
+    pytests("pydev_tests_python/test_frame_eval_and_tracing.py", Sets.newHashSet("pytest", "-iron"));
   }
 
   private void pytests(final String script, @Nullable Set<String> tags) {

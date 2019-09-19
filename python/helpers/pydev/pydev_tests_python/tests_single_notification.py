@@ -6,7 +6,7 @@ import time
 import pytest
 
 from _pydevd_bundle.pydevd_comm import run_as_pydevd_daemon_thread
-from tests_python.debugger_unittest import CMD_THREAD_SUSPEND, CMD_STEP_OVER, CMD_SET_BREAK
+from pydev_tests_python.debugger_unittest import CMD_THREAD_SUSPEND, CMD_STEP_OVER, CMD_SET_BREAK
 from _pydev_bundle.pydev_override import overrides
 
 STATE_RUN = 1
