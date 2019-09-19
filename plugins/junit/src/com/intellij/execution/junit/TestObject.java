@@ -204,10 +204,10 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
   @Override
   protected void configureRTClasspath(JavaParameters javaParameters) throws CantRunException {
     final String path = System.getProperty(DEBUG_RT_PATH);
-    javaParameters.getClassPath().add(path != null ? path : PathUtil.getJarPathForClass(JUnitStarter.class));
+    javaParameters.getClassPath().addFirst(path != null ? path : PathUtil.getJarPathForClass(JUnitStarter.class));
 
     //include junit5 listeners for the case custom junit 5 engines would be detected on runtime
-    javaParameters.getClassPath().add(getJUnit5RtFile());
+    javaParameters.getClassPath().addFirst(getJUnit5RtFile());
 
     String preferredRunner = getRunner();
     if (JUnitStarter.JUNIT5_PARAMETER.equals(preferredRunner)) {
