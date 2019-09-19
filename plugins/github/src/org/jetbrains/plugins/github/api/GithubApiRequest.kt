@@ -104,11 +104,13 @@ sealed class GithubApiRequest<out T>(val url: String) {
                                                        url: String,
                                                        override val acceptMimeType: String? = null) : GithubApiRequest.WithBody<T>(url) {
     companion object {
-      inline fun <reified T> json(url: String, body: Any): Post<T> = Json(url, body, T::class.java)
+      inline fun <reified T> json(url: String, body: Any, acceptMimeType: String? = null): Post<T> =
+        Json(url, body, T::class.java, acceptMimeType)
     }
 
-    open class Json<T>(url: String, private val bodyObject: Any, private val clazz: Class<T>)
-      : Post<T>(GithubApiContentHelper.JSON_MIME_TYPE, url, GithubApiContentHelper.V3_JSON_MIME_TYPE) {
+    open class Json<T>(url: String, private val bodyObject: Any, private val clazz: Class<T>,
+                       acceptMimeType: String? = GithubApiContentHelper.V3_JSON_MIME_TYPE)
+      : Post<T>(GithubApiContentHelper.JSON_MIME_TYPE, url, acceptMimeType) {
 
       override val body: String
         get() = GithubApiContentHelper.toJson(bodyObject)
@@ -175,12 +177,12 @@ sealed class GithubApiRequest<out T>(val url: String) {
         if (data != null && !data.isNull) {
           var node: JsonNode = data
           for (path in pathFromData) {
-            node = node[path] ?: return null
+            node = node[path] ?: break
           }
-          if (node.isNull) return null
-          return GithubApiContentHelper.fromJson(node.toString(), clazz, true)
+          if (!node.isNull) return GithubApiContentHelper.fromJson(node.toString(), clazz, true)
         }
-        else throw GithubConfusingException(result.errors.toString())
+        val errors = result.errors
+        if (errors != null) throw GithubConfusingException(errors.toString()) else return null
       }
     }
   }
