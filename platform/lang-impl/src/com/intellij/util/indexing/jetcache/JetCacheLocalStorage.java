@@ -10,6 +10,7 @@ import com.intellij.util.indexing.IndexInfrastructure;
 import com.intellij.util.io.ByteSequenceDataExternalizer;
 import com.intellij.util.io.KeyValueStore;
 import com.intellij.util.io.PersistentHashMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -22,7 +23,12 @@ public class JetCacheLocalStorage<K, V> implements KeyValueStore<byte[], ByteArr
   private final File myFile;
 
   public JetCacheLocalStorage(FileBasedIndexExtension<K, V> extension) {
-    this(new File(new File(LOCAL_JET_CACHE_ROOT == null ? IndexInfrastructure.getPersistentIndexRoot() : new File(LOCAL_JET_CACHE_ROOT), ".LocalJetCache"), extension.getName().getName()));
+    this(new File(new File(getRoot(), ".LocalJetCache"), extension.getName().getName()));
+  }
+
+  @NotNull
+  static File getRoot() {
+    return LOCAL_JET_CACHE_ROOT == null ? IndexInfrastructure.getPersistentIndexRoot() : new File(LOCAL_JET_CACHE_ROOT);
   }
 
   public JetCacheLocalStorage(File file) {

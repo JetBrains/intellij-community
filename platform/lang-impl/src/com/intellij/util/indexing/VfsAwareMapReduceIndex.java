@@ -84,7 +84,7 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
       SharedIndicesData.registerIndex((ID<Key, Value>)myIndexId, extension);
     }
     mySnapshotInputMappings = IndexImporterMappingIndex.wrap(snapshotInputMappings, extension);
-    myUpdateMappings = snapshotInputMappings instanceof UpdatableSnapshotInputMappingIndex;
+    myUpdateMappings = mySnapshotInputMappings instanceof UpdatableSnapshotInputMappingIndex;
     installMemoryModeListener();
   }
 
