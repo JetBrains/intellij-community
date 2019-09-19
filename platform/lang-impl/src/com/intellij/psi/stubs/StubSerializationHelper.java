@@ -143,9 +143,9 @@ class StubSerializationHelper {
     if (idValue == null) {
       String name = serializer.getExternalId();
       idValue = myNameToId.get(name);
-      assert idValue > 0 : "No ID found for serializer " + LogUtil.objectAndClass(serializer) +
-                           ", external id:" + name +
-                           (serializer instanceof IElementType ? ", language:" + ((IElementType)serializer).getLanguage() + ", " + serializer : "");
+      //assert idValue > 0 : "No ID found for serializer " + LogUtil.objectAndClass(serializer) +
+      //                     ", external id:" + name +
+      //                     (serializer instanceof IElementType ? ", language:" + ((IElementType)serializer).getLanguage() + ", " + serializer : "");
       mySerializerToId.put(serializer, idValue);
     }
     return idValue;

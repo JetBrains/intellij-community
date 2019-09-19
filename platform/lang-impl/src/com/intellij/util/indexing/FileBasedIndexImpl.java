@@ -65,6 +65,7 @@ import com.intellij.util.gist.GistManager;
 import com.intellij.util.indexing.hash.FileContentHashIndex;
 import com.intellij.util.indexing.hash.FileContentHashIndexExtension;
 import com.intellij.util.indexing.impl.InvertedIndexValueIterator;
+import com.intellij.util.indexing.jetcache.JetCacheService;
 import com.intellij.util.indexing.provided.ProvidedIndexExtension;
 import com.intellij.util.indexing.provided.ProvidedIndexExtensionLocator;
 import com.intellij.util.io.DataOutputStream;
@@ -538,6 +539,7 @@ public final class FileBasedIndexImpl extends FileBasedIndex implements Disposab
           }
         }
 
+        Disposer.dispose(JetCacheService.getInstance());
         ContentHashesSupport.flushContentHashes();
         SharedIndicesData.flushData();
         myConnection.disconnect();
