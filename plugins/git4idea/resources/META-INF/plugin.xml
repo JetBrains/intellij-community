@@ -278,6 +278,9 @@
 
     <vcs.actions.ScheduleForAdditionActionExtension implementation="git4idea.actions.GitAdd"/>
     <terminal.shellCommandHandler implementation="git4idea.log.GitLogTerminalCustomCommandHandler"/>
+
+    <projectStateHashGenerator implementation="git4idea.repo.GitProjectStateHashGenerator" />
+
   </extensions>
 
   <extensionPoints>
