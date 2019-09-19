@@ -165,7 +165,7 @@ public class ToggleFieldBreakpointAction extends AnAction {
           PsiClass psiClass = DebuggerUtils.findClass(field.declaringType().name(), project, (session != null) ? session.getSearchScope() : GlobalSearchScope.allScope(project));
           if(psiClass != null) {
             psiClass = (PsiClass) psiClass.getNavigationElement();
-            final PsiField psiField = psiClass.findFieldByName(field.name(), true);
+            final PsiField psiField = psiClass.findFieldByName(field.name(), false);
             if (psiField != null) {
               return SourcePosition.createFromElement(psiField);
             }
