@@ -2,8 +2,6 @@
 
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.diff.util.DiffPlaces;
-import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DefaultTreeExpander;
@@ -61,7 +59,6 @@ import java.awt.*;
 import java.util.List;
 import java.util.*;
 import java.util.function.Function;
-import java.util.stream.Stream;
 
 import static com.intellij.openapi.actionSystem.EmptyAction.registerWithShortcutSet;
 import static com.intellij.openapi.vcs.changes.ui.ChangesTree.DEFAULT_GROUPING_KEYS;
@@ -70,7 +67,6 @@ import static com.intellij.ui.IdeBorderFactory.createBorder;
 import static com.intellij.ui.ScrollPaneFactory.createScrollPane;
 import static com.intellij.util.containers.ContainerUtil.set;
 import static com.intellij.util.ui.JBUI.Panels.simplePanel;
-import static java.util.stream.Collectors.toList;
 
 @State(
   name = "ChangesViewManager",
@@ -329,7 +325,9 @@ public class ChangesViewManager implements ChangesViewEx,
       };
       contentPanel.addToCenter(myCommitPanelSplitter);
 
-      MyChangeProcessor changeProcessor = new MyChangeProcessor(myProject, this);
+      ChangesViewDiffPreviewProcessor changeProcessor = new ChangesViewDiffPreviewProcessor(myView);
+      Disposer.register(this, changeProcessor);
+
       myDiffPreviewSplitter = new PreviewDiffSplitterComponent(contentPanel, changeProcessor, CHANGES_VIEW_PREVIEW_SPLITTER_PROPORTION,
                                                                myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN);
 
@@ -649,47 +647,6 @@ public class ChangesViewManager implements ChangesViewEx,
       @Override
       public boolean isSelected(@NotNull AnActionEvent e) {
         return myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN;
-      }
-    }
-
-    private class MyChangeProcessor extends ChangeViewDiffRequestProcessor {
-      MyChangeProcessor(@NotNull Project project, @NotNull Disposable disposable) {
-        super(project, DiffPlaces.CHANGES_VIEW);
-        Disposer.register(disposable, this);
-
-        putContextUserData(DiffUserDataKeysEx.LAST_REVISION_WITH_LOCAL, true);
-      }
-
-      @NotNull
-      @Override
-      protected List<Wrapper> getSelectedChanges() {
-        boolean hasSelection = myView.getSelectionCount() != 0;
-        if (hasSelection) {
-          return wrap(myView.getSelectedChanges(), myView.getSelectedUnversionedFiles());
-        }
-        else {
-          return getAllChanges();
-        }
-      }
-
-      @NotNull
-      @Override
-      protected List<Wrapper> getAllChanges() {
-        return wrap(myView.getChanges(), myView.getUnversionedFiles());
-      }
-
-      @Override
-      protected void selectChange(@NotNull Wrapper change) {
-        TreePath path = myView.findNodePathInTree(change.getUserObject());
-        if (path != null) {
-          TreeUtil.selectPath(myView, path, false);
-        }
-      }
-
-      @NotNull
-      private List<Wrapper> wrap(@NotNull Stream<? extends Change> changes, @NotNull Stream<? extends FilePath> unversioned) {
-        return Stream.concat(changes.map(ChangeWrapper::new), unversioned.map(FilePath::getVirtualFile).filter(
-        Objects::nonNull).map(UnversionedFileWrapper::new)).collect(toList());
       }
     }
   }
