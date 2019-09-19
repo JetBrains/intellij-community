@@ -19,7 +19,7 @@ public class JetCacheLocalStorage<K, V> implements KeyValueStore<byte[], ByteArr
   private final File myFile;
 
   public JetCacheLocalStorage(FileBasedIndexExtension<K, V> extension) {
-    this(new File(IndexInfrastructure.getIndexRootDir(extension.getName()), ".jetcache"));
+    this(new File(new File(IndexInfrastructure.getPersistentIndexRootDir(extension.getName()), "LocalJetCache"), extension.getName().getName()));
   }
 
   public JetCacheLocalStorage(File file) {

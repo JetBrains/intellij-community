@@ -31,7 +31,7 @@ class JetCacheService: Disposable {
           myStorages[extension.name] = JetCacheLocalStorage(extension)
         }
       }
-      groupIdMap = GroupIdMap(File(IndexInfrastructure.getPersistentIndexRoot(), "group_id_map"))
+      groupIdMap = GroupIdMap(File(File(IndexInfrastructure.getPersistentIndexRoot(), "LocalJetCache"), "group_id_map"))
     } else {
       groupIdMap = null
     }
