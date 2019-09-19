@@ -4,6 +4,7 @@ package com.intellij.util.indexing.jetcache;
 import com.intellij.index.IndexImporterFactory;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.ByteArraySequence;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.impl.InputData;
 import com.intellij.util.indexing.impl.forward.AbstractForwardIndexAccessor;
@@ -12,8 +13,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.Map;
-
-import static com.intellij.openapi.util.text.StringUtil.toHexString;
 
 public class JetCacheIndexImporter implements IndexImporterFactory {
   @Nullable
@@ -33,8 +32,9 @@ public class JetCacheIndexImporter implements IndexImporterFactory {
 
       @Override
       public InputData<Key, Value> putData(@NotNull Input content, @NotNull InputData<Key, Value> data) throws IOException {
+        byte[] hash = calculateHash((FileContent)content);
         byte[] mixedHash = ContentHashesSupport
-          .calcContentIdHash(calculateHash((FileContent)content), ((FileBasedIndexExtension<Key, Value>)extension).getName());
+          .calcContentIdHash(hash, ((FileBasedIndexExtension<Key, Value>)extension).getName());
         jetCacheService.getJetCache().put(mixedHash, AbstractForwardIndexAccessor.serializeToByteSeq(data.getKeyValues(), myMapExternalizer, 8).toBytes());
         byte[] projectHash = jetCacheService.getProjectHash(((FileContent)content).getProject());
         jetCacheService.getJetCache().merge(projectHash, new byte[][] { mixedHash });
@@ -56,7 +56,8 @@ public class JetCacheIndexImporter implements IndexImporterFactory {
       @Nullable
       @Override
       public InputData<Key, Value> readData(@NotNull Input content) throws IOException {
-        ByteArraySequence serializedData = storage.get(calculateHash(((FileContent)content)));
+        byte[] hash = calculateHash(((FileContent)content));
+        ByteArraySequence serializedData = storage.get(hash);
         return serializedData == null ? null : new InputData<>(AbstractForwardIndexAccessor.deserializeFromByteSeq(serializedData, myMapExternalizer));
       }
 

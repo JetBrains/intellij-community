@@ -6,31 +6,23 @@ import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.ByteArraySequence
+import com.intellij.util.concurrency.Semaphore
 import com.intellij.util.indexing.*
 import com.intellij.util.indexing.jetcache.local.IntellijLocalJetCache
+import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.spinUntil
 import org.jetbrains.jetcache.Client
 import org.jetbrains.jetcache.DiscoveryClient
 import org.jetbrains.jetcache.JetCache
 import org.jetbrains.jetcache.NetworkJetCache
 import java.io.File
-import java.net.InetAddress
 
 import java.util.concurrent.ConcurrentHashMap
 
-//fun main() {
-//  DiscoveryClient(8888) {
-//    for (serverDescriptor in it) {
-//      val serverInfo = serverDescriptor.serverInfo
-//      println("${serverInfo.hostId} ${serverInfo.serverPort} ${serverInfo.isReadonly}")
-//    }
-//  }.startDiscoveryClient()
-//  Thread.sleep(60000)
-//}
-
 class JetCacheService: Disposable {
   val projectCurrentVersion = ConcurrentHashMap<Project, ByteArray>()
-  val jetCache: JetCache?
+  @Volatile
+  var jetCache: JetCache? = null
 
   init {
 
@@ -56,10 +48,27 @@ class JetCacheService: Disposable {
       if (false) {
         jetCache = IntellijLocalJetCache()
       } else {
-        val client = Client(InetAddress.getByName("172.30.163.59"), 8888)
-        spinUntil { client.connected.value }
-        val networkJetCache = NetworkJetCache(client.lifetime, client.model, client.scheduler)
-        jetCache = networkJetCache
+
+        val semaphore = Semaphore()
+        semaphore.down()
+
+        DiscoveryClient(Lifetime.Eternal, 8888) {
+          if (jetCache != null) return@DiscoveryClient
+          for (address in it.addresses) {
+            val host = address.host
+            val port = address.port
+            LOG.info("connecting to JetCache server ${host}:${port}")
+
+            val client = Client(address.host, address.port)
+            spinUntil { client.connected.value }
+            val networkJetCache = NetworkJetCache(client.lifetime, client.model, client.scheduler)
+            jetCache = networkJetCache
+            semaphore.up()
+          }
+        }
+        if (!semaphore.waitFor(20000)) {
+          LOG.error("we don't have JetCache")
+        }
       }
     } else {
       jetCache = null
@@ -73,6 +82,9 @@ class JetCacheService: Disposable {
   }
 
   fun tryGetIndexes(project: Project) {
+    if (jetCache == null) {
+      return
+    }
     if (!IS_ENABLED) {
       LOG.error("JetCache service is disabled")
     }
@@ -83,7 +95,7 @@ class JetCacheService: Disposable {
     jetCache?.getMultiple(hash)?.whenComplete { keys, u ->
       LOG.info("available ${keys.size} keys received for " + project.name)
       if (u == null) {
-        jetCache.get(keys) { key, value ->
+        jetCache!!.get(keys) { key, value ->
           val hashAndId = ContentHashesSupport.splitHashAndId(key)
           if (hashAndId != null) {
             val id = hashAndId.second
