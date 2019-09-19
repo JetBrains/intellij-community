@@ -4,6 +4,7 @@ package com.intellij.internal.statistic
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.constraints.isDisposed
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
@@ -91,7 +92,14 @@ class DelayedIdeActivity @JvmOverloads constructor(val group: String, val activi
 
       if (FeatureUsageLogger.getConfig().isRecordEnabled()) { // avoid unnecessary work, when disabled
         val delay = 1000
-        SingleAlarm(Runnable { delayedStart(delay) }, delay, Alarm.ThreadToUse.POOLED_THREAD, disposable).request()
+
+        val application = ApplicationManager.getApplication()
+        application.runReadAction {
+          if (application.isDisposed) return@runReadAction
+
+          Disposer.register(application, disposable)
+          SingleAlarm(Runnable { delayedStart(delay) }, delay, Alarm.ThreadToUse.POOLED_THREAD, disposable).request()
+        }
       }
     }
     return this
