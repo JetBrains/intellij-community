@@ -10,12 +10,23 @@ import com.intellij.util.indexing.*
 import com.intellij.util.indexing.jetcache.local.IntellijLocalJetCache
 import com.jetbrains.rd.util.spinUntil
 import org.jetbrains.jetcache.Client
+import org.jetbrains.jetcache.DiscoveryClient
 import org.jetbrains.jetcache.JetCache
 import org.jetbrains.jetcache.NetworkJetCache
 import java.io.File
 import java.net.InetAddress
 
 import java.util.concurrent.ConcurrentHashMap
+
+//fun main() {
+//  DiscoveryClient(8888) {
+//    for (serverDescriptor in it) {
+//      val serverInfo = serverDescriptor.serverInfo
+//      println("${serverInfo.hostId} ${serverInfo.serverPort} ${serverInfo.isReadonly}")
+//    }
+//  }.startDiscoveryClient()
+//  Thread.sleep(60000)
+//}
 
 class JetCacheService: Disposable {
   val projectCurrentVersion = ConcurrentHashMap<Project, ByteArray>()
@@ -68,8 +79,9 @@ class JetCacheService: Disposable {
     val hash = ProjectStateHashGenerator.generateHashFor(project)
     projectCurrentVersion.put(project, hash)
 
-    //TODO use remote implementation
+    LOG.info("query available keys for " + project.name)
     jetCache?.getMultiple(hash)?.whenComplete { keys, u ->
+      LOG.info("available ${keys.size} keys received for " + project.name)
       if (u == null) {
         jetCache.get(keys) { key, value ->
           val hashAndId = ContentHashesSupport.splitHashAndId(key)
