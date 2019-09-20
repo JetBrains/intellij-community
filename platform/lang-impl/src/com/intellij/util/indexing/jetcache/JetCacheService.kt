@@ -35,7 +35,7 @@ class JetCacheService {
     return projectCurrentVersion.get(project)
   }
 
-  fun tryGetIndexes(project: Project) {
+  init {
     if (jetCache == null) {
       if (IS_ENABLED) {
         val semaphore = Semaphore()
@@ -61,9 +61,11 @@ class JetCacheService {
           LOG.error("we don't have JetCache")
         }
       } else {
-        return
       }
     }
+  }
+  fun tryGetIndexes(project: Project) {
+
     if (!IS_ENABLED) {
       LOG.error("JetCache service is disabled")
     }
