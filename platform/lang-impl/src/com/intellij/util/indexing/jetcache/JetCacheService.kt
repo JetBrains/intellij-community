@@ -60,6 +60,7 @@ class JetCacheService: Disposable {
           val client = Client(InetAddress.getByName("172.30.162.233"), 8888, scheduler)
           jetCache = NetworkJetCache(Lifetime.Eternal, client.model, scheduler)
           semaphore.up()
+          return@DiscoveryClient
         }
       }
       if (!semaphore.waitFor(10000)) {
