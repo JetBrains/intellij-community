@@ -27,6 +27,7 @@ import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.atomic.LongAdder;
 import java.util.stream.Stream;
 
 public class SnapshotInputMappings<Key, Value, Input> implements UpdatableSnapshotInputMappingIndex<Key, Value, Input> {
@@ -343,6 +344,7 @@ public class SnapshotInputMappings<Key, Value, Input> implements UpdatableSnapsh
     return moreInfo;
   }
 
+  private static final LongAdder added = new LongAdder();
   private boolean savePersistentData(Map<Key, Value> data, int id, byte[] hash, byte[] project) {
     try {
       if (myContents.containsMapping(id)) return false;
@@ -350,6 +352,10 @@ public class SnapshotInputMappings<Key, Value, Input> implements UpdatableSnapsh
       saveContents(id, seq);
 
       if (myJetCache != null && project != null) {
+        added.increment();
+        if (added.sum() % 1000 == 0) {
+          LOG.info("sent " + added.sum());
+        }
         byte[] coolHash = ContentHashesSupport.calcContentIdHash(hash, myIndexId);
         myJetCache.put(coolHash, seq.toBytes());
         myJetCache.merge(project, new byte[][] { coolHash });
