@@ -1,6 +1,5 @@
 package com.intellij.vcs.log.ui.table;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Computable;
@@ -18,7 +17,7 @@ import com.intellij.vcs.log.data.CommitIdByStringCondition;
 import com.intellij.vcs.log.data.RefsModel;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.impl.CommonUiProperties;
-import com.intellij.vcs.log.impl.VcsLogApplicationSettings;
+import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.frame.CommitPresentationUtil;
 import com.intellij.vcs.log.ui.render.GraphCommitCell;
 import com.intellij.vcs.log.visible.VisiblePack;
@@ -47,20 +46,22 @@ public class GraphTableModel extends AbstractTableModel {
   private static final Logger LOG = Logger.getInstance(GraphTableModel.class);
   private static final FrequentErrorLogger ERROR_LOG = FrequentErrorLogger.newInstance(LOG);
 
-  private final VcsLogApplicationSettings myLogSettings =
-    ApplicationManager.getApplication().getService(VcsLogApplicationSettings.class);
-
   @NotNull private final VcsLogData myLogData;
   @NotNull private final Consumer<? super Runnable> myRequestMore;
+  @NotNull private final VcsLogUiProperties myProperties;
 
   @NotNull protected VisiblePack myDataPack;
 
   private boolean myMoreRequested;
 
-  public GraphTableModel(@NotNull VisiblePack dataPack, @NotNull VcsLogData logData, @NotNull Consumer<? super Runnable> requestMore) {
+  public GraphTableModel(@NotNull VisiblePack dataPack,
+                         @NotNull VcsLogData logData,
+                         @NotNull Consumer<? super Runnable> requestMore,
+                         @NotNull VcsLogUiProperties properties) {
     myLogData = logData;
     myDataPack = dataPack;
     myRequestMore = requestMore;
+    myProperties = properties;
   }
 
   @Override
@@ -175,7 +176,7 @@ public class GraphTableModel extends AbstractTableModel {
   @NotNull
   private String getDateSafely(@NotNull VcsShortCommitDetails data) {
     return getOrLogAndReturnStub(() -> {
-      long timeStamp = Boolean.TRUE.equals(myLogSettings.get(CommonUiProperties.PREFER_COMMIT_DATE)) ?
+      long timeStamp = Boolean.TRUE.equals(myProperties.get(CommonUiProperties.PREFER_COMMIT_DATE)) ?
                        data.getCommitTime() : data.getAuthorTime();
       return timeStamp < 0 ? "" : JBDateFormat.getFormatter("vcs.log").formatDateTime(timeStamp);
     }, "");

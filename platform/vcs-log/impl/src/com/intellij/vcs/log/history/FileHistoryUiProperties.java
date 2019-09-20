@@ -1,11 +1,13 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.history;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.log.impl.VcsLogApplicationSettings;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.table.VcsLogColumn;
 import org.jetbrains.annotations.NotNull;
@@ -19,6 +21,8 @@ import static com.intellij.vcs.log.impl.CommonUiProperties.*;
 public class FileHistoryUiProperties implements VcsLogUiProperties, PersistentStateComponent<FileHistoryUiProperties.State> {
   public static final VcsLogUiProperty<Boolean> SHOW_ALL_BRANCHES = new VcsLogUiProperty<>("Table.ShowOtherBranches");
   @NotNull private final Collection<PropertiesChangeListener> myListeners = new LinkedHashSet<>();
+  private final VcsLogApplicationSettings myLogSettings =
+    ApplicationManager.getApplication().getService(VcsLogApplicationSettings.class);
   private State myState = new State();
 
   public static class State {
@@ -59,6 +63,9 @@ public class FileHistoryUiProperties implements VcsLogUiProperties, PersistentSt
     else if (SHOW_ROOT_NAMES.equals(property)) {
       return (T)Boolean.valueOf(myState.SHOW_ROOT_NAMES);
     }
+    else if (PREFER_COMMIT_DATE.equals(property)) {
+      return myLogSettings.get(property);
+    }
     throw new UnsupportedOperationException("Unknown property " + property);
   }
 
@@ -83,6 +90,9 @@ public class FileHistoryUiProperties implements VcsLogUiProperties, PersistentSt
     else if (SHOW_ROOT_NAMES.equals(property)) {
       myState.SHOW_ROOT_NAMES = (Boolean)value;
     }
+    else if (PREFER_COMMIT_DATE.equals(property)) {
+      myLogSettings.set(property, value);
+    }
     else {
       throw new UnsupportedOperationException("Unknown property " + property);
     }
@@ -96,6 +106,7 @@ public class FileHistoryUiProperties implements VcsLogUiProperties, PersistentSt
            COLUMN_ORDER.equals(property) ||
            SHOW_DIFF_PREVIEW.equals(property) ||
            SHOW_ROOT_NAMES.equals(property) ||
+           PREFER_COMMIT_DATE.equals(property) ||
            property instanceof TableColumnProperty;
   }
 
