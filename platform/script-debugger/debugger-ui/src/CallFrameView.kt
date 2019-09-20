@@ -2,15 +2,14 @@
 package org.jetbrains.debugger.frame
 
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.util.Pair
 import com.intellij.ui.ColoredTextContainer
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator
-import com.intellij.xdebugger.frame.*
-import com.intellij.xdebugger.frame.presentation.XValuePresentation
+import com.intellij.xdebugger.frame.XCompositeNode
+import com.intellij.xdebugger.frame.XStackFrame
+import com.intellij.xdebugger.frame.XValueChildrenList
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.debugger.*
-import org.jetbrains.debugger.values.Value
 
 // isInLibraryContent call could be costly, so we compute it only once (our customizePresentation called on each repaint)
 class CallFrameView @JvmOverloads constructor(val callFrame: CallFrame,
@@ -19,7 +18,7 @@ class CallFrameView @JvmOverloads constructor(val callFrame: CallFrame,
                                               sourceInfo: SourceInfo? = null,
                                               isInLibraryContent: Boolean? = null,
                                               override val vm: Vm? = null,
-                                              val methodReturnValue: Pair<String, Value>? = null) : XStackFrame(), VariableContext {
+                                              val methodReturnValue: Variable? = null) : XStackFrame(), VariableContext {
   private val sourceInfo = sourceInfo ?: viewSupport.getSourceInfo(script, callFrame)
   private val isInLibraryContent: Boolean = isInLibraryContent ?: (this.sourceInfo != null && viewSupport.isInLibraryContent(this.sourceInfo, script))
 
@@ -30,22 +29,11 @@ class CallFrameView @JvmOverloads constructor(val callFrame: CallFrame,
   override fun computeChildren(node: XCompositeNode) {
     node.setAlreadySorted(true)
     methodReturnValue?.let {
-      val list = XValueChildrenList.singleton(MethodReturnValue(it.first, it.second))
+      val list = XValueChildrenList.singleton(VariableView(methodReturnValue, this))
       node.addChildren(list, false)
-
     }
 
     createAndAddScopeList(node, callFrame.variableScopes, this, callFrame)
-  }
-
-  class MethodReturnValue(method: String, val value: Value) : XNamedValue("$method()") {
-    override fun computePresentation(node: XValueNode, place: XValuePlace) {
-      node.setPresentation(AllIcons.Debugger.WatchLastReturnValue, object: XValuePresentation() {
-        override fun renderValue(renderer: XValueTextRenderer) {
-          renderer.renderValue(value.valueString!!)
-        }
-      }, false)
-    }
   }
 
   override val evaluateContext: EvaluateContext

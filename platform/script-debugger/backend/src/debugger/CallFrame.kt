@@ -16,7 +16,6 @@
 package org.jetbrains.debugger
 
 import org.jetbrains.concurrency.Promise
-import org.jetbrains.debugger.values.Value
 
 interface CallFrame {
   /**
@@ -41,7 +40,7 @@ interface CallFrame {
    */
   val functionName: String?
 
-  val returnValue: Value?
+  val returnValue: Variable?
     get() = null
 
   /**

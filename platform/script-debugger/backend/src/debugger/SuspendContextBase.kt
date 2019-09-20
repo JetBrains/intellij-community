@@ -15,10 +15,7 @@
  */
 package org.jetbrains.debugger
 
-import com.intellij.openapi.util.Pair
-import org.jetbrains.debugger.values.Value
-
 abstract class SuspendContextBase<F : CallFrame> : SuspendContext<F> {
 
-  override var methodReturnValue: Pair<String, Value>? = null
+  override var methodReturnValue: Variable? = null
 }
