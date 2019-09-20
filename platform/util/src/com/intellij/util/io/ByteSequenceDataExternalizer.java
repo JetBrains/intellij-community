@@ -16,6 +16,7 @@
 package com.intellij.util.io;
 
 import com.intellij.openapi.util.io.ByteArraySequence;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
@@ -36,7 +37,9 @@ public class ByteSequenceDataExternalizer implements KeyDescriptor<ByteArraySequ
 
   @Override
   public ByteArraySequence read(@NotNull DataInput in) throws IOException {
-    byte[] buf = new byte[((InputStream)in).available()]; // todo fix double copying
+    int size = ((InputStream)in).available();
+    if (size == 0) return ByteArraySequence.EMPTY;
+    byte[] buf = new byte[size]; // todo fix double copying
     in.readFully(buf);
     return new ByteArraySequence(buf);
   }

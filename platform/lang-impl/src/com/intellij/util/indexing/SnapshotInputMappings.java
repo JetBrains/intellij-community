@@ -12,6 +12,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.CompressionUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.impl.DebugAssertions;
 import com.intellij.util.indexing.impl.InputData;
 import com.intellij.util.indexing.impl.forward.AbstractForwardIndexAccessor;
@@ -35,6 +36,7 @@ public class SnapshotInputMappings<Key, Value, Input> implements UpdatableSnapsh
 
   private final ID<Key, Value> myIndexId;
   private final InputMapExternalizer<Key, Value> myMapExternalizer;
+  private final DataExternalizer<Value> myValueExternalizer;
   private final DataIndexer<Key, Value, Input> myIndexer;
   private final PersistentMapBasedForwardIndex myContents;
   private final JetCache myJetCache;
@@ -50,7 +52,8 @@ public class SnapshotInputMappings<Key, Value, Input> implements UpdatableSnapsh
     myJetCache = myJetCacheService.getJetCache();
     myIndexId = (ID<Key, Value>)indexExtension.getName();
     myIsPsiBackedIndex = FileBasedIndexImpl.isPsiDependentIndex(indexExtension);
-    myMapExternalizer = new InputMapExternalizer<>(indexExtension);
+    myMapExternalizer = indexExtension instanceof SingleEntryFileBasedIndexExtension ? null : new InputMapExternalizer<>(indexExtension);
+    myValueExternalizer = indexExtension instanceof SingleEntryFileBasedIndexExtension ? indexExtension.getValueExternalizer() : null;
     myIndexer = indexExtension.getIndexer();
     myContents = createContentsIndex();
     myHashIdForwardIndexAccessor = new HashIdForwardIndexAccessor<>(this);
@@ -87,7 +90,17 @@ public class SnapshotInputMappings<Key, Value, Input> implements UpdatableSnapsh
       ByteArraySequence bytes = readContents(hashId);
 
       if (bytes != null) {
-        data = AbstractForwardIndexAccessor.deserializeFromByteSeq(bytes, myMapExternalizer);
+        if (myMapExternalizer != null) {
+          data = AbstractForwardIndexAccessor.deserializeFromByteSeq(bytes, myMapExternalizer);
+        } else {
+          Value value;
+          if (bytes.getLength() == 0) {
+            value = null;
+          } else {
+            value = AbstractForwardIndexAccessor.deserializeFromByteSeq(bytes, myValueExternalizer);
+          }
+          data = Collections.singletonMap((Key)(Object)FileBasedIndex.getFileId(((FileContent)content).getFile()), value);
+        }
         if (DebugAssertions.EXTRA_SANITY_CHECKS) {
           Map<Key, Value> contentData = myIndexer.map(content);
           boolean sameValueForSavedIndexedResultAndCurrentOne = contentData.equals(data);
@@ -346,7 +359,17 @@ public class SnapshotInputMappings<Key, Value, Input> implements UpdatableSnapsh
   private boolean savePersistentData(Map<Key, Value> data, int id, byte[] hash, byte[] project) {
     try {
       if (myContents.containsMapping(id)) return false;
-      ByteArraySequence seq = AbstractForwardIndexAccessor.serializeToByteSeq(data, myMapExternalizer, data.size());
+      ByteArraySequence seq;
+      if (myMapExternalizer != null) {
+        seq = AbstractForwardIndexAccessor.serializeToByteSeq(data, myMapExternalizer, data.size());
+      } else {
+        Value value = ContainerUtil.getFirstItem(data.values());
+        if (value != null) {
+          seq = AbstractForwardIndexAccessor.serializeToByteSeq(value, myValueExternalizer, 8);
+        } else {
+          seq = ByteArraySequence.EMPTY;
+        }
+      }
       saveContents(id, seq);
 
       if (myJetCache != null) {

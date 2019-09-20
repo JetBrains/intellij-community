@@ -13,6 +13,7 @@
 // limitations under the License.
 package com.intellij.openapi.util.io;
 
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.ByteBuffer;
@@ -21,6 +22,7 @@ import java.nio.ByteBuffer;
  * A sequence of bytes backed by byte array (or sub-array).
  */
 public class ByteArraySequence implements ByteSequence {
+  public static final ByteArraySequence EMPTY = new ByteArraySequence(ArrayUtil.EMPTY_BYTE_ARRAY);
   private final byte[] myBytes;
   private final int myOffset;
   private final int myLen;
