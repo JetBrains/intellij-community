@@ -34,8 +34,4 @@ public class VcsLogDataKeys {
    * Set of log providers for selected rows
    */
   public static final DataKey<Set<VcsLogProvider>> VCS_LOG_PROVIDERS = DataKey.create("Vcs.Log.Provider");
-  /**
-   * True if commit/author date is displayed in current log view
-   */
-  public static final DataKey<Boolean> VCS_DATE_DISPLAYED = DataKey.create("Vcs.Log.Date.Displayed");
 }

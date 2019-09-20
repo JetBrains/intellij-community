@@ -42,6 +42,7 @@ import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.VcsLogColorManagerImpl;
+import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import com.intellij.vcs.log.ui.render.GraphCommitCell;
 import com.intellij.vcs.log.ui.render.GraphCommitCellRenderer;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
@@ -488,8 +489,8 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
       }
       return sb.toString();
     }
-    else if (VcsLogDataKeys.VCS_DATE_DISPLAYED.is(dataId)) {
-      return getTableColumn(VcsLogColumn.DATE) != null;
+    else if (VcsLogInternalDataKeys.LOG_UI_PROPERTIES.is(dataId)) {
+      return myProperties;
     }
     else if (VcsLogDataKeys.VCS_LOG_PROVIDERS.is(dataId)) {
       Map<VirtualFile, VcsLogProvider> providers = myLogData.getLogProviders();

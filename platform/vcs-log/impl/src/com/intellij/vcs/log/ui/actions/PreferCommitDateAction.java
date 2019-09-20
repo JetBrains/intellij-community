@@ -10,8 +10,13 @@ import com.intellij.vcs.log.VcsLogProperties;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.impl.CommonUiProperties;
 import com.intellij.vcs.log.impl.VcsLogApplicationSettings;
+import com.intellij.vcs.log.impl.VcsLogUiProperties;
+import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
+import com.intellij.vcs.log.ui.table.VcsLogColumn;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.Set;
 
 public class PreferCommitDateAction extends ToggleAction implements DumbAware {
@@ -40,10 +45,18 @@ public class PreferCommitDateAction extends ToggleAction implements DumbAware {
   }
 
   protected boolean isVisible(@NotNull AnActionEvent e) {
-    if (!Boolean.TRUE.equals(e.getData(VcsLogDataKeys.VCS_DATE_DISPLAYED))) {
+    if (!isDateDisplayed(e.getData(VcsLogInternalDataKeys.LOG_UI_PROPERTIES))) {
       return false;
     }
     Set<VcsLogProvider> providers = e.getData(VcsLogDataKeys.VCS_LOG_PROVIDERS);
     return providers != null && providers.stream().anyMatch(VcsLogProperties.HAS_COMMITTER::getOrDefault);
+  }
+
+  private static boolean isDateDisplayed(@Nullable VcsLogUiProperties properties) {
+    if (properties != null && properties.exists(CommonUiProperties.COLUMN_ORDER)) {
+      List<Integer> columnOrder = properties.get(CommonUiProperties.COLUMN_ORDER);
+      return columnOrder.contains(VcsLogColumn.DATE.ordinal());
+    }
+    return false;
   }
 }
