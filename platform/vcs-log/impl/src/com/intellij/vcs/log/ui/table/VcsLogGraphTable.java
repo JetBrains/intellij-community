@@ -25,11 +25,8 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.vcs.log.VcsCommitStyleFactory;
-import com.intellij.vcs.log.VcsLogDataKeys;
-import com.intellij.vcs.log.VcsLogHighlighter;
+import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.VcsLogHighlighter.VcsCommitStyle;
-import com.intellij.vcs.log.VcsShortCommitDetails;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.VcsLogProgress;
 import com.intellij.vcs.log.graph.DefaultColorGenerator;
@@ -495,7 +492,14 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
       return getTableColumn(VcsLogColumn.DATE) != null;
     }
     else if (VcsLogDataKeys.VCS_LOG_PROVIDERS.is(dataId)) {
+      Map<VirtualFile, VcsLogProvider> providers = myLogData.getLogProviders();
+      if (providers.size() == 1) {
+        return Collections.singleton(providers.values().iterator().next());
+      }
       int[] selectedRows = getSelectedRows();
+      if (selectedRows.length > VcsLogUtil.MAX_SELECTED_COMMITS) {
+        return new HashSet<>(providers.values());
+      }
       return IntStreamEx.of(selectedRows).mapToObj(getModel()::getRoot).distinct()
         .map(myLogData::getLogProvider).toSet();
     }
