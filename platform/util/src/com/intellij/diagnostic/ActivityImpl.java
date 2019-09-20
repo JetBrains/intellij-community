@@ -103,13 +103,15 @@ public final class ActivityImpl implements Activity {
   }
 
   @Override
-  public void end(@Nullable String description) {
-    if (description != null) {
-      this.description = description;
-    }
+  public void end() {
     assert end == 0 : "not started or already ended";
     end = StartUpMeasurer.getCurrentTime();
     StartUpMeasurer.add(this);
+  }
+
+  @Override
+  public void setDescription(@NotNull String value) {
+    description = value;
   }
 
   @Override

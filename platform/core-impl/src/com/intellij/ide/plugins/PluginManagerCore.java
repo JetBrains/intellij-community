@@ -1577,7 +1577,8 @@ public class PluginManagerCore {
       for (IdeaPluginDescriptorImpl descriptor : ourLoadedPlugins) {
         ourId2Index.put(descriptor.getPluginId(), count ++);
       }
-      loadPluginsActivity.end("plugin count: " + result.length);
+      loadPluginsActivity.end();
+      loadPluginsActivity.setDescription("plugin count: " + result.length);
     }
     catch (ExtensionInstantiationException e) {
       throw new PluginException(e, e.getExtensionOwnerId());

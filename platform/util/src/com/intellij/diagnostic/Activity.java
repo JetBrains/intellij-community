@@ -2,10 +2,11 @@
 package com.intellij.diagnostic;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public interface Activity {
-  void end(@Nullable String description);
+  void end();
+
+  void setDescription(@NotNull String description);
 
   /**
    * Convenient method to end token and start a new sibling one.
@@ -16,8 +17,4 @@ public interface Activity {
 
   @NotNull
   Activity startChild(@NotNull String name);
-
-  default void end() {
-    end(null);
-  }
 }
