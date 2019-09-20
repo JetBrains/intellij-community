@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import groovy.io.FileType
@@ -257,9 +258,10 @@ idea.fatal.error.notification=disabled
         def builder = factory.apply(context)
         if (builder != null && context.shouldBuildDistributionForOS(builder.targetOs.osId)) {
           return context.messages.block("Build $builder.targetOs.osName Distribution") {
-            def distDirectory = builder.copyFilesForOsDistribution()
-            builder.buildArtifacts(distDirectory)
-            distDirectory
+            def osSpecificDistDirectory = "$context.paths.buildOutputRoot/dist.$builder.targetOs.distSuffix".toString()
+            builder.copyFilesForOsDistribution(osSpecificDistDirectory)
+            builder.buildArtifacts(osSpecificDistDirectory)
+            osSpecificDistDirectory
           }
         }
         return null
@@ -767,34 +769,53 @@ idea.fatal.error.notification=disabled
   }
 
   @Override
-  void buildUnpackedDistribution(String targetDirectory) {
+  void buildUnpackedDistribution(String targetDirectory, boolean includeBinAndRuntime) {
     buildContext.paths.distAll = targetDirectory
+    OsFamily currentOs = SystemInfo.isWindows ? OsFamily.WINDOWS :
+                         SystemInfo.isMac ? OsFamily.MACOS :
+                         SystemInfo.isLinux ? OsFamily.LINUX : null
+    if (currentOs == null) {
+      buildContext.messages.error("Update from source isn't supported for '$SystemInfo.OS_NAME'")
+    }
+    buildContext.options.targetOS = currentOs.osId
+
     setupBundledMaven()
-    def jarsBuilder = new DistributionJARsBuilder(buildContext, patchApplicationInfo())
+    def patchedApplicationInfo = patchApplicationInfo()
+    def jarsBuilder = new DistributionJARsBuilder(buildContext, patchedApplicationInfo)
     CompilationTasks.create(buildContext).buildProjectArtifacts(jarsBuilder.includedProjectArtifacts)
     jarsBuilder.buildJARs()
+    if (includeBinAndRuntime) {
+      setupJBre()
+    }
     layoutShared()
-    unpackPty4jNative(buildContext, targetDirectory, null)
 
-/*
-    //todo[nik] uncomment this to update os-specific files (e.g. in 'bin' directory) as well
-    def propertiesFile = patchIdeaPropertiesFile()
-    OsSpecificDistributionBuilder builder;
-    if (SystemInfo.isWindows) {
-      builder = new WindowsDistributionBuilder(buildContext, buildContext.windowsDistributionCustomizer, propertiesFile)
-    }
-    else if (SystemInfo.isLinux) {
-      builder = new LinuxDistributionBuilder(buildContext, buildContext.linuxDistributionCustomizer, propertiesFile)
-    }
-    else if (SystemInfo.isMac) {
-      builder = new MacDistributionBuilder(buildContext, buildContext.macDistributionCustomizer, propertiesFile)
+    if (includeBinAndRuntime) {
+      def propertiesFile = patchIdeaPropertiesFile()
+      OsSpecificDistributionBuilder builder;
+      switch (currentOs) {
+        case OsFamily.WINDOWS:
+          builder = new WindowsDistributionBuilder(buildContext, buildContext.windowsDistributionCustomizer, propertiesFile, patchedApplicationInfo)
+          break
+        case OsFamily.LINUX:
+          builder = new LinuxDistributionBuilder(buildContext, buildContext.linuxDistributionCustomizer, propertiesFile)
+          break
+        case OsFamily.MACOS:
+          builder = new MacDistributionBuilder(buildContext, buildContext.macDistributionCustomizer, propertiesFile)
+          break
+      }
+      builder.copyFilesForOsDistribution(targetDirectory)
+      def executableFilesPatterns = builder.generateExecutableFilesPatterns(true)
+      buildContext.ant.chmod(perm: "755") {
+        fileset(dir: targetDirectory) {
+          executableFilesPatterns.each {
+            include(name: it)
+          }
+        }
+      }
     }
     else {
-      buildContext.messages.error("Update from source isn't supported for '$SystemInfo.OS_NAME'")
-      return
+      unpackPty4jNative(buildContext, targetDirectory, null)
     }
-    def osSpecificDistPath = builder.copyFilesForOsDistribution()
-*/
   }
 
   private abstract static class BuildTaskRunnable<V> {

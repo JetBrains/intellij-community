@@ -68,7 +68,7 @@ abstract class BuildTasks {
    */
   abstract void runTestBuild()
 
-  abstract void buildUnpackedDistribution(String targetDirectory)
+  abstract void buildUnpackedDistribution(String targetDirectory, boolean includeBinAndRuntime)
 
   static BuildTasks create(BuildContext context) {
     return new BuildTasksImpl(context)
