@@ -109,7 +109,10 @@ internal abstract class BaseComponentAdapter(internal val componentManager: Plat
 
         instance = doCreateInstance(componentManager, implementationClass, indicator)
         activityCategory?.let { category ->
-          StartUpMeasurer.addCompletedActivity(startTime, StartUpMeasurer.getCurrentTime(), implementationClassName, category, pluginId.idString)
+          val end = StartUpMeasurer.getCurrentTime()
+          if (activityCategory != ActivityCategory.MODULE_SERVICE || (end - startTime) > StartUpMeasurer.MEASURE_THRESHOLD) {
+            StartUpMeasurer.addCompletedActivity(startTime, end, implementationClassName, category, pluginId.idString)
+          }
         }
 
         initializedInstance = instance
