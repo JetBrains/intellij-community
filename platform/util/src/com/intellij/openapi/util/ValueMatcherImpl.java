@@ -25,11 +25,11 @@ final class ValueMatcherImpl<T, T1> implements ValueKey.BeforeWhen<T>, ValueKey.
   public <TT> ValueKey.BeforeThen<T, TT> when(ValueKey<TT> key) {
     switch (myState) {
       case FINISHED:
-        throw new IllegalStateException("We are already finished");
+        throw new IllegalStateException("Matching is already finished");
       case IGNORING:
       case MATCHING:
       case SKIPPING:
-        throw new IllegalStateException("We are in 'then' stage");
+        throw new IllegalStateException("'then'/'thenGet'/'or' call is expected");
       case MATCHED:
         if (key.getName().equals(myKey)) {
           throw new IllegalStateException("Key '" + key.getName() + "' already matched");
@@ -47,13 +47,15 @@ final class ValueMatcherImpl<T, T1> implements ValueKey.BeforeWhen<T>, ValueKey.
   public T get() {
     switch (myState) {
       case FINISHED:
-        throw new IllegalStateException("We are already finished");
+        throw new IllegalStateException("Matching is already finished");
       case NOT_MATCHED:
+        myState = State.FINISHED;
         throw new NoSuchElementException("Requested key '" + myKey + "' is not matched");
       case MATCHED:
+        myState = State.FINISHED;
         return myValue;
       default:
-        throw new IllegalStateException("We are in 'then' stage");
+        throw new IllegalStateException("'then'/'thenGet'/'or' call is expected");
     }
   }
 
@@ -62,12 +64,13 @@ final class ValueMatcherImpl<T, T1> implements ValueKey.BeforeWhen<T>, ValueKey.
   public T orNull() {
     switch (myState) {
       case FINISHED:
-        throw new IllegalStateException("We are already finished");
+        throw new IllegalStateException("Matching is already finished");
       case NOT_MATCHED:
       case MATCHED:
+        myState = State.FINISHED;
         return myValue;
       default:
-        throw new IllegalStateException("We are in 'then' stage");
+        throw new IllegalStateException("'then'/'thenGet'/'or' call is expected");
     }
   }
 
@@ -76,10 +79,10 @@ final class ValueMatcherImpl<T, T1> implements ValueKey.BeforeWhen<T>, ValueKey.
   public ValueKey.BeforeThen<T, T1> or(ValueKey<T1> key) {
     switch (myState) {
       case FINISHED:
-        throw new IllegalStateException("We are already finished");
+        throw new IllegalStateException("Matching is already finished");
       case MATCHED:
       case NOT_MATCHED:
-        throw new IllegalStateException("We are in 'when' stage");
+        throw new IllegalStateException("'when'/'get'/'orNull' call is expected");
       case SKIPPING:
       case MATCHING:
         if (key.getName().equals(myKey)) {
@@ -100,10 +103,10 @@ final class ValueMatcherImpl<T, T1> implements ValueKey.BeforeWhen<T>, ValueKey.
   public ValueKey.BeforeWhen<T> then(T1 value) {
     switch (myState) {
       case FINISHED:
-        throw new IllegalStateException("We are already finished");
+        throw new IllegalStateException("Matching is already finished");
       case MATCHED:
       case NOT_MATCHED:
-        throw new IllegalStateException("We are in 'when' stage");
+        throw new IllegalStateException("'when'/'get'/'orNull' call is expected");
       case SKIPPING:
         myState = State.MATCHED;
         break;
@@ -123,10 +126,10 @@ final class ValueMatcherImpl<T, T1> implements ValueKey.BeforeWhen<T>, ValueKey.
   public ValueKey.BeforeWhen<T> thenGet(@NotNull Supplier<? extends T1> fn) {
     switch (myState) {
       case FINISHED:
-        throw new IllegalStateException("We are already finished");
+        throw new IllegalStateException("Matching is already finished");
       case MATCHED:
       case NOT_MATCHED:
-        throw new IllegalStateException("We are in 'when' stage");
+        throw new IllegalStateException("'when'/'get'/'orNull' call is expected");
       case SKIPPING:
         myState = State.MATCHED;
         break;
