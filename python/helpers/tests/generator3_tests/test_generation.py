@@ -76,7 +76,7 @@ class SkeletonGenerationTest(GeneratorTestCase):
         if not extra_syspath:
             extra_syspath = [self.test_data_dir]
 
-        extra_syspath = [p if os.path.isabs(p) else os.path.join(self.test_data_dir, p) for p in extra_syspath]
+        extra_syspath = [p if os.path.isabs(p) else self.get_test_data_path(p) for p in extra_syspath]
 
         if mod_path and not os.path.isabs(mod_path):
             mod_path = os.path.join(extra_syspath[0], mod_path)
@@ -150,7 +150,7 @@ class SkeletonGenerationTest(GeneratorTestCase):
         self.assertIn('sys.py', builtin_mod_skeletons)
 
     def test_layout_for_toplevel_physical_module(self):
-        mod_path = os.path.join(self.test_data_dir, 'mod.py')
+        mod_path = self.get_test_data_path('mod.py')
         self.run_generator(mod_qname='mod', mod_path=mod_path)
         self.assertDirLayoutEquals(os.path.join(self.temp_dir, self.PYTHON_STUBS_DIR), """
         cache/
@@ -360,8 +360,7 @@ class SkeletonGenerationTest(GeneratorTestCase):
                                custom_required_gen=False, standalone_mode=False,
                                success=True, **kwargs):
         if custom_required_gen:
-            kwargs.setdefault('required_gen_version_file_path',
-                              os.path.join(self.test_data_dir, 'required_gen_version'))
+            kwargs.setdefault('required_gen_version_file_path', self.get_test_data_path('required_gen_version'))
         if standalone_mode:
             kwargs.setdefault('extra_env', {})[ENV_STANDALONE_MODE_FLAG] = 'True'
 
