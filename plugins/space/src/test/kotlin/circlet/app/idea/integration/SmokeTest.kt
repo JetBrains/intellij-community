@@ -18,7 +18,7 @@ class TestProjectExecutor(override val listener: ProjectElementListener) : Proje
     override val vcsBranch: String = "test"
 }
 
-class SmokeTest : JavaCodeInsightFixtureTestCase() {
+class SmokeTest : BasePlatformTestCase() {
 
     private var testLifetimeImpl : LifetimeSource? = null
 
