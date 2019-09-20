@@ -8,10 +8,12 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.TaskInfo
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.StatusBarEx
 import com.intellij.openapi.wm.ex.WindowManagerEx
+import com.intellij.util.Alarm
 import com.intellij.vcs.log.VcsLogProvider
 import com.intellij.vcs.log.data.index.VcsLogBigRepositoriesList
 import com.intellij.vcs.log.data.index.VcsLogPersistentIndex
@@ -26,6 +28,7 @@ class VcsLogStatusBarProgress(project: Project, logProviders: Map<VirtualFile, V
   private val statusBar: StatusBarEx by lazy {
     (WindowManager.getInstance() as WindowManagerEx).findFrameFor(project)!!.statusBar as StatusBarEx
   }
+  private val alarm = lazy { Alarm(Alarm.ThreadToUse.SWING_THREAD, this) }
   private var progress: MyProgressIndicator? = null
 
   init {
@@ -34,13 +37,16 @@ class VcsLogStatusBarProgress(project: Project, logProviders: Map<VirtualFile, V
 
   @CalledInAwt
   fun start() {
-    if (progress == null) {
-      progress = MyProgressIndicator().also { statusBar.addProgress(it, it.taskInfo) }
-    }
+    alarm.value.addRequest(Runnable {
+      if (progress == null) {
+        progress = MyProgressIndicator().also { statusBar.addProgress(it, it.taskInfo) }
+      }
+    }, Registry.intValue("vcs.log.index.progress.delay.millis"))
   }
 
   @CalledInAwt
   fun stop() {
+    if (alarm.isInitialized()) alarm.value.cancelAllRequests()
     progress?.let { it.finish(it.taskInfo) }
     progress = null
   }
