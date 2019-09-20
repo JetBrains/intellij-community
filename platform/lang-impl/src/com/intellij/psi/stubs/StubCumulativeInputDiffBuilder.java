@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.stubs;
 
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.indexing.impl.DebugAssertions;
 import com.intellij.util.indexing.impl.InputDataDiffBuilder;
@@ -27,8 +28,8 @@ class StubCumulativeInputDiffBuilder extends InputDataDiffBuilder<Integer, Seria
                                @NotNull KeyValueUpdateProcessor<? super Integer, ? super SerializedStubTree> addProcessor,
                                @NotNull KeyValueUpdateProcessor<? super Integer, ? super SerializedStubTree> updateProcessor,
                                @NotNull RemovedKeyProcessor<? super Integer> removeProcessor) throws StorageException {
-    if (newData.containsKey(myInputId)) {
-      SerializedStubTree newSerializedStubTree = newData.get(myInputId);
+    SerializedStubTree newSerializedStubTree = ContainerUtil.getFirstItem(newData.values());
+    if (newSerializedStubTree != null) {
       if (myCurrentTree != null) {
         if (treesAreEqual(newSerializedStubTree, myCurrentTree)) return false;
         removeProcessor.process(myInputId, myInputId);
