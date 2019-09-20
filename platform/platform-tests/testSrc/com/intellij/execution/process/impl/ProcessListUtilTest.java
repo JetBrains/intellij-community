@@ -11,7 +11,7 @@ import java.util.List;
 
 import static com.intellij.testFramework.UsefulTestCase.*;
 
-public class ProcessListTest extends TestCase {
+public class ProcessListUtilTest extends TestCase {
   public void testWorksOnAllPlatforms() {
     assertNotEmpty(Arrays.asList(OSProcessUtil.getProcessList()));
 
