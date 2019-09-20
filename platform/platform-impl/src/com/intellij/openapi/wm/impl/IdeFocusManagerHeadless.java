@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 
-public final class IdeFocusManagerHeadless extends IdeFocusManager {
+public class IdeFocusManagerHeadless extends IdeFocusManager { // FIXME-ank: reverted final
   public static final IdeFocusManagerHeadless INSTANCE = new IdeFocusManagerHeadless();
 
   @Override
