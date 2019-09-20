@@ -92,7 +92,7 @@
     <projectService serviceInterface="com.intellij.psi.PsiManager"
                     serviceImplementation="com.intellij.psi.impl.PsiManagerImpl" preload="true"/>
     <projectService serviceInterface="com.intellij.psi.PsiDocumentManager"
-                    serviceImplementation="com.intellij.psi.impl.PsiDocumentManagerImpl" preload="true"/>
+                    serviceImplementation="com.intellij.psi.impl.PsiDocumentManagerImpl" preload="await"/>
 
     <projectService serviceInterface="com.intellij.util.indexing.FileBasedIndexScanRunnableCollector"
                     serviceImplementation="com.intellij.util.indexing.FileBasedIndexScanRunnableCollectorImpl"/>
