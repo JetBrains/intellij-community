@@ -18,6 +18,11 @@
 
     <applicationService serviceInterface="com.intellij.psi.stubs.SerializationManager"
                         serviceImplementation="com.intellij.psi.stubs.SerializationManagerImpl" preload="true"/>
+
+    <!-- required for any persistence state component (pathMacroSubstitutor.expandPaths), so, preload -->
+    <applicationService serviceInterface="com.intellij.openapi.application.PathMacros"
+                        serviceImplementation="com.intellij.ide.macro.IdePathMacros" preload="true"/>
+
     <applicationService serviceInterface="com.intellij.psi.stubs.StubIndex"
                         serviceImplementation="com.intellij.psi.stubs.StubIndexImpl" preload="true"/>
 
@@ -202,9 +207,6 @@
 
     <applicationService serviceInterface="com.intellij.psi.util.PsiEditorUtil"
                         serviceImplementation="com.intellij.psi.util.PsiUtilBase"/>
-
-    <applicationService serviceInterface="com.intellij.openapi.application.PathMacros"
-                        serviceImplementation="com.intellij.ide.macro.IdePathMacros"/>
 
     <applicationService serviceImplementation="com.intellij.lang.IdeLanguageCustomization"/>
 
