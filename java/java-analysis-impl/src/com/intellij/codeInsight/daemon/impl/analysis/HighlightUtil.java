@@ -2845,18 +2845,26 @@ public class HighlightUtil extends HighlightUtilBase {
                         TypeConversionUtil.typesAgree(lSubstitutedType, rSubstitutedType, true);
       String openBrace = i == 0 ? "&lt;" : "";
       String closeBrace = i == typeParamColumns - 1 ? "&gt;" : ",";
-      requiredRow.append("<td style='padding: 0px 0px 8px 0px;'>").append(lTypeParams.length == 0 ? "" : openBrace).append(redIfNotMatch(lSubstitutedType, true))
+      boolean showShortType = showShortType(lSubstitutedType, rSubstitutedType);
+      requiredRow.append("<td style='padding: 0px 0px 8px 0px;'>").append(lTypeParams.length == 0 ? "" : openBrace).append(redIfNotMatch(lSubstitutedType, true, showShortType))
         .append(i < lTypeParams.length ? closeBrace : "").append("</td>");
-      foundRow.append("<td style='padding: 0px 0px 0px 0px;'>").append(rTypeParams.length == 0 ? "" : openBrace).append(redIfNotMatch(rSubstitutedType, matches))
+      foundRow.append("<td style='padding: 0px 0px 0px 0px;'>").append(rTypeParams.length == 0 ? "" : openBrace).append(redIfNotMatch(rSubstitutedType, matches, showShortType))
         .append(i < rTypeParams.length ? closeBrace : "").append("</td>");
     }
     PsiType lRawType = lType instanceof PsiClassType ? ((PsiClassType)lType).rawType() : lType;
     PsiType rRawType = rType instanceof PsiClassType ? ((PsiClassType)rType).rawType() : rType;
     boolean assignable = lRawType == null || rRawType == null || TypeConversionUtil.isAssignable(lRawType, rRawType);
-    return consumer.consume(redIfNotMatch(lRawType, true),
+    boolean shortType = showShortType(lRawType, rRawType);
+    return consumer.consume(redIfNotMatch(lRawType, true, shortType),
                             requiredRow.toString(),
-                            redIfNotMatch(rRawType, assignable),
+                            redIfNotMatch(rRawType, assignable, shortType),
                             foundRow.toString());
+  }
+
+  public static boolean showShortType(@Nullable PsiType lType, @Nullable PsiType rType) {
+    if (Comparing.equal(lType, rType)) return true;
+
+    return lType != null && rType != null && !Comparing.strEqual(lType.getPresentableText(), rType.getPresentableText());
   }
 
   private static String getReasonForIncompatibleTypes(PsiType rType) {
@@ -2893,10 +2901,10 @@ public class HighlightUtil extends HighlightUtilBase {
   }
 
   @NotNull
-  public static String redIfNotMatch(@Nullable PsiType type, boolean matches) {
+  public static String redIfNotMatch(@Nullable PsiType type, boolean matches, boolean shortType) {
     if (type == null) return "";
     String color = ColorUtil.toHtmlColor(matches ? UIUtil.getToolTipForeground() : DialogWrapper.ERROR_FOREGROUND_COLOR);
-    return "<font color='" + color + "'>" + XmlStringUtil.escapeString(type.getPresentableText()) + "</font>";
+    return "<font color='" + color + "'>" + XmlStringUtil.escapeString(shortType ? type.getPresentableText() : type.getCanonicalText()) + "</font>";
   }
 
 

@@ -681,7 +681,7 @@ public class HighlightMethodUtil {
 
     List<PsiExpression> result = new ArrayList<>();
     for (int i = 0; i < Math.max(parameters.length, expressions.length); i++) {
-      if (!showShortType(i, parameters, expressions, substitutor)) {
+      if (!assignmentCompatible(i, parameters, expressions, substitutor)) {
         result.add(i < expressions.length ? expressions[i] : null);
       }
     }
@@ -1029,13 +1029,14 @@ public class HighlightMethodUtil {
     for (int i = 0; i < Math.max(parameters.length, expressions.length); i++) {
       PsiParameter parameter = i < parameters.length ? parameters[i] : null;
       PsiExpression expression = i < expressions.length ? expressions[i] : null;
-      boolean showShort = showShortType(i, parameters, expressions, substitutor);
-      if (showShort) continue;
+      if (assignmentCompatible(i, parameters, expressions, substitutor)) continue;
+      boolean showShortType = HighlightUtil.showShortType(parameter != null ? substitutor.substitute(parameter.getType()) : null,
+                                                          expression != null ? expression.getType() : null);
       s.append("<tr>");
       if (parameter != null) {
         s.append("<td><table><tr><td style='").append(parameterNameStyle).append("'>").append(parameter.getName()).append(":</td></tr></table></td>");
         s.append("<td style='padding-left: 16px; padding-right: 24px;'>")
-          .append(HighlightUtil.redIfNotMatch(substitutor.substitute(parameter.getType()), true))
+          .append(HighlightUtil.redIfNotMatch(substitutor.substitute(parameter.getType()), true, showShortType))
           .append("</td>");
       }
       else {
@@ -1045,7 +1046,7 @@ public class HighlightMethodUtil {
 
       if (expression != null) {
         s.append("<td style='padding-right: 28px;'>")
-          .append(HighlightUtil.redIfNotMatch(expression.getType(), false))
+          .append(HighlightUtil.redIfNotMatch(expression.getType(), false, showShortType))
           .append("</td>");
       }
       else {
@@ -1066,10 +1067,10 @@ public class HighlightMethodUtil {
     return s.toString();
   }
 
-  private static boolean showShortType(int i,
-                                       @NotNull PsiParameter[] parameters,
-                                       @NotNull PsiExpression[] expressions,
-                                       @NotNull PsiSubstitutor substitutor) {
+  private static boolean assignmentCompatible(int i,
+                                              @NotNull PsiParameter[] parameters,
+                                              @NotNull PsiExpression[] expressions,
+                                              @NotNull PsiSubstitutor substitutor) {
     PsiExpression expression = i < expressions.length ? expressions[i] : null;
     if (expression == null) return true;
     PsiType paramType = i < parameters.length && parameters[i] != null
