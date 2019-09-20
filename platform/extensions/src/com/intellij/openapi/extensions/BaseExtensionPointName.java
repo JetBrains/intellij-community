@@ -28,11 +28,4 @@ public abstract class BaseExtensionPointName<T> {
     ExtensionsAreaImpl area = (ExtensionsAreaImpl)(areaInstance == null ? Extensions.getRootArea() : areaInstance.getExtensionArea());
     return area.getExtensionPoint(getName());
   }
-
-  @Nullable
-  protected <V extends T> V findExtension(@NotNull Class<V> instanceOf, @Nullable AreaInstance areaInstance, boolean isRequired) {
-    // find by isAssignableFrom to preserve old behaviour
-    //noinspection unchecked
-    return (V)getPointImpl(areaInstance).findExtension(instanceOf, isRequired, false);
-  }
 }

@@ -3,6 +3,7 @@ package com.intellij.openapi.extensions;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.impl.ExtensionProcessingHelper;
+import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -111,19 +112,24 @@ public final class ExtensionPointName<T> extends BaseExtensionPointName<T> {
 
   @Nullable
   public <V extends T> V findExtension(@NotNull Class<V> instanceOf) {
-    return findExtension(instanceOf, null, false);
+    return getPointImpl(null).findExtension(instanceOf, false, ThreeState.UNSURE);
   }
 
   @NotNull
-  public <V extends T> V findExtensionOrFail(@NotNull Class<V> instanceOf) {
-    //noinspection unchecked,ConstantConditions
-    return (V)getPointImpl(null).findExtension(instanceOf, true, true);
+  public <V extends T> V findExtensionOrFail(@NotNull Class<V> exactClass) {
+    //noinspection ConstantConditions
+    return getPointImpl(null).findExtension(exactClass, true, ThreeState.UNSURE);
+  }
+
+  @Nullable
+  public <V extends T> V findFirstAssignableExtension(@NotNull Class<V> instanceOf) {
+    return getPointImpl(null).findExtension(instanceOf, true, ThreeState.NO);
   }
 
   @NotNull
   public <V extends T> V findExtensionOrFail(@NotNull Class<V> instanceOf, @Nullable AreaInstance areaInstance) {
     //noinspection ConstantConditions
-    return findExtension(instanceOf, areaInstance, true);
+    return getPointImpl(areaInstance).findExtension(instanceOf, true, ThreeState.UNSURE);
   }
 
   /**

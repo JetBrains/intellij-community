@@ -33,6 +33,7 @@ import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author Anton Katilin
@@ -56,7 +57,7 @@ public class TextEditorProvider implements DefaultPlatformFileEditorProvider, Du
 
   @NotNull
   public static TextEditorProvider getInstance() {
-    return FileEditorProvider.EP_FILE_EDITOR_PROVIDER.findExtensionOrFail(TextEditorProvider.class);
+    return Objects.requireNonNull(FileEditorProvider.EP_FILE_EDITOR_PROVIDER.findFirstAssignableExtension(TextEditorProvider.class));
   }
 
   @Override

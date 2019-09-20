@@ -2,6 +2,7 @@
 package com.intellij.openapi.extensions;
 
 import com.intellij.openapi.extensions.impl.ExtensionProcessingHelper;
+import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,13 +33,13 @@ public final class ProjectExtensionPointName<T> extends BaseExtensionPointName<T
 
   @Nullable
   public <V extends T> V findExtension(@NotNull Class<V> instanceOf, @NotNull AreaInstance areaInstance) {
-    return findExtension(instanceOf, areaInstance, false);
+    return getPointImpl(areaInstance).findExtension(instanceOf, false, ThreeState.UNSURE);
   }
 
   @NotNull
   public <V extends T> V findExtensionOrFail(@NotNull Class<V> instanceOf, @NotNull AreaInstance areaInstance) {
     //noinspection ConstantConditions
-    return findExtension(instanceOf, areaInstance, true);
+    return getPointImpl(areaInstance).findExtension(instanceOf, true, ThreeState.UNSURE);
   }
 
   public boolean hasAnyExtensions(@NotNull AreaInstance areaInstance) {
