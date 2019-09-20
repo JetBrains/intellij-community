@@ -298,8 +298,10 @@ public class ImplicitNumericConversionInspection extends BaseInspection {
             if (rhs != null) {
               final PsiType expressionType = expression.getType();
               if (!ClassUtils.isPrimitiveNumericType(expressionType)) return;
-              final PsiType promotedType = TypeConversionUtil.binaryNumericPromotion(expressionType, rhs.getType());
-              checkTypes(rhs, promotedType, expressionType);
+              final PsiType rhsType = rhs.getType();
+              if (rhsType == null) return;
+              checkTypes(rhs, rhsType, expressionType);
+              final PsiType promotedType = TypeConversionUtil.binaryNumericPromotion(expressionType, rhsType);
               checkTypes(expression, expressionType, promotedType);
             }
           }

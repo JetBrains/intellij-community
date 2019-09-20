@@ -11,9 +11,10 @@ public class ImplicitNumericConversion
         final int i = 0;
         final char ch = (char) 0;
         final long l = 0L;
-        final double d = 0.0;
+        double d = 0.0;
         float f = (float)1.0;
 
+        d += <warning descr="Implicit numeric conversion of 'i' from 'int' to 'double'">i</warning>;
         f = f+<warning descr="Implicit numeric conversion of '1' from 'int' to 'float'">1</warning>;
         f = <warning descr="Implicit numeric conversion of 'i' from 'int' to 'float'">i</warning>;
 
