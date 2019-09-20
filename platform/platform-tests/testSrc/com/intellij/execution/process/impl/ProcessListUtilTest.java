@@ -205,4 +205,27 @@ public class ProcessListUtilTest extends TestCase {
     assertNull(ProcessListUtil.parseListTasksOutput("\"\""));
     assertEmpty(ProcessListUtil.parseListTasksOutput("\"\",\"\",\"\",\"\",\"\",\"\",\"\",\"\",\"\"\n"));
   }
+
+  public void testWinProcessListHelperOutputParsing() {
+    List<ProcessInfo> infos = ProcessListUtil.parseWinProcessListHelperOutput(
+      "19608\n" +
+      "SourceTree.exe\n" +
+      "\"C:\\Users\\grahams\\AppData\\Local\\SourceTree\\app-3.1.3\\SourceTree.exe\" \n" +
+      "12300\n" +
+      "conhost.exe\n" +
+      "\\??\\C:\\Windows\\system32\\conhost.exe 0x4\n" +
+      "26284\n" +
+      "Unity Hub.exe\n" +
+      "\"C:\\Program Files\\Unity Hub\\Unity Hub.exe\" --no-sandbox --lang=en-US --node-integration=true /prefetch:1\n"
+    );
+    assertOrderedEquals(
+      infos,
+      new ProcessInfo(19608, "\"C:\\Users\\grahams\\AppData\\Local\\SourceTree\\app-3.1.3\\SourceTree.exe\"", "SourceTree.exe", ""),
+      new ProcessInfo(12300, "\\??\\C:\\Windows\\system32\\conhost.exe 0x4", "conhost.exe", "0x4"),
+      new ProcessInfo(26284,
+                      "\"C:\\Program Files\\Unity Hub\\Unity Hub.exe\" --no-sandbox --lang=en-US --node-integration=true /prefetch:1",
+                      "Unity Hub.exe",
+                      "--no-sandbox --lang=en-US --node-integration=true /prefetch:1")
+    );
+  }
 }
