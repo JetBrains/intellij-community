@@ -80,6 +80,10 @@ public class TryWithIdenticalCatchesTest extends LightJavaCodeInsightFixtureTest
     doTest(false, true);
   }
 
+  public void testCatchParameterRewritten() {
+    highlightTest(false);
+  }
+
   public void doTest() {
     doTest(false, false);
   }
