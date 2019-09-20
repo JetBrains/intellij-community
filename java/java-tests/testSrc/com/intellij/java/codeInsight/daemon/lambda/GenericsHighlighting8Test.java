@@ -1056,7 +1056,6 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
                       "<tr><td style='padding: 0px 16px 0px 4px;color: " + greyed + "'>Provided:</td>" +
                       "<td style='padding: 0px 4px 0px 0px;'><font color='" + toolTipForeground + "'>Generic</font></td><td style='padding: 0px 0px 0px 0px;'>&lt;<font color='" + toolTipForeground + "'>Integer</font>,</td><td style='padding: 0px 0px 0px 0px;'><font color='" + red + "'>Integer</font>,</td><td style='padding: 0px 0px 0px 0px;'><font color='" + toolTipForeground + "'>Integer</font>&gt;</td></tr>" +
                       "</table>" +
-                      "<table><tr><td style='padding-top: 10px; padding-left: 4px;'></td></tr></table>" +
                       "</body></html>";
 
     doHighlighting()

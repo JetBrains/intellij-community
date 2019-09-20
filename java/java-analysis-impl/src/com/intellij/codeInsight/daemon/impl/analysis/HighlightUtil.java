@@ -2810,9 +2810,11 @@ public class HighlightUtil extends HighlightUtilBase {
                                                            String reason) {
     lType = lType != null ? PsiUtil.convertAnonymousToBaseType(lType) : null;
     rType = rType != null ? PsiUtil.convertAnonymousToBaseType(rType) : null;
+    String styledReason = reason.isEmpty() ? ""
+                                           : String.format("<table><tr><td style=''padding-top: 10px; padding-left: 4px;''>%s</td></tr></table>", reason);
     String toolTip = createIncompatibleTypesTooltip(lType, rType,
                                                     (lRawType, lTypeArguments, rRawType, rTypeArguments) ->
-                                                     JavaErrorMessages.message("incompatible.types.html.tooltip", lRawType, lTypeArguments, rRawType, rTypeArguments, reason, "#" + ColorUtil.toHex(UIUtil.getContextHelpForeground())));
+                                                     JavaErrorMessages.message("incompatible.types.html.tooltip", lRawType, lTypeArguments, rRawType, rTypeArguments, styledReason, "#" + ColorUtil.toHex(UIUtil.getContextHelpForeground())));
     String description = JavaErrorMessages.message(
       "incompatible.types", JavaHighlightUtil.formatType(lType), JavaHighlightUtil.formatType(rType));
     return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(textRange).description(description).escapedToolTip(toolTip)
