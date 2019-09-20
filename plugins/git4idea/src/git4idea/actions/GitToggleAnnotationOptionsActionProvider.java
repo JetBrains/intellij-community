@@ -5,12 +5,15 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.annotate.AnnotationGutterActionProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
-import com.intellij.vcs.log.ui.actions.PreferCommitDateAction;
+import com.intellij.vcs.log.impl.CommonUiProperties;
+import com.intellij.vcs.log.impl.VcsLogApplicationSettings;
 import git4idea.GitVcs;
 import git4idea.annotate.GitFileAnnotation;
 import git4idea.config.GitVcsApplicationSettings;
@@ -48,15 +51,31 @@ public class GitToggleAnnotationOptionsActionProvider implements AnnotationGutte
           new ToggleIgnoreWhitespaces(myAnnotation.getProject()),
           new ToggleInnerMovementsWhitespaces(myAnnotation.getProject()),
           new ToggleOuterMovementsWhitespaces(myAnnotation.getProject()),
-          new PreferCommitDateAction() {
-            @Override
-            protected boolean isVisible(@NotNull AnActionEvent e) {
-              return true;
-            }
-          }
+          new ToggleCommitDate()
         };
       }
       return AnAction.EMPTY_ARRAY;
+    }
+  }
+
+  private static class ToggleCommitDate extends ToggleAction implements DumbAware {
+    private final VcsLogApplicationSettings mySettings = ApplicationManager.getApplication().getService(VcsLogApplicationSettings.class);
+
+    private ToggleCommitDate() {
+      super(VcsBundle.message("prefer.commit.timestamp.action.text"),
+            VcsBundle.message("prefer.commit.timestamp.action.description"), null);
+    }
+
+    @Override
+    public boolean isSelected(@NotNull AnActionEvent e) {
+      return mySettings != null && Boolean.TRUE.equals(mySettings.get(CommonUiProperties.PREFER_COMMIT_DATE));
+    }
+
+    @Override
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
+      if (mySettings != null) {
+        mySettings.set(CommonUiProperties.PREFER_COMMIT_DATE, state);
+      }
     }
   }
 
