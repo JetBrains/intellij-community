@@ -39,35 +39,26 @@ public class FileHistoryUiProperties implements VcsLogUiProperties, PersistentSt
   @NotNull
   @Override
   public <T> T get(@NotNull VcsLogUiProperty<T> property) {
-    if (SHOW_DETAILS.equals(property)) {
-      return (T)Boolean.valueOf(myState.SHOW_DETAILS);
-    }
-    else if (SHOW_ALL_BRANCHES.equals(property)) {
-      return (T)Boolean.valueOf(myState.SHOW_OTHER_BRANCHES);
-    }
-    else if (COLUMN_ORDER.equals(property)) {
-      List<Integer> order = myState.COLUMN_ORDER;
-      if (order == null || order.isEmpty()) {
-        order = ContainerUtil.map(Arrays.asList(VcsLogColumn.ROOT, VcsLogColumn.AUTHOR, VcsLogColumn.DATE, VcsLogColumn.COMMIT),
-                                  VcsLogColumn::ordinal);
-      }
-      return (T)order;
-    }
-    else if (property instanceof TableColumnProperty) {
+    if (property instanceof TableColumnProperty) {
       Integer savedWidth = myState.COLUMN_WIDTH.get(((TableColumnProperty)property).getColumnIndex());
       if (savedWidth == null) return (T)Integer.valueOf(-1);
       return (T)savedWidth;
     }
-    else if (SHOW_DIFF_PREVIEW.equals(property)) {
-      return (T)Boolean.valueOf(myState.SHOW_DIFF_PREVIEW);
-    }
-    else if (SHOW_ROOT_NAMES.equals(property)) {
-      return (T)Boolean.valueOf(myState.SHOW_ROOT_NAMES);
-    }
-    else if (PREFER_COMMIT_DATE.equals(property)) {
-      return myLogSettings.get(property);
-    }
-    throw new UnsupportedOperationException("Unknown property " + property);
+    return property.match()
+      .when(SHOW_DETAILS).then(myState.SHOW_DETAILS)
+      .when(SHOW_ALL_BRANCHES).then(myState.SHOW_OTHER_BRANCHES)
+      .when(SHOW_DIFF_PREVIEW).then(myState.SHOW_DIFF_PREVIEW)
+      .when(SHOW_ROOT_NAMES).then(myState.SHOW_ROOT_NAMES)
+      .when(PREFER_COMMIT_DATE).thenGet(() -> myLogSettings.get(property))
+      .when(COLUMN_ORDER).thenGet(() -> {
+        List<Integer> order = myState.COLUMN_ORDER;
+        if (order == null || order.isEmpty()) {
+          order = ContainerUtil.map(Arrays.asList(VcsLogColumn.ROOT, VcsLogColumn.AUTHOR, VcsLogColumn.DATE, VcsLogColumn.COMMIT),
+                                    VcsLogColumn::ordinal);
+        }
+        return order;
+      })
+      .get();
   }
 
   private <T> void onApplicationSettingChange(VcsLogUiProperty<T> property) {

@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.ui.LoadingDecorator;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.ValueKey;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
@@ -458,39 +459,39 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   @Nullable
   @Override
   public Object getData(@NotNull @NonNls String dataId) {
-    if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
-      return this;
-    }
-    else if (VcsDataKeys.VCS.is(dataId)) {
-      int[] selectedRows = getSelectedRows();
-      if (selectedRows.length == 0 || selectedRows.length > VcsLogUtil.MAX_SELECTED_COMMITS) return null;
-      Set<VirtualFile> roots = ContainerUtil.map2Set(Ints.asList(selectedRows), row -> getModel().getRoot(row));
-      if (roots.size() == 1) {
-        return myLogData.getLogProvider(assertNotNull(getFirstItem(roots))).getSupportedVcs();
-      }
-    }
-    else if (VcsLogDataKeys.VCS_LOG_BRANCHES.is(dataId)) {
-      int[] selectedRows = getSelectedRows();
-      if (selectedRows.length != 1) return null;
-      return getModel().getBranchesAtRow(selectedRows[0]);
-    }
-    else if (VcsLogDataKeys.VCS_LOG_REFS.is(dataId)) {
-      int[] selectedRows = getSelectedRows();
-      if (selectedRows.length != 1) return null;
-      return getModel().getRefsAtRow(selectedRows[0]);
-    }
-    else if (VcsDataKeys.PRESET_COMMIT_MESSAGE.is(dataId)) {
-      int[] selectedRows = getSelectedRows();
-      if (selectedRows.length == 0) return null;
+    return ValueKey.match(dataId)
+      .when(PlatformDataKeys.COPY_PROVIDER).then(this)
+      .when(VcsDataKeys.VCS).thenGet(() -> {
+        int[] selectedRows = getSelectedRows();
+        if (selectedRows.length == 0 || selectedRows.length > VcsLogUtil.MAX_SELECTED_COMMITS) return null;
+        Set<VirtualFile> roots = ContainerUtil.map2Set(Ints.asList(selectedRows), row -> getModel().getRoot(row));
+        if (roots.size() == 1) {
+          return myLogData.getLogProvider(assertNotNull(getFirstItem(roots))).getSupportedVcs();
+        }
+        return null;
+      })
+      .when(VcsLogDataKeys.VCS_LOG_BRANCHES).thenGet(() -> {
+        int[] selectedRows = getSelectedRows();
+        if (selectedRows.length != 1) return null;
+        return getModel().getBranchesAtRow(selectedRows[0]);
+      })
+      .when(VcsLogDataKeys.VCS_LOG_REFS).thenGet(() -> {
+        int[] selectedRows = getSelectedRows();
+        if (selectedRows.length != 1) return null;
+        return getModel().getRefsAtRow(selectedRows[0]);
+      })
+      .when(VcsDataKeys.PRESET_COMMIT_MESSAGE).thenGet(() -> {
+        int[] selectedRows = getSelectedRows();
+        if (selectedRows.length == 0) return null;
 
-      StringBuilder sb = new StringBuilder();
-      for (int i = 0; i < Math.min(VcsLogUtil.MAX_SELECTED_COMMITS, selectedRows.length); i++) {
-        sb.append(getModel().getValueAt(selectedRows[i], VcsLogColumn.COMMIT).toString());
-        if (i != selectedRows.length - 1) sb.append("\n");
-      }
-      return sb.toString();
-    }
-    return null;
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < Math.min(VcsLogUtil.MAX_SELECTED_COMMITS, selectedRows.length); i++) {
+          sb.append(getModel().getValueAt(selectedRows[i], VcsLogColumn.COMMIT).toString());
+          if (i != selectedRows.length - 1) sb.append("\n");
+        }
+        return sb.toString();
+      })
+      .orNull();
   }
 
   @Override

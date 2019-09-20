@@ -53,39 +53,27 @@ public abstract class VcsLogUiPropertiesImpl<S extends VcsLogUiPropertiesImpl.St
     if (myAppSettings.exists(property)) {
       return myAppSettings.get(property);
     }
-
-    if (CommonUiProperties.SHOW_DETAILS.equals(property)) {
-      return (T)Boolean.valueOf(getState().SHOW_DETAILS_IN_CHANGES);
-    }
-    else if (SHOW_LONG_EDGES.equals(property)) {
-      return (T)Boolean.valueOf(getState().LONG_EDGES_VISIBLE);
-    }
-    else if (CommonUiProperties.SHOW_ROOT_NAMES.equals(property)) {
-      return (T)Boolean.valueOf(getState().SHOW_ROOT_NAMES);
-    }
-    else if (SHOW_ONLY_AFFECTED_CHANGES.equals(property)) {
-      return (T)Boolean.valueOf(getState().SHOW_ONLY_AFFECTED_CHANGES);
-    }
-    else if (BEK_SORT_TYPE.equals(property)) {
-      return (T)PermanentGraph.SortType.values()[getState().BEK_SORT_TYPE];
-    }
-    else if (TEXT_FILTER_MATCH_CASE.equals(property)) {
-      return (T)Boolean.valueOf(getTextFilterSettings().MATCH_CASE);
-    }
-    else if (TEXT_FILTER_REGEX.equals(property)) {
-      return (T)Boolean.valueOf(getTextFilterSettings().REGEX);
-    }
-    else if (property instanceof VcsLogHighlighterProperty) {
-      Boolean result = getState().HIGHLIGHTERS.get(((VcsLogHighlighterProperty)property).getId());
+    S state = getState();
+    if (property instanceof VcsLogHighlighterProperty) {
+      Boolean result = state.HIGHLIGHTERS.get(((VcsLogHighlighterProperty)property).getId());
       if (result == null) return (T)Boolean.TRUE;
       return (T)result;
     }
-    else if (property instanceof CommonUiProperties.TableColumnProperty) {
-      Integer savedWidth = getState().COLUMN_WIDTH.get(((CommonUiProperties.TableColumnProperty)property).getColumnIndex());
+    if (property instanceof CommonUiProperties.TableColumnProperty) {
+      Integer savedWidth = state.COLUMN_WIDTH.get(((CommonUiProperties.TableColumnProperty)property).getColumnIndex());
       if (savedWidth == null) return (T)Integer.valueOf(-1);
       return (T)savedWidth;
     }
-    throw new UnsupportedOperationException("Property " + property + " does not exist");
+    TextFilterSettings filterSettings = getTextFilterSettings();
+    return property.match()
+      .when(CommonUiProperties.SHOW_DETAILS).then(state.SHOW_DETAILS_IN_CHANGES)
+      .when(SHOW_LONG_EDGES).then(state.LONG_EDGES_VISIBLE)
+      .when(CommonUiProperties.SHOW_ROOT_NAMES).then(state.SHOW_ROOT_NAMES)
+      .when(SHOW_ONLY_AFFECTED_CHANGES).then(state.SHOW_ONLY_AFFECTED_CHANGES)
+      .when(BEK_SORT_TYPE).thenGet(() -> PermanentGraph.SortType.values()[state.BEK_SORT_TYPE])
+      .when(TEXT_FILTER_MATCH_CASE).then(filterSettings.MATCH_CASE)
+      .when(TEXT_FILTER_REGEX).then(filterSettings.REGEX)
+      .get();
   }
 
   @Override
