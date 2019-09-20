@@ -52,6 +52,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
+import static com.intellij.idea.ApplicationLoader.LAUNCHER_INITIAL_DIRECTORY_ENV_VAR;
 import static com.intellij.openapi.util.Pair.pair;
 
 public final class SocketLock {
@@ -274,7 +275,13 @@ public final class SocketLock {
         try {
           String token = FileUtil.loadFile(new File(mySystemPath, TOKEN_FILE));
           @SuppressWarnings("IOResourceOpenedButNotSafelyClosed") DataOutputStream out = new DataOutputStream(socket.getOutputStream());
-          out.writeUTF(ACTIVATE_COMMAND + token + '\0' + new File(".").getAbsolutePath() + '\0' + StringUtil.join(args, "\0"));
+
+          String currentDirectory = System.getenv(LAUNCHER_INITIAL_DIRECTORY_ENV_VAR);
+          log(LAUNCHER_INITIAL_DIRECTORY_ENV_VAR + ": " + currentDirectory);
+          if (currentDirectory == null)
+            currentDirectory = ".";
+
+          out.writeUTF(ACTIVATE_COMMAND + token + '\0' + new File(currentDirectory).getAbsolutePath() + '\0' + StringUtil.join(args, "\0"));
           out.flush();
 
           socket.setSoTimeout(0);

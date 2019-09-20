@@ -75,6 +75,15 @@ import javax.swing.JFrame
 import javax.swing.JOptionPane
 import kotlin.system.exitProcess
 
+/**
+ * Name of an environment variable that will be set by the Windows launcher and will contain the working directory the
+ * IDE was started with.
+ *
+ * This is necessary on Windows because the launcher needs to change the current directory for the JVM to load
+ * properly; see the details in WindowsLauncher.cpp.
+ */
+const val LAUNCHER_INITIAL_DIRECTORY_ENV_VAR = "IDEA_INITIAL_DIRECTORY"
+
 private val SAFE_JAVA_ENV_PARAMETERS = arrayOf(JetBrainsProtocolHandler.REQUIRED_PLUGINS_KEY)
 private val LOG = Logger.getInstance("#com.intellij.idea.ApplicationLoader")
 
@@ -453,8 +462,8 @@ open class IdeStarter : ApplicationStarter {
     var project: Project? = null
     if (commandLineArgs.firstOrNull() != null) {
       LOG.info("ApplicationLoader.loadProject")
-      val currentDirectory: String? = System.getenv("IDEA_INITIAL_DIRECTORY")
-      LOG.info("IDEA_INITIAL_DIRECTORY: $currentDirectory")
+      val currentDirectory: String? = System.getenv(LAUNCHER_INITIAL_DIRECTORY_ENV_VAR)
+      LOG.info("$LAUNCHER_INITIAL_DIRECTORY_ENV_VAR: $currentDirectory")
       project = CommandLineProcessor.processExternalCommandLine(commandLineArgs, currentDirectory).getFirst()
     }
     return project
