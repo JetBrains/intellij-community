@@ -31,6 +31,7 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
   @NonNls private static final String SCREEN = "screen";
 
   private static final Logger LOG = Logger.getInstance(WindowStateService.class);
+  private final Map<String, Runnable> myRunnableMap = new TreeMap<>();
   private final Map<String, WindowState> myStateMap = new TreeMap<>();
 
   protected WindowStateServiceImpl(@Nullable Project project) {
@@ -39,6 +40,10 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
 
   @Override
   public final Element getState() {
+    synchronized (myRunnableMap) {
+      myRunnableMap.values().forEach(Runnable::run);
+      myRunnableMap.clear();
+    }
     Element element = new Element(STATE);
     synchronized (myStateMap) {
       for (Map.Entry<String, WindowState> entry : myStateMap.entrySet()) {
@@ -102,6 +107,21 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
 
   @Override
   public boolean loadStateFor(Object object, @NotNull String key, @NotNull Component component) {
+    synchronized (myRunnableMap) {
+      ComponentState state = ComponentState.getState(component);
+      Runnable runnable = myRunnableMap.put(key, () -> {
+        state.uninstall(component);
+        Rectangle bounds = state.getBounds();
+        putFor(object, key,
+               apply(Rectangle::getLocation, bounds), bounds != null,
+               apply(Rectangle::getSize, bounds), bounds != null,
+               Frame.MAXIMIZED_BOTH == state.getExtendedState(), true,
+               state.isFullScreen(), true);
+      });
+      if (runnable != null) {
+        runnable.run();
+      }
+    }
     WindowState state = getFor(object, key, WindowState.class);
     if (state == null) return false;
     Frame frame = component instanceof Frame ? (Frame)component : null;
