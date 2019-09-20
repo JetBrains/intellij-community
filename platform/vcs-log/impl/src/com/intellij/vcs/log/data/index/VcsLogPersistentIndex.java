@@ -467,6 +467,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
     public void run(@NotNull ProgressIndicator indicator) {
       if (myBigRepositoriesList.isBig(myRoot)) {
         LOG.info("Indexing repository " + myRoot.getName() + " is skipped since it is too big");
+        markCommits();
         myNumberOfTasks.get(myRoot).decrementAndGet();
         return;
       }
@@ -548,11 +549,15 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
                 (myCommits.size() - myNewIndexedCommits.get() - myOldCommits.get()) +
                 " commits in " +
                 myRoot.getName());
+      markCommits();
+      scheduleIndex(false);
+    }
+
+    private void markCommits() {
       myCommits.forEach(value -> {
         markForIndexing(value, myRoot);
         return true;
       });
-      scheduleIndex(false);
     }
 
     private void indexOneByOne(@NotNull IntStream commits, @NotNull ProgressIndicator indicator) throws VcsException {
