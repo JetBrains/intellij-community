@@ -5,5 +5,5 @@ import com.intellij.util.xmlb.annotations.*
 
 class CircletRunTaskConfigurationOptions : LocatableRunConfigurationOptions() {
     @get:OptionTag("TASK_NAME")
-    var taskName =""
+    var taskName by string("")
 }
