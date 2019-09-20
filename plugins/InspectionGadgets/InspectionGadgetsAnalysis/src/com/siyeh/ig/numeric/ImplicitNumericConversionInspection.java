@@ -292,17 +292,24 @@ public class ImplicitNumericConversionInspection extends BaseInspection {
       }
       if (parent instanceof PsiAssignmentExpression) {
         final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)parent;
-        if (assignmentExpression.getOperationTokenType() != JavaTokenType.EQ && assignmentExpression.getLExpression() == expression) {
-          final PsiExpression rhs = assignmentExpression.getRExpression();
-          if (rhs != null) {
-            final PsiType expressionType = expression.getType();
-            if (!ClassUtils.isPrimitiveNumericType(expressionType)) {
-              return;
+        if (assignmentExpression.getOperationTokenType() != JavaTokenType.EQ) {
+          if (assignmentExpression.getLExpression() == expression) {
+            final PsiExpression rhs = assignmentExpression.getRExpression();
+            if (rhs != null) {
+              final PsiType expressionType = expression.getType();
+              if (!ClassUtils.isPrimitiveNumericType(expressionType)) return;
+              final PsiType promotedType = TypeConversionUtil.binaryNumericPromotion(expressionType, rhs.getType());
+              checkTypes(rhs, promotedType, expressionType);
+              checkTypes(expression, expressionType, promotedType);
             }
-            final PsiType promotedType = TypeConversionUtil.binaryNumericPromotion(expressionType, rhs.getType());
-            checkTypes(expression, expressionType, promotedType);
           }
+          return;
         }
+      }
+      if (ignoreWideningConversions) {
+        // Further analysis could be quite slow, especially in batch mode, as type of almost every expression is queried.
+        // So stop here if ignoreWideningConversions is on.
+        return;
       }
       if (ignoreConstantConversions) {
         PsiExpression rootExpression = expression;
