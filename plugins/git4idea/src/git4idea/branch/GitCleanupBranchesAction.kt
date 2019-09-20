@@ -41,7 +41,10 @@ import git4idea.repo.GitRepositoryManager
 import gnu.trove.TIntHashSet
 import java.awt.BorderLayout
 import java.awt.event.KeyEvent
-import javax.swing.*
+import javax.swing.Icon
+import javax.swing.JComponent
+import javax.swing.JList
+import javax.swing.ListSelectionModel
 import javax.swing.event.DocumentEvent
 
 private val LOG = logger<GitCleanupBranchesAction>()
@@ -240,7 +243,7 @@ private class BranchesUi(val project: Project, val log: VcsProjectLog, initialBr
       super.update(e)
       val log = VcsProjectLog.getInstance(project)
       val supportsIndexing = log.dataManager?.logProviders?.all {
-          VcsLogProperties.get(it.value, VcsLogProperties.SUPPORTS_INDEXING) } ?: false
+        VcsLogProperties.SUPPORTS_INDEXING.getOrDefault(it.value) } ?: false
 
       val isGraphReady = log.dataManager?.dataPack?.isFull ?: false
 

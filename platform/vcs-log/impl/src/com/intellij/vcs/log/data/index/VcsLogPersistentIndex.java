@@ -270,7 +270,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
     for (Map.Entry<VirtualFile, VcsLogProvider> entry : providers.entrySet()) {
       VirtualFile root = entry.getKey();
       VcsLogProvider provider = entry.getValue();
-      if (VcsLogProperties.get(provider, VcsLogProperties.SUPPORTS_INDEXING) && provider instanceof VcsIndexableLogProvider) {
+      if (VcsLogProperties.SUPPORTS_INDEXING.getOrDefault(provider) && provider instanceof VcsIndexableLogProvider) {
         indexers.put(root, ((VcsIndexableLogProvider)provider).getIndexer());
       }
     }

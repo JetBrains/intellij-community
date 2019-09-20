@@ -19,10 +19,16 @@ import org.jetbrains.annotations.NotNull;
 
 public class VcsLogProperties {
   public static class VcsLogProperty<T> {
-    private final T defaultValue;
+    private final @NotNull T defaultValue;
 
     private VcsLogProperty(@NotNull T defaultValue) {
       this.defaultValue = defaultValue;
+    }
+
+    @NotNull
+    public T getOrDefault(VcsLogProvider provider) {
+      T value = provider.getPropertyValue(this);
+      return value == null ? defaultValue : value;
     }
   }
 
@@ -31,10 +37,12 @@ public class VcsLogProperties {
   @NotNull public static final VcsLogProperty<Boolean> SUPPORTS_LOG_DIRECTORY_HISTORY = new VcsLogProperty<>(false);
   @NotNull public static final VcsLogProperty<Boolean> CASE_INSENSITIVE_REGEX = new VcsLogProperty<>(true);
 
+  /**
+   * @deprecated use {@link VcsLogProperty#getOrDefault(VcsLogProvider)}
+   */
+  @Deprecated
   @NotNull
   public static <T> T get(@NotNull VcsLogProvider provider, VcsLogProperty<T> property) {
-    T value = provider.getPropertyValue(property);
-    if (value == null) return property.defaultValue;
-    return value;
+    return property.getOrDefault(provider);
   }
 }
