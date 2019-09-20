@@ -31,9 +31,8 @@ public abstract class BaseExtensionPointName<T> {
 
   @Nullable
   protected <V extends T> V findExtension(@NotNull Class<V> instanceOf, @Nullable AreaInstance areaInstance, boolean isRequired) {
-    ExtensionPointImpl<T> point = getPointImpl(areaInstance);
     // find by isAssignableFrom to preserve old behaviour
     //noinspection unchecked
-    return (V)point.findExtension(instanceOf, isRequired, false);
+    return (V)getPointImpl(areaInstance).findExtension(instanceOf, isRequired, false);
   }
 }

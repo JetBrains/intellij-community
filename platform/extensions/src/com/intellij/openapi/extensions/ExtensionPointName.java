@@ -116,8 +116,8 @@ public final class ExtensionPointName<T> extends BaseExtensionPointName<T> {
 
   @NotNull
   public <V extends T> V findExtensionOrFail(@NotNull Class<V> instanceOf) {
-    //noinspection ConstantConditions
-    return findExtension(instanceOf, null, true);
+    //noinspection unchecked,ConstantConditions
+    return (V)getPointImpl(null).findExtension(instanceOf, true, true);
   }
 
   @NotNull
