@@ -125,6 +125,13 @@ class BuildOptions {
   boolean isInDevelopmentMode = SystemProperties.getBooleanProperty("intellij.build.dev.mode",
                                                                     System.getProperty("teamcity.buildType.id") == null)
 
+
+  /**
+   * Specifies list of names of directories of bundled plugins which shouldn't be included into the product distribution. This option can be
+   * used to speed up updating the IDE from sources.
+   */
+  List<String> bundledPluginDirectoriesToSkip = System.getProperty("intellij.build.bundled.plugin.dirs.to.skip", "").split(",") as List<String>
+
   /**
    * Specifies JRE version to be bundled with distributions, 11 by default.
    */

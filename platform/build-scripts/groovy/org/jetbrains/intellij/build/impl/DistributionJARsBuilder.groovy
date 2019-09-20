@@ -610,8 +610,13 @@ class DistributionJARsBuilder {
   private void buildBundledPlugins() {
     def layoutBuilder = createLayoutBuilder()
     def allPlugins = getPluginsByModules(buildContext, buildContext.productProperties.productLayout.bundledPluginModules)
+    def pluginDirectoriesToSkip = buildContext.options.bundledPluginDirectoriesToSkip as Set<String>
+    buildContext.messages.debug("Plugin directories to skip: " + pluginDirectoriesToSkip)
     buildContext.messages.block("Build bundled plugins") {
-      buildPlugins(layoutBuilder, allPlugins.findAll { satisfiesBundlingRequirements(it, null) }, "$buildContext.paths.distAll$PLUGINS_DIRECTORY" )
+      def pluginsToBundle = allPlugins.findAll {
+        satisfiesBundlingRequirements(it, null) && !pluginDirectoriesToSkip.contains(it.directoryName)
+      }
+      buildPlugins(layoutBuilder, pluginsToBundle, "$buildContext.paths.distAll$PLUGINS_DIRECTORY" )
     }
     usedModules.addAll(layoutBuilder.usedModules)
   }
