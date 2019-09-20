@@ -50,6 +50,7 @@ import com.intellij.vcs.log.ui.render.GraphCommitCellRenderer;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.VisiblePack;
+import one.util.streamex.IntStreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -489,6 +490,14 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
         if (i != selectedRows.length - 1) sb.append("\n");
       }
       return sb.toString();
+    }
+    else if (VcsLogDataKeys.VCS_DATE_DISPLAYED.is(dataId)) {
+      return getTableColumn(VcsLogColumn.DATE) != null;
+    }
+    else if (VcsLogDataKeys.VCS_LOG_PROVIDERS.is(dataId)) {
+      int[] selectedRows = getSelectedRows();
+      return IntStreamEx.of(selectedRows).mapToObj(getModel()::getRoot).distinct()
+        .map(myLogData::getLogProvider).toSet();
     }
     return null;
   }

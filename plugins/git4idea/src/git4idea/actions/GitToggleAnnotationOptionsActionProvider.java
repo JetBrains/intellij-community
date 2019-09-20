@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.annotate.AnnotationGutterActionProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
+import com.intellij.vcs.log.ui.actions.PreferCommitDateAction;
 import git4idea.GitVcs;
 import git4idea.annotate.GitFileAnnotation;
 import git4idea.config.GitVcsApplicationSettings;
@@ -47,6 +48,12 @@ public class GitToggleAnnotationOptionsActionProvider implements AnnotationGutte
           new ToggleIgnoreWhitespaces(myAnnotation.getProject()),
           new ToggleInnerMovementsWhitespaces(myAnnotation.getProject()),
           new ToggleOuterMovementsWhitespaces(myAnnotation.getProject()),
+          new PreferCommitDateAction() {
+            @Override
+            protected boolean isVisible(@NotNull AnActionEvent e) {
+              return true;
+            }
+          }
         };
       }
       return AnAction.EMPTY_ARRAY;
