@@ -50,8 +50,8 @@ public final class FileBasedIndexScanRunnableCollectorImpl extends FileBasedInde
         if (myProject.isDisposed()) {
           return tasks;
         }
-        //contributedRoots.addAll(IndexableSetContributor.getRootsToIndex(contributor));
-        //contributedRoots.addAll(IndexableSetContributor.getProjectRootsToIndex(contributor, myProject));
+        contributedRoots.addAll(IndexableSetContributor.getRootsToIndex(contributor));
+        contributedRoots.addAll(IndexableSetContributor.getProjectRootsToIndex(contributor, myProject));
       }
       for (VirtualFile root : contributedRoots) {
         // do not try to visit under-content-roots because the first task took care of that already
@@ -64,22 +64,22 @@ public final class FileBasedIndexScanRunnableCollectorImpl extends FileBasedInde
       }
 
       //// iterate synthetic project libraries
-      //for (AdditionalLibraryRootsProvider provider : AdditionalLibraryRootsProvider.EP_NAME.getExtensionList()) {
-      //  if (myProject.isDisposed()) {
-      //    return tasks;
-      //  }
-      //  for (SyntheticLibrary library : provider.getAdditionalProjectLibraries(myProject)) {
-      //    for (VirtualFile root : library.getAllRoots()) {
-      //      // do not try to visit under-content-roots because the first task took care of that already
-      //      if (!myProjectFileIndex.isInContent(root) && visitedRoots.add(root)) {
-      //        tasks.add(() -> {
-      //          if (myProject.isDisposed() || !root.isValid()) return;
-      //          FileBasedIndex.iterateRecursively(root, processor, indicator, visitedRoots, myProjectFileIndex);
-      //        });
-      //      }
-      //    }
-      //  }
-      //}
+      for (AdditionalLibraryRootsProvider provider : AdditionalLibraryRootsProvider.EP_NAME.getExtensionList()) {
+        if (myProject.isDisposed()) {
+          return tasks;
+        }
+        for (SyntheticLibrary library : provider.getAdditionalProjectLibraries(myProject)) {
+          for (VirtualFile root : library.getAllRoots()) {
+            // do not try to visit under-content-roots because the first task took care of that already
+            if (!myProjectFileIndex.isInContent(root) && visitedRoots.add(root)) {
+              tasks.add(() -> {
+                if (myProject.isDisposed() || !root.isValid()) return;
+                FileBasedIndex.iterateRecursively(root, processor, indicator, visitedRoots, myProjectFileIndex);
+              });
+            }
+          }
+        }
+      }
 
       // iterate associated libraries
       for (final Module module : ModuleManager.getInstance(myProject).getModules()) {

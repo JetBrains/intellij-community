@@ -12,6 +12,7 @@ import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.cache.impl.id.IdIndex;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.stubs.StubUpdatingIndex;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -30,6 +31,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 
@@ -42,7 +44,7 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
   static {
     if (!DebugAssertions.DEBUG) {
       final Application app = ApplicationManager.getApplication();
-      DebugAssertions.DEBUG = (app.isEAP() || app.isInternal()) && !ApplicationInfoImpl.isInStressTest();
+      DebugAssertions.DEBUG = false; //(app.isEAP() || app.isInternal()) && !ApplicationInfoImpl.isInStressTest();
     }
   }
 
@@ -98,6 +100,10 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
     return mySnapshotInputMappings;
   }
 
+  //static final  LongAdder m = new LongAdder();
+  //static final  LongAdder i = new LongAdder();
+
+
   @NotNull
   @Override
   protected InputData<Key, Value> mapInput(@Nullable Input content) {
@@ -107,6 +113,10 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
       try {
         data = mySnapshotInputMappings.readData(content);
         if (data != null) {
+          //if (getExtension() instanceof StubUpdatingIndex) {
+          //  m.increment();
+          //  System.out.println("preloaded " + m.sum() + " vs " + i.sum());
+          //}
           return data;
         } else {
           containsSnapshotData = !myUpdateMappings;
@@ -116,6 +126,10 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
         throw new RuntimeException(e);
       }
     }
+    //if (getExtension() instanceof StubUpdatingIndex) {
+    //  System.out.println("preloaded " + m.sum() + " vs " + i.sum());
+    //  i.increment();
+    //}
     data = super.mapInput(content);
     if (!containsSnapshotData && !UpdatableSnapshotInputMappingIndex.ignoreMappingIndexUpdate(content)) {
       try {

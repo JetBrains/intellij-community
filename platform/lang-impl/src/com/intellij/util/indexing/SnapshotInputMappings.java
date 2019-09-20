@@ -82,24 +82,23 @@ public class SnapshotInputMappings<Key, Value, Input> implements UpdatableSnapsh
     int hashId = 0;
 
     if (doReadSavedPersistentData) {
-      if (myContents == null || !myContents.isBusyReading() || DebugAssertions.EXTRA_SANITY_CHECKS) { // avoid blocking read, we can calculate index value
-        hashId = getHashId(content);
-        ByteArraySequence bytes = readContents(hashId);
+      // avoid blocking read, we can calculate index value
+      hashId = getHashId(content);
+      ByteArraySequence bytes = readContents(hashId);
 
-        if (bytes != null) {
-          data = AbstractForwardIndexAccessor.deserializeFromByteSeq(bytes, myMapExternalizer);
-          if (DebugAssertions.EXTRA_SANITY_CHECKS) {
-            Map<Key, Value> contentData = myIndexer.map(content);
-            boolean sameValueForSavedIndexedResultAndCurrentOne = contentData.equals(data);
-            if (!sameValueForSavedIndexedResultAndCurrentOne) {
-              DebugAssertions.error(
-                "Unexpected difference in indexing of %s by index %s\ndiff %s\nprevious indexed info %s",
-                getContentDebugData(content),
-                myIndexId,
-                buildDiff(data, contentData),
-                myIndexingTrace.get(hashId)
-              );
-            }
+      if (bytes != null) {
+        data = AbstractForwardIndexAccessor.deserializeFromByteSeq(bytes, myMapExternalizer);
+        if (DebugAssertions.EXTRA_SANITY_CHECKS) {
+          Map<Key, Value> contentData = myIndexer.map(content);
+          boolean sameValueForSavedIndexedResultAndCurrentOne = contentData.equals(data);
+          if (!sameValueForSavedIndexedResultAndCurrentOne) {
+            DebugAssertions.error(
+              "Unexpected difference in indexing of %s by index %s\ndiff %s\nprevious indexed info %s",
+              getContentDebugData(content),
+              myIndexId,
+              buildDiff(data, contentData),
+              myIndexingTrace.get(hashId)
+            );
           }
         }
       }
@@ -346,7 +345,7 @@ public class SnapshotInputMappings<Key, Value, Input> implements UpdatableSnapsh
 
   private boolean savePersistentData(Map<Key, Value> data, int id, byte[] hash, byte[] project) {
     try {
-      if (myContents != null && myContents.isBusyReading() && myContents.containsMapping(id)) return false;
+      if (myContents.containsMapping(id)) return false;
       ByteArraySequence seq = AbstractForwardIndexAccessor.serializeToByteSeq(data, myMapExternalizer, data.size());
       saveContents(id, seq);
 

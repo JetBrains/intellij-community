@@ -2,23 +2,34 @@
 package com.intellij.util.indexing.jetcache
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.ByteArraySequence
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.Semaphore
+import com.intellij.util.concurrency.SequentialTaskExecutor
 import com.intellij.util.indexing.*
+import com.jetbrains.rd.util.error
+import com.jetbrains.rd.util.getLogger
 import com.jetbrains.rd.util.lifetime.Lifetime
+import com.jetbrains.rd.util.reactive.IScheduler
 import com.jetbrains.rd.util.spinUntil
+import com.jetbrains.rd.util.threading.SingleThreadScheduler
 import org.jetbrains.jetcache.Client
 import org.jetbrains.jetcache.DiscoveryClient
 import org.jetbrains.jetcache.JetCache
 import org.jetbrains.jetcache.NetworkJetCache
 import java.io.File
+import java.net.InetAddress
 
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.atomic.LongAdder
+import kotlin.concurrent.thread
 
 class JetCacheService: Disposable {
   val projectCurrentVersion = ConcurrentHashMap<Project, ByteArray>()
@@ -32,29 +43,39 @@ class JetCacheService: Disposable {
   override fun dispose() {
   }
 
+
   init {
     if (IS_ENABLED) {
 
-      val semaphore = Semaphore()
-      semaphore.down()
+      //val semaphore = Semaphore()
+      //semaphore.down()
 
-      DiscoveryClient(Lifetime.Eternal, 8888) {
-        if (jetCache != null) return@DiscoveryClient
-        for (address in it.addresses) {
-          val host = address.host
-          val port = address.port
-          LOG.info("connecting to JetCache server ${host}:${port}")
+      //DiscoveryClient(Lifetime.Eternal, 8888) {
+      //  if (jetCache != null) return@DiscoveryClient
+      //  for (address in it.addresses) {
+      //    val host = address.host
+      //    val port = address.port
+      //    LOG.info("connecting to JetCache server ${host}:${port}")
+      //
+      //    val client = Client(address.host, address.port, scheduler)
+      //    spinUntil { client.connected.value }
+      //    //scheduler.queue {
+      //      val networkJetCache = NetworkJetCache(client.lifetime, client.model, client.scheduler)
+      //      jetCache = networkJetCache
+      //      semaphore.up()
+      //    //}
+      //    spinUntil { jetCache != null }
+      //  }
+      //}
+      //if (!semaphore.waitFor(120000)) {
+      //  LOG.error("we don't have JetCache")
+      //}
 
-          val client = Client(address.host, address.port)
-          spinUntil { client.connected.value }
-          val networkJetCache = NetworkJetCache(client.lifetime, client.model, client.scheduler)
-          jetCache = networkJetCache
-          semaphore.up()
-        }
-      }
-      if (!semaphore.waitFor(20000)) {
-        LOG.error("we don't have JetCache")
-      }
+      //val scheduler =  JetCacheScheduler()/*SingleThreadScheduler(Lifetime.Eternal, "JetCache thread")*/
+      val scheduler =  ThreadScheduler()/*SingleThreadScheduler(Lifetime.Eternal, "JetCache thread")*/
+      val client = Client(InetAddress.getByName("172.30.162.233"), 8888, scheduler)
+      jetCache = NetworkJetCache(Lifetime.Eternal, client.model, scheduler)
+
     } else {
       jetCache = null
     }
@@ -83,29 +104,100 @@ class JetCacheService: Disposable {
       if (u == null) {
         println("query size = " + keys.size + "")
         jetCache!!.get(keys) { key, value: ByteArray ->
+          l.increment()
+          if (l.sum().rem(1000) == 0L) {
+            println("received " + l.sum())
+          }
           try {
             val hashAndId = ContentHashesSupport.splitHashAndId(key)
-            l.increment()
-            if (l.sum().rem(1000) == 0L) {
-              println("received " + l.sum())
-            }
+
             if (hashAndId != null) {
               val contentHash = hashAndId.first
               val fileBasedIndex = FileBasedIndex.getInstance() as FileBasedIndexImpl
               val snapshotInputMappings = (fileBasedIndex.getIndex(hashAndId.second) as VfsAwareMapReduceIndex).snapshotInputMappings
               (snapshotInputMappings as UpdatableSnapshotInputMappingIndex).putData(contentHash, ByteArraySequence(value), phash)
-            } else {
+            }
+            else {
               LOG.error(StringUtil.toHexString(key) + " is not found")
             }
           }
-          catch (e: Exception) {
+          catch (e: Throwable) {
             LOG.error(e)
           }
         }
-      } else {
+      }
+      else {
         LOG.error(u)
       }
     }
+    Thread.sleep(1000 * 10)
+  }
+
+  class ThreadScheduler : IScheduler {
+
+    val q = LinkedBlockingQueue<() -> Unit>()
+    init {
+      thread(start = true, isDaemon = true) {
+        while (true) {
+          val a = q.take()
+          try {
+            a()
+          } catch (e: Throwable) {
+            getLogger<ThreadScheduler>().error(e)
+          }
+
+        }
+      }
+    }
+
+    override val isActive: Boolean
+      get() = true
+
+    override fun flush() {
+      throw NotImplementedError()
+    }
+
+    override fun queue(action: () -> Unit) {
+      q.offer(action)
+    }
+
+  }
+
+  class JetCacheScheduler() : IScheduler {
+
+    val l = LongAdder()
+    init {
+
+      ApplicationManager.getApplication().executeOnPooledThread({
+
+        var i = 0
+                                                                  while (true) {
+                                                                    i++
+                                                                    Thread.sleep(1000)
+                                                                    queue {
+                                                                      println("alive " + i)
+                                                                    }
+                                                                  }
+
+                                                                })
+
+
+    }
+    override val isActive: Boolean
+      get() = true
+
+    private val executor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("fuck")
+
+    override fun flush() {
+      throw AssertionError()
+    }
+
+    override fun queue(action: () -> Unit) {
+      l.increment()
+      println("queue count " + l.sum())
+      executor.submit(action)
+    }
+
   }
 
   companion object {
