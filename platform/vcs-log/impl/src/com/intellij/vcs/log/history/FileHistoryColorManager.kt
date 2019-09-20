@@ -25,14 +25,9 @@ class FileHistoryColorManager(private val root: VirtualFile,
       baseColorManager = VcsLogColorManagerImpl(setOf(path))
     }
     else {
-      val newPaths = ObjectLinkedOpenHashSet<FilePath>(pathsFromPack.size, FILE_PATH_HASHING_STRATEGY)
-      for (path in baseColorManager.paths) {
-        if (pathsFromPack.contains(path)) newPaths.add(path)
-      }
-      for (path in pathsFromPack) {
-        if (!newPaths.contains(path)) newPaths.add(path)
-      }
-
+      val newPaths = ObjectLinkedOpenHashSet<FilePath>(baseColorManager.paths, FILE_PATH_HASHING_STRATEGY)
+      newPaths.retainAll(pathsFromPack)
+      newPaths.addAll(pathsFromPack)
       baseColorManager = VcsLogColorManagerImpl(newPaths)
     }
   }
