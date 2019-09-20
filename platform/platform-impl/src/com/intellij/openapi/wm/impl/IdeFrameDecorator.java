@@ -3,6 +3,7 @@ package com.intellij.openapi.wm.impl;
 
 import com.intellij.jdkEx.JdkEx;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
@@ -40,18 +41,25 @@ public abstract class IdeFrameDecorator implements IdeFrameImpl.FrameDecorator {
   @NotNull
   public abstract Promise<Boolean> toggleFullScreen(boolean state);
 
+  private static final Logger LOG = Logger.getInstance(IdeFrameDecorator.class);
+
   @Nullable
   public static IdeFrameDecorator decorate(@NotNull JFrame frame, @NotNull Disposable parentDisposable) {
-    if (SystemInfo.isMac) {
-      return new MacMainFrameDecorator(frame, PlatformUtils.isAppCode(), parentDisposable);
-    }
-    else if (SystemInfo.isWindows) {
-      return new WinMainFrameDecorator(frame);
-    }
-    else if (SystemInfo.isXWindow) {
-      if (X11UiUtil.isFullScreenSupported()) {
-        return new EWMHFrameDecorator(frame, parentDisposable);
+    try {
+      if (SystemInfo.isMac) {
+        return new MacMainFrameDecorator(frame, PlatformUtils.isAppCode(), parentDisposable);
       }
+      else if (SystemInfo.isWindows) {
+        return new WinMainFrameDecorator(frame);
+      }
+      else if (SystemInfo.isXWindow) {
+        if (X11UiUtil.isFullScreenSupported()) {
+          return new EWMHFrameDecorator(frame, parentDisposable);
+        }
+      }
+    }
+    catch (Throwable t) {
+      LOG.warn("Failed to initialize IdeFrameDecorator. " + t.getMessage(), t);
     }
 
     return null;
