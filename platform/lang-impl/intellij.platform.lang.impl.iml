@@ -39,9 +39,9 @@
     <orderEntry type="module" module-name="intellij.platform.serviceContainer" />
     <orderEntry type="module-library">
       <library name="jetcache-api" type="repository">
-        <properties maven-id="com.jetbrains:jetcache:57" />
+        <properties maven-id="com.jetbrains:jetcache:60" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/jetcache/57/jetcache-57.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/jetcache/60/jetcache-60.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/commons-net/commons-net/3.6/commons-net-3.6.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-core/0.193.5/rd-core-0.193.5.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-core-common/0.193.5/rd-core-common-0.193.5.jar!/" />
@@ -49,7 +49,6 @@
           <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-framework/0.193.5/rd-framework-0.193.5.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-framework-common/0.193.5/rd-framework-common-0.193.5.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-gen/0.193.5/rd-gen-0.193.5.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/annotations/13.0/annotations-13.0.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/apache/commons/commons-pool2/2.6.2/commons-pool2-2.6.2.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/com/google/code/gson/gson/2.8.5/gson-2.8.5.jar!/" />
         </CLASSES>

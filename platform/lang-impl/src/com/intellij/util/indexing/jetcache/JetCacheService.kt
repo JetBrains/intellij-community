@@ -47,39 +47,27 @@ class JetCacheService: Disposable {
   init {
     if (IS_ENABLED) {
 
-      //val semaphore = Semaphore()
-      //semaphore.down()
+      val semaphore = Semaphore()
+      semaphore.down()
 
-      //DiscoveryClient(Lifetime.Eternal, 8888) {
-      //  if (jetCache != null) return@DiscoveryClient
-      //  for (address in it.addresses) {
-      //    val host = address.host
-      //    val port = address.port
-      //    LOG.info("connecting to JetCache server ${host}:${port}")
-      //
-      //    val client = Client(address.host, address.port, scheduler)
-      //    spinUntil { client.connected.value }
-      //    //scheduler.queue {
-      //      val networkJetCache = NetworkJetCache(client.lifetime, client.model, client.scheduler)
-      //      jetCache = networkJetCache
-      //      semaphore.up()
-      //    //}
-      //    spinUntil { jetCache != null }
-      //  }
-      //}
-      //if (!semaphore.waitFor(120000)) {
-      //  LOG.error("we don't have JetCache")
-      //}
-
-      //val scheduler =  JetCacheScheduler()/*SingleThreadScheduler(Lifetime.Eternal, "JetCache thread")*/
-      val scheduler =  ThreadScheduler()/*SingleThreadScheduler(Lifetime.Eternal, "JetCache thread")*/
-      val client = Client(InetAddress.getByName("172.30.162.233"), 8888, scheduler)
-      jetCache = NetworkJetCache(Lifetime.Eternal, client.model, scheduler)
-
+      DiscoveryClient(Lifetime.Eternal, 8888, predefinedServers = arrayOf(InetAddress.getByName("172.30.162.233"))) {
+        if (jetCache != null) return@DiscoveryClient
+        for (address in it.addresses) {
+          val host = address.host
+          val port = address.port
+          LOG.info("connecting to JetCache server ${host}:${port}")
+          val scheduler =  ThreadScheduler()/*SingleThreadScheduler(Lifetime.Eternal, "JetCache thread")*/
+          val client = Client(InetAddress.getByName("172.30.162.233"), 8888, scheduler)
+          jetCache = NetworkJetCache(Lifetime.Eternal, client.model, scheduler)
+          semaphore.up()
+        }
+      }
+      if (!semaphore.waitFor(10000)) {
+        LOG.error("we don't have JetCache")
+      }
     } else {
       jetCache = null
     }
-    //Disposer.register(FileBasedIndex.getInstance() as FileBasedIndexImpl, this)
   }
 
   fun getProjectHash(project: Project): ByteArray {
