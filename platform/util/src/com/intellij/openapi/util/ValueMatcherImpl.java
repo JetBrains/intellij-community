@@ -9,7 +9,7 @@ import java.util.function.Supplier;
 
 final class ValueMatcherImpl<T, T1> implements ValueKey.BeforeWhen<T>, ValueKey.BeforeThen<T, T1> {
   private enum State {
-    NOT_MATCHED, IGNORING, MATCHING, MATCHED, FINISHED
+    NOT_MATCHED, IGNORING, SKIPPING, MATCHING, MATCHED, FINISHED
   }
 
   private @NotNull final String myKey;
@@ -28,12 +28,13 @@ final class ValueMatcherImpl<T, T1> implements ValueKey.BeforeWhen<T>, ValueKey.
         throw new IllegalStateException("We are already finished");
       case IGNORING:
       case MATCHING:
+      case SKIPPING:
         throw new IllegalStateException("We are in 'then' stage");
       case MATCHED:
         if (key.getName().equals(myKey)) {
           throw new IllegalStateException("Key '" + key.getName() + "' already matched");
         }
-        myState = State.IGNORING;
+        myState = State.SKIPPING;
         break;
       case NOT_MATCHED:
         myState = key.getName().equals(myKey) ? State.MATCHING : State.IGNORING;
@@ -79,6 +80,7 @@ final class ValueMatcherImpl<T, T1> implements ValueKey.BeforeWhen<T>, ValueKey.
       case MATCHED:
       case NOT_MATCHED:
         throw new IllegalStateException("We are in 'when' stage");
+      case SKIPPING:
       case MATCHING:
         if (key.getName().equals(myKey)) {
           throw new IllegalStateException("Key '" + key.getName() + "' already matched");
@@ -102,6 +104,9 @@ final class ValueMatcherImpl<T, T1> implements ValueKey.BeforeWhen<T>, ValueKey.
       case MATCHED:
       case NOT_MATCHED:
         throw new IllegalStateException("We are in 'when' stage");
+      case SKIPPING:
+        myState = State.MATCHED;
+        break;
       case IGNORING:
         myState = State.NOT_MATCHED;
         break;
@@ -122,6 +127,9 @@ final class ValueMatcherImpl<T, T1> implements ValueKey.BeforeWhen<T>, ValueKey.
       case MATCHED:
       case NOT_MATCHED:
         throw new IllegalStateException("We are in 'when' stage");
+      case SKIPPING:
+        myState = State.MATCHED;
+        break;
       case IGNORING:
         myState = State.NOT_MATCHED;
         break;
