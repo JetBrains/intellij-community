@@ -11,7 +11,7 @@ import io.netty.buffer.ByteBufAllocator
 import io.netty.buffer.ByteBufUtf8Writer
 import org.jetbrains.io.JsonUtil
 
-open class OutMessage() {
+open class OutMessage {
   val buffer: ByteBuf = ByteBufAllocator.DEFAULT.buffer()
   val writer: JsonWriter = JsonWriter(ByteBufUtf8Writer(buffer))
 
