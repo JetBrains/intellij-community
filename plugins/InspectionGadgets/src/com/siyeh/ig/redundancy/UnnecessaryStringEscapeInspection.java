@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.redundancy;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
@@ -20,7 +21,7 @@ import javax.swing.*;
 /**
  * @author Bas Leijdekkers
  */
-public class UnnecessaryStringEscapeInspection extends BaseInspection {
+public class UnnecessaryStringEscapeInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   public boolean reportChars = false;
 
