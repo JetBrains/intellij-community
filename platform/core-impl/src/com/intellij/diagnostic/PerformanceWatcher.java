@@ -301,7 +301,7 @@ public final class PerformanceWatcher implements Disposable {
 
   private void dumpThreads() {
     if (myFreezeStart != 0 && System.currentTimeMillis() - myFreezeStart <= getMaxDumpDuration()) {
-      dumpThreads(getFreezeFolderName(myFreezeStart) + "/", false);
+      dumpThreads(getFreezeFolderName(myFreezeStart) + "/", false, ThreadDumper.getThreadInfos(), true);
     }
     else {
       stopDumping();
@@ -310,11 +310,11 @@ public final class PerformanceWatcher implements Disposable {
 
   @Nullable
   public File dumpThreads(@NotNull String pathPrefix, boolean millis) {
-    return dumpThreads(pathPrefix, millis, ThreadDumper.getThreadInfos());
+    return dumpThreads(pathPrefix, millis, ThreadDumper.getThreadInfos(), false);
   }
 
   @Nullable
-  private File dumpThreads(@NotNull String pathPrefix, boolean millis, ThreadInfo[] threadInfos) {
+  private File dumpThreads(@NotNull String pathPrefix, boolean millis, ThreadInfo[] threadInfos, boolean notify) {
     if (!shouldWatch()) return null;
 
     if (!pathPrefix.contains("/")) {
@@ -338,17 +338,19 @@ public final class PerformanceWatcher implements Disposable {
     ThreadDump threadDump = ThreadDumper.getThreadDumpInfo(threadInfos);
     try {
       FileUtil.writeToFile(file, threadDump.getRawDump());
-      StackTraceElement[] edtStack = threadDump.getEDTStackTrace();
-      if (edtStack != null) {
-        if (myStacktraceCommonPart == null) {
-          myStacktraceCommonPart = ContainerUtil.newArrayList(edtStack);
+      if (notify) {
+        StackTraceElement[] edtStack = threadDump.getEDTStackTrace();
+        if (edtStack != null) {
+          if (myStacktraceCommonPart == null) {
+            myStacktraceCommonPart = ContainerUtil.newArrayList(edtStack);
+          }
+          else {
+            myStacktraceCommonPart = getStacktraceCommonPart(myStacktraceCommonPart, edtStack);
+          }
         }
-        else {
-          myStacktraceCommonPart = getStacktraceCommonPart(myStacktraceCommonPart, edtStack);
-        }
-      }
 
-      getPublisher().dumpedThreads(file, threadDump);
+        getPublisher().dumpedThreads(file, threadDump);
+      }
     }
     catch (IOException e) {
       LOG.info("failed to write thread dump file: " + e.getMessage());
@@ -473,7 +475,7 @@ public final class PerformanceWatcher implements Disposable {
         myDumpTask = new SamplingTask(getDumpInterval(), getMaxDumpDuration()) {
           @Override
           protected void dumpedThreads(ThreadInfo[] infos) {
-            dumpThreads(getFreezeFolderName(myFreezeStart) + "/", false, infos);
+            dumpThreads(getFreezeFolderName(myFreezeStart) + "/", false, infos, true);
           }
         };
       }
