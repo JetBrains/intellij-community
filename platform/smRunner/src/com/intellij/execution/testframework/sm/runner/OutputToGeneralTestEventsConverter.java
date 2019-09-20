@@ -47,7 +47,7 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     // stdout: "enter your name:"
     // There is no new line after it, but user still wants to see this message.
     // So, if console is editable, we enable "doNotBufferTextUntilNewLine".
-    this(testFrameworkName, consoleProperties.isEditable(), consoleProperties.tcMessageHasNewLinePrefix(), 
+    this(testFrameworkName, consoleProperties.isEditable(), ( consoleProperties instanceof SMTRunnerConsoleProperties && ((SMTRunnerConsoleProperties)consoleProperties).serviceMessageHasNewLinePrefix()),
          !(consoleProperties instanceof SMTRunnerConsoleProperties) || !((SMTRunnerConsoleProperties)consoleProperties).isIdBasedTestTree());
   }
 
