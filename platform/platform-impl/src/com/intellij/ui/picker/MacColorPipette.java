@@ -183,7 +183,7 @@ public class MacColorPipette extends ColorPipetteBase {
   }
 
   @Nullable
-  static BufferedImage captureScreen(@Nullable Window belowWindow, @NotNull Rectangle rect) {
+  public static BufferedImage captureScreen(@Nullable Window belowWindow, @NotNull Rectangle rect) { // FIXME-ank: made public
     ID pool = Foundation.invoke("NSAutoreleasePool", "new");
     try {
       ID windowId = belowWindow != null ? MacUtil.findWindowFromJavaWindow(belowWindow) : null;
