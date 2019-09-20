@@ -13,6 +13,7 @@ import java.util.List;
  * @author yole
  */
 public class ScrollableSingleRowLayout extends SingleRowLayout {
+  public static final int DEADZONE_FOR_DECLARE_TAB_HIDDEN = 10;
   private int myScrollOffset = 0;
   private boolean myScrollSelectionInViewPending = false;
 
@@ -129,7 +130,9 @@ public class ScrollableSingleRowLayout extends SingleRowLayout {
   public boolean isTabHidden(TabInfo tabInfo) {
     final TabLabel label = myTabs.myInfo2Label.get(tabInfo);
     final Rectangle bounds = label.getBounds();
-    return getStrategy().getMinPosition(bounds) < -10 || bounds.isEmpty();
+    return getStrategy().getMinPosition(bounds) < -DEADZONE_FOR_DECLARE_TAB_HIDDEN
+           || bounds.width < label.getPreferredSize().width - DEADZONE_FOR_DECLARE_TAB_HIDDEN
+           || bounds.height < label.getPreferredSize().height - DEADZONE_FOR_DECLARE_TAB_HIDDEN;
   }
 
   @Nullable
