@@ -534,6 +534,9 @@ public class TabLabel extends JPanel implements Accessible, Disposable {
     }
   }
 
+  /**
+   * Notice, that using this method can cause changing of TabLabel instance size.
+   */
   public void setActionPanelVisible(boolean visible) {
     if (myActionPanel != null) {
       if(visible == myActionPanel.isVisible()) return;
