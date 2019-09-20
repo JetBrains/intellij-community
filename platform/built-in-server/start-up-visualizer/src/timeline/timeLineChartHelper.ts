@@ -1,5 +1,4 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-import * as am4charts from "@amcharts/amcharts4/charts"
 import * as am4core from "@amcharts/amcharts4/core"
 import {Item} from "@/state/data"
 
@@ -46,13 +45,7 @@ export function transformToTimeLineItems(items: Array<Item>): Array<TimeLineItem
   return result
 }
 
-export function disableGridButKeepBorderLines(axis: am4charts.Axis) {
-  axis.renderer.grid.template.adapter.add("disabled", (_, target) => {
-    if (target.dataItem == null) {
-      return false
-    }
-
-    const index = target.dataItem.index
-    return !(index === 0 || index === -1)
-  })
+export interface TimeLineGuide {
+  readonly value: number
+  readonly label: string
 }

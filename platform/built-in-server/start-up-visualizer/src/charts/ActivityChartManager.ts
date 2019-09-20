@@ -267,9 +267,11 @@ export interface LegendItem {
 
 export interface ClassItem extends Item {
   readonly shortName: string
-  readonly chartConfig: ClassItemChartConfig
+  readonly chartConfig: ClassItemChartConfig | null
 
   readonly sourceName: string
+  readonly plugin?: string
+  readonly totalDuration?: number
 }
 
 export interface ClassItemChartConfig {

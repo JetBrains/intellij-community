@@ -16,6 +16,9 @@ const statSupportMinVersion = semver.coerce("3")!!
 const instantEventSupportMinVersion = semver.coerce("11")!!
 const isNewServiceFormat = semver.coerce("12")!!
 
+export const SERVICE_WAITING = "serviceWaiting"
+const serviceEventCategorySet = new Set(serviceSourceNames.concat(SERVICE_WAITING))
+
 export class DataManager {
   private readonly version: SemVer | null
 
@@ -83,7 +86,7 @@ export class DataManager {
     }
 
     if (this.isNewServiceFormat) {
-      this._serviceEvents = this.data.traceEvents.filter(value => value.cat != null && serviceSourceNames.includes(value.cat)) as Array<CompleteTraceEvent>
+      this._serviceEvents = this.data.traceEvents.filter(value => value.cat != null && serviceEventCategorySet.has(value.cat)) as Array<CompleteTraceEvent>
       return this._serviceEvents
     }
 

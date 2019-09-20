@@ -11,7 +11,10 @@ import com.intellij.util.containers.ObjectLongHashMap
 import com.intellij.util.io.jackson.obj
 import gnu.trove.THashMap
 
-internal fun computeOwnTime(allEvents: List<ActivityImpl>, ownDurations: ObjectLongHashMap<ActivityImpl>, threadNameManager: ThreadNameManager) {
+// events must be already sorted by time
+internal fun computeOwnTime(allEvents: List<ActivityImpl>, threadNameManager: ThreadNameManager): ObjectLongHashMap<ActivityImpl> {
+  val ownDurations = ObjectLongHashMap<ActivityImpl>()
+
   val threadToList = THashMap<String, MutableList<ActivityImpl>>()
   for (event in allEvents) {
     threadToList.getOrPut(threadNameManager.getThreadName(event)) { mutableListOf() }.add(event)
@@ -20,8 +23,6 @@ internal fun computeOwnTime(allEvents: List<ActivityImpl>, ownDurations: ObjectL
   val respectedItems = mutableListOf<ActivityImpl>()
 
   for (list in threadToList.values) {
-    list.sortWith(Comparator(::compareTime))
-
     for ((index, item) in list.withIndex()) {
       if (item.category == ActivityCategory.SERVICE_WAITING) {
         continue
@@ -52,6 +53,8 @@ internal fun computeOwnTime(allEvents: List<ActivityImpl>, ownDurations: ObjectL
       }
     }
   }
+
+  return ownDurations
 }
 
 private fun isInclusive(otherItem: ActivityImpl, item: ActivityImpl): Boolean {

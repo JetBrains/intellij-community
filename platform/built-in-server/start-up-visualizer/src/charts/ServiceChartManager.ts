@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-import {DataManager} from "@/state/DataManager"
+import {DataManager, SERVICE_WAITING} from "@/state/DataManager"
 import {ActivityChartManager, ClassItem, ClassItemChartConfig, LegendItem} from "@/charts/ActivityChartManager"
-import {ActivityChartDescriptor} from "@/charts/ActivityChartDescriptor"
+import {ActivityChartDescriptor, getShortName} from "@/charts/ActivityChartDescriptor"
 import {CompleteTraceEvent} from "@/state/data"
 import * as am4charts from "@amcharts/amcharts4/charts"
 
@@ -17,7 +17,7 @@ export class ServiceChartManager extends ActivityChartManager {
   }
 
   protected getTooltipText() {
-    return super.getTooltipText()  +"\ntotal duration: {totalDuration} ms"
+    return super.getTooltipText() + "\ntotal duration: {totalDuration} ms"
   }
 
   render(dataManager: DataManager): void {
@@ -63,27 +63,7 @@ export class ServiceChartManager extends ActivityChartManager {
       legendData.push(legendItem)
       applicableSources.add(sourceName)
 
-      for (const item of items) {
-        const ownDur = item.args!!.ownDur
-        if (ownDur < (10 * 1000)) {
-          continue
-        }
-
-        const nameTransformer = this.descriptor.shortNameProducer
-        const result: any = {
-          ...item,
-          shortName: nameTransformer == null ? item.name : nameTransformer(item),
-          chartConfig,
-          sourceName,
-          thread: item.tid,
-          plugin: item.args!!.plugin,
-          start: Math.round(item.ts / 1000),
-          end: Math.round((item.ts + item.dur) / 1000),
-          duration: Math.round(ownDur / 1000),
-          totalDuration: Math.round(item.dur / 1000),
-        }
-        concatenatedData.push(result)
-      }
+      transformTraceEventToClassItem(items, chartConfig, concatenatedData, true)
     }
 
     // noinspection DuplicatedCode
@@ -104,6 +84,45 @@ export class ServiceChartManager extends ActivityChartManager {
     concatenatedData.sort((a, b) => a.start - b.start)
     this.computeRangeMarkers(dataManager, concatenatedData)
     this.chart.data = concatenatedData
+  }
+}
+
+// 10 ms
+const threshold = 10 * 1000
+
+export function transformTraceEventToClassItem(items: Array<CompleteTraceEvent>, chartConfig: ClassItemChartConfig | null, resultList: Array<ClassItem>, durationAsOwn: boolean): void {
+  for (const item of items) {
+    const isServiceWaiting = item.cat === SERVICE_WAITING
+    if (durationAsOwn && isServiceWaiting) {
+      continue
+    }
+
+    const ownDur = item.args!!.ownDur
+    const reportedDurationInMicroSeconds = durationAsOwn ? ownDur : item.dur
+
+    if (reportedDurationInMicroSeconds < threshold) {
+      continue
+    }
+
+    const shortName = getShortName(item)
+    const result: ClassItem & CompleteTraceEvent = {
+      ...item,
+      name: isServiceWaiting ? `wait for ${item.name}` : item.name,
+      sourceName: item.cat!!,
+      shortName: isServiceWaiting ? `wait for ${shortName}` : shortName,
+      chartConfig,
+      thread: item.tid,
+      plugin: item.args!!.plugin,
+      start: Math.round(item.ts / 1000),
+      end: Math.round((item.ts + item.dur) / 1000),
+      duration: Math.round(reportedDurationInMicroSeconds / 1000),
+      totalDuration: Math.round(item.dur / 1000),
+    }
+
+    if (!durationAsOwn) {
+      (result as any).ownDuration = Math.round(ownDur / 1000)
+    }
+    resultList.push(result)
   }
 }
 

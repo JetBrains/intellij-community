@@ -52,11 +52,9 @@ internal class IdeaFormatWriter(private val activities: Map<String, MutableList<
           val traceEventFormatWriter = TraceEventFormatWriter(timeOffset, instantEvents, threadNameManager)
           traceEventFormatWriter.writeInstantEvents(writer)
 
-          val ownDurations = ObjectLongHashMap<ActivityImpl>()
-
-          ownDurations.clear()
-          computeOwnTime(services, ownDurations, threadNameManager)
-          traceEventFormatWriter.writeServiceEvents(writer, services, ownDurations, pluginCostMap)
+          val serviceListSortedByTime = services.sortedWith(Comparator(::compareTime))
+          val ownDurations = computeOwnTime(serviceListSortedByTime, threadNameManager)
+          traceEventFormatWriter.writeServiceEvents(writer, serviceListSortedByTime, ownDurations, pluginCostMap)
         }
 
         var totalDuration = 0L
