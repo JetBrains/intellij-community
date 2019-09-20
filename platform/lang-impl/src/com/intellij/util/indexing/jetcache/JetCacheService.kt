@@ -193,7 +193,7 @@ class JetCacheService: Disposable {
     private val LOG = Logger.getInstance(JetCacheService::class.java)
 
     @JvmStatic
-    val IS_ENABLED = System.getProperty("jet.cache.is.enabled") != null
+    val IS_ENABLED = true //System.getProperty("jet.cache.is.enabled") != null
 
     @JvmStatic
     val instance: JetCacheService
