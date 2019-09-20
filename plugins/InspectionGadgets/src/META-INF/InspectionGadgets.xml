@@ -2714,6 +2714,9 @@
     <localInspection groupPath="Java" language="JAVA" shortName="RedundantCollectionOperation" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="inspection.redundant.collection.operation.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.verbose.or.redundant.code.constructs"
                      enabledByDefault="true" level="WARNING" cleanupTool="true" implementationClass="com.siyeh.ig.redundancy.RedundantCollectionOperationInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="UnnecessaryStringEscape" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="unnecessary.string.escape.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.verbose.or.redundant.code.constructs"
+                     enabledByDefault="true" level="WARNING" cleanupTool="true" implementationClass="com.siyeh.ig.redundancy.UnnecessaryStringEscapeInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="StringOperationCanBeSimplified" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="inspection.redundant.string.operation.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.verbose.or.redundant.code.constructs"
                      enabledByDefault="true" level="WARNING" cleanupTool="true" implementationClass="com.siyeh.ig.redundancy.RedundantStringOperationInspection"/>
