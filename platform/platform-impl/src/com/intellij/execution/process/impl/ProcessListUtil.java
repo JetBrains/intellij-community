@@ -267,15 +267,25 @@ public class ProcessListUtil {
     return parseCommandOutput(Collections.singletonList(exeFile.getAbsolutePath()), ProcessListUtil::parseWinProcessListHelperOutput);
   }
 
-  @NotNull
+  @Nullable
   static List<ProcessInfo> parseWinProcessListHelperOutput(@NotNull String output) {
     String[] lines = StringUtil.splitByLines(output, false);
     List<ProcessInfo> result = new ArrayList<>();
+    if (lines.length % 3 != 0) {
+      LOG.info("Broken output of " + WIN_PROCESS_LIST_HELPER_FILENAME + ": output line count is not a multiple of 3");
+      LOG.debug(output);
+      return null;
+    }
     int processCount = lines.length / 3;
     for (int i = 0; i < processCount; i++) {
       int offset = i * 3;
       int id = StringUtil.parseInt(lines[offset], -1);
-      if (id == -1 || id == 0) continue;
+      if (id == -1) {
+        LOG.info("Broken output of " + WIN_PROCESS_LIST_HELPER_FILENAME + ": process ID is not a number: " + lines[offset]);
+        LOG.debug(output);
+        return null;
+      }
+      if (id == 0) continue;
 
       String name = lines[offset + 1];
       if (StringUtil.isEmpty(name)) continue;

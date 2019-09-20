@@ -227,5 +227,15 @@ public class ProcessListUtilTest extends TestCase {
                       "Unity Hub.exe",
                       "--no-sandbox --lang=en-US --node-integration=true /prefetch:1")
     );
+
+    assertNull(ProcessListUtil.parseWinProcessListHelperOutput(""));
+    assertNull(ProcessListUtil.parseWinProcessListHelperOutput("Hello"));
+    assertNull(ProcessListUtil.parseWinProcessListHelperOutput("12345\n" +
+                                                               "git.exe\n" +
+                                                               "git.exe fetch\n" +
+                                                               "1x\n" +
+                                                               "node.exe\n" +
+                                                               "node.exe qq\n"
+    ));
   }
 }
