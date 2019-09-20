@@ -2,9 +2,9 @@
 import {XYChartManager} from "@/charts/ChartManager"
 import * as am4charts from "@amcharts/amcharts4/charts"
 import * as am4core from "@amcharts/amcharts4/core"
-import {TimeLineItem, transformToTimeLineItems} from "@/timeline/timeLineChartHelper"
+import {TimeLineGuide, TimeLineItem, transformToTimeLineItems} from "@/timeline/timeLineChartHelper"
 import {Item} from "@/state/data"
-import {SERVICE_WAITING} from "@/state/DataManager"
+import {DataManager, SERVICE_WAITING} from "@/state/DataManager"
 
 export const LABEL_DURATION_THRESHOLD = 20
 
@@ -15,7 +15,9 @@ export abstract class BaseTimeLineChartManager extends XYChartManager {
   protected maxRowIndex = 0
   protected readonly threadFirstRowIndexSet = new Set<number>()
 
-  constructor(container: HTMLElement) {
+  protected readonly guides: Array<TimeLineGuide> = []
+
+  protected constructor(container: HTMLElement) {
     super(container)
 
     const levelAxis = this.configureLevelAxis()
@@ -145,5 +147,38 @@ export abstract class BaseTimeLineChartManager extends XYChartManager {
       }
     }
     return items
+  }
+
+  protected computeRangeMarkers(data: DataManager) {
+    const nameAxis = this.chart.xAxes.getIndex(0) as am4charts.DurationAxis
+    nameAxis.axisRanges.clear()
+
+    const guides = this.guides
+
+    const isInstantEventProvided = data.isInstantEventProvided
+    if (isInstantEventProvided) {
+      for (const item of data.data.traceEvents) {
+        // reduce unneeded guides - do not report "app component registered / loaded" (it is clear)
+        if (item.ph === "i" && !item.name.startsWith("app component ") && !item.name.endsWith(" initialized")) {
+          guides.push({label: item.name, value: Math.round(item.ts / 1000), color: this.blackColor})
+        }
+      }
+    }
+
+    for (const item of data.data.prepareAppInitActivities) {
+      if (!isInstantEventProvided && item.name === "splash initialization") {
+        guides.push({label: "splash", value: item.start, color: this.blackColor})
+      }
+    }
+
+    if (guides.length === 0) {
+      return
+    }
+
+    for (const guide of guides) {
+      const range = nameAxis.axisRanges.create()
+      this.configureRangeMarker(range, guide.label, guide.color, 10 /* empirical value, not clear for now how to compute programmatically */)
+      range.value = guide.value
+    }
   }
 }

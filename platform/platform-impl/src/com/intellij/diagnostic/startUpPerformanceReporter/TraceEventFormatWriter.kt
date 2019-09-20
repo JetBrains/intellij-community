@@ -11,8 +11,6 @@ import com.intellij.util.io.jackson.obj
 import java.io.OutputStreamWriter
 import java.util.concurrent.TimeUnit
 
-private const val VERSION = "1"
-
 // https://docs.google.com/document/d/1CvAClvFfyA5R-PhYUmn5OOQtYMH4h6I0nSsKchNAySU/edit#
 // ph - phase
 // dur - duration
@@ -31,8 +29,11 @@ internal class TraceEventFormatWriter(private val timeOffset: Long,
     }
   }
 
-  fun writeServiceEvents(writer: JsonGenerator, services: List<ActivityImpl>, ownDurations: ObjectLongHashMap<ActivityImpl>, pluginCostMap: MutableMap<String, ObjectLongHashMap<String>>) {
-    for (event in services) {
+  fun writeServiceEvents(writer: JsonGenerator, unsortedServices: List<ActivityImpl>, pluginCostMap: MutableMap<String, ObjectLongHashMap<String>>?) {
+    val servicesSortedByTime = unsortedServices.sortedWith(Comparator(::compareTime))
+    val ownDurations = computeOwnTime(servicesSortedByTime, threadNameManager)
+
+    for (event in servicesSortedByTime) {
       writer.obj {
         @Suppress("DuplicatedCode")
         val computedOwnDuration = ownDurations.get(event)
@@ -42,8 +43,10 @@ internal class TraceEventFormatWriter(private val timeOffset: Long,
           writer.writeNumberField("ownDur", TimeUnit.NANOSECONDS.toMicros(duration))
         })
 
-        event.pluginId?.let {
-          StartUpMeasurer.doAddPluginCost(it, event.category?.name ?: "unknown", duration, pluginCostMap)
+        if (pluginCostMap != null) {
+          event.pluginId?.let {
+            StartUpMeasurer.doAddPluginCost(it, event.category?.name ?: "unknown", duration, pluginCostMap)
+          }
         }
       }
     }
@@ -54,7 +57,7 @@ internal class TraceEventFormatWriter(private val timeOffset: Long,
     writer.prettyPrinter = MyJsonPrettyPrinter()
     writer.use {
       writer.obj {
-        writer.writeStringField("version", VERSION)
+        writer.writeStringField("version", StartUpPerformanceReporter.VERSION)
         writer.array("traceEvents") {
           writeInstantEvents(writer)
 
@@ -64,12 +67,7 @@ internal class TraceEventFormatWriter(private val timeOffset: Long,
             }
           }
 
-          for (event in services) {
-            writer.obj {
-              writeCompleteEvent(event, writer)
-              writer.writeStringField("cat", event.category!!.jsonName)
-            }
-          }
+          writeServiceEvents(writer, services, pluginCostMap = null /* computed only by idea format writer */)
 
           for (events in categoryToActivity.values) {
             for (event in events) {
@@ -107,9 +105,8 @@ internal class TraceEventFormatWriter(private val timeOffset: Long,
     writer.writeNumberField("pid", 1)
     writer.writeStringField("tid", threadNameManager.getThreadName(event))
 
-    val category = event.category
-    if (category != null) {
-      writer.writeStringField("cat", category.jsonName)
+    event.category?.let {
+      writer.writeStringField("cat", it.jsonName)
     }
   }
 }

@@ -25,8 +25,6 @@ private class ExposingCharArrayWriter : CharArrayWriter(8192) {
   }
 }
 
-private const val VERSION = "12"
-
 internal class IdeaFormatWriter(private val activities: Map<String, MutableList<ActivityImpl>>,
                                 private val pluginCostMap: MutableMap<String, ObjectLongHashMap<String>>,
                                 private val threadNameManager: ThreadNameManager) {
@@ -41,7 +39,7 @@ internal class IdeaFormatWriter(private val activities: Map<String, MutableList<
     writer.prettyPrinter = MyJsonPrettyPrinter()
     writer.use {
       writer.obj {
-        writer.writeStringField("version", VERSION)
+        writer.writeStringField("version", StartUpPerformanceReporter.VERSION)
         writer.writeStringField("build", ApplicationInfo.getInstance().build.asStringWithoutProductCode())
         writer.writeStringField("productCode", ApplicationInfo.getInstance().build.productCode)
         writer.writeStringField("generated", ZonedDateTime.now().format(DateTimeFormatter.RFC_1123_DATE_TIME))
@@ -51,10 +49,7 @@ internal class IdeaFormatWriter(private val activities: Map<String, MutableList<
         writer.array("traceEvents") {
           val traceEventFormatWriter = TraceEventFormatWriter(timeOffset, instantEvents, threadNameManager)
           traceEventFormatWriter.writeInstantEvents(writer)
-
-          val serviceListSortedByTime = services.sortedWith(Comparator(::compareTime))
-          val ownDurations = computeOwnTime(serviceListSortedByTime, threadNameManager)
-          traceEventFormatWriter.writeServiceEvents(writer, serviceListSortedByTime, ownDurations, pluginCostMap)
+          traceEventFormatWriter.writeServiceEvents(writer, services, pluginCostMap)
         }
 
         var totalDuration = 0L

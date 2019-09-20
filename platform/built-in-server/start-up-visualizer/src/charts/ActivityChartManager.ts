@@ -237,7 +237,7 @@ export class ActivityChartManager extends XYChartManager {
       // do not add range marker if equals to first item - it means that all items beyond of phase (e.g. project post-startup activities)
       if (guideLineDescriptor.item !== items[0]) {
         const range = nameAxis.axisRanges.create()
-        this.configureRangeMarker(range, guideLineDescriptor.label)
+        this.configureRangeMarker(range, guideLineDescriptor.label, this.blackColor)
         range.category = (guideLineDescriptor.item as ClassItem).shortName
         range.label.rotation = 0
       }

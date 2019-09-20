@@ -38,6 +38,8 @@ class StartUpPerformanceReporter : StartupActivity.DumbAware {
   companion object {
     internal val LOG = logger<StartUpMeasurer>()
 
+    internal const val VERSION = "12"
+
     internal fun sortItems(items: MutableList<ActivityImpl>) {
       items.sortWith(Comparator { o1, o2 ->
         if (o1 == o2.parent) {

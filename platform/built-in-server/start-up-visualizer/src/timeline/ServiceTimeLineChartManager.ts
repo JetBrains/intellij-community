@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 import * as am4charts from "@amcharts/amcharts4/charts"
 import * as am4core from "@amcharts/amcharts4/core"
-import {TimeLineGuide} from "./timeLineChartHelper"
 import {DataManager} from "@/state/DataManager"
 import {ClassItem} from "@/charts/ActivityChartManager"
 import {transformTraceEventToClassItem} from "@/charts/ServiceChartManager"
@@ -62,34 +61,9 @@ export class ServiceTimeLineChartManager extends BaseTimeLineChartManager {
   }
 
   render(dataManager: DataManager) {
+    this.guides.length = 0
     this.chart.data = this.transformIjData(dataManager)
     this.computeRangeMarkers(dataManager)
-  }
-
-  private computeRangeMarkers(dataManager: DataManager) {
-    const nameAxis = this.chart.xAxes.getIndex(0) as am4charts.DurationAxis
-    nameAxis.axisRanges.clear()
-
-    const guides: Array<TimeLineGuide> = []
-
-    if (dataManager.isInstantEventProvided) {
-      for (const item of dataManager.data.traceEvents) {
-        // reduce unneeded guides - do not report "app component registered / loaded" (it is clear)
-        if (item.ph === "i" && !item.name.startsWith("app component ") && !item.name.endsWith(" initialized")) {
-          guides.push({label: item.name, value: Math.round(item.ts / 1000)})
-        }
-      }
-    }
-
-    if (guides.length === 0) {
-      return
-    }
-
-    for (const guide of guides) {
-      const range = nameAxis.axisRanges.create()
-      this.configureRangeMarker(range, guide.label, 10 /* empirical value, not clear for now how to compute programmatically */)
-      range.value = guide.value
-    }
   }
 
   private transformIjData(dataManager: DataManager): Array<any> {

@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 import * as am4charts from "@amcharts/amcharts4/charts"
 import * as am4core from "@amcharts/amcharts4/core"
-import {TimeLineGuide, TimeLineItem, transformToTimeLineItems} from "./timeLineChartHelper"
+import {TimeLineItem, transformToTimeLineItems} from "./timeLineChartHelper"
 import {DataManager} from "@/state/DataManager"
 import {InputData} from "@/state/data"
 import {BaseTimeLineChartManager, LABEL_DURATION_THRESHOLD} from "@/timeline/BaseTimeLineChartManager"
@@ -67,6 +67,8 @@ export class TimelineChartManager extends BaseTimeLineChartManager {
   }
 
   render(data: DataManager) {
+    this.guides.length = 0
+
     this.setStatsLabel(data)
     this.chart.data = this.transformIjData(data.data)
 
@@ -74,39 +76,6 @@ export class TimelineChartManager extends BaseTimeLineChartManager {
     durationAxis.max = Math.max(data.data.totalDurationComputed, data.data.totalDurationActual)
 
     this.computeRangeMarkers(data)
-  }
-
-  private computeRangeMarkers(data: DataManager) {
-    const nameAxis = this.chart.xAxes.getIndex(0) as am4charts.DurationAxis
-    nameAxis.axisRanges.clear()
-
-    const guides: Array<TimeLineGuide> = []
-
-    if (data.isInstantEventProvided) {
-      for (const item of data.data.traceEvents) {
-        // reduce unneeded guides - do not report "app component registered / loaded" (it is clear)
-        if (item.ph === "i" && !item.name.startsWith("app component ") && !item.name.endsWith(" initialized")) {
-          guides.push({label: item.name, value: Math.round(item.ts / 1000)})
-        }
-      }
-    }
-    else {
-      for (const item of data.data.prepareAppInitActivities) {
-        if (item.name === "splash initialization") {
-          guides.push({label: "splash", value: item.start})
-        }
-      }
-    }
-
-    if (guides.length === 0) {
-      return
-    }
-
-    for (const guide of guides) {
-      const range = nameAxis.axisRanges.create()
-      this.configureRangeMarker(range, guide.label, 10 /* empirical value, not clear for now how to compute programmatically */)
-      range.value = guide.value
-    }
   }
 
   private setStatsLabel(data: DataManager) {
@@ -144,7 +113,21 @@ export class TimelineChartManager extends BaseTimeLineChartManager {
 
     this.threadRowFirstIndex = this.maxRowIndex + 1
 
-    return items.concat(this.transformParallelToTimeLineItems(data.prepareAppInitActivities, colorSet, this.threadRowFirstIndex))
+    const parallelItems = this.transformParallelToTimeLineItems(data.prepareAppInitActivities, colorSet, this.threadRowFirstIndex)
+    this.addGuides(parallelItems)
+    return items.concat(parallelItems)
+  }
+
+  private addGuides(parallelItems: Array<TimeLineItem>) {
+    const guides = this.guides
+    for (const item of parallelItems) {
+      if (item.name.endsWith(" async preloading") || item.name.endsWith(" sync preloading")) {
+        guides.push({label: "", value: item.end, color: item.color})
+      }
+      else if (item.name.endsWith("service preloading")) {
+        guides.push({label: "", value: item.start, color: item.color})
+      }
+    }
   }
 
   private computeRowIndexForMainActivities(items: Array<TimeLineItem>, colorSet: am4core.ColorSet) {

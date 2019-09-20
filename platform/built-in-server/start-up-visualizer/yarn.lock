@@ -6875,9 +6875,9 @@ tryer@^1.0.1:
   integrity sha512-c3zayb8/kWWpycWYg87P71E1S1ZL6b6IJxfb5fvsUgsf0S2MVGaDhDXXjDMpdCpfWXqptc+4mXwmiy1ypXqRAA==
 
 ts-loader@^6.0.1:
-  version "6.1.0"
-  resolved "https://registry.yarnpkg.com/ts-loader/-/ts-loader-6.1.0.tgz#999cb0a7644f9c7c6c0901802dce50ceb0a76e5b"
-  integrity sha512-7JedeOu2rsYHQDEr2fwmMozABwbQTZXEaEMZPSIWG7gpzRefOLJCqwdazcegHtyaxp04PeEgs/b0m08WMpnIzQ==
+  version "6.1.1"
+  resolved "https://registry.yarnpkg.com/ts-loader/-/ts-loader-6.1.1.tgz#f30c68aa1ce59fa266f0bb70a36959ca68f40ddc"
+  integrity sha512-AoOek8ZWJlWwTRH5ttNmZPBRcASUJZc8wc8E/2PGOXef96H97J8KaLXaW/zUnvyFjvCoRBhTGh9ZIMKL1arcCA==
   dependencies:
     chalk "^2.3.0"
     enhanced-resolve "^4.0.0"
