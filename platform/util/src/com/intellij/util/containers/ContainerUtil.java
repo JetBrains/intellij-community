@@ -3174,5 +3174,20 @@ public class ContainerUtil extends ContainerUtilRt {
   public static <T> ObjectIntMap<T> createWeakKeyIntValueMap() {
     return new WeakKeyIntValueHashMap<>();
   }
+
+  @SuppressWarnings("unchecked")
+  @Contract(value = "_ -> new", pure = true)
+  @NotNull
+  public static <T> List<T> optimize(@NotNull List<T> list) {
+    if (list.isEmpty()) {
+      return Collections.emptyList();
+    }
+    else if (list.size() == 1) {
+      return immutableSingletonList(list.get(0));
+    }
+    else {
+      return immutableList((T[])list.toArray());
+    }
+  }
 }
 
