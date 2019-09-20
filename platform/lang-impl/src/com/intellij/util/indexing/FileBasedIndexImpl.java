@@ -539,7 +539,6 @@ public final class FileBasedIndexImpl extends FileBasedIndex implements Disposab
           }
         }
 
-        Disposer.dispose(JetCacheService.getInstance());
         ContentHashesSupport.flushContentHashes();
         SharedIndicesData.flushData();
         myConnection.disconnect();

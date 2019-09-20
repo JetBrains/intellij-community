@@ -113,10 +113,6 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
       try {
         data = mySnapshotInputMappings.readData(content);
         if (data != null) {
-          //if (getExtension() instanceof StubUpdatingIndex) {
-          //  m.increment();
-          //  System.out.println("preloaded " + m.sum() + " vs " + i.sum());
-          //}
           return data;
         } else {
           containsSnapshotData = !myUpdateMappings;
@@ -126,10 +122,6 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
         throw new RuntimeException(e);
       }
     }
-    //if (getExtension() instanceof StubUpdatingIndex) {
-    //  System.out.println("preloaded " + m.sum() + " vs " + i.sum());
-    //  i.increment();
-    //}
     data = super.mapInput(content);
     if (!containsSnapshotData && !UpdatableSnapshotInputMappingIndex.ignoreMappingIndexUpdate(content)) {
       try {

@@ -58,17 +58,6 @@ class StubSerializationHelper {
     }
 
     int id = Hashing.murmur3_32().hashString(name, StandardCharsets.UTF_8).asInt();
-    //
-    //if (myUnmodifiable) {
-    //  id = myNameStorage.tryEnumerate(name);
-    //  if (id == 0) {
-    //    LOG.debug("serialized " + name + " is ignored in unmodifiable stub serialization manager");
-    //    return;
-    //  }
-    //}
-    //else {
-    //  id = myNameStorage.enumerate(name);
-    //}
     myIdToName.put(id, name);
     myNameToId.put(name, id);
   }
@@ -355,22 +344,8 @@ class StubSerializationHelper {
     String name = myIdToName.get(id);
     Computable<ObjectStubSerializer> lazy = name == null ? null : myNameToLazySerializer.get(name);
     ObjectStubSerializer serializer = lazy == null ? null : lazy.compute();
-    if (serializer == null) {
-      //throw reportMissingSerializer(id, parentStub);
-    }
     return serializer;
   }
-
-  //private SerializerNotFoundException reportMissingSerializer(int id, @Nullable Stub parentStub) {
-  //  String externalId = null;
-  //  try {
-  //    externalId = myNameStorage.valueOf(id);
-  //  } catch (Throwable ignore) {}
-  //  return new SerializerNotFoundException(
-  //    brokenStubFormat(ourRootStubSerializer.get()) +
-  //    "Internal details, no serializer registered for stub: ID=" + id + ", externalId:" + externalId +
-  //    "; parent stub class=" + (parentStub != null? parentStub.getClass().getName() +", parent stub type:" + parentStub.getStubType() : "null"));
-  //}
 
   static String brokenStubFormat(ObjectStubSerializer root) {
     return "Broken stub format, most likely version of " + root + " was not updated after serialization changes\n";
