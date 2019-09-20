@@ -13,6 +13,7 @@ const collator = new Intl.Collator(undefined, {numeric: true, sensitivity: "base
 
 export abstract class BaseTimeLineChartManager extends XYChartManager {
   protected maxRowIndex = 0
+  protected threadRowFirstIndex = 0
   protected readonly threadFirstRowIndexSet = new Set<number>()
 
   protected readonly guides: Array<TimeLineGuide> = []
@@ -29,12 +30,47 @@ export abstract class BaseTimeLineChartManager extends XYChartManager {
     // noinspection SpellCheckingInspection
     this.chart.events.on("datavalidated", () => {
       const chart = this.chart
-      const targetHeight = chart.pixelHeight + ((this.maxRowIndex + 1) * 30 - levelAxis.pixelHeight)
+      const targetHeight = chart.pixelHeight + ((this.maxRowIndex + 1) * 20 - levelAxis.pixelHeight)
       chart.svgContainer!!.htmlElement.style.height = targetHeight + "px"
     })
   }
 
-  protected abstract configureLevelAxis(): am4charts.CategoryAxis
+  protected configureLevelAxis(): am4charts.CategoryAxis {
+    const levelAxis = this.chart.yAxes.push(new am4charts.CategoryAxis())
+    levelAxis.dataFields.category = "rowIndex"
+    levelAxis.renderer.grid.template.location = 0
+    levelAxis.renderer.minGridDistance = 1
+
+    levelAxis.renderer.grid.template.adapter.add("disabled", (_, target, _key) => {
+      if (target.dataItem == null) {
+        return false
+      }
+
+      const index = target.dataItem.index
+      if (index === 0 || index === -1) {
+        return false
+      }
+      if (index < this.threadRowFirstIndex) {
+        return true
+      }
+      return !this.threadFirstRowIndexSet.has(index)
+    })
+
+    levelAxis.renderer.labels.template.selectable = true
+    levelAxis.renderer.labels.template.adapter.add("text", (_value, target, _key) => {
+      const dataItem = target.dataItem
+      const index = dataItem == null ? -1 : dataItem.index
+      if (index >= this.threadRowFirstIndex && this.threadFirstRowIndexSet.has(index)) {
+        return "{thread}"
+      }
+      else {
+        return ""
+      }
+    })
+    // level is an internal property - not interested for user
+    levelAxis.cursorTooltipEnabled = false
+    return levelAxis
+  }
 
   protected configureSeries(valueLabelText: string) {
     const series = this.chart.series.push(new am4charts.ColumnSeries())
