@@ -148,6 +148,8 @@ class GeneratorTestCase(unittest.TestCase):
 
     @contextmanager
     def comparing_dirs(self, subdir='', tmp_subdir=''):
+        self.assertTrue(os.path.exists(self.test_data_dir),
+                        "Test data directory {!r} doesn't exist".format(self.test_data_dir))
         before_dir = os.path.join(self.test_data_dir, subdir, 'before')
         after_dir = os.path.join(self.test_data_dir, subdir, 'after')
         dst_dir = os.path.join(self.temp_dir, tmp_subdir)
