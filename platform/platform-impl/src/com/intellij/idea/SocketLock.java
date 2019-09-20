@@ -52,11 +52,19 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
-import static com.intellij.idea.ApplicationLoader.LAUNCHER_INITIAL_DIRECTORY_ENV_VAR;
 import static com.intellij.openapi.util.Pair.pair;
 
 public final class SocketLock {
   public enum ActivationStatus {ACTIVATED, NO_INSTANCE, CANNOT_ACTIVATE}
+
+  /**
+   * Name of an environment variable that will be set by the Windows launcher and will contain the working directory the
+   * IDE was started with.
+   *
+   * This is necessary on Windows because the launcher needs to change the current directory for the JVM to load
+   * properly; see the details in WindowsLauncher.cpp.
+   */
+  public static final String LAUNCHER_INITIAL_DIRECTORY_ENV_VAR = "IDEA_INITIAL_DIRECTORY";
 
   private static final String PORT_FILE = "port";
   private static final String PORT_LOCK_FILE = "port.lock";

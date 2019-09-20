@@ -13,6 +13,7 @@ import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.plugins.*
 import com.intellij.ide.ui.customization.CustomActionsSchema
+import com.intellij.idea.SocketLock.LAUNCHER_INITIAL_DIRECTORY_ENV_VAR
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
@@ -74,15 +75,6 @@ import java.util.concurrent.atomic.AtomicReference
 import javax.swing.JFrame
 import javax.swing.JOptionPane
 import kotlin.system.exitProcess
-
-/**
- * Name of an environment variable that will be set by the Windows launcher and will contain the working directory the
- * IDE was started with.
- *
- * This is necessary on Windows because the launcher needs to change the current directory for the JVM to load
- * properly; see the details in WindowsLauncher.cpp.
- */
-const val LAUNCHER_INITIAL_DIRECTORY_ENV_VAR = "IDEA_INITIAL_DIRECTORY"
 
 private val SAFE_JAVA_ENV_PARAMETERS = arrayOf(JetBrainsProtocolHandler.REQUIRED_PLUGINS_KEY)
 private val LOG = Logger.getInstance("#com.intellij.idea.ApplicationLoader")
