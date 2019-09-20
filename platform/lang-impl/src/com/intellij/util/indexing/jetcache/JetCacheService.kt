@@ -57,7 +57,7 @@ class JetCacheService: Disposable {
           val port = address.port
           LOG.info("connecting to JetCache server ${host}:${port}")
           val scheduler =  ThreadScheduler()/*SingleThreadScheduler(Lifetime.Eternal, "JetCache thread")*/
-          val client = Client(InetAddress.getByName("172.30.162.233"), 8888, scheduler)
+          val client = Client(host, port, scheduler)
           jetCache = NetworkJetCache(Lifetime.Eternal, client.model, scheduler)
           semaphore.up()
           return@DiscoveryClient
