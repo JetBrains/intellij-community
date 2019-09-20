@@ -11,6 +11,7 @@ iml_module(
     deps = [
         "//prebuilts/tools/common/m2/repository/aopalliance/aopalliance/1.0:jar",
         "//prebuilts/tools/common/m2/repository/com/google/guava/guava/18.0:jar",
+        "//prebuilts/tools/common/m2/repository/com/google/inject/guice/4.0:jar",
         "//prebuilts/tools/common/m2/repository/javax/annotation/jsr250-api/1.0:jar",
         "//prebuilts/tools/common/m2/repository/javax/enterprise/cdi-api/1.0:jar",
         "//prebuilts/tools/common/m2/repository/javax/inject/javax.inject/1:jar",
