@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.ByteArraySequence
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.Semaphore
 import com.intellij.util.indexing.*
 import com.jetbrains.rd.util.error
@@ -30,8 +31,8 @@ class JetCacheService {
   @Volatile
   var jetCache: JetCache? = null
 
-  fun getProjectHash(project: Project): ByteArray {
-    return projectCurrentVersion.get(project)!!
+  fun getProjectHash(project: Project): ByteArray? {
+    return projectCurrentVersion.get(project)
   }
 
   fun tryGetIndexes(project: Project) {
@@ -66,6 +67,7 @@ class JetCacheService {
     if (!IS_ENABLED) {
       LOG.error("JetCache service is disabled")
     }
+    LOG.info("Query JetCache")
     val phash = ProjectStateHashGenerator.generateHashFor(project)
     projectCurrentVersion.put(project, phash)
 

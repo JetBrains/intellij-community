@@ -349,7 +349,7 @@ public class SnapshotInputMappings<Key, Value, Input> implements UpdatableSnapsh
       ByteArraySequence seq = AbstractForwardIndexAccessor.serializeToByteSeq(data, myMapExternalizer, data.size());
       saveContents(id, seq);
 
-      if (myJetCache != null) {
+      if (myJetCache != null && project != null) {
         byte[] coolHash = ContentHashesSupport.calcContentIdHash(hash, myIndexId);
         myJetCache.put(coolHash, seq.toBytes());
         myJetCache.merge(project, new byte[][] { coolHash });
