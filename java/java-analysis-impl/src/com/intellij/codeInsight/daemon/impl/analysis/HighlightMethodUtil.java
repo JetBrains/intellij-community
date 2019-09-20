@@ -1010,7 +1010,7 @@ public class HighlightMethodUtil {
       if (showShort) continue;
       s.append("<tr>");
       if (parameter != null) {
-        s.append("<td><span style='").append(parameterNameStyle).append("'>").append(parameter.getName()).append(":</span></td>");
+        s.append("<td><table><tr><td style='").append(parameterNameStyle).append("'>").append(parameter.getName()).append(":</td></tr></table></td>");
         s.append("<td style='padding-left: 16px; padding-right: 24px;'>")
           .append(HighlightUtil.redIfNotMatch(substitutor.substitute(parameter.getType()), true))
           .append("</td>");
@@ -1034,9 +1034,9 @@ public class HighlightMethodUtil {
 
     String errorMessage = info != null ? info.getInferenceErrorMessage() : null;
     if (errorMessage != null) {
-      s.append("<span style='padding-left: 4px;'>")
+      s.append("<table><tr><td style='padding-left: 4px; padding-top: 10;'>")
         .append("reason: ").append(XmlStringUtil.escapeString(errorMessage).replaceAll("\n", "<br/>"))
-        .append("</span>");
+        .append("</td></tr></table>");
     }
     s.append("</body></html>");
 
