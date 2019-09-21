@@ -137,7 +137,9 @@ grammarKit {
   //tag or short commit hash of IntelliJ patched JFlex
 //  jflexRelease = '1.7.0-1'
   //tag or short commit hash of Grammar-Kit to use
-  grammarKitRelease = '07f30a1e7666f36ae780f614b6bbc89690ba36c3'
+  if (isEAP) {
+    grammarKitRelease = '07f30a1e7666f36ae780f614b6bbc89690ba36c3'
+  }
 }
 
 task generateLombokConfigParser(type: org.jetbrains.grammarkit.tasks.GenerateParser) {
