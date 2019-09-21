@@ -2,7 +2,7 @@
 package com.intellij.util.ui;
 
 import com.intellij.BundleBase;
-import com.intellij.diagnostic.LoadingPhase;
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
@@ -80,7 +80,7 @@ import java.util.regex.Pattern;
 public final class UIUtil extends StartupUiUtil {
 
   static {
-    LoadingPhase.LAF_INITIALIZED.assertAtLeast();
+    LoadingState.LAF_INITIALIZED.checkOccurred();
   }
 
   public static final String BORDER_LINE = "<hr size=1 noshade>";

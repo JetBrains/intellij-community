@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui
 
-import com.intellij.diagnostic.LoadingPhase
+import com.intellij.diagnostic.LoadingState
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
@@ -419,7 +419,7 @@ class UISettings constructor(private val notRoamableOptions: NotRoamableUiSettin
       get() {
         var result = cachedInstance
         if (result == null) {
-          LoadingPhase.CONFIGURATION_STORE_INITIALIZED.assertAtLeast()
+          LoadingState.CONFIGURATION_STORE_INITIALIZED.checkOccurred()
           result = ApplicationManager.getApplication().getService(UISettings::class.java)!!
           cachedInstance = result
         }
@@ -430,7 +430,7 @@ class UISettings constructor(private val notRoamableOptions: NotRoamableUiSettin
     val instanceOrNull: UISettings?
       get() {
         val result = cachedInstance
-        if (result == null && LoadingPhase.CONFIGURATION_STORE_INITIALIZED.isComplete) {
+        if (result == null && LoadingState.CONFIGURATION_STORE_INITIALIZED.isOccurred) {
           return instance
         }
         return result
@@ -464,7 +464,7 @@ class UISettings constructor(private val notRoamableOptions: NotRoamableUiSettin
       g as Graphics2D
       g.setRenderingHint(RenderingHints.KEY_TEXT_LCD_CONTRAST, UIUtil.getLcdContrastValue())
 
-      if (LoadingPhase.CONFIGURATION_STORE_INITIALIZED.isComplete && ApplicationManager.getApplication() == null) {
+      if (LoadingState.CONFIGURATION_STORE_INITIALIZED.isOccurred && ApplicationManager.getApplication() == null) {
         // cannot use services while Application has not been loaded yet, so let's apply the default hints
         GraphicsUtil.applyRenderingHints(g)
         return

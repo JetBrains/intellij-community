@@ -2,7 +2,7 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.diagnostic.ImplementationConflictException;
-import com.intellij.diagnostic.LoadingPhase;
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.idea.Main;
 import com.intellij.openapi.application.ApplicationManager;
@@ -23,7 +23,7 @@ public final class StartupAbortedException extends RuntimeException {
   }
 
   public static void processException(@NotNull Throwable t) {
-    if (LoadingPhase.COMPONENT_LOADED.isComplete() && !(t instanceof StartupAbortedException)) {
+    if (LoadingState.COMPONENTS_LOADED.isOccurred() && !(t instanceof StartupAbortedException)) {
       if (!(t instanceof ProcessCanceledException)) {
         PluginManagerCore.getLogger().error(t);
       }
@@ -54,7 +54,7 @@ public final class StartupAbortedException extends RuntimeException {
       }
     }
 
-    if (LoadingPhase.COMPONENT_REGISTERED.isComplete()) {
+    if (LoadingState.COMPONENTS_REGISTERED.isOccurred()) {
       ImplementationConflictException conflictException = findCause(t, ImplementationConflictException.class);
       if (conflictException != null) {
         PluginConflictReporter pluginConflictReporter = ApplicationManager.getApplication().getService(PluginConflictReporter.class);

@@ -336,7 +336,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       else {
         ProgressManager.getInstance().runProcess(() -> createComponents(indicator), indicator);
       }
-      LoadingPhase.setCurrentPhase(LoadingPhase.COMPONENT_LOADED);
+      StartUpMeasurer.setCurrentState(LoadingState.COMPONENTS_LOADED);
     }
     finally {
       token.finish();

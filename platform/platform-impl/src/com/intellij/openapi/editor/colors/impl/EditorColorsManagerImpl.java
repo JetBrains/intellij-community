@@ -6,7 +6,7 @@ import com.intellij.configurationStore.BundledSchemeEP;
 import com.intellij.configurationStore.LazySchemeProcessor;
 import com.intellij.configurationStore.SchemeDataHolder;
 import com.intellij.configurationStore.SchemeExtensionProvider;
-import com.intellij.diagnostic.LoadingPhase;
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.ide.WelcomeWizardUtil;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.UITheme;
@@ -366,7 +366,7 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
 
   @Override
   public void setGlobalScheme(@Nullable EditorColorsScheme scheme) {
-    boolean notify = LoadingPhase.COMPONENT_LOADED.isComplete();
+    boolean notify = LoadingState.COMPONENTS_LOADED.isOccurred();
     mySchemeManager.setCurrent(scheme == null ? getDefaultScheme() : scheme, notify);
   }
 

@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
-import com.intellij.diagnostic.LoadingPhase;
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.project.Project;
@@ -100,7 +100,7 @@ public final class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider
   @Override
   public void setExtendedState(int state) {
     // do not load FrameInfoHelper class
-    if (LoadingPhase.COMPONENT_REGISTERED.isComplete() && getExtendedState() == Frame.NORMAL && FrameInfoHelper.isMaximized(state)) {
+    if (LoadingState.COMPONENTS_REGISTERED.isOccurred() && getExtendedState() == Frame.NORMAL && FrameInfoHelper.isMaximized(state)) {
       getRootPane().putClientProperty(NORMAL_STATE_BOUNDS, getBounds());
     }
     super.setExtendedState(state);
@@ -108,7 +108,7 @@ public final class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider
 
   @Override
   public void paint(@NotNull Graphics g) {
-    if (LoadingPhase.COMPONENT_REGISTERED.isComplete()) {
+    if (LoadingState.COMPONENTS_REGISTERED.isOccurred()) {
       UISettings.setupAntialiasing(g);
     }
 

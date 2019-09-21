@@ -39,7 +39,7 @@ public class DialogAppender extends AppenderSkeleton {
       return;  // the dialog appender doesn't deal with non-critical errors and is meaningless when there is no frame to show an error icon
     }
 
-    if (LoadingPhase.COMPONENT_LOADED.isComplete()) {
+    if (LoadingState.COMPONENTS_LOADED.isOccurred()) {
       LoggingEvent queued;
       while ((queued = myEarlyEvents.poll()) != null) queueAppend(queued);
       queueAppend(event);

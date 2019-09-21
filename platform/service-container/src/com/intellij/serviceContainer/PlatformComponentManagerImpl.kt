@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.serviceContainer
 
-import com.intellij.diagnostic.LoadingPhase
+import com.intellij.diagnostic.LoadingState
 import com.intellij.diagnostic.PluginException
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.ide.plugins.*
@@ -137,7 +137,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
       activity = activity.endAndStart("${activityNamePrefix}extension registration")
     }
 
-    val notifyListeners = LoadingPhase.PROJECT_OPENED.isComplete
+    val notifyListeners = LoadingState.PROJECT_OPENED.isOccurred
     for (descriptor in plugins) {
       descriptor.registerExtensions(extensionArea, this, notifyListeners)
     }
@@ -148,8 +148,8 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
     }
 
     // app - phase must be set before getMessageBus()
-    if (picoContainer.parent == null && !LoadingPhase.PROJECT_OPENED.isComplete /* loading plugin on the fly */) {
-      LoadingPhase.setCurrentPhase(LoadingPhase.COMPONENT_REGISTERED)
+    if (picoContainer.parent == null && !LoadingState.PROJECT_OPENED.isOccurred /* loading plugin on the fly */) {
+      StartUpMeasurer.setCurrentState(LoadingState.COMPONENTS_REGISTERED)
     }
 
     // todo support lazy listeners for dynamically loaded plugins
@@ -254,7 +254,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
   @Internal
   fun initializeComponent(component: Any, serviceDescriptor: ServiceDescriptor?) {
     if (serviceDescriptor == null || !(component is PathMacroManager || component is IComponentStore || component is MessageBusFactory)) {
-      LoadingPhase.CONFIGURATION_STORE_INITIALIZED.assertAtLeast()
+      LoadingState.CONFIGURATION_STORE_INITIALIZED.checkOccurred()
       componentStore.initComponent(component, serviceDescriptor)
     }
   }
@@ -332,7 +332,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
   }
 
   private fun <T : Any> getOrCreateLightService(serviceClass: Class<T>, cache: ConcurrentMap<Class<*>, Any>): T {
-    LoadingPhase.COMPONENT_REGISTERED.assertAtLeast()
+    LoadingState.COMPONENTS_REGISTERED.checkOccurred()
 
     @Suppress("UNCHECKED_CAST")
     var result = cache.get(serviceClass) as T?

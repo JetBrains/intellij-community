@@ -2,7 +2,7 @@
 package com.intellij.openapi.application;
 
 import com.google.common.base.MoreObjects;
-import com.intellij.diagnostic.LoadingPhase;
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.cl.PluginClassLoader;
@@ -251,7 +251,7 @@ public class TransactionGuardImpl extends TransactionGuard {
   }
 
   private static boolean areAssertionsEnabled() {
-    return LoadingPhase.COMPONENT_LOADED.isComplete() && Registry.is("ide.require.transaction.for.model.changes", false);
+    return LoadingState.COMPONENTS_LOADED.isOccurred() && Registry.is("ide.require.transaction.for.model.changes", false);
   }
 
   @Override

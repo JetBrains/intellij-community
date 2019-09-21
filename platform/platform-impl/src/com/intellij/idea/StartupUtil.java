@@ -4,7 +4,7 @@ package com.intellij.idea;
 import com.intellij.Patches;
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.diagnostic.Activity;
-import com.intellij.diagnostic.LoadingPhase;
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.ide.CliResult;
 import com.intellij.ide.IdeEventQueue;
@@ -68,7 +68,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
-import static com.intellij.diagnostic.LoadingPhase.LAF_INITIALIZED;
+import static com.intellij.diagnostic.LoadingState.LAF_INITIALIZED;
 import static java.nio.file.attribute.PosixFilePermission.*;
 
 public final class StartupUtil {
@@ -139,7 +139,7 @@ public final class StartupUtil {
   }
 
   public static void prepareApp(@NotNull String[] args, @NotNull String mainClass) throws Exception {
-    LoadingPhase.setStrictMode();
+    LoadingState.setStrictMode();
 
     Activity activity = StartUpMeasurer.startMainActivity("ForkJoin CommonPool configuration");
     IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(Main.isHeadless(args));
@@ -277,7 +277,7 @@ public final class StartupUtil {
           }
 
           future.complete(null);
-          LoadingPhase.setCurrentPhase(LAF_INITIALIZED);
+          StartUpMeasurer.setCurrentState(LAF_INITIALIZED);
 
           if (Main.isHeadless()) {
             return;

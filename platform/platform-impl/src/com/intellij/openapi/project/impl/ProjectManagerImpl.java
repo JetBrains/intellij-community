@@ -477,10 +477,10 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       StartUpMeasurer.stopPluginCostMeasurement();
     }, ModalityState.NON_MODAL, project.getDisposedOrDisposeInProgress());
     ApplicationManager.getApplication().invokeLater(() -> {
-      LoadingPhase.compareAndSet(LoadingPhase.COMPONENT_LOADED,
-                                 DumbService.isDumb(project)
-                                 ? LoadingPhase.PROJECT_OPENED
-                                 : LoadingPhase.INDEXING_FINISHED);
+      LoadingState phase = DumbService.isDumb(project)
+      ? LoadingState.PROJECT_OPENED
+      : LoadingState.INDEXING_FINISHED;
+      StartUpMeasurer.compareAndSetCurrentState(LoadingState.COMPONENTS_LOADED, phase);
 
       if (!project.isDisposedOrDisposeInProgress()) {
         startupManager.scheduleBackgroundPostStartupActivities();

@@ -2,7 +2,7 @@
 package com.intellij.ui.mac;
 
 import com.apple.eawt.Application;
-import com.intellij.diagnostic.LoadingPhase;
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.AboutAction;
 import com.intellij.ide.actions.ShowSettingsAction;
@@ -69,7 +69,7 @@ public final class MacOSApplicationProvider {
       application.setOpenFileHandler(event -> {
         List<File> files = event.getFiles();
         if (files.isEmpty()) return;
-        if (LoadingPhase.COMPONENT_LOADED.isComplete()) {
+        if (LoadingState.COMPONENTS_LOADED.isOccurred()) {
           Project project = getProject(false);
           submit("OpenFile", () -> ProjectUtil.tryOpenFileList(project, files, "MacMenu"));
         }

@@ -9,9 +9,12 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 public final class StartUpMeasurer {
+  final static AtomicReference<LoadingState> currentState = new AtomicReference<>(LoadingState.BOOTSTRAP);
+
   public static final long MEASURE_THRESHOLD = TimeUnit.MILLISECONDS.toNanos(10);
 
   // `what + noun` is used as scheme for name to make analyzing easier (to visually group - `components loading/initialization/etc`,
@@ -77,9 +80,13 @@ public final class StartUpMeasurer {
    * Scope is not supported — reported as global.
    */
   public static void addInstantEvent(@NotNull String name) {
+    if (!isEnabled) {
+      return;
+    }
+
     ActivityImpl activity = new ActivityImpl(name, null);
     activity.setEnd(-1);
-    add(activity);
+    addActivity(activity);
   }
 
   @NotNull
@@ -140,15 +147,36 @@ public final class StartUpMeasurer {
     return duration;
   }
 
-  @NotNull
-  public static Activity addCompletedActivity(long start, long end, @NotNull String name, @NotNull ActivityCategory category, String pluginId) {
+  public static void addCompletedActivity(long start, long end, @NotNull String name, @NotNull ActivityCategory category, String pluginId) {
+    if (!isEnabled) {
+      return;
+    }
+
     ActivityImpl item = new ActivityImpl(name, start, /* parent = */ null, pluginId);
     item.setCategory(category);
     item.setEnd(end);
-    add(item);
-    return item;
+    addActivity(item);
   }
 
+  public static void setCurrentState(@NotNull LoadingState state) {
+    LoadingState old = currentState.getAndSet(state);
+    if (old.ordinal() > state.ordinal()) {
+      LoadingState.getLogger().error("New state " + state + " cannot precede old " + old);
+    }
+    stateSet(state);
+  }
+
+  public static void compareAndSetCurrentState(@NotNull LoadingState expectedState, @NotNull LoadingState newState) {
+    if (currentState.compareAndSet(expectedState, newState)) {
+      stateSet(newState);
+    }
+  }
+
+  private static void stateSet(@NotNull LoadingState state) {
+    addInstantEvent(state.displayName);
+  }
+
+  @ApiStatus.Internal
   public static void processAndClear(boolean isContinueToCollect, @NotNull Consumer<? super ActivityImpl> consumer) {
     isEnabled = isContinueToCollect;
 
@@ -167,12 +195,11 @@ public final class StartUpMeasurer {
     return startTime;
   }
 
-  static void add(@NotNull ActivityImpl activity) {
-    if (isEnabled) {
-      items.add(activity);
-    }
+  static void addActivity(@NotNull ActivityImpl activity) {
+    items.add(activity);
   }
 
+  @ApiStatus.Internal
   public static void addTimings(@NotNull LinkedHashMap<String, Long> timings, @NotNull String groupName) {
     if (!items.isEmpty()) {
       throw new IllegalStateException("addTimings must be not called if some events were already added using API");
@@ -200,6 +227,7 @@ public final class StartUpMeasurer {
     items.add(parent);
   }
 
+  @ApiStatus.Internal
   public static void addPluginCost(@NotNull String pluginId, @NotNull String phase, long time) {
     if (!isMeasuringPluginStartupCosts()) {
       return;

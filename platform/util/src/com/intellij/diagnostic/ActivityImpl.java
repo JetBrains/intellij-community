@@ -106,7 +106,7 @@ public final class ActivityImpl implements Activity {
   public void end() {
     assert end == 0 : "not started or already ended";
     end = StartUpMeasurer.getCurrentTime();
-    StartUpMeasurer.add(this);
+    StartUpMeasurer.addActivity(this);
   }
 
   @Override

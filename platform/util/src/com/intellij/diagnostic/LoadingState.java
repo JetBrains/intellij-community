@@ -10,42 +10,34 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 @ApiStatus.Internal
-public enum LoadingPhase {
+public enum LoadingState {
   BOOTSTRAP("bootstrap"),
   LAF_INITIALIZED("LaF is initialized"),
-  COMPONENT_REGISTERED("app component registered"),
+  COMPONENTS_REGISTERED("app component registered"),
   CONFIGURATION_STORE_INITIALIZED("app store initialized"),
-  COMPONENT_LOADED("app component loaded"),
+  COMPONENTS_LOADED("app component loaded"),
   PROJECT_OPENED("project opened"),
   INDEXING_FINISHED("indexing finished");
 
-  private final String displayName;
+  final String displayName;
 
-  LoadingPhase(@NotNull String displayName) {
+  private static boolean CHECK_LOADING_PHASE;
+
+  LoadingState(@NotNull String displayName) {
     this.displayName = displayName;
   }
 
   @NotNull
-  private static Logger getLogger() {
-    return Logger.getInstance(LoadingPhase.class);
+  static Logger getLogger() {
+    return Logger.getInstance("#com.intellij.diagnostic.LoadingState");
   }
 
-  private static boolean CHECK_LOADING_PHASE;
-
+  @ApiStatus.Internal
   public static void setStrictMode() {
     CHECK_LOADING_PHASE = true;
-  }
-
-  public static void setCurrentPhase(@NotNull LoadingPhase phase) {
-    LoadingPhase old = currentPhase.getAndSet(phase);
-    if (old.ordinal() > phase.ordinal()) {
-      getLogger().error("New phase " + phase + " cannot be earlier than old " + old);
-    }
-    logPhaseSet(phase);
   }
 
   private final static Set<Throwable> stackTraces = new THashSet<>(new TObjectHashingStrategy<Throwable>() {
@@ -69,29 +61,13 @@ public enum LoadingPhase {
     }
   });
 
-  private final static AtomicReference<LoadingPhase> currentPhase = new AtomicReference<>(BOOTSTRAP);
-
-  public static void compareAndSet(@NotNull LoadingPhase expect, @NotNull LoadingPhase phase) {
-    if (currentPhase.compareAndSet(expect, phase)) {
-      logPhaseSet(phase);
-    }
-  }
-
-  private static void logPhaseSet(@NotNull LoadingPhase phase) {
-    StartUpMeasurer.addInstantEvent(phase.displayName);
-
-    if (phase.ordinal() >= CONFIGURATION_STORE_INITIALIZED.ordinal()) {
-      getLogger().info("Reached the loading phase " + phase);
-    }
-  }
-
-  public void assertAtLeast() {
+  public void checkOccurred() {
     if (!CHECK_LOADING_PHASE) {
       return;
     }
 
-    LoadingPhase currentPhase = LoadingPhase.currentPhase.get();
-    if (currentPhase.ordinal() >= ordinal() || isKnownViolator()) {
+    LoadingState currentState = StartUpMeasurer.currentState.get();
+    if (currentState.ordinal() >= ordinal() || isKnownViolator()) {
       return;
     }
 
@@ -101,9 +77,9 @@ public enum LoadingPhase {
         return;
       }
 
-      getLogger().error("Should be called at least at the phase " + this + ", the current phase is: " + currentPhase + "\n" +
-                       "Current violators count: " + stackTraces.size() + "\n\n",
-                       t);
+      getLogger().error("Should be called at least in the state " + this + ", the current state is: " + currentState + "\n" +
+                        "Current violators count: " + stackTraces.size() + "\n\n",
+                        t);
     }
   }
 
@@ -117,11 +93,7 @@ public enum LoadingPhase {
     return false;
   }
 
-  public static boolean isStartupComplete() {
-    return INDEXING_FINISHED.isComplete();
-  }
-
-  public boolean isComplete() {
-    return currentPhase.get().ordinal() >= ordinal();
+  public boolean isOccurred() {
+    return StartUpMeasurer.currentState.get().ordinal() >= ordinal();
   }
 }

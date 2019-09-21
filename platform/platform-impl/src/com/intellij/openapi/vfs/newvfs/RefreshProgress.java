@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs;
 
-import com.intellij.diagnostic.LoadingPhase;
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.internal.statistic.DelayedIdeActivity;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 final class RefreshProgress extends ProgressIndicatorBase {
   @NotNull
   public static ProgressIndicator create(@NotNull String message) {
-    Application app = LoadingPhase.COMPONENT_LOADED.isComplete() ? ApplicationManager.getApplication() : null;
+    Application app = LoadingState.COMPONENTS_LOADED.isOccurred() ? ApplicationManager.getApplication() : null;
     return app == null || app.isUnitTestMode() ? new EmptyProgressIndicator() : new RefreshProgress(message);
   }
 

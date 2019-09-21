@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.messages;
 
-import com.intellij.diagnostic.LoadingPhase;
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
@@ -52,7 +52,7 @@ public class MessagesServiceImpl implements MessagesService {
 
     try {
       if (canShowMacSheetPanel() && !alwaysUseIdeaUI) {
-        WindowManager windowManager = LoadingPhase.COMPONENT_REGISTERED.isComplete() ? WindowManager.getInstance() : null;
+        WindowManager windowManager = LoadingState.COMPONENTS_REGISTERED.isOccurred() ? WindowManager.getInstance() : null;
         if (windowManager != null) {
           Window parentWindow = windowManager.suggestParentWindow(project);
           return MacMessages.getInstance()

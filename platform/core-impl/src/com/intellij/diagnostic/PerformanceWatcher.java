@@ -68,7 +68,7 @@ public final class PerformanceWatcher implements Disposable {
 
   @NotNull
   public static PerformanceWatcher getInstance() {
-    LoadingPhase.CONFIGURATION_STORE_INITIALIZED.assertAtLeast();
+    LoadingState.CONFIGURATION_STORE_INITIALIZED.checkOccurred();
     return ServiceManager.getService(PerformanceWatcher.class);
   }
 
@@ -229,7 +229,7 @@ public final class PerformanceWatcher implements Disposable {
       myLastDumpTime = currentMillis;
       if (myFreezeStart == 0) {
         myFreezeStart = myLastEdtAlive;
-        myFreezeDuringStartup = !LoadingPhase.isStartupComplete();
+        myFreezeDuringStartup = !LoadingState.INDEXING_FINISHED.isOccurred();
         getPublisher().uiFreezeStarted();
       }
       dumpThreads();

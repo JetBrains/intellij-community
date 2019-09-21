@@ -2,7 +2,7 @@
 package com.intellij.serviceContainer
 
 import com.intellij.diagnostic.ActivityCategory
-import com.intellij.diagnostic.LoadingPhase
+import com.intellij.diagnostic.LoadingState
 import com.intellij.diagnostic.PluginException
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.Disposable
@@ -73,7 +73,7 @@ internal abstract class BaseComponentAdapter(internal val componentManager: Plat
   }
 
   private fun <T : Any> getInstanceUncached(componentManager: PlatformComponentManagerImpl, indicator: ProgressIndicator?): T? {
-    LoadingPhase.COMPONENT_REGISTERED.assertAtLeast()
+    LoadingState.COMPONENTS_REGISTERED.checkOccurred()
     checkContainerIsActive(componentManager, indicator)
 
     val activityCategory = if (StartUpMeasurer.isEnabled()) getActivityCategory(componentManager) else null

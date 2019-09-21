@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
-import com.intellij.diagnostic.LoadingPhase;
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.ide.actions.MaximizeActiveDialogAction;
 import com.intellij.ide.dnd.DnDManager;
@@ -347,7 +347,7 @@ public final class IdeEventQueue extends EventQueue {
       return true;
     }
 
-    if (LoadingPhase.COMPONENT_LOADED.isComplete()) {
+    if (LoadingState.COMPONENTS_LOADED.isOccurred()) {
       ourAppIsLoaded = true;
       return true;
     }
@@ -553,7 +553,7 @@ public final class IdeEventQueue extends EventQueue {
   @Nullable
   private static PerformanceWatcher obtainPerformanceWatcher() {
     PerformanceWatcher watcher = ourPerformanceWatcher;
-    if (watcher == null && LoadingPhase.CONFIGURATION_STORE_INITIALIZED.isComplete()) {
+    if (watcher == null && LoadingState.CONFIGURATION_STORE_INITIALIZED.isOccurred()) {
       Application app = ApplicationManager.getApplication();
       if (app != null && !app.isDisposed()) {
         watcher = PerformanceWatcher.getInstance();

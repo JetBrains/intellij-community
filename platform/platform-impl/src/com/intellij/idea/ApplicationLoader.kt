@@ -415,7 +415,7 @@ fun initConfigurationStore(app: ApplicationImpl, configPath: String?) {
 
   // we set it after beforeApplicationLoaded call, because app store can depend on stream provider state
   app.stateStore.setPath(effectiveConfigPath)
-  LoadingPhase.setCurrentPhase(LoadingPhase.CONFIGURATION_STORE_INITIALIZED)
+  StartUpMeasurer.setCurrentState(LoadingState.CONFIGURATION_STORE_INITIALIZED)
   activity.end()
 }
 
