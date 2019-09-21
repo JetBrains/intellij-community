@@ -133,12 +133,12 @@ copy {
   into("generated/resources")
 }
 
-//grammarKit {
-//  //tag or short commit hash of IntelliJ patched JFlex
+grammarKit {
+  //tag or short commit hash of IntelliJ patched JFlex
 //  jflexRelease = '1.7.0-1'
-//  //tag or short commit hash of Grammar-Kit to use
-//  grammarKitRelease = '34fd65b92a'
-//}
+  //tag or short commit hash of Grammar-Kit to use
+  grammarKitRelease = '07f30a1e7666f36ae780f614b6bbc89690ba36c3'
+}
 
 task generateLombokConfigParser(type: org.jetbrains.grammarkit.tasks.GenerateParser) {
   println "Generating Parser for GrammerKit: ${grammarKit.grammarKitRelease}"
