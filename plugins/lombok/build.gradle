@@ -5,9 +5,15 @@ plugins {
 }
 
 repositories {
+  jcenter()
   mavenCentral()
-  mavenLocal()
+  maven { url "https://www.jitpack.io" }
 }
+// Fix Bug https://github.com/jitpack/jitpack.io/issues/3973
+project.repositories.removeAll {
+  it instanceof MavenArtifactRepository && it.url.toString() == 'https://jitpack.io'
+}
+
 
 apply plugin: 'java'
 apply plugin: 'idea'
@@ -15,7 +21,6 @@ apply plugin: 'org.jetbrains.intellij'
 apply plugin: 'org.jetbrains.grammarkit'
 apply plugin: 'jacoco'
 apply plugin: "com.github.ManifestClasspath"
-
 
 def ideaVersionExternDefinition = System.getenv("IDEA_VERSION")
 ideaVersion = ideaVersionExternDefinition ? ideaVersionExternDefinition : ideaVersion

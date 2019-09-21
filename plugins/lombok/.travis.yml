@@ -1,20 +1,22 @@
 language: java
-sudo: false
-
-dist: trusty
-
 jdk:
-  - oraclejdk8
+  - openjdk8
+git:
+  submodules: false
 
-before_cache:
-  - rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
+# Cache settings
 cache:
+  timeout: 600
   directories:
     - $HOME/.gradle/caches/
     - $HOME/.gradle/wrapper/
+before_cache:
+  - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+  - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
 
 env:
   - IDEA_VERSION=LATEST-EAP-SNAPSHOT
+  - IDEA_VERSION=2019.2.2
   - IDEA_VERSION=2019.2
 
 before_install:
