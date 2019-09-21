@@ -370,12 +370,13 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
         if (commitId != null) hashFilterResult.add(storage.getCommitIndex(commitId.hash, commitId.root))
       }
     }
-    if (!Registry.`is`("vcs.log.filter.messages.by.hash")) {
+    val filterMessages = Registry.`is`("vcs.log.filter.messages.by.hash")
+    if (!filterMessages || commitCount == CommitCountStage.INITIAL) {
       if (hashFilterResult.isEmpty()) return null
 
       val visibleGraph = dataPack.permanentGraph.createVisibleGraph(sortType, null, hashFilterResult)
-      val visiblePack = VisiblePack(dataPack, visibleGraph, false, VcsLogFilterObject.collection(fromHashes(hashes)))
-      return Pair(visiblePack, CommitCountStage.ALL)
+      val visiblePack = VisiblePack(dataPack, visibleGraph, filterMessages, VcsLogFilterObject.collection(fromHashes(hashes)))
+      return Pair(visiblePack, if (filterMessages) commitCount.next() else CommitCountStage.ALL)
     }
 
     val textFilter = VcsLogFilterObject.fromPatternsList(ArrayList(hashes), false)
