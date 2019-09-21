@@ -48,7 +48,7 @@ internal class ShowDiffWithBranchDialog(val project: Project,
     val buttonsPanel = JBUI.Panels.simplePanel().addToRight(closeButton)
 
     val rootPanel = JBUI.Panels.simplePanel()
-    rootPanel.addToCenter(diffPanel)
+    rootPanel.addToCenter(loadingPanel)
     rootPanel.border = JBUI.Borders.empty(UIUtil.DEFAULT_VGAP, UIUtil.DEFAULT_HGAP)
     rootPanel.addToBottom(buttonsPanel)
     setComponent(rootPanel)
