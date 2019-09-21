@@ -72,6 +72,7 @@ import java.util.concurrent.CompletionStage
 import java.util.concurrent.Executor
 import java.util.concurrent.Future
 import java.util.concurrent.atomic.AtomicReference
+import java.util.function.Function
 import javax.swing.JFrame
 import javax.swing.JOptionPane
 import kotlin.system.exitProcess
@@ -141,11 +142,18 @@ private fun startApp(app: ApplicationImpl,
     }
   }
 
+  val nonEdtExecutor = Executor {
+    when {
+      app.isDispatchThread -> AppExecutorUtil.getAppExecutorService().execute(it)
+      else -> it.run()
+    }
+  }
+
   // preload services only after icon activation
   val preloadSyncServiceFuture = registerRegistryAndInitStoreFuture
-    .thenCompose {
+    .thenComposeAsync<Void?>(Function {
       preloadServices(it, app, activityPrefix = "")
-    }
+    }, nonEdtExecutor)
 
   if (!headless) {
     if (SystemInfo.isMac) {
@@ -213,12 +221,7 @@ private fun startApp(app: ApplicationImpl,
           }
         }
       }
-    }, Executor {
-      when {
-        EventQueue.isDispatchThread() -> AppExecutorUtil.getAppExecutorService().execute(it)
-        else -> it.run()
-      }
-    })
+    }, nonEdtExecutor)
     .exceptionally {
       StartupAbortedException.processException(it)
       null
@@ -227,9 +230,8 @@ private fun startApp(app: ApplicationImpl,
 
 @ApiStatus.Internal
 fun preloadServices(plugins: List<IdeaPluginDescriptorImpl>, container: PlatformComponentManagerImpl, activityPrefix: String): CompletableFuture<Void?> {
-  val preloadServiceActivity = StartUpMeasurer.startActivity("${activityPrefix}service preloading")
-  val syncActivity = preloadServiceActivity.startChild("${activityPrefix}service sync preloading")
-  val asyncActivity = preloadServiceActivity.startChild(" ${activityPrefix}service async preloading")
+  val syncActivity = StartUpMeasurer.startActivity("${activityPrefix}service sync preloading")
+  val asyncActivity = StartUpMeasurer.startActivity(" ${activityPrefix}service async preloading")
   val result = container.preloadServices(plugins)
 
   fun endActivityAndLogError(future: CompletableFuture<Void?>, activity: Activity): CompletableFuture<Void?> {
@@ -242,15 +244,8 @@ fun preloadServices(plugins: List<IdeaPluginDescriptorImpl>, container: Platform
       }
   }
 
-  val asyncFuture = endActivityAndLogError(result.asyncPreloadedServices, asyncActivity)
-  val syncFuture = endActivityAndLogError(result.syncPreloadedServices, syncActivity)
-
-  CompletableFuture.allOf(asyncFuture, syncFuture)
-    .whenComplete { _, _ ->
-      preloadServiceActivity.end()
-    }
-
-  return syncFuture
+  endActivityAndLogError(result.asyncPreloadedServices, asyncActivity)
+  return endActivityAndLogError(result.syncPreloadedServices, syncActivity)
 }
 
 private fun scheduleIconPreloading() {

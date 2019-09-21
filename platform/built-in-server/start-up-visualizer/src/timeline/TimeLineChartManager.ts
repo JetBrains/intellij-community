@@ -83,10 +83,12 @@ export class TimelineChartManager extends BaseTimeLineChartManager {
   private addGuides(parallelItems: Array<TimeLineItem>) {
     const guides = this.guides
     for (const item of parallelItems) {
-      if (item.name.endsWith(" async preloading") || item.name.endsWith(" sync preloading")) {
+      const isAsyncServicePreloading = item.name.endsWith(" async preloading")
+      if (isAsyncServicePreloading || item.name.endsWith(" sync preloading")) {
         guides.push({label: "", value: item.end, color: item.color})
       }
-      else if (item.name.endsWith("service preloading")) {
+
+      if (isAsyncServicePreloading) {
         guides.push({label: "", value: item.start, color: item.color})
       }
     }

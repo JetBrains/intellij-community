@@ -1,6 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 import {DataManager, SERVICE_WAITING} from "@/state/DataManager"
-import {ActivityChartManager, ClassItem, ClassItemChartConfig, LegendItem} from "@/charts/ActivityChartManager"
+import {ActivityChartManager, ActivityLegendItem, ClassItem, ClassItemChartConfig} from "@/charts/ActivityChartManager"
 import {ActivityChartDescriptor, getShortName} from "@/charts/ActivityChartDescriptor"
 import {CompleteTraceEvent} from "@/state/data"
 import * as am4charts from "@amcharts/amcharts4/charts"
@@ -34,7 +34,7 @@ export class ServiceChartManager extends ActivityChartManager {
     }
 
     let colorIndex = 0
-    const legendData: Array<LegendItem> = []
+    const legendData: Array<ActivityLegendItem> = []
     const applicableSources = new Set<string>()
     const concatenatedData: Array<ClassItem> = []
 
@@ -55,7 +55,7 @@ export class ServiceChartManager extends ActivityChartManager {
         continue
       }
 
-      const legendItem: LegendItem = {
+      const legendItem: ActivityLegendItem = {
         name: sourceNameToLegendName(sourceName, items.length),
         fill: color,
         sourceName,

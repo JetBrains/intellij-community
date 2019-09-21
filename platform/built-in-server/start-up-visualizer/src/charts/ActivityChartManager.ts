@@ -1,13 +1,13 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 import * as am4charts from "@amcharts/amcharts4/charts"
 import * as am4core from "@amcharts/amcharts4/core"
-import {XYChartManager} from "@/charts/ChartManager"
+import {LegendItem, XYChartManager} from "@/charts/ChartManager"
 import {DataManager} from "@/state/DataManager"
 import {CommonItem, Item} from "@/state/data"
 import {ActivityChartDescriptor} from "@/charts/ActivityChartDescriptor"
 
 export class ActivityChartManager extends XYChartManager {
-  protected legendHitHandler: ((item: LegendItem, isActive: boolean) => void) | null = null
+  protected legendHitHandler: ((item: ActivityLegendItem, isActive: boolean) => void) | null = null
 
   // isUseYForName - if true, names are more readable, but not possible to see all components because layout from top to bottom (so, opposite from left to right some data can be out of current screen)
   constructor(container: HTMLElement, protected readonly sourceNames: Array<string>, protected readonly descriptor: ActivityChartDescriptor) {
@@ -30,7 +30,7 @@ export class ActivityChartManager extends XYChartManager {
 
     this.chart.legend.itemContainers.template.events.on("hit", event => {
       const target = event!!.target!!
-      const legendItem = target!!.dataItem!!.dataContext as LegendItem
+      const legendItem = target!!.dataItem!!.dataContext as ActivityLegendItem
       const legendHitHandler = this.legendHitHandler
       if (legendHitHandler != null) {
         legendHitHandler(legendItem, target.isActive)
@@ -186,7 +186,7 @@ export class ActivityChartManager extends XYChartManager {
         continue
       }
 
-      const legendItem: LegendItem = {
+      const legendItem: ActivityLegendItem = {
         name: sourceNameToLegendName(sourceName, items.length),
         fill: color,
         sourceName,
@@ -259,10 +259,8 @@ function sourceNameToLegendName(sourceName: string, itemCount: number): string {
   return `${prefix}-level (${itemCount})`
 }
 
-export interface LegendItem {
-  readonly name: string
+export interface ActivityLegendItem extends LegendItem {
   readonly sourceName: string
-  readonly fill: am4core.Color
 }
 
 export interface ClassItem extends Item {

@@ -14,7 +14,7 @@ const collator = new Intl.Collator(undefined, {numeric: true, sensitivity: "base
 export abstract class BaseTimeLineChartManager extends XYChartManager {
   protected maxRowIndex = 0
   protected threadRowFirstIndex = 0
-  protected readonly threadFirstRowIndexSet = new Set<number>()
+  private readonly threadFirstRowIndexSet = new Map<number, am4core.Color>()
 
   protected readonly guides: Array<TimeLineGuide> = []
 
@@ -57,6 +57,7 @@ export abstract class BaseTimeLineChartManager extends XYChartManager {
     })
 
     levelAxis.renderer.labels.template.selectable = true
+    levelAxis.renderer.labels.template.fill = am4core.color("#ff0000")
     levelAxis.renderer.labels.template.adapter.add("text", (_value, target, _key) => {
       const dataItem = target.dataItem
       const index = dataItem == null ? -1 : dataItem.index
@@ -66,6 +67,11 @@ export abstract class BaseTimeLineChartManager extends XYChartManager {
       else {
         return ""
       }
+    })
+    levelAxis.renderer.labels.template.adapter.add("fill", (value, target, _key) => {
+      const dataItem = target.dataItem
+      const index = dataItem == null ? -1 : dataItem.index
+      return index >= this.threadRowFirstIndex ? this.threadFirstRowIndexSet.get(index) : value
     })
     // level is an internal property - not interested for user
     levelAxis.cursorTooltipEnabled = false
@@ -151,14 +157,14 @@ export abstract class BaseTimeLineChartManager extends XYChartManager {
     for (let i = 0; i < items.length; i++) {
       const item = items[i]
       if (i === 0) {
-        this.threadFirstRowIndexSet.add(rowIndex)
+        this.threadFirstRowIndexSet.set(rowIndex, colorSet.getIndex(lastAllocatedColorIndex))
       }
       else {
         if (items[i - 1].thread !== item.thread) {
           lastAllocatedColorIndex++
           rowIndex++
 
-          this.threadFirstRowIndexSet.add(rowIndex)
+          this.threadFirstRowIndexSet.set(rowIndex, colorSet.getIndex(lastAllocatedColorIndex))
         }
         else {
           // for parallel activities ladder is used only to avoid text overlapping,
@@ -185,28 +191,17 @@ export abstract class BaseTimeLineChartManager extends XYChartManager {
     return items
   }
 
-  protected computeRangeMarkers(data: DataManager) {
+  protected computeRangeMarkers(dataManager: DataManager) {
+    this.collectGuides(dataManager, this.guides)
+    this.applyGuides()
+  }
+
+  // final
+  protected applyGuides() {
     const nameAxis = this.chart.xAxes.getIndex(0) as am4charts.DurationAxis
     nameAxis.axisRanges.clear()
 
     const guides = this.guides
-
-    const isInstantEventProvided = data.isInstantEventProvided
-    if (isInstantEventProvided) {
-      for (const item of data.data.traceEvents) {
-        // reduce unneeded guides - do not report "app component registered / loaded" (it is clear)
-        if (item.ph === "i" && !item.name.startsWith("app component ") && !item.name.endsWith(" initialized")) {
-          guides.push({label: item.name, value: Math.round(item.ts / 1000), color: this.blackColor})
-        }
-      }
-    }
-
-    for (const item of data.data.prepareAppInitActivities) {
-      if (!isInstantEventProvided && item.name === "splash initialization") {
-        guides.push({label: "splash", value: item.start, color: this.blackColor})
-      }
-    }
-
     if (guides.length === 0) {
       return
     }
@@ -215,6 +210,27 @@ export abstract class BaseTimeLineChartManager extends XYChartManager {
       const range = nameAxis.axisRanges.create()
       this.configureRangeMarker(range, guide.label, guide.color, 10 /* empirical value, not clear for now how to compute programmatically */)
       range.value = guide.value
+      if (guide.endValue != null) {
+        range.endValue = guide.endValue
+      }
+    }
+  }
+
+  protected collectGuides(dataManager: DataManager, guides: Array<TimeLineGuide>) {
+    const isInstantEventProvided = dataManager.isInstantEventProvided
+    if (isInstantEventProvided) {
+      for (const item of dataManager.data.traceEvents) {
+        // reduce unneeded guides - do not report "app component registered / loaded" (it is clear)
+        if (item.ph === "i" && !item.name.startsWith("app component ") && !item.name.endsWith(" initialized")) {
+          guides.push({label: item.name, value: Math.round(item.ts / 1000), color: this.blackColor})
+        }
+      }
+    }
+
+    for (const item of dataManager.data.prepareAppInitActivities) {
+      if (!isInstantEventProvided && item.name === "splash initialization") {
+        guides.push({label: "splash", value: item.start, color: this.blackColor})
+      }
     }
   }
 }

@@ -47,6 +47,8 @@ export function transformToTimeLineItems(items: Array<Item>): Array<TimeLineItem
 
 export interface TimeLineGuide {
   readonly value: number
+  readonly endValue?: number
+
   readonly label: string
 
   readonly color: am4core.Color

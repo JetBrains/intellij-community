@@ -81,3 +81,8 @@ export abstract class XYChartManager extends BaseChartManager<am4charts.XYChart>
     })
   }
 }
+
+export interface LegendItem {
+  readonly name: string
+  readonly fill: am4core.Color
+}
