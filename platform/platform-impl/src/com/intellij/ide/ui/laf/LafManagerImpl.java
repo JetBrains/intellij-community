@@ -141,8 +141,6 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     myLaFs = lafList;
 
     sortThemesIfNecessary();
-
-    myCurrentLaf = getDefaultLaf();
   }
 
   private void sortThemesIfNecessary() {
@@ -290,6 +288,11 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     }
 
     myCurrentLaf = laf;
+  }
+
+  @Override
+  public void noStateLoaded() {
+    myCurrentLaf = getDefaultLaf();
   }
 
   @Override
@@ -554,7 +557,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   }
 
   private void fixMacOSDarkThemeDecorations() {
-     if (!SystemInfo.isMacOSMojave) return;
+    if (!SystemInfo.isMacOSMojave) return;
 
     if (myCurrentLaf == myDefaultDarkTheme
         || (myCurrentLaf instanceof UIThemeBasedLookAndFeelInfo && ((UIThemeBasedLookAndFeelInfo)myCurrentLaf).getTheme().isDark())) {
