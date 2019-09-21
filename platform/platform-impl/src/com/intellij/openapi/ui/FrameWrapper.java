@@ -20,7 +20,6 @@ import com.intellij.openapi.util.WindowStateService;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.IdeFrameEx;
-import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameDecorator;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
@@ -375,7 +374,7 @@ public class FrameWrapper implements Disposable, DataProvider {
       }
 
       MouseGestureManager.getInstance().add(this);
-      setFocusTraversalPolicy(new LayoutFocusTraversalPolicyExt());
+      setFocusTraversalPolicy(new LayoutFocusTraversalPolicy());
     }
 
     @Override
@@ -488,7 +487,7 @@ public class FrameWrapper implements Disposable, DataProvider {
       getRootPane().putClientProperty("Window.style", "small");
       setBackground(UIUtil.getPanelBackground());
       MouseGestureManager.getInstance().add(this);
-      setFocusTraversalPolicy(new LayoutFocusTraversalPolicyExt());
+      setFocusTraversalPolicy(new LayoutFocusTraversalPolicy());
     }
 
     @Override

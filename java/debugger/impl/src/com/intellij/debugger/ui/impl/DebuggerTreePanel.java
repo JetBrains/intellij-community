@@ -60,7 +60,7 @@ public abstract class DebuggerTreePanel extends UpdatableDebuggerView implements
 
     setFocusTraversalPolicy(new IdeFocusTraversalPolicy() {
       @Override
-      public Component getDefaultComponentImpl(Container focusCycleRoot) {
+      public Component getDefaultComponent(Container focusCycleRoot) {
         return myTree;
       }
     });

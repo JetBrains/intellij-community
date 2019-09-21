@@ -27,7 +27,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameDecorator;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
@@ -531,9 +530,9 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       myDialogWrapper = new WeakReference<>(dialogWrapper);
       myProject = project != null ? new WeakReference<>(project) : null;
 
-      setFocusTraversalPolicy(new LayoutFocusTraversalPolicyExt() {
+      setFocusTraversalPolicy(new LayoutFocusTraversalPolicy() {
         @Override
-        protected boolean accept(Component aComponent) {
+        public boolean accept(Component aComponent) {
           if (UIUtil.isFocusProxy(aComponent)) return false;
           return super.accept(aComponent);
         }

@@ -22,7 +22,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.IdeFrameEx;
-import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.status.*;
@@ -186,7 +185,7 @@ public final class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAc
 
     MnemonicHelper.init(myFrame);
 
-    myFrame.setFocusTraversalPolicy(new MyLayoutFocusTraversalPolicyExt());
+    myFrame.setFocusTraversalPolicy(new LayoutFocusTraversalPolicy());
 
     // to show window thumbnail under Macs
     // http://lists.apple.com/archives/java-dev/2009/Dec/msg00240.html
@@ -578,43 +577,5 @@ public final class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAc
       LOG.error(e);
     }
     return false;
-  }
-
-  private final class MyLayoutFocusTraversalPolicyExt extends LayoutFocusTraversalPolicyExt {
-    @Override
-    protected Component getDefaultComponentImpl(Container focusCycleRoot) {
-      Component component = findNextFocusComponent();
-      return component == null ? super.getDefaultComponentImpl(focusCycleRoot) : component;
-    }
-
-    @Override
-    protected Component getFirstComponentImpl(Container focusCycleRoot) {
-      Component component = findNextFocusComponent();
-      return component == null ? super.getFirstComponentImpl(focusCycleRoot) : component;
-    }
-
-    @Override
-    protected Component getLastComponentImpl(Container focusCycleRoot) {
-      Component component = findNextFocusComponent();
-      return component == null ? super.getLastComponentImpl(focusCycleRoot) : component;
-    }
-
-    @Override
-    protected Component getComponentAfterImpl(Container focusCycleRoot, Component aComponent) {
-      Component component = findNextFocusComponent();
-      return component == null ? super.getComponentAfterImpl(focusCycleRoot, aComponent) : component;
-    }
-
-    @Override
-    public Component getInitialComponent(Window window) {
-      Component component = findNextFocusComponent();
-      return component == null ? super.getInitialComponent(window) : component;
-    }
-
-    @Override
-    protected Component getComponentBeforeImpl(Container focusCycleRoot, Component aComponent) {
-      Component component = findNextFocusComponent();
-      return component == null ? super.getComponentBeforeImpl(focusCycleRoot, aComponent) : component;
-    }
   }
 }
