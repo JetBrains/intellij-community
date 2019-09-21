@@ -22,6 +22,7 @@ apply plugin: 'org.jetbrains.grammarkit'
 apply plugin: 'jacoco'
 apply plugin: "com.github.ManifestClasspath"
 
+def isCI = System.getenv("CI")
 def ideaVersionExternDefinition = System.getenv("IDEA_VERSION")
 ideaVersion = ideaVersionExternDefinition ? ideaVersionExternDefinition : ideaVersion
 def isEAP = ideaVersion.contains("LATEST-EAP-SNAPSHOT") || ideaVersion.take(4).contains(".")
@@ -169,7 +170,16 @@ check.dependsOn jacocoTestReport
 
 test {
   // show standard out and standard error of the test JVM(s) on the console
-  testLogging.showStandardStreams = true
+  testLogging {
+    exceptionFormat = 'full'
+    showStandardStreams = true
+  }
+  if( isCI ){
+    testLogging {
+      events 'passed', 'skipped', 'failed', 'standardOut', 'standardError'
+      exceptionFormat "full"
+    }
+  }
 
   // listen to events in the test execution lifecycle
   beforeTest { descriptor ->
