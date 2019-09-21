@@ -3,15 +3,11 @@
  * found in the LICENSE file.
  */
 
-// BACKCOMPAT: 2019.1
-@file:Suppress("DEPRECATION")
-
 package org.toml.lang.psi
 
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.BasePlatformTestCase
 
-// BACKCOMPAT: 2019.1. Use BasePlatformTestCase instead
-class TomlPsiFactoryTest : LightPlatformCodeInsightFixtureTestCase() {
+class TomlPsiFactoryTest : BasePlatformTestCase() {
     private val factory: TomlPsiFactory get() = TomlPsiFactory(project)
 
     fun `test create value`() {

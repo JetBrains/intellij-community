@@ -15,6 +15,7 @@ import com.intellij.openapi.fileTypes.FileTypeFactory
 import org.toml.lang.psi.TomlFileType
 
 // BACKCOMPAT 2019.1. Use `fileType` extension
+//  Make sure that TOML plugin since version >= 192 at TeamCity
 class TomlFileTypeFactory : FileTypeFactory() {
     override fun createFileTypes(consumer: FileTypeConsumer) {
         consumer.consume(TomlFileType,
