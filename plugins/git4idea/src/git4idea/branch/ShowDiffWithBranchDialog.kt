@@ -16,7 +16,6 @@ import git4idea.config.GitVcsSettings
 import git4idea.repo.GitRepository
 import git4idea.util.GitLocalCommitCompareInfo
 import java.awt.BorderLayout
-import javax.swing.JButton
 import javax.swing.JComponent
 
 private val LOG = logger<ShowDiffWithBranchDialog>()
@@ -43,14 +42,9 @@ internal class ShowDiffWithBranchDialog(val project: Project,
       add(diffPanel)
     }
 
-    val closeButton = JButton("Close")
-    closeButton.addActionListener { close() }
-    val buttonsPanel = JBUI.Panels.simplePanel().addToRight(closeButton)
-
     val rootPanel = JBUI.Panels.simplePanel()
     rootPanel.addToCenter(loadingPanel)
     rootPanel.border = JBUI.Borders.empty(UIUtil.DEFAULT_VGAP, UIUtil.DEFAULT_HGAP)
-    rootPanel.addToBottom(buttonsPanel)
     setComponent(rootPanel)
   }
 
