@@ -1,12 +1,13 @@
 package de.plushnikov.intellij.plugin.processor.clazz.builder;
 
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifier;
-import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
+import de.plushnikov.intellij.plugin.processor.clazz.AbstractClassProcessor;
 import de.plushnikov.intellij.plugin.processor.handler.SuperBuilderHandler;
 import de.plushnikov.intellij.plugin.settings.ProjectSettings;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
@@ -22,40 +23,40 @@ import java.util.Optional;
  *
  * @author Michail Plushnikov
  */
-public class SuperBuilderClassProcessor extends BuilderClassProcessor {
+public class SuperBuilderClassProcessor extends AbstractClassProcessor {
 
-  private final SuperBuilderHandler superBuilderHandler;
+  private final SuperBuilderHandler builderHandler;
 
-  public SuperBuilderClassProcessor(@NotNull ConfigDiscovery configDiscovery, @NotNull SuperBuilderHandler builderHandler) {
-    super(configDiscovery, builderHandler, SuperBuilder.class);
-    this.superBuilderHandler = builderHandler;
+  public SuperBuilderClassProcessor() {
+    super(PsiClass.class, SuperBuilder.class);
+    builderHandler = ServiceManager.getService(SuperBuilderHandler.class);
   }
 
-  @Override
   public boolean isEnabled(@NotNull PropertiesComponent propertiesComponent) {
     return ProjectSettings.isEnabled(propertiesComponent, ProjectSettings.IS_SUPER_BUILDER_ENABLED);
   }
 
   @Override
   protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
-    return superBuilderHandler.validate(psiClass, psiAnnotation, builder);
+    return builderHandler.validate(psiClass, psiAnnotation, builder);
   }
 
+  @Override
   protected void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
-    final String builderClassName = superBuilderHandler.getBuilderClassName(psiClass);
+    final String builderClassName = builderHandler.getBuilderClassName(psiClass);
 
     Optional<PsiClass> builderClass = PsiClassUtil.getInnerClassInternByName(psiClass, builderClassName);
     if (!builderClass.isPresent()) {
-      final PsiClass createdBuilderClass = superBuilderHandler.createBuilderBaseClass(psiClass, psiAnnotation);
+      final PsiClass createdBuilderClass = builderHandler.createBuilderBaseClass(psiClass, psiAnnotation);
       target.add(createdBuilderClass);
       builderClass = Optional.of(createdBuilderClass);
     }
 
     // skip generation of BuilderImpl class, if class is abstract
     if (!psiClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
-      final String builderImplClassName = superBuilderHandler.getBuilderImplClassName(psiClass);
+      final String builderImplClassName = builderHandler.getBuilderImplClassName(psiClass);
       if (!PsiClassUtil.getInnerClassInternByName(psiClass, builderImplClassName).isPresent()) {
-        target.add(superBuilderHandler.createBuilderImplClass(psiClass, builderClass.get(), psiAnnotation));
+        target.add(builderHandler.createBuilderImplClass(psiClass, builderClass.get(), psiAnnotation));
       }
     }
   }

@@ -1,12 +1,12 @@
 package de.plushnikov.intellij.plugin.processor.clazz;
 
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
-import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.problem.ProblemEmptyBuilder;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
@@ -43,17 +43,14 @@ public class DataProcessor extends AbstractClassProcessor {
   private final RequiredArgsConstructorProcessor requiredArgsConstructorProcessor;
   private final NoArgsConstructorProcessor noArgsConstructorProcessor;
 
-  public DataProcessor(@NotNull ConfigDiscovery configDiscovery,
-                       @NotNull GetterProcessor getterProcessor, @NotNull SetterProcessor setterProcessor,
-                       @NotNull EqualsAndHashCodeProcessor equalsAndHashCodeProcessor, @NotNull ToStringProcessor toStringProcessor,
-                       @NotNull RequiredArgsConstructorProcessor requiredArgsConstructorProcessor, @NotNull NoArgsConstructorProcessor noArgsConstructorProcessor) {
-    super(configDiscovery, PsiMethod.class, Data.class);
-    this.getterProcessor = getterProcessor;
-    this.setterProcessor = setterProcessor;
-    this.equalsAndHashCodeProcessor = equalsAndHashCodeProcessor;
-    this.toStringProcessor = toStringProcessor;
-    this.requiredArgsConstructorProcessor = requiredArgsConstructorProcessor;
-    this.noArgsConstructorProcessor = noArgsConstructorProcessor;
+  public DataProcessor() {
+    super(PsiMethod.class, Data.class);
+    this.getterProcessor = ServiceManager.getService(GetterProcessor.class);
+    this.setterProcessor = ServiceManager.getService(SetterProcessor.class);
+    this.equalsAndHashCodeProcessor = ServiceManager.getService(EqualsAndHashCodeProcessor.class);
+    this.toStringProcessor = ServiceManager.getService(ToStringProcessor.class);
+    this.requiredArgsConstructorProcessor = ServiceManager.getService(RequiredArgsConstructorProcessor.class);
+    this.noArgsConstructorProcessor = ServiceManager.getService(NoArgsConstructorProcessor.class);
   }
 
   @Override

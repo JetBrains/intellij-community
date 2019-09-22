@@ -5,8 +5,6 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
-import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
-import de.plushnikov.intellij.plugin.processor.handler.BuilderHandler;
 import de.plushnikov.intellij.plugin.processor.handler.BuilderInfo;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import lombok.Builder;
@@ -24,9 +22,8 @@ import java.util.stream.Collectors;
  */
 public class BuilderPreDefinedInnerClassFieldProcessor extends AbstractBuilderPreDefinedInnerClassProcessor {
 
-  public BuilderPreDefinedInnerClassFieldProcessor(@NotNull ConfigDiscovery configDiscovery,
-                                                   @NotNull BuilderHandler builderHandler) {
-    super(configDiscovery, builderHandler, PsiField.class, Builder.class);
+  public BuilderPreDefinedInnerClassFieldProcessor() {
+    super(PsiField.class, Builder.class);
   }
 
   @Override

@@ -11,7 +11,6 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
-import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
 import de.plushnikov.intellij.plugin.problem.LombokProblem;
 import de.plushnikov.intellij.plugin.problem.ProblemNewBuilder;
 import de.plushnikov.intellij.plugin.quickfix.PsiQuickFixFactory;
@@ -29,8 +28,8 @@ import java.util.Collections;
  */
 public class SynchronizedProcessor extends AbstractProcessor {
 
-  public SynchronizedProcessor(@NotNull ConfigDiscovery configDiscovery) {
-    super(configDiscovery, PsiElement.class, Synchronized.class);
+  public SynchronizedProcessor() {
+    super(PsiElement.class, Synchronized.class);
   }
 
   @NotNull

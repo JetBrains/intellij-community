@@ -7,7 +7,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierList;
-import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
@@ -23,8 +22,8 @@ import java.util.List;
  */
 public class UtilityClassProcessor extends AbstractClassProcessor {
 
-  public UtilityClassProcessor(@NotNull ConfigDiscovery configDiscovery) {
-    super(configDiscovery, PsiMethod.class, UtilityClass.class);
+  public UtilityClassProcessor() {
+    super(PsiMethod.class, UtilityClass.class);
   }
 
   @Override

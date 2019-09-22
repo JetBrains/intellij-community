@@ -4,9 +4,7 @@ import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
-import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
 import de.plushnikov.intellij.plugin.processor.clazz.ToStringProcessor;
-import de.plushnikov.intellij.plugin.processor.handler.BuilderHandler;
 import de.plushnikov.intellij.plugin.processor.handler.BuilderInfo;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
@@ -27,9 +25,8 @@ import java.util.stream.Collectors;
  */
 public class BuilderPreDefinedInnerClassMethodProcessor extends AbstractBuilderPreDefinedInnerClassProcessor {
 
-  public BuilderPreDefinedInnerClassMethodProcessor(@NotNull ConfigDiscovery configDiscovery,
-                                                    @NotNull BuilderHandler builderHandler) {
-    super(configDiscovery, builderHandler, PsiMethod.class, Builder.class);
+  public BuilderPreDefinedInnerClassMethodProcessor() {
+    super(PsiMethod.class, Builder.class);
   }
 
   protected Collection<? extends PsiElement> generatePsiElements(@NotNull PsiClass psiParentClass, @Nullable PsiMethod psiParentMethod, @NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiBuilderClass) {

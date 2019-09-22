@@ -5,7 +5,6 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
-import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
 import de.plushnikov.intellij.plugin.util.LombokProcessorUtil;
@@ -23,8 +22,8 @@ import java.util.List;
  */
 public class NoArgsConstructorProcessor extends AbstractConstructorClassProcessor {
 
-  public NoArgsConstructorProcessor(@NotNull ConfigDiscovery configDiscovery) {
-    super(configDiscovery, NoArgsConstructor.class, PsiMethod.class);
+  public NoArgsConstructorProcessor() {
+    super(NoArgsConstructor.class, PsiMethod.class);
   }
 
   @Override

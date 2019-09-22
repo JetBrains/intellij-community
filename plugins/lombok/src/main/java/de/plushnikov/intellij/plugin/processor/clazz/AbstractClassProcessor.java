@@ -8,7 +8,6 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.util.PsiTreeUtil;
-import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigKey;
 import de.plushnikov.intellij.plugin.problem.LombokProblem;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
@@ -44,17 +43,15 @@ import java.util.stream.Collectors;
  */
 public abstract class AbstractClassProcessor extends AbstractProcessor implements ClassProcessor {
 
-  protected AbstractClassProcessor(@NotNull ConfigDiscovery configDiscovery,
-                                   @NotNull Class<? extends PsiElement> supportedClass,
+  protected AbstractClassProcessor(@NotNull Class<? extends PsiElement> supportedClass,
                                    @NotNull Class<? extends Annotation> supportedAnnotationClass) {
-    super(configDiscovery, supportedClass, supportedAnnotationClass);
+    super(supportedClass, supportedAnnotationClass);
   }
 
-  protected AbstractClassProcessor(@NotNull ConfigDiscovery configDiscovery,
-                                   @NotNull Class<? extends PsiElement> supportedClass,
+  protected AbstractClassProcessor(@NotNull Class<? extends PsiElement> supportedClass,
                                    @NotNull Class<? extends Annotation> supportedAnnotationClass,
                                    @NotNull Class<? extends Annotation> equivalentAnnotationClass) {
-    super(configDiscovery, supportedClass, supportedAnnotationClass, equivalentAnnotationClass);
+    super(supportedClass, supportedAnnotationClass, equivalentAnnotationClass);
   }
 
   @NotNull

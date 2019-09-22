@@ -29,6 +29,7 @@ import java.util.List;
 public class DelegateHandler {
 
   public DelegateHandler() {
+    // default constructor
   }
 
   public boolean validate(@NotNull PsiModifierListOwner psiModifierListOwner, @NotNull PsiType psiType, @NotNull PsiAnnotation psiAnnotation, @NotNull ProblemBuilder builder) {

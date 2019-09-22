@@ -1,18 +1,24 @@
 package de.plushnikov.intellij.plugin.processor.clazz.builder;
 
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
-import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
-import de.plushnikov.intellij.plugin.processor.clazz.constructor.AllArgsConstructorProcessor;
+import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
+import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
+import de.plushnikov.intellij.plugin.processor.clazz.AbstractClassProcessor;
+import de.plushnikov.intellij.plugin.processor.handler.BuilderHandler;
 import de.plushnikov.intellij.plugin.processor.handler.SuperBuilderHandler;
 import de.plushnikov.intellij.plugin.settings.ProjectSettings;
 import lombok.experimental.SuperBuilder;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -21,15 +27,13 @@ import java.util.List;
  *
  * @author Michail Plushnikov
  */
-public class SuperBuilderProcessor extends BuilderProcessor {
+public class SuperBuilderProcessor extends AbstractClassProcessor {
 
-  private final SuperBuilderHandler superBuilderHandler;
+  private final BuilderHandler builderHandler;
 
-  public SuperBuilderProcessor(@NotNull ConfigDiscovery configDiscovery,
-                               @NotNull AllArgsConstructorProcessor allArgsConstructorProcessor,
-                               @NotNull SuperBuilderHandler superBuilderHandler) {
-    super(configDiscovery, allArgsConstructorProcessor, superBuilderHandler, SuperBuilder.class);
-    this.superBuilderHandler = superBuilderHandler;
+  public SuperBuilderProcessor() {
+    super(PsiMethod.class, SuperBuilder.class);
+    this.builderHandler = ServiceManager.getService(SuperBuilderHandler.class);
   }
 
   @Override
@@ -37,29 +41,47 @@ public class SuperBuilderProcessor extends BuilderProcessor {
     return ProjectSettings.isEnabled(propertiesComponent, ProjectSettings.IS_SUPER_BUILDER_ENABLED);
   }
 
+  @NotNull
+  @Override
+  public Collection<PsiAnnotation> collectProcessedAnnotations(@NotNull PsiClass psiClass) {
+    final Collection<PsiAnnotation> result = super.collectProcessedAnnotations(psiClass);
+    addFieldsAnnotation(result, psiClass, BuilderProcessor.SINGULAR_CLASS, BuilderProcessor.BUILDER_DEFAULT_CLASS);
+    return result;
+  }
+
+  @Override
+  protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
+    // we skip validation here, because it will be validated by other BuilderClassProcessor
+    return true;//builderHandler.validate(psiClass, psiAnnotation, builder);
+  }
+
   protected void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
-    final String builderClassName = superBuilderHandler.getBuilderClassName(psiClass);
+    final String builderClassName = ((SuperBuilderHandler) builderHandler).getBuilderClassName(psiClass);
     final PsiClass builderBaseClass = psiClass.findInnerClassByName(builderClassName, false);
     if (null != builderBaseClass) {
-      final PsiClassType psiTypeBaseWithGenerics = superBuilderHandler.getTypeWithWildcardsForSuperBuilderTypeParameters(builderBaseClass);
+      final PsiClassType psiTypeBaseWithGenerics = ((SuperBuilderHandler) builderHandler).getTypeWithWildcardsForSuperBuilderTypeParameters(builderBaseClass);
 
-      superBuilderHandler.createBuilderBasedConstructor(psiClass, builderBaseClass, psiAnnotation, psiTypeBaseWithGenerics)
+      ((SuperBuilderHandler) builderHandler).createBuilderBasedConstructor(psiClass, builderBaseClass, psiAnnotation, psiTypeBaseWithGenerics)
         .ifPresent(target::add);
 
       // skip generation of builder methods, if class is abstract
       if (!psiClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
-        final String builderImplClassName = superBuilderHandler.getBuilderImplClassName(psiClass);
+        final String builderImplClassName = ((SuperBuilderHandler) builderHandler).getBuilderImplClassName(psiClass);
         final PsiClass builderImplClass = psiClass.findInnerClassByName(builderImplClassName, false);
 
         if (null != builderImplClass) {
-          superBuilderHandler.createBuilderMethodIfNecessary(psiClass, builderBaseClass, builderImplClass, psiAnnotation, psiTypeBaseWithGenerics)
+          ((SuperBuilderHandler) builderHandler).createBuilderMethodIfNecessary(psiClass, builderBaseClass, builderImplClass, psiAnnotation, psiTypeBaseWithGenerics)
             .ifPresent(target::add);
 
-          superBuilderHandler.createToBuilderMethodIfNecessary(psiClass, builderBaseClass, builderImplClass, psiAnnotation, psiTypeBaseWithGenerics)
+          ((SuperBuilderHandler) builderHandler).createToBuilderMethodIfNecessary(psiClass, builderBaseClass, builderImplClass, psiAnnotation, psiTypeBaseWithGenerics)
             .ifPresent(target::add);
         }
       }
     }
   }
 
+  @Override
+  public LombokPsiElementUsage checkFieldUsage(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation) {
+    return LombokPsiElementUsage.READ_WRITE;
+  }
 }

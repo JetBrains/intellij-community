@@ -1,11 +1,11 @@
 package de.plushnikov.intellij.plugin.processor.clazz.builder;
 
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
-import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
 import de.plushnikov.intellij.plugin.problem.LombokProblem;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.problem.ProblemEmptyBuilder;
@@ -28,12 +28,10 @@ public abstract class AbstractBuilderPreDefinedInnerClassProcessor extends Abstr
 
   final BuilderHandler builderHandler;
 
-  AbstractBuilderPreDefinedInnerClassProcessor(@NotNull ConfigDiscovery configDiscovery,
-                                               @NotNull BuilderHandler builderHandler,
-                                               @NotNull Class<? extends PsiElement> supportedClass,
+  AbstractBuilderPreDefinedInnerClassProcessor(@NotNull Class<? extends PsiElement> supportedClass,
                                                @NotNull Class<? extends Annotation> supportedAnnotationClass) {
-    super(configDiscovery, supportedClass, supportedAnnotationClass);
-    this.builderHandler = builderHandler;
+    super(supportedClass, supportedAnnotationClass);
+    this.builderHandler = ServiceManager.getService(BuilderHandler.class);
   }
 
   @Override

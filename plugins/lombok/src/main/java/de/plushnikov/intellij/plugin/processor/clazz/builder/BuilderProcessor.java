@@ -1,13 +1,13 @@
 package de.plushnikov.intellij.plugin.processor.clazz.builder;
 
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
-import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
 import de.plushnikov.intellij.plugin.processor.clazz.AbstractClassProcessor;
@@ -21,7 +21,6 @@ import lombok.Builder;
 import lombok.Singular;
 import org.jetbrains.annotations.NotNull;
 
-import java.lang.annotation.Annotation;
 import java.util.Collection;
 import java.util.List;
 
@@ -34,25 +33,16 @@ import java.util.List;
  */
 public class BuilderProcessor extends AbstractClassProcessor {
 
-  private static final String SINGULAR_CLASS = Singular.class.getName();
-  private static final String BUILDER_DEFAULT_CLASS = Builder.Default.class.getName().replace("$", ".");
+  static final String SINGULAR_CLASS = Singular.class.getName();
+  static final String BUILDER_DEFAULT_CLASS = Builder.Default.class.getName().replace("$", ".");
 
   private final BuilderHandler builderHandler;
   private final AllArgsConstructorProcessor allArgsConstructorProcessor;
 
-  public BuilderProcessor(@NotNull ConfigDiscovery configDiscovery,
-                          @NotNull AllArgsConstructorProcessor allArgsConstructorProcessor,
-                          @NotNull BuilderHandler builderHandler) {
-    this(configDiscovery, allArgsConstructorProcessor, builderHandler, Builder.class);
-  }
-
-  BuilderProcessor(@NotNull ConfigDiscovery configDiscovery,
-                   @NotNull AllArgsConstructorProcessor allArgsConstructorProcessor,
-                   @NotNull BuilderHandler builderHandler,
-                   @NotNull Class<? extends Annotation> supportedAnnotationClass) {
-    super(configDiscovery, PsiMethod.class, supportedAnnotationClass);
-    this.builderHandler = builderHandler;
-    this.allArgsConstructorProcessor = allArgsConstructorProcessor;
+  public BuilderProcessor() {
+    super(PsiMethod.class, Builder.class);
+    this.builderHandler = ServiceManager.getService(BuilderHandler.class);
+    this.allArgsConstructorProcessor = ServiceManager.getService(AllArgsConstructorProcessor.class);
   }
 
   @Override

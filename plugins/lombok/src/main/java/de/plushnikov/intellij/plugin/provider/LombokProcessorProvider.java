@@ -10,7 +10,7 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifierList;
-import de.plushnikov.intellij.plugin.extension.LombokProcessorExtensionPoint;
+import de.plushnikov.intellij.plugin.processor.LombokProcessorManager;
 import de.plushnikov.intellij.plugin.processor.Processor;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
@@ -20,30 +20,38 @@ import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class LombokProcessorProvider {
 
   public static LombokProcessorProvider getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, LombokProcessorProvider.class);
+    final LombokProcessorProvider service = ServiceManager.getService(project, LombokProcessorProvider.class);
+    service.checkInitialized();
+    return service;
   }
+
+  private final PropertiesComponent myPropertiesComponent;
 
   private final Map<Class, Collection<Processor>> lombokTypeProcessors;
   private final Map<String, Collection<Processor>> lombokProcessors;
   private final Collection<String> registeredAnnotationNames;
 
-  private PropertiesComponent myPropertiesComponent;
+  private boolean alreadyInitialized;
 
-  private LombokProcessorProvider(@NotNull PropertiesComponent propertiesComponent) {
+  public LombokProcessorProvider(@NotNull PropertiesComponent propertiesComponent) {
     myPropertiesComponent = propertiesComponent;
 
-    lombokProcessors = new HashMap<>();
-    lombokTypeProcessors = new HashMap<>();
-    registeredAnnotationNames = new HashSet<>();
+    lombokProcessors = new ConcurrentHashMap<>();
+    lombokTypeProcessors = new ConcurrentHashMap<>();
+    registeredAnnotationNames = ConcurrentHashMap.newKeySet();
+  }
 
-    initProcessors();
+  private void checkInitialized() {
+    if (!alreadyInitialized) {
+      initProcessors();
+      alreadyInitialized = true;
+    }
   }
 
   public void initProcessors() {
@@ -51,7 +59,7 @@ public class LombokProcessorProvider {
     lombokTypeProcessors.clear();
     registeredAnnotationNames.clear();
 
-    for (Processor processor : getLombokProcessors()) {
+    for (Processor processor : LombokProcessorManager.getLombokProcessors()) {
       if (processor.isEnabled(myPropertiesComponent)) {
 
         Class<? extends Annotation>[] annotationClasses = processor.getSupportedAnnotationClasses();
@@ -68,18 +76,8 @@ public class LombokProcessorProvider {
   }
 
   @NotNull
-  private Processor[] getLombokProcessors() {
-    return LombokProcessorExtensionPoint.EP_NAME_PROCESSOR.getExtensions();
-  }
-
-  private <K, V> void putProcessor(final Map<K, Collection<V>> map, final K key, final V value) {
-    Collection<V> valueList = map.computeIfAbsent(key, k -> new HashSet<>());
-    valueList.add(value);
-  }
-
-  @NotNull
   Collection<Processor> getLombokProcessors(@NotNull Class supportedClass) {
-    return lombokTypeProcessors.computeIfAbsent(supportedClass, k -> Collections.emptySet());
+    return lombokTypeProcessors.computeIfAbsent(supportedClass, k -> ConcurrentHashMap.newKeySet());
   }
 
   @NotNull
@@ -87,6 +85,26 @@ public class LombokProcessorProvider {
     final String qualifiedName = psiAnnotation.getQualifiedName();
     final Collection<Processor> result = qualifiedName == null ? null : lombokProcessors.get(qualifiedName);
     return result == null ? Collections.emptySet() : result;
+  }
+
+  @NotNull
+  Collection<LombokProcessorData> getApplicableProcessors(@NotNull PsiMember psiMember) {
+    Collection<LombokProcessorData> result = Collections.emptyList();
+    if (verifyLombokAnnotationPresent(psiMember)) {
+      result = new ArrayList<>();
+
+      addApplicableProcessors(psiMember, result);
+      final PsiClass psiClass = psiMember.getContainingClass();
+      if (null != psiClass) {
+        addApplicableProcessors(psiClass, result);
+      }
+    }
+    return result;
+  }
+
+  private <K, V> void putProcessor(final Map<K, Collection<V>> map, final K key, final V value) {
+    Collection<V> valueList = map.computeIfAbsent(key, k -> ConcurrentHashMap.newKeySet());
+    valueList.add(value);
   }
 
   private boolean verifyLombokAnnotationPresent(@NotNull PsiClass psiClass) {
@@ -120,21 +138,6 @@ public class LombokProcessorProvider {
 
     final PsiClass psiClass = psiMember.getContainingClass();
     return null != psiClass && verifyLombokAnnotationPresent(psiClass);
-  }
-
-  @NotNull
-  Collection<LombokProcessorData> getApplicableProcessors(@NotNull PsiMember psiMember) {
-    Collection<LombokProcessorData> result = Collections.emptyList();
-    if (verifyLombokAnnotationPresent(psiMember)) {
-      result = new ArrayList<>();
-
-      addApplicableProcessors(psiMember, result);
-      final PsiClass psiClass = psiMember.getContainingClass();
-      if (null != psiClass) {
-        addApplicableProcessors(psiClass, result);
-      }
-    }
-    return result;
   }
 
   private void addApplicableProcessors(@NotNull PsiMember psiMember, @NotNull Collection<LombokProcessorData> target) {

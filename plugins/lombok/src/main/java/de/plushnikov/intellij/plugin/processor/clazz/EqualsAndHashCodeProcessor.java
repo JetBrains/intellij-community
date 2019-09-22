@@ -1,11 +1,11 @@
 package de.plushnikov.intellij.plugin.processor.clazz;
 
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTypesUtil;
-import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigKey;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
@@ -45,9 +45,9 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
 
   private final EqualsAndHashCodeToStringHandler handler;
 
-  public EqualsAndHashCodeProcessor(@NotNull ConfigDiscovery configDiscovery, @NotNull EqualsAndHashCodeToStringHandler equalsAndHashCodeToStringHandler) {
-    super(configDiscovery, PsiMethod.class, EqualsAndHashCode.class);
-    handler = equalsAndHashCodeToStringHandler;
+  public EqualsAndHashCodeProcessor() {
+    super(PsiMethod.class, EqualsAndHashCode.class);
+    handler = ServiceManager.getService(EqualsAndHashCodeToStringHandler.class);
   }
 
   @Override

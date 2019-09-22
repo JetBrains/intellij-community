@@ -89,7 +89,7 @@ public class Main {
     a.getInt2Integer();
 
 
-    GenericPairClass<String, Integer> pairClass = new GenericPairClass<String, Integer>();
+    GenericPairClass<String, Integer> pairClass = new GenericPairClass<>();
     pairClass.setKey("foowwwww");
     pairClass.setValue(123);
   }

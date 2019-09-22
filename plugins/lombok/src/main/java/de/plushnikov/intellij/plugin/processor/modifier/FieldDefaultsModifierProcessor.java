@@ -31,13 +31,12 @@ public class FieldDefaultsModifierProcessor implements ModifierProcessor {
 
   private final ConfigDiscovery configDiscovery;
 
-  public FieldDefaultsModifierProcessor(@NotNull ConfigDiscovery configDiscovery) {
-    this.configDiscovery = configDiscovery;
+  public FieldDefaultsModifierProcessor() {
+    this.configDiscovery = ConfigDiscovery.getInstance();
   }
 
   @Override
   public boolean isSupported(@NotNull PsiModifierList modifierList) {
-
     // FieldDefaults only change modifiers of class fields
     // but not for enum constants or lombok generated fields
     final PsiElement psiElement = modifierList.getParent();

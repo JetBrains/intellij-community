@@ -1,11 +1,11 @@
 package de.plushnikov.intellij.plugin.processor.method;
 
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
-import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.handler.BuilderHandler;
 import de.plushnikov.intellij.plugin.settings.ProjectSettings;
@@ -25,9 +25,9 @@ public class BuilderClassMethodProcessor extends AbstractMethodProcessor {
 
   private final BuilderHandler builderHandler;
 
-  public BuilderClassMethodProcessor(@NotNull ConfigDiscovery configDiscovery, @NotNull BuilderHandler builderHandler) {
-    super(configDiscovery, PsiClass.class, Builder.class);
-    this.builderHandler = builderHandler;
+  public BuilderClassMethodProcessor() {
+    super(PsiClass.class, Builder.class);
+    this.builderHandler = ServiceManager.getService(BuilderHandler.class);
   }
 
   @Override

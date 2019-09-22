@@ -4,7 +4,6 @@ import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
-import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.problem.ProblemEmptyBuilder;
 import de.plushnikov.intellij.plugin.processor.handler.FieldNameConstantsHandler;
@@ -27,8 +26,8 @@ import java.util.Optional;
  */
 public class FieldNameConstantsPredefinedInnerClassFieldProcessor extends AbstractFieldNameConstantsProcessor {
 
-  public FieldNameConstantsPredefinedInnerClassFieldProcessor(@NotNull ConfigDiscovery configDiscovery) {
-    super(configDiscovery, PsiField.class, FieldNameConstants.class);
+  public FieldNameConstantsPredefinedInnerClassFieldProcessor() {
+    super(PsiField.class, FieldNameConstants.class);
   }
 
   @NotNull

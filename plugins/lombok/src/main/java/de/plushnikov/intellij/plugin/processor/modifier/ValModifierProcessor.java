@@ -16,7 +16,6 @@ public class ValModifierProcessor implements ModifierProcessor {
 
   @Override
   public boolean isSupported(@NotNull PsiModifierList modifierList) {
-
     final PsiElement parent = modifierList.getParent();
 
     return (parent instanceof PsiLocalVariable && ValProcessor.isVal((PsiLocalVariable) parent));
@@ -24,7 +23,6 @@ public class ValModifierProcessor implements ModifierProcessor {
 
   @Override
   public void transformModifiers(@NotNull PsiModifierList modifierList, @NotNull final Set<String> modifiers) {
-
     modifiers.add(PsiModifier.FINAL);
   }
 }

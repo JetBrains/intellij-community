@@ -6,7 +6,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.util.PsiTreeUtil;
-import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
 import de.plushnikov.intellij.plugin.problem.LombokProblem;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.problem.ProblemEmptyBuilder;
@@ -31,15 +30,15 @@ import java.util.regex.Pattern;
  */
 public abstract class AbstractFieldProcessor extends AbstractProcessor implements FieldProcessor {
 
-  AbstractFieldProcessor(@NotNull ConfigDiscovery configDiscovery, @NotNull Class<? extends PsiElement> supportedClass,
+  AbstractFieldProcessor(@NotNull Class<? extends PsiElement> supportedClass,
                          @NotNull Class<? extends Annotation> supportedAnnotationClass) {
-    super(configDiscovery, supportedClass, supportedAnnotationClass);
+    super(supportedClass, supportedAnnotationClass);
   }
 
-  AbstractFieldProcessor(@NotNull ConfigDiscovery configDiscovery, @NotNull Class<? extends PsiElement> supportedClass,
+  AbstractFieldProcessor(@NotNull Class<? extends PsiElement> supportedClass,
                          @NotNull Class<? extends Annotation> supportedAnnotationClass,
                          @NotNull Class<? extends Annotation> equivalentAnnotationClass) {
-    super(configDiscovery, supportedClass, supportedAnnotationClass, equivalentAnnotationClass);
+    super(supportedClass, supportedAnnotationClass, equivalentAnnotationClass);
   }
 
   @NotNull
@@ -88,7 +87,7 @@ public abstract class AbstractFieldProcessor extends AbstractProcessor implement
 
   protected abstract void generatePsiElements(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target);
 
-  protected void copyAnnotations(final PsiField fromPsiElement, final PsiModifierList toModifierList, final Pattern... patterns) {
+  void copyAnnotations(final PsiField fromPsiElement, final PsiModifierList toModifierList, final Pattern... patterns) {
     final Collection<String> annotationsToCopy = PsiAnnotationUtil.collectAnnotationsToCopy(fromPsiElement, patterns);
     for (String annotationFQN : annotationsToCopy) {
       toModifierList.addAnnotation(annotationFQN);

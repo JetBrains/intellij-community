@@ -32,13 +32,20 @@ import java.util.Collection;
 import java.util.stream.Stream;
 
 public abstract class AbstractDelombokAction extends AnAction {
-  private final DelombokHandler myHandler;
+  private DelombokHandler myHandler;
 
   protected AbstractDelombokAction() {
-    myHandler = createHandler();
+    //default constructor
   }
 
   protected abstract DelombokHandler createHandler();
+
+  private DelombokHandler getHandler() {
+    if (null == myHandler) {
+      myHandler = createHandler();
+    }
+    return myHandler;
+  }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent event) {
@@ -112,10 +119,6 @@ public abstract class AbstractDelombokAction extends AnAction {
       () -> ApplicationManager.getApplication().runWriteAction(action), getCommandName(), null);
   }
 
-  private DelombokHandler getHandler() {
-    return myHandler;
-  }
-
   @Override
   public void update(@NotNull AnActionEvent event) {
     final Presentation presentation = event.getPresentation();
@@ -162,7 +165,7 @@ public abstract class AbstractDelombokAction extends AnAction {
     if (psiClass.isInterface()) {
       return false;
     }
-    Collection<PsiAnnotation> psiAnnotations = myHandler.collectProcessableAnnotations(psiClass);
+    Collection<PsiAnnotation> psiAnnotations = getHandler().collectProcessableAnnotations(psiClass);
     if (!psiAnnotations.isEmpty()) {
       return true;
     }

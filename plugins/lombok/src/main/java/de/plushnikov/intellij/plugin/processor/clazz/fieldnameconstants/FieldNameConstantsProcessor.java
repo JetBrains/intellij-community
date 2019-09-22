@@ -4,7 +4,6 @@ import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
-import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
 import de.plushnikov.intellij.plugin.processor.handler.FieldNameConstantsHandler;
 import de.plushnikov.intellij.plugin.psi.LombokLightClassBuilder;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
@@ -23,8 +22,8 @@ import java.util.Optional;
  */
 public class FieldNameConstantsProcessor extends AbstractFieldNameConstantsProcessor {
 
-  public FieldNameConstantsProcessor(@NotNull ConfigDiscovery configDiscovery) {
-    super(configDiscovery, PsiClass.class, FieldNameConstants.class);
+  public FieldNameConstantsProcessor() {
+    super(PsiClass.class, FieldNameConstants.class);
   }
 
   protected void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {

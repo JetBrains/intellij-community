@@ -22,7 +22,6 @@ public class UtilityClassModifierProcessor implements ModifierProcessor {
 
   @Override
   public boolean isSupported(@NotNull PsiModifierList modifierList) {
-
     PsiElement modifierListParent = modifierList.getParent();
 
     if (modifierListParent instanceof PsiClass) {
@@ -43,7 +42,6 @@ public class UtilityClassModifierProcessor implements ModifierProcessor {
 
   @Override
   public void transformModifiers(@NotNull PsiModifierList modifierList, @NotNull final Set<String> modifiers) {
-
     final PsiElement parent = modifierList.getParent();
 
     // FINAL

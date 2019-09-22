@@ -1,13 +1,13 @@
 package de.plushnikov.intellij.plugin.processor.clazz.fieldnameconstants;
 
 
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierList;
-import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.problem.ProblemEmptyBuilder;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
@@ -35,9 +35,9 @@ public class FieldNameConstantsOldProcessor extends AbstractClassProcessor {
 
   private final FieldNameConstantsFieldProcessor fieldProcessor;
 
-  public FieldNameConstantsOldProcessor(@NotNull ConfigDiscovery configDiscovery, FieldNameConstantsFieldProcessor fieldProcessor) {
-    super(configDiscovery, PsiField.class, FieldNameConstants.class);
-    this.fieldProcessor = fieldProcessor;
+  public FieldNameConstantsOldProcessor() {
+    super(PsiField.class, FieldNameConstants.class);
+    this.fieldProcessor = ServiceManager.getService(FieldNameConstantsFieldProcessor.class);
   }
 
   @Override

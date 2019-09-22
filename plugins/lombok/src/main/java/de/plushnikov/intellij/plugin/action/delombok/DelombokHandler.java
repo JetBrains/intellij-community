@@ -7,10 +7,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
-import de.plushnikov.intellij.plugin.extension.LombokProcessorExtensionPoint;
 import de.plushnikov.intellij.plugin.processor.AbstractProcessor;
+import de.plushnikov.intellij.plugin.processor.LombokProcessorManager;
 import de.plushnikov.intellij.plugin.processor.clazz.fieldnameconstants.FieldNameConstantsPredefinedInnerClassFieldProcessor;
-import de.plushnikov.intellij.plugin.processor.modifier.ModifierProcessor;
 import de.plushnikov.intellij.plugin.psi.LombokLightClassBuilder;
 import de.plushnikov.intellij.plugin.settings.ProjectSettings;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
@@ -112,7 +111,7 @@ public class DelombokHandler {
     final PsiModifierList modifierList = modifierListOwner.getModifierList();
     if (null != modifierList) {
       final Set<String> lombokModifiers = new HashSet<>();
-      getLombokModifierProcessors().forEach(modifierProcessor -> {
+      LombokProcessorManager.getLombokModifierProcessors().forEach(modifierProcessor -> {
         if (modifierProcessor.isSupported(modifierList)) {
           modifierProcessor.transformModifiers(modifierList, lombokModifiers);
           lombokModifiers.forEach(modifier -> modifierList.setModifierProperty(modifier, true));
@@ -120,11 +119,6 @@ public class DelombokHandler {
         }
       });
     }
-  }
-
-  @NotNull
-  private Stream<ModifierProcessor> getLombokModifierProcessors() {
-    return Stream.of(LombokProcessorExtensionPoint.EP_NAME_MODIFIER_PROCESSOR.getExtensions());
   }
 
   private void rebuildElementsBeforeExistingFields(Project project, PsiClass psiClass, List<? super PsiElement> psiElements) {

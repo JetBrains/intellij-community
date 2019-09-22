@@ -26,8 +26,8 @@ public class FieldNameConstantsFieldProcessor extends AbstractFieldProcessor {
 
   private static final String CONFIG_DEFAULT = " CONFIG DEFAULT ";
 
-  public FieldNameConstantsFieldProcessor(@NotNull ConfigDiscovery configDiscovery) {
-    super(configDiscovery, PsiField.class, FieldNameConstants.class);
+  public FieldNameConstantsFieldProcessor() {
+    super(PsiField.class, FieldNameConstants.class);
   }
 
   @Override

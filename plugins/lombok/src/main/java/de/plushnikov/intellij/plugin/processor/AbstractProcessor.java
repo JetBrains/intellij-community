@@ -39,54 +39,45 @@ public abstract class AbstractProcessor implements Processor {
 
   /**
    * Constructor for all Lombok-Processors
-   *
-   * @param configDiscovery          @param configDiscovery          instance of config discovery service
-   * @param supportedClass           kind of output elements this processor supports
+   *  @param supportedClass           kind of output elements this processor supports
    * @param supportedAnnotationClass annotation this processor supports
    */
   @SuppressWarnings("unchecked")
-  protected AbstractProcessor(@NotNull ConfigDiscovery configDiscovery,
-                              @NotNull Class<? extends PsiElement> supportedClass,
+  protected AbstractProcessor(@NotNull Class<? extends PsiElement> supportedClass,
                               @NotNull Class<? extends Annotation> supportedAnnotationClass) {
-    this.configDiscovery = configDiscovery;
+    this.configDiscovery = ConfigDiscovery.getInstance();
     this.supportedClass = supportedClass;
     this.supportedAnnotationClasses = new Class[]{supportedAnnotationClass};
   }
 
   /**
    * Constructor for all Lombok-Processors
-   *
-   * @param configDiscovery           instance of config discovery service
-   * @param supportedClass            kind of output elements this processor supports
+   *  @param supportedClass            kind of output elements this processor supports
    * @param supportedAnnotationClass  annotation this processor supports
    * @param equivalentAnnotationClass another equivalent annotation
    */
   @SuppressWarnings("unchecked")
-  protected AbstractProcessor(@NotNull ConfigDiscovery configDiscovery,
-                              @NotNull Class<? extends PsiElement> supportedClass,
+  protected AbstractProcessor(@NotNull Class<? extends PsiElement> supportedClass,
                               @NotNull Class<? extends Annotation> supportedAnnotationClass,
                               @NotNull Class<? extends Annotation> equivalentAnnotationClass) {
-    this.configDiscovery = configDiscovery;
+    this.configDiscovery = ConfigDiscovery.getInstance();
     this.supportedClass = supportedClass;
     this.supportedAnnotationClasses = new Class[]{supportedAnnotationClass, equivalentAnnotationClass};
   }
 
   /**
    * Constructor for all Lombok-Processors
-   *
-   * @param configDiscovery                 instance of config discovery service
-   * @param supportedClass                  kind of output elements this processor supports
+   *  @param supportedClass                  kind of output elements this processor supports
    * @param supportedAnnotationClass        annotation this processor supports
    * @param oneEquivalentAnnotationClass    another equivalent annotation
    * @param secondEquivalentAnnotationClass another equivalent annotation
    */
   @SuppressWarnings("unchecked")
-  AbstractProcessor(@NotNull ConfigDiscovery configDiscovery,
-                    @NotNull Class<? extends PsiElement> supportedClass,
+  AbstractProcessor(@NotNull Class<? extends PsiElement> supportedClass,
                     @NotNull Class<? extends Annotation> supportedAnnotationClass,
                     @NotNull Class<? extends Annotation> oneEquivalentAnnotationClass,
                     @NotNull Class<? extends Annotation> secondEquivalentAnnotationClass) {
-    this.configDiscovery = configDiscovery;
+    this.configDiscovery = ConfigDiscovery.getInstance();
     this.supportedClass = supportedClass;
     this.supportedAnnotationClasses = new Class[]{supportedAnnotationClass, oneEquivalentAnnotationClass, secondEquivalentAnnotationClass};
   }

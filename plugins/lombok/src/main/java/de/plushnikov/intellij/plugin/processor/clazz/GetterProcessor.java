@@ -1,5 +1,6 @@
 package de.plushnikov.intellij.plugin.processor.clazz;
 
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -8,7 +9,6 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiType;
-import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
 import de.plushnikov.intellij.plugin.processor.field.AccessorsInfo;
@@ -36,9 +36,9 @@ public class GetterProcessor extends AbstractClassProcessor {
 
   private final GetterFieldProcessor fieldProcessor;
 
-  public GetterProcessor(@NotNull ConfigDiscovery configDiscovery, @NotNull GetterFieldProcessor fieldProcessor) {
-    super(configDiscovery, PsiMethod.class, Getter.class);
-    this.fieldProcessor = fieldProcessor;
+  public GetterProcessor() {
+    super(PsiMethod.class, Getter.class);
+    this.fieldProcessor = ServiceManager.getService(GetterFieldProcessor.class);
   }
 
   @Override

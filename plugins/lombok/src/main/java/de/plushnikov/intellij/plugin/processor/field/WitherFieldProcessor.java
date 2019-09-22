@@ -1,6 +1,7 @@
 package de.plushnikov.intellij.plugin.processor.field;
 
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -9,7 +10,6 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiType;
-import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
 import de.plushnikov.intellij.plugin.processor.clazz.constructor.RequiredArgsConstructorProcessor;
@@ -39,10 +39,9 @@ public class WitherFieldProcessor extends AbstractFieldProcessor {
 
   private final RequiredArgsConstructorProcessor requiredArgsConstructorProcessor;
 
-  public WitherFieldProcessor(@NotNull ConfigDiscovery configDiscovery,
-                              @NotNull RequiredArgsConstructorProcessor requiredArgsConstructorProcessor) {
-    super(configDiscovery, PsiMethod.class, Wither.class, With.class);
-    this.requiredArgsConstructorProcessor = requiredArgsConstructorProcessor;
+  public WitherFieldProcessor() {
+    super(PsiMethod.class, Wither.class, With.class);
+    this.requiredArgsConstructorProcessor = ServiceManager.getService(RequiredArgsConstructorProcessor.class);
   }
 
   @Override

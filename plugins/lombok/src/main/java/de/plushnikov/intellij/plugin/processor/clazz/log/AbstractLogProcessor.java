@@ -29,10 +29,9 @@ public abstract class AbstractLogProcessor extends AbstractClassProcessor {
   private final String loggerInitializer;
   private final String loggerCategory;
 
-  AbstractLogProcessor(@NotNull ConfigDiscovery configDiscovery,
-                       @NotNull Class<? extends Annotation> supportedAnnotationClass,
+  AbstractLogProcessor(@NotNull Class<? extends Annotation> supportedAnnotationClass,
                        @NotNull String loggerType, @NotNull String loggerInitializer, @NotNull String loggerCategory) {
-    super(configDiscovery, PsiField.class, supportedAnnotationClass);
+    super(PsiField.class, supportedAnnotationClass);
     this.loggerType = loggerType;
     this.loggerInitializer = loggerInitializer;
     this.loggerCategory = loggerCategory;
