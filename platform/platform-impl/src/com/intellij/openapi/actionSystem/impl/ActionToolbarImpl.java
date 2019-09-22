@@ -21,6 +21,8 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.ColorUtil;
@@ -1220,6 +1222,13 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     Point location;
     if (myOrientation == SwingConstants.HORIZONTAL) {
       location = getLocationOnScreen();
+
+      final ToolWindow toolWindow = DataManager.getInstance().getDataContext(this).getData(PlatformDataKeys.TOOL_WINDOW);
+      if (toolWindow.getAnchor() == ToolWindowAnchor.RIGHT) {
+        int rightXOnScreen = location.x + getWidth();
+        int toolbarPreferredWidth = popupToolbar.getPreferredSize().width;
+        location.x = rightXOnScreen - toolbarPreferredWidth;
+      }
     }
     else {
       location = getLocationOnScreen();

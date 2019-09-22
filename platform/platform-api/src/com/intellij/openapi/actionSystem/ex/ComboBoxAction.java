@@ -97,6 +97,8 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
   public JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
     JPanel panel = new JPanel(new GridBagLayout());
     ComboBoxButton button = createComboBoxButton(presentation);
+    // to make getPreferredSize() return correct values
+    button.initButton();
     GridBagConstraints constraints = new GridBagConstraints(
       0, 0, 1, 1, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.BOTH, JBInsets.create(0, 3), 0, 0);
     panel.add(button, constraints);
