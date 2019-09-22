@@ -16,6 +16,8 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -288,7 +290,14 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
       project = ((ProjectManagerImpl)ProjectManager.getInstance()).newProject(baseDir, projectName, options);
     }
     else {
+      ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+      if (indicator != null) {
+        indicator.setText("Checking project configuration...");
+      }
       project = ProjectManagerImpl.convertAndLoadProject(baseDir);
+      if (indicator != null) {
+        indicator.setText("");
+      }
     }
 
     if (project == null) {

@@ -211,7 +211,16 @@ private fun startApp(app: ApplicationImpl,
     }
     .thenComposeAsync<Void?>(Function {
       val activity = initAppActivity.startChild("app initialized callback")
-      callAppInitialized(app, boundedExecutor)
+      val future = callAppInitialized(app, boundedExecutor)
+
+      // should be after scheduling all app initialized listeners (because this activity is not important)
+      boundedExecutor.execute {
+        runActivity("project converter provider preloading") {
+          app.extensionArea.getExtensionPoint<Any>("com.intellij.project.converterProvider").extensionList
+        }
+      }
+
+      future
         .thenRun {
           activity.end()
           if (!headless) {

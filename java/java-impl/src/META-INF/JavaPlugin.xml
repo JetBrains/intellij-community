@@ -60,10 +60,6 @@
       <implementation-class>com.intellij.framework.detection.impl.FrameworkDetectionManager</implementation-class>
     </component>
     <component>
-      <interface-class>com.intellij.ide.impl.convert.ProjectFileVersion</interface-class>
-      <implementation-class>com.intellij.ide.impl.convert.ProjectFileVersionImpl</implementation-class>
-    </component>
-    <component>
       <implementation-class>com.intellij.execution.testDiscovery.TestDiscoveryIndex</implementation-class>
     </component>
 
