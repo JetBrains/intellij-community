@@ -58,8 +58,7 @@ class SkeletonGenerationTest(GeneratorTestCase):
     def get_test_data_path(self, rel_path):
         return os.path.join(self.test_data_dir, rel_path)
 
-    def run_generator(self,
-                      mod_qname=None,
+    def run_generator(self, mod_qname=None,
                       mod_path=None,
                       builtins=False,
                       extra_syspath=None,
@@ -67,7 +66,8 @@ class SkeletonGenerationTest(GeneratorTestCase):
                       required_gen_version_file_path=None,
                       extra_env=None,
                       extra_args=None,
-                      output_dir=None):
+                      output_dir=None,
+                      input=None):
         if output_dir is None:
             output_dir = self.temp_skeletons_dir
         else:
@@ -111,13 +111,17 @@ class SkeletonGenerationTest(GeneratorTestCase):
                 args.append(mod_path)
 
         self.log.info('Launching generator3 as: ' + ' '.join(args))
-        result = self.run_process(args, env=env)
+        result = self.run_process(args, input=input, env=env)
         return GeneratorResult(*result)
 
-    def run_process(self, args, env=None):
-        process = subprocess.Popen(args, env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+    def run_process(self, args, input=None, env=None):
+        process = subprocess.Popen(args,
+                                   env=env,
+                                   stdin=subprocess.PIPE,
+                                   stdout=subprocess.PIPE,
+                                   stderr=subprocess.PIPE,
                                    universal_newlines=True)
-        stdout, stderr = process.communicate()
+        stdout, stderr = process.communicate(input)
         self.process_stdout.write(stdout)
         self.process_stderr.write(stderr)
         return ProcessResult(process.returncode, stdout, stderr)
@@ -355,6 +359,25 @@ class SkeletonGenerationTest(GeneratorTestCase):
         # (which can't be distributed with tests in a platform-independent manner), but user their .py
         # counterparts for actual importing and introspection
         self.check_generator_output(extra_syspath=['mocks', 'binaries'], extra_args=['--name-pattern', 'mod?'])
+
+    def test_passing_skeletons_state_update_due_to_required_gen_version(self):
+        state = {
+            'sdk_skeletons': {
+                # shouldn't be updated
+                'mod1': {
+                    'gen_version': '0.1'
+                },
+                # should be updated because of "required_gen_version" file
+                'mod2': {
+                    'gen_version': '0.1'
+                }
+            }
+        }
+        self.check_generator_output(extra_syspath=['mocks', 'binaries'],
+                                    extra_args=['--with-state-marker', '--name-pattern', 'mod?'],
+                                    input=json.dumps(state),
+                                    custom_required_gen=True,
+                                    gen_version='0.2')
 
     def check_generator_output(self, mod_name=None, mod_path=None, mod_root=None,
                                custom_required_gen=False, standalone_mode=False,
