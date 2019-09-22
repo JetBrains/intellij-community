@@ -33,8 +33,6 @@ public final class StartUpMeasurer {
     public static final String REGISTER_COMPONENTS_SUFFIX = "component registration";
     public static final String CREATE_COMPONENTS_SUFFIX = "component creation";
 
-    public static final String APP_INITIALIZED_CALLBACK = "app initialized callback";
-
     public static final String PROJECT_PRE_STARTUP = "project pre-startup";
     public static final String PROJECT_STARTUP = "project startup";
 

@@ -148,10 +148,12 @@ private fun startApp(app: ApplicationImpl,
     }
   }
 
+  val boundedExecutor = createExecutorToPreloadServices()
+
   // preload services only after icon activation
   val preloadSyncServiceFuture = registerRegistryAndInitStoreFuture
     .thenComposeAsync<Void?>(Function {
-      preloadServices(it, app, activityPrefix = "")
+      preloadServices(it, app, boundedExecutor, activityPrefix = "")
     }, nonEdtExecutor)
 
   if (!headless) {
@@ -186,47 +188,51 @@ private fun startApp(app: ApplicationImpl,
     }
   }
 
+  val edtExecutor = Executor { EventQueue.invokeLater(it) }
+
   CompletableFuture.allOf(registerRegistryAndInitStoreFuture, StartupUtil.getServerFuture())
     .thenCompose {
       // `invokeLater()` is needed to place the app starting code on a freshly minted `IdeEventQueue` instance
       val placeOnEventQueueActivity = initAppActivity.startChild(Phases.PLACE_ON_EVENT_QUEUE)
 
-      val loadComponentInEdtFuture = CompletableFuture.runAsync({
+      val loadComponentInEdtFuture = CompletableFuture.runAsync(Runnable {
         placeOnEventQueueActivity.end()
         app.loadComponents(SplashManager.getProgressIndicator())
-      }, { EventQueue.invokeLater(it) })
+      }, edtExecutor)
+
+      boundedExecutor.execute {
+        // execute in parallel to loading components - this functionality should be used only by plugin functionality,
+        // that used after start-up
+        runActivity("system properties setting") {
+          SystemPropertyBean.initSystemProperties()
+        }
+      }
 
       CompletableFuture.allOf(loadComponentInEdtFuture, preloadSyncServiceFuture)
     }
-    .thenRunAsync(Runnable {
-      // execute in parallel to loading components - this functionality should be used only by plugin functionality,
-      // that used after start-up
-      runActivity("system properties setting") {
-        SystemPropertyBean.initSystemProperties()
-      }
-
-      val activity = initAppActivity.startChild(Phases.APP_INITIALIZED_CALLBACK)
-      callAppInitialized(app)
-      activity.end()
-
-      if (!headless) {
-        addActivateAndWindowsCliListeners()
-      }
-
-      initAppActivity.end()
-
-      EventQueue.invokeLater {
-        (TransactionGuard.getInstance() as TransactionGuardImpl).performUserActivity {
-          starter.main(ArrayUtilRt.toStringArray(args))
-        }
-
-        if (PluginManagerCore.isRunningFromSources()) {
-          NonUrgentExecutor.getInstance().execute {
-            AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame())
+    .thenComposeAsync<Void?>(Function {
+      val activity = initAppActivity.startChild("app initialized callback")
+      callAppInitialized(app, boundedExecutor)
+        .thenRun {
+          activity.end()
+          if (!headless) {
+            addActivateAndWindowsCliListeners()
           }
+
+          initAppActivity.end()
+        }
+    }, nonEdtExecutor /* if loadComponentInEdtFuture will be completed after preloadSyncServiceFuture, then this task will be executed in EDT — it is not good, so, force execution not in EDT */)
+    .thenRunAsync(Runnable {
+      (TransactionGuard.getInstance() as TransactionGuardImpl).performUserActivity {
+        starter.main(ArrayUtilRt.toStringArray(args))
+      }
+
+      if (PluginManagerCore.isRunningFromSources()) {
+        NonUrgentExecutor.getInstance().execute {
+          AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame())
         }
       }
-    }, nonEdtExecutor)
+    }, edtExecutor)
     .exceptionally {
       StartupAbortedException.processException(it)
       null
@@ -234,10 +240,16 @@ private fun startApp(app: ApplicationImpl,
 }
 
 @ApiStatus.Internal
-fun preloadServices(plugins: List<IdeaPluginDescriptorImpl>, container: PlatformComponentManagerImpl, activityPrefix: String): CompletableFuture<Void?> {
+fun createExecutorToPreloadServices(): Executor {
+  return AppExecutorUtil.createBoundedApplicationPoolExecutor("preload services", Runtime.getRuntime().availableProcessors(), /* changeThreadName = */ false)
+}
+
+@ApiStatus.Internal
+fun preloadServices(plugins: List<IdeaPluginDescriptorImpl>, container: PlatformComponentManagerImpl, executor: Executor = createExecutorToPreloadServices(), activityPrefix: String): CompletableFuture<Void?> {
   val syncActivity = StartUpMeasurer.startActivity("${activityPrefix}service sync preloading")
   val asyncActivity = StartUpMeasurer.startActivity(" ${activityPrefix}service async preloading")
-  val result = container.preloadServices(plugins)
+
+  val result = container.preloadServices(plugins, executor)
 
   fun endActivityAndLogError(future: CompletableFuture<Void?>, activity: Activity): CompletableFuture<Void?> {
     return future
@@ -660,18 +672,22 @@ private fun createLocatorFile() {
   }
 }
 
-fun callAppInitialized(app: ApplicationImpl) {
+fun callAppInitialized(app: ApplicationImpl, executor: Executor): CompletableFuture<Void?> {
   NonUrgentExecutor.getInstance().execute {
     createLocatorFile()
   }
 
+  val result = mutableListOf<CompletableFuture<Void>>()
   for (listener in app.extensionArea.getExtensionPoint<ApplicationInitializedListener>("com.intellij.applicationInitializedListener")) {
     if (listener == null) {
       break
     }
 
-    LOG.runAndLogException {
-      listener.componentsInitialized()
-    }
+    CompletableFuture.runAsync(Runnable {
+      LOG.runAndLogException {
+        listener.componentsInitialized()
+      }
+    }, executor)
   }
+  return CompletableFuture.allOf(*result.toTypedArray())
 }

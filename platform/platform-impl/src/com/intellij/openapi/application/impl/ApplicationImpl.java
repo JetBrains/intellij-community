@@ -53,10 +53,7 @@ import sun.awt.AWTAutoShutdown;
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ApplicationImpl extends PlatformComponentManagerImpl implements ApplicationEx {
@@ -320,9 +317,10 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     List<IdeaPluginDescriptor> plugins = PluginManagerCore.getLoadedPlugins();
     registerComponents(plugins);
     ApplicationLoader.initConfigurationStore(this, configPath);
-    preloadServices(plugins).getSyncPreloadedServices().join();
+    Executor executor = ApplicationLoader.createExecutorToPreloadServices();
+    preloadServices(plugins, executor).getSyncPreloadedServices().join();
     loadComponents(null);
-    ApplicationLoader.callAppInitialized(this);
+    ApplicationLoader.callAppInitialized(this, executor).join();
   }
 
   @ApiStatus.Internal

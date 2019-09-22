@@ -23,10 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 
 public final class IdeaTestApplication implements Disposable {
   private static volatile IdeaTestApplication ourInstance;
@@ -111,10 +108,13 @@ public final class IdeaTestApplication implements Disposable {
       throw new RuntimeException(t);
     }
 
-    CompletableFuture<Void> preloadServiceFuture = ApplicationLoader.preloadServices(plugins, app, "");
+    Executor boundedExecutor = ApplicationLoader.createExecutorToPreloadServices();
+    CompletableFuture<Void> preloadServiceFuture = ApplicationLoader.preloadServices(plugins, app, boundedExecutor, "");
     app.loadComponents(null);
     try {
-      preloadServiceFuture.get(20, TimeUnit.SECONDS);
+      preloadServiceFuture
+        .thenCompose(__ -> ApplicationLoader.callAppInitialized(app, boundedExecutor))
+        .get(20, TimeUnit.SECONDS);
     }
     catch (TimeoutException e) {
       throw new RuntimeException("Cannot preload services in 20 seconds: " + ThreadDumper.dumpThreadsToString(), e);
@@ -122,8 +122,6 @@ public final class IdeaTestApplication implements Disposable {
     catch (ExecutionException | InterruptedException e) {
       ExceptionUtil.rethrow(e.getCause() == null ? e : e.getCause());
     }
-
-    ApplicationLoader.callAppInitialized(app);
 
     isBootstrappingAppNow = false;
     ourInstance = new IdeaTestApplication();

@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
  * @author gregsh
  */
 public final class SystemPropertyBean implements PluginAware {
-  public static final ExtensionPointName<SystemPropertyBean> EP_NAME = ExtensionPointName.create("com.intellij.systemProperty");
+  private static final ExtensionPointName<SystemPropertyBean> EP_NAME = ExtensionPointName.create("com.intellij.systemProperty");
 
   private PluginDescriptor myPluginDescriptor;
 

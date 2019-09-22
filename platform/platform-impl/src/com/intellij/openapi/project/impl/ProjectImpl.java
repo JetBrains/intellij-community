@@ -50,6 +50,7 @@ import javax.swing.*;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 
 public class ProjectImpl extends PlatformComponentManagerImpl implements ProjectEx, ProjectStoreOwner {
   private static final Logger LOG = Logger.getInstance("#com.intellij.project.impl.ProjectImpl");
@@ -283,8 +284,11 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
       servicePreloadingFuture = CompletableFuture.completedFuture(null);
     }
     else {
-      //noinspection unchecked,rawtypes
-      servicePreloadingFuture = ApplicationLoader.preloadServices((List)PluginManagerCore.getLoadedPlugins(), this, /* activityPrefix = */ "project ");
+      //noinspection rawtypes
+      List plugins = PluginManagerCore.getLoadedPlugins();
+      Executor executor = ApplicationLoader.createExecutorToPreloadServices();
+      //noinspection unchecked
+      servicePreloadingFuture = ApplicationLoader.preloadServices(plugins, this, executor, /* activityPrefix = */ "project ");
     }
 
     createComponents(indicator);

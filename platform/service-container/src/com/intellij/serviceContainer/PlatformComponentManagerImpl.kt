@@ -23,7 +23,6 @@ import com.intellij.openapi.progress.ProgressIndicatorProvider
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.SmartList
-import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.storage.HeavyProcessLatch
 import com.intellij.util.messages.*
@@ -37,6 +36,7 @@ import java.lang.reflect.Modifier
 import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentMap
+import java.util.concurrent.Executor
 
 internal val LOG = logger<PlatformComponentManagerImpl>()
 
@@ -593,13 +593,12 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
   data class ServicePreloadingResult(val asyncPreloadedServices: CompletableFuture<Void?>, val syncPreloadedServices: CompletableFuture<Void?>)
 
   @ApiStatus.Internal
-  fun preloadServices(plugins: List<IdeaPluginDescriptor>): ServicePreloadingResult {
+  fun preloadServices(plugins: List<IdeaPluginDescriptor>, executor: Executor): ServicePreloadingResult {
     @Suppress("UNCHECKED_CAST")
     plugins as List<IdeaPluginDescriptorImpl>
 
     val asyncPreloadedServices = mutableListOf<CompletableFuture<Void>>()
     val syncPreloadedServices = mutableListOf<CompletableFuture<Void>>()
-    val executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("preload services", Runtime.getRuntime().availableProcessors(), /* changeThreadName = */ false)
     for (plugin in plugins) {
       for (service in getContainerDescriptor(plugin).services) {
         if (service.preload == PreloadMode.FALSE) {
@@ -626,7 +625,6 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
         }
       }
     }
-    executor.shutdown()
     return ServicePreloadingResult(asyncPreloadedServices = CompletableFuture.allOf(*asyncPreloadedServices.toTypedArray()),
                                    syncPreloadedServices = CompletableFuture.allOf(*syncPreloadedServices.toTypedArray()))
   }
