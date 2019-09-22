@@ -1,4 +1,5 @@
 import atexit
+import json
 import os
 import sys
 
@@ -63,7 +64,7 @@ def main():
     from getopt import getopt
 
     helptext = get_help_text()
-    opts, args = getopt(sys.argv[1:], "d:hbqxvc:ps:LiSzuV", longopts=['name-pattern='])
+    opts, args = getopt(sys.argv[1:], "d:hbqxvc:ps:LiSzuV", longopts=['name-pattern=', 'with-state-marker'])
     opts = dict(opts)
 
     generator3.core.quiet = '-q' in opts
@@ -76,6 +77,12 @@ def main():
 
     if "-x" in opts:
         debug_mode = True
+
+    if '--with-state-marker' in opts:
+        state_json = json.load(sys.stdin, encoding='utf-8')
+    else:
+        state_json = None
+
 
     # patch sys.path?
     extra_path = opts.get('-s', None)
@@ -122,7 +129,9 @@ def main():
         report("Only module_name or module_name and file_name should be specified; got %d args", len(args))
         sys.exit(1)
     elif not args:
-        process_all(target_roots, subdir, name_pattern=opts.get('--name-pattern'))
+        process_all(target_roots, subdir,
+                    name_pattern=opts.get('--name-pattern'),
+                    state_json=state_json)
         sys.exit(0)
     else:
         name = args[0]

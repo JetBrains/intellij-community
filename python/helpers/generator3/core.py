@@ -254,7 +254,7 @@ class SkeletonStatus(object):
     """
 
 
-def skeleton_status(base_dir, mod_qname, mod_path):
+def skeleton_status(base_dir, mod_qname, mod_path, state_json=None):
     gen_version = version_to_tuple(version())
 
     failed_version = read_failed_version_from_stamp(base_dir, mod_qname)
@@ -267,8 +267,13 @@ def skeleton_status(base_dir, mod_qname, mod_path):
         outdated = failed_version < gen_version or (mod_path and mtime < file_modification_timestamp(mod_path))
         return SkeletonStatus.OUTDATED if outdated else SkeletonStatus.FAILING
 
+    if state_json:
+        used_version = state_json['sdk_skeletons'].get(mod_qname, {}).get('gen_version')
+        if used_version:
+            used_version = version_to_tuple(used_version)
+    else:
+        used_version = read_used_generator_version_from_skeleton_header(base_dir, mod_qname)
     required_version = read_required_version(mod_qname)
-    used_version = read_used_generator_version_from_skeleton_header(base_dir, mod_qname)
     if required_version and used_version:
         return SkeletonStatus.OUTDATED if used_version < required_version else SkeletonStatus.UP_TO_DATE
 
@@ -447,18 +452,22 @@ def generate_skeleton(name, mod_file_name, doing_builtins, mod_cache_dir, sdk_sk
     return GenerationStatus.GENERATED
 
 
-def process_one_with_results_reporting(name, mod_file_name, doing_builtins, sdk_skeletons_dir):
-    status = process_one(name, mod_file_name, doing_builtins, sdk_skeletons_dir)
+def process_one_with_results_reporting(name, mod_file_name, doing_builtins, sdk_skeletons_dir, state_json=None):
+    status = process_one(name, mod_file_name, doing_builtins, sdk_skeletons_dir, state_json)
     control_message('generation_result', {
         'module_name': name,
         'module_origin': get_module_origin(mod_file_name, name),
         'generation_status': status
     })
+    if status != GenerationStatus.UP_TO_DATE and state_json:
+        # TODO use the actual generator version when a skeleton was copied from the cache
+        # TODO don't update state_json inplace
+        state_json['sdk_skeletons'][name] = {'gen_version': version()}
     return status
 
 
 # noinspection PyBroadException
-def process_one(name, mod_file_name, doing_builtins, sdk_skeletons_dir):
+def process_one(name, mod_file_name, doing_builtins, sdk_skeletons_dir, state_json=None):
     """
     Processes a single module named name defined in file_name (autodetect if not given).
     Returns True on success.
@@ -477,13 +486,13 @@ def process_one(name, mod_file_name, doing_builtins, sdk_skeletons_dir):
         global_cache_dir = os.path.join(python_stubs_dir, CACHE_DIR_NAME)
         mod_cache_dir = build_cache_dir_path(global_cache_dir, name, mod_file_name)
 
-        sdk_skeleton_status = skeleton_status(sdk_skeletons_dir, name, mod_file_name)
+        sdk_skeleton_status = skeleton_status(sdk_skeletons_dir, name, mod_file_name, state_json)
         if sdk_skeleton_status == SkeletonStatus.UP_TO_DATE:
             return GenerationStatus.UP_TO_DATE
         elif sdk_skeleton_status == SkeletonStatus.FAILING:
             return GenerationStatus.FAILED
 
-        cached_skeleton_status = skeleton_status(mod_cache_dir, name, mod_file_name)
+        cached_skeleton_status = skeleton_status(mod_cache_dir, name, mod_file_name, None)
         if cached_skeleton_status == SkeletonStatus.OUTDATED:
             return execute_in_subprocess_synchronously(name='Skeleton Generator Worker',
                                                        func=generate_skeleton,
@@ -600,7 +609,7 @@ def process_builtin_modules(sdk_skeletons_dir, name_pattern=None):
     return result
 
 
-def process_all(roots, sdk_skeletons_dir, name_pattern=None):
+def process_all(roots, sdk_skeletons_dir, name_pattern=None, state_json=None):
     if name_pattern is None:
         name_pattern = '*'
 
@@ -614,5 +623,8 @@ def process_all(roots, sdk_skeletons_dir, name_pattern=None):
     binaries.sort(key=(lambda b: b.qname))
     for i, binary in enumerate(binaries):
         progress(text=binary.qname, fraction=float(i) / len(binaries), minor=True)
-        process_one_with_results_reporting(binary.qname, binary.path, False, sdk_skeletons_dir)
+        process_one_with_results_reporting(binary.qname, binary.path, False, sdk_skeletons_dir, state_json)
     progress(fraction=1.0)
+    if state_json:
+        with fopen(os.path.join(sdk_skeletons_dir, 'state.json'), 'w') as f:
+            json.dump(state_json, f)
