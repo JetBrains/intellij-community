@@ -82,5 +82,28 @@
       <key>WorkingDirectory</key>
       <string>$APP_PACKAGE/Contents/bin</string>
     </dict>
+    <key>NSCameraUsageDescription</key>
+    <string>@@bundle_name@@ requests access to the device's camera.</string>
+
+    <key>NSMicrophoneUsageDescription</key>
+    <string>@@bundle_name@@ requests access to the device's microphone.</string>
+
+    <key>NSLocationUsageDescription</key>
+    <string>@@bundle_name@@ requests access to the user's location information.</string>
+
+    <key>NSDesktopFolderUsageDescription</key>
+    <string>@@bundle_name@@ requests access to the user's Desktop folder.</string>
+
+    <key>NSDocumentsFolderUsageDescription</key>
+    <string>@@bundle_name@@ requests access to the user's Documents folder.</string>
+
+    <key>NSDownloadsFolderUsageDescription</key>
+    <string>@@bundle_name@@ requests access to the user's Downloads folder.</string>
+
+    <key>NSNetworkVolumesUsageDescription</key>
+    <string>@@bundle_name@@ requests access to files on a network volume.</string>
+
+    <key>NSRemovableVolumesUsageDescription</key>
+    <string>@@bundle_name@@ requests access to files on a removable volume.</string>
   </dict>
 </plist>
