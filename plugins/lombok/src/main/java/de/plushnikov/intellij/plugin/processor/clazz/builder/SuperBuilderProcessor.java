@@ -11,7 +11,6 @@ import com.intellij.psi.PsiModifier;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
 import de.plushnikov.intellij.plugin.processor.clazz.AbstractClassProcessor;
-import de.plushnikov.intellij.plugin.processor.handler.BuilderHandler;
 import de.plushnikov.intellij.plugin.processor.handler.SuperBuilderHandler;
 import de.plushnikov.intellij.plugin.settings.ProjectSettings;
 import lombok.experimental.SuperBuilder;
@@ -28,7 +27,7 @@ import java.util.List;
  */
 public class SuperBuilderProcessor extends AbstractClassProcessor {
 
-  private final BuilderHandler builderHandler;
+  private final SuperBuilderHandler builderHandler;
 
   public SuperBuilderProcessor(@NotNull SuperBuilderHandler superBuilderHandler) {
     super(PsiMethod.class, SuperBuilder.class);
@@ -55,24 +54,24 @@ public class SuperBuilderProcessor extends AbstractClassProcessor {
   }
 
   protected void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
-    final String builderClassName = ((SuperBuilderHandler) builderHandler).getBuilderClassName(psiClass);
+    final String builderClassName = builderHandler.getBuilderClassName(psiClass);
     final PsiClass builderBaseClass = psiClass.findInnerClassByName(builderClassName, false);
     if (null != builderBaseClass) {
-      final PsiClassType psiTypeBaseWithGenerics = ((SuperBuilderHandler) builderHandler).getTypeWithWildcardsForSuperBuilderTypeParameters(builderBaseClass);
+      final PsiClassType psiTypeBaseWithGenerics = builderHandler.getTypeWithWildcardsForSuperBuilderTypeParameters(builderBaseClass);
 
-      ((SuperBuilderHandler) builderHandler).createBuilderBasedConstructor(psiClass, builderBaseClass, psiAnnotation, psiTypeBaseWithGenerics)
+      builderHandler.createBuilderBasedConstructor(psiClass, builderBaseClass, psiAnnotation, psiTypeBaseWithGenerics)
         .ifPresent(target::add);
 
       // skip generation of builder methods, if class is abstract
       if (!psiClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
-        final String builderImplClassName = ((SuperBuilderHandler) builderHandler).getBuilderImplClassName(psiClass);
+        final String builderImplClassName = builderHandler.getBuilderImplClassName(psiClass);
         final PsiClass builderImplClass = psiClass.findInnerClassByName(builderImplClassName, false);
 
         if (null != builderImplClass) {
-          ((SuperBuilderHandler) builderHandler).createBuilderMethodIfNecessary(psiClass, builderBaseClass, builderImplClass, psiAnnotation, psiTypeBaseWithGenerics)
+          builderHandler.createBuilderMethodIfNecessary(psiClass, builderBaseClass, builderImplClass, psiAnnotation, psiTypeBaseWithGenerics)
             .ifPresent(target::add);
 
-          ((SuperBuilderHandler) builderHandler).createToBuilderMethodIfNecessary(psiClass, builderBaseClass, builderImplClass, psiAnnotation, psiTypeBaseWithGenerics)
+          builderHandler.createToBuilderMethodIfNecessary(psiClass, builderBaseClass, builderImplClass, psiAnnotation, psiTypeBaseWithGenerics)
             .ifPresent(target::add);
         }
       }

@@ -2,15 +2,15 @@ package de.plushnikov;
 
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.util.BuildNumber;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
 /**
- * Simple extension of {@link LightCodeInsightFixtureTestCase} that allows skipping test cases
+ * Simple extension of {@link LightJavaCodeInsightFixtureTestCase} that allows skipping test cases
  * based on required Platform API version.
  *
  * @author Alexej Kubarev
  */
-public abstract class ApiVersionAwareLightCodeInsightFixureTestCase extends LightCodeInsightFixtureTestCase {
+public abstract class ApiVersionAwareLightJavaCodeInsightFixtureTestCase extends LightJavaCodeInsightFixtureTestCase {
 
   private String getMinVersion() {
     RequiredApiVersion requiredVersionAnnotation = getClass().getAnnotation(RequiredApiVersion.class);

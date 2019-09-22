@@ -6,8 +6,12 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.util.AsyncResult;
 import de.plushnikov.intellij.plugin.AbstractLombokLightCodeInsightTestCase;
+import org.jetbrains.concurrency.Promise;
+
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 public abstract class LombokLightActionTestCase extends AbstractLombokLightCodeInsightTestCase {
   protected void doTest() throws Exception {
@@ -16,11 +20,12 @@ public abstract class LombokLightActionTestCase extends AbstractLombokLightCodeI
     checkResultByFile(getBasePath() + "/after" + getTestName(false) + ".java");
   }
 
-  protected void performActionTest() {
+  private void performActionTest() throws TimeoutException, ExecutionException {
     AnAction anAction = getAction();
 
-    AsyncResult<DataContext> contextResult = DataManager.getInstance().getDataContextFromFocus();
-    AnActionEvent anActionEvent = new AnActionEvent(null, contextResult.getResult(), "", anAction.getTemplatePresentation(), ActionManager.getInstance(), 0);
+    Promise<DataContext> contextResult = DataManager.getInstance().getDataContextFromFocusAsync();
+    AnActionEvent anActionEvent = new AnActionEvent(null, contextResult.blockingGet(10, TimeUnit.SECONDS),
+      "", anAction.getTemplatePresentation(), ActionManager.getInstance(), 0);
 
     anAction.actionPerformed(anActionEvent);
     FileDocumentManager.getInstance().saveAllDocuments();

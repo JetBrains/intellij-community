@@ -14,7 +14,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.PathUtil;
 import junit.framework.ComparisonFailure;
 import org.jetbrains.annotations.NotNull;
@@ -24,7 +24,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.regex.Pattern;
 
-public abstract class AbstractLombokLightCodeInsightTestCase extends LightCodeInsightFixtureTestCase {
+public abstract class AbstractLombokLightCodeInsightTestCase extends LightJavaCodeInsightFixtureTestCase {
   private static final String LOMBOK_SRC_PATH = "./generated/src/lombok";
 
   @Override
