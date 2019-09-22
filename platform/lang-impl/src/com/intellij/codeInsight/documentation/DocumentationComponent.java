@@ -6,6 +6,7 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.lookup.LookupEx;
 import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.configurationStore.JbXmlOutputter;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.BaseNavigateToSourceAction;
@@ -42,10 +43,7 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
-import com.intellij.openapi.util.DimensionService;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -74,6 +72,7 @@ import com.intellij.util.Url;
 import com.intellij.util.Urls;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.ScreenReader;
+import org.jdom.Attribute;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -86,6 +85,7 @@ import javax.swing.event.ChangeListener;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import javax.swing.plaf.TextUI;
+import javax.swing.plaf.basic.BasicHTML;
 import javax.swing.text.*;
 import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLDocument;
@@ -98,6 +98,7 @@ import java.awt.image.RenderedImage;
 import java.awt.image.renderable.RenderContext;
 import java.awt.image.renderable.RenderableImage;
 import java.awt.image.renderable.RenderableImageProducer;
+import java.io.StringWriter;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.net.MalformedURLException;
@@ -128,6 +129,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   private long myModificationCount;
 
   public static final String QUICK_DOC_FONT_SIZE_PROPERTY = "quick.doc.font.size";
+  public static final String EXTERNAL_URI_PREFIX = "^\\w{3,8}://.*$";
 
   private final Stack<Context> myBackStack = new Stack<>();
   private final Stack<Context> myForwardStack = new Stack<>();
@@ -370,7 +372,8 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
 
     myExternalDocAction.registerCustomShortcutSet(CustomShortcutSet.fromString("UP"), this);
-    myExternalDocAction.registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_EXTERNAL_JAVADOC).getShortcutSet(), myEditorPane);
+    myExternalDocAction
+      .registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_EXTERNAL_JAVADOC).getShortcutSet(), myEditorPane);
     edit.registerCustomShortcutSet(CommonShortcuts.getEditSource(), this);
     ActionPopupMenu contextMenu = ((ActionManagerImpl)ActionManager.getInstance()).createActionPopupMenu(
       ActionPlaces.JAVADOC_TOOLBAR, actions, new MenuItemPresentationFactory(true));
@@ -776,12 +779,71 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
                                @Nullable String ref) {
     myIsEmpty = false;
     if (myManager == null) return;
-
-    myText = text;
     setElement(element);
+    
+    text = fixImageReferences(text);
+    myText = text;
     myDecoratedText = decorate(text);
-
     showHint(viewRect, ref);
+  }
+
+  /**
+   * Fix the <img> elements references by adding references to local files if necessary
+   *
+   * @param text: an html string is expected. If it is not an html
+   *              then it returns the value passed by parameter
+   */
+  private String fixImageReferences(String text) {
+    if (text == null || text.isEmpty() || !BasicHTML.isHTMLString(text)) {
+      return text;
+    }
+    text = text.replace("<br>", "<br/>");
+    String basePath = this.myManager.myProject.getBasePath();
+    try {
+      org.jdom.Element dom = JDOMUtil.load(text);
+      org.jdom.Element body = dom.getChild("body");
+      if (body == null) {
+        return text;
+      }
+      org.jdom.Element divContent = null;
+      for (org.jdom.Element child : body.getChildren("div")) {
+        Attribute classAttr = child.getAttribute("class");
+        if (classAttr != null && classAttr.getValue().equals("content")) {
+          divContent = child;
+          break;
+        }
+      }
+      if (divContent == null) {
+        return text;
+      }
+      List<org.jdom.Element> imgDivs = divContent.getChildren("div");
+
+      for (org.jdom.Element div : imgDivs) {
+        org.jdom.Element img = div.getChild("img");
+        if (img == null) {
+          continue;
+        }
+        Attribute srcAttr = img.getAttribute("src");
+        if (srcAttr == null) {
+          continue;
+        }
+        String urlStr = srcAttr.getValue();
+        if (urlStr.matches(EXTERNAL_URI_PREFIX)) {
+          continue;
+        }
+        String fixedPath = String.format("file://%s/%s", basePath, urlStr);
+        img.setAttribute("src", fixedPath);
+        img.setAttribute("alt", fixedPath);
+      }
+      StringWriter writer = new StringWriter();
+      JbXmlOutputter xmlWriter = new JbXmlOutputter("\n");
+      xmlWriter.output(dom, writer);
+      return writer.toString();
+    }
+    catch (Exception e) {
+      LOG.error("Error parsing the doc string", e);
+    }
+    return text;
   }
 
   protected void showHint(@NotNull Rectangle viewRect, @Nullable String ref) {
@@ -840,7 +902,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
     else {
       referenceComponent = SoftReference.dereference(myReferenceComponent);
-      if (referenceComponent == null || ! referenceComponent.isShowing()) referenceComponent = myHint.getComponent();
+      if (referenceComponent == null || !referenceComponent.isShowing()) referenceComponent = myHint.getComponent();
     }
     return DataManager.getInstance().getDataContext(referenceComponent);
   }
@@ -974,7 +1036,8 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
           text = DocumentationMarkup.CONTENT_START + text + DocumentationMarkup.CONTENT_END;
         }
         hasContent = true;
-      } else if (!text.contains(DocumentationMarkup.SECTIONS_START)){
+      }
+      else if (!text.contains(DocumentationMarkup.SECTIONS_START)) {
         text = StringUtil.replaceIgnoreCase(text, DocumentationMarkup.DEFINITION_START, "<div class='definition-only'><pre>");
       }
     }
@@ -1081,7 +1144,8 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     try {
       return new URL(url).toURI().getHost();
     }
-    catch (URISyntaxException | MalformedURLException ignored) { }
+    catch (URISyntaxException | MalformedURLException ignored) {
+    }
     return null;
   }
 
@@ -1173,6 +1237,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     return Toolkit.getDefaultToolkit().createImage(new RenderableImageProducer(new RenderableImage() {
       private Image myImage;
       private boolean myImageLoaded;
+
       @Override
       public Vector<RenderableImage> getSources() { return null; }
 
@@ -1245,7 +1310,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     highlightLink(context.highlightedLink);
 
     if (myManager != null) {
-      PsiElement element  = context.element.getElement();
+      PsiElement element = context.element.getElement();
       if (element != null) {
         myManager.updateToolWindowTabName(element);
       }
@@ -1789,7 +1854,8 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       Presentation presentation = e.getPresentation();
       if (myManager == null) {
         presentation.setEnabledAndVisible(false);
-      } else {
+      }
+      else {
         presentation
           .setIcon(ToolWindowManagerEx.getInstanceEx(myManager.myProject).getLocationIcon(ToolWindowId.DOCUMENTATION, EmptyIcon.ICON_16));
         presentation.setEnabledAndVisible(myToolwindowCallback != null);
