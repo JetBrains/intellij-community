@@ -7,7 +7,6 @@ import com.intellij.ide.actions.runAnything.activity.RunAnythingProviderBase;
 import com.intellij.ide.actions.runAnything.items.RunAnythingHelpItem;
 import com.intellij.ide.actions.runAnything.items.RunAnythingItem;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -248,15 +247,5 @@ public class MavenRunAnythingProvider extends RunAnythingProviderBase<String> {
         mavenRunner.run(params, mavenRunner.getSettings(), null);
       }
     }
-  }
-
-  @Nullable
-  @Override
-  public RunAnythingContext getPreferableContext(@NotNull DataContext dataContext) {
-    Module module = dataContext.getData(LangDataKeys.MODULE);
-    if (module != null) {
-      return new RunAnythingContext.ModuleContext(module);
-    }
-    return super.getPreferableContext(dataContext);
   }
 }
