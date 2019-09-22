@@ -34,7 +34,6 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemPropertyBean
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.registry.RegistryKeyBean
-import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.WeakFocusStackManager
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.WindowManagerEx
@@ -52,6 +51,7 @@ import com.intellij.ui.mac.foundation.Foundation
 import com.intellij.ui.mac.touchbar.TouchBarsManager
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.concurrency.NonUrgentExecutor
 import com.intellij.util.io.exists
 import com.intellij.util.io.write
 import com.intellij.util.ui.AsyncProcessIcon
@@ -73,7 +73,6 @@ import java.util.concurrent.Executor
 import java.util.concurrent.Future
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Function
-import javax.swing.JFrame
 import javax.swing.JOptionPane
 import kotlin.system.exitProcess
 
@@ -163,7 +162,7 @@ private fun startApp(app: ApplicationImpl,
 
       // ensure that TouchBarsManager is loaded before WelcomeFrame/project
       // do not wait completion - it is thread safe and not required for application start
-      AppExecutorUtil.getAppExecutorService().execute {
+      NonUrgentExecutor.getInstance().execute {
         runActivity("mac touchbar") {
           Foundation.init()
           TouchBarsManager.isTouchBarAvailable()
@@ -178,7 +177,13 @@ private fun startApp(app: ApplicationImpl,
       PlatformDefaults.setLogicalPixelBase(PlatformDefaults.BASE_FONT_SIZE)
     }
 
-    scheduleIconPreloading()
+    NonUrgentExecutor.getInstance().execute {
+      runActivity("icons preloading") {
+        AsyncProcessIcon("")
+        AnimatedIcon.Blinking(AllIcons.Ide.FatalError)
+        AnimatedIcon.FS()
+      }
+    }
   }
 
   CompletableFuture.allOf(registerRegistryAndInitStoreFuture, StartupUtil.getServerFuture())
@@ -196,7 +201,7 @@ private fun startApp(app: ApplicationImpl,
     .thenRunAsync(Runnable {
       // execute in parallel to loading components - this functionality should be used only by plugin functionality,
       // that used after start-up
-      runActivity("init system properties") {
+      runActivity("system properties setting") {
         SystemPropertyBean.initSystemProperties()
       }
 
@@ -205,7 +210,7 @@ private fun startApp(app: ApplicationImpl,
       activity.end()
 
       if (!headless) {
-        addActivateAndWindowsCliListeners(app)
+        addActivateAndWindowsCliListeners()
       }
 
       initAppActivity.end()
@@ -216,7 +221,7 @@ private fun startApp(app: ApplicationImpl,
         }
 
         if (PluginManagerCore.isRunningFromSources()) {
-          AppExecutorUtil.getAppExecutorService().execute {
+          NonUrgentExecutor.getInstance().execute {
             AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame())
           }
         }
@@ -248,16 +253,6 @@ fun preloadServices(plugins: List<IdeaPluginDescriptorImpl>, container: Platform
   return endActivityAndLogError(result.syncPreloadedServices, syncActivity)
 }
 
-private fun scheduleIconPreloading() {
-  AppExecutorUtil.getAppExecutorService().execute {
-    runActivity("preload icons") {
-      AsyncProcessIcon("")
-      AnimatedIcon.Blinking(AllIcons.Ide.FatalError)
-      AnimatedIcon.FS()
-    }
-  }
-}
-
 @ApiStatus.Internal
 fun registerRegistryAndInitStore(registerFuture: CompletableFuture<List<IdeaPluginDescriptor>>,
                                  app: ApplicationImpl): CompletableFuture<List<IdeaPluginDescriptorImpl>> {
@@ -280,25 +275,23 @@ fun registerRegistryAndInitStore(registerFuture: CompletableFuture<List<IdeaPlug
     }
 }
 
-private fun addActivateAndWindowsCliListeners(app: ApplicationImpl) {
+private fun addActivateAndWindowsCliListeners() {
   StartupUtil.addExternalInstanceListener { args ->
     val ref = AtomicReference<Future<CliResult>>()
-    app.invokeAndWait {
+    ApplicationManager.getApplication().invokeAndWait {
       LOG.info("ApplicationImpl.externalInstanceListener invocation")
       val realArgs = if (args.isEmpty()) args else args.subList(1, args.size)
       val projectAndFuture = CommandLineProcessor.processExternalCommandLine(realArgs, args.firstOrNull())
       ref.set(projectAndFuture.getSecond())
-      val frame = when (val project = projectAndFuture.getFirst()) {
-        null -> WindowManager.getInstance().findVisibleFrame()
-        else -> WindowManager.getInstance().getIdeFrame(project) as JFrame
+      val project = projectAndFuture.getFirst()
+      if (project == null) {
+        val frame = WindowManager.getInstance().findVisibleFrame()
+        frame.toFront()
+        DialogEarthquakeShaker.shake(frame)
       }
-      if (frame != null) {
-        if (frame is IdeFrame) {
-          AppIcon.getInstance().requestFocus(frame as IdeFrame)
-        }
-        else {
-          frame.toFront()
-          DialogEarthquakeShaker.shake(frame)
+      else {
+        WindowManager.getInstance().getFrame(project)?.let {
+          AppIcon.getInstance().requestFocus()
         }
       }
     }
@@ -307,6 +300,7 @@ private fun addActivateAndWindowsCliListeners(app: ApplicationImpl) {
   }
 
   MainRunner.LISTENER = WindowsCommandLineListener { currentDirectory, args ->
+    val app = ApplicationManager.getApplication()
     val argsList = args.toList()
     LOG.info("Received external Windows command line: current directory $currentDirectory, command line $argsList")
     if (argsList.isEmpty()) return@WindowsCommandLineListener 0
@@ -335,7 +329,7 @@ fun initApplication(rawArgs: List<String>, initUiTask: CompletionStage<*> = Comp
       }
 
       if (!Main.isHeadless()) {
-        runActivity("load system fonts") {
+        runActivity("system fonts loading") {
           // editor and other UI components need the list of system fonts to implement font fallback
           // this list is pre-loaded here, in parallel to other activities, to speed up project opening
           // ideally, it shouldn't overlap with other font-related activities to avoid contention on JDK-internal font manager locks
@@ -343,7 +337,7 @@ fun initApplication(rawArgs: List<String>, initUiTask: CompletionStage<*> = Comp
         }
 
         // pre-load cursors used by drag'n'drop AWT subsystem
-        invokeLaterWithAnyModality("setup DnD") {
+        invokeLaterWithAnyModality("DnD setup") {
           DragSource.getDefaultDragSource()
         }
       }
@@ -495,7 +489,7 @@ open class IdeStarter : ApplicationStarter {
 
     frameInitActivity.end()
 
-    AppExecutorUtil.getAppExecutorService().run {
+    NonUrgentExecutor.getInstance().execute {
       LifecycleUsageTriggerCollector.onIdeStart()
     }
 
@@ -539,7 +533,7 @@ open class IdeStarter : ApplicationStarter {
 
   private fun postOpenUiTasks(app: Application) {
     if (SystemInfo.isMac) {
-      AppExecutorUtil.getAppExecutorService().execute {
+      NonUrgentExecutor.getInstance().execute {
         runActivity("mac touchbar on app init") {
           TouchBarsManager.onApplicationInitialized()
           if (TouchBarsManager.isTouchBarAvailable()) {
@@ -552,7 +546,7 @@ open class IdeStarter : ApplicationStarter {
       }
     }
     else if (SystemInfo.isXWindow && SystemInfo.isJetBrainsJvm) {
-      AppExecutorUtil.getAppExecutorService().execute {
+      NonUrgentExecutor.getInstance().execute {
         runActivity("input method disabling on Linux") {
           disableInputMethodsIfPossible()
         }
@@ -667,7 +661,7 @@ private fun createLocatorFile() {
 }
 
 fun callAppInitialized(app: ApplicationImpl) {
-  AppExecutorUtil.getAppExecutorService().execute {
+  NonUrgentExecutor.getInstance().execute {
     createLocatorFile()
   }
 

@@ -38,6 +38,7 @@ import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.StartupUiUtil;
 import org.apache.log4j.ConsoleAppender;
@@ -185,7 +186,7 @@ public final class StartupUtil {
     Logger log = setupLogger();
     activity.end();
 
-    executorService.execute(() -> {
+    NonUrgentExecutor.getInstance().execute(() -> {
       ApplicationInfo appInfo = ApplicationInfoImpl.getShadowInstance();
       Activity subActivity = StartUpMeasurer.startActivity("essential IDE info logging");
       logEssentialInfoAboutIde(log, appInfo);
@@ -205,7 +206,7 @@ public final class StartupUtil {
       runPreAppClass(log);
     }
 
-    executorService.execute(() -> loadSystemLibraries(log));
+    NonUrgentExecutor.getInstance().execute(() -> loadSystemLibraries(log));
 
     activity = StartUpMeasurer.startMainActivity("tasks waiting");
     extraTaskFuture.get();

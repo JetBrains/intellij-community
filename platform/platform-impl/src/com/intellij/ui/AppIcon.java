@@ -72,7 +72,12 @@ public abstract class AppIcon {
 
   public abstract void requestAttention(@Nullable Project project, boolean critical);
 
-  public abstract void requestFocus(IdeFrame frame);
+  public void requestFocus(IdeFrame frame) {
+    requestFocus();
+  }
+
+  public void requestFocus() {
+  }
 
   private static abstract class BaseIcon extends AppIcon {
     private ApplicationActivationListener myAppListener;
@@ -165,7 +170,7 @@ public abstract class AppIcon {
   }
 
   @SuppressWarnings("UseJBColor")
-  static class MacAppIcon extends BaseIcon {
+  static final class MacAppIcon extends BaseIcon {
     private BufferedImage myAppImage;
     private final Map<Object, AppImage> myProgressImagesCache = new HashMap<>();
 
@@ -216,13 +221,14 @@ public abstract class AppIcon {
     }
 
     @Override
-    public void requestFocus(IdeFrame frame) {
+    public void requestFocus() {
       assertIsDispatchThread();
 
       try {
         getAppMethod("requestForeground", boolean.class).invoke(getApp(), true);
       }
-      catch (NoSuchMethodException ignored) { }
+      catch (NoSuchMethodException ignored) {
+      }
       catch (Exception e) {
         LOG.error(e);
       }
@@ -674,9 +680,6 @@ public abstract class AppIcon {
 
     @Override
     public void requestAttention(@Nullable Project project, boolean critical) { }
-
-    @Override
-    public void requestFocus(IdeFrame frame) { }
   }
 
   private static void assertIsDispatchThread() {

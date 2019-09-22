@@ -12,8 +12,10 @@ import org.jetbrains.annotations.NotNull;
 import java.util.LinkedHashMap;
 
 public final class MainRunner  {
-  @SuppressWarnings("StaticNonFinalField") public static WindowsCommandLineListener LISTENER;
-  @SuppressWarnings("StaticNonFinalField") public static Activity startupStart;
+  @SuppressWarnings("StaticNonFinalField")
+  public static WindowsCommandLineListener LISTENER;
+  @SuppressWarnings("StaticNonFinalField")
+  public static Activity startupStart;
 
   /** Called via reflection from {@link Main#bootstrap}. */
   public static void start(@NotNull String mainClass,
