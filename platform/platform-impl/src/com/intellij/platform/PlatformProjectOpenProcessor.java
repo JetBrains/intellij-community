@@ -2,6 +2,8 @@
 package com.intellij.platform;
 
 import com.intellij.conversion.CannotConvertException;
+import com.intellij.diagnostic.Activity;
+import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.impl.OpenProjectTask;
@@ -193,6 +195,7 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
                                             @NotNull Path baseDir,
                                             @NotNull OpenProjectTask options,
                                             @Nullable String dummyProjectName) {
+    Activity activity = StartUpMeasurer.startMainActivity("project opening preparation");
     if (!options.forceOpenInNewFrame) {
       Project[] openProjects = ProjectUtil.getOpenProjects();
       if (openProjects.length > 0) {
@@ -220,6 +223,7 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
       Pair<Project, Module> result;
       CannotConvertException cannotConvertException = null;
       try {
+        activity.end();
         result = prepareProject(file, options, baseDir, dummyProjectName);
       }
       catch (ProcessCanceledException e) {
