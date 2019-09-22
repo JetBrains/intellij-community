@@ -365,11 +365,32 @@ class SkeletonGenerationTest(GeneratorTestCase):
             'sdk_skeletons': {
                 # shouldn't be updated
                 'mod1': {
-                    'gen_version': '0.1'
+                    'gen_version': '0.1',
+                    'status': 'GENERATED'
                 },
                 # should be updated because of "required_gen_version" file
                 'mod2': {
-                    'gen_version': '0.1'
+                    'gen_version': '0.1',
+                    'status': 'GENERATED'
+                }
+            }
+        }
+        self.check_generator_output(extra_syspath=['mocks', 'binaries'],
+                                    extra_args=['--with-state-marker', '--name-pattern', 'mod?'],
+                                    input=json.dumps(state),
+                                    custom_required_gen=True,
+                                    gen_version='0.2')
+
+    def test_passing_skeletons_state_update_failed_due_to_updated_version(self):
+        state = {
+            'sdk_skeletons': {
+                'mod1': {
+                    'gen_version': '0.2',
+                    'status': 'FAILED',
+                },
+                'mod2': {
+                    'gen_version': '0.1',
+                    'status': 'FAILED'
                 }
             }
         }
