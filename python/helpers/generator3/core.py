@@ -257,22 +257,29 @@ class SkeletonStatus(object):
 def skeleton_status(base_dir, mod_qname, mod_path, state_json=None):
     gen_version = version_to_tuple(version())
 
-    failed_version = read_failed_version_from_stamp(base_dir, mod_qname)
-    if failed_version:
-        return SkeletonStatus.OUTDATED if failed_version < gen_version else SkeletonStatus.FAILING
-
-    record = read_failed_version_and_mtime_from_legacy_blacklist(base_dir, mod_path)
-    if record:
-        failed_version, mtime = record
-        outdated = failed_version < gen_version or (mod_path and mtime < file_modification_timestamp(mod_path))
-        return SkeletonStatus.OUTDATED if outdated else SkeletonStatus.FAILING
-
     if state_json:
-        used_version = state_json['sdk_skeletons'].get(mod_qname, {}).get('gen_version')
+        sdk_skeleton_state = state_json['sdk_skeletons'].get(mod_qname, {})
+
+        used_version = sdk_skeleton_state.get('gen_version')
         if used_version:
             used_version = version_to_tuple(used_version)
+
+        if sdk_skeleton_state['status'] == GenerationStatus.FAILED:
+            return SkeletonStatus.OUTDATED if used_version < gen_version else SkeletonStatus.FAILING
+
     else:
+        failed_version = read_failed_version_from_stamp(base_dir, mod_qname)
+        if failed_version:
+            return SkeletonStatus.OUTDATED if failed_version < gen_version else SkeletonStatus.FAILING
+
+        record = read_failed_version_and_mtime_from_legacy_blacklist(base_dir, mod_path)
+        if record:
+            failed_version, mtime = record
+            outdated = failed_version < gen_version or (mod_path and mtime < file_modification_timestamp(mod_path))
+            return SkeletonStatus.OUTDATED if outdated else SkeletonStatus.FAILING
+
         used_version = read_used_generator_version_from_skeleton_header(base_dir, mod_qname)
+
     required_version = read_required_version(mod_qname)
     if required_version and used_version:
         return SkeletonStatus.OUTDATED if used_version < required_version else SkeletonStatus.UP_TO_DATE
@@ -462,7 +469,10 @@ def process_one_with_results_reporting(name, mod_file_name, doing_builtins, sdk_
     if status != GenerationStatus.UP_TO_DATE and state_json:
         # TODO use the actual generator version when a skeleton was copied from the cache
         # TODO don't update state_json inplace
-        state_json['sdk_skeletons'][name] = {'gen_version': version()}
+        state_json['sdk_skeletons'].setdefault(name, {}).update(
+            gen_version=version(),
+            status=status,
+        )
     return status
 
 
@@ -626,5 +636,6 @@ def process_all(roots, sdk_skeletons_dir, name_pattern=None, state_json=None):
         process_one_with_results_reporting(binary.qname, binary.path, False, sdk_skeletons_dir, state_json)
     progress(fraction=1.0)
     if state_json:
+        mkdir(sdk_skeletons_dir)
         with fopen(os.path.join(sdk_skeletons_dir, 'state.json'), 'w') as f:
             json.dump(state_json, f)
