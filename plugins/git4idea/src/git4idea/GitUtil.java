@@ -65,7 +65,6 @@ import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
 import static com.intellij.dvcs.DvcsUtil.joinShortNames;
 import static com.intellij.openapi.vcs.changes.ChangesUtil.CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY;
 import static com.intellij.util.ObjectUtils.chooseNotNull;
-import static java.util.Arrays.stream;
 
 /**
  * Git utility/helper methods
@@ -1052,20 +1051,6 @@ public class GitUtil {
       }
     }
     refreshVfs(repository.getRoot(), changes);
-  }
-
-  public static void updateAndRefreshVfs(@NotNull GitRepository repository, @Nullable Collection<? extends Change> changes) {
-    repository.update();
-    refreshVfs(repository.getRoot(), changes);
-  }
-
-  public static void updateAndRefreshVfs(GitRepository... repositories) {
-    // repositories state will be auto-updated with the following VFS refresh => there is no need to call GitRepository#update()
-    // but we want repository state to be updated as soon as possible, without waiting for the whole VFS refresh to complete.
-    stream(repositories).forEach(GitRepository::update);
-    for (GitRepository repository : repositories) {
-      refreshVfs(repository.getRoot(), null);
-    }
   }
 
   public static boolean isGitRoot(@NotNull String rootDir) {

@@ -13,8 +13,8 @@ import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcs.log.Hash;
 import git4idea.GitUtil;
-import git4idea.changes.GitChangeUtils;
 import git4idea.commands.*;
 import git4idea.config.GitVcsSettings;
 import git4idea.merge.GitMergeCommittingConflictResolver;
@@ -28,8 +28,7 @@ import javax.swing.event.HyperlinkEvent;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static git4idea.GitUtil.HEAD;
-import static git4idea.GitUtil.updateAndRefreshVfs;
+import static git4idea.GitUtil.*;
 
 class GitMergeOperation extends GitBranchOperation {
 
@@ -65,7 +64,7 @@ class GitMergeOperation extends GitBranchOperation {
         LOG.info("next repository: " + repository);
         VirtualFile root = repository.getRoot();
 
-        Collection<Change> changes = GitChangeUtils.getDiff(repository, HEAD, myBranchToMerge, false);
+        Hash startHash = getHead(repository);
 
         GitLocalChangesWouldBeOverwrittenDetector localChangesDetector =
           new GitLocalChangesWouldBeOverwrittenDetector(root, GitLocalChangesWouldBeOverwrittenDetector.Operation.MERGE);
@@ -80,7 +79,7 @@ class GitMergeOperation extends GitBranchOperation {
                                             alreadyUpToDateDetector);
         if (result.success()) {
           LOG.info("Merged successfully");
-          updateAndRefreshVfs(repository, changes);
+          updateAndRefreshChangedVfs(repository, startHash);
           markSuccessful(repository);
           if (alreadyUpToDateDetector.hasHappened()) {
             alreadyUpToDateRepositories += 1;
@@ -101,7 +100,7 @@ class GitMergeOperation extends GitBranchOperation {
         else if (mergeConflict.hasHappened()) {
           LOG.info("Merge conflict");
           myConflictedRepositories.put(repository, Boolean.FALSE);
-          updateAndRefreshVfs(repository);
+          updateAndRefreshChangedVfs(repository, startHash);
           markSuccessful(repository);
         }
         else if (untrackedOverwrittenByMerge.wasMessageDetected()) {
@@ -216,12 +215,13 @@ class GitMergeOperation extends GitBranchOperation {
    */
   private boolean doMerge(@NotNull Collection<? extends GitRepository> repositories) {
     for (GitRepository repository : repositories) {
+      Hash startHash = getHead(repository);
       GitSimpleEventDetector mergeConflict = new GitSimpleEventDetector(GitSimpleEventDetector.Event.MERGE_CONFLICT);
       GitCommandResult result = myGit.merge(repository, myBranchToMerge, Collections.emptyList(), mergeConflict);
       if (!result.success()) {
         if (mergeConflict.hasHappened()) {
           myConflictedRepositories.put(repository, Boolean.TRUE);
-          updateAndRefreshVfs(repository);
+          updateAndRefreshChangedVfs(repository, startHash);
           markSuccessful(repository);
         }
         else {
@@ -230,7 +230,7 @@ class GitMergeOperation extends GitBranchOperation {
         }
       }
       else {
-        updateAndRefreshVfs(repository);
+        updateAndRefreshChangedVfs(repository, startHash);
         markSuccessful(repository);
       }
     }
@@ -301,8 +301,9 @@ class GitMergeOperation extends GitBranchOperation {
 
   @NotNull
   private GitCommandResult rollbackMerge(@NotNull GitRepository repository) {
+    Hash startHash = getHead(repository);
     GitCommandResult result = myGit.resetMerge(repository, null);
-    updateAndRefreshVfs(repository);
+    updateAndRefreshChangedVfs(repository, startHash);
     return result;
   }
 

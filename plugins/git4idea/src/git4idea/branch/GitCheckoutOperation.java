@@ -25,17 +25,20 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcs.log.Hash;
 import git4idea.changes.GitChangeUtils;
 import git4idea.commands.*;
 import git4idea.config.GitVcsSettings;
 import git4idea.repo.GitRepository;
 import git4idea.util.GitPreservingProcess;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.HyperlinkEvent;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.util.containers.UtilKt.getIfSingle;
@@ -85,7 +88,7 @@ class GitCheckoutOperation extends GitBranchOperation {
         final GitRepository repository = next();
         VirtualFile root = repository.getRoot();
 
-        Collection<Change> changes = GitChangeUtils.getDiff(repository, HEAD, myStartPointReference, false);
+        Hash startHash = getHead(repository);
 
         GitLocalChangesWouldBeOverwrittenDetector localChangesDetector =
           new GitLocalChangesWouldBeOverwrittenDetector(root, GitLocalChangesWouldBeOverwrittenDetector.Operation.CHECKOUT);
@@ -97,7 +100,7 @@ class GitCheckoutOperation extends GitBranchOperation {
         GitCommandResult result = myGit.checkout(repository, myStartPointReference, myNewBranch, false, myDetach,
                                                  localChangesDetector, unmergedFiles, unknownPathspec, untrackedOverwrittenByCheckout);
         if (result.success()) {
-          updateAndRefreshVfs(repository, changes);
+          updateAndRefreshChangedVfs(repository, startHash);
           markSuccessful(repository);
         }
         else if (unmergedFiles.hasHappened()) {
@@ -161,11 +164,12 @@ class GitCheckoutOperation extends GitBranchOperation {
     GitSmartOperationDialog.Choice decision = myUiHandler.showSmartOperationDialog(myProject, affectedChanges, absolutePaths, "checkout",
                                                                                    "&Force Checkout");
     if (decision == SMART) {
+      Hash startHash = getHead(repository);
       boolean smartCheckedOutSuccessfully = smartCheckout(allConflictingRepositories, myStartPointReference, myNewBranch, getIndicator());
       if (smartCheckedOutSuccessfully) {
         for (GitRepository conflictingRepository : allConflictingRepositories) {
           markSuccessful(conflictingRepository);
-          updateAndRefreshVfs(conflictingRepository);
+          updateAndRefreshChangedVfs(conflictingRepository, startHash);
         }
         return true;
       }
@@ -175,10 +179,14 @@ class GitCheckoutOperation extends GitBranchOperation {
       }
     }
     else if (decision == FORCE) {
+      Map<GitRepository, Collection<Change>> changesToRefresh = StreamEx.of(allConflictingRepositories).toMap(repo -> {
+        return GitChangeUtils.getDiffWithWorkingTree(repo, myStartPointReference, false);
+      });
       boolean forceCheckoutSucceeded = checkoutOrNotify(allConflictingRepositories, myStartPointReference, myNewBranch, true);
       if (forceCheckoutSucceeded) {
         markSuccessful(allConflictingRepositories.toArray(new GitRepository[0]));
-        updateAndRefreshVfs(allConflictingRepositories.toArray(new GitRepository[0]));
+        updateRepositories(allConflictingRepositories);
+        allConflictingRepositories.forEach(repo -> refreshVfs(repo.getRoot(), changesToRefresh.get(repo)));
       }
       return forceCheckoutSucceeded;
     }
@@ -210,6 +218,7 @@ class GitCheckoutOperation extends GitBranchOperation {
     GitCompoundResult checkoutResult = new GitCompoundResult(myProject);
     GitCompoundResult deleteResult = new GitCompoundResult(myProject);
     for (GitRepository repository : getSuccessfulRepositories()) {
+      Hash startHash = getHead(repository);
       GitCommandResult result = myGit.checkout(repository, myCurrentHeads.get(repository), null, true, false);
       checkoutResult.append(repository, result);
       if (result.success() && myNewBranch != null) {
@@ -220,7 +229,7 @@ class GitCheckoutOperation extends GitBranchOperation {
          */
         deleteResult.append(repository, myGit.branchDelete(repository, myNewBranch, true));
       }
-      updateAndRefreshVfs(repository);
+      updateAndRefreshChangedVfs(repository, startHash);
     }
     if (!checkoutResult.totalSuccess() || !deleteResult.totalSuccess()) {
       StringBuilder message = new StringBuilder();

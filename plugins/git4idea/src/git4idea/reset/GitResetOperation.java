@@ -18,7 +18,6 @@ import com.intellij.vcs.log.Hash;
 import git4idea.GitUtil;
 import git4idea.branch.GitBranchUiHandlerImpl;
 import git4idea.branch.GitSmartOperationDialog;
-import git4idea.changes.GitChangeUtils;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitLocalChangesWouldBeOverwrittenDetector;
@@ -29,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-import static git4idea.GitUtil.updateAndRefreshVfs;
+import static git4idea.GitUtil.*;
 import static git4idea.commands.GitLocalChangesWouldBeOverwrittenDetector.Operation.RESET;
 
 public class GitResetOperation {
@@ -66,7 +65,7 @@ public class GitResetOperation {
         String target = entry.getValue().asString();
         GitLocalChangesWouldBeOverwrittenDetector detector = new GitLocalChangesWouldBeOverwrittenDetector(root, RESET);
 
-        Collection<Change> changes = GitChangeUtils.getDiffWithWorkingTree(repository, target, false);
+        Hash startHash = getHead(repository);
 
         GitCommandResult result = myGit.reset(repository, myMode, target, detector);
         if (!result.success() && detector.wasMessageDetected()) {
@@ -77,7 +76,7 @@ public class GitResetOperation {
         }
         results.put(repository, result);
 
-        updateAndRefreshVfs(repository, changes);
+        updateAndRefreshChangedVfs(repository, startHash);
         VcsDirtyScopeManager.getInstance(myProject).dirDirtyRecursively(root);
       }
     }
