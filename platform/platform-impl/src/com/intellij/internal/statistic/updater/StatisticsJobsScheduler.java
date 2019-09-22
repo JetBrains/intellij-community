@@ -16,6 +16,7 @@ import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -50,13 +51,15 @@ final class StatisticsJobsScheduler implements ApplicationInitializedListener {
   private static final Map<Project, Future<?>> myPersistStatisticsSessionsMap = Collections.synchronizedMap(new HashMap<>());
 
   StatisticsJobsScheduler() {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      throw ExtensionNotApplicableException.INSTANCE;
+    }
+
     NotificationsConfigurationImpl.remove("SendUsagesStatistics");
   }
 
   @Override
   public void componentsInitialized() {
-    if (ApplicationManager.getApplication().isUnitTestMode()) return;
-
     if (StatisticsUploadAssistant.isShouldShowNotification()) {
       Disposable disposable = Disposer.newDisposable();
       Topics.subscribe(FrameStateListener.TOPIC, disposable, new FrameStateListener() {
