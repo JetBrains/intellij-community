@@ -38,7 +38,6 @@ import com.intellij.openapi.wm.WeakFocusStackManager
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.SystemDock
-import com.intellij.openapi.wm.impl.WindowManagerImpl
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.platform.PlatformProjectOpenProcessor
 import com.intellij.serviceContainer.PlatformComponentManagerImpl
@@ -469,13 +468,13 @@ open class IdeStarter : ApplicationStarter {
     // Event queue should not be changed during initialization of application components.
     // It also cannot be changed before initialization of application components because IdeEventQueue uses other
     // application components. So it is proper to perform replacement only here.
-    frameInitActivity.runChild("set window manager") {
-      IdeEventQueue.getInstance().setWindowManager(WindowManager.getInstance() as WindowManagerImpl)
+    frameInitActivity.runChild("IdeEventQueue informing about WindowManager") {
+      IdeEventQueue.getInstance().setWindowManager(WindowManagerEx.getInstanceEx())
     }
 
     val commandLineArgs = args.toList()
 
-    val appFrameCreatedActivity = frameInitActivity.startChild("call appFrameCreated")
+    val appFrameCreatedActivity = frameInitActivity.startChild("app frame created callback")
     val lifecyclePublisher = app.messageBus.syncPublisher(AppLifecycleListener.TOPIC)
     lifecyclePublisher.appFrameCreated(commandLineArgs)
     appFrameCreatedActivity.end()

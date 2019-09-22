@@ -2,6 +2,7 @@
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.diagnostic.LoadingState;
+import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.internal.statistic.DelayedIdeActivity;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -9,10 +10,8 @@ import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
-import com.intellij.openapi.wm.impl.WindowManagerImpl;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -50,17 +49,17 @@ final class RefreshProgress extends ProgressIndicatorBase {
   private void updateIndicators(boolean start) {
     // wrapping in invokeLater here reduces the number of events posted to EDT in case of multiple IDE frames
     UIUtil.invokeLaterIfNeeded(() -> {
-      if (ApplicationManager.getApplication().isDisposed()) {
+      if (ApplicationManager.getApplication().isDisposedOrDisposeInProgress()) {
         return;
       }
 
-      WindowManager windowManager = WindowManagerImpl.getInstance();
-      if (windowManager == null) {
-        return;
-      }
-
-      Project[] projects = ProjectManager.getInstance().getOpenProjects();
+      Project[] projects = ProjectUtil.getOpenProjects();
       if (projects.length == 0) {
+        return;
+      }
+
+      WindowManager windowManager = WindowManager.getInstance();
+      if (windowManager == null) {
         return;
       }
 

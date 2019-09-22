@@ -68,7 +68,7 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask, pri
               return@invokeLater
             }
 
-            runActivity("init frame") {
+            runActivity("project frame initialization") {
               initNewFrame(frame)
             }
           }

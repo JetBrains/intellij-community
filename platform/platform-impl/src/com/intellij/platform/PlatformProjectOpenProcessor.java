@@ -194,7 +194,7 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
                                             @NotNull OpenProjectTask options,
                                             @Nullable String dummyProjectName) {
     if (!options.forceOpenInNewFrame) {
-      Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
+      Project[] openProjects = ProjectUtil.getOpenProjects();
       if (openProjects.length > 0) {
         Project projectToClose = options.projectToClose;
         if (projectToClose == null) {
@@ -277,12 +277,11 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
                                                       @NotNull OpenProjectTask options,
                                                       @NotNull Path baseDir,
                                                       @Nullable String dummyProjectName) throws CannotConvertException {
-    ProjectManagerImpl projectManager = (ProjectManagerImpl)ProjectManagerEx.getInstanceEx();
     Project project;
     boolean isNewProject = options.isNewProject;
     if (isNewProject) {
       String projectName = dummyProjectName == null ? baseDir.getFileName().toString() : dummyProjectName;
-      project = projectManager.newProject(baseDir, projectName, options);
+      project = ((ProjectManagerImpl)ProjectManager.getInstance()).newProject(baseDir, projectName, options);
     }
     else {
       project = ProjectManagerImpl.convertAndLoadProject(baseDir);

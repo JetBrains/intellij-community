@@ -192,7 +192,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
   }
 
   override fun updateLastProjectPath() {
-    val openProjects = ProjectManager.getInstance().openProjects
+    val openProjects = ProjectUtil.getOpenProjects()
     synchronized(stateLock) {
       for (info in state.additionalInfo.values) {
         info.opened = false
@@ -445,10 +445,6 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
   }
 
   override fun reopenLastProjectsOnStart() {
-    if (!GeneralSettings.getInstance().isReopenLastProject) {
-      return
-    }
-
     val openPaths = lastOpenedProjects
     var someProjectWasOpened = false
     for ((key, value) in openPaths) {

@@ -254,9 +254,15 @@ public class ProjectUtil {
     return path.contains("://") || path.contains("\\\\");
   }
 
+  @NotNull
+  public static Project[] getOpenProjects() {
+    ProjectManager projectManager = ProjectManager.getInstanceIfCreated();
+    return projectManager == null ? new Project[0] : projectManager.getOpenProjects();
+  }
+
   @Nullable
   public static Project findAndFocusExistingProjectForPath(@NotNull Path file) {
-    Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
+    Project[] openProjects = getOpenProjects();
     if (openProjects.length == 0) {
       return null;
     }
