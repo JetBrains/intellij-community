@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcs.log.Hash;
 import git4idea.branch.GitRebaseParams;
 import git4idea.push.GitPushParams;
 import git4idea.repo.GitRemote;
@@ -258,6 +259,9 @@ public interface Git {
                           @NotNull String commit,
                           boolean autoCommit,
                           @NotNull GitLineHandlerListener... listeners);
+
+  @Nullable
+  Hash resolveReference(@NotNull GitRepository repository, @NotNull String reference);
 
   @NotNull
   GitCommandResult getObjectType(@NotNull GitRepository repository, @NotNull String object);

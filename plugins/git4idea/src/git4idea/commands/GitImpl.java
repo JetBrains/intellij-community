@@ -12,6 +12,9 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.impl.HashImpl;
+import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitContentRevision;
@@ -758,6 +761,30 @@ public class GitImpl extends GitImplBase {
     }
     addListeners(handler, listeners);
     return runCommand(handler);
+  }
+
+  @Nullable
+  @Override
+  public Hash resolveReference(@NotNull GitRepository repository, @NotNull String ref) {
+    VirtualFile root = repository.getRoot();
+    GitLineHandler handler = new GitLineHandler(repository.getProject(), root, GitCommand.REV_PARSE);
+    handler.addParameters("--verify");
+    handler.addParameters(ref + "^{commit}");
+    GitCommandResult result = Git.getInstance().runCommand(handler);
+    String output = result.getOutputAsJoinedString();
+    if (result.success()) {
+      if (VcsLogUtil.HASH_REGEX.matcher(output).matches()) {
+        return HashImpl.build(output);
+      }
+      else {
+        LOG.error("Invalid output for git rev-parse " + ref + " in " + root + ": " + output);
+        return null;
+      }
+    }
+    else {
+      LOG.debug("Reference [" + ref + "] is unknown to Git in " + root);
+      return null;
+    }
   }
 
   @NotNull

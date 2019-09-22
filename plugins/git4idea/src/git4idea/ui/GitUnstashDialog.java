@@ -19,6 +19,7 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.vcs.log.Hash;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
 import git4idea.branch.GitBranchUtil;
@@ -29,6 +30,7 @@ import git4idea.commands.GitLineHandler;
 import git4idea.i18n.GitBundle;
 import git4idea.merge.GitConflictResolver;
 import git4idea.repo.GitRepository;
+import git4idea.repo.GitRepositoryManager;
 import git4idea.stash.GitStashUtils;
 import git4idea.util.GitUIUtil;
 import git4idea.validators.GitNewBranchNameValidator;
@@ -46,6 +48,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 
+import static com.intellij.util.ObjectUtils.notNull;
 import static java.util.Collections.singletonList;
 
 /**
@@ -328,7 +331,13 @@ public class GitUnstashDialog extends DialogWrapper {
     VirtualFile root = getGitRoot();
     GitLineHandler h = handler();
 
-    boolean completed = ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> GitStashUtils.unstash(myProject, root, h, new UnstashConflictResolver(myProject, root, getSelectedStash())), GitBundle.getString("unstash.unstashing"), true, myProject);
+    boolean completed = ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+      StashInfo stash = getSelectedStash();
+      GitRepository repository = notNull(GitRepositoryManager.getInstance(myProject).getRepositoryForRoot(root));
+      Hash hash = Git.getInstance().resolveReference(repository, stash.getStash());
+      GitStashUtils.unstash(myProject, Collections.singletonMap(root, hash), r -> h,
+                            new UnstashConflictResolver(myProject, root, stash));
+    }, GitBundle.getString("unstash.unstashing"), true, myProject);
 
     if (completed) {
       super.doOKAction();
