@@ -1,7 +1,6 @@
 package de.plushnikov.intellij.plugin.processor.method;
 
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -25,9 +24,9 @@ public class BuilderClassMethodProcessor extends AbstractMethodProcessor {
 
   private final BuilderHandler builderHandler;
 
-  public BuilderClassMethodProcessor() {
+  public BuilderClassMethodProcessor(@NotNull BuilderHandler builderHandler) {
     super(PsiClass.class, Builder.class);
-    this.builderHandler = ServiceManager.getService(BuilderHandler.class);
+    this.builderHandler = builderHandler;
   }
 
   @Override

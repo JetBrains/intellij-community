@@ -1,6 +1,5 @@
 package de.plushnikov.intellij.plugin.processor.clazz;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -30,9 +29,9 @@ public class WitherProcessor extends AbstractClassProcessor {
 
   private final WitherFieldProcessor fieldProcessor;
 
-  public WitherProcessor() {
+  public WitherProcessor(@NotNull WitherFieldProcessor witherFieldProcessor) {
     super(PsiMethod.class, Wither.class, With.class);
-    this.fieldProcessor = ServiceManager.getService(WitherFieldProcessor.class);
+    this.fieldProcessor = witherFieldProcessor;
   }
 
   @Override

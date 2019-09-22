@@ -67,7 +67,7 @@ public abstract class AbstractProcessor implements Processor {
 
   /**
    * Constructor for all Lombok-Processors
-   *  @param supportedClass                  kind of output elements this processor supports
+   * @param supportedClass                  kind of output elements this processor supports
    * @param supportedAnnotationClass        annotation this processor supports
    * @param oneEquivalentAnnotationClass    another equivalent annotation
    * @param secondEquivalentAnnotationClass another equivalent annotation

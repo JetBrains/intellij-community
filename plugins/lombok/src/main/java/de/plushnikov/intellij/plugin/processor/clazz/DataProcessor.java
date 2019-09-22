@@ -1,6 +1,5 @@
 package de.plushnikov.intellij.plugin.processor.clazz;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -43,14 +42,19 @@ public class DataProcessor extends AbstractClassProcessor {
   private final RequiredArgsConstructorProcessor requiredArgsConstructorProcessor;
   private final NoArgsConstructorProcessor noArgsConstructorProcessor;
 
-  public DataProcessor() {
+  public DataProcessor(@NotNull GetterProcessor getterProcessor,
+                       @NotNull SetterProcessor setterProcessor,
+                       @NotNull EqualsAndHashCodeProcessor equalsAndHashCodeProcessor,
+                       @NotNull ToStringProcessor toStringProcessor,
+                       @NotNull RequiredArgsConstructorProcessor requiredArgsConstructorProcessor,
+                       @NotNull NoArgsConstructorProcessor noArgsConstructorProcessor) {
     super(PsiMethod.class, Data.class);
-    this.getterProcessor = ServiceManager.getService(GetterProcessor.class);
-    this.setterProcessor = ServiceManager.getService(SetterProcessor.class);
-    this.equalsAndHashCodeProcessor = ServiceManager.getService(EqualsAndHashCodeProcessor.class);
-    this.toStringProcessor = ServiceManager.getService(ToStringProcessor.class);
-    this.requiredArgsConstructorProcessor = ServiceManager.getService(RequiredArgsConstructorProcessor.class);
-    this.noArgsConstructorProcessor = ServiceManager.getService(NoArgsConstructorProcessor.class);
+    this.getterProcessor = getterProcessor;
+    this.setterProcessor = setterProcessor;
+    this.equalsAndHashCodeProcessor = equalsAndHashCodeProcessor;
+    this.toStringProcessor = toStringProcessor;
+    this.requiredArgsConstructorProcessor = requiredArgsConstructorProcessor;
+    this.noArgsConstructorProcessor = noArgsConstructorProcessor;
   }
 
   @Override

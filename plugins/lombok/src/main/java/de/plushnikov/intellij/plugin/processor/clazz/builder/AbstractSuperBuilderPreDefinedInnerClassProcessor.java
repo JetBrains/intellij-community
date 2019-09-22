@@ -1,7 +1,6 @@
 package de.plushnikov.intellij.plugin.processor.clazz.builder;
 
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -24,10 +23,11 @@ public abstract class AbstractSuperBuilderPreDefinedInnerClassProcessor extends 
 
   final SuperBuilderHandler builderHandler;
 
-  AbstractSuperBuilderPreDefinedInnerClassProcessor(@NotNull Class<? extends PsiElement> supportedClass,
+  AbstractSuperBuilderPreDefinedInnerClassProcessor(@NotNull SuperBuilderHandler builderHandler,
+                                                    @NotNull Class<? extends PsiElement> supportedClass,
                                                     @NotNull Class<? extends Annotation> supportedAnnotationClass) {
     super(supportedClass, supportedAnnotationClass);
-    this.builderHandler = ServiceManager.getService(SuperBuilderHandler.class);
+    this.builderHandler = builderHandler;
   }
 
   @Override

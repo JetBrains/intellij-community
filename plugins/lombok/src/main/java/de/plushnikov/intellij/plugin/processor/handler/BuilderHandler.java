@@ -1,6 +1,5 @@
 package de.plushnikov.intellij.plugin.processor.handler;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -59,9 +58,9 @@ public class BuilderHandler {
   private final ToStringProcessor toStringProcessor;
   private final NoArgsConstructorProcessor noArgsConstructorProcessor;
 
-  public BuilderHandler() {
-    this.toStringProcessor = ServiceManager.getService(ToStringProcessor.class);
-    this.noArgsConstructorProcessor = ServiceManager.getService(NoArgsConstructorProcessor.class);
+  public BuilderHandler(@NotNull ToStringProcessor toStringProcessor, @NotNull NoArgsConstructorProcessor noArgsConstructorProcessor) {
+    this.toStringProcessor = toStringProcessor;
+    this.noArgsConstructorProcessor = noArgsConstructorProcessor;
   }
 
   PsiSubstitutor getBuilderSubstitutor(@NotNull PsiTypeParameterListOwner classOrMethodToBuild, @NotNull PsiClass innerClass) {

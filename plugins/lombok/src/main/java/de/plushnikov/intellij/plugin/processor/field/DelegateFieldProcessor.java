@@ -1,6 +1,5 @@
 package de.plushnikov.intellij.plugin.processor.field;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
@@ -24,9 +23,9 @@ public class DelegateFieldProcessor extends AbstractFieldProcessor {
   private final DelegateHandler delegateHandler;
 
   @SuppressWarnings({"deprecation"})
-  public DelegateFieldProcessor() {
+  public DelegateFieldProcessor(@NotNull DelegateHandler delegateHandler) {
     super(PsiMethod.class, Delegate.class, lombok.experimental.Delegate.class);
-    this.delegateHandler = ServiceManager.getService(DelegateHandler.class);
+    this.delegateHandler = delegateHandler;
   }
 
   @Override

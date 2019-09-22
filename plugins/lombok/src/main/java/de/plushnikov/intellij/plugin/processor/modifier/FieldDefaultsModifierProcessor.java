@@ -31,8 +31,8 @@ public class FieldDefaultsModifierProcessor implements ModifierProcessor {
 
   private final ConfigDiscovery configDiscovery;
 
-  public FieldDefaultsModifierProcessor() {
-    this.configDiscovery = ConfigDiscovery.getInstance();
+  public FieldDefaultsModifierProcessor(@NotNull ConfigDiscovery configDiscovery) {
+    this.configDiscovery = configDiscovery;
   }
 
   @Override

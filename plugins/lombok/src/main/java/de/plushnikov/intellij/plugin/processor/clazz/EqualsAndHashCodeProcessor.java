@@ -1,7 +1,6 @@
 package de.plushnikov.intellij.plugin.processor.clazz;
 
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -45,9 +44,9 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
 
   private final EqualsAndHashCodeToStringHandler handler;
 
-  public EqualsAndHashCodeProcessor() {
+  public EqualsAndHashCodeProcessor(@NotNull EqualsAndHashCodeToStringHandler equalsAndHashCodeToStringHandler) {
     super(PsiMethod.class, EqualsAndHashCode.class);
-    handler = ServiceManager.getService(EqualsAndHashCodeToStringHandler.class);
+    handler = equalsAndHashCodeToStringHandler;
   }
 
   @Override

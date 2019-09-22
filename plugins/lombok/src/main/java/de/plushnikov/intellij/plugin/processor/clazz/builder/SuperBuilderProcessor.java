@@ -1,7 +1,6 @@
 package de.plushnikov.intellij.plugin.processor.clazz.builder;
 
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
@@ -31,9 +30,9 @@ public class SuperBuilderProcessor extends AbstractClassProcessor {
 
   private final BuilderHandler builderHandler;
 
-  public SuperBuilderProcessor() {
+  public SuperBuilderProcessor(@NotNull SuperBuilderHandler superBuilderHandler) {
     super(PsiMethod.class, SuperBuilder.class);
-    this.builderHandler = ServiceManager.getService(SuperBuilderHandler.class);
+    this.builderHandler = superBuilderHandler;
   }
 
   @Override

@@ -1,6 +1,5 @@
 package de.plushnikov.intellij.plugin.processor.clazz;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -34,9 +33,9 @@ public class SetterProcessor extends AbstractClassProcessor {
 
   private final SetterFieldProcessor fieldProcessor;
 
-  public SetterProcessor() {
+  public SetterProcessor(@NotNull SetterFieldProcessor setterFieldProcessor) {
     super(PsiMethod.class, Setter.class);
-    this.fieldProcessor = ServiceManager.getService(SetterFieldProcessor.class);
+    this.fieldProcessor = setterFieldProcessor;
   }
 
   @Override

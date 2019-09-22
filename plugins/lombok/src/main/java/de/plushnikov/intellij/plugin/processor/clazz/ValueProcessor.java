@@ -1,6 +1,5 @@
 package de.plushnikov.intellij.plugin.processor.clazz;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -38,14 +37,18 @@ public class ValueProcessor extends AbstractClassProcessor {
   private final AllArgsConstructorProcessor allArgsConstructorProcessor;
   private final NoArgsConstructorProcessor noArgsConstructorProcessor;
 
-  public ValueProcessor() {
+  public ValueProcessor(@NotNull GetterProcessor getterProcessor,
+                        @NotNull EqualsAndHashCodeProcessor equalsAndHashCodeProcessor,
+                        @NotNull ToStringProcessor toStringProcessor,
+                        @NotNull AllArgsConstructorProcessor allArgsConstructorProcessor,
+                        @NotNull NoArgsConstructorProcessor noArgsConstructorProcessor) {
     super(PsiMethod.class, Value.class);
 
-    this.getterProcessor = ServiceManager.getService(GetterProcessor.class);
-    this.equalsAndHashCodeProcessor = ServiceManager.getService(EqualsAndHashCodeProcessor.class);
-    this.toStringProcessor = ServiceManager.getService(ToStringProcessor.class);
-    this.allArgsConstructorProcessor = ServiceManager.getService(AllArgsConstructorProcessor.class);
-    this.noArgsConstructorProcessor = ServiceManager.getService(NoArgsConstructorProcessor.class);
+    this.getterProcessor = getterProcessor;
+    this.equalsAndHashCodeProcessor = equalsAndHashCodeProcessor;
+    this.toStringProcessor = toStringProcessor;
+    this.allArgsConstructorProcessor = allArgsConstructorProcessor;
+    this.noArgsConstructorProcessor = noArgsConstructorProcessor;
   }
 
   @Override

@@ -1,7 +1,6 @@
 package de.plushnikov.intellij.plugin.processor.field;
 
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -39,9 +38,9 @@ public class WitherFieldProcessor extends AbstractFieldProcessor {
 
   private final RequiredArgsConstructorProcessor requiredArgsConstructorProcessor;
 
-  public WitherFieldProcessor() {
+  public WitherFieldProcessor(@NotNull RequiredArgsConstructorProcessor requiredArgsConstructorProcessor) {
     super(PsiMethod.class, Wither.class, With.class);
-    this.requiredArgsConstructorProcessor = ServiceManager.getService(RequiredArgsConstructorProcessor.class);
+    this.requiredArgsConstructorProcessor = requiredArgsConstructorProcessor;
   }
 
   @Override

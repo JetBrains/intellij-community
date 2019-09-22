@@ -1,7 +1,6 @@
 package de.plushnikov.intellij.plugin.processor.clazz.fieldnameconstants;
 
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -35,9 +34,9 @@ public class FieldNameConstantsOldProcessor extends AbstractClassProcessor {
 
   private final FieldNameConstantsFieldProcessor fieldProcessor;
 
-  public FieldNameConstantsOldProcessor() {
+  public FieldNameConstantsOldProcessor(@NotNull FieldNameConstantsFieldProcessor fieldNameConstantsFieldProcessor) {
     super(PsiField.class, FieldNameConstants.class);
-    this.fieldProcessor = ServiceManager.getService(FieldNameConstantsFieldProcessor.class);
+    this.fieldProcessor = fieldNameConstantsFieldProcessor;
   }
 
   @Override
