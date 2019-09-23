@@ -29,6 +29,7 @@ import org.jetbrains.jps.incremental.messages.*;
 import org.jetbrains.jps.incremental.storage.StampsStorage;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.serialization.CannotLoadJpsModelException;
+import org.jetbrains.jps.service.JpsServiceManager;
 import org.jetbrains.jps.service.SharedThreadPool;
 
 import java.io.*;
@@ -92,6 +93,7 @@ final class BuildSession implements Runnable, CanceledStatus {
         projectDescriptor.release();
         preloaded.setProjectDescriptor(null);
       }
+      JpsServiceManager.getInstance().getExtensions(PreloadedDataExtension.class).forEach(ext-> ext.discardPreloadedData(preloaded));
     }
     else {
       myPreloadedData = preloaded;
@@ -106,6 +108,10 @@ final class BuildSession implements Runnable, CanceledStatus {
     myBuildRunner.setFilePaths(filePaths);
     myBuildRunner.setBuilderParams(builderParams);
     myForceModelLoading =  Boolean.parseBoolean(builderParams.get(BuildParametersKeys.FORCE_MODEL_LOADING));
+
+    if (myPreloadedData != null) {
+      JpsServiceManager.getInstance().getExtensions(PreloadedDataExtension.class).forEach(ext-> ext.buildSessionInitialized(myPreloadedData));
+    }
   }
 
   @Override
