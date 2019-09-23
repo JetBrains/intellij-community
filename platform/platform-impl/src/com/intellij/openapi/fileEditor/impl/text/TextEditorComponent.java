@@ -112,21 +112,21 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider, Dispos
     epName.addExtensionPointListener(new ExtensionPointListener<KeyedLazyInstance<T>>() {
       @Override
       public void extensionAdded(@NotNull KeyedLazyInstance<T> extension, @NotNull PluginDescriptor pluginDescriptor) {
-        checkUpdateHighlighters(extension.getKey());
+        checkUpdateHighlighters(extension.getKey(), false);
       }
 
       @Override
       public void extensionRemoved(@NotNull KeyedLazyInstance<T> extension, @NotNull PluginDescriptor pluginDescriptor) {
-        checkUpdateHighlighters(extension.getKey());
+        checkUpdateHighlighters(extension.getKey(), true);
       }
     }, this);
   }
 
-  private void checkUpdateHighlighters(String key) {
+  private void checkUpdateHighlighters(String key, boolean updateSynchronously) {
     FileType fileType = myFile.getFileType();
     if (fileType.getName().equals(key) ||
         (fileType instanceof LanguageFileType && ((LanguageFileType)fileType).getLanguage().getID().equals(key))) {
-      if (ApplicationManager.getApplication().isDispatchThread()) {
+      if (ApplicationManager.getApplication().isDispatchThread() && updateSynchronously) {
         updateHighlightersSynchronously();
       }
       else {
