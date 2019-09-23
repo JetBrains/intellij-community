@@ -52,7 +52,7 @@ val MAPPING_COMPARATOR_BY_GENERATED_POSITION: Comparator<MappingEntry> = Compara
 internal const val UNMAPPED = -1
 
 // https://docs.google.com/document/d/1U1RGAehQwRypUTovF1KRlpiOFze0b-_2gc6fAH0KY0k/edit?hl=en_US
-fun decodeSourceMap(`in`: CharSequence, sourceResolverFactory: (sourceUrls: List<String>, sourceContents: List<String?>?) -> SourceResolver): SourceMap? {
+fun decodeSourceMap(`in`: CharSequence, sourceResolverFactory: (sourceUrls: List<String>) -> SourceResolver): SourceMap? {
   if (`in`.isEmpty()) {
     throw IOException("source map contents cannot be empty")
   }
@@ -80,7 +80,7 @@ fun decodeSourceMap(`in`: CharSequence, sourceResolverFactory: (sourceUrls: List
     }
   }
 
-  return OneLevelSourceMap(data.file, GeneratedMappingList(data.mappings), sourceToEntries, sourceResolverFactory(data.sources, data.sourcesContent), data.hasNameMappings)
+  return OneLevelSourceMap(data, sourceToEntries, sourceResolverFactory(data.sources))
 }
 
 private fun parseMap(reader: JsonReaderEx): SourceMapData? {
@@ -364,7 +364,7 @@ private class SourceMappingList(mappings: List<MappingEntry>) : MappingList(mapp
   override val comparator = MAPPING_COMPARATOR_BY_SOURCE_POSITION
 }
 
-private class GeneratedMappingList(mappings: List<MappingEntry>) : MappingList(mappings) {
+internal class GeneratedMappingList(mappings: List<MappingEntry>) : MappingList(mappings) {
   override fun getLine(mapping: MappingEntry) = mapping.generatedLine
 
   override fun getColumn(mapping: MappingEntry) = mapping.generatedColumn

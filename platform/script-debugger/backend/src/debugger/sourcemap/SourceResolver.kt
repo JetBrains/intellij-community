@@ -9,7 +9,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Url
 import com.intellij.util.Urls
 import com.intellij.util.containers.ObjectIntHashMap
-import com.intellij.util.containers.isNullOrEmpty
 import com.intellij.util.io.URLUtil
 import java.io.File
 
@@ -24,7 +23,6 @@ interface SourceFileResolver {
 class SourceResolver(private val rawSources: List<String>,
                      trimFileScheme: Boolean,
                      baseUrl: Url?,
-                     private val sourceContents: List<String?>?,
                      baseUrlIsFile: Boolean = true) {
   companion object {
     fun isAbsolute(path: String): Boolean = path.startsWith('/') || (SystemInfo.isWindows && (path.length > 2 && path[1] == ':'))
@@ -50,28 +48,7 @@ class SourceResolver(private val rawSources: List<String>,
     return if (index < 0) null else canonicalizedUrls[index]
   }
 
-  fun getSourceContent(entry: MappingEntry): String? {
-    if (sourceContents.isNullOrEmpty()) {
-      return null
-    }
-
-    val index = entry.source
-    return if (index < 0 || index >= sourceContents!!.size) null else sourceContents[index]
-  }
-
-  fun getSourceContent(sourceIndex: Int): String? {
-    if (sourceContents.isNullOrEmpty()) {
-      return null
-    }
-    return if (sourceIndex < 0 || sourceIndex >= sourceContents!!.size) null else sourceContents[sourceIndex]
-  }
-
   fun getSourceIndex(url: Url): Int = canonicalizedUrlToSourceIndex[url]
-
-  fun getRawSource(entry: MappingEntry): String? {
-    val index = entry.source
-    return if (index < 0) null else rawSources[index]
-  }
 
   internal fun findSourceIndex(resolver: SourceFileResolver): Int {
     val resolveByCanonicalizedUrls = resolver.resolve(canonicalizedUrlToSourceIndex)
