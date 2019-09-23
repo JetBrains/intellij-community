@@ -7,8 +7,6 @@ import com.jetbrains.python.codeInsight.typing.PyTypeShed
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil.getUserSkeletonsDirectory
 import com.jetbrains.python.debugger.PyLineBreakpointType
 import com.jetbrains.python.fixtures.PyTestCase
-import com.jetbrains.python.sdk.PythonSdkUtil.findSkeletonsDir
-import com.jetbrains.python.sdk.PythonSdkUtil
 
 class PyLineBreakpointTypeTest : PyTestCase() {
 
@@ -27,16 +25,15 @@ class PyLineBreakpointTypeTest : PyTestCase() {
 
   // PY-16932
   fun testPutAtSkeleton() {
-    val sdk = PythonSdkUtil.findPythonSdk(myFixture.module)
-    val skeletonsDir = findSkeletonsDir(sdk!!)
-    val pythonFile = skeletonsDir!!.findFileByRelativePath("datetime.py")
-    val line = 20
+    runWithAdditionalFileInSkeletonDir("my_mod.py", "class A:\n    def method(self):\n        print(\"ok\")") { pythonFile ->
+      val line = 2
 
-    val document = FileDocumentManager.getInstance().getDocument(pythonFile!!)
-    val range = TextRange.create(document!!.getLineStartOffset(line), document.getLineEndOffset(line))
-    assertEquals("        pass", document.getText(range))
+      val document = FileDocumentManager.getInstance().getDocument(pythonFile)
+      val range = TextRange.create(document!!.getLineStartOffset(line), document.getLineEndOffset(line))
+      assertEquals("        print(\"ok\")", document.getText(range))
 
-    assertFalse(PyLineBreakpointType().canPutAt(pythonFile, line, myFixture.project))
+      assertFalse(PyLineBreakpointType().canPutAt(pythonFile, line, myFixture.project))
+    }
   }
 
   // PY-16932

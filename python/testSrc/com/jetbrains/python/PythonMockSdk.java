@@ -21,6 +21,7 @@ import com.intellij.openapi.projectRoots.impl.MockSdk;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
@@ -31,6 +32,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.util.Arrays;
 
 /**
  * @author yole
@@ -48,30 +50,22 @@ public class PythonMockSdk {
     SdkType sdkType = PythonSdkType.getInstance();
 
     MultiMap<OrderRootType, VirtualFile> roots = MultiMap.create();
+    OrderRootType classes = OrderRootType.CLASSES;
 
-    File libPath = new File(mock_path, "Lib");
-    if (libPath.exists()) {
-      roots.putValue(OrderRootType.CLASSES, LocalFileSystem.getInstance().refreshAndFindFileByIoFile(libPath));
-    }
+    ContainerUtil.putIfNotNull(classes, LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(mock_path, "Lib")), roots);
 
-    roots.putValue(OrderRootType.CLASSES, PyUserSkeletonsUtil.getUserSkeletonsDirectory());
+    ContainerUtil.putIfNotNull(classes, PyUserSkeletonsUtil.getUserSkeletonsDirectory(), roots);
 
     final LanguageLevel level = LanguageLevel.fromPythonVersion(version);
     final VirtualFile typeShedDir = PyTypeShed.INSTANCE.getDirectory();
-    assert typeShedDir != null;
-    PyTypeShed.INSTANCE.findRootsForLanguageLevel(level).forEach(path -> {
-      final VirtualFile file = typeShedDir.findFileByRelativePath(path);
-      if (file != null) {
-        roots.putValue(OrderRootType.CLASSES, file);
-      }
-    });
+    PyTypeShed.INSTANCE
+      .findRootsForLanguageLevel(level)
+      .forEach(path -> ContainerUtil.putIfNotNull(classes, typeShedDir.findFileByRelativePath(path), roots));
 
     String mock_stubs_path = mock_path + PythonSdkUtil.SKELETON_DIR_NAME;
-    roots.putValue(PythonSdkUtil.BUILTIN_ROOT_TYPE, LocalFileSystem.getInstance().refreshAndFindFileByPath(mock_stubs_path));
+    ContainerUtil.putIfNotNull(classes, LocalFileSystem.getInstance().refreshAndFindFileByPath(mock_stubs_path), roots);
 
-    for (final VirtualFile root : additionalRoots) {
-      roots.putValue(OrderRootType.CLASSES, root);
-    }
+    roots.putValues(classes, Arrays.asList(additionalRoots));
 
     MockSdk sdk = new MockSdk(MOCK_SDK_NAME + " " + version, sdkHome, "Python " + version + " Mock SDK", roots, sdkType);
 
