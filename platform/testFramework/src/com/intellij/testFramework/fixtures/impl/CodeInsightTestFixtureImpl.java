@@ -153,6 +153,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   private final TempDirTestFixture myTempDirFixture;
   private PsiManagerImpl myPsiManager;
   private VirtualFile myFile;
+  private PsiFile myPsiFile;
+  private PsiFile[] myAllPsiFiles;
   private Editor myEditor;
   private EditorTestFixture myEditorTestFixture;
   private String myTestDataPath;
@@ -172,12 +174,15 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     myFile = file;
     myEditor = editor;
     myEditorTestFixture = new EditorTestFixture(getProject(), editor, file);
+    myPsiFile = ReadAction.compute(() -> PsiManager.getInstance(getProject()).findFile(myFile));
   }
 
   private void clearFileAndEditor() {
     myFile = null;
     myEditor = null;
     myEditorTestFixture = null;
+    myPsiFile = null;
+    myAllPsiFiles = null;
   }
 
   private static void addGutterIconRenderer(GutterMark renderer, int offset, @NotNull SortedMap<Integer, List<GutterMark>> result) {
@@ -1273,11 +1278,11 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   private PsiFile[] configureByFilesInner(@NotNull String... filePaths) {
     assertInitialized();
     clearFileAndEditor();
-    PsiFile[] psiFiles = new PsiFile[filePaths.length];
+    myAllPsiFiles = new PsiFile[filePaths.length];
     for (int i = filePaths.length - 1; i >= 0; i--) {
-      psiFiles[i] = configureByFileInner(filePaths[i]);
+      myAllPsiFiles[i] = configureByFileInner(filePaths[i]);
     }
-    return psiFiles;
+    return myAllPsiFiles;
   }
 
   @Override
@@ -1565,7 +1570,14 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @Override
   public PsiFile getFile() {
-    return myFile != null ? ReadAction.compute(() -> PsiManager.getInstance(getProject()).findFile(myFile)) : null;
+    return ReadAction.compute(() -> {
+      PsiFile psiFile = myPsiFile;
+      if (psiFile != null && !psiFile.isValid()) {
+        psiFile = PsiManager.getInstance(getProject()).findFile(myFile);
+        myPsiFile = psiFile;
+      }
+      return psiFile;
+    });
   }
 
   @Override
