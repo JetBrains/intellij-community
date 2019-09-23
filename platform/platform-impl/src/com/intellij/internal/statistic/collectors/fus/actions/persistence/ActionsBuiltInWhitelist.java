@@ -14,12 +14,21 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashSet;
 import java.util.Set;
 
-public class ActionsBuiltInWhitelist {
+class ActionsBuiltInWhitelist {
+  private static final ActionsBuiltInWhitelist ourInstance = new ActionsBuiltInWhitelist();
+
+  static ActionsBuiltInWhitelist getInstance() {
+    return ourInstance;
+  }
+
   private final Set<String> ourXmlActionIds = new HashSet<>();
   private final Set<String> ourCustomActionWhitelist = ContainerUtil.newHashSet(
     "regexp.help", "ShowUsagesPopup.showSettings",
     "Reload Classes", "DialogCancelAction", "DialogOkAction", "DoubleShortcut"
   );
+
+  private ActionsBuiltInWhitelist() {
+  }
 
   public boolean isCustomAllowedAction(@NotNull String actionId) {
     return ourCustomActionWhitelist.contains(actionId);

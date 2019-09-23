@@ -34,7 +34,7 @@ public class ActionsCollectorImpl extends ActionsCollector {
   private static final String GROUP = "actions";
   public static final String DEFAULT_ID = "third.party";
 
-  private static final ActionsBuiltInWhitelist ourWhitelist = new ActionsBuiltInWhitelist();
+  private static final ActionsBuiltInWhitelist ourWhitelist = ActionsBuiltInWhitelist.getInstance();
 
   private final Map<AnAction, String> myOtherActions = ContainerUtil.createWeakMap();
 
