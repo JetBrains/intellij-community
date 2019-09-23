@@ -1809,7 +1809,9 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
   public void loadState(@NotNull Element state) {
     for (Element e : state.getChildren()) {
       if (DesktopLayout.TAG.equals(e.getName())) {
-        myLayout.readExternal(e);
+        DesktopLayout layout = new DesktopLayout();
+        layout.readExternal(e);
+        invokeLater(() -> setLayout(layout));
       }
       else if (LAYOUT_TO_RESTORE.equals(e.getName())) {
         myLayoutToRestoreLater = new DesktopLayout();
