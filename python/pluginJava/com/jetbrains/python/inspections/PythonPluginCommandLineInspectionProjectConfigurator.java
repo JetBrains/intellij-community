@@ -2,6 +2,7 @@
 package com.jetbrains.python.inspections;
 
 import com.intellij.analysis.AnalysisScope;
+import com.intellij.codeInspection.CommandLineInspectionLogger;
 import com.intellij.codeInspection.CommandLineInspectionProjectConfigurator;
 import com.intellij.facet.FacetManager;
 import com.intellij.openapi.application.ApplicationManager;
@@ -27,12 +28,19 @@ import java.util.List;
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
 public class PythonPluginCommandLineInspectionProjectConfigurator implements CommandLineInspectionProjectConfigurator {
   @Override
-  public boolean isApplicable(Path projectPath) {
-    System.out.println("Python is here");
+  public boolean isApplicable(@NotNull Path projectPath, @NotNull CommandLineInspectionLogger logger) {
+    List<Sdk> sdks = PythonSdkUtil.getAllSdks();
+    if (!sdks.isEmpty()) return false;
+
     try {
-      return Files.walk(projectPath).anyMatch(f -> {
+      boolean hasAnyPythonFiles = Files.walk(projectPath).anyMatch(f -> {
         return f.toString().endsWith(".py");
       });
+      if (!hasAnyPythonFiles) {
+        logger.logMessageLn(3, "Skipping Python interpreter autodetection because the project doesn't contain any Python files");
+      }
+
+      return hasAnyPythonFiles;
     }
     catch (IOException e) {
       return false;
@@ -40,36 +48,35 @@ public class PythonPluginCommandLineInspectionProjectConfigurator implements Com
   }
 
   @Override
-  public void configureEnvironment() {
-    System.out.println("Python environment configuration...");
+  public void configureEnvironment(@NotNull CommandLineInspectionLogger logger) {
+    logger.logMessageLn(3, "Python environment configuration...");
     List<Sdk> sdks = PythonSdkUtil.getAllSdks();
-    System.out.println("Python interpreters detected:");
+    logger.logMessageLn(3, "Python interpreters detected:");
     for (Sdk sdk : sdks) {
-      System.out.println(sdk.getHomePath());
+      logger.logMessageLn(3, sdk.getHomePath());
     }
     if (sdks.isEmpty()) {
       final List<Sdk> detectedSdks = PySdkExtKt.findAllPythonSdks();
 
       if (detectedSdks.size() > 0) {
         for (Sdk sdk : detectedSdks) {
-          System.out.println(sdk.getHomePath());
+          logger.logMessageLn(3, sdk.getHomePath());
         }
         final Sdk sdk = detectedSdks.get(0);
         ApplicationManager.getApplication().runWriteAction(() -> {
-
-          System.out.println("Settings up interpreter " + sdk.getName());
+          logger.logMessageLn(1, "Settings up interpreter " + sdk.getName());
           ProjectJdkTable.getInstance().addJdk(sdk);
         });
         PythonSdkUpdater.update(sdk, null, null, null);
       } else {
-        System.out.println("ERROR: Can't find Python interpreter");
+        logger.logMessageLn(1, "ERROR: Can't find Python interpreter");
       }
     }
 
   }
 
   @Override
-  public void configureProject(@NotNull Project project, AnalysisScope scope) {
+  public void configureProject(@NotNull Project project, @NotNull AnalysisScope scope, @NotNull CommandLineInspectionLogger logger) {
     List<Sdk> sdks = PythonSdkUtil.getAllSdks();
     if (!sdks.isEmpty()) {
       PythonFacetType facetType = PythonFacetType.getInstance();
