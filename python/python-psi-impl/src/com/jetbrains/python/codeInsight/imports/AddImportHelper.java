@@ -217,6 +217,10 @@ public class AddImportHelper {
         seeker = feeler;
       }
       else if (isAssignmentToModuleLevelDunderName(feeler)) {
+        if (priority == ImportPriority.FUTURE) {
+          seeker = feeler;
+          break;
+        }
         feeler = feeler.getNextSibling();
         seeker = feeler;
         skippedOverStatements = true;
