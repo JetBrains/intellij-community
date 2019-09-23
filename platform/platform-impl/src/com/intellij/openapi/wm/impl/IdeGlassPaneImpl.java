@@ -76,7 +76,7 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
       IdeBackgroundUtil.initFramePainters(this);
       IdeBackgroundUtil.initEditorPainters(this);
     }
-    if (SystemInfo.isWindows && Registry.is("ide.window.shadow.painter")) {
+    if (SystemInfo.isWindows && Registry.is("ide.window.shadow.painter", false)) {
       myWindowShadowPainter = new WindowShadowPainter();
       getPainters().addPainter(myWindowShadowPainter, null);
     }
