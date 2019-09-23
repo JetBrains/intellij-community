@@ -164,7 +164,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                                   offsetsInScope, processor));
   }
 
-  private boolean bulkProcessElementsWithWord(@NotNull SearchScope searchScope,
+  boolean bulkProcessElementsWithWord(@NotNull SearchScope searchScope,
                                               @NotNull String text,
                                               short searchContext,
                                               @NotNull EnumSet<Options> options,
@@ -227,7 +227,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   }
 
   @NotNull
-  private static Processor<PsiElement> localProcessor(@NotNull StringSearcher searcher, @NotNull BulkOccurrenceProcessor processor) {
+  static Processor<PsiElement> localProcessor(@NotNull StringSearcher searcher, @NotNull BulkOccurrenceProcessor processor) {
     return new ReadActionProcessor<PsiElement>() {
       @Override
       public boolean processInReadAction(PsiElement scopeElement) {
@@ -1060,7 +1060,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   }
 
   @NotNull
-  private static List<IdIndexEntry> getWordEntries(@NotNull String name, final boolean caseSensitively) {
+  static List<IdIndexEntry> getWordEntries(@NotNull String name, final boolean caseSensitively) {
     List<String> words = StringUtil.getWordsInStringLongestFirst(name);
     if (words.isEmpty()) {
       String trimmed = name.trim();

@@ -8,6 +8,11 @@
     <appStarter implementation="com.intellij.ide.ui.search.TraverseUIStarter"/>
     <appStarter implementation="com.intellij.formatting.commandLine.FormatterStarter"/>
 
+    <applicationService serviceInterface="com.intellij.util.Queries"
+                        serviceImplementation="com.intellij.util.QueriesImpl"/>
+    <applicationService serviceInterface="com.intellij.model.search.SearchService"
+                        serviceImplementation="com.intellij.model.search.impl.SearchServiceImpl"/>
+
     <referencesSearch implementation="com.intellij.psi.impl.search.CachesBasedRefSearcher"/>
     <referencesSearch implementation="com.intellij.psi.impl.search.NonPhysicalReferenceSearcher"/>
 
