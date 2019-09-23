@@ -724,16 +724,15 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     DfaValue result = DfaUnknownValue.getInstance();
     PsiType type = instruction.getResultType();
     if (PsiType.INT.equals(type) || PsiType.LONG.equals(type)) {
-      boolean isLong = PsiType.LONG.equals(type);
-      result = runner.getFactory().getBinOpFactory().create(dfaLeft, dfaRight, memState, isLong, opSign);
+      if (!instruction.isWidened()) {
+        boolean isLong = PsiType.LONG.equals(type);
+        result = runner.getFactory().getBinOpFactory().create(dfaLeft, dfaRight, memState, isLong, opSign);
+      }
     }
-    if (result == DfaUnknownValue.getInstance() && TypeUtils.isJavaLangString(type)) {
-      if (JavaTokenType.PLUS == opSign) {
-        result = concatStrings(dfaLeft, dfaRight, memState, type, runner.getFactory());
-      }
-      if (BinopInstruction.STRING_CONCAT_IN_LOOP == opSign) {
-        result = runner.getFactory().createTypeValue(type, Nullability.NOT_NULL);
-      }
+    if (result == DfaUnknownValue.getInstance() && JavaTokenType.PLUS == opSign && TypeUtils.isJavaLangString(type)) {
+      result = instruction.isWidened()
+               ? runner.getFactory().createTypeValue(type, Nullability.NOT_NULL)
+               : concatStrings(dfaLeft, dfaRight, memState, type, runner.getFactory());
     }
     pushExpressionResult(result, instruction, memState);
 

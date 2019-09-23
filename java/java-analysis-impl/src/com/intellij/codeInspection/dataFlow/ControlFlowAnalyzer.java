@@ -220,7 +220,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       lExpr.accept(this);
       addInstruction(new DupInstruction());
       rExpr.accept(this);
-      addInstruction(new BinopInstruction(BinopInstruction.STRING_CONCAT_IN_LOOP, null, type));
+      addInstruction(new BinopInstruction(JavaTokenType.PLUS, null, type));
     }
     else {
       IElementType sign = TypeConversionUtil.convertEQtoOperation(op);
