@@ -19,7 +19,10 @@
 package org.jetbrains.uast
 
 import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiType
 import com.intellij.psi.util.PsiMethodUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.visitor.UastVisitor
 
 /**
@@ -216,6 +219,9 @@ fun getMainMethodClass(uMainMethod: UMethod): PsiClass? {
   val mainMethod = uMainMethod.javaPsi
   if (PsiMethodUtil.isMainMethod(mainMethod)) return containingClass.javaPsi
 
+  //a workaround for KT-33956
+  if (isKotlinParameterlessMain(mainMethod)) return containingClass.javaPsi
+
   // Check for @JvmStatic main method in companion object
   val parentClassForCompanionObject = (containingClass.uastParent as? UClass)?.javaPsi ?: return null
 
@@ -225,5 +231,18 @@ fun getMainMethodClass(uMainMethod: UMethod): PsiClass? {
     return parentClassForCompanionObject
   }
 
+  return null
+}
+
+private fun isKotlinParameterlessMain(mainMethod: PsiMethod) =
+  mainMethod.language.id == "kotlin" && mainMethod.parameterList.parameters.isEmpty() && PsiType.VOID == mainMethod.returnType
+
+@ApiStatus.Experimental
+fun findMainInClass(uClass: UClass?): PsiMethod? {
+  val javaPsi = uClass?.javaPsi ?: return null
+  PsiMethodUtil.findMainInClass(javaPsi)?.let { return it }
+
+  //a workaround for KT-33956
+  javaPsi.methods.find(::isKotlinParameterlessMain)?.let { return it }
   return null
 }
