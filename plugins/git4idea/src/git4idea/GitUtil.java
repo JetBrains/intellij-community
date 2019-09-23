@@ -15,9 +15,7 @@ import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.AbstractVcsHelper;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangeListManagerEx;
@@ -274,17 +272,18 @@ public class GitUtil {
                                                                          @NotNull Collection<? extends FilePath> filePaths,
                                                                          boolean ignoreNonGit)
     throws VcsException {
-    GitRepositoryManager manager = GitRepositoryManager.getInstance(project);
-
+    ProjectLevelVcsManager manager = ProjectLevelVcsManager.getInstance(project);
+    GitVcs gitVcs = GitVcs.getInstance(project);
     Map<VirtualFile, List<FilePath>> result = new HashMap<>();
     for (FilePath path : filePaths) {
-      GitRepository repository = manager.getRepositoryForFile(path);
-      if (repository == null) {
+      VcsRoot vcsRoot = manager.getVcsRootObjectFor(path);
+      AbstractVcs vcs = vcsRoot != null ? vcsRoot.getVcs() : null;
+      if (vcs == null || !vcs.equals(gitVcs)) {
         if (ignoreNonGit) continue;
         throw new GitRepositoryNotFoundException(path);
       }
 
-      List<FilePath> paths = result.computeIfAbsent(repository.getRoot(), key -> new ArrayList<>());
+      List<FilePath> paths = result.computeIfAbsent(vcsRoot.getPath(), key -> new ArrayList<>());
       paths.add(path);
     }
     return result;
