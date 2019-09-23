@@ -16,9 +16,9 @@
 package com.intellij.codeInsight.template;
 
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
@@ -40,6 +40,6 @@ public class JavaStringContextType extends TemplateContextType {
   }
 
   static boolean isStringLiteral(PsiElement element) {
-    return PsiUtil.isJavaToken(element, JavaTokenType.STRING_LITERAL) || PsiUtil.isJavaToken(element, JavaTokenType.TEXT_BLOCK_LITERAL);
+    return PsiUtil.isJavaToken(element, ElementType.STRING_LITERALS);
   }
 }
