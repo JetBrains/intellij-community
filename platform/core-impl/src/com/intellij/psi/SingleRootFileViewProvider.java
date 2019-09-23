@@ -47,8 +47,7 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
   @SuppressWarnings("unused")
   private volatile PsiFile myPsiFile;
   private static final AtomicFieldUpdater<SingleRootFileViewProvider, PsiFile> myPsiFileUpdater = AtomicFieldUpdater.forFieldOfType(SingleRootFileViewProvider.class, PsiFile.class);
-  @NotNull private Language myBaseLanguage;
-  private boolean myLanguageAutodetected = false;
+  @NotNull private final Language myBaseLanguage;
 
   public SingleRootFileViewProvider(@NotNull PsiManager manager, @NotNull VirtualFile file) {
     this(manager, file, true);
@@ -57,8 +56,7 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
   public SingleRootFileViewProvider(@NotNull PsiManager manager,
                                     @NotNull VirtualFile virtualFile,
                                     final boolean eventSystemEnabled) {
-    this(manager, virtualFile, eventSystemEnabled, calcBaseLanguage(virtualFile, manager.getProject()));
-    myLanguageAutodetected = true;
+    this(manager, virtualFile, eventSystemEnabled, calcBaseLanguage(virtualFile, manager.getProject(), virtualFile.getFileType()));
   }
   protected SingleRootFileViewProvider(@NotNull PsiManager manager,
                                        @NotNull VirtualFile virtualFile,
@@ -74,8 +72,7 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
     return myBaseLanguage;
   }
 
-  private static Language calcBaseLanguage(@NotNull VirtualFile file, @NotNull Project project) {
-    FileType fileType = file.getFileType();
+  private static Language calcBaseLanguage(@NotNull VirtualFile file, @NotNull Project project, @NotNull final FileType fileType) {
     if (fileType.isBinary()) return Language.ANY;
     if (isTooLargeForIntelligence(file)) return PlainTextLanguage.INSTANCE;
 
@@ -240,16 +237,5 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
       }
     }
     getManager().getFileManager().setViewProvider(getVirtualFile(), this);
-  }
-
-  @Override
-  public void updateLanguage() {
-    if (myLanguageAutodetected) {
-      Language oldLanguage = myBaseLanguage;
-      myBaseLanguage = calcBaseLanguage(getVirtualFile(), getManager().getProject());
-      if (myBaseLanguage != oldLanguage) {
-        myPsiFileUpdater.set(this, null);
-      }
-    }
   }
 }

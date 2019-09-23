@@ -263,7 +263,7 @@ public final class FileManagerImpl implements FileManager {
 
   private boolean myProcessingFileTypesChange;
 
-  void processFileTypesChanged(boolean updateLanguage) {
+  void processFileTypesChanged(boolean fileTypeRemoved) {
     if (myProcessingFileTypesChange) return;
     myProcessingFileTypesChange = true;
     DebugUtil.performPsiModification(null, () -> {
@@ -273,7 +273,10 @@ public final class FileManagerImpl implements FileManager {
           event.setPropertyName(PsiTreeChangeEvent.PROP_FILE_TYPES);
           myManager.beforePropertyChange(event);
 
-          possiblyInvalidatePhysicalPsi(updateLanguage);
+          possiblyInvalidatePhysicalPsi();
+          if (fileTypeRemoved) {
+            clearViewProviders();
+          }
 
           myManager.propertyChanged(event);
         });
@@ -284,14 +287,11 @@ public final class FileManagerImpl implements FileManager {
     });
   }
 
-  void possiblyInvalidatePhysicalPsi(boolean updateLanguage) {
+  void possiblyInvalidatePhysicalPsi() {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     removeInvalidDirs();
     for (FileViewProvider provider : getVFileToViewProviderMap().values()) {
       markPossiblyInvalidated(provider);
-      if (updateLanguage && provider instanceof AbstractFileViewProvider) {
-        ((AbstractFileViewProvider) provider).updateLanguage();
-      }
     }
   }
 
