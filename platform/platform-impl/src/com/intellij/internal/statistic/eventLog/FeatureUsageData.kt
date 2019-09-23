@@ -44,7 +44,7 @@ class FeatureUsageData {
   companion object {
     // don't list "version" as "platformDataKeys" because it format depends a lot on the tool
     val platformDataKeys: MutableList<String> = Arrays.asList(
-      "plugin", "project", "os", "plugin_type", "lang", "current_file", "input_event", "place", "file_path"
+      "plugin", "project", "os", "plugin_type", "lang", "current_file", "input_event", "place", "file_path", "anonymous_id"
     )
   }
 
@@ -204,6 +204,12 @@ class FeatureUsageData {
   @FeatureUsageDataBuilder(additionalDataFields = ["file_path:util#hash"])
   fun addAnonymizedPath(path: String): FeatureUsageData {
     data["file_path"] = EventLogConfiguration.anonymize(path)
+    return this
+  }
+
+  @FeatureUsageDataBuilder(additionalDataFields = ["anonymous_id:util#hash"])
+  fun addAnonymizedId(id: String): FeatureUsageData {
+    data["anonymous_id"] = EventLogConfiguration.anonymize(id)
     return this
   }
 

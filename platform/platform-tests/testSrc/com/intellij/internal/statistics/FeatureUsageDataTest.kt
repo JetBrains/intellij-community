@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistics
 
+import com.intellij.internal.statistic.eventLog.EventLogConfiguration
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.service.fus.collectors.FUStateUsagesLogger
 import com.intellij.openapi.actionSystem.ActionPlaces
@@ -104,6 +105,26 @@ class FeatureUsageDataTest : HeavyPlatformTestCase() {
     Assert.assertTrue(build.size == 1)
     Assert.assertTrue(build.containsKey("place"))
     Assert.assertTrue(build["place"] == ActionPlaces.UNKNOWN)
+  }
+
+  @Test
+  fun `test add anonymized path`() {
+    val path = "/my/path/to/smth"
+    val build = FeatureUsageData().addAnonymizedPath(path).build()
+    Assert.assertTrue(build.size == 1)
+    Assert.assertTrue(build.containsKey("file_path"))
+    Assert.assertTrue(build["file_path"] != path)
+    Assert.assertTrue(build["file_path"] == EventLogConfiguration.anonymize(path))
+  }
+
+  @Test
+  fun `test add anonymized id`() {
+    val id = "item-id"
+    val build = FeatureUsageData().addAnonymizedId(id).build()
+    Assert.assertTrue(build.size == 1)
+    Assert.assertTrue(build.containsKey("anonymous_id"))
+    Assert.assertTrue(build["anonymous_id"] != id)
+    Assert.assertTrue(build["anonymous_id"] == EventLogConfiguration.anonymize(id))
   }
 
   @Test
