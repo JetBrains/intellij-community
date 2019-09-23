@@ -31,7 +31,7 @@ class CircletWorkspaceComponent : WorkspaceManagerHost(), LifetimedComponent by 
     private val workspacesLifetimes = SequentialLifetimes(lifetime)
     private val manager = mutableProperty<WorkspaceManager?>(null)
 
-    val workspace = flatMap<WorkspaceManager?, Workspace?>(manager, null) {
+    val workspace = flatMapInit<WorkspaceManager?, Workspace?>(manager, null) {
         (it?.workspace ?: mutableProperty<Workspace?>(null))
     }
 
