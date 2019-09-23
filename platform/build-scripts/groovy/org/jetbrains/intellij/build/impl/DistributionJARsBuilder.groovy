@@ -651,6 +651,8 @@ class DistributionJARsBuilder {
   }
 
   void buildNonBundledPlugins() {
+    if (pluginsToPublish.isEmpty()) return
+
     def productLayout = buildContext.productProperties.productLayout
     def ant = buildContext.ant
     def layoutBuilder = createLayoutBuilder()
