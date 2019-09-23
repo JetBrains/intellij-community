@@ -83,7 +83,13 @@ public class ScrollableSingleRowLayout extends SingleRowLayout {
         else {
           final int maxLength = passInfo.toFitLength - getStrategy().getMoreRectAxisSize();
           if (offset + length > maxLength) {
-            scroll(offset + length - maxLength);
+            // left side should be always visible
+            if (length < maxLength) {
+              scroll(offset + length - maxLength);
+            }
+            else {
+              scroll(offset);
+            }
           }
         }
         break;
