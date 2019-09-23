@@ -23,6 +23,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileTypes.*;
+import com.intellij.openapi.fileTypes.impl.AbstractFileType;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -348,7 +349,14 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider, Dispos
       // File can be invalid after file type changing. The editor should be removed
       // by the FileEditorManager if it's invalid.
       updateValidProperty();
-      updateHighlightersSynchronously();
+      FileType type = event.getRemovedFileType();
+      if (type != null && !(type instanceof AbstractFileType)) {
+        // Plugin is being unloaded, so we need to release plugin classes immediately
+        updateHighlightersSynchronously();
+      }
+      else {
+        updateHighlighters();
+      }
     }
   }
 
