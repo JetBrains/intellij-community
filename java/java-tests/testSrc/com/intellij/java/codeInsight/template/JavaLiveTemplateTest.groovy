@@ -6,13 +6,16 @@ import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.daemon.impl.quickfix.EmptyExpression
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.template.JavaCodeContextType
+import com.intellij.codeInsight.template.JavaStringContextType
 import com.intellij.codeInsight.template.Template
+import com.intellij.codeInsight.template.TemplateContextType
 import com.intellij.codeInsight.template.actions.SaveAsTemplateAction
 import com.intellij.codeInsight.template.impl.*
 import com.intellij.codeInsight.template.macro.*
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.testFramework.LightProjectDescriptor
 import groovy.transform.CompileStatic
 
 import static com.intellij.codeInsight.template.Template.Property.USE_STATIC_IMPORT_IF_POSSIBLE
@@ -21,6 +24,12 @@ import static com.intellij.codeInsight.template.Template.Property.USE_STATIC_IMP
  */
 @CompileStatic
 class JavaLiveTemplateTest extends LiveTemplateTestCase {
+
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_13
+  }
+
   final String basePath = JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/template/"
   
   void "test not to go to next tab after insert if element is a psi package"() {
@@ -254,6 +263,15 @@ class Outer {
     assert isApplicable("class Foo {{ Runnable r = () -> { <caret>System.out.println(\"foo\"); }; ) }}", template)
     assert isApplicable("class Foo {{ Runnable r = () -> <caret>System.out.println(\"foo\"); ) }}", template)
     assert !isApplicable("class Foo extends <caret>t {}", template)
+  }
+
+  void testJavaStringContext() {
+    TemplateImpl template = (TemplateImpl)templateManager.createTemplate("a", "b")
+    template.templateContext.setEnabled(TemplateContextType.EP_NAME.findExtension(JavaStringContextType), true)
+    assert !isApplicable('class Foo {{ <caret> }}', template)
+    assert !isApplicable('class Foo {{ <caret>1 }}', template)
+    assert isApplicable('class Foo {{ "<caret>" }}', template)
+    assert isApplicable('class Foo {{ """<caret>""" }}', template)
   }
 
   void testJavaDeclarationContext() {

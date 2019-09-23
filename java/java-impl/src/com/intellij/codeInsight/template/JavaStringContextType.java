@@ -40,6 +40,6 @@ public class JavaStringContextType extends TemplateContextType {
   }
 
   static boolean isStringLiteral(PsiElement element) {
-    return PsiUtil.isJavaToken(element, JavaTokenType.STRING_LITERAL);
+    return PsiUtil.isJavaToken(element, JavaTokenType.STRING_LITERAL) || PsiUtil.isJavaToken(element, JavaTokenType.TEXT_BLOCK_LITERAL);
   }
 }
