@@ -89,12 +89,14 @@ public interface FileEditor extends UserDataHolder, Disposable {
    * This can happen in two cases: editor is selected because the selected file
    * has been changed or editor for the selected file has been changed.
    */
-  void selectNotify();
+  default void selectNotify() {
+  }
 
   /**
    * This method is invoked each time when the editor is deselected.
    */
-  void deselectNotify();
+  default void deselectNotify() {
+  }
 
   /**
    * Removes specified listener
@@ -115,7 +117,9 @@ public interface FileEditor extends UserDataHolder, Disposable {
    * Return {@code null} if no background highlighting activity necessary for this file editor.
    */
   @Nullable
-  BackgroundEditorHighlighter getBackgroundHighlighter();
+  default BackgroundEditorHighlighter getBackgroundHighlighter() {
+    return null;
+  }
 
   /**
    * The method is optional. Currently is used only by find usages subsystem
