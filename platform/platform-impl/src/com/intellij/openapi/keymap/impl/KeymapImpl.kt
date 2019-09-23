@@ -1,12 +1,14 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.keymap.impl
 
 import com.intellij.configurationStore.SchemeDataHolder
 import com.intellij.configurationStore.SerializableScheme
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl
+import com.intellij.notification.*
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapManager
@@ -14,6 +16,7 @@ import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.keymap.ex.KeymapManagerEx
 import com.intellij.openapi.options.ExternalizableSchemeAdapter
 import com.intellij.openapi.options.SchemeState
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertiser
 import com.intellij.openapi.util.InvalidDataException
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.KeyStrokeAdapter
@@ -53,8 +56,16 @@ fun KeymapImpl(name: String, dataHolder: SchemeDataHolder<KeymapImpl>): KeymapIm
   return result
 }
 
+private val NOTIFICATION_MANAGER by lazy {
+  // we use name "Password Safe" instead of "Credentials Store" because it was named so previously (and no much sense to rename it)
+  SingletonNotificationManager(NotificationGroup("Keymap", NotificationDisplayType.STICKY_BALLOON, true), NotificationType.ERROR)
+}
+
+
 open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDataHolder<KeymapImpl>? = null) : ExternalizableSchemeAdapter(), Keymap, SerializableScheme {
   private var parent: KeymapImpl? = null
+  private var unknownParentName: String? = null
+
   open var canModify: Boolean = true
 
   @JvmField
@@ -450,6 +461,8 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
 
     name = keymapElement.getAttributeValue(NAME_ATTRIBUTE)
 
+    unknownParentName = null
+
     keymapElement.getAttributeValue(PARENT_ATTRIBUTE)?.let { parentSchemeName ->
       var parentScheme = findParentScheme(parentSchemeName)
       if (parentScheme == null && parentSchemeName == "Default for Mac OS X") {
@@ -458,7 +471,9 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
       }
 
       if (parentScheme == null) {
-        LOG.error("Cannot find parent scheme $parentSchemeName for scheme $name")
+        LOG.warn("Cannot find parent scheme $parentSchemeName for scheme $name")
+        unknownParentName = parentSchemeName
+        notifyAboutMissingParentKeymap(name, parentSchemeName)
       }
       else {
         parent = parentScheme as KeymapImpl
@@ -551,8 +566,8 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
     keymapElement.setAttribute(VERSION_ATTRIBUTE, Integer.toString(1))
     keymapElement.setAttribute(NAME_ATTRIBUTE, name)
 
-    parent?.let {
-      keymapElement.setAttribute(PARENT_ATTRIBUTE, it.name)
+    (parent?.name ?: unknownParentName)?.let {
+      keymapElement.setAttribute(PARENT_ATTRIBUTE, it)
     }
     writeOwnActionIds(keymapElement)
 
@@ -702,4 +717,32 @@ private fun areShortcutsEqual(shortcuts1: List<Shortcut>, shortcuts2: List<Short
     }
   }
   return true
+}
+
+private fun notifyAboutMissingParentKeymap(childName: String, parentName: String) {
+  ApplicationManager.getApplication().invokeLater({
+    @Suppress("SpellCheckingInspection")
+    val nameToPluginId = mapOf(
+      "Eclipse" to "com.intellij.plugins.eclipsekeymap",
+      "VSCode" to "com.intellij.plugins.vscodekeymap",
+      "Visual Studio OSX" to "com.intellij.plugins.visualstudiokeymap",
+      "Visual Studio" to "com.intellij.plugins.visualstudiokeymap",
+      "Sublime Text" to "com.intellij.plugins.sublimetextkeymap"
+    )
+    val action: AnAction? = when (val pluginId = nameToPluginId.get(parentName)) {
+      null -> {
+        null
+      }
+      else -> {
+        object : NotificationAction("Install $parentName Keymap") {
+          override fun actionPerformed(e: AnActionEvent, notification: Notification) {
+            PluginsAdvertiser.installAndEnablePlugins(setOf(pluginId)) {
+              notification.expire()
+            }
+          }
+        }
+      }
+    }
+    NOTIFICATION_MANAGER.notify("Missing Keymap", "Cannot find parent keymap \"$parentName\" for \"$childName\"", action = action)
+  }, ModalityState.NON_MODAL)
 }
