@@ -193,13 +193,9 @@ public final class StartupUtil {
       subActivity.end();
     });
 
-    Future<?> extraTaskFuture = executorService.submit(() -> {
-      Activity subActivity = StartUpMeasurer.startActivity("system libs setup");
-      setupSystemLibraries();
-      subActivity = subActivity.endAndStart("process env fixing");
-      fixProcessEnvironment(log);
-      subActivity.end();
-    });
+    Future<?> extraTaskFuture = executorService.submit(StartupUtil::setupSystemLibraries);
+
+    fixProcessEnvironment();
 
     if (!configImportNeeded) {
       installPluginUpdates();
@@ -507,18 +503,21 @@ public final class StartupUtil {
     return log;
   }
 
-  private static void fixProcessEnvironment(Logger log) {
+  private static void fixProcessEnvironment() {
+    Activity subActivity = StartUpMeasurer.startActivity("process env fixing");
+
     if (!Main.isCommandLine()) {
       System.setProperty("__idea.mac.env.lock", "unlocked");
     }
-    boolean envReady = EnvironmentUtil.isEnvironmentReady();  // trigger environment loading
-    if (!envReady) {
-      log.info("initializing environment");
-    }
+
+    EnvironmentUtil.loadEnv();
+    subActivity.end();
   }
 
   @SuppressWarnings("SpellCheckingInspection")
   private static void setupSystemLibraries() {
+    Activity subActivity = StartUpMeasurer.startActivity("system libs setup");
+
     String ideTempPath = PathManager.getTempPath();
 
     if (System.getProperty("jna.tmpdir") == null) {
@@ -536,8 +535,9 @@ public final class StartupUtil {
       System.setProperty("pty4j.tmpdir", ideTempPath);
     }
     if (System.getProperty("pty4j.preferred.native.folder") == null) {
-      System.setProperty("pty4j.preferred.native.folder", new File(PathManager.getLibPath(), "pty4j-native").getAbsolutePath());
+      System.setProperty("pty4j.preferred.native.folder", Paths.get(PathManager.getLibPath(), "pty4j-native").toAbsolutePath().toString());
     }
+    subActivity.end();
   }
 
   private static void loadSystemLibraries(Logger log) {

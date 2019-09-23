@@ -6,7 +6,6 @@ import com.intellij.execution.process.UnixProcessManager;
 import com.intellij.execution.process.WinProcessManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
@@ -27,10 +26,11 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static java.util.Collections.unmodifiableMap;
 
-public class EnvironmentUtil {
+public final class EnvironmentUtil {
   private static final Logger LOG = Logger.getInstance(EnvironmentUtil.class);
 
   private static final int SHELL_ENV_READING_TIMEOUT = 20000;
@@ -45,32 +45,21 @@ public class EnvironmentUtil {
   private static final String SHELL_LOGIN_ARGUMENT = "-l";
   public static final String SHELL_COMMAND_ARGUMENT = "-c";
 
-  private static final Future<Map<String, String>> ourEnvGetter;
+  private static final AtomicReference<Future<Map<String, String>>> ourEnvGetter = new AtomicReference<>();
 
-  static {
-    if (SystemInfo.isMac &&
-        "unlocked".equals(System.getProperty("__idea.mac.env.lock")) &&
-        SystemProperties.getBooleanProperty("idea.fix.mac.env", true)) {
-      ourEnvGetter = AppExecutorUtil.getAppExecutorService().submit(() -> unmodifiableMap(setCharsetVar(getShellEnv())));
-    }
-    else {
-      ourEnvGetter = CompletableFuture.completedFuture(getSystemEnv());
-    }
-  }
-
-  private static final NotNullLazyValue<Map<String, String>> ourEnvironment = new AtomicNotNullLazyValue<Map<String, String>>() {
-    @NotNull
-    @Override
-    protected Map<String, String> compute() {
-      try {
-        return ourEnvGetter.get();
+  private static final NotNullLazyValue<Map<String, String>> ourEnvironment = NotNullLazyValue.createValue(() -> {
+    try {
+      Future<Map<String, String>> getter = ourEnvGetter.get();
+      if (getter == null) {
+        getter = loadEnv();
       }
-      catch (Throwable t) {
-        LOG.warn("can't get shell environment", t);
-        return getSystemEnv();
-      }
+      return getter.get();
     }
-  };
+    catch (Throwable t) {
+      LOG.warn("can't get shell environment", t);
+      return getSystemEnv();
+    }
+  });
 
   private static Map<String, String> getSystemEnv() {
     if (SystemInfo.isWindows) {
@@ -83,8 +72,31 @@ public class EnvironmentUtil {
 
   private EnvironmentUtil() { }
 
-  public static boolean isEnvironmentReady() {
-    return ourEnvGetter.isDone();
+  @ApiStatus.Internal
+  public static synchronized Future<Map<String, String>> loadEnv() {
+    Future<Map<String, String>> getter = ourEnvGetter.get();
+    if (getter != null) {
+      return getter;
+    }
+
+    if (SystemInfo.isMac &&
+        "unlocked".equals(System.getProperty("__idea.mac.env.lock")) &&
+        SystemProperties.getBooleanProperty("idea.fix.mac.env", true)) {
+      getter = AppExecutorUtil.getAppExecutorService().submit(() -> {
+        return unmodifiableMap(setCharsetVar(getShellEnv()));
+      });
+    }
+    else {
+      getter = CompletableFuture.completedFuture(getSystemEnv());
+    }
+
+    if (ourEnvGetter.compareAndSet(null, getter)) {
+      return getter;
+    }
+    else {
+      getter.cancel(true);
+      return ourEnvGetter.get();
+    }
   }
 
   /**
