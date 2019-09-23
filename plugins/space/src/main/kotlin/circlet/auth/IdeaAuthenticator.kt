@@ -1,5 +1,6 @@
 package circlet.auth
 
+import circlet.common.oauth.*
 import circlet.platform.api.oauth.*
 import circlet.platform.workspaces.*
 import io.ktor.application.*
@@ -19,9 +20,15 @@ import kotlinx.coroutines.*
 
 val log = KLoggers.logger()
 
-suspend fun accessTokenInteractive(lifetime: Lifetime, config: WorkspaceConfiguration): OAuthTokenResponse {
+private val ports = lazy {
+    val regex = "[^\\d]*(?<port>\\d+)[^\\d]*".toRegex()
+    val ports = IdeaOAuthConfig.redirectURIs.mapNotNull { it ->
+        regex.find(it)?.groups?.get("port")?.value?.toIntOrNull() }
+    Pair(ports.min() ?: 1000, ports.max() ?: 65535)
+}
 
-    val port = selectFreePort()
+suspend fun accessTokenInteractive(lifetime: Lifetime, config: WorkspaceConfiguration): OAuthTokenResponse {
+    val port = selectFreePort(ports.value.first, ports.value.second)
     val codeFlow = CodeFlowConfig(config, "http://localhost:$port/auth")
 
     return suspendCancellableCoroutine { cnt ->
