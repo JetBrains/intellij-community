@@ -14,6 +14,7 @@ import com.intellij.ui.AddEditRemovePanel;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.Nullable;
 
@@ -264,9 +265,8 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Co
         } else {
           path = LocalFileSystem.getInstance().findFileByPath(loc);
         }
-        if (path == null) {
-          setForeground(new Color(210, 0, 0));
-        }
+        Color fg = isSelected ? UIUtil.getTableSelectionForeground(hasFocus) : UIUtil.getTableForeground();
+        setForeground(path != null ? fg : new Color(210, 0, 0));
       }
       return rendererComponent;
     }
