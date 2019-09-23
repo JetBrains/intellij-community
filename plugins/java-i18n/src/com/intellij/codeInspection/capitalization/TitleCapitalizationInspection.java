@@ -13,6 +13,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -100,10 +101,7 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
       if (returnValue != null && processed.add(returnValue)) {
         return getTitleValue(returnValue, processed);
       }
-      Property propertyArgument = getPropertyArgument((PsiMethodCallExpression)arg);
-      if (propertyArgument != null) {
-        return Value.of(propertyArgument);
-      }
+      return Value.of(getPropertyArgument((PsiMethodCallExpression)arg));
     }
     if (arg instanceof PsiReferenceExpression) {
       PsiElement result = ((PsiReferenceExpression)arg).resolve();
@@ -176,7 +174,6 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
           doFix(project, returnValue);
         }
         final Property property = getPropertyArgument(methodCallExpression);
-        if (property == null) return;
         Value value = Value.of(property);
         if (value == null) return;
         property.setValue(value.fixCapitalization(myCapitalization));
@@ -212,8 +209,10 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
 
     default boolean canFix() { return true; }
 
+    @Contract("null -> null")
     @Nullable
-    static Value of(Property property) {
+    static Value of(@Nullable Property property) {
+      if (property == null) return null;
       String value = property.getUnescapedValue();
       if (value == null) return null;
       try {
