@@ -209,6 +209,46 @@ public abstract class LongRangeSet {
     return null;
   }
 
+  @Nullable
+  public LongRangeSet wideBinOpFromToken(@NotNull IElementType token, @NotNull LongRangeSet other, boolean isLong) {
+    if (token.equals(JavaTokenType.PLUS) || token.equals(JavaTokenType.MINUS)) {
+      return plusWiden(token.equals(JavaTokenType.MINUS) ? other.negate(isLong) : other, isLong);
+    }
+    return null;
+  }
+
+  private LongRangeSet plusWiden(LongRangeSet other, boolean isLong) {
+    if (this instanceof Point && other instanceof Point) {
+      long val1 = ((Point)this).myValue;
+      long val2 = ((Point)other).myValue;
+      int tzb1 = val1 == 0 ? 0 : Long.numberOfTrailingZeros(val1);
+      int tzb2 = val2 == 0 ? 0 : Long.numberOfTrailingZeros(val2);
+      LongRangeSet constVal;
+      int mod;
+      if (tzb1 > tzb2) {
+        constVal = other;
+        mod = 1 << (Math.min(6, tzb1));
+      } else {
+        constVal = this;
+        mod = 1 << (Math.min(6, tzb2));
+      }
+      if (mod < 2) return null;
+      return modRange(minValue(isLong), maxValue(isLong), mod, 1).plus(constVal, isLong);
+    }
+    if (this instanceof Point && other instanceof ModRange) {
+      if (((Point)this).myValue % ((ModRange)other).myMod == 0) {
+        return other;
+      }
+      else if (((ModRange)other).myBits == 1) {
+        return this.plus(other, isLong);
+      }
+    }
+    if (other instanceof Point && this instanceof ModRange) {
+      return other.plusWiden(this, isLong);
+    }
+    return null;
+  }
+
   public abstract boolean isCardinalityBigger(long cutoff);
 
   public abstract LongRangeSet castTo(PsiPrimitiveType type);

@@ -724,8 +724,18 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     DfaValue result = DfaUnknownValue.getInstance();
     PsiType type = instruction.getResultType();
     if (PsiType.INT.equals(type) || PsiType.LONG.equals(type)) {
-      if (!instruction.isWidened()) {
-        boolean isLong = PsiType.LONG.equals(type);
+      boolean isLong = PsiType.LONG.equals(type);
+      if (instruction.isWidened()) {
+        LongRangeSet leftRange = memState.getValueFact(dfaLeft, DfaFactType.RANGE);
+        LongRangeSet rightRange = memState.getValueFact(dfaRight, DfaFactType.RANGE);
+        if (leftRange != null && rightRange != null) {
+          LongRangeSet range = leftRange.wideBinOpFromToken(opSign, rightRange, isLong);
+          if (range != null) {
+            result = runner.getFactory().getFactValue(DfaFactType.RANGE, range);
+          }
+        }
+      }
+      else {
         result = runner.getFactory().getBinOpFactory().create(dfaLeft, dfaRight, memState, isLong, opSign);
       }
     }
