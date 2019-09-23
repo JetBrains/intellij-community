@@ -1125,7 +1125,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     assertTrue(stamp == ((FileBasedIndexImpl)FileBasedIndex.instance).getIndexModificationStamp(StubUpdatingIndex.INDEX_ID, project))
   }
 
-  void "test StubIndex.getContainingIds filter result by search scope"() {
+  void "test StubIndex getContainingIds filter result by search scope"() {
     def file = myFixture.addClass("class Foo {}").getContainingFile().getVirtualFile()
 
     def iterator = StubIndexImpl.getInstance().
