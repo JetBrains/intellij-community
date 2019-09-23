@@ -15,7 +15,9 @@
  */
 package org.jetbrains.debugger.sourcemap
 
+import com.google.gson.JsonParseException
 import com.google.gson.stream.JsonToken
+import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
@@ -23,6 +25,7 @@ import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.util.PathUtil
 import com.intellij.util.SmartList
 import com.intellij.util.UriUtil
+import com.intellij.util.Url
 import com.intellij.util.containers.isNullOrEmpty
 import org.jetbrains.debugger.sourcemap.Base64VLQ.CharIterator
 import org.jetbrains.io.JsonReaderEx
@@ -50,6 +53,26 @@ val MAPPING_COMPARATOR_BY_GENERATED_POSITION: Comparator<MappingEntry> = Compara
 }
 
 internal const val UNMAPPED = -1
+
+fun decodeSourceMapSafely(sourceMapData: CharSequence,
+                          trimFileScheme: Boolean,
+                          baseUrl: Url?,
+                          baseUrlIsFile: Boolean): SourceMap? {
+  try {
+    return decodeSourceMap(sourceMapData) { sourceUrls ->
+      SourceResolver(sourceUrls, trimFileScheme, baseUrl, baseUrlIsFile)
+    }
+  }
+  catch (e: JsonParseException) {
+    logger<SourceMap>().warn("Cannot decode sourcemap $baseUrl", e)
+  }
+  catch (t: Throwable) {
+    // WEB-9565
+    logger<SourceMap>().error("Cannot decode sourcemap $baseUrl", t, Attachment("sourceMap.txt", sourceMapData.toString()))
+  }
+
+  return null
+}
 
 // https://docs.google.com/document/d/1U1RGAehQwRypUTovF1KRlpiOFze0b-_2gc6fAH0KY0k/edit?hl=en_US
 fun decodeSourceMap(`in`: CharSequence, sourceResolverFactory: (sourceUrls: List<String>) -> SourceResolver): SourceMap? {
