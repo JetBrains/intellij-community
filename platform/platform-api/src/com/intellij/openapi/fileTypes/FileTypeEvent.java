@@ -16,11 +16,35 @@
 package com.intellij.openapi.fileTypes;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.EventObject;
 
 public class FileTypeEvent extends EventObject {
-  public FileTypeEvent(@NotNull Object source) {
+  private final FileType myAddedFileType;
+  private final FileType myRemovedFileType;
+
+  public FileTypeEvent(@NotNull Object source, @Nullable FileType addedFileType, @Nullable FileType removedFileType) {
     super(source);
+    myAddedFileType = addedFileType;
+    myRemovedFileType = removedFileType;
+  }
+
+  /**
+   * If this event was triggered by a file type being added, returns the file type that has been added. Not available in
+   * beforeFileTypeChanged listeners.
+   */
+  @Nullable
+  public FileType getAddedFileType() {
+    return myAddedFileType;
+  }
+
+  /**
+   * If this event was triggered by a file type being removed, returns the file type that has been removed. Not available in
+   * beforeFileTypeChanged listeners.
+   */
+  @Nullable
+  public FileType getRemovedFileType() {
+    return myRemovedFileType;
   }
 }

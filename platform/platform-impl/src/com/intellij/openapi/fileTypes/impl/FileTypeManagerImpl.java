@@ -176,7 +176,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
         }
         AbstractFileType type = (AbstractFileType)loadFileType(element, false);
         if (!duringLoad) {
-          fireFileTypesChanged();
+          fireFileTypesChanged(type, null);
         }
         return type;
       }
@@ -221,7 +221,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
           Application app = ApplicationManager.getApplication();
           app.runWriteAction(() -> fireBeforeFileTypesChanged());
           myPatternsTable.removeAllAssociations(scheme);
-          app.runWriteAction(() -> fireFileTypesChanged());
+          app.runWriteAction(() -> fireFileTypesChanged(null, scheme));
         }, ModalityState.NON_MODAL);
       }
     });
@@ -290,8 +290,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       public void extensionAdded(@NotNull FileTypeBean extension, @NotNull PluginDescriptor pluginDescriptor) {
         fireBeforeFileTypesChanged();
         initializeMatchers(extension);
-        instantiateFileTypeBean(extension);
-        fireFileTypesChanged();
+        FileType fileType = instantiateFileTypeBean(extension);
+        fireFileTypesChanged(fileType, null);
       }
 
       @Override
@@ -1221,7 +1221,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     ApplicationManager.getApplication().runWriteAction(() -> {
       fireBeforeFileTypesChanged();
       registerFileTypeWithoutNotification(type, defaultAssociations, true);
-      fireFileTypesChanged();
+      fireFileTypesChanged(type, null);
     });
   }
 
@@ -1231,7 +1231,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       fireBeforeFileTypesChanged();
       unregisterFileTypeWithoutNotification(fileType);
       myStandardFileTypes.remove(fileType.getName());
-      fireFileTypesChanged();
+      fireFileTypesChanged(null, fileType);
     });
   }
 
@@ -1329,16 +1329,21 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
   @Override
   public void fireBeforeFileTypesChanged() {
-    FileTypeEvent event = new FileTypeEvent(this);
+    FileTypeEvent event = new FileTypeEvent(this, null, null);
     myMessageBus.syncPublisher(TOPIC).beforeFileTypesChanged(event);
   }
 
   private final AtomicInteger fileTypeChangedCount;
+
   @Override
   public void fireFileTypesChanged() {
+    fireFileTypesChanged(null, null);
+  }
+
+  public void fireFileTypesChanged(@Nullable FileType addedFileType, @Nullable FileType removedFileType) {
     clearCaches();
     clearPersistentAttributes();
-    myMessageBus.syncPublisher(TOPIC).fileTypesChanged(new FileTypeEvent(this));
+    myMessageBus.syncPublisher(TOPIC).fileTypesChanged(new FileTypeEvent(this, addedFileType, removedFileType));
   }
 
   private final Map<FileTypeListener, MessageBusConnection> myAdapters = new HashMap<>();
