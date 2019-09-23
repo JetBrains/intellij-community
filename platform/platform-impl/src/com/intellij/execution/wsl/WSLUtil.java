@@ -143,8 +143,11 @@ public class WSLUtil {
   }
 
   /**
-   * @return Windows-dependent path for a file, pointed by {@code wslPath} in WSL or null if path is unmappable.
-   * For example, {@code getWindowsPath("/mnt/c/Users/file.txt") returns "c:\Users\file.txt"}
+   * @param wslPath a path in WSL file system, e.g. "/mnt/c/Users/file.txt" or "/c/Users/file.txt"
+   * @param mntRoot a directory where fixed drives will be mounted. Default is "/mnt/" - {@link WSLDistribution#DEFAULT_WSL_MNT_ROOT}).
+   *               See https://docs.microsoft.com/ru-ru/windows/wsl/wsl-config#configuration-options
+   * @return Windows-dependent path to the file, pointed by {@code wslPath} in WSL or null if the path is unmappable.
+   * For example, {@code getWindowsPath("/mnt/c/Users/file.txt", "/mnt/") returns "C:\Users\file.txt"}
    */
   @Nullable
   public static String getWindowsPath(@NotNull String wslPath, @NotNull String mntRoot) {
