@@ -5,6 +5,7 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.ide.ui.customization.CustomisedActionGroup;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.actionSystem.impl.Utils.ActionGroupVisitor;
@@ -24,6 +25,7 @@ import com.intellij.ui.components.JBOptionButton;
 import com.intellij.ui.mac.TouchbarDataKeys;
 import com.intellij.ui.mac.UpdatableDefaultActionGroup;
 import com.intellij.ui.popup.list.ListPopupImpl;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,9 +39,12 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 class BuildUtils {
   private static final Logger LOG = Logger.getInstance(Utils.class);
+  private static final boolean ALWAYS_UPDATE_SLOW_ACTIONS = Boolean.getBoolean("mac.touchbar.always.update.slow.actions");
+  private static final boolean PERSISTENT_LIST_OF_SLOW_ACTIONS = Boolean.getBoolean("mac.touchbar.remember.slow.actions");
   private static final String DIALOG_ACTIONS_CONTEXT = "DialogWrapper.touchbar.actions";
 
   // https://developer.apple.com/design/human-interface-guidelines/macos/touch-bar/touch-bar-visual-design/
@@ -101,7 +106,7 @@ class BuildUtils {
 
   static void addActionGroupButtons(@NotNull TouchBar out, @NotNull ActionGroup actionGroup, @Nullable String filterGroupPrefix, @Nullable Customizer customizer) {
     out.softClear();
-    GroupVisitor visitor = new GroupVisitor(out, filterGroupPrefix, customizer, out.getStats());
+    GroupVisitor visitor = new GroupVisitor(out, filterGroupPrefix, customizer, out.getStats(), false);
 
     final DataContext dctx = DataManager.getInstance().getDataContext(getCurrentFocusComponent());
     Utils.expandActionGroup(false, actionGroup, out.getFactory(), dctx, ActionPlaces.TOUCHBAR_GENERAL, visitor);
@@ -382,19 +387,23 @@ class BuildUtils {
     private final @NotNull TouchBar myOut;
     private final @Nullable String myFilterByPrefix;
     private final @Nullable Customizer myCustomizer;
+    private final boolean myAllowSkipSlowUpdates;
 
     private int mySeparatorCounter = 0;
     private final LinkedList<InternalNode> myNodePath = new LinkedList<>();
     private final List<InternalNode> myVisitedNodes = new ArrayList<>();
     private InternalNodeWithContainer myRoot;
 
+    private final Map<AnAction, Long> myAct2StartUpdateNs = new ConcurrentHashMap<>();
+
     private final @Nullable TouchBarStats myStats;
 
-    GroupVisitor(@NotNull TouchBar out, @Nullable String filterByPrefix, @Nullable Customizer customizer, @Nullable TouchBarStats stats) {
+    GroupVisitor(@NotNull TouchBar out, @Nullable String filterByPrefix, @Nullable Customizer customizer, @Nullable TouchBarStats stats, boolean allowSkipSlowUpdates) {
       this.myOut = out;
       this.myFilterByPrefix = filterByPrefix;
       this.myCustomizer = customizer;
       this.myStats = stats;
+      myAllowSkipSlowUpdates = allowSkipSlowUpdates;
     }
 
     @Override
@@ -473,6 +482,35 @@ class BuildUtils {
     public void leaveNode() {
       final InternalNode leaved = myNodePath.removeLast();
       leaved.leaveTimeNs = System.nanoTime();
+    }
+
+    @Override
+    public boolean beginUpdate(@NotNull AnAction action, AnActionEvent e) {
+      if (!ALWAYS_UPDATE_SLOW_ACTIONS && myAllowSkipSlowUpdates && isSlowUpdateAction(action)) {
+        // make such action always enabled and visible
+        e.getPresentation().setEnabledAndVisible(true);
+        if (action instanceof Toggleable)
+          Toggleable.setSelected(e.getPresentation(), false);
+        return false;
+      }
+      myAct2StartUpdateNs.put(action, System.nanoTime());
+      return true;
+    }
+
+    @Override
+    public void endUpdate(@NotNull AnAction action) {
+      // check whether update is too slow
+      final long updateDurationNs = System.nanoTime() - myAct2StartUpdateNs.getOrDefault(action, 0l);
+      final boolean isEDT = ApplicationManager.getApplication().isDispatchThread();
+      if (isEDT && !ALWAYS_UPDATE_SLOW_ACTIONS && myAllowSkipSlowUpdates && updateDurationNs > 30*1000000l) { // 50 ms threshold
+        // disable update for this action
+        addSlowUpdateAction(action);
+      }
+
+      if (myStats != null) {
+        final TouchBarStats.AnActionStats stats = myStats.getActionStats(action);
+        stats.onUpdate(updateDurationNs);
+      }
     }
 
     @Override
@@ -689,5 +727,47 @@ class BuildUtils {
       }
     } else
       out.add(act);
+  }
+
+  private static final String SLOW_UPDATE_ACTIONS_KEY = "touchbar.slow.update.actions";
+  private static @NotNull Set<String> ourSlowActions;
+  private static void initSlowActions() {
+    if (ourSlowActions != null)
+      return;
+    ourSlowActions = ConcurrentHashMap.newKeySet();
+    if (PERSISTENT_LIST_OF_SLOW_ACTIONS) {
+      final String[] muted = PropertiesComponent.getInstance().getValues(SLOW_UPDATE_ACTIONS_KEY);
+      if (muted != null)
+        Collections.addAll(ourSlowActions, muted);
+    }
+  }
+  private static void saveSlowActions() {
+    if (PERSISTENT_LIST_OF_SLOW_ACTIONS) {
+      PropertiesComponent.getInstance().setValues(SLOW_UPDATE_ACTIONS_KEY, ArrayUtilRt.toStringArray(ourSlowActions));
+    }
+  }
+  private static boolean isSlowUpdateAction(@NotNull String actionId) {
+    initSlowActions();
+    return ourSlowActions.contains(actionId);
+  }
+
+  private static boolean isSlowUpdateAction(@NotNull AnAction action) {
+    final String actId = ActionManager.getInstance().getId(action);
+    if (actId == null)
+      return false;
+    return isSlowUpdateAction(actId);
+  }
+
+  private static void addSlowUpdateAction(@NotNull AnAction action) {
+    final String actId = ActionManager.getInstance().getId(action);
+    if (actId == null)
+      return;
+    addSlowUpdateAction(actId);
+  }
+
+  private static void addSlowUpdateAction(@NotNull String actId) {
+    initSlowActions();
+    ourSlowActions.add(actId);
+    saveSlowActions();
   }
 }

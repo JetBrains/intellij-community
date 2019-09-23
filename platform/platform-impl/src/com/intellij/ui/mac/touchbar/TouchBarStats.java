@@ -1,6 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.mac.touchbar;
 
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -8,13 +10,14 @@ import java.io.PrintStream;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 class TouchBarStats {
   private static final Map<String, TouchBarStats> ourStats = new HashMap<>();
 
   private final String name;
-  private final Map<String, AnActionStats> actionStats = new HashMap<>();
+  private final Map<String, AnActionStats> actionStats = new ConcurrentHashMap<>();
   private final AtomicLong[] myCounters = new AtomicLong[StatsCounters.values().length];
 
   private TouchBarStats(String name) {
@@ -77,10 +80,18 @@ class TouchBarStats {
     return actionStats.computeIfAbsent(actionId, s -> new AnActionStats(s));
   }
 
+  @NotNull AnActionStats getActionStats(@NotNull AnAction action) {
+    final String actId = BuildUtils.getActionId(action);
+    return actionStats.computeIfAbsent(actId, s -> new AnActionStats(s));
+  }
+
   static class AnActionStats {
     final @NotNull String actionId;
 
     long totalUpdateDurationNs;
+    long maxUpdateDurationNs;
+    boolean isBackgroundThread = false;
+
     long updateViewNs;
 
     // icon stats
@@ -95,8 +106,16 @@ class TouchBarStats {
       this.actionId = actionId;
     }
 
+    void onUpdate(long updateDurationNs) {
+      if (ApplicationManager.getApplication() != null)
+        isBackgroundThread |= !ApplicationManager.getApplication().isDispatchThread();
+      totalUpdateDurationNs += updateDurationNs;
+      maxUpdateDurationNs = Math.max(maxUpdateDurationNs, updateDurationNs);
+    }
+
     void accumulate(AnActionStats other) {
       this.totalUpdateDurationNs += other.totalUpdateDurationNs;
+      this.maxUpdateDurationNs = Math.max(maxUpdateDurationNs, other.maxUpdateDurationNs);
 
       this.updateViewNs += other.updateViewNs;
 

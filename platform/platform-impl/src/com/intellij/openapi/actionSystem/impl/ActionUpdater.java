@@ -90,7 +90,7 @@ class ActionUpdater {
         // clone the presentation to avoid partially changing the cached one if update is interrupted
         Presentation presentation = ActionUpdateEdtExecutor.computeOnEdt(() -> myFactory.getPresentation(action).clone());
         presentation.setEnabledAndVisible(true);
-        Supplier<Boolean> doUpdate = () -> doUpdate(myModalContext, action, createActionEvent(action, presentation));
+        Supplier<Boolean> doUpdate = () -> doUpdate(myModalContext, action, createActionEvent(action, presentation), myVisitor);
         boolean success = callAction(action, "update", doUpdate);
         return success ? presentation : null;
       },
@@ -421,8 +421,11 @@ class ActionUpdater {
   }
 
   // returns false if exception was thrown and handled
-  static boolean doUpdate(boolean isInModalContext, AnAction action, AnActionEvent e) {
+  static boolean doUpdate(boolean isInModalContext, AnAction action, AnActionEvent e, Utils.ActionGroupVisitor visitor) {
     if (ApplicationManager.getApplication().isDisposed()) return false;
+
+    if (visitor != null && !visitor.beginUpdate(action, e))
+      return true;
 
     long startTime = System.currentTimeMillis();
     final boolean result;
@@ -435,6 +438,9 @@ class ActionUpdater {
     catch (Throwable exc) {
       handleUpdateException(action, e.getPresentation(), exc);
       return false;
+    } finally {
+      if (visitor != null)
+        visitor.endUpdate(action);
     }
     long endTime = System.currentTimeMillis();
     if (endTime - startTime > 10 && LOG.isDebugEnabled()) {

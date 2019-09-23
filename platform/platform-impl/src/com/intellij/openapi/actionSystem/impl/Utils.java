@@ -185,5 +185,7 @@ public class Utils{
     void leaveNode();
     Component getCustomComponent(@NotNull AnAction action);
 
+    boolean beginUpdate(@NotNull AnAction action, AnActionEvent e);
+    void endUpdate(@NotNull AnAction action);
   }
 }

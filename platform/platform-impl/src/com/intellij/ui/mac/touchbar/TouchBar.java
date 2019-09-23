@@ -56,6 +56,8 @@ class TouchBar implements NSTLibrary.ItemCreator {
   private final Object myHideReleaseLock = new Object();
   private Future myLastUpdateNativePeers;
 
+  private boolean myAllowSkipSlowUpdates = false;
+
   private final @NotNull Map<AnAction, TBItemAnActionButton> myActionButtonPool = new HashMap<>();
   private final @NotNull LinkedList<TBItemGroup> myGroupPool = new LinkedList<>();
 
@@ -115,6 +117,8 @@ class TouchBar implements NSTLibrary.ItemCreator {
 
   @NotNull
   PresentationFactory getFactory() { return myFactory; }
+  void setAllowSkipSlowUpdates(boolean allowSkipSlowUpdates) { myAllowSkipSlowUpdates = allowSkipSlowUpdates; }
+
 
   @Nullable
   TouchBarStats getStats() { return myStats; }
@@ -351,7 +355,7 @@ class TouchBar implements NSTLibrary.ItemCreator {
       softClear();
 
       DataContext dctx = DataManager.getInstance().getDataContext(BuildUtils.getCurrentFocusComponent());
-      BuildUtils.GroupVisitor visitor = new BuildUtils.GroupVisitor(this, mySkipSubgroupsPrefix, null, myStats);
+      BuildUtils.GroupVisitor visitor = new BuildUtils.GroupVisitor(this, mySkipSubgroupsPrefix, null, myStats, myAllowSkipSlowUpdates);
       if (ourAsyncUpdate) {
         //System.out.printf("%s:\t start update %s\n", new SimpleDateFormat("hhmmss.SSS").format(new Date()), myItems.toString());
         if (myLastUpdate != null) myLastUpdate.cancel();
@@ -397,7 +401,7 @@ class TouchBar implements NSTLibrary.ItemCreator {
         }
 
         if (myStats != null)
-          myStats.getActionStats(item.getActionId()).totalUpdateDurationNs += System.nanoTime() - startNs;
+          myStats.getActionStats(item.getActionId()).onUpdate(System.nanoTime() - startNs);
       });
 
       _applyPresentationChanges(null);
