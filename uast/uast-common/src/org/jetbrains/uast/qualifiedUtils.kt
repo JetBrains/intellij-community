@@ -20,6 +20,7 @@ package org.jetbrains.uast
 
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiModifier
 import com.intellij.psi.PsiType
 import com.intellij.psi.util.PsiMethodUtil
 import org.jetbrains.annotations.ApiStatus
@@ -235,7 +236,10 @@ fun getMainMethodClass(uMainMethod: UMethod): PsiClass? {
 }
 
 private fun isKotlinParameterlessMain(mainMethod: PsiMethod) =
-  mainMethod.language.id == "kotlin" && mainMethod.parameterList.parameters.isEmpty() && PsiType.VOID == mainMethod.returnType
+  mainMethod.language.id == "kotlin"
+  && mainMethod.parameterList.parameters.isEmpty()
+  && PsiType.VOID == mainMethod.returnType
+  && mainMethod.hasModifierProperty(PsiModifier.STATIC)
 
 @ApiStatus.Experimental
 fun findMainInClass(uClass: UClass?): PsiMethod? {
