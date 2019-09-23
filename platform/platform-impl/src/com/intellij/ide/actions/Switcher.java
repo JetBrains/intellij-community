@@ -717,7 +717,9 @@ public class Switcher extends AnAction implements DumbAware {
         boolean firstRecentMarked = false;
         List<VirtualFile> selectedFiles = Arrays.asList(editorManager.getSelectedFiles());
         for (int i = filesForInit.size() - 1; i >= minIndex; i--) {
-          if (pinned && selectedFiles.contains(filesForInit.get(i))) {
+          if (pinned
+              && UISettings.getInstance().getEditorTabPlacement() != UISettings.TABS_NONE
+              && selectedFiles.contains(filesForInit.get(i)) ) {
             continue;
           }
 
