@@ -92,7 +92,12 @@ public class VcsNotifier {
 
   @NotNull
   public Notification notifyWeakError(@NotNull String message) {
-    return notify(NOTIFICATION_GROUP_ID, "", message, NotificationType.ERROR);
+    return notifyWeakError("", message);
+  }
+
+  @NotNull
+  public Notification notifyWeakError(@NotNull String title, @NotNull String message) {
+    return notify(NOTIFICATION_GROUP_ID, title, message, NotificationType.ERROR);
   }
 
   @NotNull

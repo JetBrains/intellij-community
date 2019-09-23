@@ -137,8 +137,8 @@ public abstract class CreatePatchFromChangesAction extends ExtendableAction impl
         VcsNotifier.getInstance(project).notifySuccess("Patch copied to clipboard");
       }
       catch (IOException | VcsException exception) {
-        LOG.error("Can't create patch", exception);
-        VcsNotifier.getInstance(project).notifyWeakError("Patch creation failed");
+        LOG.warn("Can't create patch", exception);
+        VcsNotifier.getInstance(project).notifyWeakError("Patch Creation Failed", exception.getMessage());
       }
     }, VcsBundle.message("create.patch.commit.action.progress"), true, project);
   }
