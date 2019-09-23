@@ -43,6 +43,7 @@ import com.intellij.psi.impl.cache.impl.id.IdIndexImpl
 import com.intellij.psi.impl.cache.impl.todo.TodoIndex
 import com.intellij.psi.impl.file.impl.FileManagerImpl
 import com.intellij.psi.impl.java.JavaFunctionalExpressionIndex
+import com.intellij.psi.impl.java.stubs.index.JavaShortClassNameIndex
 import com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys
 import com.intellij.psi.impl.search.JavaNullMethodArgumentIndex
 import com.intellij.psi.impl.source.*
@@ -1122,5 +1123,22 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     stamp = ((FileBasedIndexImpl)FileBasedIndex.instance).getIndexModificationStamp(StubUpdatingIndex.INDEX_ID, project)
     VfsUtil.saveText(vFile, "class Foo { void m() { int k = 0; } }")
     assertTrue(stamp == ((FileBasedIndexImpl)FileBasedIndex.instance).getIndexModificationStamp(StubUpdatingIndex.INDEX_ID, project))
+  }
+
+  void "test StubIndex.getContainingIds filter result by search scope"() {
+    def file = myFixture.addClass("class Foo {}").getContainingFile().getVirtualFile()
+
+    def iterator = StubIndexImpl.getInstance().
+      getContainingIds(JavaStubIndexKeys.CLASS_SHORT_NAMES,
+                       "Foo",
+                       getProject(),
+                       GlobalSearchScope.allScope(getProject()))
+    assertEquals(1, iterator.size())
+    def iterator1 = StubIndexImpl.getInstance().
+      getContainingIds(JavaStubIndexKeys.CLASS_SHORT_NAMES,
+                       "Foo",
+                       getProject(),
+                       GlobalSearchScope.allScope(getProject()).intersectWith(GlobalSearchScope.notScope(GlobalSearchScope.fileScope(getProject(), file))))
+    assertEquals(0, iterator1.size())
   }
 }
