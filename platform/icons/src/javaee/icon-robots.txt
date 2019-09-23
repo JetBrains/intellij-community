@@ -5,3 +5,28 @@ deprecated: localHome.png -> /javaee/home.svg; to be removed in IDEA 2020 - use 
 deprecated: local.png -> /nodes/interface.svg; to be removed in IDEA 2020 - use AllIcons.Nodes.Interface
 deprecated: WebService2.png -> /javaee/WebService.svg; to be removed in IDEA 2020 - use AllIcons.Javaee.WebService
 deprecated: WebServiceClient2.png -> /javaee/WebServiceClient.svg; to be removed in IDEA 2020 - use AllIcons.Javaee.WebServiceClient
+deprecated: application_xml.svg; to be removed in IDEA 2020 - use JavaxIcons.Javaee.Application_xml
+deprecated: buildOnFrameDeactivation.svg; to be removed in IDEA 2020 - use JavaxIcons.Javaee.BuildOnFrameDeactivation
+deprecated: ejb-jar_xml.svg; to be removed in IDEA 2020 - use JavaxIcons.Javaee.Ejb_jar_xml
+deprecated: ejbClass.svg; to be removed in IDEA 2020 - use JavaxIcons.Javaee.EjbClass
+deprecated: ejbModule.svg; to be removed in IDEA 2020 - use JavaxIcons.Javaee.EjbModule
+deprecated: embeddedAttributeOverlay.svg; to be removed in IDEA 2020 - use JavaxIcons.Javaee.EmbeddedAttributeOverlay
+deprecated: entityBean.svg; to be removed in IDEA 2020 - use JavaxIcons.Javaee.EntityBean
+deprecated: inheritedAttributeOverlay.svg; to be removed in IDEA 2020 - use JavaxIcons.Javaee.InheritedAttributeOverlay
+deprecated: interceptorClass.svg; to be removed in IDEA 2020 - use JavaxIcons.Javaee.InterceptorClass
+deprecated: interceptorMethod.svg; to be removed in IDEA 2020 - use JavaxIcons.Javaee.InterceptorMethod
+deprecated: JavaeeAppModule.svg; to be removed in IDEA 2020 - use JavaxIcons.Javaee.JavaeeAppModule
+deprecated: jpaFacet.svg; to be removed in IDEA 2020 - use JavaxIcons.Javaee.JpaFacet
+deprecated: messageBean.svg; to be removed in IDEA 2020 - use JavaxIcons.Javaee.MessageBean
+deprecated: persistenceAttribute.svg; to be removed in IDEA 2020 - use JavaxIcons.Javaee.PersistenceAttribute
+deprecated: persistenceEmbeddable.svg; to be removed in IDEA 2020 - use JavaxIcons.Javaee.PersistenceEmbeddable
+deprecated: persistenceEntityListener.svg; to be removed in IDEA 2020 - use JavaxIcons.Javaee.PersistenceEntityListener
+deprecated: persistenceId.svg; to be removed in IDEA 2020 - use JavaxIcons.Javaee.PersistenceId
+deprecated: persistenceIdRelationship.svg; to be removed in IDEA 2020 - use JavaxIcons.Javaee.PersistenceIdRelationship
+deprecated: persistenceMappedSuperclass.svg; to be removed in IDEA 2020 - use JavaxIcons.Javaee.PersistenceMappedSuperclass
+deprecated: persistenceRelationship.svg; to be removed in IDEA 2020 - use JavaxIcons.Javaee.PersistenceRelationship
+deprecated: persistenceUnit.svg; to be removed in IDEA 2020 - use JavaxIcons.Javaee.PersistenceUnit
+deprecated: remote.svg; to be removed in IDEA 2020 - use JavaxIcons.Javaee.Remote
+deprecated: sessionBean.svg; to be removed in IDEA 2020 - use JavaxIcons.Javaee.SessionBean
+deprecated: web_xml.svg; to be removed in IDEA 2020 - use JavaxIcons.Javaee.Web_xml
+deprecated: webModule.svg; to be removed in IDEA 2020 - use JavaxIcons.Javaee.WebModule

@@ -17,3 +17,11 @@ deprecated: treeDownArrow.png; to be removed in IDEA 2020
 deprecated: treeExpandNode.png -> /general/arrowRight.svg; to be removed in IDEA 2020 - use AllIcons.General.ArrowRight
 deprecated: TreeOpen.png -> /nodes/folder.svg; to be removed in IDEA 2020 - use AllIcons.Nodes.Folder
 deprecated: treeRightArrow.png; to be removed in IDEA 2020
+deprecated: ejb.svg; to be removed in IDEA 2020 - use JavaxIcons.Javaee.Ejb
+deprecated: ejbBusinessMethod.svg; to be removed in IDEA 2020 - use JavaxIcons.Javaee.EjbBusinessMethod
+deprecated: ejbCmpField.svg; to be removed in IDEA 2020 - use JavaxIcons.Javaee.EjbCmpField
+deprecated: ejbCmrField.svg; to be removed in IDEA 2020 - use JavaxIcons.Javaee.EjbCmrField
+deprecated: ejbCreateMethod.svg; to be removed in IDEA 2020 - use JavaxIcons.Javaee.EjbCreateMethod
+deprecated: ejbFinderMethod.svg; to be removed in IDEA 2020 - use JavaxIcons.Javaee.EjbFinderMethod
+deprecated: ejbPrimaryKeyClass.svg; to be removed in IDEA 2020 - use JavaxIcons.Javaee.EjbPrimaryKeyClass
+deprecated: ejbReference.svg; to be removed in IDEA 2020 - use JavaxIcons.Javaee.EjbReference
