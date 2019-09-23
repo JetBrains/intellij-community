@@ -264,7 +264,14 @@ def skeleton_status(base_dir, mod_qname, mod_path, state_json=None):
         if used_version:
             used_version = version_to_tuple(used_version)
 
-        if sdk_skeleton_state['status'] == GenerationStatus.FAILED:
+        used_bin_mtime = sdk_skeleton_state.get('bin_mtime')
+        # state.json is normally passed for remote skeletons only. Since we don't have neither cache,
+        # nor physical sdk skeletons there, we have to rely on binary modification time to detect
+        # outdated skeletons.
+        if mod_path and used_bin_mtime and used_bin_mtime < file_modification_timestamp(mod_path):
+            return SkeletonStatus.OUTDATED
+
+        if sdk_skeleton_state.get('status') == GenerationStatus.FAILED:
             return SkeletonStatus.OUTDATED if used_version < gen_version else SkeletonStatus.FAILING
 
     else:
@@ -466,13 +473,17 @@ def process_one_with_results_reporting(name, mod_file_name, doing_builtins, sdk_
         'module_origin': get_module_origin(mod_file_name, name),
         'generation_status': status
     })
-    if status != GenerationStatus.UP_TO_DATE and state_json:
-        # TODO use the actual generator version when a skeleton was copied from the cache
-        # TODO don't update state_json inplace
-        state_json['sdk_skeletons'].setdefault(name, {}).update(
-            gen_version=version(),
-            status=status,
-        )
+    if state_json:
+        skeleton_state = state_json['sdk_skeletons'].setdefault(name, {})
+        if status != GenerationStatus.UP_TO_DATE:
+            # TODO use the actual generator version when a skeleton was copied from the cache
+            # TODO don't update state_json inplace
+            skeleton_state.update(
+                gen_version=version(),
+                status=status,
+            )
+        if is_test_mode():
+            skeleton_state.pop('bin_mtime', None)
     return status
 
 
@@ -638,4 +649,4 @@ def process_all(roots, sdk_skeletons_dir, name_pattern=None, state_json=None):
     if state_json:
         mkdir(sdk_skeletons_dir)
         with fopen(os.path.join(sdk_skeletons_dir, 'state.json'), 'w') as f:
-            json.dump(state_json, f)
+            json.dump(state_json, f, sort_keys=True)

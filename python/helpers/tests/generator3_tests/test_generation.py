@@ -400,6 +400,69 @@ class SkeletonGenerationTest(GeneratorTestCase):
                                     custom_required_gen=True,
                                     gen_version='0.2')
 
+    def test_passing_skeletons_state_updated_due_to_modified_binary(self):
+        mod1_mtime = os.stat(self.get_test_data_path('binaries/mod1.so')).st_mtime
+        mod2_mtime = os.stat(self.get_test_data_path('binaries/mod2.so')).st_mtime
+        state = {
+            'sdk_skeletons': {
+                'mod1': {
+                    'gen_version': '0.1',
+                    'bin_mtime': mod1_mtime,
+                    'status': 'GENERATED',
+                },
+                'mod2': {
+                    'gen_version': '0.1',
+                    # generated for a binary modified ten seconds before its current state
+                    'bin_mtime': mod2_mtime - 10,
+                    'status': 'GENERATED'
+                }
+            }
+        }
+        self.check_generator_output(extra_syspath=['mocks', 'binaries'],
+                                    extra_args=['--with-state-marker', '--name-pattern', 'mod?'],
+                                    input=json.dumps(state),
+                                    custom_required_gen=True,
+                                    gen_version='0.2')
+
+    def test_passing_skeletons_state_update_failed_due_to_modified_binary(self):
+        mod1_mtime = os.stat(self.get_test_data_path('binaries/mod1.so')).st_mtime
+        mod2_mtime = os.stat(self.get_test_data_path('binaries/mod2.so')).st_mtime
+        state = {
+            'sdk_skeletons': {
+                'mod1': {
+                    'gen_version': '0.1',
+                    'bin_mtime': mod1_mtime,
+                    'status': 'FAILED',
+                },
+                'mod2': {
+                    'gen_version': '0.1',
+                    # generated for a binary modified ten seconds before its current state
+                    'bin_mtime': mod2_mtime - 10,
+                    'status': 'FAILED'
+                }
+            }
+        }
+        self.check_generator_output(extra_syspath=['mocks', 'binaries'],
+                                    extra_args=['--with-state-marker', '--name-pattern', 'mod?'],
+                                    input=json.dumps(state),
+                                    custom_required_gen=True,
+                                    gen_version='0.1')
+
+    def test_passing_skeletons_state_non_existing(self):
+        state = {
+            'sdk_skeletons': {
+                'mod1': {
+                    'gen_version': '0.1',
+                    'status': 'GENERATED',
+                },
+            }
+        }
+        self.check_generator_output(extra_syspath=['mocks', 'binaries'],
+                                    extra_args=['--with-state-marker', '--name-pattern', 'mod?'],
+                                    input=json.dumps(state),
+                                    custom_required_gen=True,
+                                    gen_version='0.1')
+
     def check_generator_output(self, mod_name=None, mod_path=None, mod_root=None,
                                custom_required_gen=False, standalone_mode=False,
                                success=True, **kwargs):
