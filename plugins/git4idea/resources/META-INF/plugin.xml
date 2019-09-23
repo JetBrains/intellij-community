@@ -72,7 +72,7 @@
       <reference ref="Annotate"/>
       <reference ref="Show.Current.Revision"/>
       <reference ref="Compare.SameVersion"/>
-      <reference ref="Compare.Selected"/>
+      <action id="Git.CompareWith" class="git4idea.actions.GitCompareWithSelectedRevisionAction" text="_Compare with..." />
       <action id="Git.CompareWithBranch" class="git4idea.actions.GitCompareWithBranchAction" text="Compare with Branch..." />
       <reference ref="Vcs.ShowTabbedFileHistory"/>
       <reference id="Vcs.ShowHistoryForBlock"/>

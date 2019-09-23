@@ -22,7 +22,6 @@ import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.history.HistoryAsTreeProvider;
 import com.intellij.openapi.vcs.history.VcsCachingHistory;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
@@ -129,16 +128,23 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
                          final List<VcsFileRevision> revisions = session.getRevisionList();
                          final HistoryAsTreeProvider treeHistoryProvider = session.getHistoryAsTreeProvider();
                          if (treeHistoryProvider != null) {
-                           showTreePopup(treeHistoryProvider.createTreeOn(revisions), file, project, vcs.getDiffProvider());
+                           showTreePopup(treeHistoryProvider.createTreeOn(revisions), project,
+                                         revision -> showSelectedRevision(vcs, revision, file, project));
                          }
                          else {
-                           showListPopup(revisions, project,
-                                         revision -> DiffActionExecutor.showDiff(vcs.getDiffProvider(), revision.getRevisionNumber(), file, project), true);
+                           showListPopup(revisions, project, revision -> showSelectedRevision(vcs, revision, file, project), true);
                          }
                        });
   }
 
-  private static void showTreePopup(final List<TreeItem<VcsFileRevision>> roots, final VirtualFile file, final Project project, final DiffProvider diffProvider) {
+  protected void showSelectedRevision(@NotNull AbstractVcs vcs, @NotNull VcsFileRevision revision,
+                                      @NotNull VirtualFile file, @NotNull Project project) {
+    DiffActionExecutor.showDiff(vcs.getDiffProvider(), revision.getRevisionNumber(), file, project);
+  }
+
+  private static void showTreePopup(final List<TreeItem<VcsFileRevision>> roots, final Project project,
+                                    final Consumer<? super VcsFileRevision> selectedRevisionConsumer) {
+
     final TreeTableView treeTable = new TreeTableView(new ListTreeTableModelOnColumns(new TreeNodeAdapter(null, null, roots),
                                                                                       new ColumnInfo[]{BRANCH_COLUMN, REVISION_COLUMN,
                                                                                       DATE_COLUMN, AUTHOR_COLUMN}));
@@ -149,7 +155,7 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
       }
       VcsFileRevision revision = getRevisionAt(treeTable, index);
       if (revision != null) {
-        DiffActionExecutor.showDiff(diffProvider, revision.getRevisionNumber(), file, project);
+        selectedRevisionConsumer.consume(revision);
       }
     };
 
