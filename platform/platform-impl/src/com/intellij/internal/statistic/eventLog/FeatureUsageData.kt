@@ -250,8 +250,8 @@ class FeatureUsageData {
   }
 
   /**
-   * This method has been added to support stack trace logging and should NOT be used for regular events.
-   * */
+   * The data reported by this method will be available ONLY for ad-hoc analysis.
+   */
   fun addData(key: String, value: List<String>): FeatureUsageData {
     return addDataInternal(key, value)
   }
