@@ -455,6 +455,8 @@ class CommunityLibraryLicenses {
                        licenseUrl: "http://www.mozilla.org/MPL/"),
     new LibraryLicense(name: "SceneBuilderKit", version: "8.2.0", license: "BSD", url: "http://gluonhq.com/open-source/scene-builder/",
                        licenseUrl: "http://www.oracle.com/technetwork/licenses/bsd-license-1835287.html"),
+    new LibraryLicense(name: "SceneBuilderKit11", version: "11.0.1", license: "BSD", url: "https://github.com/JetBrains/scenebuilder",
+                       licenseUrl: "http://www.oracle.com/technetwork/licenses/bsd-license-1835287.html"),
     new LibraryLicense(name: "six.py", attachedTo: "intellij.python.helpers", version: "1.9.0", license: "MIT",
                        url: "http://pythonhosted.org/six/"),
     new LibraryLicense(name: "Slf4j", version: "1.7.25", license: "MIT License", url: "http://slf4j.org/",
