@@ -186,6 +186,13 @@ public abstract class VcsVFSListener implements Disposable {
       myDeletedWithoutConfirmFiles.removeIf(path -> copiedAddedMoved.contains(FileUtil.toSystemIndependentName(path.getPath())));
     }
 
+    private boolean isAnythingToProcess() {
+      return computeUnderLock(PROCESSING_LOCK.readLock(), () -> !myAddedFiles.isEmpty() ||
+                                                                !myDeletedFiles.isEmpty() ||
+                                                                !myDeletedWithoutConfirmFiles.isEmpty() ||
+                                                                !myMovedFiles.isEmpty());
+    }
+
     @CalledInBackground
     private void process(@NotNull List<VFileEvent> events) {
       processEvents(events);
@@ -687,6 +694,8 @@ public abstract class VcsVFSListener implements Disposable {
 
         List<VFileEvent> events = ContainerUtil.copyList(myEventsToProcess);
         myEventsToProcess.clear();
+
+        if (events.isEmpty() && !myProcessor.isAnythingToProcess()) return;
 
         ProgressManager.getInstance()
           .runProcessWithProgressSynchronously(() -> myProcessor.process(events),
