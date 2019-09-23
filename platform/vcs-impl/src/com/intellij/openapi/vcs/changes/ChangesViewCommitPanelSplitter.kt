@@ -3,32 +3,36 @@ package com.intellij.openapi.vcs.changes
 
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.ui.OnePixelSplitter
-import com.intellij.util.ui.update.UiNotifyConnector
+import com.intellij.util.ui.update.UiNotifyConnector.doWhenFirstShown
 import javax.swing.JComponent
 
-private const val CHANGES_VIEW_COMMIT_SPLITTER_PROPORTION = "ChangesViewManager.COMMIT_SPLITTER_PROPORTION"
+private const val PROPORTION_KEY = "ChangesViewManager.COMMIT_SPLITTER_PROPORTION"
 
-private class ChangesViewCommitPanelSplitter : OnePixelSplitter(true, CHANGES_VIEW_COMMIT_SPLITTER_PROPORTION, 1.0f) {
-  private var isDefaultProportionSet = false
+private class ChangesViewCommitPanelSplitter : OnePixelSplitter(true, PROPORTION_KEY, 1.0f) {
+  private var isProportionSet = PropertiesComponent.getInstance().isValueSet(PROPORTION_KEY)
 
   override fun setSecondComponent(component: JComponent?) {
-    if (component != null && !isDefaultProportionSet) {
-      UiNotifyConnector.doWhenFirstShown(this) {
-        isDefaultProportionSet = true
-        proportion = 1.0f - (component.preferredSize.getHeight().toFloat() / height).coerceIn(0.05f, 0.95f)
-      }
-    }
     super.setSecondComponent(component)
+
+    if (component != null && !isProportionSet) {
+      calculateProportion()
+    }
   }
 
-  override fun loadProportion() {
-    val key = splitterProportionKey
-    isDefaultProportionSet = key != null && PropertiesComponent.getInstance().isValueSet(key)
+  private fun calculateProportion() =
+    doWhenFirstShown(this) {
+      val component = secondComponent ?: return@doWhenFirstShown
+      if (isProportionSet) return@doWhenFirstShown
 
-    if (isDefaultProportionSet) super.loadProportion()
+      isProportionSet = true
+      proportion = 1.0f - (component.preferredSize.getHeight().toFloat() / height).coerceIn(0.05f, 0.95f)
+    }
+
+  override fun loadProportion() {
+    if (isProportionSet) super.loadProportion()
   }
 
   override fun saveProportion() {
-    if (isDefaultProportionSet) super.saveProportion()
+    if (isProportionSet) super.saveProportion()
   }
 }
