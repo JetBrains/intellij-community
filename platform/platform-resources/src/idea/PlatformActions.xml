@@ -1318,7 +1318,6 @@
     <action id="CopyReferencePopup" class="com.intellij.ide.actions.CopyReferencePopup" text="Copy Path...">
       <add-to-group group-id="CutCopyPasteGroup" anchor="after" relative-to-action="CopyPaths"/>
       <add-to-group group-id="EditorTabPopupMenu" anchor="after" relative-to-action="CopyPaths"/>
-      <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="$Copy"/>
     </action>
 
     <group id="CopyReferencePopupGroup">
