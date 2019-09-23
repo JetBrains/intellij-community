@@ -99,6 +99,7 @@ public abstract class IdeFrameDecorator implements IdeFrameImpl.FrameDecorator {
 
       Rectangle defaultBounds = device.getDefaultConfiguration().getBounds();
       try {
+        myFrame.getRootPane().putClientProperty(IdeFrameImpl.TOGGLING_FULL_SCREEN_IN_PROGRESS, Boolean.TRUE);
         myFrame.getRootPane().putClientProperty(ScreenUtil.DISPOSE_TEMPORARY, Boolean.TRUE);
         myFrame.dispose();
         myFrame.setUndecorated(state);
@@ -121,6 +122,12 @@ public abstract class IdeFrameDecorator implements IdeFrameImpl.FrameDecorator {
         }
         notifyFrameComponents(state);
       }
+      SwingUtilities.invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          myFrame.getRootPane().putClientProperty(IdeFrameImpl.TOGGLING_FULL_SCREEN_IN_PROGRESS, null);
+        }
+      });
       return Promises.resolvedPromise(state);
     }
   }

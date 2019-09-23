@@ -99,7 +99,10 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
 
     private void update(@NotNull ComponentEvent e) {
       IdeFrameImpl frame = (IdeFrameImpl)e.getComponent();
-
+      if (UIUtil.isClientPropertyTrue(frame.getRootPane(), ScreenUtil.DISPOSE_TEMPORARY)
+          || UIUtil.isClientPropertyTrue(frame.getRootPane(), IdeFrameImpl.TOGGLING_FULL_SCREEN_IN_PROGRESS)) {
+        return;
+      }
       int extendedState = frame.getExtendedState();
       Rectangle bounds = frame.getBounds();
       JRootPane rootPane = frame.getRootPane();

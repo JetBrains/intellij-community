@@ -25,6 +25,8 @@ public final class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider
   public static final Key<Boolean> SHOULD_OPEN_IN_FULL_SCREEN = Key.create("should.open.in.full.screen");
 
   public static final String NORMAL_STATE_BOUNDS = "normalBounds";
+  //When this client property is used (Boolean.TRUE is set for the key) we have to ignore 'resizing' events and not spoil 'normal bounds' value for frame
+  public static final String TOGGLING_FULL_SCREEN_IN_PROGRESS = "togglingFullScreenInProgress";
 
   @Nullable
   private FrameHelper myFrameHelper;
