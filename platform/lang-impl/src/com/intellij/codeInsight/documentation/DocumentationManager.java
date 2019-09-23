@@ -1,5 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.documentation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -28,7 +27,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.impl.EditorMouseHoverPopupControl;
@@ -62,6 +60,7 @@ import com.intellij.psi.search.scope.packageSet.PackageSetBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.reference.SoftReference;
+import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.ui.*;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.popup.AbstractPopup;
@@ -71,8 +70,6 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.diff.Diff;
-import com.intellij.util.diff.FilesTooBigForDiffException;
 import com.intellij.util.text.DateFormatUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -90,7 +87,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.List;
 import java.util.*;
 
-public class DocumentationManager extends DockablePopupManager<DocumentationComponent> {
+public final class DocumentationManager extends DockablePopupManager<DocumentationComponent> {
   public static final String JAVADOC_LOCATION_AND_SIZE = "javadoc.popup";
   public static final String NEW_JAVADOC_LOCATION_AND_SIZE = "javadoc.popup.new";
   public static final DataKey<String> SELECTED_QUICK_DOC_TEXT = DataKey.create("QUICK_DOC.SELECTED_TEXT");
@@ -125,9 +122,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   private final Alarm myUpdateDocAlarm;
   private WeakReference<JBPopup> myDocInfoHintRef;
   private WeakReference<Component> myFocusedBeforePopup;
-  public static final Key<SmartPsiElementPointer> ORIGINAL_ELEMENT_KEY = Key.create("Original element");
-
-  private final TargetElementUtil myTargetElementUtil;
+  public static final Key<SmartPsiElementPointer<?>> ORIGINAL_ELEMENT_KEY = Key.create("Original element");
 
   private boolean myCloseOnSneeze;
   private String myPrecalculatedDocumentation;
@@ -226,11 +221,20 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     myToolWindow.setAutoHide(false);
   }
 
-  public static DocumentationManager getInstance(Project project) {
-    return ServiceManager.getService(project, DocumentationManager.class);
+  public static DocumentationManager getInstance(@NotNull Project project) {
+    return project.getService(DocumentationManager.class);
   }
 
+  /**
+   * @deprecated Use {@link #DocumentationManager(Project)}
+   */
+  @NonInjectable
+  @Deprecated
   public DocumentationManager(Project project, ActionManager manager, TargetElementUtil targetElementUtil) {
+   this(project);
+  }
+
+  public DocumentationManager(@NotNull Project project) {
     super(project);
     AnActionListener actionListener = new AnActionListener() {
       @Override
@@ -239,7 +243,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
             LookupManager.getActiveLookup(myEditor) == null && // let the lookup manage all the actions
             !Conditions.instanceOf(ACTION_CLASSES_TO_IGNORE).value(action) &&
             !ArrayUtil.contains(event.getPlace(), ACTION_PLACES_TO_IGNORE) &&
-            !ContainerUtil.exists(ACTION_IDS_TO_IGNORE, id -> manager.getAction(id) == action)) {
+            !ContainerUtil.exists(ACTION_IDS_TO_IGNORE, id -> ActionManager.getInstance().getAction(id) == action)) {
           closeDocHint();
         }
       }
@@ -254,7 +258,6 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     };
     ApplicationManager.getApplication().getMessageBus().connect(project).subscribe(AnActionListener.TOPIC, actionListener);
     myUpdateDocAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, myProject);
-    myTargetElementUtil = targetElementUtil;
   }
 
   private void closeDocHint() {
@@ -669,11 +672,12 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     }
 
     if (element == null) {
-      element = assertSameProject(util.findTargetElement(editor, myTargetElementUtil.getAllAccepted(), offset));
+      TargetElementUtil targetElementUtil = TargetElementUtil.getInstance();
+      element = assertSameProject(util.findTargetElement(editor, targetElementUtil.getAllAccepted(), offset));
 
       // Allow context doc over xml tag content
       if (element != null || contextElement != null) {
-        PsiElement adjusted = assertSameProject(util.adjustElement(editor, myTargetElementUtil.getAllAccepted(), element, contextElement));
+        PsiElement adjusted = assertSameProject(util.adjustElement(editor, targetElementUtil.getAllAccepted(), element, contextElement));
         if (adjusted != null) {
           element = adjusted;
         }
@@ -831,27 +835,12 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
           callback.setDone();
           return;
         }
-        PsiManager psiManager = PsiManager.getInstance(myProject);
         String currentText = component.getText();
-        PsiElement currentElement = component.getElement();
         if (finalText == null) {
           component.setText(CodeInsightBundle.message("no.documentation.found"), element, collector.provider);
         }
         else if (finalText.isEmpty()) {
           component.setText(currentText, element, collector.provider);
-        }
-        else if (currentElement != null && psiManager.areElementsEquivalent(currentElement, element)) {
-          Diff.Change change = null;
-          try {
-            change = Diff.buildChanges(currentText, finalText);
-          }
-          catch (FilesTooBigForDiffException ignore) { }
-          if (change == null || change.line0 > 10) {
-            component.replaceText(finalText, element);
-          }
-          else {
-            component.setData(element, finalText, collector.effectiveUrl, collector.ref, collector.provider);
-          }
         }
         else {
           component.setData(element, finalText, collector.effectiveUrl, collector.ref, collector.provider);

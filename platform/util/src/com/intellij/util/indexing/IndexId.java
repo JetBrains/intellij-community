@@ -7,7 +7,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
-@ApiStatus.Experimental
 public class IndexId<K, V> {
   private static final Map<String, IndexId<?, ?>> ourInstances = new THashMap<>();
 

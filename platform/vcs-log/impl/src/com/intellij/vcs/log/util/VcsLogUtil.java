@@ -1,10 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.util;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -213,32 +211,17 @@ public class VcsLogUtil {
   }
 
   @NotNull
-  public static CommittedChangeListForRevision createCommittedChangeList(@NotNull VcsFullCommitDetails detail) {
+  public static CommittedChangeListForRevision createCommittedChangeList(@NotNull VcsFullCommitDetails detail, boolean withChanges) {
     return new CommittedChangeListForRevision(detail.getSubject(), detail.getFullMessage(),
                                               VcsUserUtil.getShortPresentation(detail.getCommitter()),
                                               new Date(detail.getCommitTime()),
-                                              detail.getChanges(),
+                                              withChanges ? detail.getChanges() : ContainerUtil.emptyList(),
                                               convertToRevisionNumber(detail.getId()));
   }
 
-  /**
-   * Registers disposable on both provided parent and project. When project is disposed, disposable is still accessed through parent,
-   * while when parent is disposed, disposable gets removed from memory. So this method is suitable for parents that depend on project,
-   * but could be created and disposed several times through one project life.
-   *
-   * @param parent     parent to register disposable on.
-   * @param project    project to register disposable on.
-   * @param disposable disposable to register.
-   */
-  public static void registerWithParentAndProject(@NotNull Disposable parent, @NotNull Project project, @NotNull Disposable disposable) {
-    /*
-     Wrapping in another Disposable is required in order to register on several parents.
-     Otherwise the second `register` call will remove disposable from the first parent.
-     See com.intellij.openapi.util.objectTree.ObjectTree.register.
-    */
-    //noinspection SSBasedInspection
-    Disposer.register(parent, () -> Disposer.dispose(disposable));
-    Disposer.register(project, disposable);
+  @NotNull
+  public static CommittedChangeListForRevision createCommittedChangeList(@NotNull VcsFullCommitDetails detail) {
+    return createCommittedChangeList(detail, true);
   }
 
   @NotNull

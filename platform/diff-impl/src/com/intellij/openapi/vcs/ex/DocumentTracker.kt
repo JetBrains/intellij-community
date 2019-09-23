@@ -15,8 +15,6 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
-import com.intellij.openapi.editor.ex.DocumentBulkUpdateListener
-import com.intellij.openapi.editor.ex.DocumentEx
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.ex.DocumentTracker.Block
 import com.intellij.openapi.vcs.ex.DocumentTracker.Handler
@@ -57,8 +55,6 @@ class DocumentTracker : Disposable {
 
     val application = ApplicationManager.getApplication()
     application.addApplicationListener(MyApplicationListener(), this)
-    application.messageBus.connect(this)
-      .subscribe(DocumentBulkUpdateListener.TOPIC, MyDocumentBulkUpdateListener())
 
     document1.addDocumentListener(MyDocumentListener(Side.LEFT), this)
     document2.addDocumentListener(MyDocumentListener(Side.RIGHT), this)
@@ -139,7 +135,8 @@ class DocumentTracker : Disposable {
     if (!forceInFrozen && freezeHelper.isFrozen()) return
 
     LOCK.write {
-      if (!blocks.isEmpty() &&
+      if (tracker.isDirty &&
+          blocks.isNotEmpty() &&
           StringUtil.equals(document1.immutableCharSequence, document2.immutableCharSequence)) {
         tracker.setRanges(emptyList(), false)
         return
@@ -295,23 +292,6 @@ class DocumentTracker : Disposable {
   }
 
 
-  private inner class MyDocumentBulkUpdateListener : DocumentBulkUpdateListener {
-    init {
-      if ((document1 as DocumentEx).isInBulkUpdate) freeze(Side.LEFT)
-      if ((document2 as DocumentEx).isInBulkUpdate) freeze(Side.RIGHT)
-    }
-
-    override fun updateStarted(doc: Document) {
-      if (document1 == doc) freeze(Side.LEFT)
-      if (document2 == doc) freeze(Side.RIGHT)
-    }
-
-    override fun updateFinished(doc: Document) {
-      if (document1 == doc) unfreeze(Side.LEFT)
-      if (document2 == doc) unfreeze(Side.RIGHT)
-    }
-  }
-
   private inner class MyApplicationListener : ApplicationListener {
     override fun afterWriteActionFinished(action: Any) {
       refreshDirty(fastRefresh = true)
@@ -323,6 +303,10 @@ class DocumentTracker : Disposable {
 
     private var line1: Int = 0
     private var line2: Int = 0
+
+    init {
+      if (document.isInBulkUpdate) freeze(side)
+    }
 
     override fun beforeDocumentChange(e: DocumentEvent) {
       if (isDisposed || freezeHelper.isFrozen(side)) return
@@ -352,6 +336,14 @@ class DocumentTracker : Disposable {
       LOCK.write {
         tracker.rangeChanged(side, startLine, beforeLength, afterLength)
       }
+    }
+
+    override fun bulkUpdateStarting(document: Document) {
+      freeze(side)
+    }
+
+    override fun bulkUpdateFinished(document: Document) {
+      unfreeze(side)
     }
 
     private fun getAffectedRange(line1: Int, oldLine2: Int, newLine2: Int, e: DocumentEvent): Triple<Int, Int, Int> {
@@ -504,7 +496,8 @@ private class LineTracker(private val handler: Handler,
   var blocks: List<Block> = originalChanges.map { Block(it, false, false) }
     private set
 
-  private var isDirty: Boolean = false
+  var isDirty: Boolean = false
+    private set
 
 
   fun setRanges(ranges: List<Range>, dirty: Boolean) {

@@ -1,3 +1,3 @@
-[click ..](#upper<ref>case)
+[click ..](#upper<caret>case)
 
 # Uppercase

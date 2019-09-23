@@ -14,9 +14,10 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileEvent;
-import com.intellij.openapi.vfs.VirtualFileListener;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.newvfs.BulkFileListener;
+import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -55,8 +56,7 @@ import java.util.regex.Pattern;
 /**
  * @author peter
  */
-public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
-
+public final class GroovyDslFileIndex extends ScalarIndexExtension<String> {
   private static final Key<Pair<GroovyDslExecutor, Long>> CACHED_EXECUTOR = Key.create("CachedGdslExecutor");
   private static final Key<CachedValue<List<GroovyDslScript>>> SCRIPTS_CACHE = Key.create("GdslScriptCache");
   private static final Logger LOG = Logger.getInstance(GroovyDslFileIndex.class);
@@ -71,12 +71,19 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
   private final MyDataIndexer myDataIndexer = new MyDataIndexer();
 
   public GroovyDslFileIndex() {
-    VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileListener() {
+    ApplicationManager.getApplication().getMessageBus().connect().subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
-      public void contentsChanged(@NotNull VirtualFileEvent event) {
-        final VirtualFile file = event.getFile();
-        if (event.isFromRefresh() || !GdslUtil.GDSL_FILTER.value(file) || getStatus(file) != Status.ACTIVE) return;
-        disableFile(file, Status.MODIFIED, null);
+      public void after(@NotNull List<? extends VFileEvent> events) {
+        for (VFileEvent event : events) {
+          if (event instanceof VFileContentChangeEvent && !event.isFromRefresh()) {
+            VirtualFile file = event.getFile();
+            if (file == null || !GdslUtil.GDSL_FILTER.value(file) || getStatus(file) != Status.ACTIVE) {
+              continue;
+            }
+
+            disableFile(file, Status.MODIFIED, null);
+          }
+        }
       }
     });
   }

@@ -9,7 +9,6 @@ import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
-import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
@@ -23,7 +22,7 @@ import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.util.GradleBundle
 import org.jetbrains.plugins.gradle.util.GradleConstants
 
-class GradleUnlinkedProjectProcessor : StartupActivity, DumbAware {
+class GradleUnlinkedProjectProcessor : StartupActivity.DumbAware {
 
   override fun runActivity(project: Project) {
     if (isEnabledNotifications(project)) {
@@ -46,17 +45,25 @@ class GradleUnlinkedProjectProcessor : StartupActivity, DumbAware {
       if (FileUtil.findFirstThatExist(gradleGroovyDslFile, kotlinDslGradleFile) == null) return
 
 
+      val subscription = Disposer.newDisposable()
       val notification = GradleNotification.NOTIFICATION_GROUP.createNotification(
         GradleBundle.message("gradle.notifications.unlinked.project.found.title", ApplicationNamesInfo.getInstance().fullProductName),
         NotificationType.INFORMATION)
+
+      val notificationExpire = {
+        notification.expire()
+        LOG.debug("Unlinked project notification expired")
+        Disposer.dispose(subscription)
+      }
+
       notification.addAction(NotificationAction.createSimple(
         GradleBundle.message("gradle.notifications.unlinked.project.found.import")) {
-        notification.expire()
+        notificationExpire()
         linkAndRefreshGradleProject(externalProjectPath, project)
       })
       notification.addAction(NotificationAction.createSimple(
         GradleBundle.message("gradle.notifications.unlinked.project.found.skip")) {
-        notification.expire()
+        notificationExpire()
         disableNotifications(project)
       })
 
@@ -65,12 +72,9 @@ class GradleUnlinkedProjectProcessor : StartupActivity, DumbAware {
         override fun actionPerformed(e: AnActionEvent) {}
       }
 
-      val subscription = Disposer.newDisposable()
       val settingsListener = object : GradleSettingsListenerAdapter() {
         override fun onProjectsLinked(settings: MutableCollection<GradleProjectSettings>) {
-          notification.expire()
-          debug("Unlinked project notification expired")
-          Disposer.dispose(subscription)
+          notificationExpire()
         }
       }
       Disposer.register(project, subscription)
@@ -89,10 +93,6 @@ class GradleUnlinkedProjectProcessor : StartupActivity, DumbAware {
 
     fun enableNotifications(project: Project) {
       PropertiesComponent.getInstance(project).setValue(SHOW_UNLINKED_GRADLE_POPUP, true, false)
-    }
-
-    private fun debug(message: String) {
-      if (LOG.isDebugEnabled) LOG.debug(message)
     }
   }
 }

@@ -25,7 +25,7 @@ import java.lang.ref.SoftReference;
 import java.util.ResourceBundle;
 
 /**
- * Provides access to localized properties for the application component of IDEA.
+ * Provides access to localized properties of the IntelliJ Platform.
  */
 public class ApplicationBundle {
 

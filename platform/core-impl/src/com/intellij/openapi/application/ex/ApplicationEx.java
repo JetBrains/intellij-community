@@ -1,14 +1,12 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application.ex;
 
-import com.intellij.diagnostic.LoadingPhase;
 import com.intellij.openapi.application.Application;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.util.Consumer;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 
@@ -28,18 +26,6 @@ public interface ApplicationEx extends Application {
   default void load() {
     load(null);
   }
-
-  /**
-   * @deprecated Use {@code LoadingPhase.COMPONENT_LOADED.isComplete()}.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  default boolean isLoaded() {
-    return LoadingPhase.COMPONENT_LOADED.isComplete();
-  }
-
-  @NotNull
-  String getName();
 
   /**
    * @return true if this thread is inside read action.
@@ -100,6 +86,14 @@ public interface ApplicationEx extends Application {
   void restart(boolean exitConfirmed);
 
   /**
+   * Restarts the IDE with optional process elevation (on Windows).
+   *
+   * @param exitConfirmed if true, the IDE does not ask for exit confirmation.
+   * @param elevate       if true and the IDE is running on Windows, the IDE is restarted in elevated mode (with admin privileges)
+   */
+  void restart(boolean exitConfirmed, boolean elevate);
+
+  /**
    * Runs modal process. For internal use only, see {@link Task}
    */
   @ApiStatus.Internal
@@ -146,9 +140,23 @@ public interface ApplicationEx extends Application {
     runnable.run();
   }
 
-  /** DO NOT USE */
-  @ApiStatus.Internal
-  default boolean isInImpatientReader() {
-    return false;
+  @ApiStatus.Experimental
+  default boolean runWriteActionWithCancellableProgressInDispatchThread(@NotNull String title,
+                                                                        @Nullable Project project,
+                                                                        @Nullable JComponent parentComponent,
+                                                                        @NotNull Consumer<? super ProgressIndicator> action) {
+    throw new UnsupportedOperationException();
+  }
+
+  @ApiStatus.Experimental
+  default boolean runWriteActionWithNonCancellableProgressInDispatchThread(@NotNull String title,
+                                                                           @Nullable Project project,
+                                                                           @Nullable JComponent parentComponent,
+                                                                           @NotNull Consumer<? super ProgressIndicator> action) {
+    throw new UnsupportedOperationException();
+  }
+
+  @TestOnly
+  default void setDisposeInProgress(boolean disposeInProgress) {
   }
 }

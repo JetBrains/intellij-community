@@ -11,7 +11,8 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.TransactionGuard;
-import com.intellij.openapi.application.impl.ApplicationImpl;
+import com.intellij.openapi.application.ex.ApplicationEx;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.undo.BasicUndoableAction;
@@ -50,6 +51,7 @@ import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.*;
 import com.intellij.usages.impl.UnknownUsagesInUnloadedModules;
+import com.intellij.usages.impl.UsageViewImpl;
 import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.util.Processor;
 import com.intellij.util.ThrowableRunnable;
@@ -59,6 +61,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import javax.swing.*;
+import java.awt.event.ActionEvent;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
@@ -72,6 +76,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
   private RefactoringTransaction myTransaction;
   private boolean myIsPreviewUsages;
   protected Runnable myPrepareSuccessfulSwingThreadCallback;
+  private UsageView myUsageView = null;
 
   protected BaseRefactoringProcessor(@NotNull Project project) {
     this(project, null);
@@ -165,7 +170,9 @@ public abstract class BaseRefactoringProcessor implements Runnable {
   protected abstract String getCommandName();
 
   protected void doRun() {
-    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+    if (!PsiDocumentManager.getInstance(myProject).commitAllDocumentsUnderProgress()) {
+      return;
+    }
     final Ref<UsageInfo[]> refUsages = new Ref<>();
     final Ref<Language> refErrorLanguage = new Ref<>();
     final Ref<Boolean> refProcessCanceled = new Ref<>();
@@ -410,13 +417,17 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     final Usage[] usages = convertUsagesRef.get();
 
     final UsageViewPresentation presentation = createPresentation(viewDescriptor, usages);
-
-    final UsageView usageView = viewManager.showUsages(targets, usages, presentation, factory);
+    if (myUsageView == null) {
+      myUsageView = viewManager.showUsages(targets, usages, presentation, factory);
+      customizeUsagesView(viewDescriptor, myUsageView);
+    } else {
+      myUsageView.removeUsagesBulk(myUsageView.getUsages());
+      ((UsageViewImpl)myUsageView).appendUsagesInBulk(Arrays.asList(usages));
+    }
     Set<UnloadedModuleDescription> unloadedModules = computeUnloadedModulesFromUseScope(viewDescriptor);
     if (!unloadedModules.isEmpty()) {
-      usageView.appendUsage(new UnknownUsagesInUnloadedModules(unloadedModules));
+      myUsageView.appendUsage(new UnknownUsagesInUnloadedModules(unloadedModules));
     }
-    customizeUsagesView(viewDescriptor, usageView);
   }
 
   protected void customizeUsagesView(@NotNull final UsageViewDescriptor viewDescriptor, @NotNull final UsageView usageView) {
@@ -433,6 +444,12 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     String canNotMakeString = RefactoringBundle.message("usageView.need.reRun");
 
     addDoRefactoringAction(usageView, refactoringRunnable, canNotMakeString);
+    usageView.setRerunAction(new AbstractAction() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        doRun();
+      }
+    });
   }
 
   private void addDoRefactoringAction(@NotNull UsageView usageView, @NotNull Runnable refactoringRunnable, @NotNull String canNotMakeString) {
@@ -492,7 +509,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
           }
         }
       };
-      ApplicationImpl app = (ApplicationImpl)ApplicationManager.getApplication();
+      ApplicationEx app = ApplicationManagerEx.getApplicationEx();
       if (Registry.is("run.refactorings.under.progress")) {
         app.runWriteActionWithNonCancellableProgressInDispatchThread(commandName, myProject, null, indicator -> performRefactoringRunnable.run());
       }

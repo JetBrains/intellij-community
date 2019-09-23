@@ -30,6 +30,10 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Arrays;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.BiConsumer;
 
 import static com.intellij.util.ObjectUtils.notNull;
@@ -66,6 +70,13 @@ public class VcsLogContentUtil {
   public static <U extends AbstractVcsLogUi> U findAndSelect(@NotNull Project project,
                                                              @NotNull Class<U> clazz,
                                                              @NotNull Condition<? super U> condition) {
+    return find(project, clazz, true, condition);
+  }
+
+  @Nullable
+  public static <U extends AbstractVcsLogUi> U find(@NotNull Project project,
+                                                    @NotNull Class<U> clazz, boolean select,
+                                                    @NotNull Condition<? super U> condition) {
     ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS);
     if (toolWindow == null) return null;
 
@@ -80,8 +91,10 @@ public class VcsLogContentUtil {
     });
     if (component == null) return null;
 
-    if (!toolWindow.isVisible()) toolWindow.activate(null);
-    if (!ContentUtilEx.selectContent(manager, component, true)) return null;
+    if (select) {
+      if (!toolWindow.isVisible()) toolWindow.activate(null);
+      if (!ContentUtilEx.selectContent(manager, component, true)) return null;
+    }
     //noinspection unchecked
     return (U)getLogUi(component);
   }
@@ -151,7 +164,7 @@ public class VcsLogContentUtil {
   public static void openMainLogAndExecute(@NotNull Project project, @NotNull Consumer<? super VcsLogUiImpl> consumer) {
     ToolWindow window = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID);
     if (!selectMainLog(window)) {
-      VcsBalloonProblemNotifier.showOverChangesView(project, "Vcs Log is not available", MessageType.WARNING);
+      showLogIsNotAvailableMessage(project);
       return;
     }
 
@@ -162,6 +175,11 @@ public class VcsLogContentUtil {
     else {
       runConsumer.run();
     }
+  }
+
+  @CalledInAwt
+  public static void showLogIsNotAvailableMessage(@NotNull Project project) {
+    VcsBalloonProblemNotifier.showOverChangesView(project, "Vcs Log is not available", MessageType.WARNING);
   }
 
   private static boolean selectMainLog(@NotNull ToolWindow window) {
@@ -198,12 +216,23 @@ public class VcsLogContentUtil {
       action.accept(log, manager);
     }
     else { // schedule showing the log, wait its initialization, and then open the tab
+      Future<VcsLogManager> futureLogManager = log.createLogInBackground(true);
       new Task.Backgroundable(project, "Loading Commits") {
         @Nullable private VcsLogManager myLogManager;
 
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
-          myLogManager = log.createLog(true);
+          try {
+            myLogManager = futureLogManager.get(5, TimeUnit.SECONDS);
+          }
+          catch (InterruptedException ignored) {
+          }
+          catch (ExecutionException e) {
+            LOG.error(e);
+          }
+          catch (TimeoutException e) {
+            LOG.warn(e);
+          }
         }
 
         @Override
@@ -217,12 +246,19 @@ public class VcsLogContentUtil {
   }
 
   @CalledInBackground
-  @NotNull
+  @Nullable
   public static VcsLogManager getOrCreateLog(@NotNull Project project) {
     VcsProjectLog log = VcsProjectLog.getInstance(project);
     VcsLogManager manager = log.getLogManager();
     if (manager == null) {
-      manager = notNull(log.createLog(true));
+      try {
+        manager = log.createLogInBackground(true).get();
+      }
+      catch (InterruptedException ignored) {
+      }
+      catch (ExecutionException e) {
+        LOG.error(e);
+      }
     }
     return manager;
   }

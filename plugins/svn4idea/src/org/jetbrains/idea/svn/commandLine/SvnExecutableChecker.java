@@ -1,24 +1,11 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.execution.ExecutableValidator;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
+import com.intellij.notification.NotificationsManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Version;
 import com.intellij.openapi.util.registry.Registry;
@@ -34,8 +21,7 @@ import org.jetbrains.idea.svn.api.CmdVersionClient;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class SvnExecutableChecker extends ExecutableValidator {
-
+public final class SvnExecutableChecker extends ExecutableValidator {
   private static final Logger LOG = Logger.getInstance(SvnExecutableChecker.class);
 
   public static final String SVN_EXECUTABLE_LOCALE_REGISTRY_KEY = "svn.executable.locale";
@@ -77,7 +63,8 @@ public class SvnExecutableChecker extends ExecutableValidator {
   }
 
   public void expireAll() {
-    for (Notification notification : myNotificationManager.getNotificationsOfType(ExecutableNotValidNotification.class, myProject)) {
+    for (Notification notification : NotificationsManager.getNotificationsManager()
+      .getNotificationsOfType(ExecutableNotValidNotification.class, myProject)) {
       notification.expire();
     }
   }

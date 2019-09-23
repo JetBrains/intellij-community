@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author max
@@ -38,7 +24,6 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,15 +46,13 @@ public class JavaResolveCache {
 
   private static final Object NULL = Key.create("NULL");
 
-  public JavaResolveCache(@Nullable("can be null in com.intellij.core.JavaCoreApplicationEnvironment.JavaCoreApplicationEnvironment") MessageBus messageBus) {
-    if (messageBus != null) {
-      messageBus.connect().subscribe(PsiManagerImpl.ANY_PSI_CHANGE_TOPIC, new AnyPsiChangeListener.Adapter() {
-        @Override
-        public void beforePsiChanged(boolean isPhysical) {
-          clearCaches(isPhysical);
-        }
-      });
-    }
+  public JavaResolveCache(@NotNull Project project) {
+    project.getMessageBus().connect().subscribe(PsiManagerImpl.ANY_PSI_CHANGE_TOPIC, new AnyPsiChangeListener() {
+      @Override
+      public void beforePsiChanged(boolean isPhysical) {
+        clearCaches(isPhysical);
+      }
+    });
   }
 
   private void clearCaches(boolean isPhysical) {
@@ -82,22 +65,15 @@ public class JavaResolveCache {
 
   @Nullable
   public <T extends PsiExpression> PsiType getType(@NotNull T expr, @NotNull Function<? super T, ? extends PsiType> f) {
-    final boolean isOverloadCheck = MethodCandidateInfo.isOverloadCheck();
-    final boolean polyExpression = PsiPolyExpressionUtil.isPolyExpression(expr);
-
     ConcurrentMap<PsiExpression, PsiType> map = myCalculatedTypes.get();
     if (map == null) map = ConcurrencyUtil.cacheOrGet(myCalculatedTypes, ContainerUtil.createConcurrentWeakKeySoftValueMap());
 
-    PsiType type = isOverloadCheck && polyExpression ? null : map.get(expr);
+    final boolean prohibitCaching = MethodCandidateInfo.isOverloadCheck() && PsiPolyExpressionUtil.isPolyExpression(expr);
+    PsiType type = prohibitCaching ? null : map.get(expr);
     if (type == null) {
       RecursionGuard.StackStamp dStackStamp = RecursionManager.markStack();
       type = f.fun(expr);
-      if (!dStackStamp.mayCacheNow()) {
-        return type;
-      }
-
-      //cache standalone expression types as they do not depend on the context
-      if (isOverloadCheck && polyExpression) {
+      if (prohibitCaching || !dStackStamp.mayCacheNow()) {
         return type;
       }
 

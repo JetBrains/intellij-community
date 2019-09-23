@@ -1,21 +1,5 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui.popup;
-
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -37,7 +21,7 @@ import java.awt.event.KeyEvent;
  * Base interface for popup windows.
  *
  * @author mike
- * @see com.intellij.openapi.ui.popup.JBPopupFactory
+ * @see JBPopupFactory
  */
 public interface JBPopup extends Disposable, LightweightWindow {
 
@@ -72,7 +56,7 @@ public interface JBPopup extends Disposable, LightweightWindow {
    * Shows the popup in the position most appropriate for the specified data context.
    *
    * @param dataContext the data context to which the popup is related.
-   * @see com.intellij.openapi.ui.popup.JBPopupFactory#guessBestPopupLocation(com.intellij.openapi.actionSystem.DataContext)
+   * @see JBPopupFactory#guessBestPopupLocation(DataContext)
    * @see #getBestPositionFor(DataContext)
    */
   void showInBestPositionFor(@NotNull DataContext dataContext);
@@ -81,7 +65,7 @@ public interface JBPopup extends Disposable, LightweightWindow {
    * Shows the popup near the cursor location in the specified editor.
    *
    * @param editor the editor relative to which the popup should be displayed.
-   * @see com.intellij.openapi.ui.popup.JBPopupFactory#guessBestPopupLocation(com.intellij.openapi.editor.Editor)
+   * @see JBPopupFactory#guessBestPopupLocation(Editor)
    */
   void showInBestPositionFor(@NotNull Editor editor);
 
@@ -104,24 +88,24 @@ public interface JBPopup extends Disposable, LightweightWindow {
   void show(@NotNull Component owner);
 
   /**
-   * Shows the popup in the center of the active window in the IDEA frame for the specified project.
+   * Shows the popup in the center of the active window in the IDE frame for the specified project.
    *
    * @param project the project in which the popup should be displayed.
    */
   void showCenteredInCurrentWindow(@NotNull Project project);
 
   /**
-   * Hides popup as if Enter was pressed or or any other "accept" action
+   * Hides popup as if <kbd>Enter</kbd> was pressed or or any other "accept" action.
    */
   void closeOk(@Nullable InputEvent e);
 
   /**
-   * Cancels the popup as if Esc was pressed or any other "cancel" action
+   * Cancels the popup as if <kbd>Esc</kbd> was pressed or any other "cancel" action.
    */
   void cancel();
 
   /**
-   * @param b true if popup should request focus
+   * @param b {@code true} if popup should request focus.
    */
   void setRequestFocus(final boolean b);
 
@@ -134,15 +118,15 @@ public interface JBPopup extends Disposable, LightweightWindow {
   /**
    * Checks if it's currently allowed to close the popup.
    *
-   * @return true if the popup can be closed, false if a callback disallowed closing the popup.
-   * @see com.intellij.openapi.ui.popup.ComponentPopupBuilder#setCancelCallback(com.intellij.openapi.util.Computable)
+   * @return {@code true} if the popup can be closed, {@code false} if a callback disallowed closing the popup.
+   * @see ComponentPopupBuilder#setCancelCallback(com.intellij.openapi.util.Computable)
    */
   boolean canClose();
 
   /**
    * Checks if the popup is currently visible.
    *
-   * @return true if the popup is visible, false otherwise.
+   * @return {@code true} if the popup is visible, {@code false} otherwise.
    */
   boolean isVisible();
 
@@ -156,6 +140,7 @@ public interface JBPopup extends Disposable, LightweightWindow {
 
   /**
    * Moves popup to the given point. Does nothing if popup is invisible.
+   *
    * @param screenPoint Point to move to.
    */
   void setLocation(@NotNull Point screenPoint);
@@ -171,6 +156,7 @@ public interface JBPopup extends Disposable, LightweightWindow {
   boolean isModalContext();
 
   boolean isNativePopup();
+
   void setUiVisible(boolean visible);
 
   @Nullable
@@ -181,12 +167,13 @@ public interface JBPopup extends Disposable, LightweightWindow {
   boolean isCancelKeyEnabled();
 
   void addListener(@NotNull JBPopupListener listener);
+
   void removeListener(@NotNull JBPopupListener listener);
 
   boolean isDisposed();
 
   Component getOwner();
-  
+
   void setMinimumSize(@Nullable Dimension size);
 
   void setFinalRunnable(@Nullable Runnable runnable);
@@ -206,15 +193,15 @@ public interface JBPopup extends Disposable, LightweightWindow {
    * This callback is called when new key event from the event queue is being processed.
    * <p/>
    * The popup has a right to decide if its further processing should be continued (method return value).
-   * 
-   * @param e  new key event being processed
-   * @return   {@code true} if the event is completely dispatched, i.e. no further processing is necessary;
-   *           {@code false} otherwise
+   *
+   * @param e new key event being processed
+   * @return {@code true} if the event is completely dispatched, i.e. no further processing is necessary;
+   * {@code false} otherwise
    */
   boolean dispatchKeyEvent(@NotNull KeyEvent e);
 
   /**
-   * Tells whether it's OK to invoke one of the 'show' methods. Some implementation might prohibit it e.g. if the popup is shown already.
+   * Whether it's OK to invoke one of the 'show' methods. Some implementation might prohibit it e.g. if the popup is shown already.
    */
   default boolean canShow() { return !isDisposed(); }
 }

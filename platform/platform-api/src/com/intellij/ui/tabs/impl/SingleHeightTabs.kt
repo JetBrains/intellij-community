@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.tabs.TabInfo
+import com.intellij.util.ui.JBUI
 import java.awt.Dimension
 
 open class SingleHeightTabs(project: Project?,
@@ -13,48 +14,24 @@ open class SingleHeightTabs(project: Project?,
                             focusManager: IdeFocusManager,
                             parent: Disposable) : JBEditorTabs(project, actionManager, focusManager, parent) {
 
+
+  companion object {
+    @JvmStatic
+    val UNSCALED_PREF_HEIGHT = 28
+  }
+
   override fun createTabLabel(info: TabInfo): TabLabel {
     return SingleHeightLabel(this, info)
   }
 
   open inner class SingleHeightLabel(tabs: JBTabsImpl, info: TabInfo) : TabLabel(tabs, info) {
-    var height: Int? = null
-
-    init {
-      TabsHeightController.registerAdjective(this, {
-        height = it
-      }, this)
-    }
-
-
-    /**
-     * TODO fix TabLabel and use setMinimumSize insted of this ugly huck
-     */
     override fun getPreferredSize(): Dimension {
       val size = super.getPreferredSize()
-      height ?: return size
-
-      val insets = insets
-      val layoutInsets = layoutInsets
-
-      insets.top += layoutInsets.top
-      insets.bottom += layoutInsets.bottom
-
-      val newHeight = height!! - insets.top - insets.bottom
-      return if(size.height >= newHeight) size else Dimension(size.width, newHeight)
+      return Dimension(size.width, getPreferredHeight())
     }
 
-/*    private fun updateMinSize(height: Int) {
-      val size = super.getMinimumSize()
-
-      val insets = insets
-      val layoutInsets = layoutInsets
-
-      insets.top += layoutInsets.top
-      insets.bottom += layoutInsets.bottom
-
-      val newHeight = height - insets.top - insets.bottom
-      if (size.height < newHeight) minimumSize = Dimension(size.width, newHeight)
-    }*/
+    protected open fun getPreferredHeight(): Int {
+      return JBUI.scale(UNSCALED_PREF_HEIGHT)
+    }
   }
 }

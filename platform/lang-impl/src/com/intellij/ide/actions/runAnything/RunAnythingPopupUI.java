@@ -19,6 +19,7 @@ import com.intellij.ide.actions.runAnything.ui.RunAnythingScrollingUtil;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.ElementsChooser;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
@@ -69,6 +70,7 @@ import static com.intellij.ide.actions.runAnything.RunAnythingAction.ALT_IS_PRES
 import static com.intellij.ide.actions.runAnything.RunAnythingAction.SHIFT_IS_PRESSED;
 import static com.intellij.ide.actions.runAnything.RunAnythingIconHandler.MATCHED_PROVIDER_PROPERTY;
 import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
+import static java.awt.FlowLayout.RIGHT;
 
 public class RunAnythingPopupUI extends BigPopupUI {
   public static final int SEARCH_FIELD_COLUMNS = 25;
@@ -100,6 +102,10 @@ public class RunAnythingPopupUI extends BigPopupUI {
   private Project myProject;
   private Module myModule;
 
+  private RunAnythingContext mySelectedExecutingContext;
+  private final List<RunAnythingContext> myAvailableExecutingContexts = new ArrayList<>();
+  private RunAnythingChooseContextAction myChooseContextAction;
+
   private void onMouseClicked(@NotNull MouseEvent event) {
     int clickCount = event.getClickCount();
     if (clickCount > 1 && clickCount % 2 == 0) {
@@ -116,6 +122,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
   }
 
   private void initSearchField() {
+    updateContextCombobox();
     mySearchField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(@NotNull DocumentEvent e) {
@@ -133,6 +140,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
           }
 
           if (!isHelpMode(pattern)) {
+            updateContextCombobox();
             adjustMainListEmptyText(mySearchField);
             return;
           }
@@ -227,8 +235,13 @@ public class RunAnythingPopupUI extends BigPopupUI {
                                                                         SHIFT_IS_PRESSED.get(), ALT_IS_PRESSED.get());
     }
     DataContext dataContext = createDataContext(myDataContext, ALT_IS_PRESSED.get());
+    RunAnythingContext executingContext = myChooseContextAction.getSelectedContext();
+    if (executingContext != null) {
+      dataContext = SimpleDataContext.getSimpleContext(RunAnythingProvider.EXECUTING_CONTEXT.getName(), executingContext, dataContext);
+    }
     RunAnythingUtil.executeMatched(dataContext, pattern);
 
+    mySearchField.setText("");
     searchFinishedHandler.run();
     triggerUsed();
   }
@@ -373,6 +386,19 @@ public class RunAnythingPopupUI extends BigPopupUI {
         if (myLastInputText == null) myLastInputText = lastInput;
       }
     });
+  }
+
+  private void updateContextCombobox() {
+    DataContext dataContext = createDataContext(myDataContext, ALT_IS_PRESSED.get());
+    Object value = myResultsList.getSelectedValue();
+    String text = value instanceof RunAnythingItem ? ((RunAnythingItem)value).getCommand() : getSearchPattern();
+    RunAnythingProvider provider = RunAnythingProvider.findMatchedProvider(dataContext, text);
+    if (provider != null) {
+      myChooseContextAction.setAvailableContexts(provider.getExecutionContexts(dataContext));
+    }
+
+    AnActionEvent event = AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, dataContext);
+    ActionUtil.performDumbAwareUpdate(false, myChooseContextAction, event, false);
   }
 
   @Override
@@ -543,7 +569,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
 
       if (cmp == null) {
         if (value instanceof RunAnythingItem) {
-          cmp = ((RunAnythingItem)value).createComponent(myLastInputText, findIcon(index), isSelected, hasFocus);
+          cmp = ((RunAnythingItem)value).createComponent(myLastInputText, isSelected, hasFocus);
         }
         else {
           cmp = super.getListCellRendererComponent(list, value, index, isSelected, isSelected);
@@ -570,7 +596,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
       if (model != null) {
         String title = model.getTitle(index);
         if (title != null) {
-          myMainPanel.add(RunAnythingUtil.createTitle(" " + title), BorderLayout.NORTH);
+          myMainPanel.add(RunAnythingUtil.createTitle(" " + title, UIUtil.getListBackground(false, false)), BorderLayout.NORTH);
         }
       }
       JPanel wrapped = new JPanel(new BorderLayout());
@@ -584,19 +610,6 @@ public class RunAnythingPopupUI extends BigPopupUI {
       }
 
       return myMainPanel;
-    }
-
-    @Nullable
-    private Icon findIcon(int index) {
-      RunAnythingSearchListModel model = getSearchingModel(myResultsList);
-      Icon groupIcon = null;
-      if (model != null) {
-        RunAnythingGroup group = model.findItemGroup(index);
-        if (group != null) {
-          groupIcon = group.getIcon();
-        }
-      }
-      return groupIcon;
     }
 
     @Override
@@ -917,20 +930,42 @@ public class RunAnythingPopupUI extends BigPopupUI {
   @NotNull
   @Override
   protected JPanel createSettingsPanel() {
-    JPanel res = new JPanel();
-    BoxLayout bl = new BoxLayout(res, BoxLayout.X_AXIS);
-    res.setLayout(bl);
+    JPanel res = new JPanel(new FlowLayout(RIGHT, 0, 0));
     res.setOpaque(false);
 
     DefaultActionGroup actionGroup = new DefaultActionGroup();
+    myChooseContextAction = new RunAnythingChooseContextAction(res) {
+      @Override
+      public void setAvailableContexts(@NotNull List<? extends RunAnythingContext> executionContexts) {
+        myAvailableExecutingContexts.clear();
+        myAvailableExecutingContexts.addAll(executionContexts);
+      }
+
+      @NotNull
+      @Override
+      public List<RunAnythingContext> getAvailableContexts() {
+        return myAvailableExecutingContexts;
+      }
+
+      @Override
+      public void setSelectedContext(@Nullable RunAnythingContext context) {
+        mySelectedExecutingContext = context;
+      }
+
+      @Nullable
+      @Override
+      public RunAnythingContext getSelectedContext() {
+        return mySelectedExecutingContext;
+      }
+    };
+    actionGroup.addAction(myChooseContextAction);
     actionGroup.addAction(new RunAnythingShowFilterAction());
 
-    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("search.everywhere.toolbar", actionGroup, true);
+    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("run.anything.toolbar", actionGroup, true);
     toolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
     toolbar.updateActionsImmediately();
     JComponent toolbarComponent = toolbar.getComponent();
     toolbarComponent.setOpaque(false);
-    toolbarComponent.setBorder(JBUI.Borders.empty(2, 18, 2, 9));
     res.add(toolbarComponent);
     return res;
   }

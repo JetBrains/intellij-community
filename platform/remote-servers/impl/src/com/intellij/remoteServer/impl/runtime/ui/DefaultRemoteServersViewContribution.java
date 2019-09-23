@@ -3,6 +3,7 @@ package com.intellij.remoteServer.impl.runtime.ui;
 
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.impl.runtime.ui.tree.TreeBuilderBase;
 import com.intellij.ui.treeStructure.Tree;
@@ -10,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class DefaultRemoteServersViewContribution extends RemoteServersViewContribution {
@@ -65,6 +67,6 @@ public class DefaultRemoteServersViewContribution extends RemoteServersViewContr
 
   @Override
   public List<RemoteServer<?>> getRemoteServers() {
-    return getRemoteServersByToolWindowId(null);
+    return Registry.is("ide.service.view") ? Collections.emptyList() : getRemoteServersByToolWindowId(null);
   }
 }

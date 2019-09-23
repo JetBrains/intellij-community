@@ -10,6 +10,7 @@ import org.jetbrains.annotations.NotNull;
  *
  * @author max
  */
+@FunctionalInterface
 public interface QueryExecutor<Result, Param> {
 
   /**

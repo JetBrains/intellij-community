@@ -73,8 +73,8 @@ public class ToggleActionCommand extends AbstractCommand {
 
       ActionUtil.performDumbAwareUpdate(LaterInvocator.isInModalContext(), action, event, false);
 
-      Boolean state = (Boolean)event.getPresentation().getClientProperty(ToggleAction.SELECTED_PROPERTY);
-      if (state.booleanValue() != on) {
+      boolean state = Toggleable.isSelected(event.getPresentation());
+      if (state != on) {
         ActionManager.getInstance().tryToExecute(action, inputEvent, null, ActionPlaces.UNKNOWN, true).doWhenProcessed(result.createSetDoneRunnable());
       }
       else {

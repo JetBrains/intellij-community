@@ -1,0 +1,20 @@
+fragment pullRequestReviewComment on PullRequestReviewComment {
+    ...comment
+    url
+    path
+    commit {
+        ...commitHash
+    }
+    position
+    originalCommit {
+        ...commitHash
+    }
+    originalPosition
+    replyTo {
+        ...nodeInfo
+    }
+    diffHunk
+    pullRequestReview {
+        ...nodeInfo
+    }
+}

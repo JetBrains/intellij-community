@@ -25,7 +25,7 @@ public class YamlByJsonSchemaQuickFixTest extends JsonSchemaQuickFixTestBase {
       YAMLLanguage.INSTANCE);
   }
 
-  public void testAddMissingProperty() throws Exception {
+  public void testAddMissingProperty() {
     doTest("{\n" +
            "  \"properties\": {\n" +
            "    \"a\": {\n" +
@@ -38,18 +38,18 @@ public class YamlByJsonSchemaQuickFixTest extends JsonSchemaQuickFixTestBase {
                                                                               "c: 5");
   }
 
-  public void testRemoveProhibitedProperty() throws Exception {
+  public void testRemoveProhibitedProperty() {
     doTest("{\n" +
            "  \"properties\": {\n" +
            "    \"a\": {},\n" +
            "    \"c\": {}\n" +
            "  },\n" +
            "  \"additionalProperties\": false\n" +
-           "}", "a: 5\n<warning>b: 6</warning>\nc: 7", "Remove prohibited property 'b'", "a: 5\n" +
+           "}", "a: 5\n<warning>b: 6<caret></warning>\nc: 7", "Remove prohibited property 'b'", "a: 5\n" +
                                                                                          "c: 7");
   }
 
-  public void testEmptyFile() throws Exception {
+  public void testEmptyFile() {
     doTest("{\n" +
            "  \"type\": \"object\",\n" +
            "\n" +
@@ -63,7 +63,7 @@ public class YamlByJsonSchemaQuickFixTest extends JsonSchemaQuickFixTestBase {
                                                                    "  - ");
   }
 
-  public void testEmptyObject() throws Exception {
+  public void testEmptyObject() {
     doTest("{\n" +
            "  \"type\": \"object\",\n" +
            "\n" +
@@ -80,12 +80,12 @@ public class YamlByJsonSchemaQuickFixTest extends JsonSchemaQuickFixTestBase {
            "  },\n" +
            "  \"required\": [\"versionAsStringArray\"]\n" +
            "}", "versionAsStringArray:\n" +
-                "<warning>  </warning>", "Add missing property 'xxx'", "versionAsStringArray:\n" +
+                "<warning>  <caret></warning>", "Add missing property 'xxx'", "versionAsStringArray:\n" +
                                                                        "  xxx:\n" +
                                                                        "    - ");
   }
 
-  public void testEmptyObjectMultipleProps() throws Exception {
+  public void testEmptyObjectMultipleProps() {
     doTest("{\n" +
            "  \"type\": \"object\",\n" +
            "\n" +
@@ -108,7 +108,7 @@ public class YamlByJsonSchemaQuickFixTest extends JsonSchemaQuickFixTestBase {
            "  },\n" +
            "  \"required\": [\"versionAsStringArray\"]\n" +
            "}", "versionAsStringArray:\n" +
-                "<warning>  </warning>","Add missing properties 'xxx', 'yyy', 'zzz'", "versionAsStringArray:\n" +
+                "<warning>  <caret></warning>","Add missing properties 'xxx', 'yyy', 'zzz'", "versionAsStringArray:\n" +
                                                                                       "  xxx: 0\n" +
                                                                                       "  yyy:\n" +
                                                                                       "  zzz: 0");

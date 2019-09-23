@@ -12,6 +12,7 @@ import com.intellij.ui.ColoredTextContainer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ThreeState;
 import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
@@ -21,8 +22,8 @@ import com.intellij.xdebugger.impl.frame.XDebugView;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
 import com.intellij.xdebugger.impl.frame.XValueWithInlinePresentation;
 import com.intellij.xdebugger.impl.frame.XVariablesView;
-import com.intellij.xdebugger.impl.reveal.RevealMemberValue;
-import com.intellij.xdebugger.impl.reveal.actions.XDebuggerRevealAction;
+import com.intellij.xdebugger.impl.pinned.items.PinToTopMemberValue;
+import com.intellij.xdebugger.impl.pinned.items.actions.XDebuggerPinToTopAction;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
@@ -304,18 +305,18 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
   @Nullable
   @Override
   public Object getIconTag() {
-    if (!(myValueContainer instanceof RevealMemberValue)) {
+    if (!(myValueContainer instanceof PinToTopMemberValue)) {
       return null;
     }
 
-    if (!((RevealMemberValue) myValueContainer).canBeRevealed()) {
+    if (!((PinToTopMemberValue) myValueContainer).canBePinned()) {
       return null;
     }
 
-    return new XDebuggerTreeNodeHyperlink(XDebuggerRevealAction.REVEAL_NAME) {
+    return new XDebuggerTreeNodeHyperlink(XDebuggerBundle.message("xdebugger.pin.to.top.action")) {
       @Override
       public void onClick(MouseEvent event) {
-        XDebuggerRevealAction.Companion.revealField(event, XValueNodeImpl.this);
+        XDebuggerPinToTopAction.Companion.pinToTopField(event, XValueNodeImpl.this);
       }
     };
   }

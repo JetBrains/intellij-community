@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
@@ -66,6 +67,7 @@ import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -91,7 +93,7 @@ public class TerminalView {
   }
 
   public static TerminalView getInstance(@NotNull Project project) {
-    return project.getComponent(TerminalView.class);
+    return ServiceManager.getService(project, TerminalView.class);
   }
 
   void initToolWindow(@NotNull ToolWindow toolWindow) {
@@ -151,14 +153,23 @@ public class TerminalView {
     createNewSession(terminalRunner, tabState, true);
   }
 
-  private void createNewSession(@NotNull AbstractTerminalRunner terminalRunner, @Nullable TerminalTabState tabState, boolean requestFocus) {
+  @NotNull
+  public ShellTerminalWidget createLocalShellWidget() {
+    JBTerminalWidget widget = createNewSession(myTerminalRunner, null, true);
+    return (ShellTerminalWidget)Objects.requireNonNull(widget);
+  }
+
+  @Nullable
+  private JBTerminalWidget createNewSession(@NotNull AbstractTerminalRunner terminalRunner, @Nullable TerminalTabState tabState, boolean requestFocus) {
     ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow(TerminalToolWindowFactory.TOOL_WINDOW_ID);
     if (window != null && window.isAvailable()) {
       // ensure TerminalToolWindowFactory.createToolWindowContent gets called
       ((ToolWindowImpl)window).ensureContentInitialized();
-      createNewTab(null, terminalRunner, myToolWindow, tabState, requestFocus);
+      Content content = createNewTab(null, terminalRunner, myToolWindow, tabState, requestFocus);
       window.activate(null);
+      return Objects.requireNonNull(getWidgetByContent(content));
     }
+    return null;
   }
 
   @NotNull

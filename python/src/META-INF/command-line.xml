@@ -9,8 +9,8 @@
 
     <lang.parserDefinition language="CommandLine"
                            implementationClass="com.jetbrains.commandInterface.commandLine.CommandLineParserDefinition"/>
-    <lang.syntaxHighlighterFactory language="CommandLine"
-                                   implementationClass="com.jetbrains.commandInterface.commandLine.CommandLineSyntaxHighlighterFactory"/>
+    <lang.syntaxHighlighter language="CommandLine"
+                                   implementationClass="com.jetbrains.commandInterface.commandLine.CommandLineSyntaxHighlighter"/>
     <psi.referenceContributor language="CommandLine"
                               implementation="com.jetbrains.commandInterface.commandLine.CommandLineReferenceContributor"/>
     <lang.elementManipulator forClass="com.jetbrains.commandInterface.commandLine.CommandLineElement"

@@ -3,8 +3,10 @@
     <name>TestNG</name>
     <description><![CDATA[
     Supports <a href="https://testng.org/doc/">TestNG</a>, a Java unit testing framework
+    <p></p>
+    <p>Originally developed by Theory In Practice.</p>
     ]]></description>
-    <vendor>Theory In Practice, JetBrains</vendor>
+    <vendor>JetBrains</vendor>
     <depends>com.intellij.java-i18n</depends>
     <extensions defaultExtensionNs="com.intellij">
         <deadCode implementation="com.theoryinpractice.testng.inspection.TestNGEntryPoint"/>
@@ -78,10 +80,10 @@
       <externalSystem.runConfigurationImporter implementation="com.theoryinpractice.testng.configuration.TestNGRunConfigurationImporter"/>
     </extensions>
   <extensions defaultExtensionNs="com.theoryinpractice.testng">
-    <listener implementation="org.testng.TestNGTestDiscoveryListener"/>
+    <listener implementation="com.intellij.rt.testng.TestNGTestDiscoveryListener"/>
   </extensions>
     <extensionPoints >
-      <extensionPoint qualifiedName="com.theoryinpractice.testng.listener" interface="org.testng.IDEATestNGListener"/>
+      <extensionPoint qualifiedName="com.theoryinpractice.testng.listener" interface="com.intellij.rt.testng.IDEATestNGListener"/>
     </extensionPoints>
 
   <actions>

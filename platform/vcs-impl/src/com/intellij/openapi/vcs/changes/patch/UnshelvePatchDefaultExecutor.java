@@ -6,15 +6,20 @@ import com.intellij.openapi.diff.impl.patch.ApplyPatchStatus;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.PatchSyntaxException;
 import com.intellij.openapi.diff.impl.patch.formove.PatchApplier;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedBinaryFilePatch;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,12 +50,24 @@ public class UnshelvePatchDefaultExecutor extends ApplyPatchDefaultExecutor {
     final CommitContext commitContext = new CommitContext();
     applyAdditionalInfoBefore(myProject, additionalInfo, commitContext);
     final Collection<PatchApplier> appliers = getPatchAppliers(patchGroupsToApply, localList, commitContext);
-    final ApplyPatchStatus patchStatus = PatchApplier.executePatchGroup(appliers, localList);
-    if (patchStatus != ApplyPatchStatus.ABORT && patchStatus != ApplyPatchStatus.FAILURE) {
-      removeAppliedAndSaveRemainedIfNeeded(remaining, appliers, commitContext); // remove only if partly applied or successful
-    }
+    new Task.Backgroundable(myProject, VcsBundle.getString("unshelve.changes.progress.title")) {
+      ApplyPatchStatus myApplyPatchStatus;
+
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        myApplyPatchStatus = PatchApplier.executePatchGroup(appliers, localList);
+      }
+
+      @Override
+      public void onSuccess() {
+        if (myApplyPatchStatus != ApplyPatchStatus.ABORT && myApplyPatchStatus != ApplyPatchStatus.FAILURE) {
+          removeAppliedAndSaveRemainedIfNeeded(remaining, appliers, commitContext); // remove only if partly applied or successful
+        }
+      }
+    }.queue();
   }
 
+  @CalledInAwt
   private void removeAppliedAndSaveRemainedIfNeeded(@NotNull List<? extends FilePatch> remaining,
                                                     @NotNull Collection<? extends PatchApplier> appliers,
                                                     @NotNull CommitContext commitContext) {
@@ -58,9 +75,7 @@ public class UnshelvePatchDefaultExecutor extends ApplyPatchDefaultExecutor {
     if (!shelveChangesManager.isRemoveFilesFromShelf()) return;
     try {
       List<FilePatch> patches = new ArrayList<>(remaining);
-      for (PatchApplier applier : appliers) {
-        patches.addAll(applier.getRemainingPatches());
-      }
+      patches.addAll(ContainerUtil.concat(appliers, PatchApplier::getRemainingPatches));
       shelveChangesManager
         .updateListAfterUnshelve(myCurrentShelveChangeList, patches, mapNotNull(patches, patch -> patch instanceof ShelvedBinaryFilePatch
                                                                                                   ? ((ShelvedBinaryFilePatch)patch)

@@ -5,6 +5,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl;
 import com.intellij.psi.util.PsiConcatenationUtil;
+import com.intellij.psi.util.PsiLiteralUtil;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
@@ -33,7 +34,7 @@ public class ReplaceConcatenationWithFormatStringIntention extends Intention {
       parent = expression.getParent();
     }
     final List<PsiExpression> formatParameters = new ArrayList<>();
-    final String formatString = PsiConcatenationUtil.buildFormatString(expression, true, formatParameters);
+    final String formatString = PsiConcatenationUtil.buildUnescapedFormatString(expression, true, formatParameters);
     if (replaceWithPrintfExpression(expression, formatString, formatParameters)) {
       return;
     }
@@ -49,7 +50,7 @@ public class ReplaceConcatenationWithFormatStringIntention extends Intention {
     PsiReplacementUtil.replaceExpression(expression, newExpression.toString(), commentTracker);
   }
 
-  private static boolean replaceWithPrintfExpression(PsiPolyadicExpression expression, CharSequence formatString,
+  private static boolean replaceWithPrintfExpression(PsiPolyadicExpression expression, String formatString,
                                                      List<PsiExpression> formatParameters) {
     final PsiElement expressionParent = expression.getParent();
     if (!(expressionParent instanceof PsiExpressionList)) {
@@ -92,7 +93,7 @@ public class ReplaceConcatenationWithFormatStringIntention extends Intention {
       newExpression.append(commentTracker.text(qualifier)).append('.');
     }
     newExpression.append("printf(");
-    appendFormatString(expression, formatString.toString(), insertNewline, newExpression);
+    appendFormatString(expression, formatString, insertNewline, newExpression);
     for (PsiExpression formatParameter : formatParameters) {
       newExpression.append(",").append(commentTracker.text(formatParameter));
     }
@@ -110,7 +111,7 @@ public class ReplaceConcatenationWithFormatStringIntention extends Intention {
                            ((PsiLiteralExpressionImpl)operand).getLiteralElementType() == JavaTokenType.TEXT_BLOCK_LITERAL);
     if (textBlocks) {
       newExpression.append("\"\"\"\n");
-      newExpression.append(StringUtil.escapeTextBlockCharacters(formatString));
+      newExpression.append(PsiLiteralUtil.escapeTextBlockCharacters(formatString));
       if (insertNewline) {
         newExpression.append('\n');
       }

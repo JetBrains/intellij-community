@@ -5,125 +5,111 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
-import com.intellij.testFramework.LightPlatformTestCase;
-import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.testFramework.HeavyPlatformTestCase;
+import com.intellij.testFramework.TempFiles;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
- * Lightweight test for building and processing tree of {@link FilePointerPartNode}s. It doesn't create real files.
+ * test for building and processing tree of {@link FilePointerPartNode}s.
  */
-public class VirtualFilePointersTreeTest extends LightPlatformTestCase {
+public class VirtualFilePointersTreeTest extends HeavyPlatformTestCase {
   private VirtualFilePointerManagerImpl myVirtualFilePointerManager;
-  private VirtualFilePointerListener myDummyListener;
+  private VirtualFile myDir;
 
   @Override
   public void setUp() throws Exception {
     super.setUp();
     myVirtualFilePointerManager = (VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance();
-    myDummyListener = new VirtualFilePointerListener() {};
+    myDir = new TempFiles(myFilesToDelete).createTempVDir();
   }
 
   public void testRecursivePointersForSubdirectories() {
-    VirtualFilePointer parentPointer = createRecursivePointer("file:///parent");
-    VirtualFilePointer dirPointer = createRecursivePointer("file:///parent/dir");
-    VirtualFilePointer subdirPointer = createRecursivePointer("file:///parent/dir/subdir");
-    VirtualFilePointer filePointer = createPointer("file:///parent/dir/subdir/file.txt");
-    LightVirtualFile root = new LightVirtualFile("/");
-    LightVirtualFile parent = new LightVirtualFileWithParent("parent", root);
-    LightVirtualFile dir = new LightVirtualFileWithParent("dir", parent);
-    LightVirtualFile subdir = new LightVirtualFileWithParent("subdir", dir);
+    VirtualFilePointer parentPointer = createRecursivePointer("parent");
+    VirtualFilePointer dirPointer = createRecursivePointer("parent/dir");
+    VirtualFilePointer subdirPointer = createRecursivePointer("parent/dir/subdir");
+    VirtualFilePointer filePointer = createPointer("parent/dir/subdir/file.txt");
+    VirtualFile root = myDir;
+    VirtualFile parent = createChildDirectory(root, "parent");
+    VirtualFile dir = createChildDirectory(parent, "dir");
+    VirtualFile subdir = createChildDirectory(dir, "subdir");
     assertPointersUnder(subdir, "xxx.txt", parentPointer, dirPointer, subdirPointer);
-    assertPointersUnder(subdir, "", parentPointer, dirPointer, subdirPointer, filePointer);
-    assertPointersUnder(dir, "", parentPointer, dirPointer, subdirPointer, filePointer);
-    assertPointersUnder(parent, "", parentPointer, dirPointer, subdirPointer, filePointer);
+    assertPointersUnder(subdir.getParent(), subdir.getName(), parentPointer, dirPointer, subdirPointer, filePointer);
+    assertPointersUnder(dir.getParent(), dir.getName(), parentPointer, dirPointer, subdirPointer, filePointer);
+    assertPointersUnder(parent.getParent(), parent.getName(), parentPointer, dirPointer, subdirPointer, filePointer);
   }
 
   public void testRecursivePointersForDirectoriesWithCommonPrefix() {
-    VirtualFilePointer parentPointer = createRecursivePointer("file:///parent");
-    VirtualFilePointer dir1Pointer = createRecursivePointer("file:///parent/dir1");
-    VirtualFilePointer dir2Pointer = createRecursivePointer("file:///parent/dir2");
-    VirtualFilePointer subdirPointer = createRecursivePointer("file:///parent/dir1/subdir");
-    VirtualFilePointer filePointer = createPointer("file:///parent/dir1/subdir/file.txt");
-    LightVirtualFile root = new LightVirtualFile("/");
-    LightVirtualFile parent = new LightVirtualFileWithParent("parent", root);
-    LightVirtualFile dir1 = new LightVirtualFileWithParent("dir1", parent);
-    LightVirtualFile dir2 = new LightVirtualFileWithParent("dir2", parent);
-    LightVirtualFile subdir = new LightVirtualFileWithParent("subdir", dir1);
+    VirtualFilePointer parentPointer = createRecursivePointer("parent");
+    VirtualFilePointer dir1Pointer = createRecursivePointer("parent/dir1");
+    VirtualFilePointer dir2Pointer = createRecursivePointer("parent/dir2");
+    VirtualFilePointer subdirPointer = createRecursivePointer("parent/dir1/subdir");
+    VirtualFilePointer filePointer = createPointer("parent/dir1/subdir/file.txt");
+    VirtualFile root = myDir;
+    VirtualFile parent = createChildDirectory(root, "parent");
+    VirtualFile dir1 = createChildDirectory(parent, "dir1");
+    VirtualFile dir2 = createChildDirectory(parent, "dir2");
+    VirtualFile subdir = createChildDirectory(dir1, "subdir");
     assertPointersUnder(subdir, "xxx.txt", parentPointer, dir1Pointer, subdirPointer);
-    assertPointersUnder(subdir, "", parentPointer, dir1Pointer, subdirPointer, filePointer);
-    assertPointersUnder(dir1, "", parentPointer, dir1Pointer, subdirPointer, filePointer);
-    assertPointersUnder(parent, "", parentPointer, dir1Pointer, dir2Pointer, subdirPointer, filePointer);
-    assertPointersUnder(dir2, "", parentPointer, dir2Pointer);
+    assertPointersUnder(subdir.getParent(), subdir.getName(), parentPointer, dir1Pointer, subdirPointer, filePointer);
+    assertPointersUnder(dir1.getParent(), dir1.getName(), parentPointer, dir1Pointer, subdirPointer, filePointer);
+    assertPointersUnder(parent.getParent(), parent.getName(), parentPointer, dir1Pointer, dir2Pointer, subdirPointer, filePointer);
+    assertPointersUnder(dir2.getParent(), dir2.getName(), parentPointer, dir2Pointer);
   }
 
   public void testRecursivePointersUnderSiblingDirectory() {
-    VirtualFilePointer innerPointer = createRecursivePointer("file:///parent/dir/subdir1/inner/subinner");
-    createPointer("file:///parent/anotherDir");
-    LightVirtualFile root = new LightVirtualFile("/");
-    LightVirtualFile parent = new LightVirtualFileWithParent("parent", root);
-    LightVirtualFile dir = new LightVirtualFileWithParent("dir", parent);
-    LightVirtualFile subdir1 = new LightVirtualFileWithParent("subdir1", dir);
-    LightVirtualFile subdir2 = new LightVirtualFileWithParent("subdir2", dir);
+    VirtualFilePointer innerPointer = createRecursivePointer("parent/dir/subdir1/inner/subinner");
+    createPointer("parent/anotherDir");
+    VirtualFile root = myDir;
+    VirtualFile parent = createChildDirectory(root, "parent");
+    VirtualFile dir = createChildDirectory(parent, "dir");
+    VirtualFile subdir1 = createChildDirectory(dir, "subdir1");
+    VirtualFile subdir2 = createChildDirectory(dir, "subdir2");
     assertPointersUnder(subdir1, "inner", innerPointer);
     assertPointersUnder(subdir2, "xxx.txt");
   }
 
   public void testRecursivePointersUnderDisparateDirectoriesNearRoot() {
-    VirtualFilePointer innerPointer = createRecursivePointer("file:///temp/res/ext-resources");
-    LightVirtualFile root = new LightVirtualFile("/");
-    LightVirtualFile parent = new LightVirtualFileWithParent("parent", root);
-    LightVirtualFile dir = new LightVirtualFileWithParent("dir", parent);
+    VirtualFilePointer innerPointer = createRecursivePointer("temp/res/ext-resources");
+    VirtualFile root = myDir;
+    VirtualFile parent = createChildDirectory(root, "parent");
+    VirtualFile dir = createChildDirectory(parent, "dir");
     assertPointersUnder(dir, "inner");
     assertTrue(innerPointer.isRecursive());
   }
 
   public void testUrlsHavingOnlyStartingSlashInCommon() {
-    VirtualFilePointer p1 = createPointer("file:///a/p1");
-    VirtualFilePointer p2 = createPointer("file:///b/p2");
-    LightVirtualFile root = new LightVirtualFile("/");
-    LightVirtualFile a = new LightVirtualFileWithParent("a", root);
-    LightVirtualFile b = new LightVirtualFileWithParent("b", root);
+    VirtualFilePointer p1 = createPointer("a/p1");
+    VirtualFilePointer p2 = createPointer("b/p2");
+    VirtualFile root = myDir;
+    VirtualFile a = createChildDirectory(root, "a");
+    VirtualFile b = createChildDirectory(root, "b");
     assertSameElements(myVirtualFilePointerManager.getPointersUnder(a, "p1"), p1);
     assertSameElements(myVirtualFilePointerManager.getPointersUnder(b, "p2"), p2);
   }
 
   public void testUrlsHavingOnlyStartingSlashInCommonAndInvalidUrlBetweenThem() {
-    VirtualFilePointer p1 = createPointer("file:///a/p1");
-    createPointer("file://invalid/path");
-    VirtualFilePointer p2 = createPointer("file:///b/p2");
-    LightVirtualFile root = new LightVirtualFile("/");
-    LightVirtualFile a = new LightVirtualFileWithParent("a", root);
-    LightVirtualFile b = new LightVirtualFileWithParent("b", root);
+    VirtualFilePointer p1 = createPointer("a/p1");
+    createPointer("invalid/path");
+    VirtualFilePointer p2 = createPointer("b/p2");
+    VirtualFile root = myDir;
+    VirtualFile a = createChildDirectory(root, "a");
+    VirtualFile b = createChildDirectory(root, "b");
     assertSameElements(myVirtualFilePointerManager.getPointersUnder(a, "p1"), p1);
     assertSameElements(myVirtualFilePointerManager.getPointersUnder(b, "p2"), p2);
   }
 
-  private void assertPointersUnder(@NotNull LightVirtualFile file, @NotNull String childName, @NotNull VirtualFilePointer... pointers) {
+  private void assertPointersUnder(@NotNull VirtualFile file, @NotNull String childName, @NotNull VirtualFilePointer... pointers) {
     assertSameElements(myVirtualFilePointerManager.getPointersUnder(file, childName), pointers);
   }
 
   @NotNull
-  private VirtualFilePointer createPointer(String url) {
-    return myVirtualFilePointerManager.create(url, getTestRootDisposable(), myDummyListener);
+  private VirtualFilePointer createPointer(String relativePath) {
+    return myVirtualFilePointerManager.create(myDir.getUrl()+"/"+relativePath, getTestRootDisposable(), null);
   }
 
   @NotNull
-  private VirtualFilePointer createRecursivePointer(String url) {
-    return myVirtualFilePointerManager.createDirectoryPointer(url, true, getTestRootDisposable(), myDummyListener);
-  }
-
-  private static class LightVirtualFileWithParent extends LightVirtualFile {
-    private final LightVirtualFile myParent;
-
-    private LightVirtualFileWithParent(@NotNull String name, @Nullable LightVirtualFile parent) {
-      super(name);
-      myParent = parent;
-    }
-
-    @Override
-    public VirtualFile getParent() {
-      return myParent;
-    }
+  private VirtualFilePointer createRecursivePointer(@NotNull String relativePath) {
+    return myVirtualFilePointerManager.createDirectoryPointer(myDir.getUrl()+"/"+relativePath, true, getTestRootDisposable(), new VirtualFilePointerListener() {
+    });
   }
 }

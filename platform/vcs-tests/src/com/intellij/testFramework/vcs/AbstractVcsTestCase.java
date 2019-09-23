@@ -80,7 +80,7 @@ public abstract class AbstractVcsTestCase {
     projectCreated();
 
     myWorkingCopyDir = VfsUtil.createDirectories(clientRoot.getPath());
-    ((ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(myProject)).waitForInitialized();
+    ProjectLevelVcsManagerImpl.getInstanceImpl(myProject).waitForInitialized();
   }
 
   protected void projectCreated() {

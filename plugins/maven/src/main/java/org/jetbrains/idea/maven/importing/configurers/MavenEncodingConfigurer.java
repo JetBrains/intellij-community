@@ -19,7 +19,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.MavenProject;
 
 import java.nio.charset.Charset;
@@ -31,7 +30,7 @@ import java.nio.charset.UnsupportedCharsetException;
  */
 public class MavenEncodingConfigurer extends MavenModuleConfigurer {
   @Override
-  public void configure(@NotNull MavenProject mavenProject, @NotNull Project project, @Nullable Module module) {
+  public void configure(@NotNull MavenProject mavenProject, @NotNull Project project, @NotNull Module module) {
     String encoding = mavenProject.getEncoding();
     if (encoding != null) {
       try {

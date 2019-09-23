@@ -144,12 +144,7 @@ abstract class DebugProcessImpl<out C : VmConnection<*>>(session: XDebugSession,
 
   final override fun startStepOut(context: XSuspendContext?) {
     val vm = context.vm
-    if (isVmStepOutCorrect()) {
-      lastCallFrame = null
-    }
-    else {
-      updateLastCallFrame(vm)
-    }
+    updateLastCallFrame(vm)
     continueVm(vm, StepAction.OUT)
   }
 

@@ -1,15 +1,21 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options;
 
+import com.intellij.ide.ui.search.BooleanOptionDescription;
+import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Setter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UI;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import kotlin.reflect.KMutableProperty0;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,7 +30,7 @@ import java.util.List;
 /**
  * @author yole
  */
-public abstract class BeanConfigurable<T> implements UnnamedConfigurable {
+public abstract class BeanConfigurable<T> implements UnnamedConfigurable, ConfigurableWithOptionDescriptors {
   private final T myInstance;
   private String myTitle;
 
@@ -180,6 +186,18 @@ public abstract class BeanConfigurable<T> implements UnnamedConfigurable {
       myTitle = title;
     }
 
+    private String getTitle() {
+      return myTitle;
+    }
+
+    private void setValue(Object settingsInstance, boolean value) {
+      myAccessor.setBeanValue(settingsInstance, value);
+    }
+
+    private boolean getValue(Object settingsInstance) {
+      return (boolean)myAccessor.getBeanValue(settingsInstance);
+    }
+
     @NotNull
     @Override
     JCheckBox createComponent() {
@@ -203,8 +221,23 @@ public abstract class BeanConfigurable<T> implements UnnamedConfigurable {
     myInstance = beanInstance;
   }
 
+  protected BeanConfigurable(@NotNull T beanInstance, String title) {
+    this(beanInstance);
+    setTitle(title);
+  }
+
+  /**
+   * @deprecated Use BeanConfigurable(@NotNull T beanInstance) or even better BeanConfigurable(@NotNull T beanInstance, String title)
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
   protected BeanConfigurable() {
     myInstance = null;
+  }
+
+  @Nullable
+  public String getTitle() {
+    return myTitle;
   }
 
   protected void setTitle(String title) {
@@ -264,6 +297,25 @@ public abstract class BeanConfigurable<T> implements UnnamedConfigurable {
       }
     };
     myFields.add(field);
+  }
+
+  @NotNull
+  @Override
+  public List<OptionDescription> getOptionDescriptors(@NotNull String configurableId,
+                                                      @NotNull Function<? super String, String> nameConverter) {
+    List<BeanConfigurable.CheckboxField> boxes = JBIterable.from(myFields).filter(CheckboxField.class).toList();
+    Object instance = getInstance();
+    return ContainerUtil.map(boxes, box -> new BooleanOptionDescription(nameConverter.fun(box.getTitle()), configurableId) {
+      @Override
+      public boolean isOptionEnabled() {
+        return box.getValue(instance);
+      }
+
+      @Override
+      public void setOptionState(boolean enabled) {
+        box.setValue(instance, enabled);
+      }
+    });
   }
 
   @Override

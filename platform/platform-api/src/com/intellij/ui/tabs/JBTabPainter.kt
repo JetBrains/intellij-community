@@ -36,6 +36,7 @@ interface JBTabPainter {
                bounds: Rectangle,
                borderThickness: Int,
                tabColor: Color?,
+               active: Boolean,
                hovered: Boolean)
 
   fun paintSelectedTab(position: JBTabsPosition,
@@ -44,6 +45,11 @@ interface JBTabPainter {
                        borderThickness: Int,
                        tabColor: Color?,
                        active: Boolean,
-                       hovered: Boolean,
-                       singleTab: Boolean)
+                       hovered: Boolean)
+
+  fun paintUnderline(position: JBTabsPosition,
+                     rect: Rectangle,
+                     borderThickness: Int,
+                     g: Graphics2D,
+                     active: Boolean)
 }

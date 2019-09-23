@@ -23,6 +23,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.codeInsight.codeFragment.PyCodeFragmentUtil;
 import com.jetbrains.python.documentation.docstrings.PyDocstringGenerator;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
@@ -30,7 +31,6 @@ import com.jetbrains.python.psi.types.PyCallableParameter;
 import com.jetbrains.python.psi.types.PyCallableParameterImpl;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.pyi.PyiUtil;
-import com.jetbrains.python.refactoring.PyRefactoringUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
@@ -54,7 +54,7 @@ public class PyRemoveParameterQuickFix implements LocalQuickFix {
       final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(ctx);
 
       StreamEx
-        .of(PyRefactoringUtil.findUsages(function, false))
+        .of(PyCodeFragmentUtil.findUsages(function, false))
         .map(UsageInfo::getElement)
         .nonNull()
         .map(PsiElement::getParent)

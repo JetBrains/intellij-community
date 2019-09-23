@@ -17,6 +17,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.templateLanguages.TemplateLanguage;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,7 +37,7 @@ public final class LanguageUtil {
   public static Language getLanguageForPsi(@NotNull Project project, @Nullable VirtualFile file) {
     Language language = getFileLanguage(file);
     if (language == null) return null;
-    return LanguageSubstitutors.INSTANCE.substituteLanguage(language, file, project);
+    return LanguageSubstitutors.getInstance().substituteLanguage(language, file, project);
   }
 
   @Nullable
@@ -152,5 +154,10 @@ public final class LanguageUtil {
     }
     Set<MetaLanguage> result = MetaLanguage.getAllMatchingMetaLanguages(language).collect(Collectors.toSet());
     return language.putUserDataIfAbsent(MATCHING_LANGUAGES, result);
+  }
+
+  @NotNull
+  static JBIterable<Language> hierarchy(@NotNull Language language) {
+    return JBIterable.generate(language, Language::getBaseLanguage);
   }
 }

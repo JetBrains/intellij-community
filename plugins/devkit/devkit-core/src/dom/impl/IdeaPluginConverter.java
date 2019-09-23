@@ -14,26 +14,23 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.ConvertContext;
-import com.intellij.util.xml.DomFileElement;
-import com.intellij.util.xml.DomService;
-import com.intellij.util.xml.ResolvingConverter;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 import org.jetbrains.idea.devkit.dom.PluginModule;
+import org.jetbrains.idea.devkit.dom.index.PluginIdModuleIndex;
+import org.jetbrains.idea.devkit.util.DescriptorUtil;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 import java.util.Set;
 
 /**
  * @author mike
  */
-public class IdeaPluginConverter extends ResolvingConverter<IdeaPlugin> {
+public class IdeaPluginConverter extends IdeaPluginConverterBase {
 
   private static final Condition<IdeaPlugin> NON_CORE_PLUGINS = plugin -> !PluginManagerCore.CORE_PLUGIN_ID.equals(plugin.getPluginId());
 
@@ -57,27 +54,8 @@ public class IdeaPluginConverter extends ResolvingConverter<IdeaPlugin> {
   }
 
   @Override
-  public String getErrorMessage(@Nullable final String s, final ConvertContext context) {
-    return DevKitBundle.message("error.cannot.resolve.plugin", s);
-  }
-
-  @Override
   public IdeaPlugin fromString(@Nullable @NonNls final String s, final ConvertContext context) {
-    for (IdeaPlugin ideaPlugin : getAllPluginsWithoutSelf(context)) {
-      final String otherId = ideaPlugin.getPluginId();
-      if (otherId == null) continue;
-      if (otherId.equals(s)) return ideaPlugin;
-      for (PluginModule module : ideaPlugin.getModules()) {
-        final String moduleName = module.getValue().getValue();
-        if (moduleName != null && moduleName.equals(s)) return ideaPlugin;
-      }
-    }
-    return null;
-  }
-
-  @Override
-  public String toString(@Nullable final IdeaPlugin ideaPlugin, final ConvertContext context) {
-    return ideaPlugin != null ? ideaPlugin.getPluginId() : null;
+    return s == null ? null : ContainerUtil.getFirstItem(PluginIdModuleIndex.findPlugins(context.getInvocationElement(), s));
   }
 
   private static Collection<IdeaPlugin> getAllPluginsWithoutSelf(final ConvertContext context) {
@@ -94,15 +72,7 @@ public class IdeaPluginConverter extends ResolvingConverter<IdeaPlugin> {
     return CachedValuesManager.getManager(project).getCachedValue(project, () -> {
       GlobalSearchScope scope = GlobalSearchScopesCore.projectProductionScope(project).
         union(ProjectScope.getLibrariesScope(project));
-      return CachedValueProvider.Result.create(getPlugins(project, scope), PsiModificationTracker.MODIFICATION_COUNT);
+      return CachedValueProvider.Result.create(DescriptorUtil.getPlugins(project, scope), PsiModificationTracker.MODIFICATION_COUNT);
     });
-  }
-
-  @NotNull
-  public static Collection<IdeaPlugin> getPlugins(Project project, GlobalSearchScope scope) {
-    if (DumbService.isDumb(project)) return Collections.emptyList();
-
-    List<DomFileElement<IdeaPlugin>> files = DomService.getInstance().getFileElements(IdeaPlugin.class, project, scope);
-    return ContainerUtil.map(files, ideaPluginDomFileElement -> ideaPluginDomFileElement.getRootElement());
   }
 }

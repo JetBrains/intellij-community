@@ -420,7 +420,8 @@ public class TreePopupImpl extends WizardPopup implements TreePopup, NextStepHan
 
       Rectangle visibleRect = getVisibleRect();
       int rowForLocation = getClosestRowForLocation(0, visibleRect.y);
-      for (int i = rowForLocation; i < rowForLocation + TreeUtil.getVisibleRowCount(this) + 1; i++) {
+      int limit = rowForLocation + TreeUtil.getVisibleRowCount(this) + 1;
+      for (int i = rowForLocation; i < limit; i++) {
         final TreePath eachPath = getPathForRow(i);
         if (eachPath == null) continue;
 

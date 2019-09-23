@@ -7,7 +7,7 @@ import com.intellij.openapi.vcs.changes.CommitContext
 import com.intellij.vcs.commit.AbstractCommitter
 
 class AlienCommitter(
-  private val vcs: AbstractVcs<*>,
+  private val vcs: AbstractVcs,
   changes: List<Change>,
   commitMessage: String,
   commitContext: CommitContext

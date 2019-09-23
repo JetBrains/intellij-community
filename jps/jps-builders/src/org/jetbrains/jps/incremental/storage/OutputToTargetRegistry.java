@@ -7,6 +7,7 @@ import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorIntegerDescriptor;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -16,7 +17,9 @@ import java.util.Collections;
 /**
  * @author Eugene Zhuravlev
  */
-public class OutputToTargetRegistry extends AbstractStateStorage<Integer, TIntHashSet>{
+public class OutputToTargetRegistry extends AbstractStateStorage<Integer, TIntHashSet> {
+  private final PathRelativizerService myRelativizer;
+
   private static final DataExternalizer<TIntHashSet> DATA_EXTERNALIZER = new DataExternalizer<TIntHashSet>() {
     @Override
     public void save(@NotNull final DataOutput out, TIntHashSet value) throws IOException {
@@ -48,8 +51,9 @@ public class OutputToTargetRegistry extends AbstractStateStorage<Integer, TIntHa
     }
   };
 
-  OutputToTargetRegistry(File storePath) throws IOException {
+  OutputToTargetRegistry(File storePath, PathRelativizerService relativizer) throws IOException {
     super(storePath, EnumeratorIntegerDescriptor.INSTANCE, DATA_EXTERNALIZER);
+    myRelativizer = relativizer;
   }
 
   protected void addMapping(String outputPath, int buildTargetId) throws IOException {
@@ -60,7 +64,7 @@ public class OutputToTargetRegistry extends AbstractStateStorage<Integer, TIntHa
     final TIntHashSet set = new TIntHashSet();
     set.add(buildTargetId);
     for (String outputPath : outputPaths) {
-      appendData(FileUtil.pathHashCode(outputPath), set);
+      appendData(FileUtil.pathHashCode(relativePath(outputPath)), set);
     }
   }
 
@@ -73,7 +77,7 @@ public class OutputToTargetRegistry extends AbstractStateStorage<Integer, TIntHa
       return;
     }
     for (String outputPath : outputPaths) {
-      final int key = FileUtil.pathHashCode(outputPath);
+      final int key = FileUtil.pathHashCode(relativePath(outputPath));
       synchronized (myDataLock) {
         final TIntHashSet state = getState(key);
         if (state != null) {
@@ -98,7 +102,7 @@ public class OutputToTargetRegistry extends AbstractStateStorage<Integer, TIntHa
     }
     final Collection<String> result = new ArrayList<>(size);
     for (String outputPath : outputPaths) {
-      final int key = FileUtil.pathHashCode(outputPath);
+      final int key = FileUtil.pathHashCode(relativePath(outputPath));
       synchronized (myDataLock) {
         final TIntHashSet associatedTargets = getState(key);
         if (associatedTargets == null || associatedTargets.size() != 1) {
@@ -110,5 +114,10 @@ public class OutputToTargetRegistry extends AbstractStateStorage<Integer, TIntHa
       }
     }
     return result;
+  }
+
+  @NotNull
+  private String relativePath(@NotNull String path) {
+    return myRelativizer.toRelative(path);
   }
 }

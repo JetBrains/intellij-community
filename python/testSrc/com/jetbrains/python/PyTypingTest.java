@@ -433,6 +433,12 @@ public class PyTypingTest extends PyTestCase {
                        "Union[List[C], C]");
   }
 
+  // PY-37515
+  public void testNoStringLiteralInjectionUnderCall() {
+    doTestNoInjectedText("class Model:\n" +
+                         "    field: call('<caret>List[str]')");
+  }
+
   // PY-15810
   public void testNoStringLiteralInjectionForNonTypingStrings() {
     doTestNoInjectedText("class C:\n" +

@@ -28,8 +28,6 @@ import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.ui.ThreeStateCheckBox;
-import com.intellij.util.ui.accessibility.AccessibleContextDelegate;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
 import com.intellij.vcsUtil.VcsUtil;
@@ -38,12 +36,13 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.accessibility.AccessibleContext;
-import javax.accessibility.AccessibleRole;
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
-import javax.swing.tree.*;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeNode;
+import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.*;
 import java.beans.PropertyChangeListener;
@@ -52,11 +51,13 @@ import java.util.*;
 
 import static com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.DIRECTORY_GROUPING;
 import static com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.MODULE_GROUPING;
+import static com.intellij.openapi.vcs.changes.ui.VcsTreeModelData.*;
 import static com.intellij.ui.tree.TreePathUtil.toTreePathArray;
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.ar;
 import static com.intellij.util.containers.ContainerUtil.set;
 import static com.intellij.util.ui.ThreeStateCheckBox.State;
+import static java.util.stream.Collectors.toList;
 
 public abstract class ChangesTree extends Tree implements DataProvider {
   @NotNull protected final Project myProject;
@@ -105,7 +106,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     new TreeSpeedSearch(this, ChangesBrowserNode.TO_TEXT_CONVERTER, expandInSpeedSearch);
 
     final ChangesBrowserNodeRenderer nodeRenderer = new ChangesBrowserNodeRenderer(myProject, this::isShowFlatten, highlightProblems);
-    setCellRenderer(new MyTreeCellRenderer(nodeRenderer));
+    setCellRenderer(new ChangesTreeCellRenderer(nodeRenderer));
 
     new MyToggleSelectionAction().registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0)), this);
     showCheckboxesChanged();
@@ -133,16 +134,10 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     ClickListener handler = new ClickListener() {
       @Override
       public boolean onClick(@NotNull MouseEvent event, int clickCount) {
-        if (myShowCheckboxes && isEnabled()) {
-          int row = getRowForLocation(event.getX(), event.getY());
-          if (row >= 0) {
-            final Rectangle baseRect = getRowBounds(row);
-            baseRect.setSize(myCheckboxWidth, baseRect.height);
-            if (baseRect.contains(event.getPoint())) {
-              setSelectionRow(row);
-              toggleChanges(getSelectedUserObjects());
-            }
-          }
+        TreePath path = getPathIfCheckBoxClicked(event.getPoint());
+        if (path != null) {
+          setSelectionPath(path);
+          toggleChanges(getIncludableUserObjects(selected(ChangesTree.this)));
         }
         return false;
       }
@@ -150,6 +145,21 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     handler.installOn(this);
 
     return handler;
+  }
+
+  @Nullable
+  private TreePath getPathIfCheckBoxClicked(@NotNull Point p) {
+    if (!myShowCheckboxes || !isEnabled()) return null;
+
+    TreePath path = getPathForLocation(p.x, p.y);
+    if (path == null) return null;
+
+    Rectangle pathBounds = getPathBounds(path);
+    if (pathBounds == null) return null;
+
+    Rectangle checkBoxBounds = pathBounds.getBounds();
+    checkBoxBounds.setSize(myCheckboxWidth, checkBoxBounds.height);
+    return checkBoxBounds.contains(p) && isIncludable(path) ? path : null;
   }
 
   protected void installEnterKeyHandler() {
@@ -189,15 +199,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
                              ? getClosestPathForLocation(e.getX(), e.getY())
                              : getPathForLocation(e.getX(), e.getY());
         if (clickPath == null) return false;
-
-        final int row = getRowForLocation(e.getPoint().x, e.getPoint().y);
-        if (row >= 0) {
-          if (myShowCheckboxes) {
-            final Rectangle baseRect = getRowBounds(row);
-            baseRect.setSize(myCheckboxWidth, baseRect.height);
-            if (baseRect.contains(e.getPoint())) return false;
-          }
-        }
+        if (getPathIfCheckBoxClicked(e.getPoint()) != null) return false;
 
         myDoubleClickHandler.run();
         return true;
@@ -330,7 +332,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   private void changeGrouping() {
     PropertiesComponent.getInstance(myProject).setValues(GROUPING_KEYS, ArrayUtilRt.toStringArray(getGroupingSupport().getGroupingKeys()));
 
-    List<Object> oldSelection = getSelectedUserObjects();
+    List<Object> oldSelection = selected(this).userObjects();
     rebuildTree();
     setSelectedChanges(oldSelection);
   }
@@ -461,22 +463,6 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   }
 
   @NotNull
-  private List<Object> getAllUserObjects() {
-    return VcsTreeModelData.all(this).userObjects();
-  }
-
-  @NotNull
-  private List<Object> getUserObjectsUnder(@NotNull ChangesBrowserNode<?> node) {
-    return VcsTreeModelData.children(node).userObjects();
-  }
-
-  @NotNull
-  private List<Object> getSelectedUserObjects() {
-    return VcsTreeModelData.selected(this).userObjects();
-  }
-
-
-  @NotNull
   public ChangesBrowserNode<?> getRoot() {
     return (ChangesBrowserNode<?>)getModel().getRoot();
   }
@@ -603,89 +589,12 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     getSelectionModel().setSelectionMode(mode);
   }
 
-  private class MyTreeCellRenderer extends JPanel implements TreeCellRenderer {
-    private final ChangesBrowserNodeRenderer myTextRenderer;
-    private final ThreeStateCheckBox myCheckBox;
-
-
-    MyTreeCellRenderer(@NotNull ChangesBrowserNodeRenderer textRenderer) {
-      super(new BorderLayout());
-      myCheckBox = new ThreeStateCheckBox();
-      myTextRenderer = textRenderer;
-
-      add(myCheckBox, BorderLayout.WEST);
-      add(myTextRenderer, BorderLayout.CENTER);
-      setOpaque(false);
-    }
-
-    @Override
-    public Component getTreeCellRendererComponent(JTree tree,
-                                                  Object value,
-                                                  boolean selected,
-                                                  boolean expanded,
-                                                  boolean leaf,
-                                                  int row,
-                                                  boolean hasFocus) {
-
-      setBackground(null);
-
-      myTextRenderer.setOpaque(false);
-      myTextRenderer.setTransparentIconBackground(true);
-      myTextRenderer.setToolTipText(null);
-      myTextRenderer.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
-
-      myCheckBox.setBackground(null);
-      myCheckBox.setOpaque(false);
-      myCheckBox.setVisible(myShowCheckboxes);
-      if (myCheckBox.isVisible()) {
-        State state = getNodeStatus((ChangesBrowserNode)value);
-        myCheckBox.setState(state);
-
-        myCheckBox.setEnabled(tree.isEnabled() && isNodeEnabled((ChangesBrowserNode)value));
-      }
-      revalidate();
-
-      return this;
-    }
-
-    @Override
-    public String getToolTipText() {
-      return myTextRenderer.getToolTipText();
-    }
-
-    @Override
-    public AccessibleContext getAccessibleContext() {
-      if (accessibleContext == null) {
-        return accessibleContext = new AccessibleContextDelegate(myCheckBox.getAccessibleContext()) {
-          @Override
-          protected Container getDelegateParent() {
-            return getParent();
-          }
-
-          @Override
-          public String getAccessibleName() {
-            myCheckBox.getAccessibleContext().setAccessibleName(myTextRenderer.getAccessibleContext().getAccessibleName());
-            return myCheckBox.getAccessibleContext().getAccessibleName();
-          }
-
-          @Override
-          public AccessibleRole getAccessibleRole() {
-            // Because of a problem with NVDA we have to make this a LABEL,
-            // or otherwise NVDA will read out the entire tree path, causing confusion.
-            return AccessibleRole.LABEL;
-          }
-        };
-      }
-      return accessibleContext;
-    }
-  }
-
   @NotNull
-  private State getNodeStatus(@NotNull ChangesBrowserNode<?> node) {
+  State getNodeStatus(@NotNull ChangesBrowserNode<?> node) {
     boolean hasIncluded = false;
     boolean hasExcluded = false;
 
-    for (Object item : getUserObjectsUnder(node)) {
+    for (Object item : children(node).userObjects()) {
       State state = getInclusionModel().getInclusionState(item);
 
       if (state == State.SELECTED) {
@@ -705,8 +614,31 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     return State.NOT_SELECTED;
   }
 
-  protected boolean isNodeEnabled(ChangesBrowserNode<?> node) {
+  protected boolean isInclusionEnabled(@NotNull ChangesBrowserNode<?> node) {
     return true;
+  }
+
+  protected boolean isInclusionVisible(@NotNull ChangesBrowserNode<?> node) {
+    return true;
+  }
+
+  private boolean isIncludable(@NotNull TreePath path) {
+    Object lastComponent = path.getLastPathComponent();
+    if (!(lastComponent instanceof ChangesBrowserNode<?>)) return false;
+    return isIncludable((ChangesBrowserNode<?>)lastComponent);
+  }
+
+  private boolean isIncludable(@NotNull ChangesBrowserNode<?> node) {
+    return isInclusionVisible(node) && isInclusionEnabled(node);
+  }
+
+  @NotNull
+  private List<Object> getIncludableUserObjects(@NotNull VcsTreeModelData treeModelData) {
+    return treeModelData
+      .nodesStream()
+      .filter(node -> isIncludable(node))
+      .map(node -> node.getUserObject())
+      .collect(toList());
   }
 
   private class MyToggleSelectionAction extends AnAction implements DumbAware {
@@ -717,9 +649,8 @@ public abstract class ChangesTree extends Tree implements DataProvider {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      List<Object> changes = getSelectedUserObjects();
-      if (changes.isEmpty()) changes = getAllUserObjects();
-      toggleChanges(changes);
+      List<Object> changes = getIncludableUserObjects(!isSelectionEmpty() ? selected(ChangesTree.this) : all(ChangesTree.this));
+      if (!changes.isEmpty()) toggleChanges(changes);
     }
   }
 

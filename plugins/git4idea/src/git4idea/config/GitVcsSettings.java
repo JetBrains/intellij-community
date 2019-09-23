@@ -25,10 +25,8 @@ import static git4idea.config.GitIncomingCheckStrategy.Never;
  * Git VCS settings
  */
 @State(name = "Git.Settings", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
-public class GitVcsSettings extends SimplePersistentStateComponent<GitVcsOptions> implements DvcsSyncSettings, DvcsCompareSettings {
+public final class GitVcsSettings extends SimplePersistentStateComponent<GitVcsOptions> implements DvcsSyncSettings, DvcsCompareSettings {
   private static final int PREVIOUS_COMMIT_AUTHORS_LIMIT = 16; // Limit for previous commit authors
-
-  private final GitVcsApplicationSettings myAppSettings;
 
   /**
    * The way the local changes are saved before update if user has selected auto-stash
@@ -38,14 +36,12 @@ public class GitVcsSettings extends SimplePersistentStateComponent<GitVcsOptions
     SHELVE,
   }
 
-  public GitVcsSettings(GitVcsApplicationSettings appSettings) {
+  public GitVcsSettings() {
     super(new GitVcsOptions());
-
-    myAppSettings = appSettings;
   }
 
   public GitVcsApplicationSettings getAppSettings() {
-    return myAppSettings;
+    return GitVcsApplicationSettings.getInstance();
   }
 
   public static GitVcsSettings getInstance(Project project) {

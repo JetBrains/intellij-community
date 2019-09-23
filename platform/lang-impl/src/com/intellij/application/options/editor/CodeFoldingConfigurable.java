@@ -3,16 +3,22 @@
 package com.intellij.application.options.editor;
 
 import com.intellij.codeInsight.folding.CodeFoldingManager;
+import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
+import com.intellij.openapi.options.BeanConfigurable;
 import com.intellij.openapi.options.CompositeConfigurable;
+import com.intellij.openapi.options.ConfigurableWithOptionDescriptors;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.JBIterable;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -24,6 +30,7 @@ import java.util.List;
  * @author yole
  */
 public class CodeFoldingConfigurable extends CompositeConfigurable<CodeFoldingOptionsProvider> implements EditorOptionsProvider {
+  public static final String ID = "editor.preferences.folding";
   private JCheckBox myCbFolding;
   private JPanel myRootPanel;
   private JPanel myFoldingPanel;
@@ -45,9 +52,22 @@ public class CodeFoldingConfigurable extends CompositeConfigurable<CodeFoldingOp
     for (CodeFoldingOptionsProvider provider : getConfigurables()) {
       myFoldingPanel
         .add(provider.createComponent(), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0, 0, GridBagConstraints.NORTHWEST,
-                                                                GridBagConstraints.NONE, new Insets(5, 0, 7, 0), 0, 0));
+                                                                GridBagConstraints.NONE, JBUI.emptyInsets(), 0, 0));
     }
     return myRootPanel;
+  }
+
+  @NotNull
+  List<OptionDescription> getDescriptors() {
+    String byDefault = ApplicationBundle.message("label.fold.by.default");
+    return JBIterable.from(getConfigurables())
+      .map(c -> c instanceof ConfigurableWrapper ? ((ConfigurableWrapper)c).getConfigurable() : c)
+      .filter(ConfigurableWithOptionDescriptors.class)
+      .flatMap(c -> {
+        String title = c instanceof BeanConfigurable ? ((BeanConfigurable<?>)c).getTitle() : null;
+        String prefix = title == null ? byDefault + " " : StringUtil.trimEnd(byDefault, ':') + " in " + title + ": ";
+        return c.getOptionDescriptors(ID, s -> prefix + s);
+      }).toList();
   }
 
   @Override
@@ -88,6 +108,6 @@ public class CodeFoldingConfigurable extends CompositeConfigurable<CodeFoldingOp
   @Override
   @NotNull
   public String getId() {
-    return "editor.preferences.folding";
+    return ID;
   }
 }

@@ -28,6 +28,7 @@ import java.awt.*;
 import java.util.List;
 import java.util.Queue;
 import java.util.*;
+import java.util.concurrent.CancellationException;
 import java.util.function.Consumer;
 
 class ServiceTreeView extends ServiceView {
@@ -39,6 +40,7 @@ class ServiceTreeView extends ServiceView {
 
   private volatile ServiceViewItem myLastSelection;
   private boolean mySelected;
+  private volatile Promise<?> myUpdateSelectionPromise;
 
   ServiceTreeView(@NotNull Project project, @NotNull ServiceViewModel model, @NotNull ServiceViewUi ui, @NotNull ServiceViewState state) {
     super(new BorderLayout(), project, model, ui);
@@ -52,7 +54,11 @@ class ServiceTreeView extends ServiceView {
     ServiceViewActionProvider actionProvider = ServiceViewActionProvider.getInstance();
     ui.setServiceToolbar(actionProvider);
     ui.setMasterComponent(myTree, actionProvider);
+
+    myTree.setDragEnabled(true);
     DnDManager.getInstance().registerSource(ServiceViewDragHelper.createSource(this), myTree);
+    DnDManager.getInstance().registerTarget(ServiceViewDragHelper.createTarget(myTree), myTree);
+
     add(myUi.getComponent(), BorderLayout.CENTER);
 
     myTree.addTreeSelectionListener(new RestoreSelectionListener());
@@ -64,7 +70,7 @@ class ServiceTreeView extends ServiceView {
         .onSuccess(result -> AppUIUtil.invokeOnEdt(() -> {
           JComponent component = getUi().getDetailsComponent();
           if (component != null) {
-            IdeFocusManager.getInstance(myProject).requestFocusInProject(component, myProject);
+            IdeFocusManager.getInstance(myProject).requestFocus(component, false);
           }
         }, myProject.getDisposed()));
     myNavBarPanel = new ServiceViewNavBarPanel(myProject, true, getModel(), selector);
@@ -113,9 +119,15 @@ class ServiceTreeView extends ServiceView {
       AsyncPromise<Void> result = new AsyncPromise<>();
       myTreeModel.findPath(service, contributorClass)
         .onError(result::setError)
-        .onSuccess(path -> TreeUtil.promiseSelect(myTree, new PathSelectionVisitor(path))
-          .onError(result::setError)
-          .onSuccess(selectedPath -> result.setResult(null)));
+        .onSuccess(path -> {
+          TreeUtil.promiseSelect(myTree, new PathSelectionVisitor(path))
+            .onError(result::setError)
+            .onSuccess(selectedPath -> {
+              result.setResult(null);
+              cancelSelectionUpdate();
+            });
+          cancelSelectionUpdate();
+        });
       return result;
     }
     return Promises.resolvedPromise();
@@ -145,7 +157,7 @@ class ServiceTreeView extends ServiceView {
   @Override
   void jumpToServices() {
     if (myTree.isShowing()) {
-      IdeFocusManager.getInstance(myProject).requestFocusInProject(myTree, myProject);
+      IdeFocusManager.getInstance(myProject).requestFocus(myTree, false);
     }
     else {
       myNavBarPanel.rebuildAndSelectTail(true);
@@ -192,7 +204,6 @@ class ServiceTreeView extends ServiceView {
       if (Comparing.equal(newSelection, updatedItem)) {
         newSelection = updatedItem;
       }
-      //myNavBarPanel.getModel().updateModel(newSelection);
       if (Comparing.equal(newSelection, myLastSelection)) {
         myLastSelection = newSelection;
         if (mySelected) {
@@ -237,7 +248,11 @@ class ServiceTreeView extends ServiceView {
   }
 
   @Override
-  List<Object> getChildrenSafe(@NotNull Object value) {
+  List<Object> getChildrenSafe(@NotNull List<Object> valueSubPath) {
+    Queue<Object> values = new LinkedList<>(valueSubPath);
+    Object visibleRoot = values.poll();
+    if (visibleRoot == null) return Collections.emptyList();
+
     int count = myTree.getRowCount();
     for (int i = 0; i < count; i++) {
       TreePath path = myTree.getPathForRow(i);
@@ -245,11 +260,23 @@ class ServiceTreeView extends ServiceView {
       if (!(node instanceof ServiceViewItem)) continue;
 
       ServiceViewItem item = (ServiceViewItem)node;
-      if (!value.equals(item.getValue())) continue;
+      if (!visibleRoot.equals(item.getValue())) continue;
 
+      while (!values.isEmpty()) {
+        Object value = values.poll();
+        item = ContainerUtil.find(getModel().getChildren(item), child -> value.equals(child.getValue()));
+        if (item == null) return Collections.emptyList();
+      }
       return ContainerUtil.map(getModel().getChildren(item), ServiceViewItem::getValue);
     }
     return Collections.emptyList();
+  }
+
+  private void cancelSelectionUpdate() {
+    Promise<?> selectPromise = myUpdateSelectionPromise;
+    if (selectPromise instanceof AsyncPromise) {
+      ((AsyncPromise<?>)selectPromise).cancel();
+    }
   }
 
   private class MyViewModelListener implements ServiceViewModel.ServiceViewModelListener {
@@ -270,7 +297,16 @@ class ServiceTreeView extends ServiceView {
             });
           Promises.collectResults(pathPromises, true).onProcessed(paths -> {
             if (paths != null && !paths.isEmpty() && !paths.equals(selectedPaths)) {
-              TreeUtil.promiseSelect(myTree, paths.stream().map(PathSelectionVisitor::new));
+              Promise<?> newSelectPromise = TreeUtil.promiseSelect(myTree, paths.stream().map(PathSelectionVisitor::new));
+              cancelSelectionUpdate();
+              if (newSelectPromise instanceof AsyncPromise) {
+                ((AsyncPromise<?>)newSelectPromise).onError(t -> {
+                  if (t instanceof CancellationException) {
+                    TreeUtil.promiseExpand(myTree, paths.stream().map(path -> new PathSelectionVisitor(path.getParentPath())));
+                  }
+                });
+              }
+              myUpdateSelectionPromise = newSelectPromise;
             }
           });
         });

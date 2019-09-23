@@ -5,7 +5,6 @@ import com.intellij.facet.impl.ProjectFacetsConfigurator;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.components.ServiceKt;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
@@ -184,7 +183,7 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
       }
     }
 
-    for (Configurable moduleConfigurable : ServiceKt.getComponents(module, Configurable.class)) {
+    for (Configurable moduleConfigurable : module.getComponentInstancesOfType(Configurable.class)) {
       reportDeprecatedModuleEditor(moduleConfigurable.getClass());
       myEditors.add(new ModuleConfigurableWrapper(moduleConfigurable));
     }
@@ -213,8 +212,7 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
 
   @NotNull
   private static ModuleConfigurationEditorProvider[] collectProviders(@NotNull Module module) {
-    List<ModuleConfigurationEditorProvider> result =
-      new ArrayList<>(ServiceKt.getComponents(module, ModuleConfigurationEditorProvider.class));
+    List<ModuleConfigurationEditorProvider> result = new ArrayList<>(module.getComponentInstancesOfType(ModuleConfigurationEditorProvider.class));
     for (ModuleConfigurationEditorProvider component : result) {
       reportDeprecatedModuleEditor(component.getClass());
     }

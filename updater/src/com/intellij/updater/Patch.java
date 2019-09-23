@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.updater;
 
 import java.io.*;
@@ -143,29 +143,15 @@ public class Patch {
 
   private static void writeActions(DataOutputStream dataOut, List<? extends PatchAction> actions) throws IOException {
     dataOut.writeInt(actions.size());
-
     for (PatchAction each : actions) {
       int key;
-      Class clazz = each.getClass();
-
-      if (clazz == CreateAction.class) {
-        key = CREATE_ACTION_KEY;
-      }
-      else if (clazz == UpdateAction.class) {
-        key = UPDATE_ACTION_KEY;
-      }
-      else if (clazz == UpdateZipAction.class) {
-        key = UPDATE_ZIP_ACTION_KEY;
-      }
-      else if (clazz == DeleteAction.class) {
-        key = DELETE_ACTION_KEY;
-      }
-      else if (clazz == ValidateAction.class) {
-        key = VALIDATE_ACTION_KEY;
-      }
-      else {
-        throw new RuntimeException("Unknown action " + each);
-      }
+      Class<?> clazz = each.getClass();
+      if (clazz == CreateAction.class) key = CREATE_ACTION_KEY;
+      else if (clazz == UpdateAction.class) key = UPDATE_ACTION_KEY;
+      else if (clazz == UpdateZipAction.class) key = UPDATE_ZIP_ACTION_KEY;
+      else if (clazz == DeleteAction.class) key = DELETE_ACTION_KEY;
+      else if (clazz == ValidateAction.class) key = VALIDATE_ACTION_KEY;
+      else throw new RuntimeException("Unknown action " + each);
       dataOut.writeInt(key);
       each.write(dataOut);
     }
@@ -248,7 +234,7 @@ public class Patch {
     }
 
     if (myIsStrict) {
-      // in strict mode, add delete actions for unknown files
+      // in the strict mode, add delete actions for unknown files
       for (PatchAction action : myActions) {
         files.remove(action.getPath());
       }
@@ -270,7 +256,7 @@ public class Patch {
                result != null &&
                ValidationResult.ALREADY_EXISTS_MESSAGE.equals(result.message) &&
                deletedPaths.contains(mapPath(action.getPath()))) {
-        // do not warn about files which are going to be deleted
+        // do not warn about files going to be deleted
         result = null;
       }
 
@@ -310,10 +296,11 @@ public class Patch {
         forEach(actionsToApply, "Backing up files...", ui, action -> action.backup(toDir, _backupDir));
       }
       else {
+        //noinspection SSBasedInspection
         List<PatchAction> specialActions = actionsToApply.stream().filter(PatchAction::mandatoryBackup).collect(Collectors.toList());
         if (!specialActions.isEmpty()) {
           backupDir = Utils.getTempFile("partial_backup");
-          if (!backupDir.mkdir()) throw new IOException("Cannot create backup directory: " + backupDir);
+          if (!backupDir.mkdir()) throw new IOException("Cannot create a backup directory: " + backupDir);
           File _backupDir = backupDir;
           forEach(specialActions, "Preparing update...", ui, action -> action.backup(toDir, _backupDir));
         }

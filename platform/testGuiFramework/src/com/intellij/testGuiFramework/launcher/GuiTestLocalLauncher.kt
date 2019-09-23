@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testGuiFramework.launcher
 
 import com.intellij.openapi.application.PathManager
@@ -25,6 +11,7 @@ import com.intellij.testGuiFramework.launcher.ide.CommunityIde
 import com.intellij.testGuiFramework.launcher.ide.Ide
 import com.intellij.testGuiFramework.launcher.system.SystemInfo
 import com.intellij.testGuiFramework.remote.IdeControl
+import com.intellij.util.PathUtil
 import org.apache.log4j.Logger
 import org.jetbrains.jps.model.JpsElementFactory
 import org.jetbrains.jps.model.JpsProject
@@ -284,7 +271,7 @@ object GuiTestLocalLauncher {
       .plus("-Dapple.laf.useScreenMenuBar=${GuiTestOptions.useAppleScreenMenuBar}")
       .plus("-Didea.is.internal=${GuiTestOptions.isInternal}")
       .plus("-Didea.debug.mode=true")
-      .plus("-Dnative.mac.file.chooser.enabled=false")
+      .plus("-Dide.mac.file.chooser.native=false")
       .plus("-Didea.config.path=${GuiTestOptions.configPath}")
       .plus("-Didea.system.path=${GuiTestOptions.systemPath}")
       .plus("-Didea.log.config.file=${GuiTestOptions.guiTestLogFile}")
@@ -319,12 +306,7 @@ object GuiTestLocalLauncher {
     return classpath.toList()
   }
 
-  private fun getToolsJarFile(): File {
-    val toolsJarUrl = getUrlPathsFromClassloader().firstOrNull {
-      it.endsWith("/tools.jar") or it.endsWith("\\tools.jar")
-    } ?: throw Exception("Unable to find tools.jar URL in the classloader URLs of ${GuiTestLocalLauncher::class.java.name} class")
-    return File(toolsJarUrl)
-  }
+  private fun getToolsJarFile(): File = File(PathUtil.getParentPath(System.getProperty("java.home")), "lib${File.separator}tools.jar")
 
   /**
    * Finds in a current classpath that built from a test module dependencies resolved macro path

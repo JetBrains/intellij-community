@@ -90,7 +90,7 @@ public class HintManagerImpl extends HintManager {
     return (HintManagerImpl)ServiceManager.getService(HintManager.class);
   }
 
-  public HintManagerImpl(@NotNull ProjectManager projectManager) {
+  public HintManagerImpl() {
     myEditorManagerListener = new MyEditorManagerListener();
 
     myCaretMoveListener = new CaretListener() {
@@ -108,7 +108,7 @@ public class HintManagerImpl extends HintManager {
     };
 
     final MyProjectManagerListener projectManagerListener = new MyProjectManagerListener();
-    for (Project project : projectManager.getOpenProjects()) {
+    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
       projectManagerListener.projectOpened(project);
     }
 

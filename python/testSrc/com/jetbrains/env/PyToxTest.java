@@ -81,6 +81,43 @@ public final class PyToxTest extends PyEnvTestCase {
     );
   }
 
+
+  @Test
+  public void testToxPyTestXDist() {
+    runPythonTest(new MyPyProcessWithConsoleTestTask("/toxtest/toxPyTestXDist/", 1,
+                                                     () -> new MyTestProcessRunner(),
+                                                     Arrays.asList(
+                                                       Pair.create("py36", new InterpreterExpectations("", false)),
+                                                       Pair.create("py27", new InterpreterExpectations("", true))
+                                                     ),
+                                                     Integer.MAX_VALUE) {
+                    @Override
+                    protected void checkTestResults(@NotNull MyTestProcessRunner runner,
+                                                    @NotNull String stdout,
+                                                    @NotNull String stderr,
+                                                    @NotNull String all,
+                                                    int exitCode) {
+                      super.checkTestResults(runner, stdout, stderr, all, exitCode);
+                      Assert.assertEquals(5, runner.getPassedTestsCount());
+                      Assert.assertEquals(1, runner.getFailedTestsCount());
+                      runner.getFormattedTestTree();
+                    }
+                  }
+    );
+  }
+
+
+  @Test
+  public void testToxPyTestPy3k() {
+    runPythonTest(new MyPyProcessWithConsoleTestTask("/toxtest/toxPyTestPy3k/", 1,
+                                                     () -> new MyTestProcessRunner(),
+                                                     Collections.singletonList(
+                                                       Pair.create("py36", new InterpreterExpectations("", true))
+                                                     ),
+                                                     Integer.MAX_VALUE)
+    );
+  }
+
   /**
    * Check tox unit runner
    */
@@ -269,7 +306,7 @@ public final class PyToxTest extends PyEnvTestCase {
   }
 
 
-  private static final class MyPyProcessWithConsoleTestTask extends PyProcessWithConsoleTestTask<MyTestProcessRunner> {
+  private static class MyPyProcessWithConsoleTestTask extends PyProcessWithConsoleTestTask<MyTestProcessRunner> {
     private static final Logger LOGGER = Logger.getInstance(MyPyProcessWithConsoleTestTask.class);
     @NotNull
     private final Map<String, InterpreterExpectations> myInterpreters = new HashMap<>();
@@ -285,11 +322,11 @@ public final class PyToxTest extends PyEnvTestCase {
      *                                see {@link PyProcessWithConsoleTestTask#createProcessRunner()}
      * @param maximumTestCount        max number of success tests
      */
-    private MyPyProcessWithConsoleTestTask(@Nullable final String relativeTestDataPath,
-                                           final int minimumSuccessTestCount,
-                                           @NotNull final Supplier<MyTestProcessRunner> runnerSupplier,
-                                           @NotNull final Iterable<Pair<String, InterpreterExpectations>> interpreterExpectations,
-                                           final int maximumTestCount) {
+    MyPyProcessWithConsoleTestTask(@Nullable final String relativeTestDataPath,
+                                   final int minimumSuccessTestCount,
+                                   @NotNull final Supplier<MyTestProcessRunner> runnerSupplier,
+                                   @NotNull final Iterable<Pair<String, InterpreterExpectations>> interpreterExpectations,
+                                   final int maximumTestCount) {
       super(relativeTestDataPath, SdkCreationType.EMPTY_SDK);
       myMinimumSuccessTestCount = minimumSuccessTestCount;
       myMaximumSuccessTestCount = maximumTestCount;

@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.concurrency;
 
+import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
@@ -26,7 +27,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * The number of submitted tasks is unrestricted.
  * @see AppExecutorUtil#createBoundedApplicationPoolExecutor(String, Executor, int) instead
  */
-public class BoundedTaskExecutor extends AbstractExecutorService {
+public final class BoundedTaskExecutor extends AbstractExecutorService {
   private static final Logger LOG = Logger.getInstance(BoundedTaskExecutor.class);
 
   private volatile boolean myShutdown;
@@ -38,7 +39,9 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
   private final AtomicLong myStatus = new AtomicLong();
   private final BlockingQueue<Runnable> myTaskQueue = new LinkedBlockingQueue<>();
 
-  BoundedTaskExecutor(@NotNull @Nls(capitalization = Nls.Capitalization.Title) String name, @NotNull Executor backendExecutor, int maxThreads) {
+  private final boolean myChangeThreadName;
+
+  BoundedTaskExecutor(@NotNull @Nls(capitalization = Nls.Capitalization.Title) String name, @NotNull Executor backendExecutor, int maxThreads, boolean changeThreadName) {
     myName = name;
     myBackendExecutor = backendExecutor;
     if (maxThreads < 1) {
@@ -48,19 +51,20 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
       throw new IllegalArgumentException("backendExecutor is already BoundedTaskExecutor: "+backendExecutor);
     }
     myMaxThreads = maxThreads;
+    myChangeThreadName = changeThreadName;
   }
 
   /** @deprecated use {@link AppExecutorUtil#createBoundedApplicationPoolExecutor(String, Executor, int)} instead */
   @Deprecated
   public BoundedTaskExecutor(@NotNull Executor backendExecutor, int maxSimultaneousTasks) {
-    this(ExceptionUtil.getThrowableText(new Throwable("Creation point:")), backendExecutor, maxSimultaneousTasks);
+    this(ExceptionUtil.getThrowableText(new Throwable("Creation point:")), backendExecutor, maxSimultaneousTasks, true);
   }
 
   /**
    * Constructor which automatically shuts down this executor when {@code parent} is disposed.
    */
   BoundedTaskExecutor(@NotNull @Nls(capitalization = Nls.Capitalization.Title) String name, @NotNull Executor backendExecutor, int maxSimultaneousTasks, @NotNull Disposable parent) {
-    this(name, backendExecutor, maxSimultaneousTasks);
+    this(name, backendExecutor, maxSimultaneousTasks, true);
     Disposer.register(parent, () -> shutdownNow());
   }
 
@@ -69,7 +73,7 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
     Object task = info;
     String extra = null;
     if (task instanceof FutureTask) {
-      extra = ((FutureTask)task).isCancelled() ? " (future cancelled)" : ((FutureTask)task).isDone() ? " (future done)" : null;
+      extra = ((FutureTask<?>)task).isCancelled() ? " (future cancelled)" : ((FutureTask<?>)task).isDone() ? " (future done)" : null;
       task = ObjectUtils.chooseNotNull(ReflectionUtil.getField(task.getClass(), task, Callable.class, "callable"), task);
     }
     if (task instanceof Callable && task.getClass().getName().equals("java.util.concurrent.Executors$RunnableAdapter")) {
@@ -178,15 +182,26 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
       myBackendExecutor.execute(new Runnable() {
         @Override
         public void run() {
-          ConcurrencyUtil.runUnderThreadName(myName, () -> {
-            Runnable task = currentTask.get();
-            do {
-              currentTask.set(task);
-              doRun(task);
-              task = pollOrGiveUp(status);
+          if (myChangeThreadName) {
+            String name = myName;
+            if (StartUpMeasurer.isEnabled()) {
+              name += "[" + Thread.currentThread().getName() + "]";
             }
-            while (task != null);
-          });
+            ConcurrencyUtil.runUnderThreadName(name, this::execute);
+          }
+          else {
+            execute();
+          }
+        }
+
+        private void execute() {
+          Runnable task = currentTask.get();
+          do {
+            currentTask.set(task);
+            doRun(task);
+            task = pollOrGiveUp(status);
+          }
+          while (task != null);
         }
 
         @Override
@@ -233,7 +248,7 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
     // Submit 'myMaxTasks' runnables and wait for them all to start.
     // They will spread to all executor threads and ensure the previously submitted tasks are completed.
     // Wait for all empty runnables to finish to free up the threads.
-    List<Future> futures = ContainerUtil.map(Collections.nCopies(myMaxThreads, null), __ -> {
+    List<Future<?>> futures = ContainerUtil.map(Collections.nCopies(myMaxThreads, null), __ -> {
       LastTask wait = new LastTask(runnable);
       execute(wait);
       return wait;
@@ -249,7 +264,7 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
     finally {
       readyToFinish.countDown();
     }
-    for (Future future : futures) {
+    for (Future<?> future : futures) {
       future.get(timeout, unit);
     }
   }
@@ -260,7 +275,7 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
     myTaskQueue.drainTo(queued);
     for (Runnable task : queued) {
       if (task instanceof FutureTask) {
-        ((FutureTask)task).cancel(false);
+        ((FutureTask<?>)task).cancel(false);
       }
     }
     return queued;

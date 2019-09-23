@@ -1,3 +1,19 @@
+## 12
+
+* service/component events are reported in a google trace event format.
+* compute own time for services/components with respect to multi-thread execution.
+* `serviceWaiting` event (reported if > 100 μs to get cached value after lock).
+* report all services/components without threshold.
+
+## 11
+* consistent naming of activities
+
+## 10
+* Instant events in Trace Event Format.
+
+## 9
+* icon stats.
+
 ## 8
 * compute own time for services.
 

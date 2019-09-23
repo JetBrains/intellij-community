@@ -3,18 +3,19 @@ package com.intellij.util.messages.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.CompoundRuntimeException;
+import com.intellij.util.messages.LazyListenerCreator;
 import com.intellij.util.messages.ListenerDescriptor;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.Topic;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
@@ -60,7 +61,7 @@ public class MessageBusImpl implements MessageBus {
   private final RootBus myRootBus;
 
   //is used for debugging purposes
-  private final String myOwner;
+  private final Object myOwner;
   private boolean myDisposed;
   private final Disposable myConnectionDisposable;
   private MessageDeliveryListener myMessageDeliveryListener;
@@ -68,8 +69,8 @@ public class MessageBusImpl implements MessageBus {
   private final MessageBusConnectionImpl myLazyConnection;
 
   public MessageBusImpl(@NotNull Object owner, @NotNull MessageBusImpl parentBus) {
-    myOwner = owner + " of " + owner.getClass();
-    myConnectionDisposable = Disposer.newDisposable(myOwner);
+    myOwner = owner;
+    myConnectionDisposable = Disposer.newDisposable(myOwner.toString());
     myParentBus = parentBus;
     myRootBus = parentBus.myRootBus;
     synchronized (parentBus.myChildBuses) {
@@ -84,8 +85,8 @@ public class MessageBusImpl implements MessageBus {
 
   // root message bus constructor
   private MessageBusImpl(@NotNull Object owner) {
-    myOwner = owner + " of " + owner.getClass();
-    myConnectionDisposable = Disposer.newDisposable(myOwner);
+    myOwner = owner;
+    myConnectionDisposable = Disposer.newDisposable(myOwner.toString());
     myOrder = ArrayUtil.EMPTY_INT_ARRAY;
     myRootBus = (RootBus)this;
     myLazyConnection = connect();
@@ -204,11 +205,16 @@ public class MessageBusImpl implements MessageBus {
 
     List<ListenerDescriptor> listenerDescriptors = myTopicClassToListenerClass.remove(listenerClass.getName());
     if (listenerDescriptors != null) {
-      List<Object> listeners = new SmartList<>();
+      LazyListenerCreator listenerCreator = (LazyListenerCreator)myOwner;
+      List<Object> listeners = new ArrayList<>(listenerDescriptors.size());
       for (ListenerDescriptor listenerDescriptor : listenerDescriptors) {
-        ClassLoader classLoader = listenerDescriptor.pluginDescriptor.getPluginClassLoader();
         try {
-          listeners.add(ReflectionUtil.newInstance(Class.forName(listenerDescriptor.listenerClassName, true, classLoader), false));
+          listeners.add(listenerCreator.createListener(listenerDescriptor));
+        }
+        catch (ExtensionNotApplicableException ignore) {
+        }
+        catch (ProcessCanceledException e) {
+          throw e;
         }
         catch (Throwable e) {
           LOG.error("Cannot create listener", e);
@@ -291,8 +297,9 @@ public class MessageBusImpl implements MessageBus {
   }
 
   @NotNull
+  @TestOnly
   String getOwner() {
-    return myOwner;
+    return myOwner.toString();
   }
 
   private void calcSubscribers(@NotNull Topic<?> topic, @NotNull List<? super MessageBusConnectionImpl> result) {
@@ -330,7 +337,7 @@ public class MessageBusImpl implements MessageBus {
   private List<MessageBusConnectionImpl> getTopicSubscribers(@NotNull Topic<?> topic) {
     List<MessageBusConnectionImpl> topicSubscribers = mySubscriberCache.get(topic);
     if (topicSubscribers == null) {
-      topicSubscribers = new SmartList<>();
+      topicSubscribers = new ArrayList<>();
       calcSubscribers(topic, topicSubscribers);
       mySubscriberCache.put(topic, topicSubscribers);
       myRootBus.myClearedSubscribersCache = false;
@@ -367,26 +374,18 @@ public class MessageBusImpl implements MessageBus {
 
   private void pumpMessages() {
     checkNotDisposed();
-    if (myParentBus != null) {
-      LOG.assertTrue(myParentBus.myChildBuses.contains(this));
-      myParentBus.pumpMessages();
-    }
-    else {
-      final Map<MessageBusImpl, Integer> map = myRootBus.myWaitingBuses.get();
-      if (map != null && !map.isEmpty()) {
-        List<MessageBusImpl> liveBuses = null;
-        for (MessageBusImpl bus : map.keySet()) {
-          if (ensureAlive(map, bus)) {
-            if (liveBuses == null) {
-              liveBuses = new SmartList<>();
-            }
-            liveBuses.add(bus);
-          }
-        }
+    Map<MessageBusImpl, Integer> map = myRootBus.myWaitingBuses.get();
+    if (map != null && !map.isEmpty()) {
+      List<MessageBusImpl> liveBuses = new ArrayList<>(map.size());
+      for (MessageBusImpl bus : map.keySet()) {
+        if (ensureAlive(map, bus)) {
 
-        if (liveBuses != null) {
-          pumpWaitingBuses(liveBuses);
+          liveBuses.add(bus);
         }
+      }
+
+      if (!liveBuses.isEmpty()) {
+        pumpWaitingBuses(liveBuses);
       }
     }
   }
@@ -403,7 +402,7 @@ public class MessageBusImpl implements MessageBus {
 
   private static List<Throwable> appendExceptions(@Nullable List<Throwable> exceptions, @NotNull List<? extends Throwable> busExceptions) {
     if (!busExceptions.isEmpty()) {
-      if (exceptions == null) exceptions = new SmartList<>();
+      if (exceptions == null) exceptions = new ArrayList<>(busExceptions.size());
       exceptions.addAll(busExceptions);
     }
     return exceptions;
@@ -430,7 +429,7 @@ public class MessageBusImpl implements MessageBus {
   @NotNull
   private List<Throwable> doPumpMessages() {
     Queue<DeliveryJob> queue = myMessageQueue.get();
-    List<Throwable> exceptions = null;
+    List<Throwable> exceptions = Collections.emptyList();
     do {
       DeliveryJob job = queue.poll();
       if (job == null) break;
@@ -439,14 +438,14 @@ public class MessageBusImpl implements MessageBus {
         job.connection.deliverMessage(job.message);
       }
       catch (Throwable e) {
-        if (exceptions == null) {
-          exceptions = new SmartList<>();
+        if (exceptions == Collections.<Throwable>emptyList()) {
+          exceptions = new ArrayList<>();
         }
         exceptions.add(e);
       }
     }
     while (true);
-    return exceptions == null ? Collections.emptyList() : exceptions;
+    return exceptions;
   }
 
   void notifyOnSubscription(@NotNull MessageBusConnectionImpl connection, @NotNull Topic<?> topic) {

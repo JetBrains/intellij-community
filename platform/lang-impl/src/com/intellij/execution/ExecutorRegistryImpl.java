@@ -122,7 +122,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry implements Disp
     ActionManager actionManager = ActionManager.getInstance();
     final DefaultActionGroup group = (DefaultActionGroup)actionManager.getAction(groupId);
     if (group != null) {
-      group.remove(actionManager.getAction(actionId));
+      group.remove(actionManager.getAction(actionId), actionManager);
       final AnAction action = map.get(actionId);
       if (action != null) {
         actionManager.unregisterAction(actionId);
@@ -233,6 +233,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry implements Disp
           if (!canRun(project, ((CompoundRunConfiguration)configuration).getConfigurationsWithEffectiveRunTargets())) {
             return false;
           }
+          continue;
         }
         ProgramRunner<?> runner = ProgramRunner.getRunner(myExecutor.getId(), configuration);
         if (runner == null

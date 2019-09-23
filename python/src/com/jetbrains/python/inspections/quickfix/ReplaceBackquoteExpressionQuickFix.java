@@ -20,6 +20,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.PyReprExpression;
 import org.jetbrains.annotations.NotNull;
@@ -40,8 +41,9 @@ public class ReplaceBackquoteExpressionQuickFix implements LocalQuickFix {
     PsiElement problemElement = descriptor.getPsiElement();
     if (problemElement instanceof PyReprExpression) {
       if (((PyReprExpression)problemElement).getExpression() != null) {
-        PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
-        problemElement.replace(elementGenerator.createExpressionFromText("repr(" + ((PyReprExpression)problemElement).getExpression().getText() + ")"));
+        final LanguageLevel level = LanguageLevel.forElement(problemElement);
+        final String text = "repr(" + ((PyReprExpression)problemElement).getExpression().getText() + ")";
+        problemElement.replace(PyElementGenerator.getInstance(project).createExpressionFromText(level, text));
       }
     }
   }

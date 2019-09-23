@@ -22,20 +22,16 @@ import com.intellij.openapi.ui.DialogWrapperDialog;
 import com.intellij.openapi.ui.DialogWrapperPeer;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.ui.popup.StackingPopupDispatcher;
-import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.DimensionService;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.WindowStateService;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameDecorator;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
+import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomFrameDialogContent;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.*;
@@ -96,10 +92,9 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
         }
       }
       if (window == null) {
-        IdeFrame[] frames = myWindowManager.getAllProjectFrames();
-        for (IdeFrame frame : frames) {
-          if (frame instanceof IdeFrameImpl && ((IdeFrameImpl)frame).isActive()) {
-            window = (IdeFrameImpl)frame;
+        for (ProjectFrameHelper frameHelper : myWindowManager.getProjectFrameHelpers()) {
+          if (frameHelper.getFrame().isActive()) {
+            window = frameHelper.getFrame();
             break;
           }
         }
@@ -158,7 +153,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
     if (!headless) {
       Dialog.ModalityType modalityType = DialogWrapper.IdeModalityType.IDE.toAwtModality();
-      if (Registry.is("ide.perProjectModality")) {
+      if (Registry.is("ide.perProjectModality", false)) {
         modalityType = ideModalityType.toAwtModality();
       }
       myDialog.setModalityType(modalityType);
@@ -386,13 +381,14 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     final JRootPane rootPane = getRootPane();
     UIUtil.decorateWindowHeader(rootPane);
 
-    if (getWindow() instanceof JDialog) {
-      UIUtil.setCustomTitleBar(getWindow(), rootPane, runnable -> Disposer.register(myWrapper.getDisposable(), () -> runnable.run()));
+    Window window = getWindow();
+    if (window instanceof JDialog && !((JDialog)window).isUndecorated()) {
+      UIUtil.setCustomTitleBar(window, rootPane, runnable -> Disposer.register(myWrapper.getDisposable(), () -> runnable.run()));
     }
 
     Container contentPane = getContentPane();
     if (IdeFrameDecorator.isCustomDecorationActive() && contentPane instanceof JComponent) {
-      setContentPane(CustomFrameDialogContent.getContent(getWindow(), (JComponent) contentPane));
+      setContentPane(CustomFrameDialogContent.getContent(window, (JComponent) contentPane));
     }
 
     anCancelAction.registerCustomShortcutSet(CommonShortcuts.ESCAPE, rootPane);
@@ -410,7 +406,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
                                   && !isProgressDialog(); // ProgressWindow starts a modality state itself
     Project project = myProject;
 
-    boolean perProjectModality = Registry.is("ide.perProjectModality");
+    boolean perProjectModality = Registry.is("ide.perProjectModality", false);
     if (changeModalityState) {
       commandProcessor.enterModal();
       if (perProjectModality) {
@@ -534,9 +530,9 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       myDialogWrapper = new WeakReference<>(dialogWrapper);
       myProject = project != null ? new WeakReference<>(project) : null;
 
-      setFocusTraversalPolicy(new LayoutFocusTraversalPolicyExt() {
+      setFocusTraversalPolicy(new LayoutFocusTraversalPolicy() {
         @Override
-        protected boolean accept(Component aComponent) {
+        public boolean accept(Component aComponent) {
           if (UIUtil.isFocusProxy(aComponent)) return false;
           return super.accept(aComponent);
         }
@@ -665,9 +661,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
         if (myDimensionServiceKey != null) {
           final Project projectGuess = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(this));
           location = getWindowStateService(projectGuess).getLocation(myDimensionServiceKey);
-          if (location == null) location = DimensionService.getInstance().getLocation(myDimensionServiceKey, projectGuess);
           Dimension size = getWindowStateService(projectGuess).getSize(myDimensionServiceKey);
-          if (size == null) size = DimensionService.getInstance().getSize(myDimensionServiceKey, projectGuess);
           if (size != null) {
             myInitialSize = new Dimension(size);
             _setSizeForLocation(myInitialSize.width, myInitialSize.height, location);
@@ -696,7 +690,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
         setBounds(bounds);
       }
 
-      if (Registry.is("actionSystem.fixLostTyping")) {
+      if (Registry.is("actionSystem.fixLostTyping", true)) {
         final IdeEventQueue queue = IdeEventQueue.getInstance();
         if (queue != null) {
           queue.getKeyEventDispatcher().resetState();
@@ -705,7 +699,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       }
 
       // Workaround for switching workspaces on dialog show
-      if (SystemInfo.isMac && myProject != null && Registry.is("ide.mac.fix.dialog.showing") && !dialogWrapper.isModalProgress()) {
+      if (SystemInfo.isMac && myProject != null && Registry.is("ide.mac.fix.dialog.showing", false) && !dialogWrapper.isModalProgress()) {
         final IdeFrame frame = WindowManager.getInstance().getIdeFrame(myProject.get());
         AppIcon.getInstance().requestFocus(frame);
       }
@@ -751,8 +745,6 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       DialogWrapper wrapper = getDialogWrapper();
       if (wrapper != null) wrapper.disposeIfNeeded();
 
-      DialogWrapper.cleanupWindowListeners(this);
-
       final BufferStrategy strategy = getBufferStrategy();
       if (strategy != null) {
         strategy.dispose();
@@ -761,6 +753,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
       removeAll();
       DialogWrapper.cleanupRootPane(rootPane);
+      DialogWrapper.cleanupWindowListeners(this);
       rootPane = null;
 
     }
@@ -814,12 +807,10 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
           // Save location
           Point location = getLocation();
           getWindowStateService(projectGuess).putLocation(myDimensionServiceKey, location);
-          DimensionService.getInstance().setLocation(myDimensionServiceKey, location, projectGuess);
           // Save size
           Dimension size = getSize();
           if (!myInitialSize.equals(size)) {
             getWindowStateService(projectGuess).putSize(myDimensionServiceKey, size);
-            DimensionService.getInstance().setSize(myDimensionServiceKey, size, projectGuess);
           }
           myOpened = false;
         }

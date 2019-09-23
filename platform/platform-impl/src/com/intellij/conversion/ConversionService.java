@@ -19,13 +19,10 @@ public abstract class ConversionService {
   }
 
   @NotNull
-  public abstract ConversionResult convertSilently(@NotNull Path projectPath);
-
-  @NotNull
   public abstract ConversionResult convertSilently(@NotNull Path projectPath, @NotNull ConversionListener conversionListener);
 
   @NotNull
-  public abstract ConversionResult convert(@NotNull Path projectPath);
+  public abstract ConversionResult convert(@NotNull Path projectPath) throws CannotConvertException;
 
   @NotNull
   public abstract ConversionResult convertModule(@NotNull Project project, @NotNull Path moduleFile);

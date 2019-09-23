@@ -142,6 +142,9 @@ public class GitRebaseUtils {
         case GRAFTING:
           message = "There is an unfinished cherry-pick process" + in + ".<br/>You should finish it before starting a rebase.";
           break;
+        case REVERTING:
+          message = "There is an unfinished revert process" + in + ".<br/>You should finish it before starting a rebase.";
+          break;
         case DETACHED:
           message = "You are in the detached HEAD state" + in + ".<br/>Rebase is not possible.";
           break;

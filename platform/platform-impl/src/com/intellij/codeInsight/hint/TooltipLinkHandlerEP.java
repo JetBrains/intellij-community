@@ -1,19 +1,20 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hint;
 
 import com.intellij.codeInsight.highlighting.TooltipLinkHandler;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.extensions.AbstractExtensionPointBean;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.util.LazyInstance;
+import com.intellij.serviceContainer.BaseKeyedLazyInstance;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
+
 /**
  * @author peter
  */
-public class TooltipLinkHandlerEP extends AbstractExtensionPointBean {
+public final class TooltipLinkHandlerEP extends BaseKeyedLazyInstance<TooltipLinkHandler> {
   public static final ExtensionPointName<TooltipLinkHandlerEP> EP_NAME = ExtensionPointName.create("com.intellij.codeInsight.linkHandler");
 
   @Attribute("prefix")
@@ -22,42 +23,41 @@ public class TooltipLinkHandlerEP extends AbstractExtensionPointBean {
   @Attribute("handlerClass")
   public String handlerClassName;
 
-  private final LazyInstance<TooltipLinkHandler> myHandler = new LazyInstance<TooltipLinkHandler>() {
-    @Override
-    protected Class<TooltipLinkHandler> getInstanceClass() {
-      return findExtensionClass(handlerClassName);
-    }
-  };
+  @Nullable
+  @Override
+  protected String getImplementationClassName() {
+    return handlerClassName;
+  }
 
   public static boolean handleLink(@NotNull final String ref, @NotNull final Editor editor) {
-    for (final TooltipLinkHandlerEP handlerEP : EP_NAME.getExtensionList()) {
-      if (ref.startsWith(handlerEP.prefix)) {
-        final String refSuffix = ref.substring(handlerEP.prefix.length());
-        return handlerEP.myHandler.getValue().handleLink(refSuffix.replaceAll("<br/>", "\n"), editor);
+    return EP_NAME.computeSafeIfAny(ep -> {
+      if (ref.startsWith(ep.prefix)) {
+        String refSuffix = ref.substring(ep.prefix.length());
+        return ep.getInstance().handleLink(refSuffix.replaceAll("<br/>", "\n"), editor);
       }
-    }
-    return false;
+      return null;
+    }) == Boolean.TRUE;
   }
 
   @Nullable
   public static String getDescription(@NotNull final String ref, @NotNull final Editor editor) {
-    for (final TooltipLinkHandlerEP handlerEP : EP_NAME.getExtensionList()) {
-      if (ref.startsWith(handlerEP.prefix)) {
-        final String refSuffix = ref.substring(handlerEP.prefix.length());
-        return handlerEP.myHandler.getValue().getDescription(refSuffix, editor);
+    return EP_NAME.computeSafeIfAny(ep -> {
+      if (ref.startsWith(ep.prefix)) {
+        String refSuffix = ref.substring(ep.prefix.length());
+        return ep.getInstance().getDescription(refSuffix, editor);
       }
-    }
-    return null;
+      return null;
+    });
   }
 
   @NotNull
   public static String getDescriptionTitle(@NotNull String ref, @NotNull Editor editor) {
-    for (final TooltipLinkHandlerEP handlerEP : EP_NAME.getExtensionList()) {
-      if (ref.startsWith(handlerEP.prefix)) {
-        final String refSuffix = ref.substring(handlerEP.prefix.length());
-        return handlerEP.myHandler.getValue().getDescriptionTitle(refSuffix, editor);
+    return Objects.requireNonNull(EP_NAME.computeSafeIfAny(ep -> {
+      if (ref.startsWith(ep.prefix)) {
+        String refSuffix = ref.substring(ep.prefix.length());
+        return ep.getInstance().getDescriptionTitle(refSuffix, editor);
       }
-    }
-    return TooltipLinkHandler.INSPECTION_INFO;
+      return TooltipLinkHandler.INSPECTION_INFO;
+    }));
   }
 }

@@ -15,13 +15,13 @@ import java.util.*
 
 private val LOG = logger<DefaultKeymap>()
 
-open class DefaultKeymap @JvmOverloads constructor(providers: List<BundledKeymapProvider> = BundledKeymapProvider.EP_NAME.extensionList) {
+open class DefaultKeymap {
   private val myKeymaps = ArrayList<Keymap>()
 
   private val nameToScheme = THashMap<String, Keymap>()
 
   init {
-    for (provider in providers) {
+    for (provider in BundledKeymapProvider.EP_NAME.extensionList) {
       for (fileName in provider.keymapFileNames) {
         LOG.runAndLogException {
           loadKeymapsFromElement(object: SchemeDataHolder<KeymapImpl> {

@@ -3,14 +3,12 @@ package com.intellij.ide.plugins;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.LightColors;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -39,12 +37,10 @@ public class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, St
   private static final InstalledPluginsState ourState = InstalledPluginsState.getInstance();
 
   private final int columnIdx;
-  private final PluginTableModel myModel;
 
-  public PluginManagerColumnInfo(int columnIdx, PluginTableModel model) {
+  public PluginManagerColumnInfo(int columnIdx) {
     super(COLUMNS[columnIdx]);
     this.columnIdx = columnIdx;
-    myModel = model;
   }
 
   @Override
@@ -78,104 +74,13 @@ public class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, St
     }
   }
 
-  protected boolean isSortByName() {
-    return !isSortByDate() && !isSortByDownloads() && !isSortByStatus();
-  }
-
-  protected boolean isSortByDownloads() {
-    return myModel.isSortByDownloads();
-  }
-
-  protected boolean isSortByDate() {
-    return myModel.isSortByUpdated();
-  }
-
-  protected boolean isSortByStatus() {
-    return myModel.isSortByStatus();
-  }
-
-  public static boolean isDownloaded(@NotNull PluginNode node) {
-    if (node.getStatus() == PluginNode.Status.DOWNLOADED) return true;
-    final PluginId pluginId = node.getPluginId();
-    if (PluginManager.isPluginInstalled(pluginId)) {
-      return false;
-    }
-    return ourState.wasInstalled(pluginId);
-  }
-
   @Override
   public Comparator<IdeaPluginDescriptor> getComparator() {
-    final Comparator<IdeaPluginDescriptor> comparator = getColumnComparator();
-    if (isSortByStatus()) {
-      final RowSorter.SortKey defaultSortKey = myModel.getDefaultSortKey();
-      final int up = defaultSortKey != null && defaultSortKey.getSortOrder() == SortOrder.ASCENDING ? -1 : 1;
-      return (o1, o2) -> {
-        if (o1 instanceof PluginNode && o2 instanceof PluginNode) {
-          final PluginNode.Status status1 = ((PluginNode)o1).getStatus();
-          final PluginNode.Status status2 = ((PluginNode)o2).getStatus();
-          if (isDownloaded((PluginNode)o1)){
-            if (!isDownloaded((PluginNode)o2)) return up;
-            return comparator.compare(o1, o2);
-          }
-          if (isDownloaded((PluginNode)o2)) return -up;
-
-          if (status1 == PluginNode.Status.DELETED) {
-            if (status2 != PluginNode.Status.DELETED) return up;
-            return comparator.compare(o1, o2);
-          }
-          if (status2 == PluginNode.Status.DELETED) return -up;
-
-          if (status1 == PluginNode.Status.INSTALLED) {
-            if (status2 != PluginNode.Status.INSTALLED) return up;
-            final boolean hasNewerVersion1 = ourState.hasNewerVersion(o1.getPluginId());
-            final boolean hasNewerVersion2 = ourState.hasNewerVersion(o2.getPluginId());
-            if (hasNewerVersion1 != hasNewerVersion2) {
-              if (hasNewerVersion1) return up;
-              return -up;
-            }
-            return comparator.compare(o1, o2);
-          }
-          if (status2 == PluginNode.Status.INSTALLED) {
-            return -up;
-          }
-        }
-        return comparator.compare(o1, o2);
-      };
-    }
-
-    return comparator;
+    return getColumnComparator();
   }
 
   protected Comparator<IdeaPluginDescriptor> getColumnComparator() {
     return (o1, o2) -> {
-      if (myModel.isSortByRating()) {
-        final String rating1 = ((PluginNode)o1).getRating();
-        final String rating2 = ((PluginNode)o2).getRating();
-        final int compare = Comparing.compare(rating2, rating1);
-        if (compare != 0) {
-          return compare;
-        }
-      }
-
-      if (isSortByDate()) {
-        long date1 = (o1 instanceof PluginNode) ? ((PluginNode)o1).getDate() : 0;
-        long date2 = (o2 instanceof PluginNode) ? ((PluginNode)o2).getDate() : 0;
-        date1 /= 60 * 1000;
-        date2 /= 60 * 1000;
-        if (date2 != date1) {
-          return date2 - date1 > 0L ? 1 : -1;
-        }
-      }
-
-      if (isSortByDownloads()) {
-        String d1 = o1 instanceof PluginNode ? ((PluginNode)o1).getDownloads() : null;
-        String d2 = o2 instanceof PluginNode ? ((PluginNode)o2).getDownloads() : null;
-        Long count1 = d1 == null ? 0 : Long.valueOf(d1);
-        Long count2 = d2 == null ? 0 : Long.valueOf(d2);
-        int result = count2.compareTo(count1);
-        if (result != 0) return result;
-      }
-
       return StringUtil.compare(o1.getName(), o2.getName(), true);
     };
   }

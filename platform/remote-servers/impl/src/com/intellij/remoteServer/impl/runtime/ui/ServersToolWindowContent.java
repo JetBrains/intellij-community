@@ -106,18 +106,6 @@ public class ServersToolWindowContent extends JPanel implements Disposable, Serv
   private final Splitter mySplitter;
 
   /**
-   * Left for compatibility with 172 stream, will be removed after 173.
-   * Every remoteServers-like view is now expected to explicitly specify its set if Action Group IDs using
-   * {@link #ServersToolWindowContent(Project, RemoteServersViewContribution, ActionGroups)}
-   *
-   * @deprecated
-   */
-  @Deprecated
-  public ServersToolWindowContent(@NotNull Project project, @NotNull RemoteServersViewContribution contribution) {
-    this(project, contribution, ActionGroups.SHARED_ACTION_GROUPS);
-  }
-
-  /**
    * @param actionGroups allows to customize action groups bound to view toolbars and tree' poup menu.
    *                     Use {@link ActionGroups#SHARED_ACTION_GROUPS} to use a predefined action groups.
    */

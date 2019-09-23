@@ -5,7 +5,6 @@ import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.LowMemoryWatcherManager;
-import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -17,22 +16,18 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.*;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Consumer;
 
 /**
  * A ThreadPoolExecutor which also implements {@link ScheduledExecutorService} by awaiting scheduled tasks in a separate thread
  * and then executing them in the owned ThreadPoolExecutor.
  * Unlike the existing {@link ScheduledThreadPoolExecutor}, this pool is unbounded.
  */
-public class AppScheduledExecutorService extends SchedulingWrapper {
+public final class AppScheduledExecutorService extends SchedulingWrapper {
   static final String POOLED_THREAD_PREFIX = "ApplicationImpl pooled thread ";
   @NotNull private final String myName;
   private final LowMemoryWatcherManager myLowMemoryWatcherManager;
   private final MyThreadFactory myCountingThreadFactory;
-
-  @NotNull
-  private static Logger getLogger() {
-    return Logger.getInstance("#org.jetbrains.ide.PooledThreadExecutor");
-  }
 
   private static class Holder {
     private static final AppScheduledExecutorService INSTANCE = new AppScheduledExecutorService("Global instance");
@@ -55,7 +50,7 @@ public class AppScheduledExecutorService extends SchedulingWrapper {
 
       Consumer<? super Thread> listener = newThreadListener;
       if (listener != null) {
-        listener.consume(thread);
+        listener.accept(thread);
       }
       return thread;
     }
@@ -126,12 +121,9 @@ public class AppScheduledExecutorService extends SchedulingWrapper {
     return ((BackendThreadPoolExecutor)backendExecutorService).getPoolSize();
   }
 
+  @TestOnly
   void setBackendPoolCorePoolSize(int size) {
     ((BackendThreadPoolExecutor)backendExecutorService).superSetCorePoolSize(size);
-  }
-
-  int getBackendPoolCorePoolSize() {
-    return ((BackendThreadPoolExecutor)backendExecutorService).getCorePoolSize();
   }
 
   static class BackendThreadPoolExecutor extends ThreadPoolExecutor {
@@ -140,22 +132,9 @@ public class AppScheduledExecutorService extends SchedulingWrapper {
     }
 
     @Override
-    protected void beforeExecute(Thread t, Runnable r) {
-      Logger logger = getLogger();
-      if (logger.isTraceEnabled()) {
-        logger.trace("beforeExecute " + BoundedTaskExecutor.info(r) + " in " + t);
-      }
-    }
-
-    @Override
     protected void afterExecute(Runnable r, Throwable t) {
-      Logger logger = getLogger();
-      if (logger.isTraceEnabled()) {
-        logger.trace("afterExecute  " + BoundedTaskExecutor.info(r) + " in " + Thread.currentThread());
-      }
-
       if (t != null) {
-        logger.error("Worker exited due to exception", t);
+        Logger.getInstance("#com.intellij.util.concurrency.SchedulingWrapper").error("Worker exited due to exception", t);
       }
     }
 

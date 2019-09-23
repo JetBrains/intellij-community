@@ -34,10 +34,21 @@ public abstract class TerminalPipe extends LogPipeBase {
 
   @Override
   public void open() {
-    myTerminalListener = myLoggingHandler.createTerminal(myLogPipeName, getOutputStream(), getInputStream(), getStderr());
+    myTerminalListener =
+      myLoggingHandler.createTerminal(myLogPipeName, getOutputStream(), getInputStream(), getStderr());
     if (myTerminalListener == null) {
       myTerminalListener = TerminalListener.NULL;
     }
+    myTerminalListener.setTtyResizeHandler(getTtyResizeHandler());
+    hookTerminal(myTerminalListener);
+  }
+
+  protected void hookTerminal(TerminalListener terminal) {
+    //
+  }
+
+  protected TerminalListener.TtyResizeHandler getTtyResizeHandler() {
+    return null;
   }
 
   protected InputStream getStderr() {

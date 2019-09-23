@@ -27,6 +27,7 @@ internal abstract class GitAbortOperationAction(repositoryState: Repository.Stat
 
   class Merge : GitAbortOperationAction(Repository.State.MERGING, "merge", GitCommand.MERGE)
   class CherryPick : GitAbortOperationAction(Repository.State.GRAFTING, "cherry-pick", GitCommand.CHERRY_PICK)
+  class Revert : GitAbortOperationAction(Repository.State.REVERTING, "revert", GitCommand.REVERT)
 
   override fun performInBackground(repository: GitRepository) {
     if (!confirmAbort(repository)) return

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing;
 
 import com.intellij.lang.FileASTNode;
@@ -30,7 +16,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.LanguageSubstitutors;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -43,10 +32,7 @@ import java.nio.charset.Charset;
  *
  * Class is not final since it is overridden in Upsource
  */
-public class FileContentImpl extends UserDataHolderBase implements PsiDependentFileContent {
-  private final VirtualFile myFile;
-  private final String myFileName;
-  private final FileType myFileType;
+public class FileContentImpl extends IndexedFileImpl implements PsiDependentFileContent {
   private Charset myCharset;
   private byte[] myContent;
   private CharSequence myContentAsText;
@@ -72,19 +58,11 @@ public class FileContentImpl extends UserDataHolderBase implements PsiDependentF
                           byte[] content,
                           long stamp,
                           boolean physicalContent) {
-    myFile = file;
+    super(file, FileTypeRegistry.getInstance().getFileTypeByFile(file, content));
     myContentAsText = contentAsText;
     myContent = content;
-    myFileType = FileTypeRegistry.getInstance().getFileTypeByFile(file, content);
-    // remember name explicitly because the file could be renamed afterwards
-    myFileName = file.getName();
     myStamp = stamp;
     myPhysicalContent = physicalContent;
-  }
-
-  @Override
-  public Project getProject() {
-    return getUserData(IndexingDataKeys.PROJECT);
   }
 
   private static final Key<PsiFile> CACHED_PSI = Key.create("cached psi from content");
@@ -143,7 +121,7 @@ public class FileContentImpl extends UserDataHolderBase implements PsiDependentF
   public static PsiFile createFileFromText(@NotNull Project project, @NotNull CharSequence text, @NotNull LanguageFileType fileType,
                                            @NotNull VirtualFile file, @NotNull String fileName) {
     final Language language = fileType.getLanguage();
-    final Language substitutedLanguage = LanguageSubstitutors.INSTANCE.substituteLanguage(language, file, project);
+    final Language substitutedLanguage = LanguageSubstitutors.getInstance().substituteLanguage(language, file, project);
     PsiFile psiFile = PsiFileFactory.getInstance(project).createFileFromText(fileName, substitutedLanguage, text, false, false, false, file);
     if (psiFile == null) {
       throw new IllegalStateException("psiFile is null. language = " + language.getID() +

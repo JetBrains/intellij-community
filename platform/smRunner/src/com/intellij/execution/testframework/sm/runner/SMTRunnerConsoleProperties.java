@@ -78,6 +78,15 @@ public class SMTRunnerConsoleProperties extends TestConsoleProperties implements
     myCustomFilter = new CompositeFilter(project);
   }
 
+  /**
+   * If enabled, runner must add new line char (\n) before each TC message. This char is not reported to user.
+   * @deprecated Fix your runner and stop adding "\n" before TC message.
+   */
+  @Deprecated
+  public boolean serviceMessageHasNewLinePrefix() {
+    return false;
+  }
+
   @NotNull
   private static Storage.PropertiesComponentStorage getStorage(String testFrameworkName) {
     return new Storage.PropertiesComponentStorage(testFrameworkName + "Support.", PropertiesComponent.getInstance());

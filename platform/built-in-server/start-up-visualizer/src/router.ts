@@ -28,6 +28,11 @@ const routes: Array<RouteConfig> = [
     component: () => import(/* webpackMode: "eager" */ "@/timeline/TimelineChart.vue"),
   },
   {
+    path: `/serviceTimeline`,
+    name: "Service Timeline",
+    component: () => import(/* webpackMode: "eager" */ "@/timeline/ServiceTimelineChart.vue"),
+  },
+  {
     path: "*",
     component: () => {
       Notification.error("Path not found")

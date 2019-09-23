@@ -1,50 +1,34 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-/*
- * @author max
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io.storage;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.EventDispatcher;
-import gnu.trove.THashSet;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Deque;
+import java.util.EventListener;
+import java.util.Iterator;
+import java.util.Set;
+import java.util.concurrent.ConcurrentLinkedDeque;
 
-public class HeavyProcessLatch {
+public final class HeavyProcessLatch {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.io.storage.HeavyProcessLatch");
   public static final HeavyProcessLatch INSTANCE = new HeavyProcessLatch();
 
-  private final Set<String> myHeavyProcesses = new THashSet<>();
+  private final Set<String> myHeavyProcesses = ContainerUtil.newConcurrentSet();
   private final EventDispatcher<HeavyProcessListener> myEventDispatcher = EventDispatcher.create(HeavyProcessListener.class);
 
-  private final List<Runnable> toExecuteOutOfHeavyActivity = new ArrayList<>();
+  private final Deque<Runnable> toExecuteOutOfHeavyActivity = new ConcurrentLinkedDeque<>();
 
   private HeavyProcessLatch() {
   }
 
   @NotNull
   public AccessToken processStarted(@NotNull final String operationName) {
-    synchronized (myHeavyProcesses) {
-      myHeavyProcesses.add(operationName);
-    }
+    myHeavyProcesses.add(operationName);
     myEventDispatcher.getMulticaster().processStarted();
     return new AccessToken() {
       @Override
@@ -55,21 +39,14 @@ public class HeavyProcessLatch {
   }
 
   private void processFinished(@NotNull String operationName) {
-    synchronized (myHeavyProcesses) {
-      myHeavyProcesses.remove(operationName);
-    }
+    myHeavyProcesses.remove(operationName);
     myEventDispatcher.getMulticaster().processFinished();
-    List<Runnable> toRunNow;
-    synchronized (myHeavyProcesses) {
-      if (isRunning()) {
-        toRunNow = Collections.emptyList();
-      }
-      else {
-        toRunNow = new ArrayList<>(toExecuteOutOfHeavyActivity);
-        toExecuteOutOfHeavyActivity.clear();
-      }
+    if (isRunning()) {
+      return;
     }
-    for (Runnable runnable : toRunNow) {
+
+    Runnable runnable;
+    while ((runnable = toExecuteOutOfHeavyActivity.pollFirst()) != null) {
       try {
         runnable.run();
       }
@@ -80,20 +57,23 @@ public class HeavyProcessLatch {
   }
 
   public boolean isRunning() {
-    synchronized (myHeavyProcesses) {
-      return !myHeavyProcesses.isEmpty();
-    }
+    return !myHeavyProcesses.isEmpty();
   }
 
   public String getRunningOperationName() {
-    synchronized (myHeavyProcesses) {
-      return myHeavyProcesses.isEmpty() ? null : myHeavyProcesses.iterator().next();
+    if (myHeavyProcesses.isEmpty()) {
+      return null;
+    }
+    else {
+      Iterator<String> iterator = myHeavyProcesses.iterator();
+      return iterator.hasNext() ? iterator.next() : null;
     }
   }
 
-
   public interface HeavyProcessListener extends EventListener {
-    void processStarted();
+    default void processStarted() {
+    }
+
     void processFinished();
   }
 
@@ -103,19 +83,11 @@ public class HeavyProcessLatch {
   }
 
   public void executeOutOfHeavyProcess(@NotNull Runnable runnable) {
-    boolean runNow;
-    synchronized (myHeavyProcesses) {
-      if (isRunning()) {
-        runNow = false;
-        toExecuteOutOfHeavyActivity.add(runnable);
-      }
-      else {
-        runNow = true;
-      }
+    if (isRunning()) {
+      toExecuteOutOfHeavyActivity.add(runnable);
     }
-    if (runNow) {
+    else {
       runnable.run();
     }
   }
-
 }

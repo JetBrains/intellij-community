@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
@@ -22,18 +8,16 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 /**
- * A listener for VFS events, invoked inside write-action. For a non-blocking alternative,
- * see {@link com.intellij.openapi.vfs.AsyncFileListener}.
+ * A listener for VFS events, invoked inside write-action.
+ * To register this listener, use e.g. {@code project.getMessageBus().connect(disposable).subscribe(VirtualFileManager.VFS_CHANGES, listener)}
+ *
+ * For a non-blocking alternative please see {@link com.intellij.openapi.vfs.AsyncFileListener}.
  */
 public interface BulkFileListener {
-  /**
-   * @deprecated obsolete, implement {@link BulkFileListener} directly (to be removed in IDEA 2019)
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2019")
+  /** @deprecated obsolete, implement {@link BulkFileListener} directly */
   @Deprecated
-  class Adapter implements BulkFileListener {
-
-  }
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  class Adapter implements BulkFileListener { }
 
   default void before(@NotNull List<? extends VFileEvent> events) { }
 

@@ -33,6 +33,7 @@ import java.net.NetworkInterface
 import java.net.URLConnection
 import java.util.*
 import java.util.concurrent.Future
+import java.util.function.Consumer
 
 private const val PORTS_COUNT = 20
 private const val PROPERTY_RPC_PORT = "rpc.port"
@@ -80,7 +81,7 @@ class BuiltInServerManagerImpl : BuiltInServerManager() {
       }
 
       val options = BuiltInServerOptions.getInstance()
-      val idePort = BuiltInServerManager.getInstance().port
+      val idePort = getInstance().port
       if (options.builtInServerPort != port && idePort != port) {
         return false
       }
@@ -121,28 +122,28 @@ class BuiltInServerManagerImpl : BuiltInServerManager() {
   }
 
   private fun startServerInPooledThread(): Future<*> {
-    return AppExecutorUtil.getAppExecutorService().submit {
-      try {
-        val mainServer = StartupUtil.getServer()
-        @Suppress("DEPRECATION")
-        server = when {
-          mainServer == null || mainServer.eventLoopGroup is io.netty.channel.oio.OioEventLoopGroup -> BuiltInServer.start(recommendedWorkerCount, defaultPort, PORTS_COUNT)
-          else -> BuiltInServer.start(mainServer.eventLoopGroup, false, defaultPort, PORTS_COUNT, true, null)
+    return StartupUtil.getServerFuture()
+      .thenAcceptAsync(Consumer { mainServer ->
+        try {
+          @Suppress("DEPRECATION")
+          server = when {
+            mainServer == null || mainServer.eventLoopGroup is io.netty.channel.oio.OioEventLoopGroup -> BuiltInServer.start(recommendedWorkerCount, defaultPort, PORTS_COUNT)
+            else -> BuiltInServer.start(mainServer.eventLoopGroup, false, defaultPort, PORTS_COUNT, true, null)
+          }
+          bindCustomPorts(server!!)
         }
-        bindCustomPorts(server!!)
-      }
-      catch (e: Throwable) {
-        LOG.info(e)
-        NOTIFICATION_GROUP.value.createNotification(
-          "Cannot start internal HTTP server. Git integration, JavaScript debugger and LiveEdit may operate with errors. " +
-          "Please check your firewall settings and restart " + ApplicationNamesInfo.getInstance().fullProductName,
-          NotificationType.ERROR).notify(null)
-        return@submit
-      }
+        catch (e: Throwable) {
+          LOG.info(e)
+          NOTIFICATION_GROUP.value.createNotification(
+            "Cannot start internal HTTP server. Git integration, JavaScript debugger and LiveEdit may operate with errors. " +
+            "Please check your firewall settings and restart " + ApplicationNamesInfo.getInstance().fullProductName,
+            NotificationType.ERROR).notify(null)
+          return@Consumer
+        }
 
-      LOG.info("built-in server started, port ${server!!.port}")
-      Disposer.register(ApplicationManager.getApplication(), server!!)
-    }
+        LOG.info("built-in server started, port ${server!!.port}")
+        Disposer.register(ApplicationManager.getApplication(), server!!)
+      }, AppExecutorUtil.getAppExecutorService())
   }
 
   override fun isOnBuiltInWebServer(url: Url?): Boolean {

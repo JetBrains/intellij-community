@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.search;
 
+import com.intellij.lang.LanguageMatcher;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
@@ -29,6 +16,7 @@ import com.intellij.psi.StubBasedPsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -37,24 +25,26 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.stream.Collectors;
 
+/**
+ * Restricts search to given {@code PsiElement}(s).
+ */
 public class LocalSearchScope extends SearchScope {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.search.LocalSearchScope");
+  private static final Logger LOG = Logger.getInstance(LocalSearchScope.class);
 
-  @NotNull
+  public static final LocalSearchScope EMPTY = new LocalSearchScope(PsiElement.EMPTY_ARRAY);
+
+  private final String myDisplayName;
+
   private final PsiElement[] myScope;
   private final VirtualFile[] myVirtualFiles;
   private final boolean myIgnoreInjectedPsi;
-
-  public static final LocalSearchScope EMPTY = new LocalSearchScope(PsiElement.EMPTY_ARRAY);
-  private String myDisplayName;
 
   public LocalSearchScope(@NotNull PsiElement scope) {
     this(scope, null);
   }
 
   public LocalSearchScope(@NotNull PsiElement scope, @Nullable String displayName) {
-    this(new PsiElement[]{scope});
-    myDisplayName = displayName;
+    this(new PsiElement[]{scope}, displayName);
   }
 
   public LocalSearchScope(@NotNull PsiElement[] scope) {
@@ -65,22 +55,22 @@ public class LocalSearchScope extends SearchScope {
     this(scope, displayName, false);
   }
 
-  public LocalSearchScope(@NotNull PsiElement[] scope, @Nullable final String displayName, final boolean ignoreInjectedPsi) {
+  public LocalSearchScope(@NotNull PsiElement[] scope, @Nullable String displayName, boolean ignoreInjectedPsi) {
     myIgnoreInjectedPsi = ignoreInjectedPsi;
     myDisplayName = displayName;
     Set<PsiElement> localScope = new LinkedHashSet<>(scope.length);
     Set<VirtualFile> virtualFiles = new THashSet<>(scope.length);
-    for (final PsiElement element : scope) {
+    for (PsiElement element : scope) {
       LOG.assertTrue(element != null, "null element");
       PsiFile containingFile = element.getContainingFile();
       LOG.assertTrue(containingFile != null, element.getClass().getName());
       if (element instanceof PsiFile) {
         for (PsiFile file : ((PsiFile)element).getViewProvider().getAllFiles()) {
-          if (file == null) throw new IllegalArgumentException("file "+element+" returned null in its getAllFiles()");
+          if (file == null) throw new IllegalArgumentException("file " + element + " returned null in its getAllFiles()");
           localScope.add(file);
         }
       }
-      else if (element instanceof StubBasedPsiElement || element.getTextRange() != null){
+      else if (element instanceof StubBasedPsiElement || element.getTextRange() != null) {
         localScope.add(element);
       }
       VirtualFile virtualFile = PsiUtilCore.getVirtualFile(containingFile);
@@ -121,14 +111,15 @@ public class LocalSearchScope extends SearchScope {
 
     if (other.myIgnoreInjectedPsi != myIgnoreInjectedPsi) return false;
     if (other.myScope.length != myScope.length) return false;
-    if (!Comparing.strEqual(myDisplayName, other.myDisplayName)) return false; // scopes like "Current file" and "Changed files" should be different event if empty
+    if (!Comparing.strEqual(myDisplayName, other.myDisplayName)) {
+      return false; // scopes like "Current file" and "Changed files" should be different even if empty
+    }
 
-    for (final PsiElement scopeElement : myScope) {
-      for (final PsiElement thatScopeElement : other.myScope) {
+    for (PsiElement scopeElement : myScope) {
+      for (PsiElement thatScopeElement : other.myScope) {
         if (!Comparing.equal(scopeElement, thatScopeElement)) return false;
       }
     }
-
 
     return true;
   }
@@ -136,15 +127,15 @@ public class LocalSearchScope extends SearchScope {
   @Override
   public int calcHashCode() {
     int result = 0;
-    result += myIgnoreInjectedPsi? 1 : 0;
-    for (final PsiElement element : myScope) {
+    result += myIgnoreInjectedPsi ? 1 : 0;
+    for (PsiElement element : myScope) {
       result += element.hashCode();
     }
     return result;
   }
 
   @NotNull
-  public LocalSearchScope intersectWith(@NotNull LocalSearchScope scope2){
+  public LocalSearchScope intersectWith(@NotNull LocalSearchScope scope2) {
     if (equals(scope2)) return this;
     return intersection(this, scope2);
   }
@@ -152,9 +143,9 @@ public class LocalSearchScope extends SearchScope {
   @NotNull
   private static LocalSearchScope intersection(@NotNull LocalSearchScope scope1, @NotNull LocalSearchScope scope2) {
     List<PsiElement> result = new ArrayList<>();
-    for (final PsiElement element1 : scope1.myScope) {
-      for (final PsiElement element2 : scope2.myScope) {
-        final PsiElement element = intersectScopeElements(element1, element2);
+    for (PsiElement element1 : scope1.myScope) {
+      for (PsiElement element2 : scope2.myScope) {
+        PsiElement element = intersectScopeElements(element1, element2);
         if (element != null) {
           result.add(element);
         }
@@ -199,7 +190,6 @@ public class LocalSearchScope extends SearchScope {
 
   @Override
   public String toString() {
-    //noinspection HardCodedStringLiteral
     return Arrays.stream(myScope).map(String::valueOf).collect(Collectors.joining(",", "LocalSearchScope:", ""));
   }
 
@@ -223,10 +213,10 @@ public class LocalSearchScope extends SearchScope {
     boolean[] united = new boolean[elements2.length];
     List<PsiElement> result = new ArrayList<>();
     loop1:
-    for (final PsiElement element1 : elements1) {
+    for (PsiElement element1 : elements1) {
       for (int j = 0; j < elements2.length; j++) {
-        final PsiElement element2 = elements2[j];
-        final PsiElement unionElement = scopeElementsUnion(element1, element2);
+        PsiElement element2 = elements2[j];
+        PsiElement unionElement = scopeElementsUnion(element1, element2);
         if (unionElement != null && unionElement.getContainingFile() != null) {
           result.add(unionElement);
           united[j] = true;
@@ -236,7 +226,7 @@ public class LocalSearchScope extends SearchScope {
       result.add(element1);
     }
     for (int i = 0; i < united.length; i++) {
-      final boolean b = united[i];
+      boolean b = united[i];
       if (!b) {
         result.add(elements2[i]);
       }
@@ -266,8 +256,8 @@ public class LocalSearchScope extends SearchScope {
   }
 
   @NotNull
-  @Contract(pure=true)
-  public static LocalSearchScope getScopeRestrictedByFileTypes(@NotNull final LocalSearchScope scope, @NotNull final FileType... fileTypes) {
+  @Contract(pure = true)
+  public static LocalSearchScope getScopeRestrictedByFileTypes(@NotNull LocalSearchScope scope, @NotNull FileType... fileTypes) {
     if (fileTypes.length == 0) throw new IllegalArgumentException("empty fileTypes");
     if (scope == EMPTY) {
       return EMPTY;
@@ -282,6 +272,23 @@ public class LocalSearchScope extends SearchScope {
           result.add(element);
         }
       }
+      return result.isEmpty()
+             ? EMPTY
+             : new LocalSearchScope(PsiUtilCore.toPsiElementArray(result), scope.getDisplayName(), scope.isIgnoreInjectedPsi());
+    });
+  }
+
+  @Contract(pure = true)
+  @NotNull
+  static LocalSearchScope getScopeRestrictedByFileLanguage(@NotNull LocalSearchScope scope, @NotNull LanguageMatcher matcher) {
+    if (scope == EMPTY) {
+      return EMPTY;
+    }
+    return ReadAction.compute(() -> {
+      List<PsiElement> result = ContainerUtil.filter(
+        scope.getScope(),
+        element -> matcher.matchesLanguage(element.getContainingFile().getLanguage())
+      );
       return result.isEmpty()
              ? EMPTY
              : new LocalSearchScope(PsiUtilCore.toPsiElementArray(result), scope.getDisplayName(), scope.isIgnoreInjectedPsi());

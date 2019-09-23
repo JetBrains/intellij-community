@@ -1,0 +1,9 @@
+just a text
+
+{ something }
+
+text <caret>again
+
+{ somethingelse }
+
+last text

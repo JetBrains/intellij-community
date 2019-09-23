@@ -1,8 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
-import com.intellij.CommonBundle;
 import com.intellij.diagnostic.PerformanceWatcher;
+import com.intellij.ide.IdeBundle;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationGroup;
@@ -33,11 +33,11 @@ public class DumpThreadsAction extends AnAction implements DumbAware {
   private Notification createNotification(@Nullable File file) {
     if (file != null) {
       String url = FileUtil.getUrl(file);
-      String message = CommonBundle.message("thread.dump.is.taken", url);
+      String message = IdeBundle.message("thread.dump.is.taken", url);
       return GROUP.createNotification("", message, NotificationType.INFORMATION, RevealFileAction.FILE_SELECTING_LISTENER);
     }
     else {
-      return GROUP.createNotification(CommonBundle.message("failed.to.take.thread.dump"), NotificationType.INFORMATION);
+      return GROUP.createNotification(IdeBundle.message("failed.to.take.thread.dump"), NotificationType.INFORMATION);
     }
   }
 }

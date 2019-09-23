@@ -19,6 +19,10 @@ package com.intellij.openapi.progress;
  * @author max
  */
 public interface PerformInBackgroundOption {
+  /**
+   * In this mode the corresponding {@link ProgressIndicator} will be shown in progress dialog with "Background" button.
+   * Users may send the task to background.
+   */
   PerformInBackgroundOption DEAF = () -> false;
 
   PerformInBackgroundOption ALWAYS_BACKGROUND = () -> true;

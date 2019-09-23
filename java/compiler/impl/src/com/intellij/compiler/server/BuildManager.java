@@ -27,9 +27,9 @@ import com.intellij.openapi.compiler.CompilationStatusListener;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompilerPaths;
 import com.intellij.openapi.compiler.CompilerTopics;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -108,7 +108,7 @@ import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage
 /**
  * @author Eugene Zhuravlev
  */
-public class BuildManager implements Disposable {
+public final class BuildManager implements Disposable {
   public static final Key<Boolean> ALLOW_AUTOMAKE = Key.create("_allow_automake_when_process_is_active_");
   private static final Key<Integer> COMPILER_PROCESS_DEBUG_PORT = Key.create("_compiler_process_debug_port_");
   private static final Key<String> FORCE_MODEL_LOADING_PARAMETER = Key.create(BuildParametersKeys.FORCE_MODEL_LOADING);
@@ -130,10 +130,9 @@ public class BuildManager implements Disposable {
     s -> !(StringUtil.endsWithIgnoreCase(s, IWS_EXTENSION) || StringUtil.endsWithIgnoreCase(s, IPR_EXTENSION) || StringUtil.containsIgnoreCase(s, IDEA_PROJECT_DIR_PATTERN));
 
   private final List<String> myFallbackJdkParams = new SmartList<>();
-  private final ProjectManager myProjectManager;
 
-  private final Map<TaskFuture, Project> myAutomakeFutures = Collections.synchronizedMap(new HashMap<>());
-  private final Map<String, RequestFuture> myBuildsInProgress = Collections.synchronizedMap(new HashMap<>());
+  private final Map<TaskFuture<?>, Project> myAutomakeFutures = Collections.synchronizedMap(new HashMap<>());
+  private final Map<String, RequestFuture<?>> myBuildsInProgress = Collections.synchronizedMap(new HashMap<>());
   private final Map<String, Future<Pair<RequestFuture<PreloadedProcessMessageHandler>, OSProcessHandler>>> myPreloadedBuilds = Collections.synchronizedMap(new HashMap<>());
   private final BuildProcessClasspathManager myClasspathManager = new BuildProcessClasspathManager();
   private final Executor myRequestsProcessor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor(
@@ -218,10 +217,9 @@ public class BuildManager implements Disposable {
   private final Charset mySystemCharset = CharsetToolkit.getDefaultSystemCharset();
   private volatile boolean myBuildProcessDebuggingEnabled;
 
-  public BuildManager(final ProjectManager projectManager) {
+  public BuildManager() {
     final Application application = ApplicationManager.getApplication();
     IS_UNIT_TEST_MODE = application.isUnitTestMode();
-    myProjectManager = projectManager;
 
     final String fallbackSdkHome = getFallbackSdkHome();
     if (fallbackSdkHome != null) {
@@ -229,7 +227,7 @@ public class BuildManager implements Disposable {
       myFallbackJdkParams.add("-D" + GlobalOptions.FALLBACK_JDK_VERSION + "=" + SystemInfo.JAVA_VERSION);
     }
 
-    MessageBusConnection connection = application.getMessageBus().connect();
+    MessageBusConnection connection = application.getMessageBus().connect(this);
     connection.subscribe(ProjectManager.TOPIC, new ProjectWatcher());
     connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
@@ -239,9 +237,9 @@ public class BuildManager implements Disposable {
             myUnprocessedEvents.addAll(events);
           }
           myAutomakeTrigger.execute(() -> {
-            if (!application.isDisposed()) {
+            if (!application.isDisposedOrDisposeInProgress()) {
               ReadAction.run(()-> {
-                if (application.isDisposed()) return;
+                if (application.isDisposedOrDisposeInProgress()) return;
                 final List<VFileEvent> snapshot;
                 synchronized (myUnprocessedEvents) {
                   if (myUnprocessedEvents.isEmpty()) {
@@ -316,21 +314,6 @@ public class BuildManager implements Disposable {
       }
     });
 
-    EditorFactory.getInstance().getEventMulticaster().addDocumentListener(new DocumentListener() {
-      @Override
-      public void documentChanged(@NotNull DocumentEvent e) {
-        if (Registry.is("compiler.document.save.enabled", false)) {
-          final Document document = e.getDocument();
-          if (FileDocumentManager.getInstance().isDocumentUnsaved(document)) {
-            final VirtualFile file = FileDocumentManager.getInstance().getFile(document);
-            if (file != null && file.isInLocalFileSystem()) {
-              scheduleProjectSave();
-            }
-          }
-        }
-      }
-    });
-
     ShutDownTracker.getInstance().registerShutdownTask(this::stopListening);
 
     if (!IS_UNIT_TEST_MODE) {
@@ -353,8 +336,9 @@ public class BuildManager implements Disposable {
     return FileUtil.toSystemIndependentName(home);
   }
 
-  private List<Project> getOpenProjects() {
-    final Project[] projects = myProjectManager.getOpenProjects();
+  @NotNull
+  private static List<Project> getOpenProjects() {
+    final Project[] projects = ProjectManager.getInstance().getOpenProjects();
     if (projects.length == 0) {
       return Collections.emptyList();
     }
@@ -372,7 +356,7 @@ public class BuildManager implements Disposable {
   }
 
   public static BuildManager getInstance() {
-    return ApplicationManager.getApplication().getComponent(BuildManager.class);
+    return ServiceManager.getService(BuildManager.class);
   }
 
   public void notifyFilesChanged(final Collection<? extends File> paths) {
@@ -417,7 +401,7 @@ public class BuildManager implements Disposable {
           else {
             data.addChanged(filtered);
           }
-          final RequestFuture future = myBuildsInProgress.get(entry.getKey());
+          RequestFuture<?> future = myBuildsInProgress.get(entry.getKey());
           if (future != null && !future.isCancelled() && !future.isDone()) {
             final UUID sessionId = future.getRequestID();
             final Channel channel = myMessageDispatcher.getConnectedChannel(sessionId);
@@ -535,7 +519,7 @@ public class BuildManager implements Disposable {
     }
     final List<TargetTypeBuildScope> scopes = CmdlineProtoUtil.createAllModulesScopes(false);
     final AutoMakeMessageHandler handler = new AutoMakeMessageHandler(project);
-    final TaskFuture future = scheduleBuild(
+    final TaskFuture<?> future = scheduleBuild(
       project, false, true, false, scopes, Collections.emptyList(), Collections.singletonMap(BuildParametersKeys.IS_AUTOMAKE, "true"), handler
     );
     if (future != null) {
@@ -576,7 +560,7 @@ public class BuildManager implements Disposable {
   }
 
   @Nullable
-  private Project getCurrentContextProject() {
+  private static Project getCurrentContextProject() {
     final List<Project> openProjects = getOpenProjects();
     if (openProjects.isEmpty()) {
       return null;
@@ -620,12 +604,12 @@ public class BuildManager implements Disposable {
   }
 
   @NotNull
-  public Collection<TaskFuture> cancelAutoMakeTasks(@NotNull Project project) {
-    final Collection<TaskFuture> futures = new SmartList<>();
+  public Collection<TaskFuture<?>> cancelAutoMakeTasks(@NotNull Project project) {
+    final Collection<TaskFuture<?>> futures = new SmartList<>();
     synchronized (myAutomakeFutures) {
-      for (Map.Entry<TaskFuture, Project> entry : myAutomakeFutures.entrySet()) {
+      for (Map.Entry<TaskFuture<?>, Project> entry : myAutomakeFutures.entrySet()) {
         if (entry.getValue().equals(project)) {
-          final TaskFuture future = entry.getKey();
+          TaskFuture<?> future = entry.getKey();
           future.cancel(false);
           futures.add(future);
         }
@@ -689,7 +673,7 @@ public class BuildManager implements Disposable {
   }
 
   @Nullable
-  public TaskFuture scheduleBuild(
+  public TaskFuture<?> scheduleBuild(
     final Project project, final boolean isRebuild, final boolean isMake,
     final boolean onlyCheckUpToDate, final List<TargetTypeBuildScope> scopes,
     final Collection<String> paths,
@@ -730,7 +714,7 @@ public class BuildManager implements Disposable {
                                                                                                                                  sessionId,
                                                                                                                                  new CancelBuildSessionAction<>());
       // futures we need to wait for: either just "future" or both "future" and "buildFuture" below
-      TaskFuture[] delegatesToWait = {future};
+      TaskFuture<?>[] delegatesToWait = {future};
 
       if (!usingPreloadedProcess && (future.isCancelled() || project.isDisposed())) {
         // in case of preloaded process the process was already running, so the handler will be notified upon process termination
@@ -1171,6 +1155,12 @@ public class BuildManager implements Disposable {
       }
     }
 
+    if (Registry.is("compiler.build.portable.caches")) {
+      cmdLine.addParameter("-Didea.resizeable.file.truncate.on.close=true");
+      cmdLine.addParameter("-Dkotlin.jps.non.caching.storage=true");
+      cmdLine.addParameter("-Dorg.jetbrains.jps.portable.caches=true");
+    }
+
     // javac's VM should use the same default locale that IDEA uses in order for javac to print messages in 'correct' language
     cmdLine.setCharset(mySystemCharset);
     cmdLine.addParameter("-D" + CharsetToolkit.FILE_ENCODING_PROPERTY + "=" + mySystemCharset.name());
@@ -1381,7 +1371,7 @@ public class BuildManager implements Disposable {
     BuiltInServerManager builtInServerManager = BuiltInServerManager.getInstance();
     builtInServerManager.waitForStart();
     ServerBootstrap bootstrap = ((BuiltInServerManagerImpl)builtInServerManager).createServerBootstrap();
-    bootstrap.childHandler(new ChannelInitializer() {
+    bootstrap.childHandler(new ChannelInitializer<Channel>() {
       @Override
       protected void initChannel(@NotNull Channel channel) {
         channel.pipeline().addLast(myChannelRegistrar,
@@ -1689,7 +1679,7 @@ public class BuildManager implements Disposable {
     @Override
     public void projectClosing(@NotNull Project project) {
       cancelPreloadedBuilds(getProjectPath(project));
-      for (TaskFuture future : cancelAutoMakeTasks(project)) {
+      for (TaskFuture<?> future : cancelAutoMakeTasks(project)) {
         future.waitFor(500, TimeUnit.MILLISECONDS);
       }
     }
@@ -1853,12 +1843,12 @@ public class BuildManager implements Disposable {
 
   private static final class DelegateFuture implements TaskFuture {
     @Nullable
-    private TaskFuture[] myDelegates;
+    private TaskFuture<?>[] myDelegates;
     private Boolean myRequestedCancelState;
 
     @NotNull
-    private synchronized TaskFuture[] getDelegates() {
-      TaskFuture[] delegates = myDelegates;
+    private synchronized TaskFuture<?>[] getDelegates() {
+      TaskFuture<?>[] delegates = myDelegates;
       while (delegates == null) {
         try {
           wait();
@@ -1870,12 +1860,12 @@ public class BuildManager implements Disposable {
       return delegates;
     }
 
-    private synchronized boolean setDelegates(@NotNull TaskFuture... delegates) {
+    private synchronized boolean setDelegates(@NotNull TaskFuture<?>... delegates) {
       if (myDelegates == null) {
         try {
           myDelegates = delegates;
           if (myRequestedCancelState != null) {
-            for (TaskFuture delegate : delegates) {
+            for (TaskFuture<?> delegate : delegates) {
               delegate.cancel(myRequestedCancelState);
             }
           }
@@ -1890,7 +1880,7 @@ public class BuildManager implements Disposable {
 
     @Override
     public synchronized boolean cancel(boolean mayInterruptIfRunning) {
-      Future[] delegates = myDelegates;
+      Future<?>[] delegates = myDelegates;
       if (delegates == null) {
         myRequestedCancelState = mayInterruptIfRunning;
         return true;
@@ -1912,7 +1902,7 @@ public class BuildManager implements Disposable {
 
     @Override
     public boolean isCancelled() {
-      final Future[] delegates;
+      final Future<?>[] delegates;
       synchronized (this) {
         delegates = myDelegates;
         if (delegates == null) {
@@ -1924,7 +1914,7 @@ public class BuildManager implements Disposable {
 
     @Override
     public boolean isDone() {
-      final Future[] delegates;
+      final Future<?>[] delegates;
       synchronized (this) {
         delegates = myDelegates;
         if (delegates == null) {
@@ -1936,7 +1926,7 @@ public class BuildManager implements Disposable {
 
     @Override
     public Object get() throws InterruptedException, java.util.concurrent.ExecutionException {
-      for (Future delegate : getDelegates()) {
+      for (Future<?> delegate : getDelegates()) {
         delegate.get();
       }
       return null;
@@ -1944,7 +1934,7 @@ public class BuildManager implements Disposable {
 
     @Override
     public Object get(long timeout, @NotNull TimeUnit unit) throws InterruptedException, java.util.concurrent.ExecutionException, TimeoutException {
-      for (Future delegate : getDelegates()) {
+      for (Future<?> delegate : getDelegates()) {
         delegate.get(timeout, unit);
       }
       return null;
@@ -1956,6 +1946,26 @@ public class BuildManager implements Disposable {
     public void cancel(RequestFuture<T> future) {
       myMessageDispatcher.cancelSession(future.getRequestID());
       notifySessionTerminationIfNeeded(future.getRequestID(), null);
+    }
+  }
+
+  static final class MyDocumentListener implements DocumentListener {
+    @Override
+    public void documentChanged(@NotNull DocumentEvent e) {
+      if (ApplicationManager.getApplication().isUnitTestMode() ||
+          !Registry.is("compiler.document.save.enabled", false)) {
+        return;
+      }
+
+      Document document = e.getDocument();
+      if (!FileDocumentManager.getInstance().isDocumentUnsaved(document)) {
+        return;
+      }
+
+      VirtualFile file = FileDocumentManager.getInstance().getFile(document);
+      if (file != null && file.isInLocalFileSystem()) {
+        getInstance().scheduleProjectSave();
+      }
     }
   }
 }

@@ -38,7 +38,7 @@ public final class NewFilesProcessor {
   public static String processNewFiles(@NotNull final Module module, @NotNull final String files) {
     final Sdk sdk = ModuleExtKt.getSdk(module);
     assert sdk != null : String.format("Sdk can't be null on module %s", module);
-    final PyProjectSynchronizer synchronizer = PythonRemoteInterpreterManager.getSynchronizerInstance(sdk);
+    final PyProjectSynchronizer synchronizer = PyProjectSynchronizerProvider.getSynchronizer(sdk);
 
     final String[] fileNames = ArrayUtilRt.toStringArray(StringUtil.split(files, ","));
     if (fileNames.length == 0) {
@@ -74,7 +74,7 @@ public final class NewFilesProcessor {
     final Project project = module.getProject();
     Arrays.stream(localFileNames).map(o -> fs.findFileByPath(o)).filter(o -> o != null).forEach(file -> {
 
-      final AbstractVcs<?> vcs = VcsUtil.getVcsFor(project, file);
+      final AbstractVcs vcs = VcsUtil.getVcsFor(project, file);
       if (vcs == null) {
         return;
       }

@@ -73,6 +73,7 @@ public class SearchResults implements DocumentListener {
 
   private int myLastUpdatedStamp = -1;
   private long myDocumentTimestamp;
+  private boolean myUpdating;
 
   private final Stack<Pair<FindModel, FindResult>> myCursorPositions = new Stack<>();
 
@@ -139,7 +140,9 @@ public class SearchResults implements DocumentListener {
     void searchResultsUpdated(@NotNull SearchResults sr);
     void cursorMoved();
 
-    void updateFinished();
+    default void updateFinished() {}
+    default void beforeSelectionUpdate() {}
+    default void afterSelectionUpdate() {}
   }
   public void addListener(@NotNull SearchResultsListener srl) {
     myListeners.add(srl);
@@ -320,6 +323,7 @@ public class SearchResults implements DocumentListener {
     if (editor != getEditor() || myDisposed || editor.isDisposed()) {
       return;
     }
+    setUpdating(false);
     myOccurrences = occurrences;
     final TextRange oldCursorRange = myCursor;
     Collections.sort(myOccurrences, Comparator.comparingInt(TextRange::getStartOffset));
@@ -331,14 +335,28 @@ public class SearchResults implements DocumentListener {
     notifyChanged();
     if (myCursor == null || !myCursor.equals(oldCursorRange)) {
       if (toChangeSelection) {
-        mySelectionManager.updateSelection(true, true);
+        updateSelection(true, true);
       }
       notifyCursorMoved();
     }
-    dumpIfNeeded();
+    notifyUpdateFinished();
   }
 
-  private void dumpIfNeeded() {
+  private void updateSelection(boolean removePreviousSelection, boolean removeAllPreviousSelections) {
+    for (SearchResultsListener listener : myListeners) {
+      listener.beforeSelectionUpdate();
+    }
+    try {
+      mySelectionManager.updateSelection(removePreviousSelection, removeAllPreviousSelections);
+    }
+    finally {
+      for (SearchResultsListener listener : myListeners) {
+        listener.afterSelectionUpdate();
+      }
+    }
+  }
+
+  private void notifyUpdateFinished() {
     for (SearchResultsListener listener : myListeners) {
       listener.updateFinished();
     }
@@ -608,7 +626,7 @@ public class SearchResults implements DocumentListener {
     if (next != null && !mySelectionManager.isSelected(next)) {
       retainOldSelection &= myCursor != null && mySelectionManager.isSelected(myCursor);
       myCursor = next;
-      mySelectionManager.updateSelection(!retainOldSelection, false);
+      updateSelection(!retainOldSelection, false);
       notifyCursorMoved();
     }
   }
@@ -621,5 +639,13 @@ public class SearchResults implements DocumentListener {
 
   public boolean isUpToDate() {
     return myDocumentTimestamp == myEditor.getDocument().getModificationStamp();
+  }
+
+  void setUpdating(boolean value) {
+    myUpdating = value;
+  }
+
+  public boolean isUpdating() {
+    return myUpdating;
   }
 }

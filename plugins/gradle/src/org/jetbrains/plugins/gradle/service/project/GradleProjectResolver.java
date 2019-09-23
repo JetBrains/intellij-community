@@ -28,7 +28,7 @@ import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.model.DomainObjectSet;
 import org.gradle.tooling.model.GradleProject;
 import org.gradle.tooling.model.build.BuildEnvironment;
-import org.gradle.tooling.model.gradle.GradleBuild;
+import org.gradle.tooling.model.idea.BasicIdeaProject;
 import org.gradle.tooling.model.idea.IdeaModule;
 import org.gradle.tooling.model.idea.IdeaProject;
 import org.gradle.util.GradleVersion;
@@ -184,10 +184,10 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     }
 
     executionSettings.withArgument("-Didea.sync.active=true");
-    if(resolverCtx.isPreviewMode()){
+    if (resolverCtx.isPreviewMode()) {
       executionSettings.withArgument("-Didea.isPreviewMode=true");
-      final Set<Class> previewLightWeightToolingModels = ContainerUtil.set(ExternalProjectPreview.class, GradleBuild.class);
-      projectImportAction.addProjectImportModelProvider(new ClassSetProjectImportModelProvider(previewLightWeightToolingModels));
+      final Set<Class> previewLightWeightToolingModels = ContainerUtil.set(ExternalProjectPreview.class, BasicIdeaProject.class);
+      projectImportAction.addProjectImportModelProvider(new ClassSetBuildImportModelProvider(previewLightWeightToolingModels));
     }
     if(resolverCtx.isResolveModulePerSourceSet()) {
       executionSettings.withArgument("-Didea.resolveSourceSetDependencies=true");
@@ -288,7 +288,8 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
 
     resolverCtx.checkCancelled();
     if (useCustomSerialization) {
-      allModels.initToolingSerializer();
+      assert gradleVersion != null;
+      allModels.initToolingSerializer(gradleVersion);
     }
 
     allModels.setBuildEnvironment(buildEnvironment);
@@ -298,9 +299,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     // import project data
     ProjectData projectData = tracedResolverChain.createProject();
     DataNode<ProjectData> projectDataNode = new DataNode<>(ProjectKeys.PROJECT, projectData, null);
-    DataNode<PerformanceTrace> performanceTraceNode =
-      new DataNode<>(PerformanceTrace.TRACE_NODE_KEY, performanceTrace,
-                     projectDataNode);
+    DataNode<PerformanceTrace> performanceTraceNode = new DataNode<>(PerformanceTrace.TRACE_NODE_KEY, performanceTrace, projectDataNode);
 
     projectDataNode.addChild(performanceTraceNode);
 
@@ -320,10 +319,10 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     projectDataNode.putUserData(RESOLVED_SOURCE_SETS, sourceSetsMap);
 
     final Map<String/* output path */, Pair<String /* module id*/, ExternalSystemSourceType>> moduleOutputsMap =
-      ContainerUtil.newTroveMap(FileUtil.PATH_HASHING_STRATEGY);
+      new THashMap<>(FileUtil.PATH_HASHING_STRATEGY);
     projectDataNode.putUserData(MODULES_OUTPUTS, moduleOutputsMap);
     final Map<String/* artifact path */, String /* module id*/> artifactsMap =
-      ContainerUtil.newTroveMap(FileUtil.PATH_HASHING_STRATEGY);
+      new THashMap<>(FileUtil.PATH_HASHING_STRATEGY);
     projectDataNode.putUserData(CONFIGURATION_ARTIFACTS, artifactsMap);
 
     // import modules data
@@ -414,9 +413,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     }
 
     for (GradleProjectResolverExtension resolver = tracedResolverChain; resolver != null; resolver = resolver.getNext()) {
-      if (resolver instanceof AbstractProjectResolverExtension) {
-        ((AbstractProjectResolverExtension)resolver).onResolveEnd(projectDataNode);
-      }
+      resolver.resolveFinished(projectDataNode);
     }
 
     projectDataNode.putUserData(RESOLVED_SOURCE_SETS, null);
@@ -442,41 +439,34 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     }
     CompositeBuildData compositeBuildData;
     List<IdeaModule> gradleIncludedModules = new SmartList<>();
-    List<IdeaProject> includedBuilds = allModels.getIncludedBuilds();
+    List<Build> includedBuilds = allModels.getIncludedBuilds();
     if (!includedBuilds.isEmpty()) {
       ProjectData projectData = projectDataNode.getData();
       compositeBuildData = new CompositeBuildData(projectData.getLinkedExternalProjectPath());
-      for (IdeaProject project : includedBuilds) {
-        if (!project.getModules().isEmpty()) {
-          String rootProjectName = project.getName();
+      for (Build build : includedBuilds) {
+        if (!build.getProjects().isEmpty()) {
+          IdeaProject ideaProject = allModels.getModel(build, IdeaProject.class);
+          assert ideaProject != null;
+          String rootProjectName = ideaProject.getName();
           BuildParticipant buildParticipant = new BuildParticipant();
-          gradleIncludedModules.addAll(project.getModules());
-          GradleProject gradleProject = project.getModules().getAt(0).getGradleProject();
-          String projectPath = null;
-          do {
-            try {
-              projectPath = toCanonicalPath(gradleProject.getProjectDirectory().getCanonicalPath());
-            }
-            catch (IOException e) {
-              LOG.warn("construction of the canonical path for the module fails", e);
-            }
-          }
-          while ((gradleProject = gradleProject.getParent()) != null);
-          if (projectPath != null) {
+          gradleIncludedModules.addAll(ideaProject.getModules());
+          try {
+            String projectPath = toCanonicalPath(build.getBuildIdentifier().getRootDir().getCanonicalPath());
             buildParticipant.setRootProjectName(rootProjectName);
             buildParticipant.setRootPath(projectPath);
-            for (IdeaModule module : project.getModules()) {
+            for (IdeaModule module : ideaProject.getModules()) {
               try {
-                String modulePath =
-                  toCanonicalPath(module.getGradleProject().getProjectDirectory().getCanonicalPath());
+                String modulePath = toCanonicalPath(module.getGradleProject().getProjectDirectory().getCanonicalPath());
                 buildParticipant.getProjects().add(modulePath);
               }
               catch (IOException e) {
                 LOG.warn("construction of the canonical path for the module fails", e);
               }
             }
-
             compositeBuildData.getCompositeParticipants().add(buildParticipant);
+          }
+          catch (IOException e) {
+            LOG.warn("construction of the canonical path for the module fails", e);
           }
         }
       }
@@ -512,7 +502,8 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
   }
 
   private static void extractExternalProjectModels(@NotNull ProjectImportAction.AllModels models,
-                                                   @NotNull ProjectResolverContext resolverCtx, boolean useCustomSerialization) {
+                                                   @NotNull ProjectResolverContext resolverCtx,
+                                                   boolean useCustomSerialization) {
     resolverCtx.setModels(models);
     final Class<? extends ExternalProject> modelClazz = resolverCtx.isPreviewMode() ? ExternalProjectPreview.class : ExternalProject.class;
     final ExternalProject externalRootProject = models.getModel(modelClazz);
@@ -532,8 +523,10 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
         }
       }
     }
-    for (IdeaProject project : models.getIncludedBuilds()) {
-      DomainObjectSet<? extends IdeaModule> ideaModules = project.getModules();
+    for (Build includedBuild : models.getIncludedBuilds()) {
+      IdeaProject ideaProject = models.getModel(includedBuild, IdeaProject.class);
+      assert ideaProject != null;
+      DomainObjectSet<? extends IdeaModule> ideaModules = ideaProject.getModules();
       if (ideaModules.isEmpty()) continue;
 
       GradleProject gradleProject = ideaModules.getAt(0).getGradleProject();
@@ -546,7 +539,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
         useCustomSerialization ? (DefaultExternalProject)externalIncludedRootProject
                                : new DefaultExternalProject(externalIncludedRootProject);
       wrappedExternalRootProject.getChildProjects().put(wrappedExternalIncludedRootProject.getName(), wrappedExternalIncludedRootProject);
-      String compositePrefix = project.getName();
+      String compositePrefix = ideaProject.getName();
       final Map<String, DefaultExternalProject> externalIncludedProjectsMap =
         createExternalProjectsMap(compositePrefix, wrappedExternalIncludedRootProject);
       for (IdeaModule ideaModule : ideaModules) {

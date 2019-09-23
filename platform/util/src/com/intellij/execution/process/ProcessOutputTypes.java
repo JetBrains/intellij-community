@@ -7,7 +7,7 @@ public interface ProcessOutputTypes {
   /**
    * Please use {@code ProcessOutputType.SYSTEM} instead.
    */
-  Key SYSTEM = ProcessOutputType.SYSTEM;
+  Key<?> SYSTEM = ProcessOutputType.SYSTEM;
 
   /**
    * Please use {@code ProcessOutputType.STDOUT} instead.
@@ -18,7 +18,7 @@ public interface ProcessOutputTypes {
    * instead of
    * <pre>{@code ProcessOutputTypes.STDOUT.equals(key)} or ProcessOutputTypes.STDOUT == key</pre>
    */
-  Key STDOUT = ProcessOutputType.STDOUT;
+  Key<?> STDOUT = ProcessOutputType.STDOUT;
 
   /**
    * Please use {@code ProcessOutputType.STDERR} instead.
@@ -29,5 +29,5 @@ public interface ProcessOutputTypes {
    * instead of
    * <pre>{@code ProcessOutputTypes.STDERR.equals(key)} or ProcessOutputTypes.STDERR == key</pre>
    */
-  Key STDERR = ProcessOutputType.STDERR;
+  Key<?> STDERR = ProcessOutputType.STDERR;
 }

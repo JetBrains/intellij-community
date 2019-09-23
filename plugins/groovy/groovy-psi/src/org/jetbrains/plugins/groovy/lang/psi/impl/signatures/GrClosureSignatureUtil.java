@@ -6,7 +6,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiSubstitutorImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.MethodSignature;
@@ -714,7 +713,7 @@ public class GrClosureSignatureUtil {
       initialMap.put(parameter, null);
     }
 
-    final PsiSubstitutor initialSubstitutor = PsiSubstitutorImpl.createSubstitutor(initialMap);
+    final PsiSubstitutor initialSubstitutor = PsiSubstitutor.createSubstitutor(initialMap);
 
     MultiMap<MethodSignature, PsiMethod> result = new MultiMap<>();
     for (PsiMethod method : methods) {
@@ -736,7 +735,7 @@ public class GrClosureSignatureUtil {
       for (PsiTypeParameter parameter : actual.getTypeParameters()) {
         map1.put(parameter, null);
       }
-      return PsiSubstitutorImpl.createSubstitutor(map1);
+      return PsiSubstitutor.createSubstitutor(map1);
     }
     else {
       return initialSubstitutor;

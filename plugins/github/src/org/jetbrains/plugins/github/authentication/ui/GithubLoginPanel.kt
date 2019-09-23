@@ -18,6 +18,7 @@ import org.jetbrains.plugins.github.ui.util.DialogValidationUtils
 import org.jetbrains.plugins.github.ui.util.Validator
 import org.jetbrains.plugins.github.util.GithubAsyncUtil
 import org.jetbrains.plugins.github.util.submitBackgroundTask
+import java.awt.event.ActionListener
 import java.util.concurrent.CompletableFuture
 import javax.swing.JTextField
 
@@ -139,5 +140,25 @@ class GithubLoginPanel(executorFactory: GithubApiRequestExecutor.Factory,
 
   fun setError(exception: Throwable) {
     tokenAcquisitionError = currentUi.handleAcquireError(exception)
+  }
+
+  fun setLoginListener(listener: ActionListener) {
+    passwordUi.setLoginAction(listener)
+    tokenUi.setLoginAction(listener)
+  }
+
+  fun setCancelListener(listener: ActionListener) {
+    passwordUi.setCancelAction(listener)
+    tokenUi.setCancelAction(listener)
+  }
+
+  fun setLoginButtonVisible(visible: Boolean) {
+    passwordUi.setLoginButtonVisible(visible)
+    tokenUi.setLoginButtonVisible(visible)
+  }
+
+  fun setCancelButtonVisible(visible: Boolean) {
+    passwordUi.setCancelButtonVisible(visible)
+    tokenUi.setCancelButtonVisible(visible)
   }
 }

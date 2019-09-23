@@ -2,7 +2,8 @@
   <depends optional="true" config-file="google-app-engine-maven-support.xml">org.jetbrains.idea.maven</depends>
 
   <extensionPoints>
-    <extensionPoint name="forbiddenCodeHandler" interface="com.intellij.appengine.inspections.AppEngineForbiddenCodeHandler"/>
+    <extensionPoint qualifiedName="com.intellij.appengine.forbiddenCodeHandler"
+                    interface="com.intellij.appengine.inspections.AppEngineForbiddenCodeHandler"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.intellij.appengine.sdk.AppEngineSdkManager"

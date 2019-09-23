@@ -1,6 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui;
 
+import com.google.common.hash.Hasher;
+import com.google.common.hash.Hashing;
 import com.google.gson.Gson;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.plugins.cl.PluginClassLoader;
@@ -9,6 +11,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.IconPathPatcher;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.ColorHexUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.SVGLoader;
 import com.intellij.util.ui.JBDimension;
@@ -33,6 +36,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.function.Function;
 
 import static com.intellij.util.ui.JBUI.Borders.customLine;
@@ -58,7 +62,7 @@ public class UITheme {
   private Map<String, Object> colors;
   private ClassLoader providerClassLoader = getClass().getClassLoader();
   private String editorSchemeName;
-  private SVGLoader.SvgColorPatcher colorPatcher;
+  private SVGLoader.SvgElementColorPatcherProvider colorPatcher;
 
   private UITheme() { }
 
@@ -75,7 +79,7 @@ public class UITheme {
   }
 
   @NotNull
-  public static UITheme loadFromJson(InputStream stream, @NotNull String themeId, @Nullable ClassLoader provider) throws IllegalStateException {
+  public static UITheme loadFromJson(@NotNull InputStream stream, @NotNull String themeId, @Nullable ClassLoader provider) throws IllegalStateException {
     return loadFromJson(stream, themeId, provider, s -> s);
   }
 
@@ -151,31 +155,43 @@ public class UITheme {
           }
         }
 
-        theme.colorPatcher = new SVGLoader.SvgColorPatcher() {
+        theme.colorPatcher = new SVGLoader.SvgElementColorPatcherProvider() {
+          @Nullable
           @Override
-          public void patchColors(URL url, Element svg) {
+          public SVGLoader.SvgElementColorPatcher forURL(@Nullable URL url) {
             PaletteScope scope = paletteScopeManager.getScopeByURL(url);
             if (scope == null) {
-              return;
+              return null;
             }
-            String fill = svg.getAttribute("fill");
-            if (fill != null) {
-              String newFill = scope.newPalette.get(StringUtil.toLowerCase(fill));
-              if (newFill != null) {
-                svg.setAttribute("fill", newFill);
-                if (scope.alphas.get(newFill) != null) {
-                  svg.setAttribute("fill-opacity", String.valueOf((Float.valueOf(scope.alphas.get(newFill)) / 255f)));
+
+            return new SVGLoader.SvgElementColorPatcher() {
+              @Override
+              public byte[] digest() {
+                return scope.digest();
+              }
+
+              @Override
+              public void patchColors(@NotNull Element svg) {
+                String fill = svg.getAttribute("fill");
+                if (fill != null) {
+                  String newFill = scope.newPalette.get(StringUtil.toLowerCase(fill));
+                  if (newFill != null) {
+                    svg.setAttribute("fill", newFill);
+                    if (scope.alphas.get(newFill) != null) {
+                      svg.setAttribute("fill-opacity", String.valueOf((Float.valueOf(scope.alphas.get(newFill)) / 255f)));
+                    }
+                  }
+                }
+                NodeList nodes = svg.getChildNodes();
+                int length = nodes.getLength();
+                for (int i = 0; i < length; i++) {
+                  Node item = nodes.item(i);
+                  if (item instanceof Element) {
+                    patchColors((Element)item);
+                  }
                 }
               }
-            }
-            NodeList nodes = svg.getChildNodes();
-            int length = nodes.getLength();
-            for (int i = 0; i < length; i++) {
-              Node item = nodes.item(i);
-              if (item instanceof Element) {
-                patchColors(url, (Element)item);
-              }
-            }
+            };
           }
         };
       }
@@ -282,7 +298,7 @@ public class UITheme {
     return patcher;
   }
 
-  public SVGLoader.SvgColorPatcher getColorPatcher() {
+  public SVGLoader.SvgElementColorPatcherProvider getColorPatcher() {
     return colorPatcher;
   }
 
@@ -359,8 +375,9 @@ public class UITheme {
                                          Integer.parseInt(ints.get(2)),
                                          Integer.parseInt(ints.get(3))));
         }
-        else if (ColorUtil.fromHex(value, null) != null) {
-          return asUIResource(customLine(ColorUtil.fromHex(value), 1));
+        Color color = ColorHexUtil.fromHexOrNull(value);
+        if (color != null) {
+          return asUIResource(customLine(color, 1));
         }
         else {
           return Class.forName(value).newInstance();
@@ -426,7 +443,7 @@ public class UITheme {
         return null;
       }
     }
-    Color color = ColorUtil.fromHex(value, null);
+    Color color = ColorHexUtil.fromHex(value, null);
     return color == null ? null : new ColorUIResource(color);
   }
 
@@ -463,12 +480,39 @@ public class UITheme {
   static class PaletteScope {
     final Map<String, String> newPalette = new HashMap<>();
     final Map<String, Integer> alphas = new HashMap<>();
+
+    private byte[] hash = null;
+
+    @NotNull
+    byte[] digest() {
+      if (hash != null) return hash;
+
+      final Hasher hasher = Hashing.sha256().newHasher();
+      //order is significant
+      for (Map.Entry<String, String> e : new TreeMap<>(newPalette).entrySet()) {
+        hasher.putString(e.getKey(), StandardCharsets.UTF_8);
+        hasher.putString(e.getValue(), StandardCharsets.UTF_8);
+      }
+      //order is significant
+      for (Map.Entry<String, Integer> e : new TreeMap<>(alphas).entrySet()) {
+        hasher.putString(e.getKey(), StandardCharsets.UTF_8);
+        final Integer value = e.getValue();
+        if (value != null) {
+          hasher.putInt(value);
+        }
+      }
+      hash = hasher.hash().asBytes();
+      return hash;
+    }
   }
 
   static class PaletteScopeManager {
     final PaletteScope ui = new PaletteScope();
     final PaletteScope checkBoxes = new PaletteScope();
     final PaletteScope radioButtons = new PaletteScope();
+
+    PaletteScopeManager() {
+    }
 
     PaletteScope getScope(String colorKey) {
       if (colorKey.startsWith("Checkbox.")) return checkBoxes;
@@ -481,7 +525,8 @@ public class UITheme {
       return null;
     }
 
-    PaletteScope getScopeByURL(URL url) {
+    @Nullable
+    PaletteScope getScopeByURL(@Nullable URL url) {
       if (url != null) {
         String path = url.toString();
         String file = path.substring(path.lastIndexOf('/') + 1);

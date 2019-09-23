@@ -35,7 +35,7 @@ public interface XmlElementType extends XmlTokenType {
   IElementType XML_PROLOG = new IXmlElementType("XML_PROLOG");
   IElementType XML_DECL = new IXmlElementType("XML_DECL");
   IElementType XML_DOCTYPE = new IXmlElementType("XML_DOCTYPE");
-  IElementType XML_ATTRIBUTE = new IXmlElementType("XML_ATTRIBUTE");
+  IElementType XML_ATTRIBUTE = new XmlAttributeElementType();
   IElementType XML_COMMENT = new IXmlElementType("XML_COMMENT");
   IElementType XML_TAG = new IXmlElementType("XML_TAG");
   IElementType XML_ELEMENT_DECL = new IXmlElementType("XML_ELEMENT_DECL");
@@ -94,5 +94,9 @@ public interface XmlElementType extends XmlTokenType {
       HTMLParser.parseWithoutBuildingTree(HTML_FILE, builder);
       return builder.getLightTree();
     }
+  }
+
+  final class XmlAttributeElementType extends IXmlElementType implements IXmlAttributeElementType {
+    public XmlAttributeElementType() {super("XML_ATTRIBUTE");}
   }
 }

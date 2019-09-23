@@ -22,8 +22,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class MergeApplication extends DiffApplicationBase {
-  public MergeApplication() {
+class MergeApplication extends DiffApplicationBase {
+  MergeApplication() {
     super("merge", 3, 4);
   }
 
@@ -36,8 +36,8 @@ public class MergeApplication extends DiffApplicationBase {
 
   @NotNull
   @Override
-  public Future<CliResult> processCommand(@NotNull String[] args, @Nullable String currentDirectory) throws Exception {
-    List<String> filePaths = Arrays.asList(args).subList(1, args.length);
+  public Future<CliResult> processCommand(@NotNull List<String> args, @Nullable String currentDirectory) throws Exception {
+    List<String> filePaths = args.subList(1, args.size());
     List<VirtualFile> files = findFiles(filePaths, currentDirectory);
     Project project = guessProject(files);
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -7,7 +7,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
-public class DirtBuilder implements DirtBuilderReader {
+public final class DirtBuilder implements DirtBuilderReader {
   private final FileTypeManager myFileTypeManager = FileTypeManager.getInstance();
 
   private final MultiMap<AbstractVcs, FilePath> myFiles = MultiMap.createSet();

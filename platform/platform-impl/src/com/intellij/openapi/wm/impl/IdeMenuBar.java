@@ -14,16 +14,17 @@ import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory;
 import com.intellij.openapi.actionSystem.impl.WeakTimerListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.ex.IdeFrameEx;
 import com.intellij.openapi.wm.impl.status.ClockPanel;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.mac.foundation.NSDefaults;
+import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,6 +42,7 @@ import java.awt.geom.GeneralPath;
 import java.awt.geom.RoundRectangle2D;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 /**
  * @author Anton Katilin
@@ -91,7 +93,7 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
       myButton = new MyExitFullScreenButton();
       add(myClockPanel);
       add(myButton);
-      addPropertyChangeListener(WindowManagerImpl.FULL_SCREEN, evt -> updateState());
+      addPropertyChangeListener(IdeFrameDecorator.FULL_SCREEN, evt -> updateState());
       addMouseListener(new MyMouseListener());
     }
     else {
@@ -194,8 +196,8 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
   private void updateState() {
     if (myAnimator != null) {
       Window window = SwingUtilities.getWindowAncestor(this);
-      if (window instanceof IdeFrameEx) {
-        boolean fullScreen = ((IdeFrameEx)window).isInFullScreen();
+      if (window instanceof IdeFrame) {
+        boolean fullScreen = ((IdeFrame)window).isInFullScreen();
         if (fullScreen) {
           setState(State.COLLAPSING);
           restartAnimator();
@@ -250,9 +252,22 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
     updateMenuActions();
 
     // Add updater for menus
-    ActionManager.getInstance().addTimerListener(1000, new WeakTimerListener(myTimerListener));
+    doWithLazyActionManager(actionManager -> actionManager.addTimerListener(1000, new WeakTimerListener(myTimerListener)));
     Disposer.register(ApplicationManager.getApplication(), myDisposable);
     IdeEventQueue.getInstance().addDispatcher(this, myDisposable);
+  }
+
+  private static void doWithLazyActionManager(@NotNull Consumer<ActionManager> whatToDo) {
+    ActionManager created = ServiceManager.getServiceIfCreated(ActionManager.class);
+    if (created != null) {
+      whatToDo.accept(created);
+    }
+    else {
+      NonUrgentExecutor.getInstance().execute(() -> {
+        ActionManager actionManager = ActionManager.getInstance();
+        ApplicationManager.getApplication().invokeLater(() -> whatToDo.accept(actionManager), ModalityState.any());
+      });
+    }
   }
 
   @Override
@@ -319,11 +334,15 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
   }
 
   void updateMenuActions(boolean forceRebuild) {
+    doUpdateMenuActions(forceRebuild, ActionManager.getInstance());
+  }
+
+  private void doUpdateMenuActions(boolean forceRebuild, ActionManager manager) {
     myNewVisibleActions.clear();
 
     if (!myDisabled) {
       DataContext dataContext = ((DataManagerImpl)DataManager.getInstance()).getDataContextTest(this);
-      expandActionGroup(dataContext, myNewVisibleActions, ActionManager.getInstance());
+      expandActionGroup(dataContext, myNewVisibleActions, manager);
     }
 
     if (forceRebuild || !myNewVisibleActions.equals(myVisibleActions)) {
@@ -582,9 +601,9 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
     private MyExitFullScreenButton() {
       setFocusable(false);
       addActionListener(e -> {
-        Window window = SwingUtilities.getWindowAncestor(this);
-        if (window instanceof IdeFrameEx) {
-          ((IdeFrameEx)window).toggleFullScreen(false);
+        ProjectFrameHelper frameHelper = ProjectFrameHelper.getFrameHelper(SwingUtilities.getWindowAncestor(this));
+        if (frameHelper != null) {
+          frameHelper.toggleFullScreen(false);
         }
       });
       addMouseListener(new MouseAdapter() {

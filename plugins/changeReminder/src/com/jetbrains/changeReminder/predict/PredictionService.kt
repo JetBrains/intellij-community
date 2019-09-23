@@ -5,10 +5,11 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.ChangeListAdapter
 import com.intellij.openapi.vcs.changes.ChangeListManager
-import com.intellij.openapi.vcs.changes.ChangesViewI
+import com.intellij.openapi.vcs.changes.ChangesViewManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.data.DataPackChangeListener
 import com.intellij.vcs.log.data.VcsLogData
@@ -18,10 +19,9 @@ import com.intellij.vcs.log.impl.VcsProjectLog
 import com.jetbrains.changeReminder.plugin.UserSettings
 import com.jetbrains.changeReminder.repository.FilesHistoryProvider
 
-class PredictionService(val project: Project,
-                        private val changeListManager: ChangeListManager,
-                        private val changesViewManager: ChangesViewI,
-                        private val projectLog: VcsProjectLog) : Disposable {
+class PredictionService(val project: Project) : Disposable {
+  private val changesViewManager = ChangesViewManager.getInstance(project)
+  private val changeListManager = ChangeListManager.getInstance(project)
 
   private data class PredictionRequirements(val dataManager: VcsLogData, val filesHistoryProvider: FilesHistoryProvider)
 
@@ -34,7 +34,13 @@ class PredictionService(val project: Project,
 
   // prediction contains only unmodified files
   val prediction: List<VirtualFile>
-    get() = synchronized(LOCK) { _prediction.mapNotNull { if (changeListManager.getChange(it) == null) it.virtualFile else null } }
+    get() {
+      return synchronized(LOCK) {
+        _prediction.mapNotNull {
+          if (changeListManager.getChange(it) == null) it.virtualFile else null
+        }
+      }
+    }
 
   val isReady: Boolean
     get() = synchronized(LOCK) { predictionRequirements?.dataManager?.dataPack?.isFull ?: false }
@@ -97,6 +103,8 @@ class PredictionService(val project: Project,
 
   private fun setDataManager(dataManager: VcsLogData?) {
     dataManager ?: return
+    if (predictionRequirements?.dataManager == dataManager) return
+
     dataManager.addDataPackChangeListener(dataPackChangeListener)
     dataManager.index.addListener(indexingFinishedListener)
 
@@ -118,7 +126,7 @@ class PredictionService(val project: Project,
   private fun calculatePrediction() = synchronized(LOCK) {
     setPrediction(emptyList())
     val changes = changeListManager.defaultChangeList.changes
-    if (changes.size > 25) return
+    if (changes.size > Registry.intValue("vcs.changeReminder.changes.limit")) return
     val (dataManager, filesHistoryProvider) = predictionRequirements ?: return
     if (dataManager.dataPack.isFull) {
       taskController.request(PredictionRequest(project, dataManager, filesHistoryProvider, changes))
@@ -127,7 +135,9 @@ class PredictionService(val project: Project,
 
   private fun startService() = synchronized(LOCK) {
     projectLogListenerDisposable = Disposer.newDisposable()
-    projectLog.addProjectLogListener(projectLogListener, projectLogListenerDisposable)
+    project.messageBus.connect(projectLogListenerDisposable).subscribe(VcsProjectLog.VCS_PROJECT_LOG_CHANGED, projectLogListener)
+
+    setDataManager(VcsProjectLog.getInstance(project).dataManager)
 
     changeListManager.addChangeListListener(changeListsListener)
   }

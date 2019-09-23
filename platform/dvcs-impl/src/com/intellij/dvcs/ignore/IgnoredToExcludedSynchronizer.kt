@@ -54,6 +54,7 @@ class IgnoredToExcludedSynchronizer(project: Project, parentDisposable: Disposab
   }
 
   private fun updateNotificationState() {
+    if (synchronizationTurnOff()) return
     // in case if the project roots changed (e.g. by build tools) then the directories shown in notification can be outdated.
     // filter directories which excluded or containing source roots and expire notification if needed.
     if (notificationNotPresent()) return
@@ -94,6 +95,7 @@ class IgnoredToExcludedSynchronizer(project: Project, parentDisposable: Disposab
 
   override fun updateFinished(ignoredPaths: Collection<FilePath>, isFullRescan: Boolean) {
     ProgressManager.checkCanceled()
+    if (synchronizationTurnOff()) return
     if (!isFullRescan) return
     if (!VcsConfiguration.getInstance(project).MARK_IGNORED_AS_EXCLUDED && wasAskedBefore()) return
 
@@ -110,7 +112,7 @@ class IgnoredToExcludedSynchronizer(project: Project, parentDisposable: Disposab
         //shelf directory usually contains in project and excluding it prevents local history to work on it
         .filterNot(::containsShelfDirectoryOrUnderIt)
         .mapNotNull(FilePath::getVirtualFile)
-        .filterNot(fileIndex::isExcluded)
+        .filterNot { runReadAction { fileIndex.isExcluded(it) } }
         //do not propose to exclude if there is a source root inside
         .filterNot { ignored -> sourceRoots.contains(ignored) }
         .toList()
@@ -136,6 +138,7 @@ class IgnoredToExcludedSynchronizer(project: Project, parentDisposable: Disposab
     }
   }
 
+  private fun synchronizationTurnOff() = !Registry.`is`("vcs.enable.add.ignored.directories.to.exclude", true)
   private fun allowShowNotification() = Registry.`is`("vcs.propose.add.ignored.directories.to.exclude", true)
 
   private fun getProjectSourceRoots() =

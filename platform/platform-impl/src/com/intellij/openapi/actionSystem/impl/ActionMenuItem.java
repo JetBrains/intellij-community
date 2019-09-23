@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.actionholder.ActionRef;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -104,11 +105,11 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
    */
   @Override
   public void fireActionPerformed(ActionEvent event) {
-    AnAction action = myAction.getAction();
-    if (action != null && ActionPlaces.MAIN_MENU.equals(myPlace)) {
-      MainMenuCollector.getInstance().record(action);
+    Application app = ApplicationManager.getApplication();
+    if (!app.isDisposedOrDisposeInProgress() && ActionPlaces.MAIN_MENU.equals(myPlace)) {
+      MainMenuCollector.getInstance().record(myAction.getAction());
     }
-    TransactionGuard.submitTransaction(ApplicationManager.getApplication(), () -> super.fireActionPerformed(event));
+    TransactionGuard.submitTransaction(app, () -> super.fireActionPerformed(event));
   }
 
   @Override
@@ -199,7 +200,7 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
   private void updateIcon(AnAction action) {
     if (isToggleable() && (myPresentation.getIcon() == null || myInsideCheckedGroup || !UISettings.getInstance().getShowIconsInMenus())) {
       action.update(myEvent);
-      myToggled = Boolean.TRUE.equals(myEvent.getPresentation().getClientProperty(Toggleable.SELECTED_PROPERTY));
+      myToggled = Toggleable.isSelected(myEvent.getPresentation());
       if (ActionPlaces.MAIN_MENU.equals(myPlace) && SystemInfo.isMacSystemMenu) {
         setState(myToggled);
       }

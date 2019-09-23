@@ -7,15 +7,15 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.FrameWrapper
 import com.intellij.openapi.ui.Messages
 import com.intellij.ui.components.JBLoadingPanel
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import git4idea.config.GitVcsSettings
 import git4idea.repo.GitRepository
 import git4idea.util.GitLocalCommitCompareInfo
 import java.awt.BorderLayout
-import javax.swing.Action
 import javax.swing.JComponent
 
 private val LOG = logger<ShowDiffWithBranchDialog>()
@@ -23,28 +23,35 @@ private val LOG = logger<ShowDiffWithBranchDialog>()
 internal class ShowDiffWithBranchDialog(val project: Project,
                                         val branchName: String,
                                         val repositories: List<GitRepository>,
-                                        val currentBranchName: String) : DialogWrapper(project, true) {
+                                        val currentBranchName: String
+) : FrameWrapper(project, "ShowDiffWithBranchDialog") {
+
+  private var diffPanel : CompareBranchesDiffPanel
+  private val loadingPanel: JBLoadingPanel
 
   init {
-    isModal = false
-    title = "Show Diff Between $branchName and Current Working Tree"
-    setOKButtonText("Close")
-    init()
+    setTitle("Show Diff Between $branchName and Current Working Tree")
+    closeOnEsc()
+
+    diffPanel = CompareBranchesDiffPanel(project, GitVcsSettings.getInstance(project), branchName, currentBranchName)
+    diffPanel.disableControls()
+    diffPanel.setEmptyText("")
+
+    loadingPanel = JBLoadingPanel(BorderLayout(), this).apply {
+      startLoading()
+      add(diffPanel)
+    }
+
+    val rootPanel = JBUI.Panels.simplePanel()
+    rootPanel.addToCenter(loadingPanel)
+    rootPanel.border = JBUI.Borders.empty(UIUtil.DEFAULT_VGAP, UIUtil.DEFAULT_HGAP)
+    setComponent(rootPanel)
   }
 
-  private lateinit var mainPanel : CompareBranchesDiffPanel
+  override fun show() {
+    super.show()
 
-  override fun createCenterPanel(): JComponent? {
-    mainPanel = CompareBranchesDiffPanel(project, GitVcsSettings.getInstance(project), branchName, currentBranchName)
-    mainPanel.disableControls()
-
-    val loadingPanel = JBLoadingPanel(BorderLayout(), disposable).apply {
-      startLoading()
-      add(mainPanel)
-    }
-    mainPanel.setEmptyText("")
-
-    val modalityState = ModalityState.stateForComponent(rootPane)
+    val modalityState = ModalityState.stateForComponent(diffPanel)
     ApplicationManager.getApplication().executeOnPooledThread {
       val result = loadDiff()
 
@@ -54,24 +61,18 @@ internal class ShowDiffWithBranchDialog(val project: Project,
 
           when (result) {
             is LoadingResult.Success -> {
-              mainPanel.setCompareInfo(result.compareInfo)
-              mainPanel.setEmptyText("No differences")
-              mainPanel.enableControls()
+              diffPanel.setCompareInfo(result.compareInfo)
+              diffPanel.setEmptyText("No differences")
+              diffPanel.enableControls()
             }
-            is LoadingResult.Error -> Messages.showErrorDialog(rootPane, result.error)
+            is LoadingResult.Error -> Messages.showErrorDialog(diffPanel, result.error)
           }
         }
       }
     }
-
-    return loadingPanel
   }
 
-  override fun createActions(): Array<Action> = arrayOf(okAction)
-
-  override fun getDimensionServiceKey(): String = "ShowDiffWithBranchDialog"
-
-  override fun getPreferredFocusedComponent(): JComponent = mainPanel.preferredFocusComponent
+  override fun getPreferredFocusedComponent(): JComponent = diffPanel.preferredFocusComponent
 
   private fun loadDiff() : LoadingResult {
     try {

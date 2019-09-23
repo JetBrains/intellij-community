@@ -29,6 +29,7 @@ import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.UIBundle;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBOptionButton;
 import com.intellij.ui.components.JBScrollPane;
@@ -39,6 +40,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
+import kotlin.Unit;
 import kotlin.jvm.functions.Function0;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.Nls;
@@ -303,7 +305,7 @@ public abstract class DialogWrapper {
 
   @NotNull
   protected String getDoNotShowMessage() {
-    return CommonBundle.message("dialog.options.do.not.show");
+    return UIBundle.message("dialog.options.do.not.show");
   }
 
   public void setDoNotAskOption(@Nullable DoNotAskOption doNotAsk) {
@@ -476,8 +478,8 @@ public abstract class DialogWrapper {
    * @return south panel
    */
   protected JComponent createSouthPanel() {
-    List<Action> actions = ContainerUtil.filter(createActions(), Condition.NOT_NULL);
-    List<Action> leftSideActions = ContainerUtil.filter(createLeftSideActions(), Condition.NOT_NULL);
+    List<Action> actions = ContainerUtil.filter(createActions(), Conditions.notNull());
+    List<Action> leftSideActions = ContainerUtil.filter(createLeftSideActions(), Conditions.notNull());
 
     Action helpAction = getHelpAction();
     boolean addHelpToLeftSide = false;
@@ -1318,6 +1320,10 @@ public abstract class DialogWrapper {
         DialogPanel dialogPanel = (DialogPanel)centerPanel;
         myPreferredFocusedComponentFromPanel = dialogPanel.getPreferredFocusedComponent();
         myValidateCallbacks.addAll(dialogPanel.getValidateCallbacks());
+        dialogPanel.registerValidators(myDisposable, (map) -> {
+          setOKActionEnabled(map.isEmpty());
+          return Unit.INSTANCE;
+        });
         myDialogPanel = dialogPanel;
       }
     }
@@ -2170,7 +2176,7 @@ public abstract class DialogWrapper {
       @NotNull
       @Override
       public String getDoNotShowMessage() {
-        return CommonBundle.message("dialog.options.do.not.ask");
+        return UIBundle.message("dialog.options.do.not.ask");
       }
 
       @Override

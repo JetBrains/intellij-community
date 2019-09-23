@@ -16,6 +16,7 @@
 package org.jetbrains.jps.builders.storage;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
 import org.jetbrains.jps.incremental.storage.StorageOwner;
 
 import java.io.File;
@@ -27,4 +28,9 @@ import java.io.IOException;
 public abstract class StorageProvider<S extends StorageOwner> {
   @NotNull
   public abstract S createStorage(File targetDataDir) throws IOException;
+
+  @NotNull
+  public S createStorage(File targetDataDir, PathRelativizerService relativizer) throws IOException {
+    return createStorage(targetDataDir);
+  }
 }

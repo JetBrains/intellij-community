@@ -132,26 +132,34 @@ public abstract class Compressor implements Closeable {
     }
   }
 
-  private BiPredicate<String, Boolean> myFilter = null;
+  private BiPredicate<String, File> myFilter = null;
 
   /** @deprecated use {@link #filter(BiPredicate)} instead */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
   public Compressor filter(@Nullable Condition<? super String> filter) {
-    return filter(filter != null ? (entryName, isDirectory) -> filter.value(entryName) : null);
+    myFilter = filter == null ? null : (entryName, file) -> {
+      int p = -1;
+      while ((p = entryName.indexOf('/', p + 1)) > 0) {
+        if (!filter.value(entryName.substring(0, p))) return false;
+      }
+      return filter.value(entryName);
+    };
+    return this;
   }
 
-  public Compressor filter(@Nullable BiPredicate<String, Boolean> filter) {
+  /**
+   * Allows filtering entries being added to the archive.
+   * Please note that <b>the second parameter of a filter ({@code File}) could be {@code null}</b> when the filter is applied
+   * to an entry not present on a disk - e.g. via {@link #addFile(String, byte[])}.
+   */
+  public Compressor filter(@Nullable BiPredicate<String, /*@Nullable*/ File> filter) {
     myFilter = filter;
     return this;
   }
 
   public final void addFile(@NotNull String entryName, @NotNull File file) throws IOException {
-    addFile(entryName(entryName), file, true);
-  }
-
-  private void addFile(String entryName, File file, boolean checkParents) throws IOException {
-    if (accepts(entryName, Boolean.FALSE, checkParents)) {
+    if (accepts(entryName, file)) {
       try (InputStream source = new FileInputStream(file)) {
         writeFileEntry(entryName, source, file.length(), file.lastModified());
       }
@@ -164,7 +172,7 @@ public abstract class Compressor implements Closeable {
 
   public final void addFile(@NotNull String entryName, @NotNull byte[] content, long timestamp) throws IOException {
     entryName = entryName(entryName);
-    if (accepts(entryName, Boolean.FALSE, true)) {
+    if (accepts(entryName, null)) {
       writeFileEntry(entryName, new ByteArrayInputStream(content), content.length, timestamp(timestamp));
     }
   }
@@ -175,7 +183,7 @@ public abstract class Compressor implements Closeable {
 
   public final void addFile(@NotNull String entryName, @NotNull InputStream content, long timestamp) throws IOException {
     entryName = entryName(entryName);
-    if (accepts(entryName, Boolean.FALSE, true)) {
+    if (accepts(entryName, null)) {
       writeFileEntry(entryName, content, -1, timestamp(timestamp));
     }
   }
@@ -186,7 +194,7 @@ public abstract class Compressor implements Closeable {
 
   public final void addDirectory(@NotNull String entryName, long timestamp) throws IOException {
     entryName = entryName(entryName);
-    if (accepts(entryName, Boolean.TRUE, true)) {
+    if (accepts(entryName, null)) {
       writeDirectoryEntry(entryName, timestamp(timestamp));
     }
   }
@@ -196,10 +204,7 @@ public abstract class Compressor implements Closeable {
   }
 
   public final void addDirectory(@NotNull String prefix, @NotNull File directory) throws IOException {
-    prefix = entryName(prefix);
-    if (accepts(prefix, Boolean.TRUE, true)) {
-      addRecursively(prefix, directory);
-    }
+    addRecursively(entryName(prefix), directory);
   }
 
   //<editor-fold desc="Internal interface">
@@ -215,27 +220,17 @@ public abstract class Compressor implements Closeable {
     return timestamp == -1 ? System.currentTimeMillis() : timestamp;
   }
 
-  private boolean accepts(String entryName, Boolean isDirectory, boolean checkParents) {
-    if (myFilter == null) return true;
-    if (checkParents) {
-      int p = -1;
-      while ((p = entryName.indexOf('/', p + 1)) > 0) {
-        if (!myFilter.test(entryName.substring(0, p), Boolean.TRUE)) {
-          return false;
-        }
-      }
-    }
-    return myFilter.test(entryName, isDirectory);
+  private boolean accepts(String entryName, @Nullable File file) {
+    return myFilter == null || myFilter.test(entryName, file);
   }
 
   private void addRecursively(String prefix, File directory) throws IOException {
+    if (!accepts(prefix, directory)) {
+      return;
+    }
+
     if (!prefix.isEmpty()) {
-      if (!accepts(prefix, Boolean.TRUE, false)) {
-        return;
-      }
-      else {
-        writeDirectoryEntry(prefix, directory.lastModified());
-      }
+      writeDirectoryEntry(prefix, directory.lastModified());
     }
 
     File[] children = directory.listFiles();
@@ -246,7 +241,7 @@ public abstract class Compressor implements Closeable {
           addRecursively(name, child);
         }
         else {
-          addFile(name, child, false);
+          addFile(name, child);
         }
       }
     }

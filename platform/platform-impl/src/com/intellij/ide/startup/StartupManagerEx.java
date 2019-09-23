@@ -7,8 +7,6 @@ import com.intellij.openapi.startup.StartupManager;
 public abstract class StartupManagerEx extends StartupManager {
   public abstract boolean startupActivityPassed();
 
-  public abstract boolean postStartupActivityPassed();
-
   public static StartupManagerEx getInstanceEx(Project project) {
     return (StartupManagerEx)getInstance(project);
   }

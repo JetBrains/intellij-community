@@ -13,16 +13,16 @@ import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
-import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.PsiFileImpl;
-import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.HeavyPlatformTestCase;
+import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.RunAll;
+import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 
 public class LoadProjectTest extends HeavyPlatformTestCase {
@@ -30,7 +30,7 @@ public class LoadProjectTest extends HeavyPlatformTestCase {
   protected void setUpProject() throws Exception {
     String projectPath = PathManagerEx.getTestDataPath() + "/model/model.ipr";
     myProject = ProjectManager.getInstance().loadAndOpenProject(projectPath);
-    ((ProjectImpl)getProject()).registerComponentImplementation(FileEditorManager.class, FileEditorManagerImpl.class);
+    ServiceContainerUtil.registerComponentImplementation(myProject, FileEditorManager.class, FileEditorManagerImpl.class);
   }
 
   @Override
@@ -41,8 +41,8 @@ public class LoadProjectTest extends HeavyPlatformTestCase {
     new RunAll(
       () -> ((FileEditorManagerEx)FileEditorManager.getInstance(project)).closeAllFiles(),
       () -> ProjectManagerEx.getInstanceEx().forceCloseProject(project, true),
-      () -> checkNoPsiFilesInProjectReachable(project),
-      () -> super.tearDown()).run();
+      () -> super.tearDown(),
+      () -> checkNoPsiFilesInProjectReachable(project)).run();
   }
 
   private static void checkNoPsiFilesInProjectReachable(Project project) {

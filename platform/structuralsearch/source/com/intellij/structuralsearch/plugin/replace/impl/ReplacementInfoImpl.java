@@ -2,7 +2,10 @@
 package com.intellij.structuralsearch.plugin.replace.impl;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocCommentBase;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.structuralsearch.MatchResult;
 import com.intellij.structuralsearch.StructuralSearchUtil;
 import com.intellij.structuralsearch.plugin.replace.ReplacementInfo;
@@ -16,7 +19,7 @@ import java.util.Map;
 
 class ReplacementInfoImpl implements ReplacementInfo {
   private final MatchResult matchResult;
-  private final List<SmartPsiElementPointer> matchesPtrList = new SmartList<>();
+  private final List<SmartPsiElementPointer<PsiElement>> matchesPtrList = new SmartList<>();
   private final Map<String, MatchResult> variableMap = new HashMap<>();
   private final Map<PsiElement, String> elementToVariableNameMap = new HashMap<>(1);
   private final Map<String, String> sourceNameToSearchPatternNameMap = new HashMap<>(1);
@@ -91,12 +94,10 @@ class ReplacementInfoImpl implements ReplacementInfo {
             if (i.hasNext()) {
               final MatchResult son = i.next();
 
-              if (MatchResult.LINE_MATCH.equals(son.getName()) && StructuralSearchUtil.isDocCommentOwner(son.getMatch())) {
-                element = son.getMatch();
-              } else {
+              if (!MatchResult.LINE_MATCH.equals(son.getName()) || !StructuralSearchUtil.isDocCommentOwner(son.getMatch())) {
                 matchesPtrList.add(manager.createSmartPsiElementPointer(element));
-                element = son.getMatch();
               }
+              element = son.getMatch();
             }
           }
           matchesPtrList.add(manager.createSmartPsiElementPointer(element));
@@ -122,11 +123,7 @@ class ReplacementInfoImpl implements ReplacementInfo {
     final String name = r.getName();
     if (name != null) {
       variableMap.putIfAbsent(name, r);
-
-      final PsiElement element = StructuralSearchUtil.getPresentableElement(r.getMatch());
-      if (element instanceof PsiNamedElement) {
-        sourceNameToSearchPatternNameMap.put(((PsiNamedElement)element).getName(), name);
-      }
+      sourceNameToSearchPatternNameMap.put(r.getMatchImage(), name);
     }
 
     if (!r.isScopeMatch() || !r.isMultipleMatch()) {

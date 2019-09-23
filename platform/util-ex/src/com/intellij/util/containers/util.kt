@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.containers
 
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.SmartList
 import com.intellij.util.lang.CompoundRuntimeException
 import gnu.trove.THashSet
@@ -56,6 +57,10 @@ inline fun <T, R> List<T>.computeIfAny(processor: (T) -> R): R? {
   return null
 }
 
+val <T> List<T>.tail: List<T> get() = this.subList(1, this.size)
+
+fun <T> List<T>.toHeadAndTail(): Pair<T, List<T>>? = if (this.isEmpty()) null else this.first() to this.tail
+
 fun <T> List<T>?.nullize(): List<T>? = if (isNullOrEmpty()) null else this
 
 inline fun <T> Array<out T>.forEachGuaranteed(operation: (T) -> Unit) {
@@ -80,6 +85,33 @@ inline fun <T> Iterator<T>.forEachGuaranteed(operation: (T) -> Unit) {
     }
   }
   CompoundRuntimeException.throwIfNotEmpty(errors)
+}
+
+inline fun <T> Collection<T>.forEachLoggingErrors(logger: Logger, operation: (T) -> Unit) {
+  return asSequence().forEachLoggingErrors(logger, operation)
+}
+
+inline fun <T> Sequence<T>.forEachLoggingErrors(logger: Logger, operation: (T) -> Unit) {
+  forEach {
+    try {
+      operation(it)
+    }
+    catch (e: Throwable) {
+      logger.error(e)
+    }
+  }
+}
+
+inline fun <T, R : Any> Collection<T>.mapNotNullLoggingErrors(logger: Logger, operation: (T) -> R?): List<R> {
+  return mapNotNull {
+    try {
+      operation(it)
+    }
+    catch (e: Throwable) {
+      logger.error(e)
+      null
+    }
+  }
 }
 
 fun <T> Array<T>?.stream(): Stream<T> = if (this != null) Stream.of(*this) else Stream.empty()
@@ -118,6 +150,13 @@ inline fun <T, R> Array<out T>.mapSmart(transform: (T) -> R): List<R> {
     else -> mapTo(ArrayList(size), transform)
   }
 }
+
+inline fun <T, reified R> Array<out T>.map2Array(transform: (T) -> R): Array<R> = Array(this.size) { i -> transform(this[i]) }
+
+@Suppress("UNCHECKED_CAST")
+inline fun <T, reified R> Collection<T>.map2Array(transform: (T) -> R): Array<R> = arrayOfNulls<R>(this.size).also { array ->
+  this.forEachIndexed { index, t -> array[index] = transform(t) }
+} as Array<R>
 
 inline fun <T, R> Collection<T>.mapSmart(transform: (T) -> R): List<R> {
   return when (val size = size) {

@@ -18,6 +18,7 @@ import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.fileTypes.ex.FileTypeIdentifiableByVirtualFile;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
@@ -66,18 +67,20 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import static java.util.Objects.requireNonNull;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertNotEquals;
 
-@SuppressWarnings("HardCodedStringLiteral")
 public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialog {
   private static final Charset US_ASCII = CharsetToolkit.US_ASCII_CHARSET;
   private static final Charset WINDOWS_1251 = CharsetToolkit.WIN_1251_CHARSET;
   private static final Charset WINDOWS_1252 = Charset.forName("windows-1252");
   private static final String UTF8_XML_PROLOG = prolog(StandardCharsets.UTF_8);
   private static final byte[] NO_BOM = ArrayUtilRt.EMPTY_BYTE_ARRAY;
+  @org.intellij.lang.annotations.Language("XML")
   private static final String XML_TEST_BODY = "<web-app>\n" + "<!--\u043f\u0430\u043f\u0430-->\n" + "</web-app>";
   private static final String THREE_RUSSIAN_LETTERS = "\u0416\u041e\u041f";
+
   private TestDialog myOldTestDialogValue;
 
   @Override
@@ -121,9 +124,10 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
 
     assertEquals(expected, text);
   }
+
   public void testXmlProlog() throws IOException {
     VirtualFile vTestRoot = getTestRoot();
-    VirtualFile xml = ObjectUtils.assertNotNull(vTestRoot.findChild("xNotepadUtf8.xml"));
+    VirtualFile xml = requireNonNull(vTestRoot.findChild("xNotepadUtf8.xml"));
 
     String expected = UTF8_XML_PROLOG + XML_TEST_BODY;
     String text = getDocument(xml).getText();
@@ -131,28 +135,28 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
     if (!expected.equals(text)) {
       System.err.print("expected = ");
       for (int i=0; i<50;i++) {
-        final char c = expected.charAt(i);
+        char c = expected.charAt(i);
         System.err.print(Integer.toHexString(c) + ", ");
       }
       System.err.println();
       System.err.print("expected bytes = ");
       byte[] expectedBytes = FileUtil.loadFileBytes(new File(xml.getPath()));
       for (int i=0; i<50;i++) {
-        final byte c = expectedBytes[i];
+        byte c = expectedBytes[i];
         System.err.print(Integer.toHexString(c) + ", ");
       }
       System.err.println();
 
       System.err.print("text = ");
       for (int i=0; i<50;i++) {
-        final char c = text.charAt(i);
+        char c = text.charAt(i);
         System.err.print(Integer.toHexString(c) + ", ");
       }
       System.err.println();
       System.err.print("text bytes = ");
       byte[] textBytes = xml.contentsToByteArray();
       for (int i=0; i<50;i++) {
-        final byte c = textBytes[i];
+        byte c = textBytes[i];
         System.err.print(Integer.toHexString(c) + ", ");
       }
       System.err.println();
@@ -166,8 +170,8 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
 
   public void testChangeToUtfProlog() throws IOException {
     VirtualFile src = find("xWin1251.xml");
-    final File dir = createTempDirectory();
-    final File file = new File(dir, "copy.xml");
+    File dir = createTempDirectory();
+    File file = new File(dir, "copy.xml");
     FileUtil.copy(new File(src.getPath()), file);
 
     WriteCommandAction.writeCommandAction(getProject()).run(() -> {
@@ -193,7 +197,7 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
 
   @NotNull
   private static VirtualFile find(String name) {
-    return ObjectUtils.assertNotNull(getTestRoot().findChild(name));
+    return requireNonNull(getTestRoot().findChild(name));
   }
 
   public void testTrickyProlog() {
@@ -218,7 +222,7 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
   }
 
   private static VirtualFile getTestRoot() {
-    final File testRoot = new File(PathManagerEx.getCommunityHomePath(), "platform/platform-tests/testData/vfs/encoding");
+    File testRoot = new File(PathManagerEx.getCommunityHomePath(), "platform/platform-tests/testData/vfs/encoding");
     return LocalFileSystem.getInstance().findFileByIoFile(testRoot);
   }
 
@@ -256,31 +260,38 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
                "<meta charset =\"utf-8\">");
   }
 
-  private void doHtmlTest(final String metaWithWindowsEncoding, final String metaWithUtf8Encoding) throws IOException {
+  private void doHtmlTest(@org.intellij.lang.annotations.Language("HTML") String metaWithWindowsEncoding,
+                          @org.intellij.lang.annotations.Language("HTML") String metaWithUtf8Encoding) throws IOException {
     File temp = getTempDir().createTempFile("copy", ".html", false);
-    setContentOnDisk(temp, NO_BOM,
-                     "<html><head>" + metaWithWindowsEncoding + "</head>" +
+    @org.intellij.lang.annotations.Language("HTML")
+    String content = "<html><head>" + metaWithWindowsEncoding + "</head>" +
                      THREE_RUSSIAN_LETTERS +
-                     "</html>",
+                     "</html>";
+    setContentOnDisk(temp, NO_BOM,
+                     content,
                      WINDOWS_1252);
-    VirtualFile file = ObjectUtils.assertNotNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(temp));
+    VirtualFile file = requireNonNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(temp));
 
     assertEquals(WINDOWS_1252, file.getCharset());
 
     Document document = getDocument(file);
-    setText(document, "<html><head>" + metaWithUtf8Encoding + "</head>" +
-                      THREE_RUSSIAN_LETTERS +
-                      "</html>");
+    @org.intellij.lang.annotations.Language("HTML")
+    String text = "<html><head>" + metaWithUtf8Encoding + "</head>" +
+                  THREE_RUSSIAN_LETTERS +
+                  "</html>";
+    setText(document, text);
     FileDocumentManager.getInstance().saveAllDocuments();
 
     assertEquals(StandardCharsets.UTF_8, file.getCharset());
   }
 
   public void testHtmlEncodingPreferBOM() throws IOException {
+    @org.intellij.lang.annotations.Language("HTML")
+    String content = "<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=windows-1252\"></head>" +
+                     THREE_RUSSIAN_LETTERS +
+                     "</html>";
     VirtualFile file = createTempFile("html", CharsetToolkit.UTF8_BOM,
-                                      "<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=windows-1252\"></head>" +
-                                      THREE_RUSSIAN_LETTERS +
-                                      "</html>",
+                                      content,
                                       WINDOWS_1252);
 
     assertEquals(StandardCharsets.UTF_8, file.getCharset());
@@ -288,35 +299,37 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
   }
 
   public void testHtmlEncodingCaseInsensitive() throws IOException {
-    VirtualFile file = createTempFile("html", NO_BOM, "<html>\n" +
-                                                      "<head>\n" +
-                                                      "<meta http-equiv=\"content-type\" content=\"text/html;charset=us-ascii\"> \n" +
-                                                      "</head>\n" +
-                                                      "<body>\n" +
-                                                      "xyz\n" +
-                                                      "</body>\n" +
-                                                      "</html>",
-                                      WINDOWS_1252);
+    @org.intellij.lang.annotations.Language("HTML")
+    String content = "<html>\n" +
+                     "<head>\n" +
+                     "<meta http-equiv=\"content-type\" content=\"text/html;charset=us-ascii\"> \n" +
+                     "</head>\n" +
+                     "<body>\n" +
+                     "xyz\n" +
+                     "</body>\n" +
+                     "</html>";
+    VirtualFile file = createTempFile("html", NO_BOM, content, WINDOWS_1252);
 
     assertEquals(US_ASCII, file.getCharset());
   }
   public void testHtmlContentAttributeOrder() throws IOException {
-    VirtualFile file =
-      createTempFile("html", NO_BOM, "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\"\n" +
-                                     "\t\t\"http://www.w3.org/TR/html4/loose.dtd\">\n" +
-                                     "<html> <head>\n" +
-                                     "\t<meta content=\"text/html;charset=US-ASCII\" http-equiv=\"Content-Type\">\n" +
-                                     "</head> </html>",
-                     WINDOWS_1252);
+    @org.intellij.lang.annotations.Language("HTML")
+    String content = "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\"\n" +
+                     "\t\t\"http://www.w3.org/TR/html4/loose.dtd\">\n" +
+                     "<html> <head>\n" +
+                     "\t<meta content=\"text/html;charset=US-ASCII\" http-equiv=\"Content-Type\">\n" +
+                     "</head> </html>";
+    VirtualFile file = createTempFile("html", NO_BOM, content, WINDOWS_1252);
 
     assertEquals(US_ASCII, file.getCharset());
   }
 
-  private static void setText(final Document document, final String text) {
+  private static void setText(Document document, String text) {
     ApplicationManager.getApplication().runWriteAction(() -> document.setText(text));
   }
 
   public void testXHtmlStuff() throws IOException {
+    @org.intellij.lang.annotations.Language("HTML")
     String text = "<xxx>\n</xxx>";
     VirtualFile file = createTempFile("xhtml", NO_BOM, text, WINDOWS_1252);
 
@@ -335,23 +348,23 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
   }
 
   public void testSettingEncodingManually() throws IOException {
-    final StringBuilder text = new StringBuilder(THREE_RUSSIAN_LETTERS);
+    StringBuilder text = new StringBuilder(THREE_RUSSIAN_LETTERS);
     VirtualFile file = createTempFile("txt", NO_BOM, text.toString(), WINDOWS_1251);
     File ioFile = new File(file.getPath());
 
     EncodingProjectManager.getInstance(getProject()).setEncoding(file, WINDOWS_1251);
 
-    final Document document = getDocument(file);
-    final boolean[] changed = {false};
+    Document document = getDocument(file);
+    boolean[] changed = {false};
     document.addDocumentListener(new DocumentListener() {
       @Override
-      public void documentChanged(@NotNull final DocumentEvent event) {
+      public void documentChanged(@NotNull DocumentEvent event) {
         changed[0] = true;
       }
     });
 
     EncodingProjectManager.getInstance(getProject()).setEncoding(file, StandardCharsets.UTF_8);
-    //text in editor changed
+    //text in the editor changed
     assertEquals(StandardCharsets.UTF_8, file.getCharset());
     UIUtil.dispatchAllInvocationEvents();
     assertTrue(changed[0]);
@@ -385,25 +398,25 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
     assertTrue(dir1.mkdir());
     File dir2 = new File(root, "dir2");
     assertTrue(dir2.mkdir());
-    final VirtualFile vdir1 = getVirtualFile(dir1);
-    final VirtualFile vdir2 = getVirtualFile(dir2);
-    assertNotNull(dir1.getPath(), vdir1);
-    assertNotNull(dir2.getPath(), vdir2);
+    VirtualFile vDir1 = getVirtualFile(dir1);
+    VirtualFile vDir2 = getVirtualFile(dir2);
+    assertNotNull(dir1.getPath(), vDir1);
+    assertNotNull(dir2.getPath(), vDir2);
 
-    EncodingProjectManager.getInstance(getProject()).setEncoding(vdir1, WINDOWS_1251);
-    EncodingProjectManager.getInstance(getProject()).setEncoding(vdir2, US_ASCII);
+    EncodingProjectManager.getInstance(getProject()).setEncoding(vDir1, WINDOWS_1251);
+    EncodingProjectManager.getInstance(getProject()).setEncoding(vDir2, US_ASCII);
     WriteCommandAction.writeCommandAction(getProject()).run(() -> {
-      VirtualFile xxx = vdir1.createChildData(this, "xxx.txt");
+      VirtualFile xxx = vDir1.createChildData(this, "xxx.txt");
       setFileText(xxx, THREE_RUSSIAN_LETTERS);
       assertEquals(WINDOWS_1251, xxx.getCharset());
-      VirtualFile copied = xxx.copy(this, vdir2, "xxx2.txt");
+      VirtualFile copied = xxx.copy(this, vDir2, "xxx2.txt");
       assertEquals(WINDOWS_1251, copied.getCharset());
 
-      VirtualFile xus = vdir2.createChildData(this, "xxxus.txt");
+      VirtualFile xus = vDir2.createChildData(this, "xxx-us.txt");
       setFileText(xus, THREE_RUSSIAN_LETTERS);
       assertEquals(US_ASCII, xus.getCharset());
 
-      xus.move(this, vdir1);
+      xus.move(this, vDir1);
       assertEquals(US_ASCII, xus.getCharset());
     });
   }
@@ -414,25 +427,24 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
     assertTrue(dir1.mkdir());
     File dir2 = new File(root, "dir2");
     assertTrue(dir2.mkdir());
-    final VirtualFile vdir1 = getVirtualFile(dir1);
-    final VirtualFile vdir2 = getVirtualFile(dir2);
-    assertNotNull(dir1.getPath(), vdir1);
-    assertNotNull(dir2.getPath(), vdir2);
+    VirtualFile vDir1 = getVirtualFile(dir1);
+    VirtualFile vDir2 = getVirtualFile(dir2);
+    assertNotNull(dir1.getPath(), vDir1);
+    assertNotNull(dir2.getPath(), vDir2);
 
-    EncodingProjectManager.getInstance(getProject()).setEncoding(vdir1, WINDOWS_1251);
-    EncodingProjectManager.getInstance(getProject()).setEncoding(vdir2, US_ASCII);
+    EncodingProjectManager.getInstance(getProject()).setEncoding(vDir1, WINDOWS_1251);
+    EncodingProjectManager.getInstance(getProject()).setEncoding(vDir2, US_ASCII);
     WriteCommandAction.writeCommandAction(getProject()).run(() -> {
-      VirtualFile winf = vdir1.createChildData(this, "xxx.txt");
+      VirtualFile winF = vDir1.createChildData(this, "xxx.txt");
 
-      PsiDirectory psidir1 = ObjectUtils.assertNotNull(PsiManager.getInstance(getProject()).findDirectory(vdir1));
-      PsiDirectory psidir2 = ObjectUtils.assertNotNull(PsiManager.getInstance(getProject()).findDirectory(vdir2));
-      CopyFilesOrDirectoriesHandler.copyToDirectory(psidir1, psidir1.getName(), psidir2);
-      VirtualFile winfCopy =
-        ObjectUtils.assertNotNull(psidir2.getVirtualFile().findFileByRelativePath(psidir1.getName() + "/" + winf.getName()));
-      assertEquals(WINDOWS_1251, winfCopy.getCharset());
-      VirtualFile dir1Copy = psidir2.getVirtualFile().findChild(psidir1.getName());
+      PsiDirectory psiDir1 = requireNonNull(PsiManager.getInstance(getProject()).findDirectory(vDir1));
+      PsiDirectory psiDir2 = requireNonNull(PsiManager.getInstance(getProject()).findDirectory(vDir2));
+      CopyFilesOrDirectoriesHandler.copyToDirectory(psiDir1, psiDir1.getName(), psiDir2);
+      VirtualFile winFCopy = requireNonNull(psiDir2.getVirtualFile().findFileByRelativePath(psiDir1.getName() + "/" + winF.getName()));
+      assertEquals(WINDOWS_1251, winFCopy.getCharset());
+      VirtualFile dir1Copy = psiDir2.getVirtualFile().findChild(psiDir1.getName());
       assertEquals(WINDOWS_1251, EncodingProjectManager.getInstance(getProject()).getEncoding(dir1Copy, false));
-      assertNull(EncodingProjectManager.getInstance(getProject()).getEncoding(winfCopy, false));
+      assertNull(EncodingProjectManager.getInstance(getProject()).getEncoding(winFCopy, false));
     });
   }
 
@@ -443,7 +455,7 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
     assertArrayEquals(CharsetToolkit.UTF8_BOM, file.getBOM());
 
     Document document = getDocument(file);
-    setText(document, "hren");
+    setText(document, "horseradish");
     FileDocumentManager.getInstance().saveAllDocuments();
 
     assertEquals(StandardCharsets.UTF_8, file.getCharset());
@@ -460,7 +472,7 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
     assertArrayEquals(CharsetToolkit.UTF8_BOM, file.getBOM());
 
     Document document = getDocument(file);
-    String newContent = "hren";
+    String newContent = "horseradish";
     setText(document, newContent);
 
     FileDocumentManager.getInstance().saveAllDocuments();
@@ -485,7 +497,7 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
     assertArrayEquals(CharsetToolkit.UTF16LE_BOM, file.getBOM());
   }
   public void testSetCharsetAfter() throws IOException {
-    VirtualFile file = find("UTF16LE_NOBOM.txt");
+    VirtualFile file = find("UTF16LE_NO_BOM.txt");
     file.setCharset(CharsetToolkit.UTF_16LE_CHARSET);
     file.setBOM(null);
     String vfsLoad = VfsUtilCore.loadText(file);
@@ -501,7 +513,7 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
     assertArrayEquals(CharsetToolkit.UTF16BE_BOM, file.getBOM());
 
     Document document = getDocument(file);
-    String newContent = "hren";
+    String newContent = "horseradish";
     setText(document, newContent);
     FileDocumentManager.getInstance().saveAllDocuments();
     assertEquals(CharsetToolkit.UTF_16BE_CHARSET, file.getCharset());
@@ -518,16 +530,26 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
   }
 
   public void testConvertNotAvailableForHtml() throws IOException {
+    @org.intellij.lang.annotations.Language("HTML")
+    String content = "<html><head><meta content=\"text/html; charset=utf-8\" http-equiv=\"content-type\"></head>" +
+                     "<body>" + THREE_RUSSIAN_LETTERS +
+                     "</body></html>";
     VirtualFile file = createTempFile("html", null,
-                                      "<html><head><meta content=\"text/html; charset=utf-8\" http-equiv=\"content-type\"></head>" +
-                                      "<body>" + THREE_RUSSIAN_LETTERS +
-                                      "</body></html>",
+                                      content,
                                       StandardCharsets.UTF_8);
     Document document = FileDocumentManager.getInstance().getDocument(file);
     assertNotNull(document);
     FileDocumentManager.getInstance().saveAllDocuments();
+    FileType fileType = file.getFileType();
+    assertEquals(StdFileTypes.HTML, fileType);
+    Charset fromType = ((LanguageFileType)fileType).extractCharsetFromFileContent(myProject, file, (CharSequence)content);
+    assertEquals(StandardCharsets.UTF_8, fromType);
+    String fromProlog = XmlCharsetDetector.extractXmlEncodingFromProlog(content);
+    assertNull(fromProlog);
+    Charset charsetFromContent = ((EncodingManagerImpl)EncodingManager.getInstance()).computeCharsetFromContent(file);
+    assertEquals(StandardCharsets.UTF_8, charsetFromContent);
     EncodingUtil.FailReason result = EncodingUtil.checkCanConvert(file);
-    assertNotNull(result);
+    assertEquals(EncodingUtil.FailReason.BY_FILE, result);
   }
 
   public void testConvertReload() throws IOException {
@@ -543,7 +565,7 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
     Assert.assertNotSame(EncodingUtil.Magic8.NO_WAY, EncodingUtil.isSafeToConvertTo(file, text, bytes, WINDOWS_1251));
     Assert.assertSame(EncodingUtil.Magic8.NO_WAY, EncodingUtil.isSafeToConvertTo(file, text, bytes, US_ASCII));
     EncodingUtil.FailReason result = EncodingUtil.checkCanReload(file, null);
-    assertNotNull(result);
+    assertEquals(EncodingUtil.FailReason.BY_BOM, result);
 
     EncodingUtil.saveIn(document, null, file, WINDOWS_1251);
     bytes = file.contentsToByteArray();
@@ -593,7 +615,7 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
   public void testSetEncodingForDirectoryChangesEncodingsForEvenNotLoadedFiles() throws IOException {
     EncodingProjectManager.getInstance(getProject()).setEncoding(null, StandardCharsets.UTF_8);
     File fc = FileUtil.createTempDirectory("", "");
-    VirtualFile root = ObjectUtils.assertNotNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(fc));
+    VirtualFile root = requireNonNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(fc));
     PsiTestUtil.addContentRoot(getModule(), root);
 
     VirtualFile file = createChildData(root, "win.txt");
@@ -631,19 +653,19 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
     assertEquals(EncodingUtil.Magic8.ABSOLUTELY, EncodingUtil.isSafeToConvertTo(file, text, bytes, WINDOWS_1251));
     assertEquals(EncodingUtil.Magic8.WELL_IF_YOU_INSIST, EncodingUtil.isSafeToConvertTo(file, text, bytes, CharsetToolkit.UTF_16BE_CHARSET));
 
-    String rustext = THREE_RUSSIAN_LETTERS;
-    VirtualFile rusfile = createTempFile("txt", null, rustext, StandardCharsets.UTF_8);
-    byte[] rusbytes = rusfile.contentsToByteArray();
-    assertEquals(EncodingUtil.Magic8.NO_WAY, EncodingUtil.isSafeToConvertTo(rusfile, rustext, rusbytes, US_ASCII));
-    assertEquals(EncodingUtil.Magic8.WELL_IF_YOU_INSIST, EncodingUtil.isSafeToConvertTo(rusfile, rustext, rusbytes, WINDOWS_1251));
-    assertEquals(EncodingUtil.Magic8.WELL_IF_YOU_INSIST, EncodingUtil.isSafeToConvertTo(rusfile, rustext, rusbytes, CharsetToolkit.UTF_16BE_CHARSET));
+    String rusText = THREE_RUSSIAN_LETTERS;
+    VirtualFile rusFile = createTempFile("txt", null, rusText, StandardCharsets.UTF_8);
+    byte[] rusBytes = rusFile.contentsToByteArray();
+    assertEquals(EncodingUtil.Magic8.NO_WAY, EncodingUtil.isSafeToConvertTo(rusFile, rusText, rusBytes, US_ASCII));
+    assertEquals(EncodingUtil.Magic8.WELL_IF_YOU_INSIST, EncodingUtil.isSafeToConvertTo(rusFile, rusText, rusBytes, WINDOWS_1251));
+    assertEquals(EncodingUtil.Magic8.WELL_IF_YOU_INSIST, EncodingUtil.isSafeToConvertTo(rusFile, rusText, rusBytes, CharsetToolkit.UTF_16BE_CHARSET));
 
-    String bomtext = THREE_RUSSIAN_LETTERS;
-    VirtualFile bomfile = createTempFile("txt", CharsetToolkit.UTF16LE_BOM, bomtext, CharsetToolkit.UTF_16LE_CHARSET);
-    byte[] bombytes = bomfile.contentsToByteArray();
-    assertEquals(EncodingUtil.Magic8.NO_WAY, EncodingUtil.isSafeToConvertTo(bomfile, bomtext, bombytes, US_ASCII));
-    assertEquals(EncodingUtil.Magic8.WELL_IF_YOU_INSIST, EncodingUtil.isSafeToConvertTo(bomfile, bomtext, bombytes, WINDOWS_1251));
-    assertEquals(EncodingUtil.Magic8.WELL_IF_YOU_INSIST, EncodingUtil.isSafeToConvertTo(bomfile, bomtext, bombytes, CharsetToolkit.UTF_16BE_CHARSET));
+    String bomText = THREE_RUSSIAN_LETTERS;
+    VirtualFile bomFile = createTempFile("txt", CharsetToolkit.UTF16LE_BOM, bomText, CharsetToolkit.UTF_16LE_CHARSET);
+    byte[] bomBytes = bomFile.contentsToByteArray();
+    assertEquals(EncodingUtil.Magic8.NO_WAY, EncodingUtil.isSafeToConvertTo(bomFile, bomText, bomBytes, US_ASCII));
+    assertEquals(EncodingUtil.Magic8.WELL_IF_YOU_INSIST, EncodingUtil.isSafeToConvertTo(bomFile, bomText, bomBytes, WINDOWS_1251));
+    assertEquals(EncodingUtil.Magic8.WELL_IF_YOU_INSIST, EncodingUtil.isSafeToConvertTo(bomFile, bomText, bomBytes, CharsetToolkit.UTF_16BE_CHARSET));
   }
   public void testSafeToReloadUtf8Bom() throws IOException {
     String text = THREE_RUSSIAN_LETTERS;
@@ -680,7 +702,7 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
     change(file, WINDOWS_1251);
     assertEquals(WINDOWS_1251, file.getCharset());
 
-    Document document = ObjectUtils.assertNotNull(documentManager.getDocument(file));
+    Document document = requireNonNull(documentManager.getDocument(file));
     change(file, StandardCharsets.UTF_8);
     assertEquals(StandardCharsets.UTF_8, file.getCharset());
 
@@ -688,7 +710,7 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
     UIUtil.dispatchAllInvocationEvents();
 
     assertEquals(WINDOWS_1251, file.getCharset());
-    ObjectUtils.assertNotNull(document.getText());
+    requireNonNull(document.getText());
   }
 
   private void globalUndo() {
@@ -705,7 +727,7 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
   public void testCantReloadBOMDetected() throws IOException {
     VirtualFile file = createTempFile("txt", CharsetToolkit.UTF8_BOM, THREE_RUSSIAN_LETTERS, StandardCharsets.UTF_8);
     file.contentsToByteArray();
-    Document document = ObjectUtils.assertNotNull(FileDocumentManager.getInstance().getDocument(file));
+    Document document = requireNonNull(FileDocumentManager.getInstance().getDocument(file));
     assertEquals(THREE_RUSSIAN_LETTERS, document.getText());
     assertEquals(StandardCharsets.UTF_8, file.getCharset());
     EncodingProjectManager.getInstance(getProject()).setEncoding(file, CharsetToolkit.UTF_16LE_CHARSET);
@@ -718,7 +740,7 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
     String text = "text";
     VirtualFile file = createTempFile("txt", CharsetToolkit.UTF8_BOM, text, StandardCharsets.UTF_8);
     file.contentsToByteArray();
-    Document document = ObjectUtils.assertNotNull(FileDocumentManager.getInstance().getDocument(file));
+    Document document = requireNonNull(FileDocumentManager.getInstance().getDocument(file));
 
     assertEquals(text, document.getText());
     assertEquals(StandardCharsets.UTF_8, file.getCharset());
@@ -761,10 +783,10 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
         PsiTestUtil.addSourceContentToRoots(getModule(), vDir);
       }
 
-      final VirtualFile vFile = vDir.createChildData(vDir, fileName);
+      VirtualFile vFile = vDir.createChildData(vDir, fileName);
       VfsUtil.saveText(vFile, text);
       assertNotNull(vFile);
-      final PsiFile file = getPsiManager().findFile(vFile);
+      PsiFile file = getPsiManager().findFile(vFile);
       assertNotNull(file);
       return file;
     });
@@ -777,7 +799,7 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
       EncodingManager.getInstance().setDefaultCharsetName(differentFromDefault);
 
       File temp = createTempDirectory();
-      VirtualFile tempDir = ObjectUtils.assertNotNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(temp));
+      VirtualFile tempDir = requireNonNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(temp));
 
       Project newProject = ProjectManagerEx.getInstanceEx().newProject(Paths.get(tempDir.getPath()), false);
       Disposer.register(getTestRootDisposable(), () -> ApplicationManager.getApplication().runWriteAction(() -> Disposer.dispose(newProject)));
@@ -798,13 +820,13 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
 
   public void testFileMustNotLoadInWrongEncodingIfAccessedBeforeProjectOpen() {
     VirtualFile dir = find("newEncoding");
-    VirtualFile file = ObjectUtils.assertNotNull(dir.findFileByRelativePath("src/xxx.txt"));
+    VirtualFile file = requireNonNull(dir.findFileByRelativePath("src/xxx.txt"));
 
-    Document document = ObjectUtils.assertNotNull(FileDocumentManager.getInstance().getDocument(file));
+    Document document = requireNonNull(FileDocumentManager.getInstance().getDocument(file));
     assertNotNull(document.getText());
     UIUtil.dispatchAllInvocationEvents();
 
-    Project newEncodingProject = ObjectUtils.assertNotNull(ProjectUtil.openProject(dir.getPath(), null, false));
+    Project newEncodingProject = requireNonNull(ProjectUtil.openProject(dir.getPath(), null, false));
     UIUtil.dispatchAllInvocationEvents();
     try {
       assertEquals(US_ASCII, file.getCharset());
@@ -819,7 +841,7 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
     File jar = new File(tmpDir, "x.jar");
     String text = "update";
     byte[] bytes = ArrayUtil.mergeArrays(CharsetToolkit.UTF16BE_BOM, text.getBytes(CharsetToolkit.UTF_16BE_CHARSET));
-    String name = "sjkdhfksjdf";
+    String name = "some_random_name";
     IoTestUtil.createTestJar(jar, Collections.singletonList(Pair.create(name, bytes)));
     VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(jar);
     assertNotNull(vFile);
@@ -842,7 +864,7 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
     File jar = new File(tmpDir, "x.jar");
     String bigText = StringUtil.repeat("u", FileUtilRt.LARGE_FOR_CONTENT_LOADING+1);
     byte[] utf16beBytes = ArrayUtil.mergeArrays(CharsetToolkit.UTF16BE_BOM, bigText.getBytes(CharsetToolkit.UTF_16BE_CHARSET));
-    String name = "sjkdhfksjdf";
+    String name = "some_random_name";
     IoTestUtil.createTestJar(jar, Collections.singletonList(Pair.create(name, utf16beBytes)));
     VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(jar);
     assertNotNull(vFile);
@@ -863,7 +885,7 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
   }
 
   public void testSevenBitFileTextOptimisationWorks() throws IOException {
-    PsiFile file = createFile("x.txt", "a,mvnsxkjfhswr\nsdfsdf\n");
+    PsiFile file = createFile("x.txt", "some random\nfile content\n");
     VirtualFile virtualFile = file.getVirtualFile();
     CharSequence loaded = LoadTextUtil.loadText(virtualFile);
     assertInstanceOf(loaded, ByteArrayCharSequence.class);
@@ -874,7 +896,7 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
     File file = createTempFile("a.txt", text);
     setContentOnDisk(file, null, text, CharsetToolkit.UTF_16LE_CHARSET);
 
-    VirtualFile vFile = ObjectUtils.assertNotNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file));
+    VirtualFile vFile = requireNonNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file));
     vFile.setCharset(CharsetToolkit.UTF_16LE_CHARSET);
     vFile.setBOM(null);
     CharSequence loaded = LoadTextUtil.loadText(vFile);
@@ -890,19 +912,33 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
       manager.setBOMForNewUtf8Files(EncodingProjectManagerImpl.BOMForNewUTF8Files.NEVER);
       VirtualFile file = createFile("x.txt", "xx").getVirtualFile();
       assertNull(file.getBOM());
+      @org.intellij.lang.annotations.Language("XML")
+      String xxTag = "<xx/>";
+      // internal files must never be BOMed
+      VirtualFile imlFile = createFile("x.iml", xxTag).getVirtualFile();
+      assertNull(imlFile.getBOM());
 
       manager.setBOMForNewUtf8Files(EncodingProjectManagerImpl.BOMForNewUTF8Files.ALWAYS);
       VirtualFile file2 = createFile("x2.txt", "xx").getVirtualFile();
       assertArrayEquals(CharsetToolkit.UTF8_BOM, file2.getBOM());
+      // internal files must never be BOMed
+      imlFile = createFile("x2.iml", xxTag).getVirtualFile();
+      assertNull(imlFile.getBOM());
 
       manager.setBOMForNewUtf8Files(EncodingProjectManagerImpl.BOMForNewUTF8Files.WINDOWS_ONLY);
       VirtualFile file3 = createFile("x3.txt", "xx").getVirtualFile();
       byte[] expected = SystemInfo.isWindows ? CharsetToolkit.UTF8_BOM : null;
       assertArrayEquals(expected, file3.getBOM());
+      // internal files must never be BOMed
+      imlFile = createFile("x3.iml", xxTag).getVirtualFile();
+      assertNull(imlFile.getBOM());
 
       manager.setBOMForNewUtf8Files(EncodingProjectManagerImpl.BOMForNewUTF8Files.NEVER);
       VirtualFile file4 = createFile("x4.txt", "xx").getVirtualFile();
       assertNull(file4.getBOM());
+      // internal files must never be BOMed
+      imlFile = createFile("x4.iml", xxTag).getVirtualFile();
+      assertNull(imlFile.getBOM());
     }
     finally {
       manager.setBOMForNewUtf8Files(old);
@@ -910,16 +946,16 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
     }
   }
 
-  public void testBigFileAutoDetectedAsTextMustDetermineItsEncodingFromTheWholeTextToMinimizePossibilityOfUmlautInTheEndMisdetectionError() {
+  public void testBigFileAutoDetectedAsTextMustDetermineItsEncodingFromTheWholeTextToMinimizePossibilityOfDetectionErrors() {
     VirtualFile vTestRoot = getTestRoot();
-    VirtualFile file = vTestRoot.findChild("BIGCHANGES");
+    VirtualFile file = vTestRoot.findChild("BIG_CHANGES");
     assertNotNull(file);
 
     assertNull(file.getBOM());
     assertEquals(StandardCharsets.UTF_8, file.getCharset());
   }
 
-  public void testEncodingRedetectionRequestsOnDocumentChangeAreBatchedToImprovePerformance() throws IOException {
+  public void testEncodingReDetectionRequestsOnDocumentChangeAreBatchedToImprovePerformance() throws IOException {
     VirtualFile file = createTempFile("txt", null, "xxx", US_ASCII);
     Document document = ObjectUtils.notNull(getDocument(file));
     WriteCommandAction.runWriteCommandAction(myProject, () -> document.insertString(0, " "));
@@ -983,7 +1019,7 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
     try {
       fileTypeManager.registerFileType(foo);
 
-      VirtualFile file = createTempFile("my", null, "cccccccccccccccccc", US_ASCII);
+      VirtualFile file = createTempFile("my", null, StringUtil.repeat("c", 20), US_ASCII);
       FileEditorManager.getInstance(getProject()).openFile(file, false);
 
       Document document = getDocument(file);

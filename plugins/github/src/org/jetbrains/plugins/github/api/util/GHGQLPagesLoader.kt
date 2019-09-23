@@ -7,31 +7,37 @@ import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.data.graphql.GHGQLPageInfo
 import org.jetbrains.plugins.github.api.data.graphql.GHGQLRequestPagination
 import org.jetbrains.plugins.github.api.data.request.GithubRequestPagination
+import java.util.concurrent.atomic.AtomicReference
 
 abstract class GHGQLPagesLoader<T, R>(private val executor: GithubApiRequestExecutor,
                                       private val requestProducer: (GHGQLRequestPagination) -> GithubApiRequest.Post<T>,
                                       private val pageSize: Int = GithubRequestPagination.DEFAULT_PAGE_SIZE) {
-  private var cursor: String? = null
 
-  var hasNext: Boolean = true
-    private set
+  private val iterationDataRef = AtomicReference(IterationData(true))
 
+  val hasNext: Boolean
+    get() = iterationDataRef.get().hasNext
+
+  @Synchronized
   fun loadNext(progressIndicator: ProgressIndicator): R? {
-    if (!hasNext) return null
+    val iterationData = iterationDataRef.get()
+    if (!iterationData.hasNext) return null
 
-    val response = executor.execute(progressIndicator, requestProducer(
-      GHGQLRequestPagination(cursor, pageSize)))
+    val response = executor.execute(progressIndicator, requestProducer(GHGQLRequestPagination(iterationData.cursor, pageSize)))
     val page = extractPageInfo(response)
-    hasNext = page.hasNextPage
-    cursor = page.endCursor
+    iterationDataRef.compareAndSet(iterationData, IterationData(page))
+
     return extractResult(response)
   }
 
   fun reset() {
-    cursor = null
-    hasNext = true
+    iterationDataRef.set(IterationData(true))
   }
 
   protected abstract fun extractPageInfo(result: T): GHGQLPageInfo
   protected abstract fun extractResult(result: T): R
+
+  private class IterationData(val hasNext: Boolean, val cursor: String? = null) {
+    constructor(page: GHGQLPageInfo) : this(page.hasNextPage, page.endCursor)
+  }
 }

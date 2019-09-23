@@ -4,7 +4,6 @@ package com.intellij.openapi.vfs;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import gnu.trove.THashMap;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,7 +18,7 @@ import java.util.Map;
 /**
  * <p>Utility class to guess the encoding of a given byte array.
  * The guess is unfortunately not 100% sure. Especially for 8-bit charsets.
- * It's not possible to know which 8-bit charset is used.
+ * It's not possible to know for sure, which 8-bit charset is used.
  * We will then infer that the charset encountered is the same as the default standard charset.</p>
  *
  * <p>On the other hand, unicode files encoded in UTF-16 (low or big endian) or UTF-8 files
@@ -27,47 +26,38 @@ import java.util.Map;
  * is wide enough, it's easy to guess.</p>
  *
  * <p>Tested against a complicated UTF-8 file, Sun's implementation does not render bad UTF-8
- * constructs as expected by the specification. But with a buffer wide enough, the method guessEncoding()
+ * constructs as expected by the specification. But with buffer wide enough, the method {@link #guessEncoding}
  * did behave correctly and recognized the UTF-8 charset.</p>
  *
- * <p>A byte buffer of 4KB or 8KB is sufficient to be able to guessEncoding the encoding.</p>
+ * <p>A byte buffer of 4 KB or 8 KB is sufficient to be able to guess the encoding.</p>
  *
- * <p>Usage:</p>
+ * <p>Usage:
  * <pre>
  * // guess the encoding
  * Charset guessedCharset = CharsetToolkit.guessEncoding(file, 4096);
  *
  * // create a reader with the charset we've just discovered
- * FileInputStream fis = new FileInputStream(file);
- * InputStreamReader isr = new InputStreamReader(fis, guessedCharset);
- * BufferedReader br = new BufferedReader(isr);
- *
- * // read the file content
- * String line;
- * while ((line = br.readLine())!= null)
- * {
- *     System.out.println(line);
+ * try (InputStreamReader reader = new InputStreamReader(new FileInputStream(file), guessedCharset)) {
+ *   //...
  * }
  * </pre>
- * <p>An interesting improvement would be to create a custom {@code InputStream} that has a
- * method discovering the {@code Charset} of the underlying file. Thus, we would not have to
- * read the beginning of the file twice: once for guessing the encoding, the second time for reading
- * its content. Therefore, we could englobe this stream within an {@code InputStreamReader}.</p>
+ * </p>
  *
- * <p>Date: 18 juil. 2002</p>
  * @author Guillaume LAFORGE
  */
 public class CharsetToolkit {
-  @NonNls public static final String UTF8 = "UTF-8";
+  public static final String UTF8 = "UTF-8";
+
   public static final Charset UTF8_CHARSET = StandardCharsets.UTF_8;
-  public static final Charset UTF_16LE_CHARSET = Charset.forName("UTF-16LE");
-  public static final Charset UTF_16BE_CHARSET = Charset.forName("UTF-16BE");
+  public static final Charset UTF_16_CHARSET = StandardCharsets.UTF_16;
+  public static final Charset UTF_16LE_CHARSET = StandardCharsets.UTF_16LE;
+  public static final Charset UTF_16BE_CHARSET = StandardCharsets.UTF_16BE;
   public static final Charset UTF_32BE_CHARSET = Charset.forName("UTF-32BE");
   public static final Charset UTF_32LE_CHARSET = Charset.forName("UTF-32LE");
-  public static final Charset UTF_16_CHARSET = Charset.forName("UTF-16");
-  public static final Charset US_ASCII_CHARSET = Charset.forName("US-ASCII");
-  public static final Charset ISO_8859_1_CHARSET = Charset.forName("ISO-8859-1");
+  public static final Charset US_ASCII_CHARSET = StandardCharsets.US_ASCII;
+  public static final Charset ISO_8859_1_CHARSET = StandardCharsets.ISO_8859_1;
   public static final Charset WIN_1251_CHARSET = Charset.forName("windows-1251");
+
   private static final byte FF = (byte)0xff;
   private static final byte FE = (byte)0xfe;
   private static final byte EF = (byte)0xef;
@@ -76,8 +66,7 @@ public class CharsetToolkit {
   private static final int BINARY_THRESHOLD = 9; // characters with codes below this considered to be binary
 
   private final byte[] buffer;
-  @NotNull
-  private final Charset defaultCharset;
+  private final @NotNull Charset defaultCharset;
   private boolean enforce8Bit;
 
   public static final byte[] UTF8_BOM = {0xffffffef, 0xffffffbb, 0xffffffbf};
@@ -85,9 +74,9 @@ public class CharsetToolkit {
   public static final byte[] UTF16BE_BOM = {-2, -1, };
   public static final byte[] UTF32BE_BOM = {0, 0, -2, -1, };
   public static final byte[] UTF32LE_BOM = {-1, -2, 0, 0 };
-  @NonNls public static final String FILE_ENCODING_PROPERTY = "file.encoding";
+  public static final String FILE_ENCODING_PROPERTY = "file.encoding";
 
-  @NonNls private static final Map<Charset, byte[]> CHARSET_TO_MANDATORY_BOM = new THashMap<>(4);
+  private static final Map<Charset, byte[]> CHARSET_TO_MANDATORY_BOM = new THashMap<>(4);
   static {
     CHARSET_TO_MANDATORY_BOM.put(UTF_16LE_CHARSET, UTF16LE_BOM);
     CHARSET_TO_MANDATORY_BOM.put(UTF_16BE_CHARSET, UTF16BE_BOM);
@@ -213,20 +202,9 @@ public class CharsetToolkit {
    * If US-ASCII is recognized, enforce to return the default encoding, rather than US-ASCII.
    * It might be a file without any special character in the range 128-255, but that may be or become
    * a file encoded with the default {@code charset} rather than US-ASCII.
-   *
-   * @param enforce a boolean specifying the use or not of US-ASCII.
    */
   public void setEnforce8Bit(boolean enforce) {
     enforce8Bit = enforce;
-  }
-
-  /**
-   * Gets the enforce8Bit flag, in case we do not want to ever get a US-ASCII encoding.
-   *
-   * @return a boolean representing the flag of use of US-ASCII.
-   */
-  public boolean getEnforce8Bit() {
-    return enforce8Bit;
   }
 
   /**
@@ -250,12 +228,12 @@ public class CharsetToolkit {
    * <p>It is possible to discern UTF-8 thanks to the pattern of characters with a multi-byte sequence.</p>
    * <pre>
    * UCS-4 range (hex.)        UTF-8 octet sequence (binary)
-   * 0000 0000-0000 007F       0xxxxxxx
-   * 0000 0080-0000 07FF       110xxxxx 10xxxxxx
-   * 0000 0800-0000 FFFF       1110xxxx 10xxxxxx 10xxxxxx
-   * 0001 0000-001F FFFF       11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
-   * 0020 0000-03FF FFFF       111110xx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
-   * 0400 0000-7FFF FFFF       1111110x 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
+   * 0000 0000-0000 007F       0.......
+   * 0000 0080-0000 07FF       110..... 10......
+   * 0000 0800-0000 FFFF       1110.... 10...... 10......
+   * 0001 0000-001F FFFF       11110... 10...... 10...... 10......
+   * 0020 0000-03FF FFFF       111110.. 10...... 10...... 10...... 10......
+   * 0400 0000-7FFF FFFF       1111110. 10...... 10...... 10...... 10...... 10......
    * </pre>
    * <p>With UTF-8, 0xFE and 0xFF never appear.</p>
    *
@@ -269,16 +247,15 @@ public class CharsetToolkit {
     GuessedEncoding encoding = guessFromContent(startOffset, endOffset);
     switch (encoding) {
       case SEVEN_BIT:
-        // if no byte with an high order bit set, the encoding is US-ASCII
+        // if no byte with a high order bit set, the encoding is US-ASCII
         // (it might have been UTF-7, but this encoding is usually internally used only by mail systems)
         // returns the default charset rather than US-ASCII if the enforce8Bit flag is set.
-        return enforce8Bit ? defaultCharset : Charset.forName("US-ASCII");
+        return enforce8Bit ? defaultCharset : StandardCharsets.US_ASCII;
       case INVALID_UTF8:
         return defaultCharset;
       case VALID_UTF8:
         return StandardCharsets.UTF_8;
       case BINARY:
-        break;
       default:
         break;
     }
@@ -467,9 +444,6 @@ public class CharsetToolkit {
 
   /**
    * If the byte has the form 10xxxxx, then it's a continuation byte of a multiple byte character;
-   *
-   * @param b a byte.
-   * @return true if it's a continuation char.
    */
   private static boolean isContinuationChar(byte b) {
     return b <= -65;
@@ -477,9 +451,6 @@ public class CharsetToolkit {
 
   /**
    * If the byte has the form 110xxxx, then it's the first byte of a two-bytes sequence character.
-   *
-   * @param b a byte.
-   * @return true if it's the first byte of a two-bytes sequence.
    */
   private static boolean isTwoBytesSequence(byte b) {
     return -64 <= b && b <= -33;
@@ -487,9 +458,6 @@ public class CharsetToolkit {
 
   /**
    * If the byte has the form 1110xxx, then it's the first byte of a three-bytes sequence character.
-   *
-   * @param b a byte.
-   * @return true if it's the first byte of a three-bytes sequence.
    */
   private static boolean isThreeBytesSequence(byte b) {
     return -32 <= b && b <= -17;
@@ -497,9 +465,6 @@ public class CharsetToolkit {
 
   /**
    * If the byte has the form 11110xx, then it's the first byte of a four-bytes sequence character.
-   *
-   * @param b a byte.
-   * @return true if it's the first byte of a four-bytes sequence.
    */
   private static boolean isFourBytesSequence(byte b) {
     return -16 <= b && b <= -9;
@@ -507,9 +472,6 @@ public class CharsetToolkit {
 
   /**
    * If the byte has the form 11110xx, then it's the first byte of a five-bytes sequence character.
-   *
-   * @param b a byte.
-   * @return true if it's the first byte of a five-bytes sequence.
    */
   private static boolean isFiveBytesSequence(byte b) {
     return -8 <= b && b <= -5;
@@ -517,9 +479,6 @@ public class CharsetToolkit {
 
   /**
    * If the byte has the form 1110xxx, then it's the first byte of a six-bytes sequence character.
-   *
-   * @param b a byte.
-   * @return true if it's the first byte of a six-bytes sequence.
    */
   private static boolean isSixBytesSequence(byte b) {
     return -4 <= b && b <= -3;
@@ -527,8 +486,6 @@ public class CharsetToolkit {
 
   /**
    * Retrieve the default charset of the system.
-   *
-   * @return the default {@code Charset}.
    */
   @NotNull
   public static Charset getDefaultSystemCharset() {
@@ -546,31 +503,20 @@ public class CharsetToolkit {
 
   /**
    * Has a Byte Order Marker for UTF-8 (Used by Microsoft's Notepad and other editors).
-   *
-   * @param bom a buffer.
-   * @return true if the buffer has a BOM for UTF8.
    */
   public static boolean hasUTF8Bom(@NotNull byte[] bom) {
     return ArrayUtil.startsWith(bom, UTF8_BOM);
   }
 
   /**
-   * Has a Byte Order Marker for UTF-16 Low Endian
-   * (ucs-2le, ucs-4le, and ucs-16le).
-   *
-   * @param bom a buffer.
-   * @return true if the buffer has a BOM for UTF-16 Low Endian.
+   * Has a Byte Order Marker for UTF-16 Low Endian (ucs-2le, ucs-4le, and ucs-16le).
    */
   public static boolean hasUTF16LEBom(@NotNull byte[] bom) {
     return ArrayUtil.startsWith(bom, UTF16LE_BOM);
   }
 
   /**
-   * Has a Byte Order Marker for UTF-16 Big Endian
-   * (utf-16 and ucs-2).
-   *
-   * @param bom a buffer.
-   * @return true if the buffer has a BOM for UTF-16 Big Endian.
+   * Has a Byte Order Marker for UTF-16 Big Endian (utf-16 and ucs-2).
    */
   public static boolean hasUTF16BEBom(@NotNull byte[] bom) {
     return ArrayUtil.startsWith(bom, UTF16BE_BOM);
@@ -583,10 +529,7 @@ public class CharsetToolkit {
   }
 
   /**
-   * Retrieves all the available {@code Charset}s on the platform,
-   * among which the default {@code charset}.
-   *
-   * @return an array of {@code Charset}s.
+   * Retrieves all the available {@code Charset}s on the platform, among which the default {@code charset}.
    */
   @NotNull
   public static Charset[] getAvailableCharsets() {
@@ -596,12 +539,7 @@ public class CharsetToolkit {
 
   @NotNull
   public static byte[] getUtf8Bytes(@NotNull String s) {
-    try {
-      return s.getBytes(UTF8);
-    }
-    catch (UnsupportedEncodingException e) {
-      throw new RuntimeException("UTF-8 must be supported", e);
-    }
+    return s.getBytes(StandardCharsets.UTF_8);
   }
 
   public static int getBOMLength(@NotNull byte[] content, @NotNull Charset charset) {
@@ -625,8 +563,8 @@ public class CharsetToolkit {
 
   /**
    * @return BOM which is associated with this charset and the charset must have this BOM, or null otherwise.
-   *         Currently these are UTF-16xx and UTF-32xx families.
-   *         UTF-8, on the other hand, might have BOM {@link #UTF8_BOM} which is optional, thus it will not returned in this method
+   *         Currently, these are UTF-16xx and UTF-32xx families.
+   *         UTF-8, on the other hand, might have BOM {@link #UTF8_BOM} which is optional, thus it won't be returned in this method.
    */
   @Nullable
   public static byte[] getMandatoryBom(@NotNull Charset charset) {
@@ -635,7 +573,7 @@ public class CharsetToolkit {
 
   /**
    * @return BOM which can be associated with this charset, or null otherwise.
-   *         Currently these are UTF-16xx, UTF-32xx and UTF-8.
+   *         Currently, these are UTF-16xx, UTF-32xx and UTF-8.
    */
   @Nullable
   public static byte[] getPossibleBom(@NotNull Charset charset) {
@@ -656,9 +594,7 @@ public class CharsetToolkit {
       try {
         charset = Charset.forName(name);
       }
-      catch (IllegalCharsetNameException | UnsupportedCharsetException ignored) {
-        //ignore
-      }
+      catch (IllegalCharsetNameException | UnsupportedCharsetException ignored) { }
     }
 
     return charset;

@@ -28,6 +28,21 @@ public class PyGlobalUndefinedInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-37415
+  public void testReassignedAndAbsent() {
+    doTest();
+  }
+
+  // PY-37415
+  public void testReassignedAndPresent() {
+    doTest();
+  }
+
+  // PY-37623
+  public void testSeveralGlobals() {
+    doTest();
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

@@ -3,13 +3,15 @@ package com.intellij.openapi.application;
 
 import com.intellij.ide.CliResult;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.concurrent.Future;
 
 /**
- * This extension point allows running custom [command-line] application based on IDEA platform.
+ * This extension point allows running custom [command-line] application based on IntelliJ platform.
  *
  * @author max
  */
@@ -25,11 +27,20 @@ public interface ApplicationStarter {
   String getCommandName();
 
   /**
+   * @deprecated Use {@link #premain(List)}
+   */
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated
+  default void premain(@SuppressWarnings("unused") @NotNull String[] args) { }
+
+  /**
    * Called before application initialization. Invoked in event dispatch thread.
    *
    * @param args program arguments (including the selector)
    */
-  default void premain(String[] args) { }
+  default void premain(@NotNull List<String> args) {
+    premain(ArrayUtilRt.toStringArray(args));
+  }
 
   /**
    * <p>Called when application has been initialized. Invoked in event dispatch thread.</p>
@@ -67,7 +78,7 @@ public interface ApplicationStarter {
 
   /** @see #canProcessExternalCommandLine */
   @NotNull
-  default Future<CliResult> processExternalCommandLineAsync(@NotNull String[] args, @Nullable String currentDirectory) {
+  default Future<CliResult> processExternalCommandLineAsync(@NotNull List<String> args, @Nullable String currentDirectory) {
     throw new UnsupportedOperationException("Class " + getClass().getName() + " must implement `processExternalCommandLineAsync()`");
   }
 }

@@ -28,7 +28,7 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
   private static final Color NULL_COLOR = new Color(0, 0, 0); // must be new instance to work as a sentinel
   private static final Key<Boolean> VISIBLE_IF_FOLDED = Key.create("visible.folded");
 
-  private final MarkupModel myModel;
+  private final MarkupModelImpl myModel;
   private TextAttributes myTextAttributes;
   private LineMarkerRenderer myLineMarkerRenderer;
   private Color myErrorStripeColor;
@@ -57,7 +57,7 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
   @MagicConstant(flags = {CHANGED_MASK, RENDERERS_CHANGED_MASK, FONT_STYLE_OR_COLOR_CHANGED_MASK})
   private @interface ChangeStatus {}
 
-  RangeHighlighterImpl(@NotNull MarkupModel model,
+  RangeHighlighterImpl(@NotNull MarkupModelImpl model,
                        int start,
                        int end,
                        int layer,
@@ -89,8 +89,12 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
 
   @Override
   public void setTextAttributes(@NotNull TextAttributes textAttributes) {
+    boolean oldRenderedInScrollBar = isRenderedInScrollBar();
     TextAttributes old = myTextAttributes;
     myTextAttributes = textAttributes;
+    if (isRenderedInScrollBar() != oldRenderedInScrollBar) {
+      myModel.treeFor(this).updateRenderedFlags(this);
+    }
     if (old != textAttributes && (old == TextAttributes.ERASE_MARKER || textAttributes == TextAttributes.ERASE_MARKER)) {
       fireChanged(false, true);
     }
@@ -131,8 +135,12 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
 
   @Override
   public void setLineMarkerRenderer(LineMarkerRenderer renderer) {
+    boolean oldRenderedInGutter = isRenderedInGutter();
     LineMarkerRenderer old = myLineMarkerRenderer;
     myLineMarkerRenderer = renderer;
+    if (isRenderedInGutter() != oldRenderedInGutter) {
+      myModel.treeFor(this).updateRenderedFlags(this);
+    }
     if (!Comparing.equal(old, renderer)) {
       fireChanged(true, false);
     }
@@ -159,8 +167,12 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
 
   @Override
   public void setGutterIconRenderer(GutterIconRenderer renderer) {
+    boolean oldRenderedInGutter = isRenderedInGutter();
     GutterMark old = myGutterIconRenderer;
     myGutterIconRenderer = renderer;
+    if (isRenderedInGutter() != oldRenderedInGutter) {
+      myModel.treeFor(this).updateRenderedFlags(this);
+    }
     if (!Comparing.equal(old, renderer)) {
       fireChanged(true, false);
     }
@@ -176,9 +188,13 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
 
   @Override
   public void setErrorStripeMarkColor(Color color) {
+    boolean oldRenderedInScrollBar = isRenderedInScrollBar();
     if (color == null) color = NULL_COLOR;
     Color old = myErrorStripeColor;
     myErrorStripeColor = color;
+    if (isRenderedInScrollBar() != oldRenderedInScrollBar) {
+      myModel.treeFor(this).updateRenderedFlags(this);
+    }
     if (!Comparing.equal(old, color)) {
       fireChanged(false, false);
     }
@@ -269,15 +285,13 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
   }
 
   private void fireChanged(boolean renderersChanged, boolean fontStyleOrColorChanged) {
-    if (myModel instanceof MarkupModelEx) {
-      if (isFlagSet(IN_BATCH_CHANGE_MASK)) {
-        setFlag(CHANGED_MASK, true);
-        if (renderersChanged) setFlag(RENDERERS_CHANGED_MASK, true);
-        if (fontStyleOrColorChanged) setFlag(FONT_STYLE_OR_COLOR_CHANGED_MASK, true);
-      }
-      else {
-        ((MarkupModelEx)myModel).fireAttributesChanged(this, renderersChanged, fontStyleOrColorChanged);
-      }
+    if (isFlagSet(IN_BATCH_CHANGE_MASK)) {
+      setFlag(CHANGED_MASK, true);
+      if (renderersChanged) setFlag(RENDERERS_CHANGED_MASK, true);
+      if (fontStyleOrColorChanged) setFlag(FONT_STYLE_OR_COLOR_CHANGED_MASK, true);
+    }
+    else {
+      myModel.fireAttributesChanged(this, renderersChanged, fontStyleOrColorChanged);
     }
   }
 

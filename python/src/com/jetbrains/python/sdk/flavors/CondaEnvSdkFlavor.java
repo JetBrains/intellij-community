@@ -19,9 +19,10 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.PythonSdkUtil;
 import icons.PythonIcons;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -45,10 +46,11 @@ public class CondaEnvSdkFlavor extends CPythonSdkFlavor {
 
   public static final CondaEnvSdkFlavor INSTANCE = new CondaEnvSdkFlavor();
 
+  @NotNull
   @Override
-  public Collection<String> suggestHomePaths(@Nullable Module module) {
+  public Collection<String> suggestHomePaths(@Nullable Module module, @Nullable UserDataHolder context) {
     final List<String> results = new ArrayList<>();
-    final Sdk sdk = ReadAction.compute(() -> PythonSdkType.findPythonSdk(module));
+    final Sdk sdk = ReadAction.compute(() -> PythonSdkUtil.findPythonSdk(module));
     try {
       final List<String> environments = PyCondaRunKt.listCondaEnvironments(sdk);
       for (String environment : environments) {
@@ -69,7 +71,7 @@ public class CondaEnvSdkFlavor extends CPythonSdkFlavor {
   @Override
   public boolean isValidSdkPath(@NotNull File file) {
     if (!super.isValidSdkPath(file)) return false;
-    return PythonSdkType.isConda(file.getPath());
+    return PythonSdkUtil.isConda(file.getPath());
   }
 
   @Nullable

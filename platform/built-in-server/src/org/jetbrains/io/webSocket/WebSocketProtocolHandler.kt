@@ -48,12 +48,17 @@ open class WebSocketProtocolHandshakeHandler(private val handshaker: WebSocketCl
   final override fun channelRead(context: ChannelHandlerContext, message: Any) {
     val channel = context.channel()
     if (!handshaker.isHandshakeComplete) {
-      handshaker.finishHandshake(channel, message as FullHttpResponse)
-      val pipeline = channel.pipeline()
-      pipeline.replace(this, "aggregator", WebSocketFrameAggregator(NettyUtil.MAX_CONTENT_LENGTH))
-      // https codec is removed by finishHandshake
-      completed()
-      return
+      try {
+        handshaker.finishHandshake(channel, message as FullHttpResponse)
+        val pipeline = channel.pipeline()
+        pipeline.replace(this, "aggregator", WebSocketFrameAggregator(NettyUtil.MAX_CONTENT_LENGTH))
+        // https codec is removed by finishHandshake
+        completed()
+        return
+      }
+      finally {
+        ReferenceCountUtil.release(message)
+      }
     }
 
     if (message is FullHttpResponse) {

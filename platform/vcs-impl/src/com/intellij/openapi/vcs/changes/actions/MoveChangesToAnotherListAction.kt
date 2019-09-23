@@ -17,7 +17,6 @@ import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindowManager
-import com.intellij.util.containers.ContainerUtil.intersects
 import com.intellij.util.containers.isEmpty
 import com.intellij.vcsUtil.VcsUtil
 
@@ -25,7 +24,7 @@ class MoveChangesToAnotherListAction : AbstractChangeListAction() {
   override fun update(e: AnActionEvent) {
     val project = e.project
     val enabled = project != null && ProjectLevelVcsManager.getInstance(project).hasActiveVcss() &&
-                  (!e.getData(ChangesListView.UNVERSIONED_FILES_DATA_KEY).isEmpty() ||
+                  (!e.getData(ChangesListView.UNVERSIONED_FILE_PATHS_DATA_KEY).isEmpty() ||
                    !e.getData(VcsDataKeys.CHANGES).isNullOrEmpty() ||
                    !e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY).isNullOrEmpty())
 
@@ -87,19 +86,15 @@ class MoveChangesToAnotherListAction : AbstractChangeListAction() {
 
     private fun askTargetList(project: Project, changes: Collection<Change>): LocalChangeList? {
       val changeListManager = ChangeListManager.getInstance(project)
-      val nonAffectedLists = getNonAffectedLists(changeListManager.changeLists, changes)
-      val suggestedLists = nonAffectedLists.ifEmpty { listOf(changeListManager.defaultChangeList) }
-      val defaultSelection = guessPreferredList(nonAffectedLists)
+      val currentList = changes.asSequence().mapNotNull { changeListManager.getChangeList(it) }.distinct().singleOrNull()
+      val suggestedLists = changeListManager.changeLists
+      suggestedLists.remove(currentList)
+      val defaultSelection = guessPreferredList(suggestedLists)
 
-      val chooser = ChangeListChooser(project, suggestedLists, defaultSelection, ActionsBundle.message("action.ChangesView.Move.text"),
-                                      null)
+      val chooser = ChangeListChooser(project, suggestedLists.ifEmpty { listOf(changeListManager.defaultChangeList) },
+                                      defaultSelection, ActionsBundle.message("action.ChangesView.Move.text"), null)
       chooser.show()
       return chooser.selectedList
-    }
-
-    private fun getNonAffectedLists(lists: List<LocalChangeList>, changes: Collection<Change>): List<LocalChangeList> {
-      val changesSet = changes.toSet()
-      return lists.filter { !intersects(changesSet, it.changes) }
     }
   }
 }

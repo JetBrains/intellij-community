@@ -232,6 +232,9 @@ NSBundle *findMatchingVm() {
         if (jdkBundle != nil) {
           return jdkBundle;
         }
+        else {
+          NSLog(@"Value of environment variable: %@ doesn't point to valid JDK: %@", variable, explicit);
+        }
     }
 
     NSArray *vmBundles = [allVms() sortedArrayUsingFunction:compareVMVersions context:NULL];

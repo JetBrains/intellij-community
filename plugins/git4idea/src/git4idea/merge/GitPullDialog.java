@@ -38,6 +38,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+import static git4idea.commands.GitImpl.REBASE_CONFIG_PARAMS;
+
 public class GitPullDialog extends DialogWrapper {
 
   private static final Logger LOG = Logger.getInstance(GitPullDialog.class);
@@ -160,7 +162,7 @@ public class GitPullDialog extends DialogWrapper {
   }
 
   public GitLineHandler makeHandler(@NotNull List<String> urls) {
-    GitLineHandler h = new GitLineHandler(myProject, gitRoot(), GitCommand.PULL);
+    GitLineHandler h = new GitLineHandler(myProject, gitRoot(), GitCommand.PULL, REBASE_CONFIG_PARAMS);
     h.setUrls(urls);
     h.addParameters("--no-stat");
     if (myNoCommitCheckBox.isSelected()) {
@@ -295,14 +297,7 @@ public class GitPullDialog extends DialogWrapper {
         text = GitBundle.getString("util.remote.renderer.self");
       }
       else {
-        String key;
-        if (defaultRemote != null && defaultRemote.equals(remote.getName())) {
-          key = "util.remote.renderer.default";
-        }
-        else {
-          key = "util.remote.renderer.normal";
-        }
-        text = GitBundle.message(key, remote.getName(), remote.getFirstUrl());
+        text = String.format("<html><b>%s</b>(<i>%s</i>)</html>", remote.getName(), remote.getFirstUrl());
       }
       label.setText(text);
     });
@@ -340,5 +335,9 @@ public class GitPullDialog extends DialogWrapper {
   @Override
   public JComponent getPreferredFocusedComponent() {
     return myBranchChooser.getComponent();
+  }
+
+  public boolean isCommitAfterMerge() {
+    return !myNoCommitCheckBox.isSelected();
   }
 }

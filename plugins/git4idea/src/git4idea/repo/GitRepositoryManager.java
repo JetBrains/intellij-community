@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.repo;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -37,18 +23,24 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 
-public class GitRepositoryManager extends AbstractRepositoryManager<GitRepository> {
+public final class GitRepositoryManager extends AbstractRepositoryManager<GitRepository> {
   private static final Logger LOG = Logger.getInstance(GitRepositoryManager.class);
 
   public static final Comparator<GitRepository> DEPENDENCY_COMPARATOR =
     (repo1, repo2) -> - VirtualFileHierarchicalComparator.getInstance().compare(repo1.getRoot(), repo2.getRoot());
 
-  @NotNull private final GitVcsSettings mySettings;
   @Nullable private volatile GitRebaseSpec myOngoingRebaseSpec;
 
-  public GitRepositoryManager(@NotNull Project project, @NotNull VcsRepositoryManager vcsRepositoryManager) {
-    super(vcsRepositoryManager, GitVcs.getInstance(project), GitUtil.DOT_GIT);
-    mySettings = GitVcsSettings.getInstance(project);
+  public GitRepositoryManager(@NotNull Project project) {
+    super(GitVcs.getInstance(project), GitUtil.DOT_GIT);
+  }
+
+  /**
+   * @deprecated Use {@link #GitRepositoryManager(Project)}
+   */
+  @Deprecated
+  public GitRepositoryManager(@NotNull Project project, @SuppressWarnings("unused") @NotNull VcsRepositoryManager vcsRepositoryManager) {
+    super(GitVcs.getInstance(project), GitUtil.DOT_GIT);
   }
 
   @NotNull
@@ -58,7 +50,7 @@ public class GitRepositoryManager extends AbstractRepositoryManager<GitRepositor
 
   @Override
   public boolean isSyncEnabled() {
-    return mySettings.getSyncSetting() == DvcsSyncSettings.Value.SYNC && !MultiRootBranches.diverged(getRepositories());
+    return GitVcsSettings.getInstance(getVcs().getProject()).getSyncSetting() == DvcsSyncSettings.Value.SYNC && !MultiRootBranches.diverged(getRepositories());
   }
 
   @NotNull

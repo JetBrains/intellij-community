@@ -164,13 +164,13 @@ class CommunityRepositoryModules {
     },
     plugin("intellij.gradle") {
       withModule("intellij.gradle.common")
-      withModule("intellij.gradle.java")
-      withModule("intellij.gradle.jps")
       withModule("intellij.gradle.toolingExtension")
       withModule("intellij.gradle.toolingExtension.impl")
       withModule("intellij.gradle.toolingLoaderRt")
-      withProjectLibrary("Kryo")
       withProjectLibrary("Gradle")
+    },
+    plugin("intellij.gradle.java") {
+      withModule("intellij.gradle.jps")
     },
     plugin("intellij.gradle.java.maven"),
     plugin("intellij.platform.testGuiFramework") {
@@ -191,7 +191,7 @@ class CommunityRepositoryModules {
     },
     plugin("intellij.testng") {
       mainJarName = "testng-plugin.jar"
-      withModule("intellij.testng.rt", mainJarName)
+      withModule("intellij.testng.rt", "testng-rt.jar")
       withProjectLibrary("TestNG")
     },
     plugin("intellij.devkit") {
@@ -212,7 +212,7 @@ class CommunityRepositoryModules {
       withModule("intellij.cucumber.jvmFormatter")
       withModule("intellij.cucumber.jvmFormatter3")
       withModule("intellij.cucumber.jvmFormatter4")
-      withProjectLibrary("cucumber-core")
+      withModuleLibrary("cucumber-core", "intellij.cucumber.java", "")
       doNotCreateSeparateJarForLocalizableResources()
     },
     plugin("intellij.cucumber.groovy") {
@@ -232,7 +232,6 @@ class CommunityRepositoryModules {
     },
     plugin("intellij.textmate") {
       withResource("lib/bundles", "lib/bundles")
-      withResource("lib/themes", "lib/themes")
     },
     PythonCommunityPluginModules.pythonCommunityPluginLayout(),
     // required for android plugin
@@ -240,7 +239,6 @@ class CommunityRepositoryModules {
       withModule("intellij.android.smali")
     },
     plugin("intellij.statsCollector") {
-      withModule("intellij.statsCollector.features", "features.jar")
       withModule("intellij.statsCollector.logEvents")
       withModule("intellij.statsCollector.completionRanker")
     },
@@ -286,7 +284,6 @@ class CommunityRepositoryModules {
 
       withProjectLibrary("freemarker") //todo[nik] move to module libraries
       withProjectLibrary("kxml2") //todo[nik] move to module libraries
-      withProjectLibrary("layoutlib") //todo[nik] move to module libraries
 
       withResourceFromModule("intellij.android.core","lib/asm-5.0.3.jar", "lib")
       withResourceFromModule("intellij.android.core","lib/asm-analysis-5.0.3.jar", "lib")
@@ -305,6 +302,9 @@ class CommunityRepositoryModules {
       withResourceArchive("../android/annotations", "lib/androidAnnotations.jar")
 
       // here go some differences from original Android Studio layout
+      withProjectLibrary("layoutlib", "jdk8")
+      withResource("../android/lib/jdk11/layoutlib.jar", "lib/jdk11")
+
       withResourceFromModule("android.sdktools.layoutlib-resources", ".", "lib/layoutlib") // todo replace this with runtime downloading
       withResourceFromModule("android.sdktools.sdklib", "../templates", "lib/templates")
 

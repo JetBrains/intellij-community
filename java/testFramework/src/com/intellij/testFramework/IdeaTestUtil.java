@@ -82,7 +82,12 @@ public class IdeaTestUtil extends PlatformTestUtil {
 
   @NotNull
   private static Sdk createMockJdk(@NotNull String name, @NotNull String path) {
-    return ((JavaSdkImpl)JavaSdk.getInstance()).createMockJdk(name, path, false);
+    JavaSdk javaSdk = JavaSdk.getInstance();
+    if (javaSdk == null) {
+      throw new AssertionError("The test uses classes from Java plugin but Java plugin wasn't loaded; make sure that Java plugin " +
+                               "classes are included into classpath and that the plugin isn't disabled by using 'idea.load.plugins', 'idea.load.plugins.id', 'idea.load.plugins.category' system properties");
+    }
+    return ((JavaSdkImpl)javaSdk).createMockJdk(name, path, false);
   }
 
   @NotNull

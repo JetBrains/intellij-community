@@ -2,15 +2,17 @@
 package com.intellij.ui.popup;
 
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.actionSystem.impl.Utils;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.SizedIcon;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.LafIconLookup;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -18,30 +20,36 @@ import java.util.List;
 
 import static com.intellij.openapi.actionSystem.Presentation.restoreTextWithMnemonic;
 
-public class ActionStepBuilder extends PresentationFactory {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ui.popup.PopupFactoryImpl");
-
+class ActionStepBuilder {
   private final List<PopupFactoryImpl.ActionItem> myListModel;
   private final DataContext myDataContext;
   private final boolean                         myShowNumbers;
   private final boolean                         myUseAlphaAsNumbers;
+  private final PresentationFactory             myPresentationFactory;
   private final boolean                         myShowDisabled;
   private       int                             myCurrentNumber;
   private       boolean                         myPrependWithSeparator;
   private       String                          mySeparatorText;
   private final boolean                         myHonorActionMnemonics;
+  private final String                          myActionPlace;
   private Icon myEmptyIcon;
   private int myMaxIconWidth  = -1;
   private int myMaxIconHeight = -1;
-  @NotNull private String myActionPlace;
 
-  public ActionStepBuilder(@NotNull DataContext dataContext,
-                           final boolean showNumbers,
-                           final boolean useAlphaAsNumbers,
-                           final boolean showDisabled,
-                           final boolean honorActionMnemonics)
-  {
+  ActionStepBuilder(@NotNull DataContext dataContext,
+                    boolean showNumbers,
+                    boolean useAlphaAsNumbers,
+                    boolean showDisabled,
+                    boolean honorActionMnemonics,
+                    @Nullable String actionPlace,
+                    @Nullable PresentationFactory presentationFactory) {
     myUseAlphaAsNumbers = useAlphaAsNumbers;
+    if (presentationFactory == null) {
+      myPresentationFactory = new PresentationFactory();
+    }
+    else {
+      myPresentationFactory = ObjectUtils.notNull(presentationFactory);
+    }
     myListModel = new ArrayList<>();
     myDataContext = dataContext;
     myShowNumbers = showNumbers;
@@ -50,11 +58,7 @@ public class ActionStepBuilder extends PresentationFactory {
     myPrependWithSeparator = false;
     mySeparatorText = null;
     myHonorActionMnemonics = honorActionMnemonics;
-    myActionPlace = ActionPlaces.UNKNOWN;
-  }
-
-  public void setActionPlace(@NotNull String actionPlace) {
-    myActionPlace = actionPlace;
+    myActionPlace = ObjectUtils.notNull(actionPlace, ActionPlaces.UNKNOWN);
   }
 
   @NotNull
@@ -74,6 +78,8 @@ public class ActionStepBuilder extends PresentationFactory {
   }
 
   private void calcMaxIconSize(final ActionGroup actionGroup) {
+    if (myPresentationFactory instanceof MenuItemPresentationFactory &&
+        ((MenuItemPresentationFactory)myPresentationFactory).shallHideIcons()) return;
     AnAction[] actions = actionGroup.getChildren(createActionEvent(actionGroup));
     for (AnAction action : actions) {
       if (action == null) continue;
@@ -101,15 +107,14 @@ public class ActionStepBuilder extends PresentationFactory {
   }
 
   @NotNull
-  private AnActionEvent createActionEvent(@NotNull AnAction actionGroup) {
-    final AnActionEvent actionEvent =
-      new AnActionEvent(null, myDataContext, myActionPlace, getPresentation(actionGroup), ActionManager.getInstance(), 0);
-    actionEvent.setInjectedContext(actionGroup.isInInjectedContext());
+  private AnActionEvent createActionEvent(@NotNull AnAction action) {
+    AnActionEvent actionEvent = AnActionEvent.createFromDataContext(myActionPlace, myPresentationFactory.getPresentation(action), myDataContext);
+    actionEvent.setInjectedContext(action.isInInjectedContext());
     return actionEvent;
   }
 
   private void appendActionsFromGroup(@NotNull ActionGroup actionGroup) {
-    List<AnAction> newVisibleActions = Utils.expandActionGroup(false, actionGroup, this, myDataContext, myActionPlace);
+    List<AnAction> newVisibleActions = Utils.expandActionGroup(false, actionGroup, myPresentationFactory, myDataContext, myActionPlace);
     for (AnAction action : newVisibleActions) {
       if (action instanceof Separator) {
         myPrependWithSeparator = true;
@@ -122,7 +127,7 @@ public class ActionStepBuilder extends PresentationFactory {
   }
 
   private void appendAction(@NotNull AnAction action) {
-    Presentation presentation = getPresentation(action);
+    Presentation presentation = myPresentationFactory.getPresentation(action);
     boolean enabled = presentation.isEnabled();
     if ((myShowDisabled || enabled) && presentation.isVisible()) {
       String text = presentation.getText();
@@ -142,16 +147,17 @@ public class ActionStepBuilder extends PresentationFactory {
         text = restoreTextWithMnemonic(text, action.getTemplatePresentation().getMnemonic());
       }
 
-      Icon icon = presentation.getIcon();
-      Icon selectedIcon = presentation.getSelectedIcon();
-      Icon disabledIcon = presentation.getDisabledIcon();
+      boolean hideIcon = Boolean.TRUE.equals(presentation.getClientProperty(MenuItemPresentationFactory.HIDE_ICON));
+      Icon icon = hideIcon ? null : presentation.getIcon();
+      Icon selectedIcon = hideIcon ? null : presentation.getSelectedIcon();
+      Icon disabledIcon = hideIcon ? null : presentation.getDisabledIcon();
 
       if (icon == null && selectedIcon == null) {
         @NonNls final String actionId = ActionManager.getInstance().getId(action);
         if (actionId != null && actionId.startsWith("QuickList.")) {
-          icon =  null; // AllIcons.Actions.QuickList;
+          //icon =  null; // AllIcons.Actions.QuickList;
         }
-        else if (action instanceof Toggleable && Boolean.TRUE.equals(presentation.getClientProperty(Toggleable.SELECTED_PROPERTY))) {
+        else if (action instanceof Toggleable && Toggleable.isSelected(presentation)) {
           icon = LafIconLookup.getIcon("checkmark");
           selectedIcon = LafIconLookup.getSelectedIcon("checkmark");
           disabledIcon = LafIconLookup.getDisabledIcon("checkmark");

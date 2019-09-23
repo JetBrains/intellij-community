@@ -142,8 +142,10 @@ public final class ToolWindowImpl implements ToolWindowEx, Disposable {
   public final boolean isActive() {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    IdeFrameImpl frame = WindowManagerEx.getInstanceEx().getFrame(myToolWindowManager.getProject());
-    if (frame == null || !frame.isActive()) return false;
+    JFrame frame = WindowManagerEx.getInstanceEx().getFrame(myToolWindowManager.getProject());
+    if (frame == null || !frame.isActive()) {
+      return false;
+    }
 
     if (myToolWindowManager.isEditorComponentActive()) return false;
     ActionManager actionManager = ActionManager.getInstance();

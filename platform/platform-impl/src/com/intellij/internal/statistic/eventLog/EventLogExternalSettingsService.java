@@ -16,7 +16,8 @@ import org.jetbrains.annotations.Nullable;
 import static com.intellij.util.ObjectUtils.notNull;
 
 public class EventLogExternalSettingsService extends SettingsConnectionService implements EventLogSettingsService {
-  private static final Logger LOG = Logger.getInstance("com.intellij.internal.statistic.eventLog.EventLogExternalSettingsService");
+  private static final Logger LOG = Logger.getInstance(EventLogExternalSettingsService.class);
+
   private static final String APPROVED_GROUPS_SERVICE = "white-list-service";
   private static final String DICTIONARY_SERVICE = "dictionary-service";
   private static final String PERCENT_TRAFFIC = "percent-traffic";

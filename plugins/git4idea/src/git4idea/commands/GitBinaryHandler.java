@@ -117,6 +117,7 @@ public class GitBinaryHandler extends GitHandler {
    * @return the binary data
    * @throws VcsException in case of the problem with running git
    */
+  @NotNull
   public byte[] run() throws VcsException {
     Project project = project();
     GitVcsConsoleWriter vcsConsoleWriter = project != null
@@ -129,7 +130,7 @@ public class GitBinaryHandler extends GitHandler {
         if (exitCode != 0) {
           Charset cs = getCharset();
           String message = new String(myStderr.toByteArray(), cs);
-          if (message.length() == 0) {
+          if (message.isEmpty()) {
             if (myException.get() != null) {
               message = IdeBundle.message("finished.with.exit.code.text.message", exitCode);
             }

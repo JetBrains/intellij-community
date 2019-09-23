@@ -2,7 +2,7 @@
 Entry point module to start the interactive console.
 '''
 from _pydev_bundle._pydev_getopt import gnu_getopt
-from _pydev_comm.rpc import make_rpc_client, start_rpc_server, start_rpc_server_and_make_client
+from _pydev_comm.pydev_rpc import make_rpc_client, start_rpc_server, start_rpc_server_and_make_client
 from _pydev_imps._pydev_saved_modules import thread
 
 start_new_thread = thread.start_new_thread

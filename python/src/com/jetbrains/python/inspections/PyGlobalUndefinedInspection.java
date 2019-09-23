@@ -17,14 +17,18 @@ package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.PyGlobalStatement;
 import com.jetbrains.python.psi.PyTargetExpression;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * User: ktisha
@@ -59,7 +63,11 @@ public class PyGlobalUndefinedInspection extends PyInspection {
 
       for (PyTargetExpression global : globals) {
         final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(myTypeEvalContext);
-        if (global.getReference(resolveContext).resolve() == global) {
+
+        final List<PsiElement> elements = PyUtil.multiResolveTopPriority(global.getReference(resolveContext));
+        final boolean noTopLevelDeclaration = elements.stream().noneMatch(PyUtil::isTopLevel);
+
+        if (noTopLevelDeclaration) {
           registerProblem(global, PyBundle.message("INSP.NAME.global.$0.undefined", global.getName()));
         }
       }

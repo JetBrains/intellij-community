@@ -63,8 +63,7 @@ import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 import static com.intellij.ide.util.newProjectWizard.AbstractProjectWizard.getNewProjectJdk;
 import static com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl.setupCreatedProject;
@@ -83,6 +82,8 @@ public class GradleModuleBuilder extends AbstractExternalModuleBuilder<GradlePro
   private static final String DEFAULT_TEMPLATE_GRADLE_BUILD = "Gradle Build Script.gradle";
   private static final String KOTLIN_DSL_TEMPLATE_GRADLE_BUILD = "Gradle Kotlin DSL Build Script.gradle";
   private static final String KOTLIN_DSL_TEMPLATE_GRADLE_BUILD_WITH_WRAPPER = "Gradle Kotlin DSL Build Script with wrapper.gradle";
+  private static final String KOTLIN_DSL_TEMPLATE_GRADLE_SETTINGS = "Gradle Kotlin DSL Settings.gradle";
+  private static final String KOTLIN_DSL_TEMPLATE_GRADLE_SETTINGS_MERGE = "Gradle Kotlin DSL Settings merge.gradle";
 
   private static final String TEMPLATE_ATTRIBUTE_PROJECT_NAME = "PROJECT_NAME";
   private static final String TEMPLATE_ATTRIBUTE_MODULE_PATH = "MODULE_PATH";
@@ -179,7 +180,8 @@ public class GradleModuleBuilder extends AbstractExternalModuleBuilder<GradlePro
     setupGradleSettingsFile(
       rootProjectPath, modelContentRootDir, modifiableRootModel.getProject().getName(),
       myProjectId == null ? modifiableRootModel.getModule().getName() : myProjectId.getArtifactId(),
-      myWizardContext.isCreatingNewProject() || myParentProject == null
+      myWizardContext.isCreatingNewProject() || myParentProject == null,
+      myUseKotlinDSL
     );
 
     BuildScriptDataBuilder builder;
@@ -280,7 +282,13 @@ public class GradleModuleBuilder extends AbstractExternalModuleBuilder<GradlePro
   @Override
   public ModuleWizardStep[] createWizardSteps(@NotNull WizardContext wizardContext, @NotNull ModulesProvider modulesProvider) {
     myWizardContext = wizardContext;
-    return new ModuleWizardStep[]{new GradleModuleWizardStep(this, wizardContext)};
+    return new ModuleWizardStep[]{new GradleStructureWizardStep(this, wizardContext)};
+  }
+
+  @NotNull
+  @Override
+  public List<Class<? extends ModuleWizardStep>> getIgnoredSteps() {
+    return Collections.singletonList(ProjectSettingsStep.class);
   }
 
   @Nullable
@@ -349,19 +357,28 @@ public class GradleModuleBuilder extends AbstractExternalModuleBuilder<GradlePro
                                                     @NotNull VirtualFile modelContentRootDir,
                                                     String projectName,
                                                     String moduleName,
-                                                    boolean renderNewFile) throws ConfigurationException {
-    final VirtualFile file = getOrCreateExternalProjectConfigFile(rootProjectPath, GradleConstants.SETTINGS_FILE_NAME, renderNewFile);
+                                                    boolean renderNewFile,
+                                                    boolean useKotlinDSL) throws ConfigurationException {
+    if (!renderNewFile) {
+      File settingsFile = new File(rootProjectPath, GradleConstants.SETTINGS_FILE_NAME);
+      File kotlinKtsSettingsFile = new File(rootProjectPath, GradleConstants.KOTLIN_DSL_SETTINGS_FILE_NAME);
+      useKotlinDSL = !settingsFile.exists() && (kotlinKtsSettingsFile.exists() || useKotlinDSL);
+    }
+    String scriptName = useKotlinDSL ? GradleConstants.KOTLIN_DSL_SETTINGS_FILE_NAME : GradleConstants.SETTINGS_FILE_NAME;
+    final VirtualFile file = getOrCreateExternalProjectConfigFile(rootProjectPath, scriptName, renderNewFile);
 
     if (renderNewFile) {
+      String templateName = useKotlinDSL ? KOTLIN_DSL_TEMPLATE_GRADLE_SETTINGS : TEMPLATE_GRADLE_SETTINGS;
       final String moduleDirName = VfsUtilCore.getRelativePath(modelContentRootDir, file.getParent(), '/');
 
       Map<String, String> attributes = new HashMap<>();
       attributes.put(TEMPLATE_ATTRIBUTE_PROJECT_NAME, projectName);
       attributes.put(TEMPLATE_ATTRIBUTE_MODULE_PATH, moduleDirName);
       attributes.put(TEMPLATE_ATTRIBUTE_MODULE_NAME, moduleName);
-      saveFile(file, TEMPLATE_GRADLE_SETTINGS, attributes);
+      saveFile(file, templateName, attributes);
     }
     else {
+      String templateName = useKotlinDSL ? KOTLIN_DSL_TEMPLATE_GRADLE_SETTINGS_MERGE : TEMPLATE_GRADLE_SETTINGS_MERGE;
       char separatorChar = file.getParent() == null || !VfsUtilCore.isAncestor(file.getParent(), modelContentRootDir, true) ? '/' : ':';
       String modulePath = VfsUtilCore.findRelativePath(file, modelContentRootDir, separatorChar);
 
@@ -378,7 +395,7 @@ public class GradleModuleBuilder extends AbstractExternalModuleBuilder<GradlePro
         attributes.put(TEMPLATE_ATTRIBUTE_MODULE_PATH, modulePath);
       }
 
-      appendToFile(file, TEMPLATE_GRADLE_SETTINGS_MERGE, attributes);
+      appendToFile(file, templateName, attributes);
     }
     return file;
   }

@@ -8,7 +8,6 @@ import com.intellij.openapi.vcs.changes.issueLinks.TableLinkMouseListener;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.CommitId;
@@ -40,8 +39,6 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.Collection;
 import java.util.Collections;
-
-import static com.intellij.vcs.log.ui.table.GraphTableModel.*;
 
 /**
  * Processes mouse clicks and moves on the table
@@ -141,7 +138,7 @@ public class GraphTableController {
     int width = 0;
     for (int i = 0; i < myTable.getColumnModel().getColumnCount(); i++) {
       TableColumn column = myTable.getColumnModel().getColumn(i);
-      if (column.getModelIndex() == COMMIT_COLUMN) break;
+      if (column.getModelIndex() == VcsLogColumn.COMMIT.ordinal()) break;
       width += column.getWidth();
     }
     return new Point(clickPoint.x - width, PositionUtil.getYInsideRow(clickPoint, myTable.getRowHeight()));
@@ -178,7 +175,7 @@ public class GraphTableController {
     VcsLogUiUtil.showTooltip(myTable, new Point(e.getX() + 5, e.getY()), Balloon.Position.atRight, text);
   }
 
-  private void showOrHideCommitTooltip(int row, int column, @NotNull MouseEvent e) {
+  private void showOrHideCommitTooltip(int row, @NotNull VcsLogColumn column, @NotNull MouseEvent e) {
     if (!showTooltip(row, column, e.getPoint(), false)) {
       if (IdeTooltipManager.getInstance().hasCurrent()) {
         IdeTooltipManager.getInstance().hideCurrent(e);
@@ -186,9 +183,9 @@ public class GraphTableController {
     }
   }
 
-  private boolean showTooltip(int row, int column, @NotNull Point point, boolean now) {
+  private boolean showTooltip(int row, @NotNull VcsLogColumn column, @NotNull Point point, boolean now) {
     JComponent tipComponent =
-      myCommitRenderer.getTooltip(myTable.getValueAt(row, myTable.convertColumnIndexToView(column)), calcPoint4Graph(point), row);
+      myCommitRenderer.getTooltip(myTable.getValueAt(row, myTable.getColumnViewIndex(column)), calcPoint4Graph(point), row);
 
     if (tipComponent != null) {
       myTable.getExpandableItemsHandler().setEnabled(false);
@@ -202,9 +199,9 @@ public class GraphTableController {
 
   public void showTooltip(int row) {
     Point point =
-      new Point(getColumnLeftXCoordinate(myTable.convertColumnIndexToView(COMMIT_COLUMN)) + myCommitRenderer.getTooltipXCoordinate(row),
+      new Point(getColumnLeftXCoordinate(myTable.getColumnViewIndex(VcsLogColumn.COMMIT)) + myCommitRenderer.getTooltipXCoordinate(row),
                 row * myTable.getRowHeight() + myTable.getRowHeight() / 2);
-    showTooltip(row, COMMIT_COLUMN, point, true);
+    showTooltip(row, VcsLogColumn.COMMIT, point, true);
   }
 
   private void performRootColumnAction() {
@@ -250,16 +247,16 @@ public class GraphTableController {
       }
 
       int c = myTable.columnAtPoint(e.getPoint());
-      int column = myTable.convertColumnIndexToModel(c);
+      VcsLogColumn column = myTable.getVcsLogColumn(c);
+      if (column == null) return;
       if (e.getClickCount() == 2) {
         // when we reset column width, commit column eats all the remaining space
         // (or gives the required space)
         // so it is logical that we reset column width by right border if it is on the left of the commit column
         // and by the left border otherwise
-        int commitColumnIndex = myTable.convertColumnIndexToView(COMMIT_COLUMN);
+        int commitColumnIndex = myTable.getColumnViewIndex(VcsLogColumn.COMMIT);
         boolean useLeftBorder = c > commitColumnIndex;
-        if ((useLeftBorder ? isOnLeftBorder(e, c) : isOnRightBorder(e, c)) &&
-            ArrayUtil.indexOf(DYNAMIC_COLUMNS, column) != -1) {
+        if ((useLeftBorder ? isOnLeftBorder(e, c) : isOnRightBorder(e, c)) && column.isDynamic()) {
           myTable.resetColumnWidth(column);
         }
         else {
@@ -267,9 +264,8 @@ public class GraphTableController {
           // in that case, c is not the column we are looking for
           int c2 =
             myTable.columnAtPoint(new Point(e.getPoint().x + (useLeftBorder ? 1 : -1) * JBUIScale.scale(BORDER_THICKNESS), e.getPoint().y));
-          int column2 = myTable.convertColumnIndexToModel(c2);
-          if ((useLeftBorder ? isOnLeftBorder(e, c2) : isOnRightBorder(e, c2)) &&
-              ArrayUtil.indexOf(DYNAMIC_COLUMNS, column) != -1) {
+          VcsLogColumn column2 = myTable.getVcsLogColumn(c2);
+          if (column2 != null && (useLeftBorder ? isOnLeftBorder(e, c2) : isOnRightBorder(e, c2)) && column2.isDynamic()) {
             myTable.resetColumnWidth(column2);
           }
         }
@@ -277,10 +273,10 @@ public class GraphTableController {
 
       int row = myTable.rowAtPoint(e.getPoint());
       if ((row >= 0 && row < myTable.getRowCount()) && e.getClickCount() == 1) {
-        if (column == ROOT_COLUMN) {
+        if (column == VcsLogColumn.ROOT) {
           performRootColumnAction();
         }
-        else if (column == COMMIT_COLUMN) {
+        else if (column == VcsLogColumn.COMMIT) {
           PrintElement printElement = findPrintElement(row, e);
           if (printElement != null) {
             performGraphAction(printElement, e, GraphAction.Type.MOUSE_CLICK);
@@ -311,12 +307,13 @@ public class GraphTableController {
 
       int row = myTable.rowAtPoint(e.getPoint());
       if (row >= 0 && row < myTable.getRowCount()) {
-        int column = myTable.convertColumnIndexToModel(myTable.columnAtPoint(e.getPoint()));
-        if (column == ROOT_COLUMN) {
+        VcsLogColumn column = myTable.getVcsLogColumn(myTable.columnAtPoint(e.getPoint()));
+        if (column == null) return;
+        if (column == VcsLogColumn.ROOT) {
           swapCursor(Cursor.HAND_CURSOR);
           return;
         }
-        else if (column == COMMIT_COLUMN) {
+        else if (column == VcsLogColumn.COMMIT) {
           PrintElement printElement = findPrintElement(row, e);
           if (printElement == null) restoreCursor(Cursor.HAND_CURSOR);
           performGraphAction(printElement, e,

@@ -7,7 +7,10 @@ import com.intellij.execution.KillableProcess;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.ThrowableNotNullFunction;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
@@ -19,8 +22,7 @@ import java.io.File;
 import java.nio.charset.Charset;
 
 public final class ScriptRunnerUtil {
-
-  private static final Logger LOG = Logger.getInstance("com.intellij.execution.process.ScriptRunnerUtil");
+  private static final Logger LOG = Logger.getInstance(ScriptRunnerUtil.class);
 
   public static final Condition<Key> STDOUT_OUTPUT_KEY_FILTER = key -> ProcessOutputTypes.STDOUT.equals(key);
 

@@ -19,6 +19,7 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.impl.DesktopLayout;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
+import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.ui.scale.JBUIScale;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -70,7 +71,7 @@ public class TogglePresentationModeAction extends AnAction implements DumbAware 
     tweakUIDefaults(settings, inPresentation);
 
     Promise<?> callback = project == null ? Promises.resolvedPromise() : tweakFrameFullScreen(project, inPresentation);
-    callback.onSuccess(o -> {
+    callback.onProcessed(o -> {
       tweakEditorAndFireUpdateUI(settings, inPresentation);
 
       restoreToolWindows(project, layoutStored, inPresentation);
@@ -79,20 +80,19 @@ public class TogglePresentationModeAction extends AnAction implements DumbAware 
 
   @NotNull
   private static Promise<?> tweakFrameFullScreen(Project project, boolean inPresentation) {
-    Window window = IdeFrameImpl.getActiveFrame();
-    if (window instanceof IdeFrameImpl) {
-      IdeFrameImpl frame = (IdeFrameImpl)window;
-      PropertiesComponent propertiesComponent = PropertiesComponent.getInstance(project);
-      if (inPresentation) {
-        propertiesComponent.setValue("full.screen.before.presentation.mode", String.valueOf(frame.isInFullScreen()));
-        return frame.toggleFullScreen(true);
-      }
-      else {
-        if (frame.isInFullScreen()) {
-          final String value = propertiesComponent.getValue("full.screen.before.presentation.mode");
-          return frame.toggleFullScreen("true".equalsIgnoreCase(value));
-        }
-      }
+    ProjectFrameHelper frame = ProjectFrameHelper.getFrameHelper(IdeFrameImpl.getActiveFrame());
+    if (frame == null) {
+      return Promises.resolvedPromise();
+    }
+
+    PropertiesComponent propertiesComponent = PropertiesComponent.getInstance(project);
+    if (inPresentation) {
+      propertiesComponent.setValue("full.screen.before.presentation.mode", String.valueOf(frame.isInFullScreen()));
+      return frame.toggleFullScreen(true);
+    }
+    else if (frame.isInFullScreen()) {
+      final String value = propertiesComponent.getValue("full.screen.before.presentation.mode");
+      return frame.toggleFullScreen("true".equalsIgnoreCase(value));
     }
     return Promises.resolvedPromise();
   }

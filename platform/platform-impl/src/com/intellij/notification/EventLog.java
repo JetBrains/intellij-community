@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.notification;
 
@@ -9,7 +9,7 @@ import com.intellij.notification.impl.NotificationsManagerImpl;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.impl.DocumentImpl;
@@ -17,6 +17,7 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Pair;
@@ -34,6 +35,7 @@ import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.LinkedHashMap;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,10 +49,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * @author peter
- */
-public class EventLog {
+@Service
+public final class EventLog {
   public static final String LOG_REQUESTOR = "Internal log requestor";
   public static final String LOG_TOOL_WINDOW_ID = "Event Log";
   public static final String HELP_ID = "reference.toolwindows.event.log";
@@ -62,23 +62,8 @@ public class EventLog {
 
   private final LogModel myModel = new LogModel(null, ApplicationManager.getApplication());
 
-  public EventLog() {
-    ApplicationManager.getApplication().getMessageBus().connect().subscribe(Notifications.TOPIC, new NotificationsAdapter() {
-      @Override
-      public void notify(@NotNull Notification notification) {
-        final Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
-        if (openProjects.length == 0) {
-          myModel.addNotification(notification);
-        }
-        for (Project p : openProjects) {
-          getProjectComponent(p).printNotification(notification);
-        }
-      }
-    });
-  }
-
   public static void expireNotification(@NotNull Notification notification) {
-    getApplicationComponent().myModel.removeNotification(notification);
+    getApplicationService().myModel.removeNotification(notification);
     for (Project p : ProjectManager.getInstance().getOpenProjects()) {
       getProjectComponent(p).myProjectModel.removeNotification(notification);
     }
@@ -88,13 +73,13 @@ public class EventLog {
     getProjectComponent(project).showNotification(groupId, ids);
   }
 
-  private static EventLog getApplicationComponent() {
-    return ApplicationManager.getApplication().getComponent(EventLog.class);
+  private static EventLog getApplicationService() {
+    return ApplicationManager.getApplication().getService(EventLog.class);
   }
 
   @NotNull
   public static LogModel getLogModel(@Nullable Project project) {
-    return project != null ? getProjectComponent(project).myProjectModel : getApplicationComponent().myModel;
+    return project != null ? getProjectComponent(project).myProjectModel : getApplicationService().myModel;
   }
 
   public static void markAllAsRead(@Nullable Project project) {
@@ -454,24 +439,35 @@ public class EventLog {
     }, true);
   }
 
-  public static class ProjectTracker implements ProjectComponent {
+  static final class ProjectTracker {
     private final Map<String, EventLogConsole> myCategoryMap = ContainerUtil.newConcurrentMap();
     private final List<Notification> myInitial = ContainerUtil.createLockFreeCopyOnWriteList();
     private final LogModel myProjectModel;
     @NotNull private final Project myProject;
 
-    public ProjectTracker(@NotNull final Project project) {
+    ProjectTracker(@NotNull Project project) {
       myProjectModel = new LogModel(project, project);
       myProject = project;
 
-      for (Notification notification : getApplicationComponent().myModel.takeNotifications()) {
-        printNotification(notification);
+      EventLog appService = ApplicationManager.getApplication().getServiceIfCreated(EventLog.class);
+      if (appService != null) {
+        for (Notification notification : appService.myModel.takeNotifications()) {
+          printNotification(notification);
+        }
       }
 
-      project.getMessageBus().connect(project).subscribe(Notifications.TOPIC, new NotificationsAdapter() {
+      MessageBusConnection connection = project.getMessageBus().connect();
+      connection.subscribe(Notifications.TOPIC, new Notifications() {
         @Override
         public void notify(@NotNull Notification notification) {
           printNotification(notification);
+        }
+      });
+      connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
+        @Override
+        public void projectClosed(@NotNull Project project) {
+          getApplicationService().myModel.setStatusMessage(null, 0);
+          StatusBar.Info.set("", null, LOG_REQUESTOR);
         }
       });
     }
@@ -483,12 +479,6 @@ public class EventLog {
         doPrintNotification(notification, ObjectUtils.assertNotNull(getConsole(notification)));
       }
       myInitial.clear();
-    }
-
-    @Override
-    public void projectClosed() {
-      getApplicationComponent().myModel.setStatusMessage(null, 0);
-      StatusBar.Info.set("", null, LOG_REQUESTOR);
     }
 
     private void printNotification(Notification notification) {
@@ -558,7 +548,6 @@ public class EventLog {
 
       return newConsole;
     }
-
   }
 
   @NotNull
@@ -571,7 +560,7 @@ public class EventLog {
     return DEFAULT_CATEGORY;
   }
 
-  static ProjectTracker getProjectComponent(Project project) {
+  static ProjectTracker getProjectComponent(@NotNull Project project) {
     return project.getComponent(ProjectTracker.class);
   }
 
@@ -633,6 +622,24 @@ public class EventLog {
       Balloon balloon = notification.getBalloon();
       if (balloon != null) {
         balloon.hide(true);
+      }
+    }
+  }
+
+  static final class MyNotificationListener implements Notifications {
+    @Override
+    public void notify(@NotNull Notification notification) {
+      ProjectManager projectManager = ProjectManager.getInstanceIfCreated();
+      Project[] openProjects = projectManager == null ? null : projectManager.getOpenProjects();
+      if (openProjects == null || openProjects.length == 0) {
+        getApplicationService().myModel.addNotification(notification);
+      }
+      else {
+        for (Project p : openProjects) {
+          if (!p.isDisposedOrDisposeInProgress()) {
+            getProjectComponent(p).printNotification(notification);
+          }
+        }
       }
     }
   }

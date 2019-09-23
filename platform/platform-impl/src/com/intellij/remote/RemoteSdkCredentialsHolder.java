@@ -88,26 +88,6 @@ public class RemoteSdkCredentialsHolder extends RemoteCredentialsHolder implemen
     return myRemoteSdkProperties.getDefaultHelpersName();
   }
 
-  @Override
-  public void addRemoteRoot(String remoteRoot) {
-    myRemoteSdkProperties.addRemoteRoot(remoteRoot);
-  }
-
-  @Override
-  public void clearRemoteRoots() {
-    myRemoteSdkProperties.clearRemoteRoots();
-  }
-
-  @Override
-  public List<String> getRemoteRoots() {
-    return myRemoteSdkProperties.getRemoteRoots();
-  }
-
-  @Override
-  public void setRemoteRoots(List<String> remoteRoots) {
-    myRemoteSdkProperties.setRemoteRoots(remoteRoots);
-  }
-
   @NotNull
   @Override
   public PathMappingSettings getPathMappings() {

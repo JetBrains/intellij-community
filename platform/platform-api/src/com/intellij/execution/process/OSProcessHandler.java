@@ -11,6 +11,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
+import com.intellij.util.DeprecatedMethodException;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.BaseOutputReader;
@@ -20,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.util.Set;
 
@@ -28,20 +30,47 @@ public class OSProcessHandler extends BaseOSProcessHandler {
   private static final Set<String> REPORTED_EXECUTIONS = ContainerUtil.newConcurrentSet();
   private static final long ALLOWED_TIMEOUT_THRESHOLD = 10;
 
-  public static final Key<Set<File>> DELETE_FILES_ON_TERMINATION = Key.create("OSProcessHandler.FileToDelete");
+  static final Key<Set<File>> DELETE_FILES_ON_TERMINATION = Key.create("OSProcessHandler.FileToDelete");
 
-  private boolean myHasErrorStream = true;
+  private final boolean myHasErrorStream;
   private boolean myHasPty;
   private boolean myDestroyRecursively = true;
-  private Set<File> myFilesToDelete = null;
+  private final Set<File> myFilesToDelete;
 
   public OSProcessHandler(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
-    this(startProcess(commandLine), commandLine.getCommandLineString(), commandLine.getCharset());
+    super(startProcess(commandLine), commandLine.getCommandLineString(), commandLine.getCharset());
+    setHasPty(isPtyProcess(getProcess()));
     myHasErrorStream = !commandLine.isRedirectErrorStream();
     myFilesToDelete = commandLine.getUserData(DELETE_FILES_ON_TERMINATION);
   }
 
-  private static Process startProcess(GeneralCommandLine commandLine) throws ExecutionException {
+  /** @deprecated use {@link #OSProcessHandler(Process, String)} or any other constructor (to be removed in IDEA 2019) */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2019")
+  @Deprecated
+  public OSProcessHandler(@NotNull Process process) {
+    this(process, null);
+    DeprecatedMethodException.report("Use OSProcessHandler(Process, String) instead");
+  }
+
+  /**
+   * {@code commandLine} must not be not empty (for correct thread attribution in the stacktrace)
+   */
+  public OSProcessHandler(@NotNull Process process, /*@NotNull*/ String commandLine) {
+    this(process, commandLine, EncodingManager.getInstance().getDefaultCharset());
+  }
+
+  /**
+   * {@code commandLine} must not be not empty (for correct thread attribution in the stacktrace)
+   */
+  public OSProcessHandler(@NotNull Process process, /*@NotNull*/ String commandLine, @Nullable Charset charset) {
+    super(process, commandLine, charset);
+    setHasPty(isPtyProcess(process));
+    myFilesToDelete = null;
+    myHasErrorStream = true;
+  }
+
+  @NotNull
+  private static Process startProcess(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
     try {
       return commandLine.createProcess();
     }
@@ -85,7 +114,7 @@ public class OSProcessHandler extends BaseOSProcessHandler {
    * <li>Outside of {@link com.intellij.openapi.application.WriteAction WriteAction}:
    *   <ul>
    *     <li>Synchronous (you need to return execution result or derived information to the caller) - execute under
-   *       {@link ProgressManager#runProcessWithProgressSynchronously(java.lang.Runnable, java.lang.String, boolean, com.intellij.openapi.project.Project) modal progress}.</li>
+   *       {@link ProgressManager#runProcessWithProgressSynchronously(Runnable, String, boolean, com.intellij.openapi.project.Project) modal progress}.</li>
    *     <li>Non-synchronous (you don't need to return something) - execute on the pooled thread. E.g. using {@link Task.Backgroundable}</li>
    *   </ul>
    * </li>
@@ -132,30 +161,8 @@ public class OSProcessHandler extends BaseOSProcessHandler {
     }
   }
 
-  /** @deprecated use {@link #OSProcessHandler(Process, String)} or any other constructor (to be removed in IDEA 2019) */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2019")
-  @Deprecated
-  public OSProcessHandler(@NotNull Process process) {
-    this(process, null);
-  }
-
-  /**
-   * {@code commandLine} must not be not empty (for correct thread attribution in the stacktrace)
-   */
-  public OSProcessHandler(@NotNull Process process, /*@NotNull*/ String commandLine) {
-    this(process, commandLine, EncodingManager.getInstance().getDefaultCharset());
-  }
-
-  /**
-   * {@code commandLine} must not be not empty (for correct thread attribution in the stacktrace)
-   */
-  public OSProcessHandler(@NotNull Process process, /*@NotNull*/ String commandLine, @Nullable Charset charset) {
-    super(process, commandLine, charset);
-    setHasPty(isPtyProcess(process));
-  }
-
   private static boolean isPtyProcess(Process process) {
-    Class c = process.getClass();
+    Class<?> c = process.getClass();
     while (c != null) {
       if ("com.pty4j.unix.UnixPtyProcess".equals(c.getName()) || "com.pty4j.windows.WinPtyProcess".equals(c.getName())) {
         return true;
@@ -233,7 +240,10 @@ public class OSProcessHandler extends BaseOSProcessHandler {
   }
 
   /**
-   * In case of pty this process handler will use blocking read. The value should be set before
+   * In case of pty this process handler will use blocking read because {@link InputStream#available()} doesn't work for pty4j, and there
+   * is no reason to "disconnect" leaving pty alive.
+   * See {@link com.intellij.util.io.BaseDataReader.SleepingPolicy} for more info.
+   * The value should be set before
    * startNotify invocation. It is set by default in case of using GeneralCommandLine based constructor.
    *
    * @param hasPty true if process is pty based
@@ -242,6 +252,10 @@ public class OSProcessHandler extends BaseOSProcessHandler {
     myHasPty = hasPty;
   }
 
+  /**
+   * Rule of thumb: use {@link BaseOutputReader.Options#BLOCKING} for short-living process that you never want to "disconnect" from.
+   * See {@link com.intellij.util.io.BaseDataReader.SleepingPolicy} for the whole story.
+   */
   @NotNull
   @Override
   protected BaseOutputReader.Options readerOptions() {

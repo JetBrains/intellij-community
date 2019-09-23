@@ -6,6 +6,7 @@
                 factoryClass="org.jetbrains.plugins.terminal.TerminalToolWindowFactory"
                 secondary="false"
                 canCloseContents="true"/>
+    <projectService serviceImplementation="org.jetbrains.plugins.terminal.TerminalView"/>
 
     <projectConfigurable groupId="tools" groupWeight="130" displayName="Terminal" id="terminal" instance="org.jetbrains.plugins.terminal.TerminalOptionsConfigurable"/>
 
@@ -19,16 +20,15 @@
 
     <registryKey key="terminal.Ctrl-E.opens.RecentFiles.popup" defaultValue="false"
                  description="Ctrl+E in terminal opens 'Recent Files' popup on Linux/Windows"/>
-  </extensions>
 
-  <project-components>
-    <component>
-      <implementation-class>org.jetbrains.plugins.terminal.TerminalView</implementation-class>
-    </component>
-  </project-components>
+    <terminal.shellCommandHandler implementation="org.jetbrains.plugins.terminal.impl.DiffCustomCommandHandler"/>
+    <experimentalFeature id="terminal.shell.command.handling" percentOfUsers="100"/>
+  </extensions>
 
   <extensionPoints>
     <extensionPoint qualifiedName="org.jetbrains.plugins.terminal.localTerminalCustomizer"
                     interface="org.jetbrains.plugins.terminal.LocalTerminalCustomizer"/>
+    <extensionPoint qualifiedName="com.intellij.terminal.shellCommandHandler"
+                    interface="com.intellij.terminal.TerminalShellCommandHandler"/>
   </extensionPoints>
 </idea-plugin>

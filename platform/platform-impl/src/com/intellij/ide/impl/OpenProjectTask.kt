@@ -5,22 +5,47 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.impl.FrameInfo
 import com.intellij.projectImport.ProjectOpenedCallback
 
-data class OpenProjectTask @JvmOverloads constructor(val forceOpenInNewFrame: Boolean = false,
-                                                     val projectToClose: Project? = null,
-                                                     val frame: FrameInfo? = null,
-                                                     val projectWorkspaceId: String? = null,
-                                                     val isNewProject: Boolean = false,
-                                                     val showWelcomeScreenIfNoProjectOpened: Boolean = true,
-                                                     val sendFrameBack: Boolean = false) {
-  /**
-   * Used only by [ProjectUtil.openOrImport].
-   */
-  var checkDirectoryForFileBasedProjects: Boolean = true
+class OpenProjectTask @JvmOverloads constructor(@JvmField val forceOpenInNewFrame: Boolean = false,
+                                                @JvmField val projectToClose: Project? = null) {
+  @JvmField
+  var frame: FrameInfo? = null
 
-  var useDefaultProjectAsTemplate: Boolean = true
+  @JvmField
+  var projectWorkspaceId: String? = null
 
+  @JvmField
+  var showWelcomeScreen = true
+
+  @JvmField
+  var sendFrameBack = false
+
+  @JvmField
+  var isNewProject = false
+
+  /** Used only by [ProjectUtil.openOrImport] */
+  @JvmField
+  var checkDirectoryForFileBasedProjects = true
+
+  @JvmField
+  var useDefaultProjectAsTemplate = true
+
+  @JvmField
+  var isRefreshVfsNeeded = true
+
+  @JvmField
   var callback: ProjectOpenedCallback? = null
 
-  // for java clients only
-  fun withNewProject(value: Boolean) = copy(isNewProject = value)
+  fun copy(): OpenProjectTask {
+    val copy = OpenProjectTask(forceOpenInNewFrame, projectToClose)
+    copy.frame = frame
+    copy.projectWorkspaceId = projectWorkspaceId
+    copy.showWelcomeScreen = showWelcomeScreen
+    copy.sendFrameBack = sendFrameBack
+    copy.isNewProject = isNewProject
+    copy.checkDirectoryForFileBasedProjects = checkDirectoryForFileBasedProjects
+    copy.useDefaultProjectAsTemplate = useDefaultProjectAsTemplate
+    copy.callback = callback
+    copy.isRefreshVfsNeeded = isRefreshVfsNeeded
+    return copy
+  }
 }

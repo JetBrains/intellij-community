@@ -15,6 +15,7 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TestDialog;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsException;
@@ -69,7 +70,6 @@ import static org.jetbrains.idea.svn.SvnUtil.parseUrl;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assume.assumeTrue;
 
 public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
   @ClassRule public static final ApplicationRule appRule = new ApplicationRule();
@@ -117,7 +117,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
   @BeforeClass
   public static void assumeWindowsUnderTeamCity() {
     if (IS_UNDER_TEAMCITY) {
-      assumeTrue("Windows is required", SystemInfo.isWindows);
+      IoTestUtil.assumeWindows();
     }
   }
 

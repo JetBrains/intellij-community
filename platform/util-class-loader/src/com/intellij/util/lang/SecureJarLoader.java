@@ -17,7 +17,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 class SecureJarLoader extends JarLoader {
-  @Nullable private ProtectionDomain myProtectionDomain;
+  private @Nullable ProtectionDomain myProtectionDomain;
   private final Object myProtectionDomainMonitor = new Object();
 
   SecureJarLoader(@NotNull URL url, int index, @NotNull ClassPath configuration) throws IOException {
@@ -45,24 +45,26 @@ class SecureJarLoader extends JarLoader {
     @Override
     public byte[] getBytes() throws IOException {
       JarFile file = (JarFile)getZipFile();
-      InputStream stream = null;
-      byte[] result;
       try {
-        stream = file.getInputStream(myEntry);
-        result = FileUtilRt.loadBytes(stream, (int)myEntry.getSize());
-        synchronized (myProtectionDomainMonitor) {
-          if (myProtectionDomain == null) {
-            JarEntry jarEntry = file.getJarEntry(myEntry.getName());
-            CodeSource codeSource = new CodeSource(myUrl, jarEntry.getCodeSigners());
-            myProtectionDomain = new ProtectionDomain(codeSource, new Permissions());
+        InputStream stream = file.getInputStream(myEntry);
+        try {
+          byte[] result = FileUtilRt.loadBytes(stream, (int)myEntry.getSize());
+          synchronized (myProtectionDomainMonitor) {
+            if (myProtectionDomain == null) {
+              JarEntry jarEntry = file.getJarEntry(myEntry.getName());
+              CodeSource codeSource = new CodeSource(myUrl, jarEntry.getCodeSigners());
+              myProtectionDomain = new ProtectionDomain(codeSource, new Permissions());
+            }
           }
+          return result;
+        }
+        finally {
+          stream.close();
         }
       }
       finally {
-        if (stream != null) stream.close();
         releaseZipFile(file);
       }
-      return result;
     }
 
     @Nullable

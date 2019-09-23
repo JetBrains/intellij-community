@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.application.options.editor.WebEditorOptions;
@@ -11,7 +11,6 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.xhtml.XHTMLLanguage;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandListener;
@@ -23,7 +22,6 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.editor.event.EditorFactoryListener;
-import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
@@ -47,10 +45,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Objects;
 import java.util.Set;
 
-/**
- * @author Dennis.Ushakov
- */
-public class XmlTagNameSynchronizer implements CommandListener {
+public final class XmlTagNameSynchronizer implements CommandListener, EditorFactoryListener {
   private static final Key<Boolean> SKIP_COMMAND = Key.create("tag.name.synchronizer.skip.command");
   private static final Logger LOG = Logger.getInstance(XmlTagNameSynchronizer.class);
   private static final Set<Language> SUPPORTED_LANGUAGES = ContainerUtil.set(HTMLLanguage.INSTANCE,
@@ -58,26 +53,22 @@ public class XmlTagNameSynchronizer implements CommandListener {
                                                                              XHTMLLanguage.INSTANCE);
 
   private static final Key<TagNameSynchronizer> SYNCHRONIZER_KEY = Key.create("tag_name_synchronizer");
-  private final FileDocumentManager myFileDocumentManager;
 
-  public XmlTagNameSynchronizer(EditorFactory editorFactory, FileDocumentManager manager, Application application) {
-    myFileDocumentManager = manager;
-    editorFactory.addEditorFactoryListener(new EditorFactoryListener() {
-      @Override
-      public void editorCreated(@NotNull EditorFactoryEvent event) {
-        installSynchronizer(event.getEditor());
-      }
-    }, application);
-    application.getMessageBus().connect().subscribe(CommandListener.TOPIC, this);
+  private XmlTagNameSynchronizer() {
+    ApplicationManager.getApplication().getMessageBus().connect().subscribe(CommandListener.TOPIC, this);
   }
 
-  private void installSynchronizer(final Editor editor) {
-    final Project project = editor.getProject();
-    if (project == null || !(editor instanceof EditorImpl)) return;
+  @Override
+  public void editorCreated(@NotNull EditorFactoryEvent event) {
+    Editor editor = event.getEditor();
+    Project project = editor.getProject();
+    if (project == null || !(editor instanceof EditorImpl)) {
+      return;
+    }
 
-    final Document document = editor.getDocument();
-    final VirtualFile file = myFileDocumentManager.getFile(document);
-    final Language language = findXmlLikeLanguage(project, file);
+    Document document = editor.getDocument();
+    VirtualFile file = FileDocumentManager.getInstance().getFile(document);
+    Language language = findXmlLikeLanguage(project, file);
     if (language != null) {
       new TagNameSynchronizer((EditorImpl)editor, project, language).listenForDocumentChanges();
     }
@@ -149,7 +140,7 @@ public class XmlTagNameSynchronizer implements CommandListener {
 
       final Document document = event.getDocument();
       if (myApplying || UndoManager.getInstance(Objects.requireNonNull(myEditor.getProject())).isUndoInProgress() ||
-          !PomModelImpl.isAllowPsiModification() || ((DocumentEx)document).isInBulkUpdate()) {
+          !PomModelImpl.isAllowPsiModification() || document.isInBulkUpdate()) {
         return;
       }
 

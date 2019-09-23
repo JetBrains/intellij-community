@@ -11,7 +11,7 @@ import org.jetbrains.yaml.YAMLBundle;
 import org.jetbrains.yaml.psi.YAMLQuotedText;
 import org.jetbrains.yaml.psi.YAMLScalar;
 
-@ApiStatus.Experimental
+@ApiStatus.Internal
 public class YamlNumberType extends YamlScalarType {
   private static final YamlNumberType SHARED_INSTANCE_NO_QUOTED_VALUES_ALLOWED = new YamlNumberType(false);
   private static final YamlNumberType SHARED_INSTANCE_QUOTED_VALUES_ALLOWED = new YamlNumberType(true);

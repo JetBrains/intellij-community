@@ -22,17 +22,19 @@ class JavaTextBlocksHighlightingTest : LightJavaCodeInsightFixtureTestCase() {
     myFixture.checkHighlighting()
   }
 
-  fun testEscapeQuotes() {
-    doTestPaste("\"\"\"\ntarget\"\"\"")
-  }
+  fun testEscapeQuotes() = doTestPaste("\"\"\"\ntarget\"\"\"")
 
-  fun testEscapeQuotes2() {
-    doTestPaste("\"\ntarget\"")
-  }
+  fun testEscapeQuotes2() = doTestPaste("\"\ntarget\"")
 
-  fun testNoEscapeWhenNotInTextBlockContent() {
-    doTestPaste("\\");
-  }
+  fun testNoEscapeWhenNotInTextBlockContent() = doTestPaste("\\")
+
+  fun testNoEscapeWhenInTextBlockPrefix() = doTestPaste("\\")
+
+  fun testPasteNewline() = doTestPaste("\n\n")
+
+  fun testPasteMultilineText() = doTestPaste("<html>\n  <body>\n  </body>\n</html>")
+
+  fun testBadEscape() = doTestPaste("\\");
 
   private fun doTestPaste(textToPaste: String) {
     myFixture.configureByText("plain.txt", "<selection>$textToPaste</selection>")

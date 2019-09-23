@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.fixtures;
 
 import com.google.common.base.Joiner;
@@ -13,6 +13,7 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.find.findUsages.CustomUsageSearcher;
 import com.intellij.find.findUsages.FindUsagesOptions;
 import com.intellij.ide.DataManager;
+import com.intellij.idea.IdeaTestApplication;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
@@ -63,11 +64,12 @@ import com.jetbrains.python.psi.impl.PyFileImpl;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
-import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
+import javax.swing.*;
 import java.io.File;
 import java.util.*;
 
@@ -93,7 +95,7 @@ public abstract class PyTestCase extends UsefulTestCase {
   }
 
   protected void assertSdkRootsNotParsed(@NotNull PsiFile currentFile) {
-    final Sdk testSdk = PythonSdkType.findPythonSdk(currentFile);
+    final Sdk testSdk = PythonSdkUtil.findPythonSdk(currentFile);
     for (VirtualFile root : testSdk.getRootProvider().getFiles(OrderRootType.CLASSES)) {
       assertRootNotParsed(currentFile, root, null);
     }
@@ -133,16 +135,32 @@ public abstract class PyTestCase extends UsefulTestCase {
 
   @Override
   protected void setUp() throws Exception {
+    initApplication();
     super.setUp();
     IdeaTestFixtureFactory factory = IdeaTestFixtureFactory.getFixtureFactory();
     TestFixtureBuilder<IdeaProjectTestFixture> fixtureBuilder = factory.createLightFixtureBuilder(getProjectDescriptor());
     final IdeaProjectTestFixture fixture = fixtureBuilder.getFixture();
-    myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixture,
-                                                                                    createTempDirFixture());
+    myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixture, createTempDirFixture());
     myFixture.setTestDataPath(getTestDataPath());
-    myFixture.setUp();
-
     PythonDialectsTokenSetProvider.reset();
+    if (SwingUtilities.isEventDispatchThread()) {
+      myFixture.setUp();
+    }
+    else {
+      ApplicationManager.getApplication().invokeAndWait(() -> {
+        try {
+          myFixture.setUp();
+        }
+        catch (final Exception e) {
+          throw new RuntimeException("Error running setup", e);
+        }
+      });
+    }
+
+  }
+
+  private static void initApplication() {
+    IdeaTestApplication.getInstance();
   }
 
   /**
@@ -154,7 +172,7 @@ public abstract class PyTestCase extends UsefulTestCase {
   }
 
   protected void runWithAdditionalClassEntryInSdkRoots(@NotNull VirtualFile directory, @NotNull Runnable runnable) {
-    final Sdk sdk = PythonSdkType.findPythonSdk(myFixture.getModule());
+    final Sdk sdk = PythonSdkUtil.findPythonSdk(myFixture.getModule());
     assertNotNull(sdk);
     WriteAction.run(() -> {
       final SdkModificator modificator = sdk.getSdkModificator();

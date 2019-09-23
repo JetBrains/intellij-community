@@ -18,6 +18,7 @@ import javafx.application.Platform;
 import javafx.concurrent.Worker;
 import javafx.embed.swing.JFXPanel;
 import javafx.scene.Scene;
+import javafx.scene.text.FontSmoothingType;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
 import org.jetbrains.annotations.NotNull;
@@ -53,6 +54,7 @@ public class JavaFxHtmlPanel implements Disposable {
       myWebView = new WebView();
       myWebView.setContextMenuEnabled(false);
       myWebView.setZoom(JBUIScale.scale(1.f));
+      myWebView.fontSmoothingTypeProperty().setValue(FontSmoothingType.GRAY);
 
       final WebEngine engine = myWebView.getEngine();
       registerListeners(engine);

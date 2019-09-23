@@ -42,7 +42,7 @@ public class ConcatenationToMessageFormatTest extends JavaCodeInsightFixtureTest
   private void doTest(String expressionText, String messageFormatText, String... foundExpressionTexts) {
     final PsiExpression expression = getElementFactory().createExpressionFromText(expressionText, null);
     final ArrayList<PsiExpression> args = new ArrayList<>();
-    final String formatString = PsiConcatenationUtil.buildFormatString(expression, false, args);
+    final String formatString = PsiConcatenationUtil.buildUnescapedFormatString(expression, false, args);
     assertEquals(messageFormatText, formatString);
     assertEquals(foundExpressionTexts.length, args.size());
     for (int i = 0; i < foundExpressionTexts.length; i++) {

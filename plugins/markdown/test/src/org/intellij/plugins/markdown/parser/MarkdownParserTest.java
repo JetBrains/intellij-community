@@ -16,9 +16,18 @@
 package org.intellij.plugins.markdown.parser;
 
 import com.intellij.lang.LanguageASTFactory;
+import com.intellij.lang.html.HTMLParserDefinition;
+import com.intellij.lang.xml.XMLLanguage;
+import com.intellij.lang.xml.XmlASTFactory;
+import com.intellij.lang.xml.XmlTemplateTreePatcher;
+import com.intellij.lexer.EmbeddedTokenTypesProvider;
+import com.intellij.psi.LanguageFileViewProviders;
+import com.intellij.psi.templateLanguages.TemplateDataElementType;
+import com.intellij.psi.xml.StartTagEndTokenProvider;
 import com.intellij.testFramework.ParsingTestCase;
 import org.intellij.plugins.markdown.MarkdownTestingUtil;
 import org.intellij.plugins.markdown.highlighting.MarkdownColorSettingsPage;
+import org.intellij.plugins.markdown.lang.MarkdownFileViewProviderFactory;
 import org.intellij.plugins.markdown.lang.MarkdownLanguage;
 import org.intellij.plugins.markdown.lang.parser.MarkdownParserDefinition;
 import org.intellij.plugins.markdown.lang.psi.MarkdownASTFactory;
@@ -28,13 +37,21 @@ import java.io.IOException;
 public class MarkdownParserTest extends ParsingTestCase {
 
   public MarkdownParserTest() {
-    super("parser", "md", true, new MarkdownParserDefinition());
+    super("parser", "md", true, new MarkdownParserDefinition(), new HTMLParserDefinition());
   }
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
+    registerExtensionPoint(EmbeddedTokenTypesProvider.EXTENSION_POINT_NAME, EmbeddedTokenTypesProvider.class);
+    registerExtensionPoint(StartTagEndTokenProvider.EP_NAME, StartTagEndTokenProvider.class);
+
+    addExplicitExtension(LanguageFileViewProviders.INSTANCE, MarkdownLanguage.INSTANCE, new MarkdownFileViewProviderFactory());
+
     addExplicitExtension(LanguageASTFactory.INSTANCE, MarkdownLanguage.INSTANCE, new MarkdownASTFactory());
+    addExplicitExtension(LanguageASTFactory.INSTANCE, XMLLanguage.INSTANCE, new XmlASTFactory());
+
+    addExplicitExtension(TemplateDataElementType.TREE_PATCHER, XMLLanguage.INSTANCE, new XmlTemplateTreePatcher());
   }
 
   @Override

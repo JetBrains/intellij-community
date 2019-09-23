@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
-
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.PathUtilRt
@@ -19,6 +18,8 @@ import org.jetbrains.jps.model.artifact.JpsArtifactService
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaDependenciesEnumerator
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
+import org.jetbrains.jps.model.java.JpsJavaSdkType
+import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
 import org.jetbrains.jps.model.serialization.JpsProjectLoader
@@ -64,7 +65,7 @@ class CompilationContextImpl implements CompilationContext {
 
     def dependenciesProjectDir = new File(communityHome, 'build/dependencies')
     logFreeDiskSpace(messages, projectHome, "before downloading dependencies")
-    def gradleJdk = toCanonicalPath(JdkUtils.computeJdkHome(messages, "jdk8Home", null, "JDK_18_x64"))
+    def gradleJdk = toCanonicalPath(JdkUtils.computeJdkHome(messages, '1.8', null, "JDK_18_x64"))
     GradleRunner gradle = new GradleRunner(dependenciesProjectDir, projectHome, messages, gradleJdk)
     if (!options.isInDevelopmentMode) {
       setupCompilationDependencies(gradle, options)
@@ -74,11 +75,9 @@ class CompilationContextImpl implements CompilationContext {
     }
 
     projectHome = toCanonicalPath(projectHome)
-    def jdkDefaultDir = "${jdkDir(projectHome, options)}/${jdkVersionName(options)}"
-    def jdkHome = toCanonicalPath(JdkUtils.computeJdkHome(messages, "jdk8Home", jdkDefaultDir, "JDK_18_x64"))
     def kotlinHome = toCanonicalPath("$communityHome/build/dependencies/build/kotlin/Kotlin")
-
-    def model = loadProject(projectHome, jdkHome, kotlinHome, messages, options, ant)
+    def model = loadProject(projectHome, kotlinHome, messages, options, ant, gradle)
+    def jdkHome = defineJavaSdk(model, projectHome, options, messages)
     def oldToNewModuleName = loadModuleRenamingHistory(projectHome, messages) + loadModuleRenamingHistory(communityHome, messages)
     def context = new CompilationContextImpl(ant, gradle, model, communityHome, projectHome, jdkHome, kotlinHome, messages, oldToNewModuleName,
                                              buildOutputRootEvaluator, options)
@@ -87,14 +86,50 @@ class CompilationContextImpl implements CompilationContext {
     return context
   }
 
-  private static String jdkDir(String projectHome, BuildOptions options) {
+  private static String defineJavaSdk(JpsModel model, String projectHome, BuildOptions options, BuildMessages messages) {
+    def sdks = []
+    def jbrDir = jbrDir(projectHome, options)
+    def jdk6Home = JdkUtils.computeJdkHome(messages, '1.6', "$jbrDir/1.6", "JDK_16_x64")
+    JdkUtils.defineJdk(model.global, "IDEA jdk", jdk6Home, messages)
+    sdks << "IDEA jdk"
+    def jbrVersionName = jbrVersionName(options)
+    sdks << jbrVersionName
+    def jbrDefaultDir = "$jbrDir/$jbrVersionName"
+    def jbrEnvVar = "JDK_${options.jbrVersion < 9 ? "1$options.jbrVersion" : options.jbrVersion}_x64"
+    def jbrHome = toCanonicalPath(JdkUtils.computeJdkHome(messages, jbrVersionName, jbrDefaultDir, jbrEnvVar))
+    JdkUtils.defineJdk(model.global, jbrVersionName, jbrHome, messages)
+    model.project.modules
+      .collect { it.getSdkReference(JpsJavaSdkType.INSTANCE)?.sdkName }
+      .findAll { it != null && !sdks.contains(it) }
+      .toSet().each { sdkName ->
+      def sdkHome = JdkUtils.computeJdkHome(messages, sdkName, "$jbrDir/$sdkName", null)?.with {
+        toCanonicalPath(it)
+      }
+      if (sdkHome != null) {
+        JdkUtils.defineJdk(model.global, sdkName, sdkHome, messages)
+        def additionalSdk = model.global.libraryCollection.findLibrary(sdkName)
+        def urls = additionalSdk.getRoots(JpsOrderRootType.COMPILED).collect { it.url }
+        JdkUtils.readModulesFromReleaseFile(new File(sdkHome)).each {
+          if (!urls.contains(it)) {
+            additionalSdk.addRoot(it, JpsOrderRootType.COMPILED)
+          }
+        }
+      }
+      else {
+        messages.warning("JDK $sdkName is required to compile the project but it's not found")
+      }
+    }
+    return jbrHome
+  }
+
+  private static String jbrDir(String projectHome, BuildOptions options) {
     options.jdksTargetDir?.with {
       new File(it).exists() ? it : null
     } ?: "$projectHome/build/jdk"
   }
 
-  private static String jdkVersionName(BuildOptions options) {
-    "${options.jdkVersion < 9 ? "1.$options.jdkVersion" : options.jdkVersion}"
+  private static String jbrVersionName(BuildOptions options) {
+    "${options.jbrVersion < 9 ? "1.$options.jbrVersion" : options.jbrVersion}"
   }
 
   @SuppressWarnings(["GrUnresolvedAccess", "GroovyAssignabilityCheck"])
@@ -135,7 +170,7 @@ class CompilationContextImpl implements CompilationContext {
                                       paths.kotlinHome, messages, oldToNewModuleName, buildOutputRootEvaluator, options)
   }
 
-  private static JpsModel loadProject(String projectHome, String jdkHome, String kotlinHome, BuildMessages messages, BuildOptions options, AntBuilder ant) {
+  private static JpsModel loadProject(String projectHome, String kotlinHome, BuildMessages messages, BuildOptions options, AntBuilder ant, GradleRunner gradle) {
     if (!options.useCompiledClassesFromProjectOutput && options.pathToCompiledClassesArchive == null && options.pathToCompiledClassesArchivesMetadata == null) {
       //we need to add Kotlin JPS plugin to classpath before loading the project to ensure that Kotlin settings will be properly loaded
       ensureKotlinJpsPluginIsAddedToClassPath(kotlinHome, ant, messages)
@@ -144,9 +179,6 @@ class CompilationContextImpl implements CompilationContext {
     def model = JpsElementFactory.instance.createModel()
     def pathVariablesConfiguration = JpsModelSerializationDataService.getOrCreatePathVariablesConfiguration(model.global)
     pathVariablesConfiguration.addPathVariable("MAVEN_REPOSITORY", FileUtil.toSystemIndependentName(new File(SystemProperties.getUserHome(), ".m2/repository").absolutePath))
-
-    JdkUtils.defineJdk(model.global, "IDEA jdk", JdkUtils.computeJdkHome(messages, "jdkHome", "${jdkDir(projectHome, options)}/1.6", "JDK_16_x64"))
-    JdkUtils.defineJdk(model.global, jdkVersionName(options), jdkHome)
 
     def pathVariables = JpsModelSerializationDataService.computeAllPathVariables(model.global)
     JpsProjectLoader.loadProject(model.project, pathVariables, projectHome)
@@ -362,7 +394,11 @@ class CompilationContextImpl implements CompilationContext {
 
   @Override
   List<String> getModuleRuntimeClasspath(JpsModule module, boolean forTests) {
-    JpsJavaDependenciesEnumerator enumerator = JpsJavaExtensionService.dependencies(module).recursively().includedIn(JpsJavaClasspathKind.runtime(forTests))
+    JpsJavaDependenciesEnumerator enumerator = JpsJavaExtensionService
+      .dependencies(module).recursively()
+      // if project requires different SDKs they all shouldn't be added to test classpath
+      .with { forTests ? withoutSdk() : it }
+      .includedIn(JpsJavaClasspathKind.runtime(forTests))
     return enumerator.classes().roots.collect { it.absolutePath }
   }
 

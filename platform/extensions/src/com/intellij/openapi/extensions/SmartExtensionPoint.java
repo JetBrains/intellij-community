@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions;
 
-import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,19 +22,14 @@ public abstract class SmartExtensionPoint<Extension, V> {
   protected SmartExtensionPoint(@NotNull final Collection<V> explicitExtensions) {
     myExplicitExtensions = explicitExtensions;
 
-    myExtensionPointAndAreaListener = new ExtensionPointAndAreaListener<Extension>() {
+    myExtensionPointAndAreaListener = new ExtensionPointAdapter<Extension>() {
       @Override
       public void areaReplaced(@NotNull ExtensionsArea oldArea) {
         dropCache();
       }
 
       @Override
-      public final void extensionRemoved(@NotNull final Extension extension, @NotNull final PluginDescriptor pluginDescriptor) {
-        dropCache();
-      }
-
-      @Override
-      public final void extensionAdded(@NotNull final Extension extension, @NotNull final PluginDescriptor pluginDescriptor) {
+      public void extensionListChanged() {
         dropCache();
       }
 
@@ -91,7 +86,7 @@ public abstract class SmartExtensionPoint<Extension, V> {
       myExtensionPoint = extensionPoint;
     }
 
-    List<V> registeredExtensions = ContainerUtilRt.mapNotNull(extensionPoint.getExtensionList(), this::getExtension);
+    List<V> registeredExtensions = ContainerUtil.mapNotNull(extensionPoint.getExtensionList(), this::getExtension);
     synchronized (myExplicitExtensions) {
       result = myCache;
       if (result != null) {

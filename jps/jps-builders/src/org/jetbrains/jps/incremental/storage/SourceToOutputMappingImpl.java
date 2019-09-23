@@ -18,6 +18,7 @@ package org.jetbrains.jps.incremental.storage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
+import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
 
 import java.io.File;
 import java.io.IOException;
@@ -30,8 +31,8 @@ import java.util.Iterator;
 public class SourceToOutputMappingImpl implements SourceToOutputMapping {
   private final OneToManyPathsMapping myMapping;
 
-  public SourceToOutputMappingImpl(File storePath) throws IOException {
-    myMapping = new OneToManyPathsMapping(storePath);
+  public SourceToOutputMappingImpl(File storePath, PathRelativizerService relativizer) throws IOException {
+    myMapping = new OneToManyPathsMapping(storePath, relativizer);
   }
 
   @Override
@@ -55,8 +56,8 @@ public class SourceToOutputMappingImpl implements SourceToOutputMapping {
   }
 
   @Override
-  public void removeOutput(@NotNull String sourcePath, @NotNull String outputPath) throws IOException {
-    myMapping.removeData(sourcePath, outputPath);
+  public void removeOutput(@NotNull String srcPath, @NotNull String outputPath) throws IOException {
+    myMapping.removeData(srcPath, outputPath);
   }
 
   @NotNull

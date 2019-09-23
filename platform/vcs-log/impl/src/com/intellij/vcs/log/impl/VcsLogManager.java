@@ -4,6 +4,7 @@ package com.intellij.vcs.log.impl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Disposer;
@@ -33,6 +34,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -46,8 +48,9 @@ public class VcsLogManager implements Disposable {
 
   @NotNull private final VcsLogData myLogData;
   @NotNull private final VcsLogColorManagerImpl myColorManager;
-  @NotNull private final VcsLogTabsWatcher myTabsLogRefresher;
+  @Nullable private VcsLogTabsWatcher myTabsLogRefresher;
   @NotNull private final PostponableLogRefresher myPostponableRefresher;
+  private boolean myDisposed;
 
   public VcsLogManager(@NotNull Project project, @NotNull VcsLogTabsProperties uiProperties, @NotNull Collection<? extends VcsRoot> roots) {
     this(project, uiProperties, findLogProviders(roots, project), true, null);
@@ -65,7 +68,6 @@ public class VcsLogManager implements Disposable {
     MyFatalErrorsHandler fatalErrorsHandler = new MyFatalErrorsHandler();
     myLogData = new VcsLogData(myProject, logProviders, fatalErrorsHandler, this);
     myPostponableRefresher = new PostponableLogRefresher(myLogData);
-    myTabsLogRefresher = new VcsLogTabsWatcher(myProject, myPostponableRefresher);
 
     refreshLogOnVcsEvents(logProviders, myPostponableRefresher, myLogData);
 
@@ -113,10 +115,14 @@ public class VcsLogManager implements Disposable {
 
   @NotNull
   public <U extends AbstractVcsLogUi> U createLogUi(@NotNull VcsLogUiFactory<U> factory, boolean isToolWindowTab) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    if (isDisposed()) throw new ProcessCanceledException();
+
     U ui = factory.createLogUi(myProject, myLogData);
 
     Disposable disposable;
     if (isToolWindowTab) {
+      if (myTabsLogRefresher == null) myTabsLogRefresher = new VcsLogTabsWatcher(myProject, myPostponableRefresher);
       disposable = myTabsLogRefresher.addTabToWatch(ui.getId(), ui.getRefresher());
     }
     else {
@@ -140,6 +146,8 @@ public class VcsLogManager implements Disposable {
 
   @NotNull
   public static Map<VirtualFile, VcsLogProvider> findLogProviders(@NotNull Collection<? extends VcsRoot> roots, @NotNull Project project) {
+    if (roots.isEmpty()) return Collections.emptyMap();
+
     Map<VirtualFile, VcsLogProvider> logProviders = new HashMap<>();
     VcsLogProvider[] allLogProviders = VcsLogProvider.LOG_PROVIDER_EP.getExtensions(project);
     for (VcsRoot root : roots) {
@@ -160,6 +168,13 @@ public class VcsLogManager implements Disposable {
     return logProviders;
   }
 
+  @CalledInAwt
+  void disposeUi() {
+    myDisposed = true;
+    LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
+    if (myTabsLogRefresher != null) Disposer.dispose(myTabsLogRefresher);
+  }
+
   /**
    * Dispose VcsLogManager and execute some activity after it.
    *
@@ -167,9 +182,7 @@ public class VcsLogManager implements Disposable {
    */
   @CalledInAwt
   public void dispose(@Nullable Runnable callback) {
-    LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
-
-    Disposer.dispose(myTabsLogRefresher);
+    disposeUi();
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       Disposer.dispose(this);
       if (callback != null) {
@@ -185,6 +198,11 @@ public class VcsLogManager implements Disposable {
     // the above method first disposes ui in EDT, than disposes everything else in background
     LOG.assertTrue(!ApplicationManager.getApplication().isDispatchThread());
     LOG.debug("Disposed Vcs Log for " + VcsLogUtil.getProvidersMapText(myLogData.getLogProviders()));
+  }
+
+  @CalledInAwt
+  public boolean isDisposed() {
+    return myDisposed;
   }
 
   private class MyFatalErrorsHandler implements FatalErrorHandler {

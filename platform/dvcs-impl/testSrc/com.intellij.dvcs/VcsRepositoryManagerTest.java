@@ -5,8 +5,8 @@ import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.repo.VcsRepositoryCreator;
 import com.intellij.dvcs.repo.VcsRepositoryManager;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.ExtensionPoint;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsKey;
@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 
@@ -55,7 +56,7 @@ public class VcsRepositoryManagerTest extends VcsPlatformTest {
 
   @NotNull
   private ExtensionPoint<VcsRepositoryCreator> getExtensionPoint() {
-    return Extensions.getArea(myProject).getExtensionPoint(VcsRepositoryCreator.EXTENSION_POINT_NAME);
+    return VcsRepositoryCreator.EXTENSION_POINT_NAME.getPoint(myProject);
   }
 
   @Override
@@ -79,19 +80,17 @@ public class VcsRepositoryManagerTest extends VcsPlatformTest {
           VcsUtil.addMapping(myProjectLevelVcsManager.getDirectoryMappings(), projectRoot.getPath(), myVcs.getName()));
       return !myGlobalRepositoryManager.getRepositories().isEmpty();
     });
-    Thread modify = new Thread(modifyRepositoryMapping,"vcs modify");
-    modify.start();
+    Future<?> modify = ApplicationManager.getApplication().executeOnPooledThread(modifyRepositoryMapping);
 
     //wait until modification starts
     assertTrue(LOCK_ERROR_TEXT, READY_TO_READ.await(1, TimeUnit.SECONDS));
 
-    Thread read = new Thread(readExistingRepo,"vcs read");
-    read.start();
+    Future<?> read = ApplicationManager.getApplication().executeOnPooledThread(readExistingRepo);
     assertNotNull(readExistingRepo.get(1, TimeUnit.SECONDS));
     CONTINUE_MODIFY.countDown();
     assertTrue(modifyRepositoryMapping.get(1, TimeUnit.SECONDS));
-    read.join();
-    modify.join();
+    read.get();
+    modify.get();
   }
 
   @NotNull

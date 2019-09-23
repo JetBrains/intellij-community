@@ -8,3 +8,8 @@
 (self.rest := [])
 
 (p: Optional[int] := None)
+
+(b := -)
+(x := )
+
+x = (b[j] := z) = 'spam'  # z is a reference

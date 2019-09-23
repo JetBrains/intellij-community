@@ -70,7 +70,7 @@ public class PsiVFSListener implements BulkFileListener {
       connection.subscribe(FileTypeManager.TOPIC, new FileTypeListener() {
         @Override
         public void fileTypesChanged(@NotNull FileTypeEvent e) {
-          myFileManager.processFileTypesChanged();
+          myFileManager.processFileTypesChanged(true);
         }
       });
       connection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, new MyFileDocumentManagerAdapter());
@@ -122,7 +122,6 @@ public class PsiVFSListener implements BulkFileListener {
         VirtualFile parent = vFile.getParent();
         PsiDirectory parentDir = getCachedDirectory(parent);
         if (parentDir == null) {
-          // parent directory was never accessed via PSI
           handleVfsChangeWithoutPsi(vFile);
           return;
         }
@@ -588,7 +587,7 @@ public class PsiVFSListener implements BulkFileListener {
           assert depthCounter >= 0 : depthCounter;
           if (depthCounter > 0) return;
 
-          DebugUtil.performPsiModification(null, () -> myFileManager.possiblyInvalidatePhysicalPsi());
+          DebugUtil.performPsiModification(null, () -> myFileManager.possiblyInvalidatePhysicalPsi(false));
 
           PsiTreeChangeEventImpl treeEvent = new PsiTreeChangeEventImpl(myManager);
           treeEvent.setPropertyName(PsiTreeChangeEvent.PROP_ROOTS);

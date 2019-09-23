@@ -79,14 +79,15 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
   }
 
   private void printText(@NotNull String text, @Nullable ConsoleViewContentType contentType) throws IOException {
-    if (contentType != null) {
-      myDataStream.append(encodeColor(contentType.getAttributes().getForegroundColor()));
+    Color foregroundColor = contentType != null ? contentType.getAttributes().getForegroundColor() : null;
+    if (foregroundColor != null) {
+      myDataStream.append(encodeColor(foregroundColor));
     }
 
     myDataStream.append(text);
 
-    if (contentType != null) {
-      myDataStream.append((char)CharUtils.ESC + "[39m"); //restore color
+    if (foregroundColor != null) {
+      myDataStream.append((char)CharUtils.ESC + "[39m"); //restore default foreground color
     }
     myContentHelper.onContentTypePrinted(ObjectUtils.notNull(contentType, ConsoleViewContentType.NORMAL_OUTPUT));
   }
@@ -96,7 +97,8 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
     myContentHelper.addChangeListener(listener, parent);
   }
 
-  private static String encodeColor(Color color) {
+  @NotNull
+  private static String encodeColor(@NotNull Color color) {
     return ((char)CharUtils.ESC) + "[" + "38;2;" + color.getRed() + ";" + color.getGreen() + ";" +
            color.getBlue() + "m";
   }
@@ -120,7 +122,7 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
   @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
   @Deprecated
   public void addMessageFilter(Project project, Filter filter) {
-    myTerminalWidget.addMessageFilter(project, filter);
+    myTerminalWidget.addMessageFilter(filter);
   }
 
   @Override
@@ -251,7 +253,7 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
 
   @Override
   public void addMessageFilter(@NotNull Filter filter) {
-    myTerminalWidget.addMessageFilter(myProject, filter);
+    myTerminalWidget.addMessageFilter(filter);
   }
 
   @Override
@@ -315,7 +317,7 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
 
   private class ConsoleTerminalWidget extends JBTerminalWidget implements DataProvider {
     private ConsoleTerminalWidget(@NotNull Project project, @NotNull JBTerminalSystemSettingsProviderBase provider) {
-      super(project, 200, 24, provider, TerminalExecutionConsole.this);
+      super(project, 200, 24, provider, TerminalExecutionConsole.this, TerminalExecutionConsole.this);
     }
 
     @Override

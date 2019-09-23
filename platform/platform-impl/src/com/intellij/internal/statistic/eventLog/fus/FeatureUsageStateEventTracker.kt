@@ -10,7 +10,5 @@ interface FeatureUsageStateEventTracker {
 }
 
 fun initStateEventTrackers() {
-  for (extension in EP_NAME.iterable) {
-    extension.initialize()
-  }
+  EP_NAME.forEachExtensionSafe { it.initialize()}
 }

@@ -27,8 +27,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
-import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonEnvUtil;
+import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -36,7 +36,8 @@ import java.io.IOException;
 import java.util.*;
 
 public class PyCythonExtensionWarning {
-  private static final Logger LOG = Logger.getInstance("com.jetbrains.python.debugger.PyCythonExtensionWarning");
+  private static final Logger LOG = Logger.getInstance(PyCythonExtensionWarning.class);
+
   public static final String ERROR_TITLE = "Compile Cython Extensions Error";
   private static final String CYTHON_WARNING_GROUP_ID = "CythonWarning";
   private static final String WARNING_MESSAGE = "Cython extension speeds up Python debugging";
@@ -88,7 +89,7 @@ public class PyCythonExtensionWarning {
     }
     AbstractPythonRunConfiguration runConfiguration = (AbstractPythonRunConfiguration)configuration;
     // Temporarily disable notification for Remote interpreters
-    return PySdkUtil.isRemote(runConfiguration.getSdk());
+    return PythonSdkUtil.isRemote(runConfiguration.getSdk());
   }
 
   private static void showErrorDialog(Project project, String message) {

@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.command.impl;
 
-import com.intellij.CommonBundle;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.command.undo.DocumentReference;
@@ -81,14 +81,14 @@ abstract class UndoRedo {
 
   public boolean execute(boolean drop, boolean disableConfirmation) {
     if (!myUndoableGroup.isUndoable()) {
-      reportCannotUndo(CommonBundle.message("cannot.undo.error.contains.nonundoable.changes.message"),
+      reportCannotUndo(IdeBundle.message("cannot.undo.error.contains.nonundoable.changes.message"),
                        myUndoableGroup.getAffectedDocuments());
       return false;
     }
 
     Set<DocumentReference> clashing = getStackHolder().collectClashingActions(myUndoableGroup);
     if (!clashing.isEmpty()) {
-      reportCannotUndo(CommonBundle.message("cannot.undo.error.other.affected.files.changed.message"), clashing);
+      reportCannotUndo(IdeBundle.message("cannot.undo.error.other.affected.files.changed.message"), clashing);
       return false;
     }
 
@@ -195,7 +195,7 @@ abstract class UndoRedo {
   boolean confirmSwitchTo(@NotNull UndoRedo other) {
     final boolean[] isOk = new boolean[1];
     TransactionGuard.getInstance().submitTransactionAndWait(() -> {
-      String message = CommonBundle.message("undo.conflicting.change.confirmation.message") + "\n" +
+      String message = IdeBundle.message("undo.conflicting.change.confirmation") + "\n" +
                        getActionName(other.myUndoableGroup.getCommandName()) + "?";
       isOk[0] = Messages.showOkCancelDialog(myManager.getProject(), message, getActionName(),
                                             Messages.getQuestionIcon()) == Messages.OK;

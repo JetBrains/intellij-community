@@ -6,7 +6,6 @@ import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleTypeManager;
 import icons.PythonIcons;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
@@ -18,13 +17,11 @@ import javax.swing.*;
  */
 public abstract class PythonModuleTypeBase<T extends ModuleBuilder> extends ModuleType<T> {
   public static ModuleType getInstance() {
-    return ModuleTypeManager.getInstance().findByID(PYTHON_MODULE);
+    return ModuleTypeManager.getInstance().findByID(PyNames.PYTHON_MODULE_ID);
   }
 
-  @NonNls public static final String PYTHON_MODULE = "PYTHON_MODULE";
-
   protected PythonModuleTypeBase() {
-    super(PYTHON_MODULE);
+    super(PyNames.PYTHON_MODULE_ID);
   }
 
   @Override

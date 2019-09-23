@@ -2,13 +2,10 @@
 package com.intellij.psi.codeStyle.arrangement.std;
 
 import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * Used to group ordered collections of {@link StdArrangementTokens} along with their {@link StdArrangementTokenUiRole roles}.
@@ -50,13 +47,14 @@ public class CompositeArrangementSettingsToken {
   public CompositeArrangementSettingsToken(@NotNull ArrangementSettingsToken token,
                                            @NotNull ArrangementSettingsToken... children)
   {
-    this(token, deduceRole(token), ContainerUtilRt.map2List(children, WRAPPER));
+    this(token, deduceRole(token),
+         ContainerUtil.map2List(Arrays.asList(children), WRAPPER));
   }
 
   public CompositeArrangementSettingsToken(@NotNull ArrangementSettingsToken token,
                                            @NotNull Collection<? extends ArrangementSettingsToken> children)
   {
-    this(token, deduceRole(token), ContainerUtilRt.map2List(children, WRAPPER));
+    this(token, deduceRole(token), ContainerUtil.map2List(children, WRAPPER));
   }
 
   public CompositeArrangementSettingsToken(@NotNull ArrangementSettingsToken token,

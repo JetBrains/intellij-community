@@ -10,6 +10,7 @@ import com.intellij.openapi.ListSelection;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
@@ -20,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Stream;
 
 import static com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffTool.ALLOW_EXCLUDE_FROM_COMMIT;
@@ -37,7 +39,7 @@ public class ShowDiffFromLocalChangesActionProvider implements AnActionExtension
     ChangesListView view = e.getRequiredData(ChangesListView.DATA_KEY);
 
     Stream<Change> changes = view.getSelectedChanges();
-    Stream<VirtualFile> unversionedFiles = view.getSelectedUnversionedFiles();
+    Stream<FilePath> unversionedFiles = view.getSelectedUnversionedFiles();
 
     if (ActionPlaces.MAIN_MENU.equals(e.getPlace())) {
       e.getPresentation().setEnabled(project != null && (changes.findAny().isPresent() || unversionedFiles.findAny().isPresent()));
@@ -47,8 +49,8 @@ public class ShowDiffFromLocalChangesActionProvider implements AnActionExtension
     }
   }
 
-  private static boolean canShowDiff(@Nullable Project project, @NotNull Stream<? extends Change> changes, @NotNull Stream<VirtualFile> files) {
-    return files.findAny().isPresent() ||
+  private static boolean canShowDiff(@Nullable Project project, @NotNull Stream<? extends Change> changes, @NotNull Stream<FilePath> paths) {
+    return paths.findAny().isPresent() ||
            changes.anyMatch(it -> ChangeDiffRequestProducer.canCreate(project, it));
   }
 
@@ -59,7 +61,8 @@ public class ShowDiffFromLocalChangesActionProvider implements AnActionExtension
     if (ChangeListManager.getInstance(project).isFreezedWithNotification(null)) return;
 
     List<Change> changes = view.getSelectedChanges().collect(toList());
-    List<VirtualFile> unversioned = view.getSelectedUnversionedFiles().collect(toList());
+    List<VirtualFile> unversioned =
+      view.getSelectedUnversionedFiles().map(FilePath::getVirtualFile).filter(Objects::nonNull).collect(toList());
 
     final boolean needsConversion = checkIfThereAreFakeRevisions(project, changes);
 
@@ -68,7 +71,7 @@ public class ShowDiffFromLocalChangesActionProvider implements AnActionExtension
       // but we can only rely on callback after refresh
       ChangeListManager.getInstance(project).invokeAfterUpdate(
         () -> {
-          ((ChangesViewManager)ChangesViewManager.getInstance(project)).refreshImmediately();
+          ChangesViewManager.getInstanceEx(project).refreshImmediately();
           List<Change> actualChanges = loadFakeRevisions(project, changes);
           showDiff(project, actualChanges, unversioned, view);
         },
@@ -130,7 +133,8 @@ public class ShowDiffFromLocalChangesActionProvider implements AnActionExtension
 
     if (unversioned.size() == 1 && changes.isEmpty()) { // show all unversioned changes
       VirtualFile selectedFile = unversioned.get(0);
-      List<VirtualFile> allUnversioned = changesView.getUnversionedFiles().collect(toList());
+      List<VirtualFile> allUnversioned =
+        changesView.getUnversionedFiles().map(FilePath::getVirtualFile).filter(Objects::nonNull).collect(toList());
       showUnversionedDiff(project, ListSelection.create(allUnversioned, selectedFile));
       return;
     }
@@ -177,10 +181,7 @@ public class ShowDiffFromLocalChangesActionProvider implements AnActionExtension
   }
 
   private static void setAllowExcludeFromCommit(@NotNull Project project, @NotNull DiffRequestChain chain) {
-    ChangesViewI manager = ChangesViewManager.getInstance(project);
-
-    if (manager instanceof ChangesViewManager) {
-      chain.putUserData(ALLOW_EXCLUDE_FROM_COMMIT, ((ChangesViewManager)manager).isAllowExcludeFromCommit());
-    }
+    boolean allowExcludeFromCommit = ChangesViewManager.getInstanceEx(project).isAllowExcludeFromCommit();
+    chain.putUserData(ALLOW_EXCLUDE_FROM_COMMIT, allowExcludeFromCommit);
   }
 }

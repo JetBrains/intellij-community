@@ -1,8 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-/**
- * @author traff
- */
-
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.index.stubs
 
 import com.google.common.hash.HashCode
@@ -14,16 +10,17 @@ import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.impl.DebugUtil
 import com.intellij.psi.stubs.*
 import com.intellij.util.indexing.FileBasedIndexExtension
 import com.intellij.util.indexing.FileContentImpl
 import com.intellij.util.io.PersistentHashMap
+import com.intellij.util.io.write
 import junit.framework.TestCase
 import org.jetbrains.index.IndexGenerator
 import java.io.File
+import java.nio.file.Paths
 import java.util.*
 
 /**
@@ -61,17 +58,13 @@ open class StubsGenerator(private val stubsVersion: String, private val stubsSto
 
   open fun buildStubForFile(fileContent: FileContentImpl,
                             serializationManager: SerializationManagerImpl): Stub? {
-
     return ReadAction.compute<Stub, Throwable> { StubTreeBuilder.buildStubTree(fileContent) }
   }
 }
 
-fun writeStubsVersionFile(stubsStorageFilePath: String, stubsVersion: String) {
-  val stubSerializationVersion = FileBasedIndexExtension
-    .EXTENSION_POINT_NAME
-    .findExtension(StubUpdatingIndex::class.java)!!
-    .version
-  FileUtil.writeToFile(File("$stubsStorageFilePath.version"), "$stubSerializationVersion\n$stubsVersion")
+private fun writeStubsVersionFile(stubsStorageFilePath: String, stubsVersion: String) {
+  val stubSerializationVersion = FileBasedIndexExtension.EXTENSION_POINT_NAME.findExtensionOrFail(StubUpdatingIndex::class.java).version
+  Paths.get("$stubsStorageFilePath.version").write("$stubSerializationVersion\n$stubsVersion")
 }
 
 fun mergeStubs(paths: List<String>, stubsFilePath: String, stubsFileName: String, projectPath: String, stubsVersion: String) {

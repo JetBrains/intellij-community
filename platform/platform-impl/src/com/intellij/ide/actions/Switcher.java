@@ -64,6 +64,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
@@ -71,6 +72,7 @@ import java.awt.event.*;
 import java.io.File;
 import java.util.List;
 import java.util.*;
+import java.util.function.Supplier;
 
 import static com.intellij.ide.actions.RecentLocationsAction.SHORTCUT_HEX_COLOR;
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
@@ -86,7 +88,8 @@ public class Switcher extends AnAction implements DumbAware {
   private static final Color SEPARATOR_COLOR = JBColor.namedColor("Popup.separatorColor", new JBColor(Gray.xC0, Gray.x4B));
   private static final String TOGGLE_CHECK_BOX_ACTION_ID = "SwitcherRecentEditedChangedToggleCheckBox";
 
-  private static final int MINIMUM_HEIGHT = JBUIScale.scale(100);
+  private static final int MINIMUM_HEIGHT = JBUIScale.scale(400);
+  private static final int MINIMUM_WIDTH = JBUIScale.scale(500);
 
   private static final Color ON_MOUSE_OVER_BG_COLOR = new JBColor(new Color(231, 242, 249), new Color(77, 80, 84));
 
@@ -197,12 +200,12 @@ public class Switcher extends AnAction implements DumbAware {
 
   public static class SwitcherPanel extends JPanel implements KeyListener, MouseListener, MouseMotionListener, DataProvider,
                                                               QuickSearchComponent {
+    static final Object RECENT_LOCATIONS = new Object();
     final JBPopup myPopup;
-    final JBList<ToolWindow> toolWindows;
+    final JBList<Object> toolWindows;
     final JBList<FileInfo> files;
-    final JPanel separator;
     final ToolWindowManager twManager;
-    final JBCheckBox myShowOnlyEditedFilesCheckBox;
+    JBCheckBox myShowOnlyEditedFilesCheckBox;
     final JLabel pathLabel = new JLabel(" ");
     final JPanel myTopPanel;
     final JPanel descriptions;
@@ -313,14 +316,12 @@ public class Switcher extends AnAction implements DumbAware {
 
     @SuppressWarnings({"ConstantConditions"})
     SwitcherPanel(@NotNull final Project project, @NotNull String title, @NotNull String actionId, boolean onlyEdited, boolean pinned) {
-      setLayout(new SwitcherLayouter());
+      setLayout(new BorderLayout());
       this.project = project;
       myTitle = title;
       myPinned = pinned;
       mySpeedSearch = pinned ? new SwitcherSpeedSearch(this) : null;
 
-      //setFocusable(true);
-      //addKeyListener(this);
       setBorder(JBUI.Borders.empty());
       setBackground(JBColor.background());
       pathLabel.setHorizontalAlignment(SwingConstants.LEFT);
@@ -338,7 +339,7 @@ public class Switcher extends AnAction implements DumbAware {
       descriptions.setBorder(new CustomLineBorder(JBUI.CurrentTheme.Advertiser.borderColor(), JBUI.insetsTop(1)));
       descriptions.add(pathLabel, BorderLayout.CENTER);
       twManager = ToolWindowManager.getInstance(project);
-      CollectionListModel<ToolWindow> twModel = new CollectionListModel<>();
+      CollectionListModel<Object> twModel = new CollectionListModel<>();
       List<ActivateToolWindowAction> actions = ToolWindowsGroup.getToolWindowActions(project, true);
       List<ToolWindow> windows = new ArrayList<>();
       for (ActivateToolWindowAction action : actions) {
@@ -353,16 +354,19 @@ public class Switcher extends AnAction implements DumbAware {
       for (ToolWindow window : windows) {
         twModel.add(window);
       }
-      toolWindows = createList(twModel, ToolWindow::getStripeTitle, mySpeedSearch, pinned);
+      twModel.add(RECENT_LOCATIONS);
+
+      toolWindows = createList(twModel, getNamer(), mySpeedSearch, pinned);
       toolWindows.addFocusListener(new MyToolWindowsListFocusListener());
+      toolWindows.setPreferredSize(new Dimension(JBUI.scale(200), toolWindows.getPreferredSize().height));
 
       toolWindows.setBorder(JBUI.Borders.empty(5, 5, 5, 20));
       toolWindows.setSelectionMode(pinned ? ListSelectionModel.MULTIPLE_INTERVAL_SELECTION : ListSelectionModel.SINGLE_SELECTION);
-      toolWindows.setCellRenderer(new SwitcherToolWindowsListRenderer(mySpeedSearch, map, myPinned) {
+      toolWindows.setCellRenderer(new SwitcherToolWindowsListRenderer(mySpeedSearch, map, myPinned, showEdited()) {
         @NotNull
         @Override
-        public Component getListCellRendererComponent(@NotNull JList<? extends ToolWindow> list,
-                                                      ToolWindow value,
+        public Component getListCellRendererComponent(@NotNull JList<?> list,
+                                                      Object value,
                                                       int index,
                                                       boolean selected,
                                                       boolean hasFocus) {
@@ -389,11 +393,6 @@ public class Switcher extends AnAction implements DumbAware {
           }
         }
       });
-
-      separator = new JPanel();
-      separator.setBorder(new CustomLineBorder(SEPARATOR_COLOR, JBUI.insetsLeft(1)));
-      separator.setPreferredSize(JBUI.size(9, 10));
-      separator.setBackground(toolWindows.getBackground());
 
       final Pair<List<FileInfo>, Integer> filesAndSelection = getFilesToShowAndSelectionIndex(project, collectFiles(project, onlyEdited),
                                                                                               toolWindows.getModel().getSize(), pinned);
@@ -499,6 +498,7 @@ public class Switcher extends AnAction implements DumbAware {
                                   pinned);
       if (isCheckboxMode()) {
         myShowOnlyEditedFilesCheckBox.addActionListener(e -> setShowOnlyEditedFiles(myShowOnlyEditedFilesCheckBox.isSelected()));
+        myShowOnlyEditedFilesCheckBox.addActionListener(e -> toolWindows.repaint());
       }
       else {
         myShowOnlyEditedFilesCheckBox.setEnabled(false);
@@ -513,11 +513,16 @@ public class Switcher extends AnAction implements DumbAware {
         pane.setPreferredSize(new Dimension(Math.max(myTopPanel.getPreferredSize().width - toolWindows.getPreferredSize().width,
                                                      files.getPreferredSize().width),
                                             20 * 20));
-        this.add(pane, BorderLayout.EAST);
+        Border border = JBUI.Borders.merge(
+          JBUI.Borders.emptyLeft(9),
+          new CustomLineBorder(SEPARATOR_COLOR, JBUI.insetsLeft(1)),
+          true
+        );
+        pane.setBorder(border);
+        this.add(pane, BorderLayout.CENTER);
         if (selectionIndex > -1) {
           files.setSelectedIndex(selectionIndex);
         }
-        this.add(separator, BorderLayout.CENTER);
       }
       this.add(descriptions, BorderLayout.SOUTH);
 
@@ -541,8 +546,8 @@ public class Switcher extends AnAction implements DumbAware {
         .setCancelOnOtherWindowOpen(true)
         .setCancelOnClickOutside(true)
         .setMovable(pinned)
-        .setKeyEventHandler(this::keyEvent)
-        .setMinSize(new Dimension(myTopPanel.getMinimumSize().width, MINIMUM_HEIGHT))
+        .setMinSize(new Dimension(MINIMUM_WIDTH, MINIMUM_HEIGHT))
+        .setDimensionServiceKey(pinned ? project : null, pinned ? "SwitcherDM" : null , false)
         .setCancelKeyEnabled(false)
         .setCancelCallback(() -> {
           Container popupFocusAncestor = getPopupFocusAncestor();
@@ -586,6 +591,36 @@ public class Switcher extends AnAction implements DumbAware {
 
       fromListToList(toolWindows, files);
       fromListToList(files, toolWindows);
+
+      IdeEventQueue.getInstance().addPostprocessor(event -> {
+        if (event instanceof KeyEvent) {
+          return keyEvent((KeyEvent)event);
+        }
+        return false;
+      }, myPopup);
+    }
+
+    @NotNull
+    private Supplier<Boolean> showEdited() {
+      return () -> myShowOnlyEditedFilesCheckBox != null && myShowOnlyEditedFilesCheckBox.isSelected();
+    }
+
+    @NotNull
+    private Function<? super Object, String> getNamer() {
+      return value -> {
+        if (value instanceof ToolWindow) {
+          return ((ToolWindow)value).getStripeTitle();
+        }
+        if (value == RECENT_LOCATIONS) {
+          return getRecentLocationsLabel(showEdited());
+        }
+
+        throw new IllegalStateException();
+      };
+    }
+
+    static String getRecentLocationsLabel(@NotNull Supplier<Boolean> showEdited) {
+      return showEdited.get() ? IdeBundle.message("recent.locations.changed.locations") : IdeBundle.message("recent.locations.popup.title");
     }
 
     private boolean keyEvent(KeyEvent event) {
@@ -672,10 +707,8 @@ public class Switcher extends AnAction implements DumbAware {
       final ArrayList<FileInfo> filesData = new ArrayList<>();
       final ArrayList<FileInfo> editors = new ArrayList<>();
       if (!pinned) {
-        if (UISettings.getInstance().getEditorTabPlacement() != UISettings.TABS_NONE) {
-          for (Pair<VirtualFile, EditorWindow> pair : editorManager.getSelectionHistory()) {
-            editors.add(new FileInfo(pair.first, pair.second, project));
-          }
+        for (Pair<VirtualFile, EditorWindow> pair : editorManager.getSelectionHistory()) {
+          editors.add(new FileInfo(pair.first, pair.second, project));
         }
       }
       if (editors.size() < 2) {
@@ -684,9 +717,7 @@ public class Switcher extends AnAction implements DumbAware {
         boolean firstRecentMarked = false;
         List<VirtualFile> selectedFiles = Arrays.asList(editorManager.getSelectedFiles());
         for (int i = filesForInit.size() - 1; i >= minIndex; i--) {
-          if (pinned
-              && selectedFiles.contains(filesForInit.get(i))
-              && UISettings.getInstance().getEditorTabPlacement() != UISettings.TABS_NONE) {
+          if (pinned && selectedFiles.contains(filesForInit.get(i))) {
             continue;
           }
 
@@ -704,9 +735,7 @@ public class Switcher extends AnAction implements DumbAware {
             filesData.add(info);
             if (!firstRecentMarked) {
               selectionIndex = filesData.size() - 1;
-              if (selectionIndex != 0 || UISettings.getInstance().getEditorTabPlacement() != UISettings.TABS_NONE || !pinned || selectedFiles.isEmpty()) {
-                firstRecentMarked = true;
-              }
+              firstRecentMarked = true;
             }
           }
         }
@@ -903,7 +932,6 @@ public class Switcher extends AnAction implements DumbAware {
           if (jList.getModel().getSize() == 1) {
             removeElementAt(jList, selectedIndex);
             this.remove(jList);
-            this.remove(separator);
             final Dimension size = toolWindows.getSize();
             myPopup.setSize(new Dimension(size.width, myPopup.getSize().height));
           }
@@ -1037,7 +1065,10 @@ public class Switcher extends AnAction implements DumbAware {
       if (values.isEmpty()) {
         tryToOpenFileSearch(e, searchQuery);
       }
-      else if (values.get(0) instanceof ToolWindow) {
+      else if (values.get(0) == RECENT_LOCATIONS) {
+        RecentLocationsAction.showPopup(project, myShowOnlyEditedFilesCheckBox.isSelected());
+
+      } else if (values.get(0) instanceof ToolWindow) {
         ToolWindow toolWindow = (ToolWindow)values.get(0);
         IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(() -> toolWindow.activate(null, true, true),
                                                                     ModalityState.current());
@@ -1064,7 +1095,7 @@ public class Switcher extends AnAction implements DumbAware {
                 UISettingsState settings = UISettings.getInstance().getState();
                 boolean oldValue = settings.getReuseNotModifiedTabs();
                 settings.setReuseNotModifiedTabs(false);
-                manager.openFile(file, true, UISettings.getInstance().getEditorTabPlacement() != UISettings.TABS_NONE);
+                manager.openFile(file, true, true);
                 if (oldValue) {
                   CommandProcessor.getInstance().executeCommand(project, () -> settings.setReuseNotModifiedTabs(true), "", null);
                 }
@@ -1267,44 +1298,6 @@ public class Switcher extends AnAction implements DumbAware {
 
     public boolean isPinnedMode() {
       return myPinned;
-    }
-
-    private class SwitcherLayouter extends BorderLayout {
-      private Rectangle sBounds;
-      private Rectangle tBounds;
-      private Rectangle fBounds;
-      private Rectangle dBounds;
-      private Rectangle headerBounds;
-
-      @Override
-      public void layoutContainer(@NotNull Container target) {
-        final JScrollPane scrollPane = ComponentUtil.getParentOfType((Class<? extends JScrollPane>)JScrollPane.class, (Component)files);
-        JComponent filesPane = scrollPane != null ? scrollPane : files;
-        if (sBounds == null || !target.isShowing()) {
-          super.layoutContainer(target);
-          sBounds = separator.getBounds();
-          tBounds = toolWindows.getBounds();
-          fBounds = filesPane.getBounds();
-          dBounds = descriptions.getBounds();
-          headerBounds = myTopPanel.getBounds();
-        }
-        else {
-          final int h = target.getHeight();
-          final int w = target.getWidth();
-          sBounds.height = h - dBounds.height - headerBounds.height;
-          tBounds.height = h - dBounds.height - headerBounds.height;
-          fBounds.height = h - dBounds.height - headerBounds.height;
-          fBounds.width = w - sBounds.width - tBounds.width;
-          dBounds.width = w;
-          headerBounds.width = w;
-          dBounds.y = h - dBounds.height;
-          separator.setBounds(sBounds);
-          toolWindows.setBounds(tBounds);
-          filesPane.setBounds(fBounds);
-          descriptions.setBounds(dBounds);
-          myTopPanel.setBounds(headerBounds);
-        }
-      }
     }
   }
 

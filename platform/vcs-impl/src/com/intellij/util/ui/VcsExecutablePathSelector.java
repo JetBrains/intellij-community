@@ -20,7 +20,6 @@ import java.util.function.Consumer;
 public class VcsExecutablePathSelector {
   private final JPanel myMainPanel;
   private final TextFieldWithBrowseButton myPathSelector;
-  private final JButton myTestButton;
   private final JBCheckBox myProjectPathCheckbox;
 
   @Nullable private String mySavedPath;
@@ -29,16 +28,16 @@ public class VcsExecutablePathSelector {
   public VcsExecutablePathSelector(@NotNull String vcsName, @NotNull Consumer<String> executableTester) {
     BorderLayoutPanel panel = JBUI.Panels.simplePanel(UIUtil.DEFAULT_HGAP, 0);
 
-    myPathSelector = new TextFieldWithBrowseButton(new JBTextField(10));
+    myPathSelector = new TextFieldWithBrowseButton();
     myPathSelector.addBrowseFolderListener(VcsBundle.getString("executable.select.title"),
                                            null,
                                            null,
                                            FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor());
     panel.addToCenter(myPathSelector);
 
-    myTestButton = new JButton(VcsBundle.getString("executable.test"));
-    myTestButton.addActionListener(e -> executableTester.accept(ObjectUtils.notNull(getCurrentPath(), myAutoDetectedPath)));
-    panel.addToRight(myTestButton);
+    JButton testButton = new JButton(VcsBundle.getString("executable.test"));
+    testButton.addActionListener(e -> executableTester.accept(ObjectUtils.notNull(getCurrentPath(), myAutoDetectedPath)));
+    panel.addToRight(testButton);
 
     myProjectPathCheckbox = new JBCheckBox(VcsBundle.getString("executable.project.override"));
     myProjectPathCheckbox.addActionListener(e -> handleProjectOverrideStateChanged());

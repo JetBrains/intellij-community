@@ -8,7 +8,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.concurrency.FixedFuture;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.JBTreeTraverser;
@@ -28,11 +27,13 @@ import java.nio.file.Path;
 import java.nio.file.attribute.PosixFileAttributeView;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
-import java.util.concurrent.FutureTask;
-import java.util.concurrent.RunnableFuture;
 import java.util.regex.Pattern;
 
+/**
+ * Utilities for working with {@link File}.
+ */
 @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass"})
 public class FileUtil extends FileUtilRt {
   public static final String ASYNC_DELETE_EXTENSION = ".__del__";
@@ -40,6 +41,7 @@ public class FileUtil extends FileUtilRt {
   public static final int REGEX_PATTERN_FLAGS = SystemInfo.isFileSystemCaseSensitive ? 0 : Pattern.CASE_INSENSITIVE;
 
   public static final TObjectHashingStrategy<String> PATH_HASHING_STRATEGY = FilePathHashingStrategy.create();
+  public static final TObjectHashingStrategy<CharSequence> PATH_CHAR_SEQUENCE_HASHING_STRATEGY = FilePathHashingStrategy.createForCharSequence();
 
   public static final TObjectHashingStrategy<File> FILE_HASHING_STRATEGY =
     new TObjectHashingStrategy<File>() {
@@ -54,7 +56,7 @@ public class FileUtil extends FileUtilRt {
       }
     };
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.io.FileUtil");
+  private static final Logger LOG = Logger.getInstance(FileUtil.class);
 
   @NotNull
   public static String join(@NotNull final String... parts) {
@@ -132,11 +134,15 @@ public class FileUtil extends FileUtilRt {
   }
 
   public static boolean startsWith(@NotNull String path, @NotNull String start) {
-    return !ThreeState.NO.equals(startsWith(path, start, false, SystemInfo.isFileSystemCaseSensitive, false));
+    return startsWith(path, start, SystemInfo.isFileSystemCaseSensitive);
   }
 
   public static boolean startsWith(@NotNull String path, @NotNull String start, boolean caseSensitive) {
-    return !ThreeState.NO.equals(startsWith(path, start, false, caseSensitive, false));
+    return startsWith(path, start, caseSensitive, false);
+  }
+
+  public static boolean startsWith(@NotNull String path, @NotNull String start, boolean caseSensitive, boolean strict) {
+    return !ThreeState.NO.equals(startsWith(path, start, strict, caseSensitive, false));
   }
 
   @NotNull
@@ -303,22 +309,14 @@ public class FileUtil extends FileUtilRt {
   public static Future<Void> asyncDelete(@NotNull Collection<? extends File> files) {
     List<File> tempFiles = new ArrayList<>();
     for (File file : files) {
-      final File tempFile = renameToTempFileOrDelete(file);
+      File tempFile = renameToTempFileOrDelete(file);
       if (tempFile != null) {
         tempFiles.add(tempFile);
       }
     }
-    if (!tempFiles.isEmpty()) {
-      return startDeletionThread(tempFiles.toArray(new File[0]));
-    }
-    return new FixedFuture<>(null);
-  }
-
-  @NotNull
-  private static Future<Void> startDeletionThread(@NotNull File... tempFiles) {
-    RunnableFuture<Void> deleteFilesTask = new FutureTask<>(() -> {
-      final Thread currentThread = Thread.currentThread();
-      final int priority = currentThread.getPriority();
+    return tempFiles.isEmpty() ? CompletableFuture.completedFuture(null) : AppExecutorUtil.getAppExecutorService().submit(() -> {
+      Thread currentThread = Thread.currentThread();
+      int priority = currentThread.getPriority();
       currentThread.setPriority(Thread.MIN_PRIORITY);
       try {
         for (File tempFile : tempFiles) {
@@ -328,10 +326,8 @@ public class FileUtil extends FileUtilRt {
       finally {
         currentThread.setPriority(priority);
       }
-    }, null);
-
-    AppExecutorUtil.getAppExecutorService().execute(deleteFilesTask);
-    return deleteFilesTask;
+      return null;
+    });
   }
 
   @Nullable
@@ -532,6 +528,13 @@ public class FileUtil extends FileUtilRt {
 
   public static String createSequentFileName(@NotNull File aParentFolder, @NotNull String aFilePrefix, @NotNull String aExtension) {
     return findSequentNonexistentFile(aParentFolder, aFilePrefix, aExtension).getName();
+  }
+
+  public static String createSequentFileName(@NotNull File aParentFolder,
+                                             @NotNull String aFilePrefix,
+                                             @NotNull String aExtension,
+                                             @NotNull Condition<? super File> condition) {
+    return findSequentFile(aParentFolder, aFilePrefix, aExtension, condition).getName();
   }
 
   @NotNull

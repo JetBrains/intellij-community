@@ -2,10 +2,11 @@
 package com.intellij.json.editor;
 
 import com.intellij.openapi.options.BeanConfigurable;
-import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.SearchableConfigurable;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 
-public class JsonSmartKeysConfigurable extends BeanConfigurable<JsonEditorOptions> implements Configurable {
+public class JsonSmartKeysConfigurable extends BeanConfigurable<JsonEditorOptions> implements SearchableConfigurable {
   public JsonSmartKeysConfigurable() {
     super(JsonEditorOptions.getInstance());
     JsonEditorOptions settings = getInstance();
@@ -34,5 +35,11 @@ public class JsonSmartKeysConfigurable extends BeanConfigurable<JsonEditorOption
   @Override
   public String getDisplayName() {
     return "JSON";
+  }
+
+  @NotNull
+  @Override
+  public String getId() {
+    return "editor.preferences.jsonOptions";
   }
 }

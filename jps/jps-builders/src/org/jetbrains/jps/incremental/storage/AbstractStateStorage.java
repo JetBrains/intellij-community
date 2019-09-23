@@ -7,14 +7,13 @@ import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.io.PersistentHashMap;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Iterator;
 
 public abstract class AbstractStateStorage<Key, T> implements StorageOwner {
-  private PersistentHashMap<Key, T> myMap;
+  private JpsPersistentHashMap<Key, T> myMap;
   private final File myBaseFile;
   private final KeyDescriptor<Key> myKeyDescriptor;
   private final DataExternalizer<T> myStateExternalizer;
@@ -84,12 +83,7 @@ public abstract class AbstractStateStorage<Key, T> implements StorageOwner {
 
   public void appendData(final Key key, final T data) throws IOException {
     synchronized (myDataLock) {
-      myMap.appendData(key, new PersistentHashMap.ValueDataAppender() {
-        @Override
-        public void append(DataOutput out) throws IOException {
-          myStateExternalizer.save(out, data);
-        }
-      });
+      myMap.appendDataWithoutCache(key, data);
     }
   }
 
@@ -119,9 +113,9 @@ public abstract class AbstractStateStorage<Key, T> implements StorageOwner {
   }
 
 
-  private PersistentHashMap<Key, T> createMap(final File file) throws IOException {
+  private JpsPersistentHashMap<Key, T> createMap(final File file) throws IOException {
     FileUtil.createIfDoesntExist(file);
-    return new PersistentHashMap<>(file, myKeyDescriptor, myStateExternalizer);
+    return new JpsPersistentHashMap<>(file, myKeyDescriptor, myStateExternalizer);
   }
 
   @Override

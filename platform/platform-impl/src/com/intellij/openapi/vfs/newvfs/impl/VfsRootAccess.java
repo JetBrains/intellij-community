@@ -1,17 +1,17 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -33,10 +33,11 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Set;
 
 public class VfsRootAccess {
-  private static final boolean SHOULD_PERFORM_ACCESS_CHECK = System.getenv("NO_FS_ROOTS_ACCESS_CHECK") == null;
+  private static final boolean SHOULD_PERFORM_ACCESS_CHECK = System.getenv("NO_FS_ROOTS_ACCESS_CHECK") == null && System.getProperty("NO_FS_ROOTS_ACCESS_CHECK")==null;
 
   // we don't want test subclasses to accidentally remove allowed files, added by base classes
   private static final Set<String> ourAdditionalRoots = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
@@ -48,7 +49,7 @@ public class VfsRootAccess {
     if (SHOULD_PERFORM_ACCESS_CHECK &&
         application.isUnitTestMode() &&
         application instanceof ApplicationImpl &&
-        ((ApplicationImpl)application).isComponentsCreated() &&
+        ((ApplicationImpl)application).getComponentCreated() &&
         !ApplicationInfoImpl.isInStressTest()) {
 
       if (delegate != LocalFileSystem.getInstance() && delegate != JarFileSystem.getInstance()) {
@@ -60,7 +61,7 @@ public class VfsRootAccess {
         return;
       }
 
-      Set<String> allowed = ReadAction.compute(VfsRootAccess::allowedRoots);
+      Set<String> allowed = allowedRoots();
       boolean isUnder = allowed == null || allowed.isEmpty();
 
       if (!isUnder) {
@@ -130,22 +131,21 @@ public class VfsRootAccess {
         if (!project.isInitialized()) {
           return null; // all is allowed
         }
-        for (VirtualFile root : ProjectRootManager.getInstance(project).getContentRoots()) {
-          allowed.add(root.getPath());
+        for (String url : ProjectRootManager.getInstance(project).getContentRootUrls()) {
+          allowed.add(VfsUtilCore.urlToPath(url));
         }
-        for (VirtualFile root : getAllRoots(project)) {
-          allowed.add(StringUtil.trimEnd(root.getPath(), JarFileSystem.JAR_SEPARATOR));
+        for (String url : getAllRootUrls(project)) {
+          allowed.add(StringUtil.trimEnd(VfsUtilCore.urlToPath(url), JarFileSystem.JAR_SEPARATOR));
         }
         String location = project.getBasePath();
         assert location != null : project;
         allowed.add(FileUtil.toSystemIndependentName(location));
       }
-
-      allowed.addAll(ourAdditionalRoots);
     }
     catch (Error ignored) {
       // sometimes library.getRoots() may crash if called from inside library modification
     }
+    allowed.addAll(ourAdditionalRoots);
 
     return allowed;
   }
@@ -162,16 +162,16 @@ public class VfsRootAccess {
   }
 
   @NotNull
-  private static VirtualFile[] getAllRoots(@NotNull Project project) {
+  private static Collection<String> getAllRootUrls(@NotNull Project project) {
     insideGettingRoots = true;
-    final Set<VirtualFile> roots = new THashSet<>();
+    final Set<String> roots = new THashSet<>();
 
-    final OrderEnumerator enumerator = ProjectRootManager.getInstance(project).orderEntries();
-    ContainerUtil.addAll(roots, enumerator.getClassesRoots());
-    ContainerUtil.addAll(roots, enumerator.getSourceRoots());
+    OrderEnumerator enumerator = ProjectRootManager.getInstance(project).orderEntries().using(new DefaultModulesProvider(project));
+    ContainerUtil.addAll(roots, enumerator.classes().getUrls());
+    ContainerUtil.addAll(roots, enumerator.sources().getUrls());
 
     insideGettingRoots = false;
-    return VfsUtilCore.toVirtualFileArray(roots);
+    return roots;
   }
 
   @TestOnly

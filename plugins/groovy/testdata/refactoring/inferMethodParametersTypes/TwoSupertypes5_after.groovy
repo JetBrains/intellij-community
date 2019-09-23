@@ -1,4 +1,4 @@
-def <T0> void foo(C<T0> a, C<T0> b, C<T0> e, C<? extends T0> f) {
+def <T, U extends T, V extends U> void foo(C<T> a, C<U> b, C<V> e, C<? extends V> f) {
   a.tie(b.get())
   b.tie(f.get())
   e.tie(f.get())

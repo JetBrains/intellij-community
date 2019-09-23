@@ -1,37 +1,41 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang
 
-import com.intellij.openapi.extensions.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.extensions.DefaultPluginDescriptor
+import com.intellij.openapi.extensions.PluginDescriptor
+import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.testFramework.LightPlatformTestCase
-import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.ServiceContainerUtil
 import groovy.transform.CompileStatic
 
 @CompileStatic
 class LanguageExtensionOrderTest extends LightPlatformTestCase {
   private PluginDescriptor myDescriptor = new DefaultPluginDescriptor(PluginId.getId(""), getClass().classLoader)
-  private ExtensionsArea myArea
+  private ExtensionsAreaImpl myArea
   private LanguageExtension myLanguageExtension
 
   void setUp() {
     super.setUp()
-    myArea = Extensions.rootArea
+    myArea = ApplicationManager.getApplication().getExtensionArea() as ExtensionsAreaImpl
     myLanguageExtension = new LanguageExtension<TestLangExtension>("langExt")
     registerMetaLanguage()
     registerLanguageEP()
   }
 
   private void registerMetaLanguage() {
-    PlatformTestUtil.registerExtension myArea, MetaLanguage.EP_NAME, MyMetaLanguage.INSTANCE, testRootDisposable
+    ServiceContainerUtil.registerExtension(ApplicationManager.getApplication(), MetaLanguage.EP_NAME, MyMetaLanguage.INSTANCE, testRootDisposable)
   }
 
   private void registerLanguageEP() {
-    myArea.registerExtensionPoint myDescriptor, JDOMUtil.load('''\
-<extensionPoint qualifiedName="langExt" beanClass="com.intellij.lang.LanguageExtensionPoint">
-  <with attribute="implementationClass" implements="com.intellij.lang.TestLangExtension"/>
-</extensionPoint>    
-''')
+    myArea.registerExtensionPoints(myDescriptor, Collections.singletonList(JDOMUtil.load('''\
+    <extensionPoint qualifiedName="langExt" beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.lang.TestLangExtension"/>
+    </extensionPoint>    
+    ''')), ApplicationManager.getApplication())
     Disposer.register(testRootDisposable) {
       myArea.unregisterExtensionPoint("langExt")
     }

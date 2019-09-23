@@ -1,0 +1,15 @@
+fragment commit on Commit {
+    ...commitHash
+    url
+    author {
+        name
+        email
+        avatarUrl
+        date
+        user {
+            url
+        }
+    }
+    messageHeadlineHTML
+    messageBodyHTML
+}

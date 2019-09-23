@@ -160,6 +160,10 @@ public class NullabilityProblemKind<T extends PsiElement> {
     }
     PsiElement parent = context.getParent();
     if (parent instanceof PsiReferenceExpression) {
+      PsiElement resolved = ((PsiReferenceExpression)parent).resolve();
+      if (resolved instanceof PsiMember && ((PsiMember)resolved).hasModifierProperty(PsiModifier.STATIC)) {
+        return null;
+      }
       PsiElement grandParent = parent.getParent();
       if (grandParent instanceof PsiMethodCallExpression) {
         return callNPE.problem((PsiMethodCallExpression)grandParent, expression);

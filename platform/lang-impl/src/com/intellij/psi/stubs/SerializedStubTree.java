@@ -19,14 +19,18 @@
  */
 package com.intellij.psi.stubs;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ThreadLocalCachedValue;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.psi.impl.DebugUtil;
+import com.intellij.util.Function;
 import com.intellij.util.io.*;
+import gnu.trove.TObjectHashingStrategy;
 import one.util.streamex.IntStreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.*;
 import java.io.DataOutputStream;
@@ -52,6 +56,12 @@ public class SerializedStubTree {
   final byte[] myIndexedStubBytes;
   final int myIndexedStubByteLength;
   private Map<StubIndexKey, Map<Object, StubIdList>> myIndexedStubs;
+
+  private volatile SerializationManagerEx mySerializationManager;
+
+  public void setSerializationManager(SerializationManagerEx serializationManager) {
+    mySerializationManager = serializationManager;
+  }
 
   public SerializedStubTree(@NotNull byte[] treeBytes, int treeByteLength, @Nullable Stub stubElement,
                             @NotNull byte[] indexedStubBytes, int indexedStubByteLength, @Nullable Map<StubIndexKey, Map<Object, StubIdList>> indexedStubs) {
@@ -109,21 +119,31 @@ public class SerializedStubTree {
                                   reSerializedIndexBytes, reSerializedIndexByteLength, myIndexedStubs);
   }
 
-  public void restoreIndexedStubs(@NotNull StubForwardIndexExternalizer<?> dataExternalizer) throws IOException {
+  void restoreIndexedStubs(@NotNull StubForwardIndexExternalizer<?> dataExternalizer) throws IOException {
     if (myIndexedStubs == null) {
       myIndexedStubs = dataExternalizer.read(new DataInputStream(new ByteArrayInputStream(myIndexedStubBytes, 0, myIndexedStubByteLength)));
     }
   }
 
   @NotNull
-  Map<StubIndexKey, Map<Object, StubIdList>> getStubIndicesValueMap() {
+  public Map<StubIndexKey, Map<Object, StubIdList>> getStubIndicesValueMap() {
+    return myIndexedStubs;
+  }
+
+  @TestOnly
+  public Map<StubIndexKey, Map<Object, StubIdList>> readStubIndicesValueMap() throws IOException {
+    restoreIndexedStubs(StubForwardIndexExternalizer.IdeStubForwardIndexesExternalizer.INSTANCE);
     return myIndexedStubs;
   }
 
   // willIndexStub is one time optimization hint, once can safely pass false
   @NotNull
   public Stub getStub(boolean willIndexStub) throws SerializerNotFoundException {
-    return getStub(willIndexStub, SerializationManagerEx.getInstanceEx());
+    SerializationManagerEx manager = mySerializationManager;
+    if (manager == null) {
+      manager = SerializationManagerEx.getInstanceEx();
+    }
+    return getStub(willIndexStub, manager);
   }
 
   @NotNull
@@ -143,6 +163,7 @@ public class SerializedStubTree {
     return serializationManager.deserialize(new UnsyncByteArrayInputStream(myTreeBytes, 0, myTreeByteLength));
   }
 
+  @Override
   public boolean equals(final Object that) {
     if (this == that) {
       return true;
@@ -168,6 +189,7 @@ public class SerializedStubTree {
     return true;
   }
 
+  @Override
   public int hashCode() {
     if (myTreeBytes == null) {
       return 0;
@@ -198,7 +220,8 @@ public class SerializedStubTree {
   static Map<StubIndexKey, Map<Object, StubIdList>> indexTree(@NotNull Stub root) {
     ObjectStubTree objectStubTree = root instanceof PsiFileStub ? new StubTree((PsiFileStub)root, false) :
                                     new ObjectStubTree((ObjectStubBase)root, false);
-    Map<StubIndexKey, Map<Object, int[]>> map = objectStubTree.indexStubTree();
+    StubIndexImpl indexImpl = (StubIndexImpl)StubIndex.getInstance();
+    Map<StubIndexKey, Map<Object, int[]>> map = objectStubTree.indexStubTree(k -> indexImpl.getKeyHashingStrategy((StubIndexKey<Object, ?>)k));
 
     // xxx:fix refs inplace
     for (StubIndexKey key : map.keySet()) {

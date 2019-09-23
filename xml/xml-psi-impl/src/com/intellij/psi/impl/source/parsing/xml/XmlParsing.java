@@ -229,8 +229,12 @@ public class XmlParsing {
 
   public void parseTagContent() {
     PsiBuilder.Marker xmlText = null;
-    while (token() != XML_END_TAG_START && !eof()) {
+    while (true) {
       final IElementType tt = token();
+      if (tt == null || tt == XML_END_TAG_START) {
+        break;
+      }
+
       if (tt == XML_START_TAG_START) {
         xmlText = terminateText(xmlText);
         parseTag(false);

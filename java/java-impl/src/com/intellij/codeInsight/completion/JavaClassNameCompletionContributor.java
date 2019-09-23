@@ -8,7 +8,6 @@ import com.intellij.lang.LangBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
@@ -67,10 +66,6 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
 
   private static boolean mayContainClassName(CompletionParameters parameters) {
     PsiElement position = parameters.getPosition();
-    PsiFile file = position.getContainingFile();
-    if (file instanceof PsiPlainTextFile || file.getFileType() instanceof CustomSyntaxTableFileType) {
-      return true;
-    }
     if (SkipAutopopupInStrings.isInStringLiteral(position)) {
       return true;
     }
@@ -95,7 +90,7 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
         consumer.consume(item);
         return true;
       });
-      for (String name : CompletionUtil.sortMatching(matcher, annoMap.keySet())) {
+      for (String name : matcher.sortMatching(annoMap.keySet())) {
         if (!ContainerUtil.process(annoMap.get(name), processor)) break;
       }
       return;

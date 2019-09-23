@@ -45,7 +45,7 @@
               <grid row="3" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text resource-bundle="messages/CommonBundle" key="label.proxy.exceptions.text"/>
+              <text resource-bundle="messages/UIBundle" key="proxy.manual.exclude.example"/>
             </properties>
           </component>
           <component id="2008d" class="javax.swing.JTextField" binding="myProxyHostTextField">
@@ -61,7 +61,7 @@
               <grid row="7" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text resource-bundle="messages/CommonBundle" key="checkbox.remember.password"/>
+              <text resource-bundle="messages/UIBundle" key="auth.remember.cb"/>
             </properties>
           </component>
           <component id="2a6e8" class="javax.swing.JLabel" binding="myHostNameLabel">
@@ -70,7 +70,7 @@
             </constraints>
             <properties>
               <labelFor value="2008d"/>
-              <text resource-bundle="messages/CommonBundle" key="editbox.host.name"/>
+              <text resource-bundle="messages/UIBundle" key="proxy.manual.host"/>
             </properties>
           </component>
           <component id="a2263" class="javax.swing.JLabel" binding="myPortNumberLabel">
@@ -79,7 +79,7 @@
             </constraints>
             <properties>
               <labelFor value="7e62"/>
-              <text resource-bundle="messages/CommonBundle" key="editbox.port.number"/>
+              <text resource-bundle="messages/UIBundle" key="proxy.manual.port"/>
             </properties>
           </component>
           <component id="29784" class="javax.swing.JCheckBox" binding="myProxyAuthCheckBox">
@@ -89,7 +89,7 @@
             <properties>
               <margin top="2" left="1" bottom="2" right="2"/>
               <selected value="false"/>
-              <text resource-bundle="messages/CommonBundle" key="checkbox.proxy.authentication"/>
+              <text resource-bundle="messages/UIBundle" key="proxy.manual.auth"/>
             </properties>
           </component>
           <component id="e8502" class="javax.swing.JLabel" binding="myProxyLoginLabel">
@@ -98,7 +98,7 @@
             </constraints>
             <properties>
               <labelFor value="fc937"/>
-              <text resource-bundle="messages/CommonBundle" key="editbox.login"/>
+              <text resource-bundle="messages/UIBundle" key="auth.login.label"/>
             </properties>
           </component>
           <component id="7ced" class="javax.swing.JLabel" binding="myProxyPasswordLabel">
@@ -107,10 +107,10 @@
             </constraints>
             <properties>
               <labelFor value="1acb8"/>
-              <text resource-bundle="messages/CommonBundle" key="editbox.password"/>
+              <text resource-bundle="messages/UIBundle" key="auth.password.label"/>
             </properties>
           </component>
-          <component id="8655a" class="com.intellij.ui.RawCommandLineEditor" binding="myProxyExceptions">
+          <component id="8655a" class="com.intellij.ui.RawCommandLineEditor" binding="myProxyExceptions" custom-create="true">
             <constraints>
               <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="7" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
             </constraints>
@@ -123,7 +123,7 @@
               <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="2" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="No proxy for:"/>
+              <text resource-bundle="messages/UIBundle" key="proxy.manual.exclude"/>
             </properties>
           </component>
         </children>
@@ -138,8 +138,8 @@
           <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text resource-bundle="messages/CommonBundle" key="checkbox.use.http.proxy.pac"/>
-          <toolTipText resource-bundle="messages/CommonBundle" key="tooltip.http.proxy.pac"/>
+          <text resource-bundle="messages/UIBundle" key="proxy.pac.rb"/>
+          <toolTipText resource-bundle="messages/UIBundle" key="proxy.pac.rb.tt"/>
         </properties>
       </component>
       <component id="9e485" class="com.intellij.ui.components.JBRadioButton" binding="myUseHTTPProxyRb" default-binding="true">
@@ -147,7 +147,7 @@
           <grid row="6" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text resource-bundle="messages/CommonBundle" key="checkbox.use.http.proxy"/>
+          <text resource-bundle="messages/UIBundle" key="proxy.manual.rb"/>
         </properties>
       </component>
       <component id="4b9f9" class="javax.swing.JLabel" binding="mySystemProxyDefined">
@@ -155,7 +155,7 @@
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text resource-bundle="messages/CommonBundle" key="label.system.proxy.used"/>
+          <text resource-bundle="messages/UIBundle" key="proxy.system.label"/>
           <verticalAlignment value="0"/>
           <verticalTextPosition value="1"/>
         </properties>
@@ -165,7 +165,7 @@
           <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text resource-bundle="messages/CommonBundle" key="http.noproxy"/>
+          <text resource-bundle="messages/UIBundle" key="proxy.direct.rb"/>
         </properties>
       </component>
       <grid id="1bb9b" layout-manager="GridLayoutManager" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
@@ -181,7 +181,7 @@
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="0" indent="2" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text resource-bundle="messages/CommonBundle" key="http.proxy.type"/>
+              <text resource-bundle="messages/UIBundle" key="proxy.manual.type.http"/>
             </properties>
           </component>
           <component id="2538c" class="com.intellij.ui.components.JBRadioButton" binding="mySocks">
@@ -189,7 +189,7 @@
               <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="0" indent="2" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text resource-bundle="messages/CommonBundle" key="socks.proxy.type"/>
+              <text resource-bundle="messages/UIBundle" key="proxy.manual.type.socks"/>
             </properties>
           </component>
         </children>
@@ -207,7 +207,7 @@
           <grid row="9" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="Check connection"/>
+          <text resource-bundle="messages/UIBundle" key="proxy.test.button"/>
         </properties>
       </component>
       <component id="98030" class="javax.swing.JLabel" binding="myOtherWarning">
@@ -231,7 +231,7 @@
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="2" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text resource-bundle="messages/CommonBundle" key="checkbox.automatic.proxy.configuration.url"/>
+              <text resource-bundle="messages/UIBundle" key="proxy.pac.url.label"/>
             </properties>
           </component>
           <component id="77d11" class="javax.swing.JTextField" binding="myPacUrlTextField">
@@ -249,7 +249,7 @@
           <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="2" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text resource-bundle="messages/CommonBundle" key="autodetected.proxies.clear.button"/>
+          <text resource-bundle="messages/UIBundle" key="proxy.pac.pw.clear.button"/>
         </properties>
       </component>
     </children>

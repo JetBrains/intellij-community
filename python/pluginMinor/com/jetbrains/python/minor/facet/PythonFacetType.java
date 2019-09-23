@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.List;
 
-import static com.jetbrains.python.PythonModuleTypeBase.PYTHON_MODULE;
+import static com.jetbrains.python.PyNames.PYTHON_MODULE_ID;
 
 /**
  * @author traff
@@ -64,7 +64,7 @@ public class PythonFacetType extends FacetType<PythonFacet, PythonFacetType.Pyth
 
   @Override
   public boolean isSuitableModuleType(ModuleType moduleType) {
-    return !(moduleType.getId().equals(PYTHON_MODULE));
+    return !(moduleType.getId().equals(PYTHON_MODULE_ID));
   }
 
   @Override

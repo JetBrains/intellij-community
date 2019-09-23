@@ -32,8 +32,7 @@ import com.intellij.webcore.packaging.InstalledPackagesPanel;
 import com.intellij.webcore.packaging.PackageManagementService;
 import com.intellij.webcore.packaging.PackagesNotificationPanel;
 import com.jetbrains.python.packaging.*;
-import com.jetbrains.python.sdk.PySdkUtil;
-import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.PythonSdkUtil;
 import icons.PythonIcons;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -118,7 +117,7 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
         if (selectedSdk == getSelectedSdk()) {
           myNotificationArea.hide();
           if (problem != null) {
-            final boolean invalid = PythonSdkType.isInvalid(selectedSdk);
+            final boolean invalid = PythonSdkUtil.isInvalid(selectedSdk);
             if (!invalid) {
               final StringBuilder builder = new StringBuilder(problem.getMessage());
               builder.append(". ");
@@ -159,9 +158,9 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
     if (sdk == null) return false;
     if (!PyPackageUtil.packageManagementEnabled(sdk)) return false;
 
-    if (PythonSdkType.isVirtualEnv(sdk) && pkg instanceof PyPackage) {
+    if (PythonSdkUtil.isVirtualEnv(sdk) && pkg instanceof PyPackage) {
       final String location = ((PyPackage)pkg).getLocation();
-      if (location != null && location.startsWith(PySdkUtil.getUserSite())) {
+      if (location != null && location.startsWith(PythonSdkUtil.getUserSite())) {
         return false;
       }
     }
@@ -219,7 +218,7 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
       @Override
       public boolean isVisible() {
         final Sdk sdk = getSelectedSdk();
-        return sdk != null && PythonSdkType.isConda(sdk);
+        return sdk != null && PythonSdkUtil.isConda(sdk);
       }
     };
 

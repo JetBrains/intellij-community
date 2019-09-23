@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.openapi.Disposable;
@@ -14,13 +14,13 @@ import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -28,12 +28,10 @@ import java.awt.event.*;
 import java.util.List;
 import java.util.*;
 
-public class EditorTracker implements ProjectComponent {
+public final class EditorTracker implements ProjectComponent {
   private static final Logger LOG = Logger.getInstance(EditorTracker.class);
 
   private final Project myProject;
-  private final WindowManager myWindowManager;
-  private final EditorFactory myEditorFactory;
 
   private final Map<Window, List<Editor>> myWindowToEditorsMap = new HashMap<>();
   private final Map<Window, WindowAdapter> myWindowToWindowFocusListenerMap = new HashMap<>();
@@ -42,28 +40,28 @@ public class EditorTracker implements ProjectComponent {
 
   private final EventDispatcher<EditorTrackerListener> myDispatcher = EventDispatcher.create(EditorTrackerListener.class);
 
-  private IdeFrameImpl myIdeFrame;
+  private JFrame myIdeFrame;
   private Window myActiveWindow;
 
-  public EditorTracker(Project project, WindowManager windowManager, EditorFactory editorFactory) {
+  public EditorTracker(Project project) {
     myProject = project;
-    myWindowManager = windowManager;
-    myEditorFactory = editorFactory;
   }
 
   @Override
   public void projectOpened() {
-    myIdeFrame = ((WindowManagerEx)myWindowManager).getFrame(myProject);
+    myIdeFrame = (WindowManager.getInstance()).getFrame(myProject);
     myProject.getMessageBus().connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
       @Override
       public void selectionChanged(@NotNull FileEditorManagerEvent event) {
-        if (myIdeFrame == null || myIdeFrame.getFocusOwner() == null) return;
+        if (myIdeFrame == null || myIdeFrame.getFocusOwner() == null) {
+          return;
+        }
         setActiveWindow(myIdeFrame);
       }
     });
 
     final MyEditorFactoryListener myEditorFactoryListener = new MyEditorFactoryListener();
-    myEditorFactory.addEditorFactoryListener(myEditorFactoryListener, myProject);
+    EditorFactory.getInstance().addEditorFactoryListener(myEditorFactoryListener, myProject);
     Disposer.register(myProject, () -> myEditorFactoryListener.executeOnRelease(null));
   }
 
@@ -160,12 +158,10 @@ public class EditorTracker implements ProjectComponent {
     }
   }
 
-  private Window windowByEditor(Editor editor) {
+  @Nullable
+  private Window windowByEditor(@NotNull Editor editor) {
     Window window = SwingUtilities.windowForComponent(editor.getComponent());
-    if (window instanceof IdeFrameImpl) {
-      if (window != myIdeFrame) return null;
-    }
-    return window;
+    return (window instanceof IdeFrameImpl && window != myIdeFrame) ? null : window;
   }
 
   @NotNull

@@ -42,6 +42,7 @@ def _parse_parametrized(part):
 class _TreeManagerHolder(object):
     def __init__(self):
         self.parallel = "JB_USE_PARALLEL_TREE_MANAGER" in os.environ
+        self.offset = 0
         self._manager_imp = None
 
     @property
@@ -51,15 +52,12 @@ class _TreeManagerHolder(object):
         return self._manager_imp
 
     def _fill_manager(self):
-        path = os.path.dirname(os.path.realpath(__file__))
-        if path not in sys.path:
-            sys.path.append(path)
         if self.parallel:
             from _jb_parallel_tree_manager import ParallelTreeManager
-            self._manager_imp = ParallelTreeManager()
+            self._manager_imp = ParallelTreeManager(self.offset)
         else:
             from _jb_serial_tree_manager import SerialTreeManager
-            self._manager_imp = SerialTreeManager()
+            self._manager_imp = SerialTreeManager(self.offset)
 
 
 _TREE_MANAGER_HOLDER = _TreeManagerHolder()
@@ -84,7 +82,8 @@ class NewTeamcityServiceMessages(_old_service_messages):
 
     def message(self, messageName, **properties):
         if messageName in {"enteredTheMatrix", "testCount"}:
-            _old_service_messages.message(self, messageName, **properties)
+            if "_jb_do_not_call_enter_matrix" not in os.environ:
+                _old_service_messages.message(self, messageName, **properties)
             return
 
         try:
@@ -296,6 +295,7 @@ def parse_arguments():
     utils = _jb_utils.VersionAgnosticUtils()
     namespace = utils.get_options(
         _jb_utils.OptionDescription('--path', 'Path to file or folder to run'),
+        _jb_utils.OptionDescription('--offset', 'Root node offset'),
         _jb_utils.OptionDescription('--target', 'Python target to run', "append"))
     del sys.argv[1:]  # Remove all args
 
@@ -303,9 +303,12 @@ def parse_arguments():
     # But sys.path should be same as when launched with test runner directly
     try:
         if os.path.abspath(sys.path[0]) == os.path.abspath(os.environ["PYCHARM_HELPERS_DIR"]):
-            sys.path.pop(0)
+            path = sys.path.pop(0)
+            if path not in sys.path:
+                sys.path.append(path)
     except KeyError:
         pass
+    _TREE_MANAGER_HOLDER.offset = int(namespace.offset if namespace.offset else 0)
     return namespace.path, namespace.target, additional_args
 
 

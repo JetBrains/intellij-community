@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,12 +34,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * @author Konstantin Bulenkov
+ */
 public class AnnotateActionGroup extends ActionGroup implements DumbAware {
   private final AnAction[] myActions;
 
   public AnnotateActionGroup(@NotNull List<AnnotationFieldGutter> gutters,
                              @Nullable Couple<Map<VcsRevisionNumber, Color>> bgColorMap) {
-    super("View", true);
+    super(VcsBundle.message("annotate.action.view.group.text"), true);
     final List<AnAction> actions = new ArrayList<>();
     for (AnnotationFieldGutter g : gutters) {
       if (g.getID() != null) {

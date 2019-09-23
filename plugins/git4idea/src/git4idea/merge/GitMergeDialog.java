@@ -206,4 +206,8 @@ public class GitMergeDialog extends DialogWrapper {
   public VirtualFile getSelectedRoot() {
     return (VirtualFile)myGitRoot.getSelectedItem();
   }
+
+  public boolean isCommitAfterMerge() {
+    return !myNoCommitCheckBox.isSelected();
+  }
 }

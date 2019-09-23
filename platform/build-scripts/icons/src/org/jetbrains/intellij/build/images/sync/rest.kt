@@ -30,4 +30,8 @@ internal fun HttpRequestBase.basicAuth(login: String, password: String) {
   addHeader(HttpHeaders.AUTHORIZATION, "Basic ${Base64.getEncoder().encodeToString("$login:$password".toByteArray())}")
 }
 
+internal fun HttpRequestBase.tokenAuth(token: String) {
+  addHeader(HttpHeaders.AUTHORIZATION, "Bearer $token")
+}
+
 internal fun HttpEntity.asString() = EntityUtils.toString(this, Charsets.UTF_8)

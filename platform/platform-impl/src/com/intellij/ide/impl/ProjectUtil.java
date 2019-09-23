@@ -124,7 +124,7 @@ public class ProjectUtil {
         }
 
         if (provider.canOpenProject(virtualFile)) {
-          return provider.doOpenProject(virtualFile, options.getProjectToClose(), options.getForceOpenInNewFrame());
+          return provider.doOpenProject(virtualFile, options.projectToClose, options.forceOpenInNewFrame);
         }
       }
     }
@@ -133,12 +133,12 @@ public class ProjectUtil {
       return PlatformProjectOpenProcessor.openExistingProject(file, file, options, null);
     }
 
-    if (options.getCheckDirectoryForFileBasedProjects() && Files.isDirectory(file)) {
+    if (options.checkDirectoryForFileBasedProjects && Files.isDirectory(file)) {
       try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(file)) {
         for (Path child : directoryStream) {
           String childPath = child.toString();
           if (childPath.endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION)) {
-            return openProject(childPath, options.getProjectToClose(), options.getForceOpenInNewFrame());
+            return openProject(childPath, options.projectToClose, options.forceOpenInNewFrame);
           }
         }
       }
@@ -156,7 +156,7 @@ public class ProjectUtil {
       return null;
     }
 
-    Project project = provider.doOpenProject(virtualFile, options.getProjectToClose(), options.getForceOpenInNewFrame());
+    Project project = provider.doOpenProject(virtualFile, options.projectToClose, options.forceOpenInNewFrame);
     if (project == null) {
       return null;
     }
@@ -254,9 +254,15 @@ public class ProjectUtil {
     return path.contains("://") || path.contains("\\\\");
   }
 
+  @NotNull
+  public static Project[] getOpenProjects() {
+    ProjectManager projectManager = ProjectManager.getInstanceIfCreated();
+    return projectManager == null ? new Project[0] : projectManager.getOpenProjects();
+  }
+
   @Nullable
   public static Project findAndFocusExistingProjectForPath(@NotNull Path file) {
-    Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
+    Project[] openProjects = getOpenProjects();
     if (openProjects.length == 0) {
       return null;
     }
@@ -355,7 +361,7 @@ public class ProjectUtil {
         f.toFront();
       }
       else {
-        IdeFocusManager.getInstance(p).requestFocus(f, true);
+        IdeFocusManager.getInstance(p).requestFocus(f.getMostRecentFocusOwner(), true);
       }
     }
   }

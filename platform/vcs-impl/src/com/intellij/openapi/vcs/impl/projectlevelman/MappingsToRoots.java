@@ -34,17 +34,9 @@ import java.util.Collections;
 import java.util.List;
 
 public class MappingsToRoots {
-  private final NewMappings myMappings;
-  private final Project myProject;
-
-  public MappingsToRoots(@NotNull NewMappings mappings, @NotNull Project project) {
-    myMappings = mappings;
-    myProject = project;
-  }
-
   @NotNull
-  public VirtualFile[] getRootsUnderVcs(@NotNull AbstractVcs vcs) {
-    List<VirtualFile> mappings = new ArrayList<>(myMappings.getMappingsAsFilesUnderVcs(vcs));
+  public static VirtualFile[] getRootsUnderVcs(@NotNull Project project, @NotNull NewMappings newMappings, @NotNull AbstractVcs vcs) {
+    List<VirtualFile> mappings = new ArrayList<>(newMappings.getMappingsAsFilesUnderVcs(vcs));
 
     final AbstractVcs.RootsConvertor convertor = vcs.getCustomConvertor();
     final List<VirtualFile> result = convertor != null ? convertor.convertRoots(mappings) : mappings;
@@ -53,7 +45,7 @@ public class MappingsToRoots {
       Collections.sort(result, FilePathComparator.getInstance());
 
       ApplicationManager.getApplication().runReadAction(() -> {
-        final FileIndexFacade facade = ServiceManager.getService(myProject, FileIndexFacade.class);
+        final FileIndexFacade facade = ServiceManager.getService(project, FileIndexFacade.class);
         int i = 1;
         while (i < result.size()) {
           final VirtualFile previous = result.get(i - 1);
@@ -75,19 +67,19 @@ public class MappingsToRoots {
    * @see com.intellij.openapi.vcs.VcsRootSettings
    */
   @NotNull
-  public List<VirtualFile> getDetailedVcsMappings(@NotNull AbstractVcs vcs) {
+  public static List<VirtualFile> getDetailedVcsMappings(@NotNull Project project, @NotNull NewMappings newMappings, @NotNull AbstractVcs vcs) {
     // same as above, but no compression
-    List<VirtualFile> roots = new ArrayList<>(myMappings.getMappingsAsFilesUnderVcs(vcs));
+    List<VirtualFile> roots = new ArrayList<>(newMappings.getMappingsAsFilesUnderVcs(vcs));
 
-    Collection<VirtualFile> modules = DefaultVcsRootPolicy.getInstance(myProject).getDefaultVcsRoots();
+    Collection<VirtualFile> modules = DefaultVcsRootPolicy.getInstance(project).getDefaultVcsRoots();
     Collection<VirtualFile> modulesUnderVcs = ContainerUtil.filter(modules, file -> {
       if (!file.isDirectory()) return false;
-      NewMappings.MappedRoot root = myMappings.getMappedRootFor(file);
+      NewMappings.MappedRoot root = newMappings.getMappedRootFor(file);
       return root != null && vcs.equals(root.vcs);
     });
 
     List<VirtualFile> modulesToAdd = ApplicationManager.getApplication().runReadAction((Computable<List<VirtualFile>>)() -> {
-      final FileIndexFacade facade = ServiceManager.getService(myProject, FileIndexFacade.class);
+      final FileIndexFacade facade = ServiceManager.getService(project, FileIndexFacade.class);
       return ContainerUtil.filter(modulesUnderVcs,
                                   module -> ContainerUtil.or(roots, root -> facade.isValidAncestor(root, module)));
     });

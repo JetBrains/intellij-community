@@ -433,7 +433,7 @@ public class PyResolveTest extends PyResolveTestCase {
   }
 
   public void testImportInTryExcept() {  // PY-2197
-    assertResolvesTo(PyFile.class, "sys.py");
+    assertResolvesTo(PyFile.class, "sys.pyi");
   }
 
   public void testModuleToBuiltins() {
@@ -756,11 +756,6 @@ public class PyResolveTest extends PyResolveTestCase {
 
   public void testGlobalNotDefinedAtTopLevel() {
     assertResolvesTo(PyTargetExpression.class, "foo");
-  }
-
-  public void testGlobalReassignmentNotDefinedAtTopLevel() {
-    final PyTargetExpression target = assertResolvesTo(PyTargetExpression.class, "xx");
-    assertInstanceOf(target.getParent(), PyGlobalStatement.class);
   }
 
   // PY-13734

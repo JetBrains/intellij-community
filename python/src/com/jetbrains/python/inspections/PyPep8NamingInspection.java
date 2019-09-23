@@ -53,13 +53,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.regex.Pattern;
-
-import static com.intellij.util.containers.ContainerUtilRt.addIfNotNull;
 
 /**
  * User : ktisha
@@ -292,7 +288,7 @@ public class PyPep8NamingInspection extends PyInspection {
         .setItemChosenCallback((selectedValue) -> InspectionProfileModifiableModelKt.modifyAndCommitProjectProfile(project, it -> {
           PyPep8NamingInspection inspection =
             (PyPep8NamingInspection)it.getUnwrappedTool(PyPep8NamingInspection.class.getSimpleName(), descriptor.getPsiElement());
-          addIfNotNull(inspection.ignoredBaseClasses, selectedValue);
+          ContainerUtil.addIfNotNull(inspection.ignoredBaseClasses, selectedValue);
         }))
         .setNamerForFiltering(o -> o)
         .createPopup()

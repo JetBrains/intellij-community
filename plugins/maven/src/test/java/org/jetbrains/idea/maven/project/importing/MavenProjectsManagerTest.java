@@ -15,10 +15,14 @@
  */
 package org.jetbrains.idea.maven.project.importing;
 
+import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModuleTypeId;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -27,12 +31,14 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.TestActionEvent;
 import com.intellij.util.FileContentUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.importing.MavenRootModelAdapter;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.project.*;
+import org.jetbrains.idea.maven.project.actions.RemoveManagedFilesAction;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
 
@@ -1137,4 +1143,68 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
 
     assertTrue(log.toString(), log.length() == 0);
   }
+
+  public void testShouldRemoveMavenProjectsAndNotAddThemToIgnore() throws Exception {
+    VirtualFile mavenParentPom = createProjectSubFile("maven-parent/pom.xml", "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+                                                                              "<project xmlns=\"http://maven.apache.org/POM/4.0.0\"\n" +
+                                                                              "         xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
+                                                                              "         xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd\">\n" +
+                                                                              "    <modelVersion>4.0.0</modelVersion>\n" +
+                                                                              "    <groupId>test</groupId>\n" +
+                                                                              "    <artifactId>parent-maven</artifactId>\n" +
+                                                                              "    <packaging>pom</packaging>\n" +
+                                                                              "    <version>1.0-SNAPSHOT</version>\n" +
+                                                                              "    <modules>\n" +
+                                                                              "        <module>child1</module>\n" +
+                                                                              "    </modules>" +
+                                                                              "</project>");
+
+    createProjectSubFile("maven-parent/child1/pom.xml", "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+                                                        "<project xmlns=\"http://maven.apache.org/POM/4.0.0\"\n" +
+                                                        "         xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
+                                                        "         xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd\">\n" +
+                                                        "    <parent>\n" +
+                                                        "        <artifactId>parent-maven</artifactId>\n" +
+                                                        "        <groupId>test</groupId>\n" +
+                                                        "        <version>1.0-SNAPSHOT</version>\n" +
+                                                        "    </parent>\n" +
+                                                        "    <modelVersion>4.0.0</modelVersion>" +
+                                                        "    <artifactId>child1</artifactId>" +
+                                                        "</project>");
+
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      ModuleManager.getInstance(myProject).newModule("non-maven", ModuleTypeId.JAVA_MODULE);
+    });
+    importProject(mavenParentPom);
+    assertEquals(3, ModuleManager.getInstance(myProject).getModules().length);
+
+    configConfirmationForYesAnswer();
+
+    RemoveManagedFilesAction action = new RemoveManagedFilesAction();
+    action.actionPerformed(new TestActionEvent(createTestDataContext(mavenParentPom), action));
+    assertEquals(1, ModuleManager.getInstance(myProject).getModules().length);
+    assertEquals("non-maven", ModuleManager.getInstance(myProject).getModules()[0].getName());
+    assertEmpty(myProjectsManager.getIgnoredFilesPaths());
+
+    //should then import project in non-ignored state again
+    importProject(mavenParentPom);
+    assertEquals(3, ModuleManager.getInstance(myProject).getModules().length);
+    assertEmpty(myProjectsManager.getIgnoredFilesPaths());
+  }
+
+
+
+  private DataContext createTestDataContext(VirtualFile mavenParentPom) {
+    final DataContext defaultContext = DataManager.getInstance().getDataContext();
+    return dataId -> {
+      if (CommonDataKeys.PROJECT.is(dataId)) {
+        return myProject;
+      }
+      if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
+        return new VirtualFile[]{mavenParentPom};
+      }
+      return defaultContext.getData(dataId);
+    };
+  }
+
 }

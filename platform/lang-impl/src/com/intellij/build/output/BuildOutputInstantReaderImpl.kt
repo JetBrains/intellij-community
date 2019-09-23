@@ -23,7 +23,7 @@ open class BuildOutputInstantReaderImpl(private val buildId: Any,
                                         parsers: List<BuildOutputParser>) : BuildOutputInstantReader, Closeable, Appendable {
   private val readJob: Job
   private val appendParentJob: Job = Job()
-  private val outputLinesChannel = Channel<String>()
+  private val outputLinesChannel = Channel<String>(getMaxLinesBufferSize() * 2)
 
   private val readLinesBuffer = LinkedList<String>()
   private var readLinesBufferPosition = -1
@@ -84,7 +84,7 @@ open class BuildOutputInstantReaderImpl(private val buildId: Any,
     closeAndGetFuture()
   }
 
-  fun closeAndGetFuture(): CompletableFuture<Unit> {
+  open fun closeAndGetFuture(): CompletableFuture<Unit> {
     appendedLineProcessor.close()
     outputLinesChannel.close()
     return CoroutineScope(Dispatchers.Default).future {
@@ -104,7 +104,7 @@ open class BuildOutputInstantReaderImpl(private val buildId: Any,
       readLinesBufferPosition++
       return readLinesBuffer[readLinesBufferPosition]
     }
-    val line = runBlocking {
+    val line = outputLinesChannel.poll() ?: runBlocking {
       try {
         outputLinesChannel.receive()
       }

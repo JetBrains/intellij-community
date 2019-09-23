@@ -49,6 +49,11 @@ public final class PyToxConfiguration extends AbstractPythonTestRunConfiguration
     mySkipModuleSerialization = true;
   }
 
+  @Override
+  public boolean isIdTestBased() {
+    return true;
+  }
+
   @NotNull
   String[] getRunOnlyEnvs() {
     return (myRunOnlyEnvs == null ? ArrayUtilRt.EMPTY_STRING_ARRAY : myRunOnlyEnvs.clone());

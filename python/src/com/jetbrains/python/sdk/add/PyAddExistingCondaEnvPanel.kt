@@ -15,14 +15,13 @@
  */
 package com.jetbrains.python.sdk.add
 
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.util.ui.FormBuilder
@@ -43,10 +42,11 @@ import javax.swing.Icon
 class PyAddExistingCondaEnvPanel(private val project: Project?,
                                  private val module: Module?,
                                  private val existingSdks: List<Sdk>,
-                                 override var newProjectPath: String?) : PyAddSdkPanel() {
+                                 override var newProjectPath: String?,
+                                 context: UserDataHolder) : PyAddSdkPanel() {
   override val panelName: String = "Existing environment"
   override val icon: Icon = PythonIcons.Python.Anaconda
-  private val sdkComboBox = PySdkPathChoosingComboBox(listOf(), null)
+  private val sdkComboBox = PySdkPathChoosingComboBox()
   private val condaPathField = TextFieldWithBrowseButton().apply {
     val path = PyCondaPackageService.getInstance().PREFERRED_CONDA_PATH ?: PyCondaPackageService.getSystemCondaExecutable()
     if (path != null) {
@@ -73,24 +73,9 @@ class PyAddExistingCondaEnvPanel(private val project: Project?,
       .addComponent(makeSharedField)
       .panel
     add(formPanel, BorderLayout.NORTH)
-    ApplicationManager.getApplication().executeOnPooledThread(object : Runnable {
-      override fun run() {
-        if (module != null && module.isDisposed) return
-        ApplicationManager.getApplication().invokeLater({ sdkComboBox.setBusy(true) }, ModalityState.any())
-        var sdks = emptyList<Sdk>()
-        try {
-          sdks = detectCondaEnvs(module, existingSdks)
-        }
-        finally {
-          ApplicationManager.getApplication().invokeLater({
-                                                            sdkComboBox.setBusy(false)
-                                                            sdks.forEach {
-                                                              sdkComboBox.childComponent.addItem(it)
-                                                            }
-                                                          }, ModalityState.any())
-        }
-      }
-    })
+    addInterpretersAsync(sdkComboBox) {
+      detectCondaEnvs(module, existingSdks, context)
+    }
   }
 
   override fun validateAll(): List<ValidationInfo> = listOfNotNull(validateSdkComboBox(sdkComboBox), validateAnacondaPath())

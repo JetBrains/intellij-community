@@ -32,6 +32,8 @@ public interface ASTNode extends UserDataHolder {
 
   /**
    * Returns the text of this node.
+   * <p></p>
+   * Note: This call requires traversing whole subtree, so it can be expensive for composite nodes, and should be avoided if possible.
    *
    * @return the node text.
    */
@@ -40,8 +42,12 @@ public interface ASTNode extends UserDataHolder {
 
   /**
    * Returns same text getText() returns but might be more effective eliminating toString() transformation from internal CharSequence representation
+   * <p></p>
+   * Note: This call requires traversing whole subtree, so it can be expensive for composite nodes, and should be avoided if possible.
    *
    * @return the node text.
+   * @see PsiElement#textMatches
+   * @see #textContains
    */
   @NotNull
   CharSequence getChars();
@@ -56,6 +62,8 @@ public interface ASTNode extends UserDataHolder {
 
   /**
    * Returns the starting offset of the node text in the document.
+   * <p></p>
+   * Note: it works in <i>O(tree_depth)</i> time, which can be slow in deep trees, so invoking this method should be avoided if possible.
    *
    * @return the start offset.
    */
@@ -80,6 +88,8 @@ public interface ASTNode extends UserDataHolder {
 
   /**
    * Returns the text range (a combination of starting offset in the document and length) for this node.
+   * <p></p>
+   * Note: it works in <i>O(tree_depth)</i> time, which can be slow in deep trees, so invoking this method should be avoided if possible.
    *
    * @return the text range.
    */

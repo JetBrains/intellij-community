@@ -17,6 +17,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsDataKeys;
@@ -51,7 +52,7 @@ import java.util.Optional;
 
 import static com.intellij.openapi.util.text.StringUtil.shortenTextWithEllipsis;
 import static com.intellij.openapi.vcs.changes.ui.ChangesListView.EXACTLY_SELECTED_FILES_DATA_KEY;
-import static com.intellij.openapi.vcs.changes.ui.ChangesListView.UNVERSIONED_FILES_DATA_KEY;
+import static com.intellij.openapi.vcs.changes.ui.ChangesListView.UNVERSIONED_FILE_PATHS_DATA_KEY;
 import static com.intellij.util.containers.ContainerUtil.immutableSingletonList;
 import static com.intellij.util.ui.update.MergingUpdateQueue.ANY_COMPONENT;
 
@@ -69,7 +70,7 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
   @NotNull private final PartialCommitInclusionModel myInclusionModel;
   @NotNull private LocalChangeList myChangeList;
   private final List<Change> myChanges = new ArrayList<>();
-  private final List<VirtualFile> myUnversioned = new ArrayList<>();
+  private final List<FilePath> myUnversioned = new ArrayList<>();
   private boolean myHasHiddenUnversioned;
 
   @Nullable private Runnable mySelectedListChangeListener;
@@ -243,7 +244,7 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
     myChanges.addAll(myChangeList.getChanges());
 
     if (myEnableUnversioned) {
-      List<VirtualFile> unversioned = ChangeListManagerImpl.getInstanceImpl(myProject).getUnversionedFiles();
+      List<FilePath> unversioned = ChangeListManagerImpl.getInstanceImpl(myProject).getUnversionedFilesPaths();
       if (isShowUnversioned()) {
         myUnversioned.addAll(unversioned);
       }
@@ -289,8 +290,8 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
   @Nullable
   @Override
   public Object getData(@NotNull String dataId) {
-    if (UNVERSIONED_FILES_DATA_KEY.is(dataId)) {
-      return VcsTreeModelData.selected(myViewer).userObjectsStream(VirtualFile.class);
+    if (UNVERSIONED_FILE_PATHS_DATA_KEY.is(dataId)) {
+      return VcsTreeModelData.allUnderTag(myViewer, ChangesBrowserNode.UNVERSIONED_FILES_TAG).userObjectsStream(FilePath.class);
     }
     else if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
       return myDeleteProvider;
@@ -329,9 +330,9 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
     if (!isShowUnversioned()) return Collections.emptyList();
 
     VcsTreeModelData treeModelData = VcsTreeModelData.allUnderTag(myViewer, ChangesBrowserNode.UNVERSIONED_FILES_TAG);
-    if (containsCollapsedUnversionedNode(treeModelData)) return myUnversioned;
+    if (containsCollapsedUnversionedNode(treeModelData)) return ContainerUtil.mapNotNull(myUnversioned, FilePath::getVirtualFile);
 
-    return treeModelData.userObjects(VirtualFile.class);
+    return ContainerUtil.mapNotNull(treeModelData.userObjects(FilePath.class), FilePath::getVirtualFile);
   }
 
   @NotNull
@@ -340,9 +341,9 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
     if (!isShowUnversioned()) return Collections.emptyList();
 
     VcsTreeModelData treeModelData = VcsTreeModelData.selectedUnderTag(myViewer, ChangesBrowserNode.UNVERSIONED_FILES_TAG);
-    if (containsCollapsedUnversionedNode(treeModelData)) return myUnversioned;
+    if (containsCollapsedUnversionedNode(treeModelData)) return ContainerUtil.mapNotNull(myUnversioned, FilePath::getVirtualFile);
 
-    return treeModelData.userObjects(VirtualFile.class);
+    return ContainerUtil.mapNotNull(treeModelData.userObjects(FilePath.class), FilePath::getVirtualFile);
   }
 
   @NotNull
@@ -351,9 +352,9 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
     if (!isShowUnversioned()) return Collections.emptyList();
 
     VcsTreeModelData treeModelData = VcsTreeModelData.includedUnderTag(myViewer, ChangesBrowserNode.UNVERSIONED_FILES_TAG);
-    if (containsCollapsedUnversionedNode(treeModelData)) return myUnversioned;
+    if (containsCollapsedUnversionedNode(treeModelData)) return ContainerUtil.mapNotNull(myUnversioned, FilePath::getVirtualFile);
 
-    return treeModelData.userObjects(VirtualFile.class);
+    return ContainerUtil.mapNotNull(treeModelData.userObjects(FilePath.class), FilePath::getVirtualFile);
   }
 
   private static boolean containsCollapsedUnversionedNode(@NotNull VcsTreeModelData treeModelData) {

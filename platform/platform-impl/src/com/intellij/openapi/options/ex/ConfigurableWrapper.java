@@ -1,10 +1,13 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options.ex;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.options.*;
+import com.intellij.openapi.project.Project;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
@@ -87,10 +90,10 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
            : null;
   }
 
-  private final ConfigurableEP myEp;
+  private final ConfigurableEP<?> myEp;
   int myWeight; // see ConfigurableExtensionPointUtil.getConfigurableToReplace
 
-  private ConfigurableWrapper(@NotNull ConfigurableEP ep) {
+  private ConfigurableWrapper(@NotNull ConfigurableEP<?> ep) {
     myEp = ep;
     myWeight = ep.groupWeight;
   }
@@ -202,7 +205,7 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
   }
 
   @NotNull
-  public ConfigurableEP getExtensionPoint() {
+  public ConfigurableEP<?> getExtensionPoint() {
     return myEp;
   }
 
@@ -249,53 +252,65 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
     @NotNull
     @Override
     public Configurable[] getConfigurables() {
-      if (!isInitialized) {
-        long time = System.currentTimeMillis();
-        ArrayList<Configurable> list = new ArrayList<>();
-        if (super.myEp.dynamic) {
-          Composite composite = cast(Composite.class, this);
-          if (composite != null) {
-            Collections.addAll(list, composite.getConfigurables());
-          }
-        }
-        if (super.myEp.children != null) {
-          for (ConfigurableEP ep : super.myEp.getChildren()) {
-            if (ep.isAvailable()) {
-              list.add((Configurable)wrapConfigurable(ep));
-            }
-          }
-        }
-        if (super.myEp.childrenEPName != null) {
-          Object[] extensions = Extensions.getArea(super.myEp.getProject()).getExtensionPoint(super.myEp.childrenEPName).getExtensions();
-          if (extensions.length > 0) {
-            if (extensions[0] instanceof ConfigurableEP) {
-              for (Object object : extensions) {
-                list.add((Configurable)wrapConfigurable((ConfigurableEP)object));
-              }
-            }
-            else if (!super.myEp.dynamic) {
-              Composite composite = cast(Composite.class, this);
-              if (composite != null) {
-                Collections.addAll(list, composite.getConfigurables());
-              }
-            }
-          }
-        }
-        Collections.addAll(list, myKids);
-        // sort configurables is needed
-        for (Configurable configurable : list) {
-          if (configurable instanceof Weighted) {
-            if (((Weighted)configurable).getWeight() != 0) {
-              myComparator = COMPARATOR;
-              Collections.sort(list, myComparator);
-              break;
-            }
-          }
-        }
-        myKids = list.toArray(new Configurable[0]);
-        isInitialized = true;
-        ConfigurableCardPanel.warn(this, "children", time);
+      if (isInitialized) {
+        return myKids;
       }
+
+      long time = System.currentTimeMillis();
+      ArrayList<Configurable> list = new ArrayList<>();
+      if (super.myEp.dynamic) {
+        Composite composite = cast(Composite.class, this);
+        if (composite != null) {
+          Collections.addAll(list, composite.getConfigurables());
+        }
+      }
+      if (super.myEp.children != null) {
+        for (ConfigurableEP<?> ep : super.myEp.getChildren()) {
+          if (ep.isAvailable()) {
+            list.add((Configurable)wrapConfigurable(ep));
+          }
+        }
+      }
+      if (super.myEp.childrenEPName != null) {
+        Project project = super.myEp.getProject();
+        ExtensionsArea area = project == null ? ApplicationManager.getApplication().getExtensionArea() : project.getExtensionArea();
+        ExtensionPoint<Object> point = area.getExtensionPointIfRegistered(super.myEp.childrenEPName);
+        List<Object> extensions;
+        if (point == null) {
+          LOG.warn("Cannot find extension point " + super.myEp.childrenEPName + " in " + area);
+          extensions = Collections.emptyList();
+        }
+        else {
+          extensions = point.getExtensionList();
+        }
+        if (!extensions.isEmpty()) {
+          if (extensions.get(0) instanceof ConfigurableEP) {
+            for (Object object : extensions) {
+              list.add((Configurable)wrapConfigurable((ConfigurableEP<?>)object));
+            }
+          }
+          else if (!super.myEp.dynamic) {
+            Composite composite = cast(Composite.class, this);
+            if (composite != null) {
+              Collections.addAll(list, composite.getConfigurables());
+            }
+          }
+        }
+      }
+      Collections.addAll(list, myKids);
+      // sort configurables is needed
+      for (Configurable configurable : list) {
+        if (configurable instanceof Weighted) {
+          if (((Weighted)configurable).getWeight() != 0) {
+            myComparator = COMPARATOR;
+            Collections.sort(list, myComparator);
+            break;
+          }
+        }
+      }
+      myKids = list.toArray(new Configurable[0]);
+      isInitialized = true;
+      ConfigurableCardPanel.warn(this, "children", time);
       return myKids;
     }
 

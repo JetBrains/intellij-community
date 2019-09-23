@@ -2,7 +2,7 @@
 package com.intellij.ide.startup.impl;
 
 import com.intellij.diagnostic.Activity;
-import com.intellij.diagnostic.ParallelActivity;
+import com.intellij.diagnostic.ActivityCategory;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.diagnostic.StartUpMeasurer.Phases;
@@ -18,28 +18,24 @@ import com.intellij.notification.Notifications;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
-import com.intellij.openapi.project.DumbModeTask;
 import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.impl.ProjectLifecycleListener;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.impl.local.FileWatcher;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
-import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.project.ProjectKt;
 import com.intellij.ui.GuiUtils;
 import com.intellij.util.PathUtil;
@@ -47,7 +43,6 @@ import com.intellij.util.SmartList;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
-import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -77,7 +72,6 @@ public class StartupManagerImpl extends StartupManagerEx implements Disposable {
   private volatile boolean myStartupActivitiesPassed;
 
   private final Project myProject;
-  private boolean myInitialRefreshScheduled;
   private ScheduledFuture<?> myBackgroundPostStartupScheduledFuture;
 
   public StartupManagerImpl(@NotNull Project project) {
@@ -157,11 +151,10 @@ public class StartupManagerImpl extends StartupManagerEx implements Disposable {
 
   public void runPostStartupActivitiesFromExtensions() {
     PerformanceWatcher.Snapshot snapshot = PerformanceWatcher.takeSnapshot();
-    // strictly speaking, it is not a sequential activity,
-    // because sub activities performed in a different threads (depends on dumb awareness),
-    // but because there is no any other concurrent phase and timeline end equals to last dumb-aware activity,
-    // we measure it as a sequential activity to put on a timeline and make clear what's going on the end (avoid last "unknown" phase).
-    Activity dumbAwareActivity = StartUpMeasurer.start(Phases.RUN_PROJECT_POST_STARTUP_ACTIVITIES_DUMB_AWARE);
+    // strictly speaking, the activity is not sequential, because sub-activities are performed in different threads
+    // (depending on dumb-awareness), but because there is no other concurrent phase and timeline end equals to last dumb-aware activity,
+    // we measure it as a sequential activity to put it on the timeline and make clear what's going on the end (avoid last "unknown" phase)
+    Activity dumbAwareActivity = StartUpMeasurer.startMainActivity("project post-startup dumb-aware activities");
 
     AtomicReference<Activity> edtActivity = new AtomicReference<>();
 
@@ -175,7 +168,7 @@ public class StartupManagerImpl extends StartupManagerEx implements Disposable {
       }
       else {
         if (edtActivity.get() == null) {
-          edtActivity.set(StartUpMeasurer.start(Phases.RUN_PROJECT_POST_STARTUP_ACTIVITIES_EDT));
+          edtActivity.set(StartUpMeasurer.startMainActivity("project post-startup edt activities"));
         }
 
         counter.incrementAndGet();
@@ -199,6 +192,19 @@ public class StartupManagerImpl extends StartupManagerEx implements Disposable {
     }
     dumbAwareActivity.end();
     snapshot.logResponsivenessSinceCreation("Post-startup activities under progress");
+
+    StartupActivity.POST_STARTUP_ACTIVITY.addExtensionPointListener(
+      new ExtensionPointListener<StartupActivity>() {
+        @Override
+        public void extensionAdded(@NotNull StartupActivity extension, @NotNull PluginDescriptor pluginDescriptor) {
+          if (DumbService.isDumbAware(extension)) {
+            runActivity(new AtomicBoolean(), extension, pluginDescriptor);
+          }
+          else {
+            dumbService.runWhenSmart(() -> runActivity(new AtomicBoolean(), extension, pluginDescriptor));
+          }
+        }
+      }, this);
   }
 
   private void runActivity(@NotNull AtomicBoolean uiFreezeWarned, @NotNull StartupActivity extension, @NotNull PluginDescriptor pluginDescriptor) {
@@ -222,7 +228,7 @@ public class StartupManagerImpl extends StartupManagerEx implements Disposable {
     }
 
     String pluginId = pluginDescriptor.getPluginId().getIdString();
-    long duration = ParallelActivity.POST_STARTUP_ACTIVITY.record(startTime, extension.getClass(), null, pluginId);
+    long duration = StartUpMeasurer.addCompletedActivity(startTime, extension.getClass(), ActivityCategory.POST_STARTUP_ACTIVITY, pluginId, StartUpMeasurer.MEASURE_THRESHOLD);
     if (duration > EDT_WARN_THRESHOLD_IN_NANO) {
       reportUiFreeze(uiFreezeWarned);
     }
@@ -267,7 +273,7 @@ public class StartupManagerImpl extends StartupManagerEx implements Disposable {
             break;
           }
 
-          // queue each activity in smart mode separately so that if one of them starts dumb mode, the next ones just wait for it to finish
+          // queue each activity in smart mode separately so that if one of them starts the dumb mode, the next ones just wait for it to finish
           for (Runnable activity : dumbUnaware) {
             dumbService.runWhenSmart(() -> runActivity(activity));
           }
@@ -299,33 +305,6 @@ public class StartupManagerImpl extends StartupManagerEx implements Disposable {
       myNotDumbAwarePostStartupActivities.clear();
       return result;
     }
-  }
-
-  public void scheduleInitialVfsRefresh() {
-    GuiUtils.invokeLaterIfNeeded(() -> {
-      if (myProject.isDisposed() || myInitialRefreshScheduled) return;
-
-      myInitialRefreshScheduled = true;
-      ProjectRootManagerEx.getInstanceEx(myProject).markRootsForRefresh();
-
-      Application app = ApplicationManager.getApplication();
-      if (!app.isCommandLine()) {
-        long sessionId = VirtualFileManager.getInstance().asyncRefresh(null);
-        MessageBusConnection connection = app.getMessageBus().connect();
-        connection.subscribe(ProjectLifecycleListener.TOPIC, new ProjectLifecycleListener() {
-          @Override
-          public void afterProjectClosed(@NotNull Project project) {
-            if (project == myProject) {
-              RefreshQueue.getInstance().cancelSession(sessionId);
-              connection.disconnect();
-            }
-          }
-        });
-      }
-      else {
-        VirtualFileManager.getInstance().syncRefresh();
-      }
-    }, ModalityState.defaultModalityState());
   }
 
   private void checkFsSanity() {
@@ -403,40 +382,11 @@ public class StartupManagerImpl extends StartupManagerEx implements Disposable {
     });
   }
 
-  public void startCacheUpdate() {
-    if (myProject.isDisposed()) return;
-
-    try {
-      DumbServiceImpl dumbService = DumbServiceImpl.getInstance(myProject);
-
-      if (!ApplicationManager.getApplication().isUnitTestMode()) {
-        // pre-startup activities have registered dumb tasks that load VFS (scanning files to index)
-        // only after these tasks pass does VFS refresh make sense
-        dumbService.queueTask(new DumbModeTask() {
-          @Override
-          public void performInDumbMode(@NotNull ProgressIndicator indicator) {
-            scheduleInitialVfsRefresh();
-          }
-
-          @Override
-          public String toString() {
-            return "initial refresh";
-          }
-        });
-      }
-    }
-    catch (ProcessCanceledException e) {
-      throw e;
-    }
-    catch (Throwable e) {
-      LOG.error(e);
-    }
-  }
-
   private void runActivities(@NotNull Deque<? extends Runnable> activities, @NotNull String phaseName) {
-    Activity activity = StartUpMeasurer.start(phaseName);
-    Runnable runnable;
+    Activity activity = StartUpMeasurer.startMainActivity(phaseName);
+
     while (true) {
+      Runnable runnable;
       synchronized (myLock) {
         runnable = activities.pollFirst();
       }
@@ -452,18 +402,42 @@ public class StartupManagerImpl extends StartupManagerEx implements Disposable {
 
       runActivity(runnable);
 
-      ParallelActivity.POST_STARTUP_ACTIVITY.record(startTime, runnable.getClass(), null, pluginId);
+      StartUpMeasurer.addCompletedActivity(startTime, runnable.getClass(), ActivityCategory.POST_STARTUP_ACTIVITY, pluginId, StartUpMeasurer.MEASURE_THRESHOLD);
     }
+
     activity.end();
   }
 
-  public void scheduleBackgroundPostStartupActivities() {
-    myBackgroundPostStartupScheduledFuture = AppExecutorUtil.getAppScheduledExecutorService().schedule(
-      () -> BackgroundTaskUtil.runUnderDisposeAwareIndicator(this, () -> {
-        for (StartupActivity activity : StartupActivity.BACKGROUND_POST_STARTUP_ACTIVITY.getIterable()) {
+  public final void scheduleBackgroundPostStartupActivities() {
+    if (myProject.isDisposedOrDisposeInProgress()) {
+      return;
+    }
+
+    myBackgroundPostStartupScheduledFuture = AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> {
+      if (myProject.isDisposedOrDisposeInProgress()) {
+        return;
+      }
+
+      List<StartupActivity.Background> activities = StartupActivity.BACKGROUND_POST_STARTUP_ACTIVITY.getExtensionList();
+      StartupActivity.BACKGROUND_POST_STARTUP_ACTIVITY.addExtensionPointListener(new ExtensionPointListener<StartupActivity.Background>() {
+        @Override
+        public void extensionAdded(@NotNull StartupActivity.Background extension, @NotNull PluginDescriptor pluginDescriptor) {
+          extension.runActivity(myProject);
+        }
+      }, this);
+
+      BackgroundTaskUtil.runUnderDisposeAwareIndicator(this, () -> {
+        for (StartupActivity activity : activities) {
+          ProgressManager.checkCanceled();
+
+          if (myProject.isDisposedOrDisposeInProgress()) {
+            return;
+          }
+
           activity.runActivity(myProject);
         }
-      }), 5, TimeUnit.SECONDS);
+      });
+    }, 5, TimeUnit.SECONDS);
   }
 
   @Override
@@ -499,8 +473,8 @@ public class StartupManagerImpl extends StartupManagerEx implements Disposable {
 
       //noinspection SynchronizeOnThis
       synchronized (this) {
-        // in tests which simulate project opening, post-startup activities could have been run already.
-        // Then we should act as if the project was initialized
+        // in tests that simulate project opening, post-startup activities could have been run already
+        // then we should act as if the project was initialized
         boolean initialized = myProject.isInitialized() || myProject.isDefault() || (myPostStartupActivitiesPassed && application.isUnitTestMode());
         if (!initialized) {
           registerPostStartupActivity(action);

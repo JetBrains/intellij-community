@@ -38,8 +38,8 @@ public class StartupActionScriptManager {
     }
   }
 
-  public static synchronized void executeActionScript(@NotNull Path scriptFile, @NotNull Path oldTarget, @NotNull File newTarget) throws IOException {
-    List<ActionCommand> commands = loadActionScript(scriptFile);
+  public static synchronized void executeActionScript(@NotNull File scriptFile, @NotNull File oldTarget, @NotNull File newTarget) throws IOException {
+    List<ActionCommand> commands = loadActionScript(scriptFile.toPath());
     for (ActionCommand command : commands) {
       ActionCommand toExecute = mapPaths(command, oldTarget, newTarget);
       if (toExecute != null) {
@@ -89,11 +89,11 @@ public class StartupActionScriptManager {
       if (data instanceof ActionCommand[]) {
         return new ArrayList<>(Arrays.asList((ActionCommand[])data));
       }
-      else if (data instanceof List && ((List)data).size() == 0) {
+      else if (data instanceof List && ((List<?>)data).size() == 0) {
         return new ArrayList<>();
       }
       else {
-        throw new IOException("Unexpected object: " + data + "/" + data.getClass());
+        throw new IOException("An unexpected object: " + data + "/" + data.getClass());
       }
     }
     catch (ReflectiveOperationException e) {
@@ -114,7 +114,7 @@ public class StartupActionScriptManager {
     }
   }
 
-  private static ActionCommand mapPaths(ActionCommand command, Path oldTarget, File newTarget) {
+  private static ActionCommand mapPaths(ActionCommand command, File oldTarget, File newTarget) {
     if (command instanceof CopyCommand) {
       File destination = mapPath(((CopyCommand)command).myDestination, oldTarget, newTarget);
       if (destination != null) {
@@ -137,8 +137,8 @@ public class StartupActionScriptManager {
     return null;
   }
 
-  private static File mapPath(String path, Path oldTarget, File newTarget) {
-    String oldTargetPath = oldTarget.toString();
+  private static File mapPath(String path, File oldTarget, File newTarget) {
+    String oldTargetPath = oldTarget.getPath();
     if (path.startsWith(oldTargetPath)) {
       if (path.length() == oldTargetPath.length()) {
         return newTarget;
@@ -177,7 +177,7 @@ public class StartupActionScriptManager {
 
       File destDir = destination.getParentFile();
       if (!(destDir.isDirectory() || destDir.mkdirs())) {
-        throw new IOException("Cannot create directory: " + destDir);
+        throw new IOException("Cannot create a directory: " + destDir);
       }
 
       FileUtilRt.copy(source, destination);
@@ -215,7 +215,7 @@ public class StartupActionScriptManager {
       }
 
       if (!(destination.isDirectory() || destination.mkdirs())) {
-        throw new IOException("Cannot create directory: " + destination);
+        throw new IOException("Cannot create a directory: " + destination);
       }
 
       ZipUtil.extract(source, destination, myFilenameFilter);

@@ -51,7 +51,7 @@ public final class SvgFileType extends XmlLikeFileType implements UIBasedFileTyp
     return "svg";
   }
 
-  @Nullable
+  @NotNull
   @Override
   public Icon getIcon() {
     return ImagesIcons.ImagesFileType;

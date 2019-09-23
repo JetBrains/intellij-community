@@ -7,7 +7,7 @@ import com.intellij.util.containers.ContainerUtil.newUnmodifiableList
 import com.intellij.util.containers.ContainerUtil.unmodifiableOrEmptyMap
 
 interface CommitOptions {
-  val vcsOptions: Map<AbstractVcs<*>, RefreshableOnComponent>
+  val vcsOptions: Map<AbstractVcs, RefreshableOnComponent>
   val beforeOptions: List<RefreshableOnComponent>
   val afterOptions: List<RefreshableOnComponent>
 }
@@ -16,13 +16,13 @@ val CommitOptions.allOptions: Sequence<RefreshableOnComponent> get() = sequenceO
 val CommitOptions.isEmpty: Boolean get() = allOptions.none()
 
 class CommitOptionsImpl(
-  override val vcsOptions: Map<AbstractVcs<*>, RefreshableOnComponent>,
+  override val vcsOptions: Map<AbstractVcs, RefreshableOnComponent>,
   override val beforeOptions: List<RefreshableOnComponent>,
   override val afterOptions: List<RefreshableOnComponent>
 ) : CommitOptions
 
 class MutableCommitOptions : CommitOptions {
-  override val vcsOptions: MutableMap<AbstractVcs<*>, RefreshableOnComponent> = mutableMapOf()
+  override val vcsOptions: MutableMap<AbstractVcs, RefreshableOnComponent> = mutableMapOf()
   override val beforeOptions: MutableList<RefreshableOnComponent> = mutableListOf()
   override val afterOptions: MutableList<RefreshableOnComponent> = mutableListOf()
 

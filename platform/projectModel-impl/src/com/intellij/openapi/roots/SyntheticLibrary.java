@@ -9,7 +9,6 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,7 +41,6 @@ import java.util.Set;
  * </ul>
  * @see AdditionalLibraryRootsProvider
  */
-@ApiStatus.Experimental
 public abstract class SyntheticLibrary {
 
   @NotNull
@@ -158,7 +156,7 @@ public abstract class SyntheticLibrary {
   }
 
   @NotNull
-  private static <T extends VirtualFile> Set<T> asSet(@NotNull Collection<? extends T> collection) {
+  private static <T extends VirtualFile> Set<T> asSet(@NotNull Collection<T> collection) {
     return collection instanceof Set ? (Set<T>)collection : new THashSet<>(collection);
   }
 }

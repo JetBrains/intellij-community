@@ -7,7 +7,7 @@ import pytest
 
 from _pydev_bundle.pydev_stdin import StdIn
 from _pydev_bundle.pydev_localhost import get_localhost
-from _pydev_comm.rpc import make_rpc_client
+from _pydev_comm.pydev_rpc import make_rpc_client
 from _pydevd_bundle import pydevd_io
 from pydev_console.protocol import PythonConsoleFrontendService, PythonConsoleBackendService
 from pydevconsole import enable_thrift_logging, create_server_handler_factory
@@ -209,7 +209,7 @@ class TestRunningCode(TestBase):
             return
 
         from _pydev_bundle.pydev_ipython_console_011 import get_pydev_frontend
-        from _pydev_comm.rpc import start_rpc_server_and_make_client
+        from _pydev_comm.pydev_rpc import start_rpc_server_and_make_client
 
         called_RequestInput = [False]
         called_IPythonEditor = [False]

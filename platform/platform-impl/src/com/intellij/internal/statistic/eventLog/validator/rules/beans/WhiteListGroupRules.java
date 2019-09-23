@@ -78,11 +78,13 @@ public class WhiteListGroupRules {
   }
 
   public ValidationResultType validateEventId(@NotNull EventContext context) {
+    ValidationResultType prevResult = null;
     for (FUSRule rule : eventIdRules) {
       ValidationResultType resultType = rule.validate(context.eventId, context);
-      if (resultType != REJECTED) return resultType;
+      if (resultType.isFinal()) return resultType;
+      prevResult = resultType;
     }
-    return REJECTED;
+    return prevResult != null ? prevResult : REJECTED;
   }
 
   public ValidationResultType validateEventData(@NotNull String key,
@@ -94,16 +96,33 @@ public class WhiteListGroupRules {
 
     if (rules == null || rules.length == 0) return UNDEFINED_RULE;
 
-    return data == null ? REJECTED :  acceptRule(data.toString(), context, rules);
+    if (data == null) {
+      return REJECTED;
+    }
+    else if (data instanceof List<?>) {
+      for (Object dataPart : (List<?>) data) {
+        ValidationResultType resultType = acceptRule(dataPart.toString(), context, rules);
+        if (resultType != ACCEPTED) {
+          return resultType;
+        }
+      }
+      return ACCEPTED;
+    }
+    else {
+      return acceptRule(data.toString(), context, rules);
+    }
   }
 
   private static ValidationResultType acceptRule(@NotNull String ruleData, @NotNull EventContext context, @Nullable FUSRule... rules) {
     if (rules == null) return UNDEFINED_RULE;
+
+    ValidationResultType prevResult = null;
     for (FUSRule rule : rules) {
       ValidationResultType resultType = rule.validate(ruleData, context);
-      if (resultType != REJECTED) return resultType;
+      if (resultType.isFinal()) return resultType;
+      prevResult = resultType;
     }
-    return REJECTED;
+    return prevResult != null ? prevResult : REJECTED;
   }
 
   @NotNull

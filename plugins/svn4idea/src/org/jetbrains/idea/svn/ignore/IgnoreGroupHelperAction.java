@@ -15,13 +15,16 @@
  */
 package org.jetbrains.idea.svn.ignore;
 
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnStatusUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 
@@ -41,10 +44,21 @@ public class IgnoreGroupHelperAction {
     // TODO: This logic was taken from BasicAction.update(). Probably it'll be more convenient to share these conditions for correctness.
     Project project = e.getProject();
     SvnVcs vcs = project != null ? SvnVcs.getInstance(project) : null;
-    VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
+    VirtualFile[] files = getSelectedFiles(e);
     boolean enabledAndVisible = project != null && vcs != null && !isEmpty(files) && isEnabled(vcs, files);
 
     e.getPresentation().setEnabledAndVisible(enabledAndVisible);
+  }
+
+  @Nullable
+  private VirtualFile[] getSelectedFiles(@NotNull AnActionEvent e) {
+    if (e.getPlace().equals(ActionPlaces.CHANGES_VIEW_POPUP)) {
+      Stream<VirtualFile> exactlySelectedFiles = e.getData(ChangesListView.EXACTLY_SELECTED_FILES_DATA_KEY);
+      if (exactlySelectedFiles != null) {
+        return exactlySelectedFiles.toArray(VirtualFile[]::new);
+      }
+    }
+    return e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
   }
 
   protected boolean isEnabled(@NotNull SvnVcs vcs, @NotNull VirtualFile[] files) {

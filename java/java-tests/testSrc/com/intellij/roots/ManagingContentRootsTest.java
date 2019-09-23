@@ -15,22 +15,23 @@
  */
 package com.intellij.roots;
 
+import com.intellij.configurationStore.StoreUtil;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.impl.ContentEntryImpl;
-import com.intellij.openapi.roots.impl.ModuleRootManagerComponent;
-import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.JavaProjectTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import org.jdom.Element;
-import org.jdom.JDOMException;
 
+import java.io.File;
 import java.io.IOException;
-
-import static com.intellij.testFramework.assertions.Assertions.assertThat;
 
 public class ManagingContentRootsTest extends JavaProjectTestCase {
   private VirtualFile dir;
@@ -105,26 +106,36 @@ public class ManagingContentRootsTest extends JavaProjectTestCase {
     assertEmpty(findContentEntry(dir.getUrl()).getExcludePatterns());
   }
 
-  public void testExcludePatternSerialization() {
+  public void testExcludePatternSerialization() throws Exception {
     PsiTestUtil.addContentRoot(myModule, dir);
     ModuleRootModificationUtil.updateModel(myModule, model -> findContentEntry(dir.getUrl(), model).addExcludePattern("exc"));
-    Element entry = new Element(ContentEntryImpl.ELEMENT_NAME);
-    ((ContentEntryImpl)findContentEntry(dir.getUrl())).writeExternal(entry);
-    String elementText = "<content url=\"" + dir.getUrl() + "\">\n" +
+    StoreUtil.saveDocumentsAndProjectSettings(myProject);
+
+    Element root = JDOMUtil.load(new File(myModule.getModuleFilePath()));
+    String elementText = "<content url=\"file://$MODULE_DIR$/idea_test_\">\n" +
                          "  <excludePattern pattern=\"exc\" />\n" +
                          "</content>";
-    assertThat(entry).isEqualTo(elementText);
+    assertEquals(elementText, JDOMUtil.writeElement(root.getChild("component").getChild("content")));
   }
 
-  public void testExcludePatternDeserialization() throws IOException, JDOMException {
-    ModuleRootManagerImpl.ModuleRootManagerState state = new ModuleRootManagerImpl.ModuleRootManagerState();
-    state.readExternal(JDOMUtil.load("<component name=\"NewModuleRootManager\">" +
-                                     "  <content url=\"" + dir.getUrl() + "\">\n" +
-                                     "    <excludePattern pattern=\"exc\" />\n" +
-                                     "  </content>" +
-                                     "</component>\n"));
-    ((ModuleRootManagerComponent)getRootManager()).loadState(state);
-    assertEquals("exc", assertOneElement(findContentEntry(dir.getUrl()).getExcludePatterns()));
+  public void testExcludePatternDeserialization() throws Exception {
+    File dir = createTempDir("module");
+    String dirUrl = VfsUtilCore.fileToUrl(dir);
+
+    File iml = new File(dir, "module.iml");
+    FileUtil.writeToFile(
+      iml,
+      "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+      "<module type=\"JAVA_MODULE\" version=\"4\">\n" +
+      "  <component name=\"NewModuleRootManager\">\n" +
+      "    <content url=\"" + dirUrl + "\">\n" +
+      "      <excludePattern pattern=\"exc\" />\n" +
+      "    </content>\n" +
+      "  </component>\n" +
+      "</module>");
+
+    Module module = WriteAction.computeAndWait(() -> ModuleManager.getInstance(myProject).loadModule(iml.getPath()));
+    assertEquals("exc", assertOneElement(findContentEntry(dirUrl, ModuleRootManager.getInstance(module)).getExcludePatterns()));
   }
 
   private ContentEntry findContentEntry(String url) {

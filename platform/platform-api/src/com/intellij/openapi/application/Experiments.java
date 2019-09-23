@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application;
 
-import com.intellij.diagnostic.LoadingPhase;
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.components.ServiceManager;
@@ -22,11 +22,15 @@ public final class Experiments {
 
   @NotNull
   public static Experiments getInstance() {
+    if (ApplicationManager.getApplication() == null) {
+      //usages from UI Designer preview where no application available
+      return new Experiments();
+    }
     return ServiceManager.getService(Experiments.class);
   }
 
   public boolean isFeatureEnabled(@NotNull String featureId) {
-    if (!LoadingPhase.COMPONENT_REGISTERED.isComplete()) {
+    if (!LoadingState.COMPONENTS_REGISTERED.isOccurred()) {
       return false;
     }
 
@@ -62,16 +66,10 @@ public final class Experiments {
 
   @Nullable
   private static ExperimentalFeature getFeatureById(@NotNull String featureId) {
-    if (!LoadingPhase.COMPONENT_REGISTERED.isComplete()) {
+    if (!LoadingState.COMPONENTS_REGISTERED.isOccurred()) {
       return null;
     }
-
-    for (ExperimentalFeature feature : EP_NAME.getIterable()) {
-      if (feature.id.equals(featureId)) {
-        return feature;
-      }
-    }
-    return null;
+    return EP_NAME.findFirstSafe(feature -> feature.id.equals(featureId));
   }
 
   public boolean isChanged(@NotNull String featureId) {

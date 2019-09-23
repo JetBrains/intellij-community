@@ -641,7 +641,7 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
       WriteCommandAction.runWriteCommandAction(myProject, () -> document.insertString(document.getTextLength(), " "));
 
       PsiDocumentManager.getInstance(myProject).reparseFiles(Collections.singleton(file), false);
-      assertEquals("1\n2\n3\n ", VfsUtilCore.loadText(file));
+      assertEquals("1\n2\n3\n", VfsUtilCore.loadText(file));
 
       WriteCommandAction.runWriteCommandAction(myProject, () -> document.insertString(0, "-"));
       FileDocumentManager.getInstance().saveDocument(document);

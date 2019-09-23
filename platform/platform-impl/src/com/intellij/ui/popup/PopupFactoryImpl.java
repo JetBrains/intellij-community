@@ -9,6 +9,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
+import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.LaterInvocator;
@@ -24,8 +25,6 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.HintHint;
@@ -171,23 +170,40 @@ public class PopupFactoryImpl extends JBPopupFactory {
                             final Condition<? super AnAction> preselectActionCondition,
                             @Nullable final String actionPlace) {
       this(title, actionGroup, dataContext, showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics, disposeCallback,
-           maxRowCount, preselectActionCondition, actionPlace, false);
+           maxRowCount, preselectActionCondition, actionPlace, null, false);
     }
 
-    public ActionGroupPopup(final String title,
+    public ActionGroupPopup(String title,
                             @NotNull ActionGroup actionGroup,
                             @NotNull DataContext dataContext,
                             boolean showNumbers,
                             boolean useAlphaAsNumbers,
                             boolean showDisabledActions,
                             boolean honorActionMnemonics,
-                            final Runnable disposeCallback,
-                            final int maxRowCount,
-                            final Condition<? super AnAction> preselectActionCondition,
+                            Runnable disposeCallback,
+                            int maxRowCount,
+                            Condition<? super AnAction> preselectActionCondition,
                             @Nullable final String actionPlace,
                             boolean autoSelection) {
+      this(title, actionGroup, dataContext, showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics, disposeCallback,
+           maxRowCount, preselectActionCondition, actionPlace, null, autoSelection);
+    }
+
+    public ActionGroupPopup(String title,
+                            @NotNull ActionGroup actionGroup,
+                            @NotNull DataContext dataContext,
+                            boolean showNumbers,
+                            boolean useAlphaAsNumbers,
+                            boolean showDisabledActions,
+                            boolean honorActionMnemonics,
+                            Runnable disposeCallback,
+                            int maxRowCount,
+                            Condition<? super AnAction> preselectActionCondition,
+                            @Nullable final String actionPlace,
+                            @Nullable PresentationFactory presentationFactory,
+                            boolean autoSelection) {
       this(null, createStep(title, actionGroup, dataContext, showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics,
-                            preselectActionCondition, actionPlace, autoSelection), disposeCallback, dataContext, actionPlace, maxRowCount);
+                            preselectActionCondition, actionPlace, presentationFactory, autoSelection), disposeCallback, dataContext, actionPlace, maxRowCount);
     }
 
     protected ActionGroupPopup(@Nullable WizardPopup aParent,
@@ -232,26 +248,29 @@ public class PopupFactoryImpl extends JBPopupFactory {
       return presentation;
     }
 
-    private static ListPopupStep createStep(String title,
-                                            @NotNull ActionGroup actionGroup,
-                                            @NotNull DataContext dataContext,
-                                            boolean showNumbers,
-                                            boolean useAlphaAsNumbers,
-                                            boolean showDisabledActions,
-                                            boolean honorActionMnemonics,
-                                            Condition<? super AnAction> preselectActionCondition,
-                                            @Nullable String actionPlace,
-                                            boolean autoSelection) {
+    private static ListPopupStep<ActionItem> createStep(String title,
+                                                        @NotNull ActionGroup actionGroup,
+                                                        @NotNull DataContext dataContext,
+                                                        boolean showNumbers,
+                                                        boolean useAlphaAsNumbers,
+                                                        boolean showDisabledActions,
+                                                        boolean honorActionMnemonics,
+                                                        Condition<? super AnAction> preselectActionCondition,
+                                                        @Nullable String actionPlace,
+                                                        @Nullable PresentationFactory presentationFactory,
+                                                        boolean autoSelection) {
       final Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
       LOG.assertTrue(component != null, "dataContext has no component for new ListPopupStep");
 
-      List<ActionItem> items =
-        getActionItems(actionGroup, dataContext, showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics, actionPlace);
+      List<ActionItem> items = ActionPopupStep.createActionItems(
+          actionGroup, dataContext, showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics, actionPlace, presentationFactory);
 
       return new ActionPopupStep(items, title, getComponentContextSupplier(component), actionPlace, showNumbers || honorActionMnemonics && itemsHaveMnemonics(items),
-                                 preselectActionCondition, autoSelection, showDisabledActions);
+                                 preselectActionCondition, autoSelection, showDisabledActions, presentationFactory);
     }
 
+    /** @deprecated Use {@link ActionPopupStep#createActionItems(ActionGroup, DataContext, boolean, boolean, boolean, boolean, String, PresentationFactory)} instead. */
+    @Deprecated
     @NotNull
     public static List<ActionItem> getActionItems(@NotNull ActionGroup actionGroup,
                                                   @NotNull DataContext dataContext,
@@ -260,13 +279,8 @@ public class PopupFactoryImpl extends JBPopupFactory {
                                                   boolean showDisabledActions,
                                                   boolean honorActionMnemonics,
                                                   @Nullable String actionPlace) {
-      ActionStepBuilder builder =
-        new ActionStepBuilder(dataContext, showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics);
-      if (actionPlace != null) {
-        builder.setActionPlace(actionPlace);
-      }
-      builder.buildGroup(actionGroup);
-      return builder.getItems();
+      return ActionPopupStep.createActionItems(
+        actionGroup, dataContext, showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics, actionPlace, null);
     }
 
     @Override
@@ -373,21 +387,21 @@ public class PopupFactoryImpl extends JBPopupFactory {
 
   @NotNull
   @Override
-  public ListPopupStep createActionsStep(@NotNull ActionGroup actionGroup,
-                                         @NotNull DataContext dataContext,
-                                         @Nullable String actionPlace,
-                                         boolean showNumbers,
-                                         boolean showDisabledActions,
-                                         String title,
-                                         Component component,
-                                         boolean honorActionMnemonics,
-                                         int defaultOptionIndex,
-                                         boolean autoSelectionEnabled) {
+  public ListPopupStep<ActionItem> createActionsStep(@NotNull ActionGroup actionGroup,
+                                                     @NotNull DataContext dataContext,
+                                                     @Nullable String actionPlace,
+                                                     boolean showNumbers,
+                                                     boolean showDisabledActions,
+                                                     String title,
+                                                     Component component,
+                                                     boolean honorActionMnemonics,
+                                                     int defaultOptionIndex,
+                                                     boolean autoSelectionEnabled) {
     return ActionPopupStep.createActionsStep(
       actionGroup, dataContext, showNumbers, true, showDisabledActions,
       title, honorActionMnemonics, autoSelectionEnabled,
       getComponentContextSupplier(component),
-      actionPlace, null, defaultOptionIndex);
+      actionPlace, null, defaultOptionIndex, null);
   }
 
   private static boolean itemsHaveMnemonics(final List<? extends ActionItem> items) {
@@ -439,7 +453,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
 
     if (focusOwner == null) {
       Project project = CommonDataKeys.PROJECT.getData(dataContext);
-      IdeFrameImpl frame = project == null ? null : ((WindowManagerEx)WindowManager.getInstance()).getFrame(project);
+      JFrame frame = project == null ? null : WindowManager.getInstance().getFrame(project);
       focusOwner = frame == null ? null : frame.getRootPane();
       if (focusOwner == null) {
         throw new IllegalArgumentException("focusOwner cannot be null");

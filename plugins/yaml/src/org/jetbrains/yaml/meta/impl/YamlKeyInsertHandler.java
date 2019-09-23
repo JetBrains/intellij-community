@@ -19,7 +19,7 @@ import org.jetbrains.yaml.meta.model.YamlMetaType.YamlInsertionMarkup;
 
 import java.util.Optional;
 
-@ApiStatus.Experimental
+@ApiStatus.Internal
 public abstract class YamlKeyInsertHandler implements InsertHandler<LookupElement> {
   private final boolean myNeedsSequenceItem;
 

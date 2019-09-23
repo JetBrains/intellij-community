@@ -133,6 +133,7 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
         if (PsiUtil.isLanguageLevel9OrHigher(member)) {
           return PUBLIC_PRIVATE;
         }
+        return Collections.singletonList(AccessModifier.PUBLIC);
       }
       AccessModifier minAccess = getMinAccess((PsiMethod)member);
       if (minAccess != AccessModifier.PRIVATE) {
@@ -252,6 +253,7 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
         try {
           updater.undoChange();
           PsiDocumentManager.getInstance(project).commitDocument(document);
+          if (t == current) return;
           PsiMember m = memberPointer.getElement();
           if (m == null) return;
           modifierList = m.getModifierList();

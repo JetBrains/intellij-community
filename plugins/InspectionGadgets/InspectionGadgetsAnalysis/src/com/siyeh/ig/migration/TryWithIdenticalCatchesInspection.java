@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.migration;
 
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.openapi.project.Project;
@@ -324,7 +325,7 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
       final PsiCodeBlock codeBlock = catchSection.getCatchBlock();
       if (parameter != null && codeBlock != null) {
         final List<PsiClassType> types = getClassTypes(parameter.getType());
-        if (types != null) {
+        if (types != null && HighlightControlFlowUtil.isEffectivelyFinal(parameter, codeBlock, null)) {
           final DuplicatesFinder finder = buildDuplicatesFinder(codeBlock, parameter);
           return new CatchSectionWrapper(catchSection, codeBlock, parameter, types, finder);
         }

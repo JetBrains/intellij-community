@@ -5,10 +5,16 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.rename.RenameHandler;
+import com.intellij.sh.ShSupport;
+import com.intellij.sh.highlighting.ShTextOccurrencesUtil;
+import com.intellij.sh.lexer.ShTokenTypes;
 import com.intellij.sh.psi.ShFile;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class ShRenameHandler implements RenameHandler {
@@ -16,13 +22,26 @@ public class ShRenameHandler implements RenameHandler {
   public boolean isAvailableOnDataContext(@NotNull DataContext dataContext) {
     Editor editor = dataContext.getData(CommonDataKeys.EDITOR);
     return editor != null
+           && ShSupport.getInstance().isRenameEnabled()
            && ShRenameAllOccurrencesHandler.INSTANCE.isEnabled(editor, editor.getCaretModel().getPrimaryCaret(), dataContext)
-           && dataContext.getData(CommonDataKeys.PSI_FILE) instanceof ShFile;
+           && isRenameAvailable(editor, dataContext)
+      ;
   }
 
-  @Override
-  public boolean isRenaming(@NotNull DataContext dataContext) {
-    return isAvailableOnDataContext(dataContext);
+  private static boolean isRenameAvailable(@NotNull Editor editor, @NotNull DataContext dataContext) {
+    ShFile file = ObjectUtils.tryCast(dataContext.getData(CommonDataKeys.PSI_FILE), ShFile.class);
+    if (file == null) {
+      return false;
+    }
+    if (editor.getCaretModel().getPrimaryCaret().hasSelection()) return true;
+    TextRange textRange = ShTextOccurrencesUtil.findTextRangeOfIdentifierAtCaret(editor);
+    if (textRange != null) {
+      PsiElement element = file.findElementAt(textRange.getStartOffset());
+      if (element != null && ShTokenTypes.keywords.contains(PsiUtilCore.getElementType(element))) {
+        return false;
+      }
+    }
+    return true;
   }
 
   @Override

@@ -76,7 +76,7 @@ private fun push(context: Context) {
           .map {
             commitUrl(UPSOURCE_DEV_PROJECT_ID, it)?.let { url ->
               slackLink("'${it.subject}'", url)
-            } ?: it.subject
+            } ?: "'${it.subject}'"
           }.joinToString()
         val commitUrl = commitUrl(UPSOURCE_ICONS_PROJECT_ID, pushedCommit)
         val synced = commitUrl?.let { slackLink("synced", it) } ?: "synced"
@@ -192,7 +192,7 @@ private fun readIconsRepo(context: Context) = protectStdErr {
     // read icon hashes
     Icon(file).isValid
   }.also {
-    if (it.isEmpty()) error("${context.iconsRepoName} repo doesn't contain icons")
+    if (it.isEmpty()) log("${context.iconsRepoName} repo doesn't contain icons")
   }
 }
 

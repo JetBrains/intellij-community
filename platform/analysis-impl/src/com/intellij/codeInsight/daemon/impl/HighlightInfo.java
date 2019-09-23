@@ -38,9 +38,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
+import java.util.*;
 import java.util.List;
 
 public class HighlightInfo implements Segment {
@@ -62,16 +60,18 @@ public class HighlightInfo implements Segment {
 
   public final TextAttributes forcedTextAttributes;
   public final TextAttributesKey forcedTextAttributesKey;
-  public final @NotNull HighlightInfoType type;
+  @NotNull
+  public final HighlightInfoType type;
   public final int startOffset;
   public final int endOffset;
 
-  public @Nullable List<Pair<IntentionActionDescriptor, TextRange>> quickFixActionRanges;
-  public @Nullable List<Pair<IntentionActionDescriptor, RangeMarker>> quickFixActionMarkers;
+  public List<Pair<IntentionActionDescriptor, TextRange>> quickFixActionRanges;
+  public List<Pair<IntentionActionDescriptor, RangeMarker>> quickFixActionMarkers;
  
   private final String description;
   private final String toolTip;
-  private final @NotNull HighlightSeverity severity;
+  @NotNull
+  private final HighlightSeverity severity;
   private final GutterMark gutterIconRenderer;
   private final ProblemGroup myProblemGroup;
 
@@ -372,7 +372,6 @@ public class HighlightInfo implements Segment {
     this.group = group;
   }
 
-  @SuppressWarnings("unused")
   public interface Builder {
     // only one 'range' call allowed
     @NotNull Builder range(@NotNull TextRange textRange);
@@ -775,7 +774,8 @@ public class HighlightInfo implements Segment {
         HighlightDisplayKey key = myKey;
         if (key == null) {
           myCanCleanup = false;
-        } else {
+        }
+        else {
           InspectionToolWrapper toolWrapper = profile.getInspectionTool(key.toString(), element);
           myCanCleanup = toolWrapper != null && toolWrapper.isCleanupTool();
         }
@@ -843,7 +843,7 @@ public class HighlightInfo implements Segment {
         else {
           SuppressQuickFix[] suppressFixes = wrappedTool.getBatchSuppressActions(element);
           if (suppressFixes.length > 0) {
-            ContainerUtil.addAll(newOptions, ContainerUtil.map(suppressFixes, SuppressIntentionActionFromFix::convertBatchToSuppressIntentionAction));
+            newOptions.addAll(ContainerUtil.map(suppressFixes, SuppressIntentionActionFromFix::convertBatchToSuppressIntentionAction));
           }
         }
 

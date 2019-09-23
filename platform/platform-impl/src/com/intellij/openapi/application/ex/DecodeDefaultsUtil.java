@@ -26,7 +26,7 @@ public class DecodeDefaultsUtil {
         url = getResource(appendExt(componentResourcePath), requestor);
       }
       else {
-        url = getResource(appendExt('/' + ApplicationManagerEx.getApplicationEx().getName() + '/' + componentResourcePath), requestor);
+        url = getResource(appendExt("/idea/" + componentResourcePath), requestor);
         if (url == null) {
           url = getResource(appendExt('/' + componentResourcePath), requestor);
         }

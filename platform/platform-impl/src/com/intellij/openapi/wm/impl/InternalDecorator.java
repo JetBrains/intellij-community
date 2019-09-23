@@ -8,6 +8,7 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -32,10 +33,12 @@ import org.jetbrains.annotations.Nullable;
 import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.border.Border;
-import javax.swing.event.AncestorEvent;
-import javax.swing.event.AncestorListener;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ComponentEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.util.Collection;
 import java.util.Map;
 
 /**
@@ -72,6 +75,8 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
 
   private ToolWindowHeader myHeader;
   private final ActionGroup myToggleToolbarGroup;
+
+  private final AnAction myFocusEditorAction = ActionManager.getInstance().getAction("FocusEditor");
 
   InternalDecorator(final Project project, @NotNull WindowInfoImpl info, final ToolWindowImpl toolWindow, boolean dumbAware) {
     super(new BorderLayout());
@@ -238,7 +243,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     JPanel innerPanel = new JPanel(new BorderLayout());
     JComponent toolWindowComponent = myToolWindow.getComponent();
     if (!dumbAware) {
-      toolWindowComponent = DumbService.getInstance(myProject).wrapGently(toolWindowComponent, myProject);
+      toolWindowComponent = DumbService.getInstance(myProject).wrapGently(toolWindowComponent, myToolWindow);
     }
     innerPanel.add(toolWindowComponent, BorderLayout.CENTER);
 
@@ -249,36 +254,18 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     if (SystemInfo.isMac) {
       setBackground(new JBColor(Gray._200, Gray._90));
     }
+  }
 
-    AncestorListener ancestorListener = new AncestorListener() {
-
-      private static final String FOCUS_EDITOR_ACTION_KEY = "FOCUS_EDITOR_ACTION_KEY";
-
-      @Override
-      public void ancestorAdded(AncestorEvent event) {
-        registerEscapeAction();
+  @Override
+  protected boolean processKeyBinding(KeyStroke ks, KeyEvent e, int condition, boolean pressed) {
+    if (condition == WHEN_ANCESTOR_OF_FOCUSED_COMPONENT && pressed) {
+      Collection<KeyStroke> keyStrokes = KeymapUtil.getKeyStrokes(myFocusEditorAction.getShortcutSet());
+      if (keyStrokes.contains(ks)) {
+        ToolWindowManager.getInstance(myProject).activateEditorComponent();
+        return true;
       }
-
-      @Override
-      public void ancestorMoved(AncestorEvent event) {}
-
-      private void registerEscapeAction() {
-
-        getInputMap(WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(KeyStroke.getKeyStroke(
-          KeyEvent.VK_ESCAPE, 0),FOCUS_EDITOR_ACTION_KEY);
-        getActionMap().put(FOCUS_EDITOR_ACTION_KEY, new AbstractAction() {
-          @Override
-          public void actionPerformed(ActionEvent e) {
-            ToolWindowManager.getInstance(myProject).activateEditorComponent();
-          }
-        });
-      }
-
-      @Override
-      public void ancestorRemoved(AncestorEvent event) {}
-    };
-    addAncestorListener(ancestorListener);
-    Disposer.register(myHeader, () -> removeAncestorListener(ancestorListener));
+    }
+    return super.processKeyBinding(ks, e, condition, pressed);
   }
 
   public void setTitleActions(@NotNull AnAction[] actions) {

@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 
 @Deprecated
-@ApiStatus.ScheduledForRemoval(inVersion = "soon, i swear")
+@ApiStatus.ScheduledForRemoval
 public abstract class RefResolveService {
   /**
    * if true then PsiElement.getUseScope() returns scope restricted to only relevant files which are stored in {@link com.intellij.psi.RefResolveService}

@@ -17,7 +17,6 @@ package com.intellij.slicer;
 
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
-import com.intellij.codeInspection.dataFlow.Nullness;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.openapi.application.ReadAction;
@@ -33,8 +32,6 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
-
-import static com.intellij.util.containers.ContainerUtil.addIfNotNull;
 
 public abstract class SliceNullnessAnalyzerBase {
   @NotNull
@@ -65,9 +62,9 @@ public abstract class SliceNullnessAnalyzerBase {
     root.targetEqualUsages.clear();
 
     List<SliceLeafValueClassNode> children = new ArrayList<>();
-    addIfNotNull(children, createValueRootNode(result, oldRoot, map, root, oldRootStart, "Null Values", NullAnalysisResult.NULLS));
-    addIfNotNull(children, createValueRootNode(result, oldRoot, map, root, oldRootStart, "NotNull Values", NullAnalysisResult.NOT_NULLS));
-    addIfNotNull(children, createValueRootNode(result, oldRoot, map, root, oldRootStart, "Other Values", NullAnalysisResult.UNKNOWNS));
+    ContainerUtil.addIfNotNull(children, createValueRootNode(result, oldRoot, map, root, oldRootStart, "Null Values", NullAnalysisResult.NULLS));
+    ContainerUtil.addIfNotNull(children, createValueRootNode(result, oldRoot, map, root, oldRootStart, "NotNull Values", NullAnalysisResult.NOT_NULLS));
+    ContainerUtil.addIfNotNull(children, createValueRootNode(result, oldRoot, map, root, oldRootStart, "Other Values", NullAnalysisResult.UNKNOWNS));
     root.setChildren(children);
     return root;
   }
@@ -206,18 +203,6 @@ public abstract class SliceNullnessAnalyzerBase {
   }
 
   /**
-   * @param element element to find nullness for
-   * @return element nullness
-   * @deprecated for removal; call/override {@link #checkNullability(PsiElement)} instead.
-   */
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  @Deprecated
-  @NotNull
-  protected Nullness checkNullness(@SuppressWarnings("unused") final PsiElement element) {
-    throw new UnsupportedOperationException();
-  }
-
-  /**
    * Implementors must override this method; default implementation just throws UnsupportedOperationException.
    *
    * @param element element to find nullability for
@@ -225,8 +210,7 @@ public abstract class SliceNullnessAnalyzerBase {
    */
   @NotNull
   protected Nullability checkNullability(final PsiElement element) {
-    //noinspection deprecation
-    return checkNullness(element).toNullability();
+    throw new UnsupportedOperationException();
   }
 
   public static class NullAnalysisResult {

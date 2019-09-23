@@ -1,0 +1,82 @@
+<root>
+  <idea-plugin url="file://core.xml">
+    <id>com.intellij</id>
+    <module value="com.intellij.modules.core"/>
+    <depends>com.intellij.modules.core</depends>
+  </idea-plugin>
+  <idea-plugin url="file://cycle0.xml">
+    <id>cycle0</id>
+    <depends>cycle1</depends>
+  </idea-plugin>
+  <idea-plugin url="file://cycle1.xml">
+    <id>cycle1</id>
+    <depends>cycle2</depends>
+  </idea-plugin>
+  <idea-plugin url="file://cycle2.xml">
+    <id>cycle2</id>
+    <depends>cycle3</depends>
+  </idea-plugin>
+  <idea-plugin url="file://cycle3.xml">
+    <id>cycle3</id>
+    <depends>cycle1</depends>
+  </idea-plugin>
+  <idea-plugin url="file://cycle4.xml">
+    <id>cycle4</id>
+    <depends>cycle5</depends>
+  </idea-plugin>
+  <idea-plugin url="file://cycle5.xml">
+    <id>cycle5</id>
+    <depends>cycle4</depends>
+  </idea-plugin>
+  <idea-plugin url="file://duplicate0.xml">
+    <id>duplicate0</id>
+    <module value="com.intellij.modules.duplicate"/>
+  </idea-plugin>
+  <idea-plugin url="file://duplicate1.xml">
+    <id>duplicate</id>
+    <module value="com.intellij.modules.duplicate"/>
+  </idea-plugin>
+  <idea-plugin url="file://duplicate2.xml">
+    <id>duplicate</id>
+    <module value="com.intellij.modules.duplicate"/>
+  </idea-plugin>
+  <idea-plugin url="file://missing0.xml">
+  </idea-plugin>
+  <idea-plugin url="file://missing1.xml">
+    <id>missing1</id>
+    <depends>com.intellij.modules.missing</depends>
+  </idea-plugin>
+  <idea-plugin url="file://missing2.xml">
+    <id>missing2</id>
+    <module value="com.intellij.modules.disabled"/>
+    <depends>com.intellij.missing</depends>
+  </idea-plugin>
+  <idea-plugin url="file://missing3.xml">
+    <id>missing3</id>
+    <depends>com.intellij.modules.disabled</depends>
+  </idea-plugin>
+  <idea-plugin url="file://missing4.xml">
+    <id>missing4</id>
+  </idea-plugin>
+  <idea-plugin url="file://plugin0.xml">
+    <id>plugin0</id>
+    <module value="com.intellij.modules.plugin0"/>
+    <depends>plugin3</depends>
+    <depends>com.intellij.modules.core</depends>
+    <depends optional="true" config-file="zzz">cycle0</depends>
+  </idea-plugin>
+  <idea-plugin url="file://plugin1.xml">
+    <id>plugin1</id>
+    <depends>plugin0</depends>
+    <depends>com.intellij.modules.core</depends>
+  </idea-plugin>
+  <idea-plugin url="file://plugin2.xml">
+    <id>plugin2</id>
+    <depends>com.intellij.modules.plugin0</depends>
+    <depends>com.intellij.modules.core</depends>
+  </idea-plugin>
+  <idea-plugin url="file://plugin3.xml">
+    <id>plugin3</id>
+    <depends>com.intellij.modules.core</depends>
+  </idea-plugin>
+</root>

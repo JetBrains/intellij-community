@@ -30,7 +30,8 @@
             text="Compare Before with Local" description="Compare version before selected revision with current version"/>
     <action id="Vcs.ShowDiffWithLocal" class="com.intellij.openapi.vcs.history.actions.ShowDiffAfterWithLocalAction"
             text="Compare with Local" description="Compare version in selected revision with current version"/>
-
+    <action id="Vcs.VcsClone" class="com.intellij.openapi.wm.impl.welcomeScreen.GetFromVersionControlAction"
+            text="Get from Version Control..."/>
     <group class="com.intellij.openapi.vcs.actions.VcsActionGroup" id="VcsGroup"/>
 
     <group class="com.intellij.openapi.vcs.actions.VcsGroupsWrapper" id="VcsFileGroupPopup" popup="true"/>
@@ -76,6 +77,7 @@
 
       <separator/>
       <group id="Vcs.Checkout" class="com.intellij.openapi.vcs.checkout.CheckoutActionGroup" popup="true"/>
+      <reference id="Vcs.VcsClone"/>
       <group id="Vcs.Import" class="com.intellij.ide.actions.NonEmptyActionGroup" popup="true"/>
       <group id="Vcs.Browse" class="com.intellij.ide.actions.NonEmptyActionGroup" popup="true"/>
 
@@ -127,7 +129,8 @@
       <reference ref="EditSource"/>
       <separator/>
       <reference ref="$Delete"/>
-      <action id="ChangesView.AddUnversioned" class="com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction">
+      <action id="ChangesView.AddUnversioned"
+              class="com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionWithIgnoredFilesConfirmationAction">
         <keyboard-shortcut first-keystroke="control alt A" keymap="$default"/>
       </action>
       <action id="ChangesView.RemoveDeleted" class="com.intellij.openapi.vcs.changes.actions.ScheduleForRemovalAction"
@@ -165,6 +168,7 @@
       <reference id="Vcs.ShowDiffWithLocal"/>
       <action id="ChangesView.CreatePatchFromChanges" class="com.intellij.openapi.vcs.changes.actions.CreatePatchFromChangesAction$Dialog"
               icon="AllIcons.Vcs.Patch"/>
+      <reference ref="ChangesView.CreatePatchToClipboard"/>
       <action id="ShelvedChanges.ImportPatches" class="com.intellij.openapi.vcs.changes.shelf.ImportIntoShelfAction"/>
       <separator/>
       <action id="ShelvedChanges.Rename" class="com.intellij.openapi.vcs.changes.shelf.RenameShelvedChangeListAction"/>
@@ -346,11 +350,9 @@
             icon="AllIcons.Welcome.FromVCS">
       <add-to-group group-id="WelcomeScreen.QuickStart" anchor="first"/>
     </action>
-    <action id="WelcomeScreen.NewGetFromVcs" class="com.intellij.openapi.wm.impl.welcomeScreen.RunVcsCloneDialogAction"
-            icon="AllIcons.Vcs.Clone"
-            internal="true">
+    <reference ref="Vcs.VcsClone">
       <add-to-group group-id="WelcomeScreen.QuickStart" anchor="last"/>
-    </action>
+    </reference>
 
     <action id="Vcs.CopyRevisionNumberAction" class="com.intellij.openapi.vcs.history.actions.CopyRevisionNumberAction"
             text="Copy Revision Number" description="Copy short revision numbers of selected commits to the clipboard"
@@ -447,6 +449,7 @@
       <reference ref="Vcs.ShowMessageHistory"/>
       <reference ref="CloseAllUnmodifiedEditors"/>
       <reference ref="WelcomeScreen.GetFromVcs"/>
+      <reference ref="Vcs.VcsClone"/>
       <reference ref="Vcs.CopyRevisionNumberAction"/>
       <separator/>
 

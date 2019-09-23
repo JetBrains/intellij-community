@@ -22,7 +22,6 @@ import com.intellij.util.containers.MostlySingularMultiMap;
 import com.intellij.util.text.CharSequenceReader;
 import gnu.trove.THashSet;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.xml.sax.Attributes;
@@ -65,17 +64,6 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
   @Nullable
   protected static String getExternalName(@NotNull PsiModifierListOwner listOwner) {
     return PsiFormatUtil.getExternalName(listOwner, false, Integer.MAX_VALUE);
-  }
-
-  /**
-   * @deprecated use {@link #getExternalName(PsiModifierListOwner)} instead
-   * since external annotations files don't contain parameters' names anyway.
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2019.3")
-  @Deprecated
-  @Nullable
-  protected static String getExternalName(@NotNull PsiModifierListOwner listOwner, boolean showParamName) {
-    return PsiFormatUtil.getExternalName(listOwner, showParamName, Integer.MAX_VALUE);
   }
 
   protected abstract boolean hasAnyAnnotationsRoots();

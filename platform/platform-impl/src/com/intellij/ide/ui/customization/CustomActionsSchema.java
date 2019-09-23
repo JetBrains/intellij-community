@@ -23,7 +23,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.openapi.wm.impl.IdeFrameImpl;
+import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBImageIcon;
@@ -234,14 +234,15 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
     // as result do it *before* update all toolbars, menu bars and popups
     getInstance().incrementModificationStamp();
 
+    WindowManagerEx windowManager = WindowManagerEx.getInstanceEx();
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-      IdeFrameImpl frame = WindowManagerEx.getInstanceEx().getFrame(project);
+      ProjectFrameHelper frame = windowManager.getFrameHelper(project);
       if (frame != null) {
         frame.updateView();
       }
     }
 
-    IdeFrameImpl frame = WindowManagerEx.getInstanceEx().getFrame(null);
+    ProjectFrameHelper frame = windowManager.getFrameHelper(null);
     if (frame != null) {
       frame.updateView();
     }
@@ -288,6 +289,13 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
       return corrected;
     }
     return null;
+  }
+
+  public void invalidateCustomizedActionGroup(String groupId) {
+    ActionGroup group = myIdToActionGroup.get(groupId);
+    if (group instanceof CustomisedActionGroup) {
+      ((CustomisedActionGroup) group).resetChildren();
+    }
   }
 
   public void fillCorrectedActionGroups(@NotNull DefaultMutableTreeNode root) {
@@ -407,7 +415,7 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
         anAction.setDefaultIcon(false);
       }
     }
-    IdeFrameImpl frame = WindowManagerEx.getInstanceEx().getFrame(null);
+    ProjectFrameHelper frame = WindowManagerEx.getInstanceEx().getFrameHelper(null);
     if (frame != null) {
       frame.updateView();
     }

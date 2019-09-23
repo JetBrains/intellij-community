@@ -11,6 +11,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -30,7 +31,7 @@ public class UpdatePluginsApp implements ApplicationStarter {
   }
 
   @Override
-  public void premain(String[] args) {
+  public void premain(@NotNull List<String> args) {
     System.setProperty("idea.skip.indices.initialization", "true");
   }
 

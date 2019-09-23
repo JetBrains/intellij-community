@@ -6,10 +6,7 @@ import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.impl.AllFileTemplatesConfigurable;
 import com.intellij.ide.fileTemplates.impl.BundledFileTemplate;
-import com.intellij.ide.plugins.AvailablePluginsManagerMain;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.PluginManager;
-import com.intellij.ide.plugins.PluginManagerConfigurableProxy;
+import com.intellij.ide.plugins.*;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -33,6 +30,7 @@ import com.intellij.util.io.URLUtil;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -68,9 +66,9 @@ public class TraverseUIStarter implements ApplicationStarter {
   }
 
   @Override
-  public void premain(String[] args) {
-    OUTPUT_PATH = args[1];
-    SPLIT_BY_RESOURCE_PATH = args.length > 2 && Boolean.valueOf(args[2]);
+  public void premain(@NotNull List<String> args) {
+    OUTPUT_PATH = args.get(1);
+    SPLIT_BY_RESOURCE_PATH = args.size() > 2 && Boolean.valueOf(args.get(2));
   }
 
   @Override
@@ -124,9 +122,9 @@ public class TraverseUIStarter implements ApplicationStarter {
         else if (configurable instanceof OptionsContainingConfigurable) {
           processOptionsContainingConfigurable((OptionsContainingConfigurable)configurable, configurableElement);
         }
-        else if (configurable instanceof PluginManagerConfigurableProxy) {
-          for (OptionDescription description : wordsToOptionDescriptors(Collections.singleton(AvailablePluginsManagerMain.MANAGE_REPOSITORIES))) {
-            append(null, AvailablePluginsManagerMain.MANAGE_REPOSITORIES, description.getOption(), configurableElement);
+        else if (configurable instanceof PluginManagerConfigurable) {
+          for (OptionDescription description : wordsToOptionDescriptors(Collections.singleton(PluginManagerConfigurable.MANAGE_PLUGIN_REPOSITORIES))) {
+            append(null, PluginManagerConfigurable.MANAGE_PLUGIN_REPOSITORIES, description.getOption(), configurableElement);
           }
         }
         else if (configurable instanceof AllFileTemplatesConfigurable) {
@@ -218,16 +216,24 @@ public class TraverseUIStarter implements ApplicationStarter {
   private static void processOptionsContainingConfigurable(OptionsContainingConfigurable configurable, Element configurableElement) {
     Set<String> optionsPath = configurable.processListOptions();
     Set<OptionDescription> result = wordsToOptionDescriptors(optionsPath);
+    Map<String,Set<String>> optionsWithPaths = configurable.processListOptionsWithPaths();
+    for (String path : optionsWithPaths.keySet()) {
+      result.addAll(wordsToOptionDescriptors(optionsWithPaths.get(path), path));
+    }
     writeOptions(configurableElement, result);
   }
 
   private static Set<OptionDescription> wordsToOptionDescriptors(@NotNull Set<String> optionsPath) {
+    return wordsToOptionDescriptors(optionsPath, null);
+  }
+
+  private static Set<OptionDescription> wordsToOptionDescriptors(@NotNull Set<String> optionsPath, @Nullable String path) {
     SearchableOptionsRegistrar registrar = SearchableOptionsRegistrar.getInstance();
     Set<OptionDescription> result = new TreeSet<>();
     for (String opt : optionsPath) {
       for (String word : registrar.getProcessedWordsWithoutStemming(opt)) {
         if (word != null) {
-          result.add(new OptionDescription(word, opt, null));
+          result.add(new OptionDescription(word, opt, path));
         }
       }
     }
@@ -286,7 +292,7 @@ public class TraverseUIStarter implements ApplicationStarter {
     final ActionManager actionManager = ActionManager.getInstance();
     final PluginId id = actionToPluginId.get(actionManager.getId(rootAction));
     if (id != null) {
-      final IdeaPluginDescriptor plugin = PluginManager.getPlugin(id);
+      final IdeaPluginDescriptor plugin = PluginManagerCore.getPlugin(id);
       if (plugin != null && !plugin.getName().equals("IDEA CORE")) {
         return PathUtil.getFileName(plugin.getPath().getPath());
       }

@@ -70,14 +70,14 @@ public class JavaBackwardReferenceIndexWriter extends CompilerReferenceWriter<Co
       } else if (CompilerReferenceIndex.versionDiffers(buildDir, JavaCompilerIndices.VERSION)) {
         CompilerReferenceIndex.removeIndexFiles(buildDir);
         if ((ourInitAttempt++ == 0 && areAllJavaModulesAffected(context))) {
-          throw new BuildDataCorruptedException("backward reference index should be updated to actual version");
+          throw new BuildDataCorruptedException("backward reference index will be updated to actual version");
         } else {
           // do not request a rebuild if a project is affected incompletely and version is changed, just disable indices
         }
       }
 
       if (CompilerReferenceIndex.exists(buildDir) || isRebuild) {
-        ourInstance = new JavaBackwardReferenceIndexWriter(new JavaCompilerBackwardReferenceIndex(buildDir, false));
+        ourInstance = new JavaBackwardReferenceIndexWriter(new JavaCompilerBackwardReferenceIndex(buildDir, dataManager.getRelativizer(), false));
         ShutDownTracker.getInstance().registerShutdownTask(() -> {
           closeIfNeeded(false);
         });

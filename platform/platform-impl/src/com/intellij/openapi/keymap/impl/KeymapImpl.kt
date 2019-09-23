@@ -3,6 +3,7 @@ package com.intellij.openapi.keymap.impl
 
 import com.intellij.configurationStore.SchemeDataHolder
 import com.intellij.configurationStore.SerializableScheme
+import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import com.intellij.openapi.application.ApplicationManager
@@ -26,6 +27,7 @@ import gnu.trove.THashMap
 import org.jdom.Element
 import java.util.*
 import javax.swing.KeyStroke
+import kotlin.collections.HashSet
 
 private const val KEY_MAP = "keymap"
 private const val KEYBOARD_SHORTCUT = "keyboard-shortcut"
@@ -464,6 +466,7 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
       }
     }
 
+    val actionIds = HashSet<String>()
     val skipInserts = SystemInfo.isMac && (ApplicationManager.getApplication() == null || !ApplicationManager.getApplication().isUnitTestMode)
     for (actionElement in keymapElement.children) {
       if (actionElement.name != ACTION) {
@@ -471,6 +474,7 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
       }
 
       val id = actionElement.getAttributeValue(ID_ATTRIBUTE) ?: throw InvalidDataException("Attribute 'id' cannot be null; Keymap's name=$name")
+      actionIds.add(id)
       val shortcuts = SmartList<Shortcut>()
       // always creates list even if no shortcuts - empty action element means that action overrides parent to denote that no shortcuts
       actionIdToShortcuts.put(id, shortcuts)
@@ -532,6 +536,7 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
       }
     }
 
+    ActionsCollectorImpl.onActionsLoadedFromKeymapXml(this, actionIds)
     cleanShortcutsCache()
   }
 
@@ -637,7 +642,7 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
           continue
         }
 
-        result.getOrPut(id) { SmartList<KeyboardShortcut>() }.add(shortcut1)
+        result.getOrPut(id) { SmartList() }.add(shortcut1)
       }
     }
 

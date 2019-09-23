@@ -256,6 +256,11 @@
       <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
       <categoryKey>intention.category.control.flow</categoryKey>
     </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.switchbranches.CreateMissingSwitchBranchesAction</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.control.flow</categoryKey>
+    </intentionAction>
 
     <!-- Modifiers -->
     <intentionAction>

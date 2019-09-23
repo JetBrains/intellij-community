@@ -1,20 +1,19 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.history;
 
-
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
-import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
+import com.intellij.vcs.log.ui.table.VcsLogColumn;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
 import static com.intellij.vcs.log.impl.CommonUiProperties.*;
-import static com.intellij.vcs.log.ui.table.GraphTableModel.*;
 
 @State(name = "Vcs.Log.History.Properties", storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)})
 public class FileHistoryUiProperties implements VcsLogUiProperties, PersistentStateComponent<FileHistoryUiProperties.State> {
@@ -44,12 +43,13 @@ public class FileHistoryUiProperties implements VcsLogUiProperties, PersistentSt
     else if (COLUMN_ORDER.equals(property)) {
       List<Integer> order = myState.COLUMN_ORDER;
       if (order == null || order.isEmpty()) {
-        order = ContainerUtilRt.newArrayList(ROOT_COLUMN, AUTHOR_COLUMN, DATE_COLUMN, COMMIT_COLUMN);
+        order = ContainerUtil.map(Arrays.asList(VcsLogColumn.ROOT, VcsLogColumn.AUTHOR, VcsLogColumn.DATE, VcsLogColumn.COMMIT),
+                                  VcsLogColumn::ordinal);
       }
       return (T)order;
     }
     else if (property instanceof TableColumnProperty) {
-      Integer savedWidth = myState.COLUMN_WIDTH.get(((TableColumnProperty)property).getColumn());
+      Integer savedWidth = myState.COLUMN_WIDTH.get(((TableColumnProperty)property).getColumnIndex());
       if (savedWidth == null) return (T)Integer.valueOf(-1);
       return (T)savedWidth;
     }
@@ -75,7 +75,7 @@ public class FileHistoryUiProperties implements VcsLogUiProperties, PersistentSt
       myState.COLUMN_ORDER = (List<Integer>)value;
     }
     else if (property instanceof TableColumnProperty) {
-      myState.COLUMN_WIDTH.put(((TableColumnProperty)property).getColumn(), (Integer)value);
+      myState.COLUMN_WIDTH.put(((TableColumnProperty)property).getColumnIndex(), (Integer)value);
     }
     else if (SHOW_DIFF_PREVIEW.equals(property)) {
       myState.SHOW_DIFF_PREVIEW = (Boolean)value;

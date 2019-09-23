@@ -119,10 +119,12 @@ public class HyperlinkLabel extends HighlightableComponent {
       myMousePressed = false;
       repaint();
     } else if (UIUtil.isActionClick(e, MouseEvent.MOUSE_PRESSED) && isOnLink(e.getX())) {
-      fireHyperlinkEvent(e);
       myMousePressed = true;
       repaint();
     } else if (e.getID() == MouseEvent.MOUSE_RELEASED) {
+      if (myMousePressed && isOnLink(e.getX())) {
+        fireHyperlinkEvent(e);
+      }
       myMousePressed = false;
       repaint();
     }

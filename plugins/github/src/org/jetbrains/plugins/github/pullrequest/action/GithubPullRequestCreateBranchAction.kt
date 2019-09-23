@@ -20,14 +20,14 @@ class GithubPullRequestCreateBranchAction : DumbAwareAction("Create New Local Br
                                                             null) {
   override fun update(e: AnActionEvent) {
     val project = e.getData(CommonDataKeys.PROJECT)
-    val selection = e.getData(GithubPullRequestKeys.DATA_CONTEXT)?.selectedPullRequestDataProvider
+    val selection = e.getData(GithubPullRequestKeys.ACTION_DATA_CONTEXT)?.selectedPullRequestDataProvider
     e.presentation.isEnabled = project != null && !project.isDefault && selection != null
   }
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.getRequiredData(CommonDataKeys.PROJECT)
-    val context = e.getRequiredData(GithubPullRequestKeys.DATA_CONTEXT)
-    val repository = context.gitRepository
+    val context = e.getRequiredData(GithubPullRequestKeys.ACTION_DATA_CONTEXT)
+    val repository = context.gitRepositoryCoordinates.repository
     val repositoryList = listOf(repository)
     val dataProvider = context.selectedPullRequestDataProvider ?: return
 

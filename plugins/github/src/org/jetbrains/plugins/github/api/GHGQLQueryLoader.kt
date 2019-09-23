@@ -16,6 +16,8 @@ object GHGQLQueryLoader {
   private const val GQL_QUERY_DIRECTORY = "query"
   private const val GQL_FILE_SUFFIX = "graphql"
 
+  private val fragmentDefinitionRegex = Regex("fragment (.*) on .*\\{")
+
   private val fragmentsCache = CacheBuilder.newBuilder()
     .expireAfterAccess(2, TimeUnit.MINUTES)
     .build<String, Fragment>()
@@ -54,17 +56,26 @@ object GHGQLQueryLoader {
   private fun readCollectingFragmentNames(filePath: String): Pair<String, Set<String>> {
     val bodyBuilder = StringBuilder()
     val fragments = mutableSetOf<String>()
+    val innerFragments = mutableSetOf<String>()
 
     val stream = GHGQLQueryLoader::class.java.classLoader.getResourceAsStream(filePath)
                  ?: throw GHGQLFileNotFoundException("Couldn't find file $filePath")
     stream.reader().forEachLine {
       val line = it.trim()
       bodyBuilder.append(line).append("\n")
+
+      if (line.startsWith("fragment")) {
+        val fragmentName = fragmentDefinitionRegex.matchEntire(line)?.groupValues?.get(1)?.trim()
+        if (fragmentName != null)
+          innerFragments.add(fragmentName)
+      }
+
       if (line.startsWith("...") && line.length > 3 && !line[3].isWhitespace()) {
         val fragmentName = line.substring(3)
         fragments.add(fragmentName)
       }
     }
+    fragments.removeAll(innerFragments)
     return bodyBuilder.toString() to fragments
   }
 

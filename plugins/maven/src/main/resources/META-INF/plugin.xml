@@ -46,7 +46,7 @@
     <customJavadocTagProvider implementation="org.jetbrains.idea.maven.javadoc.MojoClassAnnotationTagProvider"/>
     <fileType name="MavenConfig" implementationClass="org.jetbrains.idea.maven.config.MavenConfigFileType"
               fileNames="maven.config"/>
-    <fileTypeFactory implementation="org.jetbrains.idea.maven.utils.MavenFileTypeFactory"/>
+    <fileType name="XML" extensions="pom"/>
     <fileTypeUsageSchemaDescriptor schema="Maven" implementationClass="org.jetbrains.idea.maven.utils.MavenFileTypeFactory"/>
     <projectImportProvider implementation="org.jetbrains.idea.maven.wizards.MavenProjectImportProvider"/>
     <projectOpenProcessor implementation="org.jetbrains.idea.maven.wizards.MavenProjectOpenProcessor"/>
@@ -237,6 +237,22 @@
 
     <registryKey key="maven.packagesearch.enabled" defaultValue="true"
                  description="Enable package search dependency via https://package-search.services.jetbrains.com" restartRequired="true"/>
+
+    <registryKey key="packagesearch.config.url" defaultValue="https://resources.jetbrains.com/package-search/config/config.json"
+                 description="package search service config url" restartRequired="true"/>
+
+    <registryKey key="packagesearch.timeout.multiplier" defaultValue="1.2"
+                 description="Exponential backoff multiplyer when package search service request failed" restartRequired="true"/>
+
+    <registryKey key="packagesearch.timeout.initial" defaultValue="10000"
+                 description="initial backoff timeout when  package search service request failed (milliseconds)" restartRequired="true"/>
+
+    <registryKey key="packagesearch.timeout.initial" defaultValue="10000"
+                 description="initial backoff timeout when  package search service request failed (milliseconds)" restartRequired="true"/>
+
+    <registryKey key="packagesearch.timeout.max" defaultValue="86400000"
+                 description="maximum backoff timeout when  package search service request failed (milliseconds)" restartRequired="true"/>
+
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.idea.maven">
@@ -477,8 +493,8 @@
 
     <action id="Maven.RemoveManagedFiles"
             class="org.jetbrains.idea.maven.project.actions.RemoveManagedFilesAction"
-            text="Remove Projects"
-            description="Remove selected Maven projects from the project tree"
+            text="Unlink Maven Projects"
+            description="Unlink selected Maven projects and their subprojects from the project tree"
             icon="AllIcons.General.Remove">
     </action>
 

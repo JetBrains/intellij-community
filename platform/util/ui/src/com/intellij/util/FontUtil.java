@@ -12,6 +12,21 @@ public final class FontUtil {
     return canDisplay(font, '\u2192', "->");
   }
 
+  public static boolean isValidFont(@NotNull Font font) {
+    try {
+      return font.canDisplay('a') &&
+             font.canDisplay('z') &&
+             font.canDisplay('A') &&
+             font.canDisplay('Z') &&
+             font.canDisplay('0') &&
+             font.canDisplay('1');
+    }
+    catch (Exception e) {
+      // JRE has problems working with the font. Just skip.
+      return false;
+    }
+  }
+
   @NotNull
   public static String upArrow(@NotNull Font font, @NotNull String defaultValue) {
     return canDisplay(font, '\u2191', defaultValue);

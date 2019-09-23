@@ -4,11 +4,12 @@ package com.intellij.util;
 import com.intellij.openapi.diagnostic.LoggerRt;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtilRt;
-import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.Charset;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
 
@@ -50,7 +51,15 @@ public class PathUtilRt {
     if (end == path.length() - 1) {
       end = getLastIndexOfPathSeparator(path, end);
     }
-    return end == -1 ? "" : path.substring(0, end);
+    if (end == -1 || end == 0) {
+      return "";
+    }
+    // parent of '//host' is root
+    char prev = path.charAt(end - 1);
+    if (prev == '/' || prev == '\\') {
+      end--;
+    }
+    return path.substring(0, end);
   }
 
   private static int getLastIndexOfPathSeparator(@NotNull String path, int end) {
@@ -134,10 +143,11 @@ public class PathUtilRt {
   }
 
   private static final String WINDOWS_CHARS = "<>:\"|?*";
-  private static final Set<String> WINDOWS_NAMES = ContainerUtilRt.newHashSet(
-    "CON", "PRN", "AUX", "NUL",
-    "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9",
-    "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9");
+  private static final Set<String> WINDOWS_NAMES = new HashSet<String>(Arrays.asList(
+    "CON", "PRN", "AUX", "NUL", "COM1", "COM2", "COM3", "COM4",
+    "COM5", "COM6", "COM7", "COM8", "COM9", "LPT1", "LPT2",
+    "LPT3",
+    "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9"));
 
   private static final Charset FS_CHARSET = fsCharset();
   private static Charset fsCharset() {

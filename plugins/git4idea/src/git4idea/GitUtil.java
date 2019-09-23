@@ -1127,4 +1127,11 @@ public class GitUtil {
     }
     return handler;
   }
+
+  @NotNull
+  public static Hash getHead(@NotNull GitRepository repository) throws VcsException {
+    GitCommandResult result = Git.getInstance().tip(repository, HEAD);
+    String head = result.getOutputOrThrow();
+    return HashImpl.build(head);
+  }
 }

@@ -4,10 +4,7 @@ package com.intellij.internal.statistic.eventLog
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.text.StringUtil
-import java.io.File
 import java.util.concurrent.TimeUnit
 
 private val LOG = Logger.getInstance("#com.intellij.internal.statistic.eventLog.StatisticsEventLogger")
@@ -16,8 +13,8 @@ private val EP_NAME = ExtensionPointName.create<StatisticsEventLoggerProvider>("
 interface StatisticsEventLogger {
   fun log(group: EventLogGroup, eventId: String, isState: Boolean)
   fun log(group: EventLogGroup, eventId: String, data: Map<String, Any>, isState: Boolean)
-  fun getActiveLogFile(): File?
-  fun getLogFiles(): List<File>
+  fun getActiveLogFile(): EventLogFile?
+  fun getLogFiles(): List<EventLogFile>
   fun cleanup()
   fun rollOver()
 }
@@ -25,17 +22,17 @@ interface StatisticsEventLogger {
 abstract class StatisticsEventLoggerProvider(val recorderId: String,
                                              val version: Int,
                                              val sendFrequencyMs: Long = TimeUnit.HOURS.toMillis(1),
-                                             val maxFileSize: String = "200KB") {
+                                             private val maxFileSize: String = "200KB") {
   open val logger: StatisticsEventLogger = createLogger()
 
   abstract fun isRecordEnabled() : Boolean
   abstract fun isSendEnabled() : Boolean
 
-  fun getActiveLogFile(): File? {
+  fun getActiveLogFile(): EventLogFile? {
     return logger.getActiveLogFile()
   }
 
-  fun getLogFiles(): List<File> {
+  fun getLogFiles(): List<EventLogFile> {
     return logger.getLogFiles()
   }
 
@@ -44,8 +41,10 @@ abstract class StatisticsEventLoggerProvider(val recorderId: String,
       return EmptyStatisticsEventLogger()
     }
 
+    val app = ApplicationManager.getApplication()
+    val isEap = app != null && app.isEAP
     val config = EventLogConfiguration
-    val writer = StatisticsEventLogFileWriter(recorderId, maxFileSize)
+    val writer = EventLogNotificationProxy(StatisticsEventLogFileWriter(recorderId, maxFileSize, isEap, config.build), recorderId)
     val logger = StatisticsFileEventLogger(recorderId, config.sessionId, config.build, config.bucket.toString(), version.toString(), writer)
     Disposer.register(ApplicationManager.getApplication(), logger)
     return logger
@@ -66,26 +65,19 @@ class EmptyStatisticsEventLoggerProvider(recorderId: String): StatisticsEventLog
 class EmptyStatisticsEventLogger : StatisticsEventLogger {
   override fun log(group: EventLogGroup, eventId: String, isState: Boolean) = Unit
   override fun log(group: EventLogGroup, eventId: String, data: Map<String, Any>, isState: Boolean) = Unit
-  override fun getActiveLogFile(): File? = null
-  override fun getLogFiles(): List<File> = emptyList()
+  override fun getActiveLogFile(): EventLogFile? = null
+  override fun getLogFiles(): List<EventLogFile> = emptyList()
   override fun cleanup() = Unit
   override fun rollOver() = Unit
 }
 
 fun getEventLogProviders(): List<StatisticsEventLoggerProvider> {
-  if (Extensions.getRootArea().hasExtensionPoint(EP_NAME.name)) {
-    return EP_NAME.extensionList
-  }
-  return emptyList()
+  return EP_NAME.extensionsIfPointIsRegistered
 }
 
-
 fun getEventLogProvider(recorderId: String): StatisticsEventLoggerProvider {
-  val providers = getEventLogProviders()
-  for (provider in providers) {
-    if (StringUtil.equals(provider.recorderId, recorderId)) {
-      return provider
-    }
+  if (ApplicationManager.getApplication().extensionArea.hasExtensionPoint(EP_NAME.name)) {
+    EP_NAME.findFirstSafe { it.recorderId == recorderId }?.let { return it }
   }
   LOG.warn("Cannot find event log provider with recorder-id=${recorderId}")
   return EmptyStatisticsEventLoggerProvider(recorderId)

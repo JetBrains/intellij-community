@@ -2,6 +2,8 @@ package org.jetbrains.plugins.textmate.bundles;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonIOException;
+import com.google.gson.JsonSyntaxException;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -133,15 +135,20 @@ public class VSCBundle extends Bundle {
 
   @NotNull
   private static Plist loadLanguageConfig(File languageConfig) throws IOException {
-    Gson gson = new GsonBuilder().setLenient().create();
-    Object json = gson.fromJson(new FileReader(languageConfig), Object.class);
-    Plist settings = new Plist();
-    if (json instanceof Map) {
-      settings.setEntry(HIGHLIGHTING_PAIRS_KEY, loadBrackets((Map)json, "brackets"));
-      settings.setEntry(SMART_TYPING_PAIRS_KEY, loadBrackets((Map)json, "surroundingPairs"));
-      settings.setEntry(SHELL_VARIABLES_KEY, array(loadComments((Map)json)));
+    try {
+      Gson gson = new GsonBuilder().setLenient().create();
+      Object json = gson.fromJson(new FileReader(languageConfig), Object.class);
+      Plist settings = new Plist();
+      if (json instanceof Map) {
+        settings.setEntry(HIGHLIGHTING_PAIRS_KEY, loadBrackets((Map)json, "brackets"));
+        settings.setEntry(SMART_TYPING_PAIRS_KEY, loadBrackets((Map)json, "surroundingPairs"));
+        settings.setEntry(SHELL_VARIABLES_KEY, array(loadComments((Map)json)));
+      }
+      return settings;
     }
-    return settings;
+    catch (JsonSyntaxException | JsonIOException e) {
+      throw new IOException(e);
+    }
   }
 
   private static PListValue loadBrackets(Map json, String key) {

@@ -38,7 +38,6 @@ import java.util.Map;
  */
 
 public class CvsEntriesManager implements VirtualFileListener {
-
   private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.application.CvsEntriesManager");
 
   private final Map<VirtualFile, CvsInfo> myInfoByParentDirectoryPath = new THashMap<>();
@@ -51,15 +50,10 @@ public class CvsEntriesManager implements VirtualFileListener {
 
   private final Map<String, CvsConnectionSettings> myStringToSettingsMap = new THashMap<>();
   private final UserDirIgnores myUserDirIgnores = new UserDirIgnores();
-  private final CvsApplicationLevelConfiguration myApplicationLevelConfiguration;
   private Disposable listenerDisposable;
 
   public static CvsEntriesManager getInstance() {
     return ServiceManager.getService(CvsEntriesManager.class);
-  }
-
-  public CvsEntriesManager(final CvsApplicationLevelConfiguration applicationLevelConfiguration) {
-    myApplicationLevelConfiguration = applicationLevelConfiguration;
   }
 
   private class MyVirtualFileManagerListener implements VirtualFileManagerListener {
@@ -350,7 +344,7 @@ public class CvsEntriesManager implements VirtualFileListener {
 
   CvsConnectionSettings createConnectionSettingsOn(String cvsRoot) {
     if (!myStringToSettingsMap.containsKey(cvsRoot)) {
-      final CvsRootConfiguration rootConfiguration = myApplicationLevelConfiguration.getConfigurationForCvsRoot(cvsRoot);
+      final CvsRootConfiguration rootConfiguration = CvsApplicationLevelConfiguration.getInstance().getConfigurationForCvsRoot(cvsRoot);
       CvsConnectionSettings settings = new IDEARootFormatter(rootConfiguration).createConfiguration();
       myStringToSettingsMap.put(cvsRoot, settings);
     }

@@ -202,6 +202,10 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
     myToolBarGroup.add(action);
   }
 
+  public void addToolbarSeparator() {
+    myToolBarGroup.addSeparator();
+  }
+
 
   @NotNull
   public JComponent getPreferredFocusedComponent() {

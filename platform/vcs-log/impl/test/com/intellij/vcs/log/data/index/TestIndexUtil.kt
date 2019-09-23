@@ -26,7 +26,7 @@ fun setUpIndex(project: Project, root: VirtualFile, logProvider: VcsLogProvider,
   val errorConsumer = TestErrorConsumer()
 
   val storage = VcsLogStorageImpl(project, providersMap, errorConsumer, disposable)
-  return VcsLogPersistentIndex(project, storage, VcsLogProgress(project, disposable), providersMap, errorConsumer, disposable)
+  return VcsLogPersistentIndex(project, storage, VcsLogProgress(disposable), providersMap, errorConsumer, disposable)
 }
 
 class TestErrorConsumer : FatalErrorHandler {

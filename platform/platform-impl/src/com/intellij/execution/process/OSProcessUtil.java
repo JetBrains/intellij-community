@@ -1,5 +1,4 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package com.intellij.execution.process;
 
 import com.intellij.execution.process.impl.ProcessListUtil;
@@ -95,12 +94,16 @@ public class OSProcessUtil {
   }
 
   public static int getProcessID(@NotNull Process process) {
+    return getProcessID(process, Registry.is("disable.winp"));
+  }
+
+  public static int getProcessID(@NotNull Process process, Boolean disableWinp) {
     if (SystemInfo.isWindows) {
       try {
         if (process instanceof WinPtyProcess) {
           return ((WinPtyProcess)process).getChildProcessId();
         }
-        if (!Registry.is("disable.winp")) {
+        if (!disableWinp) {
           try {
             return createWinProcess(process).getPid();
           }
@@ -111,8 +114,7 @@ public class OSProcessUtil {
         return WinProcessManager.getProcessId(process);
       }
       catch (Throwable e) {
-        throw new IllegalStateException("Cannot get PID from instance of " + process.getClass()
-                                        + ", OS: " + SystemInfo.OS_NAME, e);
+        throw new IllegalStateException("Cannot get PID from an instance of " + process.getClass() + ", OS: " + SystemInfo.OS_NAME, e);
       }
     }
     else if (SystemInfo.isUnix) {
@@ -153,13 +155,12 @@ public class OSProcessUtil {
     if (ourPid == null) {
       ourPid = String.valueOf(getCurrentProcessId());
     }
-
     return ourPid;
   }
 
-  /** @deprecated trivial; use {@link #getProcessList()} directly (to be removed in IDEA 2019) */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2019")
+  /** @deprecated trivial, use {@link #getProcessList()} directly */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   public static List<String> getCommandLinesOfRunningProcesses() {
     List<String> result = new ArrayList<>();
     for (ProcessInfo each : getProcessList()) {

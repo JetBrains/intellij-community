@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform;
 
+import com.intellij.conversion.CannotConvertException;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.impl.OpenProjectTask;
@@ -89,7 +90,7 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
     OpenProjectTask options = new OpenProjectTask(forceOpenInNewFrame, projectToClose);
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       // doesn't make sense to use default project in tests for heavy projects
-      options.setUseDefaultProjectAsTemplate(false);
+      options.useDefaultProjectAsTemplate = false;
     }
     return doOpenProject(Paths.get(virtualFile.getPath()), options, -1);
   }
@@ -108,18 +109,18 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
     }
   }
 
-  /** @deprecated use {@link #doOpenProject(VirtualFile, Project, int, ProjectOpenedCallback, EnumSet)} (to be removed in IDEA 2019) */
+  /**
+   * @deprecated Use {@link #doOpenProject(Path, OpenProjectTask, int)}
+   */
   @ApiStatus.ScheduledForRemoval(inVersion = "2019")
   @Deprecated
   public static Project doOpenProject(@NotNull VirtualFile virtualFile,
                                       Project projectToClose,
                                       boolean forceOpenInNewFrame,
                                       int line,
-                                      @Nullable ProjectOpenedCallback callback,
+                                      @SuppressWarnings("unused") @Nullable ProjectOpenedCallback callback,
                                       @SuppressWarnings("unused") boolean isReopen) {
-    OpenProjectTask openProjectOptions = new OpenProjectTask(forceOpenInNewFrame, projectToClose);
-    openProjectOptions.setCallback(callback);
-    return doOpenProject(Paths.get(virtualFile.getPath()), openProjectOptions, line);
+    return doOpenProject(Paths.get(virtualFile.getPath()), new OpenProjectTask(forceOpenInNewFrame, projectToClose), line);
   }
 
   /**
@@ -133,7 +134,7 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
                                       @Nullable ProjectOpenedCallback callback,
                                       @NotNull EnumSet<Option> options) {
     OpenProjectTask openProjectOptions = new OpenProjectTask(options.contains(Option.FORCE_NEW_FRAME), projectToClose);
-    openProjectOptions.setCallback(callback);
+    openProjectOptions.callback = callback;
     return doOpenProject(Paths.get(virtualFile.getPath()), openProjectOptions, line);
   }
 
@@ -149,7 +150,9 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
       throw new RuntimeException(e);
     }
 
-    Project project = openExistingProject(file, baseDir, options.withNewProject(true), dummyProjectName);
+    OpenProjectTask copy = options.copy();
+    copy.isNewProject = true;
+    Project project = openExistingProject(file, baseDir, copy, dummyProjectName);
     if (project != null) {
       openFileFromCommandLine(project, file, line);
     }
@@ -173,7 +176,7 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
         }
 
         baseDir = file.getParent();
-        options = options.withNewProject(!Files.isDirectory(baseDir.resolve(Project.DIRECTORY_STORE_FOLDER)));
+        options.isNewProject = !Files.isDirectory(baseDir.resolve(Project.DIRECTORY_STORE_FOLDER));
       }
     }
 
@@ -190,10 +193,10 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
                                             @NotNull Path baseDir,
                                             @NotNull OpenProjectTask options,
                                             @Nullable String dummyProjectName) {
-    if (!options.getForceOpenInNewFrame()) {
-      Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
+    if (!options.forceOpenInNewFrame) {
+      Project[] openProjects = ProjectUtil.getOpenProjects();
       if (openProjects.length > 0) {
-        Project projectToClose = options.getProjectToClose();
+        Project projectToClose = options.projectToClose;
         if (projectToClose == null) {
           // if several projects are opened, ask to reuse not last opened project frame, but last focused (to avoid focus switching)
           IdeFrame lastFocusedFrame = IdeFocusManager.getGlobalInstance().getLastFocusedFrame();
@@ -203,7 +206,7 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
           }
         }
 
-        if (checkExistingProjectOnOpen(projectToClose, options.getCallback(), baseDir)) {
+        if (checkExistingProjectOnOpen(projectToClose, options.callback, baseDir)) {
           return null;
         }
       }
@@ -211,16 +214,34 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
 
     ProjectFrameAllocator frameAllocator = ApplicationManager.getApplication().isHeadlessEnvironment()
                                            ? new ProjectFrameAllocator()
-                                           : new ProjectUiFrameAllocator(options);
+                                           : new ProjectUiFrameAllocator(options, file);
     Ref<Pair<Project, Module>> refResult = new Ref<>(Pair.empty());
     boolean isCompleted = frameAllocator.run(() -> {
-      Pair<Project, Module> result = prepareProject(file, options, baseDir, dummyProjectName);
-      if (result == null) {
+      Pair<Project, Module> result;
+      CannotConvertException cannotConvertException = null;
+      try {
+        result = prepareProject(file, options, baseDir, dummyProjectName);
+      }
+      catch (ProcessCanceledException e) {
+        throw e;
+      }
+      catch (CannotConvertException e) {
+        LOG.info(e);
+        cannotConvertException = e;
+        result = Pair.empty();
+      }
+      catch (Exception e) {
+        result = Pair.empty();
+        LOG.error(e);
+      }
+
+      Project project = result.first;
+      if (project == null) {
+        frameAllocator.projectNotLoaded(cannotConvertException);
         return;
       }
 
       refResult.set(result);
-      Project project = result.first;
       frameAllocator.projectLoaded(project);
       if (ProjectManagerEx.getInstanceEx().openProject(project)) {
         frameAllocator.projectOpened(project);
@@ -228,59 +249,46 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
       else {
         refResult.set(Pair.empty());
       }
-    }, file);
+    });
     if (!isCompleted) {
       refResult.set(Pair.empty());
     }
 
     Project project = refResult.get().first;
     if (project == null) {
-      if (options.getShowWelcomeScreenIfNoProjectOpened()) {
+      if (options.showWelcomeScreen) {
         WelcomeFrame.showIfNoProjectOpened();
       }
       return null;
     }
 
-    if (options.getCallback() != null) {
+    if (options.callback != null) {
       Module module = refResult.get().second;
       if (module == null) {
         module = ModuleManager.getInstance(project).getModules()[0];
       }
-      options.getCallback().projectOpened(project, module);
+      options.callback.projectOpened(project, module);
     }
     return project;
   }
 
-  @Nullable
+  @NotNull
   private static Pair<Project, Module> prepareProject(@NotNull Path file,
                                                       @NotNull OpenProjectTask options,
                                                       @NotNull Path baseDir,
-                                                      @Nullable String dummyProjectName) {
-    ProjectManagerImpl projectManager = (ProjectManagerImpl)ProjectManagerEx.getInstanceEx();
+                                                      @Nullable String dummyProjectName) throws CannotConvertException {
     Project project;
-    boolean isNewProject = options.isNewProject();
+    boolean isNewProject = options.isNewProject;
     if (isNewProject) {
       String projectName = dummyProjectName == null ? baseDir.getFileName().toString() : dummyProjectName;
-      project = projectManager.newProject(baseDir, projectName, !options.getUseDefaultProjectAsTemplate(), /* isRefreshVfsNeeded = */ true);
+      project = ((ProjectManagerImpl)ProjectManager.getInstance()).newProject(baseDir, projectName, options);
     }
     else {
-      try {
-        for (ProjectOpenProcessor processor : ProjectOpenProcessor.EXTENSION_POINT_NAME.getIterable()) {
-          processor.refreshProjectFiles(baseDir);
-        }
-        project = projectManager.convertAndLoadProject(baseDir);
-      }
-      catch (ProcessCanceledException e) {
-        throw e;
-      }
-      catch (Exception e) {
-        LOG.error(e);
-        project = null;
-      }
+      project = ProjectManagerImpl.convertAndLoadProject(baseDir);
     }
 
     if (project == null) {
-      return null;
+      return Pair.empty();
     }
 
     ProjectBaseDirectory.getInstance(project).setBaseDir(baseDir);
@@ -365,24 +373,14 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
     final Ref<Module> moduleRef = new Ref<>();
     VirtualFile virtualFile = ProjectUtil.getFileAndRefresh(baseDir);
     LOG.assertTrue(virtualFile != null);
-    for (DirectoryProjectConfigurator configurator: DirectoryProjectConfigurator.EP_NAME.getIterable()) {
-      try {
-        configurator.configureProject(project, virtualFile, moduleRef);
-      }
-      catch (Exception e) {
-        LOG.error(e);
-      }
-    }
+    DirectoryProjectConfigurator.EP_NAME.forEachExtensionSafe(configurator -> {
+      configurator.configureProject(project, virtualFile, moduleRef);
+    });
     return moduleRef.get();
   }
 
-  public static boolean attachToProject(Project project, @NotNull Path projectDir, ProjectOpenedCallback callback) {
-    for (ProjectAttachProcessor processor : ProjectAttachProcessor.EP_NAME.getExtensionList()) {
-      if (processor.attachToProject(project, projectDir, callback)) {
-        return true;
-      }
-    }
-    return false;
+  public static boolean attachToProject(Project project, @NotNull Path projectDir, @Nullable ProjectOpenedCallback callback) {
+    return ProjectAttachProcessor.EP_NAME.findFirstSafe(processor -> processor.attachToProject(project, projectDir, callback)) != null;
   }
 
   private static void openFileFromCommandLine(@NotNull Project project, @NotNull Path file, int line) {

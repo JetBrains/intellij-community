@@ -78,8 +78,17 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     return scope;
   }
 
-  public PsiSearchHelperImpl(@NotNull PsiManagerEx manager) {
-    myManager = manager;
+  public PsiSearchHelperImpl(@NotNull Project project) {
+    myManager = PsiManagerEx.getInstanceEx(project);
+    myDumbService = DumbService.getInstance(myManager.getProject());
+  }
+
+  /**
+   * @deprecated Use {@link #PsiSearchHelperImpl(Project)}
+   */
+  @Deprecated
+  public PsiSearchHelperImpl(@NotNull PsiManagerEx psiManager) {
+    myManager = psiManager;
     myDumbService = DumbService.getInstance(myManager.getProject());
   }
 
@@ -984,8 +993,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                                        @NotNull final Processor<? super VirtualFile> processor) {
     final FileIndexFacade index = FileIndexFacade.getInstance(project);
     return DumbService.getInstance(project).runReadActionInSmartMode(
-      () -> FileBasedIndex.getInstance().processFilesContainingAllKeys(IdIndex.NAME, keys, scope, checker,
-                                                                        file -> !index.shouldBeFound(scope, file) || processor.process(file)));
+      () -> FileBasedIndex.getInstance().processFilesContainingAllKeys(IdIndex.NAME, keys, scope, checker, processor));
   }
 
   @NotNull

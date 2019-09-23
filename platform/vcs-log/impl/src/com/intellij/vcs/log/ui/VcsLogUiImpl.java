@@ -2,22 +2,25 @@
 package com.intellij.vcs.log.ui;
 
 import com.google.common.util.concurrent.SettableFuture;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.NamedRunnable;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.ui.navigation.History;
+import com.intellij.util.Consumer;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.PairFunction;
 import com.intellij.vcs.log.VcsLogFilterCollection;
-import com.intellij.vcs.log.VcsLogFilterUi;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.graph.actions.GraphAction;
 import com.intellij.vcs.log.graph.actions.GraphAnswer;
 import com.intellij.vcs.log.impl.*;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties.VcsLogHighlighterProperty;
+import com.intellij.vcs.log.ui.filter.VcsLogClassicFilterUi;
+import com.intellij.vcs.log.ui.filter.VcsLogFilterUiEx;
 import com.intellij.vcs.log.ui.frame.MainFrame;
 import com.intellij.vcs.log.ui.highlighters.VcsLogHighlighterFactory;
 import com.intellij.vcs.log.ui.table.GraphTableModel;
@@ -49,10 +52,11 @@ public class VcsLogUiImpl extends AbstractVcsLogUi {
                       @NotNull VcsLogColorManager manager,
                       @NotNull MainVcsLogUiProperties uiProperties,
                       @NotNull VisiblePackRefresher refresher,
-                      @Nullable VcsLogFilterCollection filters) {
+                      @Nullable VcsLogFilterCollection initialFilters) {
     super(id, logData, manager, refresher);
     myUiProperties = uiProperties;
-    myMainFrame = new MainFrame(logData, this, uiProperties, myVisiblePack, filters);
+    myMainFrame = new MainFrame(logData, this, uiProperties,
+                                createFilterUi(filters -> applyFiltersAndUpdateUi(filters), initialFilters, this));
 
     for (VcsLogHighlighterFactory factory : LOG_HIGHLIGHTER_FACTORY_EP.getExtensions(myProject)) {
       getTable().addHighlighter(factory.createHighlighter(logData, this));
@@ -62,6 +66,15 @@ public class VcsLogUiImpl extends AbstractVcsLogUi {
     myUiProperties.addChangeListener(myPropertiesListener);
 
     myHistory = VcsLogUiUtil.installNavigationHistory(this);
+
+    applyFiltersAndUpdateUi(myMainFrame.getFilterUi().getFilters());
+  }
+
+  @NotNull
+  protected VcsLogFilterUiEx createFilterUi(@NotNull Consumer<VcsLogFilterCollection> filterConsumer,
+                                            @Nullable VcsLogFilterCollection filters,
+                                            @NotNull Disposable parentDisposable) {
+    return new VcsLogClassicFilterUi(myLogData, filterConsumer, myUiProperties, myColorManager, filters, parentDisposable);
   }
 
   @Override
@@ -148,9 +161,13 @@ public class VcsLogUiImpl extends AbstractVcsLogUi {
     return myUiProperties.exists(property) && myUiProperties.get(property);
   }
 
-  public void applyFiltersAndUpdateUi(@NotNull VcsLogFilterCollection filters) {
+  protected void applyFiltersAndUpdateUi(@NotNull VcsLogFilterCollection filters) {
     myRefresher.onFiltersChange(filters);
     myFilterListenerDispatcher.getMulticaster().onFiltersChanged();
+
+    JComponent toolbar = myMainFrame.getToolbar();
+    toolbar.revalidate();
+    toolbar.repaint();
   }
 
   public void addFilterListener(@NotNull VcsLogFilterListener listener) {
@@ -170,13 +187,8 @@ public class VcsLogUiImpl extends AbstractVcsLogUi {
   }
 
   @NotNull
-  public JComponent getToolbar() {
-    return myMainFrame.getToolbar();
-  }
-
-  @NotNull
   @Override
-  public VcsLogFilterUi getFilterUi() {
+  public VcsLogFilterUiEx getFilterUi() {
     return myMainFrame.getFilterUi();
   }
 
@@ -225,6 +237,9 @@ public class VcsLogUiImpl extends AbstractVcsLogUi {
       }
       else if (MainVcsLogUiProperties.SHOW_TAG_NAMES.equals(property)) {
         myMainFrame.getGraphTable().setShowTagNames(myUiProperties.get(MainVcsLogUiProperties.SHOW_TAG_NAMES));
+      }
+      else if (MainVcsLogUiProperties.LABELS_LEFT_ALIGNED.equals(property)) {
+        myMainFrame.getGraphTable().setLabelsLeftAligned(myUiProperties.get(MainVcsLogUiProperties.LABELS_LEFT_ALIGNED));
       }
       else if (MainVcsLogUiProperties.BEK_SORT_TYPE.equals(property)) {
         myRefresher.onSortTypeChange(myUiProperties.get(MainVcsLogUiProperties.BEK_SORT_TYPE));

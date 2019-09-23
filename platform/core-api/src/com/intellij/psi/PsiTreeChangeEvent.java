@@ -50,7 +50,9 @@ public abstract class PsiTreeChangeEvent extends EventObject {
   @NonNls public static final String PROP_FILE_TYPES = "propFileTypes";
 
   /**
-   * In the event with this property the {@link #getOldValue()} contains virtual file of the change
+   * A property change event with this property is fired when some change (e.g. VFS) somewhere in the project has occurred,
+   * and there was no PSI loaded for that area, so no more specific events about that PSI can be generated. Given the absence
+   * of specific information, the most likely strategy for listeners is to clear all their cache.
    */
   @NonNls
   public static final String PROP_UNLOADED_PSI = "propUnloadedPsi";

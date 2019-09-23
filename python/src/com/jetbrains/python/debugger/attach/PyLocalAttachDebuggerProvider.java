@@ -26,13 +26,14 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.xdebugger.attach.XAttachProcessPresentationGroup;
 import com.intellij.xdebugger.attach.XLocalAttachDebugger;
 import com.intellij.xdebugger.attach.XLocalAttachDebuggerProvider;
-import com.intellij.xdebugger.attach.XLocalAttachGroup;
 import com.jetbrains.python.debugger.PyDebuggerOptionsProvider;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
 import com.jetbrains.python.sdk.PreferredSdkComparator;
 import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -45,7 +46,7 @@ public class PyLocalAttachDebuggerProvider implements XLocalAttachDebuggerProvid
 
   @NotNull
   @Override
-  public XLocalAttachGroup getAttachGroup() {
+  public XAttachProcessPresentationGroup getPresentationGroup() {
     return PyLocalAttachGroup.INSTANCE;
   }
 
@@ -69,10 +70,10 @@ public class PyLocalAttachDebuggerProvider implements XLocalAttachDebuggerProvid
 
     final Sdk selectedSdk = selected;
     // most recent python version goes first
-    final List<XLocalAttachDebugger> result = PythonSdkType.getAllLocalCPythons()
+    final List<XLocalAttachDebugger> result = PythonSdkUtil.getAllLocalCPythons()
                                                            .stream()
                                                            .filter(sdk -> sdk != selectedSdk)
-                                                           .filter(sdk -> !PythonSdkType.isInvalid(sdk))
+                                                           .filter(sdk -> !PythonSdkUtil.isInvalid(sdk))
                                                            .sorted(PreferredSdkComparator.INSTANCE)
                                                            .map(PyLocalAttachDebugger::new)
                                                            .collect(Collectors.toList());

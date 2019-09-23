@@ -176,4 +176,12 @@ public interface DfaMemoryState {
   boolean isEphemeral();
 
   boolean isEmptyStack();
+
+  /**
+   * Returns true if two given values should be compared by content, rather than by reference.
+   * @param dfaLeft left value
+   * @param dfaRight right value
+   * @return true if two given values should be compared by content, rather than by reference.
+   */
+  boolean shouldCompareByEquals(DfaValue dfaLeft, DfaValue dfaRight);
 }

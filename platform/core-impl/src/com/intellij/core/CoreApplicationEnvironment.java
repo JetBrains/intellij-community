@@ -8,7 +8,6 @@ import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.lang.*;
 import com.intellij.lang.impl.PsiBuilderFactoryImpl;
 import com.intellij.mock.MockApplication;
-import com.intellij.mock.MockApplicationEx;
 import com.intellij.mock.MockFileDocumentManagerImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationInfo;
@@ -16,7 +15,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.impl.CoreCommandProcessor;
-import com.intellij.openapi.components.ExtensionAreas;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -27,8 +25,8 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.util.ClassExtension;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.StaticGetter;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.VirtualFileManagerListener;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.impl.CoreVirtualFilePointerManager;
@@ -86,30 +84,28 @@ public class CoreApplicationEnvironment {
 
     myApplication = createApplication(myParentDisposable);
     ApplicationManager.setApplication(myApplication,
-                                      new StaticGetter<>(myFileTypeRegistry),
+                                      () -> myFileTypeRegistry,
                                       myParentDisposable);
     myLocalFileSystem = createLocalFileSystem();
     myJarFileSystem = createJarFileSystem();
     myJrtFileSystem = createJrtFileSystem();
 
-    Extensions.registerAreaClass(ExtensionAreas.IDEA_PROJECT, null);
+    registerApplicationService(FileDocumentManager.class, new MockFileDocumentManagerImpl(charSequence -> {
+      return new DocumentImpl(charSequence);
+    }, null));
 
-    final MutablePicoContainer appContainer = myApplication.getPicoContainer();
-    registerComponentInstance(appContainer, FileDocumentManager.class, new MockFileDocumentManagerImpl(
-      charSequence -> new DocumentImpl(charSequence), null));
-
+    registerApplicationExtensionPoint(new ExtensionPointName<>("com.intellij.virtualFileManagerListener"), VirtualFileManagerListener.class);
     List<VirtualFileSystem> fs = myJrtFileSystem != null
                              ? Arrays.asList(myLocalFileSystem, myJarFileSystem, myJrtFileSystem)
                              : Arrays.asList(myLocalFileSystem, myJarFileSystem);
-    VirtualFileManagerImpl virtualFileManager = new VirtualFileManagerImpl(fs);
-    registerApplicationComponent(VirtualFileManager.class, virtualFileManager);
+    registerApplicationService(VirtualFileManager.class, new VirtualFileManagerImpl(fs));
 
     //fake EP for cleaning resources after area disposing (otherwise KeyedExtensionCollector listener will be copied to the next area)
     registerApplicationExtensionPoint(new ExtensionPointName<>("com.intellij.virtualFileSystem"), KeyedLazyInstanceEP.class);
 
     registerApplicationService(EncodingManager.class, new CoreEncodingRegistry());
     registerApplicationService(VirtualFilePointerManager.class, createVirtualFilePointerManager());
-    registerApplicationService(DefaultASTFactory.class, new CoreASTFactory());
+    registerApplicationService(DefaultASTFactory.class, new DefaultASTFactoryImpl());
     registerApplicationService(PsiBuilderFactory.class, new PsiBuilderFactoryImpl());
     registerApplicationService(ReferenceProvidersRegistry.class, new ReferenceProvidersRegistryImpl());
     registerApplicationService(StubTreeLoader.class, new CoreStubTreeLoader());
@@ -135,7 +131,7 @@ public class CoreApplicationEnvironment {
 
   @NotNull
   protected MockApplication createApplication(@NotNull Disposable parentDisposable) {
-    return new MockApplicationEx(parentDisposable) {
+    return new MockApplication(parentDisposable) {
       @Override
       public boolean isUnitTestMode() {
         return myUnitTestMode;

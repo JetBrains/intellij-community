@@ -244,8 +244,8 @@ def is_numpy(x):
            or 'float' in type_name or 'complex' in type_name
 
 
-def is_numeric_container(var_type):
-    return var_type in ("ndarray", "DataFrame", "Series")
+def is_numeric_container(var_type, var):
+    return var_type in ("ndarray", "DataFrame", "Series") and hasattr(var, "shape")
 
 
 def should_evaluate_full_value(val):

@@ -79,14 +79,10 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
       context.setAddCompletionChar(false);
     }
 
-    final XmlElementDescriptor descriptor = tag.getDescriptor();
-
     if (XmlUtil.getTokenOfType(tag, XmlTokenType.XML_TAG_END) == null &&
         XmlUtil.getTokenOfType(tag, XmlTokenType.XML_EMPTY_ELEMENT_END) == null) {
 
-      if (descriptor != null) {
         insertIncompleteTag(context.getCompletionChar(), editor, tag);
-      }
     }
     else if (context.getCompletionChar() == Lookup.REPLACE_SELECT_CHAR) {
       PsiDocumentManager.getInstance(project).commitAllDocuments();
@@ -128,7 +124,9 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
   public static void insertIncompleteTag(char completionChar,
                                           final Editor editor,
                                           XmlTag tag) {
-    XmlElementDescriptor descriptor = tag.getDescriptor();
+    XmlTag originalElement = CompletionUtil.getOriginalElement(tag);
+    XmlElementDescriptor descriptor = originalElement != null ? originalElement.getDescriptor() : tag.getDescriptor();
+    if (descriptor == null) return;
     final Project project = editor.getProject();
     TemplateManager templateManager = TemplateManager.getInstance(project);
     Template template = templateManager.createTemplate("", "");
@@ -170,8 +168,7 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
           return;
         }
 
-        final UndoManager manager = UndoManager.getInstance(project);
-        if (manager.isUndoInProgress() || manager.isRedoInProgress()) {
+        if (UndoManager.getInstance(project).isUndoOrRedoInProgress()) {
           return;
         }
 

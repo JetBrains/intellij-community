@@ -36,7 +36,7 @@ import kotlin.test.assertNull
  *
  * Only one TestDialogHandler or function can be registered per test for a certain DialogWrapper class.
  *
- * Apart from dialogs, the TestDialogManager is capable to handle [Messages]. For this pass a function to the method [#onMessage]
+ * Apart from dialogs, the TestDialogManager is capable to handle [Messages][com.intellij.openapi.ui.Messages]. For this pass a function to the method [#onMessage]
  */
 class TestDialogManager : DialogManager() {
 
@@ -77,7 +77,7 @@ class TestDialogManager : DialogManager() {
   }
 
   fun <T : DialogWrapper> registerDialogHandler(dialogClass: Class<T>, handler: TestDialogHandler<T>) {
-    onDialog(dialogClass, { handler.handleDialog(it) })
+    onDialog(dialogClass) { handler.handleDialog(it) }
   }
 
   fun <T : DialogWrapper> onDialog(dialogClass: Class<T>, handler: (T) -> Int) {

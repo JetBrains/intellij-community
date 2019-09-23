@@ -33,8 +33,8 @@ open class SingleChangeListCommitWorkflow(
   val initialChangeList: LocalChangeList? = null,
   executors: List<CommitExecutor> = emptyList(),
   final override val isDefaultCommitEnabled: Boolean = executors.isEmpty(),
-  val vcsToCommit: AbstractVcs<*>? = null,
-  affectedVcses: Set<AbstractVcs<*>> = if (vcsToCommit != null) setOf(vcsToCommit) else emptySet(),
+  val vcsToCommit: AbstractVcs? = null,
+  affectedVcses: Set<AbstractVcs> = if (vcsToCommit != null) setOf(vcsToCommit) else emptySet(),
   private val isDefaultChangeListFullyIncluded: Boolean = true,
   val initialCommitMessage: String? = null,
   private val resultHandler: CommitResultHandler? = null
@@ -59,7 +59,7 @@ open class SingleChangeListCommitWorkflow(
     CheckinHandler.ReturnResult.CANCEL -> Unit
   }
 
-  override fun executeCustom(executor: CommitExecutor, session: CommitSession) =
+  override fun executeCustom(executor: CommitExecutor, session: CommitSession): Boolean =
     executeCustom(executor, session, commitState.changes, commitState.commitMessage)
 
   override fun processExecuteCustomChecksResult(executor: CommitExecutor, session: CommitSession, result: CheckinHandler.ReturnResult) =
@@ -76,7 +76,10 @@ open class SingleChangeListCommitWorkflow(
   protected open fun doCommit(commitState: ChangeListCommitState) {
     LOG.debug("Do actual commit")
 
-    with(SingleChangeListCommitter(project, commitState, commitContext, vcsToCommit, DIALOG_TITLE, isDefaultChangeListFullyIncluded)) {
+    with(object : SingleChangeListCommitter(project, commitState, commitContext, vcsToCommit, DIALOG_TITLE,
+                                            isDefaultChangeListFullyIncluded) {
+      override fun afterRefreshChanges() = endExecution { super.afterRefreshChanges() }
+    }) {
       addResultHandler(CommitHandlersNotifier(commitHandlers))
       addResultHandler(getCommitEventDispatcher())
       addResultHandler(resultHandler ?: ShowNotificationCommitResultHandler(this))
@@ -93,6 +96,7 @@ open class SingleChangeListCommitWorkflow(
       addResultHandler(CommitResultHandler { cleaner.clean() })
       addResultHandler(getCommitCustomEventDispatcher())
       resultHandler?.let { addResultHandler(it) }
+      addResultHandler(getEndExecutionHandler())
 
       runCommit(executor.actionText)
     }

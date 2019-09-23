@@ -65,13 +65,13 @@ abstract class InlayHintsProviderTestCase : BasePlatformTestCase() {
         append(renderer.presentation.toString())
         append(" #>")
         if (type == InlayType.Block) {
-          appendln()
+          append('\n')
         }
       }
     }
 
     companion object {
-      val pattern: Pattern = Pattern.compile("<# block (.*)#>\n|<#(.*)#>")
+      val pattern: Pattern = Pattern.compile("<# block ([^#]*)#>(\r\n|\r|\n)|<#([^#]*)#>")
     }
   }
 

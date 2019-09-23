@@ -32,7 +32,6 @@ import com.intellij.openapi.editor.colors.EditorColorsUtil;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
@@ -107,7 +106,7 @@ import java.net.URL;
 import java.util.List;
 import java.util.*;
 
-public class DocumentationComponent extends JPanel implements Disposable, DataProvider {
+public class DocumentationComponent extends JPanel implements Disposable, DataProvider, WidthBasedLayout {
 
   private static final Logger LOG = Logger.getInstance(DocumentationComponent.class);
   private static final String DOCUMENTATION_TOPIC_ID = "reference.toolWindows.Documentation";
@@ -125,7 +124,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   private final ExternalDocAction myExternalDocAction;
 
   private DocumentationManager myManager;
-  private SmartPsiElementPointer myElement;
+  private SmartPsiElementPointer<PsiElement> myElement;
   private long myModificationCount;
 
   public static final String QUICK_DOC_FONT_SIZE_PROPERTY = "quick.doc.font.size";
@@ -293,7 +292,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
               Object src = attrs.getAttribute(HTML.Attribute.SRC);
               Icon icon = src != null ? IconLoader.findIcon((String)src, false) : null;
               if (icon == null) {
-                ModuleType id = ModuleTypeManager.getInstance().findByID((String)src);
+                ModuleType<?> id = ModuleTypeManager.getInstance().findByID((String)src);
                 if (id != null) icon = id.getIcon();
               }
               if (icon != null) {
@@ -394,7 +393,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     toolbarActions.addAction(new MyShowSettingsAction(true)).setAsSecondary(true);
     toolbarActions.addAction(new ShowToolbarAction()).setAsSecondary(true);
     toolbarActions.addAction(new RestoreDefaultSizeAction()).setAsSecondary(true);
-    myToolBar = new ActionToolbarImpl(ActionPlaces.JAVADOC_TOOLBAR, toolbarActions, true, KeymapManagerEx.getInstanceEx()) {
+    myToolBar = new ActionToolbarImpl(ActionPlaces.JAVADOC_TOOLBAR, toolbarActions, true) {
       Point initialClick;
 
       @Override
@@ -720,7 +719,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     return myElement != null ? myElement.getElement() : null;
   }
 
-  private void setElement(SmartPsiElementPointer element) {
+  private void setElement(SmartPsiElementPointer<PsiElement> element) {
     myElement = element;
     myModificationCount = getCurrentModificationCount();
   }
@@ -764,14 +763,14 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     myExternalUrl = effectiveExternalUrl;
     myProvider = provider;
 
-    SmartPsiElementPointer pointer = null;
+    SmartPsiElementPointer<PsiElement> pointer = null;
     if (element != null && element.isValid()) {
       pointer = SmartPointerManager.getInstance(element.getProject()).createSmartPsiElementPointer(element);
     }
     setDataInternal(pointer, text, new Rectangle(0, 0), ref);
   }
 
-  private void setDataInternal(@Nullable SmartPsiElementPointer element,
+  private void setDataInternal(@Nullable SmartPsiElementPointer<PsiElement> element,
                                @NotNull String text,
                                @NotNull Rectangle viewRect,
                                @Nullable String ref) {
@@ -810,7 +809,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     SwingUtilities.invokeLater(() -> {
       myEditorPane.scrollRectToVisible(viewRectToUse); // if ref is defined but is not found in document, this provides a default location
       if (refToUse != null) {
-        myEditorPane.scrollToReference(refToUse);
+        UIUtil.scrollToReference(myEditorPane, refToUse);
       }
       else if (ScreenReader.isActive()) {
         myEditorPane.setCaretPosition(0);
@@ -876,6 +875,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     return new Dimension(width, height);
   }
 
+  @Override
   public int getPreferredWidth() {
     int minWidth = JBUIScale.scale(300);
     int maxWidth = getPopupAnchor() != null ? JBUIScale.scale(435) : MAX_DEFAULT.width;
@@ -891,6 +891,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     return Math.min(maxWidth, Math.max(minWidth, width)) + insets.left + insets.right;
   }
 
+  @Override
   public int getPreferredHeight(int width) {
     myEditorPane.setBounds(0, 0, width, MAX_DEFAULT.height);
     myEditorPane.setText(myDecoratedText);
@@ -1336,7 +1337,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     @Nullable
     @Override
     protected Navigatable[] getNavigatables(DataContext dataContext) {
-      SmartPsiElementPointer element = myElement;
+      SmartPsiElementPointer<PsiElement> element = myElement;
       if (element != null) {
         PsiElement psiElement = element.getElement();
         return psiElement instanceof Navigatable ? new Navigatable[]{(Navigatable)psiElement} : null;
@@ -1562,14 +1563,14 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   }
 
   private static class Context {
-    final SmartPsiElementPointer element;
+    final SmartPsiElementPointer<PsiElement> element;
     final String text;
     final String externalUrl;
     final DocumentationProvider provider;
     final Rectangle viewRect;
     final int highlightedLink;
 
-    Context(SmartPsiElementPointer element,
+    Context(SmartPsiElementPointer<PsiElement> element,
             String text,
             String externalUrl,
             DocumentationProvider provider,
@@ -1785,8 +1786,14 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      e.getPresentation().setIcon(ToolWindowManagerEx.getInstanceEx(myManager.myProject).getLocationIcon(ToolWindowId.DOCUMENTATION, EmptyIcon.ICON_16));
-      e.getPresentation().setEnabledAndVisible(myToolwindowCallback != null);
+      Presentation presentation = e.getPresentation();
+      if (myManager == null) {
+        presentation.setEnabledAndVisible(false);
+      } else {
+        presentation
+          .setIcon(ToolWindowManagerEx.getInstanceEx(myManager.myProject).getLocationIcon(ToolWindowId.DOCUMENTATION, EmptyIcon.ICON_16));
+        presentation.setEnabledAndVisible(myToolwindowCallback != null);
+      }
     }
 
     @Override
@@ -1844,7 +1851,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
       Graphics2D graphics = image.createGraphics();
       super.paint(graphics, new Rectangle(image.getWidth(), image.getHeight()));
-      UIUtil.drawImage(g, ImageUtil.ensureHiDPI(image, ScaleContext.create(myEditorPane)), bounds.x, bounds.y, null);
+      StartupUiUtil.drawImage(g, ImageUtil.ensureHiDPI(image, ScaleContext.create(myEditorPane)), bounds.x, bounds.y, null);
     }
   }
 

@@ -101,7 +101,8 @@ import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.isFieldDecla
  * @author ven
  */
 public class GroovyAnnotator extends GroovyElementVisitor {
-  private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.annotator.GroovyAnnotator");
+  private static final Logger LOG = Logger.getInstance(GroovyAnnotator.class);
+
   public static final Condition<PsiClass> IS_INTERFACE = aClass -> aClass.isInterface();
   private static final Condition<PsiClass> IS_NOT_INTERFACE = aClass -> !aClass.isInterface();
   public static final Condition<PsiClass> IS_TRAIT = aClass -> GrTraitUtil.isTrait(aClass);

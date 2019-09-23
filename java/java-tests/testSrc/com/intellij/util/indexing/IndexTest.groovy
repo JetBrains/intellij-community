@@ -55,6 +55,7 @@ import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.SkipSlowTestLocally
+import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
 import com.intellij.testFramework.exceptionCases.IllegalArgumentExceptionCase
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import com.intellij.util.*
@@ -78,6 +79,18 @@ import java.util.concurrent.CountDownLatch
  */
 @SkipSlowTestLocally
 class IndexTest extends JavaCodeInsightFixtureTestCase {
+
+  @Override
+  protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) throws Exception {
+    if (getName() == "test indexed state for file without content requiring indices") {
+      // should add file to test dire as soon as possible
+      String otherRoot = myFixture.getTempDirPath() + "/otherRoot";
+      assertTrue(new File(otherRoot).mkdirs());
+      assertTrue(new File(otherRoot, "intellij.exe").createNewFile());
+      moduleBuilder.addSourceContentRoot(otherRoot)
+    }
+  }
+
   @Override
   protected void invokeTestRunnable(@NotNull Runnable runnable) throws Exception {
     if ("testUndoToFileContentForUnsavedCommittedDocument".equals(getName())) {
@@ -776,12 +789,12 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
 
   class RecordingVfsListener extends IndexedFilesListener {
     RecordingVfsListener() {
-      super(ManagingFS.getInstance())
+      super()
     }
 
     @Override
     protected void iterateIndexableFiles(@NotNull VirtualFile file, @NotNull ContentIterator iterator) {
-      VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor() {
+      VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor<Void>() {
         @Override
         boolean visitFile(@NotNull VirtualFile visitedFile) {
           iterator.processFile(visitedFile)
@@ -852,7 +865,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
   void "test requesting nonexisted index fails as expected"() {
     ID<?, ?> myId = ID.create("my.id")
     FileBasedIndex.instance.getContainingFiles(myId, "null", GlobalSearchScope.allScope(project))
-    FileBasedIndex.instance.processAllKeys(myId, Processor.TRUE, project)
+    FileBasedIndex.instance.processAllKeys(myId, CommonProcessors.alwaysTrue(), project)
   }
 
   void "test read-only index access"() {
@@ -1070,6 +1083,20 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
       VfsUtil.saveText(file, fileText)
       assertNotNull(findClass("Bar"))
     }
+  }
+
+  void "test indexed state for file without content requiring indices"() {
+    def scope = GlobalSearchScope.allScope(getProject())
+    FileBasedIndex.instance.ensureUpToDate(FilenameIndex.NAME, project, scope)
+
+    def files = FilenameIndex.getFilesByName(getProject(), "intellij.exe", scope)
+    def file = assertOneElement(files).virtualFile
+    assertTrue(file.getFileType().isBinary())
+    assertTrue(((VirtualFileSystemEntry)file).isFileIndexed())
+
+    file.rename(this, 'intellij2.exe')
+    FileBasedIndex.instance.ensureUpToDate(FilenameIndex.NAME, project, scope)
+    assertTrue(((VirtualFileSystemEntry)file).isFileIndexed())
   }
 
   void "test IDEA-188028" () {

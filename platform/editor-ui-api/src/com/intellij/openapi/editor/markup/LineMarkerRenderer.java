@@ -24,6 +24,7 @@ import java.awt.*;
  * marker area (over the folding area).
  *
  * @see RangeHighlighter#setLineMarkerRenderer(LineMarkerRenderer)
+ * @see LineMarkerRendererEx
  */
 public interface LineMarkerRenderer {
   /**

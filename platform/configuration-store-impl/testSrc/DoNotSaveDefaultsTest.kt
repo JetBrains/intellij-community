@@ -6,14 +6,12 @@ import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceCom
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.application.impl.coroutineDispatchingContext
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.impl.ComponentManagerImpl
-import com.intellij.openapi.components.impl.ServiceManagerImpl
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.impl.ProjectImpl
+import com.intellij.serviceContainer.ServiceManagerImpl
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.assertions.Assertions.assertThat
@@ -44,21 +42,21 @@ internal class DoNotSaveDefaultsTest {
   @Test
   fun testApp() = runBlocking {
     useAppConfigDir {
-      doTest(ApplicationManager.getApplication() as ApplicationImpl)
+      doTest(ApplicationManager.getApplication() as ComponentManagerImpl)
     }
   }
 
   @Test
   fun testProject() = runBlocking {
     createOrLoadProject(tempDir, directoryBased = false) { project ->
-      doTest(project as ProjectImpl)
+      doTest(project as ComponentManagerImpl)
     }
   }
 
   @Test
   fun `project - load empty state`() = runBlocking {
     createOrLoadProject(tempDir, directoryBased = false) { project ->
-      doTest(project as ProjectImpl, isTestEmptyState = true)
+      doTest(project as ComponentManagerImpl, isTestEmptyState = true)
     }
   }
 

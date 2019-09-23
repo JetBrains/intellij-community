@@ -31,7 +31,7 @@ import git4idea.merge.GitConflictResolver;
 import git4idea.repo.GitRepository;
 import git4idea.stash.GitStashUtils;
 import git4idea.util.GitUIUtil;
-import git4idea.validators.GitBranchNameValidator;
+import git4idea.validators.GitNewBranchNameValidator;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -45,6 +45,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+
+import static java.util.Collections.singletonList;
 
 /**
  * The unstash dialog
@@ -201,15 +203,14 @@ public class GitUnstashDialog extends DialogWrapper {
       myPopStashCheckBox.setSelected(true);
       myReinstateIndexCheckBox.setEnabled(false);
       myReinstateIndexCheckBox.setSelected(true);
-      if (!GitBranchNameValidator.INSTANCE.checkInput(branch)) {
-        setErrorText(GitBundle.getString("unstash.error.invalid.branch.name"));
-        setOKActionEnabled(false);
-        return;
-      }
-      if (myBranches.contains(branch)) {
-        setErrorText(GitBundle.getString("unstash.error.branch.exists"));
-        setOKActionEnabled(false);
-        return;
+      GitRepository repository = GitUtil.getRepositoryManager(myProject).getRepositoryForRoot(getGitRoot());
+      if (repository != null) {
+        GitNewBranchNameValidator branchNameValidator = GitNewBranchNameValidator.newInstance(singletonList(repository));
+        if (!branchNameValidator.checkInput(branch)) {
+          setErrorText(branchNameValidator.getErrorText(branch));
+          setOKActionEnabled(false);
+          return;
+        }
       }
     }
     else {

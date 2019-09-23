@@ -664,4 +664,17 @@ void foo(Object i, Integer... objects){
 foo<warning descr="Method call is ambiguous">(1, 1)</warning>
 '''
   }
+
+  void 'test IDEA-219842'() {
+    testHighlighting '''\
+import groovy.transform.CompileStatic
+
+@CompileStatic
+def m() {
+    ["a"]*.trim().findAll {
+        String line -> !line.isEmpty()
+    }
+}
+'''
+  }
 }

@@ -15,6 +15,8 @@ import org.jetbrains.annotations.Nullable;
  * <p>
  * In general, implementation should be thread-safe, because "loadState" is called from the same thread where component is initialized.
  * If component used only from one thread (e.g. EDT), thread-safe implementation is not required.
+ *
+ * @see SimplePersistentStateComponent
  */
 public interface PersistentStateComponent<T> {
   /**
@@ -44,7 +46,7 @@ public interface PersistentStateComponent<T> {
   }
 
   /**
-   * If class also is a component, then this method will be called after loading state (even if not state).
+   * If class also is a component, then this method will be called after loading state (even if not state) but only once throughout the life cycle
    */
   default void initializeComponent() {
   }

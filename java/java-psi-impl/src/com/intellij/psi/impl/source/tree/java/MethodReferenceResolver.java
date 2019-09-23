@@ -144,7 +144,7 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
         processor.setIsConstructor(isConstructor);
         processor.setName(isConstructor ? containingClass.getName() : element.getText());
         final PsiExpression expression = reference.getQualifierExpression();
-        if (expression == null || !(expression.getType() instanceof PsiArrayType)) {
+        if (expression == null || !(expression.getType() instanceof PsiArrayType) && !(expression instanceof PsiSuperExpression)) {
           processor.setAccessClass(containingClass);
         }
 

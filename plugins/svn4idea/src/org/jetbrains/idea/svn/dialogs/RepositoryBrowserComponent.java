@@ -17,6 +17,7 @@ import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.NotNullFunction;
+import com.intellij.util.ui.StatusText;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,7 +44,7 @@ import java.util.List;
  */
 public class RepositoryBrowserComponent extends JPanel implements Disposable, DataProvider {
 
-  private JTree myRepositoryTree;
+  private Tree myRepositoryTree;
   private final SvnVcs myVCS;
 
   public RepositoryBrowserComponent(@NotNull SvnVcs vcs) {
@@ -285,5 +286,10 @@ public class RepositoryBrowserComponent extends JPanel implements Disposable, Da
 
   public void setLazyLoadingExpander(final NotNullFunction<RepositoryBrowserComponent, Expander> expanderFactory) {
     ((RepositoryTreeModel)myRepositoryTree.getModel()).setDefaultExpanderFactory(expanderFactory);
+  }
+
+  @NotNull
+  public StatusText getStatusText() {
+    return myRepositoryTree.getEmptyText();
   }
 }

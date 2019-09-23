@@ -1,4 +1,4 @@
-def <U0 extends X1 & X2> Object foo(X3 a, U0 c) {
+def <T extends X1 & X2> Object foo(X3 a, T c) {
   a.h(c)
   a.i(c)
 }

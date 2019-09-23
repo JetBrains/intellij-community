@@ -84,7 +84,7 @@ object UpdateChecker {
 
   /**
    * For manual update checks (Help | Check for Updates, Settings | Updates | Check Now)
-   * (the latter action may pass customised update settings).
+   * (the latter action may pass customized update settings).
    */
   @JvmStatic
   fun updateAndShowResult(project: Project?, customSettings: UpdateSettings?) {
@@ -227,7 +227,7 @@ object UpdateChecker {
   }
 
   /**
-   * Returns a list of plugins which are currently installed or were installed in the previous installation from which
+   * Returns a list of plugins that are currently installed or were installed in the previous installation from which
    * we're importing the settings.
    */
   private fun collectUpdateablePlugins(): MutableMap<PluginId, IdeaPluginDescriptor> {
@@ -308,7 +308,7 @@ object UpdateChecker {
     if (PluginManagerCore.isDisabled(pluginId)) return
 
     val pluginVersion = downloader.pluginVersion
-    val installedPlugin = PluginManager.getPlugin(PluginId.getId(pluginId))
+    val installedPlugin = PluginManagerCore.getPlugin(PluginId.getId(pluginId))
     if (installedPlugin == null || pluginVersion == null || PluginDownloader.compareVersionsSkipBrokenAndIncompatible(installedPlugin, pluginVersion) > 0) {
       var descriptor: IdeaPluginDescriptor?
 
@@ -332,7 +332,7 @@ object UpdateChecker {
       }
     }
 
-    // collect plugins which were not updated and would be incompatible with new version
+    // collect plugins that were not updated and would be incompatible with the new version
     if (incompatiblePlugins != null && installedPlugin != null && installedPlugin.isEnabled &&
         !toUpdate.containsKey(installedPlugin.pluginId) &&
         !PluginManagerCore.isCompatible(installedPlugin, downloader.buildNumber)) {
@@ -498,7 +498,7 @@ object UpdateChecker {
     if (!ourHasFailedPlugins) {
       val app = ApplicationManager.getApplication()
       if (app != null && !app.isDisposed && !app.isDisposeInProgress && UpdateSettings.getInstance().isCheckNeeded) {
-        val pluginDescriptor = PluginManager.getPlugin(IdeErrorsDialog.findPluginId(event.throwable))
+        val pluginDescriptor = PluginManagerCore.getPlugin(IdeErrorsDialog.findPluginId(event.throwable))
         if (pluginDescriptor != null && !pluginDescriptor.isBundled) {
           ourHasFailedPlugins = true
           updateAndShowResult()

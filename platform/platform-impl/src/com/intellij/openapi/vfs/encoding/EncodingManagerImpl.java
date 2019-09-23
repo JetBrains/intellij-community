@@ -31,7 +31,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.BoundedTaskExecutor;
-import com.intellij.util.messages.MessageBus;
 import com.intellij.util.xmlb.annotations.Attribute;
 import gnu.trove.Equality;
 import gnu.trove.THashSet;
@@ -91,8 +90,9 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
     "EncodingManagerImpl Document Pool", PooledThreadExecutor.INSTANCE, JobSchedulerImpl.getJobPoolParallelism(), this);
 
   private final AtomicBoolean myDisposed = new AtomicBoolean();
-  public EncodingManagerImpl(@NotNull EditorFactory editorFactory, MessageBus messageBus) {
-    messageBus.connect().subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
+
+  public EncodingManagerImpl() {
+    ApplicationManager.getApplication().getMessageBus().connect().subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
       @Override
       public void appClosing() {
         // should call before dispose in write action
@@ -101,6 +101,8 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
         clearDocumentQueue();
       }
     });
+
+    EditorFactory editorFactory = EditorFactory.getInstance();
     editorFactory.getEventMulticaster().addDocumentListener(new DocumentListener() {
       @Override
       public void documentChanged(@NotNull DocumentEvent e) {

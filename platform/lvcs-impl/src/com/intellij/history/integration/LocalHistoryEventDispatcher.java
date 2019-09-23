@@ -93,7 +93,7 @@ class LocalHistoryEventDispatcher implements VirtualFileManagerListener, Command
   }
 
   private void createRecursively(VirtualFile f) {
-    VfsUtilCore.visitChildrenRecursively(f, new VirtualFileVisitor() {
+    VfsUtilCore.visitChildrenRecursively(f, new VirtualFileVisitor<Void>() {
       @Override
       public boolean visitFile(@NotNull VirtualFile f) {
         if (isVersioned(f)) {

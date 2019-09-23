@@ -26,17 +26,20 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
  */
 public class InterpreterDirectoryMacro extends Macro {
+  @NotNull
   @Override
   public String getName() {
     return "PyInterpreterDirectory";
   }
 
+  @NotNull
   @Override
   public String getDescription() {
     return "The directory containing the Python interpreter selected for the project";
@@ -44,7 +47,7 @@ public class InterpreterDirectoryMacro extends Macro {
 
   @Nullable
   @Override
-  public String expand(DataContext dataContext) {
+  public String expand(@NotNull DataContext dataContext) {
     Module module = LangDataKeys.MODULE.getData(dataContext);
     if (module == null) {
       Project project = CommonDataKeys.PROJECT.getData(dataContext);
@@ -57,7 +60,7 @@ public class InterpreterDirectoryMacro extends Macro {
       }
       module = modules[0];
     }
-    Sdk sdk = PythonSdkType.findPythonSdk(module);
+    Sdk sdk = PythonSdkUtil.findPythonSdk(module);
     if (sdk != null) {
       VirtualFile homeDir = sdk.getHomeDirectory();
       if (homeDir == null) {

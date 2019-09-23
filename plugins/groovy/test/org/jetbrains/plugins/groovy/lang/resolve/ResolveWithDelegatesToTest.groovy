@@ -749,6 +749,7 @@ c {
 ''', GrMethod
   }
 
+
   private void assertScript(String text, String resolvedClass) {
     def resolved = resolveByText(text, PsiMethod)
     final containingClass = resolved.containingClass.qualifiedName

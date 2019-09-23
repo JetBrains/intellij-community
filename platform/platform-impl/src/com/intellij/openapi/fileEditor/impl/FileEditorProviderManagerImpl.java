@@ -6,6 +6,7 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorPolicy;
 import com.intellij.openapi.fileEditor.FileEditorProvider;
 import com.intellij.openapi.fileEditor.WeighedFileEditorProvider;
@@ -48,6 +49,10 @@ public final class FileEditorProviderManagerImpl extends FileEditorProviderManag
       })) {
         sharedProviders.add(provider);
         hideDefaultEditor |= provider.getPolicy() == FileEditorPolicy.HIDE_DEFAULT_EDITOR;
+        if (provider.getPolicy() == FileEditorPolicy.HIDE_DEFAULT_EDITOR && !DumbService.isDumbAware(provider)) {
+          String message = "HIDE_DEFAULT_EDITOR is supported only for DumbAware providers; " + provider.getClass() + " is not DumbAware.";
+          Logger.getInstance(FileEditorProviderManagerImpl.class).error(message);
+        }
       }
     }
 
@@ -87,11 +92,10 @@ public final class FileEditorProviderManagerImpl extends FileEditorProviderManag
   private final Map<String, String> mySelectedProviders = new HashMap<>();
 
   void providerSelected(EditorComposite composite) {
-    if (!(composite instanceof EditorWithProviderComposite)) return;
-    FileEditorProvider[] providers = ((EditorWithProviderComposite)composite).getProviders();
+    FileEditorProvider[] providers = composite.getProviders();
     if (providers.length < 2) return;
     mySelectedProviders.put(computeKey(providers),
-                            composite.getSelectedEditorWithProvider().getSecond().getEditorTypeId());
+                            composite.getSelectedWithProvider().getProvider().getEditorTypeId());
   }
 
   private static String computeKey(FileEditorProvider[] providers) {

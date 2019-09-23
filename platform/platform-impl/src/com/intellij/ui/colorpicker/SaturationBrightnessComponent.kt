@@ -21,10 +21,7 @@ import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import sun.awt.image.ToolkitImage
-import java.awt.Color
-import java.awt.Dimension
-import java.awt.Graphics
-import java.awt.Rectangle
+import java.awt.*
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.awt.image.ColorModel
@@ -35,7 +32,7 @@ private val KNOB_COLOR = Color.WHITE
 private const val KNOB_OUTER_RADIUS = 4
 private const val KNOB_INNER_RADIUS = 3
 
-class SaturationBrightnessComponent(private val myModel: ColorPickerModel) : JComponent(), ColorListener {
+public class SaturationBrightnessComponent(private val myModel: ColorPickerModel) : JComponent(), ColorListener {
   var brightness = 1f
     private set
   var hue = 1f
@@ -65,14 +62,19 @@ class SaturationBrightnessComponent(private val myModel: ColorPickerModel) : JCo
   }
 
   private fun handleMouseEvent(e: MouseEvent) {
-    val x = Math.max(0, Math.min(e.x, size.width))
-    val y = Math.max(0, Math.min(e.y, size.height))
+    myModel.setColor(getColorByPoint(e.point), this)
+  }
+
+  public fun getColorByPoint(p: Point): Color {
+    val x = Math.max(0, Math.min(p.x, size.width))
+    val y = Math.max(0, Math.min(p.y, size.height))
 
     val saturation = x.toFloat() / size.width
     val brightness = 1.0f - y.toFloat() / size.height
 
     val argb = ahsbToArgb(alpha, hue, saturation, brightness)
-    myModel.setColor(Color(argb, true), this)
+    val newColor = Color(argb, true)
+    return newColor
   }
 
   override fun getPreferredSize(): Dimension = JBUI.size(PICKER_PREFERRED_WIDTH, 150)

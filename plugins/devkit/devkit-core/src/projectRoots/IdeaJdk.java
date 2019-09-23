@@ -363,7 +363,7 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
       for (JpsDependencyElement dep : o.getDependenciesList().getDependencies()) {
         ProgressManager.checkCanceled();
         JpsLibrary library = dep instanceof JpsLibraryDependency ? ((JpsLibraryDependency)dep).getLibrary() : null;
-        if (library == null) continue;
+        if (library == null || library.getName().equals("jps-build-script-dependencies-bootstrap")) continue;
 
         // do not check extension.getScope(), plugin projects need tests too
         //JpsLibraryType<?> libraryType = library == null ? null : library.getType();

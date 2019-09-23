@@ -15,11 +15,13 @@ public class ShRunConfigurationEditor extends SettingsEditor<ShRunConfiguration>
   private JPanel myPanel;
   private TextFieldWithBrowseButton myScriptSelector;
   private RawCommandLineEditor myScriptOptions;
+  private TextFieldWithBrowseButton myScriptWorkingDirectory;
   private TextFieldWithBrowseButton myInterpreterSelector;
   private RawCommandLineEditor myInterpreterOptions;
 
   ShRunConfigurationEditor(Project project) {
     myScriptSelector.addBrowseFolderListener("Choose Shell Script", "", project, FileChooserDescriptorFactory.createSingleFileDescriptor());
+    myScriptWorkingDirectory.addBrowseFolderListener("Choose Script Working Directory", "", project, FileChooserDescriptorFactory.createSingleFolderDescriptor());
     myInterpreterSelector.addBrowseFolderListener("Choose Interpreter", "", project, FileChooserDescriptorFactory.createSingleFileDescriptor());
   }
 
@@ -27,6 +29,7 @@ public class ShRunConfigurationEditor extends SettingsEditor<ShRunConfiguration>
   protected void resetEditorFrom(@NotNull ShRunConfiguration configuration) {
     myScriptSelector.setText(configuration.getScriptPath());
     myScriptOptions.setText(configuration.getScriptOptions());
+    myScriptWorkingDirectory.setText(configuration.getScriptWorkingDirectory());
     myInterpreterSelector.setText(configuration.getInterpreterPath());
     myInterpreterOptions.setText(configuration.getInterpreterOptions());
   }
@@ -35,6 +38,7 @@ public class ShRunConfigurationEditor extends SettingsEditor<ShRunConfiguration>
   protected void applyEditorTo(@NotNull ShRunConfiguration configuration) throws ConfigurationException {
     configuration.setScriptPath(myScriptSelector.getText());
     configuration.setScriptOptions(myScriptOptions.getText());
+    configuration.setScriptWorkingDirectory(myScriptWorkingDirectory.getText());
     configuration.setInterpreterPath(myInterpreterSelector.getText());
     configuration.setInterpreterOptions(myInterpreterOptions.getText());
   }

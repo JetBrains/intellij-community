@@ -5,9 +5,7 @@ import textwrap
 import unittest
 
 import generator3
-import six
-from generator3 import GenerationStatus
-from generator3_tests import GeneratorTestCase
+from generator3_tests import GeneratorTestCase, python3_only, python2_only
 from pycharm_generator_utils.constants import (
     CACHE_DIR_NAME,
     ENV_REQUIRED_GEN_VERSION_FILE,
@@ -15,12 +13,10 @@ from pycharm_generator_utils.constants import (
     ENV_TEST_MODE_FLAG,
     ENV_VERSION,
 )
-# Such version implies that skeletons are always regenerated
 from pycharm_generator_utils.util_methods import mkdir
 
+# Such version implies that skeletons are always regenerated
 TEST_GENERATOR_VERSION = '1000.0'
-
-_run_generator_in_separate_process = True
 
 
 class SkeletonCachingTest(GeneratorTestCase):
@@ -40,9 +36,6 @@ class SkeletonCachingTest(GeneratorTestCase):
         if not extra_syspath_entry:
             extra_syspath_entry = self.test_data_dir
 
-        if mod_qname and not mod_path:
-            mod_path = self.imported_module_path(mod_qname, extra_syspath_entry)
-
         env = {
             ENV_TEST_MODE_FLAG: 'True',
             ENV_VERSION: gen_version or TEST_GENERATOR_VERSION,
@@ -53,57 +46,35 @@ class SkeletonCachingTest(GeneratorTestCase):
         if extra_env:
             env.update(extra_env)
 
-        if _run_generator_in_separate_process:
-            generator3_path = os.path.abspath(generator3.__file__)
-            base, ext = os.path.splitext(generator3_path)
-            if ext == '.pyc':
-                generator3_path = base + '.py'
-            args = [
-                sys.executable,
-                generator3_path,
-                '-d', output_dir,
-                '-s', extra_syspath_entry,
-            ]
+        generator3_path = os.path.abspath(generator3.__file__)
+        base, ext = os.path.splitext(generator3_path)
+        if ext == '.pyc':
+            generator3_path = base + '.py'
+        args = [
+            sys.executable,
+            generator3_path,
+            '-d', output_dir,
+            '-s', extra_syspath_entry,
+        ]
 
-            if extra_args:
-                args.extend(extra_args)
+        if extra_args:
+            args.extend(extra_args)
 
-            if builtins:
-                args.append('-b')
-            else:
-                args.append(mod_qname)
-                if mod_path:
-                    args.append(mod_path)
-
-            self.log.info('Launching generator3 as: ' + ' '.join(args))
-            process = subprocess.Popen(args, env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            process.wait()
-            sys.stdout.write(process.stdout.read().decode('utf-8'))
-            process.stdout.close()
-            sys.stderr.write(process.stderr.read().decode('utf-8'))
-            process.stderr.close()
-            return process.returncode == 0
+        if builtins:
+            args.append('-b')
         else:
-            os.environ.update(env)
-            sys.path.append(extra_syspath_entry)
-            try:
-                success = True
-                if builtins:
-                    for mod_qname in sys.builtin_module_names:
-                        result = generator3.process_one(mod_qname, None, True, output_dir)
-                        success &= (result != GenerationStatus.FAILED)
-                else:
-                    builtins = mod_qname in sys.builtin_module_names
-                    return generator3.process_one(mod_qname, mod_path, builtins, output_dir) != GenerationStatus.FAILED
-            except Exception:
-                self.log.error('Raised inside generator', exc_info=True)
-                return False
-            finally:
-                if mod_qname != 'sys':
-                    sys.modules.pop(mod_qname, None)
-                sys.path.pop()
-                for name in env:
-                    del os.environ[name]
+            args.append(mod_qname)
+            if mod_path:
+                args.append(mod_path)
+
+        self.log.info('Launching generator3 as: ' + ' '.join(args))
+        process = subprocess.Popen(args, env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        process.wait()
+        sys.stdout.write(process.stdout.read().decode('utf-8'))
+        process.stdout.close()
+        sys.stderr.write(process.stderr.read().decode('utf-8'))
+        process.stderr.close()
+        return process.returncode == 0
 
     @property
     def temp_skeletons_dir(self):
@@ -112,19 +83,6 @@ class SkeletonCachingTest(GeneratorTestCase):
     @property
     def temp_cache_dir(self):
         return os.path.join(self.temp_dir, self.PYTHON_STUBS_DIR, CACHE_DIR_NAME)
-
-    @staticmethod
-    def imported_module_path(mod_qname, extra_syspath_entry):
-        sys.path.insert(0, extra_syspath_entry)
-        try:
-            return os.path.abspath(getattr(__import__(mod_qname), '__file__'))
-        except AttributeError:
-            pass
-        finally:
-            if mod_qname != 'sys':
-                sys.modules.pop(mod_qname, None)
-            sys.path.pop(0)
-        return None
 
     def test_layout_for_builtin_module(self):
         self.run_generator(mod_qname='_ast')
@@ -217,8 +175,6 @@ class SkeletonCachingTest(GeneratorTestCase):
     def test_skeleton_not_regenerated_for_failed_module_on_same_generator_version(self):
         self.check_generator_output('failing', mod_path='failing.py', gen_version='0.1', success=False)
 
-    @unittest.skipIf(not _run_generator_in_separate_process,
-                     'Importing module causing SIGSEGV cannot be done in the same interpreter')
     def test_segmentation_fault_handling(self):
         self.check_generator_output('sigsegv', mod_path='sigsegv.py', gen_version='0.1', success=False)
 
@@ -251,11 +207,11 @@ class SkeletonCachingTest(GeneratorTestCase):
     def test_cache_skeleton_regenerated_when_sdk_skeleton_generation_failed_for_modified_binary(self):
         self.check_generator_output('mod', mod_path='mod.py', gen_version='0.1', custom_required_gen=True)
 
-    @unittest.skipUnless(six.PY3, "Python 3 version of the test")
+    @python3_only
     def test_inaccessible_class_attribute_py3(self):
         self.check_generator_output('mod', mod_path='mod.py', success=False)
 
-    @unittest.skipUnless(six.PY2, "Python 2 version of the test")
+    @python2_only
     def test_inaccessible_class_attribute_py2(self):
         self.check_generator_output('mod', mod_path='mod.py', success=False)
 
@@ -272,18 +228,18 @@ class SkeletonCachingTest(GeneratorTestCase):
         mod_hash = generator3.module_hash('_abc', None)
         template = textwrap.dedent("""\
         # encoding: utf-8
-        # module _abc
+        # module _ast
         # from {origin}
         # by generator 1000.0
         """)
 
         cache_entry_dir = os.path.join(self.temp_cache_dir, mod_hash)
         mkdir(cache_entry_dir)
-        with open(os.path.join(cache_entry_dir, '_abc.py'), 'w') as f:
+        with open(os.path.join(cache_entry_dir, '_ast.py'), 'w') as f:
             f.write(template.format(origin='(pre-generated)'))
 
-        self.run_generator('_abc', None, True)
-        with open(os.path.join(self.temp_skeletons_dir, '_abc.py')) as f:
+        self.run_generator('_ast', None, True)
+        with open(os.path.join(self.temp_skeletons_dir, '_ast.py')) as f:
             self.assertEquals(template.format(origin='(built-in)'), f.read())
 
     def test_single_pyexpat_skeletons_layout(self):
@@ -303,6 +259,17 @@ class SkeletonCachingTest(GeneratorTestCase):
         self.assertNonEmptyFile(os.path.join(self.temp_skeletons_dir, 'pyexpat', '__init__.py'))
         self.assertTrue(os.path.exists(os.path.join(self.temp_skeletons_dir, 'pyexpat', 'model.py')))
         self.assertTrue(os.path.exists(os.path.join(self.temp_skeletons_dir, 'pyexpat', 'errors.py')))
+
+    @python3_only
+    def test_introspecting_submodule_modifies_sys_modules(self):
+        self.check_generator_output('mod', 'mod.py')
+
+    # PY-37241
+    # Python 2 version of the skeleton differs significantly
+    # TODO investigate why
+    @python3_only
+    def test_non_string_dunder_module(self):
+        self.check_generator_output('mod', 'mod.py')
 
     def check_generator_output(self, mod_name, mod_path=None, mod_root=None,
                                custom_required_gen=False, standalone_mode=False,

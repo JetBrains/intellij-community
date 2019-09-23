@@ -32,17 +32,11 @@ public class GitCherryPicker extends VcsCherryPicker {
   private static final Logger LOG = Logger.getInstance(GitCherryPicker.class);
 
   @NotNull private final Project myProject;
-  @NotNull private final Git myGit;
   @NotNull private final GitRepositoryManager myRepositoryManager;
   @NotNull private final GitVcsSettings mySettings;
 
   public GitCherryPicker(@NotNull Project project) {
-    this(project, Git.getInstance());
-  }
-
-  public GitCherryPicker(@NotNull Project project, @NotNull Git git) {
     myProject = project;
-    myGit = git;
     myRepositoryManager = GitUtil.getRepositoryManager(myProject);
     mySettings = GitVcsSettings.getInstance(myProject);
   }
@@ -51,8 +45,8 @@ public class GitCherryPicker extends VcsCherryPicker {
   public void cherryPick(@NotNull List<? extends VcsFullCommitDetails> commits) {
     GitApplyChangesProcess applyProcess = new GitApplyChangesProcess(myProject, commits, isAutoCommit(), "cherry-pick", "applied",
                                                                      (repository, commit, autoCommit, listeners) ->
-      myGit.cherryPick(repository, commit.asString(), autoCommit, shouldAddSuffix(repository, commit),
-                       listeners.toArray(new GitLineHandlerListener[0])),
+      Git.getInstance().cherryPick(repository, commit.asString(), autoCommit, shouldAddSuffix(repository, commit),
+                                   listeners.toArray(new GitLineHandlerListener[0])),
       result -> isNothingToCommitMessage(result),
       (repository, commit) -> createCommitMessage(repository, commit),
       true,
@@ -82,7 +76,7 @@ public class GitCherryPicker extends VcsCherryPicker {
    * We control the cherry-pick workflow ourselves + we want to use partial commits ('git commit --only'), which is prohibited during
    * cherry-pick, i.e. until the CHERRY_PICK_HEAD exists.
    */
-  private Unit cancelCherryPick(@NotNull GitRepository repository) {
+  private static Unit cancelCherryPick(@NotNull GitRepository repository) {
     if (isAutoCommit()) {
       removeCherryPickHead(repository);
     }
@@ -114,7 +108,7 @@ public class GitCherryPicker extends VcsCherryPicker {
     return "Cherry-Pick";
   }
 
-  private boolean isAutoCommit() {
+  private static boolean isAutoCommit() {
     return GitVcsApplicationSettings.getInstance().isAutoCommitOnCherryPick();
   }
 

@@ -3,6 +3,9 @@ package com.intellij.stats.completion
 
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
+import com.intellij.codeInsight.completion.ml.ContextFeatureProvider
+import com.intellij.completion.ml.ContextFeaturesStorage
+import com.intellij.codeInsight.completion.ml.MLFeatureValue
 import com.intellij.completion.settings.CompletionMLRankingSettings
 import com.intellij.completion.tracker.PositionTrackingListener
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
@@ -13,6 +16,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.reporting.isUnitTestMode
 import com.intellij.stats.experiment.WebServiceStatus
@@ -25,13 +29,13 @@ import com.intellij.stats.storage.factors.MutableLookupStorage
 import java.beans.PropertyChangeListener
 import kotlin.random.Random
 
-class CompletionTrackerInitializer(experimentHelper: WebServiceStatus) : Disposable {
+class CompletionTrackerInitializer(experimentHelper: WebServiceStatus) {
   companion object {
     var isEnabledInTests: Boolean = false
     private val LOGGED_SESSIONS_RATIO: Map<String, Double> = mapOf(
       "python" to 0.5,
       "scala" to 0.3,
-      "php" to 0.3,
+      "php" to 0.2,
       "kotlin" to 0.2,
       "java" to 0.1
     )
@@ -45,9 +49,11 @@ class CompletionTrackerInitializer(experimentHelper: WebServiceStatus) : Disposa
     }
     else if (lookup is LookupImpl) {
       if (isUnitTestMode() && !isEnabledInTests) return@PropertyChangeListener
+      val language = lookup.language() ?: return@PropertyChangeListener
 
-      val lookupStorage = MutableLookupStorage.initLookupStorage(lookup, System.currentTimeMillis())
+      val lookupStorage = MutableLookupStorage.initLookupStorage(lookup, language, System.currentTimeMillis())
 
+      processContextFactors(lookup, lookupStorage)
       processUserFactors(lookup, lookupStorage)
       processSessionFactors(lookup, lookupStorage)
 
@@ -69,7 +75,7 @@ class CompletionTrackerInitializer(experimentHelper: WebServiceStatus) : Disposa
     return CompletionActionsTracker(lookup, logger, experimentHelper)
   }
 
-  private fun shouldInitialize() = (ApplicationManager.getApplication().isEAP && StatisticsUploadAssistant.isSendAllowed())
+  private fun shouldInitialize() = (ApplicationManager.getApplication().isEAP && StatisticsUploadAssistant.isSendAllowed() && !CompletionTrackerDisabler.isDisabled())
                                    || isUnitTestMode()
 
   private fun shouldTrackSession() = CompletionMLRankingSettings.getInstance().isCompletionLogsSendAllowed || isUnitTestMode()
@@ -89,6 +95,23 @@ class CompletionTrackerInitializer(experimentHelper: WebServiceStatus) : Disposa
     }
 
     return Random.nextDouble() < logSessionChance
+  }
+
+  private fun processContextFactors(lookup: LookupImpl, lookupStorage: MutableLookupStorage) {
+    val file = lookup.psiFile
+    if (file != null) {
+      val result = mutableMapOf<String, MLFeatureValue>()
+      for (provider in ContextFeatureProvider.forLanguage(lookupStorage.language)) {
+        val providerName = provider.name
+        for ((featureName, value) in provider.calculateFeatures(lookup)) {
+          result["ml_ctx_${providerName}_$featureName"] = value
+        }
+      }
+
+      ContextFeaturesStorage.setContextFeatures(file, result)
+      Disposer.register(lookup, Disposable { ContextFeaturesStorage.clear(file) })
+      lookupStorage.contextFactors = result.mapValues { it.value.toString() }
+    }
   }
 
   private fun processUserFactors(lookup: LookupImpl,
@@ -123,9 +146,11 @@ class CompletionTrackerInitializer(experimentHelper: WebServiceStatus) : Disposa
   }
 
   private fun initComponent() {
-    if (!shouldInitialize()) return
+    if (!shouldInitialize()) {
+      return
+    }
 
-    val busConnection = ApplicationManager.getApplication().messageBus.connect(this)
+    val busConnection = ApplicationManager.getApplication().messageBus.connect()
     busConnection.subscribe(AnActionListener.TOPIC, actionListener)
     busConnection.subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
       override fun projectOpened(project: Project) {
@@ -138,8 +163,5 @@ class CompletionTrackerInitializer(experimentHelper: WebServiceStatus) : Disposa
         lookupManager.removePropertyChangeListener(lookupTrackerInitializer)
       }
     })
-  }
-
-  override fun dispose() {
   }
 }

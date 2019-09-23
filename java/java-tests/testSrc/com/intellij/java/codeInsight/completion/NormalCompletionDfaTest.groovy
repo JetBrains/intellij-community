@@ -176,7 +176,7 @@ public class Super {
 
   private void doTestSecond() {
     configure()
-    assert myItems?.length == 0
+    assert myItems == null || myItems.length == 0
     myFixture.completeBasic()
     checkResult()
   }

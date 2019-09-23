@@ -29,5 +29,6 @@
     <orderEntry type="module" module-name="intellij.copyright" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.copyright" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.debugger.testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.psi.impl" />
   </component>
 </module>

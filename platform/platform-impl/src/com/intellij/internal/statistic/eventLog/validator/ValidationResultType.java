@@ -4,21 +4,34 @@ package com.intellij.internal.statistic.eventLog.validator;
 import org.jetbrains.annotations.NonNls;
 
 public enum ValidationResultType {
-  ACCEPTED("accepted"),
-  THIRD_PARTY("third.party"),
-  REJECTED("validation.unmatched_rule"),
-  INCORRECT_RULE("validation.incorrect_rule"),
-  UNDEFINED_RULE("validation.undefined_rule"),
-  UNREACHABLE_WHITELIST("validation.unreachable.whitelist"),
-  PERFORMANCE_ISSUE("validation.performance_issue");
+  ACCEPTED("accepted", true),
+  THIRD_PARTY("third.party", false),
+  REJECTED("validation.unmatched_rule", false),
+  INCORRECT_RULE("validation.incorrect_rule", false),
+  UNDEFINED_RULE("validation.undefined_rule", false),
+  UNREACHABLE_WHITELIST("validation.unreachable.whitelist", true),
+  PERFORMANCE_ISSUE("validation.performance_issue", true);
 
   private final String value;
 
-  ValidationResultType(@NonNls String value) {
+  /**
+   * Indicates if we should return the result or continue iterating through rules list,
+   *
+   * e.g. we want to check other rules if resultType==UNDEFINED_RULE
+   * but we want to stop iterating if resultType==ACCEPTED
+   */
+  private final boolean isFinal;
+
+  ValidationResultType(@NonNls String value, boolean isFinal) {
     this.value = value;
+    this.isFinal = isFinal;
   }
 
   public String getDescription() {
     return value;
+  }
+
+  public boolean isFinal() {
+    return isFinal;
   }
 }

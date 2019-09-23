@@ -58,14 +58,14 @@ public class ArrayBackedFMap implements KeyFMap {
     int i = indexOf(key.hashCode());
     if (i >= 0) {
       if (size() == 3) {
-        int i1 = (2-i)/2;
-        int i2 = 3 - (i+2)/2;
-        Key<Object> key1 = Key.getKeyByIndex(keys[i1]);
-        Key<Object> key2 = Key.getKeyByIndex(keys[i2]);
+        int otherI1 = (2 - i) / 2;
+        int otherI2 = 3 - (i + 2) / 2;
+        Key<Object> key1 = Key.getKeyByIndex(keys[otherI1]);
+        Key<Object> key2 = Key.getKeyByIndex(keys[otherI2]);
         if (key1 == null && key2 == null) return EMPTY_MAP;
-        if (key1 == null) return new OneElementFMap(key2, values[i2]);
-        if (key2 == null) return new OneElementFMap(key1, values[i1]);
-        return new PairElementsFMap(key1, values[i1], key2, values[i2]);
+        if (key1 == null) return new OneElementFMap<>(key2, values[otherI2]);
+        if (key2 == null) return new OneElementFMap<>(key1, values[otherI1]);
+        return new PairElementsFMap<>(key1, values[otherI1], key2, values[otherI2]);
       }
       int[] newKeys = ArrayUtil.remove(keys, i);
       Object[] newValues = ArrayUtil.remove(values, i, ArrayUtil.OBJECT_ARRAY_FACTORY);
@@ -87,7 +87,7 @@ public class ArrayBackedFMap implements KeyFMap {
     for (int i = 0; i < keys.length; i++) {
       int key = keys[i];
       Object value = values[i];
-      s.append((s.length() == 1) ? "" : ", ").append(Key.getKeyByIndex(key)).append("=").append(value);
+      s.append(s.length() == 1 ? "" : ", ").append(Key.getKeyByIndex(key)).append("=").append(value);
     }
     return s.append("}").toString();
   }
@@ -130,7 +130,7 @@ public class ArrayBackedFMap implements KeyFMap {
     int length = keys.length;
     for (int i = 0; i < length; i++) {
       // key index is its hashcode
-      hash += (keys[i] ^ values[i].hashCode());
+      hash += keys[i] ^ values[i].hashCode();
     }
     return hash;
   }

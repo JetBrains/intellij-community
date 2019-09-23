@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io
 
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.util.containers.ContainerUtil
@@ -9,11 +8,13 @@ import java.io.File
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
+import java.nio.ByteBuffer
 import java.nio.CharBuffer
 import java.nio.channels.Channels
 import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.FileTime
+import kotlin.math.min
 
 fun Path.exists(): Boolean = Files.exists(this)
 
@@ -45,6 +46,11 @@ private fun doCreateDirectories(path: Path) {
 fun Path.outputStream(): OutputStream {
   parent?.createDirectories()
   return Files.newOutputStream(this)
+}
+
+fun Path.safeOutputStream(): OutputStream {
+  parent?.createDirectories()
+  return SafeFileOutputStream(this)
 }
 
 @Throws(IOException::class)
@@ -150,43 +156,29 @@ fun Path.write(data: ByteArray, offset: Int = 0, size: Int = data.size): Path {
   return this
 }
 
-fun Path.writeSafe(data: ByteArray, offset: Int = 0, size: Int = data.size): Path {
-  writeSafe {
-    it.write(data, offset, size)
-  }
-  return this
-}
-
-/**
- * Consider using [SafeWriteRequestor.shallUseSafeStream] along with [SafeFileOutputStream]
- */
-fun Path.writeSafe(outConsumer: (OutputStream) -> Unit): Path {
-  val tempFile = parent.resolve("${fileName}.${DigestUtil.randomToken()}.tmp")
-  tempFile.outputStream().use(outConsumer)
-  try {
-    Files.move(tempFile, this, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)
-  }
-  catch (e: AtomicMoveNotSupportedException) {
-    LOG.warn(e)
-    Files.move(tempFile, this, StandardCopyOption.REPLACE_EXISTING)
-  }
-  return this
-}
-
 @JvmOverloads
 @Throws(IOException::class)
 fun Path.write(data: CharSequence, createParentDirs: Boolean = true): Path {
+  if (data is String) {
+    if (createParentDirs) {
+      parent?.createDirectories()
+    }
+    Files.write(this, data.toByteArray())
+  }
+  else {
+    write(Charsets.UTF_8.encode(CharBuffer.wrap(data)), createParentDirs)
+  }
+  return this
+}
+
+@Throws(IOException::class)
+fun Path.write(data: ByteBuffer, createParentDirs: Boolean = true): Path {
   if (createParentDirs) {
     parent?.createDirectories()
   }
 
-  if (data is String) {
-    Files.write(this, data.toByteArray())
-  }
-  else {
-    Files.newByteChannel(this, setOf(StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)).use {
-      it.write(Charsets.UTF_8.encode(CharBuffer.wrap(data)))
-    }
+  Files.newByteChannel(this, setOf(StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)).use {
+    it.write(data)
   }
   return this
 }
@@ -243,8 +235,6 @@ inline fun <R> Path.directoryStreamIfExists(noinline filter: ((path: Path) -> Bo
   return null
 }
 
-private val LOG = Logger.getInstance("#com.intellij.openapi.util.io.FileUtil")
-
 private val illegalChars = ContainerUtil.set('/', '\\', '?', '<', '>', ':', '*', '|', '"', ':')
 
 // https://github.com/parshap/node-sanitize-filename/blob/master/index.js
@@ -253,7 +243,7 @@ fun sanitizeFileName(name: String, replacement: String? = "_", isTruncate: Boole
   var last = 0
   val length = name.length
   for (i in 0 until length) {
-    val c = name.get(i)
+    val c = name[i]
     if (!illegalChars.contains(c) && !c.isISOControl()) {
       continue
     }
@@ -271,7 +261,7 @@ fun sanitizeFileName(name: String, replacement: String? = "_", isTruncate: Boole
     last = i + 1
   }
 
-  fun String.truncateFileName() = if (isTruncate) substring(0, Math.min(length, 255)) else this
+  fun String.truncateFileName() = if (isTruncate) substring(0, min(length, 255)) else this
 
   if (result == null) {
     return name.truncateFileName()

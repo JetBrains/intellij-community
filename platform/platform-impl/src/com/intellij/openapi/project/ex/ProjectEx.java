@@ -4,8 +4,11 @@ package com.intellij.openapi.project.ex;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 public interface ProjectEx extends Project {
+  String NAME_FILE = ".name";
+
   /**
    * Consider using only and only if {@link com.intellij.configurationStore.SettingsSavingComponent} is not possible to use.
    */
@@ -20,4 +23,9 @@ public interface ProjectEx extends Project {
   }
 
   void setProjectName(@NotNull String name);
+
+  @TestOnly
+  default boolean isLight() {
+    return false;
+  }
 }

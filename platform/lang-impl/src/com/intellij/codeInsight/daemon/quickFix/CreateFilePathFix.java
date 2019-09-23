@@ -5,6 +5,7 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -18,8 +19,6 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.impl.PsiManagerImpl;
-import com.intellij.psi.impl.file.PsiDirectoryImpl;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -64,7 +63,7 @@ public class CreateFilePathFix extends AbstractCreateFileFix {
     myFileTextSupplier = fileTextSupplier;
   }
 
-  private void createFile(@NotNull Project project, @NotNull PsiDirectory currentDirectory, String fileName)
+  private void createFile(@NotNull Project project, @NotNull PsiDirectory currentDirectory, @NotNull String fileName)
     throws IncorrectOperationException {
 
     String newFileName = fileName;
@@ -87,7 +86,8 @@ public class CreateFilePathFix extends AbstractCreateFileFix {
           return;
         }
 
-        directory = new PsiDirectoryImpl((PsiManagerImpl)currentDirectory.getManager(), vfsDir);
+        directory = currentDirectory.getManager().findDirectory(vfsDir);
+        if (directory == null) throw new IOException("Couldn't create directory '" + newDirectories + "'");
       }
       catch (IOException e) {
         throw new IncorrectOperationException(e.getMessage());
@@ -153,25 +153,9 @@ public class CreateFilePathFix extends AbstractCreateFileFix {
   }
 
   @Override
-  protected void apply(@NotNull Project project, TargetDirectory directory) throws IncorrectOperationException {
-    myIsAvailableTimeStamp = 0; // to revalidate applicability
+  protected void apply(@NotNull Project project, @NotNull PsiDirectory targetDirectory, @Nullable Editor editor)
+    throws IncorrectOperationException {
 
-    PsiDirectory currentDirectory = directory.getDirectory();
-    if (currentDirectory == null) {
-      return;
-    }
-
-    try {
-      for (String pathPart : directory.getPathToCreate()) {
-        currentDirectory = findOrCreateSubdirectory(currentDirectory, pathPart);
-      }
-      for (String pathPart : mySubPath) {
-        currentDirectory = findOrCreateSubdirectory(currentDirectory, pathPart);
-      }
-      createFile(project, currentDirectory, myNewFileName);
-    }
-    catch (IncorrectOperationException e) {
-      myIsAvailable = false;
-    }
+    createFile(project, targetDirectory, myNewFileName);
   }
 }

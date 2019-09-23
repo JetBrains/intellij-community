@@ -3,6 +3,7 @@ package git4idea.rollback;
 
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
@@ -13,7 +14,6 @@ import com.intellij.openapi.vcs.rollback.RollbackProgressListener;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsFileUtil;
-import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitUtil;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
@@ -26,7 +26,8 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.util.*;
 
-public class GitRollbackEnvironment implements RollbackEnvironment {
+@Service
+public final class GitRollbackEnvironment implements RollbackEnvironment {
   @NotNull private final Project myProject;
 
   public GitRollbackEnvironment(@NotNull Project project) {
@@ -189,9 +190,8 @@ public class GitRollbackEnvironment implements RollbackEnvironment {
       GitRepository repo = GitUtil.getRepositoryManager(myProject).getRepositoryForRoot(root);
       GitUntrackedFilesHolder untrackedFilesHolder = (repo == null ? null : repo.getUntrackedFilesHolder());
       for (FilePath path : files) {
-        VirtualFile vf = VcsUtil.getVirtualFile(path.getIOFile());
-        if (untrackedFilesHolder != null && vf != null) {
-          untrackedFilesHolder.add(vf);
+        if (untrackedFilesHolder != null) {
+          untrackedFilesHolder.add(path);
         }
       }
     }

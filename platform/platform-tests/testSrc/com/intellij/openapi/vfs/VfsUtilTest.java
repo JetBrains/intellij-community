@@ -24,8 +24,8 @@ import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.RefreshSession;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.testFramework.EdtTestUtil;
-import com.intellij.testFramework.PlatformLiteFixture;
 import com.intellij.testFramework.HeavyPlatformTestCase;
+import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.TimeoutUtil;
@@ -301,7 +301,7 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
 
   @Test(timeout = 20_000)
   public void testScanNewChildrenMustNotBeRunOutsideOfProjectRoots() throws Exception {
-    checkNewDirAndRefresh(__->{}, getAllExcludedCalled->assertFalse(getAllExcludedCalled.get()));
+    checkNewDirAndRefresh(__-> {}, getAllExcludedCalled->assertFalse(getAllExcludedCalled.get()));
   }
 
   @Test(timeout = 20_000)
@@ -336,10 +336,9 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
         return super.getAllExcludedUrls();
       }
     };
-    ProjectManager old = ProjectManager.getInstance();
-    PlatformLiteFixture.registerComponentInstance(ApplicationManager.getApplication(), ProjectManager.class, test);
-    assertSame(test, ProjectManager.getInstance());
 
+    ServiceContainerUtil.replaceService(ApplicationManager.getApplication(), ProjectManager.class, test, test);
+    assertSame(test, ProjectManager.getInstance());
 
     try {
       final File temp = myTempDir.newFolder();
@@ -365,10 +364,6 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
       getAllExcludedCalledChecker.accept(getAllExcludedCalled);
     }
     finally {
-      if (old != null) {
-        PlatformLiteFixture.registerComponentInstance(ApplicationManager.getApplication(), ProjectManager.class, old);
-      }
-      assertSame(old, ProjectManager.getInstance());
       WriteAction.runAndWait(() -> Disposer.dispose(test));
     }
   }

@@ -85,27 +85,24 @@ public class FindUtil {
   }
 
   public static void configureFindModel(boolean replace, @Nullable Editor editor, FindModel model, boolean firstSearch) {
-    String stringToFind = firstSearch ? "" : model.getStringToFind();
     String selectedText = getSelectedText(editor);
+    boolean multiline = selectedText != null && selectedText.contains("\n");
+    String stringToFind = firstSearch || model.getStringToFind().contains("\n") ? "" : model.getStringToFind();
     boolean isSelectionUsed = false;
     if (!StringUtil.isEmpty(selectedText)) {
-      stringToFind = selectedText;
-      isSelectionUsed = true;
+      if (!multiline) {
+        stringToFind = selectedText;
+        isSelectionUsed = true;
+      }
     }
     model.setReplaceState(replace);
-    boolean multiline = stringToFind.contains("\n");
-    boolean isGlobal = true;
-    if (replace && multiline) {
-      isGlobal = false;
-      stringToFind = "";
-      multiline = false;
-    }
+    boolean isGlobal = !multiline;
     model.setStringToFind(isSelectionUsed
                           && model.isRegularExpressions()
                           && Registry.is("ide.find.escape.selected.text.for.regex")
                           ? StringUtil.escapeToRegexp(stringToFind)
                           : stringToFind);
-    model.setMultiline(multiline);
+    model.setMultiline(false);
     model.setGlobal(isGlobal);
     model.setPromptOnReplace(false);
   }
@@ -314,6 +311,9 @@ public class FindUtil {
   }
 
   static void findAllAndShow(@NotNull Project project, @NotNull PsiFile psiFile, @NotNull FindModel findModel) {
+    findModel.setCustomScope(true);
+    findModel.setProjectScope(false);
+    findModel.setCustomScopeName("File " + psiFile.getName());
     List<Usage> usages = findAll(project, psiFile, findModel);
     if (usages == null) return;
     final UsageTarget[] usageTargets = {new FindInProjectUtil.StringUsageTarget(project, findModel)};
@@ -938,7 +938,7 @@ public class FindUtil {
     PsiElement[] primary = sourceElement == null ? PsiElement.EMPTY_ARRAY : new PsiElement[]{sourceElement};
 
     SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(project);
-    SmartPsiElementPointer[] pointers = Stream.of(targets).map(smartPointerManager::createSmartPsiElementPointer).toArray(SmartPsiElementPointer[]::new);
+    SmartPsiElementPointer<?>[] pointers = Stream.of(targets).map(smartPointerManager::createSmartPsiElementPointer).toArray(SmartPsiElementPointer[]::new);
     // usage view will load document/AST so still referencing all these PSI elements might lead to out of memory
     //noinspection UnusedAssignment
     targets = PsiElement.EMPTY_ARRAY;

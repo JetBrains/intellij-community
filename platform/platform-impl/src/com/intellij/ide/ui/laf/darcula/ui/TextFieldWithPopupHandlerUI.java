@@ -201,7 +201,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
 
   @Override
   protected Caret createCaret() {
-    return Registry.is("ide.text.mouse.selection.new") ? new MouseDragAwareCaret() : new MarginAwareCaret();
+    return Registry.is("ide.text.mouse.selection.new", true) ? new MouseDragAwareCaret() : new MarginAwareCaret();
   }
 
   @Override
@@ -229,7 +229,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
 
   @Nullable
   public static AbstractAction getNewLineAction(Component c) {
-    if (!isSearchField(c) || !Registry.is("ide.find.show.add.newline.hint")) return null;
+    if (!isSearchField(c) || !Registry.is("ide.find.show.add.newline.hint", true)) return null;
     Object action = ((JTextField)c).getClientProperty("JTextField.Search.NewLineAction");
     return action instanceof AbstractAction ? (AbstractAction)action : null;
   }

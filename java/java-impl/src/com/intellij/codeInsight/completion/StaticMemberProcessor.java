@@ -44,7 +44,7 @@ public abstract class StaticMemberProcessor {
   public void processStaticMethodsGlobally(final PrefixMatcher matcher, Consumer<? super LookupElement> consumer) {
     final GlobalSearchScope scope = myPosition.getResolveScope();
     Collection<String> memberNames = JavaStaticMemberNameIndex.getInstance().getAllKeys(myProject);
-    for (final String memberName : CompletionUtil.sortMatching(matcher, memberNames)) {
+    for (final String memberName : matcher.sortMatching(memberNames)) {
       Set<PsiClass> classes = new THashSet<>();
       for (final PsiMember member : JavaStaticMemberNameIndex.getInstance().getStaticMembers(memberName, myProject, scope)) {
         if (isStaticallyImportable(member)) {

@@ -22,7 +22,6 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -112,14 +111,13 @@ public class PathsVerifier {
     }
   }
 
-  @CalledInAwt
-  public List<FilePatch> nonWriteActionPreCheck() {
+   List<FilePatch> nonWriteActionPreCheck() {
     List<FilePatch> failedToApply = new ArrayList<>();
     myDelayedPrecheckContext = new DelayedPrecheckContext(myProject);
     for (FilePatch patch : myPatches) {
       final CheckPath checker = getChecker(patch);
       if (!checker.canBeApplied(myDelayedPrecheckContext)) {
-        revert(checker.getErrorMessage());
+        PatchApplier.showError(myProject, checker.getErrorMessage());
         failedToApply.add(patch);
       }
     }
@@ -130,11 +128,11 @@ public class PathsVerifier {
     return failedToApply;
   }
 
-  public List<FilePatch> getSkipped() {
+  List<FilePatch> getSkipped() {
     return mySkipped;
   }
 
-  public List<FilePatch> execute() {
+  List<FilePatch> execute() {
     List<FilePatch> failedPatches = new ArrayList<>();
     try {
       final List<CheckPath> checkers = new ArrayList<>(myPatches.size());
@@ -145,12 +143,12 @@ public class PathsVerifier {
       for (CheckPath checker : checkers) {
         if (!checker.check()) {
           failedPatches.add(checker.getPatch());
-          revert(checker.getErrorMessage());
+          PatchApplier.showError(myProject, checker.getErrorMessage());
         }
       }
     }
     catch (IOException e) {
-      revert(e.getMessage());
+      PatchApplier.showError(myProject, e.getMessage());
     }
     myPatches.removeAll(failedPatches);
     return failedPatches;
@@ -215,6 +213,14 @@ public class PathsVerifier {
   private class CheckModified extends CheckDeleted {
     private CheckModified(final FilePatch path) {
       super(path);
+    }
+
+    @Override
+    protected boolean precheck(VirtualFile beforeFile, VirtualFile afterFile, DelayedPrecheckContext context) {
+      if (beforeFile == null) {
+        setErrorMessage(fileNotFoundMessage(myBeforeName));
+      }
+      return beforeFile != null;
     }
   }
 
@@ -407,50 +413,6 @@ public class PathsVerifier {
     return VcsBundle.message("cannot.apply.file.already.exists", path);
   }
 
-  private void revert(final String errorMessage) {
-    PatchApplier.showError(myProject, errorMessage);
-
-    // move back
-    /*for (MovedFileData movedFile : myMovedFiles) {
-      try {
-        final VirtualFile current = movedFile.getCurrent();
-        final VirtualFile newParent = current.getParent();
-        final VirtualFile file;
-        if (! Comparing.equal(newParent, movedFile.getOldParent())) {
-          file = moveFile(current, movedFile.getOldParent());
-        } else {
-          file = current;
-        }
-        if (! Comparing.equal(current.getName(), movedFile.getOldName())) {
-          file.rename(PatchApplier.class, movedFile.getOldName());
-        }
-      }
-      catch (IOException e) {
-        // ignore: revert as much as possible
-      }
-    }
-
-    // go back
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        for (int i = myCreatedDirectories.size() - 1; i >= 0; -- i) {
-          final VirtualFile file = myCreatedDirectories.get(i);
-          try {
-            file.delete(PatchApplier.class);
-          }
-          catch (IOException e) {
-            // ignore
-          }
-        }
-      }
-    });
-
-    myBinaryPatches.clear();
-    myTextPatches.clear();
-    myWritableFiles.clear();*/
-  }
-
-
   private static VirtualFile createFile(final VirtualFile parent, final String name) throws IOException {
     return parent.createChildData(PatchApplier.class, name);
     /*final Ref<IOException> ioExceptionRef = new Ref<IOException>();
@@ -534,12 +496,7 @@ public class PathsVerifier {
     final MovedFileData movedFile = myMovedFiles.get(file);
     if (movedFile != null) {
       myBeforePaths.add(VcsUtil.getFilePath(file));
-      ApplicationManager.getApplication().runWriteAction(new ThrowableComputable<VirtualFile, IOException>() {
-        @Override
-        public VirtualFile compute() throws IOException {
-          return movedFile.doMove();
-        }
-      });
+      ApplicationManager.getApplication().runWriteAction((ThrowableComputable<VirtualFile, IOException>)() -> movedFile.doMove());
     }
   }
 
@@ -629,24 +586,26 @@ public class PathsVerifier {
     // returns those to be skipped
     public Collection<FilePatch> doDelayed() {
       final List<FilePatch> result = new ArrayList<>();
-      if (! myOverrideExisting.isEmpty()) {
-        final String title = "Overwrite Existing Files";
-        List<FilePath> files = new ArrayList<>(myOverrideExisting.keySet());
-        Collection<FilePath> selected = AbstractVcsHelper.getInstance(myProject).selectFilePathsToProcess(
-          files, title,
-          "\nThe following files should be created by patch, but they already exist.\nDo you want to overwrite them?\n", title,
-          "The following file should be created by patch, but it already exists.\nDo you want to overwrite it?\n{0}",
-          VcsShowConfirmationOption.STATIC_SHOW_CONFIRMATION,
-          "Overwrite", "Cancel");
-        if (selected != null) {
-          for (FilePath path : selected) {
-            myOverrideExisting.remove(path);
+      if (!myOverrideExisting.isEmpty()) {
+        ApplicationManager.getApplication().invokeAndWait(() -> {
+          final String title = "Overwrite Existing Files";
+          List<FilePath> files = new ArrayList<>(myOverrideExisting.keySet());
+          Collection<FilePath> selected = AbstractVcsHelper.getInstance(myProject).selectFilePathsToProcess(
+            files, title,
+            "\nThe following files should be created by patch, but they already exist.\nDo you want to overwrite them?\n", title,
+            "The following file should be created by patch, but it already exists.\nDo you want to overwrite it?\n{0}",
+            VcsShowConfirmationOption.STATIC_SHOW_CONFIRMATION,
+            "Overwrite", "Cancel");
+          if (selected != null) {
+            for (FilePath path : selected) {
+              myOverrideExisting.remove(path);
+            }
           }
-        }
-        result.addAll(myOverrideExisting.values());
-        if (selected != null) {
-          myOverridenPaths.addAll(selected);
-        }
+          result.addAll(myOverrideExisting.values());
+          if (selected != null) {
+            myOverridenPaths.addAll(selected);
+          }
+        });
       }
       result.addAll(mySkipDeleted.values());
       return result;

@@ -131,16 +131,18 @@ public class MavenProjectImporter {
 
         if (projectsHaveChanges) {
           removeOutdatedCompilerConfigSettings();
+        }
+      });
 
-          for (MavenProject mavenProject : myAllProjects) {
-            Module module = myMavenProjectToModule.get(mavenProject);
-            if (module != null && module.isDisposed()) {
-              module = null;
-            }
+      MavenUtil.invokeAndWait(myProject, () -> {
+        for (MavenProject mavenProject : myAllProjects) {
+          Module module = myMavenProjectToModule.get(mavenProject);
+          if (module == null || module.isDisposed()) {
+            continue;
+          }
 
-            for (MavenModuleConfigurer configurer : MavenModuleConfigurer.getConfigurers()) {
-              configurer.configure(mavenProject, myProject, module);
-            }
+          for (MavenModuleConfigurer configurer : MavenModuleConfigurer.getConfigurers()) {
+            configurer.configure(mavenProject, myProject, module);
           }
         }
       });

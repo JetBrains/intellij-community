@@ -80,7 +80,7 @@ public class AssertWithSideEffectsInspection extends BaseInspection {
 
     @Override
     public void visitAssignmentExpression(PsiAssignmentExpression expression) {
-      sideEffectDescription = expression.getLExpression() + " " + expression.getOperationSign() + " ...";
+      sideEffectDescription = expression.getLExpression().getText() + " " + expression.getOperationSign().getText() + " ...";
       stopWalking();
     }
 

@@ -2,7 +2,11 @@
   <name>Ant</name>
   <id>AntSupport</id>
   <description><![CDATA[
-  Supports editing, maintaining and running <a href="http://ant.apache.org/">Ant</a> build scripts.
+  Provides integration with the <a href="http://ant.apache.org/">Ant</a> build tool.
+<ul><li>Dedicated tool window</li>
+<li>Coding assistance for build files</li>
+<li>Possibility to execute tasks</li></ul>
+To use the <b>Ant</b> tool window, select <b>View > Tool Windows > Ant Build</b>.
   ]]></description>
   <vendor>JetBrains</vendor>
 
@@ -78,9 +82,6 @@
 
     <applicationService serviceImplementation="com.intellij.lang.ant.config.impl.GlobalAntConfiguration"/>
   </extensions>
-
-  <application-components>
-  </application-components>
 
   <project-components>
     <component>

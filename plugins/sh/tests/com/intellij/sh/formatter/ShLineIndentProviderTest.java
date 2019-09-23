@@ -29,6 +29,7 @@ public class ShLineIndentProviderTest extends BasePlatformTestCase {
   public void testCaseEnd()               { doTest(); }
   public void testCasePattern()           { doTest(); }
   public void testIndentAtBeginOfFile()   { doTest(); }
+  public void testInternationalization()  { doTest(); }
 
   private void doTest() {
     String testName = getTestName(true);

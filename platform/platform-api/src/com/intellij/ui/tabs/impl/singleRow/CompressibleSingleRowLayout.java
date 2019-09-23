@@ -21,15 +21,13 @@ public class CompressibleSingleRowLayout extends SingleRowLayout {
   @Override
   protected void recomputeToLayout(SingleRowPassInfo data) {
     calculateRequiredLength(data);
-    data.firstGhostVisible = false;
-    data.lastGhostVisible = false;
   }
 
   @Override
-  protected void layoutLabelsAndGhosts(SingleRowPassInfo data) {
+  protected void layoutLabels(SingleRowPassInfo data) {
     if (myTabs.getPresentation().getTabsPosition() != JBTabsPosition.top
         && myTabs.getPresentation().getTabsPosition() != JBTabsPosition.bottom) {
-      super.layoutLabelsAndGhosts(data);
+      super.layoutLabels(data);
       return;
     }
 
@@ -66,7 +64,6 @@ public class CompressibleSingleRowLayout extends SingleRowLayout {
 
     for (Iterator<TabInfo> iterator = data.toLayout.iterator(); iterator.hasNext(); ) {
       final TabLabel label = myTabs.myInfo2Label.get(iterator.next());
-      label.setActionPanelVisible(true);
 
       int length;
       int lengthIncrement = label.getPreferredSize().width;
@@ -80,7 +77,7 @@ public class CompressibleSingleRowLayout extends SingleRowLayout {
         length = Math.max(lengthIncrement, actualGridSize);
       }
       spentLength += length + myTabs.getTabHGap();
-      applyTabLayout(data, label, length, 0);
+      applyTabLayout(data, label, length);
       data.position = (int)label.getBounds().getMaxX() + myTabs.getTabHGap();
     }
 
@@ -90,8 +87,8 @@ public class CompressibleSingleRowLayout extends SingleRowLayout {
   }
 
   @Override
-  protected boolean applyTabLayout(SingleRowPassInfo data, TabLabel label, int length, int deltaToFit) {
-    boolean result = super.applyTabLayout(data, label, length, deltaToFit);
+  protected boolean applyTabLayout(SingleRowPassInfo data, TabLabel label, int length) {
+    boolean result = super.applyTabLayout(data, label, length);
     label.setAlignmentToCenter(false);
     return result;
   }

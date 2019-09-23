@@ -184,10 +184,6 @@
     },
     {
       "key": "EditorTabs.hoverBackground",
-      "deprecated": true
-    },
-    {
-      "key": "EditorTabs.hoverMaskColor",
       "since": "2019.2",
       "description": "Transparent overlay on hover"
     },
@@ -751,7 +747,8 @@
       "since": "2019.2"
     },
     {
-      "key": "ToolWindow.HeaderTab.selectedBackground"
+      "key": "ToolWindow.HeaderTab.selectedBackground",
+      "deprecated": true
     },
     {
       "key": "ToolWindow.HeaderTab.selectedInactiveBackground"

@@ -25,20 +25,20 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-class UnifiedFragmentBuilder {
-  @NotNull private final List<? extends LineFragment> myFragments;
+public class UnifiedFragmentBuilder {
+  @NotNull protected final List<? extends LineFragment> myFragments;
   @NotNull private final Document myDocument1;
   @NotNull private final Document myDocument2;
   @NotNull private final Side myMasterSide;
 
   @NotNull private final StringBuilder myBuilder = new StringBuilder();
-  @NotNull private final List<ChangedBlock> myBlocks = new ArrayList<>();
+  @NotNull private final List<UnifiedDiffChange> myChanges = new ArrayList<>();
   @NotNull private final List<HighlightRange> myRanges = new ArrayList<>();
   @NotNull private final LineNumberConvertor.Builder myConvertor1 = new LineNumberConvertor.Builder();
   @NotNull private final LineNumberConvertor.Builder myConvertor2 = new LineNumberConvertor.Builder();
   @NotNull private final List<LineRange> myChangedLines = new ArrayList<>();
 
-  UnifiedFragmentBuilder(@NotNull List<? extends LineFragment> fragments,
+  public UnifiedFragmentBuilder(@NotNull List<? extends LineFragment> fragments,
                                 @NotNull Document document1,
                                 @NotNull Document document2,
                                 @NotNull Side masterSide) {
@@ -47,8 +47,6 @@ class UnifiedFragmentBuilder {
     myDocument2 = document2;
     myMasterSide = masterSide;
   }
-
-  private boolean myEqual = false;
 
   private int lastProcessedLine1 = -1;
   private int lastProcessedLine2 = -1;
@@ -59,18 +57,20 @@ class UnifiedFragmentBuilder {
     return myMasterSide;
   }
 
-  public void exec() {
+  public UnifiedFragmentBuilder exec() {
     if (myFragments.isEmpty()) {
-      myEqual = true;
       appendTextMaster(0, 0, getLineCount(myDocument1) - 1, getLineCount(myDocument2) - 1);
-      return;
+      return this;
     }
 
-    for (LineFragment fragment : myFragments) {
+    for (int i = 0; i < myFragments.size(); i++) {
+      LineFragment fragment = myFragments.get(i);
       processEquals(fragment.getStartLine1() - 1, fragment.getStartLine2() - 1);
-      processChanged(fragment);
+      processChanged(fragment, i);
     }
     processEquals(getLineCount(myDocument1) - 1, getLineCount(myDocument2) - 1);
+
+    return this;
   }
 
   private void processEquals(int endLine1, int endLine2) {
@@ -80,8 +80,7 @@ class UnifiedFragmentBuilder {
     appendTextMaster(startLine1, startLine2, endLine1, endLine2);
   }
 
-  @SuppressWarnings("UnnecessaryLocalVariable")
-  private void processChanged(@NotNull LineFragment fragment) {
+  private void processChanged(@NotNull LineFragment fragment, int fragmentIndex) {
     int startLine1 = fragment.getStartLine1();
     int endLine1 = fragment.getEndLine1() - 1;
     int lines1 = endLine1 - startLine1;
@@ -96,7 +95,7 @@ class UnifiedFragmentBuilder {
     if (lines1 >= 0) {
       int startOffset1 = myDocument1.getLineStartOffset(startLine1);
       int endOffset1 = myDocument1.getLineEndOffset(endLine1);
-      appendTextSide(Side.LEFT, startOffset1, endOffset1, lines1, lines2, startLine1, -1);
+      appendText(Side.LEFT, startOffset1, endOffset1, lines1, lines2, startLine1, -1);
     }
 
     int linesBetween = totalLines;
@@ -104,22 +103,27 @@ class UnifiedFragmentBuilder {
     if (lines2 >= 0) {
       int startOffset2 = myDocument2.getLineStartOffset(startLine2);
       int endOffset2 = myDocument2.getLineEndOffset(endLine2);
-      appendTextSide(Side.RIGHT, startOffset2, endOffset2, lines2, lines2, -1, startLine2);
+      appendText(Side.RIGHT, startOffset2, endOffset2, lines2, lines2, -1, startLine2);
     }
 
     linesAfter = totalLines;
 
-    int blockStartLine1 = linesBefore;
-    int blockEndLine1 = linesBetween;
-    int blockStartLine2 = linesBetween;
-    int blockEndLine2 = linesAfter;
-
-    myBlocks.add(new ChangedBlock(new LineRange(blockStartLine1, blockEndLine1),
-                                  new LineRange(blockStartLine2, blockEndLine2),
-                                  fragment));
+    UnifiedDiffChange change = createDiffChange(linesBefore, linesBetween, linesAfter, fragmentIndex);
+    myChanges.add(change);
+    if (!change.isSkipped()) {
+      myChangedLines.add(new LineRange(linesBefore, linesAfter));
+    }
 
     lastProcessedLine1 = endLine1;
     lastProcessedLine2 = endLine2;
+  }
+
+  @NotNull
+  protected UnifiedDiffChange createDiffChange(int blockStart,
+                                               int insertedStart,
+                                               int blockEnd,
+                                               int fragmentIndex) {
+    return new UnifiedDiffChange(blockStart, insertedStart, blockEnd, myFragments.get(fragmentIndex));
   }
 
   private void appendTextMaster(int startLine1, int startLine2, int endLine1, int endLine2) {
@@ -134,14 +138,6 @@ class UnifiedFragmentBuilder {
 
       appendText(myMasterSide, startOffset, endOffset, lines1, lines2, startLine1, startLine2);
     }
-  }
-
-  private void appendTextSide(@NotNull Side side, int offset1, int offset2, int lines1, int lines2, int startLine1, int startLine2) {
-    int linesBefore = totalLines;
-    appendText(side, offset1, offset2, lines1, lines2, startLine1, startLine2);
-    int linesAfter = totalLines;
-
-    if (linesBefore != linesAfter) myChangedLines.add(new LineRange(linesBefore, linesAfter));
   }
 
   private void appendText(@NotNull Side side, int offset1, int offset2, int lines1, int lines2, int startLine1, int startLine2) {
@@ -179,19 +175,14 @@ class UnifiedFragmentBuilder {
   // Result
   //
 
-
-  public boolean isEqual() {
-    return myEqual;
-  }
-
   @NotNull
   public CharSequence getText() {
     return myBuilder;
   }
 
   @NotNull
-  public List<ChangedBlock> getBlocks() {
-    return myBlocks;
+  public List<UnifiedDiffChange> getChanges() {
+    return myChanges;
   }
 
   @NotNull

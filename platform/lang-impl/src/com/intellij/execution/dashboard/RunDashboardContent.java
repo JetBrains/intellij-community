@@ -17,9 +17,14 @@ package com.intellij.execution.dashboard;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.actions.StopAction;
-import com.intellij.execution.dashboard.tree.*;
+import com.intellij.execution.dashboard.actions.RunDashboardFilterActionGroup;
+import com.intellij.execution.dashboard.tree.RunDashboardGrouper;
+import com.intellij.execution.dashboard.tree.RunDashboardTreeCellRenderer;
+import com.intellij.execution.dashboard.tree.RunDashboardTreeModel;
+import com.intellij.execution.dashboard.tree.RunDashboardTreeStructure;
 import com.intellij.execution.runners.FakeRerunAction;
 import com.intellij.execution.services.ServiceViewTreeLinkMouseListener;
+import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManagerImpl;
 import com.intellij.execution.ui.layout.impl.RunnerLayoutUiImpl;
 import com.intellij.icons.AllIcons;
@@ -38,12 +43,13 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.pom.Navigatable;
+import com.intellij.psi.PsiElement;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.content.*;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.PsiNavigateUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeModelAdapter;
@@ -60,8 +66,8 @@ import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
 
+import static com.intellij.execution.dashboard.RunDashboardManagerImpl.findActionToolbar;
 import static com.intellij.execution.dashboard.RunDashboardManagerImpl.getRunnerLayoutUi;
-import static com.intellij.execution.dashboard.RunDashboardRunConfigurationStatus.*;
 import static com.intellij.ui.AnimatedIcon.ANIMATION_IN_RENDERER_ALLOWED;
 
 /**
@@ -90,7 +96,6 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
   private AbstractTreeNode<?> myLastSelection;
   private final Set<Object> myCollapsedTreeNodeValues = new HashSet<>();
   private final List<? extends RunDashboardGrouper> myGroupers;
-  private final RunDashboardStatusFilter myStatusFilter = new RunDashboardStatusFilter();
 
   @NotNull private final ContentManager myContentManager;
   @NotNull private final ContentManagerListener myContentManagerListener;
@@ -221,9 +226,9 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
         if (myLastSelection instanceof RunDashboardRunConfigurationNode && myLastSelection.getChildren().isEmpty()) {
           RunDashboardRunConfigurationNode node = (RunDashboardRunConfigurationNode)myLastSelection;
           for (RunDashboardCustomizer customizer : node.getCustomizers()) {
-            Navigatable navigatable = customizer.getNavigatable(node);
-            if (navigatable != null && navigatable.canNavigateToSource()) {
-              navigatable.navigate(true);
+            PsiElement psiElement = customizer.getPsiElement(node);
+            if (psiElement != null) {
+              PsiNavigateUtil.navigate(psiElement, true);
               return true;
             }
           }
@@ -326,10 +331,20 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
   }
 
   private void onContentAdded(Content content) {
-    RunnerLayoutUiImpl ui = getRunnerLayoutUi(RunContentManagerImpl.getRunContentDescriptorByContent(content));
-    if (ui == null) return;
+    List<AnAction> leftToolbarActions = null;
+    RunContentDescriptor descriptor = RunContentManagerImpl.getRunContentDescriptorByContent(content);
+    RunnerLayoutUiImpl ui = getRunnerLayoutUi(descriptor);
+    if (ui != null) {
+      leftToolbarActions = ui.getActions();
+    }
+    else {
+      ActionToolbar toolbar = findActionToolbar(descriptor);
+      if (toolbar != null) {
+        leftToolbarActions = toolbar.getActions();
+      }
+    }
+    if (leftToolbarActions == null) return;
 
-    List<AnAction> leftToolbarActions = ui.getActions();
     myContentActions.put(content, leftToolbarActions);
     updateContentToolbar(content);
   }
@@ -372,7 +387,7 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
   }
 
   private void setupBuilder() {
-    RunDashboardTreeStructure structure = new RunDashboardTreeStructure(myProject, myGroupers, ContainerUtil.newSmartList(myStatusFilter));
+    RunDashboardTreeStructure structure = new RunDashboardTreeStructure(myProject, myGroupers);
     myBuilder = new AbstractTreeBuilder(myTree, myTreeModel, structure, IndexComparator.INSTANCE) {
       // unique class to simplify search through the logs
       @Override
@@ -555,30 +570,14 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
     }
   }
 
-  private class StatusActionGroup extends DefaultActionGroup implements CheckedActionGroup {
+  private static class StatusActionGroup extends RunDashboardFilterActionGroup {
     StatusActionGroup() {
       super(ExecutionBundle.message("run.dashboard.filter.by.status.action.name"), true);
       getTemplatePresentation().setIcon(AllIcons.General.Filter);
+    }
 
-      for (final RunDashboardRunConfigurationStatus status : new RunDashboardRunConfigurationStatus[]{STARTED, FAILED, STOPPED, CONFIGURED}) {
-        add(new ToggleAction(status.getName()) {
-          @Override
-          public boolean isSelected(@NotNull AnActionEvent e) {
-            return myStatusFilter.isVisible(status);
-          }
-
-          @Override
-          public void setSelected(@NotNull AnActionEvent e, boolean state) {
-            if (state) {
-              myStatusFilter.show(status);
-            }
-            else {
-              myStatusFilter.hide(status);
-            }
-            updateContent(true);
-          }
-        });
-      }
+    @Override
+    public void update(@NotNull AnActionEvent e) {
     }
   }
 }

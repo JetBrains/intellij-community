@@ -10,6 +10,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.IconUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -204,11 +205,10 @@ public abstract class SdkType implements SdkTypeId {
 
   @NotNull
   public static SdkType[] getAllTypes() {
-    List<SdkType> allTypes = new ArrayList<>();
     //noinspection deprecation
-    Collections.addAll(allTypes, ApplicationManager.getApplication().getComponents(SdkType.class));
-    allTypes.addAll(EP_NAME.getExtensionList());
-    return allTypes.toArray(new SdkType[0]);
+    SdkType[] components = ApplicationManager.getApplication().getComponents(SdkType.class);
+    List<SdkType> list1 = components.length == 0 ? Collections.emptyList() : Arrays.asList(components);
+    return ContainerUtil.concat(list1, EP_NAME.getExtensionList()).toArray(new SdkType[0]);
   }
 
   @NotNull

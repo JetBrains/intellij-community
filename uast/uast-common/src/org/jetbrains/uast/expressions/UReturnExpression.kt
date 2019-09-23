@@ -10,7 +10,7 @@ import org.jetbrains.uast.visitor.UastVisitor
 /**
  * Represents a `return` expression.
  */
-interface UReturnExpression : UExpression {
+interface UReturnExpression : UJumpExpression {
   /**
    * Returns the `return` value.
    */
@@ -29,4 +29,13 @@ interface UReturnExpression : UExpression {
   override fun asRenderString(): String = returnExpression.let { if (it == null) "return" else "return " + it.asRenderString() }
 
   override fun asLogString(): String = log()
+
+  @JvmDefault
+  override val label: String?
+    get() = null
+
+  @JvmDefault
+  override val jumpTarget: UElement? get() =
+    generateSequence(uastParent) { it.uastParent }
+      .find { it is ULambdaExpression || it is UMethod }
 }

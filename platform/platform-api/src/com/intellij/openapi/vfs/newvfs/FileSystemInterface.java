@@ -20,12 +20,15 @@
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Arrays;
+import java.util.stream.Stream;
 
 public interface FileSystemInterface {
   // default values for missing files (same as in corresponding java.io.File methods)
@@ -36,6 +39,19 @@ public interface FileSystemInterface {
 
   @NotNull
   String[] list(@NotNull VirtualFile file);
+
+  /**
+   * @param file to get children for
+   * @return List of all children of the given <code>file</code> if it represents a directory.
+   * Each entry in the returned <code>Stream</code> represents basename of the file or
+   * directory without the path prefix. <code>Stream.empty()</code> is returned if
+   * <code>file</code> has no children.
+   */
+  @ApiStatus.Experimental
+  @NotNull
+  default Stream<String> listStream(@NotNull VirtualFile file) {
+    return Arrays.stream(list(file));
+  }
 
   boolean isDirectory(@NotNull VirtualFile file);
 

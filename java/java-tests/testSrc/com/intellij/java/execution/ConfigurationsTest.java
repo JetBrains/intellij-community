@@ -44,7 +44,7 @@ import com.intellij.project.IntelliJProjectConfiguration;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.rt.ant.execution.SegmentedOutputStream;
-import com.intellij.rt.execution.junit.JUnitStarter;
+import com.intellij.rt.junit.JUnitStarter;
 import com.intellij.testFramework.CompilerTester;
 import com.intellij.testFramework.MapDataContext;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -53,7 +53,6 @@ import com.intellij.ui.EditorTextFieldWithBrowseButton;
 import com.intellij.util.Assertion;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.ContainerUtilRt;
 import junit.framework.TestCase;
 import org.jdom.Element;
 
@@ -84,7 +83,7 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
     Module module1 = getModule1();
     PsiClass psiClass = findTestA(module1);
     JUnitConfiguration configuration = createConfiguration(psiClass);
-    assertEquals(Collections.singleton(module1), ContainerUtilRt.newHashSet(configuration.getModules()));
+    assertEquals(Collections.singleton(module1), new HashSet<>(Arrays.asList(configuration.getModules())));
     checkClassName(psiClass.getQualifiedName(), configuration);
     assertEquals(psiClass.getName(), configuration.getName());
     checkTestObject(JUnitConfiguration.TEST_CLASS, configuration);
@@ -129,7 +128,7 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
       assertTrue(configurable.isModified());
       configurable.apply();
       assertFalse(configurable.isModified());
-      assertEquals(Collections.singleton(module1), ContainerUtilRt.newHashSet(configuration.getModules()));
+      assertEquals(Collections.singleton(module1), new HashSet<>(Arrays.asList(configuration.getModules())));
     }
     finally {
       Disposer.dispose(editor);

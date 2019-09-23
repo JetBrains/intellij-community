@@ -470,9 +470,12 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
           !EquivalenceChecker.getCanonicalPsiEquivalence().typesAreEquivalent(qualifier.getType(), parentCall.getType())) {
         return null;
       }
-      if ("get".equals(call.getMethodExpression().getReferenceName())) {
+      String name = call.getMethodExpression().getReferenceName();
+      if ("get".equals(name)) {
         SpecialFieldValue fact = CommonDataflow.getExpressionFact(qualifier, DfaFactType.SPECIAL_FIELD_VALUE);
         if (DfaFactType.NULLABILITY.fromDfaValue(SpecialField.OPTIONAL_VALUE.extract(fact)) != DfaNullability.NOT_NULL) return null;
+      } else if ("orElse".equals(name)) {
+        if (!ExpressionUtils.isNullLiteral(call.getArgumentList().getExpressions()[0])) return null;
       }
       return new Context(qualifier, parentCall);
     }
@@ -490,7 +493,7 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
       if (myType == Type.OptionalGet) {
         return OPTIONAL_GET;
       }
-      return OPTIONAL_OR_ELSE_OR_ELSE_GET;
+      return OPTIONAL_OR_ELSE;
     }
 
     private static class Context {

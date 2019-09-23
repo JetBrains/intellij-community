@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.gpp;
 
 import com.intellij.psi.PsiClass;
@@ -19,6 +19,7 @@ import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter;
 import java.util.List;
 
 import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil.canAssign;
+import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isInMethodCallContext;
 
 /**
  * @author peter
@@ -26,16 +27,16 @@ import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.
 public class GppTypeConverter extends GrTypeConverter {
 
   @Override
-  public boolean isApplicableTo(@NotNull ApplicableTo position) {
-    return position == ApplicableTo.ASSIGNMENT;
+  public boolean isApplicableTo(@NotNull Position position) {
+    return position == Position.ASSIGNMENT;
   }
 
   @Nullable
   @Override
-  public ConversionResult isConvertibleEx(@NotNull PsiType targetType,
-                                          @NotNull PsiType actualType,
-                                          @NotNull GroovyPsiElement context,
-                                          @NotNull ApplicableTo currentPosition) {
+  public ConversionResult isConvertible(@NotNull PsiType targetType,
+                                        @NotNull PsiType actualType,
+                                        @NotNull Position position,
+                                        @NotNull GroovyPsiElement context) {
     if (context instanceof GrListOrMap &&
         context.getReference() instanceof LiteralConstructorReference &&
         ((LiteralConstructorReference)context.getReference()).getConstructedClassType() != null) return null;
@@ -44,12 +45,12 @@ public class GppTypeConverter extends GrTypeConverter {
       final GrTupleType tupleType = (GrTupleType)actualType;
 
       final PsiType expectedComponent = PsiUtil.extractIterableTypeParameter(targetType, false);
-      if (expectedComponent != null && isMethodCallConversion(context)) {
+      if (expectedComponent != null && isInMethodCallContext(context)) {
         PsiType[] parameters = tupleType.getParameters();
         if (parameters.length == 1) {
           PsiType tupleComponent = parameters[0];
           if (tupleComponent != null &&
-              canAssign(expectedComponent, tupleComponent, context, ApplicableTo.ASSIGNMENT) == ConversionResult.OK &&
+              canAssign(expectedComponent, tupleComponent, context, Position.ASSIGNMENT) == ConversionResult.OK &&
               hasDefaultConstructor(targetType)) {
             return ConversionResult.OK;
           }
@@ -71,7 +72,5 @@ public class GppTypeConverter extends GrTypeConverter {
   public static boolean hasDefaultConstructor(PsiType type) {
     final PsiClass psiClass = PsiUtil.resolveClassInType(type);
     return psiClass != null && PsiUtil.hasDefaultConstructor(psiClass, true, true);
-
   }
-
 }

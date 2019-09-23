@@ -27,8 +27,11 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiMethod;
 import com.intellij.ui.PopupHandler;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -38,6 +41,15 @@ import java.util.Map;
 public class CallHierarchyBrowser extends CallHierarchyBrowserBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.hierarchy.call.CallHierarchyBrowser");
 
+  public CallHierarchyBrowser(@NotNull Project project, @NotNull PsiMember method) {
+    super(project, method);
+  }
+  
+  /**
+   * @deprecated use CallHierarchyBrowser#CallHierarchyBrowser(Project, PsiMember)
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
   public CallHierarchyBrowser(@NotNull Project project, @NotNull PsiMethod method) {
     super(project, method);
   }
@@ -78,17 +90,17 @@ public class CallHierarchyBrowser extends CallHierarchyBrowserBase {
   }
 
   @Override
-  protected boolean isApplicableElement(@NotNull final PsiElement element) {
-    return element instanceof PsiMethod;
+  protected boolean isApplicableElement(@NotNull PsiElement e) {
+    return e instanceof PsiMethod || e instanceof PsiField;
   }
 
   @Override
   protected HierarchyTreeStructure createHierarchyTreeStructure(@NotNull final String typeName, @NotNull final PsiElement psiElement) {
     if (CALLER_TYPE.equals(typeName)) {
-      return new CallerMethodsTreeStructure(myProject, (PsiMethod)psiElement, getCurrentScopeType());
+      return new CallerMethodsTreeStructure(myProject, (PsiMember)psiElement, getCurrentScopeType());
     }
-    else if (CALLEE_TYPE.equals(typeName)) {
-      return new CalleeMethodsTreeStructure(myProject, (PsiMethod)psiElement, getCurrentScopeType());
+    if (CALLEE_TYPE.equals(typeName)) {
+      return new CalleeMethodsTreeStructure(myProject, (PsiMember)psiElement, getCurrentScopeType());
     }
     else {
       LOG.error("unexpected type: " + typeName);

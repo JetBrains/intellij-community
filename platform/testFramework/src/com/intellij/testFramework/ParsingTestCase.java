@@ -9,8 +9,12 @@ import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.mock.*;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.extensions.DefaultPluginDescriptor;
+import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
+import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
@@ -20,8 +24,8 @@ import com.intellij.openapi.options.SchemeManagerFactory;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.LineColumn;
@@ -37,24 +41,25 @@ import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.CachedValuesManagerImpl;
+import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
-import org.picocontainer.*;
-import org.picocontainer.defaults.AbstractComponentAdapter;
+import org.picocontainer.ComponentAdapter;
+import org.picocontainer.MutablePicoContainer;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Set;
-
-import static java.util.Objects.requireNonNull;
+import java.util.*;
 
 /** @noinspection JUnitTestCaseWithNonTrivialConstructors*/
-public abstract class ParsingTestCase extends PlatformLiteFixture {
+public abstract class ParsingTestCase extends UsefulTestCase {
+  private PluginDescriptor myPluginDescriptor;
+
+  private MockApplication myApp;
+  protected MockProjectEx myProject;
+
   protected String myFilePrefix = "";
   protected String myFileExt;
   protected final String myFullDataPath;
@@ -64,6 +69,7 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
   protected Language myLanguage;
   private final ParserDefinition[] myDefinitions;
   private final boolean myLowercaseFirstLetter;
+  private ExtensionPointImpl<KeyedLazyInstance<ParserDefinition>> myLangParserDefinition;
 
   protected ParsingTestCase(@NotNull String dataPath, @NotNull String fileExt, @NotNull ParserDefinition... definitions) {
     this(dataPath, fileExt, false, definitions);
@@ -76,49 +82,52 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
     myLowercaseFirstLetter = lowercaseFirstLetter;
   }
 
+  @NotNull
+  protected MockApplication getApplication() {
+    return myApp;
+  }
+
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    initApplication();
-    ComponentAdapter component = getApplication().getPicoContainer().getComponentAdapter(ProgressManager.class.getName());
-    if (component == null) {
-      getApplication().getPicoContainer().registerComponent(new AbstractComponentAdapter(ProgressManager.class.getName(), Object.class) {
-        @Override
-        public Object getComponentInstance(PicoContainer container) throws PicoInitializationException, PicoIntrospectionException {
-          return new ProgressManagerImpl();
-        }
 
-        @Override
-        public void verify(PicoContainer container) throws PicoIntrospectionException { }
-      });
+    MockApplication app = MockApplication.setUp(getTestRootDisposable());
+    myApp = app;
+    MutablePicoContainer appContainer = app.getPicoContainer();
+    ComponentAdapter component = appContainer.getComponentAdapter(ProgressManager.class.getName());
+    if (component == null) {
+      appContainer.registerComponentInstance(ProgressManager.class.getName(), new ProgressManagerImpl());
     }
-    Extensions.registerAreaClass("IDEA_PROJECT", null);
+
     myProject = new MockProjectEx(getTestRootDisposable());
     myPsiManager = new MockPsiManager(myProject);
     myFileFactory = new PsiFileFactoryImpl(myPsiManager);
-    MutablePicoContainer appContainer = getApplication().getPicoContainer();
-    registerComponentInstance(appContainer, MessageBus.class, getApplication().getMessageBus());
-    registerComponentInstance(appContainer, SchemeManagerFactory.class, new MockSchemeManagerFactory());
+    appContainer.registerComponentInstance(MessageBus.class, app.getMessageBus());
+    appContainer.registerComponentInstance(SchemeManagerFactory.class, new MockSchemeManagerFactory());
     MockEditorFactory editorFactory = new MockEditorFactory();
-    registerComponentInstance(appContainer, EditorFactory.class, editorFactory);
-    registerComponentInstance(appContainer, FileDocumentManager.class, new MockFileDocumentManagerImpl(
-      charSequence -> editorFactory.createDocument(charSequence), FileDocumentManagerImpl.HARD_REF_TO_DOCUMENT_KEY));
-    registerComponentInstance(appContainer, PsiDocumentManager.class, new MockPsiDocumentManager());
+    appContainer.registerComponentInstance(EditorFactory.class, editorFactory);
+    app.registerService(FileDocumentManager.class, new MockFileDocumentManagerImpl(charSequence -> {
+      return editorFactory.createDocument(charSequence);
+    }, FileDocumentManagerImpl.HARD_REF_TO_DOCUMENT_KEY));
 
-    registerApplicationService(PsiBuilderFactory.class, new PsiBuilderFactoryImpl());
-    registerApplicationService(DefaultASTFactory.class, new DefaultASTFactoryImpl());
-    registerApplicationService(ReferenceProvidersRegistry.class, new ReferenceProvidersRegistryImpl());
-    myProject.registerService(CachedValuesManager.class, new CachedValuesManagerImpl(myProject, new PsiCachedValuesFactory(myPsiManager)));
+    app.registerService(PsiBuilderFactory.class, new PsiBuilderFactoryImpl());
+    app.registerService(DefaultASTFactory.class, new DefaultASTFactoryImpl());
+    app.registerService(ReferenceProvidersRegistry.class, new ReferenceProvidersRegistryImpl());
+    myProject.registerService(PsiDocumentManager.class, new MockPsiDocumentManager());
     myProject.registerService(PsiManager.class, myPsiManager);
+    myProject.registerService(CachedValuesManager.class, new CachedValuesManagerImpl(myProject, new PsiCachedValuesFactory(myProject)));
     myProject.registerService(StartupManager.class, new StartupManagerImpl(myProject));
-    registerExtensionPoint(FileTypeFactory.FILE_TYPE_FACTORY_EP, FileTypeFactory.class);
-    registerExtensionPoint(MetaLanguage.EP_NAME, MetaLanguage.class);
+    registerExtensionPoint(app.getExtensionArea(), FileTypeFactory.FILE_TYPE_FACTORY_EP, FileTypeFactory.class);
+    registerExtensionPoint(app.getExtensionArea(), MetaLanguage.EP_NAME, MetaLanguage.class);
 
-    for (ParserDefinition definition : myDefinitions) {
-      addExplicitExtension(LanguageParserDefinitions.INSTANCE, definition.getFileNodeType().getLanguage(), definition);
-    }
+    myLangParserDefinition = app.getExtensionArea().registerFakeBeanPoint(LanguageParserDefinitions.INSTANCE.getName(), getPluginDescriptor());
+
     if (myDefinitions.length > 0) {
       configureFromParserDefinition(myDefinitions[0], myFileExt);
+      // first definition is registered by configureFromParserDefinition
+      for (int i = 1, length = myDefinitions.length; i < length; i++) {
+        registerParserDefinition(myDefinitions[i]);
+      }
     }
 
     // That's for reparse routines
@@ -127,22 +136,84 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
     new TreeAspect(pomModel);
   }
 
-  public void configureFromParserDefinition(ParserDefinition definition, String extension) {
+  protected final void registerParserDefinition(@NotNull ParserDefinition definition) {
+    final Language language = definition.getFileNodeType().getLanguage();
+    myLangParserDefinition.registerExtension(new KeyedLazyInstance<ParserDefinition>() {
+      @Override
+      public String getKey() {
+        return language.getID();
+      }
+
+      @NotNull
+      @Override
+      public ParserDefinition getInstance() {
+        return definition;
+      }
+    });
+    LanguageParserDefinitions.INSTANCE.clearCache(language);
+    disposeOnTearDown(() -> LanguageParserDefinitions.INSTANCE.clearCache(language));
+  }
+
+  public void configureFromParserDefinition(@NotNull ParserDefinition definition, String extension) {
     myLanguage = definition.getFileNodeType().getLanguage();
     myFileExt = extension;
-    addExplicitExtension(LanguageParserDefinitions.INSTANCE, myLanguage, definition);
-    registerComponentInstance(getApplication().getPicoContainer(), FileTypeManager.class,
-                              new MockFileTypeManager(new MockLanguageFileType(myLanguage, myFileExt)));
+    registerParserDefinition(definition);
+    myApp.registerService(FileTypeManager.class, new MockFileTypeManager(new MockLanguageFileType(myLanguage, myFileExt)));
   }
 
-  protected <T> void addExplicitExtension(LanguageExtension<T> instance, Language language, T object) {
-    instance.addExplicitExtension(language, object, myProject);
+  protected final <T> void registerExtension(@NotNull ExtensionPointName<T> name, @NotNull T extension) {
+    //noinspection unchecked
+    registerExtensions(name, (Class<T>)extension.getClass(), Collections.singletonList(extension));
   }
 
-  @Override
-  protected <T> void registerExtensionPoint(@NotNull ExtensionPointName<T> extensionPointName, @NotNull Class<T> aClass) {
-    super.registerExtensionPoint(extensionPointName, aClass);
-    Disposer.register(getTestRootDisposable(), () -> Extensions.getRootArea().unregisterExtensionPoint(extensionPointName.getName()));
+  protected final <T> void registerExtensions(@NotNull ExtensionPointName<T> name, @NotNull Class<T> extensionClass, @NotNull List<T> extensions) {
+    ExtensionsAreaImpl area = myApp.getExtensionArea();
+    ExtensionPoint<T> point = area.getExtensionPointIfRegistered(name.getName());
+    if (point == null) {
+      point = registerExtensionPoint(area, name, extensionClass);
+    }
+
+    for (T extension : extensions) {
+      // no need to specify disposable because ParsingTestCase in any case clean area for each test
+      //noinspection deprecation
+      point.registerExtension(extension);
+    }
+  }
+
+  protected final <T> void addExplicitExtension(@NotNull LanguageExtension<T> collector, @NotNull Language language, @NotNull T object) {
+    ExtensionsAreaImpl area = myApp.getExtensionArea();
+    if (!area.hasExtensionPoint(collector.getName())) {
+      area.registerFakeBeanPoint(collector.getName(), getPluginDescriptor());
+    }
+    ExtensionTestUtil.addExtension(area, collector, language, object);
+  }
+
+  protected final <T> void registerExtensionPoint(@NotNull ExtensionPointName<T> extensionPointName, @NotNull Class<T> aClass) {
+    registerExtensionPoint(myApp.getExtensionArea(), extensionPointName, aClass);
+  }
+
+  protected <T> ExtensionPointImpl<T> registerExtensionPoint(@NotNull ExtensionsAreaImpl extensionArea,
+                                                             @NotNull ExtensionPointName<T> extensionPointName,
+                                                             @NotNull Class<T> extensionClass) {
+    // todo get rid of it - registerExtensionPoint should be not called several times
+    String name = extensionPointName.getName();
+    if (extensionArea.hasExtensionPoint(name)) {
+      return extensionArea.getExtensionPoint(name);
+    }
+    else {
+      return extensionArea.registerPoint(name, extensionClass, getPluginDescriptor());
+    }
+  }
+
+  @NotNull
+  // easy debug of not disposed extension
+  private PluginDescriptor getPluginDescriptor() {
+    PluginDescriptor pluginDescriptor = myPluginDescriptor;
+    if (pluginDescriptor == null) {
+      pluginDescriptor = new DefaultPluginDescriptor(getClass().getName() + "." + getName());
+      myPluginDescriptor = pluginDescriptor;
+    }
+    return pluginDescriptor;
   }
 
   @NotNull
@@ -226,7 +297,7 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
       ensureParsed(myFile);
       assertEquals("light virtual file text mismatch", text, ((LightVirtualFile)myFile.getVirtualFile()).getContent().toString());
       assertEquals("virtual file text mismatch", text, LoadTextUtil.loadText(myFile.getVirtualFile()));
-      assertEquals("doc text mismatch", text, requireNonNull(myFile.getViewProvider().getDocument()).getText());
+      assertEquals("doc text mismatch", text, Objects.requireNonNull(myFile.getViewProvider().getDocument()).getText());
       assertEquals("psi text mismatch", text, myFile.getText());
       ensureCorrectReparse(myFile);
       if (checkResult) {
@@ -369,7 +440,7 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
 
     DebugUtil.performPsiModification("ensureCorrectReparse", () -> {
                                        final String fileText = file.getText();
-                                       final DiffLog diffLog = new BlockSupportImpl(file.getProject()).reparseRange(
+                                       final DiffLog diffLog = new BlockSupportImpl().reparseRange(
                                          file, file.getNode(), TextRange.allOf(fileText), fileText, new EmptyProgressIndicator(), fileText);
                                        diffLog.performActualPsiChange(file);
                                      });
@@ -378,9 +449,10 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
   }
 
   public void registerMockInjectedLanguageManager() {
-    registerExtensionPoint(Extensions.getArea(myProject), MultiHostInjector.MULTIHOST_INJECTOR_EP_NAME, MultiHostInjector.class);
+    registerExtensionPoint(myProject.getExtensionArea(), MultiHostInjector.MULTIHOST_INJECTOR_EP_NAME, MultiHostInjector.class);
 
-    registerExtensionPoint(LanguageInjector.EXTENSION_POINT_NAME, LanguageInjector.class);
-    myProject.registerService(InjectedLanguageManager.class, new InjectedLanguageManagerImpl(myProject, new MockDumbService(myProject)));
+    registerExtensionPoint(myApp.getExtensionArea(), LanguageInjector.EXTENSION_POINT_NAME, LanguageInjector.class);
+    myProject.registerService(DumbService.class, new MockDumbService(myProject));
+    myProject.registerService(InjectedLanguageManager.class, new InjectedLanguageManagerImpl(myProject));
   }
 }

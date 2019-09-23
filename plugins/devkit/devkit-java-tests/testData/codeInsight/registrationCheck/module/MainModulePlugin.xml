@@ -3,6 +3,8 @@
   <vendor>JetBrains</vendor>
   <version>1.0</version>
 
+  <depends>dependency.module</depends>
+
   <xi:include href="/idea/JavaActions.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
   <extensionPoints>

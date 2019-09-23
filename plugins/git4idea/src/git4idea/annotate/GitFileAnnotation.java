@@ -64,7 +64,7 @@ public class GitFileAnnotation extends FileAnnotation {
   private final LineAnnotationAspect DATE_ASPECT = new GitAnnotationAspect(LineAnnotationAspect.DATE, true) {
     @Override
     public String doGetValue(LineInfo info) {
-      return DateFormatUtil.formatPrettyDate(info.getAuthorDate());
+      return FileAnnotation.formatDate(info.getAuthorDate());
     }
   };
 

@@ -29,6 +29,7 @@ import com.intellij.pom.xml.impl.XmlAspectChangeSetImpl;
 import com.intellij.pom.xml.impl.events.XmlTagChildAddImpl;
 import com.intellij.pom.xml.impl.events.XmlTextChangedImpl;
 import com.intellij.psi.*;
+import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.source.DummyHolderFactory;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
@@ -41,6 +42,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
@@ -530,6 +532,8 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
   @Override
   @NotNull
   public LiteralTextEscaper<XmlTextImpl> createLiteralTextEscaper() {
-    return new XmlTextLiteralEscaper(this);
+    return getParentTag() instanceof HtmlTag ?
+           LiteralTextEscaper.createSimple(this) :
+           new XmlTextLiteralEscaper(this);
   }
 }

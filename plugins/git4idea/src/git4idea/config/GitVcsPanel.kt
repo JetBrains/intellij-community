@@ -25,6 +25,8 @@ import com.intellij.ui.layout.*
 import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.VcsExecutablePathSelector
+import com.intellij.vcs.log.VcsLogFilterCollection.STRUCTURE_FILTER
+import com.intellij.vcs.log.impl.MainVcsLogUiProperties
 import com.intellij.vcs.log.ui.VcsLogColorManagerImpl
 import com.intellij.vcs.log.ui.filter.StructureFilterPopupComponent
 import com.intellij.vcs.log.ui.filter.VcsLogClassicFilterUi
@@ -49,6 +51,7 @@ internal class GitVcsPanel(private val project: Project,
   private var versionCheckRequested = false
 
   private val pathSelector: VcsExecutablePathSelector = createPathSelector()
+  private val currentUpdateInfoFilterProperties = MyLogProperties(project.service<GitUpdateProjectInfoLogProperties>())
 
   private lateinit var branchUpdateInfoRow: Row
   private lateinit var branchUpdateInfoCommentRow: Row
@@ -220,6 +223,16 @@ internal class GitVcsPanel(private val project: Project,
       }
     }
     row {
+      cell {
+        label("Clean working tree using:")
+        buttonGroup({ projectSettings.updateChangesPolicy() }, { projectSettings.setUpdateChangesPolicy(it) }) {
+          GitVcsSettings.UpdateChangesPolicy.values().forEach { saveSetting ->
+            radioButton(saveSetting.name.toLowerCase().capitalize(), saveSetting)
+          }
+        }
+      }
+    }
+    row {
       checkBox("Auto-update if push of the current branch was rejected",
                { projectSettings.autoUpdateIfPushRejected() },
                { projectSettings.setAutoUpdateIfPushRejected(it) })
@@ -256,19 +269,47 @@ internal class GitVcsPanel(private val project: Project,
     }
 
     if (AbstractCommonUpdateAction.showsCustomNotification(listOf(GitVcs.getInstance(project)))) {
-      row {
-        cell {
-          val updateInfoProperties = project.service<GitUpdateProjectInfoLogProperties>()
-          val roots = ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(GitVcs.getInstance(project)).toSet()
-          val model = VcsLogClassicFilterUi.FileFilterModel(roots, updateInfoProperties, null)
-          val component = object : StructureFilterPopupComponent(updateInfoProperties, model, VcsLogColorManagerImpl(roots)) {
-            override fun shouldDrawLabel(): Boolean = false
-            override fun shouldIndicateHovering(): Boolean = false
-            override fun getDefaultSelectorForeground(): Color = UIUtil.getLabelForeground()
-          }.initUi()
-          label("Filter Update Project information by paths: ")
-          component()
-        }
+      updateProjectInfoFilter()
+    }
+  }
+
+  private fun LayoutBuilder.updateProjectInfoFilter() {
+    row {
+      cell {
+        val storedProperties = project.service<GitUpdateProjectInfoLogProperties>()
+        val roots = ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(GitVcs.getInstance(project)).toSet()
+        val model = VcsLogClassicFilterUi.FileFilterModel(roots, currentUpdateInfoFilterProperties, null)
+        val component = object : StructureFilterPopupComponent(currentUpdateInfoFilterProperties, model, VcsLogColorManagerImpl(roots)) {
+          override fun shouldDrawLabel(): Boolean = false
+          override fun shouldIndicateHovering(): Boolean = false
+          override fun getDefaultSelectorForeground(): Color = UIUtil.getLabelForeground()
+        }.initUi()
+
+        label("Filter Update Project information by paths: ")
+
+        component()
+          .onIsModified {
+            storedProperties.getFilterValues(STRUCTURE_FILTER.name) != currentUpdateInfoFilterProperties.structureFilter
+          }
+          .onApply {
+            storedProperties.saveFilterValues(STRUCTURE_FILTER.name, currentUpdateInfoFilterProperties.structureFilter)
+          }
+          .onReset {
+            currentUpdateInfoFilterProperties.structureFilter = storedProperties.getFilterValues(STRUCTURE_FILTER.name)
+            model.updateFilterFromProperties()
+          }
+      }
+    }
+  }
+
+  private class MyLogProperties(mainProperties: GitUpdateProjectInfoLogProperties) : MainVcsLogUiProperties by mainProperties {
+    var structureFilter: List<String>? = null
+
+    override fun getFilterValues(filterName: String): List<String>? = structureFilter.takeIf { filterName == STRUCTURE_FILTER.name }
+
+    override fun saveFilterValues(filterName: String, values: MutableList<String>?) {
+      if (filterName == STRUCTURE_FILTER.name) {
+        structureFilter = values
       }
     }
   }

@@ -16,6 +16,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitUtil;
 import git4idea.changes.GitChangeUtils;
 import git4idea.commands.*;
+import git4idea.config.GitVcsSettings;
 import git4idea.merge.GitMergeCommittingConflictResolver;
 import git4idea.merge.GitMerger;
 import git4idea.repo.GitRepository;
@@ -29,7 +30,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static git4idea.GitUtil.HEAD;
 import static git4idea.GitUtil.updateAndRefreshVfs;
-import static git4idea.config.GitVcsSettings.UpdateChangesPolicy.STASH;
 
 class GitMergeOperation extends GitBranchOperation {
 
@@ -197,8 +197,9 @@ class GitMergeOperation extends GitBranchOperation {
 
   private boolean doSmartMerge(@NotNull final Collection<? extends GitRepository> repositories) {
     final AtomicBoolean success = new AtomicBoolean();
+    GitVcsSettings.UpdateChangesPolicy saveMethod = GitVcsSettings.getInstance(myProject).updateChangesPolicy();
     myPreservingProcess = new GitPreservingProcess(myProject, myGit, GitUtil.getRootsFromRepositories(repositories), "merge",
-                                                   myBranchToMerge, STASH, getIndicator(),
+                                                   myBranchToMerge, saveMethod, getIndicator(),
                                                    () -> success.set(doMerge(repositories)));
     myPreservingProcess.execute(myConflictedRepositories::isEmpty);
     return success.get();
@@ -283,8 +284,9 @@ class GitMergeOperation extends GitBranchOperation {
     LOG.info("Starting smart rollback...");
     final GitCompoundResult result = new GitCompoundResult(myProject);
     Collection<VirtualFile> roots = GitUtil.getRootsFromRepositories(repositories);
+    GitVcsSettings.UpdateChangesPolicy saveMethod = GitVcsSettings.getInstance(myProject).updateChangesPolicy();
     GitPreservingProcess preservingProcess =
-      new GitPreservingProcess(myProject, myGit, roots, "merge", myBranchToMerge, STASH, getIndicator(), () -> {
+      new GitPreservingProcess(myProject, myGit, roots, "merge", myBranchToMerge, saveMethod, getIndicator(), () -> {
         for (GitRepository repository : repositories) result.append(repository, rollback(repository));
       });
     preservingProcess.execute();

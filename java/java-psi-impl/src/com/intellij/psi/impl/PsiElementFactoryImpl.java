@@ -32,13 +32,14 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 
-public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements PsiElementFactory {
+public final class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements PsiElementFactory {
   private final ConcurrentMap<LanguageLevel, PsiClass> myArrayClasses = ContainerUtil.newConcurrentMap();
   private final ConcurrentMap<GlobalSearchScope, PsiClassType> myCachedObjectType = ContainerUtil.createConcurrentSoftMap();
 
-  public PsiElementFactoryImpl(@NotNull PsiManagerEx manager) {
-    super(manager);
-    manager.registerRunnableToRunOnChange(myCachedObjectType::clear);
+  public PsiElementFactoryImpl(@NotNull Project project) {
+    super(project);
+
+    ((PsiManagerEx)myManager).registerRunnableToRunOnChange(myCachedObjectType::clear);
   }
 
   @NotNull
@@ -330,7 +331,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
       if (substitutorMap == null) substitutorMap = new HashMap<>();
       substitutorMap.put(parameter, null);
     }
-    return PsiSubstitutorImpl.createSubstitutor(substitutorMap);
+    return PsiSubstitutor.createSubstitutor(substitutorMap);
   }
 
   @NotNull
@@ -341,7 +342,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
       if (substitutorMap == null) substitutorMap = new HashMap<>();
       substitutorMap.put(parameter, null);
     }
-    return PsiSubstitutorImpl.createSubstitutor(substitutorMap).putAll(baseSubstitutor);
+    return PsiSubstitutor.createSubstitutor(substitutorMap).putAll(baseSubstitutor);
   }
 
   @NotNull
@@ -365,7 +366,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   @NotNull
   @Override
   public PsiSubstitutor createSubstitutor(@NotNull Map<PsiTypeParameter, PsiType> map) {
-    return PsiSubstitutorImpl.createSubstitutor(map);
+    return PsiSubstitutor.createSubstitutor(map);
   }
 
   @Nullable

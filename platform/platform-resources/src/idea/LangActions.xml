@@ -109,8 +109,8 @@
       <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="$Copy"/>
     </action>
 
-    <action id="CopyTBXReference" class="com.intellij.ide.actions.CopyTBXReferenceAction" >
-      <add-to-group group-id="CutCopyPasteGroup" anchor="after" relative-to-action="CopyReference"/>
+    <action id="CopyReferencePopupAction" class="com.intellij.ide.actions.CopyReferencePopupAction" text="Reference">
+      <add-to-group group-id="CopyFileReference" anchor="first"/>
     </action>
 
     <action id="CopyAsRichText" class="com.intellij.openapi.editor.richcopy.CopyAsRichTextAction">
@@ -1187,6 +1187,8 @@
                 text="Service Groups"/>
         <separator/>
       </group>
+      <group id="ServiceView.Filter" popup="true" text="Filter" icon="AllIcons.General.Filter"
+             class="com.intellij.ide.actions.NonEmptyActionGroup"/>
       <separator/>
       <action id="ServiceView.ShowInNewTab" class="com.intellij.execution.services.ShowInNewTabAction"
               text="Show in New Tab" icon="AllIcons.Actions.OpenNewTab"/>
@@ -1220,6 +1222,10 @@
       <action id="RunDashboard.GroupByStatus" class="com.intellij.execution.dashboard.actions.GroupByConfigurationStatusAction"
               text="Status"/>
       <add-to-group group-id="ServiceView.GroupBy"/>
+    </group>
+    <group id="RunDashboard.Filter" popup="true" text="Configuration Status"
+           class="com.intellij.execution.dashboard.actions.RunDashboardFilterActionGroup">
+      <add-to-group group-id="ServiceView.Filter"/>
     </group>
 
     <action id="RenameFile" class="com.intellij.refactoring.actions.RenameFileAction">

@@ -1,6 +1,6 @@
 package com.intellij.coverage.listeners;
 
-import org.testng.IDEATestNGListener;
+import com.intellij.rt.testng.IDEATestNGListener;
 import org.testng.ITestContext;
 import org.testng.ITestResult;
 

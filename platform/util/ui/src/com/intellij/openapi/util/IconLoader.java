@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util;
 
+import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconLoader.CachedImageIcon.HandleNotFound;
 import com.intellij.openapi.util.text.StringUtil;
@@ -34,8 +35,7 @@ import java.util.function.Supplier;
 
 import static com.intellij.ui.paint.PaintUtil.RoundingMode.ROUND;
 import static com.intellij.ui.scale.DerivedScaleType.DEV_SCALE;
-import static com.intellij.ui.scale.ScaleType.OBJ_SCALE;
-import static com.intellij.ui.scale.ScaleType.SYS_SCALE;
+import static com.intellij.ui.scale.ScaleType.*;
 
 public final class IconLoader {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.IconLoader");
@@ -274,6 +274,21 @@ public final class IconLoader {
                                @NotNull ClassLoader classLoader,
                                @NotNull HandleNotFound handleNotFound,
                                boolean deferUrlResolve) {
+    long start = StartUpMeasurer.isEnabled() ? StartUpMeasurer.getCurrentTime() : -1;
+    Icon icon = findIconImpl(originalPath, clazz, classLoader, handleNotFound, deferUrlResolve);
+    if (start != -1) {
+      IconLoadMeasurer.addFindIcon(StartUpMeasurer.getCurrentTime() - start);
+    }
+
+    return icon;
+  }
+
+  @Nullable
+  private static Icon findIconImpl(@NotNull String originalPath,
+                                   @Nullable Class clazz,
+                                   @NotNull ClassLoader classLoader,
+                                   @NotNull HandleNotFound handleNotFound,
+                                   boolean deferUrlResolve) {
     Pair<String, ClassLoader> patchedPath = ourTransform.get().patchPath(originalPath, classLoader);
     String path = patchedPath.first;
     if (patchedPath.second != null) {
@@ -293,12 +308,13 @@ public final class IconLoader {
       }
       cachedIcon = ConcurrencyUtil.cacheOrGet(ourIconsCache, key, cachedIcon);
     }
-
-    ScaleContext scaleContext = ScaleContext.create();
-    if (!cachedIcon.getScaleContext().equals(scaleContext)) {
-      // honor scale context as the cache doesn't do that
-      cachedIcon = cachedIcon.copy();
-      cachedIcon.updateScaleContext(scaleContext);
+    else {
+      ScaleContext scaleContext = ScaleContext.create();
+      if (!cachedIcon.getScaleContext().equals(scaleContext)) {
+        // honor scale context as 'ourIconsCache' doesn't do that
+        cachedIcon = cachedIcon.copy();
+        cachedIcon.updateScaleContext(scaleContext);
+      }
     }
     return cachedIcon;
   }
@@ -658,6 +674,7 @@ public final class IconLoader {
     public Icon getMenuBarIcon(boolean isDark) {
       boolean useMRI = MultiResolutionImageProvider.isMultiResolutionImageAvailable() && SystemInfo.isMac;
       ScaleContext ctx = useMRI ? ScaleContext.create() : ScaleContext.createIdentity();
+      ctx.setScale(USR_SCALE.of(1));
       Image img = loadFromUrl(ctx, isDark);
       if (useMRI) {
         img = MultiResolutionImageProvider.convertFromJBImage(img);
@@ -706,6 +723,15 @@ public final class IconLoader {
 
     @Nullable
     private Image loadFromUrl(@NotNull ScaleContext ctx, boolean dark) {
+      long start = StartUpMeasurer.isEnabled() ? StartUpMeasurer.getCurrentTime() : -1;
+      Image image = loadFromUrlImpl(ctx, dark);
+      if (start != -1) {
+        IconLoadMeasurer.addFindIconLoad(StartUpMeasurer.getCurrentTime() - start);
+      }
+      return image;
+    }
+
+    private Image loadFromUrlImpl(@NotNull ScaleContext ctx, boolean dark) {
       int flags = ImageLoader.FIND_SVG | ImageLoader.ALLOW_FLOAT_SCALING;
       if (myUseCacheOnLoad) {
         flags |= ImageLoader.USE_CACHE;

@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.refactoring.inline
 
+import com.google.common.annotations.VisibleForTesting
 import com.intellij.codeInsight.TargetElementUtil
 import com.intellij.lang.Language
 import com.intellij.lang.refactoring.InlineActionHandler
@@ -9,6 +10,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiReference
 import com.intellij.psi.SyntaxTraverser
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.util.CommonRefactoringUtil
@@ -18,13 +20,13 @@ import com.jetbrains.python.PythonLanguage
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyBuiltinCache
+import com.jetbrains.python.psi.impl.references.PyImportReference
 import com.jetbrains.python.psi.search.PyOverridingMethodsSearch
 import com.jetbrains.python.psi.search.PySuperMethodsSearch
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.pyi.PyiFile
 import com.jetbrains.python.pyi.PyiUtil
-import com.jetbrains.python.sdk.PySdkUtil
-import com.jetbrains.python.sdk.PythonSdkType
+import com.jetbrains.python.sdk.PythonSdkUtil
 
 /**
  * @author Aleksei.Kniazev
@@ -46,7 +48,7 @@ class PyInlineFunctionHandler : InlineActionHandler() {
     val error = when {
       element.isAsync -> "refactoring.inline.function.async"
       element.isGenerator -> "refactoring.inline.function.generator"
-      PyNames.INIT == element.name -> "refactoring.inline.function.constructor"
+      PyUtil.isInitOrNewMethod(element) -> "refactoring.inline.function.constructor"
       PyBuiltinCache.getInstance(element).isBuiltin(element) -> "refactoring.inline.function.builtin"
       isSpecialMethod(element) -> "refactoring.inline.function.special.method"
       isUnderSkeletonDir(element) -> "refactoring.inline.function.skeleton.only"
@@ -66,7 +68,7 @@ class PyInlineFunctionHandler : InlineActionHandler() {
       return
     }
     if (!ApplicationManager.getApplication().isUnitTestMode){
-      PyInlineFunctionDialog(project, editor, element, TargetElementUtil.findReference(editor)).show()
+      PyInlineFunctionDialog(project, editor, element, findReference(editor)).show()
     }
   }
 
@@ -140,18 +142,26 @@ class PyInlineFunctionHandler : InlineActionHandler() {
     .any { it is PyReferenceExpression && it.reference.isReferenceTo(function) }
 
   private fun isUnderSkeletonDir(function: PyFunction): Boolean {
-    val sdk = PythonSdkType.findPythonSdk(function.containingFile) ?: return false
-    val skeletonsDir = PySdkUtil.findSkeletonsDir(sdk) ?: return false
-    return VfsUtil.isAncestor(skeletonsDir, function.containingFile.virtualFile, true)
+    val containingFile = PyiUtil.getOriginalElementOrLeaveAsIs(function, PyElement::class.java).containingFile
+    val sdk = PythonSdkUtil.findPythonSdk(containingFile) ?: return false
+    val skeletonsDir = PythonSdkUtil.findSkeletonsDir(sdk) ?: return false
+    return VfsUtil.isAncestor(skeletonsDir, containingFile.virtualFile, true)
   }
 
   companion object {
     @JvmStatic
     fun getInstance(): PyInlineFunctionHandler {
-      return InlineActionHandler.EP_NAME.findExtensionOrFail(PyInlineFunctionHandler::class.java)
+      return EP_NAME.findExtensionOrFail(PyInlineFunctionHandler::class.java)
     }
 
     @JvmStatic
     val REFACTORING_ID = "refactoring.inlineMethod"
+
+    @JvmStatic
+    @VisibleForTesting
+    fun findReference(editor: Editor): PsiReference? {
+      val reference = TargetElementUtil.findReference(editor)
+      return if (reference !is PyImportReference) reference else null
+    }
   }
 }

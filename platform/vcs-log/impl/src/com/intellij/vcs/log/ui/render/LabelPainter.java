@@ -3,7 +3,6 @@ package com.intellij.vcs.log.ui.render;
 
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -59,28 +58,22 @@ public class LabelPainter {
 
   private boolean myCompact;
   private boolean myShowTagNames;
+  private boolean myLeftAligned;
 
   public LabelPainter(@NotNull VcsLogData data,
                       @NotNull JComponent component,
-                      @NotNull LabelIconCache iconCache,
-                      boolean compact,
-                      boolean showTagNames) {
+                      @NotNull LabelIconCache iconCache) {
     myLogData = data;
     myComponent = component;
     myIconCache = iconCache;
-    myCompact = compact;
-    myShowTagNames = showTagNames;
   }
 
   @Nullable
   public static VcsLogRefManager getRefManager(@NotNull VcsLogData logData, @NotNull Collection<? extends VcsRef> references) {
-    if (!references.isEmpty()) {
-      VirtualFile root = ObjectUtils.assertNotNull(ContainerUtil.getFirstItem(references)).getRoot();
-      return logData.getLogProvider(root).getReferenceManager();
-    }
-    else {
-      return null;
-    }
+    if (references.isEmpty()) return null;
+
+    VirtualFile root = ObjectUtils.assertNotNull(ContainerUtil.getFirstItem(references)).getRoot();
+    return logData.getLogProvider(root).getReferenceManager();
   }
 
   public void customizePainter(@NotNull Collection<? extends VcsRef> references,
@@ -338,7 +331,7 @@ public class LabelPainter {
   }
 
   public boolean isLeftAligned() {
-    return Registry.is("vcs.log.labels.left.aligned");
+    return myLeftAligned;
   }
 
   public static Font getReferenceFont() {
@@ -356,6 +349,10 @@ public class LabelPainter {
 
   public void setCompact(boolean compact) {
     myCompact = compact;
+  }
+
+  public void setLeftAligned(boolean leftAligned) {
+    myLeftAligned = leftAligned;
   }
 }
 

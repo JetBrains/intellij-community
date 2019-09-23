@@ -159,10 +159,10 @@ class ChangesBuilder {
       : this(type, null, nameAfter, matcher)
 
     override fun toString(): String {
-      when (type) {
-        Change.Type.NEW -> return "A: $nameAfter"
-        Change.Type.DELETED -> return "D: $nameAfter"
-        Change.Type.MOVED -> return "M: $nameBefore -> $nameAfter"
+      when {
+        type == FileStatus.ADDED -> return "A: $nameAfter"
+        type == FileStatus.DELETED -> return "D: $nameAfter"
+        nameBefore != nameAfter -> return "M: $nameBefore -> $nameAfter"
         else -> return "M: $nameAfter"
       }
     }

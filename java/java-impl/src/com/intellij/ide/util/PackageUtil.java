@@ -32,7 +32,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class PackageUtil {
-  private static final Logger LOG = Logger.getInstance("com.intellij.ide.util.PackageUtil");
+  private static final Logger LOG = Logger.getInstance(PackageUtil.class);
 
   @Nullable
   public static PsiDirectory findPossiblePackageDirectoryInModule(Module module, String packageName) {
@@ -141,9 +141,8 @@ public class PackageUtil {
     final PsiDirectory[] psiDirectory = new PsiDirectory[1];
     final IncorrectOperationException[] exception = new IncorrectOperationException[1];
 
-    CommandProcessor.getInstance().executeCommand(project, () -> psiDirectory[0] = ApplicationManager.getApplication().runWriteAction(new Computable<PsiDirectory>() {
-      @Override
-      public PsiDirectory compute() {
+    CommandProcessor.getInstance().executeCommand(project, () -> psiDirectory[0] = ApplicationManager.getApplication().runWriteAction(
+      (Computable<PsiDirectory>)() -> {
         try {
           return oldDirectory.createSubdirectory(name);
         }
@@ -151,8 +150,7 @@ public class PackageUtil {
           exception[0] = e;
           return null;
         }
-      }
-    }), IdeBundle.message("command.create.new.subdirectory"), null);
+      }), IdeBundle.message("command.create.new.subdirectory"), null);
 
     if (exception[0] != null) throw exception[0];
 

@@ -48,7 +48,6 @@
     <multiHostInjector id ="CommentLanguageInjector" implementation="org.intellij.plugins.intelliLang.inject.CommentLanguageInjector" order="after TemporaryPlacesInjector"/>
     <multiHostInjector implementation="org.intellij.plugins.intelliLang.inject.DefaultLanguageInjector" order="last"/>
 
-    <projectService serviceImplementation="org.intellij.plugins.intelliLang.inject.TemporaryPlacesRegistry"/>
     <applicationService serviceInterface="org.intellij.plugins.intelliLang.Configuration"
                     serviceImplementation="org.intellij.plugins.intelliLang.Configuration$App"/>
     <projectService serviceInterface="org.intellij.plugins.intelliLang.Configuration"

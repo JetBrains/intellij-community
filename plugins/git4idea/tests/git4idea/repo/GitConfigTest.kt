@@ -91,6 +91,15 @@ class GitConfigTest : GitPlatformTest() {
     assertSameElements("pushurl parsed incorrectly", remote!!.pushUrls, listOf(pushUrl))
   }
 
+  fun `test instead of case insensitive`() {
+    createRepository()
+    addRemote("https://github.com/:foo/bar.git")
+    git("config url.git@github.com:.InsteaDof https://github.com/")
+    val config = readConfig()
+    val remote = config.parseRemotes().first()
+    assertEquals(listOf("git@github.com::foo/bar.git"), remote.urls)
+  }
+
   fun `test config values are case sensitive`() {
     createRepository()
     val url = "git@GITHUB.com:foo/bar.git"
@@ -150,7 +159,8 @@ class GitConfigTest : GitPlatformTest() {
     val localBranches = expectedInfos.map { it.localBranch }
     val remoteBranches = expectedInfos.map { it.remoteBranch }
 
-    VcsTestUtil.assertEqualCollections(testName, GitConfig.read(configFile).parseTrackInfos(localBranches, remoteBranches), expectedInfos)
+    val trackInfos = GitConfig.read(configFile).parseTrackInfos(localBranches, remoteBranches)
+    VcsTestUtil.assertEqualCollections(testName, trackInfos, expectedInfos)
   }
 
   private fun loadRemotes() = loadConfigData(getTestDataFolder("remote"))

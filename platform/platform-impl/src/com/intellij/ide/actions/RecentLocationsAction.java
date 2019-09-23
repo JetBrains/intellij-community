@@ -54,7 +54,7 @@ import java.util.List;
 import static com.intellij.ui.speedSearch.SpeedSearchSupply.ENTERED_PREFIX_PROPERTY_NAME;
 
 public class RecentLocationsAction extends DumbAwareAction {
-  private static final String RECENT_LOCATIONS_ACTION_ID = "RecentLocations";
+  public static final String RECENT_LOCATIONS_ACTION_ID = "RecentLocations";
   private static final String LOCATION_SETTINGS_KEY = "recent.locations.popup";
   private static final int DEFAULT_WIDTH = JBUIScale.scale(700);
   private static final int DEFAULT_HEIGHT = JBUIScale.scale(530);
@@ -76,8 +76,12 @@ public class RecentLocationsAction extends DumbAwareAction {
       return;
     }
 
+    showPopup(project, false);
+  }
+
+  public static void showPopup(@NotNull Project project, boolean showChanged) {
     RecentLocationsDataModel model = new RecentLocationsDataModel(project, new ArrayList<>());
-    JBList<RecentLocationItem> list = new JBList<>(JBList.createDefaultListModel(model.getPlaces(false)));
+    JBList<RecentLocationItem> list = new JBList<>(JBList.createDefaultListModel(model.getPlaces(showChanged)));
     final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(list,
                                                                       ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
                                                                       ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
@@ -85,7 +89,7 @@ public class RecentLocationsAction extends DumbAwareAction {
     scrollPane.setBorder(BorderFactory.createEmptyBorder());
 
     ShortcutSet showChangedOnlyShortcutSet = KeymapUtil.getActiveKeymapShortcuts(RECENT_LOCATIONS_ACTION_ID);
-    JBCheckBox checkBox = createCheckbox(showChangedOnlyShortcutSet);
+    JBCheckBox checkBox = createCheckbox(showChangedOnlyShortcutSet, showChanged);
 
     ListWithFilter<RecentLocationItem> listWithFilter = (ListWithFilter<RecentLocationItem>)ListWithFilter
       .wrap(list, scrollPane, getNamer(model, checkBox), true);
@@ -108,7 +112,7 @@ public class RecentLocationsAction extends DumbAwareAction {
     ScrollingUtil.installActions(list);
     ScrollingUtil.ensureSelectionExists(list);
 
-    JLabel title = createTitle();
+    JLabel title = createTitle(showChanged);
 
     JPanel topPanel = createHeaderPanel(title, checkBox);
     JPanel mainPanel = createMainPanel(listWithFilter, topPanel);
@@ -207,7 +211,7 @@ public class RecentLocationsAction extends DumbAwareAction {
   }
 
   @NotNull
-  public JBCheckBox createCheckbox(@NotNull ShortcutSet checkboxShortcutSet) {
+  public static JBCheckBox createCheckbox(@NotNull ShortcutSet checkboxShortcutSet, boolean showChanged) {
     String text = "<html>"
                   + IdeBundle.message("recent.locations.title.text")
                   + " <font color=\"" + SHORTCUT_HEX_COLOR + "\">"
@@ -216,6 +220,7 @@ public class RecentLocationsAction extends DumbAwareAction {
     JBCheckBox checkBox = new JBCheckBox(text);
     checkBox.setBorder(JBUI.Borders.empty());
     checkBox.setOpaque(false);
+    checkBox.setSelected(showChanged);
 
     return checkBox;
   }
@@ -279,10 +284,10 @@ public class RecentLocationsAction extends DumbAwareAction {
   }
 
   @NotNull
-  private static JLabel createTitle() {
+  private static JLabel createTitle(boolean showChanged) {
     JBLabel title = new JBLabel();
     title.setFont(title.getFont().deriveFont(Font.BOLD));
-    updateTitleText(title, false);
+    updateTitleText(title, showChanged);
     return title;
   }
 

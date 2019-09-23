@@ -67,6 +67,9 @@ public class VcsColorsPageFactory implements ColorAndFontPanelFactory, ColorAndF
     descriptors.add(new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.deleted.lines"), EditorColors.DELETED_LINES_COLOR, ColorDescriptor.Kind.BACKGROUND));
     descriptors.add(new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.whitespaces.modified.lines"), EditorColors.WHITESPACES_MODIFIED_LINES_COLOR, ColorDescriptor.Kind.BACKGROUND));
     descriptors.add(new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.border.lines"), EditorColors.BORDER_LINES_COLOR, ColorDescriptor.Kind.BACKGROUND));
+    descriptors.add(new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.ignored.added.lines"), EditorColors.IGNORED_ADDED_LINES_BORDER_COLOR, ColorDescriptor.Kind.BACKGROUND));
+    descriptors.add(new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.ignored.modified.lines"), EditorColors.IGNORED_MODIFIED_LINES_BORDER_COLOR, ColorDescriptor.Kind.BACKGROUND));
+    descriptors.add(new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.ignored.deleted.lines"), EditorColors.IGNORED_DELETED_LINES_BORDER_COLOR, ColorDescriptor.Kind.BACKGROUND));
 
     descriptors.add(new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.vcs.annotations"), EditorColors.ANNOTATIONS_COLOR, ColorDescriptor.Kind.FOREGROUND));
 

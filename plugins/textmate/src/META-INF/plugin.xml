@@ -9,16 +9,9 @@
 
   <depends>com.intellij.modules.lang</depends>
 
-  <application-components>
-    <component>
-      <implementation-class>org.jetbrains.plugins.textmate.TextMateApplicationComponent</implementation-class>
-    </component>
-  </application-components>
-
   <extensions defaultExtensionNs="com.intellij">
     <registryKey key="textmate.line.highlighting.limit" defaultValue="20000"
                  description="The maximum length of the line to be highlighted by TextMate lexer."/>
-    <registryKey description="Enables tmTheme emulation from current color scheme" key="textmate.theme.emulation" defaultValue="true"/>
 
     <fileType name="textmate" implementationClass="org.jetbrains.plugins.textmate.language.TextMateFileType" language="textmate" fieldName="INSTANCE"/>
     <applicationService id="textmateSettings"

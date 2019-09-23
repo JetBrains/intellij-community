@@ -111,15 +111,20 @@ public class PluginDownloader {
     return myDescriptor;
   }
 
+  public File getFile() {
+    return myFile;
+  }
+
   public boolean prepareToInstall(@NotNull ProgressIndicator indicator) throws IOException {
     if (myFile != null) {
       return true;
     }
 
     IdeaPluginDescriptor descriptor = null;
-    if (!Boolean.getBoolean(StartupActionScriptManager.STARTUP_WIZARD_MODE) && PluginManager.isPluginInstalled(PluginId.getId(myPluginId))) {
+    if (!Boolean.getBoolean(StartupActionScriptManager.STARTUP_WIZARD_MODE) &&
+        PluginManagerCore.isPluginInstalled(PluginId.getId(myPluginId))) {
       //store old plugins file
-      descriptor = PluginManager.getPlugin(PluginId.getId(myPluginId));
+      descriptor = PluginManagerCore.getPlugin(PluginId.getId(myPluginId));
       LOG.assertTrue(descriptor != null);
       if (myPluginVersion != null && compareVersionsSkipBrokenAndIncompatible(descriptor, myPluginVersion) <= 0) {
         LOG.info("Plugin " + myPluginId + ": current version (max) " + myPluginVersion);
@@ -214,11 +219,11 @@ public class PluginDownloader {
       throw new IOException("Plugin '" + getPluginName() + "' was not successfully downloaded");
     }
 
-    PluginInstaller.install(myFile, true, myOldFile, myDescriptor);
+    PluginInstaller.installAfterRestart(myFile, true, myOldFile, myDescriptor);
 
     InstalledPluginsState state = InstalledPluginsState.getInstanceIfLoaded();
     if (state != null) {
-      state.onPluginInstall(myDescriptor);
+      state.onPluginInstall(myDescriptor, PluginManagerCore.isPluginInstalled(myDescriptor.getPluginId()), true);
     }
   }
 

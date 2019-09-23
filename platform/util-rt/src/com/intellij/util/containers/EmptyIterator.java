@@ -15,9 +15,14 @@
  */
 package com.intellij.util.containers;
 
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
+/**
+ * @deprecated Use {@link Collections#emptyIterator()} instead
+ */
+@Deprecated
 public class EmptyIterator<T> implements Iterator<T> {
   private static final EmptyIterator INSTANCE = new EmptyIterator();
   public static <T> EmptyIterator<T> getInstance() {

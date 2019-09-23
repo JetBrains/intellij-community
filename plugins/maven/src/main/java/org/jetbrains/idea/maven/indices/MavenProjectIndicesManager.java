@@ -6,11 +6,8 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
-import com.intellij.util.WaitFor;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import gnu.trove.THashSet;
@@ -95,13 +92,7 @@ public final class MavenProjectIndicesManager extends MavenSimpleProjectComponen
           ReadAction.compute(() -> myProject.isDisposed() ? null : collectRemoteRepositoriesIdsAndUrls());
         File localRepository = ReadAction.compute(() -> myProject.isDisposed() ? null : getLocalRepository());
         if (remoteRepositoriesIdsAndUrls == null || localRepository == null) return;
-        Iterator<Pair<String, String>> iterator = remoteRepositoriesIdsAndUrls.iterator();
-        while (iterator.hasNext()) {
-          Pair<String, String> next = iterator.next();
-          if ("central".equals(next.first) || next.second.contains("repo1.maven.org/maven2")) {
-            iterator.remove();
-          }
-        }
+
 
         if (remoteRepositoriesIdsAndUrls.isEmpty()) {
           myProjectIndices.clear();
@@ -109,6 +100,7 @@ public final class MavenProjectIndicesManager extends MavenSimpleProjectComponen
         else {
           myProjectIndices = MavenIndicesManager.getInstance().ensureIndicesExist(myProject, remoteRepositoriesIdsAndUrls);
         }
+        myProjectIndices.add(MavenIndicesManager.getInstance().createIndexForLocalRepo(myProject, localRepository));
         myDependencySearchService.reload();
 
         if (consumer != null) {
@@ -126,7 +118,7 @@ public final class MavenProjectIndicesManager extends MavenSimpleProjectComponen
     Set<Pair<String, String>> result = new THashSet<>();
     Set<MavenRemoteRepository> remoteRepositories = new HashSet<>(getMavenProjectManager().getRemoteRepositories());
     for (MavenRepositoryProvider repositoryProvider : MavenRepositoryProvider.EP_NAME.getExtensions()) {
-      ContainerUtil.addAll(remoteRepositories, repositoryProvider.getRemoteRepositories(myProject));
+      remoteRepositories.addAll(repositoryProvider.getRemoteRepositories(myProject));
     }
     for (MavenRemoteRepository each : remoteRepositories) {
       String id = each.getId();
@@ -223,15 +215,8 @@ public final class MavenProjectIndicesManager extends MavenSimpleProjectComponen
     }
     ProgressIndicatorProvider.checkCanceled();
     if (hasProjectGroupId(groupId)) return true;
-    boolean result = getOfflineSearchService().findGroupCandidates(new MavenDependencyCompletionItem(groupId)).stream()
+    return getOfflineSearchService().findGroupCandidates(new MavenDependencyCompletionItem(groupId)).stream()
       .anyMatch(p -> StringUtil.equals(groupId, p.getGroupId()));
-    if (result) {
-      return true;
-    }
-    else {
-      return checkRemote(groupId, null, null);
-    }
-
   }
 
   /**
@@ -244,14 +229,8 @@ public final class MavenProjectIndicesManager extends MavenSimpleProjectComponen
     }
     ProgressIndicatorProvider.checkCanceled();
     if (hasProjectArtifactId(groupId, artifactId)) return true;
-    boolean result = !getOfflineSearchService().findAllVersions(new MavenDependencyCompletionItem(groupId, artifactId, null),
-                                                                SearchParameters.DEFAULT).isEmpty();
-    if (result) {
-      return true;
-    }
-    else {
-      return checkRemote(groupId, artifactId, null);
-    }
+    return !getOfflineSearchService().findAllVersions(new MavenDependencyCompletionItem(groupId, artifactId, null),
+                                                      SearchParameters.DEFAULT).isEmpty();
   }
 
   /**
@@ -261,40 +240,9 @@ public final class MavenProjectIndicesManager extends MavenSimpleProjectComponen
   public boolean hasVersion(String groupId, String artifactId, String version) {
     if (hasProjectVersion(groupId, artifactId, version)) return true;
     ProgressIndicatorProvider.checkCanceled();
-    boolean result =
-      getOfflineSearchService().findAllVersions(new MavenDependencyCompletionItem(groupId, artifactId, null)).stream().anyMatch(
+    return getOfflineSearchService().findAllVersions(new MavenDependencyCompletionItem(groupId, artifactId, null)).stream().anyMatch(
       s -> version.equals(s.getVersion())
     );
-    if (result) {
-      return true;
-    }
-    else {
-      return checkRemote(groupId, artifactId, version);
-    }
-  }
-
-  private boolean checkRemote(@NotNull String groupId, @Nullable String artifactId, @Nullable String version) {
-    Ref<Boolean> result = new Ref<>();
-    myDependencySearchService.suggestPrefix(groupId, artifactId == null ? "" : artifactId, SearchParameters.DEFAULT, info -> {
-      if (version == null) {
-        result.set(true);
-      } else {
-        for (MavenDependencyCompletionItem item : info.getItems()) {
-          if (version.equals(item.getVersion())) {
-            result.set(true);
-          }
-        }
-      }
-
-    }).onProcessed(v -> result.setIfNull(false));
-    new WaitFor((int)SearchParameters.DEFAULT.getMillisToWait()) {
-      @Override
-      protected boolean condition() {
-        return !result.isNull();
-      }
-    };
-    result.setIfNull(false);
-    return result.get();
   }
 
   private Set<String> getProjectGroupIds() {

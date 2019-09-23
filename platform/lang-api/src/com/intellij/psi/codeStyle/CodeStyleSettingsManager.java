@@ -42,9 +42,7 @@ public class CodeStyleSettingsManager implements PersistentStateComponent<Elemen
       return getInstance();
     }
 
-    ProjectCodeStyleSettingsManager projectSettingsManager = ServiceManager.getService(project, ProjectCodeStyleSettingsManager.class);
-    projectSettingsManager.initProjectSettings(project);
-    return projectSettingsManager;
+    return ServiceManager.getService(project, ProjectCodeStyleSettingsManager.class);
   }
 
   /**
@@ -148,12 +146,10 @@ public class CodeStyleSettingsManager implements PersistentStateComponent<Elemen
    * @see #dropTemporarySettings()
    */
   public void setTemporarySettings(@NotNull CodeStyleSettings settings) {
-    updateSettingsTracker();
     myTemporarySettings = settings;
   }
 
   public void dropTemporarySettings() {
-    updateSettingsTracker();
     myTemporarySettings = null;
   }
 

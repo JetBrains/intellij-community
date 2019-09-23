@@ -80,4 +80,17 @@ def usage() {
 }
 '''
   }
+
+  void 'test no warning for type parameter assigning'() {
+    testHighlighting '''\
+class A<T> {
+    
+    T value
+    def foo(it) {
+        value = it
+    }
+    
+}
+'''
+  }
 }

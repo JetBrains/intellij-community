@@ -90,18 +90,19 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
 
     JarFileSystem fs = JarFileSystem.getInstance();
     String path = jar.getPath() + "!/";
-    NewVirtualFile root = ManagingFS.getInstance().findRoot(path, fs);
-    PlatformTestUtil.startPerformanceTest("finding root", 10_000,
-        () -> JobLauncher.getInstance().invokeConcurrentlyUnderProgress(
+    ManagingFS managingFS = ManagingFS.getInstance();
+    NewVirtualFile root = managingFS.findRoot(path, fs);
+    PlatformTestUtil.startPerformanceTest("finding root", 20_000,
+      () -> JobLauncher.getInstance().invokeConcurrentlyUnderProgress(
         Collections.nCopies(500, null), null,
         __ -> {
-          for (int i = 0; i < 20_000; i++) {
-            NewVirtualFile rootJar = ManagingFS.getInstance().findRoot(path, fs);
+          for (int i = 0; i < 100_000; i++) {
+            NewVirtualFile rootJar = managingFS.findRoot(path, fs);
             assertNotNull(rootJar);
             assertSame(root, rootJar);
           }
           return true;
-        })).assertTiming();
+        })).usesAllCPUCores().assertTiming();
   }
 
   @Test
@@ -117,7 +118,7 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
         dir = dir.createChildDirectory(this, "foo");
       }
       VirtualFile leafDir = dir;
-      ThrowableRunnable checkPerformance = new ThrowableRunnable() {
+      ThrowableRunnable<RuntimeException> checkPerformance = new ThrowableRunnable<RuntimeException>() {
         private VirtualFile findRoot(VirtualFile file) {
           while (true) {
             VirtualFile parent = file.getParent();
@@ -146,7 +147,7 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
       for (int i = 0; i < 13; i++) {  /*13 is max length with THashMap capacity of 17, we get plenty collisions then*/
         dir1.createChildData(this, "a" + i + ".txt").move(this, dir2);
       }
-      PlatformTestUtil.startPerformanceTest("getParent after movement", time, checkPerformance).assertTiming();
+      PlatformTestUtil.startPerformanceTest("getParent after movement", time, checkPerformance).attempts(10).assertTiming();
     });
   }
 

@@ -38,7 +38,7 @@ import com.intellij.lang.properties.refactoring.PropertiesRefactoringSettings;
 import com.intellij.lang.properties.structureView.PropertiesSeparatorManager;
 import com.intellij.lang.properties.xml.XmlPropertiesIconProvider;
 import com.intellij.lang.properties.xml.XmlPropertiesIndex;
-import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
+import com.intellij.openapi.fileTypes.LanguageSyntaxHighlighters;
 import com.intellij.psi.ElementManipulators;
 import com.intellij.psi.impl.cache.impl.id.IdIndexers;
 import com.intellij.psi.impl.cache.impl.idCache.PropertiesIdIndexer;
@@ -56,8 +56,8 @@ public class PropertiesCoreEnvironment {
   public static class ApplicationEnvironment {
     public ApplicationEnvironment(CoreApplicationEnvironment appEnvironment) {
       appEnvironment.registerFileType(PropertiesFileType.INSTANCE, "properties");
-      appEnvironment.addExplicitExtension(SyntaxHighlighterFactory.LANGUAGE_FACTORY, PropertiesLanguage.INSTANCE,
-                                          new PropertiesSyntaxHighlighterFactory());
+      appEnvironment.addExplicitExtension(LanguageSyntaxHighlighters.INSTANCE, PropertiesLanguage.INSTANCE,
+                                          new PropertiesHighlighter());
       appEnvironment.addExplicitExtension(LanguageParserDefinitions.INSTANCE, PropertiesLanguage.INSTANCE, new PropertiesParserDefinition());
       appEnvironment.addExtension(FileBasedIndexExtension.EXTENSION_POINT_NAME, new XmlPropertiesIndex());
       appEnvironment.addExtension(StubIndexExtension.EP_NAME, new PropertyKeyIndex());

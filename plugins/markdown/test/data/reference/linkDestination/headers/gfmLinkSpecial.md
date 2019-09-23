@@ -1,3 +1,3 @@
-- [`get()` method](#get-m<ref>ethod)
+- [`get()` method](#get-m<caret>ethod)
 
 ## `get()` method

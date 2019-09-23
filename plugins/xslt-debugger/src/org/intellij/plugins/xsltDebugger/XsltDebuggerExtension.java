@@ -26,7 +26,6 @@ import com.intellij.execution.process.ProcessListener;
 import com.intellij.execution.runners.RunTab;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -144,7 +143,7 @@ public class XsltDebuggerExtension extends XsltRunnerExtension {
 
     final File pluginPath;
     if (pluginId != null) {
-      final IdeaPluginDescriptor descriptor = PluginManager.getPlugin(pluginId);
+      final IdeaPluginDescriptor descriptor = PluginManagerCore.getPlugin(pluginId);
       assert descriptor != null;
       pluginPath = descriptor.getPath();
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.daemon;
 
@@ -13,6 +13,7 @@ import java.util.List;
  * @author yole
  * @see LineMarkerProviders#EP_NAME
  * @see LineMarkerProviderDescriptor
+ * @see RelatedItemLineMarkerProvider
  */
 public interface LineMarkerProvider {
   /**
@@ -47,7 +48,7 @@ public interface LineMarkerProvider {
    *   }
    * }
    * </pre>
-   * Note that it create LIneMarkerInfo for the whole method body.
+   * Note that it create LineMarkerInfo for the whole method body.
    * Following will happen when this method is half-visible (e.g. its name is visible but a part of its body isn't):
    * <ul>
    * <li>the first pass would remove line marker info because the whole PsiMethod isn't visible</li>

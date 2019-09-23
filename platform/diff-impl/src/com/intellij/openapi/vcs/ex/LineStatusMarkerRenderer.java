@@ -340,17 +340,20 @@ public abstract class LineStatusMarkerRenderer {
         }
       }
     }
-    else {
+    else if (line1 != line2) {
       paintRect(g, null, borderColor, x, y, endX, endY);
     }
 
-    for (ChangedLines change: block) {
+    for (ChangedLines change : block) {
       if (change.line1 == change.line2) {
         int start = editorImpl.visualLineToY(change.line1);
 
         if (!change.isIgnored) {
           Color gutterColor = getGutterColor(change.type, editor);
           paintTriangle(g, editor, gutterColor, borderColor, x, endX, start);
+        }
+        else if (borderColor != null) {
+          paintTriangle(g, editor, null, borderColor, x, endX, start);
         }
         else {
           Color ignoredBorderColor = getIgnoredGutterBorderColor(change.type, editor);
@@ -363,8 +366,15 @@ public abstract class LineStatusMarkerRenderer {
   public static void paintRange(@NotNull Graphics g,
                                 @NotNull Editor editor,
                                 @NotNull Range range,
-                                int framingBorder) {
-    List<ChangesBlock> blocks = new VisibleRangeMerger(editor).run(Collections.singletonList(range), g.getClipBounds());
+                                int framingBorder,
+                                boolean isIgnored) {
+    VisibleRangeMerger merger = new VisibleRangeMerger(editor) {
+      @Override
+      protected boolean isIgnored(@NotNull Range range) {
+        return isIgnored;
+      }
+    };
+    List<ChangesBlock> blocks = merger.run(Collections.singletonList(range), g.getClipBounds());
     for (ChangesBlock block : blocks) {
       paintChangedLines((Graphics2D)g, editor, block.changes, framingBorder);
     }
@@ -473,9 +483,6 @@ public abstract class LineStatusMarkerRenderer {
 
   @Nullable
   private static Color getIgnoredGutterBorderColor(byte type, @Nullable Editor editor) {
-    Color borderColor = getGutterBorderColor(editor);
-    if (borderColor != null) return borderColor;
-
     final EditorColorsScheme scheme = getColorScheme(editor);
     switch (type) {
       case Range.INSERTED:

@@ -4,12 +4,17 @@ package com.jetbrains.python.sdk.pipenv
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.util.UserDataHolder
 import com.jetbrains.python.sdk.add.PyAddSdkProvider
 
 /**
  * @author vlan
  */
 class PyAddPipEnvSdkProvider : PyAddSdkProvider {
-  override fun createView(project: Project?, module: Module?, newProjectPath: String?, existingSdks: List<Sdk>) =
-    PyAddPipEnvPanel(project, module, existingSdks, newProjectPath)
+  override fun createView(project: Project?,
+                          module: Module?,
+                          newProjectPath: String?,
+                          existingSdks: List<Sdk>,
+                          context: UserDataHolder) =
+    PyAddPipEnvPanel(project, module, existingSdks, newProjectPath, context)
 }

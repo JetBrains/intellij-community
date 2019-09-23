@@ -33,14 +33,14 @@ public class ShProcessSubstitutionImpl extends ShCompositeElementImpl implements
 
   @Override
   @Nullable
-  public PsiElement getGt() {
-    return findChildByType(GT);
+  public PsiElement getInputProcessSubstitution() {
+    return findChildByType(INPUT_PROCESS_SUBSTITUTION);
   }
 
   @Override
   @Nullable
-  public PsiElement getLeftParen() {
-    return findChildByType(LEFT_PAREN);
+  public PsiElement getOutputProcessSubstitution() {
+    return findChildByType(OUTPUT_PROCESS_SUBSTITUTION);
   }
 
   @Override

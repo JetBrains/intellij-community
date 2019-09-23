@@ -4,19 +4,19 @@ package com.intellij.ide;
 import com.intellij.util.messages.Topic;
 
 /**
- * Listener for receiving notifications when the IDEA window is activated or deactivated.
+ * Listener for receiving notifications when the IDE window is activated or deactivated.
  */
 public interface FrameStateListener {
   Topic<FrameStateListener> TOPIC = new Topic<>("FrameStateListener", FrameStateListener.class);
 
   /**
-   * Called when the IDEA window is deactivated.
+   * Called when the IDE window is deactivated.
    */
   default void onFrameDeactivated() {
   }
 
   /**
-   * Called when the IDEA window is activated.
+   * Called when the IDE window is activated.
    */
   default void onFrameActivated() {
   }

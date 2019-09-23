@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -44,7 +44,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-public class DocumentCommitThread implements Runnable, Disposable, DocumentCommitProcessor {
+public final class DocumentCommitThread implements Runnable, Disposable, DocumentCommitProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.DocumentCommitThread");
   private static final String SYNC_COMMIT_REASON = "Sync commit";
 
@@ -52,7 +52,6 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
   private final Object lock = new Object();
   private final HashSetQueue<CommitTask> documentsToCommit = new HashSetQueue<>();      // guarded by lock
   private final HashSetQueue<CommitTask> documentsToApplyInEDT = new HashSetQueue<>();  // guarded by lock
-  private final ApplicationEx myApplication;
   private volatile boolean isDisposed;
   private CommitTask currentTask; // guarded by lock
   private boolean myEnabled; // true if we can do commits. set to false temporarily during the write action.  guarded by lock
@@ -60,8 +59,9 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
   static DocumentCommitThread getInstance() {
     return (DocumentCommitThread)ServiceManager.getService(DocumentCommitProcessor.class);
   }
-  DocumentCommitThread(final ApplicationEx application) {
-    myApplication = application;
+
+  DocumentCommitThread() {
+    ApplicationEx application = (ApplicationEx)ApplicationManager.getApplication();
     // install listener in EDT to avoid missing events in case we are inside write action right now
     application.invokeLater(() -> {
       if (application.isDisposed()) return;
@@ -248,7 +248,7 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
 
   // returns true if queue changed
   private boolean pollQueue() {
-    assert !myApplication.isDispatchThread() : Thread.currentThread();
+    assert !ApplicationManager.getApplication().isDispatchThread() : Thread.currentThread();
     CommitTask task;
     synchronized (lock) {
       if (!myEnabled || (task = documentsToCommit.poll()) == null) {
@@ -284,7 +284,7 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
         failureReason = result.get().second;
 
         if (success) {
-          assert !myApplication.isDispatchThread();
+          assert !ApplicationManager.getApplication().isDispatchThread();
           TransactionGuardImpl guard = (TransactionGuardImpl)TransactionGuard.getInstance();
           guard.submitTransaction(task.project, task.myCreationContext, finishRunnable);
         }
@@ -409,7 +409,7 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
     final List<BooleanRunnable> finishProcessors = new SmartList<>();
     List<BooleanRunnable> reparseInjectedProcessors = new SmartList<>();
     Runnable runnable = () -> {
-      myApplication.assertReadAccessAllowed();
+      ApplicationManager.getApplication().assertReadAccessAllowed();
       if (project.isDisposed()) return;
 
       Lock lock = getDocumentLock(document);
@@ -450,8 +450,10 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
         }
       }
     };
-    if (!myApplication.tryRunReadAction(runnable)) {
-      log(project, "Could not start read action", task, myApplication.isReadAccessAllowed(), Thread.currentThread());
+
+    ApplicationEx app = (ApplicationEx)ApplicationManager.getApplication();
+    if (!app.tryRunReadAction(runnable)) {
+      log(project, "Could not start read action", task, app.isReadAccessAllowed(), Thread.currentThread());
       return new Pair<>(null, "Could not start read action");
     }
 
@@ -471,7 +473,7 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
                                                    @NotNull List<? extends BooleanRunnable> finishProcessors,
                                                    @NotNull List<? extends BooleanRunnable> reparseInjectedProcessors) {
     return () -> {
-      myApplication.assertIsDispatchThread();
+      ApplicationManager.getApplication().assertIsDispatchThread();
       Document document = task.getDocument();
       Project project = task.project;
       PsiDocumentManagerBase documentManager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(project);
@@ -530,7 +532,7 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
 
   @Override
   public String toString() {
-    return "Document commit thread; application: "+myApplication+"; isDisposed: "+isDisposed+"; myEnabled: "+isEnabled();
+    return "Document commit thread; application: "+ApplicationManager.getApplication()+"; isDisposed: "+isDisposed+"; myEnabled: "+isEnabled();
   }
 
   @TestOnly

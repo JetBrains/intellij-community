@@ -24,7 +24,7 @@ public class GitPushOptionsPanel extends VcsPushOptionsPanel {
   @NotNull private final JBCheckBox myRunHooks;
 
   public GitPushOptionsPanel(@Nullable GitPushTagMode defaultMode, boolean followTagsSupported, boolean showSkipHookOption) {
-    String checkboxText = "Push Tags";
+    String checkboxText = "Push tags";
     if (followTagsSupported) {
       checkboxText += ": ";
     }
@@ -59,7 +59,7 @@ public class GitPushOptionsPanel extends VcsPushOptionsPanel {
       add(myPushTagsMode);
     }
     if (myRunHooks.isVisible()) {
-      add(Box.createHorizontalStrut(calcStrutWidth(40, myPushTagsMode, myRunHooks)));
+      add(Box.createHorizontalStrut(calcStrutWidth(16, myPushTagsMode, myRunHooks)));
       add(myRunHooks);
     }
   }

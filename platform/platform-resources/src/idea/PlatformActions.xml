@@ -26,10 +26,10 @@
     <group id="ListActions" text="List Actions">
       <action id="List-selectFirstRow" text="Select First Row"
               description="Selects the first row."
-              class="com.intellij.ui.ListActions$Home" use-shortcut-of="EditorLineStart"/>
+              class="com.intellij.ui.ListActions$Home" use-shortcut-of="EditorTextStart"/>
       <action id="List-selectFirstRowExtendSelection" text="Extend Selection to First Row"
               description="Scrolls to the first row and adds corresponding rows to selection."
-              class="com.intellij.ui.ListActions$ShiftHome" use-shortcut-of="EditorLineStartWithSelection"/>
+              class="com.intellij.ui.ListActions$ShiftHome" use-shortcut-of="EditorTextStartWithSelection"/>
       <action id="List-selectLastRow" text="Select Last Row"
               description="Selects the last row."
               class="com.intellij.ui.ListActions$End" use-shortcut-of="EditorTextEnd"/>
@@ -130,10 +130,10 @@
     <group id="TreeActions" text="Tree Actions">
       <action id="Tree-selectFirst" text="Select First Node"
               description="Selects the first node."
-              class="com.intellij.ui.TreeActions$Home" use-shortcut-of="EditorLineStart"/>
+              class="com.intellij.ui.TreeActions$Home" use-shortcut-of="EditorTextStart"/>
       <action id="Tree-selectFirstExtendSelection" text="Extend Selection to First Node"
               description="Scrolls to the first node and adds corresponding nodes to selection."
-              class="com.intellij.ui.TreeActions$ShiftHome" use-shortcut-of="EditorLineStartWithSelection"/>
+              class="com.intellij.ui.TreeActions$ShiftHome" use-shortcut-of="EditorTextStartWithSelection"/>
       <action id="Tree-selectLast" text="Select Last Node"
               description="Selects the last node."
               class="com.intellij.ui.TreeActions$End" use-shortcut-of="EditorTextEnd"/>
@@ -315,6 +315,7 @@
       <action id="EditorMoveToPageBottomWithSelection" class="com.intellij.openapi.editor.actions.PageBottomWithSelectionAction"/>
       <action id="EditorEnter" class="com.intellij.openapi.editor.actions.EnterAction"/>
       <action id="EditorEscape" class="com.intellij.openapi.editor.actions.EscapeAction"/>
+      <action id="FocusEditor" class="com.intellij.ide.actions.FocusEditorAction"/>
       <action id="EditorUp" class="com.intellij.openapi.editor.actions.MoveCaretUpAction"/>
       <action id="EditorDown" class="com.intellij.openapi.editor.actions.MoveCaretDownAction"/>
       <action id="EditorLeft" class="com.intellij.openapi.editor.actions.MoveCaretLeftAction"/>
@@ -704,7 +705,7 @@
       </group>
 
       <!-- Tools -->
-      <group id="ToolsMenu" popup="true" compact="true">
+      <group id="ToolsMenu" popup="true" compact="true" class="com.intellij.ide.IdeDependentActionGroup">
         <action id="PsiViewer" class="com.intellij.internal.psiView.PsiViewerAction"/>
         <action id="PsiViewerForContext" class="com.intellij.internal.psiView.PsiViewerAction$ForContext"/>
         <separator/>
@@ -944,6 +945,8 @@
              text="Move To Group" popup="true"/>
       <action id="WelcomeScreen.ChangeProjectIcon" class="com.intellij.openapi.wm.impl.welcomeScreen.ChangeProjectIconAction"
               text="Change Icon"/>
+      <action id="WelcomeScreen.CopyProjectPath" class="com.intellij.openapi.wm.impl.welcomeScreen.CopyProjectPathAction"
+              text="Copy Path" use-shortcut-of="CopyPaths"/>
       <separator/>
       <action id="WelcomeScreen.RemoveSelected" class="com.intellij.openapi.wm.impl.welcomeScreen.RemoveSelectedProjectsAction"
               text="Remove Selected from Welcome Screen"/>
@@ -995,8 +998,6 @@
 
     <group id="MaintenanceGroup">
       <action id="ShowRegistry" class="com.intellij.openapi.util.registry.ShowRegistryAction"/>
-      <action id="SwitchBootJdk" class="com.intellij.ide.actions.SwitchBootJdkAction"/>
-      <action id="SwitchBootRuntime" class="com.intellij.bootRuntime.SwitchBootRuntimeAction"/>
       <action id="UiDebugger" class="com.intellij.ui.debugger.ShowUiDebuggerAction"/>
       <action id="ShowExperiments" class="com.intellij.application.ShowExperimentsAction"/>
     </group>
@@ -1021,6 +1022,7 @@
       <separator/>
       <action internal="true" id="ReloadProjectAction" class="com.intellij.internal.ReloadProjectAction"/>
       <action internal="true" id="ShowMainMenu" class="com.intellij.internal.ui.ShowMainMenuAction"/>
+      <action internal="true" id="JBTabsDemo" class="com.intellij.internal.JBTabsDemoAction" text="JBTabs Demo"/>
       <action id="DumbMode" internal="true" class="com.intellij.internal.ToggleDumbModeAction" text="Dumb Mode"/>
       <action id="DisablePCE" internal="true" class="com.intellij.internal.DisablePCEAction" text="Disable ProcessCanceledException"
               description="Disable ProcessCanceledException thrown in a background thread during read action, to simplify debugging"/>
@@ -1129,6 +1131,12 @@
         <action internal="true" id="CleanupLocalWhitelistAction"
                 class="com.intellij.internal.statistic.actions.CleanupLocalWhitelistAction"
                 text="Clean Up Local Whitelist"/>
+        <action id="ShowStatisticsEventLogAction"
+                class="com.intellij.internal.statistic.actions.ShowStatisticsEventLogAction"
+                text="Show Statistics Event Log">
+        </action>
+        <action internal="true" id="ConfigureWhitelistAction" class="com.intellij.internal.statistic.actions.ConfigureWhitelistAction"
+                text="Configure Whitelist"/>
       </group>
 
       <group id="Internal.PMM" popup="true" text="PMM Utils">
@@ -1306,5 +1314,25 @@
 
     <action id="NextWindow" class="com.intellij.openapi.wm.impl.NextWindow"  text="Activate Next Window"/>
     <action id="PreviousWindow" class="com.intellij.openapi.wm.impl.PreviousWindow" text="Activate Previous Window"/>
+
+    <action id="CopyReferencePopup" class="com.intellij.ide.actions.CopyReferencePopup" text="Copy Path...">
+      <add-to-group group-id="CutCopyPasteGroup" anchor="after" relative-to-action="CopyPaths"/>
+      <add-to-group group-id="EditorTabPopupMenu" anchor="after" relative-to-action="CopyPaths"/>
+      <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="$Copy"/>
+    </action>
+
+    <group id="CopyReferencePopupGroup">
+      <group id="CopyFileReference">
+        <action id="CopyAbsolutePath" class="com.intellij.ide.actions.CopyAbsolutePathProvider" text="Absolute Path"/>
+        <action id="CopyPathWithLineNumber" class="com.intellij.ide.actions.CopyFileWithLineNumberPathProvider" text="Path With Line Number"/>
+        <action id="CopyContentRootPath" class="com.intellij.ide.actions.CopyContentRootPathProvider" text="Content Root Path"/>
+        <action id="CopySourceRootPath" class="com.intellij.ide.actions.CopySourceRootPathProvider" text="Source Root Path"/>
+      </group>
+      <separator/>
+      <group id="CopyExternalReferenceGroup">
+        <action id="CopyTBXReference" class="com.intellij.ide.actions.CopyTBXReferenceProvider" text="Toolbox Reference"
+                icon="AllIcons.Actions.Copy"/>
+      </group>
+    </group>
   </actions>
 </idea-plugin>

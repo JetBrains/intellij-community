@@ -277,6 +277,14 @@ public class InlineMethodTest extends LightRefactoringTestCase {
     doTest();
   }
 
+  public void testBooleanConstantArgument() {
+    doTest();
+  }
+
+  public void testBooleanConstantArgument2() {
+    doTest();
+  }
+
   private void doTestConflict(final String conflict) {
     try {
       doTest();
@@ -528,6 +536,10 @@ public class InlineMethodTest extends LightRefactoringTestCase {
   }
   
   public void testUnusedParameter() {
+    doTest();
+  }
+
+  public void testEnumStaticMethod() {
     doTest();
   }
 

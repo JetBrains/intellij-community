@@ -13,9 +13,8 @@ import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.inspections.PyStringFormatParser;
+import com.jetbrains.python.PyStringFormatParser;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
@@ -307,18 +306,10 @@ public class ConvertFormatOperatorToMethodIntention extends PyBaseIntentionActio
   private static boolean isDictCall(@NotNull PyExpression callee,
                                     @NotNull PyClassType classType) {
     final PyClassType dictType = PyBuiltinCache.getInstance(callee.getContainingFile()).getDictType();
-    if (dictType != null && classType.getPyClass() == dictType.getPyClass()) {
-      if (callee instanceof PyReferenceExpression) {
-        PsiElement maybeDict = ((PyReferenceExpression)callee).getReference().resolve();
-        final PyFunction dictInit = PyUtil.as(maybeDict, PyFunction.class);
-        if (dictInit != null) {
-          if (PyNames.INIT.equals(dictInit.getName())) {
-            return true;
-          }
-        }
-      }
-    }
-    return false;
+    return dictType != null &&
+           classType.getPyClass() == dictType.getPyClass() &&
+           callee instanceof PyReferenceExpression &&
+           PyUtil.isInitMethod(((PyReferenceExpression)callee).getReference().resolve());
   }
 
   private static String getSeparator(PyStringLiteralExpression leftExpression) {

@@ -514,18 +514,22 @@ public final class IdeStatusBarImpl extends JComponent implements Accessible, St
   @Override
   public boolean dispatch(@NotNull AWTEvent e) {
     if (e instanceof MouseEvent) {
-      if (myRightPanel == null) {
-        return false;
-      }
-      Component component = ((MouseEvent)e).getComponent();
-      if (component == null) {
-        return false;
-      }
-      Point point = SwingUtilities.convertPoint(component, ((MouseEvent)e).getPoint(), myRightPanel);
-      Component widget = myRightPanel.getComponentAt(point);
-      hoverComponent(widget != myRightPanel ? widget : null);
+      dispatchMouseEvent((MouseEvent)e);
     }
     return false;
+  }
+
+  private void dispatchMouseEvent(@NotNull MouseEvent e) {
+    if (myRightPanel == null) {
+      return;
+    }
+    Component component = e.getComponent();
+    if (component == null) {
+      return;
+    }
+    Point point = SwingUtilities.convertPoint(component, e.getPoint(), myRightPanel);
+    Component widget = myRightPanel.getComponentAt(point);
+    hoverComponent(widget != myRightPanel ? widget : null);
   }
 
   @Override

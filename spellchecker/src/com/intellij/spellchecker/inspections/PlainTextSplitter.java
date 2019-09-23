@@ -54,7 +54,7 @@ public class PlainTextSplitter extends BaseSplitter {
     if (StringUtil.isEmpty(text)) {
       return;
     }
-     final TextSplitter ws = TextSplitter.getInstance();
+    final Splitter ws = getTextSplitter();
     int from = range.getStartOffset();
     int till;
 
@@ -106,5 +106,10 @@ public class PlainTextSplitter extends BaseSplitter {
     }
     catch (ProcessCanceledException ignored) {
     }
+  }
+
+  @NotNull
+  protected Splitter getTextSplitter() {
+    return TextSplitter.getInstance();
   }
 }

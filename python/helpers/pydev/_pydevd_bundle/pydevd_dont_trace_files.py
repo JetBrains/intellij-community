@@ -20,7 +20,6 @@ DONT_TRACE = {
     'dis.py':LIB_FILE,
 
     #things from pydev that we don't want to trace
-    '_pydev_execfile.py':PYDEV_FILE,
     '_pydev_BaseHTTPServer.py': PYDEV_FILE,
     '_pydev_SimpleXMLRPCServer.py': PYDEV_FILE,
     '_pydev_SocketServer.py': PYDEV_FILE,
@@ -40,7 +39,6 @@ DONT_TRACE = {
     '_pydev_xmlrpclib.py': PYDEV_FILE,
     'django_debug.py': PYDEV_FILE,
     'fix_getpass.py': PYDEV_FILE,
-    'io.py': PYDEV_FILE,
     'jinja2_debug.py': PYDEV_FILE,
     'protocol.py': PYDEV_FILE,
     'pycompletionserver.py': PYDEV_FILE,
@@ -51,6 +49,7 @@ DONT_TRACE = {
     'pydev_console_utils.py': PYDEV_FILE,
     'pydev_import_hook.py': PYDEV_FILE,
     'pydev_imports.py': PYDEV_FILE,
+    'pydev_io.py': PYDEV_FILE,
     'pydev_ipython_code_executor.py': PYDEV_FILE,
     'pydev_ipython_console.py': PYDEV_FILE,
     'pydev_ipython_console_011.py': PYDEV_FILE,
@@ -60,7 +59,10 @@ DONT_TRACE = {
     'pydev_monkey.py': PYDEV_FILE,
     'pydev_monkey_qt.py': PYDEV_FILE,
     'pydev_override.py': PYDEV_FILE,
+    'pydev_rpc.py': PYDEV_FILE,
+    'pydev_server.py': PYDEV_FILE,
     'pydev_stdin.py': PYDEV_FILE,
+    'pydev_transport.py': PYDEV_FILE,
     'pydev_umd.py': PYDEV_FILE,
     'pydev_versioncheck.py': PYDEV_FILE,
     'pydevconsole.py': PYDEV_FILE,
@@ -120,9 +122,6 @@ DONT_TRACE = {
     'pydevd_vars.py': PYDEV_FILE,
     'pydevd_vm_type.py': PYDEV_FILE,
     'pydevd_xml.py': PYDEV_FILE,
-    'rpc.py': PYDEV_FILE,
-    'server.py': PYDEV_FILE,
-    'transport.py': PYDEV_FILE,
 }
 
 DONT_TRACE['pydev_jupyter_plugin.py'] = PYDEV_FILE

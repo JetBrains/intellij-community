@@ -62,7 +62,6 @@ public class SchemaTypeInheritanceIndex extends XmlIndex<Set<SchemaTypeInfo>> {
   private static class MyWorker implements BiFunction<String, String, List<Set<SchemaTypeInfo>>> {
     private final Project myProject;
     private final VirtualFile myCurrentFile;
-    private final GlobalSearchScope myFilter;
     private final boolean myShouldParseCurrent;
     private MultiMap<SchemaTypeInfo,SchemaTypeInfo> myMap;
 
@@ -70,8 +69,8 @@ public class SchemaTypeInheritanceIndex extends XmlIndex<Set<SchemaTypeInfo>> {
       myCurrentFile = currentFile;
       myProject = project;
 
-      myFilter = createFilter(project);
-      myShouldParseCurrent = (myCurrentFile != null && ! myFilter.contains(myCurrentFile));
+      GlobalSearchScope filter = createFilter(project);
+      myShouldParseCurrent = (myCurrentFile != null && ! filter.contains(myCurrentFile));
     }
 
     @Override

@@ -5,7 +5,6 @@ import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -28,9 +27,9 @@ public class MavenDependencyInsertionHandler implements InsertHandler<LookupElem
 
   @Override
   public void handleInsert(@NotNull final InsertionContext context, @NotNull LookupElement item) {
-    if (TemplateManager.getInstance(context.getProject()).getActiveTemplate(context.getEditor()) != null) {
+    /*if (TemplateManager.getInstance(context.getProject()).getActiveTemplate(context.getEditor()) != null) {
       return; // Don't brake the template.
-    }
+    }*/
     Object object = item.getObject();
     if (!(object instanceof MavenRepositoryArtifactInfo)) {
       return;
@@ -95,7 +94,9 @@ public class MavenDependencyInsertionHandler implements InsertHandler<LookupElem
 
     DomFileElement<MavenDomProjectModel> domModel =
       DomManager.getDomManager(context.getProject()).getFileElement(contextFile, MavenDomProjectModel.class);
-    if (MavenDependencyCompletionUtil.findManagedDependency(domModel.getRootElement(), context.getProject(), completionItem.getGroupId(),
+
+    if (!MavenDependencyCompletionUtil.isInsideManagedDependency(domCoordinates) &&
+        MavenDependencyCompletionUtil.findManagedDependency(domModel.getRootElement(), context.getProject(), completionItem.getGroupId(),
                                                             completionItem.getArtifactId()) != null) {
       return; //allready present in parent file
     }
@@ -113,4 +114,5 @@ public class MavenDependencyInsertionHandler implements InsertHandler<LookupElem
       MavenDependencyCompletionUtil.invokeCompletion(context, CompletionType.BASIC);
     }
   }
+
 }

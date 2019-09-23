@@ -4,17 +4,20 @@ package com.intellij.ide.actions.runAnything.activity;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.ReopenProjectAction;
+import com.intellij.ide.actions.runAnything.RunAnythingContext;
 import com.intellij.ide.actions.runAnything.items.RunAnythingItem;
 import com.intellij.ide.actions.runAnything.items.RunAnythingItemBase;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.stream.Collectors;
 
 public class RunAnythingRecentProjectProvider extends RunAnythingAnActionProvider<AnAction> {
@@ -77,5 +80,11 @@ public class RunAnythingRecentProjectProvider extends RunAnythingAnActionProvide
     public String getDescription() {
       return myValue.getProjectPath();
     }
+  }
+
+  @NotNull
+  @Override
+  public List<RunAnythingContext> getExecutionContexts(@NotNull DataContext dataContext) {
+    return ContainerUtil.emptyList();
   }
 }

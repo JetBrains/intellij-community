@@ -50,7 +50,9 @@ public class TestCaseWithNoTestMethodsInspectionTest extends LightJavaInspection
       "package org.junit.jupiter.api;" +
       "public @interface Test {}",
       "package org.junit.jupiter.api;" +
-      "public @interface Nested {}"
+      "public @interface Nested {}",
+      "package org.junit.platform.commons.annotation;" +
+      "public @interface Testable {}"
     };
   }
 }

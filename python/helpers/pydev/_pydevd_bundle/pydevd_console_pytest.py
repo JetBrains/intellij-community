@@ -1,5 +1,6 @@
 
 from _pydev_bundle import pydev_log
+import traceback
 
 
 def enable_pytest_output():

@@ -43,6 +43,8 @@ public class PyMethodParametersInspection extends PyInspection {
   @Nullable
   @Override
   public JComponent createOptionsPanel() {
+    //TODO: simplify this (drop this?)
+    // it should offer only one default option mcs or metacls, inspection should accept both
     ComboBox comboBox = new ComboBox<>(new String[] {"mcs", "metacls"});
     comboBox.setSelectedItem(MCS);
     comboBox.addActionListener(new ActionListener() {

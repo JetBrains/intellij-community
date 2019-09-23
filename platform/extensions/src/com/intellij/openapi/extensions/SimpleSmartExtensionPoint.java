@@ -23,4 +23,24 @@ public abstract class SimpleSmartExtensionPoint<T> extends SmartExtensionPoint<T
   protected final T getExtension(@NotNull final T t) {
     return t;
   }
+
+  public static <T> SimpleSmartExtensionPoint<T> create(ExtensionPointName<T> epName) {
+    return new SimpleSmartExtensionPoint<T>() {
+      @NotNull
+      @Override
+      protected ExtensionPoint<T> getExtensionPoint() {
+        return Extensions.getRootArea().getExtensionPoint(epName);
+      }
+    };
+  }
+
+  public static <T> SimpleSmartExtensionPoint<T> create(ExtensionsArea area, ExtensionPointName<T> epName) {
+    return new SimpleSmartExtensionPoint<T>() {
+      @NotNull
+      @Override
+      protected ExtensionPoint<T> getExtensionPoint() {
+        return area.getExtensionPoint(epName);
+      }
+    };
+  }
 }

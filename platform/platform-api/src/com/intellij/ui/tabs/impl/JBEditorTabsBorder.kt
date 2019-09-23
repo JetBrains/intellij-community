@@ -14,16 +14,16 @@ class JBEditorTabsBorder(tabs: JBTabsImpl) : JBTabsBorder(tabs) {
     g as Graphics2D
 
     tabs.tabPainter.paintBorderLine(g, thickness, Point(x, y), Point(x + width, y))
-    if(tabs.isEmptyVisible) return
+    if(tabs.isEmptyVisible || tabs.isHideTabs) return
 
-    val firstLabel = tabs.myInfo2Label.get(tabs.lastLayoutPass.getTabAt(0, 0)) ?: return
+    val myInfo2Label = tabs.myInfo2Label
+    val firstLabel = myInfo2Label[tabs.lastLayoutPass.getTabAt(0, 0)] ?: return
 
     val startY = firstLabel.y - if (tabs.position == JBTabsPosition.bottom) 0 else thickness
 
-
     when(tabs.position) {
       JBTabsPosition.top -> {
-        for (eachRow in 1..tabs.lastLayoutPass.rowCount) {
+        for (eachRow in 0..tabs.lastLayoutPass.rowCount) {
           val yl = (eachRow * tabs.myHeaderFitSize.height) + startY
           tabs.tabPainter.paintBorderLine(g, thickness, Point(x, yl), Point(x + width, yl))
         }
@@ -43,5 +43,8 @@ class JBEditorTabsBorder(tabs: JBTabsImpl) : JBTabsBorder(tabs) {
         tabs.tabPainter.paintBorderLine(g, thickness, Point(i, y), Point(i, y + height))
       }
     }
+
+    val selectedLabel = tabs.selectedLabel ?: return
+    tabs.tabPainter.paintUnderline(tabs.position, selectedLabel.bounds, thickness, g, tabs.isActiveTabs(tabs.selectedInfo))
   }
 }

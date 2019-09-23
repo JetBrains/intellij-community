@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.util;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ObjectUtils;
@@ -15,21 +16,36 @@ public class PsiConcatenationUtil {
 
   /**
    * @param formatParameters  output parameter, will contain the format parameters found in the concatenation
-   * @return unescaped (!) format string produced from the concatenation
+   * @return unescaped format string produced from the concatenation
    */
-  public static String buildFormatString(PsiExpression concatenation, boolean printfFormat,
-                                         List<? super PsiExpression> formatParameters) {
+  public static String buildUnescapedFormatString(PsiExpression concatenation, boolean printfFormat,
+                                                  List<? super PsiExpression> formatParameters) {
     final StringBuilder result = new StringBuilder();
-    buildFormatString(concatenation, result, formatParameters, printfFormat);
+    buildFormatString(concatenation, result, formatParameters, printfFormat, false);
     return result.toString();
   }
 
   // externally used
+
+  /**
+   * @deprecated use {@code buildUnescapedFormatString} instead and use either
+   * {@code com.intellij.openapi.util.text.StringUtil#escapeStringCharacters(java.lang.String)}
+   * or
+   * {@code com.intellij.openapi.util.text.StringUtil#escapeTextBlockCharacters(java.lang.String)}
+   * to escape the resulting string.
+   */
+  @Deprecated
   public static void buildFormatString(PsiExpression expression, StringBuilder formatString,
                                        List<? super PsiExpression> formatParameters, boolean printfFormat) {
+    buildFormatString(expression, formatString, formatParameters, printfFormat, true);
+  }
+
+  private static void buildFormatString(PsiExpression expression, StringBuilder formatString,
+                                       List<? super PsiExpression> formatParameters, boolean printfFormat, boolean escape) {
     if (expression instanceof PsiLiteralExpression) {
       final PsiLiteralExpression literalExpression = (PsiLiteralExpression) expression;
-      final String text = String.valueOf(literalExpression.getValue());
+      final String value = String.valueOf(literalExpression.getValue());
+      final String text = escape ? StringUtil.escapeStringCharacters(value) : value;
       String formatText;
       if (printfFormat) {
         formatText = text.replace("%", "%%").replace("\\'", "'");
@@ -48,7 +64,7 @@ public class PsiConcatenationUtil {
         boolean stringStarted = first != null && first.equalsToText(JAVA_LANG_STRING) ||
                                 second != null && second.equalsToText(JAVA_LANG_STRING);
         if (stringStarted) {
-          buildFormatString(operands[0], formatString, formatParameters, printfFormat);
+          buildFormatString(operands[0], formatString, formatParameters, printfFormat, escape);
         }
         for (int i = 1; i < operands.length; i++) {
           PsiExpression op = operands[i];
@@ -66,7 +82,7 @@ public class PsiConcatenationUtil {
           }
           if (stringStarted) {
             if (optype != null && (optype.equalsToText(JAVA_LANG_STRING) || PsiType.CHAR.equals(optype))) {
-              buildFormatString(op, formatString, formatParameters, printfFormat);
+              buildFormatString(op, formatString, formatParameters, printfFormat, escape);
             }
             else {
               addFormatParameter(op, formatString, formatParameters, printfFormat);

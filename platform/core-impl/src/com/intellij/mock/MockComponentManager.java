@@ -2,33 +2,31 @@
 package com.intellij.mock;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.components.ComponentManager;
-import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.impl.MessageBusFactoryImpl;
 import com.intellij.util.pico.DefaultPicoContainer;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.picocontainer.MutablePicoContainer;
 import org.picocontainer.PicoContainer;
 
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 public class MockComponentManager extends UserDataHolderBase implements ComponentManager {
   private final MessageBus myMessageBus = new MessageBusFactoryImpl().createMessageBus(this);
-  private final MutablePicoContainer myPicoContainer;
+  private final DefaultPicoContainer myPicoContainer;
+  private final ExtensionsAreaImpl myExtensionArea;
 
-  private final Map<Class<?>, Object> myComponents = new HashMap<>();
+  private final Map<Class<?>, Object> myComponents = new THashMap<>();
   private final Set<Object> myDisposableComponents = ContainerUtil.newConcurrentSet();
   private boolean myDisposed;
 
@@ -47,19 +45,20 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
     };
 
     myPicoContainer.registerComponentInstance(this);
+    myExtensionArea = new ExtensionsAreaImpl(this);
     Disposer.register(parentDisposable, this);
   }
 
-  private void registerComponentInDisposer(@Nullable Object o) {
-    if (o instanceof Disposable && o != this && !(o instanceof MessageBus)) {
-      if (myDisposableComponents.add(o))
-        Disposer.register(this, (Disposable)o);
-    }
+  @NotNull
+  @Override
+  public ExtensionsAreaImpl getExtensionArea() {
+    return myExtensionArea;
   }
 
-  @Override
-  public BaseComponent getComponent(@NotNull String name) {
-    return null;
+  protected void registerComponentInDisposer(@Nullable Object o) {
+    if (o instanceof Disposable && o != this && !(o instanceof MessageBus) && myDisposableComponents.add(o)) {
+      Disposer.register(this, (Disposable)o);
+    }
   }
 
   public <T> void registerService(@NotNull Class<T> serviceInterface, @NotNull Class<? extends T> serviceImplementation) {
@@ -76,6 +75,12 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
     registerComponentInDisposer(serviceImplementation);
   }
 
+  public <T> void registerService(@NotNull Class<T> serviceInterface, @NotNull T serviceImplementation, @NotNull Disposable parentDisposable) {
+    String key = serviceInterface.getName();
+    registerService(serviceInterface, serviceImplementation);
+    Disposer.register(parentDisposable, () -> myPicoContainer.unregisterComponent(key));
+  }
+
   public <T> void addComponent(@NotNull Class<T> interfaceClass, @NotNull T instance) {
     myComponents.put(interfaceClass, instance);
     registerComponentInDisposer(instance);
@@ -90,21 +95,10 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
   }
 
   @Override
-  public <T> T getComponent(@NotNull Class<T> interfaceClass, T defaultImplementation) {
-    return getComponent(interfaceClass);
-  }
-
-  @Override
-  public boolean hasComponent(@NotNull Class interfaceClass) {
-    return false;
-  }
-
-  @SuppressWarnings("unchecked")
-  @Override
-  @NotNull
-  public <T> T[] getComponents(@NotNull Class<T> baseClass) {
-    final List<T> list = myPicoContainer.getComponentInstancesOfType(baseClass);
-    return list.toArray(ArrayUtil.newArray(baseClass, 0));
+  public <T> T getService(@NotNull Class<T> serviceClass, boolean createIfNeeded) {
+    T result = myPicoContainer.getService(serviceClass);
+    registerComponentInDisposer(result);
+    return result;
   }
 
   @Override
@@ -128,12 +122,6 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
   public void dispose() {
     Disposer.dispose(myMessageBus);
     myDisposed = true;
-  }
-
-  @NotNull
-  @Override
-  public <T> T[] getExtensions(@NotNull final ExtensionPointName<T> extensionPointName) {
-    throw new UnsupportedOperationException("getExtensions()");
   }
 
   @NotNull

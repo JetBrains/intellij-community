@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
  * Show/hide background action.
  *
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
- * @see org.intellij.images.ui.ImageComponentDecorator#setTransparencyChessboardVisible
+ * @see ImageComponentDecorator#setTransparencyChessboardVisible
  */
 public final class ToggleTransparencyChessboardAction extends ToggleAction {
   @Override

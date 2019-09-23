@@ -21,9 +21,7 @@ import com.intellij.psi.PsiManager;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-public class ResourceBundleEditorProvider extends FileTypeFactory implements FileEditorProvider, DumbAware {
-  private static final ResourceBundleFileType RESOURCE_BUNDLE_FILE_TYPE = new ResourceBundleFileType();
-
+public class ResourceBundleEditorProvider implements FileEditorProvider, DumbAware {
   @Override
   public boolean accept(@NotNull final Project project, @NotNull final VirtualFile file){
     if (file instanceof ResourceBundleAsVirtualFile) return true;
@@ -73,11 +71,5 @@ public class ResourceBundleEditorProvider extends FileTypeFactory implements Fil
   @NotNull
   public String getEditorTypeId(){
     return "ResourceBundle";
-  }
-
-
-  @Override
-  public void createFileTypes(@NotNull final FileTypeConsumer consumer) {
-    consumer.consume(RESOURCE_BUNDLE_FILE_TYPE, "");
   }
 }

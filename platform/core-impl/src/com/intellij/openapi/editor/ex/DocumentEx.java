@@ -85,22 +85,6 @@ public interface DocumentEx extends Document {
                            boolean greedyToRight,
                            int layer);
 
-  default boolean isInBulkUpdate() {
-    return false;
-  }
-
-  /**
-   * Enters or exits 'bulk' mode for processing of document changes. Bulk mode should be used when a large number of document changes
-   * are applied in batch (without user interaction for each change). In this mode, to improve performance, some activities that usually
-   * happen on each document change will be muted, with reconciliation happening on bulk mode exit.
-   * <br>
-   * Certain operations shouldn't be invoked in bulk mode as they can return invalid results or lead to exception. They include: querying 
-   * or updating folding or soft wrap data, editor position recalculation functions (offset to logical position, logical to visual position, 
-   * etc), querying or updating caret position or selection state. 
-   */
-  default void setInBulkUpdate(boolean value) {
-  }
-
   @NotNull
   default List<RangeMarker> getGuardedBlocks() {
     return Collections.emptyList();
@@ -113,7 +97,7 @@ public interface DocumentEx extends Document {
   boolean processRangeMarkers(@NotNull Processor<? super RangeMarker> processor);
 
   /**
-   * Get range markers which {@link com.intellij.openapi.util.TextRange#intersects(int, int)} the specified range
+   * Get range markers which {@link TextRange#intersects(int, int)} the specified range
    * and hand them to the {@code processor} in their {@link RangeMarker#getStartOffset()} order
    */
   boolean processRangeMarkersOverlappingWith(int start, int end, @NotNull Processor<? super RangeMarker> processor);

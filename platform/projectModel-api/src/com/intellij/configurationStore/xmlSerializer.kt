@@ -12,7 +12,7 @@ import java.net.URL
 import java.util.*
 
 @ApiStatus.Internal
-val jdomSerializer: JdomSerializer = ServiceLoader.load<JdomSerializer>(JdomSerializer::class.java).first()
+val jdomSerializer: JdomSerializer = ServiceLoader.load(JdomSerializer::class.java, JdomSerializer::class.java.classLoader).first()
 
 @JvmOverloads
 fun <T : Any> serialize(obj: T, filter: SerializationFilter? = jdomSerializer.getDefaultSerializationFilter(), createElementIfEmpty: Boolean = false): Element? {

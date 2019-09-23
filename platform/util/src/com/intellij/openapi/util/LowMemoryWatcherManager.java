@@ -3,7 +3,7 @@ package com.intellij.openapi.util;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
@@ -16,18 +16,20 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryNotificationInfo;
 import java.lang.management.MemoryPoolMXBean;
 import java.lang.management.MemoryType;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 
-public class LowMemoryWatcherManager implements Disposable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.LowMemoryWatcherManager");
+public final class LowMemoryWatcherManager implements Disposable {
+  @NotNull
+  private static Logger getLogger() {
+    return Logger.getInstance("#com.intellij.openapi.util.LowMemoryWatcherManager");
+  }
 
   private static final long MEM_THRESHOLD = 5 /*MB*/ * 1024 * 1024;
   @NotNull private final ExecutorService myExecutorService;
 
   private Future<?> mySubmitted; // guarded by ourJanitor
   private final Future<?> myMemoryPoolMXBeansFuture;
-  private final AtomicBoolean myProcessing = new AtomicBoolean();
   private final Consumer<Boolean> myJanitor = new Consumer<Boolean>() {
     @Override
     public void consume(@NotNull Boolean afterGc) {
@@ -41,7 +43,10 @@ public class LowMemoryWatcherManager implements Disposable {
   };
 
   public LowMemoryWatcherManager(@NotNull ExecutorService backendExecutorService) {
-    myExecutorService = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("LowMemoryWatcherManager", backendExecutorService);
+    // whether LowMemoryWatcher runnables should be executed on the same thread that the low memory events come
+    myExecutorService = SystemProperties.getBooleanProperty("low.memory.watcher.sync", false) ?
+      ConcurrencyUtil.newSameThreadExecutorService() :
+      SequentialTaskExecutor.createSequentialApplicationPoolExecutor("LowMemoryWatcherManager", backendExecutorService);
 
     myMemoryPoolMXBeansFuture = initializeMXBeanListenersLater(backendExecutorService);
   }
@@ -65,7 +70,7 @@ public class LowMemoryWatcherManager implements Disposable {
       }
       catch (Throwable e) {
         // should not happen normally
-        LOG.info("Errors initializing LowMemoryWatcher: ", e);
+        getLogger().info("Errors initializing LowMemoryWatcher: ", e);
       }
     });
   }
@@ -77,16 +82,13 @@ public class LowMemoryWatcherManager implements Disposable {
       boolean memoryCollectionThreshold = MemoryNotificationInfo.MEMORY_COLLECTION_THRESHOLD_EXCEEDED.equals(notification.getType());
 
       if (memoryThreshold || memoryCollectionThreshold) {
-        final boolean afterGc = memoryCollectionThreshold;
-
-        if (Registry.is("low.memory.watcher.sync", true)) {
-          handleEventImmediately(afterGc);
-          return;
-        }
-
         synchronized (myJanitor) {
           if (mySubmitted == null) {
-            mySubmitted = myExecutorService.submit(() -> myJanitor.consume(afterGc));
+            mySubmitted = myExecutorService.submit(() -> myJanitor.consume(memoryCollectionThreshold));
+            // maybe it's executed too fast or even synchronously
+            if (mySubmitted.isDone()) {
+              mySubmitted = null;
+            }
           }
         }
       }
@@ -97,17 +99,6 @@ public class LowMemoryWatcherManager implements Disposable {
     return SystemProperties.getFloatProperty("low.memory.watcher.notification.threshold", 0.95f);
   }
 
-  private void handleEventImmediately(boolean afterGc) {
-    if (myProcessing.compareAndSet(false, true)) {
-      try {
-        myJanitor.consume(afterGc);
-      }
-      finally {
-        myProcessing.set(false);
-      }
-    }
-  }
-
   @Override
   public void dispose() {
     try {
@@ -115,7 +106,7 @@ public class LowMemoryWatcherManager implements Disposable {
       ((NotificationEmitter)ManagementFactory.getMemoryMXBean()).removeNotificationListener(myLowMemoryListener);
     }
     catch (Exception e) {
-      LOG.error(e);
+      getLogger().error(e);
     }
     synchronized (myJanitor) {
       if (mySubmitted != null) {

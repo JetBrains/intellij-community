@@ -20,7 +20,7 @@ import java.util.concurrent.ConcurrentMap;
 /**
  * The base class for all programming language support implementations.
  * Specific language implementations should inherit from this class
- * and its registered instance wrapped with {@link LanguageFileType} via {@link com.intellij.openapi.fileTypes.FileTypeFactory} extension point.
+ * and its registered instance wrapped with {@link LanguageFileType} via {@code com.intellij.fileType} extension point.
  * There should be exactly one instance of each Language.
  * It is usually created when creating {@link LanguageFileType} and can be retrieved later with {@link #findInstance(Class)}.
  * For the list of standard languages, see {@link com.intellij.lang.StdLanguages}.<p/>
@@ -105,6 +105,18 @@ public abstract class Language extends UserDataHolderBase {
   public static Collection<Language> getRegisteredLanguages() {
     final Collection<Language> languages = ourRegisteredLanguages.values();
     return Collections.unmodifiableCollection(new ArrayList<>(languages));
+  }
+
+  public static void unregisterLanguage(@NotNull Language language) {
+    ourRegisteredLanguages.remove(language.getClass());
+    ourRegisteredIDs.remove(language.getID());
+    for (String mimeType : language.getMimeTypes()) {
+      ourRegisteredMimeTypes.remove(mimeType);
+    }
+    final Language baseLanguage = language.getBaseLanguage();
+    if (baseLanguage != null) {
+      baseLanguage.myDialects.remove(language);
+    }
   }
 
   /**

@@ -28,6 +28,8 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.infos.MethodCandidateInfo;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -138,6 +140,19 @@ public class AddTypeCastFix extends LocalQuickFixAndIntentionActionOnPsiElement 
                                  TextRange fixRange) {
     String referenceName = ref.getReferenceName();
     if (referenceName == null) return;
+    if (qualifier instanceof PsiReferenceExpression) {
+      PsiElement resolve = ((PsiReferenceExpression)qualifier).resolve();
+      if (resolve == null) return;
+      if (resolve instanceof PsiParameter && ((PsiParameter)resolve).getTypeElement() == null) {
+        PsiMethodCallExpression callExpression = PsiTreeUtil.getParentOfType(resolve, PsiMethodCallExpression.class);
+        if (callExpression != null) {
+          JavaResolveResult result = callExpression.resolveMethodGenerics();
+          if (result instanceof MethodCandidateInfo && ((MethodCandidateInfo)result).getInferenceErrorMessage() != null) {
+            return;
+          }
+        }
+      }
+    }
     PsiElement gParent = ref.getParent();
     List<PsiType> conjuncts = GuessManager.getInstance(qualifier.getProject()).getControlFlowExpressionTypeConjuncts(qualifier);
     for (PsiType conjunct : conjuncts) {

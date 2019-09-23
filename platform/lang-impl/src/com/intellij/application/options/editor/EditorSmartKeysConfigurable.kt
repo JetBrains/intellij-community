@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.editor
 
-import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.CodeInsightSettings.*
 import com.intellij.codeInsight.editorActions.SmartBackspaceMode
 import com.intellij.lang.CodeDocumentationAwareCommenter
@@ -12,10 +11,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.keymap.impl.ModifierKeyDoubleClickHandler
-import com.intellij.openapi.options.BoundCompositeConfigurable
-import com.intellij.openapi.options.Configurable
-import com.intellij.openapi.options.SearchableConfigurable
-import com.intellij.openapi.options.UnnamedConfigurable
+import com.intellij.openapi.options.*
 import com.intellij.openapi.options.ex.ConfigurableWrapper
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.EnumComboBoxModel
@@ -24,7 +20,7 @@ import java.awt.event.KeyEvent
 import javax.swing.DefaultComboBoxModel
 
 val editorSettings = EditorSettingsExternalizable.getInstance()
-val codeInsightSettings = CodeInsightSettings.getInstance()
+val codeInsightSettings = getInstance()
 
 val myCbSmartHome = CheckboxDescriptor(ApplicationBundle.message("checkbox.smart.home"),
                                        PropertyBinding(editorSettings::isSmartHome, editorSettings::setSmartHome))
@@ -34,7 +30,7 @@ val myCbInsertPairBracket = CheckboxDescriptor(ApplicationBundle.message("checkb
 val myCbInsertPairQuote = CheckboxDescriptor(ApplicationBundle.message("checkbox.insert.pair.quote"),
                                              codeInsightSettings::AUTOINSERT_PAIR_QUOTE.toBinding())
 val myCbReformatBlockOnTypingRBrace = CheckboxDescriptor(ApplicationBundle.message("checkbox.reformat.on.typing.rbrace"),
-                                                         codeInsightSettings::INSERT_BRACE_ON_ENTER.toBinding())
+                                                         codeInsightSettings::REFORMAT_BLOCK_ON_RBRACE.toBinding())
 val myCbCamelWords = CheckboxDescriptor(ApplicationBundle.message("checkbox.use.camelhumps.words"),
                                         PropertyBinding(editorSettings::isCamelWords, editorSettings::setCamelWords))
 val myCbSurroundSelectionOnTyping = CheckboxDescriptor("Surround selection on typing quote or brace",
@@ -46,9 +42,31 @@ val myCbEnableAddingCaretsOnDoubleCtrlArrows = CheckboxDescriptor(ApplicationBun
 val myCbSmartIndentOnEnter = CheckboxDescriptor(ApplicationBundle.message("checkbox.smart.indent"),
                                                 codeInsightSettings::AUTOCOMPLETE_ON_SMART_TYPE_COMPLETION.toBinding())
 val myCbInsertPairCurlyBraceOnEnter = CheckboxDescriptor(ApplicationBundle.message("checkbox.insert.pair.curly.brace"),
-                                                         codeInsightSettings::SMART_INDENT_ON_ENTER.toBinding())
+                                                         codeInsightSettings::INSERT_BRACE_ON_ENTER.toBinding())
 val myCbInsertJavadocStubOnEnter = CheckboxDescriptor(ApplicationBundle.message("checkbox.javadoc.stub.after.slash.star.star"),
                                                       codeInsightSettings::SMART_INDENT_ON_ENTER.toBinding())
+
+val childOptions = EditorSmartKeysConfigurable().configurables
+  .map { c -> if (c is ConfigurableWrapper) c.configurable else c }
+  .flatMap { c -> if (c is ConfigurableWithOptionDescriptors) c.getOptionDescriptors(ID, { s -> s }) else emptyList() }
+
+val editorSmartKeysOptionDescriptors = listOf(
+      myCbSmartHome
+    , myCbSmartEnd
+    , myCbInsertPairBracket
+    , myCbInsertPairQuote
+    , myCbReformatBlockOnTypingRBrace
+    , myCbCamelWords
+    , myCbSurroundSelectionOnTyping
+    , myCbTabExistsBracketsAndQuotes
+    , myCbEnableAddingCaretsOnDoubleCtrlArrows
+    , myCbSmartIndentOnEnter
+    , myCbInsertPairCurlyBraceOnEnter
+    , myCbInsertJavadocStubOnEnter
+).map(CheckboxDescriptor::asOptionDescriptor) + childOptions
+
+const val ID = "editor.preferences.smartKeys"
+
 /**
  * To provide additional options in Editor | Smart Keys section register implementation of {@link com.intellij.openapi.options.UnnamedConfigurable} in the plugin.xml:
  * <p/>
@@ -167,7 +185,7 @@ class EditorSmartKeysConfigurable : BoundCompositeConfigurable<UnnamedConfigurab
 
   override fun hasOwnContent() = true
 
-  override fun getId() = "editor.preferences.smartKeys"
+  override fun getId() = ID
 
   companion object {
     private val EP_NAME = ExtensionPointName.create<EditorSmartKeysConfigurableEP>("com.intellij.editorSmartKeysConfigurable")

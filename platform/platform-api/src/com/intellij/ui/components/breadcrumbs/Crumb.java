@@ -4,6 +4,7 @@ package com.intellij.ui.components.breadcrumbs;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.breadcrumbs.BreadcrumbsProvider;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Arrays;
@@ -18,6 +19,10 @@ public interface Crumb {
 
   default String getText() { return toString(); }
 
+  /**
+   * @return synchronously calculated tooltip text
+   */
+  @Nullable
   default String getTooltip() { return null; }
 
   /**

@@ -8,22 +8,19 @@ import com.intellij.openapi.vcs.*
 import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.testFramework.replaceService
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.vcsUtil.VcsUtil
-import org.picocontainer.MutablePicoContainer
 import java.io.File
 
 class VcsIntegrationEnablerTest : VcsRootBaseTest() {
-
   private var myTestRoot: VirtualFile? = null
 
   @Throws(Exception::class)
   public override fun setUp() {
     super.setUp()
-    val picoContainer = myProject.picoContainer as MutablePicoContainer
-    val vcsNotifierKey = VcsNotifier::class.java.name
-    picoContainer.unregisterComponent(vcsNotifierKey)
-    picoContainer.registerComponentImplementation(vcsNotifierKey, TestVcsNotifier::class.java)
+
+    myProject.replaceService(VcsNotifier::class.java, TestVcsNotifier(myProject), testRootDisposable)
     myTestRoot = projectRoot.parent
   }
 

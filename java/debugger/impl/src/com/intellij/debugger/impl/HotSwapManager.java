@@ -8,6 +8,7 @@ import com.intellij.ide.actions.ActionsCollector;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEnumerator;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -15,6 +16,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.JBIterable;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.*;
@@ -48,17 +50,20 @@ public class HotSwapManager {
     myTimeStamps.put(session, Long.valueOf(tStamp));
   }
 
-  public Map<String, HotSwapFile> scanForModifiedClasses(final DebuggerSession session, final HotSwapProgress progress) {
+  public Map<String, HotSwapFile> scanForModifiedClasses(@NotNull DebuggerSession session,
+                                                         @Nullable NotNullLazyValue<? extends List<String>> outputPaths,
+                                                         @NotNull HotSwapProgress progress) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
 
     final long timeStamp = getTimeStamp(session);
     final Map<String, HotSwapFile> modifiedClasses = new HashMap<>();
 
-    List<String> outputPaths = ReadAction.compute(
-      () -> JBIterable.of(OrderEnumerator.orderEntries(myProject).classes().getRoots())
-        .filterMap(o -> o.isDirectory() && !o.getFileSystem().isReadOnly() ? o.getPath() : null)
-        .toList());
-    for (String path : outputPaths) {
+    List<String> paths = outputPaths != null ? outputPaths.getValue() :
+                         ReadAction.compute(() -> JBIterable.of(OrderEnumerator.orderEntries(myProject).classes().getRoots())
+                           .filterMap(o -> o.isDirectory() && !o.getFileSystem().isReadOnly() ? o.getPath() : null)
+                           .toList()
+                         );
+    for (String path : paths) {
       String rootPath = FileUtil.toCanonicalPath(path);
       collectModifiedClasses(new File(path), rootPath, rootPath + "/", modifiedClasses, progress, timeStamp);
     }
@@ -131,9 +136,16 @@ public class HotSwapManager {
     return result;
   }
 
+  @NotNull
+  public static Map<DebuggerSession, Map<String, HotSwapFile>> scanForModifiedClasses(@NotNull List<? extends DebuggerSession> sessions,
+                                                                                      @NotNull HotSwapProgress swapProgress) {
+    return scanForModifiedClasses(sessions, null, swapProgress);
+  }
+
 
   @NotNull
   public static Map<DebuggerSession, Map<String, HotSwapFile>> scanForModifiedClasses(@NotNull List<? extends DebuggerSession> sessions,
+                                                                                      @Nullable NotNullLazyValue<? extends List<String>> outputPaths,
                                                                                       @NotNull HotSwapProgress swapProgress) {
     final Map<DebuggerSession, Map<String, HotSwapFile>> modifiedClasses = new THashMap<>();
     final MultiProcessCommand scanClassesCommand = new MultiProcessCommand();
@@ -147,7 +159,8 @@ public class HotSwapManager {
         @Override
         protected void action() {
           swapProgress.setDebuggerSession(debuggerSession);
-          Map<String, HotSwapFile> sessionClasses = getInstance(swapProgress.getProject()).scanForModifiedClasses(debuggerSession, swapProgress);
+          Map<String, HotSwapFile> sessionClasses =
+            getInstance(swapProgress.getProject()).scanForModifiedClasses(debuggerSession, outputPaths, swapProgress);
           if (!sessionClasses.isEmpty()) {
             modifiedClasses.put(debuggerSession, sessionClasses);
           }

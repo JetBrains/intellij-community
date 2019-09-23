@@ -15,11 +15,14 @@
  */
 package git4idea.actions;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitUtil;
 import git4idea.commands.GitLineHandler;
+import git4idea.config.GitConfigUtil;
 import git4idea.i18n.GitBundle;
 import git4idea.merge.GitPullDialog;
 import git4idea.repo.GitRemote;
@@ -31,6 +34,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class GitPull extends GitMergeAction {
+  private static final Logger LOG = Logger.getInstance(GitPull.class);
 
   @Override
   @NotNull
@@ -58,7 +62,18 @@ public class GitPull extends GitMergeAction {
     final List<String> urls = remote == null ? Collections.singletonList(remoteOrUrl) : remote.getUrls();
     Computable<GitLineHandler> handlerProvider = () -> dialog.makeHandler(urls);
     return new DialogState(dialog.gitRoot(), GitBundle.message("pulling.title", dialog.getRemote()), handlerProvider,
-                           dialog.getSelectedBranches());
+                           dialog.getSelectedBranches(), dialog.isCommitAfterMerge());
   }
 
+  @Override
+  protected boolean shouldSetupRebaseEditor(@NotNull Project project, VirtualFile selectedRoot) {
+    String value = null;
+    try {
+      value = GitConfigUtil.getValue(project, selectedRoot, "pull.rebase");
+    }
+    catch (VcsException e) {
+      LOG.warn(e);
+    }
+    return "interactive".equals(value);
+  }
 }

@@ -173,13 +173,6 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
     return false;
   }
 
-  /**
-   * If enabled, runner must add new line char (\n) before each TC message. This char is not reported to user.
-   */
-  public boolean tcMessageHasNewLinePrefix() {
-    return false;
-  }
-
   protected ExecutionConsole getConsole() {
     return myConsole;
   }

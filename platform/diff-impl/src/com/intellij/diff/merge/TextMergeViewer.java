@@ -14,6 +14,7 @@ import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.fragments.MergeLineFragment;
 import com.intellij.diff.requests.ContentDiffRequest;
+import com.intellij.diff.requests.ProxySimpleDiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.diff.tools.simple.ThreesideTextDiffViewerEx;
 import com.intellij.diff.tools.util.DiffNotifications;
@@ -88,9 +89,10 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     myMergeRequest = request;
 
     DiffContext diffContext = new MergeUtil.ProxyDiffContext(myMergeContext);
-    ContentDiffRequest diffRequest = new SimpleDiffRequest(myMergeRequest.getTitle(),
-                                                           getDiffContents(myMergeRequest),
-                                                           getDiffContentTitles(myMergeRequest));
+    ContentDiffRequest diffRequest = new ProxySimpleDiffRequest(myMergeRequest.getTitle(),
+                                                                getDiffContents(myMergeRequest),
+                                                                getDiffContentTitles(myMergeRequest),
+                                                                myMergeRequest);
     diffRequest.putUserData(DiffUserDataKeys.FORCE_READ_ONLY_CONTENTS, new boolean[]{true, false, true});
 
     myViewer = new MyThreesideViewer(diffContext, diffRequest);

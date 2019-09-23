@@ -66,12 +66,12 @@ import java.util.zip.ZipInputStream;
 public class TemplateModuleBuilder extends ModuleBuilder {
   private final static Logger LOG = Logger.getInstance(TemplateModuleBuilder.class);
 
-  private final ModuleType myType;
-  private final List<WizardInputField> myAdditionalFields;
+  private final ModuleType<?> myType;
+  private final List<WizardInputField<?>> myAdditionalFields;
   private final ArchivedProjectTemplate myTemplate;
   private boolean myProjectMode;
 
-  public TemplateModuleBuilder(ArchivedProjectTemplate template, ModuleType moduleType, @NotNull List<WizardInputField> additionalFields) {
+  public TemplateModuleBuilder(ArchivedProjectTemplate template, ModuleType<?> moduleType, @NotNull List<WizardInputField<?>> additionalFields) {
     myTemplate = template;
     myType = moduleType;
     myAdditionalFields = additionalFields;
@@ -91,7 +91,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
 
   @NotNull
   @Override
-  protected List<WizardInputField> getAdditionalFields() {
+  protected List<WizardInputField<?>> getAdditionalFields() {
     return myAdditionalFields;
   }
 
@@ -130,14 +130,14 @@ public class TemplateModuleBuilder extends ModuleBuilder {
     }
   }
 
-  @Nullable
+  @NotNull
   @Override
   public String getBuilderId() {
     return myTemplate.getName();
   }
 
   @Override
-  public ModuleType getModuleType() {
+  public ModuleType<?> getModuleType() {
     return myType;
   }
 
@@ -168,7 +168,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
 
   private void fixModuleName(@NotNull Module module) {
     ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
-    for (WizardInputField field : myAdditionalFields) {
+    for (WizardInputField<?> field : myAdditionalFields) {
       ProjectTemplateParameterFactory factory = WizardInputField.getFactoryById(field.getId());
       if (factory != null) {
         factory.applyResult(field.getValue(), model);
@@ -189,7 +189,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
     RunManager runManager = RunManager.getInstance(module.getProject());
     for (RunConfiguration configuration : runManager.getAllConfigurationsList()) {
       if (configuration instanceof ModuleBasedConfiguration) {
-        ((ModuleBasedConfiguration)configuration).getConfigurationModule().setModule(module);
+        ((ModuleBasedConfiguration<?, ?>)configuration).getConfigurationModule().setModule(module);
       }
     }
   }
@@ -205,8 +205,8 @@ public class TemplateModuleBuilder extends ModuleBuilder {
   }
 
   @Nullable
-  private WizardInputField getBasePackageField() {
-    for (WizardInputField field : getAdditionalFields()) {
+  private WizardInputField<?> getBasePackageField() {
+    for (WizardInputField<?> field : getAdditionalFields()) {
       if (ProjectTemplateParameterFactory.IJ_BASE_PACKAGE.equals(field.getId())) {
         return field;
       }
@@ -219,7 +219,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
                      final boolean isModuleMode,
                      @Nullable ProgressIndicator pI,
                      boolean reportFailuresWithDialog) {
-    final WizardInputField basePackage = getBasePackageField();
+    final WizardInputField<?> basePackage = getBasePackageField();
     try {
       final File dir = new File(path);
       class ExceptionConsumer implements Consumer<VelocityException> {
@@ -342,13 +342,13 @@ public class TemplateModuleBuilder extends ModuleBuilder {
     throws IOException {
     String patchedContent = content;
     if (!(myTemplate instanceof LocalArchivedTemplate) || ((LocalArchivedTemplate)myTemplate).isEscaped()) {
-      for (WizardInputField field : myAdditionalFields) {
+      for (WizardInputField<?> field : myAdditionalFields) {
         if (!field.acceptFile(file)) {
           return null;
         }
       }
       Properties properties = FileTemplateManager.getDefaultInstance().getDefaultProperties();
-      for (WizardInputField field : myAdditionalFields) {
+      for (WizardInputField<?> field : myAdditionalFields) {
         properties.putAll(field.getValues());
       }
       if (projectName != null) {
@@ -395,11 +395,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
         try {
           myProjectMode = true;
           unzip(name, path, false, indicator, false);
-          return ProjectManagerEx.getInstanceEx().convertAndLoadProject(baseDir);
-        }
-        catch (IOException e) {
-          LOG.error(e);
-          return null;
+          return ProjectManagerEx.getInstanceEx().loadProject(baseDir);
         }
         finally {
           cleanup();

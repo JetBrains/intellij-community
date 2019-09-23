@@ -3,11 +3,11 @@ package com.intellij.configurationStore
 
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.StoragePathMacros
-import com.intellij.openapi.components.impl.ServiceManagerImpl
 import com.intellij.openapi.module.impl.ModuleManagerImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.serviceContainer.ServiceManagerImpl
 import com.intellij.util.LineSeparator
 import com.intellij.util.SmartList
 import com.intellij.util.containers.forEachGuaranteed
@@ -88,6 +88,7 @@ internal fun moveComponentConfiguration(defaultProject: Project, element: Elemen
 
   val storageNameToComponentNames = THashMap<String, MutableSet<String>>()
   val workspaceComponentNames = THashSet(listOf("GradleLocalSettings"))
+  val ignoredComponentNames = THashSet<String>()
   storageNameToComponentNames.put("workspace.xml", workspaceComponentNames)
 
   fun processComponents(aClass: Class<*>) {
@@ -101,13 +102,16 @@ internal fun moveComponentConfiguration(defaultProject: Project, element: Elemen
 
     when (storagePath) {
       StoragePathMacros.WORKSPACE_FILE -> workspaceComponentNames.add(stateAnnotation.name)
+      StoragePathMacros.PRODUCT_WORKSPACE_FILE -> {
+        // ignore - this data should be not copied
+        ignoredComponentNames.add(stateAnnotation.name)
+      }
       else -> storageNameToComponentNames.getOrPut(storagePathResolver(storagePath)) { THashSet() }.add(stateAnnotation.name)
     }
   }
 
   @Suppress("DEPRECATION")
-  val projectComponents = defaultProject.getComponents(PersistentStateComponent::class.java)
-  projectComponents.forEachGuaranteed {
+  defaultProject.getComponentInstancesOfType(PersistentStateComponent::class.java).forEachGuaranteed {
     processComponents(it.javaClass)
   }
 
@@ -123,6 +127,10 @@ internal fun moveComponentConfiguration(defaultProject: Project, element: Elemen
     iterator.remove()
 
     val name = componentElement.getAttributeValue("name") ?: continue
+    if (ignoredComponentNames.contains(name)) {
+      continue
+    }
+
     for ((storageName, componentNames) in storageNameToComponentNames) {
       if (componentNames.contains(name)) {
         storagePathToComponentStates.getOrPut(fileResolver(storageName)) { SmartList() }.add(componentElement)

@@ -8,9 +8,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
+import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
@@ -24,16 +28,28 @@ public final class CallerMethodsTreeStructure extends HierarchyTreeStructure {
   /**
    * Should be called in read action
    */
-  public CallerMethodsTreeStructure(@NotNull Project project, @NotNull PsiMethod method, final String scopeType) {
-    super(project, new CallHierarchyNodeDescriptor(project, null, method, true, false));
+  public CallerMethodsTreeStructure(@NotNull Project project, @NotNull PsiMember member, final String scopeType) {
+    super(project, new CallHierarchyNodeDescriptor(project, null, member, true, false));
     myScopeType = scopeType;
+  } 
+  
+  /**
+   * @deprecated use CallerMethodsTreeStructure#CallerMethodsTreeStructure(Project, PsiMember, String)
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
+  public CallerMethodsTreeStructure(@NotNull Project project, @NotNull PsiMethod method, final String scopeType) {
+    this(project, ((PsiMember)method), scopeType);
   }
 
   @NotNull
   @Override
   protected final Object[] buildChildren(@NotNull final HierarchyNodeDescriptor descriptor) {
     PsiMember enclosingElement = ((CallHierarchyNodeDescriptor)descriptor).getEnclosingElement();
+    if (enclosingElement == null) return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
+
     HierarchyNodeDescriptor nodeDescriptor = getBaseDescriptor();
+    if (nodeDescriptor == null) return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
 
     if (enclosingElement instanceof PsiMethod) {
       PsiClass clazz = enclosingElement.getContainingClass();
@@ -47,38 +63,48 @@ public final class CallerMethodsTreeStructure extends HierarchyTreeStructure {
       }
     }
 
-    if (!(enclosingElement instanceof PsiMethod) || nodeDescriptor == null) {
-      return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
-    }
+    PsiMember baseMember = (PsiMember)((CallHierarchyNodeDescriptor)nodeDescriptor).getTargetElement();
+    if (baseMember == null) return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
 
-    final PsiMethod baseMethod = (PsiMethod)((CallHierarchyNodeDescriptor)nodeDescriptor).getTargetElement();
-    if (baseMethod == null) {
-      return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
-    }
-    final SearchScope searchScope = getSearchScope(myScopeType, baseMethod.getContainingClass());
+    SearchScope searchScope = getSearchScope(myScopeType, baseMember.getContainingClass());
 
-    final PsiMethod method = (PsiMethod)enclosingElement;
-    final PsiClass originalClass = method.getContainingClass();
+    PsiMember member = enclosingElement;
+    PsiClass originalClass = member.getContainingClass();
     assert originalClass != null;
-    final PsiClassType originalType = JavaPsiFacade.getElementFactory(myProject).createType(originalClass);
-    final Set<PsiMethod> methodsToFind = new HashSet<>();
-    methodsToFind.add(method);
-    ContainerUtil.addAll(methodsToFind, method.findDeepestSuperMethods());
+    PsiClassType originalType = JavaPsiFacade.getElementFactory(myProject).createType(originalClass);
+    Set<PsiMethod> methodsToFind = new HashSet<>();
 
-    final Map<PsiMember, NodeDescriptor> methodToDescriptorMap = new HashMap<>();
-    for (final PsiMethod methodToFind : methodsToFind) {
-      final JavaCallHierarchyData
-        data = new JavaCallHierarchyData(originalClass, methodToFind, originalType, method, methodsToFind, descriptor, methodToDescriptorMap, myProject);
+    if (enclosingElement instanceof PsiMethod) {
+      PsiMethod method = (PsiMethod)enclosingElement;
+      methodsToFind.add(method);
+      ContainerUtil.addAll(methodsToFind, method.findDeepestSuperMethods());
 
-      MethodReferencesSearch.search(methodToFind, searchScope, true).forEach(reference -> {
-        for (CallReferenceProcessor processor : CallReferenceProcessor.EP_NAME.getExtensions()) {
-          if (!processor.process(reference, data)) break;
-        }
-        return true;
-      });
+      Map<PsiMember, NodeDescriptor> methodToDescriptorMap = new HashMap<>();
+      for (PsiMethod methodToFind : methodsToFind) {
+        JavaCallHierarchyData data = new JavaCallHierarchyData(originalClass, methodToFind, originalType, method, methodsToFind, descriptor, methodToDescriptorMap, myProject);
+
+        MethodReferencesSearch.search(methodToFind, searchScope, true).forEach(reference -> {
+          for (CallReferenceProcessor processor : CallReferenceProcessor.EP_NAME.getExtensions()) {
+            if (!processor.process(reference, data)) break;
+          }
+          return true;
+        });
+      }
+
+      return ArrayUtil.toObjectArray(methodToDescriptorMap.values());
     }
+    
+    assert enclosingElement instanceof PsiField;
 
-    return ArrayUtil.toObjectArray(methodToDescriptorMap.values());
+    Set<PsiMethod> methodsToFindForField = new HashSet<>();
+    ReferencesSearch.search(enclosingElement, enclosingElement.getUseScope()).forEach(reference -> {
+      PsiMethod method = PsiTreeUtil.getParentOfType(reference.getElement(), PsiMethod.class);
+      if (method != null) methodsToFindForField.add(method);
+    });
+
+    return JBIterable.from(methodsToFindForField)
+      .map(method -> new CallHierarchyNodeDescriptor(myProject, nodeDescriptor, method, false, false))
+      .toArray(new CallHierarchyNodeDescriptor[]{});
   }
 
   private static boolean isLocalOrAnonymousClass(PsiMember enclosingElement) {

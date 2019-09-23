@@ -12,6 +12,7 @@ import com.intellij.openapi.vcs.changes.SimpleContentRevision;
 import com.intellij.openapi.vcs.rollback.RollbackProgressListener;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
@@ -32,7 +33,6 @@ import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 import static com.intellij.testFramework.UsefulTestCase.assertDoesntExist;
 import static com.intellij.testFramework.UsefulTestCase.assertExists;
 import static com.intellij.util.containers.ContainerUtil.isEmpty;
-import static com.intellij.util.containers.ContainerUtil.newHashSet;
 import static com.intellij.util.lang.CompoundRuntimeException.throwIfNotEmpty;
 import static com.intellij.vcsUtil.VcsUtil.getFilePath;
 import static java.util.Arrays.asList;
@@ -483,7 +483,7 @@ public class SvnRollbackTest extends SvnTestCase {
     assertNotNull(deletedFiles);
     assertEquals(3, deletedFiles.size());
 
-    final Set<File> files = newHashSet(wasFile, wasFileS1, wasFileS2);
+    final Set<File> files = ContainerUtil.newHashSet(wasFile, wasFileS1, wasFileS2);
     for (LocallyDeletedChange file : deletedFiles) {
       files.remove(file.getPath().getIOFile());
     }
@@ -518,7 +518,7 @@ public class SvnRollbackTest extends SvnTestCase {
     final List<LocallyDeletedChange> deletedFiles = changeListManager.getDeletedFiles();
     assertNotNull(deletedFiles);
     assertEquals(3, deletedFiles.size());
-    final Set<File> files = newHashSet(wasFile1, wasFile2, wasFile3);
+    final Set<File> files = ContainerUtil.newHashSet(wasFile1, wasFile2, wasFile3);
     assertTrue(files.contains(deletedFiles.get(0).getPath().getIOFile()));
     assertTrue(files.contains(deletedFiles.get(1).getPath().getIOFile()));
     assertTrue(files.contains(deletedFiles.get(2).getPath().getIOFile()));

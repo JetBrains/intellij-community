@@ -50,7 +50,7 @@
     <lang.braceMatcher language="HgIgnore" implementationClass="com.intellij.openapi.vcs.changes.ignore.lang.IgnoreBraceMatcher"/>
     <lang.commenter language="HgIgnore" implementationClass="com.intellij.openapi.vcs.changes.ignore.lang.IgnoreCommenter"/>
     <!--END HG ignore lang-->
-
+    <vcs.actions.ScheduleForAdditionActionExtension implementation="org.zmlx.hg4idea.action.HgAdd"/>
   </extensions>
 
   <actions>
@@ -61,7 +61,8 @@
 
     <group id="hg4idea.file.menu" popup="true" class="org.zmlx.hg4idea.action.HgMercurialMenu">
       <reference ref="CheckinFiles"/>
-      <reference ref="ChangesView.AddUnversioned"/>
+      <action id="hg4idea.add" class="com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionWithIgnoredFilesConfirmationAction"
+              text="Add" icon="AllIcons.General.Add" use-shortcut-of="ChangesView.AddUnversioned"/>
       <reference ref="ChangesView.Revert"/>
       <separator/>
 
@@ -165,8 +166,8 @@
     </action>
 
     <group id="Hg.Ignore.File" class="org.zmlx.hg4idea.ignore.actions.HgIgnoreFileActionGroup">
-      <add-to-group group-id="ChangesViewPopupMenu" anchor="after" relative-to-action="ChangesView.AddUnversioned"/>
-      <add-to-group group-id="hg4idea.file.menu" anchor="after" relative-to-action="ChangesView.AddUnversioned"/>
+      <add-to-group group-id="ChangesViewPopupMenu" anchor="after" relative-to-action="hg4idea.add"/>
+      <add-to-group group-id="hg4idea.file.menu" anchor="after" relative-to-action="hg4idea.add"/>
       <add-to-group group-id="Unversioned.Files.Dialog.Popup" anchor="after" relative-to-action="$Delete"/>
     </group>
   </actions>

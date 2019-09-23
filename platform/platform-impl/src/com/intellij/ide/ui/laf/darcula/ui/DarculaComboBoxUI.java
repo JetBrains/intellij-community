@@ -722,6 +722,41 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
       };
     }
 
+    @Override
+    protected int getPopupHeightForRowCount(int maxRowCount) {
+      int minRowCount = Math.min(maxRowCount, comboBox.getItemCount());
+      int height = 0;
+      ListCellRenderer<Object> renderer = list.getCellRenderer();
+
+      for (int i = 0; i < minRowCount; i++) {
+        Object value = list.getModel().getElementAt(i);
+        Component c = renderer.getListCellRendererComponent(list, value, i, false, false);
+
+        // The whole method is copied from the parent class except for the following line
+        // that adjusts the minimum row height of a list cell.
+        // See WideSelectionListUI.updateLayoutState
+        height += Math.max(c.getPreferredSize().height, UIManager.getInt("List.rowHeight"));
+      }
+
+      if (height == 0) {
+        height = comboBox.getHeight();
+      }
+
+      Border border = scroller.getViewportBorder();
+      if (border != null) {
+        Insets insets = border.getBorderInsets(null);
+        height += insets.top + insets.bottom;
+      }
+
+      border = scroller.getBorder();
+      if (border != null) {
+        Insets insets = border.getBorderInsets(null);
+        height += insets.top + insets.bottom;
+      }
+
+      return height;
+    }
+
     private class MyDelegateRenderer implements ListCellRenderer {
       @Override
       public Component getListCellRendererComponent(JList list,

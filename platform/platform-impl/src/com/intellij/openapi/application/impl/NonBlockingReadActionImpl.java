@@ -2,17 +2,19 @@
 package com.intellij.openapi.application.impl;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.intellij.concurrency.SensitiveProgressWrapper;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.constraints.ExpirableConstrainedExecution;
 import com.intellij.openapi.application.constraints.Expiration;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import kotlin.collections.ArraysKt;
@@ -31,6 +33,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 
@@ -41,16 +44,19 @@ import java.util.function.Consumer;
 public class NonBlockingReadActionImpl<T>
   extends ExpirableConstrainedExecution<NonBlockingReadActionImpl<T>>
   implements NonBlockingReadAction<T> {
+  private static final Logger LOG = Logger.getInstance(NonBlockingReadActionImpl.class);
 
   private final @Nullable Pair<ModalityState, Consumer<T>> myEdtFinish;
   private final @Nullable List<Object> myCoalesceEquality;
+  private final @Nullable ProgressIndicator myProgressIndicator;
   private final Callable<T> myComputation;
 
   private static final Set<CancellablePromise<?>> ourTasks = ContainerUtil.newConcurrentSet();
   private static final Map<List<Object>, CancellablePromise<?>> ourTasksByEquality = ContainerUtil.newConcurrentMap();
+  private static final AtomicInteger ourUnboundedSubmissionCount = new AtomicInteger();
 
   NonBlockingReadActionImpl(@NotNull Callable<T> computation) {
-    this(computation, null, new ContextConstraint[0], new BooleanSupplier[0], Collections.emptySet(), null);
+    this(computation, null, new ContextConstraint[0], new BooleanSupplier[0], Collections.emptySet(), null, null);
   }
 
   private NonBlockingReadActionImpl(@NotNull Callable<T> computation,
@@ -58,11 +64,13 @@ public class NonBlockingReadActionImpl<T>
                                     @NotNull ContextConstraint[] constraints,
                                     @NotNull BooleanSupplier[] cancellationConditions,
                                     @NotNull Set<? extends Expiration> expirationSet,
-                                    @Nullable List<Object> coalesceEquality) {
+                                    @Nullable List<Object> coalesceEquality,
+                                    @Nullable ProgressIndicator progressIndicator) {
     super(constraints, cancellationConditions, expirationSet);
     myComputation = computation;
     myEdtFinish = edtFinish;
     myCoalesceEquality = coalesceEquality;
+    myProgressIndicator = progressIndicator;
   }
 
   @NotNull
@@ -71,7 +79,7 @@ public class NonBlockingReadActionImpl<T>
                                                    @NotNull BooleanSupplier[] cancellationConditions,
                                                    @NotNull Set<? extends Expiration> expirationSet) {
     return new NonBlockingReadActionImpl<>(myComputation, myEdtFinish, constraints, cancellationConditions, expirationSet,
-                                           myCoalesceEquality);
+                                           myCoalesceEquality, myProgressIndicator);
   }
 
   @Override
@@ -95,9 +103,16 @@ public class NonBlockingReadActionImpl<T>
   }
 
   @Override
+  public NonBlockingReadAction<T> cancelWith(@NotNull ProgressIndicator progressIndicator) {
+    LOG.assertTrue(myProgressIndicator == null, "Unspecified behaviour. Outer progress indicator is already set for the action.");
+    return new NonBlockingReadActionImpl<>(myComputation, myEdtFinish, getConstraints(), getCancellationConditions(), getExpirationSet(),
+                                           myCoalesceEquality, progressIndicator);
+  }
+
+  @Override
   public NonBlockingReadAction<T> finishOnUiThread(@NotNull ModalityState modality, @NotNull Consumer<T> uiThreadAction) {
     return new NonBlockingReadActionImpl<>(myComputation, Pair.create(modality, uiThreadAction),
-                                           getConstraints(), getCancellationConditions(), getExpirationSet(), myCoalesceEquality);
+                                           getConstraints(), getCancellationConditions(), getExpirationSet(), myCoalesceEquality, myProgressIndicator);
   }
 
   @Override
@@ -105,25 +120,48 @@ public class NonBlockingReadActionImpl<T>
     if (myCoalesceEquality != null) throw new IllegalStateException("Setting equality twice is not allowed");
     if (equality.length == 0) throw new IllegalArgumentException("Equality should include at least one object");
     return new NonBlockingReadActionImpl<>(myComputation, myEdtFinish, getConstraints(), getCancellationConditions(), getExpirationSet(),
-                                           ContainerUtil.newArrayList(equality));
+                                           ContainerUtil.newArrayList(equality), myProgressIndicator);
   }
 
   @Override
   public CancellablePromise<T> submit(@NotNull Executor backgroundThreadExecutor) {
     AsyncPromise<T> promise = new AsyncPromise<>();
-    if (myCoalesceEquality != null) {
-      CancellablePromise<?> previous = ourTasksByEquality.put(myCoalesceEquality, promise);
-      if (previous != null) {
-        previous.cancel();
-      }
-      promise.onProcessed(__ -> ourTasksByEquality.remove(myCoalesceEquality, promise));
-    }
+    trackSubmission(backgroundThreadExecutor, promise);
     new Submission(promise, backgroundThreadExecutor).transferToBgThread();
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      ourTasks.add(promise);
-      promise.onProcessed(__ -> ourTasks.remove(promise));
-    }
     return promise;
+  }
+
+  private void trackSubmission(@NotNull Executor backgroundThreadExecutor, AsyncPromise<T> promise) {
+    if (myCoalesceEquality != null) {
+      setupCoalescing(promise, myCoalesceEquality);
+    }
+    if (backgroundThreadExecutor == AppExecutorUtil.getAppExecutorService()) {
+      preventTooManySubmissions(promise);
+    }
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      rememberSubmissionInTests(promise);
+    }
+  }
+
+  private static void setupCoalescing(AsyncPromise<?> promise, List<Object> coalesceEquality) {
+    CancellablePromise<?> previous = ourTasksByEquality.put(coalesceEquality, promise);
+    if (previous != null) {
+      previous.cancel();
+    }
+    promise.onProcessed(__ -> ourTasksByEquality.remove(coalesceEquality, promise));
+  }
+
+  private static void preventTooManySubmissions(AsyncPromise<?> promise) {
+    if (ourUnboundedSubmissionCount.incrementAndGet() % 107 == 0) {
+      LOG.error("Too many non-blocking read actions submitted at once. " +
+                "Please use coalesceBy, BoundedTaskExecutor or another way of limiting the number of concurrently running threads.");
+    }
+    promise.onProcessed(__ -> ourUnboundedSubmissionCount.decrementAndGet());
+  }
+
+  private static void rememberSubmissionInTests(AsyncPromise<?> promise) {
+    ourTasks.add(promise);
+    promise.onProcessed(__ -> ourTasks.remove(promise));
   }
 
   private class Submission {
@@ -156,43 +194,61 @@ public class NonBlockingReadActionImpl<T>
 
     void transferToBgThread(@NotNull ReschedulingAttempt previousAttempt) {
       backendExecutor.execute(() -> {
-        final ProgressIndicator indicator = new EmptyProgressIndicator(creationModality);
+        final ProgressIndicator indicator = myProgressIndicator != null ? new SensitiveProgressWrapper(myProgressIndicator) {
+          @NotNull
+          @Override
+          public ModalityState getModalityState() {
+            return creationModality;
+          }
+        } : new EmptyProgressIndicator(creationModality);
+
         currentIndicator = indicator;
         try {
-          ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(() -> insideReadAction(indicator), indicator);
+          ReadAction.run(() -> {
+            boolean success = ProgressIndicatorUtils.runWithWriteActionPriority(() -> insideReadAction(previousAttempt, indicator), indicator);
+            if (!success && Promises.isPending(promise)) {
+              reschedule(previousAttempt);
+            }
+          });
         }
         finally {
           currentIndicator = null;
         }
-
-        if (Promises.isPending(promise)) {
-          // using a blocking read action here for simplicity
-          // but nothing expensive should happen inside, just constraint checks that need read action
-          ReadAction.run(() -> {
-            if (!checkObsolete()) {
-              doScheduleWithinConstraints(attempt -> dispatchLaterUnconstrained(() -> transferToBgThread(attempt)), previousAttempt);
-            }
-          });
-        }
       });
     }
 
-    void insideReadAction(ProgressIndicator indicator) {
+    private void reschedule(ReschedulingAttempt previousAttempt) {
+      if (!checkObsolete()) {
+        doScheduleWithinConstraints(attempt -> dispatchLaterUnconstrained(() -> transferToBgThread(attempt)), previousAttempt);
+      }
+    }
+
+    void insideReadAction(ReschedulingAttempt previousAttempt, ProgressIndicator indicator) {
       try {
-        if (checkObsolete() || !constraintsAreSatisfied()) return;
+        if (checkObsolete()) {
+          return;
+        }
+        if (!constraintsAreSatisfied()) {
+          reschedule(previousAttempt);
+          return;
+        }
 
         T result = myComputation.call();
 
         if (myEdtFinish != null) {
-          safeTransferToEdt(result, myEdtFinish, indicator);
+          safeTransferToEdt(result, myEdtFinish, previousAttempt);
         } else {
           promise.setResult(result);
         }
       }
-      catch (Throwable e) {
+      catch (ProcessCanceledException e) {
         if (!indicator.isCanceled()) {
-          promise.setError(e);
+          promise.setError(e); // don't restart after a manually thrown PCE
         }
+        throw e;
+      }
+      catch (Throwable e) {
+        promise.setError(e);
       }
     }
 
@@ -201,47 +257,39 @@ public class NonBlockingReadActionImpl<T>
     }
 
     private boolean checkObsolete() {
-      if (promise.isCancelled()) return true;
+      if (Promises.isRejected(promise)) return true;
       if (myExpireCondition != null && myExpireCondition.getAsBoolean()) {
+        promise.cancel();
+        return true;
+      }
+      if (myProgressIndicator != null && myProgressIndicator.isCanceled()) {
         promise.cancel();
         return true;
       }
       return false;
     }
 
-    void safeTransferToEdt(T result, Pair<? extends ModalityState, ? extends Consumer<T>> edtFinish, ProgressIndicator indicator) {
+    void safeTransferToEdt(T result, Pair<? extends ModalityState, ? extends Consumer<T>> edtFinish, ReschedulingAttempt previousAttempt) {
       if (Promises.isRejected(promise)) return;
 
-      Semaphore semaphore = new Semaphore(1);
+      long stamp = AsyncExecutionServiceImpl.getWriteActionCounter();
+
       ApplicationManager.getApplication().invokeLater(() -> {
-        if (indicator.isCanceled()) {
-          // a write action has managed to sneak in before us, or the whole computation got canceled;
-          // anyway, nobody waits for us on bg thread, so we just exit
+        if (stamp != AsyncExecutionServiceImpl.getWriteActionCounter()) {
+          reschedule(previousAttempt);
           return;
         }
 
         if (checkObsolete()) {
-          semaphore.up();
           return;
         }
 
-        // complete the promise now to prevent write actions inside custom callback from cancelling it
         promise.setResult(result);
-
-        // now background thread may release its read lock, and we continue on EDT, invoking custom callback
-        semaphore.up();
 
         if (promise.isSucceeded()) { // in case another thread managed to cancel it just before `setResult`
           edtFinish.second.accept(result);
         }
       }, edtFinish.first);
-
-      // don't release read action until we're on EDT, to avoid result invalidation in between
-      while (!semaphore.waitFor(10)) {
-        if (indicator.isCanceled()) { // checkCanceled isn't enough, because some smart developers disable it
-          throw new ProcessCanceledException();
-        }
-      }
     }
 
   }

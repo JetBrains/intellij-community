@@ -4,6 +4,7 @@ package com.intellij.vcs.log.impl;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.LocalFilePath;
 import com.intellij.openapi.vcs.changes.Change;
@@ -17,10 +18,7 @@ import com.intellij.vcs.log.impl.VcsStatusMerger.MergedStatusInfo;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiFunction;
 
@@ -62,6 +60,11 @@ public class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImpl impleme
 
   public int size() {
     return myChanges.get().size();
+  }
+
+  @NotNull
+  protected Changes getChangesObject() {
+    return myChanges.get();
   }
 
   protected interface Changes {
@@ -120,7 +123,9 @@ public class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImpl impleme
     private List<Change> parseMergedChanges() {
       List<MergedStatusInfo<VcsFileStatusInfo>> statuses = getMergedStatusInfo();
       List<Change> changes = myParser.apply(ContainerUtil.map(statuses, MergedStatusInfo::getStatusInfo), 0);
-      LOG.assertTrue(changes.size() == statuses.size(), "Incorrectly parsed statuses " + statuses + " to changes " + changes);
+      if (changes.size() != statuses.size()) {
+        LOG.error("Incorrectly parsed statuses " + statuses + " to changes " + changes);
+      }
       if (getParents().size() <= 1) return changes;
 
       // each merge change knows about all changes to parents
@@ -146,7 +151,7 @@ public class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImpl impleme
     @Override
     public int size() {
       int size = 0;
-      for (List<VcsFileStatusInfo> changesToParent: myChangesOutput) {
+      for (List<VcsFileStatusInfo> changesToParent : myChangesOutput) {
         size += changesToParent.size();
       }
       return size;
@@ -160,6 +165,7 @@ public class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImpl impleme
       else {
         List<Collection<Change>> changes = new ArrayList<>(myChangesOutput.size());
         for (int i = 0; i < myChangesOutput.size(); i++) {
+          ProgressManager.checkCanceled();
           changes.add(myParser.apply(myChangesOutput.get(i), i));
         }
         return changes;
@@ -174,6 +180,16 @@ public class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImpl impleme
     @NotNull
     private List<MergedStatusInfo<VcsFileStatusInfo>> getMergedStatusInfo() {
       return myStatusMerger.merge(myChangesOutput);
+    }
+
+    @ApiStatus.Internal
+    @NotNull
+    public Collection<VcsFileStatusInfo> getMergedStatuses() {
+      Collection<VcsFileStatusInfo> result = new HashSet<>();
+      for (MergedStatusInfo<VcsFileStatusInfo> mergedStatusInfo : getMergedStatusInfo()) {
+        result.add(mergedStatusInfo.getStatusInfo());
+      }
+      return result;
     }
   }
 

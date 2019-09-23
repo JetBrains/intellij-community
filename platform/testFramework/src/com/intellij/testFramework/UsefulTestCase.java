@@ -10,7 +10,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.command.impl.StartMarkAction;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
@@ -246,7 +245,7 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   private static final Set<String> DELETE_ON_EXIT_HOOK_DOT_FILES;
-  private static final Class DELETE_ON_EXIT_HOOK_CLASS;
+  private static final Class<?> DELETE_ON_EXIT_HOOK_CLASS;
   static {
     Class<?> aClass;
     try {
@@ -880,14 +879,14 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   protected static void clearFields(@NotNull Object test) throws IllegalAccessException {
-    Class aClass = test.getClass();
+    Class<?> aClass = test.getClass();
     while (aClass != null) {
       clearDeclaredFields(test, aClass);
       aClass = aClass.getSuperclass();
     }
   }
 
-  public static void clearDeclaredFields(@NotNull Object test, @NotNull Class aClass) throws IllegalAccessException {
+  public static void clearDeclaredFields(@NotNull Object test, @NotNull Class<?> aClass) throws IllegalAccessException {
     for (final Field field : aClass.getDeclaredFields()) {
       final String name = field.getDeclaringClass().getName();
       if (!name.startsWith("junit.framework.") && !name.startsWith("com.intellij.testFramework.")) {
@@ -959,7 +958,7 @@ public abstract class UsefulTestCase extends TestCase {
    *
    * @param exceptionCase Block annotated with some exception type
    */
-  protected void assertException(@NotNull AbstractExceptionCase exceptionCase) {
+  protected void assertException(@NotNull AbstractExceptionCase<?> exceptionCase) {
     assertException(exceptionCase, null);
   }
 
@@ -1097,7 +1096,7 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   public static void refreshRecursively(@NotNull VirtualFile file) {
-    VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor() {
+    VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor<Void>() {
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {
         file.getChildren();
@@ -1107,19 +1106,20 @@ public abstract class UsefulTestCase extends TestCase {
     file.refresh(false, true);
   }
 
-  @Nullable
   public static VirtualFile refreshAndFindFile(@NotNull final File file) {
     return UIUtil.invokeAndWaitIfNeeded(() -> LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file));
   }
 
   public static void waitForAppLeakingThreads(long timeout, @NotNull TimeUnit timeUnit) {
     EdtTestUtil.runInEdtAndWait(() -> {
-      Application application = ApplicationManager.getApplication();
-      if (application != null && !application.isDisposed()) {
-        FileBasedIndexImpl index = (FileBasedIndexImpl)FileBasedIndex.getInstance();
-        if (index != null) index.waitForVfsEventsExecuted(timeout, timeUnit);
+      Application app = ApplicationManager.getApplication();
+      if (app != null && !app.isDisposed()) {
+        FileBasedIndexImpl index = (FileBasedIndexImpl)app.getServiceIfCreated(FileBasedIndex.class);
+        if (index != null) {
+          index.waitForVfsEventsExecuted(timeout, timeUnit);
+        }
 
-        DocumentCommitThread commitThread = (DocumentCommitThread)ServiceManager.getService(DocumentCommitProcessor.class);
+        DocumentCommitThread commitThread = (DocumentCommitThread)app.getServiceIfCreated(DocumentCommitProcessor.class);
         if (commitThread != null) {
           commitThread.waitForAllCommits(timeout, timeUnit);
         }

@@ -2,6 +2,8 @@ package org.jetbrains.plugins.textmate.configuration;
 
 import com.intellij.openapi.util.io.FileUtil;
 
+import java.util.Objects;
+
 public class BundleConfigBean implements Cloneable {
 
   public BundleConfigBean() {
@@ -49,8 +51,8 @@ public class BundleConfigBean implements Cloneable {
     BundleConfigBean bean = (BundleConfigBean)o;
 
     if (enabled != bean.enabled) return false;
-    if (name != null ? !name.equals(bean.name) : bean.name != null) return false;
-    if (path != null ? !path.equals(bean.path) : bean.path != null) return false;
+    if (!Objects.equals(name, bean.name)) return false;
+    if (!Objects.equals(path, bean.path)) return false;
 
     return true;
   }

@@ -1,21 +1,18 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema;
 
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.json.JsonLanguage;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.ExpectedHighlightingData;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.util.containers.Predicate;
 import com.jetbrains.jsonSchema.impl.inspections.JsonSchemaComplianceInspection;
-import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.util.Collection;
 
 public class JsonSchemaReSharperHighlightingTest extends JsonSchemaHighlightingTestBase {
   @NotNull
@@ -41,14 +38,11 @@ public class JsonSchemaReSharperHighlightingTest extends JsonSchemaHighlightingT
   }
 
   private void doTestFiles(String file, String schema) throws Exception {
-    @Language("JSON") String schemaText = FileUtil.loadFile(new File(getTestDataPath() + "/" + schema + ".json"));
+    String schemaText = FileUtil.loadFile(new File(getTestDataPath() + "/" + schema + ".json"));
     String inputText = FileUtil.loadFile(new File(getTestDataPath() + "/" + file + ".json"));
-    doTest(schemaText, inputText);
-  }
-
-  @Override
-  protected void doCheckResult(@NotNull ExpectedHighlightingData data, Collection<HighlightInfo> infos, String text) {
-    data.checkResult(infos, text, getTestDataPath() + "/" + getName() + ".json");
+    configureInitially(schemaText, inputText, "json");
+    myFixture.getFile().getVirtualFile().putUserData(VfsTestUtil.TEST_DATA_FILE_PATH, getTestDataPath() + "/" + getName() + ".json");
+    myFixture.checkHighlighting(true, false, false);
   }
 
   //  generated code below

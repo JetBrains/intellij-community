@@ -1,24 +1,9 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.smartPointers;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiSubstitutorImpl;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.NullableFunction;
@@ -38,8 +23,8 @@ public class SmartTypePointerManagerImpl extends SmartTypePointerManager {
   private final SmartPointerManager myPsiPointerManager;
   private final Project myProject;
 
-  public SmartTypePointerManagerImpl(final SmartPointerManager psiPointerManager, final Project project) {
-    myPsiPointerManager = psiPointerManager;
+  public SmartTypePointerManagerImpl(Project project) {
+    myPsiPointerManager = SmartPointerManager.getInstance(project);
     myProject = project;
   }
 
@@ -108,16 +93,16 @@ public class SmartTypePointerManagerImpl extends SmartTypePointerManager {
   }
 
   private static class ClassTypePointer extends TypePointerBase<PsiClassType> {
-    private final SmartPsiElementPointer myClass;
+    private final SmartPsiElementPointer<?> myClass;
     private final LanguageLevel myLevel;
     private final Map<SmartPsiElementPointer<PsiTypeParameter>, SmartTypePointer> myMap;
-    private final SmartPsiElementPointer[] myAnnotations;
+    private final SmartPsiElementPointer<?>[] myAnnotations;
 
     ClassTypePointer(@NotNull PsiClassType type,
-                     @NotNull SmartPsiElementPointer aClass,
+                     @NotNull SmartPsiElementPointer<?> aClass,
                      @NotNull LanguageLevel languageLevel,
                      @NotNull Map<SmartPsiElementPointer<PsiTypeParameter>, SmartTypePointer> map,
-                     @NotNull SmartPsiElementPointer[] annotations) {
+                     @NotNull SmartPsiElementPointer<?>[] annotations) {
       super(type);
       myClass = aClass;
       myLevel = languageLevel;
@@ -143,7 +128,7 @@ public class SmartTypePointerManagerImpl extends SmartTypePointerManager {
           resurrected.put(typeParameter, null);
         }
       }
-      final PsiSubstitutor resurrectedSubstitutor = PsiSubstitutorImpl.createSubstitutor(resurrected);
+      final PsiSubstitutor resurrectedSubstitutor = PsiSubstitutor.createSubstitutor(resurrected);
 
       PsiAnnotation[] resurrectedAnnotations = Stream.of(myAnnotations).map(SmartPsiElementPointer::getElement).filter(Objects::nonNull).toArray(PsiAnnotation[]::new);
       return new PsiImmediateClassType((PsiClass)classElement, resurrectedSubstitutor, myLevel, resurrectedAnnotations);
@@ -207,15 +192,15 @@ public class SmartTypePointerManagerImpl extends SmartTypePointerManager {
         }
       }
 
-      SmartPsiElementPointer[] annotationPointers =
+      SmartPsiElementPointer<?>[] annotationPointers =
         Stream
           .of(classType.getAnnotations())
           .map(myPsiPointerManager::createSmartPsiElementPointer)
-          .toArray(SmartPsiElementPointer[]::new);
+          .toArray(SmartPsiElementPointer<?>[]::new);
 
       LanguageLevel languageLevel = classType.getLanguageLevel();
       return new ClassTypePointer(new PsiImmediateClassType(aClass,
-                                                            PsiSubstitutorImpl.createSubstitutor(map),
+                                                            PsiSubstitutor.createSubstitutor(map),
                                                             languageLevel,
                                                             classType.getAnnotations()),
                                   myPsiPointerManager.createSmartPsiElementPointer(aClass),

@@ -202,7 +202,7 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
           String parentId = getParentId(testIdentifier);
           String nameAndId = " name=\'" + JUnit4TestListener.CLASS_CONFIGURATION +
                              "\' nodeId=\'" + escapeName(getId(testIdentifier)) +
-                             "\' parentNodeId=\'" + parentId + "\' ";
+                             "\' parentNodeId=\'" + escapeName(parentId) + "\' ";
           testFailure(JUnit4TestListener.CLASS_CONFIGURATION, getId(testIdentifier), parentId, messageName, throwableOptional, 0, reason, true);
           myPrintStream.println("\n##teamcity[testFinished" + nameAndId + "]");
         }

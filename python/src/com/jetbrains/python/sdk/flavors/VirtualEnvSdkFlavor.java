@@ -4,13 +4,14 @@ package com.jetbrains.python.sdk.flavors;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SystemProperties;
 import com.jetbrains.python.sdk.PySdkExtKt;
-import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.PythonSdkUtil;
 import icons.PythonIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,8 +32,9 @@ public class VirtualEnvSdkFlavor extends CPythonSdkFlavor {
 
   public static VirtualEnvSdkFlavor INSTANCE = new VirtualEnvSdkFlavor();
 
+  @NotNull
   @Override
-  public Collection<String> suggestHomePaths(@Nullable Module module) {
+  public Collection<String> suggestHomePaths(@Nullable Module module, @Nullable UserDataHolder context) {
     return ReadAction.compute(() -> {
       final List<String> candidates = new ArrayList<>();
       if (module != null) {
@@ -149,7 +151,7 @@ public class VirtualEnvSdkFlavor extends CPythonSdkFlavor {
   @Override
   public boolean isValidSdkPath(@NotNull File file) {
     if (!super.isValidSdkPath(file)) return false;
-    return PythonSdkType.getVirtualEnvRoot(file.getPath()) != null;
+    return PythonSdkUtil.getVirtualEnvRoot(file.getPath()) != null;
   }
 
   @Override

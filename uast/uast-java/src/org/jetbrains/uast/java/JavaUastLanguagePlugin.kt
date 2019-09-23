@@ -166,6 +166,7 @@ internal object JavaConverter {
     is PsiPackageStatement -> unwrapElements(element.parent)
     is PsiImportList -> unwrapElements(element.parent)
     is PsiReferenceList -> unwrapElements(element.parent)
+    is PsiBlockStatement -> unwrapElements(element.parent)
     else -> element
   }
 

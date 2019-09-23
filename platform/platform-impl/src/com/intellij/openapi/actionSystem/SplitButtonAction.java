@@ -148,8 +148,7 @@ public class SplitButtonAction extends AnAction implements CustomComponentAction
     }
 
     private boolean isToggleActionPushed() {
-      return selectedAction instanceof Toggleable &&
-             myPresentation.getClientProperty(Toggleable.SELECTED_PROPERTY) == Boolean.TRUE;
+      return selectedAction instanceof Toggleable && Toggleable.isSelected(myPresentation);
     }
 
     @Override

@@ -8,36 +8,34 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.util.ProgressWindow;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.OnePixelSplitter;
-import com.intellij.ui.PopupHandler;
-import com.intellij.ui.SearchTextField;
-import com.intellij.ui.SideBorder;
+import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.table.ComponentsListFocusTraversalPolicy;
 import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.VcsFullCommitDetails;
-import com.intellij.vcs.log.VcsLogFilterCollection;
-import com.intellij.vcs.log.VcsLogFilterUi;
 import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.DataPackBase;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.impl.CommonUiProperties;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
+import com.intellij.vcs.log.ui.AbstractVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogActionPlaces;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
-import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.ui.actions.IntelliSortChooserPopupAction;
 import com.intellij.vcs.log.ui.actions.ShowPreviewEditorAction;
-import com.intellij.vcs.log.ui.filter.VcsLogClassicFilterUi;
+import com.intellij.vcs.log.ui.filter.VcsLogFilterUiEx;
 import com.intellij.vcs.log.ui.table.CommitSelectionListener;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.util.BekUtil;
@@ -50,6 +48,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.CompoundBorder;
 import java.awt.*;
 import java.util.Arrays;
 import java.util.Collection;
@@ -71,8 +70,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
   @NotNull private final JComponent myToolbar;
   @NotNull private final VcsLogGraphTable myGraphTable;
 
-  @NotNull private final VcsLogClassicFilterUi myFilterUi;
-  @NotNull private final SearchTextField myTextFilter;
+  @NotNull private final VcsLogFilterUiEx myFilterUi;
 
   @NotNull private final VcsLogChangesBrowser myChangesBrowser;
   @NotNull private final Splitter myChangesBrowserSplitter;
@@ -82,17 +80,22 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
   @NotNull private final VcsLogCommitDetailsListPanel myDetailsPanel;
   @NotNull private final Splitter myDetailsSplitter;
+  @NotNull private final EditorNotificationPanel myNotificationLabel;
 
-  public MainFrame(@NotNull VcsLogData logData, @NotNull VcsLogUiImpl logUi, @NotNull MainVcsLogUiProperties uiProperties,
-                   @NotNull VisiblePack initialDataPack, @Nullable VcsLogFilterCollection filters) {
+  public MainFrame(@NotNull VcsLogData logData,
+                   @NotNull AbstractVcsLogUi logUi,
+                   @NotNull MainVcsLogUiProperties uiProperties,
+                   @NotNull VcsLogFilterUiEx filterUi) {
     myLogData = logData;
     myUiProperties = uiProperties;
 
-    myFilterUi = new VcsLogClassicFilterUi(logUi, logData, myUiProperties, initialDataPack, filters);
+    myFilterUi = filterUi;
 
-    myGraphTable = new MyVcsLogGraphTable(logUi, logData, initialDataPack);
+    myGraphTable = new MyVcsLogGraphTable(logUi, logData);
     myGraphTable.setCompactReferencesView(myUiProperties.get(MainVcsLogUiProperties.COMPACT_REFERENCES_VIEW));
     myGraphTable.setShowTagNames(myUiProperties.get(MainVcsLogUiProperties.SHOW_TAG_NAMES));
+    myGraphTable.setLabelsLeftAligned(myUiProperties.get(MainVcsLogUiProperties.LABELS_LEFT_ALIGNED));
+
     PopupHandler.installPopupHandler(myGraphTable, VcsLogActionPlaces.POPUP_ACTION_GROUP, VcsLogActionPlaces.VCS_LOG_TABLE_PLACE);
     myDetailsPanel = new VcsLogCommitDetailsListPanel(logData, logUi.getColorManager(), this) {
       @Override
@@ -112,7 +115,6 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
     myPreviewDiff = new VcsLogChangeProcessor(logData.getProject(), myChangesBrowser, false, this);
 
-    myTextFilter = myFilterUi.createTextFilter();
     myToolbar = createActionsToolbar();
     myChangesBrowser.setToolbarHeightReferent(myToolbar);
     myPreviewDiff.getToolbarWrapper().setVerticalSizeReferent(myToolbar);
@@ -124,8 +126,14 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     myDetailsPanel.installCommitSelectionListener(myGraphTable);
     VcsLogUiUtil.installDetailsListeners(myGraphTable, myDetailsPanel, myLogData, this);
 
+    myNotificationLabel = new EditorNotificationPanel(UIUtil.getPanelBackground());
+    myNotificationLabel.setVisible(false);
+    myNotificationLabel.setBorder(new CompoundBorder(JBUI.Borders.customLine(JBColor.border(), 1, 0, 0, 0),
+                                                     notNull(myNotificationLabel.getBorder(), JBUI.Borders.empty())));
+
     JComponent toolbars = new JPanel(new BorderLayout());
     toolbars.add(myToolbar, BorderLayout.NORTH);
+    toolbars.add(myNotificationLabel, BorderLayout.CENTER);
     JComponent toolbarsAndTable = new JPanel(new BorderLayout());
     toolbarsAndTable.add(toolbars, BorderLayout.NORTH);
     toolbarsAndTable.add(VcsLogUiUtil.installProgress(VcsLogUiUtil.setupScrolledGraph(myGraphTable, SideBorder.TOP),
@@ -153,6 +161,11 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     setFocusTraversalPolicy(new MyFocusPolicy());
   }
 
+  public void setExplanationHtml(@Nullable String text) {
+    myNotificationLabel.setText(text);
+    myNotificationLabel.setVisible(text != null);
+  }
+
   /**
    * Informs components that the actual DataPack has been updated (e.g. due to a log refresh). <br/>
    * Components may want to update their fields and/or rebuild.
@@ -172,7 +185,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
   }
 
   @NotNull
-  public VcsLogFilterUi getFilterUi() {
+  public VcsLogFilterUiEx getFilterUi() {
     return myFilterUi;
   }
 
@@ -200,7 +213,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     mainGroup.add(toolbarGroup);
     ActionToolbar toolbar = createActionsToolbar(mainGroup);
 
-    Wrapper textFilter = new Wrapper(myTextFilter);
+    Wrapper textFilter = new Wrapper(myFilterUi.getTextFilterComponent());
     textFilter.setVerticalSizeReferent(toolbar.getComponent());
     textFilter.setBorder(JBUI.Borders.emptyLeft(5));
 
@@ -284,11 +297,6 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     return myToolbar;
   }
 
-  @NotNull
-  public SearchTextField getTextFilter() {
-    return myTextFilter;
-  }
-
   public void showDetails(boolean state) {
     myDetailsSplitter.setSecondComponent(state ? myDetailsPanel : null);
   }
@@ -302,6 +310,16 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
   public void dispose() {
     myDetailsSplitter.dispose();
     myChangesBrowserSplitter.dispose();
+  }
+
+  public void toggleTextFilterFocus() {
+    Project project = myLogData.getProject();
+    if (IdeFocusManager.getInstance(project).getFocusedDescendantFor(getToolbar()) != null) {
+      IdeFocusManager.getInstance(project).requestFocus(getGraphTable(), true);
+    }
+    else {
+      IdeFocusManager.getInstance(project).requestFocus(myFilterUi.getTextFilterComponent(), true);
+    }
   }
 
   private class MyCommitSelectionListenerForDiff extends CommitSelectionListener<VcsFullCommitDetails> {
@@ -362,15 +380,15 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
       return Arrays.asList(myGraphTable,
                            myChangesBrowser.getPreferredFocusedComponent(),
                            myPreviewDiff.getPreferredFocusedComponent(),
-                           myTextFilter.getTextEditor());
+                           myFilterUi.getTextFilterComponent().getTextEditor());
     }
   }
 
   private class MyVcsLogGraphTable extends VcsLogGraphTable {
     @NotNull private final Runnable myRefresh;
 
-    MyVcsLogGraphTable(@NotNull VcsLogUiImpl ui, @NotNull VcsLogData logData, @NotNull VisiblePack initialDataPack) {
-      super(ui, logData, initialDataPack, ui::requestMore);
+    MyVcsLogGraphTable(@NotNull AbstractVcsLogUi ui, @NotNull VcsLogData logData) {
+      super(ui, logData, VisiblePack.EMPTY, ui::requestMore);
       myRefresh = () -> ui.getRefresher().onRefresh();
     }
 
@@ -384,17 +402,17 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
         setErrorEmptyText(((DataPack.ErrorDataPack)dataPack).getError(), "Error loading commits");
         appendActionToEmptyText("Refresh", () -> myLogData.refresh(myLogData.getLogProviders().keySet()));
       }
-      else if (visiblePack.getVisibleGraph().getVisibleCommitCount() == 0) {
-        if (visiblePack instanceof VisiblePack.ErrorVisiblePack) {
-          setErrorEmptyText(((VisiblePack.ErrorVisiblePack)visiblePack).getError(), "Error filtering commits");
-          if (visiblePack.getFilters().isEmpty()) {
-            appendActionToEmptyText("Refresh", myRefresh);
-          }
-          else {
-            appendResetFiltersActionToEmptyText();
-          }
+      else if (visiblePack instanceof VisiblePack.ErrorVisiblePack) {
+        setErrorEmptyText(((VisiblePack.ErrorVisiblePack)visiblePack).getError(), "Error filtering commits");
+        if (visiblePack.getFilters().isEmpty()) {
+          appendActionToEmptyText("Refresh", myRefresh);
         }
-        else if (visiblePack.getFilters().isEmpty()) {
+        else {
+          VcsLogUiUtil.appendResetFiltersActionToEmptyText(myFilterUi, getEmptyText());
+        }
+      }
+      else if (visiblePack.getVisibleGraph().getVisibleCommitCount() == 0) {
+        if (visiblePack.getFilters().isEmpty()) {
           statusText.setText("No changes committed.").
             appendSecondaryText("Commit local changes", VcsLogUiUtil.getLinkAttributes(),
                                 ActionUtil.createActionListener(VcsLogActionPlaces.CHECKIN_PROJECT_ACTION, this,
@@ -405,17 +423,12 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
           }
         }
         else {
-          statusText.setText("No commits matching filters.");
-          appendResetFiltersActionToEmptyText();
+          myFilterUi.setCustomEmptyText(getEmptyText());
         }
       }
       else {
         statusText.setText(CHANGES_LOG_TEXT);
       }
-    }
-
-    private void appendResetFiltersActionToEmptyText() {
-      appendActionToEmptyText("Reset filters", () -> myFilterUi.setFilter(null));
     }
   }
 }

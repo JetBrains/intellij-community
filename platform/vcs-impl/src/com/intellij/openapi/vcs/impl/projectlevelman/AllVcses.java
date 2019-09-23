@@ -69,7 +69,7 @@ public class AllVcses implements AllVcsesI, Disposable {
       vcs.doStart();
     }
     catch (VcsException e) {
-      LOG.debug(e);
+      LOG.warn(e);
     }
     vcs.getProvidedStatuses();
   }
@@ -143,7 +143,7 @@ public class AllVcses implements AllVcsesI, Disposable {
       vcs.doShutdown();
     }
     catch (VcsException e) {
-      LOG.info(e);
+      LOG.warn(e);
     }
   }
 

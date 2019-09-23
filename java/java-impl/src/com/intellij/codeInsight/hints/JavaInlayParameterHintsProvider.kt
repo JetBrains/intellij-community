@@ -97,32 +97,32 @@ class JavaInlayParameterHintsProvider : InlayParameterHintsProvider {
   )
   
   val showIfMethodNameContainsParameterName: Option = Option("java.method.name.contains.parameter.name",
-                                                             "If method name contains parameter name",
+                                                             "Parameters with names that are contained in the method name",
                                                              false)
   
   val showForParamsWithSameType: Option = Option("java.multiple.params.same.type",
-                                                 "For non-literals in case of multiple params with the same type",
+                                                 "Non-literals in case of multiple parameters with the same type",
                                                  false)
   
   val showForBuilderLikeMethods: Option = Option("java.build.like.method",
-                                                 "For builder-like methods",
+                                                 "Builder-like methods",
                                                  false)
 
 
   val ignoreOneCharOneDigitHints: Option = Option("java.simple.sequentially.numbered",
-                                                  "For methods with same-named numbered parameters",
+                                                  "Methods with same-named numbered parameters",
                                                   false)
 
   val isShowHintWhenExpressionTypeIsClear: Option = Option("java.clear.expression.type",
-                                                           "Even when type of expression is clear",
+                                                           "All other cases",
                                                            false)
 
   val isShowHintsForEnumConstants: Option = Option("java.enums",
-                                                           "For enum constants",
+                                                           "Enum constants",
                                                            true)
 
   val isShowHintsForNewExpressions: Option = Option("java.new.expr",
-                                                    "For 'new' expressions",
+                                                    "'new' expressions",
                                                     true)
 
   override fun getSupportedOptions(): List<Option> {
@@ -131,13 +131,21 @@ class JavaInlayParameterHintsProvider : InlayParameterHintsProvider {
       showForParamsWithSameType,
       showForBuilderLikeMethods,
       ignoreOneCharOneDigitHints,
-      isShowHintWhenExpressionTypeIsClear,
       isShowHintsForEnumConstants,
-      isShowHintsForNewExpressions
+      isShowHintsForNewExpressions,
+      isShowHintWhenExpressionTypeIsClear
     )
   }
 
   override fun getSettingsPreview(): String {
     return "class A {\n  native void foo(String name, boolean isChanged);\n  \n  void bar() {\n    foo(\"\", false);\n  }\n}"
+  }
+
+  override fun isExhaustive(): Boolean {
+    return true
+  }
+
+  override fun getMainCheckboxText(): String {
+    return "Show parameter hints for:"
   }
 }

@@ -96,7 +96,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "shift control H",          "ChangesView.ShelveSilently", "MethodHierarchy"},
     { "shift control LEFT",       "EditorPreviousWordWithSelection", "ResizeToolWindowLeft"},
     { "shift control RIGHT",      "EditorNextWordWithSelection", "ResizeToolWindowRight"},
-    { "shift control T",          "GotoTest", "Images.ShowThumbnails", "RunDashboard.ShowConfigurations"},
+    { "shift control T",          "GotoTest", "RunDashboard.ShowConfigurations"},
     { "shift control UP",         "ResizeToolWindowUp", "MoveStatementUp"},
     { "shift control U",          "ShelveChanges.UnshelveWithDialog", "EditorToggleCase"},
     { "shift control alt D",      "UML.ShowChanges", "Console.TableResult.CloneColumn"},
@@ -109,7 +109,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "button2",                  "EditorPasteFromX11", "GotoDeclaration", "EditorCreateRectangularSelectionOnMouseDrag"},
     { "PAGE_DOWN",                "EditorPageDown", "SearchEverywhere.NavigateToNextGroup"},
     { "PAGE_UP",                  "EditorPageUp", "SearchEverywhere.NavigateToPrevGroup"},
-    { "ESCAPE",                   "EditorEscape", "Terminal.SwitchFocusToEditor"},
+    { "ESCAPE",                   "EditorEscape", "FocusEditor", "Terminal.SwitchFocusToEditor"},
     { "shift ctrl alt LEFT",      "MoveElementLeft", "Terminal.MoveToolWindowTabLeft"},
     { "shift ctrl alt RIGHT",     "MoveElementRight", "Terminal.MoveToolWindowTabRight"},
     });
@@ -201,7 +201,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "shift control X",          SECOND_STROKE, "com.jetbrains.php.framework.FrameworkRunConsoleAction"},
     { "shift ctrl DOWN",          "EditorForwardParagraphWithSelection", "ResizeToolWindowDown"},
     { "shift ctrl UP",            "EditorBackwardParagraphWithSelection", "ResizeToolWindowUp"},
-    { "ESCAPE",                   SECOND_STROKE, "Terminal.SwitchFocusToEditor"},
+    { "ESCAPE",                   SECOND_STROKE, "FocusEditor", "Terminal.SwitchFocusToEditor"},
     });
     put("Visual Studio", new String[][] {
     { "F5",                       "Resume", "Graph.ApplyCurrentLayout"},
@@ -361,7 +361,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "shift ctrl D",             "Console.TableResult.CompareCells", "EditorDuplicate", "Uml.ShowDiff"},
     { "shift ctrl DOWN",          "MoveLineDown", "ResizeToolWindowDown"},
     { "shift ctrl ENTER",         "Console.Jpa.GenerateSql", "EditorStartNewLineBefore"},
-    { "shift ctrl T",             "Images.ShowThumbnails", "ReopenClosedTab", "RunDashboard.ShowConfigurations"},
+    { "shift ctrl T",             "ReopenClosedTab", "RunDashboard.ShowConfigurations"},
     { "shift ctrl UP",            "MoveLineUp", "ResizeToolWindowUp"}
     });
     put("Sublime Text (Mac OS X)", new String[][] {
@@ -384,7 +384,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "shift ENTER",              "CollapseExpandableComponent", "Console.TableResult.EditValueMaximized", "EditorSplitLine", "ExpandExpandableComponent", "JupyterRunCellSelectBelowAction", "OpenElementInNewWindow"},
     { "shift meta D",             "Console.TableResult.CompareCells", "EditorDuplicate", "Uml.ShowDiff"},
     { "shift meta ENTER",         "Console.Jpa.GenerateSql", "EditorStartNewLineBefore"},
-    { "shift meta T",             "Images.ShowThumbnails", "ReopenClosedTab", "RunDashboard.ShowConfigurations"}
+    { "shift meta T",             "ReopenClosedTab", "RunDashboard.ShowConfigurations"}
     });
   }};
   // @formatter:on

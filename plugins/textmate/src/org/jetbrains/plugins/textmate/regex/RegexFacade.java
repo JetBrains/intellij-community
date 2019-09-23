@@ -92,7 +92,7 @@ public class RegexFacade {
     }
   }
 
-  private class LastMatch {
+  private static class LastMatch {
     private final Object lastId;
     private final int lastOffset;
     private final MatchData lastMatch;

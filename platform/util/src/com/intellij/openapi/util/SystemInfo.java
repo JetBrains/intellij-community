@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util;
 
+import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.openapi.util.io.PathExecLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.lang.JavaVersion;
@@ -25,12 +26,6 @@ public class SystemInfo extends SystemInfoRt {
   public static final String JAVA_RUNTIME_VERSION = getRtVersion(JAVA_VERSION);
   public static final String JAVA_VENDOR = System.getProperty("java.vm.vendor", "Unknown");
 
-  /**
-   * @deprecated use {@link #is32Bit} or {@link #is64Bit} instead
-   */
-  @Deprecated public static final String ARCH_DATA_MODEL = System.getProperty("sun.arch.data.model");
-  public static final String SUN_DESKTOP = System.getProperty("sun.desktop", "");
-
   private static String getRtVersion(@SuppressWarnings("SameParameterValue") String fallback) {
     String rtVersion = System.getProperty("java.runtime.version");
     return Character.isDigit(rtVersion.charAt(0)) ? rtVersion : fallback;
@@ -51,6 +46,7 @@ public class SystemInfo extends SystemInfoRt {
   public static final boolean isAzulJvm = containsIgnoreCase(JAVA_VENDOR, "Azul");
   public static final boolean isJetBrainsJvm = containsIgnoreCase(JAVA_VENDOR, "JetBrains");
 
+  @ReviseWhenPortedToJDK("9")
   public static final boolean IS_AT_LEAST_JAVA9 = isModularJava();
 
   @SuppressWarnings("JavaReflectionMemberAccess")
@@ -181,7 +177,7 @@ public class SystemInfo extends SystemInfoRt {
   }
 
   private static int normalize(int number) {
-    return number > 9 ? 9 : number;
+    return Math.min(number, 9);
   }
 
   private static int toInt(String string) {
@@ -202,20 +198,15 @@ public class SystemInfo extends SystemInfoRt {
   }
 
   //<editor-fold desc="Deprecated stuff.">
-  /** @deprecated use {@link #isJavaVersionAtLeast(int, int, int)} (to be removed in IDEA 2020) */
+  /** @deprecated use {@link #isJavaVersionAtLeast(int, int, int)} */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2020")
   public static boolean isJavaVersionAtLeast(String v) {
     return StringUtil.compareVersionNumbers(JAVA_RUNTIME_VERSION, v) >= 0;
   }
 
-  /** @deprecated use {@link #isWinXpOrNewer} (to be removed in IDEA 2018) */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2018")
+  /** @deprecated use {@link #isWinXpOrNewer} */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020")
   @Deprecated public static final boolean isWindowsXP = isWindows && (OS_VERSION.equals("5.1") || OS_VERSION.equals("5.2"));
-
-  /** @deprecated use {@link #is32Bit} or {@link #is64Bit} (to be removed in IDEA 2018) */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2018")
-  @Deprecated public static final boolean isAMD64 = "amd64".equals(OS_ARCH);
-
   //</editor-fold>
 }

@@ -36,7 +36,7 @@ public class ChildInfoImpl implements ChildInfo {
     this.id = id;
     this.children = children;
     this.symLinkTarget = symLinkTarget;
-    if (id <= 0 && id != UNKNOWN_ID_YET) throw new IllegalArgumentException("Invalid ID: " + id);
+    if (id <= 0 && id != UNKNOWN_ID_YET || nameId <= 0) throw new IllegalArgumentException("invalid arguments id: "+id+"; nameId: "+nameId);
     if (attributes == null) {
       fileAttributesType = -1;
       flags = -1;

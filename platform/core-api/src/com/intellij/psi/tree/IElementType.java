@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.tree;
 
-import com.intellij.diagnostic.LoadingPhase;
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
@@ -63,6 +63,15 @@ public class IElementType {
     }
   }
 
+  public static void unregisterElementTypes(@NotNull Language language) {
+    for (int i = 0; i < ourRegistry.length; i++) {
+      IElementType type = ourRegistry[i];
+      if (type != null && type.getLanguage().equals(language)) {
+        ourRegistry[i] = null;
+      }
+    }
+  }
+
   private final short myIndex;
   @NotNull
   private final String myDebugName;
@@ -79,7 +88,7 @@ public class IElementType {
     this(debugName, language, true);
 
     if (!(this instanceof IFileElementType)) {
-      LoadingPhase.COMPONENT_LOADED.assertAtLeast();
+      LoadingState.COMPONENTS_LOADED.checkOccurred();
     }
   }
 

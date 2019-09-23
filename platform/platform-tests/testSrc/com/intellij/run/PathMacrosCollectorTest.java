@@ -1,11 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.run;
 
 import com.intellij.application.options.PathMacrosCollector;
 import com.intellij.application.options.PathMacrosImpl;
+import com.intellij.mock.MockApplication;
 import com.intellij.openapi.application.PathMacroFilter;
 import com.intellij.testFramework.UsefulTestCase;
-import junit.framework.TestCase;
 import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jdom.Text;
@@ -16,7 +16,14 @@ import java.util.Set;
 /**
  * @author Eugene Zhuravlev
  */
-public class PathMacrosCollectorTest extends TestCase {
+public class PathMacrosCollectorTest extends UsefulTestCase {
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+
+    MockApplication.setUp(getTestRootDisposable());
+  }
+
   public void testCollectMacros() {
     Element root = new Element("root");
     root.addContent(new Text("$MACro1$ some text $macro2$ other text $MACRo3$"));

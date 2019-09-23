@@ -31,7 +31,7 @@ import java.util.Collection;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-@ApiStatus.Experimental
+@ApiStatus.Internal
 public abstract class YamlMissingKeysInspectionBase extends YamlMetaTypeInspectionBase {
 
   @Override

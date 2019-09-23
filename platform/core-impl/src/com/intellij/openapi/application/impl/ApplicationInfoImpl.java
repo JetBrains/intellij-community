@@ -2,6 +2,8 @@
 package com.intellij.openapi.application.impl;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.intellij.diagnostic.Activity;
+import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.IdeUrlTrackingParametersProvider;
@@ -10,12 +12,12 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.ex.ProgressSlide;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.ui.JBImageIcon;
@@ -199,15 +201,23 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   static final String IDEA_PLUGINS_HOST_PROPERTY = "idea.plugins.host";
 
   ApplicationInfoImpl() {
-    String resource = IDEA_PATH + ApplicationNamesInfo.getComponentName() + XML_EXTENSION;
     try {
-      loadState(JDOMUtil.load(ApplicationInfoImpl.class, resource));
+      loadState(JDOMUtil.load(ApplicationInfoImpl.class, getApplicationInfoPath()));
     }
     catch (Exception e) {
-      throw new RuntimeException("Cannot load resource: " + resource, e);
+      //this class can be loaded before MainImpl so fix the prefix manually 
+      PlatformUtils.setDefaultPrefixForCE();
+      try {
+        loadState(JDOMUtil.load(ApplicationInfoImpl.class, getApplicationInfoPath()));
+        return;
+      }
+      catch (Exception ex) {
+        e = ex;
+      }
+      throw new RuntimeException("Cannot load resource: " + getApplicationInfoPath(), e);
     }
   }
-
+  
   @Override
   public Calendar getBuildDate() {
     return myBuildDate;
@@ -280,12 +290,6 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
     String fullName = ApplicationNamesInfo.getInstance().getFullProductName();
     if (myEAP && !StringUtil.isEmptyOrSpaces(myCodeName)) fullName += " (" + myCodeName + ")";
     return fullName;
-  }
-
-  @Nullable
-  @Override
-  public String getHelpURL() {
-    return null;
   }
 
   @Override
@@ -608,14 +612,26 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
     return myProgressSlides;
   }
 
-  private static ApplicationInfoImpl ourShadowInstance;
+  private static volatile ApplicationInfoImpl ourShadowInstance;
 
   @NotNull
   public static ApplicationInfoEx getShadowInstance() {
-    if (ourShadowInstance == null) {
-      ourShadowInstance = new ApplicationInfoImpl();
+    ApplicationInfoImpl result = ourShadowInstance;
+    if (result != null) {
+      return result;
     }
-    return ourShadowInstance;
+
+    //noinspection SynchronizeOnThis
+    synchronized (ApplicationInfoImpl.class) {
+      result = ourShadowInstance;
+      if (result == null) {
+        Activity activity = StartUpMeasurer.startActivity("app info loading");
+        result = new ApplicationInfoImpl();
+        ourShadowInstance = result;
+        activity.end();
+      }
+    }
+    return result;
   }
 
   /**
@@ -668,14 +684,6 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
         myMajorReleaseBuildDate = parseDate(majorReleaseDateString);
       }
     }
-
-    Thread currentThread = Thread.currentThread();
-    currentThread.setName(
-      currentThread.getName() + " " +
-      myMajorVersion + "." + myMinorVersion + "#" + myBuildNumber +
-      " " + ApplicationNamesInfo.getInstance().getProductName() +
-      ", eap:" + myEAP + ", os:" + SystemInfo.OS_NAME + " " + SystemInfo.OS_VERSION +
-      ", java-version:" + SystemInfo.JAVA_VENDOR + " " + SystemInfo.JAVA_RUNTIME_VERSION);
 
     Element logoElement = getChild(parentNode, ELEMENT_LOGO);
     if (logoElement != null) {
@@ -929,6 +937,11 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
     }
   }
 
+  @NotNull
+  private static String getApplicationInfoPath() {
+    return IDEA_PATH + ApplicationNamesInfo.getComponentName() + XML_EXTENSION;
+  }
+  
   @NotNull
   private static List<Element> getChildren(Element parentNode, String name) {
     return parentNode.getChildren(name, parentNode.getNamespace());

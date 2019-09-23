@@ -16,44 +16,54 @@
 package org.jetbrains.plugins.gradle.model;
 
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
+import com.intellij.openapi.util.Pair;
+import com.intellij.util.ExceptionUtilRt;
+import gnu.trove.THashSet;
+import org.gradle.api.Action;
 import org.gradle.tooling.BuildAction;
 import org.gradle.tooling.BuildController;
+import org.gradle.tooling.UnknownModelException;
+import org.gradle.tooling.UnsupportedVersionException;
 import org.gradle.tooling.internal.adapter.ProtocolToModelAdapter;
 import org.gradle.tooling.internal.adapter.TargetTypeProvider;
-import org.gradle.tooling.model.BuildIdentifier;
-import org.gradle.tooling.model.BuildModel;
-import org.gradle.tooling.model.DomainObjectSet;
-import org.gradle.tooling.model.ProjectModel;
+import org.gradle.tooling.internal.gradle.DefaultBuildIdentifier;
+import org.gradle.tooling.internal.gradle.DefaultProjectIdentifier;
+import org.gradle.tooling.model.*;
 import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.tooling.model.gradle.BasicGradleProject;
 import org.gradle.tooling.model.gradle.GradleBuild;
-import org.gradle.tooling.model.idea.BasicIdeaProject;
-import org.gradle.tooling.model.idea.IdeaModule;
 import org.gradle.tooling.model.idea.IdeaProject;
+import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider.BuildModelConsumer;
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider.ProjectModelConsumer;
+import org.jetbrains.plugins.gradle.model.internal.DummyModel;
+import org.jetbrains.plugins.gradle.tooling.Exceptions;
+import org.jetbrains.plugins.gradle.tooling.serialization.SerializationService;
 import org.jetbrains.plugins.gradle.tooling.serialization.ToolingSerializer;
+import org.jetbrains.plugins.gradle.tooling.serialization.internal.IdeaProjectSerializationService;
 
-import java.io.IOException;
+import java.io.File;
 import java.io.Serializable;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
+import java.lang.reflect.*;
 import java.util.*;
 
 /**
  * @author Vladislav.Soroka
  */
 public class ProjectImportAction implements BuildAction<ProjectImportAction.AllModels>, Serializable {
-  private final Set<ProjectImportModelProvider> myProjectsLoadedModelProviders = new LinkedHashSet<ProjectImportModelProvider>();
-  private final Set<ProjectImportModelProvider> myBuildFinishedModelProviders = new LinkedHashSet<ProjectImportModelProvider>();
-  private final Set<Class> myTargetTypes = new LinkedHashSet<Class>();
+  private final Set<ProjectImportModelProvider> myProjectsLoadedModelProviders = new THashSet<ProjectImportModelProvider>();
+  private final Set<ProjectImportModelProvider> myBuildFinishedModelProviders = new THashSet<ProjectImportModelProvider>();
+  private final Set<Class> myTargetTypes = new THashSet<Class>();
   private final boolean myIsPreviewMode;
   private final boolean myIsCompositeBuildsSupported;
   private final boolean myUseCustomSerialization;
   private boolean myUseProjectsLoadedPhase;
   private AllModels myAllModels = null;
+  @Nullable
+  private transient GradleBuild myGradleBuild;
+  private ToolingSerializerAdapter mySerializer;
 
   public ProjectImportAction(boolean isPreviewMode) {
     this(isPreviewMode, false, false);
@@ -94,56 +104,56 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
 
   @Nullable
   @Override
-  public AllModels execute(final BuildController controller) {
+  public AllModels execute(BuildController controller) {
     configureAdditionalTypes(controller);
     boolean isProjectsLoadedAction = myAllModels == null && myUseProjectsLoadedPhase;
     if (isProjectsLoadedAction || !myUseProjectsLoadedPhase) {
       long startTime = System.currentTimeMillis();
-      GradleBuild gradleBuild = controller.getBuildModel();
-      AllModels allModels = new AllModels(gradleBuild);
+      myGradleBuild = controller.getBuildModel();
+      AllModels allModels = new AllModels(convert(myGradleBuild));
       allModels.logPerformance("Get model GradleBuild", System.currentTimeMillis() - startTime);
       long startTimeBuildEnv = System.currentTimeMillis();
       BuildEnvironment buildEnvironment = controller.findModel(BuildEnvironment.class);
       allModels.setBuildEnvironment(buildEnvironment);
       allModels.logPerformance("Get model BuildEnvironment", System.currentTimeMillis() - startTimeBuildEnv);
       myAllModels = allModels;
-    }
-    if (!isProjectsLoadedAction) {
-      long startTimeIdeaProject = System.currentTimeMillis();
-      final IdeaProject ideaProject = myIsPreviewMode ?
-                                      controller.getModel(BasicIdeaProject.class) : controller.getModel(IdeaProject.class);
-      assert ideaProject != null && !ideaProject.getModules().isEmpty();
-      myAllModels.logPerformance("Get model IdeaProject" + (myIsPreviewMode ? " (preview mode)" : ""),
-                                 System.currentTimeMillis() - startTimeIdeaProject);
-      myAllModels.setIdeaProject(ideaProject);
+      mySerializer = new ToolingSerializerAdapter(controller);
     }
 
-    GradleBuild gradleBuild = (GradleBuild)myAllModels.getRootModel();
-    ToolingSerializerAdapter serializerHolder = new ToolingSerializerAdapter();
-    for (BasicGradleProject gradleProject : gradleBuild.getProjects()) {
-      addProjectModels(serializerHolder, controller, myAllModels, gradleProject, isProjectsLoadedAction);
+    assert myGradleBuild != null;
+    assert mySerializer != null;
+    controller = new MyBuildController(controller, myGradleBuild);
+    for (BasicGradleProject gradleProject : myGradleBuild.getProjects()) {
+      addProjectModels(mySerializer, controller, myAllModels, gradleProject, isProjectsLoadedAction);
     }
-    addBuildModels(controller, myAllModels, gradleBuild, isProjectsLoadedAction);
+    addBuildModels(mySerializer, controller, myAllModels, myGradleBuild, isProjectsLoadedAction);
 
     if (myIsCompositeBuildsSupported) {
-      for (GradleBuild includedBuild : gradleBuild.getIncludedBuilds()) {
+      for (GradleBuild includedBuild : myGradleBuild.getIncludedBuilds()) {
         if (!isProjectsLoadedAction) {
-          IdeaProject ideaIncludedProject = myIsPreviewMode
-                                            ? controller.findModel(includedBuild, BasicIdeaProject.class)
-                                            : controller.findModel(includedBuild, IdeaProject.class);
-          myAllModels.getIncludedBuilds().add(ideaIncludedProject);
+          myAllModels.getIncludedBuilds().add(convert(includedBuild));
         }
         for (BasicGradleProject project : includedBuild.getProjects()) {
-          addProjectModels(serializerHolder, controller, myAllModels, project, isProjectsLoadedAction);
+          addProjectModels(mySerializer, controller, myAllModels, project, isProjectsLoadedAction);
         }
-        addBuildModels(controller, myAllModels, includedBuild, isProjectsLoadedAction);
+        addBuildModels(mySerializer, controller, myAllModels, includedBuild, isProjectsLoadedAction);
       }
     }
-
     return isProjectsLoadedAction && myAllModels.hasModels() ? null : myAllModels;
   }
 
+  @NotNull
+  private static Build convert(@NotNull GradleBuild build) {
+    DefaultBuild rootProject = new DefaultBuild(build.getBuildIdentifier().getRootDir());
+    for (BasicGradleProject project : build.getProjects()) {
+      rootProject.addProject(project.getProjectIdentifier());
+    }
+    return rootProject;
+  }
+
   private void configureAdditionalTypes(BuildController controller) {
+    if (myTargetTypes.isEmpty()) return;
+
     try {
       Field adapterField;
       try {
@@ -186,7 +196,7 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
     try {
       Set<ProjectImportModelProvider> modelProviders = getModelProviders(isProjectsLoadedAction);
       for (ProjectImportModelProvider extension : modelProviders) {
-        final Set<String> obtainedModels = new HashSet<String>();
+        final Set<String> obtainedModels = new THashSet<String>();
         long startTime = System.currentTimeMillis();
         ProjectModelConsumer modelConsumer = new ProjectModelConsumer() {
           @Override
@@ -214,7 +224,8 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
     }
   }
 
-  private void addBuildModels(@NotNull BuildController controller,
+  private void addBuildModels(@NotNull final ToolingSerializerAdapter serializerAdapter,
+                              @NotNull BuildController controller,
                               @NotNull final AllModels allModels,
                               @NotNull final GradleBuild buildModel,
                               boolean isProjectsLoadedAction) {
@@ -225,7 +236,19 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
         long startTime = System.currentTimeMillis();
         BuildModelConsumer modelConsumer = new BuildModelConsumer() {
           @Override
+          public void consumeProjectModel(@NotNull ProjectModel projectModel, @NotNull Object object, @NotNull Class clazz) {
+            if (myUseCustomSerialization) {
+              object = serializerAdapter.serialize(object);
+            }
+            allModels.addModel(object, clazz, projectModel);
+            obtainedModels.add(clazz.getName());
+          }
+
+          @Override
           public void consume(@NotNull BuildModel buildModel, @NotNull Object object, @NotNull Class clazz) {
+            if (myUseCustomSerialization) {
+              object = serializerAdapter.serialize(object);
+            }
             allModels.addModel(object, clazz, buildModel);
             obtainedModels.add(clazz.getName());
           }
@@ -273,28 +296,32 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
   }
 
   public static class AllModels extends ModelsHolder<BuildModel, ProjectModel> {
-    private final List<IdeaProject> includedBuilds = new ArrayList<IdeaProject>();
+    @NotNull private final List<Build> includedBuilds = new ArrayList<Build>();
     private final Map<String, Long> performanceTrace = new LinkedHashMap<String, Long>();
-    private IdeaProject myIdeaProject;
 
-    public AllModels(@NotNull BuildModel rootProjectModel) {
-      super(rootProjectModel);
+    public AllModels(@NotNull Build mainBuild) {
+      super(mainBuild);
     }
 
     public AllModels(@NotNull IdeaProject ideaProject) {
-      super(new IdeaProjectBuildModelAdapter(ideaProject));
+      super(new LegacyIdeaProjectModelAdapter(ideaProject));
+      addModel(ideaProject, IdeaProject.class);
     }
 
     @NotNull
     public IdeaProject getIdeaProject() {
-      return myIdeaProject;
+      IdeaProject ideaProject = getModel(IdeaProject.class);
+      assert ideaProject != null;
+      return ideaProject;
     }
 
-    public void setIdeaProject(@NotNull IdeaProject ideaProject) {
-      myIdeaProject = ideaProject;
+    @NotNull
+    public Build getMainBuild() {
+      return (Build)getRootModel();
     }
 
-    public List<IdeaProject> getIncludedBuilds() {
+    @NotNull
+    public List<Build> getIncludedBuilds() {
       return includedBuilds;
     }
 
@@ -316,72 +343,220 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
     public Map<String, Long> getPerformanceTrace() {
       return performanceTrace;
     }
-
-    private static class IdeaProjectBuildModelAdapter implements BuildModel {
-      private final BuildIdentifier myBuildIdentifier;
-
-      private IdeaProjectBuildModelAdapter(@NotNull IdeaProject ideaProject) {
-        DomainObjectSet<? extends IdeaModule> ideaModules = ideaProject.getChildren();
-        assert !ideaModules.isEmpty();
-        IdeaModule ideaModule = ideaModules.getAt(0);
-        myBuildIdentifier = ideaModule.getGradleProject().getProjectIdentifier().getBuildIdentifier();
-      }
-
-      @Override
-      public BuildIdentifier getBuildIdentifier() {
-        return myBuildIdentifier;
-      }
-    }
   }
 
   private static class ToolingSerializerAdapter {
-    private ClassLoader myModelBuildersClassLoader;
-    private Object mySerializer;
-    private Method mySerializerWriteMethod;
+    private final Object mySerializer;
+    private final Method mySerializerWriteMethod;
+    private final ClassLoader myModelBuildersClassLoader;
 
-    private Object prepare(Object object) throws IOException {
+    private ToolingSerializerAdapter(@NotNull BuildController controller) {
+      Object unpacked = new ProtocolToModelAdapter().unpack(controller.getModel(DummyModel.class));
+      myModelBuildersClassLoader = unpacked.getClass().getClassLoader();
       try {
-        object = new ProtocolToModelAdapter().unpack(object);
+        Class<?> toolingSerializerClass = myModelBuildersClassLoader.loadClass(ToolingSerializer.class.getName());
+        mySerializer = toolingSerializerClass.newInstance();
+        mySerializerWriteMethod = toolingSerializerClass.getMethod("write", Object.class, Class.class);
+        registerIdeaProjectSerializationService(toolingSerializerClass);
       }
-      catch (IllegalArgumentException ignore) {
+      catch (Exception e) {
+        throw new RuntimeException(e);
       }
+    }
 
+    // support custom serialization of the gradle built-in IdeaProject model
+    private void registerIdeaProjectSerializationService(Class<?> toolingSerializerClass)
+      throws NoSuchMethodException, IllegalAccessException, InvocationTargetException, ClassNotFoundException {
+      Class<?> serializationServiceClass = myModelBuildersClassLoader.loadClass(SerializationService.class.getName());
+      final IdeaProjectSerializationService ideaProjectService = new IdeaProjectSerializationService(getBuildGradleVersion());
+      Method register = toolingSerializerClass.getMethod("register", serializationServiceClass);
+      Object proxyInstance =
+        Proxy.newProxyInstance(myModelBuildersClassLoader, new Class<?>[]{serializationServiceClass}, new InvocationHandler() {
+          @Override
+          public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+            return ideaProjectService.getClass().getMethod(method.getName(), method.getParameterTypes()).invoke(ideaProjectService, args);
+          }
+        });
+      register.invoke(mySerializer, proxyInstance);
+    }
+
+    @NotNull
+    private GradleVersion getBuildGradleVersion() {
       try {
-        ClassLoader objectClassLoader = object.getClass().getClassLoader();
-        if (myModelBuildersClassLoader == null) {
-          Class<?> toolingSerializerClass = objectClassLoader.loadClass(ToolingSerializer.class.getName());
-          mySerializer = toolingSerializerClass.newInstance();
-          mySerializerWriteMethod = toolingSerializerClass.getMethod("write", Object.class, Class.class);
-          myModelBuildersClassLoader = objectClassLoader;
+        Class<?> gradleVersionClass = myModelBuildersClassLoader.loadClass("org.gradle.util.GradleVersion");
+        Object buildGradleVersion = gradleVersionClass.getMethod("current").invoke(gradleVersionClass);
+        return GradleVersion.version(gradleVersionClass.getMethod("getVersion").invoke(buildGradleVersion).toString());
+      }
+      catch (Exception e) {
+        ExceptionUtilRt.rethrowUnchecked(e);
+        throw new RuntimeException(e);
+      }
+    }
+
+    @Nullable
+    private Pair<Object, ? extends Class<?>> prepare(Object object) {
+      Class<?> modelClazz;
+      if (object instanceof IdeaProject) { // support custom serialization of the gradle built-in IdeaProject model
+        modelClazz = IdeaProject.class;
+      }
+      else {
+        try {
+          object = new ProtocolToModelAdapter().unpack(object);
         }
-        else if (objectClassLoader != myModelBuildersClassLoader) {
+        catch (IllegalArgumentException ignore) {
+        }
+        modelClazz = object.getClass();
+        if (modelClazz.getClassLoader() != myModelBuildersClassLoader) {
           //The object has not been created by custom model builders
           return null;
         }
       }
-      catch (ClassNotFoundException e) {
-        // The object has not been created by custom model builders
-        return null;
-      }
-      catch (Exception e) {
-        throw new IOException(e);
-      }
-
-      return object;
+      return Pair.pair(object, modelClazz);
     }
 
     private Object serialize(Object object) {
       try {
-        Object preparedObject = prepare(object);
+        Pair<Object, ? extends Class<?>> preparedObject = prepare(object);
         if (preparedObject != null) {
-          return mySerializerWriteMethod.invoke(mySerializer, preparedObject, preparedObject.getClass());
+          return mySerializerWriteMethod.invoke(mySerializer, preparedObject.first, preparedObject.second);
         }
       }
       catch (Exception e) {
+        Throwable unwrap = Exceptions.unwrap(e);
+        if (object instanceof IdeaProject) {
+          ExceptionUtilRt.rethrowUnchecked(unwrap);
+          throw new RuntimeException(unwrap);
+        }
         //noinspection UseOfSystemOutOrSystemErr
-        System.err.println(e.getMessage());
+        System.err.println(ExceptionUtilRt.getThrowableText(unwrap, "org.jetbrains."));
       }
       return object;
+    }
+  }
+
+  private final static class DefaultBuild implements Build, Serializable {
+    private final DefaultBuildIdentifier myBuildIdentifier;
+    private final Collection<ProjectModel> myProjects = new ArrayList<ProjectModel>(0);
+
+    private DefaultBuild(File rootDir) {myBuildIdentifier = new DefaultBuildIdentifier(rootDir);}
+
+    @Override
+    public BuildIdentifier getBuildIdentifier() {
+      return myBuildIdentifier;
+    }
+
+    @Override
+    public Collection<ProjectModel> getProjects() {
+      return myProjects;
+    }
+
+    private void addProject(final ProjectIdentifier projectIdentifier) {
+      final String projectPath = projectIdentifier.getProjectPath();
+      File rootDir = myBuildIdentifier.getRootDir();
+      assert rootDir.getPath().equals(projectIdentifier.getBuildIdentifier().getRootDir().getPath());
+      myProjects.add(new DefaultProjectModel(rootDir, projectPath));
+    }
+
+    private final static class DefaultProjectModel implements ProjectModel, Serializable {
+      private final DefaultProjectIdentifier myProjectIdentifier;
+
+      private DefaultProjectModel(@NotNull File rootDir, @NotNull String projectPath) {
+        myProjectIdentifier = new DefaultProjectIdentifier(rootDir, projectPath);
+      }
+
+      @Override
+      public ProjectIdentifier getProjectIdentifier() {
+        return myProjectIdentifier;
+      }
+    }
+  }
+
+  private final static class MyBuildController implements BuildController {
+    private final BuildController myDelegate;
+    private final GradleBuild myMainGradleBuild;
+
+    private MyBuildController(@NotNull BuildController buildController, @NotNull GradleBuild mainGradleBuild) {
+      myDelegate = buildController;
+      myMainGradleBuild = mainGradleBuild;
+    }
+
+    @Override
+    public <T> T getModel(Class<T> aClass) throws UnknownModelException {
+      if (aClass == GradleBuild.class) {
+        //noinspection unchecked
+        return (T)myMainGradleBuild;
+      }
+      return myDelegate.getModel(aClass);
+    }
+
+    @Override
+    public <T> T findModel(Class<T> aClass) {
+      if (aClass == GradleBuild.class) {
+        //noinspection unchecked
+        return (T)myMainGradleBuild;
+      }
+      return myDelegate.findModel(aClass);
+    }
+
+    @Override
+    public GradleBuild getBuildModel() {
+      return myMainGradleBuild;
+    }
+
+    @Override
+    public <T> T getModel(Model model, Class<T> aClass) throws UnknownModelException {
+      if (isMainBuild(model)) {
+        return getModel(aClass);
+      }
+      else {
+        return myDelegate.getModel(model, aClass);
+      }
+    }
+
+    @Override
+    public <T> T findModel(Model model, Class<T> aClass) {
+      if (isMainBuild(model)) {
+        return findModel(aClass);
+      }
+      else {
+        return myDelegate.findModel(model, aClass);
+      }
+    }
+
+    @Override
+    public <T, P> T getModel(Class<T> aClass, Class<P> aClass1, Action<? super P> action)
+      throws UnsupportedVersionException {
+      return myDelegate.getModel(aClass, aClass1, action);
+    }
+
+    @Override
+    public <T, P> T findModel(Class<T> aClass, Class<P> aClass1, Action<? super P> action) {
+      return myDelegate.findModel(aClass, aClass1, action);
+    }
+
+    @Override
+    public <T, P> T getModel(Model model, Class<T> aClass, Class<P> aClass1, Action<? super P> action)
+      throws UnsupportedVersionException {
+      if (isMainBuild(model)) {
+        return getModel(aClass, aClass1, action);
+      }
+      else {
+        return myDelegate.getModel(model, aClass, aClass1, action);
+      }
+    }
+
+    @Override
+    public <T, P> T findModel(Model model, Class<T> aClass, Class<P> aClass1, Action<? super P> action) {
+      if (isMainBuild(model)) {
+        return findModel(aClass, aClass1, action);
+      }
+      else {
+        return myDelegate.findModel(model, aClass, aClass1, action);
+      }
+    }
+
+    private boolean isMainBuild(Model model) {
+      return model == null || model == myMainGradleBuild;
     }
   }
 }

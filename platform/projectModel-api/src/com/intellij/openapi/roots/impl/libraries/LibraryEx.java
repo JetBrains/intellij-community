@@ -16,6 +16,7 @@
 
 package com.intellij.openapi.roots.impl.libraries;
 
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryProperties;
@@ -60,6 +61,9 @@ public interface LibraryEx extends Library {
    */
   @NotNull
   VirtualFile[] getExcludedRoots();
+
+  @Nullable("will return non-null value only for module level libraries")
+  Module getModule();
 
   interface ModifiableModelEx extends ModifiableModel {
     void setProperties(LibraryProperties properties);

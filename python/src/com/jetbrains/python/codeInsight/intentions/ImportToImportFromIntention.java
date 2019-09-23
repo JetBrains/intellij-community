@@ -15,6 +15,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.ui.PyUiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -179,7 +180,7 @@ public class ImportToImportFromIntention extends PyBaseIntentionAction {
         }
       }
       catch (IncorrectOperationException ignored) {
-        PyUtil.showBalloon(project, PyBundle.message("QFIX.action.failed"), MessageType.WARNING);
+        PyUiUtil.showBalloon(project, PyBundle.message("QFIX.action.failed"), MessageType.WARNING);
       }
     }
 

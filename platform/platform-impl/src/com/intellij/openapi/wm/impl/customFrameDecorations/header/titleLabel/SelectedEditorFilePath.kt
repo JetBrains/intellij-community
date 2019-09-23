@@ -1,8 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel
 
+import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationInfo
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -16,13 +18,19 @@ import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.impl.FrameTitleBuilder
-import com.intellij.openapi.wm.impl.IdeFrameImpl
+import com.intellij.openapi.wm.impl.ProjectFrameHelper
+import com.intellij.util.Alarm
+import com.intellij.util.ui.JBUI
 import net.miginfocom.swing.MigLayout
+import sun.swing.SwingUtilities2
 import java.awt.Dimension
+import java.awt.Graphics
+import java.awt.Graphics2D
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import javax.swing.JComponent
 import javax.swing.JPanel
+import kotlin.math.min
 
 
 open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = null ) {
@@ -43,6 +51,9 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
 
   protected val components = listOf(projectTitle, classTitle, productTitle, productVersion, superUserSuffix)
 
+  private val updater = Alarm(Alarm.ThreadToUse.SWING_THREAD, ApplicationManager.getApplication())
+  private val UPDATER_TIMEOUT = 70
+
   private val registryListener = object : RegistryValueListener.Adapter() {
     override fun afterValueChanged(value: RegistryValue) {
       updateTitlePaths()
@@ -50,7 +61,29 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
     }
   }
 
-  private val pane = object : JPanel(MigLayout("ins 0, gap 0", "[min!][pref][pref][pref][pref]push")){
+  protected val label = object : JComponent() {
+    override fun getMinimumSize(): Dimension {
+      return Dimension(projectTitle.shortWidth, super.getMinimumSize().height)
+    }
+
+    override fun getPreferredSize(): Dimension {
+      val fm = getFontMetrics(font)
+      val w = SwingUtilities2.stringWidth(this, fm, titleString) + JBUI.scale(5)
+      return Dimension(min(parent.width, w), fm.height)
+    }
+
+    override fun paintComponent(g: Graphics) {
+      val fm = getFontMetrics(font)
+
+      g as Graphics2D
+
+      UISettings.setupAntialiasing(g)
+
+      g.drawString(titleString, 0, fm.ascent)
+    }
+  }
+
+  private var pane = object : JPanel(MigLayout("ins 0, novisualpadding, gap 0", "[]push")) {
     override fun addNotify() {
       super.addNotify()
       installListeners()
@@ -64,19 +97,15 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
     override fun getMinimumSize(): Dimension {
       return Dimension(projectTitle.shortWidth, super.getMinimumSize().height)
     }
+
   }.apply {
     isOpaque = false
-    
-    add(projectTitle.component)
-    add(classTitle.component, "growx")
-    add(productTitle.component)
-    add(productVersion.component)
-    add(superUserSuffix.component)
+    add(label)
   }
 
   private fun updateTitlePaths() {
-    projectTitle.active = PROJECT_PATH_REGISTRY.asBoolean()
-    classTitle.active = CLASSPATH_REGISTRY.asBoolean()
+    projectTitle.active = PROJECT_PATH_REGISTRY.asBoolean() || multipleSameNamed
+    classTitle.active = CLASSPATH_REGISTRY.asBoolean() || classPathNeeded
     productTitle.active = PRODUCT_REGISTRY.asBoolean()
     productVersion.active = VERSION_REGISTRY.asBoolean()
   }
@@ -86,7 +115,34 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
   }
 
   private var disposable: Disposable? = null
-  private var project: Project? = null
+  var project: Project? = null
+    set(value) {
+      if(field == value) return
+      field = value
+
+      installListeners()
+    }
+
+  var multipleSameNamed = false
+    set(value) {
+      if(field == value) return
+      field = value
+
+      updateTitlePaths()
+      update()
+    }
+
+
+  var classPathNeeded = false
+    set(value) {
+      if(field == value) return
+      field = value
+
+      updateTitlePaths()
+      update()
+    }
+
+
   protected open fun installListeners() {
     project ?: return
 
@@ -134,19 +190,17 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
       disposable = null
     }
 
-    getView().removeComponentListener(resizedListener)
-  }
+    pane.invalidate()
 
-  fun isClipped(): Boolean {
-    for (component in components) {
-      if(component.isClipped) return true
-    }
-    return false
+    getView().removeComponentListener(resizedListener)
   }
 
   private val resizedListener = object : ComponentAdapter() {
     override fun componentResized(e: ComponentEvent?) {
-      update()
+
+      updater.addRequest({
+                           update()
+                         }, UPDATER_TIMEOUT)
     }
   }
 
@@ -155,7 +209,7 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
       val fileEditorManager = FileEditorManager.getInstance(it)
 
       val file = if (fileEditorManager is FileEditorManagerEx) {
-        val splittersFor = fileEditorManager.getSplittersFor(pane)
+        val splittersFor = fileEditorManager.getSplittersFor(getView())
         splittersFor.currentFile
       }
       else {
@@ -170,17 +224,11 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
     update()
   }
 
-  fun setProject(project: Project) {
-    this.project = project
-
-    installListeners()
-  }
-
   protected fun updateProjectName() {
     productTitle.longText = ApplicationNamesInfo.getInstance().fullProductName
     productVersion.longText = ApplicationInfo.getInstance().fullVersion ?: ""
 
-    superUserSuffix.longText = IdeFrameImpl.getSuperUserSuffix() ?: ""
+    superUserSuffix.longText = ProjectFrameHelper.getSuperUserSuffix() ?: ""
 
 
     project?.let {
@@ -192,117 +240,109 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
     }
   }
 
+  protected var isClipped = false
+  var titleString = ""
+
   private fun update() {
+    updater.cancelAllRequests()
+
     val insets = getView().getInsets(null)
     val width: Int = getView().width - (insets.right + insets.left)
 
-    components.forEach{it.refresh()}
+    val fm = label.getFontMetrics(label.font)
 
-    when {
+    components.forEach{it.refresh(label, fm)}
+
+    isClipped = true
+
+    titleString = when {
       width > projectTitle.longWidth + classTitle.longWidth + productTitle.longWidth + superUserSuffix.longWidth + productVersion.longWidth -> {
         //LOGGER.info("projectTitle.showLong, classTitle.showLong, productTitle.showLong, productVersion.showLong")
 
-        projectTitle.showLong()
-        classTitle.showLong()
-        productTitle.showLong()
-        productVersion.showLong()
-        superUserSuffix.showLong()
+        isClipped = components.any{!it.active}
+
+        projectTitle.getLong()+
+        classTitle.getLong()+
+        productTitle.getLong()+
+        productVersion.getLong()+
+        superUserSuffix.getLong()
       }
 
       width > projectTitle.longWidth + classTitle.longWidth + productTitle.longWidth + productVersion.longWidth + superUserSuffix.shortWidth -> {
         //LOGGER.info("projectTitle.showLong, classTitle.showLong, productTitle.showLong, superUserSuffix.SHOW_SHORT")
 
-        projectTitle.showLong()
-        classTitle.showLong()
-        productTitle.showLong()
-        productVersion.showLong()
-        superUserSuffix.showShort()
+        projectTitle.getLong()+
+        classTitle.getLong()+
+        productTitle.getLong()+
+        productVersion.getLong()+
+        superUserSuffix.getShort()
       }
 
       width > projectTitle.longWidth + classTitle.longWidth + productVersion.longWidth + productTitle.longWidth -> {
         //LOGGER.info("projectTitle.showLong, classTitle.showLong, productTitle.showLong, superUserSuffix.HIDE")
 
-        projectTitle.showLong()
-        classTitle.showLong()
-        productTitle.showLong()
-        productVersion.showLong()
-        superUserSuffix.hide()
+        projectTitle.getLong()+
+        classTitle.getLong()+
+        productTitle.getLong()+
+        productVersion.getLong()
       }
 
       width > projectTitle.longWidth + classTitle.longWidth + productVersion.shortWidth + productTitle.longWidth -> {
         //LOGGER.info("projectTitle.showLong, classTitle.showLong, productTitle.showLong, productVersion.SHOW_SHORT")
 
-        projectTitle.showLong()
-        classTitle.showLong()
-        productTitle.showLong()
-        productVersion.showShort()
-        superUserSuffix.hide()
+        projectTitle.getLong()+
+        classTitle.getLong()+
+        productTitle.getLong()+
+        productVersion.getShort()
       }
 
       width > projectTitle.longWidth + classTitle.longWidth + productTitle.longWidth -> {
         //LOGGER.info("projectTitle.showLong, classTitle.showLong, productTitle.showLong, productVersion.HIDE")
 
-        projectTitle.showLong()
-        classTitle.showLong()
-        productTitle.showLong()
-        superUserSuffix.hide()
-        productVersion.hide()
+        projectTitle.getLong()+
+        classTitle.getLong()+
+        productTitle.getLong()
       }
 
       width > projectTitle.longWidth + classTitle.longWidth + productTitle.shortWidth -> {
         //LOGGER.info("projectTitle.showLong, classTitle.showLong, productTitle.SHOW_SHORT")
 
-        projectTitle.showLong()
-        classTitle.showLong()
-        productTitle.showShort()
-        productVersion.hide()
-        superUserSuffix.hide()
+        projectTitle.getLong()+
+        classTitle.getLong()+
+        productTitle.getShort()
       }
 
       width > projectTitle.longWidth + classTitle.longWidth -> {
         //LOGGER.info("projectTitle.showLong, classTitle.showLong, productTitle.HIDE, productVersion.HIDE")
 
-        projectTitle.showLong()
-        classTitle.showLong()
-        productTitle.hide()
-        productVersion.hide()
-        superUserSuffix.hide()
+        projectTitle.getLong()+
+        classTitle.getLong()
       }
 
       width > projectTitle.longWidth + classTitle.shortWidth -> {
         //LOGGER.info("projectTitle.showLong, classTitle.SHRINK: ${width - projectTitle.longWidth}, productTitle.HIDE, productVersion.HIDE")
 
-        projectTitle.showLong()
-        productTitle.hide()
-        productVersion.hide()
-        superUserSuffix.hide()
-        classTitle.shrink(width - projectTitle.longWidth)
+        projectTitle.getLong()+
+        classTitle.shrink(label, fm,width - projectTitle.longWidth)
       }
 
       width > projectTitle.shortWidth + classTitle.shortWidth -> {
         //LOGGER.info("projectTitle.showLong, classTitle.SHOW_SHORT, productTitle.HIDE, productVersion.HIDE")
 
-        projectTitle.shrink(width - classTitle.shortWidth)
-        productTitle.hide()
-        productVersion.hide()
-        superUserSuffix.hide()
-        classTitle.showShort()
+        projectTitle.shrink(label, fm,width - classTitle.shortWidth)+
+        classTitle.getShort()
       }
 
-      width > projectTitle.shortWidth -> {
+      else -> {
         //LOGGER.info("projectTitle.SHOW_SHORT, classTitle.HIDE, productTitle.HIDE, productVersion.HIDE")
-
-        projectTitle.showShort()
-        productTitle.hide()
-        productVersion.hide()
-        superUserSuffix.hide()
-        classTitle.hide()
+        projectTitle.getShort()
       }
     }
 
-    val clipped = isClipped()
-    val tooltip = if(!clipped) null else components.joinToString(separator = "", transform = {it.toolTipPart})
-    components.forEach {it.setToolTip(tooltip)}
+    label.toolTipText = if(!isClipped) null else components.joinToString(separator = "", transform = {it.toolTipPart})
+
+    label.revalidate()
+    label.repaint()
 
     onBoundsChanged?.invoke()
   }

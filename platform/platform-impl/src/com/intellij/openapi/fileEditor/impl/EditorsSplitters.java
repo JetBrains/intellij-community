@@ -2,7 +2,7 @@
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.diagnostic.Activity;
-import com.intellij.diagnostic.ParallelActivity;
+import com.intellij.diagnostic.ActivityCategory;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
@@ -23,19 +23,18 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.FocusWatcher;
-import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
+import com.intellij.openapi.wm.ex.IdeFrameEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.FrameTitleBuilder;
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
 import com.intellij.openapi.wm.impl.IdePanePanel;
+import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.testFramework.LightVirtualFileBase;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.OnePixelSplitter;
@@ -44,6 +43,7 @@ import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.tabs.JBTabs;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.util.Alarm;
+import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ArrayListSet;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.StartupUiUtil;
@@ -72,6 +72,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
   private static final String CURRENT_IN_TAB = "current-in-tab";
 
   private static final Key<Object> DUMMY_KEY = Key.create("EditorsSplitters.dummy.key");
+  private static final Key<Boolean> OPENED_IN_BULK = Key.create("EditorSplitters.opened.in.bulk");
 
   private EditorWindow myCurrentWindow;
   private final Set<EditorWindow> myWindows = new CopyOnWriteArraySet<>();
@@ -83,7 +84,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
   private final Alarm myIconUpdaterAlarm = new Alarm();
   private final UIBuilder myUIBuilder = new UIBuilder();
 
-  EditorsSplitters(final FileEditorManagerImpl manager, DockManager dockManager, boolean createOwnDockableContainer) {
+  EditorsSplitters(@NotNull FileEditorManagerImpl manager, boolean createOwnDockableContainer) {
     super(new BorderLayout());
 
     setBackground(JBColor.namedColor("Editor.background", IdeBackgroundUtil.getIdeBackgroundColor()));
@@ -106,7 +107,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     if (createOwnDockableContainer) {
       DockableEditorTabbedContainer dockable = new DockableEditorTabbedContainer(myManager.getProject(), this, false);
       Disposer.register(manager.getProject(), dockable);
-      dockManager.register(dockable);
+      DockManager.getInstance(manager.getProject()).register(dockable);
     }
 
     ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(KeymapManagerListener.TOPIC, new KeymapManagerListener() {
@@ -213,12 +214,6 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
       writeWindow(res, findWindowWith(comp));
       return res;
     }
-    else if (comp instanceof EditorWindow.TCompForTablessMode) {
-      EditorWithProviderComposite composite = ((EditorWindow.TCompForTablessMode)comp).myEditor;
-      Element res = new Element("leaf");
-      res.addContent(writeComposite(composite.getFile(), composite, false, composite));
-      return res;
-    }
     else {
       LOG.error(comp.getClass().getName());
       return null;
@@ -249,7 +244,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
       return;
     }
 
-    Activity restoringEditors = StartUpMeasurer.start(StartUpMeasurer.Phases.RESTORING_EDITORS);
+    Activity restoringEditors = StartUpMeasurer.startMainActivity("editor restoring");
     JPanel component = myUIBuilder.process(mySplittersElement, getTopPanel());
     restoringEditors.end();
 
@@ -421,7 +416,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     }
 
     Project project = myManager.getProject();
-    IdeFrame frame = getFrame(project);
+    IdeFrameEx frame = getFrame(project);
     if (frame != null) {
       String fileTitle = null;
       File ioFile = null;
@@ -436,9 +431,8 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     }
   }
 
-  protected IdeFrame getFrame(Project project) {
-    final WindowManagerEx windowManagerEx = WindowManagerEx.getInstanceEx();
-    final IdeFrame frame = windowManagerEx.getFrame(project);
+  protected IdeFrameEx getFrame(@NotNull Project project) {
+    ProjectFrameHelper frame = WindowManagerEx.getInstanceEx().getFrameHelper(project);
     LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode() || frame != null);
     return frame;
   }
@@ -563,7 +557,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
 
   private final class MyFocusTraversalPolicy extends IdeFocusTraversalPolicy {
     @Override
-    public final Component getDefaultComponentImpl(final Container focusCycleRoot) {
+    public final Component getDefaultComponent(final Container focusCycleRoot) {
       if (myCurrentWindow != null) {
         final EditorWithProviderComposite selectedEditor = myCurrentWindow.getSelectedEditor();
         if (selectedEditor != null) {
@@ -697,7 +691,8 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     return res;
   }
 
-  @NotNull public EditorWindow [] getWindows() {
+  @NotNull
+  public EditorWindow [] getWindows() {
     return myWindows.toArray(new EditorWindow[0]);
   }
 
@@ -755,6 +750,10 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
 
   public boolean isPreview() {
     return false;
+  }
+
+  public static boolean isOpenedInBulk(@NotNull VirtualFile file) {
+    return file.getUserData(OPENED_IN_BULK) != null;
   }
 
   private final class MyFocusWatcher extends FocusWatcher {
@@ -856,14 +855,17 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
         final Element file = fileElements.get(i);
         Element historyElement = file.getChild(HistoryEntry.TAG);
         String fileName = historyElement.getAttributeValue(HistoryEntry.FILE_ATTR);
-        Activity activity = ParallelActivity.REOPENING_EDITOR
-          .start(FileUtil.getLocationRelativeToUserHome(VirtualFileManager.extractPath(fileName), false));
+        Activity activity = StartUpMeasurer.startActivity(PathUtil.getFileName(fileName), ActivityCategory.REOPENING_EDITOR);
+        VirtualFile virtualFile = null;
         try {
           final FileEditorManagerImpl fileEditorManager = getManager();
           final HistoryEntry entry = HistoryEntry.createLight(fileEditorManager.getProject(), historyElement);
-          final VirtualFile virtualFile = entry.getFile();
+          virtualFile = entry.getFile();
           if (virtualFile == null) throw new InvalidDataException("No file exists: " + entry.getFilePointer().getUrl());
-          Document document = ReadAction.compute(() -> virtualFile.isValid() ? FileDocumentManager.getInstance().getDocument(virtualFile) : null);
+          virtualFile.putUserData(OPENED_IN_BULK, Boolean.TRUE);
+          VirtualFile finalVirtualFile = virtualFile;
+          Document document =
+            ReadAction.compute(() -> finalVirtualFile.isValid() ? FileDocumentManager.getInstance().getDocument(finalVirtualFile) : null);
 
           boolean isCurrentTab = Boolean.valueOf(file.getAttributeValue(CURRENT_IN_TAB)).booleanValue();
           FileEditorOpenOptions openOptions = new FileEditorOpenOptions()
@@ -887,6 +889,9 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
           if (ApplicationManager.getApplication().isUnitTestMode()) {
             LOG.error(e);
           }
+        }
+        finally {
+          if (virtualFile != null) virtualFile.putUserData(OPENED_IN_BULK, null);
         }
         activity.end();
       }

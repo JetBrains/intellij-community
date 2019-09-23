@@ -57,9 +57,6 @@ import static com.intellij.openapi.util.Pair.pair;
 public class HttpConfigurable implements PersistentStateComponent<HttpConfigurable>, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.net.HttpConfigurable");
   private static final File PROXY_CREDENTIALS_FILE = new File(PathManager.getOptionsPath(), "proxy.settings.pwd");
-  public static final int CONNECTION_TIMEOUT = HttpRequests.CONNECTION_TIMEOUT;
-  public static final int READ_TIMEOUT = HttpRequests.READ_TIMEOUT;
-  public static final int REDIRECT_LIMIT = HttpRequests.REDIRECT_LIMIT;
 
   public boolean PROXY_TYPE_IS_SOCKS;
   public boolean USE_HTTP_PROXY;
@@ -86,12 +83,12 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     (byte)0x50, (byte)0x72, (byte)0x6f, (byte)0x78, (byte)0x79, (byte)0x20, (byte)0x43, (byte)0x6f,
     (byte)0x6e, (byte)0x66, (byte)0x69, (byte)0x67, (byte)0x20, (byte)0x53, (byte)0x65, (byte)0x63
   }, "AES"));
+
   private transient final NotNullLazyValue<Properties> myProxyCredentials = NotNullLazyValue.createValue(() -> {
     try {
       return myEncryptionSupport.load(PROXY_CREDENTIALS_FILE);
     }
-    catch (FileNotFoundException ignored) {
-    }
+    catch (FileNotFoundException ignored) { }
     catch (Throwable th) {
       LOG.info(th);
     }
@@ -156,10 +153,9 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     CommonProxy.getInstance().setCustomAuth(name, new IdeaWideAuthenticator(this));
   }
 
-  /**
-   * @deprecated use {@link #initializeComponent()}
-   */
+  /** @deprecated use {@link #initializeComponent()} */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.3")
   public void initComponent() {
     initializeComponent();
   }
@@ -364,17 +360,13 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     }
   }
 
-  /**
-   * @deprecated left for compatibility with com.intellij.openapi.project.impl.IdeaServerSettings
-   */
+  /** @deprecated left for compatibility with com.intellij.openapi.project.impl.IdeaServerSettings */
   @Deprecated
   public void readExternal(Element element) throws InvalidDataException {
     loadState(XmlSerializer.deserialize(element, HttpConfigurable.class));
   }
 
-  /**
-   * @deprecated left for compatibility with com.intellij.openapi.project.impl.IdeaServerSettings
-   */
+  /** @deprecated left for compatibility with com.intellij.openapi.project.impl.IdeaServerSettings */
   @Deprecated
   public void writeExternal(Element element) throws WriteExternalException {
     com.intellij.util.xmlb.XmlSerializer.serializeInto(getState(), element);
@@ -393,10 +385,10 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   }
 
   /**
-   * todo [all] It is NOT necessary to call anything if you obey common IDEA proxy settings;
+   * todo [all] It is NOT necessary to call anything if you obey common IDE proxy settings;
    * todo if you want to define your own behaviour, refer to {@link CommonProxy}
    *
-   * also, this method is useful in a way that it test connection to the host [through proxy]
+   * Also, this method is useful in a way that it tests connection to the host [through proxy].
    *
    * @param url URL for HTTP connection
    */
@@ -409,8 +401,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     catch (IOException e) {
       throw e;
     }
-    catch (Throwable ignored) {
-    }
+    catch (Throwable ignored) { }
     finally {
       if (connection instanceof HttpURLConnection) {
         ((HttpURLConnection)connection).disconnect();
@@ -443,8 +434,8 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     }
 
     assert urlConnection != null;
-    urlConnection.setReadTimeout(READ_TIMEOUT);
-    urlConnection.setConnectTimeout(CONNECTION_TIMEOUT);
+    urlConnection.setReadTimeout(HttpRequests.READ_TIMEOUT);
+    urlConnection.setConnectTimeout(HttpRequests.CONNECTION_TIMEOUT);
     return urlConnection;
   }
 
@@ -469,15 +460,6 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     if (!USE_HTTP_PROXY) return false;
     URI uri = url != null ? VfsUtil.toUri(url) : null;
     return uri == null || !isProxyException(uri.getHost());
-  }
-
-  /** @deprecated use {@link #getJvmProperties(boolean, URI)} (to be removed in IDEA 2018) */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2018")
-  @SuppressWarnings({"unused"})
-  public static List<KeyValue<String, String>> getJvmPropertiesList(boolean withAutodetection, @Nullable URI uri) {
-    List<Pair<String, String>> properties = getInstance().getJvmProperties(withAutodetection, uri);
-    return ContainerUtil.map(properties, p -> KeyValue.create(p.first, p.second));
   }
 
   @NotNull
@@ -566,22 +548,6 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     return !Proxy.NO_PROXY.equals(proxy) && !Proxy.Type.DIRECT.equals(proxy.type());
   }
 
-  /** @deprecated use {@link com.intellij.execution.configurations.ParametersList#addProperty(String, String)} (to be removed in IDEA 2018) */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2018")
-  @SuppressWarnings({"unused"})
-  @NotNull
-  public static List<String> convertArguments(@NotNull final List<? extends KeyValue<String, String>> list) {
-    if (list.isEmpty()) {
-      return Collections.emptyList();
-    }
-    final List<String> result = new ArrayList<>(list.size());
-    for (KeyValue<String, String> value : list) {
-      result.add("-D" + value.getKey() + "=" + value.getValue());
-    }
-    return result;
-  }
-
   public void clearGenericPasswords() {
     synchronized (myLock) {
       myGenericPasswords.clear();
@@ -637,7 +603,6 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
 
   private String getSecure(String key) {
     try {
-      //return PasswordSafe.getInstance().getPassword(null, HttpConfigurable.class, key);
       synchronized (myProxyCredentials) {
         final Properties props = myProxyCredentials.getValue();
         return props.getProperty(key, null);
@@ -656,7 +621,6 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     }
 
     try {
-      //PasswordSafe.getInstance().storePassword(null, HttpConfigurable.class, key, value);
       synchronized (myProxyCredentials) {
         final Properties props = myProxyCredentials.getValue();
         props.setProperty(key, value);
@@ -670,7 +634,6 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
 
   private void removeSecure(String key) {
     try {
-      //PasswordSafe.getInstance().removePassword(null, HttpConfigurable.class, key);
       synchronized (myProxyCredentials) {
         final Properties props = myProxyCredentials.getValue();
         props.remove(key);
@@ -682,4 +645,29 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     }
   }
 
+  //<editor-fold desc="Deprecated stuff.">
+  /** @deprecated use {@link HttpRequests#CONNECTION_TIMEOUT} */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.3")
+  public static final int CONNECTION_TIMEOUT = HttpRequests.CONNECTION_TIMEOUT;
+
+  /** @deprecated use {@link HttpRequests#READ_TIMEOUT} */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.3")
+  public static final int READ_TIMEOUT = HttpRequests.READ_TIMEOUT;
+
+  /** @deprecated use {@link HttpRequests#REDIRECT_LIMIT} */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.3")
+  public static final int REDIRECT_LIMIT = HttpRequests.REDIRECT_LIMIT;
+
+  /** @deprecated use {@link #getJvmProperties(boolean, URI)} */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @SuppressWarnings({"unused"})
+  public static List<KeyValue<String, String>> getJvmPropertiesList(boolean withAutodetection, @Nullable URI uri) {
+    List<Pair<String, String>> properties = getInstance().getJvmProperties(withAutodetection, uri);
+    return ContainerUtil.map(properties, p -> KeyValue.create(p.first, p.second));
+  }
+  //</editor-fold>
 }

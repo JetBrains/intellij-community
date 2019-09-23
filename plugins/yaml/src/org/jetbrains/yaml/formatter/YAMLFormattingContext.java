@@ -3,6 +3,7 @@ package org.jetbrains.yaml.formatter;
 
 import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.impl.source.tree.TreeUtil;
@@ -30,6 +31,8 @@ class YAMLFormattingContext {
   @NotNull
   public final CodeStyleSettings mySettings;
   @NotNull
+  private final PsiFile myFile;
+  @NotNull
   private final SpacingBuilder mySpaceBuilder;
 
   /** This alignments increase partial reformatting stability in case of initially incorrect indents */
@@ -44,8 +47,12 @@ class YAMLFormattingContext {
   private final boolean shouldInlineBlockMappingIntoSequence;
   private final int getValueAlignment;
 
-  YAMLFormattingContext(@NotNull CodeStyleSettings settings) {
+  @Nullable
+  private String myFullText = null;
+
+  YAMLFormattingContext(@NotNull CodeStyleSettings settings, @NotNull PsiFile file) {
     mySettings = settings;
+    myFile = file;
     mySpaceBuilder = new SpacingBuilder(mySettings, YAMLLanguage.INSTANCE)
       .before(YAMLTokenTypes.COLON).spaces(0)
     ;
@@ -199,6 +206,14 @@ class YAMLFormattingContext {
       }
     }
     return FormatterUtil.isIncomplete(node);
+  }
+
+  @NotNull
+  public String getFullText() {
+    if (myFullText == null) {
+      myFullText = myFile.getText();
+    }
+    return myFullText;
   }
 
   @Nullable

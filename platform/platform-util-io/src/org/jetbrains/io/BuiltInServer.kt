@@ -11,6 +11,9 @@ import com.intellij.util.io.serverBootstrap
 import io.netty.bootstrap.ServerBootstrap
 import io.netty.channel.*
 import io.netty.channel.nio.NioEventLoopGroup
+import io.netty.channel.oio.OioEventLoopGroup
+import io.netty.util.concurrent.FastThreadLocalThread
+import io.netty.util.internal.logging.InternalLoggerFactory
 import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.util.*
@@ -30,13 +33,26 @@ class BuiltInServer private constructor(val eventLoopGroup: EventLoopGroup, val 
       // IDEA-120811
       if (SystemProperties.getBooleanProperty("io.netty.random.id", true)) {
         System.setProperty("io.netty.machineId", "28:f0:76:ff:fe:16:65:0e")
-        System.setProperty("io.netty.processId", Integer.toString(Random().nextInt(65535)))
-        System.setProperty("io.netty.serviceThreadPrefix", "Netty ")
+        System.setProperty("io.netty.processId", Random().nextInt(65535).toString())
+      }
 
-        // https://youtrack.jetbrains.com/issue/IDEA-208908
-        val numArenas = if (PlatformUtils.isIdeaCommunity()) "1" else "2"
-        System.setProperty("io.netty.allocator.numDirectArenas", numArenas)
-        System.setProperty("io.netty.allocator.numHeapArenas", numArenas)
+      System.setProperty("io.netty.serviceThreadPrefix", "Netty ")
+
+      // https://youtrack.jetbrains.com/issue/IDEA-208908
+      setSystemPropertyIfNotConfigured("io.netty.allocator.numDirectArenas", "1")
+      setSystemPropertyIfNotConfigured("io.netty.allocator.numHeapArenas", "1")
+      setSystemPropertyIfNotConfigured("io.netty.allocator.useCacheForAllThreads", "false")
+      setSystemPropertyIfNotConfigured("io.netty.allocation.cacheTrimIntervalMillis", "600000")
+
+      val logger = IdeaNettyLogger()
+      InternalLoggerFactory.setDefaultFactory(object : InternalLoggerFactory() {
+        override fun newInstance(name: String) = logger
+      })
+    }
+
+    private fun setSystemPropertyIfNotConfigured(name: String, @Suppress("SameParameterValue") value: String) {
+      if (System.getProperty(name) == null) {
+        System.setProperty(name, value)
       }
     }
 
@@ -49,7 +65,6 @@ class BuiltInServer private constructor(val eventLoopGroup: EventLoopGroup, val 
       return start(multiThreadEventLoopGroup(workerCount, BuiltInServerThreadFactory()), true, firstPort, portsCount, tryAnyPort, handler)
     }
 
-    @Throws(Exception::class)
     @JvmStatic
     fun startNioOrOio(workerCount: Int, firstPort: Int, portsCount: Int, tryAnyPort: Boolean, handler: (Supplier<ChannelHandler>)?): BuiltInServer {
       val threadFactory = BuiltInServerThreadFactory()
@@ -59,7 +74,7 @@ class BuiltInServer private constructor(val eventLoopGroup: EventLoopGroup, val 
       catch (e: IllegalStateException) {
         logger<BuiltInServer>().warn(e)
         @Suppress("DEPRECATION")
-        io.netty.channel.oio.OioEventLoopGroup(1, threadFactory)
+        (OioEventLoopGroup(1, threadFactory))
       }
 
       return start(loopGroup, true, firstPort, portsCount, tryAnyPort, handler)
@@ -142,7 +157,7 @@ private class BuiltInServerThreadFactory : ThreadFactory {
   private val counter = AtomicInteger()
 
   override fun newThread(r: Runnable): Thread {
-    return Thread(r, "Netty Builtin Server " + counter.incrementAndGet())
+    return FastThreadLocalThread(r, "Netty Builtin Server " + counter.incrementAndGet())
   }
 }
 

@@ -6,7 +6,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.EnvironmentUtil
 import com.intellij.util.containers.ContainerUtil
 import com.jetbrains.python.packaging.PyCondaPackageService
-import com.jetbrains.python.sdk.PythonSdkType
+import com.jetbrains.python.sdk.PythonSdkUtil
 import java.io.File
 
 /**
@@ -21,7 +21,7 @@ class PyVirtualEnvReader(val virtualEnvSdkPath: String) : EnvironmentUtil.ShellE
     private val virtualEnvVars = listOf("PATH", "PS1", "VIRTUAL_ENV", "PYTHONHOME", "PROMPT", "_OLD_VIRTUAL_PROMPT",
                                         "_OLD_VIRTUAL_PYTHONHOME", "_OLD_VIRTUAL_PATH", "CONDA_SHLVL", "CONDA_PROMPT_MODIFIER",
                                         "CONDA_PREFIX", "CONDA_DEFAULT_ENV",
-                                        "GDAL_DATA")
+                                        "GDAL_DATA", "PROJ_LIB", "JAVA_HOME", "JAVA_LD_LIBRARY_PATH")
 
     /**
      * Filter envs that are setup by the activate script, adding other variables from the different shell can break the actual shell.
@@ -85,14 +85,14 @@ class PyVirtualEnvReader(val virtualEnvSdkPath: String) : EnvironmentUtil.ShellE
 }
 
 fun findActivateScript(sdkPath: String?, shellPath: String?): Pair<String, String?>? {
-  if (PythonSdkType.isVirtualEnv(sdkPath)) {
+  if (PythonSdkUtil.isVirtualEnv(sdkPath)) {
     val shellName = if (shellPath != null) File(shellPath).name else null
     val activate = findActivateInPath(sdkPath!!, shellName)
 
     return if (activate != null && activate.exists()) {
         Pair(activate.absolutePath, null)
     } else null
-  } else if (PythonSdkType.isConda(sdkPath)) {
+  } else if (PythonSdkUtil.isConda(sdkPath)) {
     val condaExecutable = PyCondaPackageService.getCondaExecutable(sdkPath!!)
 
     if (condaExecutable != null) {
@@ -113,9 +113,9 @@ private fun findActivateInPath(path: String, shellName: String?): File? {
   else File(File(path).parentFile, "activate")
 }
 
-private fun condaEnvFolder(path: String?) = if (SystemInfo.isWindows) File(path).parent else File(path).parentFile.parent
+private fun condaEnvFolder(path: String) = if (SystemInfo.isWindows) File(path).parent else File(path).parentFile.parent
 
-private fun findActivateOnWindows(path: String?): File? {
+private fun findActivateOnWindows(path: String): File? {
   for (location in arrayListOf("activate.bat", "Scripts/activate.bat")) {
     val file = File(File(path).parentFile, location)
     if (file.exists()) {

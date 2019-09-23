@@ -1,5 +1,4 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package com.intellij.psi.impl;
 
 import com.intellij.lang.PsiBuilderFactory;
@@ -7,7 +6,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
@@ -15,6 +13,7 @@ import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vfs.NonPhysicalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
@@ -24,7 +23,6 @@ import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.impl.file.impl.FileManagerImpl;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,12 +33,11 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-public class PsiManagerImpl extends PsiManagerEx {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiManagerImpl");
+public final class PsiManagerImpl extends PsiManagerEx {
+  private static final Logger LOG = Logger.getInstance(PsiManagerImpl.class);
 
   private final Project myProject;
-  private final FileIndexFacade myFileIndex;
-  private final MessageBus myMessageBus;
+  private final NotNullLazyValue<? extends FileIndexFacade> myFileIndex;
   private final PsiModificationTracker myModificationTracker;
 
   private final FileManagerImpl myFileManager;
@@ -58,21 +55,17 @@ public class PsiManagerImpl extends PsiManagerEx {
   public static final Topic<AnyPsiChangeListener> ANY_PSI_CHANGE_TOPIC =
     Topic.create("ANY_PSI_CHANGE_TOPIC", AnyPsiChangeListener.class, Topic.BroadcastDirection.TO_PARENT);
 
-  public PsiManagerImpl(Project project,
-                        FileDocumentManager fileDocumentManager,
-                        //We need to initialize PsiBuilderFactory service so it won't initialize under PsiLock from ChameleonTransform
-                        @SuppressWarnings("unused") PsiBuilderFactory psiBuilderFactory,
-                        FileIndexFacade fileIndex,
-                        MessageBus messageBus,
-                        PsiModificationTracker modificationTracker) {
+  public PsiManagerImpl(@NotNull Project project) {
+    // we need to initialize PsiBuilderFactory service so it won't initialize under PsiLock from ChameleonTransform
+    PsiBuilderFactory.getInstance();
+
     myProject = project;
-    myFileIndex = fileIndex;
-    myMessageBus = messageBus;
-    myModificationTracker = modificationTracker;
+    myFileIndex = NotNullLazyValue.createValue(() -> FileIndexFacade.getInstance(project));
+    myModificationTracker = PsiModificationTracker.SERVICE.getInstance(project);
 
-    myFileManager = new FileManagerImpl(this, fileDocumentManager, fileIndex);
+    myFileManager = new FileManagerImpl(this, myFileIndex);
 
-    myTreeChangePreprocessors.add((PsiTreeChangePreprocessor)modificationTracker);
+    myTreeChangePreprocessors.add((PsiTreeChangePreprocessor)myModificationTracker);
 
     Disposer.register(project, () -> myIsDisposed = true);
   }
@@ -114,7 +107,7 @@ public class PsiManagerImpl extends PsiManagerEx {
     }
     if (file != null && file.isPhysical() && virtualFile.getFileSystem() instanceof NonPhysicalFileSystem) return true;
 
-    return virtualFile != null && myFileIndex.isInContent(virtualFile);
+    return virtualFile != null && myFileIndex.getValue().isInContent(virtualFile);
   }
 
   @Override
@@ -160,8 +153,8 @@ public class PsiManagerImpl extends PsiManagerEx {
     return myFileManager.findFile(file);
   }
 
+  @NotNull
   @Override
-  @Nullable
   public FileViewProvider findViewProvider(@NotNull VirtualFile file) {
     ProgressIndicatorProvider.checkCanceled();
     return myFileManager.findViewProvider(file);
@@ -417,7 +410,7 @@ public class PsiManagerImpl extends PsiManagerEx {
 
   @Override
   public void registerRunnableToRunOnChange(@NotNull final Runnable runnable) {
-    myMessageBus.connect().subscribe(ANY_PSI_CHANGE_TOPIC, new AnyPsiChangeListener.Adapter() {
+    myProject.getMessageBus().connect().subscribe(ANY_PSI_CHANGE_TOPIC, new AnyPsiChangeListener() {
       @Override
       public void beforePsiChanged(boolean isPhysical) {
         if (isPhysical) runnable.run();
@@ -427,7 +420,7 @@ public class PsiManagerImpl extends PsiManagerEx {
 
   @Override
   public void registerRunnableToRunOnAnyChange(@NotNull final Runnable runnable) { // includes non-physical changes
-    myMessageBus.connect().subscribe(ANY_PSI_CHANGE_TOPIC, new AnyPsiChangeListener.Adapter() {
+    myProject.getMessageBus().connect().subscribe(ANY_PSI_CHANGE_TOPIC, new AnyPsiChangeListener() {
       @Override
       public void beforePsiChanged(boolean isPhysical) {
         runnable.run();
@@ -437,7 +430,7 @@ public class PsiManagerImpl extends PsiManagerEx {
 
   @Override
   public void registerRunnableToRunAfterAnyChange(@NotNull final Runnable runnable) { // includes non-physical changes
-    myMessageBus.connect().subscribe(ANY_PSI_CHANGE_TOPIC, new AnyPsiChangeListener.Adapter() {
+    myProject.getMessageBus().connect().subscribe(ANY_PSI_CHANGE_TOPIC, new AnyPsiChangeListener() {
       @Override
       public void afterPsiChanged(boolean isPhysical) {
         runnable.run();
@@ -447,12 +440,12 @@ public class PsiManagerImpl extends PsiManagerEx {
 
   @Override
   public void beforeChange(boolean isPhysical) {
-    myMessageBus.syncPublisher(ANY_PSI_CHANGE_TOPIC).beforePsiChanged(isPhysical);
+    myProject.getMessageBus().syncPublisher(ANY_PSI_CHANGE_TOPIC).beforePsiChanged(isPhysical);
   }
 
   @Override
   public void afterChange(boolean isPhysical) {
-    myMessageBus.syncPublisher(ANY_PSI_CHANGE_TOPIC).afterPsiChanged(isPhysical);
+    myProject.getMessageBus().syncPublisher(ANY_PSI_CHANGE_TOPIC).afterPsiChanged(isPhysical);
   }
 
   @Override

@@ -14,7 +14,6 @@ import com.intellij.codeInspection.dataFlow.inliner.*;
 import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.value.*;
-import com.intellij.codeInspection.dataFlow.value.DfaRelationValue.RelationType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -125,10 +124,6 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     return myFactory;
   }
 
-  PsiElement getContext() {
-    return myCodeFragment;
-  }
-
   @NotNull
   private PsiClassType createClassType(GlobalSearchScope scope, String fqn) {
     PsiClass aClass = JavaPsiFacade.getInstance(myProject).findClass(fqn, scope);
@@ -225,8 +220,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       lExpr.accept(this);
       addInstruction(new DupInstruction());
       rExpr.accept(this);
-      addInstruction(new BinopInstruction(
-        isAcceptableContextForMathOperation(expression) ? JavaTokenType.PLUS : BinopInstruction.STRING_CONCAT_IN_LOOP, null, type));
+      addInstruction(new BinopInstruction(JavaTokenType.PLUS, null, type));
     }
     else {
       IElementType sign = TypeConversionUtil.convertEQtoOperation(op);
@@ -236,7 +230,6 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       generateBoxingUnboxingInstructionFor(lExpr, resType);
       rExpr.accept(this);
       generateBoxingUnboxingInstructionFor(rExpr, resType);
-      sign = substituteBinaryOperation(rExpr, sign);
       if (isAssignmentDivision(op) && resType != null && PsiType.LONG.isAssignableFrom(resType)) {
         checkZeroDivisor();
       }
@@ -683,7 +676,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       addInstruction(new PushInstruction(loopVar, null, true));
       addInstruction(new PushInstruction(loopVar, null));
       addInstruction(new PushInstruction(myFactory.getConstFactory().createFromValue(1, PsiType.INT), null));
-      addInstruction(new BinopInstruction(JavaTokenType.PLUS, null, loopVar.getType()));
+      addInstruction(new BinopInstruction(JavaTokenType.PLUS, null, loopVar.getType(), -1, true));
       addInstruction(new AssignInstruction(null, null));
       addInstruction(new PopInstruction());
     }
@@ -954,7 +947,9 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
                   if (caseValue != null && expressionValue != null) {
                     addInstruction(new PushInstruction(expressionValue, null));
                     caseValue.accept(this);
-                    addInstruction(new BinopInstruction(JavaTokenType.EQEQ, null, PsiType.BOOLEAN));
+                    addInstruction(new BinopInstruction(
+                      TypeUtils.isJavaLangString(expressionValue.getType()) ? BinopInstruction.STRING_EQUALITY_BY_CONTENT :
+                      JavaTokenType.EQEQ, null, PsiType.BOOLEAN));
                   }
                   else {
                     pushUnknown();
@@ -1402,8 +1397,6 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   private void generateOther(PsiPolyadicExpression expression, IElementType op, PsiExpression[] operands, PsiType type) {
-    op = substituteBinaryOperation(expression, op);
-
     PsiExpression lExpr = operands[0];
     lExpr.accept(this);
     PsiType lType = lExpr.getType();
@@ -1418,38 +1411,6 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       lExpr = rExpr;
       lType = rType;
     }
-  }
-
-  @Nullable
-  private IElementType substituteBinaryOperation(PsiExpression expression, IElementType op) {
-    if (JavaTokenType.PLUS == op) {
-      if (isAcceptableContextForMathOperation(expression)) return op;
-      if (TypeUtils.isJavaLangString(expression.getType())) return BinopInstruction.STRING_CONCAT_IN_LOOP;
-      return null;
-    }
-    if ((JavaTokenType.MINUS == op || JavaTokenType.ASTERISK == op) && !isAcceptableContextForMathOperation(expression)) return null;
-    return op;
-  }
-
-  private boolean isAcceptableContextForMathOperation(PsiExpression expression) {
-    PsiElement parent = expression.getParent();
-    while (parent != null && parent != myCodeFragment) {
-      if ((parent instanceof PsiExpressionList && parent.getParent() instanceof PsiCallExpression) ||
-          parent instanceof PsiArrayInitializerExpression ||
-          parent instanceof PsiArrayAccessExpression) {
-        return true;
-      }
-      if (parent instanceof PsiBinaryExpression && RelationType.fromElementType(((PsiBinaryExpression)parent).getOperationTokenType()) != null) {
-        return true;
-      }
-      if (parent instanceof PsiLoopStatement &&
-          !(parent instanceof PsiForStatement &&
-            PsiTreeUtil.isAncestor(((PsiForStatement)parent).getInitialization(), expression, false))) {
-        return false;
-      }
-      parent = parent.getParent();
-    }
-    return true;
   }
 
   private void acceptBinaryRightOperand(@Nullable IElementType op, PsiType type,
@@ -1951,14 +1912,42 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     PsiExpression operand = PsiUtil.skipParenthesizedExprDown(expression.getOperand());
     if (operand != null) {
       operand.accept(this);
-      generateBoxingUnboxingInstructionFor(operand, PsiType.INT);
-      pushUnknown();
-      addInstruction(new AssignInstruction(operand, null, myFactory.createValue(operand)));
+      addInstruction(new DupInstruction());
+      processIncrementDecrement(expression, operand);
       addInstruction(new PopInstruction());
+    } else {
+      pushUnknown();
     }
-    pushUnknown();
 
     finishElement(expression);
+  }
+
+  private boolean processIncrementDecrement(PsiUnaryExpression expression, PsiExpression operand) {
+    IElementType token;
+    if (expression.getOperationTokenType().equals(JavaTokenType.MINUSMINUS)) {
+      token = JavaTokenType.MINUS;
+    }
+    else if (expression.getOperationTokenType().equals(JavaTokenType.PLUSPLUS)) {
+      token = JavaTokenType.PLUS;
+    }
+    else {
+      return false;
+    }
+    PsiPrimitiveType unboxedType = PsiPrimitiveType.getOptionallyUnboxedType(operand.getType());
+    if (unboxedType == null) return false;
+    addInstruction(new DupInstruction());
+    generateBoxingUnboxingInstructionFor(operand, unboxedType);
+    PsiType resultType = TypeConversionUtil.binaryNumericPromotion(unboxedType, PsiType.INT);
+    addInstruction(new PushInstruction(myFactory.getConstFactory().createFromValue(1, PsiType.INT), null));
+    addInstruction(new BinopInstruction(token, null, resultType));
+    if (!unboxedType.equals(resultType)) {
+      addInstruction(new PrimitiveConversionInstruction(unboxedType, null));
+    }
+    if (!(operand.getType() instanceof PsiPrimitiveType)) {
+      addInstruction(new BoxingInstruction(operand.getType()));
+    }
+    addInstruction(new AssignInstruction(operand, null, myFactory.createValue(operand)));
+    return true;
   }
 
   @Override public void visitPrefixExpression(PsiPrefixExpression expression) {
@@ -1981,8 +1970,10 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
         PsiPrimitiveType unboxed = PsiPrimitiveType.getUnboxedType(type);
         generateBoxingUnboxingInstructionFor(operand, unboxed == null ? type : unboxed);
         if (PsiUtil.isIncrementDecrementOperation(expression)) {
-          pushUnknown();
-          addInstruction(new AssignInstruction(operand, null, myFactory.createValue(operand)));
+          if (!processIncrementDecrement(expression, operand)) {
+            pushUnknown();
+            addInstruction(new AssignInstruction(operand, null, myFactory.createValue(operand)));
+          }
         }
         else if (expression.getOperationTokenType() == JavaTokenType.EXCL) {
           addInstruction(new NotInstruction(expression));
@@ -2048,7 +2039,9 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
     final PsiTypeElement typeElement = castExpression.getCastType();
     if (typeElement != null && operand != null && operand.getType() != null && !(typeElement.getType() instanceof PsiPrimitiveType)) {
-      addInstruction(new TypeCastInstruction(castExpression, operand, typeElement.getType()));
+      DfaControlTransferValue transfer =
+        shouldHandleException() ? myFactory.controlTransfer(myExceptionCache.get("java.lang.ClassCastException"), myTrapStack) : null;
+      addInstruction(new TypeCastInstruction(castExpression, operand, typeElement.getType(), transfer));
     }
     finishElement(castExpression);
   }

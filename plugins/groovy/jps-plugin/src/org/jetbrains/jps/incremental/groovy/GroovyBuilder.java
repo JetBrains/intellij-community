@@ -18,9 +18,9 @@ package org.jetbrains.jps.incremental.groovy;
  import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.groovy.compiler.rt.GroovyRtConstants;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
 import org.jetbrains.jps.builders.java.JavaBuilderUtil;
@@ -130,10 +130,37 @@ public class GroovyBuilder extends ModuleLevelBuilder {
   }
 
   static List<String> getGroovyRtRoots() {
-    File rt = ClasspathBootstrap.getResourceFile(GroovyBuilder.class);
-    File constants = ClasspathBootstrap.getResourceFile(GroovyRtConstants.class);
-    return Arrays.asList(new File(rt.getParentFile(), rt.isFile() ? "groovy_rt.jar" : "intellij.groovy.rt").getPath(),
-                         new File(constants.getParentFile(), constants.isFile() ? "groovy-rt-constants.jar" : "intellij.groovy.constants.rt").getPath());
+    return getGroovyRtRoots(ClasspathBootstrap.getResourceFile(GroovyBuilder.class));
+  }
+
+  @NotNull
+  static List<String> getGroovyRtRoots(File jpsPluginRoot) {
+    return Arrays.asList(getGroovyRtJarPath(jpsPluginRoot, "groovy_rt.jar", "intellij.groovy.rt", "groovy-rt"),
+                         getGroovyRtJarPath(jpsPluginRoot, "groovy-rt-constants.jar", "intellij.groovy.constants.rt", "groovy-constants-rt"));
+  }
+
+  @NotNull
+  private static String getGroovyRtJarPath(File jpsPluginClassesRoot, String jarNameInDistribution,
+                                           String moduleName,
+                                           String mavenArtifactNamePrefix) {
+    String fileName;
+    File parentDir = jpsPluginClassesRoot.getParentFile();
+    if (jpsPluginClassesRoot.isFile()) {
+      if (jpsPluginClassesRoot.getName().equals("groovy-jps-plugin.jar")) {
+        fileName = jarNameInDistribution;
+      }
+      else {
+        String version = StringUtil.substringAfterLast(FileUtil.getNameWithoutExtension(jpsPluginClassesRoot), "-");
+        fileName = mavenArtifactNamePrefix + "-" + version + ".jar";
+        if (parentDir.getName().equals(version)) {
+          parentDir = new File(parentDir.getParentFile().getParentFile(), mavenArtifactNamePrefix + "/" + version);
+        }
+      }
+    }
+    else {
+      fileName = moduleName;
+    }
+    return new File(parentDir, fileName).getPath();
   }
 
   public static boolean isGroovyFile(String path) {

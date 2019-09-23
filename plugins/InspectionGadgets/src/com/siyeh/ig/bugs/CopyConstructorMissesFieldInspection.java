@@ -7,7 +7,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -18,10 +18,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -119,7 +116,7 @@ public class CopyConstructorMissesFieldInspection extends BaseInspection {
           if (variable instanceof PsiField) {
             assignedFields.add((PsiField)variable);
           }
-          ContainerUtilRt.addIfNotNull(assignedFields, resolveFieldOfGetter(argument, parameter));
+          ContainerUtil.addIfNotNull(assignedFields, resolveFieldOfGetter(argument, parameter));
         }
       }
       else if (element instanceof PsiMethodCallExpression) {

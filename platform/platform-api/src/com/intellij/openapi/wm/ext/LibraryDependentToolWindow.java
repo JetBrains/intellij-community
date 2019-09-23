@@ -7,10 +7,9 @@ import com.intellij.openapi.wm.ToolWindowEP;
 import com.intellij.util.xmlb.annotations.Attribute;
 
 public class LibraryDependentToolWindow extends ToolWindowEP {
+  private static final Logger LOG = Logger.getInstance(LibraryDependentToolWindow.class);
 
   public static final ExtensionPointName<LibraryDependentToolWindow> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.library.toolWindow");
-
-  private static final Logger LOG = Logger.getInstance("com.intellij.javaee.toolwindow.LibraryDependentToolWindow");
 
   private LibrarySearchHelper myLibrarySearchHelper;
 

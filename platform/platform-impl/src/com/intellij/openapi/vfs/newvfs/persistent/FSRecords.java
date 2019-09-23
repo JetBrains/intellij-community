@@ -45,7 +45,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * @author max
  */
 public class FSRecords {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.vfs.persistent.FSRecords");
+  private static final Logger LOG = Logger.getInstance(FSRecords.class);
 
   public static final boolean WE_HAVE_CONTENT_HASHES = SystemProperties.getBooleanProperty("idea.share.contents", true);
          static final String VFS_FILES_EXTENSION = System.getProperty("idea.vfs.files.extension", ".dat");
@@ -114,6 +114,7 @@ public class FSRecords {
 
   private static final int FREE_RECORD_FLAG = 0x100;
   private static final int ALL_VALID_FLAGS = PersistentFS.ALL_VALID_FLAGS | FREE_RECORD_FLAG;
+  private static final int MAX_INITIALIZATION_ATTEMPTS = 10;
 
   static {
     //noinspection ConstantConditions
@@ -220,9 +221,21 @@ public class FSRecords {
     }
 
     private static void init() {
+      Exception exception = null;
+      for (int i = 0; i < MAX_INITIALIZATION_ATTEMPTS; i++) {
+        exception = tryInit();
+        if (exception == null) {
+          return;
+        }
+      }
+      throw new RuntimeException("Can't initialize filesystem storage", exception);
+    }
+
+    @Nullable
+    private static Exception tryInit() {
       final File basePath = basePath().getAbsoluteFile();
       if (!(basePath.isDirectory() || basePath.mkdirs())) {
-        throw new RuntimeException("Cannot create storage directory: " + basePath);
+        return new RuntimeException("Cannot create storage directory: " + basePath);
       }
 
       final File namesFile = new File(basePath, "names" + VFS_FILES_EXTENSION);
@@ -291,6 +304,7 @@ public class FSRecords {
         }
         scanFreeRecords();
         getAttributeId(ourChildrenAttr.getId()); // trigger writing / loading of vfs attribute ids in top level write action
+        return null;
       }
       catch (Exception e) { // IOException, IllegalArgumentException
         LOG.info("Filesystem storage is corrupted or does not exist. [Re]Building. Reason: " + e.getMessage());
@@ -341,7 +355,7 @@ public class FSRecords {
           throw new RuntimeException("Can't rebuild filesystem storage ", e1);
         }
 
-        init();
+        return e;
       }
     }
 
@@ -894,6 +908,7 @@ public class FSRecords {
       this.id = id;
       this.nameId = nameId;
       this.name = name;
+      if (id <= 0 || nameId <= 0) throw new IllegalArgumentException("invalid arguments id: "+id+"; nameId: "+nameId);
     }
 
     @Override
@@ -905,6 +920,7 @@ public class FSRecords {
   // returns NameId[] sorted by NameId.id
   @NotNull
   public static NameId[] listAll(int parentId) {
+    assert parentId > 0 : parentId;
     return readAndHandleErrors(() -> {
       try (final DataInputStream input = readAttribute(parentId, ourChildrenAttr)) {
         if (input == null) return NameId.EMPTY_ARRAY;
@@ -972,6 +988,7 @@ public class FSRecords {
   }
 
   static void updateList(int id, @NotNull int[] childIds) {
+    assert id > 0 : id;
     Arrays.sort(childIds);
     writeAndHandleErrors(() -> {
       DbConnection.markDirty();

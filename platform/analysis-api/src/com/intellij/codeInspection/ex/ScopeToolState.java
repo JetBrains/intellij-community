@@ -5,6 +5,7 @@ package com.intellij.codeInspection.ex;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
@@ -29,13 +30,13 @@ public class ScopeToolState {
   @NotNull
   private final String myScopeName;
   private NamedScope myScope;
-  private InspectionToolWrapper myToolWrapper;
+  private InspectionToolWrapper<?, ?> myToolWrapper;
   private boolean myEnabled;
   private HighlightDisplayLevel myLevel;
   private ConfigPanelState myAdditionalConfigPanelState;
 
   public ScopeToolState(@NotNull NamedScope scope,
-                        @NotNull InspectionToolWrapper toolWrapper,
+                        @NotNull InspectionToolWrapper<?, ?> toolWrapper,
                         boolean enabled,
                         @NotNull HighlightDisplayLevel level) {
     this(scope.getName(), toolWrapper, enabled, level);
@@ -43,7 +44,7 @@ public class ScopeToolState {
   }
 
   public ScopeToolState(@NotNull String scopeName,
-                        @NotNull InspectionToolWrapper toolWrapper,
+                        @NotNull InspectionToolWrapper<?, ?> toolWrapper,
                         boolean enabled,
                         @NotNull HighlightDisplayLevel level) {
     myScopeName = scopeName;
@@ -71,7 +72,7 @@ public class ScopeToolState {
   }
 
   @NotNull
-  public InspectionToolWrapper getTool() {
+  public InspectionToolWrapper<?, ?> getTool() {
     return myToolWrapper;
   }
 
@@ -95,7 +96,7 @@ public class ScopeToolState {
   @Nullable
   public JComponent getAdditionalConfigPanel() {
     if (myAdditionalConfigPanelState == null) {
-      myAdditionalConfigPanelState = ConfigPanelState.of(myToolWrapper.getTool().createOptionsPanel());
+      myAdditionalConfigPanelState = ConfigPanelState.of(myToolWrapper.getTool().createOptionsPanel(), myToolWrapper);
     }
     return myAdditionalConfigPanelState.getPanel(isEnabled());
   }
@@ -104,20 +105,20 @@ public class ScopeToolState {
     myAdditionalConfigPanelState = null;
   }
 
-  public void setTool(@NotNull InspectionToolWrapper tool) {
+  public void setTool(@NotNull InspectionToolWrapper<?, ?> tool) {
     myToolWrapper = tool;
   }
 
   public boolean equalTo(@NotNull ScopeToolState state2) {
     if (isEnabled() != state2.isEnabled()) return false;
     if (getLevel() != state2.getLevel()) return false;
-    InspectionToolWrapper toolWrapper = getTool();
-    InspectionToolWrapper toolWrapper2 = state2.getTool();
+    InspectionToolWrapper<?, ?> toolWrapper = getTool();
+    InspectionToolWrapper<?, ?> toolWrapper2 = state2.getTool();
     if (!toolWrapper.isInitialized() && !toolWrapper2.isInitialized()) return true;
     return areSettingsEqual(toolWrapper, toolWrapper2);
   }
 
-  public static boolean areSettingsEqual(@NotNull InspectionToolWrapper toolWrapper, @NotNull InspectionToolWrapper toolWrapper2) {
+  public static boolean areSettingsEqual(@NotNull InspectionToolWrapper<?, ?> toolWrapper, @NotNull InspectionToolWrapper<?, ?> toolWrapper2) {
     try {
       @NonNls String tempRoot = "root";
       Element oldToolSettings = new Element(tempRoot);
@@ -152,7 +153,7 @@ public class ScopeToolState {
     try {
       entry.writeSettings(node);
     }
-    catch (WriteExternalException e) {
+    catch (WriteExternalException | ProcessCanceledException e) {
       throw e;
     }
     catch (Exception e) {
@@ -161,7 +162,7 @@ public class ScopeToolState {
   }
 
   private static class ConfigPanelState {
-    private static final ConfigPanelState EMPTY = new ConfigPanelState(null);
+    private static final ConfigPanelState EMPTY = new ConfigPanelState(null, null);
 
     private final JComponent myOptionsPanel;
     private final Set<Component> myEnableRequiredComponent = new HashSet<>();
@@ -169,7 +170,7 @@ public class ScopeToolState {
     private boolean myLastState = true;
     private boolean myDeafListeners;
 
-    private ConfigPanelState(JComponent optionsPanel) {
+    private ConfigPanelState(JComponent optionsPanel, InspectionToolWrapper<?, ?> wrapper) {
       myOptionsPanel = optionsPanel;
       if (myOptionsPanel != null) {
         Queue<Component> q = new Queue<>(1);
@@ -185,7 +186,11 @@ public class ScopeToolState {
                   myEnableRequiredComponent.add(current);
                 }
                 else {
-                  LOG.assertTrue(myEnableRequiredComponent.remove(current));
+                  String message = wrapper == null
+                                   ? null
+                                   : (" tool = #" + wrapper.getShortName());
+                  LOG.assertTrue(myEnableRequiredComponent.remove(current), message);
+
                 }
               }
             }
@@ -219,8 +224,8 @@ public class ScopeToolState {
       return myOptionsPanel;
     }
 
-    private static ConfigPanelState of(JComponent panel) {
-      return panel == null ? EMPTY : new ConfigPanelState(panel);
+    private static ConfigPanelState of(JComponent panel, InspectionToolWrapper<?, ?> toolWrapper) {
+      return panel == null ? EMPTY : new ConfigPanelState(panel, toolWrapper);
     }
   }
 }

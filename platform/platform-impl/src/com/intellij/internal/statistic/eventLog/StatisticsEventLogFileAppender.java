@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -19,7 +19,6 @@ import java.io.InterruptedIOException;
 import java.io.Writer;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.UUID;
 import java.util.function.Supplier;
 
 public class StatisticsEventLogFileAppender extends FileAppender {
@@ -29,17 +28,28 @@ public class StatisticsEventLogFileAppender extends FileAppender {
   private long nextRollover = 0;
   protected long oldestExistingFile = -1;
 
+  private final String mySuffix;
+  private final EventLogBuildType myBuildType;
+
   private final Path myLogDirectory;
   private final Supplier<List<File>> myFilesProducer;
 
   @TestOnly
   public StatisticsEventLogFileAppender(@NotNull Path path, @NotNull List<File> files) {
+    mySuffix = "";
+    myBuildType = EventLogBuildType.EAP;
     myLogDirectory = path;
     myFilesProducer = () -> files;
   }
 
-  public StatisticsEventLogFileAppender(@NotNull Layout layout, @NotNull Path dir, @NotNull String filename) throws IOException {
+  public StatisticsEventLogFileAppender(@NotNull Layout layout,
+                                        @NotNull Path dir,
+                                        @NotNull String suffix,
+                                        @NotNull EventLogBuildType buildType,
+                                        @NotNull String filename) throws IOException {
     super(layout, filename);
+    mySuffix = suffix;
+    myBuildType = buildType;
     myLogDirectory = dir;
     myFilesProducer = () -> {
       final File[] files = dir.toFile().listFiles();
@@ -48,9 +58,11 @@ public class StatisticsEventLogFileAppender extends FileAppender {
     cleanUpOldFiles();
   }
 
-  public static StatisticsEventLogFileAppender create(@NotNull Layout layout, @NotNull Path dir) throws IOException {
-    final File file = nextFile(dir);
-    return new StatisticsEventLogFileAppender(layout, dir, file.getPath());
+  public static StatisticsEventLogFileAppender create(@NotNull Layout layout, @NotNull Path dir,
+                                                      @NotNull String suffix, boolean isEap) throws IOException {
+    final EventLogBuildType buildType = isEap ? EventLogBuildType.EAP : EventLogBuildType.RELEASE;
+    final EventLogFile logFile = EventLogFile.create(dir, buildType, suffix);
+    return new StatisticsEventLogFileAppender(layout, dir, suffix, buildType, logFile.getFile().getPath());
   }
 
   @NotNull
@@ -100,8 +112,8 @@ public class StatisticsEventLogFileAppender extends FileAppender {
   public void rollOver() {
     nextRollover = getQuietWriter().getCount() + maxFileSize;
     try {
-      final File file = nextFile(myLogDirectory);
-      setFile(file.getPath(), false, bufferedIO, bufferSize);
+      final EventLogFile logFile = EventLogFile.create(myLogDirectory, myBuildType, mySuffix);
+      setFile(logFile.getFile().getPath(), false, bufferedIO, bufferSize);
       nextRollover = 0;
     }
     catch (InterruptedIOException e) {
@@ -157,14 +169,5 @@ public class StatisticsEventLogFileAppender extends FileAppender {
       }
     }
     rollOver();
-  }
-
-    @NotNull
-  private static File nextFile(@NotNull Path dir) {
-    File file = dir.resolve(UUID.randomUUID() + ".log").toFile();
-    while (file.exists()) {
-      file = dir.resolve(UUID.randomUUID() + ".log").toFile();
-    }
-    return file;
   }
 }

@@ -45,6 +45,13 @@ MAXIMUM_VARIABLE_REPRESENTATION_SIZE = 1000
 # Prefix for saving functions return values in locals
 RETURN_VALUES_DICT = '__pydevd_ret_val_dict'
 
+original_excepthook = sys.__excepthook__
+
+
+def dummy_excepthook(exctype, value, traceback):
+    return None
+
+
 import os
 
 from _pydevd_bundle import pydevd_vm_type
@@ -64,6 +71,8 @@ elif IS_IRONPYTHON:
     import System
     IS_WINDOWS = "windows" in System.Environment.OSVersion.VersionString.lower()
 
+IS_MACOS = sys.platform == 'darwin'
+
 IS_PYTHON_STACKLESS = "stackless" in sys.version.lower()
 CYTHON_SUPPORTED = False
 
@@ -79,7 +88,7 @@ else:
             (sys.version_info[0] == 2 and sys.version_info[1] >= 7)
             or (sys.version_info[0] == 3 and sys.version_info[1] >= 5)
             or (sys.version_info[0] > 3)
-            ):
+        ):
             # Supported in 2.7 or 3.5 onwards (32 or 64)
             CYTHON_SUPPORTED = True
 
@@ -89,6 +98,7 @@ else:
 IS_PY3K = False
 IS_PY34_OR_GREATER = False
 IS_PY36_OR_GREATER = False
+IS_PY36_OR_LESSER = False
 IS_PY2 = True
 IS_PY27 = False
 IS_PY24 = False
@@ -98,6 +108,7 @@ try:
         IS_PY2 = False
         IS_PY34_OR_GREATER = sys.version_info >= (3, 4)
         IS_PY36_OR_GREATER = sys.version_info >= (3, 6)
+        IS_PY36_OR_LESSER = sys.version_info[:2] <= (3, 6)
     elif sys.version_info[0] == 2 and sys.version_info[1] == 7:
         IS_PY27 = True
     elif sys.version_info[0] == 2 and sys.version_info[1] == 4:
@@ -257,10 +268,10 @@ except:
 
 NO_FTRACE = None
 
-if sys.version_info[:2] in ((2, 6), (3, 3), (3, 4)):
+if sys.version_info[:2] in ((3, 3), (3, 4), (3, 5)) or sys.version_info < (2, 7, 12):
 
     def NO_FTRACE(frame, event, arg):
-        # In Python <= 2.6 and <= 3.4, if we're tracing a method, frame.f_trace may not be set
+        # In Python < 2.7.12 and <= 3.5, if we're tracing a method, frame.f_trace may not be set
         # to None, it must always be set to a tracing function.
         # See: tests_python.test_tracing_gotchas.test_tracing_gotchas
         return None

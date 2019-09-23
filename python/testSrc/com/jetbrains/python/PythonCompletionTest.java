@@ -14,6 +14,7 @@ import com.intellij.testFramework.TestDataPath;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -617,6 +618,16 @@ public class PythonCompletionTest extends PyTestCase {
   // PY-2813
   public void testFromNamespacePackageImport() {
     doMultiFileTest();
+  }
+
+  // PY-32268
+  public void testFromLocalNamespacePackageInFromImport() {
+    doTestImportFromLocalPython3NamespacePackage();
+  }
+
+  // PY-32268
+  public void testFromLocalNamespacePackageInImportStatement() {
+    doTestImportFromLocalPython3NamespacePackage();
   }
 
   // PY-6829
@@ -1529,6 +1540,41 @@ public class PythonCompletionTest extends PyTestCase {
     doTest();
   }
 
+  // PY-36003
+  public void testContinueInFinallyBefore38() {
+    final String text = "for x in []:\n" +
+                        "    try:\n" +
+                        "        a = 1\n" +
+                        "    finally:\n" +
+                        "        cont";
+
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON37,
+      () -> {
+        myFixture.configureByText(PythonFileType.INSTANCE, text + "<caret>");
+        myFixture.completeBasic();
+        myFixture.checkResult(text);
+      }
+    );
+  }
+
+  // PY-36003
+  public void testContinueInFinallyAfter38() {
+    final String text = "for x in []:\n" +
+                        "    try:\n" +
+                        "        a = 1\n" +
+                        "    finally:\n" +
+                        "        cont";
+
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON38,
+      () -> {
+        myFixture.configureByText(PythonFileType.INSTANCE, text + "<caret>");
+        myFixture.completeBasic();
+        myFixture.checkResult(text + "inue");
+      }
+    );
+  }
 
   private void assertNoVariantsInExtendedCompletion() {
     myFixture.copyDirectoryToProject(getTestName(true), "");
@@ -1553,6 +1599,19 @@ public class PythonCompletionTest extends PyTestCase {
                          assertNull(myFixture.complete(CompletionType.BASIC, 2));
                          myFixture.checkResultByFile(getTestName(true) + "/a.after.py");
                        });
+  }
+
+  private void doTestImportFromLocalPython3NamespacePackage() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, () -> {
+      myFixture.copyDirectoryToProject(getTestName(true), "");
+      runWithSourceRoots(Lists.newArrayList(myFixture.findFileInTempDir("root1"), myFixture.findFileInTempDir("root2")), () -> {
+        myFixture.configureByFile("root1/pkg/test.py");
+        List<String> lookupStrings = StreamEx.of(myFixture.completeBasic())
+          .map(LookupElement::getLookupString)
+          .toList();
+        assertContainsElements(lookupStrings, "foo", "bar", "baz");
+      });
+    });
   }
 
   @Override

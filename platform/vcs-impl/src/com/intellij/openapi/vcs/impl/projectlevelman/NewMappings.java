@@ -15,6 +15,7 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
@@ -34,9 +35,11 @@ import com.intellij.util.Functions;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
+import gnu.trove.THashMap;
+import gnu.trove.TIntArrayList;
+import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.SystemIndependent;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
@@ -45,7 +48,7 @@ import static com.intellij.util.containers.ContainerUtil.*;
 import static java.util.Collections.unmodifiableList;
 
 public class NewMappings implements Disposable {
-  private static final Comparator<MappedRoot> ROOT_COMPARATOR = Comparator.comparingInt(it -> -it.rootPath.length());
+  private static final Comparator<MappedRoot> ROOT_COMPARATOR = Comparator.comparing(it -> it.root.getPath());
   private static final Comparator<VcsDirectoryMapping> MAPPINGS_COMPARATOR = Comparator.comparing(VcsDirectoryMapping::getDirectory);
 
   private final static Logger LOG = Logger.getInstance(NewMappings.class);
@@ -55,27 +58,23 @@ public class NewMappings implements Disposable {
 
   private final DefaultVcsRootPolicy myDefaultVcsRootPolicy;
   private final ProjectLevelVcsManager myVcsManager;
-  private final FileStatusManager myFileStatusManager;
   private final Project myProject;
 
   @NotNull private Disposable myFilePointerDisposable = Disposer.newDisposable();
   private volatile List<VcsDirectoryMapping> myMappings = Collections.emptyList(); // sorted by MAPPINGS_COMPARATOR
   private volatile List<MappedRoot> myMappedRoots = Collections.emptyList(); // sorted by ROOT_COMPARATOR
+  private volatile FilePathMapping myMappedRootsMapping = new FilePathMapping(Collections.emptyList());
   private volatile List<AbstractVcs> myActiveVcses = Collections.emptyList();
   private volatile boolean myActivated = false;
 
   @NotNull private final MergingUpdateQueue myRootUpdateQueue;
   private final VirtualFilePointerListener myFilePointerListener;
 
-  public NewMappings(Project project,
-                     ProjectLevelVcsManagerImpl vcsManager,
-                     FileStatusManager fileStatusManager,
-                     DefaultVcsRootPolicy defaultVcsRootPolicy) {
+  public NewMappings(@NotNull Project project, @NotNull ProjectLevelVcsManagerImpl vcsManager) {
     myProject = project;
     myVcsManager = vcsManager;
-    myFileStatusManager = fileStatusManager;
     myFileWatchRequestsManager = new FileWatchRequestsManager(myProject, this);
-    myDefaultVcsRootPolicy = defaultVcsRootPolicy;
+    myDefaultVcsRootPolicy = DefaultVcsRootPolicy.getInstance(project);
 
     myRootUpdateQueue = new MergingUpdateQueue("NewMappings", 1000, true, null, this, null, Alarm.ThreadToUse.POOLED_THREAD);
 
@@ -189,11 +188,10 @@ public class NewMappings implements Disposable {
 
       Disposer.dispose(myFilePointerDisposable);
       myMappedRoots = newMappedRoots.mappedRoots;
+      myMappedRootsMapping = new FilePathMapping(newMappedRoots.mappedRoots);
       myFilePointerDisposable = newMappedRoots.filePointerDisposable;
 
-      if (LOG.isDebugEnabled()) {
-        dumpMappedRootsToLog();
-      }
+      dumpMappedRootsToLog();
     }
 
     if (fireMappingsChangedEvent) mappingsChanged();
@@ -204,7 +202,7 @@ public class NewMappings implements Disposable {
     List<VcsDirectoryMapping> newMapping = new ArrayList<>();
     Set<String> paths = new HashSet<>();
 
-    for (VcsDirectoryMapping mapping : reverse(newArrayList(mappings))) {
+    for (VcsDirectoryMapping mapping : reverse(new ArrayList<>(mappings))) {
       // take last mapping in collection in case of duplicates
       if (paths.add(mapping.getDirectory())) {
         newMapping.add(mapping);
@@ -245,7 +243,7 @@ public class NewMappings implements Disposable {
 
       for (VcsDirectoryMapping mapping : mappings) {
         if (!mapping.isDefaultMapping()) continue;
-        AbstractVcs<?> vcs = getMappingsVcs(mapping);
+        AbstractVcs vcs = getMappingsVcs(mapping);
         if (vcs == null) continue;
 
         Collection<VirtualFile> defaultRoots = detectDefaultRootsFor(vcs,
@@ -294,7 +292,7 @@ public class NewMappings implements Disposable {
   }
 
   @NotNull
-  private Collection<VirtualFile> detectDefaultRootsFor(@NotNull AbstractVcs<?> vcs,
+  private Collection<VirtualFile> detectDefaultRootsFor(@NotNull AbstractVcs vcs,
                                                         @NotNull Collection<VirtualFile> projectRoots,
                                                         @NotNull Set<VirtualFile> mappedDirs) {
     try {
@@ -363,7 +361,6 @@ public class NewMappings implements Disposable {
 
   public void mappingsChanged() {
     BackgroundTaskUtil.syncPublisher(myProject, ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED).directoryMappingChanged();
-    myFileStatusManager.fileStatusesChanged();
     myFileWatchRequestsManager.ping();
   }
 
@@ -376,8 +373,13 @@ public class NewMappings implements Disposable {
   }
 
   private void dumpMappedRootsToLog() {
-    for (MappedRoot root : myMappedRoots) {
-      LOG.info(String.format("Mapped Root: [%s] - [%s]", root.vcs, root.rootPath));
+    if (LOG.isDebugEnabled()) {
+      for (MappedRoot root : myMappedRoots) {
+        LOG.debug(String.format("Mapped Root: [%s] - [%s]", root.vcs, root.root.getPath()));
+      }
+    }
+    else if (haveDefaultMapping() != null) {
+      LOG.info("Mapped Roots: " + myMappedRoots.size());
     }
   }
 
@@ -391,35 +393,19 @@ public class NewMappings implements Disposable {
   @Nullable
   public MappedRoot getMappedRootFor(@Nullable VirtualFile file) {
     if (file == null || !file.isInLocalFileSystem()) return null;
+    if (myMappedRoots.isEmpty()) return null;
     if (myVcsManager.isIgnored(file)) return null;
 
-    final List<MappedRoot> mappings = new ArrayList<>(myMappedRoots);
-
-    // ROOT_COMPARATOR ensures we'll find "inner" matching root before "outer" one
-    for (MappedRoot mapping : mappings) {
-      if (mapping.root.isValid() && VfsUtilCore.isAncestor(mapping.root, file, false)) {
-        return mapping;
-      }
-    }
-    return null;
+    return myMappedRootsMapping.getRootFor(file);
   }
 
   @Nullable
   public MappedRoot getMappedRootFor(@Nullable FilePath file) {
-    if (file == null) return null;
-    if (file.isNonLocal()) return null;
+    if (file == null || file.isNonLocal()) return null;
+    if (myMappedRoots.isEmpty()) return null;
     if (myVcsManager.isIgnored(file)) return null;
 
-    final List<MappedRoot> mappings = new ArrayList<>(myMappedRoots);
-
-    @SystemIndependent String filePath = file.getPath();
-    // ROOT_COMPARATOR ensures we'll find "inner" matching root before "outer" one
-    for (MappedRoot mapping : mappings) {
-      if (mapping.root.isValid() && FileUtil.isAncestor(mapping.rootPath, filePath, false)) {
-        return mapping;
-      }
-    }
-    return null;
+    return myMappedRootsMapping.getRootFor(file);
   }
 
   @NotNull
@@ -485,7 +471,11 @@ public class NewMappings implements Disposable {
       filteredMappings.add(defaultMapping);
     }
 
-    MultiMap<String, VcsDirectoryMapping> groupedMappings = groupBy(oldMappings, mapping -> mapping.getVcs());
+    MultiMap<String, VcsDirectoryMapping> groupedMappings = new MultiMap<>();
+    for (VcsDirectoryMapping mapping : oldMappings) {
+      groupedMappings.putValue(mapping.getVcs(), mapping);
+    }
+
     for (Map.Entry<String, Collection<VcsDirectoryMapping>> entry : groupedMappings.entrySet()) {
       String vcsName = entry.getKey();
       Collection<VcsDirectoryMapping> mappings = entry.getValue();
@@ -499,7 +489,7 @@ public class NewMappings implements Disposable {
         filteredMappings.addAll(map(objects, Functions.pairSecond()));
       }
       else {
-        AbstractVcs<?> vcs = myVcsManager.findVcsByName(vcsName);
+        AbstractVcs vcs = myVcsManager.findVcsByName(vcsName);
         if (vcs == null) {
           VcsBalloonProblemNotifier.showOverChangesView(myProject, "VCS plugin not found for mapping to : '" + vcsName + "'",
                                                         MessageType.ERROR);
@@ -572,13 +562,11 @@ public class NewMappings implements Disposable {
     @Nullable public final AbstractVcs vcs;
     @NotNull public final VcsDirectoryMapping mapping;
     @NotNull public final VirtualFile root;
-    @NotNull public final String rootPath;
 
     private MappedRoot(@Nullable AbstractVcs vcs, @NotNull VcsDirectoryMapping mapping, @NotNull VirtualFile root) {
       this.vcs = vcs;
       this.mapping = mapping;
       this.root = root;
-      rootPath = root.getPath();
     }
   }
 
@@ -589,6 +577,80 @@ public class NewMappings implements Disposable {
     private Mappings(@NotNull List<MappedRoot> mappedRoots, @NotNull Disposable filePointerDisposable) {
       this.mappedRoots = mappedRoots;
       this.filePointerDisposable = filePointerDisposable;
+    }
+  }
+
+  private static class FilePathMapping {
+    private final Map<VirtualFile, MappedRoot> myVFMap = new HashMap<>();
+    private final Map<String, MappedRoot> myPathMap = new THashMap<>(FileUtil.PATH_HASHING_STRATEGY);
+    private final TIntHashSet myPathHashSet = new TIntHashSet();
+
+    private FilePathMapping(@NotNull List<MappedRoot> mappedRoots) {
+      for (MappedRoot root : mappedRoots) {
+        myVFMap.put(root.root, root);
+
+        String path = StringUtil.trimTrailing(root.root.getPath(), '/');
+        myPathMap.put(path, root);
+        myPathHashSet.add(pathHashCode(path));
+      }
+    }
+
+    @Nullable
+    public MappedRoot getRootFor(@NotNull VirtualFile file) {
+      while (file != null) {
+        MappedRoot root = myVFMap.get(file);
+        if (root != null) return root;
+        file = file.getParent();
+      }
+      return null;
+    }
+
+    @Nullable
+    public MappedRoot getRootFor(@NotNull FilePath filePath) {
+      String path = filePath.getPath();
+
+      int index = 0;
+      int prefixHash = 0;
+      TIntArrayList matches = new TIntArrayList();
+
+      // check empty string for FS root
+      if (myPathHashSet.contains(prefixHash)) {
+        matches.add(index);
+      }
+
+      while (index < path.length()) {
+        int nextIndex = path.indexOf('/', index + 1);
+        if (nextIndex == -1) nextIndex = path.length();
+
+        prefixHash = pathHashCode(path, index, nextIndex, prefixHash);
+
+        if (myPathHashSet.contains(prefixHash)) {
+          matches.add(nextIndex);
+        }
+
+        index = nextIndex;
+      }
+
+      for (int i = matches.size() - 1; i >= 0; i--) {
+        String prefix = path.substring(0, matches.get(i));
+        MappedRoot root = myPathMap.get(prefix);
+        if (root != null) return root;
+      }
+
+      return null;
+    }
+
+    private static int pathHashCode(@NotNull String path) {
+      return pathHashCode(path, 0, path.length(), 0);
+    }
+
+    private static int pathHashCode(@NotNull String path, int offset1, int offset2, int prefixHash) {
+      if (SystemInfo.isFileSystemCaseSensitive) {
+        return StringUtil.stringHashCode(path, offset1, offset2, prefixHash);
+      }
+      else {
+        return StringUtil.stringHashCodeInsensitive(path, offset1, offset2, prefixHash);
+      }
     }
   }
 }

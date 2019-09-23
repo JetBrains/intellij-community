@@ -11,15 +11,11 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.typeMigration.rules.DisjunctionTypeConversionRule;
 import com.intellij.refactoring.typeMigration.rules.RootTypeConversionRule;
 import com.intellij.refactoring.typeMigration.rules.TypeConversionRule;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author db
@@ -36,7 +32,7 @@ public class TypeMigrationRules {
     myConversionRules = new ArrayList<>(extensions.size() + 2);
     myConversionRules.add(new RootTypeConversionRule());
     myConversionRules.add(new DisjunctionTypeConversionRule());
-    ContainerUtil.addAll(myConversionRules, extensions);
+    myConversionRules.addAll(extensions);
     addConversionRuleSettings(new MigrateGetterNameSetting());
   }
 

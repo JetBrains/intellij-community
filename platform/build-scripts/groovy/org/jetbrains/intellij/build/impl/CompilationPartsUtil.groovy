@@ -54,7 +54,7 @@ class CompilationPartsUtil {
       @Override
       protected void append(LoggingEvent event) {
         def level = event.getLevel()
-        String message = this.getLayout().format(event)
+        String message = getLayout().format(event)
         if (level.isGreaterOrEqual(Level.ERROR)) {
           def throwable = event.throwableInformation?.throwable
           if (throwable != null) {
@@ -276,6 +276,7 @@ class CompilationPartsUtil {
       messages.error("Cannot fetch compiled classes: metadata file not found at '$options.pathToCompiledClassesArchivesMetadata'")
       return
     }
+    boolean forInstallers = System.getProperty('intellij.fetch.compiled.classes.for.installers', 'false').toBoolean()
     CompilationPartsMetadata metadata
     try {
       metadata = new Gson().fromJson(FileUtil.loadFile(metadataFile, CharsetToolkit.UTF8),
@@ -293,7 +294,7 @@ class CompilationPartsUtil {
 
     List<FetchAndUnpackContext> contexts = new ArrayList<FetchAndUnpackContext>(metadata.files.size())
     new TreeMap<String, String>(metadata.files).each { entry ->
-      contexts.add(new FetchAndUnpackContext(entry.key, entry.value, new File("$classesOutput/$entry.key")))
+      contexts.add(new FetchAndUnpackContext(entry.key, entry.value, new File("$classesOutput/$entry.key"), !forInstallers))
     }
 
     //region Prepare executor
@@ -330,7 +331,7 @@ class CompilationPartsUtil {
               }
             }
             else {
-              messages.info("There's no .hash file in output directory '$ctx.name'")
+              messages.debug("There's no .hash file in output directory '$ctx.name'")
             }
           }
           FileUtil.delete(out)
@@ -527,8 +528,10 @@ class CompilationPartsUtil {
     messages.block("Unpacking $ctx.name") {
       FileUtil.ensureExists(ctx.output)
       new Decompressor.Zip(ctx.jar).overwrite(true).extract(ctx.output)
-      // Save actual hash
-      FileUtil.writeToFile(new File(ctx.output, ".hash"), ctx.hash)
+      if (ctx.saveHash) {
+        // Save actual hash
+        FileUtil.writeToFile(new File(ctx.output, ".hash"), ctx.hash)
+      }
     }
   }
 
@@ -609,13 +612,15 @@ class CompilationPartsUtil {
     final String name
     final String hash
     final File output
+    final boolean saveHash
 
     File jar
 
-    FetchAndUnpackContext(String name, String hash, File output) {
+    FetchAndUnpackContext(String name, String hash, File output, boolean saveHash) {
       this.name = name
       this.hash = hash
       this.output = output
+      this.saveHash = saveHash
     }
   }
 

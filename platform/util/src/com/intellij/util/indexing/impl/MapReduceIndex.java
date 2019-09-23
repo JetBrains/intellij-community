@@ -42,7 +42,6 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-@ApiStatus.Experimental
 public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<Key, Value, Input> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.indexing.impl.MapReduceIndex");
   @NotNull protected final IndexId<Key, Value> myIndexId;
@@ -238,7 +237,11 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
   @Override
   public final Computable<Boolean> update(final int inputId, @Nullable final Input content) {
     final UpdateData<Key, Value> updateData = calculateUpdateData(inputId, content);
+    return createIndexUpdateComputation(updateData);
+  }
 
+  @NotNull
+  protected Computable<Boolean> createIndexUpdateComputation(@NotNull UpdateData<Key, Value> updateData) {
     return () -> {
       try {
         updateWithMap(updateData);
@@ -262,7 +265,8 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
   @NotNull
   protected UpdateData<Key, Value> calculateUpdateData(final int inputId, @Nullable Input content) {
     final InputData<Key, Value> data = mapInput(content);
-    return createUpdateData(data.getKeyValues(),
+    return createUpdateData(inputId,
+                            data.getKeyValues(),
                             () -> getKeysDiffBuilder(inputId),
                             () -> updateForwardIndex(inputId, data));
   }
@@ -290,10 +294,11 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
   }
 
   @NotNull
-  private UpdateData<Key, Value> createUpdateData(@NotNull Map<Key, Value> data,
+  private UpdateData<Key, Value> createUpdateData(int inputId,
+                                                  @NotNull Map<Key, Value> data,
                                                   @NotNull ThrowableComputable<InputDataDiffBuilder<Key, Value>, IOException> keys,
                                                   @NotNull ThrowableRunnable<IOException> forwardIndexUpdate) {
-    return new UpdateData<>(data, keys, myIndexId, forwardIndexUpdate);
+    return new UpdateData<>(inputId, data, keys, myIndexId, forwardIndexUpdate);
   }
 
   @NotNull

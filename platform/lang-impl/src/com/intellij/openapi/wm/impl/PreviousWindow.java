@@ -2,25 +2,14 @@
 package com.intellij.openapi.wm.impl;
 
 
-import com.intellij.ide.IdeEventQueue;
-import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.ide.ActiveWindowsWatcher;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.wm.ex.WindowManagerEx;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
-
-final class PreviousWindow extends AnAction implements DumbAware {
+final class PreviousWindow extends AbstractTraverseWindowAction implements DumbAware {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    Window window = IdeEventQueue.getInstance().nextWindowBefore(WindowManagerEx.getInstanceEx().getMostRecentFocusedWindow());
-    Component recentFocusOwner = window.getMostRecentFocusOwner();
-    (recentFocusOwner == null ? window : recentFocusOwner).requestFocus();
-  }
-
-  @Override
-  public void update(@NotNull AnActionEvent e) {
-    e.getPresentation().setEnabled(true);
+    doPerform(w -> ActiveWindowsWatcher.nextWindowBefore(w));
   }
 }

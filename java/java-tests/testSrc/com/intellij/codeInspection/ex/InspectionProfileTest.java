@@ -32,7 +32,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static com.intellij.testFramework.assertions.Assertions.assertThat;
@@ -434,7 +433,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
                                                  "</profile>";
     profile.readExternal(JDOMUtil.load(customSettingsText));
     assertEquals(customSettingsText, serialize(profile));
-    InspectionToolWrapper wrapper = profile.getInspectionTool("NewClassNamingConvention", getProject());
+    InspectionToolWrapper<?, ?> wrapper = profile.getInspectionTool("NewClassNamingConvention", getProject());
     assertNotNull(wrapper);
     NewClassNamingConventionInspection tool = (NewClassNamingConventionInspection)wrapper.getTool();
     assertEquals(256, tool.getNamingConventionBean("AnnotationNamingConvention").m_maxLength);
@@ -584,27 +583,27 @@ public class InspectionProfileTest extends LightIdeaTestCase {
                                                "  </inspection_tool>\n" +
                                                "</profile>"));
     profile.modifyProfile(it -> {
-      InspectionToolWrapper toolWrapper = it.getInspectionTool("unused", getProject());
+      InspectionToolWrapper<?, ?> toolWrapper = it.getInspectionTool("unused", getProject());
       UnusedDeclarationInspectionBase tool = (UnusedDeclarationInspectionBase)toolWrapper.getTool();
       UnusedSymbolLocalInspectionBase inspectionTool = tool.getSharedLocalInspectionTool();
       inspectionTool.setClassVisibility(PsiModifier.PUBLIC);
       inspectionTool.CLASS = false;
     });
     String mergedText = "<profile version=\"1.0\">\n" +
-                        "  <option name=\"myName\" value=\"ToConvert\" />\n" +
-                        "  <inspection_tool class=\"unused\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\">\n" +
-                        "    <option name=\"LOCAL_VARIABLE\" value=\"true\" />\n" +
-                        "    <option name=\"FIELD\" value=\"true\" />\n" +
-                        "    <option name=\"METHOD\" value=\"true\" />\n" +
-                        "    <option name=\"CLASS\" value=\"false\" />\n" +
-                        "    <option name=\"PARAMETER\" value=\"true\" />\n" +
-                        "    <option name=\"REPORT_PARAMETER_FOR_PUBLIC_METHODS\" value=\"true\" />\n" +
-                        "    <option name=\"ADD_MAINS_TO_ENTRIES\" value=\"true\" />\n" +
-                        "    <option name=\"ADD_APPLET_TO_ENTRIES\" value=\"true\" />\n" +
-                        "    <option name=\"ADD_SERVLET_TO_ENTRIES\" value=\"true\" />\n" +
-                        "    <option name=\"ADD_NONJAVA_TO_ENTRIES\" value=\"false\" />\n" +
-                        "  </inspection_tool>\n" +
-                        "</profile>";
+                            "  <option name=\"myName\" value=\"ToConvert\" />\n" +
+                            "  <inspection_tool class=\"unused\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\">\n" +
+                            "    <option name=\"LOCAL_VARIABLE\" value=\"true\" />\n" +
+                            "    <option name=\"FIELD\" value=\"true\" />\n" +
+                            "    <option name=\"METHOD\" value=\"true\" />\n" +
+                            "    <option name=\"CLASS\" value=\"false\" />\n" +
+                            "    <option name=\"PARAMETER\" value=\"true\" />\n" +
+                            "    <option name=\"REPORT_PARAMETER_FOR_PUBLIC_METHODS\" value=\"true\" />\n" +
+                            "    <option name=\"ADD_MAINS_TO_ENTRIES\" value=\"true\" />\n" +
+                            "    <option name=\"ADD_APPLET_TO_ENTRIES\" value=\"true\" />\n" +
+                            "    <option name=\"ADD_SERVLET_TO_ENTRIES\" value=\"true\" />\n" +
+                            "    <option name=\"ADD_NONJAVA_TO_ENTRIES\" value=\"false\" />\n" +
+                            "  </inspection_tool>\n" +
+                            "</profile>";
     assertEquals(mergedText, serialize(profile));
   }
 
@@ -786,7 +785,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     final List<InspectionToolWrapper> list = new ArrayList<>();
     list.add(createTool("foo", true));
 
-    Supplier<List<InspectionToolWrapper>> toolSupplier = () -> list;
+    InspectionToolsSupplier.Simple toolSupplier = new InspectionToolsSupplier.Simple(list);
     InspectionProfileImpl profile = createProfile(toolSupplier);
 
     List<ScopeToolState> tools = profile.getAllTools();
@@ -835,7 +834,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     return JDOMUtil.writeElement(profile.writeScheme());
   }
 
-  private static InspectionProfileImpl createProfile(@NotNull Supplier<List<InspectionToolWrapper>> toolSupplier) {
+  private static InspectionProfileImpl createProfile(@NotNull InspectionToolsSupplier toolSupplier) {
     InspectionProfileImpl base = new InspectionProfileImpl("Base", toolSupplier, (InspectionProfileImpl)null);
     return new InspectionProfileImpl("Foo", toolSupplier, base);
   }

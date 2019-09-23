@@ -27,11 +27,15 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.VcsLogDataKeys;
+import com.intellij.vcs.log.VcsLogDataPack;
+import com.intellij.vcs.log.VcsLogUi;
+import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
+import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.ui.filter.BranchPopupBuilder;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
@@ -50,7 +54,7 @@ public class DeepCompareAction extends ToggleAction implements DumbAware {
     Project project = e.getData(CommonDataKeys.PROJECT);
     VcsLogUi ui = e.getData(VcsLogDataKeys.VCS_LOG_UI);
     VcsLogData dataProvider = e.getData(VcsLogInternalDataKeys.LOG_DATA);
-    if (project == null || ui == null || dataProvider == null) {
+    if (project == null || dataProvider == null || !(ui instanceof VcsLogUiImpl)) {
       return false;
     }
     return DeepComparator.getInstance(project, dataProvider, ui).hasHighlightingOrInProgress();
@@ -59,11 +63,13 @@ public class DeepCompareAction extends ToggleAction implements DumbAware {
   @Override
   public void setSelected(@NotNull AnActionEvent e, boolean selected) {
     Project project = e.getData(CommonDataKeys.PROJECT);
-    final VcsLogUi ui = e.getData(VcsLogDataKeys.VCS_LOG_UI);
+    final VcsLogUi logUi = e.getData(VcsLogDataKeys.VCS_LOG_UI);
     VcsLogData dataProvider = e.getData(VcsLogInternalDataKeys.LOG_DATA);
-    if (project == null || ui == null || dataProvider == null) {
+    if (project == null || dataProvider == null || !(logUi instanceof VcsLogUiImpl)) {
       return;
     }
+    VcsLogUiImpl ui = (VcsLogUiImpl)logUi;
+
     final DeepComparator dc = DeepComparator.getInstance(project, dataProvider, ui);
     if (selected) {
       VcsLogUsageTriggerCollector.triggerUsage(e, this);

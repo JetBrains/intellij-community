@@ -6,7 +6,7 @@ import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.registry.Registry
 
-class FeatureUsageEventLoggerProvider : StatisticsEventLoggerProvider("FUS", 23) {
+class FeatureUsageEventLoggerProvider : StatisticsEventLoggerProvider("FUS", 30) {
   override fun isRecordEnabled(): Boolean {
     return !ApplicationManager.getApplication().isUnitTestMode &&
            Registry.`is`("feature.usage.event.log.collect.and.upload") &&

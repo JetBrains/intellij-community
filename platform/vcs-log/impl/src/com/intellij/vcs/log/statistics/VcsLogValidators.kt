@@ -5,13 +5,12 @@ import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomWhiteListRule
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.LocalEnumCustomWhitelistRule
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.vcs.log.VcsLogFilterCollection
 import com.intellij.vcs.log.graph.PermanentGraph
 import com.intellij.vcs.log.ui.highlighters.CurrentBranchHighlighter
 import com.intellij.vcs.log.ui.highlighters.MergeCommitsHighlighter
 import com.intellij.vcs.log.ui.highlighters.MyCommitsHighlighter
-import com.intellij.vcs.log.ui.table.GraphTableModel
+import com.intellij.vcs.log.ui.table.VcsLogColumn
 
 open class CustomStringsWhiteListRule(private val id: String, private val values: Collection<String>) : CustomWhiteListRule() {
   final override fun acceptRuleId(ruleId: String?): Boolean = id == ruleId
@@ -36,6 +35,4 @@ class VcsLogHighlighterIdValidator :
                                                              CurrentBranchHighlighter.Factory.ID))
 
 class VcsLogColumnNameValidator :
-  CustomStringsWhiteListRule("vcs_log_column_name", GraphTableModel.DYNAMIC_COLUMNS.map {
-    StringUtil.toLowerCase(GraphTableModel.COLUMN_NAMES[it])
-  }.toSet())
+  CustomStringsWhiteListRule("vcs_log_column_name", VcsLogColumn.DYNAMIC_COLUMNS.map { it.stableName }.toSet())

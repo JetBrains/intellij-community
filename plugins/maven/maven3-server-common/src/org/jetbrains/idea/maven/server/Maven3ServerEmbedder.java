@@ -71,6 +71,10 @@ import java.util.regex.Pattern;
  */
 public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements MavenServerEmbedder {
 
+  public interface RunnableThrownRemote {
+    void run() throws RemoteException;
+  }
+
   public final static boolean USE_MVN2_COMPATIBLE_DEPENDENCY_RESOLVING = System.getProperty("idea.maven3.use.compat.resolver") != null;
   private final static String MAVEN_VERSION = System.getProperty(MAVEN_EMBEDDER_VERSION);
   private static final Pattern PROPERTY_PATTERN = Pattern.compile("\"-D([\\S&&[^=]]+)(?:=([^\"]+))?\"|-D([\\S&&[^=]]+)(?:=(\\S+))?");
@@ -336,7 +340,16 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
 
   public abstract <T> T getComponent(Class<T> clazz);
 
-  protected void executeWithMavenSession(MavenExecutionRequest request, Runnable runnable) {
+  protected void executeWithMavenSession(MavenExecutionRequest request, final Runnable runnable) throws RemoteException {
+    executeWithMavenSession(request, new RunnableThrownRemote() {
+      @Override
+      public void run() throws RemoteException {
+        runnable.run();
+      }
+    });
+  }
+
+  protected void executeWithMavenSession(MavenExecutionRequest request, RunnableThrownRemote runnable) throws RemoteException {
 
     if (VersionComparatorUtil.compare(getMavenVersion(), "3.2.5") >= 0) {
       executeWithSessionScope(request, runnable);
@@ -346,7 +359,17 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
     }
   }
 
-  protected void executeWithMavenSessionLegacy(MavenExecutionRequest request, Runnable runnable) {
+  protected void executeWithMavenSessionLegacy(MavenExecutionRequest request, final Runnable runnable) throws RemoteException {
+    executeWithMavenSessionLegacy(request, new RunnableThrownRemote() {
+      @Override
+      public void run() throws RemoteException {
+        runnable.run();
+      }
+    });
+  }
+
+
+  protected void executeWithMavenSessionLegacy(MavenExecutionRequest request, RunnableThrownRemote runnable) throws RemoteException {
     DefaultMaven maven = (DefaultMaven)getComponent(Maven.class);
     MavenSession mavenSession = createMavenSession(request, maven);
     LegacySupport legacySupport = getComponent(LegacySupport.class);
@@ -381,7 +404,7 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
   }
 
 
-  protected void executeWithSessionScope(MavenExecutionRequest request, Runnable runnable) {
+  protected void executeWithSessionScope(MavenExecutionRequest request, RunnableThrownRemote runnable) throws RemoteException {
     DefaultMaven maven = (DefaultMaven)getComponent(Maven.class);
     SessionScope sessionScope = getComponent(SessionScope.class);
     sessionScope.enter();

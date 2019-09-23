@@ -15,7 +15,6 @@
  */
 package com.intellij.psi;
 
-import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.components.ServiceManager;
@@ -50,7 +49,7 @@ public class ClassFileViewProvider extends SingleRootFileViewProvider {
   }
 
   public ClassFileViewProvider(@NotNull PsiManager manager, @NotNull VirtualFile file, boolean eventSystemEnabled) {
-    super(manager, file, eventSystemEnabled, JavaLanguage.INSTANCE, JavaClassFileType.INSTANCE);
+    super(manager, file, eventSystemEnabled, JavaLanguage.INSTANCE);
   }
 
   @Override

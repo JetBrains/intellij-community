@@ -76,11 +76,19 @@ public class SplitIfActionTest extends LightJavaCodeInsightTestCase {
   public void testWithoutSpaces() {
     doTest();
   }
-  
+
+  public void testRedundantChainedCondition() {
+    doTest();
+  }
+
   public void testIncomplete() {
     configureByFile("/codeInsight/splitIfAction/before" + getTestName(false) + ".java");
     SplitIfAction action = new SplitIfAction();
     assertFalse(action.isAvailable(getProject(), getEditor(), getFile()));
+  }
+
+  public void testIncomplete2() {
+    doTest();
   }
 
   private void doTest() {

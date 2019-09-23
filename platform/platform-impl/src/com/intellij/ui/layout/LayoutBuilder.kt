@@ -9,21 +9,19 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.components.JBRadioButton
 import java.awt.event.ActionListener
 import javax.swing.ButtonGroup
-import javax.swing.JComponent
-import javax.swing.JLabel
 
-open class LayoutBuilder @PublishedApi internal constructor(@PublishedApi internal val builder: LayoutBuilderImpl, override val buttonGroup: ButtonGroup? = null) : RowBuilder {
-  override fun createChildRow(label: JLabel?, buttonGroup: ButtonGroup?, isSeparated: Boolean, noGrid: Boolean, title: String?): Row {
-    return builder.rootRow.createChildRow(label, buttonGroup, isSeparated, noGrid, title)
+open class LayoutBuilder @PublishedApi internal constructor(@PublishedApi internal val builder: LayoutBuilderImpl) : RowBuilder by builder.rootRow {
+
+  override fun withButtonGroup(buttonGroup: ButtonGroup, body: () -> Unit) {
+    builder.withButtonGroup(buttonGroup, body)
   }
 
-  override fun createNoteOrCommentRow(component: JComponent): Row {
-    return builder.rootRow.createNoteOrCommentRow(component)
-  }
-
-  inline fun buttonGroup(crossinline elementActionListener: () -> Unit, init: LayoutBuilder.() -> Unit): ButtonGroup {
+  inline fun buttonGroup(crossinline elementActionListener: () -> Unit, crossinline init: LayoutBuilder.() -> Unit): ButtonGroup {
     val group = ButtonGroup()
-    LayoutBuilder(builder, group).init()
+
+    builder.withButtonGroup(group) {
+      LayoutBuilder(builder).init()
+    }
 
     val listener = ActionListener { elementActionListener() }
     for (button in group.elements) {
@@ -39,26 +37,26 @@ open class LayoutBuilder @PublishedApi internal constructor(@PublishedApi intern
     get() = builder
 }
 
-class RowBuilderWithButtonGroupProperty<T : Any>
-    @PublishedApi internal constructor(private val builder: RowBuilder, private val prop: PropertyBinding<T>) : RowBuilder {
+class CellBuilderWithButtonGroupProperty<T : Any>
+@PublishedApi internal constructor(private val prop: PropertyBinding<T>)  {
 
-  override val buttonGroup: ButtonGroup? = ButtonGroup()
-
-  override fun createChildRow(label: JLabel?, buttonGroup: ButtonGroup?, isSeparated: Boolean, noGrid: Boolean, title: String?): Row {
-    return builder.createChildRow(label, buttonGroup, isSeparated, noGrid, title)
-  }
-
-  override fun createNoteOrCommentRow(component: JComponent): Row {
-    return builder.createNoteOrCommentRow(component)
-  }
-
-  fun Row.radioButton(text: String, value: T): CellBuilder<JBRadioButton> {
+  fun Cell.radioButton(text: String, value: T, comment: String? = null): CellBuilder<JBRadioButton> {
     val component = JBRadioButton(text, prop.get() == value)
-    subRowsEnabled = component.isSelected
-    component.addChangeListener {
-      subRowsEnabled = component.isSelected
-    }
-    return component()
+    return component(comment = comment)
+      .onApply { if (component.isSelected) prop.set(value) }
+      .onReset { component.isSelected = prop.get() == value }
+      .onIsModified { component.isSelected != (prop.get() == value) }
+  }
+}
+
+
+class RowBuilderWithButtonGroupProperty<T : Any>
+    @PublishedApi internal constructor(private val builder: RowBuilder, private val prop: PropertyBinding<T>) : RowBuilder by builder {
+
+  fun Row.radioButton(text: String, value: T, comment: String? = null): CellBuilder<JBRadioButton> {
+    val component = JBRadioButton(text, prop.get() == value)
+    attachSubRowsEnabled(component)
+    return component(comment = comment)
       .onApply { if (component.isSelected) prop.set(value) }
       .onReset { component.isSelected = prop.get() == value }
       .onIsModified { component.isSelected != (prop.get() == value) }
@@ -67,4 +65,11 @@ class RowBuilderWithButtonGroupProperty<T : Any>
 
 fun FileChooserDescriptor.chooseFile(event: AnActionEvent, fileChosen: (chosenFile: VirtualFile) -> Unit) {
   FileChooser.chooseFile(this, event.getData(PlatformDataKeys.PROJECT), event.getData(PlatformDataKeys.CONTEXT_COMPONENT), null, fileChosen)
+}
+
+fun Row.attachSubRowsEnabled(component: JBRadioButton) {
+  subRowsEnabled = component.isSelected
+  component.addChangeListener {
+    subRowsEnabled = component.isSelected
+  }
 }

@@ -18,5 +18,9 @@ class KtSuspiciousPackagePrivateAccessInspectionTest : SuspiciousPackagePrivateA
     doTestWithDependency()
   }
 
+  fun testOverridePackagePrivateMethod() {
+    doTestWithDependency()
+  }
+
   override fun getBasePath() = "${JvmAnalysisKtTestsUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH}/codeInspection/suspiciousPackagePrivateAccess"
 }

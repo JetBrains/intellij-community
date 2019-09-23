@@ -13,7 +13,6 @@ import com.intellij.codeInspection.ui.InspectionToolPresentation;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.testFramework.fixtures.impl.GlobalInspectionContextForTests;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.UIUtil;
 import org.jdom.Document;
@@ -175,12 +174,12 @@ public class InspectionTestUtil {
   @NotNull
   public static List<InspectionProfileEntry> instantiateTools(Set<String> classNames) {
     List<InspectionProfileEntry> tools = JBIterable.of(LocalInspectionEP.LOCAL_INSPECTION, InspectionEP.GLOBAL_INSPECTION)
-      .flatten((o) -> Arrays.asList(o.getExtensions()))
+      .flatten((o) -> o.getExtensionList())
       .filter((o) -> classNames.contains(o.implementationClass))
       .transform(InspectionEP::instantiateTool)
       .toList();
     if (tools.size() != classNames.size()) {
-      Set<String> missing = ContainerUtil.newTreeSet(classNames);
+      Set<String> missing = new TreeSet<>(classNames);
       missing.removeAll(JBIterable.from(tools).transform((o) -> o.getClass().getName()).toSet());
       throw new RuntimeException("Unregistered inspections requested: " + missing);
     }

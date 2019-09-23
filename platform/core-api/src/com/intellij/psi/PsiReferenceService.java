@@ -14,6 +14,9 @@ import java.util.List;
  */
 public abstract class PsiReferenceService {
 
+  /**
+   * @deprecated unused
+   */
   @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
   @Deprecated
   public static final Key<Hints> HINTS = Key.create("HINTS");

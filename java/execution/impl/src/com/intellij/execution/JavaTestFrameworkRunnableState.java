@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution;
 
-import com.intellij.ExtensionPoints;
+import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.debugger.impl.GenericDebuggerRunnerSettings;
 import com.intellij.diagnostic.logging.OutputFileUtil;
 import com.intellij.execution.configurations.*;
@@ -26,27 +26,37 @@ import com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ProgramParametersConfigurator;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkType;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
+import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiJavaModule;
 import com.intellij.psi.PsiPackage;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.util.PathUtil;
+import com.intellij.util.PathsList;
 import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -57,6 +67,7 @@ import java.io.*;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.util.*;
+import java.util.function.Consumer;
 
 public abstract class JavaTestFrameworkRunnableState<T extends
   ModuleBasedConfiguration<JavaRunConfigurationModule, Element>
@@ -64,6 +75,9 @@ public abstract class JavaTestFrameworkRunnableState<T extends
   & ConfigurationWithCommandLineShortener
   & SMRunnerConsolePropertiesProvider> extends JavaCommandLineState implements RemoteConnectionCreator {
   private static final Logger LOG = Logger.getInstance(JavaTestFrameworkRunnableState.class);
+
+  private static final ExtensionPointName<JUnitPatcher> JUNIT_PATCHER_EP = new ExtensionPointName<>("com.intellij.junitPatcher");
+
   protected ServerSocket myServerSocket;
   protected File myTempFile;
   protected File myWorkingDirsFile = null;
@@ -214,7 +228,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     javaParameters.getClassPath().addFirst(JavaSdkUtil.getIdeaRtJarPath());
     configureClasspath(javaParameters);
 
-    for (JUnitPatcher patcher : Extensions.getRootArea().<JUnitPatcher>getExtensionPoint(ExtensionPoints.JUNIT_PATCHER).getExtensionList()) {
+    for (JUnitPatcher patcher : JUNIT_PATCHER_EP.getExtensionList()) {
       patcher.patchJavaParameters(project, module, javaParameters);
     }
 
@@ -323,7 +337,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
       }
       if (enabled) {
         if (buf.length() > 0) buf.append(delimiter);
-        final Class classListener = listener.getClass();
+        final Class<?> classListener = listener.getClass();
         buf.append(classListener.getName());
         javaParameters.getClassPath().add(PathUtil.getJarPathForClass(classListener));
       }
@@ -331,16 +345,105 @@ public abstract class JavaTestFrameworkRunnableState<T extends
   }
 
   protected void configureClasspath(final JavaParameters javaParameters) throws CantRunException {
-    configureRTClasspath(javaParameters);
-    RunConfigurationModule module = getConfiguration().getConfigurationModule();
+    RunConfigurationModule configurationModule = getConfiguration().getConfigurationModule();
     final String jreHome = getConfiguration().isAlternativeJrePathEnabled() ? getConfiguration().getAlternativeJrePath() : null;
     final int pathType = JavaParameters.JDK_AND_CLASSES_AND_TESTS;
-    if (configureByModule(module.getModule())) {
-      JavaParametersUtil.configureModule(module, javaParameters, pathType, jreHome);
+    Module module = configurationModule.getModule();
+    if (configureByModule(module)) {
+      JavaParametersUtil.configureModule(configurationModule, javaParameters, pathType, jreHome);
+      LOG.assertTrue(module != null);
+      if (JavaSdkUtil.isJdkAtLeast(javaParameters.getJdk(), JavaSdkVersion.JDK_1_9)) {
+        configureModulePath(javaParameters, module);
+      }
     }
     else {
       JavaParametersUtil.configureProject(getConfiguration().getProject(), javaParameters, pathType, jreHome);
     }
+    configureRTClasspath(javaParameters);
+  }
+
+  private static void configureModulePath(JavaParameters javaParameters, @NotNull Module module) {
+    DumbService dumb = DumbService.getInstance(module.getProject());
+    PsiJavaModule testModule = dumb.computeWithAlternativeResolveEnabled(() -> JavaModuleGraphUtil.findDescriptorByModule(module, true));
+    if (testModule != null) {
+      //adding the test module explicitly as it is unreachable from `idea.rt`
+      ParametersList vmParametersList = javaParameters.getVMParametersList();
+      vmParametersList.add("--add-modules");
+      vmParametersList.add(testModule.getName());
+      //setup module path
+      PathsList classPath = javaParameters.getClassPath();
+      PathsList modulePath = javaParameters.getModulePath();
+      modulePath.addAll(classPath.getPathList());
+      classPath.clear();
+    }
+    else {
+      PsiJavaModule prodModule = dumb.computeWithAlternativeResolveEnabled(() -> JavaModuleGraphUtil.findDescriptorByModule(module, false));
+      if (prodModule != null) {
+        splitDepsBetweenModuleAndClasspath(javaParameters, module, prodModule);
+      }
+    }
+  }
+
+  /**
+   * Put dependencies reachable from module-info located in production sources on the module path
+   * leave all other dependencies on the class path as is
+   */
+  private static void splitDepsBetweenModuleAndClasspath(JavaParameters javaParameters, Module module, PsiJavaModule prodModule) {
+    CompilerModuleExtension compilerExt = CompilerModuleExtension.getInstance(module);
+    if (compilerExt == null) return;
+
+    PathsList modulePath = javaParameters.getModulePath();
+    PathsList classPath = javaParameters.getClassPath();
+
+    Consumer<VirtualFile> putOnModulePath = virtualFile -> {
+      classPath.remove(virtualFile.getPath());
+      modulePath.add(virtualFile.getPath());
+    };
+
+    //put all transitive required modules on the module path
+    Set<PsiJavaModule> allRequires = JavaModuleGraphUtil.getAllDependencies(prodModule);
+    JarFileSystem jarFS = JarFileSystem.getInstance();
+    ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(module.getProject());
+    allRequires.stream()
+      .map(javaModule -> getClasspathEntry(javaModule, fileIndex, jarFS))
+      .filter(Objects::nonNull)
+      .forEach(putOnModulePath);
+
+    ParametersList vmParametersList = javaParameters.getVMParametersList();
+    //put production output on the module path
+    VirtualFile out = compilerExt.getCompilerOutputPath();
+    if (out != null) {
+      putOnModulePath.accept(out);
+    }
+    //ensure test output is merged to the production module
+    VirtualFile testOutput = compilerExt.getCompilerOutputPathForTests();
+    if (testOutput != null) {
+      vmParametersList.add("--patch-module");
+      vmParametersList.add(prodModule.getName() + "=" + testOutput.getPath());
+    }
+
+    //ensure test dependencies missing from production module descriptor are available in tests
+    //todo enumerate all test dependencies explicitly
+    vmParametersList.add("--add-reads");
+    vmParametersList.add(prodModule.getName() + "=ALL-UNNAMED");
+
+    //ensure production module is explicitly added as test starter in `idea-rt` doesn't depend on it
+    vmParametersList.add("--add-modules");
+    vmParametersList.add(prodModule.getName());
+  }
+
+  private static VirtualFile getClasspathEntry(PsiJavaModule javaModule,
+                                               ProjectFileIndex fileIndex,
+                                               JarFileSystem jarFileSystem) {
+    VirtualFile moduleFile = PsiImplUtil.getModuleVirtualFile(javaModule);
+
+    Module moduleDependency = fileIndex.getModuleForFile(moduleFile);
+    if (moduleDependency == null) {
+      return jarFileSystem.getLocalVirtualFileFor(moduleFile);
+    }
+
+    CompilerModuleExtension moduleExtension = CompilerModuleExtension.getInstance(moduleDependency);
+    return moduleExtension != null ? moduleExtension.getCompilerOutputPath() : null;
   }
 
   protected void createServerSocket(JavaParameters javaParameters) {
@@ -378,7 +481,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
   }
 
   /**
-   * Configuration based on package which spans multiple modules
+   * Configuration based on a package spanning multiple modules.
    */
   protected boolean forkPerModule() {
     return getScope() != TestSearchScope.SINGLE_MODULE &&

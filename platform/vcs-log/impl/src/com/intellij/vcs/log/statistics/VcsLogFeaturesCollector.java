@@ -8,13 +8,12 @@ import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesColle
 import com.intellij.internal.statistic.service.fus.collectors.UsageDescriptorKeyValidator;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.impl.*;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.ui.highlighters.VcsLogHighlighterFactory;
-import com.intellij.vcs.log.ui.table.GraphTableModel;
+import com.intellij.vcs.log.ui.table.VcsLogColumn;
 import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.NotNull;
 
@@ -54,6 +53,7 @@ public class VcsLogFeaturesCollector extends ProjectUsagesCollector {
 
         addBoolIfDiffers(metricEvents, properties, defaultProperties, getter(COMPACT_REFERENCES_VIEW), "labels.compact");
         addBoolIfDiffers(metricEvents, properties, defaultProperties, getter(SHOW_TAG_NAMES), "labels.showTagNames");
+        addBoolIfDiffers(metricEvents, properties, defaultProperties, getter(LABELS_LEFT_ALIGNED), "labels.onTheLeft");
 
         addBoolIfDiffers(metricEvents, properties, defaultProperties, getter(TEXT_FILTER_REGEX), "textFilter.regex");
         addBoolIfDiffers(metricEvents, properties, defaultProperties, getter(TEXT_FILTER_MATCH_CASE), "textFilter.matchCase");
@@ -73,9 +73,9 @@ public class VcsLogFeaturesCollector extends ProjectUsagesCollector {
 
         Set<Integer> currentColumns = new HashSet<>(properties.get(COLUMN_ORDER));
         Set<Integer> defaultColumns = new HashSet<>(defaultProperties.get(COLUMN_ORDER));
-        for (int column : GraphTableModel.DYNAMIC_COLUMNS) {
-          String columnName = StringUtil.toLowerCase(GraphTableModel.COLUMN_NAMES[column]);
-          addBoolIfDiffers(metricEvents, currentColumns, defaultColumns, p -> p.contains(column),
+        for (VcsLogColumn column : VcsLogColumn.DYNAMIC_COLUMNS) {
+          String columnName = column.getStableName();
+          addBoolIfDiffers(metricEvents, currentColumns, defaultColumns, p -> p.contains(column.ordinal()),
                            "column", new FeatureUsageData().addData("name", columnName));
         }
 

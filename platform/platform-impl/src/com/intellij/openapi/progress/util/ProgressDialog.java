@@ -125,6 +125,7 @@ class ProgressDialog implements Disposable {
     if (cancelText != null) {
       myProgressWindow.setCancelButtonText(cancelText);
     }
+    myProgressBar.setIndeterminate(myProgressWindow.isIndeterminate());
     myProgressBar.setMaximum(100);
     createCenterPanel();
 

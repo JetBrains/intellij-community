@@ -2,13 +2,14 @@
 package com.intellij.terminal;
 
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.jediterm.terminal.ui.TerminalPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -61,7 +62,7 @@ public class TerminalEscapeKeyListener {
       DataContext dataContext = DataManager.getInstance().getDataContext(myTerminalPanel);
       Project project = dataContext.getData(CommonDataKeys.PROJECT);
       if (project != null && !project.isDisposed()) {
-        if (isTerminalToolWindow(dataContext.getData(PlatformDataKeys.TOOL_WINDOW)) &&
+        if (JBTerminalWidget.isInTerminalToolWindow(dataContext) &&
             !Registry.is("terminal.escape.moves.focus.to.editor")) {
           return; // For example, vi key bindings configured in terminal
         }
@@ -69,9 +70,5 @@ public class TerminalEscapeKeyListener {
         ToolWindowManager.getInstance(project).activateEditorComponent();
       }
     }
-  }
-
-  private static boolean isTerminalToolWindow(@Nullable ToolWindow toolWindow) {
-    return toolWindow instanceof ToolWindowImpl && "Terminal".equals(((ToolWindowImpl)toolWindow).getId());
   }
 }

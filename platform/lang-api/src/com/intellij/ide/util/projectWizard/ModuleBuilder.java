@@ -52,9 +52,14 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
   private String myContentEntryPath;
 
   @NotNull
+  public List<Class<? extends ModuleWizardStep>> getIgnoredSteps() {
+    return Collections.emptyList();
+  }
+
+  @NotNull
   public static List<ModuleBuilder> getAllBuilders() {
     final ArrayList<ModuleBuilder> result = new ArrayList<>();
-    for (final ModuleType moduleType : ModuleTypeManager.getInstance().getRegisteredTypes()) {
+    for (final ModuleType<?> moduleType : ModuleTypeManager.getInstance().getRegisteredTypes()) {
       result.add(moduleType.createModuleBuilder());
     }
     for (ModuleBuilderFactory factory : EP_NAME.getExtensions()) {
@@ -95,7 +100,7 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
   @Override
   @Nullable
   public String getBuilderId() {
-    ModuleType moduleType = getModuleType();
+    ModuleType<?> moduleType = getModuleType();
     return moduleType == null ? null : moduleType.getId();
   }
 
@@ -120,14 +125,14 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
   }
 
   public ModuleWizardStep modifyStep(SettingsStep settingsStep) {
-    ModuleType type = getModuleType();
+    ModuleType<?> type = getModuleType();
     if (type == null) {
       return null;
     }
     else {
       final ModuleWizardStep step = type.modifySettingsStep(settingsStep, this);
-      final List<WizardInputField> fields = getAdditionalFields();
-      for (WizardInputField field : fields) {
+      final List<WizardInputField<?>> fields = getAdditionalFields();
+      for (WizardInputField<?> field : fields) {
         field.addToSettings(settingsStep);
       }
       return new ModuleWizardStep() {
@@ -145,7 +150,7 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
 
         @Override
         public boolean validate() throws ConfigurationException {
-          for (WizardInputField field : fields) {
+          for (WizardInputField<?> field : fields) {
             if (!field.validate()) {
               return false;
             }
@@ -158,12 +163,12 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
 
   @Override
   public ModuleWizardStep modifyProjectTypeStep(@NotNull SettingsStep settingsStep) {
-    ModuleType type = getModuleType();
+    ModuleType<?> type = getModuleType();
     return type == null ? null : type.modifyProjectTypeStep(settingsStep, this);
   }
 
   @NotNull
-  protected List<WizardInputField> getAdditionalFields() {
+  protected List<WizardInputField<?>> getAdditionalFields() {
     return Collections.emptyList();
   }
 
@@ -264,7 +269,7 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
   public void setupRootModel(@NotNull ModifiableRootModel modifiableRootModel) throws ConfigurationException {
   }
 
-  public abstract ModuleType getModuleType();
+  public abstract ModuleType<?> getModuleType();
 
   protected ProjectType getProjectType() {
     return null;

@@ -2,8 +2,10 @@
 package com.intellij.ui.mac;
 
 import com.apple.eawt.*;
+import com.intellij.ide.ActiveWindowsWatcher;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
@@ -13,17 +15,14 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.impl.IdeFrameDecorator;
-import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.IdeRootPane;
 import com.intellij.ui.CustomProtocolHandler;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
 import com.intellij.ui.mac.foundation.MacUtil;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.Function;
 import com.intellij.util.ui.UIUtil;
 import com.sun.jna.Callback;
-import com.sun.jna.Pointer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
@@ -35,11 +34,12 @@ import java.lang.reflect.Method;
 import java.util.EventListener;
 import java.util.LinkedList;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 
 import static com.intellij.ui.mac.foundation.Foundation.invoke;
 
-public final class MacMainFrameDecorator extends IdeFrameDecorator implements UISettingsListener {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ui.mac.MacMainFrameDecorator");
+public final class MacMainFrameDecorator extends IdeFrameDecorator {
+  private static final Logger LOG = Logger.getInstance(MacMainFrameDecorator.class);
 
   private final FullscreenQueue<Runnable> myFullscreenQueue = new FullscreenQueue<>();
 
@@ -76,40 +76,24 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator implements UI
     }
   }
 
-
-  // Fullscreen listener delivers event too late,
-  // so we use method swizzling here
-  private final Callback windowWillEnterFullScreenCallBack = new Callback() {
-    public void callback(ID self,
-                         ID nsNotification)
-    {
-      invoke(self, "oldWindowWillEnterFullScreen:", nsNotification);
-      enterFullscreen();
-    }
-  };
-
   private void enterFullscreen() {
     myInFullScreen = true;
-    myFrame.storeFullScreenStateIfNeeded();
+    storeFullScreenStateIfNeeded();
     myFullscreenQueue.runFromQueue();
   }
 
-  private final Callback windowWillExitFullScreenCallBack = new Callback() {
-    public void callback(ID self,
-                         ID nsNotification)
-    {
-      invoke(self, "oldWindowWillExitFullScreen:", nsNotification);
-      exitFullscreen();
-    }
-  };
-
   private void exitFullscreen() {
     myInFullScreen = false;
-    myFrame.storeFullScreenStateIfNeeded();
+    storeFullScreenStateIfNeeded();
 
     JRootPane rootPane = myFrame.getRootPane();
     if (rootPane != null) rootPane.putClientProperty(FULL_SCREEN, null);
     myFullscreenQueue.runFromQueue();
+  }
+
+  private void storeFullScreenStateIfNeeded() {
+    // todo should we really check that frame has not null project as it was implemented previously?
+    myFrame.doLayout();
   }
 
   public static final String FULL_SCREEN = "Idea.Is.In.FullScreen.Mode.Now";
@@ -120,17 +104,21 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator implements UI
   static {
     try {
       Class.forName("com.apple.eawt.FullScreenUtilities");
+      //noinspection JavaReflectionMemberAccess
       requestToggleFullScreenMethod = Application.class.getMethod("requestToggleFullScreen", Window.class);
       HAS_FULLSCREEN_UTILITIES = true;
-    } catch (Exception e) {
+    }
+    catch (Exception e) {
       HAS_FULLSCREEN_UTILITIES = false;
     }
   }
+
   public static final boolean FULL_SCREEN_AVAILABLE = HAS_FULLSCREEN_UTILITIES;
 
   private static boolean SHOWN = false;
 
   private static final Callback SET_VISIBLE_CALLBACK = new Callback() {
+    @SuppressWarnings("unused")
     public void callback(ID caller, ID selector, ID value) {
       SHOWN = value.intValue() == 1;
       SwingUtilities.invokeLater(CURRENT_SETTER);
@@ -138,6 +126,7 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator implements UI
   };
 
   private static final Callback IS_VISIBLE = new Callback() {
+    @SuppressWarnings("unused")
     public boolean callback(ID caller) {
       return SHOWN;
     }
@@ -157,38 +146,38 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator implements UI
     settings.fireUISettingsChanged();
   };
 
-  @SuppressWarnings("Convert2Lambda")
-  public static final Function<Object, Boolean> NAVBAR_GETTER = new Function<Object, Boolean>() {
-    @Override
-    public Boolean fun(Object o) {
-      return UISettings.getInstance().getShowNavigationBar();
-    }
-  };
+  public static final Supplier<Boolean> NAV_BAR_GETTER = () -> UISettings.getInstance().getShowNavigationBar();
 
-  @SuppressWarnings("Convert2Lambda")
-  public static final Function<Object, Boolean> TOOLBAR_GETTER = new Function<Object, Boolean>() {
-    @Override
-    public Boolean fun(Object o) {
-      return UISettings.getInstance().getShowMainToolbar();
-    }
-  };
+  public static final Supplier<Boolean> TOOLBAR_GETTER = () -> UISettings.getInstance().getShowMainToolbar();
 
   private static Runnable CURRENT_SETTER = null;
-  private static Function<Object, Boolean> CURRENT_GETTER = null;
+  private static Supplier<Boolean> CURRENT_GETTER = null;
   private static CustomProtocolHandler ourProtocolHandler = null;
 
   private boolean myInFullScreen;
 
-  public MacMainFrameDecorator(@NotNull final IdeFrameImpl frame, final boolean navBar) {
+  public MacMainFrameDecorator(@NotNull JFrame frame, boolean navBar, @NotNull Disposable parentDisposable) {
     super(frame);
 
     if (CURRENT_SETTER == null) {
+      //noinspection AssignmentToStaticFieldFromInstanceMethod
       CURRENT_SETTER = navBar ? NAVBAR_SETTER : TOOLBAR_SETTER;
-      CURRENT_GETTER = navBar ? NAVBAR_GETTER : TOOLBAR_GETTER;
-      SHOWN = CURRENT_GETTER.fun(null);
+      //noinspection AssignmentToStaticFieldFromInstanceMethod
+      CURRENT_GETTER = navBar ? NAV_BAR_GETTER : TOOLBAR_GETTER;
+      //noinspection AssignmentToStaticFieldFromInstanceMethod
+      SHOWN = CURRENT_GETTER.get();
     }
 
-    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(UISettingsListener.TOPIC, this);
+    //noinspection Convert2Lambda
+    ApplicationManager.getApplication().getMessageBus().connect(parentDisposable).subscribe(UISettingsListener.TOPIC, new UISettingsListener() {
+      @Override
+      public void uiSettingsChanged(final UISettings uiSettings) {
+        if (CURRENT_GETTER != null) {
+          //noinspection AssignmentToStaticFieldFromInstanceMethod
+          SHOWN = CURRENT_GETTER.get();
+        }
+      }
+    });
 
     final ID pool = invoke("NSAutoreleasePool", "new");
 
@@ -196,7 +185,9 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator implements UI
 
     try {
       if (SystemInfo.isMacOSLion) {
-        if (!FULL_SCREEN_AVAILABLE) return;
+        if (!FULL_SCREEN_AVAILABLE) {
+          return;
+        }
 
         FullScreenUtilities.setWindowCanFullScreen(frame, true);
         // Native fullscreen listener can be set only once
@@ -249,6 +240,7 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator implements UI
               UIUtil.setCustomTitleBar(frame, ideRootPane, runnable -> Disposer.register(ideRootPane, () -> runnable.run()));
             }
             exitFullscreen();
+            ActiveWindowsWatcher.addActiveWindow(frame);
             myFrame.validate();
           }
         });
@@ -307,31 +299,6 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator implements UI
     }
   }
 
-  private void replaceNativeFullscreenListenerCallback() {
-    ID awtWindow = Foundation.getObjcClass("AWTWindow");
-
-    Pointer windowWillEnterFullScreenMethod = Foundation.createSelector("windowWillEnterFullScreen:");
-    ID originalWindowWillEnterFullScreen = Foundation.class_replaceMethod(awtWindow, windowWillEnterFullScreenMethod,
-                                                                          windowWillEnterFullScreenCallBack, "v@::@");
-
-    Foundation.addMethodByID(awtWindow, Foundation.createSelector("oldWindowWillEnterFullScreen:"),
-                             originalWindowWillEnterFullScreen, "v@::@");
-
-    Pointer  windowWillExitFullScreenMethod = Foundation.createSelector("windowWillExitFullScreen:");
-    ID originalWindowWillExitFullScreen = Foundation.class_replaceMethod(awtWindow, windowWillExitFullScreenMethod,
-                                                                         windowWillExitFullScreenCallBack, "v@::@");
-
-    Foundation.addMethodByID(awtWindow, Foundation.createSelector("oldWindowWillExitFullScreen:"),
-                             originalWindowWillExitFullScreen, "v@::@");
-  }
-
-  @Override
-  public void uiSettingsChanged(final UISettings uiSettings) {
-    if (CURRENT_GETTER != null) {
-      SHOWN = CURRENT_GETTER.fun(null);
-    }
-  }
-
   @Override
   public boolean isInFullScreen() {
     return myInFullScreen;
@@ -339,22 +306,25 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator implements UI
 
   @NotNull
   @Override
-  public Promise<?> toggleFullScreen(final boolean state) {
-    if (!SystemInfo.isMacOSLion || myFrame == null || myInFullScreen == state) {
+  public Promise<Boolean> toggleFullScreen(boolean state) {
+    if (!SystemInfo.isMacOSLion || myFrame == null) {
       return Promises.rejectedPromise();
     }
+    if (myInFullScreen == state) {
+      return Promises.resolvedPromise(state);
+    }
 
-    AsyncPromise<?> promise = new AsyncPromise<>();
+    AsyncPromise<Boolean> promise = new AsyncPromise<>();
     myDispatcher.addListener(new FSAdapter() {
       @Override
       public void windowExitedFullScreen(AppEvent.FullScreenEvent event) {
-        promise.setResult(null);
+        promise.setResult(false);
         myDispatcher.removeListener(this);
       }
 
       @Override
       public void windowEnteredFullScreen(AppEvent.FullScreenEvent event) {
-        promise.setResult(null);
+        promise.setResult(true);
         myDispatcher.removeListener(this);
       }
     });

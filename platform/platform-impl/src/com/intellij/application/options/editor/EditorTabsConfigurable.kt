@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.editor
 
-import com.intellij.ide.ui.UINumericRange
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettings.Companion.TABS_NONE
 import com.intellij.openapi.application.ApplicationBundle.message
@@ -13,12 +12,9 @@ import javax.swing.JCheckBox
 import javax.swing.JComboBox
 import javax.swing.JComponent
 import javax.swing.SwingConstants
+import kotlin.math.max
 
 class EditorTabsConfigurable : BoundConfigurable("Editor Tabs", "reference.settingsdialog.IDE.editor.tabs"), EditorOptionsProvider {
-  companion object {
-    private val EDITOR_TABS_RANGE = UINumericRange(10, 1, Math.max(10, Registry.intValue("ide.max.editor.tabs", 100)))
-  }
-
   private lateinit var myEditorTabPlacement: JComboBox<Int>
   private lateinit var myScrollTabLayoutInEditorCheckBox: JCheckBox
 
@@ -52,16 +48,14 @@ class EditorTabsConfigurable : BoundConfigurable("Editor Tabs", "reference.setti
         }.enableIf((myEditorTabPlacement.selectedValueMatches { it != TABS_NONE }))
       }
       titledRow(message("group.tab.order")) {
-        row { checkBox(sortTabsAlphabetically) }.enableIf(myScrollTabLayoutInEditorCheckBox.selected
-                                                            or myEditorTabPlacement.selectedValueIs(SwingConstants.LEFT)
-                                                            or myEditorTabPlacement.selectedValueIs(SwingConstants.RIGHT))
+        row { checkBox(sortTabsAlphabetically) }
         row { checkBox(openTabsAtTheEnd) }
       }
       titledRow(message("group.tab.closing.policy")) {
         row {
           cell {
             label(message("editbox.tab.limit"))
-            intTextField(ui::editorTabLimit, 4, EDITOR_TABS_RANGE)
+            intTextField(ui::editorTabLimit, 4, 1..max(10, Registry.intValue("ide.max.editor.tabs", 100)))
           }
         }
         row {

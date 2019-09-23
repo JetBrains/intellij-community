@@ -24,15 +24,15 @@ class MockVcsHelper(project: Project) : AbstractVcsHelper(project) {
   @Volatile private var myMergeDelegate: () -> Unit = { throw IllegalStateException() }
   @Volatile private var myCommitDelegate: (String) -> Boolean = { throw IllegalStateException() }
 
-  override fun runTransactionRunnable(vcs: AbstractVcs<*>?, runnable: TransactionRunnable?, vcsParameters: Any?): List<VcsException>? {
+  override fun runTransactionRunnable(vcs: AbstractVcs?, runnable: TransactionRunnable?, vcsParameters: Any?): List<VcsException>? {
     throw UnsupportedOperationException()
   }
 
-  override fun showAnnotation(annotation: FileAnnotation?, file: VirtualFile?, vcs: AbstractVcs<*>?) {
+  override fun showAnnotation(annotation: FileAnnotation?, file: VirtualFile?, vcs: AbstractVcs?) {
     throw UnsupportedOperationException()
   }
 
-  override fun showAnnotation(annotation: FileAnnotation?, file: VirtualFile?, vcs: AbstractVcs<*>?, line: Int) {
+  override fun showAnnotation(annotation: FileAnnotation?, file: VirtualFile?, vcs: AbstractVcs?, line: Int) {
     throw UnsupportedOperationException()
   }
 
@@ -40,7 +40,7 @@ class MockVcsHelper(project: Project) : AbstractVcsHelper(project) {
     throw UnsupportedOperationException()
   }
 
-  override fun openCommittedChangesTab(vcs: AbstractVcs<*>?, root: VirtualFile?, settings: ChangeBrowserSettings?, maxCount: Int, title: String?) {
+  override fun openCommittedChangesTab(vcs: AbstractVcs?, root: VirtualFile?, settings: ChangeBrowserSettings?, maxCount: Int, title: String?) {
     throw UnsupportedOperationException()
   }
 
@@ -48,11 +48,11 @@ class MockVcsHelper(project: Project) : AbstractVcsHelper(project) {
     throw UnsupportedOperationException()
   }
 
-  override fun showFileHistory(historyProvider: VcsHistoryProvider, path: FilePath, vcs: AbstractVcs<*>) {
+  override fun showFileHistory(historyProvider: VcsHistoryProvider, path: FilePath, vcs: AbstractVcs) {
     throw UnsupportedOperationException()
   }
 
-  override fun showFileHistory(historyProvider: VcsHistoryProvider, annotationProvider: AnnotationProvider?, path: FilePath, vcs: AbstractVcs<*>) {
+  override fun showFileHistory(historyProvider: VcsHistoryProvider, annotationProvider: AnnotationProvider?, path: FilePath, vcs: AbstractVcs) {
     throw UnsupportedOperationException()
   }
 

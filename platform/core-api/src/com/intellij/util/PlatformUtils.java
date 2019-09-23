@@ -48,6 +48,12 @@ public final class PlatformUtils {
   public static String getPlatformPrefix(String defaultPrefix) {
     return System.getProperty(PLATFORM_PREFIX_KEY, defaultPrefix);
   }
+  
+  public static void setDefaultPrefixForCE() {
+    //IJ CE doesn't have prefix if we start IDE from the source code.
+    //The proper fix is to set the prefix in all CE run configurations but for keeping compatibility set it indirectly 
+    System.setProperty(PLATFORM_PREFIX_KEY, getPlatformPrefix(IDEA_CE_PREFIX));
+  }
 
   public static boolean isJetBrainsProduct() {
     final ApplicationInfo appInfo = ApplicationInfo.getInstance();
@@ -66,7 +72,7 @@ public final class PlatformUtils {
     return is(IDEA_CE_PREFIX);
   }
 
-  private static boolean isIdeaEducational() {
+  public static boolean isIdeaEducational() {
     return is(IDEA_EDU_PREFIX);
   }
 

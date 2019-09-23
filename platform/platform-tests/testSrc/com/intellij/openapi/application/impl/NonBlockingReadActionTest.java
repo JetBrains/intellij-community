@@ -1,20 +1,30 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application.impl;
 
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.concurrency.SequentialTaskExecutor;
 import org.jetbrains.concurrency.CancellablePromise;
+
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
+
+import static com.intellij.testFramework.PlatformTestUtil.waitForPromise;
 
 /**
  * @author peter
  */
 public class NonBlockingReadActionTest extends LightPlatformTestCase {
 
-  public void testCoalesceEqual() throws Exception {
+  public void testCoalesceEqual() {
     CancellablePromise<String> promise = WriteAction.compute(() -> {
       CancellablePromise<String> promise1 =
         ReadAction.nonBlocking(() -> "y").coalesceBy("foo").submit(AppExecutorUtil.getAppExecutorService());
@@ -26,22 +36,42 @@ public class NonBlockingReadActionTest extends LightPlatformTestCase {
       assertFalse(promise2.isCancelled());
       return promise2;
     });
-    String result = getResult(promise);
+    String result = waitForPromise(promise);
     assertEquals("x", result);
   }
 
-  public void testDoNotCoalesceDifferent() throws Exception {
+  public void testDoNotCoalesceDifferent() {
     Pair<CancellablePromise<String>, CancellablePromise<String>> promises = WriteAction.compute(
       () -> Pair.create(ReadAction.nonBlocking(() -> "x").coalesceBy("foo").submit(AppExecutorUtil.getAppExecutorService()),
                         ReadAction.nonBlocking(() -> "y").coalesceBy("bar").submit(AppExecutorUtil.getAppExecutorService())));
-    assertEquals("x", getResult(promises.first));
-    assertEquals("y", getResult(promises.second));
+    assertEquals("x", waitForPromise(promises.first));
+    assertEquals("y", waitForPromise(promises.second));
   }
 
-  private static String getResult(CancellablePromise<String> promise) throws InterruptedException, java.util.concurrent.ExecutionException {
-    while (!promise.isDone()) {
-      UIUtil.dispatchAllInvocationEvents();
-    }
-    return promise.get();
+  public void testDoNotBlockExecutorThreadWhileWaitingForEdtFinish() throws Exception {
+    Semaphore semaphore = new Semaphore(1);
+    ExecutorService executor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor(getName());
+    CancellablePromise<Void> promise = ReadAction
+      .nonBlocking(() -> {})
+      .finishOnUiThread(ModalityState.defaultModalityState(), __ -> semaphore.up())
+      .submit(executor);
+    assertFalse(semaphore.isUp());
+    executor.submit(() -> {}).get(10, TimeUnit.SECONDS); // shouldn't fail by timeout
+    waitForPromise(promise);
+  }
+
+  public void testStopExecutionWhenOuterProgressIndicatorStopped() {
+    ProgressIndicator outerIndicator = new EmptyProgressIndicator();
+    CancellablePromise<Object> promise = ReadAction
+      .nonBlocking(() -> {
+        //noinspection InfiniteLoopStatement
+        while (true) {
+          ProgressManager.getInstance().getProgressIndicator().checkCanceled();
+        }
+      })
+      .cancelWith(outerIndicator)
+      .submit(AppExecutorUtil.getAppExecutorService());
+    outerIndicator.cancel();
+    waitForPromise(promise);
   }
 }

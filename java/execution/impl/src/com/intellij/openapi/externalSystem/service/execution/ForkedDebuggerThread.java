@@ -294,7 +294,7 @@ class ForkedDebuggerThread extends Thread {
               hyperlinkSupport.removeHyperlink(myHyperlink);
               hyperlinkSupport.addHighlighter(startOffset, endOffset, inactiveTextAttributes, HighlighterLayer.CONSOLE_FILTER);
             }
-          );
+          , myProject.getDisposed());
         }
       }
     }

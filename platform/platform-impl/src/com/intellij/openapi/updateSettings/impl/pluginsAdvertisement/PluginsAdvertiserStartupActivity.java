@@ -2,7 +2,6 @@
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement;
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.RepositoryHelper;
 import com.intellij.ide.util.PropertiesComponent;
@@ -12,7 +11,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
@@ -28,16 +26,22 @@ import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.*;
 
-final class PluginsAdvertiserStartupActivity implements StartupActivity, DumbAware {
+final class PluginsAdvertiserStartupActivity implements StartupActivity.Background {
+  private final Object myListRefreshLock = new Object();
+  private boolean myListRefreshed = false;
+
   @Override
   public void runActivity(@NotNull Project project) {
     Application app = ApplicationManager.getApplication();
-    if (app.isUnitTestMode() || app.isHeadlessEnvironment()) {
+    if (app.isUnitTestMode() || app.isHeadlessEnvironment() || !UpdateSettings.getInstance().isCheckNeeded()) {
       return;
     }
 
-    if (!UpdateSettings.getInstance().isCheckNeeded()) {
-      return;
+    synchronized (myListRefreshLock) {
+      if (!myListRefreshed) {
+        myListRefreshed = true;
+        PluginsAdvertiser.ensureDeleted();
+      }
     }
 
     try {
@@ -85,7 +89,7 @@ final class PluginsAdvertiserStartupActivity implements StartupActivity, DumbAwa
     for (String id : ids.keySet()) {
       PluginsAdvertiser.Plugin plugin = ids.get(id);
       if (PluginManagerCore.isDisabled(id)) {
-        final IdeaPluginDescriptor pluginDescriptor = PluginManager.getPlugin(PluginId.getId(id));
+        final IdeaPluginDescriptor pluginDescriptor = PluginManagerCore.getPlugin(PluginId.getId(id));
         if (pluginDescriptor != null) {
           disabledPlugins.put(plugin, pluginDescriptor);
         }

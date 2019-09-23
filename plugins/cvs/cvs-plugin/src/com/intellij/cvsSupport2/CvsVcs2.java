@@ -7,7 +7,6 @@ import com.intellij.cvsSupport2.actions.merge.CvsMergeProvider;
 import com.intellij.cvsSupport2.annotate.CvsAnnotationProvider;
 import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.cvsSupport2.application.CvsStorageSupportingDeletionComponent;
-import com.intellij.cvsSupport2.changeBrowser.CvsChangeList;
 import com.intellij.cvsSupport2.changeBrowser.CvsCommittedChangesProvider;
 import com.intellij.cvsSupport2.checkinProject.CvsCheckinEnvironment;
 import com.intellij.cvsSupport2.checkinProject.CvsRollbackEnvironment;
@@ -56,7 +55,7 @@ import java.util.function.Function;
  * @author lesya
  */
 
-public class CvsVcs2 extends AbstractVcs<CvsChangeList> implements TransactionProvider, EditFileProvider {
+public class CvsVcs2 extends AbstractVcs implements TransactionProvider, EditFileProvider {
   private static final String NAME = "CVS";
   private static final VcsKey ourKey = createKey(NAME);
   private final Cvs2Configurable myConfigurable;

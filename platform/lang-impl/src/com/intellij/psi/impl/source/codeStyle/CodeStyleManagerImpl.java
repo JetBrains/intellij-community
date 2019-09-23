@@ -26,6 +26,7 @@ import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.impl.source.codeStyle.lineIndent.FormatterBasedIndentAdjuster;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.RecursiveTreeElementWalkingVisitor;
 import com.intellij.psi.impl.source.tree.TreeElement;
@@ -163,20 +164,22 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
   public void reformatTextWithContext(@NotNull PsiFile file,
                                       @NotNull ChangedRangesInfo info) throws IncorrectOperationException
   {
-    FormatTextRanges formatRanges = new FormatTextRanges(info);
-    reformatText(file, formatRanges, null, true);
+    FormatTextRanges formatRanges = new FormatTextRanges(info, ChangedRangesUtil.processChangedRanges(file, info));
+    formatRanges.setExtendToContext(true);
+    reformatText(file, formatRanges, null);
   }
+
+
 
   public void reformatText(@NotNull PsiFile file, @NotNull Collection<? extends TextRange> ranges, @Nullable Editor editor) throws IncorrectOperationException {
     FormatTextRanges formatRanges = new FormatTextRanges();
     ranges.forEach((range) -> formatRanges.add(range, true));
-    reformatText(file, formatRanges, editor, false);
+    reformatText(file, formatRanges, editor);
   }
 
   private void reformatText(@NotNull PsiFile file,
                             @NotNull FormatTextRanges ranges,
-                            @Nullable Editor editor,
-                            boolean reformatContext) throws IncorrectOperationException
+                            @Nullable Editor editor) throws IncorrectOperationException
   {
     if (ranges.isEmpty()) {
       return;
@@ -213,7 +216,6 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
                  ? null  // do nothing, delegate the external formatting activity to post-processor
                  : () -> {
                    final CodeFormatterFacade codeFormatter = new CodeFormatterFacade(getSettings(file), file.getLanguage());
-                   codeFormatter.setReformatContext(reformatContext);
                    codeFormatter.processText(file, ranges, true);
                  });
 
@@ -949,5 +951,10 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
       return settingsProvider.getDocCommentSettings(CodeStyle.getSettings(file));
     }
     return DocCommentSettings.DEFAULTS;
+  }
+
+  @Override
+  public void scheduleIndentAdjustment(@NotNull Document document, int offset) {
+    FormatterBasedIndentAdjuster.scheduleIndentAdjustment(myProject, document, offset);
   }
 }

@@ -9,6 +9,7 @@ import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
+import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.LineSeparator;
@@ -25,28 +26,28 @@ import java.io.OutputStream;
 import java.nio.charset.Charset;
 
 /**
- * Represents a file in {@link VirtualFileSystem}. A particular file is represented by equal
+ * <p>Represents a file in {@link VirtualFileSystem}. A particular file is represented by equal
  * {@code VirtualFile} instances for the entire lifetime of the IDE process, unless the file
- * is deleted, in which case {@link #isValid()} will return {@code false}.
- * <p/>
- * VirtualFile instances are created on request, so there can be several instances corresponding to the same file.
- * All of them are equal, have the same {@code hashCode} and use shared storage for all related data, including user data (see {@link UserDataHolder}).
- * <p/>
- * If an in-memory implementation of VirtualFile is required, {@link LightVirtualFile}
- * can be used.
- * <p/>
- * Please see <a href="http://www.jetbrains.org/intellij/sdk/docs/basics/virtual_file_system.html">Virtual File System</a>
- * for high-level overview.
+ * is deleted, in which case {@link #isValid()} will return {@code false}.</p>
+ *
+ * <p>VirtualFile instances are created on request, so there can be several instances corresponding to the same file.
+ * All of them are equal, have the same {@code hashCode} and use shared storage for all related data, including user data
+ * (see {@link UserDataHolder}).</p>
+ *
+ * <p>If an in-memory implementation of VirtualFile is required, {@link LightVirtualFile} can be used.</p>
+ *
+ * <p>Please see <a href="http://www.jetbrains.org/intellij/sdk/docs/basics/virtual_file_system.html">Virtual File System</a>
+ * for a high-level overview.</p>
  *
  * @see VirtualFileSystem
  * @see VirtualFileManager
+ * @see com.intellij.openapi.vfs.VfsUtil
  */
 public abstract class VirtualFile extends UserDataHolderBase implements ModificationTracker {
   public static final VirtualFile[] EMPTY_ARRAY = new VirtualFile[0];
 
   /**
-   * Used as a property name in the {@link VirtualFilePropertyEvent} fired when the name of a
-   * {@link VirtualFile} changes.
+   * Used as a property name in the {@link VirtualFilePropertyEvent} fired when the name of a {@link VirtualFile} changes.
    *
    * @see VirtualFileListener#propertyChanged
    * @see VirtualFilePropertyEvent#getPropertyName
@@ -54,8 +55,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   public static final String PROP_NAME = "name";
 
   /**
-   * Used as a property name in the {@link VirtualFilePropertyEvent} fired when the encoding of a
-   * {@link VirtualFile} changes.
+   * Used as a property name in the {@link VirtualFilePropertyEvent} fired when the encoding of a {@link VirtualFile} changes.
    *
    * @see VirtualFileListener#propertyChanged
    * @see VirtualFilePropertyEvent#getPropertyName
@@ -63,8 +63,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   public static final String PROP_ENCODING = "encoding";
 
   /**
-   * Used as a property name in the {@link VirtualFilePropertyEvent} fired when the write permission of a
-   * {@link VirtualFile} changes.
+   * Used as a property name in the {@link VirtualFilePropertyEvent} fired when write permission of a {@link VirtualFile} changes.
    *
    * @see VirtualFileListener#propertyChanged
    * @see VirtualFilePropertyEvent#getPropertyName
@@ -72,8 +71,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   public static final String PROP_WRITABLE = "writable";
 
   /**
-   * Used as a property name in the {@link VirtualFilePropertyEvent} fired when a visibility of a
-   * {@link VirtualFile} changes.
+   * Used as a property name in the {@link VirtualFilePropertyEvent} fired when a visibility of a {@link VirtualFile} changes.
    *
    * @see VirtualFileListener#propertyChanged
    * @see VirtualFilePropertyEvent#getPropertyName
@@ -81,8 +79,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   public static final String PROP_HIDDEN = "HIDDEN";
 
   /**
-   * Used as a property name in the {@link VirtualFilePropertyEvent} fired when a symlink target of a
-   * {@link VirtualFile} changes.
+   * Used as a property name in the {@link VirtualFilePropertyEvent} fired when a symlink target of a {@link VirtualFile} changes.
    *
    * @see VirtualFileListener#propertyChanged
    * @see VirtualFilePropertyEvent#getPropertyName
@@ -123,7 +120,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   public abstract VirtualFileSystem getFileSystem();
 
   /**
-   * Gets the path of this file. Path is a string which uniquely identifies file within given
+   * Gets the path of this file. Path is a string that uniquely identifies a file within a given
    * {@link VirtualFileSystem}. Format of the path depends on the concrete file system.
    * For {@link LocalFileSystem} it is an absolute file path with file separator characters
    * ({@link File#separatorChar}) replaced to the forward slash ({@code '/'}).
@@ -134,12 +131,12 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   public abstract String getPath();
 
   /**
-   * Gets the URL of this file. The URL is a string which uniquely identifies file in all file systems.
-   * It has the following format: {@code <protocol>://<path>}.
-   * <p>
-   * File can be found by its URL using {@link VirtualFileManager#findFileByUrl} method.
-   * <p>
-   * Please note these URLs are intended for use withing VFS - meaning they are not necessarily RFC-compliant.
+   * <p>Returns the URL of this file. The URL is a string that uniquely identifies a file in all file systems.
+   * It has the following format: {@code <protocol>://<path>}.</p>
+   *
+   * <p>File can be found by its URL using {@link VirtualFileManager#findFileByUrl} method.</p>
+   *
+   * <p>Please note these URLs are intended for use withing VFS - meaning they are not necessarily RFC-compliant.</p>
    *
    * @return the URL consisting of protocol and path
    * @see VirtualFileManager#findFileByUrl
@@ -176,11 +173,10 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   }
 
   /**
-   * Gets the file name without the extension. If file name contains '.' the substring till the last '.' is returned.
-   * Otherwise the same value as <code>{@link #getName}</code> method returns is returned.
+   * Gets the file name without the extension. If file name contains '.', the substring till the last '.' is returned.
+   * Otherwise, the value of {@link #getName} is returned.
    *
    * @return the name without extension
-   *         if there is no '.' in it
    */
   @NotNull
   public String getNameWithoutExtension() {
@@ -188,9 +184,9 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   }
 
   /**
-   * Renames this file to the {@code newName}.<p>
-   * This method should be only called within write-action.
-   * See {@link Application#runWriteAction(Runnable)}.
+   * <p>Renames this file to the {@code newName}.</p>
+   *
+   * <p>This method should only be called within {@link Application#runWriteAction(Runnable) write action}.</p>
    *
    * @param requestor any object to control who called this method. Note that
    *                  it is considered to be an external change if {@code requestor} is {@code null}.
@@ -209,8 +205,8 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   }
 
   /**
-   * Checks whether this file has write permission. Note that this value may be cached and may differ from
-   * the write permission of the physical file.
+   * Checks whether this file could be modified. Note that this value may be cached and may differ from
+   * write permission of the physical file.
    *
    * @return {@code true} if this file is writable, {@code false} otherwise
    */
@@ -237,10 +233,10 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   }
 
   /**
-   * Resolves all symbolic links containing in a path to this file and returns a path to a link target (in platform-independent format).
-   * <p/>
-   * <b>Note</b>: please use this method judiciously. In most cases VFS clients don't need to resolve links in paths and should
-   * work with those provided by a user.
+   * <p>Resolves all symbolic links containing in a path to this file and returns a path to a link target (in platform-independent format).</p>
+   *
+   * <p><b>Note</b>: please use this method judiciously. In most cases VFS clients don't need to resolve links in paths and should
+   * work with those provided by a user.</p>
    *
    * @return {@code getPath()} if there are no symbolic links in a file's path;
    *         {@code getCanonicalFile().getPath()} if the link was successfully resolved;
@@ -252,10 +248,10 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   }
 
   /**
-   * Resolves all symbolic links containing in a path to this file and returns a link target.
-   * <p/>
-   * <b>Note</b>: please use this method judiciously. In most cases VFS clients don't need to resolve links in paths and should
-   * work with those provided by a user.
+   * <p>Resolves all symbolic links containing in a path to this file and returns a link target.</p>
+   *
+   * <p><b>Note</b>: please use this method judiciously. In most cases VFS clients don't need to resolve links in paths and should
+   * work with those provided by a user.</p>
    *
    * @return {@code this} if there are no symbolic links in a file's path;
    *         instance of {@code VirtualFile} if the link was successfully resolved;
@@ -320,6 +316,12 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   /**
    * Returns the {@link FileType} of this file, or {@link com.intellij.openapi.fileTypes.FileTypes#UNKNOWN} if a type cannot be determined
    * (i.e. file type is not registered via {@link FileTypeRegistry}).
+   *
+   * <p> Performance notice: consider using {@link FileTypeRegistry#isFileOfType} or {@link FileTypeRegistry#getFileTypeByFileName}
+   * if this method is to be called for massive file collections, e.g. in {@link BulkFileListener}. See {@code FileTypeRegistry} javadoc
+   * for the details.
+   *
+   * @see FileTypeRegistry
    */
   @NotNull
   public FileType getFileType() {
@@ -560,12 +562,12 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   }
 
   /**
-   * Gets the {@code OutputStream} for this file and sets modification stamp and time stamp to the specified values
-   * after closing the stream.<p>
-   * <p/>
-   * Normally you should not use this method.
-   * <p>
-   * Writes BOM first, if there is any. See <a href=http://unicode.org/faq/utf_bom.html>Unicode Byte Order Mark FAQ</a> for an explanation.
+   * <p>Gets the {@code OutputStream} for this file and sets modification stamp and time stamp to the specified values
+   * after closing the stream.</p>
+   *
+   * <p>Normally, you should not use this method.</p>
+   *
+   * <p>Writes BOM first, if there is any. See <a href=http://unicode.org/faq/utf_bom.html>Unicode Byte Order Mark FAQ</a> for an explanation.</p>
    *
    * @param requestor            any object to control who called this method. Note that
    *                             it is considered to be an external change if {@code requestor} is {@code null}.
@@ -633,13 +635,13 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   public abstract long getLength();
 
   /**
-   * Refreshes the cached file information from the physical file system. If this file is not a directory
+   * <p>Refreshes the cached file information from the physical file system. If this file is not a directory
    * the timestamp value is refreshed and {@code contentsChanged} event is fired if it is changed.<p>
    * If this file is a directory the set of its children is refreshed. If recursive value is {@code true} all
-   * children are refreshed recursively.
-   * <p/>
-   * When invoking synchronous refresh from a thread other than the event dispatch thread, the current thread must
-   * NOT be in a read action, otherwise a deadlock may occur.
+   * children are refreshed recursively.</p>
+   *
+   * <p>When invoking synchronous refresh from a thread other than the event dispatch thread, the current thread must
+   * NOT be in a read action, otherwise a deadlock may occur.</p>
    *
    * @param asynchronous if {@code true}, the method will return immediately and the refresh will be processed
    *                     in the background. If {@code false}, the method will return only after the refresh
@@ -654,7 +656,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
 
   /**
    * The same as {@link #refresh(boolean, boolean)} but also runs {@code postRunnable}
-   * after the operation is completed. The runnable is executed on event dispatch thread inside a write action.
+   * after the operation is completed. The runnable is executed on event dispatch thread inside write action.
    */
   public abstract void refresh(boolean asynchronous, boolean recursive, @Nullable Runnable postRunnable);
 
@@ -707,9 +709,9 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
     return false;
   }
 
-  /** @deprecated use {@link VirtualFileSystem#isValidName(String)} (to be removed in IDEA 18) */
+  /** @deprecated use {@link VirtualFileSystem#isValidName(String)} */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2018")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   public static boolean isValidName(@NotNull String name) {
     return !name.isEmpty() && name.indexOf('\\') < 0 && name.indexOf('/') < 0;
   }
@@ -733,9 +735,8 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   public void setPreloadedContentHint(byte[] preloadedContentHint) { }
 
   /**
-   * @return true if this file is a symlink which is
-   * - recursive, i.e. points to this file' parent or
-   * - circular, i.e. has a loop. It means its path has a form of "/.../linkX/.../linkX"
+   * Returns {@code true} if this file is a symlink that is either <i>recursive</i> (i.e. points to this file' parent) or
+   * <i>circular</i> (i.e. its path has a form of "/.../linkX/.../linkX").
    */
   public boolean isRecursiveOrCircularSymLink() {
     if (!is(VFileProperty.SYMLINK)) return false;

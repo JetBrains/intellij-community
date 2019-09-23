@@ -30,12 +30,12 @@ public class ComparatorUtil {
   }
 
   @NotNull
-  public static <T extends Comparable<T>> T max(@NotNull T o1, @NotNull T o2) {
+  public static <T extends Comparable<? super T>> T max(@NotNull T o1, @NotNull T o2) {
     return o1.compareTo(o2) >= 0 ? o1 : o2;
   }
 
   @NotNull
-  public static <T extends Comparable<T>> T min(@NotNull T o1, @NotNull T o2) {
+  public static <T extends Comparable<? super T>> T min(@NotNull T o1, @NotNull T o2) {
     return o1.compareTo(o2) >= 0 ? o2 : o1;
   }
 

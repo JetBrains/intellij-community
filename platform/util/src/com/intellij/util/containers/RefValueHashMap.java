@@ -135,7 +135,8 @@ abstract class RefValueHashMap<K,V> implements Map<K,V>{
 
   @SuppressWarnings("unused")
   // used in debugger renderer
-  private Map.Entry[] childrenArray() {
+  private Map.Entry<K,V>[] childrenArray() {
+    //noinspection unchecked
     return myMap.entrySet().stream()
       .map(entry -> {
         Object val = SoftReference.deref(entry.getValue());

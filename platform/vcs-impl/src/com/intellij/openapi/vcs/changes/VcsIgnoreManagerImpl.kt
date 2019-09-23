@@ -41,7 +41,7 @@ class VcsIgnoreManagerImpl(private val project: Project) : VcsIgnoreManager {
                                             Alarm.ThreadToUse.POOLED_THREAD)
   }
 
-  fun findIgnoreFileType(vcs: AbstractVcs<*>): IgnoreFileType? {
+  fun findIgnoreFileType(vcs: AbstractVcs): IgnoreFileType? {
     val ignoredFileContentProvider = findIgnoredFileContentProvider(vcs) ?: return null
     return FileTypeManager.getInstance().getFileTypeByFileName(ignoredFileContentProvider.fileName) as? IgnoreFileType
   }
@@ -74,14 +74,13 @@ class VcsIgnoreManagerImpl(private val project: Project) : VcsIgnoreManager {
     }
   }
 
-  override fun isPotentiallyIgnoredFile(file: VirtualFile): Boolean =
+  override fun isPotentiallyIgnoredFile(file: VirtualFile): Boolean = isPotentiallyIgnoredFile(VcsUtil.getFilePath(file))
+
+  override fun isPotentiallyIgnoredFile(filePath: FilePath): Boolean =
     runReadAction {
       if (project.isDisposed) return@runReadAction false
-
-      val filePath = VcsUtil.getFilePath(file)
       return@runReadAction IgnoredFileProvider.IGNORE_FILE.extensions.any { it.isIgnoredFile(project, filePath) }
     }
-
 
   private fun removeConfigurationFromVcsIgnore(project: Project, configurationName: String) {
     val projectFileOrConfigDir =

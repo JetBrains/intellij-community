@@ -111,7 +111,7 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
     }
 
     @Throws(VcsException::class)
-    private fun filterWithProvider(vcs: AbstractVcs<*>,
+    private fun filterWithProvider(vcs: AbstractVcs,
                                    dataPack: DataPack,
                                    sortType: PermanentGraph.SortType,
                                    filters: VcsLogFilterCollection): VisiblePack {
@@ -235,7 +235,7 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
     val revisionFilter = filters.get(VcsLogFilterCollection.REVISION_FILTER)
     return revisionFilter?.heads?.singleOrNull()?.hash
   }
-  
+
   companion object {
     private val LOG = Logger.getInstance(FileHistoryFilterer::class.java)
 

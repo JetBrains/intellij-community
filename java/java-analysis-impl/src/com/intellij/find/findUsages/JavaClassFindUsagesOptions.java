@@ -16,6 +16,7 @@
 package com.intellij.find.findUsages;
 
 import com.intellij.find.FindBundle;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.SearchScope;
 import org.jetbrains.annotations.NotNull;
@@ -40,6 +41,30 @@ public class JavaClassFindUsagesOptions extends JavaFindUsagesOptions {
 
   public JavaClassFindUsagesOptions(@NotNull SearchScope searchScope) {
     super(searchScope);
+  }
+
+  @Override
+  protected void setDefaults(@NotNull PropertiesComponent properties, @NotNull String prefix) {
+    super.setDefaults(properties, prefix);
+    isMethodsUsages = properties.getBoolean(prefix + "isMethodsUsages");
+    isFieldsUsages = properties.getBoolean(prefix + "isFieldsUsages");
+    isDerivedClasses = properties.getBoolean(prefix + "isDerivedClasses");
+    isImplementingClasses = properties.getBoolean(prefix + "isImplementingClasses");
+    isDerivedInterfaces = properties.getBoolean(prefix + "isDerivedInterfaces");
+    isCheckDeepInheritance = properties.getBoolean(prefix + "isCheckDeepInheritance", true);
+    isIncludeInherited = properties.getBoolean(prefix + "isIncludeInherited");
+  }
+
+  @Override
+  protected void storeDefaults(@NotNull PropertiesComponent properties, @NotNull String prefix) {
+    super.storeDefaults(properties, prefix);
+    properties.setValue(prefix + "isMethodsUsages", isMethodsUsages);
+    properties.setValue(prefix + "isFieldsUsages", isFieldsUsages);
+    properties.setValue(prefix + "isDerivedClasses", isDerivedClasses);
+    properties.setValue(prefix + "isImplementingClasses", isImplementingClasses);
+    properties.setValue(prefix + "isDerivedInterfaces", isDerivedInterfaces);
+    properties.setValue(prefix + "isCheckDeepInheritance", isCheckDeepInheritance, true);
+    properties.setValue(prefix + "isIncludeInherited", isIncludeInherited);
   }
 
   @Override

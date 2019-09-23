@@ -14,7 +14,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.function.Function;
 
-abstract class FilterModel<Filter> {
+public abstract class FilterModel<Filter> {
   @NotNull protected final MainVcsLogUiProperties myUiProperties;
   @NotNull private final Collection<Runnable> mySetFilterListeners = new ArrayList<>();
 
@@ -24,7 +24,7 @@ abstract class FilterModel<Filter> {
     myUiProperties = uiProperties;
   }
 
-  void setFilter(@Nullable Filter filter) {
+  public void setFilter(@Nullable Filter filter) {
     myFilter = filter;
     saveFilterToProperties(filter);
     notifyFiltersChanged();
@@ -84,7 +84,7 @@ abstract class FilterModel<Filter> {
     }
 
     @Override
-    void setFilter(@Nullable Filter filter) {
+    public void setFilter(@Nullable Filter filter) {
       if (!ObjectUtils.equals(myFilter, filter) && filter != null) triggerFilterSet(myFilterKey.getName());
 
       super.setFilter(filter);
@@ -134,11 +134,15 @@ abstract class FilterModel<Filter> {
     }
 
     @Override
-    void setFilter(@Nullable FilterPair<Filter1, Filter2> filter) {
+    public void setFilter(@Nullable FilterPair<Filter1, Filter2> filter) {
       triggerFilterSet(filter, FilterPair::getFilter1, myFilter, myFilterKey1.getName());
       triggerFilterSet(filter, FilterPair::getFilter2, myFilter, myFilterKey2.getName());
 
       super.setFilter(filter);
+    }
+
+    public void updateFilterFromProperties() {
+      setFilter(getFilterFromProperties());
     }
 
     @Override

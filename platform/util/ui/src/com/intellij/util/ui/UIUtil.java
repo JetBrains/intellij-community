@@ -2,7 +2,7 @@
 package com.intellij.util.ui;
 
 import com.intellij.BundleBase;
-import com.intellij.diagnostic.LoadingPhase;
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
@@ -43,6 +43,7 @@ import javax.swing.plaf.basic.BasicComboBoxUI;
 import javax.swing.plaf.basic.BasicRadioButtonUI;
 import javax.swing.plaf.basic.ComboPopup;
 import javax.swing.text.*;
+import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.ParagraphView;
 import javax.swing.text.html.StyleSheet;
@@ -77,15 +78,16 @@ import java.util.regex.Pattern;
  */
 @SuppressWarnings("StaticMethodOnlyUsedInOneClass")
 public final class UIUtil extends StartupUiUtil {
+
   static {
-    LoadingPhase.COMPONENT_REGISTERED.assertAtLeast();
+    LoadingState.LAF_INITIALIZED.checkOccurred();
   }
 
   public static final String BORDER_LINE = "<hr size=1 noshade>";
 
   public static final Key<Boolean> LAF_WITH_THEME_KEY = Key.create("Laf.with.ui.theme");
 
-  public static final boolean SUPPRESS_FOCUS_STEALING = Registry.is("suppress.focus.stealing.linux") && Registry.is("suppress.focus.stealing");
+  public static final boolean SUPPRESS_FOCUS_STEALING = Registry.is("suppress.focus.stealing.linux", false) && Registry.is("suppress.focus.stealing", true);
 
   @NotNull
   // cannot be static because logging maybe not configured yet
@@ -93,80 +95,73 @@ public final class UIUtil extends StartupUiUtil {
     return Logger.getInstance("#com.intellij.util.ui.UIUtil");
   }
 
-  /**
-   * @deprecated use {@link #decorateWindowHeader(JRootPane)}
-   */
-  @Deprecated
-  public static void decorateFrame(@NotNull JRootPane pane) {
-    decorateWindowHeader(pane);
-  }
-
   public static void decorateWindowHeader(JRootPane pane) {
     if (pane != null && SystemInfo.isMac) {
-      pane.putClientProperty("jetbrains.awt.windowDarkAppearance", Registry.is("ide.mac.allowDarkWindowDecorations") &&
-                                                                   StartupUiUtil.isUnderDarcula());
+      pane.putClientProperty("jetbrains.awt.windowDarkAppearance", StartupUiUtil.isUnderDarcula());
     }
   }
 
   public static void setCustomTitleBar(@NotNull Window window, @NotNull JRootPane rootPane, Consumer<Runnable> onDispose) {
-    if(SystemInfo.isMac && Registry.is("ide.mac.transparentTitleBarAppearance")) {
-      JBInsets topWindowInset = JBUI.insetsTop(24);
-      rootPane.putClientProperty("jetbrains.awt.transparentTitleBarAppearance", true);
-      AbstractBorder customDecorationBorder = new AbstractBorder() {
-        @Override
-        public Insets getBorderInsets(Component c) {
-          return topWindowInset;
-        }
-
-        @Override
-        public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
-          Graphics2D graphics = (Graphics2D)g.create();
-          try {
-            Rectangle headerRectangle = new Rectangle(0, 0, c.getWidth(), topWindowInset.top);
-            graphics.setColor(getPanelBackground());
-            graphics.fill(headerRectangle);
-            Color color = window.isActive()
-                          ? JBColor.black
-                          : JBColor.gray;
-            graphics.setColor(color);
-            int controlButtonsWidth = 70;
-            String windowTitle = getWindowTitle(window);
-            double widthToFit = (controlButtonsWidth*2 + GraphicsUtil.stringWidth(windowTitle, g.getFont())) - c.getWidth();
-            if (widthToFit <= 0) {
-              drawCenteredString(graphics, headerRectangle, windowTitle);
-            } else {
-              FontMetrics fm = graphics.getFontMetrics();
-              Rectangle2D stringBounds = fm.getStringBounds(windowTitle, graphics);
-              Rectangle bounds =
-                AffineTransform.getTranslateInstance(controlButtonsWidth, fm.getAscent() + (headerRectangle.height - stringBounds.getHeight()) / 2).createTransformedShape(stringBounds).getBounds();
-              drawCenteredString(graphics, bounds, windowTitle, false, true);
-            }
-          }
-          finally {
-            graphics.dispose();
-          }
-        }
-      };
-      rootPane.setBorder(customDecorationBorder);
-
-      WindowAdapter windowAdapter = new WindowAdapter() {
-        @Override
-        public void windowActivated(WindowEvent e) {
-          rootPane.repaint();
-        }
-
-        @Override
-        public void windowDeactivated(WindowEvent e) {
-          rootPane.repaint();
-        }
-      };
-      PropertyChangeListener propertyChangeListener = e -> rootPane.repaint();
-      window.addPropertyChangeListener("title", propertyChangeListener);
-      onDispose.consume(() -> {
-        window.removeWindowListener(windowAdapter);
-        window.removePropertyChangeListener("title", propertyChangeListener);
-      });
+    if (!SystemInfo.isMac || !Registry.is("ide.mac.transparentTitleBarAppearance", false)) {
+      return;
     }
+
+    JBInsets topWindowInset = JBUI.insetsTop(24);
+    rootPane.putClientProperty("jetbrains.awt.transparentTitleBarAppearance", true);
+    AbstractBorder customDecorationBorder = new AbstractBorder() {
+      @Override
+      public Insets getBorderInsets(Component c) {
+        return topWindowInset;
+      }
+
+      @Override
+      public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+        Graphics2D graphics = (Graphics2D)g.create();
+        try {
+          Rectangle headerRectangle = new Rectangle(0, 0, c.getWidth(), topWindowInset.top);
+          graphics.setColor(getPanelBackground());
+          graphics.fill(headerRectangle);
+          Color color = window.isActive()
+                        ? JBColor.black
+                        : JBColor.gray;
+          graphics.setColor(color);
+          int controlButtonsWidth = 70;
+          String windowTitle = getWindowTitle(window);
+          double widthToFit = (controlButtonsWidth*2 + GraphicsUtil.stringWidth(windowTitle, g.getFont())) - c.getWidth();
+          if (widthToFit <= 0) {
+            drawCenteredString(graphics, headerRectangle, windowTitle);
+          } else {
+            FontMetrics fm = graphics.getFontMetrics();
+            Rectangle2D stringBounds = fm.getStringBounds(windowTitle, graphics);
+            Rectangle bounds =
+              AffineTransform.getTranslateInstance(controlButtonsWidth, fm.getAscent() + (headerRectangle.height - stringBounds.getHeight()) / 2).createTransformedShape(stringBounds).getBounds();
+            drawCenteredString(graphics, bounds, windowTitle, false, true);
+          }
+        }
+        finally {
+          graphics.dispose();
+        }
+      }
+    };
+    rootPane.setBorder(customDecorationBorder);
+
+    WindowAdapter windowAdapter = new WindowAdapter() {
+      @Override
+      public void windowActivated(WindowEvent e) {
+        rootPane.repaint();
+      }
+
+      @Override
+      public void windowDeactivated(WindowEvent e) {
+        rootPane.repaint();
+      }
+    };
+    PropertyChangeListener propertyChangeListener = e -> rootPane.repaint();
+    window.addPropertyChangeListener("title", propertyChangeListener);
+    onDispose.consume(() -> {
+      window.removeWindowListener(windowAdapter);
+      window.removePropertyChangeListener("title", propertyChangeListener);
+    });
   }
 
   private static String getWindowTitle(Window window) {
@@ -259,12 +254,6 @@ public final class UIUtil extends StartupUiUtil {
   @NotNull
   public static RGBImageFilter getTextGrayFilter() {
     return GrayFilter.namedFilter("text.grayFilter", new GrayFilter(20, 0, 100));
-  }
-
-  public static boolean isMinimized(Window window) {
-    if (!(window instanceof Frame)) return false;
-    Frame frame = (Frame)window;
-    return frame.getExtendedState() == Frame.ICONIFIED;
   }
 
   @ApiStatus.Experimental
@@ -366,9 +355,9 @@ public final class UIUtil extends StartupUiUtil {
     }
   }
 
-  /** @deprecated Apple JRE is no longer supported (to be removed in IDEA 2019) */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2019")
+  /** @deprecated use {@link JBUIScale} instead */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   public static boolean isAppleRetina() {
     return false;
   }
@@ -420,6 +409,14 @@ public final class UIUtil extends StartupUiUtil {
 
   public static final Key<Integer> KEEP_BORDER_SIDES = Key.create("keepBorderSides");
   private static final Key<UndoManager> UNDO_MANAGER = Key.create("undoManager");
+  /**
+   * Alt+click does copy text from tooltip or balloon to clipboard.
+   * We collect this text from components recursively and this generic approach might 'grab' unexpected text fragments.
+   * To provide more accurate text scope you should mark dedicated component with putClientProperty(TEXT_COPY_ROOT, Boolean.TRUE)
+   * Note, main(root) components of BalloonImpl and AbstractPopup are already marked with this key
+   */
+  public static final Key<Boolean> TEXT_COPY_ROOT = Key.create("TEXT_COPY_ROOT");
+
   private static final AbstractAction REDO_ACTION = new AbstractAction() {
     @Override
     public void actionPerformed(@NotNull ActionEvent e) {
@@ -453,7 +450,10 @@ public final class UIUtil extends StartupUiUtil {
   public static final int DEFAULT_VGAP = 4;
   public static final int LARGE_VGAP = 12;
 
-  public static final Insets PANEL_REGULAR_INSETS = JBInsets.create(8, 12);
+  public static final int REGULAR_PANEL_TOP_BOTTOM_INSET = 8;
+  public static final int REGULAR_PANEL_LEFT_RIGHT_INSET = 12;
+
+  public static final Insets PANEL_REGULAR_INSETS = JBInsets.create(REGULAR_PANEL_TOP_BOTTOM_INSET, REGULAR_PANEL_LEFT_RIGHT_INSET);
   public static final Insets PANEL_SMALL_INSETS = JBInsets.create(5, 8);
 
   @NonNls private static final String ROOT_PANE = "JRootPane.future";
@@ -479,7 +479,7 @@ public final class UIUtil extends StartupUiUtil {
       return true;
     }
 
-    if (Registry.is("new.retina.detection")) {
+    if (Registry.is("new.retina.detection", false)) {
       return DetectRetinaKit.isRetina();
     }
     else {
@@ -1320,11 +1320,11 @@ public final class UIUtil extends StartupUiUtil {
   }
 
   public static boolean isUnderDefaultMacTheme() {
-    return SystemInfo.isMac && isUnderIntelliJLaF() && Registry.is("ide.intellij.laf.macos.ui") && !isCustomTheme();
+    return SystemInfo.isMac && isUnderIntelliJLaF() && Registry.is("ide.intellij.laf.macos.ui", true) && !isCustomTheme();
   }
 
   public static boolean isUnderWin10LookAndFeel() {
-    return SystemInfo.isWindows && isUnderIntelliJLaF() && Registry.is("ide.intellij.laf.win10.ui") && !isCustomTheme();
+    return SystemInfo.isWindows && isUnderIntelliJLaF() && Registry.is("ide.intellij.laf.win10.ui", true) && !isCustomTheme();
   }
 
   private static boolean isCustomTheme() {
@@ -1471,7 +1471,7 @@ public final class UIUtil extends StartupUiUtil {
     // adds fonts that can display symbols at [A, Z] + [a, z] + [0, 9]
     for (Font font : GraphicsEnvironment.getLocalGraphicsEnvironment().getAllFonts()) {
       try {
-        if (isValidFont(font)) {
+        if (FontUtil.isValidFont(font)) {
           result.add(familyName ? font.getFamily() : font.getName());
         }
       }
@@ -1482,7 +1482,7 @@ public final class UIUtil extends StartupUiUtil {
 
     // add label font (if isn't listed among above)
     Font labelFont = getLabelFont();
-    if (labelFont != null && isValidFont(labelFont)) {
+    if (labelFont != null && FontUtil.isValidFont(labelFont)) {
       result.add(familyName ? labelFont.getFamily() : labelFont.getName());
     }
 
@@ -1494,19 +1494,9 @@ public final class UIUtil extends StartupUiUtil {
     return STANDARD_FONT_SIZES;
   }
 
+  @Deprecated
   public static boolean isValidFont(@NotNull Font font) {
-    try {
-      return font.canDisplay('a') &&
-             font.canDisplay('z') &&
-             font.canDisplay('A') &&
-             font.canDisplay('Z') &&
-             font.canDisplay('0') &&
-             font.canDisplay('1');
-    }
-    catch (Exception e) {
-      // JRE has problems working with the font. Just skip.
-      return false;
-    }
+    return FontUtil.isValidFont(font);
   }
 
   public static void setupEnclosingDialogBounds(@NotNull final JComponent component) {
@@ -1767,11 +1757,9 @@ public final class UIUtil extends StartupUiUtil {
     painter.paint(g, startX, endX, lineY);
   }
 
-  /** This method is intended to use when user settings are not accessible yet.
-   *  Use it to set up default RenderingHints.
-   */
+  @Deprecated
   public static void applyRenderingHints(@NotNull Graphics g) {
-    GraphicsUtil.applyRenderingHints(g);
+    GraphicsUtil.applyRenderingHints((Graphics2D)g);
   }
 
   /**
@@ -2229,16 +2217,6 @@ public final class UIUtil extends StartupUiUtil {
   @NotNull
   public static Color getHeaderInactiveColor() {
     return INACTIVE_HEADER_COLOR;
-  }
-
-  /**
-   * @deprecated use {@link JBColor#border()}
-   */
-  @NotNull
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2019.3")
-  public static Color getBorderColor() {
-    return JBColor.border();
   }
 
   @NotNull
@@ -3089,30 +3067,13 @@ public final class UIUtil extends StartupUiUtil {
   }
 
   public static int getLcdContrastValue() {
-    int lcdContrastValue  = Registry.get("lcd.contrast.value").asInteger();
-
-    // Evaluate the value depending on our current theme
+    int lcdContrastValue  = Registry.intValue("lcd.contrast.value", 0);
     if (lcdContrastValue == 0) {
-      if (SystemInfo.isMacIntel64) {
-        lcdContrastValue = StartupUiUtil.isUnderDarcula() ? 140 : 230;
-      } else {
-        Map map = (Map)Toolkit.getDefaultToolkit().getDesktopProperty("awt.font.desktophints");
-
-        if (map == null) {
-          lcdContrastValue = 140;
-        } else {
-          Object o = map.get(RenderingHints.KEY_TEXT_LCD_CONTRAST);
-          lcdContrastValue = o == null ? 140 : (Integer)o;
-        }
-      }
+      return StartupUiUtil.doGetLcdContrastValueForSplash(StartupUiUtil.isUnderDarcula());
     }
-
-    if (lcdContrastValue < 100 || lcdContrastValue > 250) {
-      // the default value
-      lcdContrastValue = 140;
+    else {
+      return normalizeLcdContrastValue(lcdContrastValue);
     }
-
-    return lcdContrastValue;
   }
 
   /**
@@ -3142,7 +3103,7 @@ public final class UIUtil extends StartupUiUtil {
 
   @NotNull
   public static Paint getGradientPaint(float x1, float y1, @NotNull Color c1, float x2, float y2, @NotNull Color c2) {
-    return Registry.is("ui.no.bangs.and.whistles") ? ColorUtil.mix(c1, c2, .5) : new GradientPaint(x1, y1, c1, x2, y2, c2);
+    return Registry.is("ui.no.bangs.and.whistles", false) ? ColorUtil.mix(c1, c2, .5) : new GradientPaint(x1, y1, c1, x2, y2, c2);
   }
 
   @Nullable
@@ -3162,15 +3123,6 @@ public final class UIUtil extends StartupUiUtil {
       }
     }
     return null;
-  }
-
-  @NotNull
-  public static Window getActiveWindow() {
-    Window[] windows = Window.getWindows();
-    for (Window each : windows) {
-      if (each.isVisible() && each.isActive()) return each;
-    }
-    return JOptionPane.getRootFrame();
   }
 
   public static void setAutoRequestFocus(@NotNull Window window, boolean value) {
@@ -3288,9 +3240,11 @@ public final class UIUtil extends StartupUiUtil {
     return null;
   }
 
-  public static void playSoundFromResource(@NotNull final String resourceName) {
-    final Class callerClass = ReflectionUtil.getGrandCallerClass();
-    if (callerClass == null) return;
+  public static void playSoundFromResource(@NotNull String resourceName) {
+    Class<?> callerClass = ReflectionUtil.getGrandCallerClass();
+    if (callerClass == null) {
+      return;
+    }
     playSoundFromStream(() -> callerClass.getResourceAsStream(resourceName));
   }
 
@@ -3834,5 +3788,30 @@ public final class UIUtil extends StartupUiUtil {
   @NotNull
   public static Color getTooltipSeparatorColor() {
     return JBColor.namedColor("Tooltip.separatorColor", 0xd1d1d1, 0x545658);
+  }
+
+  /**
+   * This method (as opposed to {@link JEditorPane#scrollToReference}) supports also targets using {@code id} HTML attribute.
+   */
+  public static void scrollToReference(@NotNull JEditorPane editor, @NotNull String reference) {
+    Document document = editor.getDocument();
+    if (document instanceof HTMLDocument) {
+      Element elementById = ((HTMLDocument) document).getElement(reference);
+      if (elementById != null) {
+        try {
+          int pos = elementById.getStartOffset();
+          Rectangle r = editor.modelToView(pos);
+          if (r != null) {
+            r.height = editor.getVisibleRect().height;
+            editor.scrollRectToVisible(r);
+            editor.setCaretPosition(pos);
+          }
+        } catch (BadLocationException e) {
+          getLogger().error(e);
+        }
+        return;
+      }
+    }
+    editor.scrollToReference(reference);
   }
 }

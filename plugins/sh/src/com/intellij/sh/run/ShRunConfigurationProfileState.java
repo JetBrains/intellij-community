@@ -1,10 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.sh.run;
 
-import com.intellij.execution.DefaultExecutionResult;
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.ExecutionResult;
-import com.intellij.execution.Executor;
+import com.intellij.execution.*;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.PtyCommandLine;
 import com.intellij.execution.configurations.RunProfileState;
@@ -15,6 +12,7 @@ import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -26,10 +24,11 @@ import com.intellij.util.io.BaseOutputReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
+
 import static com.intellij.sh.ShStringUtil.quote;
 
 public class ShRunConfigurationProfileState implements RunProfileState {
-  private static final String WHITESPACE = " ";
   private final Project myProject;
   private final ShRunConfiguration myRunConfiguration;
 
@@ -41,11 +40,14 @@ public class ShRunConfigurationProfileState implements RunProfileState {
   @Nullable
   @Override
   public ExecutionResult execute(Executor executor, @NotNull ProgramRunner runner) throws ExecutionException {
+    Key<Boolean> userDataKey = ShBeforeRunTaskProvider.getRunBeforeUserDataKey(myRunConfiguration);
+    Boolean userDataValue = myProject.getUserData(userDataKey);
+    boolean isRunBeforeConfig = userDataValue != null && userDataValue.booleanValue();
     ShRunner shRunner = ServiceManager.getService(myProject, ShRunner.class);
-    if (shRunner == null || !shRunner.isAvailable(myProject)) {
+    if (shRunner == null || !shRunner.isAvailable(myProject) || isRunBeforeConfig) {
       return buildExecutionResult();
     }
-    shRunner.run(buildCommand());
+    shRunner.run(buildCommand(), myRunConfiguration.getScriptWorkingDirectory());
     return null;
   }
 
@@ -98,7 +100,7 @@ public class ShRunConfigurationProfileState implements RunProfileState {
     commandLine.withConsoleMode(false);
     commandLine.withInitialColumns(120);
     commandLine.withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.CONSOLE);
-    commandLine.setWorkDirectory(virtualFile.getParent().getPath());
+    commandLine.setWorkDirectory(myRunConfiguration.getScriptWorkingDirectory());
 
     commandLine.setExePath(myRunConfiguration.getInterpreterPath());
     if (StringUtil.isNotEmpty(myRunConfiguration.getInterpreterOptions())) {
@@ -113,13 +115,15 @@ public class ShRunConfigurationProfileState implements RunProfileState {
 
   @NotNull
   private String buildCommand() {
-    return quote(myRunConfiguration.getInterpreterPath()) +
-           WHITESPACE +
-           myRunConfiguration.getInterpreterOptions() +
-           WHITESPACE +
-           quote(myRunConfiguration.getScriptPath()) +
-           WHITESPACE +
-           myRunConfiguration.getScriptOptions() +
-           "\n";
+    return String.join(" ", Arrays.asList(adaptPathForExecution(myRunConfiguration.getInterpreterPath()),
+                                          myRunConfiguration.getInterpreterOptions(),
+                                          adaptPathForExecution(myRunConfiguration.getScriptPath()),
+                                          myRunConfiguration.getScriptOptions()));
+  }
+
+  private static String adaptPathForExecution(@NotNull String systemDependentPath) {
+    if (Platform.current() != Platform.WINDOWS) return quote(systemDependentPath);
+    String escapedPath = StringUtil.escapeQuotes(systemDependentPath);
+    return StringUtil.containsWhitespaces(systemDependentPath) ? StringUtil.QUOTER.fun(escapedPath) : escapedPath;
   }
 }

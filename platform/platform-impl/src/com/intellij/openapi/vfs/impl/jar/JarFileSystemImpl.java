@@ -85,7 +85,7 @@ public class JarFileSystemImpl extends JarFileSystem {
   @Override
   protected String extractRootPath(@NotNull String path) {
     final int jarSeparatorIndex = path.indexOf(JAR_SEPARATOR);
-    assert jarSeparatorIndex >= 0 : "Path passed to JarFileSystem must have jar separator '!/': " + path;
+    assert jarSeparatorIndex >= 0 : "Path passed to JarFileSystem must have jar separator '!/' but got: " + path;
     return path.substring(0, jarSeparatorIndex + JAR_SEPARATOR.length());
   }
 

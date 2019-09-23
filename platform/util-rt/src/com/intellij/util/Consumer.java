@@ -19,7 +19,11 @@ package com.intellij.util;
  * Please use {@link java.util.function.Consumer} instead
  */
 public interface Consumer<T> {
-  Consumer EMPTY_CONSUMER = new Consumer() {
+  /**
+   * @deprecated use {@link com.intellij.util.EmptyConsumer#getInstance()} instead
+   */
+  @Deprecated
+  Consumer<Object> EMPTY_CONSUMER = new Consumer<Object>() {
     public void consume(Object t) { }
   };
 

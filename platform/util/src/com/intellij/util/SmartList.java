@@ -1,8 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
-import com.intellij.util.containers.EmptyIterator;
-import com.intellij.util.containers.SingletonIteratorBase;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -19,14 +17,15 @@ public class SmartList<E> extends AbstractList<E> implements RandomAccess {
   public SmartList() { }
 
   public SmartList(E element) {
-    add(element);
+    myElem = element;
+    mySize = 1;
   }
 
   public SmartList(@NotNull Collection<? extends E> elements) {
     int size = elements.size();
     if (size == 1) {
       //noinspection unchecked
-      E element = elements instanceof List ? (E)((List)elements).get(0) : elements.iterator().next();
+      E element = elements instanceof RandomAccess ? ((List<? extends E>)elements).get(0) : elements.iterator().next();
       add(element);
     }
     else if (size > 0) {
@@ -37,53 +36,51 @@ public class SmartList<E> extends AbstractList<E> implements RandomAccess {
 
   @SafeVarargs
   public SmartList(@NotNull E... elements) {
-    if (elements.length == 1) {
-      add(elements[0]);
-    }
-    else if (elements.length > 0) {
-      mySize = elements.length;
-      myElem = Arrays.copyOf(elements, mySize);
+    int length = elements.length;
+    switch (length) {
+      case 0:
+        break;
+      case 1:
+        myElem = elements[0];
+        mySize = 1;
+        break;
+      default:
+        myElem = Arrays.copyOf(elements, length);
+        mySize = length;
+        break;
     }
   }
 
   @Override
   public E get(int index) {
-    if (index < 0 || index >= mySize) {
-      throw new IndexOutOfBoundsException("Index: " + index + ", Size: " + mySize);
+    int size = mySize;
+    checkOutOfBounds(index, size, false);
+    if (size == 1) {
+      return asElement();
     }
-    if (mySize == 1) {
-      return getTheOnlyElem();
+    return asArray()[index];
+  }
+
+  private static void checkOutOfBounds(int index, int size, boolean inclusive) {
+    if (index < 0 || (inclusive ? index > size : index >= size)) {
+      throw new IndexOutOfBoundsException("Index: " + index + ", Size: " + size);
     }
-    //noinspection unchecked
-    return (E)((Object[])myElem)[index];
   }
 
   @Override
   public boolean add(E e) {
-    if (mySize == 0) {
-      myElem = e;
-    }
-    else if (mySize == 1) {
-      Object[] array = new Object[2];
-      array[0] = myElem;
-      array[1] = e;
-      myElem = array;
-    }
-    else {
-      Object[] array = (Object[])myElem;
-      int oldCapacity = array.length;
-      if (mySize >= oldCapacity) {
-        // have to resize
-        int newCapacity = oldCapacity * 3 / 2 + 1;
-        int minCapacity = mySize + 1;
-        if (newCapacity < minCapacity) {
-          newCapacity = minCapacity;
-        }
-        Object[] oldArray = array;
-        myElem = array = new Object[newCapacity];
-        System.arraycopy(oldArray, 0, array, 0, oldCapacity);
-      }
-      array[mySize] = e;
+    int size = mySize;
+    switch (size) {
+      case 0:
+        myElem = e;
+        break;
+      case 1:
+        myElem = new Object[]{myElem, e};
+        break;
+      default:
+        E[] array = resizeIfNecessary(size);
+        array[size] = e;
+        break;
     }
 
     mySize++;
@@ -91,33 +88,35 @@ public class SmartList<E> extends AbstractList<E> implements RandomAccess {
     return true;
   }
 
+  @NotNull
+  private E[] resizeIfNecessary(int size) {
+    E[] array = asArray();
+    int oldCapacity = array.length;
+    if (size >= oldCapacity) {
+      // have to resize
+      int newCapacity = Math.max(oldCapacity * 3 / 2 + 1, size + 1);
+      //noinspection unchecked
+      myElem = array = (E[])ArrayUtil.realloc(array, newCapacity, Object[]::new);
+    }
+    return array;
+  }
+
   @Override
   public void add(int index, E e) {
-    if (index < 0 || index > mySize) {
-      throw new IndexOutOfBoundsException("Index: " + index + ", Size: " + mySize);
-    }
-
-    if (mySize == 0) {
-      myElem = e;
-    }
-    else if (mySize == 1 && index == 0) {
-      Object[] array = new Object[2];
-      array[0] = e;
-      array[1] = myElem;
-      myElem = array;
-    }
-    else {
-      Object[] array = new Object[mySize + 1];
-      if (mySize == 1) {
-        array[0] = myElem; // index == 1
-      }
-      else {
-        Object[] oldArray = (Object[])myElem;
-        System.arraycopy(oldArray, 0, array, 0, index);
-        System.arraycopy(oldArray, index, array, index + 1, mySize - index);
-      }
-      array[index] = e;
-      myElem = array;
+    int size = mySize;
+    checkOutOfBounds(index, size, true);
+    switch (size) {
+      case 0:
+        myElem = e;
+        break;
+      case 1:
+        myElem = index == 0 ? new Object[]{e, myElem} : new Object[]{myElem, e};
+        break;
+      default:
+        E[] array = resizeIfNecessary(size);
+        System.arraycopy(array, index, array, index + 1, size - index);
+        array[index] = e;
+        break;
     }
 
     mySize++;
@@ -138,55 +137,55 @@ public class SmartList<E> extends AbstractList<E> implements RandomAccess {
 
   @Override
   public E set(final int index, final E element) {
-    if (index < 0 || index >= mySize) {
-      throw new IndexOutOfBoundsException("Index: " + index + ", Size: " + mySize);
-    }
-
+    int size = mySize;
+    checkOutOfBounds(index, size, false);
     final E oldValue;
-    if (mySize == 1) {
-      oldValue = getTheOnlyElem();
+    if (size == 1) {
+      oldValue = asElement();
       myElem = element;
     }
     else {
-      final Object[] array = (Object[])myElem;
-      //noinspection unchecked
-      oldValue = (E)array[index];
+      E[] array = asArray();
+      oldValue = array[index];
       array[index] = element;
     }
     return oldValue;
   }
 
-  private <T> T getTheOnlyElem() {
+  private E asElement() {
     //noinspection unchecked
-    return (T)myElem;
+    return (E)myElem;
+  }
+  private E[] asArray() {
+    //noinspection unchecked
+    return (E[])myElem;
   }
 
   @Override
   public E remove(final int index) {
-    if (index < 0 || index >= mySize) {
-      throw new IndexOutOfBoundsException("Index: " + index + ", Size: " + mySize);
-    }
+    int size = mySize;
+    checkOutOfBounds(index, size, false);
 
     final E oldValue;
-    if (mySize == 1) {
-      oldValue = getTheOnlyElem();
-      myElem = null;
-    }
-    else {
-      Object[] array = (Object[])myElem;
-      //noinspection unchecked
-      oldValue = (E)array[index];
-
-      if (mySize == 2) {
+    switch (size) {
+      case 0: // impossible
+      case 1:
+        oldValue = asElement();
+        myElem = null;
+        break;
+      case 2:
+        E[] array = asArray();
+        oldValue = array[index];
         myElem = array[1 - index];
-      }
-      else {
-        int numMoved = mySize - index - 1;
+        break;
+      default:
+        array = asArray();
+        oldValue = array[index];
+        int numMoved = size - index - 1;
         if (numMoved > 0) {
           System.arraycopy(array, index + 1, array, index, numMoved);
         }
-        array[mySize - 1] = null;
-      }
+        array[size - 1] = null;
     }
     mySize--;
     modCount++;
@@ -196,46 +195,13 @@ public class SmartList<E> extends AbstractList<E> implements RandomAccess {
   @NotNull
   @Override
   public Iterator<E> iterator() {
-    if (mySize == 0) {
-      return EmptyIterator.getInstance();
-    }
-    if (mySize == 1) {
-      return new SingletonIterator();
-    }
-    return super.iterator();
-  }
-
-  private class SingletonIterator extends SingletonIteratorBase<E> {
-    private final int myInitialModCount;
-
-    SingletonIterator() {
-      myInitialModCount = modCount;
-    }
-
-    @Override
-    protected E getElement() {
-      return getTheOnlyElem();
-    }
-
-    @Override
-    protected void checkCoModification() {
-      if (modCount != myInitialModCount) {
-        throw new ConcurrentModificationException("ModCount: " + modCount + "; expected: " + myInitialModCount);
-      }
-    }
-
-    @Override
-    public void remove() {
-      checkCoModification();
-      clear();
-    }
+    return mySize == 0 ? Collections.emptyIterator() : super.iterator();
   }
 
   @Override
   public void sort(Comparator<? super E> comparator) {
     if (mySize >= 2) {
-      //noinspection unchecked
-      Arrays.sort((E[])myElem, 0, mySize, comparator);
+      Arrays.sort(asArray(), 0, mySize, comparator);
     }
   }
 
@@ -247,27 +213,33 @@ public class SmartList<E> extends AbstractList<E> implements RandomAccess {
   @Override
   public <T> T[] toArray(@NotNull T[] a) {
     int aLength = a.length;
-    if (mySize == 1) {
-      if (aLength != 0) {
-        a[0] = getTheOnlyElem();
-      }
-      else {
-        T[] r = ArrayUtil.newArray(ArrayUtil.getComponentType(a), 1);
-        r[0] = getTheOnlyElem();
-        return r;
-      }
-    }
-    else if (aLength < mySize) {
-      //noinspection unchecked
-      return (T[])Arrays.copyOf((E[])myElem, mySize, a.getClass());
-    }
-    else if (mySize != 0) {
-      //noinspection SuspiciousSystemArraycopy
-      System.arraycopy(myElem, 0, a, 0, mySize);
+    int size = mySize;
+    switch (size) {
+      case 0:
+        // nothing to copy
+        break;
+      case 1:
+        //noinspection unchecked
+        T t = (T)asElement();
+        if (aLength == 0) {
+          T[] r = ArrayUtil.newArray(ArrayUtil.getComponentType(a), 1);
+          r[0] = t;
+          return r;
+        }
+        a[0] = t;
+        break;
+      default:
+        if (aLength < size) {
+          //noinspection unchecked
+          return (T[])Arrays.copyOf(asArray(), size, a.getClass());
+        }
+        //noinspection SuspiciousSystemArraycopy
+        System.arraycopy(asArray(), 0, a, 0, size);
+        break;
     }
 
-    if (aLength > mySize) {
-      a[mySize] = null;
+    if (aLength > size) {
+      a[size] = null;
     }
     return a;
   }
@@ -278,45 +250,25 @@ public class SmartList<E> extends AbstractList<E> implements RandomAccess {
    * the storage of a list instance.
    */
   public void trimToSize() {
-    if (mySize < 2) return;
-    Object[] array = (Object[])myElem;
-    int oldCapacity = array.length;
-    if (mySize < oldCapacity) {
+    int size = mySize;
+    if (size < 2) return;
+    E[] array = asArray();
+    if (size < array.length) {
       modCount++;
-      myElem = Arrays.copyOf(array, mySize);
+      myElem = Arrays.copyOf(array, size);
     }
   }
 
   @Override
   public int indexOf(Object o) {
-    if (mySize == 0) {
-      return -1;
+    switch (mySize) {
+      case 0:
+        return -1;
+      case 1:
+        return Objects.equals(o, myElem) ? 0 : -1;
+      default:
+        return ArrayUtilRt.indexOf(asArray(), o, 0, mySize);
     }
-    if (mySize == 1) {
-      if (o == null) {
-        return myElem == null ? 0 : -1;
-      }
-      else {
-        return o.equals(myElem) ? 0 : -1;
-      }
-    }
-
-    Object[] array = (Object[])myElem;
-    if (o == null) {
-      for (int i = 0; i < mySize; i++) {
-        if (array[i] == null) {
-          return i;
-        }
-      }
-    }
-    else {
-      for (int i = 0; i < mySize; i++) {
-        if (o.equals(array[i])) {
-          return i;
-        }
-      }
-    }
-    return -1;
   }
 
   @Override
@@ -331,43 +283,48 @@ public class SmartList<E> extends AbstractList<E> implements RandomAccess {
     }
 
     if (o instanceof SmartList) {
-      return equalsWithSmartList((SmartList)o);
+      return equalsWithSmartList((SmartList<?>)o);
     }
-
     if (o instanceof ArrayList) {
-      return equalsWithArrayList((ArrayList)o);
+      return equalsWithArrayList((ArrayList<?>)o);
     }
-
     return super.equals(o);
   }
 
-  private boolean equalsWithSmartList(SmartList that) {
-    if (mySize != that.mySize) {
+  private boolean equalsWithSmartList(@NotNull SmartList<?> that) {
+    int size = mySize;
+    if (size != that.mySize) {
       return false;
     }
-
-    if (mySize == 1) {
-      return Objects.equals(myElem, that.myElem);
+    switch (size) {
+      case 0:
+        return true;
+      case 1:
+        return Objects.equals(myElem, that.myElem);
+      default:
+        return compareOneByOne(size, that);
     }
-
-    return compareOneByOne(that);
   }
 
-  private boolean equalsWithArrayList(ArrayList that) {
-    if (mySize != that.size()) {
+  private boolean equalsWithArrayList(@NotNull ArrayList<?> that) {
+    int size = mySize;
+    if (size != that.size()) {
       return false;
     }
-
-    if (mySize == 1) {
-      return Objects.equals(myElem, that.get(0));
+    switch (size) {
+      case 0:
+        return true;
+      case 1:
+        return Objects.equals(myElem, that.get(0));
+      default:
+        return compareOneByOne(size, that);
     }
-
-    return compareOneByOne(that);
   }
 
-  private boolean compareOneByOne(List that) {
-    for (int i = 0; i < mySize; i++) {
-      E o1 = get(i);
+  private boolean compareOneByOne(int size, @NotNull List<?> that) {
+    E[] array = asArray();
+    for (int i = 0; i < size; i++) {
+      E o1 = array[i];
       Object o2 = that.get(i);
       if (!Objects.equals(o1, o2)) {
         return false;
@@ -377,21 +334,20 @@ public class SmartList<E> extends AbstractList<E> implements RandomAccess {
   }
 
   @Override
-  public void forEach(Consumer<? super E> action) {
-    if (mySize == 0) {
-      return;
-    }
-
-    if (mySize == 1) {
-      //noinspection unchecked
-      action.accept((E)myElem);
-    }
-    else {
-      Object[] array = (Object[])myElem;
-      for (int i = 0, length = mySize; i < length; i++) {
-        //noinspection unchecked
-        action.accept((E)array[i]);
-      }
+  public void forEach(@NotNull Consumer<? super E> action) {
+    int size = mySize;
+    switch (size) {
+      case 0:
+        break;
+      case 1:
+        action.accept(asElement());
+        break;
+      default:
+        E[] array = asArray();
+        for (int i = 0; i < size; i++) {
+          action.accept(array[i]);
+        }
+        break;
     }
   }
 }

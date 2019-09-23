@@ -28,7 +28,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeSet;
 
-import static com.intellij.util.containers.ContainerUtil.newTreeSet;
 import static org.jetbrains.idea.svn.IdeaSVNConfigFile.CONFIG_FILE_NAME;
 import static org.jetbrains.idea.svn.IdeaSVNConfigFile.SERVERS_FILE_NAME;
 import static org.jetbrains.idea.svn.SvnUtil.SYSTEM_CONFIGURATION_PATH;
@@ -394,7 +393,7 @@ public class SvnConfiguration implements PersistentStateComponent<SvnConfigurati
   // TODO: Rewrite AutoStorage to use MemoryPasswordSafe at least
   public static class AuthStorage {
 
-    @NotNull private final TreeSet<String> myKeys = newTreeSet();
+    @NotNull private final TreeSet<String> myKeys = new TreeSet<>();
     @NotNull private final Map<String, Object> myStorage = new HashMap<>();
 
     @NotNull

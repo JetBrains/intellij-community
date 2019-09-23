@@ -232,6 +232,9 @@ class ReturnReplacementContext {
     PsiElement rBrace = block.getRBrace();
     int endPos = rBrace == null ? children.length : ArrayUtil.lastIndexOf(children, rBrace);
     assert endPos >= pos;
+    if (pos + 1 < children.length && children[pos + 1] instanceof PsiWhiteSpace) {
+      pos++;
+    }
     return Arrays.copyOfRange(children, pos + 1, endPos);
   }
 

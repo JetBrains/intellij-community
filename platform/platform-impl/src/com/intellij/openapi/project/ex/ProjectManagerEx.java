@@ -10,13 +10,18 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.io.IOException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collection;
 
 public abstract class ProjectManagerEx extends ProjectManager {
   public static ProjectManagerEx getInstanceEx() {
-    return (ProjectManagerEx)ApplicationManager.getApplication().getComponent(ProjectManager.class);
+    return (ProjectManagerEx)ApplicationManager.getApplication().getService(ProjectManager.class);
+  }
+
+  @Nullable
+  public static ProjectManagerEx getInstanceExIfCreated() {
+    return (ProjectManagerEx)ProjectManager.getInstanceIfCreated();
   }
 
   /**
@@ -28,11 +33,22 @@ public abstract class ProjectManagerEx extends ProjectManager {
   @Nullable
   public abstract Project newProject(@NotNull Path file, boolean useDefaultProjectSettings);
 
-  @Nullable
-  public abstract Project loadProject(@NotNull String filePath) throws IOException;
+  /**
+   * @deprecated Use {@link #loadProject(Path)}
+   */
+  @NotNull
+  @Deprecated
+  public final Project loadProject(@NotNull String filePath) {
+    return loadProject(Paths.get(filePath).toAbsolutePath(), null);
+  }
 
-  @Nullable
-  public abstract Project loadProject(@NotNull Path file, @Nullable String projectName) throws IOException;
+  @NotNull
+  public final Project loadProject(@NotNull Path path) {
+    return loadProject(path, null);
+  }
+
+  @NotNull
+  public abstract Project loadProject(@NotNull Path file, @Nullable String projectName);
 
   public abstract boolean openProject(@NotNull Project project);
 
@@ -95,13 +111,7 @@ public abstract class ProjectManagerEx extends ProjectManager {
   @Nullable
   public abstract Project findOpenProjectByHash(@Nullable String locationHash);
 
-  @Nullable
-  public abstract Project convertAndLoadProject(@NotNull Path path) throws IOException;
-
   @NotNull
   @ApiStatus.Internal
   public abstract String[] getAllExcludedUrls();
-  @NotNull
-  @ApiStatus.Internal
-  public abstract String[] getAllProjectUrls();
 }

@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.impl.local;
 
-import com.intellij.ide.GeneralSettings;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -65,12 +64,17 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
 
   @NotNull
   private static File convertToIOFile(@NotNull VirtualFile file) {
+    return convertToPath(file).toFile();
+  }
+
+  @NotNull
+  static Path convertToPath(@NotNull VirtualFile file) {
     String path = file.getPath();
     if (StringUtil.endsWithChar(path, ':') && path.length() == 2 && SystemInfo.isWindows) {
       path += "/"; // Make 'c:' resolve to a root directory for drive c:, not the current directory on that drive
     }
 
-    return new File(path);
+    return Paths.get(path);
   }
 
   @NotNull
@@ -446,8 +450,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   @NotNull
   public OutputStream getOutputStream(@NotNull VirtualFile file, Object requestor, long modStamp, long timeStamp) throws IOException {
     File ioFile = convertToIOFileAndCheck(file);
-    OutputStream stream =
-      useSafeStream(requestor, file) ? new SafeFileOutputStream(ioFile, SystemInfo.isUnix) : new FileOutputStream(ioFile);
+    OutputStream stream = SafeWriteRequestor.shouldUseSafeWrite(requestor) ? new SafeFileOutputStream(ioFile) : new FileOutputStream(ioFile);
     return new BufferedOutputStream(stream) {
       @Override
       public void close() throws IOException {
@@ -459,11 +462,6 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
         }
       }
     };
-  }
-
-  // note: keep in sync with SafeWriteUtil#useSafeStream
-  private static boolean useSafeStream(Object requestor, VirtualFile file) {
-    return requestor instanceof SafeWriteRequestor && GeneralSettings.getInstance().isUseSafeWrite() && !file.is(VFileProperty.SYMLINK);
   }
 
   @Override
@@ -724,7 +722,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
       // behaviour of this code.
       return canonicalFileName;
     }
-    catch (IOException e) {
+    catch (IOException | InvalidPathException e) {
       return originalFileName;
     }
     finally {

@@ -4,6 +4,7 @@ package com.intellij.dvcs.ui
 import com.intellij.dvcs.DvcsUtil.getShortRepositoryName
 import com.intellij.dvcs.repo.Repository
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNodeRenderer
 import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent.Companion.TEXT_COLOR
@@ -11,7 +12,6 @@ import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent.Companion.getB
 import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent.Companion.getCurrentBranch
 import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent.Companion.getPresentableText
 import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent.Companion.getSingleTooltip
-import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.SimpleTextAttributes.REGULAR_ATTRIBUTES
 import com.intellij.ui.SimpleTextAttributes.STYLE_OPAQUE
@@ -66,6 +66,6 @@ class RepositoryChangesBrowserNode(repository: Repository) : ChangesBrowserNode<
 
   companion object {
     fun getColorManager(project: Project): VcsLogColorManagerImpl = VcsProjectLog.getInstance(project).logManager?.colorManager ?: VcsLogColorManagerImpl(
-      findLogProviders(ProjectLevelVcsManagerImpl.getInstance(project).allVcsRoots.asList(), project).keys)
+      findLogProviders(ProjectLevelVcsManager.getInstance(project).allVcsRoots.asList(), project).keys)
   }
 }

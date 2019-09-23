@@ -15,7 +15,7 @@ class GithubCreateGistContentTest : GithubCreateGistContentTestBase() {
 
   override fun tearDown() {
     RunAll()
-      .append(ThrowableRunnable { if (wasInit { editor }) EditorFactory.getInstance().releaseEditor(editor) })
+      .append(ThrowableRunnable { if (::editor.isInitialized) EditorFactory.getInstance().releaseEditor(editor) })
       .append(ThrowableRunnable { super.tearDown() })
       .run()
   }

@@ -18,6 +18,7 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.tabs.JBTabPainter;
 import com.intellij.ui.tabs.JBTabsPosition;
 import com.intellij.ui.tabs.impl.singleRow.MoreTabsIcon;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.BaseButtonBehavior;
 import org.jetbrains.annotations.NotNull;
@@ -281,11 +282,10 @@ class TabContentLayout extends ContentLayout {
       g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
       if (each.isSelected()) {
-        tabPainter.paintSelectedTab(JBTabsPosition.top, g2d, r, borderThickness, null, myUi.myWindow.isActive(), each.isHovered(),
-                                    myTabs.size() == 1);
+        tabPainter.paintSelectedTab(JBTabsPosition.top, g2d, r, borderThickness, null, myUi.myWindow.isActive(), each.isHovered());
       }
       else {
-        tabPainter.paintTab(JBTabsPosition.top, g2d, r, borderThickness, null, each.isHovered());
+        tabPainter.paintTab(JBTabsPosition.top, g2d, r, borderThickness, null, myUi.myWindow.isActive(), each.isHovered());
       }
     }
     g2d.dispose();
@@ -333,14 +333,22 @@ class TabContentLayout extends ContentLayout {
     }
     myTabs.add(event.getIndex(), tab);
     myContent2Tabs.put(content, tab);
-    if (content instanceof DnDTarget) {
-      DnDTarget target = (DnDTarget)content;
+
+    DnDTarget target = getDnDTarget(content);
+    if (target != null) {
       DnDSupport.createBuilder(tab)
                 .setDropHandler(target)
                 .setTargetChecker(target)
                 .setCleanUpOnLeaveCallback(() -> target.cleanUpOnLeave())
                 .install();
     }
+  }
+
+  @Nullable
+  private static DnDTarget getDnDTarget(Content content) {
+    DnDTarget target = content.getUserData(Content.TAB_DND_TARGET_KEY);
+    if (target != null) return target;
+    return ObjectUtils.tryCast(content, DnDTarget.class);
   }
 
   @Override

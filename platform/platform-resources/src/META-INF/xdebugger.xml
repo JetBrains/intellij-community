@@ -91,8 +91,8 @@
               description="Load classes on debugger pause (may increase overhead on debugger stepping)"/>
     </group>
 
-    <action id="XDebugger.Reveal" class="com.intellij.xdebugger.impl.reveal.actions.XDebuggerRevealAction" icon="AllIcons.Debugger.Reveal.RevealOn"
-            text="Reveal">
+    <action id="XDebugger.PinToTop" class="com.intellij.xdebugger.impl.pinned.items.actions.XDebuggerPinToTopAction"
+            text="Pin to Top">
       <add-to-group group-id="XDebugger.ValueGroup" anchor="last"/>
     </action>
   </actions>

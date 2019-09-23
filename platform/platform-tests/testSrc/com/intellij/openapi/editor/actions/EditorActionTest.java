@@ -228,6 +228,12 @@ public class EditorActionTest extends AbstractEditorTest {
     checkResultByText("class C { String s = \"<selection>AB\\nCD<caret></selection>\"; }");
   }
 
+  public void testToggleCaseForEszett() {
+    init("<selection>\u00df</selection>", TestFileType.TEXT);
+    executeAction(IdeActions.ACTION_EDITOR_TOGGLE_CASE);
+    checkResultByText("<selection>SS</selection>");
+  }
+
   public void testJoinSeveralLinesAtDocumentEnd() {
     initText("a\nb\nc");
     executeAction(IdeActions.ACTION_SELECT_ALL);

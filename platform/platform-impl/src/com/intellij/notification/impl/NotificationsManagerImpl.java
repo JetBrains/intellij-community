@@ -3,7 +3,7 @@ package com.intellij.notification.impl;
 
 import com.intellij.application.Topics;
 import com.intellij.codeInsight.hint.TooltipController;
-import com.intellij.diagnostic.LoadingPhase;
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.FrameStateListener;
@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.DialogWrapperDialog;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.*;
@@ -69,10 +70,7 @@ import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author spleaner
- */
-public class NotificationsManagerImpl extends NotificationsManager {
+public final class NotificationsManagerImpl extends NotificationsManager {
   public static final Color DEFAULT_TEXT_COLOR = new JBColor(Gray._0, Gray._191);
   private static final Color TEXT_COLOR = JBColor.namedColor("Notification.foreground", DEFAULT_TEXT_COLOR);
   public static final Color FILL_COLOR = JBColor.namedColor("Notification.background", new JBColor(Gray._242, new Color(78, 80, 82)));
@@ -80,7 +78,6 @@ public class NotificationsManagerImpl extends NotificationsManager {
 
   public NotificationsManagerImpl() {
     MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
-    connection.subscribe(Notifications.TOPIC, new MyNotificationListener(null));
     connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectClosed(@NotNull Project project) {
@@ -141,7 +138,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
   }
 
   private static void showNotification(@NotNull final Notification notification, @Nullable final Project project) {
-    if (!LoadingPhase.COMPONENT_LOADED.isComplete()) {
+    if (!LoadingState.COMPONENTS_LOADED.isOccurred()) {
       ApplicationManager.getApplication().invokeLater(() -> showNotification(notification, project), ModalityState.current());
       return;
     }
@@ -303,7 +300,9 @@ public class NotificationsManagerImpl extends NotificationsManager {
     }
     if (frame == null && project == null) {
       frame = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
-      while (frame instanceof DialogWrapperDialog && ((DialogWrapperDialog)frame).getDialogWrapper().isModalProgress()) {
+      while (frame instanceof DialogWrapperDialog) {
+        DialogWrapper wrapper = ((DialogWrapperDialog)frame).getDialogWrapper();
+        if (wrapper == null || !wrapper.isModalProgress()) break;
         frame = frame.getOwner();
       }
     }
@@ -1035,15 +1034,20 @@ public class NotificationsManagerImpl extends NotificationsManager {
     }
   }
 
-  private static void showPopup(@NotNull LinkLabel link, @NotNull DefaultActionGroup group) {
+  private static void showPopup(@NotNull LinkLabel<?> link, @NotNull DefaultActionGroup group) {
     if (link.isShowing()) {
       ActionPopupMenu menu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UNKNOWN, group);
       menu.getComponent().show(link, JBUIScale.scale(-10), link.getHeight() + JBUIScale.scale(2));
     }
   }
 
-  private static class MyNotificationListener extends NotificationsAdapter {
+  static class MyNotificationListener implements Notifications {
     private final Project myProject;
+
+    @SuppressWarnings("unused")
+    MyNotificationListener() {
+      myProject = null;
+    }
 
     private MyNotificationListener(@Nullable Project project) {
       myProject = project;

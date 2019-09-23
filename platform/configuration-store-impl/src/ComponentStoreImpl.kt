@@ -27,11 +27,11 @@ import com.intellij.util.ArrayUtilRt
 import com.intellij.util.SmartList
 import com.intellij.util.SystemProperties
 import com.intellij.util.ThreeState
+import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.SmartHashSet
 import com.intellij.util.containers.isNullOrEmpty
 import com.intellij.util.messages.MessageBus
 import com.intellij.util.xmlb.XmlSerializerUtil
-import gnu.trove.THashMap
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -76,7 +76,7 @@ internal fun setRoamableComponentSaveThreshold(thresholdInSeconds: Int) {
 
 @ApiStatus.Internal
 abstract class ComponentStoreImpl : IComponentStore {
-  private val components = Collections.synchronizedMap(THashMap<String, ComponentInfo>())
+  private val components = ContainerUtil.newConcurrentMap<String, ComponentInfo>()
 
   open val project: Project?
     get() = null
@@ -107,6 +107,15 @@ abstract class ComponentStoreImpl : IComponentStore {
     catch (e: Exception) {
       PluginException.logPluginError(LOG, "Cannot init $componentName component state", e, component.javaClass)
     }
+  }
+
+  override fun unloadComponent(component: Any) {
+    @Suppress("DEPRECATION") val name = when (component) {
+      is PersistentStateComponent<*> -> getStateSpec(component).name
+      is com.intellij.openapi.util.JDOMExternalizable -> ComponentManagerImpl.getComponentName(component)
+      else -> null
+    }
+    name?.let { removeComponent(it) }
   }
 
   override fun initPersistencePlainComponent(component: Any, key: String) {
@@ -142,20 +151,14 @@ abstract class ComponentStoreImpl : IComponentStore {
     return withEdtContext(storageManager.componentManager, task)
   }
 
-  internal suspend fun createSaveSessionManagerAndSaveComponents(saveResult: SaveResult, forceSavingAllSettings: Boolean): SaveSessionProducerManager {
-    return withEdtContext {
+  internal suspend fun commitComponentsOnEdt(saveResult: SaveResult, forceSavingAllSettings: Boolean,
+                                             saveSessionProducerManager: SaveSessionProducerManager) {
+    withEdtContext {
       val errors = SmartList<Throwable>()
-      val manager = doCreateSaveSessionManagerAndCommitComponents(forceSavingAllSettings, errors)
+      commitComponents(forceSavingAllSettings, saveSessionProducerManager, errors)
       saveResult.addErrors(errors)
-      manager
+      saveSessionProducerManager
     }
-  }
-
-  @CalledInAwt
-  internal fun doCreateSaveSessionManagerAndCommitComponents(isForce: Boolean, errors: MutableList<Throwable>): SaveSessionProducerManager {
-    val saveManager = createSaveSessionProducerManager()
-    commitComponents(isForce, saveManager, errors)
-    return saveManager
   }
 
   @CalledInAwt
@@ -251,7 +254,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     }
   }
 
-  internal open fun createSaveSessionProducerManager() = SaveSessionProducerManager()
+  open fun createSaveSessionProducerManager() = SaveSessionProducerManager()
 
   private fun commitComponent(session: SaveSessionProducerManager, info: ComponentInfo, componentName: String?) {
     val component = info.component
@@ -340,18 +343,29 @@ abstract class ComponentStoreImpl : IComponentStore {
   private fun doAddComponent(name: String, component: Any, stateSpec: State?, serviceDescriptor: ServiceDescriptor?): ComponentInfo {
     val newInfo = createComponentInfo(component, stateSpec, serviceDescriptor)
     val existing = components.put(name, newInfo)
+
+    if (name == "GradleSettings") {
+      LOG.info("hi")
+    }
+
     if (existing != null && existing.component !== component) {
       components.put(name, existing)
-      LOG.error("Conflicting component name '$name': ${existing.component.javaClass} and ${component.javaClass}")
+      LOG.error("Conflicting component name '$name': ${existing.component.javaClass} and ${component.javaClass} (componentManager=${storageManager.componentManager})")
       return existing
     }
     return newInfo
   }
 
   private fun initComponent(info: ComponentInfo, changedStorages: Set<StateStorage>?, reloadData: ThreeState): Boolean {
+    @Suppress("UNCHECKED_CAST")
+    val component = info.component as PersistentStateComponent<Any>
     return when {
-      loadPolicy == StateLoadPolicy.NOT_LOAD -> false
-      doInitComponent(info, changedStorages, reloadData) -> {
+      loadPolicy == StateLoadPolicy.NOT_LOAD -> {
+        @Suppress("UNCHECKED_CAST")
+        component.noStateLoaded()
+        false
+      }
+      doInitComponent(info, component, changedStorages, reloadData) -> {
         // if component was initialized, update lastModificationCount
         info.updateModificationCount()
         true
@@ -360,10 +374,9 @@ abstract class ComponentStoreImpl : IComponentStore {
     }
   }
 
-  private fun doInitComponent(info: ComponentInfo, changedStorages: Set<StateStorage>?, reloadData: ThreeState): Boolean {
+  private fun doInitComponent(info: ComponentInfo, component: PersistentStateComponent<Any>, changedStorages: Set<StateStorage>?, reloadData: ThreeState): Boolean {
     val stateSpec = info.stateSpec!!
-    @Suppress("UNCHECKED_CAST")
-    val component = info.component as PersistentStateComponent<Any>
+
     val name = stateSpec.name
     @Suppress("UNCHECKED_CAST")
     val stateClass: Class<Any> = when (component) {
@@ -555,7 +568,6 @@ abstract class ComponentStoreImpl : IComponentStore {
     }
   }
 
-  @TestOnly
   fun removeComponent(name: String) {
     components.remove(name)
   }
@@ -626,9 +638,9 @@ abstract class ChildlessComponentStore : ComponentStoreImpl() {
 }
 
 internal suspend fun ComponentStoreImpl.childlessSaveImplementation(result: SaveResult, forceSavingAllSettings: Boolean) {
-  createSaveSessionManagerAndSaveComponents(result, forceSavingAllSettings)
-    .save()
-    .appendTo(result)
+  val saveSessionManager = createSaveSessionProducerManager()
+  commitComponentsOnEdt(result, forceSavingAllSettings, saveSessionManager)
+  saveSessionManager.save().appendTo(result)
 }
 
 internal suspend inline fun <T> withEdtContext(disposable: ComponentManager?, crossinline task: suspend () -> T): T {

@@ -5,8 +5,9 @@ package com.intellij.openapi.module;
  * Registers {@link WebModuleType} in IDEs which don't register neither {@link WebModuleType} nor {@link com.intellij.webcore.moduleType.PlatformWebModuleType}
  * but still need to use {@link WebModuleTypeBase} because they have Java plugin installed.
  */
-class WebModuleTypeRegistrar {
-  WebModuleTypeRegistrar(ModuleTypeManager moduleTypeManager) {
+final class WebModuleTypeRegistrar {
+  WebModuleTypeRegistrar() {
+    ModuleTypeManager moduleTypeManager = ModuleTypeManager.getInstance();
     if (moduleTypeManager.findByID(WebModuleTypeBase.WEB_MODULE) instanceof UnknownModuleType) {
       moduleTypeManager.registerModuleType(new WebModuleType());
     }

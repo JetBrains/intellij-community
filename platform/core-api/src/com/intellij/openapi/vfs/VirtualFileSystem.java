@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.application.Application;
@@ -25,7 +11,9 @@ import java.io.File;
 import java.io.IOException;
 
 /**
- * Represents a virtual file system.
+ * Represents a Virtual File System (VFS).
+ * <p>
+ * See <a href="http://www.jetbrains.org/intellij/sdk/docs/basics/virtual_file_system.html">Virtual File System</a> (SDK docs).
  *
  * @see VirtualFile
  * @see VirtualFileManager
@@ -100,11 +88,11 @@ public abstract class VirtualFileSystem {
   public abstract VirtualFile refreshAndFindFileByPath(@NotNull String path);
 
   /**
-   * Adds listener to the file system. Normally one should use {@link VirtualFileManager#addVirtualFileListener}.
+   * Adds listener to the file system. Normally one should use {@link VirtualFileManager#VFS_CHANGES} message bus topic.
    *
    * @param listener the listener
    * @see VirtualFileListener
-   * @see VirtualFileManager#addVirtualFileListener
+   * @see VirtualFileManager#VFS_CHANGES
    */
   public abstract void addVirtualFileListener(@NotNull VirtualFileListener listener);
 

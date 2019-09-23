@@ -67,9 +67,7 @@ import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.*;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
+import java.lang.reflect.*;
 import java.util.List;
 import java.util.*;
 
@@ -1108,8 +1106,39 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
     }
   }
 
+  @SuppressWarnings("rawtypes")
   @NotNull
   private static String getToStringValue(@NotNull Object value) {
+    StringBuilder sb = new StringBuilder();
+    if (value.getClass().getName().equals("javax.swing.ArrayTable")) {
+      Object table = ReflectionUtil.getField(value.getClass(), value, Object.class, "table");
+      if (table != null) {
+        try {
+          if (table instanceof Object[]) {
+            Object[] arr = (Object[])table;
+            for (int i = 0; i < arr.length; i += 2) {
+              if (arr[i].equals("uiInspector.addedAt")) continue;
+              if (sb.length() > 0) sb.append(",");
+              sb.append('[').append(arr[i]).append("->").append(arr[i + 1]).append(']');
+            }
+          }
+          else if (table instanceof Map) {
+            Map map = (Map)table;
+            Set<Map.Entry> set = map.entrySet();
+            for (Map.Entry entry : set) {
+              if (entry.getKey().equals("uiInspector.addedAt")) continue;
+              if (sb.length() > 0) sb.append(",");
+              sb.append('[').append(entry.getKey()).append("->").append(entry.getValue()).append(']');
+            }
+          }
+        }
+        catch (Exception e) {
+          //ignore
+        }
+      }
+      if (sb.length() == 0) sb.append("-");
+      value = sb;
+    }
     String toString = StringUtil.notNullize(String.valueOf(value), "toString()==null");
     return toString.replace('\n', ' ');
   }
@@ -1160,7 +1189,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       "getTooltipText", "getToolTipText", "cursor",
       "isShowing", "isEnabled", "isVisible", "isDoubleBuffered",
       "isFocusable", "isFocusCycleRoot", "isFocusOwner",
-      "isValid", "isDisplayable", "isLightweight"
+      "isValid", "isDisplayable", "isLightweight", "getClientProperties"
     );
 
     final List<String> CHECKERS = Arrays.asList(
@@ -1240,6 +1269,14 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       addPropertiesFromMethodNames(prefix, component, methodNames);
     }
 
+    private static List<Method> collectAllMethodsRecursively(Class<?> clazz) {
+      ArrayList<Method> list = new ArrayList<>();
+      for(Class<?> cl = clazz; cl != null; cl = cl.getSuperclass()) {
+        list.addAll(Arrays.asList(cl.getDeclaredMethods()));
+      }
+      return list;
+    }
+
     private void addPropertiesFromMethodNames(@NotNull String prefix,
                                               @NotNull Object component,
                                               @NotNull List<String> methodNames) {
@@ -1251,7 +1288,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
         try {
           try {
             //noinspection ConstantConditions
-            propertyValue = ReflectionUtil.findMethod(Arrays.asList(clazz.getMethods()), name).invoke(component);
+            propertyValue = ReflectionUtil.findMethod(collectAllMethodsRecursively(clazz), name).invoke(component);
           }
           catch (Exception e) {
             propertyValue = ReflectionUtil.findField(clazz, null, name).get(component);
@@ -1448,7 +1485,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
     }
 
     private void addMigLayoutComponentConstraints(CC cc) {
-      myProperties.add(new PropertyBean("MigLayout component constraints", cc));
+      myProperties.add(new PropertyBean("MigLayout component constraints", componentConstraintsToString(cc)));
       DimConstraint horizontal = cc.getHorizontal();
       addDimConstraintProperties("  cc.horizontal", horizontal);
       DimConstraint vertical = cc.getVertical();
@@ -1475,15 +1512,76 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       }
     }
 
+    private static String componentConstraintsToString(CC cc) {
+      CC newCC = new CC();
+      StringBuilder stringBuilder = new StringBuilder();
+      if (cc.getSkip() != newCC.getSkip()) {
+        stringBuilder.append(" skip=").append(cc.getSkip());
+      }
+      if (cc.getSpanX() != newCC.getSpanX()) {
+        stringBuilder.append(" spanX=").append(cc.getSpanX() == LayoutUtil.INF ? "INF" : cc.getSpanX());
+      }
+      if (cc.getSpanY() != newCC.getSpanY()) {
+        stringBuilder.append(" spanY=").append(cc.getSpanY() == LayoutUtil.INF ? "INF" : cc.getSpanY());
+      }
+      if (cc.getPushX() != null) {
+        stringBuilder.append(" pushX=").append(cc.getPushX());
+      }
+      if (cc.getPushY() != null) {
+        stringBuilder.append(" pushY=").append(cc.getPushY());
+      }
+      if (cc.getSplit() != newCC.getSplit()) {
+        stringBuilder.append(" split=").append(cc.getSplit());
+      }
+      if (cc.isWrap()) {
+        stringBuilder.append(" wrap=");
+        if (cc.getWrapGapSize() != null) {
+          stringBuilder.append(cc.getWrapGapSize());
+        }
+        else {
+          stringBuilder.append("true");
+        }
+      }
+      if (cc.isNewline()) {
+        stringBuilder.append(" newline=");
+        if (cc.getNewlineGapSize() != null) {
+          stringBuilder.append(cc.getNewlineGapSize());
+        }
+        else {
+          stringBuilder.append("true");
+        }
+      }
+      return stringBuilder.toString().trim();
+    }
+
     private static String dimConstraintToString(DimConstraint constraint) {
-      return "grow=" + constraint.getGrow() +
-             " growPrio=" + constraint.getGrowPriority() +
-             " shrink=" + constraint.getShrink() +
-             " shrinkPrio=" + constraint.getShrinkPriority() +
-             " fill=" + constraint.isFill() +
-             " noGrid=" + constraint.isNoGrid() +
-             " sizeGroup=" + constraint.getSizeGroup() +
-             " endGroup=" + constraint.getEndGroup();
+      StringBuilder stringBuilder = new StringBuilder();
+      DimConstraint newConstraint = new DimConstraint();
+      if (!Comparing.equal(constraint.getGrow(), newConstraint.getGrow())) {
+        stringBuilder.append(" grow=").append(constraint.getGrow());
+      }
+      if (constraint.getGrowPriority() != newConstraint.getGrowPriority()) {
+        stringBuilder.append(" growPrio=").append(constraint.getGrowPriority());
+      }
+      if (!Comparing.equal(constraint.getShrink(), newConstraint.getShrink())) {
+        stringBuilder.append(" shrink=").append(constraint.getShrink());
+      }
+      if (constraint.getShrinkPriority() != newConstraint.getShrinkPriority()) {
+        stringBuilder.append(" shrinkPrio=").append(constraint.getShrinkPriority());
+      }
+      if (constraint.isFill() != newConstraint.isFill()) {
+        stringBuilder.append(" fill=").append(constraint.isFill());
+      }
+      if (constraint.isNoGrid() != newConstraint.isNoGrid()) {
+        stringBuilder.append(" noGrid=").append(constraint.isNoGrid());
+      }
+      if (!Comparing.equal(constraint.getSizeGroup(), newConstraint.getSizeGroup())) {
+        stringBuilder.append(" sizeGroup=").append(constraint.getSizeGroup());
+      }
+      if (!Comparing.equal(constraint.getEndGroup(), newConstraint.getEndGroup())) {
+        stringBuilder.append(" endGroup=").append(constraint.getEndGroup());
+      }
+      return stringBuilder.toString();
     }
 
     @NotNull
@@ -1802,6 +1900,9 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
         return new ColorUIResource(
           new Color(Integer.parseInt(s[1]), Integer.parseInt(s[2]), Integer.parseInt(s[3]), Integer.parseInt(s[4])));
       }
+    }
+    else if (type.getSimpleName().contains("ArrayTable")) {
+      return "ArrayTable!";
     }
     throw new UnsupportedOperationException(type.toString());
   }

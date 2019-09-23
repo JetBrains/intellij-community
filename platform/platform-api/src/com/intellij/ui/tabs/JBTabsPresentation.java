@@ -26,8 +26,6 @@ public interface JBTabsPresentation {
 
   JBTabsPresentation setPaintFocus(boolean paintFocus);
 
-  JBTabsPresentation setStealthTabMode(boolean stealthTabMode);
-
   JBTabsPresentation setSideComponentVertical(boolean vertical);
 
   JBTabsPresentation setSideComponentOnTabs(boolean onTabs);
@@ -46,7 +44,13 @@ public interface JBTabsPresentation {
 
   JBTabsPresentation setInnerInsets(Insets innerInsets);
 
-  JBTabsPresentation setGhostsAlwaysVisible(boolean visible);
+  /**
+   * @deprecated This logic is no longer supported, please remove calls of this method
+   */
+  @Deprecated
+  default JBTabsPresentation setGhostsAlwaysVisible(boolean visible) {
+    return this;
+  }
 
   JBTabsPresentation setFocusCycle(final boolean root);
 

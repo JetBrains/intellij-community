@@ -11,6 +11,7 @@ import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.fragments.LineFragment;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
+import com.intellij.diff.tools.fragmented.UnifiedDiffModel.ChangedBlockData;
 import com.intellij.diff.tools.util.*;
 import com.intellij.diff.tools.util.base.InitialScrollPositionSupport;
 import com.intellij.diff.tools.util.base.ListenerDiffViewerBase;
@@ -26,7 +27,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.undo.UndoManager;
-import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.LineTokenizer;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
@@ -65,11 +65,11 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
   @NotNull private final MyInitialScrollHelper myInitialScrollHelper = new MyInitialScrollHelper();
   @NotNull private final MyFoldingModel myFoldingModel;
 
-  @NotNull private final TwosideTextDiffProvider.NoIgnore myTextDiffProvider;
+  @NotNull protected final TwosideTextDiffProvider.NoIgnore myTextDiffProvider;
 
   @NotNull protected Side myMasterSide = Side.RIGHT;
 
-  @Nullable private ChangedBlockData myChangedBlockData;
+  @NotNull private final UnifiedDiffModel myModel = new UnifiedDiffModel(this);
 
   private final boolean[] myForceReadOnlyFlags;
   private boolean myReadOnlyLockSet = false;
@@ -97,8 +97,8 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     myDocument = EditorFactory.getInstance().createDocument("");
     myEditor = DiffUtil.createEditor(myDocument, myProject, true, true);
 
-    List<JComponent> titles = DiffUtil.createTextTitles(myRequest, Arrays.asList(myEditor, myEditor));
-    UnifiedContentPanel contentPanel = new UnifiedContentPanel(titles, myEditor);
+    JComponent titlesPanel = createTitles();
+    UnifiedContentPanel contentPanel = new UnifiedContentPanel(titlesPanel, myEditor);
 
     myPanel = new UnifiedDiffPanel(myProject, contentPanel, this, myContext);
 
@@ -130,6 +130,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
   @Override
   @CalledInAwt
   protected void onDispose() {
+    myModel.clear();
     myFoldingModel.destroy();
     super.onDispose();
     EditorFactory.getInstance().releaseEditor(myEditor);
@@ -151,6 +152,17 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     super.updateContextHints();
     myInitialScrollHelper.updateContext(myRequest);
     myFoldingModel.updateContext(myRequest, getFoldingModelSettings());
+  }
+
+  @Nullable
+  protected JComponent createTitles() {
+    List<JComponent> titles = DiffUtil.createTextTitles(myRequest, Arrays.asList(myEditor, myEditor));
+    assert titles.size() == 2;
+
+    titles = ContainerUtil.skipNulls(titles);
+    if (titles.isEmpty()) return null;
+
+    return DiffUtil.createStackedComponents(titles, DiffUtil.TITLE_GAP);
   }
 
   @CalledInAwt
@@ -217,6 +229,11 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     new TextDiffViewerUtil.EditorActionsPopup(createEditorPopupActions()).install(getEditors());
   }
 
+  @NotNull
+  protected UnifiedDiffChangeUi createUi(@NotNull UnifiedDiffChange change) {
+    return new UnifiedDiffChangeUi(this, change);
+  }
+
   //
   // Diff
   //
@@ -232,51 +249,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
   @NotNull
   protected Runnable performRediff(@NotNull final ProgressIndicator indicator) {
     try {
-      indicator.checkCanceled();
-
-      final Document document1 = getContent1().getDocument();
-      final Document document2 = getContent2().getDocument();
-
-      final CharSequence[] texts = ReadAction.compute(() -> new CharSequence[]{document1.getImmutableCharSequence(), document2.getImmutableCharSequence()});
-
-      final List<LineFragment> fragments = myTextDiffProvider.compare(texts[0], texts[1], indicator);
-
-      final DocumentContent content1 = getContent1();
-      final DocumentContent content2 = getContent2();
-
-      indicator.checkCanceled();
-      TwosideDocumentData data = ReadAction.compute(() -> {
-        indicator.checkCanceled();
-        UnifiedFragmentBuilder builder = new UnifiedFragmentBuilder(fragments, document1, document2, myMasterSide);
-        builder.exec();
-
-        indicator.checkCanceled();
-
-        EditorHighlighter highlighter = buildHighlighter(myProject, content1, content2,
-                                                         texts[0], texts[1], builder.getRanges(),
-                                                         builder.getText().length());
-
-        UnifiedEditorRangeHighlighter rangeHighlighter = new UnifiedEditorRangeHighlighter(myProject, document1, document2,
-                                                                                           builder.getRanges());
-
-        return new TwosideDocumentData(builder, highlighter, rangeHighlighter);
-      });
-      UnifiedFragmentBuilder builder = data.getBuilder();
-
-      LineNumberConvertor convertor1 = builder.getConvertor1();
-      LineNumberConvertor convertor2 = builder.getConvertor2();
-      List<LineRange> changedLines = builder.getChangedLines();
-      boolean isContentsEqual = builder.isEqual();
-
-      CombinedEditorData editorData = new CombinedEditorData(builder.getText(), data.getHighlighter(), data.getRangeHighlighter(),
-                                                             convertor1.createConvertor(), convertor2.createConvertor());
-
-      Side masterSide = builder.getMasterSide();
-      FoldingModelSupport.Data foldingState = myFoldingModel.createState(changedLines, getFoldingModelSettings(),
-                                                                         getDocument(masterSide), masterSide.select(convertor1, convertor2),
-                                                                         StringUtil.countNewLines(builder.getText()) + 1);
-
-      return apply(editorData, builder.getBlocks(), convertor1, convertor2, foldingState, isContentsEqual);
+      return computeDifferences(indicator);
     }
     catch (DiffTooBigException e) {
       return () -> {
@@ -289,11 +262,34 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     }
     catch (Throwable e) {
       LOG.error(e);
-      return () -> {
-        clearDiffPresentation();
-        myPanel.setErrorContent();
-      };
+      return applyErrorNotification();
     }
+  }
+
+  @NotNull
+  protected Runnable applyErrorNotification() {
+    return () -> {
+      clearDiffPresentation();
+      myPanel.setErrorContent();
+    };
+  }
+
+  @NotNull
+  protected Runnable computeDifferences(@NotNull ProgressIndicator indicator) {
+    final Document document1 = getContent1().getDocument();
+    final Document document2 = getContent2().getDocument();
+
+    final CharSequence[] texts = ReadAction.compute(
+      () -> new CharSequence[]{document1.getImmutableCharSequence(), document2.getImmutableCharSequence()});
+
+    final List<LineFragment> fragments = myTextDiffProvider.compare(texts[0], texts[1], indicator);
+
+    UnifiedFragmentBuilder builder = ReadAction.compute(() -> {
+      indicator.checkCanceled();
+      return new UnifiedFragmentBuilder(fragments, document1, document2, myMasterSide).exec();
+    });
+
+    return apply(builder, texts, indicator);
   }
 
   private void clearDiffPresentation() {
@@ -316,11 +312,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
   protected void markStateIsOutOfDate() {
     myStateIsOutOfDate = true;
     myFoldingModel.disposeLineConvertor();
-    if (myChangedBlockData != null) {
-      for (UnifiedDiffChange diffChange : myChangedBlockData.getDiffChanges()) {
-        diffChange.updateGutterActions();
-      }
-    }
+    myModel.updateGutterActions();
   }
 
   @Nullable
@@ -342,12 +334,34 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
   }
 
   @NotNull
-  private Runnable apply(@NotNull final CombinedEditorData data,
-                         @NotNull final List<? extends ChangedBlock> blocks,
-                         @NotNull final LineNumberConvertor convertor1,
-                         @NotNull final LineNumberConvertor convertor2,
-                         @Nullable final FoldingModelSupport.Data foldingState,
-                         final boolean isContentsEqual) {
+  protected Runnable apply(@NotNull UnifiedFragmentBuilder builder,
+                           @NotNull CharSequence[] texts,
+                           @NotNull ProgressIndicator indicator) {
+    final DocumentContent content1 = getContent1();
+    final DocumentContent content2 = getContent2();
+
+    EditorHighlighter highlighter = ReadAction.compute(() -> {
+      indicator.checkCanceled();
+      return buildHighlighter(myProject, content1, content2,
+                              texts[0], texts[1], builder.getRanges(),
+                              builder.getText().length());
+    });
+
+    UnifiedEditorRangeHighlighter rangeHighlighter = ReadAction.compute(() -> {
+      indicator.checkCanceled();
+      return new UnifiedEditorRangeHighlighter(myProject, content1.getDocument(), content2.getDocument(), builder.getRanges());
+    });
+
+    LineNumberConvertor convertor1 = builder.getConvertor1();
+    LineNumberConvertor convertor2 = builder.getConvertor2();
+    List<LineRange> changedLines = builder.getChangedLines();
+    boolean isContentsEqual = changedLines.isEmpty() && StringUtil.equals(texts[0], texts[1]);
+
+    Side masterSide = builder.getMasterSide();
+    FoldingModelSupport.Data foldingState = myFoldingModel.createState(changedLines, getFoldingModelSettings(),
+                                                                       getDocument(masterSide), masterSide.select(convertor1, convertor2),
+                                                                       StringUtil.countNewLines(builder.getText()) + 1);
+
     return () -> {
       myFoldingModel.updateContext(myRequest, getFoldingModelSettings());
 
@@ -368,34 +382,28 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
       TIntFunction contentConvertor1 = DiffUtil.getContentLineConvertor(getContent1());
       TIntFunction contentConvertor2 = DiffUtil.getContentLineConvertor(getContent2());
       myEditor.getGutterComponentEx().setLineNumberConvertor(
-        mergeLineConverters(contentConvertor1, data.getLineConvertor1(), foldingLineConvertor),
-        mergeLineConverters(contentConvertor2, data.getLineConvertor2(), foldingLineConvertor));
+        mergeLineConverters(contentConvertor1, convertor1.createConvertor(), foldingLineConvertor),
+        mergeLineConverters(contentConvertor2, convertor2.createConvertor(), foldingLineConvertor));
 
       ApplicationManager.getApplication().runWriteAction(() -> {
         myDuringOnesideDocumentModification = true;
         try {
-          myDocument.setText(data.getText());
+          myDocument.setText(builder.getText());
         }
         finally {
           myDuringOnesideDocumentModification = false;
         }
       });
 
-      if (data.getHighlighter() != null) myEditor.setHighlighter(data.getHighlighter());
+      if (highlighter != null) myEditor.setHighlighter(highlighter);
       DiffUtil.setEditorCodeStyle(myProject, myEditor, getContent(myMasterSide));
 
-      if (data.getRangeHighlighter() != null) data.getRangeHighlighter().apply(myProject, myDocument);
-
-
-      ArrayList<UnifiedDiffChange> diffChanges = new ArrayList<>(blocks.size());
-      for (ChangedBlock block : blocks) {
-        diffChanges.add(new UnifiedDiffChange(this, block));
-      }
+      if (rangeHighlighter != null) rangeHighlighter.apply(myProject, myDocument);
 
       List<RangeMarker> guarderRangeBlocks = new ArrayList<>();
       if (!myEditor.isViewer()) {
-        for (ChangedBlock block : blocks) {
-          LineRange range = myMasterSide.select(block.getRange2(), block.getRange1());
+        for (UnifiedDiffChange change : builder.getChanges()) {
+          LineRange range = myMasterSide.select(change.getInsertedRange(), change.getDeletedRange());
           if (range.isEmpty()) continue;
           TextRange textRange = DiffUtil.getLinesRange(myDocument, range.start, range.end);
           guarderRangeBlocks.add(createGuardedBlock(textRange.getStartOffset(), textRange.getEndOffset()));
@@ -404,9 +412,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
         guarderRangeBlocks.add(createGuardedBlock(textLength, textLength));
       }
 
-
-      myChangedBlockData = new ChangedBlockData(diffChanges, guarderRangeBlocks, convertor1, convertor2, isContentsEqual);
-
+      myModel.setChanges(builder.getChanges(), isContentsEqual, guarderRangeBlocks, convertor1, convertor2);
 
       int newCaretLine = transferLineToOneside(oldCaretLineTwoside.second,
                                                oldCaretLineTwoside.second.select(oldCaretLineTwoside.first));
@@ -442,8 +448,8 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
    */
   @CalledInAwt
   public int transferLineToOnesideStrict(@NotNull Side side, int line) {
-    if (myChangedBlockData == null) return -1;
-    return myChangedBlockData.getLineNumberConvertor(side).convertInv(line);
+    LineNumberConvertor convertor = myModel.getLineNumberConvertor(side);
+    return convertor != null ? convertor.convertInv(line) : -1;
   }
 
   /*
@@ -451,8 +457,8 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
    */
   @CalledInAwt
   public int transferLineFromOnesideStrict(@NotNull Side side, int line) {
-    if (myChangedBlockData == null) return -1;
-    return myChangedBlockData.getLineNumberConvertor(side).convert(line);
+    LineNumberConvertor convertor = myModel.getLineNumberConvertor(side);
+    return convertor != null ? convertor.convert(line) : -1;
   }
 
   /*
@@ -460,8 +466,12 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
    */
   @CalledInAwt
   public int transferLineToOneside(@NotNull Side side, int line) {
-    if (myChangedBlockData == null) return line;
-    return myChangedBlockData.getLineNumberConvertor(side).convertApproximateInv(line);
+    LineNumberConvertor convertor = myModel.getLineNumberConvertor(side);
+    return convertor != null ? convertor.convertApproximateInv(line) : line;
+  }
+
+  public int transferLineFromOneside(@NotNull Side side, int line) {
+    return side.select(transferLineFromOneside(line).first);
   }
 
   /*
@@ -472,14 +482,15 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
   public Pair<int[], Side> transferLineFromOneside(int line) {
     int[] lines = new int[2];
 
-    if (myChangedBlockData == null) {
+    ChangedBlockData blockData = myModel.getData();
+    if (blockData == null) {
       lines[0] = line;
       lines[1] = line;
       return Pair.create(lines, myMasterSide);
     }
 
-    LineNumberConvertor lineConvertor1 = myChangedBlockData.getLineNumberConvertor(Side.LEFT);
-    LineNumberConvertor lineConvertor2 = myChangedBlockData.getLineNumberConvertor(Side.RIGHT);
+    LineNumberConvertor lineConvertor1 = blockData.getLineNumberConvertor(Side.LEFT);
+    LineNumberConvertor lineConvertor2 = blockData.getLineNumberConvertor(Side.RIGHT);
 
     Side side = myMasterSide;
     lines[0] = lineConvertor1.convert(line);
@@ -503,15 +514,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
 
   @CalledInAwt
   private void destroyChangedBlockData() {
-    if (myChangedBlockData == null) return;
-
-    for (UnifiedDiffChange change : myChangedBlockData.getDiffChanges()) {
-      change.destroyHighlighter();
-    }
-    for (RangeMarker block : myChangedBlockData.getGuardedRangeBlocks()) {
-      myDocument.removeGuardedBlock(block);
-    }
-    myChangedBlockData = null;
+    myModel.clear();
 
     UnifiedEditorRangeHighlighter.erase(myProject, myDocument);
 
@@ -528,8 +531,9 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     @Override
     public void beforeDocumentChange(@NotNull DocumentEvent e) {
       if (myDuringOnesideDocumentModification) return;
-      if (myChangedBlockData == null) {
-        LOG.warn("oneside beforeDocumentChange - myChangedBlockData == null");
+      ChangedBlockData blockData = myModel.getData();
+      if (blockData == null) {
+        LOG.warn("oneside beforeDocumentChange - model is invalid");
         return;
       }
       // TODO: modify Document guard range logic - we can handle case, when whole read-only block is modified (ex: my replacing selection).
@@ -559,12 +563,12 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
         int twosideEndOffset = twosideDocument.getLineStartOffset(twosideEndLine) + onesideEndPosition.column;
         twosideDocument.replaceString(twosideStartOffset, twosideEndOffset, e.getNewFragment());
 
-        for (UnifiedDiffChange change : myChangedBlockData.getDiffChanges()) {
+        for (UnifiedDiffChange change : blockData.getDiffChanges()) {
           change.processChange(line1, line2, shift);
         }
 
-        LineNumberConvertor masterConvertor = myChangedBlockData.getLineNumberConvertor(myMasterSide);
-        LineNumberConvertor slaveConvertor = myChangedBlockData.getLineNumberConvertor(myMasterSide.other());
+        LineNumberConvertor masterConvertor = blockData.getLineNumberConvertor(myMasterSide);
+        LineNumberConvertor slaveConvertor = blockData.getLineNumberConvertor(myMasterSide.other());
         masterConvertor.handleMasterChange(line1, line2, shift, true);
         slaveConvertor.handleMasterChange(line1, line2, shift, false);
       }
@@ -670,24 +674,10 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     }
 
     protected boolean isSomeChangeSelected() {
-      if (myChangedBlockData == null) return false;
-      List<UnifiedDiffChange> changes = myChangedBlockData.getDiffChanges();
-      if (changes.isEmpty()) return false;
+      List<UnifiedDiffChange> changes = myModel.getDiffChanges();
+      if (changes == null || changes.isEmpty()) return false;
 
       return DiffUtil.isSomeRangeSelected(getEditor(), lines -> ContainerUtil.exists(changes, change -> isChangeSelected(change, lines)));
-    }
-
-    @NotNull
-    @CalledInAwt
-    private List<UnifiedDiffChange> getSelectedChanges() {
-      if (myChangedBlockData == null) return Collections.emptyList();
-      final BitSet lines = DiffUtil.getSelectedLines(myEditor);
-      List<UnifiedDiffChange> changes = myChangedBlockData.getDiffChanges();
-      return ContainerUtil.filter(changes, change -> isChangeSelected(change, lines));
-    }
-
-    private boolean isChangeSelected(@NotNull UnifiedDiffChange change, @NotNull BitSet lines) {
-      return DiffUtil.isSelectedByLine(lines, change.getLine1(), change.getLine2());
     }
 
     @CalledWithWriteLock
@@ -762,6 +752,18 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
                                sourceSide.getStartLine(lineFragment), sourceSide.getEndLine(lineFragment));
   }
 
+  @NotNull
+  @CalledInAwt
+  protected List<UnifiedDiffChange> getSelectedChanges() {
+    final BitSet lines = DiffUtil.getSelectedLines(myEditor);
+    List<UnifiedDiffChange> changes = ContainerUtil.notNullize(myModel.getDiffChanges());
+    return ContainerUtil.filter(changes, change -> isChangeSelected(change, lines));
+  }
+
+  private static boolean isChangeSelected(@NotNull UnifiedDiffChange change, @NotNull BitSet lines) {
+    return DiffUtil.isSelectedByLine(lines, change.getLine1(), change.getLine2());
+  }
+
   //
   // Impl
   //
@@ -821,7 +823,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
   @CalledInAwt
   @Nullable
   protected List<UnifiedDiffChange> getDiffChanges() {
-    return myChangedBlockData == null ? null : myChangedBlockData.getDiffChanges();
+    return myModel.getDiffChanges();
   }
 
   @NotNull
@@ -839,7 +841,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
 
   @NotNull
   @Override
-  protected JComponent getStatusPanel() {
+  protected StatusPanel getStatusPanel() {
     return myStatusPanel;
   }
 
@@ -872,10 +874,12 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
   @CalledInAwt
   @Nullable
   protected UnifiedDiffChange getCurrentChange() {
-    if (myChangedBlockData == null) return null;
+    List<UnifiedDiffChange> changes = myModel.getDiffChanges();
+    if (changes == null) return null;
+
     int caretLine = myEditor.getCaretModel().getLogicalPosition().line;
 
-    for (UnifiedDiffChange change : myChangedBlockData.getDiffChanges()) {
+    for (UnifiedDiffChange change : changes) {
       if (DiffUtil.isSelectedByLine(caretLine, change.getLine1(), change.getLine2())) return change;
     }
     return null;
@@ -896,7 +900,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
   }
 
   public boolean isContentGood() {
-    return myPanel.isGoodContent() && myChangedBlockData != null;
+    return myPanel.isGoodContent() && myModel.isValid();
   }
 
   public static boolean canShowRequest(@NotNull DiffContext context, @NotNull DiffRequest request) {
@@ -960,11 +964,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     @Override
     protected void doApply(boolean readOnly) {
       myReadOnlyLockSet = readOnly;
-      if (myChangedBlockData != null) {
-        for (UnifiedDiffChange unifiedDiffChange : myChangedBlockData.getDiffChanges()) {
-          unifiedDiffChange.updateGutterActions();
-        }
-      }
+      myModel.updateGutterActions();
       updateEditorCanBeTyped();
       putEditorHint(myEditor, readOnly && isEditable(myMasterSide, false));
     }
@@ -1043,125 +1043,13 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     @Nullable
     @Override
     protected String getMessage() {
-      if (myChangedBlockData == null) return null;
-      int changesCount = myChangedBlockData.getDiffChanges().size();
-      if (changesCount == 0 && !myChangedBlockData.isContentsEqual()) {
-        return DiffBundle.message("diff.all.differences.ignored.text");
-      }
-      return DiffBundle.message("diff.count.differences.status.text", changesCount);
-    }
-  }
+      ChangedBlockData blockData = myModel.getData();
+      if (blockData == null) return null;
 
-  private static class TwosideDocumentData {
-    @NotNull private final UnifiedFragmentBuilder myBuilder;
-    @Nullable private final EditorHighlighter myHighlighter;
-    @Nullable private final UnifiedEditorRangeHighlighter myRangeHighlighter;
-
-    TwosideDocumentData(@NotNull UnifiedFragmentBuilder builder,
-                        @Nullable EditorHighlighter highlighter,
-                        @Nullable UnifiedEditorRangeHighlighter rangeHighlighter) {
-      myBuilder = builder;
-      myHighlighter = highlighter;
-      myRangeHighlighter = rangeHighlighter;
-    }
-
-    @NotNull
-    public UnifiedFragmentBuilder getBuilder() {
-      return myBuilder;
-    }
-
-    @Nullable
-    public EditorHighlighter getHighlighter() {
-      return myHighlighter;
-    }
-
-    @Nullable
-    public UnifiedEditorRangeHighlighter getRangeHighlighter() {
-      return myRangeHighlighter;
-    }
-  }
-
-  private static class ChangedBlockData {
-    @NotNull private final List<UnifiedDiffChange> myDiffChanges;
-    @NotNull private final List<RangeMarker> myGuardedRangeBlocks;
-    @NotNull private final LineNumberConvertor myLineNumberConvertor1;
-    @NotNull private final LineNumberConvertor myLineNumberConvertor2;
-    private final boolean myIsContentsEqual;
-
-    ChangedBlockData(@NotNull List<UnifiedDiffChange> diffChanges,
-                     @NotNull List<RangeMarker> guarderRangeBlocks,
-                     @NotNull LineNumberConvertor lineNumberConvertor1,
-                     @NotNull LineNumberConvertor lineNumberConvertor2,
-                     boolean isContentsEqual) {
-      myDiffChanges = diffChanges;
-      myGuardedRangeBlocks = guarderRangeBlocks;
-      myLineNumberConvertor1 = lineNumberConvertor1;
-      myLineNumberConvertor2 = lineNumberConvertor2;
-      myIsContentsEqual = isContentsEqual;
-    }
-
-    @NotNull
-    public List<UnifiedDiffChange> getDiffChanges() {
-      return myDiffChanges;
-    }
-
-    @NotNull
-    public List<RangeMarker> getGuardedRangeBlocks() {
-      return myGuardedRangeBlocks;
-    }
-
-    @NotNull
-    public LineNumberConvertor getLineNumberConvertor(@NotNull Side side) {
-      return side.select(myLineNumberConvertor1, myLineNumberConvertor2);
-    }
-
-    public boolean isContentsEqual() {
-      return myIsContentsEqual;
-    }
-  }
-
-  private static class CombinedEditorData {
-    @NotNull private final CharSequence myText;
-    @Nullable private final EditorHighlighter myHighlighter;
-    @Nullable private final UnifiedEditorRangeHighlighter myRangeHighlighter;
-    @NotNull private final TIntFunction myLineConvertor1;
-    @NotNull private final TIntFunction myLineConvertor2;
-
-    CombinedEditorData(@NotNull CharSequence text,
-                       @Nullable EditorHighlighter highlighter,
-                       @Nullable UnifiedEditorRangeHighlighter rangeHighlighter,
-                       @NotNull TIntFunction convertor1,
-                       @NotNull TIntFunction convertor2) {
-      myText = text;
-      myHighlighter = highlighter;
-      myRangeHighlighter = rangeHighlighter;
-      myLineConvertor1 = convertor1;
-      myLineConvertor2 = convertor2;
-    }
-
-    @NotNull
-    public CharSequence getText() {
-      return myText;
-    }
-
-    @Nullable
-    public EditorHighlighter getHighlighter() {
-      return myHighlighter;
-    }
-
-    @Nullable
-    public UnifiedEditorRangeHighlighter getRangeHighlighter() {
-      return myRangeHighlighter;
-    }
-
-    @NotNull
-    public TIntFunction getLineConvertor1() {
-      return myLineConvertor1;
-    }
-
-    @NotNull
-    public TIntFunction getLineConvertor2() {
-      return myLineConvertor2;
+      List<UnifiedDiffChange> allChanges = blockData.getDiffChanges();
+      return DiffUtil.getStatusText(allChanges.size(),
+                                    ContainerUtil.count(allChanges, it -> it.isExcluded()),
+                                    myModel.isContentsEqual());
     }
   }
 
@@ -1230,10 +1118,11 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     }
 
     private boolean doScrollToChange(@NotNull ScrollToPolicy scrollToChangePolicy) {
-      if (myChangedBlockData == null) return false;
-      List<UnifiedDiffChange> changes = myChangedBlockData.getDiffChanges();
+      List<UnifiedDiffChange> changes = myModel.getDiffChanges();
+      if (changes == null) return false;
 
-      UnifiedDiffChange targetChange = scrollToChangePolicy.select(changes);
+      UnifiedDiffChange targetChange = scrollToChangePolicy.select(ContainerUtil.filter(changes, it -> !it.isSkipped()));
+      if (targetChange == null) targetChange = scrollToChangePolicy.select(changes);
       if (targetChange == null) return false;
 
       DiffUtil.scrollEditor(myEditor, targetChange.getLine1(), false);
@@ -1254,9 +1143,11 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     @Override
     protected boolean doScrollToContext() {
       if (myNavigationContext == null) return false;
-      if (myChangedBlockData == null) return false;
 
-      ChangedLinesIterator changedLinesIterator = new ChangedLinesIterator(myChangedBlockData.getDiffChanges());
+      List<UnifiedDiffChange> changes = myModel.getDiffChanges();
+      if (changes == null) return false;
+
+      ChangedLinesIterator changedLinesIterator = new ChangedLinesIterator(changes);
       int line = myNavigationContext.contextMatchCheck(changedLinesIterator);
       if (line == -1) {
         // this will work for the case, when spaces changes are ignored, and corresponding fragments are not reported as changed

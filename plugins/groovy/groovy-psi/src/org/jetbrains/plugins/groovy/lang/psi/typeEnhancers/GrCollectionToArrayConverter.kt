@@ -12,16 +12,16 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 
 class GrCollectionToArrayConverter : GrTypeConverter() {
 
-  override fun isApplicableTo(position: ApplicableTo): Boolean = position == ApplicableTo.ASSIGNMENT
+  override fun isApplicableTo(position: Position): Boolean = position == Position.ASSIGNMENT
 
-  override fun isConvertibleEx(targetType: PsiType,
-                               actualType: PsiType,
-                               context: GroovyPsiElement,
-                               currentPosition: ApplicableTo): ConversionResult? {
+  override fun isConvertible(targetType: PsiType,
+                             actualType: PsiType,
+                             position: Position,
+                             context: GroovyPsiElement): ConversionResult? {
     if (targetType !is PsiArrayType) return null
     if (!isInheritor(actualType, JAVA_UTIL_COLLECTION)) return null
     val left = targetType.componentType
     val right = substituteTypeParameter(actualType, JAVA_UTIL_COLLECTION, 0, false) ?: return null
-    return TypesUtil.canAssign(left, right, context, ApplicableTo.ASSIGNMENT)
+    return TypesUtil.canAssign(left, right, context, Position.ASSIGNMENT)
   }
 }

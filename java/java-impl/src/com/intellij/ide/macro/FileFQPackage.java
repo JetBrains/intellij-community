@@ -4,20 +4,23 @@ package com.intellij.ide.macro;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.psi.PsiPackage;
+import org.jetbrains.annotations.NotNull;
 
 public class FileFQPackage extends Macro {
   @Override
-  public String expand(DataContext dataContext) {
+  public String expand(@NotNull DataContext dataContext) {
     PsiPackage aPackage = FilePackageMacro.getFilePackage(dataContext);
     if (aPackage == null) return null;
     return aPackage.getQualifiedName();
   }
 
+  @NotNull
   @Override
   public String getDescription() {
     return IdeBundle.message("macro.file.fully.qualified.package");
   }
 
+  @NotNull
   @Override
   public String getName() {
     return "FileFQPackage";

@@ -1,9 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-import * as am4charts from "@amcharts/amcharts4/charts"
 import * as am4core from "@amcharts/amcharts4/core"
 import {Item} from "@/state/data"
 
 export interface TimeLineItem extends Item {
+  // helper property, not required to visualize chart (used only to compute rowIndex for non-parallel activities)
   level: number
   rowIndex: number
 
@@ -25,29 +25,31 @@ export function transformToTimeLineItems(items: Array<Item>): Array<TimeLineItem
     }
     result[i] = item
 
+    let colorIndex = -1
+
     for (let j = i - 1; j >= 0; j--) {
       const prevItem = result[j]
       if (prevItem.end >= item.end) {
         item.level = prevItem.level + 1
-        item.colorIndex = prevItem.colorIndex
+        colorIndex = prevItem.colorIndex
+        item.colorIndex = colorIndex
         break
       }
     }
 
-    if (item.colorIndex === -1) {
-      item.colorIndex = lastAllocatedColorIndex++
+    if (colorIndex === -1) {
+      colorIndex = lastAllocatedColorIndex++
+      item.colorIndex = colorIndex
     }
   }
   return result
 }
 
-export function disableGridButKeepBorderLines(axis: am4charts.Axis) {
-  axis.renderer.grid.template.adapter.add("disabled", (_, target) => {
-    if (target.dataItem == null) {
-      return false
-    }
+export interface TimeLineGuide {
+  readonly value: number
+  readonly endValue?: number
 
-    const index = target.dataItem.index
-    return !(index === 0 || index === -1)
-  })
+  readonly label: string
+
+  readonly color: am4core.Color
 }

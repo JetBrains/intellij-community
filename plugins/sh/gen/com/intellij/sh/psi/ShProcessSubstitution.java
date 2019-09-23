@@ -11,10 +11,10 @@ public interface ShProcessSubstitution extends ShCompositeElement {
   ShCompoundList getCompoundList();
 
   @Nullable
-  PsiElement getGt();
+  PsiElement getInputProcessSubstitution();
 
   @Nullable
-  PsiElement getLeftParen();
+  PsiElement getOutputProcessSubstitution();
 
   @Nullable
   PsiElement getRightParen();

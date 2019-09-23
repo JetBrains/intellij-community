@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
-import com.intellij.diagnostic.LoadingPhase;
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.extensions.PluginId;
@@ -23,7 +23,7 @@ import java.util.Set;
 public final class InstalledPluginsState {
   @Nullable
   public static InstalledPluginsState getInstanceIfLoaded() {
-    return LoadingPhase.COMPONENT_LOADED.isComplete() ? getInstance() : null;
+    return LoadingState.COMPONENTS_LOADED.isOccurred() ? getInstance() : null;
   }
 
   public static InstalledPluginsState getInstance() {
@@ -32,7 +32,9 @@ public final class InstalledPluginsState {
 
   private final Object myLock = new Object();
   private final Map<PluginId, IdeaPluginDescriptor> myInstalledPlugins = ContainerUtil.newIdentityHashMap();
+  private final Map<PluginId, IdeaPluginDescriptor> myInstalledWithoutRestartPlugins = ContainerUtil.newIdentityHashMap();
   private final Map<PluginId, IdeaPluginDescriptor> myUpdatedPlugins = ContainerUtil.newIdentityHashMap();
+  private final Map<PluginId, IdeaPluginDescriptor> myUninstalledWithoutRestartPlugins = ContainerUtil.newIdentityHashMap();
   private final Set<String> myOutdatedPlugins = new SmartHashSet<>();
 
   @NotNull
@@ -54,6 +56,18 @@ public final class InstalledPluginsState {
     }
   }
 
+  public boolean wasInstalledWithoutRestart(@NotNull PluginId id) {
+    synchronized (myLock) {
+      return myInstalledWithoutRestartPlugins.containsKey(id);
+    }
+  }
+
+  public boolean wasUninstalledWithoutRestart(@NotNull PluginId id) {
+    synchronized (myLock) {
+      return myUninstalledWithoutRestartPlugins.containsKey(id);
+    }
+  }
+
   public boolean wasUpdated(@NotNull PluginId id) {
     synchronized (myLock) {
       return myUpdatedPlugins.containsKey(id);
@@ -65,7 +79,7 @@ public final class InstalledPluginsState {
    */
   public void onDescriptorDownload(@NotNull IdeaPluginDescriptor descriptor) {
     PluginId id = descriptor.getPluginId();
-    IdeaPluginDescriptor existing = PluginManager.getPlugin(id);
+    IdeaPluginDescriptor existing = PluginManagerCore.getPlugin(id);
     if (existing == null || (existing.isBundled() && !existing.allowBundledUpdate()) || wasUpdated(id)) {
       return;
     }
@@ -84,22 +98,37 @@ public final class InstalledPluginsState {
       }
     }
   }
-
   /**
    * Should be called whenever a new plugin is installed or an existing one is updated.
    */
-  public void onPluginInstall(@NotNull IdeaPluginDescriptor descriptor) {
+  public void onPluginInstall(@NotNull IdeaPluginDescriptor descriptor, boolean isUpdate, boolean restartNeeded) {
     PluginId id = descriptor.getPluginId();
-    boolean existing = PluginManager.isPluginInstalled(id);
-
     synchronized (myLock) {
       myOutdatedPlugins.remove(id.getIdString());
-      if (existing) {
+      if (isUpdate) {
         myUpdatedPlugins.put(id, descriptor);
       }
-      else {
+      else if (restartNeeded) {
         myInstalledPlugins.put(id, descriptor);
       }
+      else {
+        myInstalledWithoutRestartPlugins.put(id, descriptor);
+      }
     }
+  }
+
+
+  public void onPluginUninstall(@NotNull IdeaPluginDescriptor descriptor, boolean restartNeeded) {
+    PluginId id = descriptor.getPluginId();
+    synchronized (myLock) {
+      if (!restartNeeded) {
+        myUninstalledWithoutRestartPlugins.put(id, descriptor);
+      }
+    }
+  }
+
+  public void resetChangesAppliedWithoutRestart() {
+    myInstalledWithoutRestartPlugins.clear();
+    myUninstalledWithoutRestartPlugins.clear();
   }
 }

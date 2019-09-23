@@ -13,6 +13,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl;
 import com.intellij.psi.util.PsiConcatenationUtil;
+import com.intellij.psi.util.PsiLiteralUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -46,7 +47,7 @@ public class ConcatenationToMessageFormatAction implements IntentionAction {
     PsiPolyadicExpression concatenation = getEnclosingLiteralConcatenation(element);
     if (concatenation == null) return;
     List<PsiExpression> args = new ArrayList<>();
-    final String formatString = PsiConcatenationUtil.buildFormatString(concatenation, false, args);
+    final String formatString = PsiConcatenationUtil.buildUnescapedFormatString(concatenation, false, args);
 
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     PsiMethodCallExpression call = (PsiMethodCallExpression)
@@ -56,7 +57,7 @@ public class ConcatenationToMessageFormatAction implements IntentionAction {
       .anyMatch(operand -> operand instanceof PsiLiteralExpressionImpl &&
                            ((PsiLiteralExpressionImpl)operand).getLiteralElementType() == JavaTokenType.TEXT_BLOCK_LITERAL);
     final String expressionText = textBlocks
-                                  ? "\"\"\"\n" + StringUtil.escapeTextBlockCharacters(formatString) + "\"\"\""
+                                  ? "\"\"\"\n" + PsiLiteralUtil.escapeTextBlockCharacters(formatString) + "\"\"\""
                                   : "\"" + StringUtil.escapeStringCharacters(formatString) + "\"";
     PsiExpression formatArgument = factory.createExpressionFromText(expressionText, null);
     argumentList.add(formatArgument);

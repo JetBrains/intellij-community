@@ -3,6 +3,14 @@ import java.util.concurrent.*;
 import org.jetbrains.annotations.*;
 
 class ThisAsVariable {
+  // IDEA-219807 'Method invocation may produce NullPointerException' false positive for ArrayDeque.pollFirst
+  void checkPollFirst(ArrayDeque<String> stack, String symbol) {
+    if (!stack.isEmpty()) {
+      System.out.println(stack.pollFirst().toString());
+      System.out.println(stack.pollFirst().<warning descr="Method invocation 'toString' may produce 'NullPointerException'">toString</warning>());
+    }
+  }
+
   void check(Queue<String> queue) {
     if(!queue.isEmpty()) {
       System.out.println(queue.peek().length() + queue.peek().length());

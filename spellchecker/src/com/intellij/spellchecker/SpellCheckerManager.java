@@ -71,9 +71,9 @@ public class SpellCheckerManager implements Disposable {
     return ServiceManager.getService(project, SpellCheckerManager.class);
   }
 
-  public SpellCheckerManager(Project project, SpellCheckerSettings settings) {
+  public SpellCheckerManager(Project project) {
     this.project = project;
-    this.settings = settings;
+    this.settings = SpellCheckerSettings.getInstance(project);
     fullConfigurationReload();
 
     Disposer.register(project, this);
@@ -173,7 +173,7 @@ public class SpellCheckerManager implements Disposable {
   }
 
   private void initUserDictionaries() {
-    final CachedDictionaryState cachedDictionaryState = ServiceManager.getService(project, CachedDictionaryState.class);
+    CachedDictionaryState cachedDictionaryState = CachedDictionaryState.getInstance();
     cachedDictionaryState.addCachedDictListener((dict) -> restartInspections());
     if (cachedDictionaryState.getDictionary() == null) {
       cachedDictionaryState.setDictionary(new UserDictionary(CachedDictionaryState.DEFAULT_NAME));
@@ -469,7 +469,7 @@ public class SpellCheckerManager implements Disposable {
       final String path = toSystemDependentName(file.getPath());
       if (!affectCustomDicts(path)) return;
 
-      visitChildrenRecursively(file, new VirtualFileVisitor() {
+      visitChildrenRecursively(file, new VirtualFileVisitor<Void>() {
         @Override
         public boolean visitFile(@NotNull VirtualFile file) {
           final boolean isDirectory = file.isDirectory();

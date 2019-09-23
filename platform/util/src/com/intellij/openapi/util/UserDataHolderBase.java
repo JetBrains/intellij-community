@@ -80,12 +80,11 @@ public class UserDataHolderBase implements UserDataHolderEx, Cloneable {
     }
   }
 
-  protected boolean changeUserMap(KeyFMap oldMap, KeyFMap newMap) {
+  protected boolean changeUserMap(@NotNull KeyFMap oldMap, @NotNull KeyFMap newMap) {
     return updater.compareAndSet(this, oldMap, newMap);
   }
 
   public <T> T getCopyableUserData(@NotNull Key<T> key) {
-    // noinspection ConstantConditions
     KeyFMap map = getUserData(COPYABLE_USER_MAP_KEY);
     return map == null ? null : map.get(key);
   }

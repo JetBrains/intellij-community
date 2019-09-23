@@ -94,7 +94,7 @@ public interface RegExpLanguageHost {
    */
   @Nullable
   default Number getQuantifierValue(@NotNull RegExpNumber number) {
-    return Double.parseDouble(number.getText());
+    return Double.parseDouble(number.getUnescapedText());
   }
 
   default Lookbehind supportsLookbehind(@NotNull RegExpGroup lookbehindGroup) {

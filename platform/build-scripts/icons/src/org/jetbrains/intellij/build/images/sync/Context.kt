@@ -88,8 +88,8 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
     val iconsRepoRelativePath = System.getProperty(iconsRepoPathArg) ?: ""
     val iconsRepoRootDir = findDirectoryIgnoringCase(System.getProperty(iconsRepoArg)) ?: cloneIconsRepoToTempDir()
     iconsRepoDir = iconsRepoRootDir.resolve(iconsRepoRelativePath)
-    if (!iconsRepoDir.isDirectory) {
-      doFail("Cannot find $iconsRepoRelativePath under $iconsRepoRootDir")
+    if (!iconsRepoDir.exists() && !iconsRepoDir.mkdirs() || !iconsRepoDir.isDirectory) {
+      doFail("Cannot access $iconsRepoDir")
     }
     iconsRepoName = System.getProperty(iconsRepoNameArg) ?: "icons repo"
     devRepoName = System.getProperty(devRepoNameArg) ?: "dev repo"

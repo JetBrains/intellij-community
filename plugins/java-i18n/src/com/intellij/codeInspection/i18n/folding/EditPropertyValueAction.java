@@ -351,6 +351,7 @@ public class EditPropertyValueAction extends BaseRefactoringAction {
           int placeholderColumn = ((EditorImpl)editor).offsetToVisualColumnInFoldRegion(foldRegion, placeholderOffset, false);
           editor.getCaretModel().moveToVisualPosition(
             new VisualPosition(regionStartPosition.line, regionStartPosition.column + placeholderColumn));
+          editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
           UndoManager.getInstance(project).undoableActionPerformed(new UndoableAction() {
             @Override
             public void undo() {

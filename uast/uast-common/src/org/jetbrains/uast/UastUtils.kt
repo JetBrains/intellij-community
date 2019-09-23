@@ -18,10 +18,12 @@
 
 package org.jetbrains.uast
 
+import com.intellij.codeInsight.completion.CompletionUtilCoreImpl
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.annotations.ApiStatus
 import java.io.File
 
 inline fun <reified T : UElement> UElement.getParentOfType(strict: Boolean = true): T? = getParentOfType(T::class.java, strict)
@@ -182,6 +184,7 @@ tailrec fun UElement.getUastContext(): UastContext {
   return (uastParent ?: error("PsiElement should exist at least for UFile")).getUastContext()
 }
 
+@Deprecated("could unexpectedly throw exception", ReplaceWith("UastFacade.findPlugin"))
 tailrec fun UElement.getLanguagePlugin(): UastLanguagePlugin {
   val psi = this.sourcePsi
   if (psi != null) {
@@ -220,3 +223,16 @@ fun UCallExpression.getParameterForArgument(arg: UExpression): PsiParameter? {
     return@find false
   }?.value
 }
+
+@ApiStatus.Experimental
+tailrec fun UElement.isLastElementInControlFlow(scopeElement: UElement? = null): Boolean =
+  when (val parent = this.uastParent) {
+    scopeElement -> true
+    is UBlockExpression -> if (parent.expressions.lastOrNull() == this) parent.isLastElementInControlFlow(scopeElement) else false
+    is UElement -> parent.isLastElementInControlFlow(scopeElement)
+    else -> false
+  }
+
+@ApiStatus.Experimental
+inline fun <reified T : UElement> toOriginalUElementOrSelf(uExpression: T) =
+  uExpression.sourcePsi?.let(CompletionUtilCoreImpl::getOriginalElement)?.toUElementOfType<T>() ?: uExpression

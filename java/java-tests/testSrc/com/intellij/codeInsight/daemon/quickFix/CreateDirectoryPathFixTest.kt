@@ -2,8 +2,6 @@
 package com.intellij.codeInsight.daemon.quickFix
 
 import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference
 
 class CreateDirectoryPathFixTest : CreateFileQuickFixTestCase() {
 
@@ -31,7 +29,7 @@ class CreateDirectoryPathFixTest : CreateFileQuickFixTestCase() {
 
     withFileReferenceInStringLiteral {
       val ref = myFixture.getReferenceAtCaretPosition()
-      val fileReference = (ref as PsiMultiReference).references.filterIsInstance<FileReference>()[0]
+      val fileReference = findFileReference(ref)
 
       assertEquals(expectedDirName, fileReference.fileNameToCreate)
       val intention = fileReference.quickFixes!![0]

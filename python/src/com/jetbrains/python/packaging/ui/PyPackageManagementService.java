@@ -19,8 +19,8 @@ import com.jetbrains.python.packaging.*;
 import com.jetbrains.python.packaging.PyPIPackageUtil.PackageDetails;
 import com.jetbrains.python.packaging.requirement.PyRequirementRelation;
 import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -139,15 +139,15 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
 
   @Override
   public boolean canInstallToUser() {
-    return !PythonSdkType.isVirtualEnv(mySdk);
+    return !PythonSdkUtil.isVirtualEnv(mySdk);
   }
 
   @NotNull
   @Override
   public String getInstallToUserText() {
     String userSiteText = "Install to user's site packages directory";
-    if (!PythonSdkType.isRemote(mySdk))
-      userSiteText += " (" + PySdkUtil.getUserSite() + ")";
+    if (!PythonSdkUtil.isRemote(mySdk))
+      userSiteText += " (" + PythonSdkUtil.getUserSite() + ")";
     return userSiteText;
   }
 

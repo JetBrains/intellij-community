@@ -3,7 +3,6 @@ package com.intellij.internal.statistics.whitelist
 
 import com.intellij.internal.statistic.service.fus.FUSWhitelist
 import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService
-import com.intellij.internal.statistics.WhitelistBuilder
 import com.intellij.openapi.util.BuildNumber
 import org.junit.Test
 import kotlin.test.assertEquals

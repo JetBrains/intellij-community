@@ -72,8 +72,7 @@ public class HighlightInfoHolder {
     return myErrorCount != 0;
   }
 
-  public boolean addAll(@Nullable Collection<? extends HighlightInfo> highlightInfos) {
-    if (highlightInfos == null) return false;
+  public boolean addAll(@NotNull Collection<? extends HighlightInfo> highlightInfos) {
     LOG.assertTrue(highlightInfos != this);
     boolean added = false;
     for (final HighlightInfo highlightInfo : highlightInfos) {
@@ -86,6 +85,7 @@ public class HighlightInfoHolder {
     return myInfos.size();
   }
 
+  @NotNull
   public HighlightInfo get(final int i) {
     return myInfos.get(i);
   }

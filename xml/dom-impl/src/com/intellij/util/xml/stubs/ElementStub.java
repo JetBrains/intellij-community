@@ -19,7 +19,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.stubs.ObjectStubSerializer;
 import com.intellij.psi.stubs.Stub;
 import com.intellij.util.SmartList;
-import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,15 +34,15 @@ public class ElementStub extends DomStub {
   private final boolean myCustom;
 
   @Nullable
-  private final StringRef myElementClass;
+  private final String myElementClass;
   private final String myValue;
 
   public ElementStub(@Nullable ElementStub parent,
-                     @NotNull StringRef name,
-                     @Nullable StringRef namespace,
+                     @NotNull String name,
+                     @Nullable String namespace,
                      int index,
                      boolean custom,
-                     @Nullable StringRef elementClass,
+                     @Nullable String elementClass,
                      @NotNull String value) {
     super(parent, name, namespace);
     myIndex = index;
@@ -63,7 +62,7 @@ public class ElementStub extends DomStub {
   }
 
   @Override
-  public ObjectStubSerializer getStubType() {
+  public ObjectStubSerializer<?,?> getStubType() {
     return DomElementTypeHolder.ElementStubSerializer;
   }
 
@@ -86,7 +85,7 @@ public class ElementStub extends DomStub {
 
   @Nullable
   String getElementClass() {
-    return myElementClass == null ? null : myElementClass.getString();
+    return myElementClass;
   }
 
   @NotNull

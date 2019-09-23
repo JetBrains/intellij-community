@@ -10,6 +10,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -25,7 +26,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
-import java.nio.charset.Charset;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -36,27 +36,26 @@ public abstract class PythonSdkFlavor {
   private static final Pattern VERSION_RE = Pattern.compile("(Python \\S+).*");
   private static final Logger LOG = Logger.getInstance(PythonSdkFlavor.class);
 
-  public static Collection<String> appendSystemPythonPath(@NotNull Collection<String> pythonPath) {
-    return appendSystemEnvPaths(pythonPath, PythonEnvUtil.PYTHONPATH);
+
+  /**
+   * @param context used as cache.
+   *                If provided, must have "session"-scope.
+   *                Session could be one dialog or wizard.
+   */
+  @NotNull
+  public Collection<String> suggestHomePaths(@Nullable final Module module, @Nullable final UserDataHolder context) {
+    return suggestHomePaths(module);
   }
 
-  protected static Collection<String> appendSystemEnvPaths(@NotNull Collection<String> pythonPath, String envname) {
-    String syspath = System.getenv(envname);
-    if (syspath != null) {
-      pythonPath.addAll(Lists.newArrayList(syspath.split(File.pathSeparator)));
-    }
-    return pythonPath;
-  }
 
-
-  public static void initPythonPath(@NotNull Map<String, String> envs, boolean passParentEnvs, @NotNull Collection<String> pythonPathList) {
-    if (passParentEnvs && !envs.containsKey(PythonEnvUtil.PYTHONPATH)) {
-      pythonPathList = appendSystemPythonPath(pythonPathList);
-    }
-    PythonEnvUtil.addToPythonPath(envs, pythonPathList);
-  }
-
-  public Collection<String> suggestHomePaths(@Nullable Module module) {
+  /**
+   * @deprecated use {@link #suggestHomePaths(Module, UserDataHolder)}.
+   * Will be deleted in 2020.3
+   */
+  @SuppressWarnings("unused")
+  @Deprecated
+  @NotNull
+  public Collection<String> suggestHomePaths(@Nullable final Module module) {
     return Collections.emptyList();
   }
 
@@ -210,15 +209,6 @@ public abstract class PythonSdkFlavor {
     initPythonPath(path, passParentEnvs, cmd.getEnvironment());
   }
 
-  public static void addToEnv(final String key, String value, Map<String, String> envs) {
-    PythonEnvUtil.addPathToEnv(envs, key, value);
-  }
-
-  public static void setupEncodingEnvs(Map<String, String> envs, @NotNull Charset charset) {
-    final String encoding = charset.name();
-    PythonEnvUtil.setPythonIOEncoding(envs, encoding);
-  }
-
   @NotNull
   public abstract String getName();
 
@@ -246,7 +236,7 @@ public abstract class PythonSdkFlavor {
   }
 
   public void initPythonPath(Collection<String> path, boolean passParentEnvs, Map<String, String> env) {
-    initPythonPath(env, passParentEnvs, path);
+    PythonEnvUtil.initPythonPath(env, passParentEnvs, path);
   }
 
   public VirtualFile getSdkPath(VirtualFile path) {

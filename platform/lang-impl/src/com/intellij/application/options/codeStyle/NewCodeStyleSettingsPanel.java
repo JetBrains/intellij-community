@@ -16,8 +16,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Collections;
-import java.util.Set;
 
 /**
  * @author max
@@ -104,11 +102,10 @@ public class NewCodeStyleSettingsPanel extends JPanel implements TabbedLanguageC
   }
 
   @NotNull
-  public Set<String> processListOptions() {
-    if (myTab instanceof OptionsContainingConfigurable) {
-      return ((OptionsContainingConfigurable) myTab).processListOptions();
-    }
-    return Collections.emptySet();
+  public OptionsContainingConfigurable getOptionIndexer() {
+    return myTab instanceof OptionsContainingConfigurable
+           ? (OptionsContainingConfigurable)myTab
+           : OptionsContainingConfigurable.EMPTY;
   }
 
   @Nullable
@@ -124,6 +121,12 @@ public class NewCodeStyleSettingsPanel extends JPanel implements TabbedLanguageC
     CodeStyleAbstractPanel panel = getSelectedPanel();
     if (panel instanceof TabbedLanguageCodeStylePanel && panel != source) {
       ((TabbedLanguageCodeStylePanel)panel).changeTab(tabTitle);
+    }
+  }
+
+  void highlightOptions(@NotNull String searchString) {
+    if (myTab instanceof CodeStyleAbstractConfigurable) {
+      ((CodeStyleAbstractConfigurable)myTab).highlightOptions(searchString);
     }
   }
 }

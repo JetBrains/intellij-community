@@ -42,6 +42,14 @@ abstract class VcsCloneDialogExtensionComponent : Disposable {
   abstract fun doValidateAll(): List<ValidationInfo>
 
   /**
+   * would be called from [com.intellij.openapi.ui.DialogWrapper.getPreferredFocusedComponent] when clone dialog is opened
+   *
+   * @see com.intellij.openapi.ui.DialogWrapper.getPreferredFocusedComponent
+   */
+  @CalledInAwt
+  open fun getPreferredFocusedComponent(): JComponent? = null
+
+  /**
    * Adds listener that would be called from component in order to notify parent dialog about internal state
    *
    * @see VcsCloneDialogComponentStateListener

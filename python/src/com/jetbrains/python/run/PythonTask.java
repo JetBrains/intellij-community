@@ -23,7 +23,6 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.NotNullFunction;
@@ -32,9 +31,8 @@ import com.jetbrains.python.HelperPackage;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.buildout.BuildoutFacet;
 import com.jetbrains.python.console.PydevConsoleRunner;
-import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonEnvUtil;
-import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,7 +66,7 @@ public class PythonTask {
   private Runnable myAfterCompletion;
 
   public PythonTask(Module module, String runTabTitle) throws ExecutionException {
-    this(module, runTabTitle, PythonSdkType.findPythonSdk(module));
+    this(module, runTabTitle, PythonSdkUtil.findPythonSdk(module));
   }
 
   @NotNull
@@ -132,7 +130,7 @@ public class PythonTask {
     PydevConsoleRunner.setCorrectStdOutEncoding(commandLine, myModule.getProject()); // To support UTF-8 output
 
     ProcessHandler handler;
-    if (PySdkUtil.isRemote(mySdk)) {
+    if (PythonSdkUtil.isRemote(mySdk)) {
       assert mySdk != null;
       handler = new PyRemoteProcessStarter().startRemoteProcess(mySdk, commandLine, myModule.getProject(), null);
     }
@@ -173,7 +171,7 @@ public class PythonTask {
     assert scriptParams != null;
 
     Map<String, String> env = cmd.getEnvironment();
-    if (!SystemInfo.isWindows && !PySdkUtil.isRemote(mySdk)) {
+    if (!SystemInfo.isWindows && !PythonSdkUtil.isRemote(mySdk)) {
       cmd.setExePath("bash");
       ParamsGroup bashParams = cmd.getParametersList().addParamsGroupAt(0, "Bash");
       bashParams.addParameter("-cl");
@@ -294,12 +292,7 @@ public class PythonTask {
     final ProgressManager manager = ProgressManager.getInstance();
     final Output output;
     if (SwingUtilities.isEventDispatchThread()) {
-      output = manager.runProcessWithProgressSynchronously(new ThrowableComputable<Output, ExecutionException>() {
-        @Override
-        public Output compute() throws ExecutionException {
-          return getOutputInternal();
-        }
-      }, myRunTabTitle, false, myModule.getProject());
+      output = manager.runProcessWithProgressSynchronously(() -> getOutputInternal(), myRunTabTitle, false, myModule.getProject());
     }
     else {
       output = getOutputInternal();

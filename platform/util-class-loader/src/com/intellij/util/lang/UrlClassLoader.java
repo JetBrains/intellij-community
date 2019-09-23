@@ -30,7 +30,6 @@ public class UrlClassLoader extends ClassLoader {
   static {
     //this class is compiled for Java 6 so it's enough to check that it isn't running under Java 6
     boolean isAtLeastJava7 = !System.getProperty("java.runtime.version", "unknown").startsWith("1.6.");
-
     boolean ibmJvm = System.getProperty("java.vm.vendor", "unknown").toLowerCase(Locale.ENGLISH).contains("ibm");
     boolean capable =
       isAtLeastJava7 && !ibmJvm && Boolean.parseBoolean(System.getProperty("use.parallel.class.loading", "true"));
@@ -57,16 +56,13 @@ public class UrlClassLoader extends ClassLoader {
   }
 
   private static boolean isUrlNeedsProtectionDomain(@NotNull URL url) {
-    String basename = PathUtilRt.getFileName(url.getPath());
-    if (basename.endsWith(".jar") && (basename.startsWith("bcprov-") || basename.startsWith("bcpkix-"))) {
-      // JARs of bouncycastle needs protection domain
-      return true;
-    }
-    return false;
+    String name = PathUtilRt.getFileName(url.getPath());
+    //noinspection SpellCheckingInspection
+    return name.endsWith(".jar") && (name.startsWith("bcprov-") || name.startsWith("bcpkix-"));  // BouncyCastle needs protection domain
   }
 
   /**
-   * Called by the VM to support dynamic additions to the class path
+   * Called by the VM to support dynamic additions to the class path.
    *
    * @see java.lang.instrument.Instrumentation#appendToSystemClassLoaderSearch
    */
@@ -75,7 +71,7 @@ public class UrlClassLoader extends ClassLoader {
     try {
       addURL(new File(jar).toURI().toURL());
     }
-    catch(MalformedURLException ignore) {}
+    catch (MalformedURLException ignore) { }
   }
 
   private static final boolean ourClassPathIndexEnabled = Boolean.parseBoolean(System.getProperty("idea.classpath.index.enabled", "true"));
@@ -101,7 +97,7 @@ public class UrlClassLoader extends ClassLoader {
   }
 
   public static final class Builder {
-    private List<URL> myURLs = ContainerUtilRt.emptyList();
+    private List<URL> myURLs = Collections.emptyList();
     private Set<URL> myURLsWithProtectionDomain = new HashSet<URL>();
     private ClassLoader myParent;
     private boolean myLockJars;
@@ -122,20 +118,14 @@ public class UrlClassLoader extends ClassLoader {
     public Builder urls(@NotNull List<URL> urls) { myURLs = urls; return this; }
     @NotNull
     public Builder urls(@NotNull URL... urls) { myURLs = Arrays.asList(urls); return this; }
-    @NotNull
-    public Builder parent(ClassLoader parent) { myParent = parent; return this; }
-
     /**
-     * @param urls List of URLs that are signed by Sun/Oracle and their signatures must be verified.
+     * Marks URLs that are signed by Sun/Oracle and whose signatures must be verified.
      */
     @NotNull
     Builder urlsWithProtectionDomain(@NotNull Set<URL> urls) { myURLsWithProtectionDomain = urls; return this; }
 
-    /**
-     * @see #urlsWithProtectionDomain(Set)
-     */
     @NotNull
-    public Builder urlsWithProtectionDomain(@NotNull URL... urls) { return urlsWithProtectionDomain(ContainerUtilRt.newHashSet(urls)); }
+    public Builder parent(ClassLoader parent) { myParent = parent; return this; }
 
     /**
      * ZipFile handles opened in JarLoader will be kept in SoftReference. Depending on OS, the option significantly speeds up classloading
@@ -158,7 +148,7 @@ public class UrlClassLoader extends ClassLoader {
     /**
      * FileLoader will save list of files / packages under its root and use this information instead of walking filesystem for
      * speedier classloading. Should be used only when the caches could be properly invalidated, e.g. when new file appears under
-     * FileLoader's root. Currently the flag is used for faster unit test / developed Idea running, because Idea's make (as of 14.1) ensures deletion of
+     * FileLoader's root. Currently, the flag is used for faster unit test / developed Idea running, because Idea's make (as of 14.1) ensures deletion of
      * such information upon appearing new file for output root.
      * N.b. Idea make does not ensure deletion of cached information upon deletion of some file under local root but false positives are not a
      * logical error since code is prepared for that and disk access is performed upon class / resource loading.
@@ -266,7 +256,7 @@ public class UrlClassLoader extends ClassLoader {
   }
 
   /**
-   * replace {@link URL#protocol} field (with "file" or "jar" values) and {@link URL#host} field (with empty string) with corresponding interned strings
+   * Interns a value of the {@link URL#protocol} ("file" or "jar") and {@link URL#host} (empty string) fields.
    */
   public static URL internProtocol(@NotNull URL url) {
     String protocol = url.getProtocol();
@@ -276,7 +266,7 @@ public class UrlClassLoader extends ClassLoader {
       interned = true;
     }
     String host = url.getHost();
-    if ("".equals(host)) {
+    if (host != null && host.isEmpty()) {
       host = "";
       interned = true;
     }
@@ -311,8 +301,8 @@ public class UrlClassLoader extends ClassLoader {
   }
 
   @Override
-  protected Class findClass(final String name) throws ClassNotFoundException {
-    Class clazz = _findClass(name);
+  protected Class<?> findClass(final String name) throws ClassNotFoundException {
+    Class<?> clazz = _findClass(name);
     if (clazz == null) {
       throw new ClassNotFoundException(name);
     }
@@ -320,7 +310,7 @@ public class UrlClassLoader extends ClassLoader {
   }
 
   @Nullable
-  protected final Class _findClass(@NotNull String name) {
+  protected final Class<?> _findClass(@NotNull String name) {
     Resource res = getClassPath().getResource(name.replace('.', '/') + CLASS_EXTENSION);
     if (res == null) {
       return null;
@@ -333,7 +323,7 @@ public class UrlClassLoader extends ClassLoader {
     }
   }
 
-  private Class defineClass(@NotNull String name, @NotNull Resource res) throws IOException {
+  private Class<?> defineClass(@NotNull String name, @NotNull Resource res) throws IOException {
     int i = name.lastIndexOf('.');
     if (i != -1) {
       String pkgName = name.substring(0, i);
@@ -364,11 +354,11 @@ public class UrlClassLoader extends ClassLoader {
     return _defineClass(name, b);
   }
 
-  protected Class _defineClass(final String name, final byte[] b) {
+  protected Class<?> _defineClass(final String name, final byte[] b) {
     return defineClass(name, b, 0, b.length);
   }
 
-  protected Class _defineClass(final String name, final byte[] b, @Nullable ProtectionDomain protectionDomain) {
+  protected Class<?> _defineClass(final String name, final byte[] b, @Nullable ProtectionDomain protectionDomain) {
     return defineClass(name, b, 0, b.length, protectionDomain);
   }
 

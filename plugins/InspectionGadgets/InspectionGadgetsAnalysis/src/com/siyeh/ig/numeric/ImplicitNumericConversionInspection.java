@@ -290,6 +290,29 @@ public class ImplicitNumericConversionInspection extends BaseInspection {
       if (parent instanceof PsiParenthesizedExpression) {
         return;
       }
+      if (parent instanceof PsiAssignmentExpression) {
+        final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)parent;
+        if (assignmentExpression.getOperationTokenType() != JavaTokenType.EQ) {
+          if (assignmentExpression.getLExpression() == expression) {
+            final PsiExpression rhs = assignmentExpression.getRExpression();
+            if (rhs != null) {
+              final PsiType expressionType = expression.getType();
+              if (!ClassUtils.isPrimitiveNumericType(expressionType)) return;
+              final PsiType rhsType = rhs.getType();
+              if (rhsType == null) return;
+              checkTypes(rhs, rhsType, expressionType);
+              final PsiType promotedType = TypeConversionUtil.binaryNumericPromotion(expressionType, rhsType);
+              checkTypes(expression, expressionType, promotedType);
+            }
+          }
+          return;
+        }
+      }
+      if (ignoreWideningConversions) {
+        // Further analysis could be quite slow, especially in batch mode, as type of almost every expression is queried.
+        // So stop here if ignoreWideningConversions is on.
+        return;
+      }
       if (ignoreConstantConversions) {
         PsiExpression rootExpression = expression;
         while (rootExpression instanceof PsiParenthesizedExpression) {
@@ -306,16 +329,6 @@ public class ImplicitNumericConversionInspection extends BaseInspection {
       }
       if (PsiType.CHAR.equals(expressionType) && (ignoreCharConversions || isArgumentOfStringIndexOf(parent))) {
         return;
-      }
-      if (parent instanceof PsiAssignmentExpression) {
-        final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)parent;
-        if (assignmentExpression.getOperationTokenType() != JavaTokenType.EQ && assignmentExpression.getLExpression() == expression) {
-          final PsiExpression rhs = assignmentExpression.getRExpression();
-          if (rhs != null) {
-            final PsiType promotedType = TypeConversionUtil.binaryNumericPromotion(expressionType, rhs.getType());
-            checkTypes(expression, expressionType, promotedType);
-          }
-        }
       }
       final PsiType expectedType = ExpectedTypeUtils.findExpectedType(expression, true);
       if (!ClassUtils.isPrimitiveNumericType(expectedType)) {

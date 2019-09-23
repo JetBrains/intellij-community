@@ -296,6 +296,33 @@ def in_project_roots(filename, filename_to_in_scope_cache=_FILENAME_TO_IN_SCOPE_
         return in_project
 
 
+def is_exception_trace_in_project_scope(trace):
+    if trace is None:
+        return False
+    elif in_project_roots(trace.tb_frame.f_code.co_filename):
+        return True
+    else:
+        while trace is not None:
+            if not in_project_roots(trace.tb_frame.f_code.co_filename):
+                return False
+            trace = trace.tb_next
+        return True
+
+
+def is_top_level_trace_in_project_scope(trace):
+    if trace is not None and trace.tb_next is not None:
+        return is_exception_trace_in_project_scope(trace) and not is_exception_trace_in_project_scope(trace.tb_next)
+    return is_exception_trace_in_project_scope(trace)
+
+
+def get_top_level_trace_in_project_scope(trace):
+    while trace:
+        if is_top_level_trace_in_project_scope(trace):
+            break
+        trace = trace.tb_next
+    return trace
+
+
 def is_filter_enabled():
     return os.getenv('PYDEVD_FILTERS') is not None
 

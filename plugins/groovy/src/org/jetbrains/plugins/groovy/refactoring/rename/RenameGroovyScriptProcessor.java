@@ -10,6 +10,7 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
+import org.jetbrains.plugins.groovy.runner.GroovyScriptUtil;
 
 import java.util.Map;
 
@@ -19,7 +20,7 @@ import java.util.Map;
 public class RenameGroovyScriptProcessor extends RenamePsiFileProcessor {
   @Override
   public boolean canProcessElement(@NotNull PsiElement element) {
-    return element instanceof GroovyFile && ((GroovyFile)element).isScript();
+    return element instanceof GroovyFile && ((GroovyFile)element).isScript() && GroovyScriptUtil.isPlainGroovyScript((GroovyFile)element);
   }
 
   @Override

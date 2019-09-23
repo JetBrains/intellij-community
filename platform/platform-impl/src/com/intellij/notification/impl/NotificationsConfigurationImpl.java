@@ -1,15 +1,12 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.notification.impl;
 
-import com.intellij.notification.NotificationDisplayType;
-import com.intellij.notification.NotificationGroup;
-import com.intellij.notification.NotificationsConfiguration;
+import com.intellij.notification.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.messages.MessageBus;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jdom.Element;
@@ -21,15 +18,8 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.Map;
 
-/**
- * @author spleaner
- */
-@State(
-  name = "NotificationConfiguration",
-  storages = @Storage("notifications.xml")
-)
-public class NotificationsConfigurationImpl extends NotificationsConfiguration implements PersistentStateComponent<Element>, Disposable {
-
+@State(name = "NotificationConfiguration", storages = @Storage("notifications.xml"))
+public final class NotificationsConfigurationImpl extends NotificationsConfiguration implements PersistentStateComponent<Element>, Disposable {
   private static final Logger LOG = Logger.getInstance(NotificationsConfiguration.class);
   private static final String SHOW_BALLOONS_ATTRIBUTE = "showBalloons";
   private static final String SYSTEM_NOTIFICATIONS_ATTRIBUTE = "systemNotifications";
@@ -43,16 +33,19 @@ public class NotificationsConfigurationImpl extends NotificationsConfiguration i
   public boolean SHOW_BALLOONS = true;
   public boolean SYSTEM_NOTIFICATIONS = true;
 
-  public NotificationsConfigurationImpl(@NotNull MessageBus bus) {
-    bus.connect(this).subscribe(TOPIC, this);
-  }
-
   public static NotificationsConfigurationImpl getInstanceImpl() {
     return (NotificationsConfigurationImpl)getNotificationsConfiguration();
   }
 
   public synchronized boolean hasToolWindowCapability(@NotNull String groupId) {
     return getToolWindowId(groupId) != null || myToolWindowCapable.containsKey(groupId);
+  }
+
+  static final class MyNotificationListener implements Notifications {
+    @Override
+    public void notify(@NotNull Notification notification) {
+      getInstanceImpl().notify(notification);
+    }
   }
 
   @Nullable

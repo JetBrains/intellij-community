@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.readOnlyHandler;
 
-import com.intellij.CommonBundle;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.application.Application;
@@ -49,6 +49,7 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
   }
 
   @Override
+  @NotNull
   public State getState() {
     return myState;
   }
@@ -83,15 +84,20 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
     files = new ArrayList<>(realFiles);
 
     if (!myProject.isDefault()) {
-      for (final WritingAccessProvider accessProvider : WritingAccessProvider.EP_NAME.getIterable(myProject)) {
-        Collection<VirtualFile> denied = ContainerUtil.filter(files, virtualFile -> !accessProvider.isPotentiallyWritable(virtualFile));
+      Collection<? extends VirtualFile> finalFiles = files;
+      OperationStatusImpl status = WritingAccessProvider.EP.computeSafeIfAny(myProject, provider -> {
+        Collection<VirtualFile> denied = ContainerUtil.filter(finalFiles, virtualFile -> !provider.isPotentiallyWritable(virtualFile));
 
         if (denied.isEmpty()) {
-          denied = accessProvider.requestWriting(files);
+          denied = provider.requestWriting(finalFiles);
         }
         if (!denied.isEmpty()) {
-          return new OperationStatusImpl(VfsUtilCore.toVirtualFileArray(denied), accessProvider.getReadOnlyMessage());
+          return new OperationStatusImpl(VfsUtilCore.toVirtualFileArray(denied), provider.getReadOnlyMessage());
         }
+        return null;
+      });
+      if (status != null) {
+        return status;
       }
     }
 
@@ -224,10 +230,10 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
             buf.append(file.getPresentableUrl());
           }
 
-          return CommonBundle.message("failed.to.make.the.following.files.writable.error.message", buf.toString());
+          return IdeBundle.message("failed.to.make.the.following.files.writable.error.message", buf.toString());
         }
         else {
-          return CommonBundle.message("failed.to.make.file.writable.error.message", myReadonlyFiles[0].getPresentableUrl());
+          return IdeBundle.message("failed.to.make.file.writable.error.message", myReadonlyFiles[0].getPresentableUrl());
         }
       }
       throw new RuntimeException("No readonly files");

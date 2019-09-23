@@ -42,8 +42,14 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedBinaryFilePatch;
 import com.intellij.openapi.vcs.changes.ui.*;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.newvfs.BulkFileListener;
+import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.ui.*;
+import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.util.Alarm;
 import com.intellij.util.NullableConsumer;
 import com.intellij.util.containers.ContainerUtil;
@@ -82,7 +88,8 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
   private final List<? extends ShelvedBinaryFilePatch> myBinaryShelvedPatches;
   @NotNull private final EditorNotificationPanel myErrorNotificationPanel;
   @NotNull private final MyChangeTreeList myChangesTreeList;
-  @Nullable private final Collection<Change> myPreselectedChanges;
+  @NotNull private final JBLoadingPanel myChangesTreeLoadingPanel;
+  @Nullable private final Collection<? extends Change> myPreselectedChanges;
   private final boolean myUseProjectRootAsPredefinedBase;
 
   private JComponent myCenterPanel;
@@ -100,7 +107,6 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
   private boolean myContainBasedChanges;
   private JLabel myPatchFileLabel;
   private PatchReader myReader;
-  private VirtualFileListener myListener;
   private final boolean myCanChangePatchFile;
   private String myHelpId = "reference.dialogs.vcs.patch.apply";
   private final boolean myShouldUpdateChangeListName;
@@ -127,7 +133,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
                                         @Nullable final List<? extends TextFilePatch> patches,
                                         @Nullable final LocalChangeList defaultList,
                                         @Nullable List<? extends ShelvedBinaryFilePatch> binaryShelvedPatches,
-                                        @Nullable Collection<Change> preselectedChanges,
+                                        @Nullable Collection<? extends Change> preselectedChanges,
                                         @Nullable String externalCommitMessage,
                                         boolean useProjectRootAsPredefinedBase) {
     super(project, true);
@@ -176,6 +182,8 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
       }
       new MyShowDiff().showDiff();
     });
+    myChangesTreeLoadingPanel = new JBLoadingPanel(new BorderLayout(), getDisposable());
+    myChangesTreeLoadingPanel.add(myChangesTreeList, BorderLayout.CENTER);
     myShouldUpdateChangeListName = defaultList == null && externalCommitMessage == null;
     myUpdater = new MyUpdater();
     myPatchFile = new TextFieldWithBrowseButton();
@@ -236,13 +244,18 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     myPatchFile.setVisible(myCanChangePatchFile);
 
     if (myCanChangePatchFile) {
-      myListener = new VirtualFileListener() {
+      BulkFileListener listener = new BulkFileListener() {
         @Override
-        public void contentsChanged(@NotNull VirtualFileEvent event) {
-          syncUpdatePatchFileAndScheduleReloadIfNeeded(event.getFile());
+        public void after(@NotNull List<? extends VFileEvent> events) {
+          for (VFileEvent event : events) {
+            if (event instanceof VFileContentChangeEvent) {
+              syncUpdatePatchFileAndScheduleReloadIfNeeded(event.getFile());
+            }
+          }
         }
       };
-      VirtualFileManager.getInstance().addVirtualFileListener(myListener, getDisposable());
+      ApplicationManager.getApplication().getMessageBus().connect(getDisposable())
+        .subscribe(VirtualFileManager.VFS_CHANGES, listener);
     }
     updateOkActions();
   }
@@ -541,7 +554,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
       ++gb.gridy;
       gb.weighty = 1;
       gb.fill = GridBagConstraints.BOTH;
-      JPanel changeTreePanel = JBUI.Panels.simplePanel(myChangesTreeList).addToTop(myErrorNotificationPanel);
+      JPanel changeTreePanel = JBUI.Panels.simplePanel(myChangesTreeLoadingPanel).addToTop(myErrorNotificationPanel);
       treePanel.add(ScrollPaneFactory.createScrollPane(changeTreePanel), gb);
 
       ++gb.gridy;
@@ -567,12 +580,14 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     return new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, JBUI.insets(1), 0, 0);
   }
 
-  private void paintBusy(final boolean requestPut) {
-    if (requestPut) {
-      myChangesTreeList.setPaintBusy(true);
+  private void paintBusy(final boolean isBusy) {
+    if (isBusy) {
+      myChangesTreeList.setEmptyText("");
+      myChangesTreeLoadingPanel.startLoading();
     }
     else {
-      myChangesTreeList.setPaintBusy(!myLoadQueue.isEmpty());
+      myChangesTreeList.setEmptyText("No changed files");
+      myChangesTreeLoadingPanel.stopLoading();
     }
   }
 
@@ -594,8 +609,8 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     }
 
     @Override
-    protected boolean isNodeEnabled(ChangesBrowserNode<?> node) {
-      boolean enabled = super.isNodeEnabled(node);
+    protected boolean isInclusionEnabled(@NotNull ChangesBrowserNode<?> node) {
+      boolean enabled = super.isInclusionEnabled(node);
       Object value = node.getUserObject();
       if (value instanceof AbstractFilePatchInProgress.PatchChange) {
         enabled &= ((AbstractFilePatchInProgress.PatchChange)value).isValid();

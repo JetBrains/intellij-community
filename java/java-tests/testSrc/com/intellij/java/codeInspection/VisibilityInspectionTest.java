@@ -1,27 +1,12 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.ToolExtensionPoints;
+import com.intellij.codeInspection.ex.EntryPointsManagerBase;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.visibility.EntryPointWithVisibilityLevel;
 import com.intellij.codeInspection.visibility.VisibilityInspection;
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiClass;
@@ -30,7 +15,7 @@ import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.testFramework.JavaInspectionTestCase;
-import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.ServiceContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -138,7 +123,7 @@ public class VisibilityInspectionTest extends JavaInspectionTestCase {
     myTool.SUGGEST_PRIVATE_FOR_INNERS = false;
     doTest("visibility/typeArguments", myTool, false, true);
   }
-  
+
   public void testUsedFromAnnotationsExtendsList() {
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = true;
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = true;
@@ -152,7 +137,7 @@ public class VisibilityInspectionTest extends JavaInspectionTestCase {
     myTool.SUGGEST_PRIVATE_FOR_INNERS = true;
     doTest("visibility/overrideInInnerClass", myTool, false, true);
   }
-  
+
   public void testUsedQualifiedFromAnotherPackage() {
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = true;
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = true;
@@ -183,7 +168,7 @@ public class VisibilityInspectionTest extends JavaInspectionTestCase {
   }
 
   public void testEntryPointWithPredefinedVisibility() {
-    PlatformTestUtil.registerExtension(Extensions.getRootArea(), ExtensionPointName.create(ToolExtensionPoints.DEAD_CODE_TOOL), new EntryPointWithVisibilityLevel() {
+    ServiceContainerUtil.registerExtension(ApplicationManager.getApplication(), EntryPointsManagerBase.DEAD_CODE_EP_NAME, new EntryPointWithVisibilityLevel() {
       @Override
       public void readExternal(Element element) throws InvalidDataException {}
 

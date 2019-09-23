@@ -168,15 +168,17 @@ private fun convertRootContainer(module: Module,
 
 private fun generateOptionDescriptors(call: FormCall, optionDescriptors: StringBuilder) {
   val propertyName = call.binding
-  if (call.callee == "checkBox" && propertyName != null && call.args.size >= 2) {
+  val size = call.args.size
+  if (call.callee == "checkBox" && propertyName != null && size >= 1) {
     optionDescriptors.append("val $propertyName = CheckboxDescriptor(${call.args[0]}, ")
 
-    val propertyBindingArg = if (call.args.size == 2) {
-      "${call.args[1]}.toBinding()"
-    }
-    else {
-      "PropertyBinding(${call.args[1]}, ${call.args[2]})"
-    }
+    val propertyBindingArg =
+      when {
+        size == 1 -> "TODO()"
+        size == 2 -> "${call.args[1]}.toBinding()"
+        else -> "PropertyBinding(${call.args[1]}, ${call.args[2]})"
+      }
+
     optionDescriptors.append(propertyBindingArg).append(")\n")
 
     call.args.clear()
@@ -431,8 +433,10 @@ class FormToDslConverter(private val module: Module, private val boundInstanceUC
     return bindingWords.count { it in elementWords } > 1
   }
 
-  private fun convertComponentText(component: IComponent) =
-    convertStringDescriptor(component.getPropertyValue("text") as StringDescriptor)
+  private fun convertComponentText(component: IComponent): String {
+    val propertyValue = component.getPropertyValue("text") ?: return ""
+    return convertStringDescriptor(propertyValue as StringDescriptor)
+  }
 
   private fun convertStringDescriptor(text: StringDescriptor): String {
     text.value?.let {

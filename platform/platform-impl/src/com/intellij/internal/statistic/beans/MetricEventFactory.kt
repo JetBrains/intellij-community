@@ -13,6 +13,7 @@ import java.util.*
  * * merging this metric with another one, e.g. "has.config.file" -> "type":"dockerfile" or "type":"docker-compose.yml";
  * * adding more information about this metric, e.g. "has.dockerfile" -> "version":"2.3", "location":"project.root";
  */
+@StatisticsEventProvider(eventIdIndex = 0)
 fun newMetric(eventId: String): MetricEvent {
   return MetricEvent(eventId, null)
 }
@@ -23,6 +24,7 @@ fun newMetric(eventId: String): MetricEvent {
  * "breakpoint" -> "type":"line", "lang":"Java", "count":5,
  * "gradle" -> "version":"2.3.1"
  */
+@StatisticsEventProvider(eventIdIndex = 0, dataIndex = 1)
 fun newMetric(eventId: String, data: FeatureUsageData?): MetricEvent {
   return MetricEvent(eventId, data)
 }
@@ -32,6 +34,7 @@ fun newMetric(eventId: String, data: FeatureUsageData?): MetricEvent {
  *
  * "upload.files" -> "value":"ON_SAVE"
  */
+@StatisticsEventProvider(eventIdIndex = 0, additionalDataFields = ["value"])
 fun newMetric(eventId: String, value: String): MetricEvent {
   return newMetric(eventId, value, null)
 }
@@ -41,6 +44,7 @@ fun newMetric(eventId: String, value: String): MetricEvent {
  *
  * "upload.files" -> "value":"ON_SAVE"
  */
+@StatisticsEventProvider(eventIdIndex = 0, dataIndex = 2, additionalDataFields = ["value"])
 fun newMetric(eventId: String, value: String, data: FeatureUsageData?): MetricEvent {
   val newData = data?.copy() ?: FeatureUsageData()
   return MetricEvent(eventId, newData.addValue(value))
@@ -51,6 +55,7 @@ fun newMetric(eventId: String, value: String, data: FeatureUsageData?): MetricEv
  *
  * "upload.files" -> "value":"ON_SAVE"
  */
+@StatisticsEventProvider(eventIdIndex = 0, additionalDataFields = ["value"])
 fun newMetric(eventId: String, value: Enum<*>?): MetricEvent {
   return newMetric(eventId, value, null)
 }
@@ -60,6 +65,7 @@ fun newMetric(eventId: String, value: Enum<*>?): MetricEvent {
  *
  * "upload.files" -> "value":"ON_SAVE"
  */
+@StatisticsEventProvider(eventIdIndex = 0, dataIndex = 2, additionalDataFields = ["value"])
 fun newMetric(eventId: String, value: Enum<*>?, data: FeatureUsageData?): MetricEvent {
   val newData = data?.copy() ?: FeatureUsageData()
   val newValue = value?.name?.toLowerCase(Locale.ENGLISH) ?: "unknown"
@@ -71,6 +77,7 @@ fun newMetric(eventId: String, value: Enum<*>?, data: FeatureUsageData?): Metric
  *
  * "allowed.connections" -> "value":3
  */
+@StatisticsEventProvider(eventIdIndex = 0, additionalDataFields = ["value:regexp#integer"])
 fun newMetric(eventId: String, value: Int): MetricEvent {
   return newMetric(eventId, value, null)
 }
@@ -80,6 +87,7 @@ fun newMetric(eventId: String, value: Int): MetricEvent {
  *
  * "allowed.connections" -> "value":3
  */
+@StatisticsEventProvider(eventIdIndex = 0, dataIndex = 2, additionalDataFields = ["value:regexp#integer"])
 fun newMetric(eventId: String, value: Int, data: FeatureUsageData?): MetricEvent {
   val newData = data?.copy() ?: FeatureUsageData()
   return MetricEvent(eventId, newData.addValue(value))
@@ -90,6 +98,7 @@ fun newMetric(eventId: String, value: Int, data: FeatureUsageData?): MetricEvent
  *
  * "line.spacing" -> "value":1.2
  */
+@StatisticsEventProvider(eventIdIndex = 0, additionalDataFields = ["value:regexp#float"])
 fun newMetric(eventId: String, value: Float): MetricEvent {
   return newMetric(eventId, value, null)
 }
@@ -99,6 +108,7 @@ fun newMetric(eventId: String, value: Float): MetricEvent {
  *
  * "line.spacing" -> "value":1.2
  */
+@StatisticsEventProvider(eventIdIndex = 0, dataIndex = 2, additionalDataFields = ["value:regexp#float"])
 fun newMetric(eventId: String, value: Float, data: FeatureUsageData?): MetricEvent {
   val newData = data?.copy() ?: FeatureUsageData()
   return MetricEvent(eventId, newData.addValue(value))
@@ -109,6 +119,7 @@ fun newMetric(eventId: String, value: Float, data: FeatureUsageData?): MetricEve
  *
  * "font.ligatures" -> "enabled":true
  */
+@StatisticsEventProvider(eventIdIndex = 0, additionalDataFields = ["enabled:enum#boolean"])
 fun newBooleanMetric(eventId: String, enabled: Boolean): MetricEvent {
   return newBooleanMetric(eventId, enabled, null)
 }
@@ -118,6 +129,7 @@ fun newBooleanMetric(eventId: String, enabled: Boolean): MetricEvent {
  *
  * "font.ligatures" -> "enabled":true
  */
+@StatisticsEventProvider(eventIdIndex = 0, dataIndex = 2, additionalDataFields = ["enabled:enum#boolean"])
 fun newBooleanMetric(eventId: String, enabled: Boolean, data: FeatureUsageData?): MetricEvent {
   val newData = data?.copy() ?: FeatureUsageData()
   return MetricEvent(eventId, newData.addEnabled(enabled))
@@ -128,6 +140,7 @@ fun newBooleanMetric(eventId: String, enabled: Boolean, data: FeatureUsageData?)
  *
  * "tool.is.under.project.root" -> "value":true
  */
+@StatisticsEventProvider(eventIdIndex = 0, additionalDataFields = ["value:enum#boolean"])
 fun newMetric(eventId: String, value: Boolean): MetricEvent {
   return newMetric(eventId, value, null)
 }
@@ -137,6 +150,7 @@ fun newMetric(eventId: String, value: Boolean): MetricEvent {
  *
  * "tool.is.under.project.root" -> "value":true
  */
+@StatisticsEventProvider(eventIdIndex = 0, dataIndex = 2, additionalDataFields = ["value:enum#boolean"])
 fun newMetric(eventId: String, value: Boolean, data: FeatureUsageData? = null): MetricEvent {
   val newData = data?.copy() ?: FeatureUsageData()
   return MetricEvent(eventId, newData.addValue(value))
@@ -147,6 +161,7 @@ fun newMetric(eventId: String, value: Boolean, data: FeatureUsageData? = null): 
  *
  * "source_roots" -> "count":3
  */
+@StatisticsEventProvider(eventIdIndex = 0, additionalDataFields = ["count:regexp#integer"])
 fun newCounterMetric(eventId: String, count: Int): MetricEvent {
   return newCounterMetric(eventId, count, null)
 }
@@ -156,6 +171,7 @@ fun newCounterMetric(eventId: String, count: Int): MetricEvent {
  *
  * "source_roots" -> "count":3
  */
+@StatisticsEventProvider(eventIdIndex = 0, dataIndex = 2, additionalDataFields = ["count:regexp#integer"])
 fun newCounterMetric(eventId: String, count: Int, data: FeatureUsageData?): MetricEvent {
   val newData = data?.copy() ?: FeatureUsageData()
   return MetricEvent(eventId, newData.addCount(count))
@@ -169,6 +185,7 @@ fun newCounterMetric(eventId: String, count: Int, data: FeatureUsageData?): Metr
  * @see newCounterMetric(java.lang.String, int)
  */
 @Deprecated("Only for existing counter metrics, new metrics should report absolute counter value")
+@StatisticsEventProvider(eventIdIndex = 0, dataIndex = 2, additionalDataFields = ["count:regexp#integer", "count_group"])
 fun newCounterRangeMetric(eventId: String, count: Int, data: FeatureUsageData? = null): MetricEvent {
   val newData = data?.copy() ?: FeatureUsageData()
   newData.addCount(count).addData("count_group", getCountingUsage(count))
@@ -183,6 +200,7 @@ fun newCounterRangeMetric(eventId: String, count: Int, data: FeatureUsageData? =
  * @see newCounterMetric(java.lang.String, int)
  */
 @Deprecated("Only for existing counter metrics, new metrics should report absolute counter value")
+@StatisticsEventProvider(eventIdIndex = 0, dataIndex = 3, additionalDataFields = ["count:regexp#integer", "count_group"])
 fun newCounterRangeMetric(eventId: String, count: Int, steps: List<Int>, data: FeatureUsageData? = null): MetricEvent {
   val newData = data?.copy() ?: FeatureUsageData()
   newData.addCount(count).addData("count_group", getCountingUsage(count, steps))

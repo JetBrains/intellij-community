@@ -17,7 +17,6 @@ import com.intellij.openapi.util.registry.RegistryValueListener;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowType;
-import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
 import com.intellij.openapi.wm.impl.commands.FinalizableCommand;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.OnePixelSplitter;
@@ -50,7 +49,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.ToolWindowsPane");
   public static final String TEMPORARY_ADDED = "TEMPORARY_ADDED";
 
-  private final IdeFrameImpl myFrame;
+  private final JFrame myFrame;
 
   private final Map<String, StripeButton> myId2Button = new HashMap<>();
   private final Map<String, InternalDecorator> myId2Decorator = new HashMap<>();
@@ -85,7 +84,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
   private boolean myLeftHorizontalSplit;
   private boolean myRightHorizontalSplit;
 
-  ToolWindowsPane(@NotNull IdeFrameImpl frame, @NotNull ToolWindowManagerImpl manager) {
+  ToolWindowsPane(@NotNull JFrame frame, @NotNull ToolWindowManagerImpl manager) {
     myManager = manager;
 
     setOpaque(false);
@@ -145,7 +144,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     add(myRightStripe, JLayeredPane.POPUP_LAYER);
     add(myLayeredPane, JLayeredPane.DEFAULT_LAYER);
 
-    setFocusTraversalPolicy(new LayoutFocusTraversalPolicyExt());
+    setFocusTraversalPolicy(new LayoutFocusTraversalPolicy());
   }
 
   private void updateInnerMinSize(@NotNull RegistryValue value) {
@@ -195,7 +194,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
   }
 
   public Project getProject() {
-    return myFrame.getProject();
+    return myManager.getProject();
   }
 
   @Override
@@ -279,14 +278,15 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
   @NotNull
   final FinalizableCommand createRemoveDecoratorCmd(@NotNull String id, final boolean dirtyMode, @NotNull Runnable finishCallBack) {
     final Component decorator = getDecoratorById(id);
+    LOG.assertTrue(decorator != null, "Decorator not found: id = " + id);
     final WindowInfoImpl info = getDecoratorInfoById(id);
+    LOG.assertTrue(info != null, "WindowInfo not found: id = " + id);
 
     myDecorator2Info.remove(decorator);
     myId2Decorator.remove(id);
 
-    WindowInfoImpl sideInfo = getDockedInfoAt(info.getAnchor(), !info.isSplit());
-
     if (info.isDocked()) {
+      WindowInfoImpl sideInfo = getDockedInfoAt(info.getAnchor(), !info.isSplit());
       return sideInfo == null
              ? new RemoveDockedComponentCmd(info, dirtyMode, finishCallBack)
              : new RemoveSplitAndDockedComponentCmd(info, dirtyMode, finishCallBack);
@@ -319,7 +319,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     return myLayeredPane;
   }
 
-  private InternalDecorator getDecoratorById(final String id) {
+  InternalDecorator getDecoratorById(final String id) {
     return myId2Decorator.get(id);
   }
 

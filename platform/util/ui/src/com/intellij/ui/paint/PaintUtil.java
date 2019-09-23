@@ -136,7 +136,7 @@ public class PaintUtil {
   }
 
   /**
-   * Returns the value in the user aligned with the integer value in the device space, applying the rounding and parity modes.
+   * Returns the value in the user space aligned with the integer value in the device space, applying the rounding and parity modes.
    * If the rounding mode is null - {@code ROUND} is applied. If the parity mode is null - it's ignored, otherwise the value
    * converted to the device space is aligned with the nearest integer odd/even value by the provided rounding mode.
    * For instance, 2.1 would be floor'd to odd 1, ceil'd and round'ed to odd 3. Also, 1.9 would be floor'd to odd 1, ceil'd to

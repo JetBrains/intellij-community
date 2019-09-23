@@ -2,7 +2,7 @@
 package com.intellij.diagnostic
 
 import com.intellij.diagnostic.startUpPerformanceReporter.StartUpPerformanceReporter
-import com.intellij.ide.plugins.PluginManager
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
@@ -60,7 +60,7 @@ class PluginStartupCostDialog(private val project: Project) : DialogWrapper(proj
           return@mapNotNull null
         }
 
-        val name = PluginManager.getPlugin(PluginId.getId(pluginId))?.name ?: return@mapNotNull null
+        val name = PluginManagerCore.getPlugin(PluginId.getId(pluginId))?.name ?: return@mapNotNull null
 
         var totalCost = 0L
         costMap.forEachValue {
@@ -120,7 +120,7 @@ class PluginStartupCostDialog(private val project: Project) : DialogWrapper(proj
 
   override fun doOKAction() {
     super.doOKAction()
-    val plugins = pluginsToDisable.map { PluginManager.getPlugin(PluginId.getId(it)) }
-    PluginManager.confirmDisablePlugins(project, plugins)
+    val plugins = pluginsToDisable.map { PluginManagerCore.getPlugin(PluginId.getId(it)) }.toSet()
+    IdeErrorsDialog.confirmDisablePlugins(project, plugins)
   }
 }

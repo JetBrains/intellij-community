@@ -1,4 +1,4 @@
-def <T0> Object foo(C<T0, T0, T0> a, T0 b) {
+def <T, U extends T, V extends U> Object foo(C<T, U, V> a, V b) {
   a.doTU(b, b)
   a.doU(b)
   a.doT(b)

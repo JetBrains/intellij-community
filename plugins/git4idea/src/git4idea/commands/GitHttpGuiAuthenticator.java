@@ -57,9 +57,8 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
   @NotNull private final GitAuthenticationGate myAuthenticationGate;
   @NotNull private final GitAuthenticationMode myAuthenticationMode;
 
-  @Nullable private ProviderAndData myProviderAndData = null;
-
-  private boolean myCredentialHelperShouldBeUsed = false;
+  @Nullable private volatile ProviderAndData myProviderAndData = null;
+  private volatile boolean myCredentialHelperShouldBeUsed = false;
 
   GitHttpGuiAuthenticator(@NotNull Project project,
                           @NotNull Collection<String> urls,
@@ -84,9 +83,10 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
   @Override
   @NotNull
   public String askPassword(@NotNull String url) {
-    if (myProviderAndData != null) {
+    ProviderAndData providerAndData = myProviderAndData;
+    if (providerAndData != null) {
       LOG.debug("askPassword. Data already filled in askUsername.");
-      return myProviderAndData.getPassword();
+      return providerAndData.getPassword();
     }
 
     Couple<String> usernameAndUrl = splitToUsernameAndUnifiedUrl(getRequiredUrl(url));
@@ -99,11 +99,12 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
     String unifiedUrl = usernameAndUrl.second;
     LOG.debug("askPassword. gitUrl=" + url + ", unifiedUrl=" + unifiedUrl);
 
-    myProviderAndData = acquireData(unifiedUrl, provider -> provider.getDataForKnownLogin(login));
+    ProviderAndData newData = acquireData(unifiedUrl, provider -> provider.getDataForKnownLogin(login));
 
-    if (myProviderAndData != null) {
-      LOG.debug("askPassword. " + myProviderAndData.toString());
-      return myProviderAndData.getPassword();
+    myProviderAndData = newData;
+    if (newData != null) {
+      LOG.debug("askPassword. " + newData.toString());
+      return newData.getPassword();
     }
     else {
       LOG.debug("askPassword. no data provided");
@@ -117,11 +118,12 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
     String unifiedUrl = splitToUsernameAndUnifiedUrl(getRequiredUrl(url)).second;
     LOG.debug("askUsername. gitUrl=" + url + ", unifiedUrl=" + unifiedUrl);
 
-    myProviderAndData = acquireData(unifiedUrl, AuthDataProvider::getData);
+    ProviderAndData providerAndData = acquireData(unifiedUrl, AuthDataProvider::getData);
+    myProviderAndData = providerAndData;
 
-    if (myProviderAndData != null) {
-      LOG.debug("askUsername. " + myProviderAndData.toString());
-      return myProviderAndData.getLogin();
+    if (providerAndData != null) {
+      LOG.debug("askUsername. " + providerAndData.toString());
+      return providerAndData.getLogin();
     }
     else {
       LOG.debug("askUsername. no data provided");
@@ -180,18 +182,20 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
 
   @Override
   public void saveAuthData() {
-    if (myProviderAndData == null) return;
+    ProviderAndData providerAndData = myProviderAndData;
+    if (providerAndData == null) return;
 
-    LOG.debug("saveAuthData. " + myProviderAndData.toString());
-    myProviderAndData.getProvider().onAuthSuccess();
+    LOG.debug("saveAuthData. " + providerAndData.toString());
+    providerAndData.getProvider().onAuthSuccess();
   }
 
   @Override
   public void forgetPassword() {
-    if (myProviderAndData == null) return;
+    ProviderAndData providerAndData = myProviderAndData;
+    if (providerAndData == null) return;
 
-    LOG.debug("forgetPassword. " + myProviderAndData.toString());
-    myProviderAndData.getProvider().onAuthFailure();
+    LOG.debug("forgetPassword. " + providerAndData.toString());
+    providerAndData.getProvider().onAuthFailure();
   }
 
   @Override
@@ -199,7 +203,13 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
     if (myCredentialHelperShouldBeUsed) {
       return false;
     }
-    return myProviderAndData != null && myProviderAndData.getProvider() instanceof CancelledProvider;
+    ProviderAndData providerAndData = myProviderAndData;
+    return providerAndData != null && providerAndData.getProvider() instanceof CancelledProvider;
+  }
+
+  @Override
+  public boolean wasRequested() {
+    return myProviderAndData != null;
   }
 
   /**

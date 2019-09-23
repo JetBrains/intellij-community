@@ -22,13 +22,12 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Vladislav.Soroka
  */
-@ApiStatus.Experimental
 public interface BuildProgressListener {
 
   /**
    * @deprecated do not use it, it's only for compatibility reason
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2019.3")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
   @Deprecated
   Object UNKNOWN_BUILD_ID = new Object();
 
@@ -36,7 +35,7 @@ public interface BuildProgressListener {
    * @param event
    * @deprecated use {@link #onEvent(Object, BuildEvent)}
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2019.3")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
   @Deprecated
   default void onEvent(@NotNull BuildEvent event) { onEvent(UNKNOWN_BUILD_ID, event);}
 

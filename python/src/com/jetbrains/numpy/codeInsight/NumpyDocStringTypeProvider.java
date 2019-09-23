@@ -102,9 +102,9 @@ public class NumpyDocStringTypeProvider extends PyTypeProviderBase {
   @Nullable
   private static NumpyDocString forFunction(@NotNull PyFunction function, @Nullable PsiElement reference, @Nullable String knownSignature) {
     String docString = function.getDocStringValue();
-    if (docString == null && PyNames.INIT.equals(function.getName())) {
+    if (docString == null) {
       // Docstring for constructor can be found in the docstring of class
-      PyClass cls = function.getContainingClass();
+      PyClass cls = PyUtil.turnConstructorIntoClass(function);
       if (cls != null) {
         docString = cls.getDocStringValue();
       }

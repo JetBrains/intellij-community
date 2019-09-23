@@ -9,6 +9,7 @@ import com.intellij.openapi.vcs.RepositoryLocation;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,7 +20,6 @@ import java.util.List;
 import java.util.Map;
 
 import static com.intellij.openapi.util.text.StringUtil.join;
-import static com.intellij.util.containers.ContainerUtil.addAll;
 import static com.intellij.vcsUtil.VcsUtil.getFilePath;
 import static java.util.function.Function.identity;
 
@@ -27,7 +27,7 @@ public class RootsCalculator {
   private final static Logger LOG = Logger.getInstance(RootsCalculator.class);
 
   @NotNull private final Project myProject;
-  @NotNull private final AbstractVcs<?> myVcs;
+  @NotNull private final AbstractVcs myVcs;
   @NotNull private final ProjectLevelVcsManager myPlManager;
   @NotNull private final RepositoryLocationCache myLocationCache;
 
@@ -43,7 +43,7 @@ public class RootsCalculator {
     LOG.debug("Collecting roots for " + myVcs);
     // TODO: It is not quite clear why using just ProjectLevelVcsManager.getRootsUnderVcs() is not sufficient
     List<VirtualFile> roots = getRootsFromMappings();
-    addAll(roots, myPlManager.getRootsUnderVcs(myVcs));
+    ContainerUtil.addAll(roots, myPlManager.getRootsUnderVcs(myVcs));
 
     logRoots("Candidates", roots);
 

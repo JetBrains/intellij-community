@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
@@ -77,6 +78,7 @@ public class AddMissingPropertyFix implements LocalQuickFix, BatchQuickFix<Commo
       WriteAction.run(() -> editor.getCaretModel().moveToOffset(newElement.getTextRange().getEndOffset()));
       return;
     }
+    PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.getDocument());
     TemplateManager templateManager = TemplateManager.getInstance(project);
     TemplateBuilderImpl builder = new TemplateBuilderImpl(newElement);
     String text = value.getText();

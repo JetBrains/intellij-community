@@ -40,8 +40,7 @@ public class EnableMatchCaseAction extends BooleanPropertyToggleAction {
       }
       else {
         Collection<VcsLogProvider> providers = new LinkedHashSet<>(ui.getDataPack().getLogProviders().values());
-        List<VcsLogProvider> supported =
-          ContainerUtil.filter(providers, p -> VcsLogProperties.get(p, VcsLogProperties.CASE_INSENSITIVE_REGEX));
+        List<VcsLogProvider> supported = ContainerUtil.filter(providers, VcsLogProperties.CASE_INSENSITIVE_REGEX::getOrDefault);
         e.getPresentation().setVisible(true);
         e.getPresentation().setEnabled(!supported.isEmpty());
         if (providers.size() == supported.size() || supported.isEmpty()) {

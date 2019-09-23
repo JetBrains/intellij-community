@@ -715,31 +715,43 @@ public final class TreeUtil {
     return row;
   }
 
+  /**
+   * Returns a number of tree rows currently visible. Do not mix with {@link JTree#getVisibleRowCount()}
+   * which returns a preferred number of rows to be displayed within a scroll pane.
+   *
+   * @param tree tree to get the number of visible rows
+   * @return number of visible rows, including partially visible ones. Not more than total number of tree rows.
+   */
   public static int getVisibleRowCount(@NotNull final JTree tree) {
     final Rectangle visible = tree.getVisibleRect();
-
     if (visible == null) return 0;
 
-    int count = 0;
-    for (int i=0; i < tree.getRowCount(); i++) {
-      final Rectangle bounds = tree.getRowBounds(i);
-      if (bounds == null) continue;
-      if (visible.y <= bounds.y && visible.y + visible.height >= bounds.y + bounds.height) {
-        count++;
-      }
+    int rowCount = tree.getRowCount();
+    if (rowCount <= 0) return 0;
+
+    int firstRow;
+    int lastRow;
+    int rowHeight = tree.getRowHeight();
+    if (rowHeight > 0) {
+      Insets insets = tree.getInsets();
+      int top = visible.y - insets.top;
+      int bottom = visible.y + visible.height - insets.top;
+      firstRow = Math.max(0, Math.min(top / rowHeight, rowCount - 1));
+      lastRow = Math.max(0, Math.min(bottom / rowHeight, rowCount - 1));
+    } else {
+      firstRow = tree.getClosestRowForLocation(visible.x, visible.y);
+      lastRow = tree.getClosestRowForLocation(visible.x, visible.y + visible.height);
     }
-    return count;
+    return lastRow - firstRow + 1;
   }
 
   /**
-   * works correctly for trees with fixed row height only.
-   * For variable height trees (e.g. trees with custom tree node renderer) use the {@link #getVisibleRowCount(JTree)} which is slower
+   * @deprecated use {@link #getVisibleRowCount(JTree)}
    */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
   public static int getVisibleRowCountForFixedRowHeight(@NotNull final JTree tree) {
-    // myTree.getVisibleRowCount returns 20
-    Rectangle bounds = tree.getRowBounds(0);
-    int rowHeight = bounds == null ? 0 : bounds.height;
-    return rowHeight == 0 ? tree.getVisibleRowCount() : tree.getVisibleRect().height / rowHeight;
+    return getVisibleRowCount(tree);
   }
 
   @SuppressWarnings("HardCodedStringLiteral")
@@ -1445,21 +1457,15 @@ public final class TreeUtil {
   }
 
   /**
-   * Selects a node specified by {@code visitor} in the {@code tree}.
-   */
-  public static Promise<TreePath> select(@NotNull JTree tree, @NotNull TreeVisitor visitor) {
-    return promiseMakeVisibleOne(tree, visitor, path -> {
-      internalSelectPath(tree, path);
-    });
-  }
-
-  /**
    * Selects a node in the specified tree.
    *
    * @param tree     a tree, which nodes should be selected
    * @param visitor  a visitor that controls expanding of tree nodes
    * @param consumer a path consumer called on EDT if path is found and selected
+   * @deprecated use {@code promiseSelect(tree, visitor).onSuccess(consumer)} instead
    */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   public static void select(@NotNull JTree tree, @NotNull TreeVisitor visitor, @NotNull Consumer<? super TreePath> consumer) {
     promiseMakeVisibleOne(tree, visitor, path -> {
       internalSelectPath(tree, path);
@@ -1582,9 +1588,13 @@ public final class TreeUtil {
    */
   @NotNull
   public static Promise<TreePath> promiseSelectFirst(@NotNull JTree tree) {
-    return promiseSelect(tree, path -> !tree.isRootVisible() && path.getParentPath() == null
+    return promiseSelect(tree, path -> isHiddenRoot(tree, path)
                                        ? TreeVisitor.Action.CONTINUE
                                        : TreeVisitor.Action.INTERRUPT);
+  }
+
+  private static boolean isHiddenRoot(@NotNull JTree tree, @NotNull TreePath path) {
+    return !tree.isRootVisible() && path.getParentPath() == null;
   }
 
   /**
@@ -1609,7 +1619,16 @@ public final class TreeUtil {
     }, promise)
       .onError(promise::setError)
       .onSuccess(path -> {
-        if (!promise.isDone()) promise.cancel();
+        if (!promise.isDone()) {
+          TreePath tail = reference.get();
+          if (tail == null || isHiddenRoot(tree, tail)) {
+            promise.cancel();
+          }
+          else {
+            internalSelectPath(tree, tail);
+            promise.setResult(tail);
+          }
+        }
       });
     return promise;
   }

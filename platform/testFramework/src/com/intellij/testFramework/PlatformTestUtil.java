@@ -25,7 +25,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.extensions.*;
+import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
@@ -132,49 +132,24 @@ public class PlatformTestUtil {
   }
 
   /**
-   * @see ExtensionPointImpl#maskAll(List, Disposable)
-   */
-  public static <T> void maskExtensions(@NotNull ExtensionPointName<T> pointName,
-                                        @NotNull List<? extends T> newExtensions,
-                                        @NotNull Disposable parentDisposable) {
-    ((ExtensionPointImpl<T>)pointName.getPoint(null)).maskAll(newExtensions, parentDisposable);
-  }
-
-  /**
-   * @see ExtensionPointImpl#maskAll(List, Disposable)
+   * @see ExtensionPointImpl#maskAll(List, Disposable, boolean)
    */
   public static <T> void maskExtensions(@NotNull ProjectExtensionPointName<T> pointName,
                                         @NotNull Project project,
-                                        @NotNull List<? extends T> newExtensions,
+                                        @NotNull List<T> newExtensions,
                                         @NotNull Disposable parentDisposable) {
-    ((ExtensionPointImpl<T>)pointName.getPoint(project)).maskAll(newExtensions, parentDisposable);
-  }
-
-  /**
-   * @deprecated Use {@link ExtensionPointName#getPoint(AreaInstance)} and {@link ExtensionPoint#registerExtension(Object, Disposable)}.
-   */
-  @Deprecated
-  public static <T> void registerExtension(@NotNull ExtensionPointName<T> name, @NotNull T t, @NotNull Disposable parentDisposable) {
-    registerExtension(Extensions.getRootArea(), name, t, parentDisposable);
-  }
-
-  public static <T> void registerExtension(@NotNull ExtensionsArea area,
-                                           @NotNull BaseExtensionPointName name,
-                                           @NotNull T t,
-                                           @NotNull Disposable parentDisposable) {
-    area.<T>getExtensionPoint(name.getName()).registerExtension(t, parentDisposable);
+    ((ExtensionPointImpl<T>)pointName.getPoint(project)).maskAll(newExtensions, parentDisposable, true);
   }
 
   @Nullable
   public static String toString(@Nullable Object node, @Nullable Queryable.PrintInfo printInfo) {
     if (node instanceof AbstractTreeNode) {
       if (printInfo != null) {
-        return ((AbstractTreeNode)node).toTestString(printInfo);
+        return ((AbstractTreeNode<?>)node).toTestString(printInfo);
       }
       else {
-        @SuppressWarnings({"deprecation", "UnnecessaryLocalVariable"})
-        final String presentation = ((AbstractTreeNode)node).getTestPresentation();
-        return presentation;
+        //noinspection deprecation
+        return ((AbstractTreeNode<?>)node).getTestPresentation();
       }
     }
     return String.valueOf(node);
@@ -480,7 +455,7 @@ public class PlatformTestUtil {
     return event1;
   }
 
-  public static StringBuilder print(AbstractTreeStructure structure, Object node, int currentLevel, @Nullable Comparator comparator,
+  public static StringBuilder print(AbstractTreeStructure structure, Object node, int currentLevel, @Nullable Comparator<?> comparator,
                                     int maxRowCount, char paddingChar, @Nullable Queryable.PrintInfo printInfo) {
     return print(structure, node, currentLevel, comparator, maxRowCount, paddingChar, o -> toString(o, printInfo));
   }
@@ -489,7 +464,7 @@ public class PlatformTestUtil {
     return print(structure, node, 0, Comparator.comparing(nodePresenter), -1, ' ', nodePresenter).toString();
   }
 
-  private static StringBuilder print(AbstractTreeStructure structure, Object node, int currentLevel, @Nullable Comparator comparator,
+  private static StringBuilder print(AbstractTreeStructure structure, Object node, int currentLevel, @Nullable Comparator<?> comparator,
                                      int maxRowCount, char paddingChar, Function<Object, String> nodePresenter) {
     StringBuilder buffer = new StringBuilder();
     doPrint(buffer, currentLevel, node, structure, comparator, maxRowCount, 0, paddingChar, nodePresenter);
@@ -500,7 +475,7 @@ public class PlatformTestUtil {
                              int currentLevel,
                              Object node,
                              AbstractTreeStructure structure,
-                             @Nullable Comparator comparator,
+                             @Nullable Comparator<?> comparator,
                              int maxRowCount,
                              int currentLine,
                              char paddingChar,
@@ -513,8 +488,9 @@ public class PlatformTestUtil {
     Object[] children = structure.getChildElements(node);
 
     if (comparator != null) {
-      ArrayList<?> list = new ArrayList<>(Arrays.asList(children));
-      @SuppressWarnings({"UnnecessaryLocalVariable", "unchecked"}) Comparator<Object> c = comparator;
+      List<?> list = new ArrayList<>(Arrays.asList(children));
+      @SuppressWarnings({"unchecked"})
+      Comparator<Object> c = (Comparator<Object>)comparator;
       Collections.sort(list, c);
       children = ArrayUtil.toObjectArray(list);
     }
@@ -533,7 +509,7 @@ public class PlatformTestUtil {
     return c.stream().map(each -> toString(each, null)).collect(Collectors.joining("\n"));
   }
 
-  public static String print(ListModel model) {
+  public static String print(@NotNull ListModel<?> model) {
     StringBuilder result = new StringBuilder();
     for (int i = 0; i < model.getSize(); i++) {
       result.append(toString(model.getElementAt(i), null));
@@ -591,7 +567,7 @@ public class PlatformTestUtil {
    * An example: {@code startPerformanceTest("calculating pi",100, testRunnable).assertTiming();}
    */
   @Contract(pure = true) // to warn about not calling .assertTiming() in the end
-  public static PerformanceTestInfo startPerformanceTest(@NonNls @NotNull String what, int expectedMs, @NotNull ThrowableRunnable test) {
+  public static PerformanceTestInfo startPerformanceTest(@NonNls @NotNull String what, int expectedMs, @NotNull ThrowableRunnable<?> test) {
     return new PerformanceTestInfo(test, expectedMs, what);
   }
 
@@ -792,7 +768,7 @@ public class PlatformTestUtil {
 
   @NotNull
   @Contract(pure = true)
-  public static Comparator<AbstractTreeNode> createComparator(final Queryable.PrintInfo printInfo) {
+  public static Comparator<AbstractTreeNode<?>> createComparator(final Queryable.PrintInfo printInfo) {
     return (o1, o2) -> {
       String displayText1 = o1.toTestString(printInfo);
       String displayText2 = o2.toTestString(printInfo);
@@ -811,7 +787,7 @@ public class PlatformTestUtil {
     return StringUtil.convertLineSeparators(FileUtil.loadFile(new File(fileName)));
   }
 
-  public static void withEncoding(@NotNull String encoding, @NotNull ThrowableRunnable r) {
+  public static void withEncoding(@NotNull String encoding, @NotNull ThrowableRunnable<?> r) {
     Charset.forName(encoding); // check the encoding exists
     try {
       Charset oldCharset = Charset.defaultCharset();

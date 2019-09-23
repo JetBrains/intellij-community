@@ -13,6 +13,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashMap;
 import org.gradle.tooling.model.idea.IdeaModule;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.model.ExternalDependency;
@@ -66,7 +67,7 @@ public class JavaEEGradleProjectResolverExtension extends AbstractProjectResolve
     if (projectDataNode != null) {
       archivesMap = projectDataNode.getUserData(ARCHIVES_ARTIFACTS);
       if (archivesMap == null) {
-        archivesMap = ContainerUtil.newTroveMap(FileUtil.PATH_HASHING_STRATEGY);
+        archivesMap = new THashMap<>(FileUtil.PATH_HASHING_STRATEGY);
         projectDataNode.putUserData(ARCHIVES_ARTIFACTS, archivesMap);
       }
 
@@ -123,7 +124,7 @@ public class JavaEEGradleProjectResolverExtension extends AbstractProjectResolve
   }
 
   @Override
-  public void onResolveEnd(@NotNull DataNode<ProjectData> projectDataNode) {
+  public void resolveFinished(@NotNull DataNode<ProjectData> projectDataNode) {
     List<Pair<DataNode<? extends ModuleData>, EarConfiguration>> earConfigurations = projectDataNode.getUserData(EAR_CONFIGURATIONS);
     if (earConfigurations == null) return;
     for (Pair<DataNode<? extends ModuleData>, EarConfiguration> pair : earConfigurations) {
@@ -186,7 +187,7 @@ public class JavaEEGradleProjectResolverExtension extends AbstractProjectResolve
     final Map<String, String> allArtifactsMap;
     final Map<String, String> archivesMap = ideProject.getUserData(ARCHIVES_ARTIFACTS);
     if (archivesMap != null && !archivesMap.isEmpty()) {
-      allArtifactsMap = ContainerUtil.newTroveMap(FileUtil.PATH_HASHING_STRATEGY);
+      allArtifactsMap = new THashMap<>(FileUtil.PATH_HASHING_STRATEGY);
       allArtifactsMap.putAll(artifactsMap);
       allArtifactsMap.putAll(archivesMap);
     }

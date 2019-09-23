@@ -296,9 +296,11 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
 
     PsiElementVisitor visitor = InspectionEngine.createVisitorAndAcceptElements(tool, holder, isOnTheFly, session, elements, elementDialectIds,
                                                                                 dialectIdsSpecifiedForTool);
-
-    synchronized (init) {
-      init.add(new InspectionContext(toolWrapper, holder, holder.getResultCount(), visitor, dialectIdsSpecifiedForTool));
+    // if inspection returned empty visitor then it should be skipped
+    if (visitor != PsiElementVisitor.EMPTY_VISITOR) {
+      synchronized (init) {
+        init.add(new InspectionContext(toolWrapper, holder, holder.getResultCount(), visitor, dialectIdsSpecifiedForTool));
+      }
     }
     advanceProgress(1);
 
@@ -542,7 +544,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
                        " is not from the file '" + file.getVirtualFile().getPath() +
                        "' the inspection '" + toolWrapper +
                        "' (" + tool.getClass() +
-                       ") was invoked for. Message: '" + descriptor + "'.\nElement' containing file: " +
+                       ") was invoked for. Message: '" + descriptor + "'.\nElement containing file: " +
                        context + "\nInspection invoked for file: " + myContext + "\n";
       PluginException.logPluginError(LOG, errorMessage, null, tool.getClass());
     }

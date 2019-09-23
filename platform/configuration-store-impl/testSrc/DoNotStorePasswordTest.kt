@@ -1,12 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-import com.intellij.configurationStore.BaseXmlOutputter
-import com.intellij.configurationStore.getStateSpec
+package com.intellij.configurationStore
+
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.impl.ComponentManagerImpl
-import com.intellij.openapi.components.impl.ServiceManagerImpl
 import com.intellij.openapi.extensions.PluginDescriptor
+import com.intellij.serviceContainer.ServiceManagerImpl
 import com.intellij.testFramework.ProjectRule
 import com.intellij.util.xmlb.XmlSerializerUtil
 import org.jdom.Attribute
@@ -46,7 +45,7 @@ class DoNotStorePasswordTest {
       true
     }
 
-    val app = ApplicationManager.getApplication() as ApplicationImpl
+    val app = ApplicationManager.getApplication() as ComponentManagerImpl
     ServiceManagerImpl.processAllImplementationClasses(app, processor)
     // yes, we don't use default project here to be sure
     ServiceManagerImpl.processAllImplementationClasses(projectRule.project, processor)

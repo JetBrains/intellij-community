@@ -70,17 +70,21 @@ public class CodeStyle {
    */
   @NotNull
   public static CodeStyleSettings getSettings(@NotNull PsiFile file) {
-    for (FileCodeStyleProvider provider : FileCodeStyleProvider.EP_NAME.getIterable()) {
-      CodeStyleSettings fileSettings = provider.getSettings(file);
-      if (fileSettings != null) {
-        return fileSettings;
-      }
+    final Project project = file.getProject();
+    CodeStyleSettings tempSettings = CodeStyleSettingsManager.getInstance(project).getTemporarySettings();
+    if (tempSettings != null) {
+      return tempSettings;
+    }
+
+    CodeStyleSettings result = FileCodeStyleProvider.EP_NAME.computeSafeIfAny(provider -> provider.getSettings(file));
+    if (result != null) {
+      return result;
     }
 
     if (!file.isPhysical()) {
-      return getSettings(file.getProject());
+      return getSettings(project);
     }
-    return CodeStyleCachingUtil.getCachedCodeStyle(file);
+    return CodeStyleCachedValueProvider.getInstance(file).tryGetSettings();
   }
 
 

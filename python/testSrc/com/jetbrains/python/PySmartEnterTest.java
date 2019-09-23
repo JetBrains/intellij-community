@@ -188,6 +188,31 @@ public class PySmartEnterTest extends PyTestCase {
     doTest();
   }
 
+  // PY-35163
+  public void testMethodParameterNoDecorators() {
+    doTest();
+  }
+
+  // PY-35163
+  public void testMethodParameterClassMethod() {
+    doTest();
+  }
+
+  // PY-35163
+  public void testMethodParameterStaticMethod() {
+    doTest();
+  }
+
+  // PY-35163
+  public void testMethodParameterWithExistingParameters() {
+    doTest();
+  }
+
+  // PY-35163
+  public void testMethodParameterWithOpenBracket() {
+    doTest();
+  }
+
   // PY-12877
   public void testWithTargetOmitted() {
     doTest();

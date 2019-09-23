@@ -6,11 +6,14 @@ import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.layout.*
+import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
 import org.jetbrains.plugins.github.api.*
 import org.jetbrains.plugins.github.api.data.GithubAuthenticatedUser
 import org.jetbrains.plugins.github.authentication.util.GithubTokenCreator
@@ -18,11 +21,11 @@ import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException
 import org.jetbrains.plugins.github.exceptions.GithubParseException
 import org.jetbrains.plugins.github.ui.util.DialogValidationUtils
 import org.jetbrains.plugins.github.ui.util.Validator
+import java.awt.event.ActionListener
+import java.awt.event.KeyEvent
 import java.net.UnknownHostException
 import java.util.function.Supplier
-import javax.swing.JComponent
-import javax.swing.JPanel
-import javax.swing.JPasswordField
+import javax.swing.*
 
 sealed class GithubCredentialsUI {
   abstract fun getPanel(): JPanel
@@ -35,6 +38,27 @@ sealed class GithubCredentialsUI {
 
   abstract fun handleAcquireError(error: Throwable): ValidationInfo
   abstract fun setBusy(busy: Boolean)
+
+  protected val loginButton = JButton("Log In").apply { isVisible = false }
+  protected val cancelButton = JButton("Cancel").apply { isVisible = false }
+
+  open fun setLoginAction(actionListener: ActionListener) {
+    loginButton.addActionListener(actionListener)
+    loginButton.setMnemonic('l')
+  }
+
+  fun setCancelAction(actionListener: ActionListener) {
+    cancelButton.addActionListener(actionListener)
+    cancelButton.setMnemonic('c')
+  }
+
+  fun setLoginButtonVisible(visible: Boolean) {
+    loginButton.isVisible = visible
+  }
+
+  fun setCancelButtonVisible(visible: Boolean) {
+    cancelButton.isVisible = visible
+  }
 
   internal class PasswordUI(private val serverTextField: ExtendableTextField,
                             private val clientName: String,
@@ -55,18 +79,30 @@ sealed class GithubCredentialsUI {
       passwordField.text = password
     }
 
-    override fun getPanel(): JPanel = JBUI.Panels.simplePanel()
-      .addToTop(panel {
-        row {
-          if (!dialogMode) label("Log in to GitHub", bold = true)
-          right { switchUiLink() }
+    override fun setLoginAction(actionListener: ActionListener) {
+      super.setLoginAction(actionListener)
+      passwordField.setEnterPressedAction(actionListener)
+      loginTextField.setEnterPressedAction(actionListener)
+      serverTextField.setEnterPressedAction(actionListener)
+    }
+
+    override fun getPanel(): JPanel = panel {
+      buildTitleAndLinkRow(this, dialogMode, switchUiLink)
+      row("Server:") { serverTextField(pushX, growX) }
+      row("Login:") { loginTextField(pushX, growX) }
+      row("Password:") {
+        passwordField(comment = "Password is not saved and used only to acquire GitHub token",
+                      constraints = *arrayOf(pushX, growX))
+      }
+      row("") {
+        cell {
+          loginButton()
+          cancelButton()
         }
-      })
-      .addToCenter(panel {
-        row("Server:") { serverTextField() }
-        row("Login:") { loginTextField() }
-        row("Password:") { passwordField(comment = "Password is not saved and used only to acquire GitHub token") }
-      })
+      }
+    }.apply {
+      border = JBUI.Borders.empty(UIUtil.REGULAR_PANEL_TOP_BOTTOM_INSET, UIUtil.REGULAR_PANEL_LEFT_RIGHT_INSET)
+    }
 
     override fun getPreferredFocus() = if (loginTextField.isEditable && loginTextField.text.isEmpty()) loginTextField else passwordField
 
@@ -80,7 +116,7 @@ sealed class GithubCredentialsUI {
       return executorFactory.create(loginTextField.text, passwordField.password, Supplier {
         invokeAndWaitIfNeeded(modalityState) {
           Messages.showInputDialog(passwordField,
-                                   "Authentication Code",
+                                   "Authentication code:",
                                    "GitHub Two-Factor Authentication",
                                    null)
         }
@@ -129,18 +165,19 @@ sealed class GithubCredentialsUI {
       tokenTextField.text = token
     }
 
-    override fun getPanel() = JBUI.Panels.simplePanel()
-      .addToTop(panel {
-        row {
-          if (!dialogMode) label("Log in to GitHub", bold = true)
-          right { switchUiLink() }
+    override fun getPanel() = panel {
+      buildTitleAndLinkRow(this, dialogMode, switchUiLink)
+      row("Server:") { serverTextField(pushX, growX) }
+      row("Token:") { tokenTextField(pushX, growX) }
+      row("") {
+        cell {
+          loginButton()
+          cancelButton()
         }
-      })
-      .addToCenter(panel {
-        row("Server:") { serverTextField() }
-        row("Token:") { tokenTextField() }
-      })
-
+      }
+    }.apply {
+      border = JBUI.Borders.empty(UIUtil.REGULAR_PANEL_TOP_BOTTOM_INSET, UIUtil.REGULAR_PANEL_LEFT_RIGHT_INSET)
+    }
 
     override fun getPreferredFocus() = tokenTextField
 
@@ -196,5 +233,32 @@ sealed class GithubCredentialsUI {
     fun setFixedLogin(fixedLogin: String?) {
       this.fixedLogin = fixedLogin
     }
+
+    override fun setLoginAction(actionListener: ActionListener) {
+      super.setLoginAction(actionListener)
+      tokenTextField.setEnterPressedAction(actionListener)
+      serverTextField.setEnterPressedAction(actionListener)
+    }
   }
+}
+
+private fun buildTitleAndLinkRow(layoutBuilder: LayoutBuilder,
+                                 dialogMode: Boolean,
+                                 linkLabel: LinkLabel<*>) {
+  layoutBuilder.row {
+    cell(isFullWidth = true) {
+      if (!dialogMode) {
+        val jbLabel = JBLabel("Log In to GitHub", UIUtil.ComponentStyle.LARGE).apply {
+          font = JBFont.label().biggerOn(5.0f)
+        }
+        jbLabel()
+      }
+      JLabel(" ")(pushX, growX) // just to be able to align link to the right
+      linkLabel()
+    }
+  }
+}
+
+private fun JComponent.setEnterPressedAction(actionListener: ActionListener) {
+  registerKeyboardAction(actionListener, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), JComponent.WHEN_FOCUSED)
 }

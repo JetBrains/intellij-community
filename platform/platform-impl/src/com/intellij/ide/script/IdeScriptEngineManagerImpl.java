@@ -3,6 +3,7 @@ package com.intellij.ide.script;
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
@@ -47,7 +48,7 @@ class IdeScriptEngineManagerImpl extends IdeScriptEngineManager {
   @NotNull
   @Override
   public List<EngineInfo> getEngineInfos() {
-    return ContainerUtil.newArrayList(getFactories().keySet());
+    return new ArrayList<>(getFactories().keySet());
   }
 
   @Nullable
@@ -123,8 +124,9 @@ class IdeScriptEngineManagerImpl extends IdeScriptEngineManager {
     redirectOutputToLog(wrapper);
 
     PluginInfo pluginInfo = PluginInfoDetectorKt.getPluginInfo(scriptEngineFactory.getClass());
-    String eventId = pluginInfo.isSafeToReport() ? scriptEngineFactory.getClass().getName() : "third.party";
-    FUCounterUsageLogger.getInstance().logEvent("ide.script.engine", eventId);
+    String factoryClass = pluginInfo.isSafeToReport() ? scriptEngineFactory.getClass().getName() : "third.party";
+    FeatureUsageData data = new FeatureUsageData().addData("factory", factoryClass).addPluginInfo(pluginInfo);
+    FUCounterUsageLogger.getInstance().logEvent("ide.script.engine", "used", data);
     return wrapper;
   }
 

@@ -120,7 +120,7 @@ public class CucumberJvm2SMFormatter implements Formatter {
           !currentFilePath.equals(getEventUri(event))) {
         closeCurrentScenarioOutline();
         currentScenarioOutlineLine = mainScenarioLine;
-        currentScenarioOutlineName = getEventName(event);
+        currentScenarioOutlineName = getScenarioNameFromTestCase(event.testCase);
         outCommand(TEMPLATE_TEST_SUITE_STARTED, getCurrentTime(), getEventUri(event) + ":" + currentScenarioOutlineLine,
                    currentScenarioOutlineName);
         outCommand(TEMPLATE_TEST_SUITE_STARTED, getCurrentTime(), "", EXAMPLES_CAPTION);
@@ -261,7 +261,7 @@ public class CucumberJvm2SMFormatter implements Formatter {
 
   private static PickleEvent getPickleEvent(TestCase testCase) {
     try {
-      Field pickleEventField = TestCase.class.getDeclaredField("pickleEvent");
+      Field pickleEventField = testCase.getClass().getDeclaredField("pickleEvent");
       pickleEventField.setAccessible(true);
       return (PickleEvent)pickleEventField.get(testCase);
     }
@@ -283,18 +283,22 @@ public class CucumberJvm2SMFormatter implements Formatter {
     return 0;
   }
 
-  private static String getScenarioName(TestCase testCase) {
+  private String getScenarioName(TestCase testCase) {
     if (isScenarioOutline(testCase)) {
       return SCENARIO_OUTLINE_CAPTION + testCase.getLine();
     }
+    return getScenarioNameFromTestCase(testCase);
+  }
+
+  protected String getScenarioNameFromTestCase(TestCase testCase) {
     return testCase.getName();
   }
 
-  protected String getScenarioName(TestCaseStarted testCaseStarted) {
+  private String getScenarioName(TestCaseStarted testCaseStarted) {
     return getScenarioName(testCaseStarted.testCase);
   }
 
-  protected String getScenarioName(TestCaseFinished testCaseFinished) {
+  private String getScenarioName(TestCaseFinished testCaseFinished) {
     return getScenarioName(testCaseFinished.testCase);
   }
 

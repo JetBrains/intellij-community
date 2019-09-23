@@ -52,7 +52,8 @@ public class RemoteRevisionsCache implements VcsListener {
 
     myChangeDecorator = new RemoteStatusChangeNodeDecorator(this);
 
-    myVcsManager = ProjectLevelVcsManager.getInstance(project);
+    ProjectLevelVcsManagerImpl vcsManager = ProjectLevelVcsManagerImpl.getInstanceImpl(project);
+    myVcsManager = vcsManager;
     MessageBusConnection connection = myProject.getMessageBus().connect();
     connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, this);
     connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED_IN_PLUGIN, this);
@@ -74,13 +75,13 @@ public class RemoteRevisionsCache implements VcsListener {
 
     updateRoots();
 
-    if ((! myProject.isDefault()) && vcsConfiguration.isChangedOnServerEnabled()) {
-      ((ProjectLevelVcsManagerImpl) myVcsManager).addInitializationRequest(VcsInitObject.REMOTE_REVISIONS_CACHE,
-                                                                           () -> {
-                                                                             // do not start if there're no vcses
-                                                                             if (! myVcsManager.hasActiveVcss() || ! vcsConfiguration. isChangedOnServerEnabled()) return;
-                                                                             myControlledCycle.startIfNotStarted();
-                                                                           });
+    if ((!myProject.isDefault()) && vcsConfiguration.isChangedOnServerEnabled()) {
+      vcsManager.addInitializationRequest(VcsInitObject.REMOTE_REVISIONS_CACHE,
+                                          () -> {
+                                            // do not start if there're no vcses
+                                            if (!myVcsManager.hasActiveVcss() || !vcsConfiguration.isChangedOnServerEnabled()) return;
+                                            myControlledCycle.startIfNotStarted();
+                                          });
     }
   }
 

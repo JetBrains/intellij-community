@@ -12,6 +12,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 
 public abstract class LocalInspectionTool extends InspectionProfileEntry {
@@ -185,6 +186,10 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
     final PsiElementVisitor customVisitor = buildVisitor(holder, false, session);
     LOG.assertTrue(!(customVisitor instanceof PsiRecursiveVisitor),
                    "The visitor returned from LocalInspectionTool.buildVisitor() must not be recursive: " + customVisitor);
+
+    if (customVisitor == PsiElementVisitor.EMPTY_VISITOR) {
+      return Collections.emptyList();
+    }
 
     inspectionStarted(session, false);
 

@@ -93,11 +93,6 @@ public class ScrollableSingleRowLayout extends SingleRowLayout {
 
   @Override
   protected void recomputeToLayout(SingleRowPassInfo data) {
-    TabInfo info = myTabs.getSelectedInfo();
-    if (info != null && myScrollSelectionInViewPending) {
-      TabLabel label = myTabs.getTabLabel(info);
-      label.setActionPanelVisible(true);
-    }
     calculateRequiredLength(data);
     clampScrollOffsetToBounds(data);
     if (myScrollSelectionInViewPending || myLastSingRowLayout == null || !data.layoutSize.equals(myLastSingRowLayout.layoutSize)) {
@@ -115,21 +110,19 @@ public class ScrollableSingleRowLayout extends SingleRowLayout {
   }
 
   @Override
-  protected boolean applyTabLayout(SingleRowPassInfo data, TabLabel label, int length, int deltaToFit) {
+  protected boolean applyTabLayout(SingleRowPassInfo data, TabLabel label, int length) {
     if (data.requiredLength > data.toFitLength) {
       length = getStrategy().getLengthIncrement(label.getPreferredSize());
       final int moreRectSize = getStrategy().getMoreRectAxisSize();
       if (data.position + length > data.toFitLength - moreRectSize) {
         final int clippedLength = getStrategy().drawPartialOverflowTabs()
-                                  ? data.toFitLength - data.position - moreRectSize - 4 : 0;
-        super.applyTabLayout(data, label, clippedLength, deltaToFit);
+                                  ? data.toFitLength - data.position - moreRectSize : 0;
+        super.applyTabLayout(data, label, clippedLength);
         label.setAlignmentToCenter(false);
-        label.setActionPanelVisible(false);
         return false;
       }
     }
-    label.setActionPanelVisible(true);
-    return super.applyTabLayout(data, label, length, deltaToFit);
+    return super.applyTabLayout(data, label, length);
   }
 
   @Override
@@ -142,10 +135,10 @@ public class ScrollableSingleRowLayout extends SingleRowLayout {
   @Nullable
   @Override
   protected TabLabel findLastVisibleLabel(SingleRowPassInfo data) {
-    int i = data.toLayout.size()-1;
-    while(i > 0) {
-      final TabInfo info = data.toLayout.get(i);
-      final TabLabel label = myTabs.myInfo2Label.get(info);
+    int i = data.toLayout.size() - 1;
+    while (i >= 0) {
+      TabInfo info = data.toLayout.get(i);
+      TabLabel label = myTabs.myInfo2Label.get(info);
       if (!label.getBounds().isEmpty()) {
         return label;
       }

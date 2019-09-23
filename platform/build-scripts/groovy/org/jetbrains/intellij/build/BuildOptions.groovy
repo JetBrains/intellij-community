@@ -34,9 +34,12 @@ class BuildOptions {
    * Pass comma-separated names of build steps (see below) to 'intellij.build.skip.build.steps' system property to skip them when building locally.
    */
   Set<String> buildStepsToSkip = System.getProperty("intellij.build.skip.build.steps", "").split(",") as Set<String>
+  /** Pre-builds SVG icons for all SVG resource files into *.jpix resources to speedup icons loading at runtime */
+  static final String SVGICONS_PREBUILD_STEP = "svg_icons_prebuild"
   /** Build actual searchableOptions.xml file. If skipped; the (possibly outdated) source version of the file will be used. */
   static final String SEARCHABLE_OPTIONS_INDEX_STEP = "search_index"
   static final String PROVIDED_MODULES_LIST_STEP = "provided_modules_list"
+  static final String GENERATE_JAR_ORDER_STEP = "jar_order"
   static final String SOURCES_ARCHIVE_STEP = "sources_archive"
   static final String SCRAMBLING_STEP = "scramble"
   static final String NON_BUNDLED_PLUGINS_STEP = "non_bundled_plugins"
@@ -122,6 +125,13 @@ class BuildOptions {
   boolean isInDevelopmentMode = SystemProperties.getBooleanProperty("intellij.build.dev.mode",
                                                                     System.getProperty("teamcity.buildType.id") == null)
 
+
+  /**
+   * Specifies list of names of directories of bundled plugins which shouldn't be included into the product distribution. This option can be
+   * used to speed up updating the IDE from sources.
+   */
+  List<String> bundledPluginDirectoriesToSkip = System.getProperty("intellij.build.bundled.plugin.dirs.to.skip", "").split(",") as List<String>
+
   /**
    * Specifies JRE version to be bundled with distributions, 11 by default.
    */
@@ -139,10 +149,10 @@ class BuildOptions {
   String jdksTargetDir = System.getProperty(JDKS_TARGET_DIR_OPTION)
 
   /**
-   * Specifies Jetbrains JDK version to be used by build scripts, 8 by default.
+   * Specifies Jetbrains JBR version to be used by build scripts, 8 by default.
    */
   static final String JDK_VERSION_OPTION = "intellij.build.jdk.version"
-  int jdkVersion = System.getProperty(JDK_VERSION_OPTION, "8").toInteger()
+  int jbrVersion = System.getProperty(JDK_VERSION_OPTION, "8").toInteger()
 
   /**
    * Specifies an algorithm to build distribution checksums.

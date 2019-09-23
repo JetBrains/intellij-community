@@ -16,10 +16,9 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.event.SelectionEvent;
 import com.intellij.openapi.editor.event.SelectionListener;
-import com.intellij.openapi.editor.ex.DocumentBulkUpdateListener;
-import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
 import com.intellij.openapi.editor.impl.EditorImpl;
@@ -36,7 +35,6 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.DocumentUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
@@ -611,11 +609,8 @@ public final class EditorUtil {
     editor.getSelectionModel().removeSelection();
     Document document = editor.getDocument();
     int lastLine = Math.max(0, document.getLineCount() - 1);
-    if (editor.getCaretModel().getLogicalPosition().line == lastLine) {
-      editor.getCaretModel().moveToOffset(document.getTextLength());
-    } else {
-      editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(lastLine, 0));
-    }
+    boolean caretWasAtLastLine = editor.getCaretModel().getLogicalPosition().line == lastLine;
+    editor.getCaretModel().moveToOffset(document.getTextLength());
     ScrollingModel scrollingModel = editor.getScrollingModel();
     if (preferVerticalScroll && document.getLineStartOffset(lastLine) == document.getLineEndOffset(lastLine)) {
       // don't move 'focus' to empty last line
@@ -629,7 +624,12 @@ public final class EditorUtil {
       }
       scrollingModel.scrollVertically(scrollOffset);
     }
+    else if (!caretWasAtLastLine) {
+      // don't scroll to the end of the last line (IDEA-124688)...
+      scrollingModel.scrollTo(new LogicalPosition(lastLine, 0), ScrollType.RELATIVE);
+    }
     else {
+      // ...unless the caret was already on the last line - then scroll to the end of it.
       scrollingModel.scrollToCaret(ScrollType.RELATIVE);
     }
   }
@@ -769,17 +769,14 @@ public final class EditorUtil {
   }
 
   public static void runBatchFoldingOperationOutsideOfBulkUpdate(@NotNull Editor editor, @NotNull Runnable operation) {
-    DocumentEx document = ObjectUtils.tryCast(editor.getDocument(), DocumentEx.class);
-    if (document != null && document.isInBulkUpdate()) {
-      MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
-      disposeWithEditor(editor, connection);
-      connection.subscribe(DocumentBulkUpdateListener.TOPIC, new DocumentBulkUpdateListener.Adapter() {
+    if (editor.getDocument().isInBulkUpdate()) {
+      Disposable disposable = Disposer.newDisposable();
+      disposeWithEditor(editor, disposable);
+      editor.getDocument().addDocumentListener(new DocumentListener() {
         @Override
-        public void updateFinished(@NotNull Document doc) {
-          if (doc == editor.getDocument()) {
-            editor.getFoldingModel().runBatchFoldingOperation(operation);
-            connection.disconnect();
-          }
+        public void bulkUpdateFinished(@NotNull Document document) {
+          editor.getFoldingModel().runBatchFoldingOperation(operation);
+          Disposer.dispose(disposable);
         }
       });
     }

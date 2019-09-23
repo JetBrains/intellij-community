@@ -7,13 +7,11 @@ import com.intellij.openapi.application.ApplicationStarterBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.concurrent.Future;
 
-/**
- * @author Denis Fokin
- */
-public final class RecentProjectApplication extends ApplicationStarterBase {
-  public RecentProjectApplication() {
+final class RecentProjectApplication extends ApplicationStarterBase {
+  RecentProjectApplication() {
     super("reopen", 1);
   }
 
@@ -24,8 +22,8 @@ public final class RecentProjectApplication extends ApplicationStarterBase {
 
   @NotNull
   @Override
-  protected Future<CliResult> processCommand(@NotNull String[] args, @Nullable String currentDirectory) {
-    ProjectUtil.openProject(args[1], null, false);
-    return CliResult.ok();
+  protected Future<CliResult> processCommand(@NotNull List<String> args, @Nullable String currentDirectory) {
+    ProjectUtil.openProject(args.get(1), null, false);
+    return CliResult.OK_FUTURE;
   }
 }

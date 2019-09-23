@@ -45,7 +45,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.fixes.CreateDefaultBranchFix;
 import com.siyeh.ig.fixes.CreateMissingSwitchBranchesFix;
 import com.siyeh.ipp.modifiers.ChangeModifierIntention;
-import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -501,64 +500,16 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
     return CreateMethodFromUsage.generateActions(call);
   }
 
-  @Deprecated
-  @ScheduledForRemoval(inVersion = "2019.3")
-  @NotNull
-  @Override
-  public IntentionAction createCreateMethodFromUsageFix(@NotNull PsiMethodCallExpression call) {
-    return new CreateMethodFromUsageFix(call);
-  }
-
   @NotNull
   @Override
   public IntentionAction createCreateMethodFromUsageFix(@NotNull PsiMethodReferenceExpression methodReferenceExpression) {
     return new CreateMethodFromMethodReferenceFix(methodReferenceExpression);
   }
 
-  @Deprecated
-  @ScheduledForRemoval(inVersion = "2019.3")
-  @NotNull
-  @Override
-  public IntentionAction createCreateAbstractMethodFromUsageFix(@NotNull PsiMethodCallExpression call) {
-    return new CreateAbstractMethodFromUsageFix(call);
-  }
-
-  @Deprecated
-  @ScheduledForRemoval(inVersion = "2019.3")
-  @NotNull
-  @Override
-  public IntentionAction createCreatePropertyFromUsageFix(@NotNull PsiMethodCallExpression call) {
-    return new CreatePropertyFromUsageFix(call);
-  }
-
-  @Deprecated
-  @ScheduledForRemoval(inVersion = "2019.3")
-  @NotNull
-  @Override
-  public IntentionAction createCreateConstructorFromSuperFix(@NotNull PsiMethodCallExpression call) {
-    return new CreateConstructorFromSuperFix(call);
-  }
-
-  @Deprecated
-  @ScheduledForRemoval(inVersion = "2019.3")
-  @NotNull
-  @Override
-  public IntentionAction createCreateConstructorFromThisFix(@NotNull PsiMethodCallExpression call) {
-    return new CreateConstructorFromThisFix(call);
-  }
-
   @NotNull
   @Override
   public List<IntentionAction> createCreateConstructorFromCallExpressionFixes(@NotNull PsiMethodCallExpression call) {
     return CreateConstructorFromUsage.generateConstructorActions(call);
-  }
-
-  @Deprecated
-  @ScheduledForRemoval(inVersion = "2019.3")
-  @NotNull
-  @Override
-  public IntentionAction createCreateGetterSetterPropertyFromUsageFix(@NotNull PsiMethodCallExpression call) {
-    return new CreateGetterSetterPropertyFromUsageFix(call);
   }
 
   @NotNull
@@ -577,14 +528,6 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
   @Override
   public IntentionAction createReplaceAddAllArrayToCollectionFix(@NotNull PsiMethodCallExpression call) {
     return new ReplaceAddAllArrayToCollectionFix(call);
-  }
-
-  @Deprecated
-  @ScheduledForRemoval(inVersion = "2019.3")
-  @NotNull
-  @Override
-  public IntentionAction createCreateConstructorFromCallFix(@NotNull PsiConstructorCall call) {
-    return new CreateConstructorFromCallFix(call);
   }
 
   @NotNull

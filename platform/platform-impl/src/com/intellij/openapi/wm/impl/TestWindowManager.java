@@ -14,6 +14,7 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.WindowManagerListener;
+import com.intellij.openapi.wm.ex.IdeFrameEx;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
@@ -61,6 +62,18 @@ public final class TestWindowManager extends WindowManagerEx {
     return null;
   }
 
+  @Nullable
+  @Override
+  public ProjectFrameHelper findFrameHelper(@Nullable Project project) {
+    return null;
+  }
+
+  @Nullable
+  @Override
+  public ProjectFrameHelper getFrameHelper(@Nullable Project project) {
+    return null;
+  }
+
   @Override
   public Rectangle getScreenBounds(@NotNull Project project) {
     return null;
@@ -74,8 +87,8 @@ public final class TestWindowManager extends WindowManagerEx {
 
   @Override
   @NotNull
-  public IdeFrameImpl[] getAllProjectFrames() {
-    return new IdeFrameImpl[0];
+  public ProjectFrameHelper[] getAllProjectFrames() {
+    return new ProjectFrameHelper[0];
   }
 
   @Override
@@ -83,6 +96,7 @@ public final class TestWindowManager extends WindowManagerEx {
     return null;
   }
 
+  @Nullable
   @Override
   public final IdeFrameImpl getFrame(final Project project) {
     return null;
@@ -90,15 +104,11 @@ public final class TestWindowManager extends WindowManagerEx {
 
   @Override
   @NotNull
-  public final IdeFrameImpl allocateFrame(@NotNull Project project) {
-    IdeFrameImpl frame = new IdeFrameImpl();
+  public final ProjectFrameHelper allocateFrame(@NotNull Project project) {
+    // no need to setup min / pref size for a test window
+    ProjectFrameHelper frame = new ProjectFrameHelper(new IdeFrameImpl(), null);
     frame.init();
     return frame;
-  }
-
-  @Override
-  public final void releaseFrame(@NotNull final IdeFrameImpl frame) {
-    frame.dispose();
   }
 
   @Override
@@ -210,7 +220,7 @@ public final class TestWindowManager extends WindowManagerEx {
       return new Dimension(0, 0);
     }
 
-    @NotNull
+    @Nullable
     @Override
     public StatusBar createChild(@NotNull IdeFrame frame) {
       return null;
@@ -329,5 +339,22 @@ public final class TestWindowManager extends WindowManagerEx {
                                                   @Nullable HyperlinkListener listener) {
       return () -> { };
     }
+  }
+
+  @Override
+  public void releaseFrame(@NotNull ProjectFrameHelper frameHelper) {
+    frameHelper.getFrame().dispose();
+  }
+
+  @NotNull
+  @Override
+  public List<ProjectFrameHelper> getProjectFrameHelpers() {
+    return Collections.emptyList();
+  }
+
+  @Nullable
+  @Override
+  public IdeFrameEx findFirstVisibleFrameHelper() {
+    return null;
   }
 }

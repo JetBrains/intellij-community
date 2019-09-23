@@ -665,4 +665,8 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testFieldRewrittenInInner() { doTest(); }
   public void testArrayElementLocality() { doTest(); }
   public void testOverwrittenParameter() { doTest(); }
+  public void testClassCastExceptionDispatch() { doTest(); }
+  public void testInstanceQualifiedStaticMember() { doTest(); }
+  public void testClassEqualityCornerCase() { doTest(); }
+  public void testCellsComplex() { doTest(); }
 }

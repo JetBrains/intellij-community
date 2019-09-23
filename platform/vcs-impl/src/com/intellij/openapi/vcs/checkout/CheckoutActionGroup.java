@@ -17,7 +17,9 @@ package com.intellij.openapi.vcs.checkout;
 
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ComputableActionGroup;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.CheckoutProvider;
 import org.jetbrains.annotations.NotNull;
 
@@ -60,5 +62,11 @@ public class CheckoutActionGroup extends ComputableActionGroup.Simple {
   @NotNull
   protected AnAction createAction(CheckoutProvider provider) {
     return new CheckoutAction(provider, myIdPrefix);
+  }
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    boolean useNewCloneDialogInstead = !Registry.is("vcs.use.new.clone.dialog");
+    e.getPresentation().setEnabledAndVisible(useNewCloneDialogInstead);
   }
 }

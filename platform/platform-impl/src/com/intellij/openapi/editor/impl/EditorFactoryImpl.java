@@ -5,6 +5,7 @@ import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityStateListener;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -14,7 +15,9 @@ import com.intellij.openapi.editor.EditorKind;
 import com.intellij.openapi.editor.actionSystem.ActionPlan;
 import com.intellij.openapi.editor.actionSystem.TypedActionHandler;
 import com.intellij.openapi.editor.actionSystem.TypedActionHandlerEx;
+import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.EditorEventMulticaster;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.editor.event.EditorFactoryListener;
@@ -22,6 +25,7 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.editor.impl.event.EditorEventMulticasterImpl;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -40,6 +44,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class EditorFactoryImpl extends EditorFactory {
+  private static final ExtensionPointName<EditorFactoryListener> EP = new ExtensionPointName<>("com.intellij.editorFactoryListener");
+
   private static final Logger LOG = Logger.getInstance(EditorFactoryImpl.class);
   private final EditorEventMulticasterImpl myEditorEventMulticaster = new EditorEventMulticasterImpl();
   private final EventDispatcher<EditorFactoryListener> myEditorFactoryEventDispatcher = EventDispatcher.create(EditorFactoryListener.class);
@@ -49,7 +55,7 @@ public class EditorFactoryImpl extends EditorFactory {
     MessageBusConnection busConnection = ApplicationManager.getApplication().getMessageBus().connect();
     busConnection.subscribe(ProjectLifecycleListener.TOPIC, new ProjectLifecycleListener() {
       @Override
-      public void beforeProjectLoaded(@NotNull final Project project) {
+      public void beforeProjectLoaded(@NotNull Project project) {
         // validate all editors are disposed after fireProjectClosed() was called, because it's the place where editor should be released
         Disposer.register(project, () -> {
           final Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
@@ -58,11 +64,19 @@ public class EditorFactoryImpl extends EditorFactory {
         });
       }
     });
-    busConnection.subscribe(EditorColorsManager.TOPIC, __ -> refreshAllEditors());
+    busConnection.subscribe(EditorColorsManager.TOPIC, new EditorColorsListener() {
+      @Override
+      public void globalSchemeChange(@Nullable EditorColorsScheme scheme) {
+        refreshAllEditors();
+      }
+    });
 
-    LaterInvocator.addModalityStateListener(entering -> {
-      for (Editor editor : myEditors) {
-        ((EditorImpl)editor).beforeModalityStateChanged();
+    LaterInvocator.addModalityStateListener(new ModalityStateListener() {
+      @Override
+      public void beforeModalityStateChanged(boolean entering) {
+        for (Editor editor : myEditors) {
+          ((EditorImpl)editor).beforeModalityStateChanged();
+        }
       }
     }, ApplicationManager.getApplication());
   }
@@ -186,7 +200,10 @@ public class EditorFactoryImpl extends EditorFactory {
     EditorImpl editor = new EditorImpl(hostDocument, isViewer, project, kind);
     myEditors.add(editor);
     myEditorEventMulticaster.registerEditor(editor);
-    myEditorFactoryEventDispatcher.getMulticaster().editorCreated(new EditorFactoryEvent(this, editor));
+
+    EditorFactoryEvent event = new EditorFactoryEvent(this, editor);
+    myEditorFactoryEventDispatcher.getMulticaster().editorCreated(event);
+    EP.forEachExtensionSafe(it -> it.editorCreated(event));
 
     if (LOG.isDebugEnabled()) {
       LOG.debug("number of Editors after create: " + myEditors.size());
@@ -198,7 +215,9 @@ public class EditorFactoryImpl extends EditorFactory {
   @Override
   public void releaseEditor(@NotNull Editor editor) {
     try {
-      myEditorFactoryEventDispatcher.getMulticaster().editorReleased(new EditorFactoryEvent(this, editor));
+      EditorFactoryEvent event = new EditorFactoryEvent(this, editor);
+      myEditorFactoryEventDispatcher.getMulticaster().editorReleased(event);
+      EP.forEachExtensionSafe(it -> it.editorReleased(event));
     }
     finally {
       try {
@@ -258,6 +277,7 @@ public class EditorFactoryImpl extends EditorFactory {
   public static class MyRawTypedHandler implements TypedActionHandlerEx {
     private final TypedActionHandler myDelegate;
 
+    @SuppressWarnings("NonDefaultConstructor")
     public MyRawTypedHandler(TypedActionHandler delegate) {
       myDelegate = delegate;
     }

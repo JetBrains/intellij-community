@@ -356,6 +356,10 @@ public abstract class GitHandler {
     myCustomEnv.put(name, value);
   }
 
+  public boolean containsCustomEnvironmentVariable(@NotNull String key) {
+    return myCustomEnv.containsKey(key);
+  }
+
   /**
    * See {@link GitImplBase#run(Computable, Computable)}
    */

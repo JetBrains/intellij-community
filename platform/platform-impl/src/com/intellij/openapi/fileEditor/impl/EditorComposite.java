@@ -51,7 +51,7 @@ import java.util.*;
  *
  * @author Vladimir Kondratyev
  */
-public abstract class EditorComposite implements Disposable {
+public class EditorComposite implements Disposable {
   private static final Logger LOG = Logger.getInstance(EditorComposite.class);
 
   /**
@@ -83,6 +83,8 @@ public abstract class EditorComposite implements Disposable {
   private final Map<FileEditor, JComponent> myBottomComponents = new HashMap<>();
   private final Map<FileEditor, String> myDisplayNames = new HashMap<>();
 
+  private FileEditorProvider[] myProviders;
+
   /**
    * @param file {@code file} for which composite is being constructed
    *
@@ -93,10 +95,12 @@ public abstract class EditorComposite implements Disposable {
    */
   EditorComposite(@NotNull final VirtualFile file,
                   @NotNull final FileEditor[] editors,
+                  @NotNull FileEditorProvider[] providers,
                   @NotNull final FileEditorManagerEx fileEditorManager) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     myFile = file;
     myEditors = editors;
+    myProviders = providers;
     if (ArrayUtil.contains(null, editors)) throw new IllegalArgumentException("Must not pass null editors in " + Arrays.asList(editors));
     myFileEditorManager = fileEditorManager;
     myInitialFileTimeStamp     = myFile.getTimeStamp();
@@ -145,6 +149,11 @@ public abstract class EditorComposite implements Disposable {
         }
       }
     });
+  }
+
+  @NotNull
+  public FileEditorProvider[] getProviders() {
+    return myProviders;
   }
 
   @NotNull
@@ -365,7 +374,24 @@ public abstract class EditorComposite implements Disposable {
    * @return currently selected myEditor with its provider.
    */
   @NotNull
-  public abstract FileEditorWithProvider getSelectedWithProvider();
+  public FileEditorWithProvider getSelectedWithProvider() {
+    LOG.assertTrue(myEditors.length > 0, myEditors.length);
+    if (myEditors.length == 1) {
+      LOG.assertTrue(myTabbedPaneWrapper == null);
+      return new FileEditorWithProvider(myEditors[0], myProviders[0]);
+    }
+    else {
+      // we have to get myEditor from tabbed pane
+      LOG.assertTrue(myTabbedPaneWrapper != null);
+      int index = myTabbedPaneWrapper.getSelectedIndex();
+      if (index == -1) {
+        index = 0;
+      }
+      LOG.assertTrue(index >= 0, index);
+      LOG.assertTrue(index < myEditors.length, index);
+      return new FileEditorWithProvider(myEditors[index], myProviders[index]);
+    }
+  }
 
   /**
    * @deprecated use {@link #getSelectedWithProvider()}
@@ -399,8 +425,9 @@ public abstract class EditorComposite implements Disposable {
    * modified myEditor
    */
   public boolean isModified(){
-    for(int i=myEditors.length-1;i>=0;i--){
-      if(myEditors[i].isModified()){
+    final FileEditor[] editors = getEditors();
+    for (FileEditor editor : editors) {
+      if (editor.isModified()) {
         return true;
       }
     }
@@ -525,5 +552,24 @@ public abstract class EditorComposite implements Disposable {
         return result == null ? JBColor.BLACK : result;
       }
     };
+  }
+
+  @NotNull
+  public HistoryEntry currentStateAsHistoryEntry() {
+    final FileEditor[] editors = getEditors();
+    final FileEditorState[] states = new FileEditorState[editors.length];
+    for (int j = 0; j < states.length; j++) {
+      states[j] = editors[j].getState(FileEditorStateLevel.FULL);
+      LOG.assertTrue(states[j] != null);
+    }
+    final int selectedProviderIndex = ArrayUtil.find(editors, getSelectedEditor());
+    LOG.assertTrue(selectedProviderIndex != -1);
+    final FileEditorProvider[] providers = getProviders();
+    return HistoryEntry.createLight(getFile(), providers, states, providers[selectedProviderIndex]);
+  }
+
+  public void addEditor(@NotNull FileEditor editor, FileEditorProvider provider) {
+    addEditor(editor);
+    myProviders = ArrayUtil.append(myProviders, provider);
   }
 }

@@ -2,10 +2,12 @@
 <idea-plugin>
   <id>org.editorconfig.editorconfigjetbrains</id>
   <name>EditorConfig</name>
-  <vendor url="http://editorconfig.org">Kirill Glazyrin and Kevin Bell, JetBrains</vendor>
+  <vendor>JetBrains</vendor>
 
   <description><![CDATA[
       Supports storing code formatting settings inside EditorConfig files, as well as editing EditorConfig files.
+      <p></p>
+      <p>Originally developed by Kirill Glazyrin and Kevin Bell.</p>
       ]]></description>
 
   <depends>com.intellij.modules.lang</depends>
@@ -34,7 +36,11 @@
     <gotoFileContributor implementation="org.editorconfig.configmanagement.finder.EditorConfigGotoFileContributor"/>
 
     <!-- Language support -->
-    <fileTypeFactory implementation="org.editorconfig.language.filetype.EditorConfigFileTypeFactory"/>
+    <fileType name="EditorConfig" 
+              language="EditorConfig" 
+              implementationClass="org.editorconfig.language.filetype.EditorConfigFileType"
+              fieldName="INSTANCE"
+              fileNames=".editorconfig"/>
     <colorSettingsPage implementation="org.editorconfig.language.highlighting.EditorConfigColorSettingsPage"/>
     <annotator
         language="EditorConfig"

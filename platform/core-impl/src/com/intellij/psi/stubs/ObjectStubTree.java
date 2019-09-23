@@ -17,7 +17,9 @@ package com.intellij.psi.stubs;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
 import gnu.trove.THashMap;
+import gnu.trove.TObjectHashingStrategy;
 import gnu.trove.TObjectObjectProcedure;
 import gnu.trove.TObjectProcedure;
 import org.jetbrains.annotations.NotNull;
@@ -59,9 +61,15 @@ public class ObjectStubTree<T extends Stub> {
     return getPlainList();
   }
 
+  @Deprecated
   @NotNull
   public Map<StubIndexKey, Map<Object, int[]>> indexStubTree() {
-    StubIndexSink sink = new StubIndexSink();
+    return indexStubTree(key -> TObjectHashingStrategy.CANONICAL);
+  }
+
+  @NotNull
+  public Map<StubIndexKey, Map<Object, int[]>> indexStubTree(@NotNull Function<StubIndexKey<?, ?>, TObjectHashingStrategy<?>> keyHashingStrategyFunction) {
+    StubIndexSink sink = new StubIndexSink(keyHashingStrategyFunction);
     final List<T> plainList = getPlainListFromAllRoots();
     for (int i = 0, plainListSize = plainList.size(); i < plainListSize; i++) {
       final Stub stub = plainList.get(i);
@@ -116,14 +124,19 @@ public class ObjectStubTree<T extends Stub> {
 
   private static class StubIndexSink implements IndexSink, TObjectProcedure<Map<Object, int[]>>, TObjectObjectProcedure<Object,int[]> {
     private final THashMap<StubIndexKey, Map<Object, int[]>> myResult = new THashMap<>();
+    private final Function<StubIndexKey<?, ?>, TObjectHashingStrategy<?>> myHashingStrategyFunction;
     private int myStubIdx;
     private Map<Object, int[]> myProcessingMap;
+
+    private StubIndexSink(@NotNull Function<StubIndexKey<?, ?>, TObjectHashingStrategy<?>> hashingStrategyFunction) {
+      myHashingStrategyFunction = hashingStrategyFunction;
+    }
 
     @Override
     public void occurrence(@NotNull final StubIndexKey indexKey, @NotNull final Object value) {
       Map<Object, int[]> map = myResult.get(indexKey);
       if (map == null) {
-        map = new THashMap<>();
+        map = new THashMap<>((TObjectHashingStrategy<Object>)myHashingStrategyFunction.fun(indexKey));
         myResult.put(indexKey, map);
       }
 

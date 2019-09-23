@@ -3,7 +3,6 @@ package com.intellij.ui.layout
 
 import com.intellij.BundleBase
 import com.intellij.icons.AllIcons
-import com.intellij.ide.ui.UINumericRange
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DefaultActionGroup
@@ -20,14 +19,15 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.*
 import com.intellij.ui.components.*
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
 import java.awt.event.MouseEvent
 import javax.swing.*
+import javax.swing.text.JTextComponent
 import kotlin.jvm.internal.CallableReference
 import kotlin.reflect.KMutableProperty0
-import kotlin.reflect.KVisibility
 
 @DslMarker
 annotation class CellMarker
@@ -76,34 +76,52 @@ inline fun <reified T : Any> KMutableProperty0<T>.toBinding(): PropertyBinding<T
   return createPropertyBinding(this, T::class.javaPrimitiveType ?: T::class.java)
 }
 
+inline fun <reified T : Any> KMutableProperty0<T?>.toNullableBinding(defaultValue: T): PropertyBinding<T> {
+  return PropertyBinding({ get() ?: defaultValue }, { set(it) })
+}
+
 interface CellBuilder<T : JComponent> {
   val component: T
 
   fun comment(text: String, maxLineLength: Int = 70): CellBuilder<T>
   fun focused(): CellBuilder<T>
-  fun withValidation(callback: (T) -> ValidationInfo?): CellBuilder<T>
+  fun withValidationOnApply(callback: (T) -> ValidationInfo?): CellBuilder<T>
+  fun withValidationOnInput(callback: (T) -> String?): CellBuilder<T>
   fun onApply(callback: () -> Unit): CellBuilder<T>
   fun onReset(callback: () -> Unit): CellBuilder<T>
   fun onIsModified(callback: () -> Boolean): CellBuilder<T>
+
+  /**
+   * If this method is called, the value of the component will be stored to the backing property only if the component is enabled.
+   */
+  fun applyIfEnabled(): CellBuilder<T>
 
   fun <V> withBinding(
     componentGet: (T) -> V,
     componentSet: (T, V) -> Unit,
     modelBinding: PropertyBinding<V>
   ): CellBuilder<T> {
-    onApply { modelBinding.set(componentGet(component)) }
+    onApply { if (shouldSaveOnApply()) modelBinding.set(componentGet(component)) }
     onReset { componentSet(component, modelBinding.get()) }
-    onIsModified { componentGet(component) != modelBinding.get() }
+    onIsModified { shouldSaveOnApply() && componentGet(component) != modelBinding.get() }
     return this
   }
 
   fun enabled(isEnabled: Boolean)
   fun enableIf(predicate: ComponentPredicate): CellBuilder<T>
 
-  fun withErrorIf(message: String, callback: (T) -> Boolean): CellBuilder<T> {
-    withValidation { if (callback(it)) ValidationInfo(message, it) else null }
+  fun withErrorOnApplyIf(message: String, callback: (T) -> Boolean): CellBuilder<T> {
+    withValidationOnApply { if (callback(it)) ValidationInfo(message, it) else null }
     return this
   }
+
+  @ApiStatus.Internal
+  fun shouldSaveOnApply(): Boolean
+}
+
+fun <T : JTextComponent> CellBuilder<T>.validateTextOnInput(callback: (String) -> String?): CellBuilder<T> {
+  withValidationOnInput { callback(component.text) }
+  return this
 }
 
 internal interface CheckboxCellBuilder {
@@ -112,6 +130,15 @@ internal interface CheckboxCellBuilder {
 
 fun <T : JCheckBox> CellBuilder<T>.actsAsLabel(): CellBuilder<T> {
   (this as CheckboxCellBuilder).actsAsLabel()
+  return this
+}
+
+internal interface ScrollPaneCellBuilder {
+  fun noGrowY()
+}
+
+fun <T : JScrollPane> CellBuilder<T>.noGrowY(): CellBuilder<T> {
+  (this as ScrollPaneCellBuilder).noGrowY()
   return this
 }
 
@@ -130,7 +157,7 @@ const val UNBOUND_RADIO_BUTTON = "unbound.radio.button"
 
 // separate class to avoid row related methods in the `cell { } `
 @CellMarker
-abstract class Cell {
+abstract class Cell : BaseBuilder {
   /**
    * Sets how keen the component should be to grow in relation to other component **in the same cell**. Use `push` in addition if need.
    * If this constraint is not set the grow weight is set to 0 and the component will not grow (unless some automatic rule is not applied (see [com.intellij.ui.layout.panel])).
@@ -213,13 +240,13 @@ abstract class Cell {
     return component(comment = comment).withSelectedBinding(modelBinding)
   }
 
-  fun radioButton(text: String, comment: String? = null): CellBuilder<JBRadioButton> {
+  open fun radioButton(text: String, comment: String? = null): CellBuilder<JBRadioButton> {
     val component = JBRadioButton(text)
     component.putClientProperty(UNBOUND_RADIO_BUTTON, true)
     return component(comment = comment)
   }
 
-  fun radioButton(text: String, prop: KMutableProperty0<Boolean>, comment: String? = null): CellBuilder<JBRadioButton> {
+  open fun radioButton(text: String, prop: KMutableProperty0<Boolean>, comment: String? = null): CellBuilder<JBRadioButton> {
     val component = JBRadioButton(text, prop.get())
     return component(comment = comment).withSelectedBinding(prop.toBinding())
   }
@@ -252,32 +279,35 @@ abstract class Cell {
     return comboBox(model, prop.toBinding().toNullable(), growPolicy, renderer)
   }
 
-  fun textField(prop: KMutableProperty0<String>, columns: Int? = null): CellBuilder<JTextField> {
-    val component = JTextField(prop.get(),columns ?: 0)
+  fun textField(prop: KMutableProperty0<String>, columns: Int? = null): CellBuilder<JTextField> = textField(prop.toBinding(), columns)
+
+  fun textField(getter: () -> String, setter: (String) -> Unit, columns: Int? = null) = textField(PropertyBinding(getter, setter), columns)
+
+  fun textField(binding: PropertyBinding<String>, columns: Int? = null): CellBuilder<JTextField> {
+    val component = JTextField(binding.get(), columns ?: 0)
     val builder = component()
-    return builder.withTextBinding(prop.toBinding())
+    return builder.withTextBinding(binding)
   }
 
-  fun textField(getter: () -> String, setter: (String) -> Unit, columns: Int? = null): CellBuilder<JTextField> {
-    val component = JTextField(getter(),columns ?: 0)
-    val builder = component()
-    return builder.withTextBinding(PropertyBinding(getter, setter))
-  }
+  fun intTextField(prop: KMutableProperty0<Int>, columns: Int? = null, range: IntRange? = null): CellBuilder<JTextField> =
+    intTextField(prop.toBinding(), columns, range)
 
-  fun intTextField(prop: KMutableProperty0<Int>, columns: Int? = null, range: UINumericRange? = null): CellBuilder<JTextField> {
+  fun intTextField(getter: () -> Int, setter: (Int) -> Unit, columns: Int? = null, range: IntRange? = null): CellBuilder<JTextField> =
+    intTextField(PropertyBinding(getter, setter), columns, range)
+
+  fun intTextField(binding: PropertyBinding<Int>, columns: Int? = null, range: IntRange? = null): CellBuilder<JTextField> {
     return textField(
-      { prop.get().toString() },
-      { value -> value.toIntOrNull()?.let { prop.set(range?.fit(it) ?: it) } },
+      { binding.get().toString() },
+      { value -> value.toIntOrNull()?.let { intValue -> binding.set(range?.let { intValue.coerceIn(it.first, it.last) } ?: intValue) } },
       columns
-    )
-  }
-
-  fun intTextField(getter: () -> Int, setter: (Int) -> Unit, columns: Int? = null, range: UINumericRange? = null): CellBuilder<JTextField> {
-    return textField(
-      { getter().toString() },
-      { value -> value.toIntOrNull()?.let { setter(range?.fit(it) ?: it) } },
-      columns
-    )
+    ).validateTextOnInput {
+      val value = it.toIntOrNull()
+      if (value == null)
+        "Please enter a number"
+      else if (range != null && value !in range)
+        "Please enter a number from ${range.first} to ${range.last}"
+      else null
+    }
   }
 
   fun spinner(prop: KMutableProperty0<Int>, minValue: Int, maxValue: Int, step: Int = 1): CellBuilder<JBIntSpinner> {
@@ -323,9 +353,8 @@ abstract class Cell {
     fileChosen: ((chosenFile: VirtualFile) -> String)? = null,
     growPolicy: GrowPolicy? = null
   ): CellBuilder<TextFieldWithBrowseButton> {
-    val component = textFieldWithBrowseButton(project, browseDialogTitle, fileChooserDescriptor, fileChosen)
-    component.text = prop.get()
-    return component(growX, growPolicy = growPolicy).withBinding(TextFieldWithBrowseButton::getText, TextFieldWithBrowseButton::setText, prop.toBinding())
+    val modelBinding = prop.toBinding()
+    return textFieldWithBrowseButton(modelBinding, browseDialogTitle, project, fileChooserDescriptor, fileChosen, growPolicy)
   }
 
   fun textFieldWithBrowseButton(
@@ -337,9 +366,22 @@ abstract class Cell {
     fileChosen: ((chosenFile: VirtualFile) -> String)? = null,
     growPolicy: GrowPolicy? = null
   ): CellBuilder<TextFieldWithBrowseButton> {
+    val modelBinding = PropertyBinding(getter, setter)
+    return textFieldWithBrowseButton(modelBinding, browseDialogTitle, project, fileChooserDescriptor, fileChosen, growPolicy)
+  }
+
+  fun textFieldWithBrowseButton(
+    modelBinding: PropertyBinding<String>,
+    browseDialogTitle: String? = null,
+    project: Project? = null,
+    fileChooserDescriptor: FileChooserDescriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor(),
+    fileChosen: ((chosenFile: VirtualFile) -> String)? = null,
+    growPolicy: GrowPolicy? = null
+  ): CellBuilder<TextFieldWithBrowseButton> {
     val component = textFieldWithBrowseButton(project, browseDialogTitle, fileChooserDescriptor, fileChosen)
-    component.text = getter()
-    return component(growX, growPolicy = growPolicy).withBinding(TextFieldWithBrowseButton::getText, TextFieldWithBrowseButton::setText, PropertyBinding(getter, setter))
+    component.text = modelBinding.get()
+    return component(growX, growPolicy = growPolicy)
+      .withBinding(TextFieldWithBrowseButton::getText, TextFieldWithBrowseButton::setText, modelBinding)
   }
 
   fun gearButton(vararg actions: AnAction) {
@@ -373,8 +415,8 @@ abstract class Cell {
     panel(*constraints)
   }
 
-  fun scrollPane(component: Component, vararg constraints: CCFlags) {
-    JBScrollPane(component)(*constraints)
+  fun scrollPane(component: Component, vararg constraints: CCFlags): CellBuilder<JScrollPane> {
+    return JBScrollPane(component)(*constraints)
   }
 
   abstract operator fun <T : JComponent> T.invoke(
@@ -383,7 +425,21 @@ abstract class Cell {
     growPolicy: GrowPolicy? = null,
     comment: String? = null
   ): CellBuilder<T>
+}
 
+class InnerCell(val cell: Cell) : Cell() {
+  override fun <T : JComponent> T.invoke(vararg constraints: CCFlags,
+                                         gapLeft: Int,
+                                         growPolicy: GrowPolicy?,
+                                         comment: String?): CellBuilder<T> {
+    with(cell) {
+      return invoke(*constraints, gapLeft = gapLeft, growPolicy = growPolicy, comment = comment)
+    }
+  }
+
+  override fun withButtonGroup(buttonGroup: ButtonGroup, body: () -> Unit) {
+    cell.withButtonGroup(buttonGroup, body)
+  }
 }
 
 fun <T> listCellRenderer(renderer: SimpleListCellRenderer<T?>.(value: T, index: Int, isSelected: Boolean) -> Unit): SimpleListCellRenderer<T?> {

@@ -114,7 +114,7 @@ class GradleRunner {
 
   private GradleRunner createModularRunner() {
     if (isModularRuntime()) return this
-    run('Downloading JBR 11', 'setupJdks', "-D$BuildOptions.JDK_VERSION_OPTION=11")
+    run('Downloading JBR 11', 'setupJbr11')
     def modularRuntime = "$projectDir/build/jdk/11"
     if (SystemInfo.isMac) modularRuntime += '/Contents/Home'
     modularRuntime = FileUtil.toSystemIndependentName(new File(modularRuntime).canonicalPath)

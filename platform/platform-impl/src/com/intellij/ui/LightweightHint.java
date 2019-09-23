@@ -12,7 +12,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.panels.OpaquePanel;
 import org.jetbrains.annotations.NotNull;
@@ -360,14 +359,9 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
           if (layeredPane != null) {
             Rectangle bounds = myComponent.getBounds();
             try {
-              if (myFocusBackComponent != null) {
-                LayoutFocusTraversalPolicyExt.setOverridenDefaultComponent(myFocusBackComponent);
-              }
               layeredPane.remove(myComponent);
             }
-            finally {
-              LayoutFocusTraversalPolicyExt.setOverridenDefaultComponent(null);
-            }
+            finally {}
 
             layeredPane.paintImmediately(bounds.x, bounds.y, bounds.width, bounds.height);
           }

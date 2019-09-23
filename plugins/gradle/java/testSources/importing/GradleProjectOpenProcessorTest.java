@@ -5,6 +5,7 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.ScopeToolState;
 import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.idea.Bombed;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataImportListener;
@@ -39,6 +40,7 @@ import org.junit.runners.Parameterized;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -104,6 +106,7 @@ public class GradleProjectOpenProcessorTest extends GradleImportingTestCase {
   }
 
   @Test
+  @Bombed(user = "Sergey.Vorobyov", year=2019, month = Calendar.OCTOBER, day = 1, description = "Should be enabled when https://youtrack.jetbrains.com/issue/IJP-485 will be implemented")
   public void testGradleSettingsFileModification() throws IOException {
     VirtualFile foo = createProjectSubDir("foo");
     createProjectSubFile("foo/build.gradle", "apply plugin: 'java'");
@@ -190,7 +193,7 @@ public class GradleProjectOpenProcessorTest extends GradleImportingTestCase {
       assertTrue(GradleSettings.getInstance(fooProject).getStoreProjectFilesExternally());
       GradleProjectSettings fooSettings = GradleSettings.getInstance(fooProject).getLinkedProjectSettings(foo.getPath());
       assertTrue(fooSettings.isResolveModulePerSourceSet());
-      assertFalse(fooSettings.isResolveExternalAnnotations());
+      assertTrue(fooSettings.isResolveExternalAnnotations());
       assertTrue(fooSettings.getDelegatedBuild());
       assertEquals(TestRunner.GRADLE, fooSettings.getTestRunner());
       assertFalse(fooSettings.isUseAutoImport());

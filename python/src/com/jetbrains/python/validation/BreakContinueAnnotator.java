@@ -15,13 +15,10 @@
  */
 package com.jetbrains.python.validation;
 
-import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.psi.PyBreakStatement;
 import com.jetbrains.python.psi.PyContinueStatement;
-import com.jetbrains.python.psi.PyFinallyPart;
-import com.jetbrains.python.psi.PyLoopStatement;
 
-import static com.jetbrains.python.PyBundle.message;
+import static com.jetbrains.python.PyPsiBundle.message;
 
 /**
  * Annotates misplaced 'break' and 'continue'.
@@ -38,9 +35,6 @@ public class BreakContinueAnnotator extends PyAnnotator {
   public void visitPyContinueStatement(final PyContinueStatement node) {
     if (node.getLoopStatement() == null) {
       getHolder().createErrorAnnotation(node, message("ANN.continue.outside.loop"));
-    }
-    else if (PsiTreeUtil.getParentOfType(node, PyFinallyPart.class, false, PyLoopStatement.class) != null) {
-      getHolder().createErrorAnnotation(node, message("ANN.cant.continue.in.finally"));
     }
   }
 }

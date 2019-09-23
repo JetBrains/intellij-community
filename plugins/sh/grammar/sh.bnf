@@ -97,6 +97,8 @@
     REDIRECT_AMP_GREATER_GREATER = "&>>"
     REDIRECT_LESS_GREATER = "<>"
     REDIRECT_GREATER_BAR = ">|"
+    OUTPUT_PROCESS_SUBSTITUTION = ">("
+    INPUT_PROCESS_SUBSTITUTION = "<("
 
     OPEN_QUOTE = 'OPEN_QUOTE'
     CLOSE_QUOTE = 'CLOSE_QUOTE'
@@ -154,8 +156,8 @@ command ::= shell_command [heredoc | redirection+]
 
 redirection ::= redirection_inner | '&>' w | number redirection_inner | process_substitution
 private redirection_inner ::= ('<&' | '>&') (number | '-')
-                            | ('>' | '<' | '>>' | '<<<' | '<<' | '<&' | '>&' | '&>>' | '<>' | '>|') w+
-process_substitution ::= ('<' '<'?| '>') '(' list ')' {pin=1}
+                            | ('>' | '<' | '>>' | '<<<' | '<<' | '<&' | '>&' | '&>>' | '<>' | '>|') (process_substitution | w+ )
+process_substitution ::= ('<(' | '>(') list ')' {pin=1}
 
 include_command ::= include_directive (simple_command_element | <<keywordsRemapped>>)+ {pin=0}
 include_directive ::= &('source' | '.') word {extends=generic_command_directive}
@@ -245,10 +247,7 @@ block_compound_list ::= (nl pipeline_command_list | pipeline_command_list) end_o
 }
 private block_compound_list_recover ::= !('{' | '\n' | '}' | do | done)
 
-simple_command ::= generic_command_directive (simple_command_element | <<keywordsRemapped>>)* {
-  pin=1
-  methods=[getReferences]
-}
+simple_command ::= generic_command_directive (simple_command_element | <<keywordsRemapped>>)* {pin=1}
 generic_command_directive ::= simple_command_element_inner {extends=simple_command}
 simple_command_element ::= simple_command_element_inner
 private simple_command_element_inner ::=  literal assignment_command?
@@ -293,7 +292,10 @@ left assignment_command ::= array_expression? ('='|"+=") [assignment_list | <<pa
 assignment_list ::= '(' (<<backslash>> | array_assignment)* ')'
 array_assignment ::= newlines '='? expression newlines
 
-literal ::= word | string | number | variable {extends=simple_command_element}
+literal ::= word | string | number | variable {
+  extends=simple_command_element
+  methods=[getReferences]
+}
 private not_lvalue ::= '!' | vars | '$' | brace_expansion | 'file descriptor'
 brace_expansion ::= '{' (word | brace_expansion)* '}'
 variable ::= var {extends=literal}
@@ -301,7 +303,6 @@ variable ::= var {extends=literal}
 number ::= int | hex | octal {extends=literal}
 string ::= (OPEN_QUOTE (STRING_CONTENT | vars | <<notQuote>>)* CLOSE_QUOTE) | RAW_STRING {
   pin(".*")=1
-  methods=[getReferences]
   extends=literal
 }
 private w ::= word | string | number | not_lvalue

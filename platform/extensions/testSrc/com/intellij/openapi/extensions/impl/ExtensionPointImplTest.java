@@ -2,15 +2,19 @@
 package com.intellij.openapi.extensions.impl;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
+import com.intellij.util.messages.MessageBus;
+import com.intellij.util.pico.DefaultPicoContainer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.After;
 import org.junit.Test;
 import org.picocontainer.PicoContainer;
-import org.picocontainer.defaults.DefaultPicoContainer;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -118,6 +122,7 @@ public class ExtensionPointImplTest {
   @Test
   @SuppressWarnings("unchecked")
   public void testIncompatibleExtension() {
+    @SuppressWarnings("rawtypes")
     ExtensionPoint extensionPoint = buildExtensionPoint(Integer.class);
 
     try {
@@ -239,7 +244,7 @@ public class ExtensionPointImplTest {
     extensionPoint.registerExtension("second", LoadingOrder.FIRST, disposable);
 
     MyShootingComponentAdapter adapter = stringAdapter();
-    ((ExtensionPointImpl)extensionPoint).addExtensionAdapter(adapter);
+    ((ExtensionPointImpl<?>)extensionPoint).addExtensionAdapter(adapter);
     adapter.setFire(() -> {
       throw new ProcessCanceledException();
     });
@@ -267,7 +272,7 @@ public class ExtensionPointImplTest {
 
   @NotNull
   private static <T> ExtensionPointImpl<T> buildExtensionPoint(@NotNull Class<T> aClass) {
-    return new InterfaceExtensionPoint<>(ExtensionsImplTest.EXTENSION_POINT_NAME_1, aClass, new DefaultPicoContainer());
+    return new InterfaceExtensionPoint<>(ExtensionsImplTest.EXTENSION_POINT_NAME_1, aClass, new MyComponentManager());
   }
 
   private static MyShootingComponentAdapter stringAdapter() {
@@ -287,11 +292,59 @@ public class ExtensionPointImplTest {
 
     @NotNull
     @Override
-    public synchronized Object createInstance(@NotNull PicoContainer container) {
+    public synchronized <T> T createInstance(@NotNull ComponentManager componentManager) {
       if (myFire != null) {
         myFire.run();
       }
-      return super.createInstance(container);
+      return super.createInstance(componentManager);
+    }
+  }
+
+  static class MyComponentManager implements ComponentManager {
+    private final DefaultPicoContainer myContainer = new DefaultPicoContainer();
+
+    @Override
+    public <T> T getComponent(@NotNull Class<T> interfaceClass) {
+      return null;
+    }
+
+    @NotNull
+    @Override
+    public PicoContainer getPicoContainer() {
+      return myContainer;
+    }
+
+    @NotNull
+    @Override
+    public MessageBus getMessageBus() {
+      return null;
+    }
+
+    @Override
+    public boolean isDisposed() {
+      return false;
+    }
+
+    @NotNull
+    @Override
+    public Condition<?> getDisposed() {
+      return null;
+    }
+
+    @Override
+    public void dispose() {
+
+    }
+
+    @Nullable
+    @Override
+    public <T> T getUserData(@NotNull Key<T> key) {
+      return null;
+    }
+
+    @Override
+    public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
+
     }
   }
 }

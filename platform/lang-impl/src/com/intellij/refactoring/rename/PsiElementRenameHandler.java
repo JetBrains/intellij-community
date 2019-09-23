@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.refactoring.rename;
 
@@ -162,6 +162,15 @@ public class PsiElementRenameHandler implements RenameHandler {
 
   public static void rename(@NotNull PsiElement element, @NotNull Project project, PsiElement nameSuggestionContext, Editor editor, String defaultName) {
     RenamePsiElementProcessor processor = RenamePsiElementProcessor.forElement(element);
+    rename(element, project, nameSuggestionContext, editor, defaultName, processor);
+  }
+
+  public static void rename(@NotNull PsiElement element,
+                            @NotNull Project project,
+                            PsiElement nameSuggestionContext,
+                            Editor editor,
+                            String defaultName,
+                            RenamePsiElementProcessor processor) {
     PsiElement substituted = processor.substituteElementToRename(element, editor);
     if (substituted == null || !canRename(project, editor, substituted)) return;
 
@@ -216,10 +225,5 @@ public class PsiElementRenameHandler implements RenameHandler {
       return null;
     }
     return elementArray[0];
-  }
-
-  @Override
-  public boolean isRenaming(@NotNull DataContext dataContext) {
-    return isAvailableOnDataContext(dataContext);
   }
 }

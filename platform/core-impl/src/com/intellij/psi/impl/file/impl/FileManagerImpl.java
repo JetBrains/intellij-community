@@ -1,19 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.file.impl;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -27,10 +12,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.roots.FileIndexFacade;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.LowMemoryWatcher;
-import com.intellij.openapi.util.StackOverflowPreventedException;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -52,13 +34,13 @@ import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class FileManagerImpl implements FileManager {
+public final class FileManagerImpl implements FileManager {
   private static final Key<Boolean> IN_COMA = Key.create("IN_COMA");
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.file.impl.FileManagerImpl");
   private final Key<FileViewProvider> myPsiHardRefKey = Key.create("HARD_REFERENCE_TO_PSI"); //non-static!
 
   private final PsiManagerImpl myManager;
-  private final FileIndexFacade myFileIndex;
+  private final NotNullLazyValue<? extends FileIndexFacade> myFileIndex;
 
   private final AtomicReference<ConcurrentMap<VirtualFile, PsiDirectory>> myVFileToPsiDirMap = new AtomicReference<>();
   private final AtomicReference<ConcurrentMap<VirtualFile, FileViewProvider>> myVFileToViewProviderMap = new AtomicReference<>();
@@ -70,15 +52,12 @@ public class FileManagerImpl implements FileManager {
 
   private boolean myDisposed;
 
-  private final FileDocumentManager myFileDocumentManager;
   private final MessageBusConnection myConnection;
 
-  public FileManagerImpl(PsiManagerImpl manager, FileDocumentManager fileDocumentManager, FileIndexFacade fileIndex) {
+  public FileManagerImpl(@NotNull PsiManagerImpl manager, @NotNull NotNullLazyValue<? extends FileIndexFacade> fileIndex) {
     myManager = manager;
     myFileIndex = fileIndex;
     myConnection = manager.getProject().getMessageBus().connect();
-
-    myFileDocumentManager = fileDocumentManager;
 
     Disposer.register(manager.getProject(), this);
     LowMemoryWatcher.register(this::processQueue, this);
@@ -86,12 +65,12 @@ public class FileManagerImpl implements FileManager {
     myConnection.subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
       @Override
       public void enteredDumbMode() {
-        processFileTypesChanged();
+        processFileTypesChanged(false);
       }
 
       @Override
       public void exitDumbMode() {
-        processFileTypesChanged();
+        processFileTypesChanged(false);
       }
     });
   }
@@ -268,7 +247,7 @@ public class FileManagerImpl implements FileManager {
                                       : LanguageFileViewProviders.INSTANCE.forLanguage(language);
     FileViewProvider viewProvider = factory == null ? null : factory.createFileViewProvider(file, language, myManager, eventSystemEnabled);
 
-    return viewProvider == null ? new SingleRootFileViewProvider(myManager, file, eventSystemEnabled, fileType) : viewProvider;
+    return viewProvider == null ? new SingleRootFileViewProvider(myManager, file, eventSystemEnabled) : viewProvider;
   }
 
   /** @deprecated Left for plugin compatibility */
@@ -284,7 +263,7 @@ public class FileManagerImpl implements FileManager {
 
   private boolean myProcessingFileTypesChange;
 
-  void processFileTypesChanged() {
+  void processFileTypesChanged(boolean updateLanguage) {
     if (myProcessingFileTypesChange) return;
     myProcessingFileTypesChange = true;
     DebugUtil.performPsiModification(null, () -> {
@@ -294,7 +273,7 @@ public class FileManagerImpl implements FileManager {
           event.setPropertyName(PsiTreeChangeEvent.PROP_FILE_TYPES);
           myManager.beforePropertyChange(event);
 
-          possiblyInvalidatePhysicalPsi();
+          possiblyInvalidatePhysicalPsi(updateLanguage);
 
           myManager.propertyChanged(event);
         });
@@ -305,11 +284,14 @@ public class FileManagerImpl implements FileManager {
     });
   }
 
-  void possiblyInvalidatePhysicalPsi() {
+  void possiblyInvalidatePhysicalPsi(boolean updateLanguage) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     removeInvalidDirs();
     for (FileViewProvider provider : getVFileToViewProviderMap().values()) {
       markPossiblyInvalidated(provider);
+      if (updateLanguage && provider instanceof AbstractFileViewProvider) {
+        ((AbstractFileViewProvider) provider).updateLanguage();
+      }
     }
   }
 
@@ -424,7 +406,8 @@ public class FileManagerImpl implements FileManager {
 
   private boolean isExcludedOrIgnored(@NotNull VirtualFile vFile) {
     if (myManager.getProject().isDefault()) return false;
-    return Registry.is("ide.hide.excluded.files") ? myFileIndex.isExcludedFile(vFile) : myFileIndex.isUnderIgnored(vFile);
+    FileIndexFacade fileIndexFacade = myFileIndex.getValue();
+    return Registry.is("ide.hide.excluded.files") ? fileIndexFacade.isExcludedFile(vFile) : fileIndexFacade.isUnderIgnored(vFile);
   }
 
   public PsiDirectory getCachedDirectory(@NotNull VirtualFile vFile) {
@@ -433,7 +416,7 @@ public class FileManagerImpl implements FileManager {
 
   void removeFilesAndDirsRecursively(@NotNull VirtualFile vFile) {
     DebugUtil.performPsiModification("removeFilesAndDirsRecursively", () -> {
-      VfsUtilCore.visitChildrenRecursively(vFile, new VirtualFileVisitor() {
+      VfsUtilCore.visitChildrenRecursively(vFile, new VirtualFileVisitor<Void>() {
         @Override
         public boolean visitFile(@NotNull VirtualFile file) {
           if (file.isDirectory()) {
@@ -565,9 +548,9 @@ public class FileManagerImpl implements FileManager {
     VirtualFile vFile = file.getVirtualFile();
     assert vFile != null;
 
-    Document document = myFileDocumentManager.getCachedDocument(vFile);
+    Document document = FileDocumentManager.getInstance().getCachedDocument(vFile);
     if (document != null) {
-      myFileDocumentManager.reloadFromDisk(document);
+      FileDocumentManager.getInstance().reloadFromDisk(document);
     }
     else {
       reloadPsiAfterTextChange(file.getViewProvider(), vFile);
@@ -593,10 +576,10 @@ public class FileManagerImpl implements FileManager {
     AbstractFileViewProvider vp = (AbstractFileViewProvider)file.getViewProvider();
     return evaluateValidity(vp) && vp.getCachedPsiFiles().contains(file);
   }
-  
+
   private boolean evaluateValidity(@NotNull AbstractFileViewProvider viewProvider) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
-    
+
     VirtualFile file = viewProvider.getVirtualFile();
     if (getRawCachedViewProvider(file) != viewProvider) {
       return false;
@@ -619,7 +602,7 @@ public class FileManagerImpl implements FileManager {
       }
       return true;
     }
-    
+
     getVFileToViewProviderMap().remove(file, viewProvider);
     file.replace(myPsiHardRefKey, viewProvider, null);
     viewProvider.putUserData(IN_COMA, null);

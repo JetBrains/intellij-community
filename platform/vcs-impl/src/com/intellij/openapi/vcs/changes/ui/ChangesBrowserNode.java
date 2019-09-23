@@ -8,6 +8,7 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -90,8 +91,13 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode implements Use
   }
 
   @NotNull
+  public static ChangesBrowserNode createFilePath(@NotNull FilePath userObject, @Nullable FileStatus status) {
+    return new ChangesBrowserFilePathNode(userObject, status);
+  }
+
+  @NotNull
   public static ChangesBrowserNode createFilePath(@NotNull FilePath userObject) {
-    return new ChangesBrowserFilePathNode(userObject);
+    return createFilePath(userObject, null);
   }
 
   @NotNull

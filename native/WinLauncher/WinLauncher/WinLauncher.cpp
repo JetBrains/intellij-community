@@ -608,17 +608,13 @@ bool LoadJVMLibrary()
     dllName = clientDllName;
   }
 
-  // Call SetDllDirectory to allow jvm.dll to load the corresponding runtime libraries.
-  SetDllDirectoryA(binDir.c_str());
+  // Call SetCurrentDirectory to allow jvm.dll to load the corresponding runtime libraries.
+  SetCurrentDirectoryA(binDir.c_str());
   hJVM = LoadLibraryA(dllName.c_str());
   if (hJVM)
   {
     pCreateJavaVM = (JNI_createJavaVM) GetProcAddress(hJVM, "JNI_CreateJavaVM");
   }
-
-  // Now clean up the SetDllDirectory context, because otherwise it will pollute the child processes (and that is
-  // often unwanted for any user programs started from IDE).
-  SetDllDirectoryA(nullptr);
 
   if (!pCreateJavaVM)
   {
@@ -1161,6 +1157,19 @@ void StartSplashProcess()
   }
 }
 
+std::wstring GetCurrentDirectoryAsString()
+{
+  std::vector<wchar_t> buffer(_MAX_PATH);
+  DWORD sizeWithoutTerminatingZero = GetCurrentDirectoryW(buffer.size(), buffer.data());
+  if (sizeWithoutTerminatingZero >= buffer.size())
+  {
+    buffer.resize(sizeWithoutTerminatingZero + 1);
+    sizeWithoutTerminatingZero = GetCurrentDirectoryW(buffer.size(), buffer.data());
+  }
+
+  return std::wstring(buffer.data(), sizeWithoutTerminatingZero);
+}
+
 int APIENTRY _tWinMain(HINSTANCE hInstance,
                        HINSTANCE hPrevInstance,
                        LPTSTR    lpCmdLine,
@@ -1186,6 +1195,11 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
   //it's OK to return 0 here, because the control is transferred to the first instance
   int exitCode = CheckSingleInstance();
   if (exitCode != -1) return exitCode;
+
+  // Read current directory and pass it to JVM through environment variable. The real current directory will be changed
+  // in LoadJVMLibrary.
+  std::wstring currentDirectory = GetCurrentDirectoryAsString();
+  SetEnvironmentVariableW(L"IDEA_INITIAL_DIRECTORY", currentDirectory.c_str());
 
   std::vector<LPWSTR> args = ParseCommandLine(GetCommandLineW());
 

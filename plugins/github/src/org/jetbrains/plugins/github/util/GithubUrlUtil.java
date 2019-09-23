@@ -1,23 +1,9 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.util;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.github.api.GithubFullPath;
+import org.jetbrains.plugins.github.api.GHRepositoryPath;
 import org.jetbrains.plugins.github.api.GithubServerPath;
 
 /**
@@ -76,7 +62,7 @@ public class GithubUrlUtil {
    * git@github.com:user/repo.git -> user/repo
    */
   @Nullable
-  public static GithubFullPath getUserAndRepositoryFromRemoteUrl(@NotNull String remoteUrl) {
+  public static GHRepositoryPath getUserAndRepositoryFromRemoteUrl(@NotNull String remoteUrl) {
     remoteUrl = removeProtocolPrefix(removeEndingDotGit(remoteUrl));
     int index1 = remoteUrl.lastIndexOf('/');
     if (index1 == -1) {
@@ -92,7 +78,7 @@ public class GithubUrlUtil {
     if (username.isEmpty() || reponame.isEmpty()) {
       return null;
     }
-    return new GithubFullPath(username, reponame);
+    return new GHRepositoryPath(username, reponame);
   }
 
   @NotNull
@@ -111,7 +97,7 @@ public class GithubUrlUtil {
    * E.g.: https://github.com/suffix/ -> github.com
    * github.com:8080/ -> github.com
    *
-   * @deprecated {@link org.jetbrains.plugins.github.api.GithubRepositoryPath}
+   * @deprecated {@link org.jetbrains.plugins.github.api.GHRepositoryCoordinates}
    */
   @Deprecated
   @NotNull
@@ -127,16 +113,16 @@ public class GithubUrlUtil {
   }
 
   /**
-   * @deprecated {@link org.jetbrains.plugins.github.api.GithubRepositoryPath}
+   * @deprecated {@link org.jetbrains.plugins.github.api.GHRepositoryCoordinates}
    */
   @Deprecated
   @Nullable
   public static String makeGithubRepoUrlFromRemoteUrl(@NotNull String remoteUrl, @NotNull String host) {
-    GithubFullPath repo = getUserAndRepositoryFromRemoteUrl(remoteUrl);
+    GHRepositoryPath repo = getUserAndRepositoryFromRemoteUrl(remoteUrl);
     if (repo == null) {
       return null;
     }
-    return host + '/' + repo.getUser() + '/' + repo.getRepository();
+    return host + '/' + repo.getOwner() + '/' + repo.getRepository();
   }
   //endregion
 }

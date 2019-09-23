@@ -15,7 +15,6 @@ import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.testFramework.TestDataPath;
-import com.jetbrains.python.codeInsight.stdlib.PyNamedTupleType;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.*;
@@ -441,7 +440,17 @@ public class PyStubsTest extends PyTestCase {
     doTestNamedTupleArguments();
   }
 
+  // PY-29983
+  public void testNamedTupleNameKeyword() {
+    doTestNamedTupleArguments();
+  }
+
   public void testNamedTupleFieldsReference() {
+    doTestNamedTupleArguments();
+  }
+
+  // PY-29983
+  public void testNamedTupleFieldsKeyword() {
     doTestNamedTupleArguments();
   }
 
@@ -489,7 +498,17 @@ public class PyStubsTest extends PyTestCase {
     doTestTypingNamedTupleArguments();
   }
 
+  // PY-34134
+  public void testTypingNamedTupleNameKeyword() {
+    doTestTypingNamedTupleArguments();
+  }
+
   public void testTypingNamedTupleFieldsReference() {
+    doTestTypingNamedTupleArguments();
+  }
+
+  // PY-34134
+  public void testTypingNamedTupleFieldsKeyword() {
     doTestTypingNamedTupleArguments();
   }
 

@@ -12,7 +12,7 @@ import com.intellij.xdebugger.impl.breakpoints.BreakpointState
 import com.intellij.xdebugger.impl.breakpoints.LineBreakpointState
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointsDialogState
 import com.intellij.xdebugger.impl.breakpoints.XExpressionState
-import com.intellij.xdebugger.impl.reveal.RevealItemInfo
+import com.intellij.xdebugger.impl.pinned.items.PinnedItemInfo
 
 @Tag("breakpoint-manager")
 class BreakpointManagerState : BaseState() {
@@ -67,10 +67,10 @@ class WatchState : XExpressionState {
   constructor(expression: XExpression) : super(expression)
 }
 
-@Tag("reveal-manager")
-class RevealManagerState : BaseState() {
-    @get:XCollection(propertyElementName = "revealed-members")
-    var revealedMembersList by list<RevealItemInfo>()
+@Tag("pin-to-top-manager")
+class PinToTopManagerState : BaseState() {
+    @get:XCollection(propertyElementName = "pinned-members")
+    var pinnedMembersList by list<PinnedItemInfo>()
 }
 
 internal class XDebuggerState : BaseState() {
@@ -81,5 +81,5 @@ internal class XDebuggerState : BaseState() {
   var watchesManagerState by property(WatchesManagerState())
 
   @get:Property(surroundWithTag = false)
-  var revealManagerState by property(RevealManagerState())
+  var pinToTopManagerState by property(PinToTopManagerState())
 }

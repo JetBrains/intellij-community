@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.compiler.server.BuildManager;
@@ -104,23 +104,18 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Pla
 
   private final ObsoleteLibraryFilesRemover myObsoleteLibraryFilesRemover;
 
-  public ProjectStructureConfigurable(final Project project,
-                                      final ProjectLibrariesConfigurable projectLibrariesConfigurable,
-                                      final GlobalLibrariesConfigurable globalLibrariesConfigurable,
-                                      final ModuleStructureConfigurable moduleStructureConfigurable,
-                                      FacetStructureConfigurable facetStructureConfigurable,
-                                      ArtifactsStructureConfigurable artifactsStructureConfigurable) {
+  public ProjectStructureConfigurable(@NotNull Project project) {
     myProject = project;
-    myFacetStructureConfigurable = facetStructureConfigurable;
-    myArtifactsStructureConfigurable = artifactsStructureConfigurable;
+    myFacetStructureConfigurable = FacetStructureConfigurable.getInstance(project);
+    myArtifactsStructureConfigurable = project.getService(ArtifactsStructureConfigurable.class);
 
     myModuleConfigurator = new ModulesConfigurator(myProject);
     myContext = new StructureConfigurableContext(myProject, myModuleConfigurator);
     myModuleConfigurator.setContext(myContext);
 
-    myProjectLibrariesConfig = projectLibrariesConfigurable;
-    myGlobalLibrariesConfig = globalLibrariesConfigurable;
-    myModulesConfig = moduleStructureConfigurable;
+    myProjectLibrariesConfig = ProjectLibrariesConfigurable.getInstance(project);
+    myGlobalLibrariesConfig = GlobalLibrariesConfigurable.getInstance(project);
+    myModulesConfig = ModuleStructureConfigurable.getInstance(project);
 
     myProjectLibrariesConfig.init(myContext);
     myGlobalLibrariesConfig.init(myContext);

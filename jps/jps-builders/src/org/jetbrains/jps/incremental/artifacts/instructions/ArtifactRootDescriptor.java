@@ -8,6 +8,7 @@ import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.ProjectBuildException;
 import org.jetbrains.jps.incremental.artifacts.ArtifactBuildTarget;
 import org.jetbrains.jps.incremental.artifacts.ArtifactOutputToSourceMapping;
+import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -43,9 +44,9 @@ public abstract class ArtifactRootDescriptor extends BuildRootDescriptor {
 
   protected abstract String getFullPath();
 
-  public void writeConfiguration(PrintWriter out) {
-    out.println(getFullPath());
-    out.println("->" + myDestinationInfo.getOutputPath());
+  public void writeConfiguration(PrintWriter out, PathRelativizerService relativizer) {
+    out.println(relativizer.toRelative(getFullPath()));
+    out.println("->" + relativizer.toRelative(myDestinationInfo.getOutputPath()));
   }
 
   @Override

@@ -30,7 +30,7 @@ public class LogicallyLockedHolder implements FileHolder {
 
   @Override
   public void cleanAndAdjustScope(@NotNull VcsModifiableDirtyScope scope) {
-    VirtualFileHolder.cleanScope(myProject, myMap.keySet(), scope);
+    VirtualFileHolder.Companion.cleanScope(myMap.keySet(), scope);
   }
 
   @Override

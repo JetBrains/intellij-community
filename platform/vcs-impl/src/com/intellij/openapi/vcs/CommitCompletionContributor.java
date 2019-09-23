@@ -30,6 +30,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.ui.TextFieldWithAutoCompletionListProvider;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -57,20 +58,49 @@ public class CommitCompletionContributor extends CompletionContributor {
 
     String prefix = TextFieldWithAutoCompletionListProvider.getCompletionPrefix(parameters);
     if (count == 0 && prefix.length() < 5) return;
-    CompletionResultSet insensitive = result.caseInsensitive().withPrefixMatcher(new CamelHumpMatcher(prefix));
-    CompletionResultSet prefixed = result.withPrefixMatcher(prefix);
+    CompletionResultSet insensitive = result.caseInsensitive().withPrefixMatcher(
+      count == 0 ? new PlainPrefixMatcher(prefix, true) : new CamelHumpMatcher(prefix));
+    CompletionResultSet prefixed = result.withPrefixMatcher(new PlainPrefixMatcher(prefix, count == 0));
     for (ChangeList list : lists) {
       ProgressManager.checkCanceled();
       for (Change change : list.getChanges()) {
         ProgressManager.checkCanceled();
-        ContentRevision revision = change.getAfterRevision() == null ? change.getBeforeRevision() : change.getAfterRevision();
-        if (revision != null) {
-          FilePath filePath = revision.getFile();
-          LookupElementBuilder element = LookupElementBuilder.create(filePath.getName()).
-              withIcon(filePath.getFileType().getIcon());
-          insensitive.addElement(element);
-          addLanguageSpecificElements(project, count, prefixed, filePath);
+        if (change.getAfterRevision() == null) {
+          ContentRevision revision = change.getBeforeRevision();
+          if (revision != null) {
+            FilePath filePath = revision.getFile();
+            LookupElementBuilder element = LookupElementBuilder.create(filePath.getName())
+              .withStrikeoutness(true).withIcon(filePath.getFileType().getIcon());
+            insensitive.addElement(element);
+          }
         }
+        else {
+          ContentRevision revision = change.getAfterRevision();
+          if (revision != null) {
+            FilePath filePath = revision.getFile();
+            LookupElementBuilder element = LookupElementBuilder.create(filePath.getName())
+              .withIcon(filePath.getFileType().getIcon());
+            insensitive.addElement(element);
+            ContentRevision beforeRevision = change.getBeforeRevision();
+            if (beforeRevision != null) {
+              FilePath beforeFile = beforeRevision.getFile();
+              if (!beforeFile.getName().equals(filePath.getName())) {
+                insensitive.addElement(LookupElementBuilder.create(beforeFile.getName())
+                  .withStrikeoutness(true).withIcon(beforeFile.getFileType().getIcon()));
+              }
+            }
+            addLanguageSpecificElements(project, count, prefixed, filePath);
+          }
+        }
+      }
+
+      if (count > 0) {
+        result.caseInsensitive()
+          .withPrefixMatcher(new PlainPrefixMatcher(prefix))
+          .addAllElements(
+            StreamEx.of(VcsConfiguration.getInstance(project).getRecentMessages())
+              .reverseSorted()
+              .map(lookupString -> PrioritizedLookupElement.withPriority(LookupElementBuilder.create(lookupString), Integer.MIN_VALUE)));
       }
     }
   }
@@ -80,8 +110,8 @@ public class CommitCompletionContributor extends CompletionContributor {
     if (vFile == null) return;
     PsiFile psiFile = PsiManagerEx.getInstanceEx(project).findFile(vFile);
     if (psiFile == null) return;
-    TopLevelCompletionContributor contributor = TopLevelCompletionContributorEP.forLanguage(psiFile.getLanguage());
+    PlainTextSymbolCompletionContributor contributor = PlainTextSymbolCompletionContributorEP.forLanguage(psiFile.getLanguage());
     if (contributor == null) return;
-    contributor.addLookupElements(psiFile, count, prefixed);
+    prefixed.addAllElements(contributor.getLookupElements(psiFile, count, prefixed.getPrefixMatcher().getPrefix()));
   }
 }

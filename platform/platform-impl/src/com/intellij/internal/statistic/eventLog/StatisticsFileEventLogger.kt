@@ -1,7 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
-
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog
 
 import com.intellij.internal.statistic.eventLog.validator.SensitiveDataValidator
@@ -17,7 +14,7 @@ open class StatisticsFileEventLogger(private val recorderId: String,
                                      private val bucket: String,
                                      private val recorderVersion: String,
                                      private val writer: StatisticsEventLogWriter) : StatisticsEventLogger, Disposable {
-  protected val myLogExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("StatisticsFileEventLogger: " + sessionId)
+  protected val logExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("StatisticsFileEventLogger: $sessionId")
 
   private var lastEvent: LogEvent? = null
   private var lastEventTime: Long = 0
@@ -29,7 +26,7 @@ open class StatisticsFileEventLogger(private val recorderId: String,
 
   override fun log(group: EventLogGroup, eventId: String, data: Map<String, Any>, isState: Boolean) {
     val eventTime = System.currentTimeMillis()
-    myLogExecutor.execute(Runnable {
+    logExecutor.execute(Runnable {
       val context = EventContext.create(eventId, data)
       val validator = SensitiveDataValidator.getInstance(recorderId)
       val validatedEventId = validator.guaranteeCorrectEventId(group, context)
@@ -63,16 +60,16 @@ open class StatisticsFileEventLogger(private val recorderId: String,
         it.event.addData("last", lastEventTime)
       }
       it.event.addData("created", lastEventCreatedTime)
-      writer.log(LogEventSerializer.toString(it))
+      writer.log(it)
     }
     lastEvent = null
   }
 
-  override fun getActiveLogFile(): File? {
+  override fun getActiveLogFile(): EventLogFile? {
     return writer.getActiveFile()
   }
 
-  override fun getLogFiles(): List<File> {
+  override fun getLogFiles(): List<EventLogFile> {
     return writer.getFiles()
   }
 
@@ -89,9 +86,9 @@ open class StatisticsFileEventLogger(private val recorderId: String,
   }
 
   private fun dispose(writer: StatisticsEventLogWriter) {
-    myLogExecutor.execute(Runnable {
+    logExecutor.execute(Runnable {
       logLastEvent(writer)
     })
-    myLogExecutor.shutdown()
+    logExecutor.shutdown()
   }
 }

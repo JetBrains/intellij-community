@@ -7,7 +7,6 @@ import com.intellij.codeInspection.dataFlow.instructions.GotoInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.Instruction;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.containers.EmptyIterator;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.Graph;
 import gnu.trove.TIntArrayList;
@@ -65,7 +64,7 @@ class LoopAnalyzer {
 
     @NotNull
     private Iterator<Instruction> indicesToInstructions(int[] next) {
-      if (next == null) return EmptyIterator.getInstance();
+      if (next == null) return Collections.emptyIterator();
       List<Instruction> out = new ArrayList<>(next.length);
       for (int i : next) {
         out.add(myInstructions[i]);

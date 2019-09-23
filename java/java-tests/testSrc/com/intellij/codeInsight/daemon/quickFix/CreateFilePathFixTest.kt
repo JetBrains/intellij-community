@@ -3,8 +3,6 @@ package com.intellij.codeInsight.daemon.quickFix
 
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference
 
 class CreateFilePathFixTest : CreateFileQuickFixTestCase() {
 
@@ -30,6 +28,12 @@ class CreateFilePathFixTest : CreateFileQuickFixTestCase() {
                                "/main/java/pkg/ClassWithFileReference.java")
   }
 
+  fun testCreatePathExcludesGeneratedSources() {
+    assertCreateFileOptions("my.properties",
+                            listOf("/src/main/resources", "/src/main/java"),
+                            "/main/java/pkg/ClassWithFileReference.java")
+  }
+
   fun testCreatePathInSources() {
     ApplicationManager.getApplication().runWriteAction {
       // only src/main/java and /src/test/java will be available for new files
@@ -47,8 +51,13 @@ class CreateFilePathFixTest : CreateFileQuickFixTestCase() {
   }
 
   fun testCreatePathInTestResources() {
-    assertIntentionCreatesFile("my-test.properties", "/test/resources/pkg/my-test.properties",
-                               "/test/java/pkg/TestClassWithFileReference.java")
+    val testSource = "/test/java/pkg/TestClassWithFileReference.java"
+
+    assertCreateFileOptions("my-test.properties",
+                            listOf("/src/test/resources", "/src/main/resources", "/src/test/java", "/src/main/java"),
+                            testSource)
+
+    assertIntentionCreatesFile("my-test.properties", "/test/resources/pkg/my-test.properties", testSource)
   }
 
   fun testCreatePathInTestSources() {
@@ -58,8 +67,13 @@ class CreateFilePathFixTest : CreateFileQuickFixTestCase() {
       myFixture.tempDirFixture.getFile("/test/resources")!!.delete(null)
     }
 
-    assertIntentionCreatesFile("my-test.properties", "/test/java/pkg/my-test.properties",
-                               "/test/java/pkg/TestClassWithFileReference.java")
+    val testSource = "/test/java/pkg/TestClassWithFileReference.java"
+
+    assertCreateFileOptions("my-test.properties",
+                            listOf("/src/test/java", "/src/main/java"),
+                            testSource)
+
+    assertIntentionCreatesFile("my-test.properties", "/test/java/pkg/my-test.properties", testSource)
   }
 
   fun testCreateIntermediateSourcePathAutomatically() {
@@ -78,7 +92,7 @@ class CreateFilePathFixTest : CreateFileQuickFixTestCase() {
 
     withFileReferenceInStringLiteral {
       val ref = myFixture.getReferenceAtCaretPosition()
-      val fileReference = (ref as PsiMultiReference).references.filterIsInstance<FileReference>()[0]
+      val fileReference = findFileReference(ref)
 
       assertEquals(expectedFileName, fileReference.fileNameToCreate)
       val intention = fileReference.quickFixes!![0]
@@ -90,5 +104,28 @@ class CreateFilePathFixTest : CreateFileQuickFixTestCase() {
 
       myFixture.checkResult("", true)
     }
+  }
+
+  private fun assertCreateFileOptions(expectedFileName: String, expectedOptions: List<String>, javaSourcePath: String) {
+    myFixture.configureFromTempProjectFile(javaSourcePath)
+    myFixture.testHighlighting(true, false, true)
+
+    withFileReferenceInStringLiteral {
+      val ref = myFixture.getReferenceAtCaretPosition()
+      val fileReference = findFileReference(ref)
+
+      assertEquals(expectedFileName, fileReference.fileNameToCreate)
+      val intention = fileReference.quickFixes!![0]
+
+      val options = (intention as AbstractCreateFileFix).myDirectories
+
+      assertEquals(expectedOptions.size, options.size)
+
+      assertEquals(expectedOptions, options.map { getTargetPath(it) })
+    }
+  }
+
+  private fun getTargetPath(dir: TargetDirectory) : String {
+    return dir.directory!!.virtualFile.path
   }
 }

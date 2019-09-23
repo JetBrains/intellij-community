@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.applications;
 
 import com.intellij.diff.DiffDialogHints;
@@ -32,13 +18,12 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 
-public class DiffApplication extends DiffApplicationBase {
-  public DiffApplication() {
+final class DiffApplication extends DiffApplicationBase {
+  DiffApplication() {
     super("diff", 2, 3);
   }
 
@@ -51,8 +36,8 @@ public class DiffApplication extends DiffApplicationBase {
 
   @NotNull
   @Override
-  public Future<CliResult> processCommand(@NotNull String[] args, @Nullable String currentDirectory) throws Exception {
-    List<String> filePaths = Arrays.asList(args).subList(1, args.length);
+  public Future<CliResult> processCommand(@NotNull List<String> args, @Nullable String currentDirectory) throws Exception {
+    List<String> filePaths = args.subList(1, args.size());
     List<VirtualFile> files = findFiles(filePaths, currentDirectory);
     Project project = guessProject(files);
 
@@ -70,16 +55,15 @@ public class DiffApplication extends DiffApplicationBase {
 
     if (project != null) {
       CompletableFuture<CliResult> future = new CompletableFuture<>();
-      Runnable resultCallback = () -> future.complete(new CliResult(0, null));
-
-      DiffDialogHints dialogHints = new DiffDialogHints(WindowWrapper.Mode.FRAME, null,
-                                                        wrapper -> UIUtil.runWhenWindowClosed(wrapper.getWindow(), resultCallback));
+      Runnable resultCallback = () -> future.complete(CliResult.OK);
+      DiffDialogHints dialogHints = new DiffDialogHints(
+        WindowWrapper.Mode.FRAME, null, wrapper -> UIUtil.runWhenWindowClosed(wrapper.getWindow(), resultCallback));
       DiffManagerEx.getInstance().showDiffBuiltin(project, chain, dialogHints);
       return future;
     }
     else {
       DiffManagerEx.getInstance().showDiffBuiltin(null, chain, DiffDialogHints.MODAL);
-      return CliResult.ok();
+      return CliResult.OK_FUTURE;
     }
   }
 }

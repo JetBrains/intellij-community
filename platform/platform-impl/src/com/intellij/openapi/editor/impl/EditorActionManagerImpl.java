@@ -1,31 +1,26 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorBundle;
 import com.intellij.openapi.editor.ReadOnlyFragmentModificationException;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.actionSystem.*;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.injected.editor.DocumentWindow;
 import org.jetbrains.annotations.NotNull;
 
 public class EditorActionManagerImpl extends EditorActionManager {
   private ReadonlyFragmentModificationHandler myReadonlyFragmentsHandler = new DefaultReadOnlyFragmentModificationHandler();
-  private final ActionManager myActionManager;
-
-  public EditorActionManagerImpl(ActionManager actionManager) {
-    myActionManager = actionManager;
-  }
 
   @Override
   public EditorActionHandler getActionHandler(@NotNull String actionId) {
-    return ((EditorAction) myActionManager.getAction(actionId)).getHandler();
+    return ((EditorAction) ActionManager.getInstance().getAction(actionId)).getHandler();
   }
 
   @Override
   public EditorActionHandler setActionHandler(@NotNull String actionId, @NotNull EditorActionHandler handler) {
-    EditorAction action = (EditorAction)myActionManager.getAction(actionId);
+    EditorAction action = (EditorAction)ActionManager.getInstance().getAction(actionId);
     return action.setupHandler(handler);
   }
 

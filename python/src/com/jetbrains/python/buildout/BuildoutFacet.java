@@ -47,6 +47,7 @@ import java.util.regex.Pattern;
  * Knows which script in bin/ contains paths we want to add.
  * User: dcheryasov
  */
+@Deprecated
 public class BuildoutFacet extends LibraryContributingFacet<BuildoutFacetConfiguration> implements PythonPathContributingFacet {
 
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.buildout.BuildoutFacet");

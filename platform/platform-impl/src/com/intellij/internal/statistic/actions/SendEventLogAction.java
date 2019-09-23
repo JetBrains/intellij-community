@@ -143,7 +143,7 @@ public class SendEventLogAction extends AnAction {
   }
 
   private static boolean tryToOpenInScratch(@NotNull Project project, @NotNull String request) {
-    final String fileName = PathUtil.makeFileName("fus-event-log", "json");
+    final String fileName = "fus-event-log.json";
     try {
       final ThrowableComputable<NavigatablePsiElement, Exception> computable = () -> {
         final ScratchFileService fileService = ScratchFileService.getInstance();

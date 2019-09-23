@@ -90,8 +90,8 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void testBasics() {
-    VirtualFile dir = PlatformTestUtil.notNull(myFS.refreshAndFindFileByIoFile(tempDir.getRoot()));
+  public void testBasics() throws IOException {
+    VirtualFile dir = PlatformTestUtil.notNull(myFS.refreshAndFindFileByIoFile(tempDir.newFolder("xxx")));
     assertTrue(dir.isValid());
     assertEquals(0, dir.getChildren().length);
 
@@ -109,7 +109,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
 
   @Test
   public void testChildrenAccessedButNotCached() throws IOException {
-    File dir = tempDir.getRoot();
+    File dir = tempDir.newFolder("xxx");
     ManagingFS managingFS = ManagingFS.getInstance();
 
     VirtualFile vFile = myFS.refreshAndFindFileByPath(dir.getPath());
@@ -375,7 +375,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
 
   @Test
   public void testWindowsHiddenDirectory() {
-    assumeTrue("Windows expected", SystemInfo.isWindows);
+    IoTestUtil.assumeWindows();
 
     File file = new File("C:\\Documents and Settings\\desktop.ini");
     assumeTrue("Documents and Settings assumed to exist", file.exists());
@@ -450,6 +450,20 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
     catch (Throwable t) {
       String message = t.getMessage();
       assertTrue(message, message.startsWith("Invalid root"));
+    }
+  }
+
+  @Test
+  public void testFindRootWithDeepNestedFileMustThrow() {
+    try {
+      File d = tempDir.newFolder();
+      VirtualFile vDir = ObjectUtils.assertNotNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(d));
+      PersistentFS.getInstance().findRoot(vDir.getPath(), myFS);
+      fail("should fail by assertion in PersistentFsImpl.findRoot()");
+    }
+    catch (Throwable t) {
+      String message = t.getMessage();
+      assertTrue(message, message.startsWith("Must pass FS root path, but got"));
     }
   }
 

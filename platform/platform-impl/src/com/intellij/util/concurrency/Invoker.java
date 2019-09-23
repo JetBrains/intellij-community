@@ -11,6 +11,7 @@ import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.util.ThreeState;
+import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.CancellablePromise;
@@ -43,7 +44,9 @@ public abstract class Invoker implements Disposable {
 
   private Invoker(@NotNull String prefix, @NotNull Disposable parent, @NotNull ThreeState useReadAction) {
     StringBuilder sb = new StringBuilder().append(UID.getAndIncrement()).append(".Invoker.").append(prefix);
-    if (useReadAction != ThreeState.UNSURE) sb.append(".ReadAction=").append(useReadAction);
+    if (useReadAction != ThreeState.UNSURE) {
+      sb.append(".ReadAction=").append(useReadAction);
+    }
     description = sb.append(": ").append(parent).toString();
     this.useReadAction = useReadAction;
     register(parent, this);
@@ -157,13 +160,19 @@ public abstract class Invoker implements Disposable {
           ProgressManager.getInstance().runProcess(task, indicator(promise));
         }
         else if (getApplication().isReadAccessAllowed()) {
-          if (((ApplicationEx)getApplication()).isWriteActionPending()) throw new ProcessCanceledException();
+          if (((ApplicationEx)getApplication()).isWriteActionPending()) {
+            offerRestart(task, promise, attempt);
+            return;
+          }
           ProgressManager.getInstance().runProcess(task, indicator(promise));
         }
         else {
           // try to execute a task until it stops throwing ProcessCanceledException
           while (!ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(task, indicator(promise))) {
-            if (!is("invoker.can.yield.to.pending.write.actions")) throw new ProcessCanceledException();
+            if (!is("invoker.can.yield.to.pending.write.actions")) {
+              offerRestart(task, promise, attempt);
+              return;
+            }
             if (!canInvoke(task, promise)) return; // stop execution of obsolete task
             ProgressIndicatorUtils.yieldToPendingWriteActions();
             if (!canRestart(task, promise, attempt)) return;
@@ -175,12 +184,7 @@ public abstract class Invoker implements Disposable {
       }
     }
     catch (ProcessCanceledException | IndexNotReadyException exception) {
-      if (canRestart(task, promise, attempt)) {
-        count.incrementAndGet();
-        int nextAttempt = attempt + 1;
-        offer(() -> invokeSafely(task, promise, nextAttempt), 10);
-        LOG.debug("Task is restarted");
-      }
+      offerRestart(task, promise, attempt);
     }
     catch (Throwable throwable) {
       try {
@@ -192,6 +196,19 @@ public abstract class Invoker implements Disposable {
     }
     finally {
       count.decrementAndGet();
+    }
+  }
+
+  /**
+   * @param task    a task to execute on the valid thread
+   * @param promise an object to control task processing
+   * @param attempt an attempt to run the specified task
+   */
+  private void offerRestart(@NotNull Runnable task, @NotNull AsyncPromise<?> promise, int attempt) {
+    if (canRestart(task, promise, attempt)) {
+      count.incrementAndGet();
+      offer(() -> invokeSafely(task, promise, attempt + 1), 10);
+      LOG.debug("Task is restarted");
     }
   }
 
@@ -282,7 +299,10 @@ public abstract class Invoker implements Disposable {
    * Every thread is valid for this invoker except the EDT.
    * It allows to run background tasks in parallel,
    * but requires a good synchronization.
+   * @deprecated use {@link Background#Background(Disposable, int)} instead
    */
+  @Deprecated
+  @ScheduledForRemoval(inVersion = "2020.1")
   public static final class BackgroundPool extends Invoker {
     public BackgroundPool(@NotNull Disposable parent) {
       super("Background.Pool", parent, ThreeState.YES);
@@ -302,7 +322,10 @@ public abstract class Invoker implements Disposable {
   /**
    * This class is the {@code Invoker} in a single background thread.
    * This invoker does not need additional synchronization.
+   * @deprecated use {@link Background#Background(Disposable)} instead
    */
+  @Deprecated
+  @ScheduledForRemoval(inVersion = "2021.1")
   public static final class BackgroundThread extends Invoker {
     private final ScheduledExecutorService executor;
     private volatile Thread thread;

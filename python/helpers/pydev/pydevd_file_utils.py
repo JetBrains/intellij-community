@@ -41,8 +41,10 @@ r'''
         machine for the paths that'll actually have breakpoints).
 '''
 
-from _pydevd_bundle.pydevd_constants import IS_PY2, IS_PY3K, DebugInfoHolder, IS_WINDOWS, IS_JYTHON
+from _pydev_bundle import pydev_log
 from _pydev_bundle._pydev_filesystem_encoding import getfilesystemencoding
+from _pydevd_bundle.pydevd_constants import IS_PY2, IS_PY3K, DebugInfoHolder, IS_WINDOWS, IS_JYTHON
+from _pydevd_bundle.pydevd_comm_constants import file_system_encoding, filesystem_encoding_is_utf8
 import json
 import os.path
 import sys
@@ -228,7 +230,10 @@ def _NormPaths(filename):
         return NORM_PATHS_CONTAINER[filename]
     except KeyError:
         if filename.__class__ != str:
-            raise AssertionError('Paths passed to _NormPaths must be str. Found: %s (%s)' % (filename, type(filename)))
+            filename = _path_to_expected_str(filename)
+        if filename.__class__ != str:
+            pydev_log.warn('Failed to convert filename to str: %s (%s)' % (filename, type(filename)))
+            return '', ''
         abs_path = _NormPath(filename, os.path.abspath)
         real_path = _NormPath(filename, rPath)
 
@@ -363,6 +368,23 @@ except:
 # pydevd_file_utils.norm_file_to_server
 #
 # instead of importing any of those names to a given scope.
+
+
+def _path_to_expected_str(filename):
+    if IS_PY2:
+        if not filesystem_encoding_is_utf8 and hasattr(filename, "decode"):
+            # filename_in_utf8 is a byte string encoded using the file system encoding
+            # convert it to utf8
+            filename = filename.decode(file_system_encoding)
+
+        if not isinstance(filename, bytes):
+            filename = filename.encode('utf-8')
+
+    else:  # py3
+        if isinstance(filename, bytes):
+            filename = filename.decode(file_system_encoding)
+
+    return filename
 
 
 def _original_file_to_client(filename, cache={}):

@@ -15,6 +15,8 @@ import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.util.HgUtil;
 
+import java.util.Objects;
+
 public class HgPushSupport extends PushSupport<HgRepository, HgPushSource, HgTarget> {
 
   @NotNull private final Project myProject;
@@ -51,8 +53,12 @@ public class HgPushSupport extends PushSupport<HgRepository, HgPushSource, HgTar
   @Override
   public HgTarget getDefaultTarget(@NotNull HgRepository repository) {
     String defaultPushPath = repository.getRepositoryConfig().getDefaultPushPath();
-    return defaultPushPath == null ? null : new HgTarget(defaultPushPath, repository.getCurrentBranchName());
+    return defaultPushPath == null ? null : new HgTarget(defaultPushPath, Objects.requireNonNull(repository.getCurrentBranchName()));
   }
+
+  @Override
+  @Nullable
+  public HgTarget getDefaultTarget(@NotNull HgRepository repository, @NotNull HgPushSource source) {return getDefaultTarget(repository);}
 
   @NotNull
   @Override

@@ -4,10 +4,8 @@ package com.intellij.openapi.vcs.changes.committed;
 import com.intellij.mock.MockLocalFileSystem;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
-import com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vcs.impl.projectlevelman.FileWatchRequestsManager;
 import com.intellij.openapi.vcs.impl.projectlevelman.NewMappings;
@@ -33,8 +31,7 @@ public class VcsFileWatchRequestManagementTest extends LightPlatformTestCase {
     super.setUp();
 
     Project project = getProject();
-    myNewMappings = new NewMappings(project, (ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(project),
-                                    FileStatusManager.getInstance(project), DefaultVcsRootPolicy.getInstance(project));
+    myNewMappings = new NewMappings(project, (ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(project));
     Disposer.register(getTestRootDisposable(), myNewMappings);
     myMockLocalFileSystem = new MyMockLocalFileSystem();
     myNewMappings.setFileWatchRequestsManager(new FileWatchRequestsManager(project, myNewMappings, myMockLocalFileSystem));

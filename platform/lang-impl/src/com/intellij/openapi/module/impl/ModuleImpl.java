@@ -7,13 +7,11 @@ import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.components.impl.PlatformComponentManagerImpl;
+import com.intellij.openapi.components.impl.stores.ModuleStore;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.AreaInstance;
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleComponent;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleServiceManager;
 import com.intellij.openapi.module.impl.scopes.ModuleScopeProviderImpl;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -26,14 +24,15 @@ import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
+import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.serviceContainer.PlatformComponentManagerImpl;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
 import com.intellij.util.xmlb.annotations.Property;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.picocontainer.MutablePicoContainer;
 
 import java.util.List;
 import java.util.Map;
@@ -53,7 +52,7 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
   private final ModuleScopeProvider myModuleScopeProvider;
 
   ModuleImpl(@NotNull String name, @NotNull Project project, @NotNull String filePath) {
-    super(project, "Module " + name);
+    super(project);
 
     getPicoContainer().registerComponentInstance(Module.class, this);
 
@@ -61,13 +60,18 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
     myModuleScopeProvider = new ModuleScopeProviderImpl(this);
 
     myName = name;
-    myImlFilePointer = VirtualFilePointerManager.getInstance().create(VfsUtilCore.pathToUrl(filePath), this, null);
-  }
-
-  @Override
-  protected MutablePicoContainer bootstrapPicoContainer(@NotNull String name) {
-    Extensions.instantiateArea(ExtensionAreas.IDEA_MODULE, this, (AreaInstance)getParentComponentManager());
-    return super.bootstrapPicoContainer(name);
+    myImlFilePointer = VirtualFilePointerManager.getInstance().create(
+      VfsUtilCore.pathToUrl(filePath), this,
+      new VirtualFilePointerListener() {
+        @Override
+        public void validityChanged(@NotNull VirtualFilePointer[] pointers) {
+          VirtualFile file = myImlFilePointer.getFile();
+          if (file != null) {
+            ((ModuleStore)ServiceKt.getStateStore(ModuleImpl.this)).setPath(file.getPath(), false);
+            ModuleManager.getInstance(myProject).incModificationCount();
+          }
+        }
+      });
   }
 
   @Override
@@ -81,11 +85,10 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
     createComponents(null);
   }
 
-  @Nullable
   @Override
-  protected ProgressIndicator getProgressIndicator() {
-    // module loading progress is not tracked, progress updated by ModuleManagerImpl on module load
-    return null;
+  protected void setProgressDuringInit(@NotNull ProgressIndicator indicator) {
+    // Component loading progress is not reported for module, because at this stage minimal reporting unit it is the module itself.
+    // Stage "Loading modules" — progress reported for each loaded module and module component count doesn't matter.
   }
 
   @Override
@@ -139,6 +142,10 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
     }
   }
 
+  public void updatePath(@NotNull String newPath) {
+    System.out.println("here");
+  }
+
   @Override
   @NotNull
   public String getModuleFilePath() {
@@ -149,7 +156,6 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
   public synchronized void dispose() {
     isModuleAdded = false;
     disposeComponents();
-    Extensions.disposeArea(this);
     super.dispose();
   }
 
@@ -161,7 +167,7 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
 
   @Override
   public void projectOpened() {
-    for (ModuleComponent component : getComponentInstancesOfType(ModuleComponent.class)) {
+    for (ModuleComponent component : getModuleComponents()) {
       try {
         //noinspection deprecation
         component.projectOpened();
@@ -174,7 +180,7 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
 
   @Override
   public void projectClosed() {
-    List<ModuleComponent> components = getComponentInstancesOfType(ModuleComponent.class);
+    List<ModuleComponent> components = getModuleComponents();
     for (int i = components.size() - 1; i >= 0; i--) {
       try {
         //noinspection deprecation
@@ -206,9 +212,15 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
   @Override
   public void moduleAdded() {
     isModuleAdded = true;
-    for (ModuleComponent component : getComponentInstancesOfType(ModuleComponent.class)) {
+    for (ModuleComponent component : getModuleComponents()) {
       component.moduleAdded();
     }
+  }
+
+  @NotNull
+  private List<ModuleComponent> getModuleComponents() {
+    //noinspection deprecation
+    return getComponentInstancesOfType(ModuleComponent.class);
   }
 
   @Override
@@ -305,18 +317,6 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
   public String toString() {
     if (myName == null) return "Module (not initialized)";
     return "Module: '" + getName() + "'";
-  }
-
-  @NotNull
-  @Override
-  public <T> T[] getExtensions(@NotNull final ExtensionPointName<T> extensionPointName) {
-    return Extensions.getArea(this).getExtensionPoint(extensionPointName).getExtensions();
-  }
-
-  @NotNull
-  @Override
-  protected MutablePicoContainer createPicoContainer() {
-    return Extensions.getArea(this).getPicoContainer();
   }
 
   @Override

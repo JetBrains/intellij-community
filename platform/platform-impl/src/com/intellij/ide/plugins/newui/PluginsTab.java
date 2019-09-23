@@ -2,7 +2,7 @@
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.ide.plugins.MultiPanel;
-import com.intellij.ide.plugins.PluginManagerConfigurableNew;
+import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
@@ -63,7 +63,12 @@ public abstract class PluginsTab {
   };
 
   private final Consumer<PluginsGroupComponent> mySelectionListener = panel -> {
-    List<CellPluginComponent> selection = panel.getSelection();
+    int key = mySearchPanel.getPanel() == panel ? 1 : 0;
+    if (myCardPanel.getKey() != key) {
+      return;
+    }
+
+    List<ListPluginComponent> selection = panel.getSelection();
     int size = selection.size();
     myDetailsPage.showPlugin(size == 1 ? selection.get(0) : null, size > 1);
   };
@@ -101,7 +106,7 @@ public abstract class PluginsTab {
       @Override
       protected Divider createDivider() {
         Divider divider = super.createDivider();
-        divider.setBackground(PluginManagerConfigurableNew.SEARCH_FIELD_BORDER_COLOR);
+        divider.setBackground(PluginManagerConfigurable.SEARCH_FIELD_BORDER_COLOR);
         return divider;
       }
     };
@@ -203,7 +208,7 @@ public abstract class PluginsTab {
       }
     });
 
-    mySearchTextField.setBorder(JBUI.Borders.customLine(PluginManagerConfigurableNew.SEARCH_FIELD_BORDER_COLOR));
+    mySearchTextField.setBorder(JBUI.Borders.customLine(PluginManagerConfigurable.SEARCH_FIELD_BORDER_COLOR));
 
     JBTextField editor = mySearchTextField.getTextEditor();
     editor.putClientProperty("JTextField.Search.Gap", JBUIScale.scale(6));
@@ -211,12 +216,12 @@ public abstract class PluginsTab {
     editor.putClientProperty("StatusVisibleFunction", (BooleanFunction<JBTextField>)field -> field.getText().isEmpty());
     editor.setBorder(JBUI.Borders.empty(0, 6));
     editor.setOpaque(true);
-    editor.setBackground(PluginManagerConfigurableNew.SEARCH_BG_COLOR);
+    editor.setBackground(PluginManagerConfigurable.SEARCH_BG_COLOR);
 
     String text = "Type / to see options";
 
     StatusText emptyText = mySearchTextField.getTextEditor().getEmptyText();
-    emptyText.appendText(text, new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, CellPluginComponent.GRAY_COLOR));
+    emptyText.appendText(text, new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, ListPluginComponent.GRAY_COLOR));
   }
 
   @NotNull

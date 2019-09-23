@@ -6,6 +6,7 @@ import com.intellij.lang.java.parser.DeclarationParser;
 import com.intellij.lang.java.parser.JavaParser;
 import com.intellij.lang.java.parser.JavaParserUtil;
 import com.intellij.lang.java.parser.ReferenceParser;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
@@ -90,8 +91,8 @@ public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
 
   protected final PsiManager myManager;
 
-  public PsiJavaParserFacadeImpl(PsiManager manager) {
-    myManager = manager;
+  public PsiJavaParserFacadeImpl(@NotNull Project project) {
+    myManager = PsiManager.getInstance(project);
   }
 
   protected PsiJavaFile createDummyJavaFile(String text) {

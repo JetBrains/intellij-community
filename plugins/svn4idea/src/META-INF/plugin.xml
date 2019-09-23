@@ -65,8 +65,8 @@
       <action id="Subversion.Clenaup" class="org.jetbrains.idea.svn.actions.CleanupAction"/>
       <separator/>
       <reference id="Show.Current.Revision"/>
-      <reference id="Compare.SameVersion" text="Compare with BASE revision"/>
-      <reference id="Compare.LastVersion" text="Compare with revision at HEAD"/>
+      <reference id="Compare.SameVersion"/>
+      <reference id="Compare.LastVersion"/>
       <reference id="Compare.Selected"/>
       <action id="Subversion.CompareWithBranch" class="org.jetbrains.idea.svn.diff.CompareWithBranchAction"/>
       <reference id="Vcs.ShowTabbedFileHistory"/>
@@ -97,6 +97,7 @@
     <group id="IgnoreChoicesGroup" popup="true" class="org.jetbrains.idea.svn.actions.IgnoreActionGroup">
       <add-to-group group-id="ChangesViewPopupMenu" anchor="after" relative-to-action="ChangesView.AddUnversioned"/>
       <add-to-group group-id="SubversionGroup" relative-to-action="ChangesView.AddUnversioned" anchor="after"/>
+      <add-to-group group-id="Unversioned.Files.Dialog.Popup" anchor="after" relative-to-action="$Delete"/>
     </group>
 
     <action class="org.jetbrains.idea.svn.actions.CleanupProjectAction" id="Subversion.CleanupProject">

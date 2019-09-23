@@ -6,8 +6,10 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
+import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ipp.psiutils.ErrorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -117,9 +119,20 @@ public class SplitConditionUtil {
       if (nextIf == null) break;
       PsiExpression nextCondition = PsiUtil.skipParenthesizedExprDown(nextIf.getCondition());
       if (nextCondition == null) break;
-      if (PsiEquivalenceUtil.areElementsEquivalent(extract, nextCondition) && nextIf.getThenBranch() != null) {
+      EquivalenceChecker equivalence = EquivalenceChecker.getCanonicalPsiEquivalence();
+      if (nextIf.getThenBranch() == null) break;
+      if (equivalence.expressionsAreEquivalent(extract, nextCondition)) {
         elseChain.add(tracker.text(nextIf.getThenBranch()));
         chainFinished = true;
+      }
+      else if (nextIf.getElseBranch() == null && equivalence.expressionsAreEquivalent(
+        extract, factory.createExpressionFromText(BoolUtils.getNegatedExpressionText(nextCondition), nextCondition))) {
+        // skip duplicating else branch in cases like
+        // if(foo && bar) {1} else if (!foo) {2} =>
+        // if(foo) { if(bar) {1} } else {2}
+        elseBranch = nextIf.getThenBranch();
+        chainFinished = true;
+        break;
       }
       else {
         if (!(nextCondition instanceof PsiPolyadicExpression)) break;
@@ -150,6 +163,9 @@ public class SplitConditionUtil {
     String thenString;
     if (elseChain.isEmpty()) {
       thenString = createIfString(leave, thenBranch, (String)null, tracker);
+      if (elseBranch != null) {
+        thenString = "{" + thenString + "}";
+      }
     }
     else {
       thenString = "{" + createIfString(leave, thenBranch, String.join("\nelse ", elseChain), tracker) + "\n}";

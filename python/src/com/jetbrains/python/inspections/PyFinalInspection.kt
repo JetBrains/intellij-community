@@ -262,7 +262,7 @@ class PyFinalInspection : PyInspection() {
     }
 
     private fun checkInstanceFinalsOutsideInit(method: PyFunction) {
-      if (PyUtil.isInit(method)) return
+      if (PyUtil.isInitMethod(method)) return
 
       val instanceAttributes = mutableMapOf<String, PyTargetExpression>()
       PyClassImpl.collectInstanceAttributes(method, instanceAttributes)
@@ -278,7 +278,12 @@ class PyFinalInspection : PyInspection() {
         return
       }
 
-      val resolved = PyUtil.multiResolveTopPriority(target, resolveContext)
+      // TODO: revert back to PyUtil#multiResolveTopPriority when resolve into global statement is implemented
+      val resolved = when (target) {
+        is PyReferenceOwner -> target.getReference(resolveContext).multiResolve(false).mapNotNull { it.element }
+        else -> PyUtil.multiResolveTopPriority(target, resolveContext)
+      }
+
       if (resolved.any { it is PyTargetExpression && isFinal(it) }) {
         registerProblem(target, "'${target.name}' is 'Final' and could not be reassigned")
         return
@@ -307,7 +312,7 @@ class PyFinalInspection : PyInspection() {
       val classAttribute = cls.findClassAttribute(name, false, myTypeEvalContext)
       if (classAttribute != null && !classAttribute.hasAssignedValue() && isFinal(classAttribute)) {
         if (target is PyTargetExpression &&
-            ScopeUtil.getScopeOwner(target).let { it is PyFunction && PyUtil.isInit(it) && cls == it.containingClass }) {
+            ScopeUtil.getScopeOwner(target).let { it is PyFunction && PyUtil.turnConstructorIntoClass(it) == cls }) {
           return
         }
         registerProblem(target, "'$name' is 'Final' and could not be reassigned")

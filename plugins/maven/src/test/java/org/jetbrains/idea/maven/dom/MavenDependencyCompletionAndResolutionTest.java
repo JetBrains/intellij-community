@@ -17,8 +17,8 @@ package org.jetbrains.idea.maven.dom;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
-import com.intellij.idea.Bombed;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -34,13 +34,9 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Calendar;
 import java.util.List;
 
 public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndicesTestCase {
-  private static boolean packageSearchIgnore(){
-    return true;
-  }
   @Override
   protected void setUpInWriteAction() throws Exception {
     super.setUpInWriteAction();
@@ -124,11 +120,7 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
     assertCompletionVariants(myProjectPom); // should not throw
   }
 
-  @Bombed(user="Alexander Bubenchikov", month = Calendar.JUNE, day = 1, description = "Fix for local package search")
   public void testAddingLocalProjectsIntoCompletion() {
-    if(packageSearchIgnore()){
-      return;
-    }
     createProjectPom("<groupId>project-group</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -162,7 +154,7 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
                     "  </dependency>" +
                     "</dependencies>");
 
-    assertCompletionVariants(m, "project", "m1", "m2");
+    assertCompletionVariants(m, "project-group:project:1", "project-group:m1:1", "project-group:m2:2");
   }
 
   public void testResolvingPropertiesForLocalProjectsInCompletion() {
@@ -226,11 +218,7 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
     checkHighlighting(m);
   }
 
-  @Bombed(user="Alexander Bubenchikov", month = Calendar.JUNE, day = 1, description = "Fix for local package search")
   public void testChangingExistingProjects() {
-    if(packageSearchIgnore()){
-      return;
-    }
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -263,7 +251,7 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
                     "  </dependency>" +
                     "</dependencies>");
 
-    assertCompletionVariants(m1, "project", "m1", "m2");
+    assertCompletionVariants(m1, "test:project:1", "test:m1:1", "test:m2:1");
 
     createModulePom("m1", "<groupId>test</groupId>" +
                     "<artifactId>m1</artifactId>" +
@@ -286,7 +274,7 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
                           "  </dependency>" +
                           "</dependencies>");
 
-    assertCompletionVariants(m1, "project", "m1", "m2_new");
+    assertCompletionVariants(m1, "test:project:1", "test:m1:1", "test:m2_new:1");
   }
 
   public void testChangingExistingProjectsWithArtifactIdsRemoval() {
@@ -381,6 +369,28 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
                      "</dependencies>");
 
     String filePath = myIndicesFixture.getRepositoryHelper().getTestDataPath("local1/junit/junit/4.0/junit-4.0.pom");
+    VirtualFile f = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath);
+    assertResolved(myProjectPom, findPsiFile(f));
+  }
+
+  public void testResolutionParentPathOutsideTheProject() throws Exception {
+
+    String filePath = myIndicesFixture.getRepositoryHelper().getTestDataPath("local1/org/example/1.0/example-1.0.pom");
+
+    String relativePathUnixSeparator =
+      FileUtil.getRelativePath(new File(myProjectRoot.getPath()), new File(filePath)).replaceAll("\\\\", "/");
+
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+                     "<parent>" +
+                     "  <groupId>org.example</groupId>" +
+                     "  <artifactId>example</artifactId>" +
+                     "  <version>1.0</version>" +
+                     "  <relativePath>" + relativePathUnixSeparator + "<caret></relativePath>" +
+                     "</parent>"
+    );
+
     VirtualFile f = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath);
     assertResolved(myProjectPom, findPsiFile(f));
   }
@@ -834,6 +844,23 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
     checkHighlighting();
   }
 
+  public void testHighlightingVersionIfVersionIsWrong() {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<dependencies>" +
+                     "  <dependency>" +
+                     "    <groupId>junit</groupId>" +
+                     "    <artifactId>junit</artifactId>" +
+                     "    <version><error>4.0.wrong</error></version>" +
+                     "  </dependency>" +
+                     "</dependencies>");
+
+    checkHighlighting();
+  }
+
+
   public void testHighlightingArtifactIdAndVersionIfGroupIsUnknown() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -931,8 +958,6 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
   }
 
   public void testHighlightingCoordinatesWithClosedTags() {
-    if (ignore()) return;
-
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +

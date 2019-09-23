@@ -14,10 +14,11 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
 import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
@@ -25,23 +26,23 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.util.JBHiDPIScaledImage;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.UIUtil;
+import com.jediterm.terminal.TerminalCopyPasteHandler;
 import com.jediterm.terminal.TextStyle;
 import com.jediterm.terminal.model.StyleState;
 import com.jediterm.terminal.model.TerminalTextBuffer;
 import com.jediterm.terminal.ui.TerminalPanel;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.datatransfer.StringSelection;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
+import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.ImageObserver;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Consumer;
 
 public class JBTerminalPanel extends TerminalPanel implements FocusListener, TerminalSettingsListener, Disposable {
   private static final Logger LOG = Logger.getInstance(JBTerminalPanel.class);
@@ -58,7 +59,13 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
     "ActivateHierarchyToolWindow",
     "ActivateServicesToolWindow",
     "ActivateVersionControlToolWindow",
+    "HideActiveWindow",
     "HideAllWindows",
+
+    "NextWindow",
+    "PreviousWindow",
+    "NextProjectWindow",
+    "PreviousProjectWindow",
 
     "ShowBookmarks",
     "GotoBookmark0",
@@ -87,10 +94,12 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
     "ResizeToolWindowDown",
     "MaximizeToolWindow"
   };
+  private static final int MIN_FONT_SIZE = 8;
 
   private final TerminalEventDispatcher myEventDispatcher = new TerminalEventDispatcher();
   private final JBTerminalSystemSettingsProviderBase mySettingsProvider;
   private final TerminalEscapeKeyListener myEscapeKeyListener;
+  private final List<Consumer<KeyEvent>> myPreKeyEventConsumers = new CopyOnWriteArrayList<>();
 
   private List<AnAction> myActionsToSkip;
 
@@ -141,15 +150,11 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
     }
   }
 
-  private boolean skipKeyEvent(KeyEvent e) {
-    if (myActionsToSkip == null) {
-      return false;
-    }
-    int kc = e.getKeyCode();
-    return kc == KeyEvent.VK_ESCAPE || skipAction(e, myActionsToSkip);
+  private boolean skipKeyEvent(@NotNull KeyEvent e) {
+    return skipAction(e, myActionsToSkip);
   }
 
-  private static boolean skipAction(KeyEvent e, List<? extends AnAction> actionsToSkip) {
+  private static boolean skipAction(@NotNull KeyEvent e, @Nullable List<? extends AnAction> actionsToSkip) {
     if (actionsToSkip != null) {
       final KeyboardShortcut eventShortcut = new KeyboardShortcut(KeyStroke.getKeyStrokeForEvent(e), null);
       for (AnAction action : actionsToSkip) {
@@ -180,7 +185,16 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
       }
     }
     myEscapeKeyListener.handleKeyEvent(e);
-    super.handleKeyEvent(e);
+    for (Consumer<KeyEvent> preKeyEventConsumer : myPreKeyEventConsumers) {
+      preKeyEventConsumer.accept(e);
+    }
+    if (!e.isConsumed()) {
+      super.handleKeyEvent(e);
+    }
+  }
+
+  public void addPreKeyEventHandler(@NotNull Consumer<KeyEvent> preKeyEventHandler) {
+    myPreKeyEventConsumers.add(preKeyEventHandler);
   }
 
   @Override
@@ -189,9 +203,10 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
     UISettings.setupAntialiasing(graphics);
   }
 
+  @NotNull
   @Override
-  protected void setCopyContents(StringSelection selection) {
-    CopyPasteManager.getInstance().setContents(selection);
+  protected TerminalCopyPasteHandler createCopyPasteHandler() {
+    return new IdeTerminalCopyPasteHandler();
   }
 
   @Override
@@ -291,7 +306,7 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
   }
 
   public FontInfo fontForChar(final char c, @JdkConstants.FontStyle int style) {
-    return ComplementaryFontsRegistry.getFontAbleToDisplay(c, style, mySettingsProvider.getColorScheme().getConsoleFontPreferences(), null);
+    return ComplementaryFontsRegistry.getFontAbleToDisplay(c, style, mySettingsProvider.getColorsScheme().getConsoleFontPreferences(), null);
   }
 
   @Override
@@ -310,6 +325,19 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
       //we need to refresh local file system after a command has been executed in the terminal
       LocalFileSystem.getInstance().refresh(true);
     }
+  }
+
+  @Override
+  protected void processMouseWheelEvent(MouseWheelEvent e) {
+    if (EditorSettingsExternalizable.getInstance().isWheelFontChangeEnabled() && EditorUtil.isChangeFontSize(e)) {
+      int newFontSize = (int)mySettingsProvider.getTerminalFontSize() - e.getWheelRotation();
+      if (newFontSize >= MIN_FONT_SIZE) {
+        mySettingsProvider.getColorsScheme().setConsoleFontSize(newFontSize);
+        mySettingsProvider.fireFontChanged();
+      }
+      return;
+    }
+    super.processMouseWheelEvent(e);
   }
 
   /**

@@ -3,6 +3,7 @@ package git4idea.history;
 
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -22,6 +23,7 @@ import git4idea.GitContentRevision;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
 import git4idea.commands.Git;
+import git4idea.commands.GitObjectType;
 import git4idea.log.GitShowCommitInLogAction;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
@@ -37,9 +39,10 @@ import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 /**
  * Git history provider implementation
  */
-public class GitHistoryProvider implements VcsHistoryProviderEx,
-                                           VcsCacheableHistorySessionFactory<Boolean, VcsAbstractHistorySession>,
-                                           VcsBaseRevisionAdviser {
+@Service
+public final class GitHistoryProvider implements VcsHistoryProviderEx,
+                                                 VcsCacheableHistorySessionFactory<Boolean, VcsAbstractHistorySession>,
+                                                 VcsBaseRevisionAdviser {
   private static final Logger LOG = Logger.getInstance(GitHistoryProvider.class.getName());
 
   @NotNull private final Project myProject;
@@ -132,8 +135,8 @@ public class GitHistoryProvider implements VcsHistoryProviderEx,
     GitRepository repository = GitRepositoryManager.getInstance(myProject).getRepositoryForFile(filePath);
     if (repository == null) return false;
 
-    String objectType = Git.getInstance().getObjectType(repository, beforeVersionId);
-    if (!"commit".equals(objectType)) return false;
+    GitObjectType objectType = Git.getInstance().getObjectTypeEnum(repository, beforeVersionId);
+    if (!GitObjectType.COMMIT.equals(objectType)) return false;
 
     final ContentRevision content = GitContentRevision.createRevision(filePath, new GitRevisionNumber(beforeVersionId), myProject);
     return !processor.process(content.getContent());

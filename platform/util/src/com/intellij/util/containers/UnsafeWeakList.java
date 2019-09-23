@@ -218,7 +218,7 @@ public class UnsafeWeakList<T> extends AbstractCollection<T> {
   }
   @NotNull
   public List<T> toStrongList() {
-    return ContainerUtilRt.mapNotNull(myList, deref());
+    return ContainerUtil.mapNotNull(myList, deref());
   }
 
   /**
@@ -250,7 +250,10 @@ public class UnsafeWeakList<T> extends AbstractCollection<T> {
   }
   private static final Condition<MyReference<Object>> NOT_NULL = reference -> SoftReference.dereference(reference) != null;
 
-  // (*@#ing plugins
+  /**
+   * @deprecated Since weak references can be collected at any time,
+   * this method considered dangerous, misleading, error-inducing and is not supported.
+   */
   @Deprecated
   public T get(int index) {
     throwNotAllowedException();

@@ -409,12 +409,7 @@ public class TabbedPaneWrapper  {
 
   private final class _MyFocusTraversalPolicy extends IdeFocusTraversalPolicy{
     @Override
-    public boolean isNoDefaultComponent() {
-      return false;
-    }
-
-    @Override
-    public final Component getDefaultComponentImpl(final Container focusCycleRoot) {
+    public final Component getDefaultComponent(final Container focusCycleRoot) {
       final JComponent component=getSelectedComponent();
       return component == null ? null : IdeFocusTraversalPolicy.getPreferredFocusedComponent(component, this);
     }

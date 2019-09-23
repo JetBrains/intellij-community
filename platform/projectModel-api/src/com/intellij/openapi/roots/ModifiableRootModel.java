@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -28,9 +29,12 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Model of roots that should be used by clients to modify module roots.
+ * <p/>
+ * Invoke {@link #commit()} to persist changes, see also {@link ModuleRootModificationUtil}.
  *
  * @author dsl
  * @see ModuleRootManager#getModifiableModel()
+ * @see ModuleRootModificationUtil
  */
 @ApiStatus.NonExtendable
 public interface ModifiableRootModel extends ModuleRootModel {
@@ -70,7 +74,7 @@ public interface ModifiableRootModel extends ModuleRootModel {
   void addOrderEntry(@NotNull OrderEntry orderEntry);
 
   /**
-   * Creates an entry for a given library and adds it to order
+   * Creates an entry for a given library and adds it to order.
    *
    * @param library the library for which the entry is created.
    * @return newly created order entry for the library
@@ -106,24 +110,25 @@ public interface ModifiableRootModel extends ModuleRootModel {
   void clear();
 
   /**
-   * Commits changes to a <code>{@link ModuleRootManager}</code>.
+   * Commits changes to a {@link ModuleRootManager}.
    * Should be invoked in a write action. After <code>commit()<code>, the model
    * becomes read-only.
-   *
-   * Use of ModuleRootModificationUtil.updateModel() is recommended.
+   * <p>
+   * Use of {@link ModuleRootModificationUtil#updateModel(Module, Consumer)} is recommended.
    */
   void commit();
 
   /**
    * Must be invoked for uncommitted models that are no longer needed.
-   *
-   * Use of ModuleRootModificationUtil.updateModel() is recommended.
+   * <p>
+   * Use of {@link ModuleRootModificationUtil#updateModel(Module, Consumer)} is recommended.
    */
   void dispose();
 
   /**
-   * Returns library table with module libraries.<br>
-   * <b>Note:</b> returned library table does not support listeners. Also one shouldn't invoke 'commit()' or 'dispose()' methods on it,
+   * Returns library table with module libraries.
+   * <p/>
+   * <b>Note:</b> returned library table does not support listeners. Also, one shouldn't invoke 'commit()' or 'dispose()' methods on it,
    * it is automatically committed or disposed along with this {@link ModifiableRootModel} instance.
    *
    * @return library table to be modified
@@ -132,21 +137,21 @@ public interface ModifiableRootModel extends ModuleRootModel {
   LibraryTable getModuleLibraryTable();
 
   /**
-   * Sets JDK for this module to a specific value
+   * Sets SDK for this module to a specific value.
    */
-  void setSdk(@Nullable Sdk jdk);
+  void setSdk(@Nullable Sdk sdk);
 
   /**
    * Sets JDK name and type for this module.
-   * To be used when JDK with this name and type does not exist (e.g. when importing module configuration).
+   * To be used when SDK with this name and type does not exist (e.g. when importing module configuration).
    *
-   * @param sdkName JDK name
-   * @param sdkType JDK type
+   * @param sdkName SDK name
+   * @param sdkType SDK type
    */
   void setInvalidSdk(@NotNull String sdkName, String sdkType);
 
   /**
-   * Makes this module inheriting JDK from its project
+   * Makes this module inheriting SDK from its project.
    */
   void inheritSdk();
 

@@ -16,6 +16,7 @@
 package com.intellij.refactoring.changeSignature;
 
 import com.intellij.lang.LanguageRefactoringSupport;
+import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.JavaTokenType;
@@ -110,7 +111,8 @@ public class ChangeSignatureUtil {
   }
 
   public static void invokeChangeSignatureOn(PsiMethod method, Project project) {
-    ChangeSignatureHandler handler = LanguageRefactoringSupport.INSTANCE.forLanguage(method.getLanguage()).getChangeSignatureHandler();
+    RefactoringSupportProvider provider = LanguageRefactoringSupport.INSTANCE.forContext(method);
+    ChangeSignatureHandler handler = provider != null ? provider.getChangeSignatureHandler() : null;
     if (handler != null) {
       handler.invoke(project, new PsiElement[]{method}, null);
     }

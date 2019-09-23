@@ -48,6 +48,12 @@ private fun wrapLambdaBody(parent: JavaULambdaExpression, b: PsiExpression): UBl
   }
 
 private class JavaImplicitUReturnExpression(givenParent: UElement?) : JavaAbstractUExpression(givenParent), UReturnExpression {
+  override val label: String?
+    get() = null
+
+  override val jumpTarget: UElement? =
+    getParentOfType(ULambdaExpression::class.java, strict = true)
+
   override val sourcePsi: PsiElement?
     get() = null
   override val psi: PsiElement?

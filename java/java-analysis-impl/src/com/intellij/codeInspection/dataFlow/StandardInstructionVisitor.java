@@ -259,22 +259,49 @@ public class StandardInstructionVisitor extends InstructionVisitor {
   @Override
   public DfaInstructionState[] visitTypeCast(TypeCastInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
     PsiType type = instruction.getCastTo();
+    DfaControlTransferValue transfer = instruction.getCastExceptionTransfer();
     final DfaValueFactory factory = runner.getFactory();
     PsiType fromType = instruction.getCasted().getType();
-    if (fromType != null && type.isConvertibleFrom(fromType) && !memState.castTopOfStack(factory.createDfaType(type))) {
-      onInstructionProducesCCE(instruction);
-    }
+    DfaPsiType dfaType = factory.createDfaType(type);
+    boolean castPossible = true;
+    List<DfaInstructionState> result = new ArrayList<>();
+    if (transfer != null) {
+      DfaMemoryState castFail = memState.createCopy();
+      if (fromType != null && type.isConvertibleFrom(fromType)) {
+        if (!memState.castTopOfStack(dfaType)) {
+          castPossible = false;
+        } else {
+          result.add(new DfaInstructionState(runner.getInstruction(instruction.getIndex() + 1), memState));
+          DfaValue value = memState.pop();
+          pushExpressionResult(value, instruction, memState);
+        }
+      }
+      DfaValue value = castFail.peek();
+      DfaValue notNullCondition = factory.createCondition(value, RelationType.NE, factory.getConstFactory().getNull());
+      DfaValue notTypeCondition = factory.createCondition(value, RelationType.IS_NOT, factory.createTypeValue(type, Nullability.NOT_NULL));
+      if (castFail.applyCondition(notNullCondition) && castFail.applyCondition(notTypeCondition)) {
+        List<DfaInstructionState> states = transfer.dispatch(castFail, runner);
+        for (DfaInstructionState cceState : states) {
+          cceState.getMemoryState().markEphemeral();
+        }
+        result.addAll(states);
+      }
+    } else {
+      if (fromType != null && type.isConvertibleFrom(fromType)) {
+        if (!memState.castTopOfStack(dfaType)) {
+          castPossible = false;
+        }
+      }
 
-    DfaValue value = memState.pop();
-    if (type instanceof PsiPrimitiveType) {
-      value = DfaUtil.boxUnbox(value, type);
+      result.add(new DfaInstructionState(runner.getInstruction(instruction.getIndex() + 1), memState));
+      DfaValue value = memState.pop();
+      pushExpressionResult(value, instruction, memState);
     }
-    pushExpressionResult(value, instruction, memState);
-
-    return nextInstruction(instruction, runner, memState);
+    onTypeCast(instruction.getExpression(), memState, castPossible);
+    return result.toArray(DfaInstructionState.EMPTY_ARRAY);
   }
 
-  protected void onInstructionProducesCCE(TypeCastInstruction instruction) {}
+  protected void onTypeCast(PsiTypeCastExpression castExpression, DfaMemoryState state, boolean castPossible) {}
 
   protected void beforeMethodCall(@NotNull PsiExpression expression,
                                   @NotNull DfaCallArguments arguments,
@@ -686,7 +713,8 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     DfaValue dfaLeft = memState.pop();
 
     final IElementType opSign = instruction.getOperationSign();
-    RelationType relationType = RelationType.fromElementType(opSign);
+    RelationType relationType =
+      RelationType.fromElementType(opSign == BinopInstruction.STRING_EQUALITY_BY_CONTENT ? JavaTokenType.EQEQ : opSign);
     if (relationType != null) {
       DfaInstructionState[] states = handleRelationBinop(instruction, runner, memState, dfaRight, dfaLeft, relationType);
       if (states != null) {
@@ -696,16 +724,15 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     DfaValue result = DfaUnknownValue.getInstance();
     PsiType type = instruction.getResultType();
     if (PsiType.INT.equals(type) || PsiType.LONG.equals(type)) {
-      boolean isLong = PsiType.LONG.equals(type);
-      result = runner.getFactory().getBinOpFactory().create(dfaLeft, dfaRight, memState, isLong, opSign);
+      if (!instruction.isWidened()) {
+        boolean isLong = PsiType.LONG.equals(type);
+        result = runner.getFactory().getBinOpFactory().create(dfaLeft, dfaRight, memState, isLong, opSign);
+      }
     }
-    if (result == DfaUnknownValue.getInstance() && TypeUtils.isJavaLangString(type)) {
-      if (JavaTokenType.PLUS == opSign) {
-        result = concatStrings(dfaLeft, dfaRight, memState, type, runner.getFactory());
-      }
-      if (BinopInstruction.STRING_CONCAT_IN_LOOP == opSign) {
-        result = runner.getFactory().createTypeValue(type, Nullability.NOT_NULL);
-      }
+    if (result == DfaUnknownValue.getInstance() && JavaTokenType.PLUS == opSign && TypeUtils.isJavaLangString(type)) {
+      result = instruction.isWidened()
+               ? runner.getFactory().createTypeValue(type, Nullability.NOT_NULL)
+               : concatStrings(dfaLeft, dfaRight, memState, type, runner.getFactory());
     }
     pushExpressionResult(result, instruction, memState);
 
@@ -757,8 +784,8 @@ public class StandardInstructionVisitor extends InstructionVisitor {
                                                     RelationType relationType) {
     DfaValueFactory factory = runner.getFactory();
     if((relationType == RelationType.EQ || relationType == RelationType.NE) &&
-       (dfaLeft != dfaRight || dfaLeft instanceof DfaBoxedValue || dfaLeft instanceof DfaConstValue) &&
-       isComparedByEquals(instruction.getExpression()) && !memState.isNull(dfaLeft) && !memState.isNull(dfaRight)) {
+       instruction.getOperationSign() != BinopInstruction.STRING_EQUALITY_BY_CONTENT &&
+       memState.shouldCompareByEquals(dfaLeft, dfaRight)) {
       ArrayList<DfaInstructionState> states = new ArrayList<>(2);
       DfaMemoryState equality = memState.createCopy();
       if (equality.applyCondition(factory.createCondition(dfaLeft, RelationType.EQ, dfaRight))) {
@@ -799,15 +826,6 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     }
 
     return states.toArray(DfaInstructionState.EMPTY_ARRAY);
-  }
-
-  private static boolean isComparedByEquals(PsiExpression expression) {
-    if (expression instanceof PsiBinaryExpression) {
-      PsiExpression left = ((PsiBinaryExpression)expression).getLOperand();
-      PsiExpression right = ((PsiBinaryExpression)expression).getROperand();
-      return right != null && (DfaUtil.isComparedByEquals(left.getType()) && DfaUtil.isComparedByEquals(right.getType()));
-    }
-    return false;
   }
 
   @NotNull

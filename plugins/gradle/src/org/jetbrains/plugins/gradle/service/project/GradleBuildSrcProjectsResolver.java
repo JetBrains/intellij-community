@@ -262,7 +262,7 @@ public class GradleBuildSrcProjectsResolver {
 
           List<BuildScriptClasspathData.ClasspathEntry> classpathEntries = new ArrayList<>(copyFrom.getClasspathEntries().size() + 1);
           classpathEntries.addAll(copyFrom.getClasspathEntries());
-          classpathEntries.add(new BuildScriptClasspathData.ClasspathEntry(
+          classpathEntries.add(BuildScriptClasspathData.ClasspathEntry.create(
             new THashSet<>(buildSrcRuntimeClassesPaths),
             new THashSet<>(buildSrcRuntimeSourcesPaths),
             Collections.emptySet()
@@ -273,7 +273,7 @@ public class GradleBuildSrcProjectsResolver {
 
           DataNode<?> parent = classpathNode.getParent();
           assert parent != null;
-          parent.createChild(BuildScriptClasspathData.KEY, GradleProjectResolverUtil.intern(myResolverContext, buildScriptClasspathData));
+          parent.createChild(BuildScriptClasspathData.KEY, buildScriptClasspathData);
           classpathNode.clear(true);
         });
       }

@@ -3,10 +3,10 @@ package com.theoryinpractice.testng.configuration;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.rt.testng.TestNGForkedSplitter;
 import com.intellij.util.ArrayUtilRt;
 import org.junit.Assert;
 import org.junit.Test;
-import org.testng.TestNGForkedSplitter;
 
 import java.io.File;
 import java.io.IOException;

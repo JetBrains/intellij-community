@@ -27,6 +27,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.intellij.openapi.util.io.FileUtilRt.doIOOperation;
+import static com.intellij.util.ObjectUtils.notNull;
 
 /**
  * Reads information about the Hg repository from Hg service files located in the {@code .hg} folder.
@@ -118,7 +119,7 @@ public class HgRepositoryReader {
 
   @NotNull
   private static byte[] readHashBytesFromFile(@NotNull File file) throws IOException {
-    try (final FileInputStream stream = doIOOperation(lastAttempt -> {
+    try (FileInputStream stream = doIOOperation(lastAttempt -> {
       try {
         return new FileInputStream(file);
       }
@@ -127,8 +128,7 @@ public class HgRepositoryReader {
         return null;
       }
     })) {
-      assert stream != null;
-      return FileUtil.loadBytes(stream, 20);
+      return FileUtil.loadBytes(notNull(stream), 20);
     }
   }
 

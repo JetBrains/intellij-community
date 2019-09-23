@@ -97,7 +97,7 @@ public class ExternalAnnotationsManagerTest extends LightPlatformTestCase {
   private void findAnnotationsXmlAndCheckSyntax(String root) {
     VirtualFile jdkAnnoRoot = LocalFileSystem.getInstance().findFileByPath(root);
     VfsUtilCore.visitChildrenRecursively(
-      jdkAnnoRoot, new VirtualFileVisitor() {
+      jdkAnnoRoot, new VirtualFileVisitor<Void>() {
         @Override
         public boolean visitFile(@NotNull VirtualFile file) {
           if (file.getName().equals("annotations.xml")) {

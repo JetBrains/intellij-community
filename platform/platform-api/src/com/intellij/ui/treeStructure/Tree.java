@@ -643,8 +643,8 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     public void mousePressed(MouseEvent event) {
       setPressed(event, true);
 
-      if (!JBSwingUtilities.isLeftMouseButton(event) &&
-          (JBSwingUtilities.isRightMouseButton(event) || JBSwingUtilities.isMiddleMouseButton(event))) {
+      if (!SwingUtilities.isLeftMouseButton(event) &&
+          (SwingUtilities.isRightMouseButton(event) || SwingUtilities.isMiddleMouseButton(event))) {
         TreePath path = getClosestPathForLocation(event.getX(), event.getY());
         if (path == null) return;
 

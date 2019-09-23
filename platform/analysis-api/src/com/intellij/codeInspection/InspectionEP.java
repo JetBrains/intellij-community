@@ -25,7 +25,8 @@ import java.util.ResourceBundle;
  * @author Dmitry Avdeev
  * @see LocalInspectionEP
  */
-public class InspectionEP extends LanguageExtensionPoint implements InspectionProfileEntry.DefaultNameProvider {
+public class InspectionEP extends LanguageExtensionPoint<InspectionProfileEntry> implements InspectionProfileEntry.DefaultNameProvider {
+  private static final Logger LOG = Logger.getInstance(InspectionEP.class);
 
   /**
    * @see GlobalInspectionTool
@@ -83,7 +84,7 @@ public class InspectionEP extends LanguageExtensionPoint implements InspectionPr
   public String bundle;
 
   /**
-   * Non-localized display name. Use {@link #key} for I18N.
+   * Non-localized display name used in UI (Settings|Editor|Inspections and "Inspection Results" tool window). Use {@link #key} for I18N.
    */
   @Attribute("displayName")
   @Nls(capitalization = Nls.Capitalization.Sentence)
@@ -108,14 +109,14 @@ public class InspectionEP extends LanguageExtensionPoint implements InspectionPr
   public String groupBundle;
 
   /**
-   * Non-localized group display name. Use {@link #groupKey} for I18N.
+   * Non-localized group display name used in UI (Settings|Editor|Inspections). Use {@link #groupKey} for I18N.
    */
   @Attribute("groupName")
   @Nls(capitalization = Nls.Capitalization.Sentence)
   public String groupDisplayName;
 
   /**
-   * Comma-delimited list of parent groups (excluding groupName), e.g. {@code "Java,Java language level migration aids"}.
+   * Comma-delimited list of parent group names (excluding {@code groupName}) used in UI (Settings|Editor|Inspections), e.g. {@code "Java,Java language level migration aids"}.
    */
   @Attribute("groupPath")
   public String groupPath;
@@ -161,7 +162,7 @@ public class InspectionEP extends LanguageExtensionPoint implements InspectionPr
     HighlightDisplayLevel displayLevel = HighlightDisplayLevel.find(level);
     if (displayLevel == null) {
       LOG.error(new PluginException("Can't find highlight display level: " + level + "; registered for: " + implementationClass + "; " +
-                                    "and short name: " + shortName, getPluginId()));
+                                    "and short name: " + shortName, getPluginDescriptor().getPluginId()));
       return HighlightDisplayLevel.WARNING;
     }
     return displayLevel;
@@ -176,22 +177,21 @@ public class InspectionEP extends LanguageExtensionPoint implements InspectionPr
   @Nullable
   private String getLocalizedString(@Nullable String bundleName, String key) {
     final String baseName = bundleName != null ? bundleName :
-                            bundle == null ? ((IdeaPluginDescriptor)myPluginDescriptor).getResourceBundleBaseName() : bundle;
+                            bundle == null ? ((IdeaPluginDescriptor)getPluginDescriptor()).getResourceBundleBaseName() : bundle;
     if (baseName == null || key == null) {
       if (bundleName != null) {
         LOG.warn(implementationClass);
       }
       return null;
     }
-    final ResourceBundle resourceBundle = AbstractBundle.getResourceBundle(baseName, myPluginDescriptor.getPluginClassLoader());
+    ResourceBundle resourceBundle = AbstractBundle.getResourceBundle(baseName, getLoaderForClass());
     return CommonBundle.message(resourceBundle, key);
   }
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.InspectionEP");
-
   @NotNull
   public InspectionProfileEntry instantiateTool() {
-    final InspectionProfileEntry entry = instantiateExtension(implementationClass, ApplicationManager.getApplication().getPicoContainer());
+    // must create a new instance for each invocation
+    InspectionProfileEntry entry = createInstance(ApplicationManager.getApplication());
     entry.myNameProvider = this;
     return entry;
   }

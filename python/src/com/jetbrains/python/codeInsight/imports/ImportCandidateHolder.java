@@ -2,6 +2,7 @@
 package com.jetbrains.python.codeInsight.imports;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.QualifiedName;
@@ -154,10 +155,23 @@ public class ImportCandidateHolder implements Comparable<ImportCandidateHolder> 
   public int compareTo(@NotNull ImportCandidateHolder other) {
     if (myImportElement != null && other.myImportElement == null) return -1;
     if (myImportElement == null && other.myImportElement != null) return 1;
-    return Comparator
+    int comparedRelevance = Comparator
       .comparing(ImportCandidateHolder::getRelevance).reversed()
-      .thenComparing(ImportCandidateHolder::getPath)
       .compare(this, other);
+    if (comparedRelevance != 0) return comparedRelevance;
+
+    QualifiedName myLocalPath = getPath();
+    QualifiedName otherPath = other.getPath();
+    if (myImportElement != null) {
+      // both are not null here
+      PyImportElement myElement = myImportElement.getElement();
+      PyImportElement otherElement = other.myImportElement.getElement();
+      if (myElement != null && otherElement != null) {
+        myLocalPath = myElement.getImportedQName();
+        otherPath = otherElement.getImportedQName();
+      }
+    }
+    return Comparing.compare(myLocalPath, otherPath);
   }
 
   public int getRelevance() {

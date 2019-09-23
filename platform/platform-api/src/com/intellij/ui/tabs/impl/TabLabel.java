@@ -10,8 +10,8 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.ui.*;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.ui.tabs.JBTabPainter;
 import com.intellij.ui.tabs.JBTabsEx;
+import com.intellij.ui.tabs.JBTabsPosition;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.UiDecorator;
 import com.intellij.ui.tabs.impl.themes.TabTheme;
@@ -19,6 +19,7 @@ import com.intellij.util.ui.Centerizer;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
+import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.Nullable;
 
 import javax.accessibility.Accessible;
@@ -55,10 +56,10 @@ public class TabLabel extends JPanel implements Accessible, Disposable {
     // navigate through the other tabs using the LEFT/RIGHT keys.
     setFocusable(ScreenReader.isActive());
     setOpaque(false);
-    setLayout(new BorderLayout());
+    setLayout(new MigLayout("gap 0 0,novisualpadding,ins 0,aligny center"));
 
     myLabelPlaceholder.setOpaque(false);
-    add(myLabelPlaceholder, BorderLayout.CENTER);
+    addLabelPlaceholder();
 
     setAlignmentToCenter(true);
 
@@ -150,6 +151,12 @@ public class TabLabel extends JPanel implements Accessible, Disposable {
     }
   }
 
+  private void addLabelPlaceholder() {
+    JBTabsPosition position = myTabs.getTabsPosition();
+    String labelAlignment = position.isSide() ? "ax left" : "ax center";
+    add(myLabelPlaceholder, "pushx, " + labelAlignment);
+  }
+
   @Override
   public void dispose() {
   }
@@ -191,8 +198,8 @@ public class TabLabel extends JPanel implements Accessible, Disposable {
 
       @Override
       protected Color getActiveTextColor(Color attributesColor) {
-        JBTabPainter painter = myTabs.getTabPainter();
-        TabTheme theme = painter.getTabTheme();
+        TabPainterAdapter painterAdapter = myTabs.getTabPainterAdapter();
+        TabTheme theme = painterAdapter.getTabTheme();
         return myTabs.getSelectedInfo() == myInfo && (UIUtil.getLabelForeground().equals(attributesColor) || attributesColor == null) ?
                myTabs.isActiveTabs(myInfo) ? theme.getUnderlinedTabForeground() : theme.getUnderlinedTabInactiveForeground()
                                                    : super.getActiveTextColor(attributesColor);
@@ -232,13 +239,8 @@ public class TabLabel extends JPanel implements Accessible, Disposable {
   protected void setPlaceholderContent(boolean toCenter, JComponent component) {
     myLabelPlaceholder.removeAll();
 
-    if (toCenter /*&& !Registry.is("ide.new.editor.tabs.selection")*/) {
-      final Centerizer center = new Centerizer(component);
-      myLabelPlaceholder.setContent(center);
-    }
-    else {
-      myLabelPlaceholder.setContent(component);
-    }
+    JComponent content = toCenter ? new Centerizer(component, Centerizer.TYPE.BOTH) : new Centerizer(component, Centerizer.TYPE.VERTICAL);
+    myLabelPlaceholder.setContent(content);
 
     myCentered = toCenter;
   }
@@ -399,9 +401,17 @@ public class TabLabel extends JPanel implements Accessible, Disposable {
     myActionPanel.setBorder(JBUI.Borders.empty(1, 0));
     toggleShowActions(false);
 
-    add(myActionPanel, UISettings.getShadowInstance().getCloseTabButtonOnTheRight() ? BorderLayout.EAST : BorderLayout.WEST);
+    addActionPanel();
 
     myTabs.revalidateAndRepaint(false);
+  }
+
+  private void addActionPanel() {
+    boolean closeOnRight = UISettings.getShadowInstance().getCloseTabButtonOnTheRight();
+    add(myActionPanel);
+    if (!closeOnRight) {
+      setComponentZOrder(myActionPanel, 0);
+    }
   }
 
   private void removeOldActionPanel() {
@@ -490,20 +500,8 @@ public class TabLabel extends JPanel implements Accessible, Disposable {
   }
 
   private void paintBackground(Graphics g) {
-    JBTabPainter painter = myTabs.getTabPainter();
-    boolean isSelected = myInfo == myTabs.getSelectedInfo();
-
-    Rectangle rect = new Rectangle(0, 0, getWidth(), getHeight());
-
-    Graphics2D g2d = (Graphics2D)g;
-    if (isSelected) {
-      painter
-        .paintSelectedTab(myTabs.getPosition(), g2d, rect, myTabs.getBorderThickness(), myInfo.getTabColor(), myTabs.isActiveTabs(myInfo),
-                          myTabs.isHoveredTab(this), myTabs.getVisibleInfos().size() == 1);
-    }
-    else {
-      painter.paintTab(myTabs.getPosition(), g2d, rect, myTabs.getBorderThickness(), myInfo.getTabColor(), myTabs.isHoveredTab(this));
-    }
+    TabPainterAdapter painterAdapter = myTabs.getTabPainterAdapter();
+    painterAdapter.paintBackground(this, g, myTabs);
   }
 
   @Override
@@ -549,10 +547,25 @@ public class TabLabel extends JPanel implements Accessible, Disposable {
 
   public void setActionPanelVisible(boolean visible) {
     if (myActionPanel != null) {
-      add(myActionPanel, UISettings.getShadowInstance().getCloseTabButtonOnTheRight() ? BorderLayout.EAST : BorderLayout.WEST);
+      if(visible == myActionPanel.isVisible()) return;
+
       myActionPanel.setVisible(visible);
       if (visible) {
         myActionPanel.update();
+      }
+
+      handleUISettingsChange();
+    }
+  }
+
+  void handleUISettingsChange() {
+    addLabelPlaceholder();
+    if (myActionPanel != null) {
+      if (!myActionPanel.isVisible()) {
+        remove(myActionPanel);
+      }
+      else {
+        addActionPanel();
       }
     }
   }

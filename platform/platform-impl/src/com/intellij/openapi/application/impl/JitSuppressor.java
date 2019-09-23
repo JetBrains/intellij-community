@@ -18,9 +18,11 @@ public class JitSuppressor implements PowerSaveMode.Listener {
   private static final Logger LOG = Logger.getInstance(JitSuppressor.class);
   private static final String SELF_ATTACH_PROP = "jdk.attach.allowAttachSelf";
   private static final String EXCLUDE_ALL_FROM_C2_CLAUSE = "{ match : [\"*.*\"], c2 : { Exclude : true }}";
-  // Limit C2 compilation with the given packages only. The package set was computed by test performance analysis:
-  // it makes performance tests timing comparable with full C2 and same time IDE does not load CPU heavily with this limitation.
-  private static final String[] C2_LIMIT_MASKS = {
+
+  // Limit C2 compilation to the given packages only. The package set was computed by test performance analysis:
+  // it's supposed to make performance tests (not all yet) timing comparable with full C2
+  // and at same time the IDE does not load CPU heavily with this limitation.
+  private static final String[] C2_WHITELIST = {
     "com/intellij/openapi/application/*.*",
     "com/intellij/openapi/editor/*.*",
     "com/intellij/openapi/project/*.*",
@@ -41,6 +43,15 @@ public class JitSuppressor implements PowerSaveMode.Listener {
     "jdk/internal/*.*",
     "sun/*.*",
   };
+
+  // masks matching methods with longest compilation durations which we have no control over
+  private static final String[] C2_BLACKLIST = {
+    "javax/swing/*.*",
+    "javax/awt/*.*",
+    "sun/awt/*.*",
+    "sun/java2d/*.*",
+  };
+  private static final boolean ourBlacklistMode = true;
 
   public JitSuppressor() {
     if (!SystemProperties.getBooleanProperty("enable.jit.suppressor", false)) {
@@ -77,7 +88,7 @@ public class JitSuppressor implements PowerSaveMode.Listener {
 
   @Override
   public void powerSaveStateChanged() {
-    String directives = generateDirectives();
+    String directives = "[" + generateDirectives() + "]";
 
     Runnable runnable = () -> setDirectives(directives);
     if (ApplicationManager.getApplication().isUnitTestMode()) {
@@ -110,9 +121,14 @@ public class JitSuppressor implements PowerSaveMode.Listener {
   }
 
   private static String generateDirectives() {
-    String includes = PowerSaveMode.isEnabled()
-                      ? ""
-                      : StringUtil.join(C2_LIMIT_MASKS, mask -> "{ match: [\"" + mask + "\"], c2: { Exclude: false, }, },", "");
-    return "[" + includes + EXCLUDE_ALL_FROM_C2_CLAUSE + "]";
+    if (PowerSaveMode.isEnabled()) {
+      return EXCLUDE_ALL_FROM_C2_CLAUSE;
+    }
+
+    if (ourBlacklistMode) {
+      return StringUtil.join(C2_BLACKLIST, mask -> "{ match: [\"" + mask + "\"], c2: { Exclude: true, }, },", "");
+    }
+    return StringUtil.join(C2_WHITELIST, mask -> "{ match: [\"" + mask + "\"], c2: { Exclude: false, }, },", "") +
+           EXCLUDE_ALL_FROM_C2_CLAUSE;
   }
 }

@@ -5,7 +5,7 @@ import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusFactory;
 import org.jetbrains.annotations.NotNull;
 
-public class MessageBusFactoryImpl extends MessageBusFactory {
+public final class MessageBusFactoryImpl extends MessageBusFactory {
   @NotNull
   @Override
   public MessageBus createMessageBus(@NotNull Object owner) {

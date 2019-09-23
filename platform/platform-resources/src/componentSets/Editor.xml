@@ -10,14 +10,8 @@
       <implementation-class>com.intellij.openapi.keymap.impl.ModifierKeyDoubleClickHandler</implementation-class>
     </component>
   </application-components>
-
-  <project-components>
-    <component>
-      <implementation-class>com.intellij.openapi.editor.impl.DocumentMarkupModelManager</implementation-class>
-    </component>
-    <component>
-      <interface-class>com.intellij.openapi.fileEditor.ex.IdeDocumentHistory</interface-class>
-      <implementation-class>com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl</implementation-class>
-    </component>
-  </project-components>
+  <extensions defaultExtensionNs="com.intellij">
+    <projectService serviceInterface="com.intellij.openapi.fileEditor.ex.IdeDocumentHistory"
+                    serviceImplementation="com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl" preload="await"/>
+  </extensions>
 </idea-plugin>

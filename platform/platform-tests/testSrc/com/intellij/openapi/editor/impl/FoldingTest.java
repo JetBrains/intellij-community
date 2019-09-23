@@ -2,7 +2,6 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.FoldingListener;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
@@ -50,7 +49,7 @@ public class FoldingTest extends AbstractEditorTest {
       myModel.addFoldRegion(5, 9, "/*...*/");
     });
     assertSize(2, myModel.getAllFoldRegions());
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> getEditor().getDocument().deleteString(0, 5));
+    runWriteCommand(() -> getEditor().getDocument().deleteString(0, 5));
     assertSize(1, myModel.getAllFoldRegions());
   }
 
@@ -182,7 +181,7 @@ public class FoldingTest extends AbstractEditorTest {
     addCollapsedFoldRegion(0, 10, "...");
     addCollapsedFoldRegion(1, 9, "...");
 
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> getEditor().getDocument().deleteString(0, 1));
+    runWriteCommand(() -> getEditor().getDocument().deleteString(0, 1));
 
     addFoldRegion(20, 21, "..."); // an arbitrary action to rebuild folding caches
     
@@ -193,7 +192,7 @@ public class FoldingTest extends AbstractEditorTest {
     FoldRegion c = addCollapsedFoldRegion(0, 10, "...");
     FoldRegion e = addFoldRegion(1, 10, "...");
 
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> getEditor().getDocument().deleteString(0, 1));
+    runWriteCommand(() -> getEditor().getDocument().deleteString(0, 1));
 
     assertFalse(e.isValid());
     assertTrue(c.isValid());
@@ -205,7 +204,7 @@ public class FoldingTest extends AbstractEditorTest {
     FoldRegion e = addFoldRegion(0, 10, "...");
     FoldRegion c = addCollapsedFoldRegion(1, 10, "...");
 
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> getEditor().getDocument().deleteString(0, 1));
+    runWriteCommand(() -> getEditor().getDocument().deleteString(0, 1));
 
     assertFalse(e.isValid());
     assertTrue(c.isValid());
@@ -218,7 +217,7 @@ public class FoldingTest extends AbstractEditorTest {
     addFoldRegion(0, 4, "...");
     assertNumberOfValidFoldRegions(2);
 
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> getEditor().getDocument().deleteString(4, 5));
+    runWriteCommand(() -> getEditor().getDocument().deleteString(4, 5));
 
 
     assertNumberOfValidFoldRegions(1);
@@ -251,7 +250,7 @@ public class FoldingTest extends AbstractEditorTest {
   public void testTopLevelRegionRemainsTopLevelAfterMergingIdenticalRegions() {
     addCollapsedFoldRegion(10, 15, "...");
     addCollapsedFoldRegion(10, 14, "...");
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> getEditor().getDocument().deleteString(14, 15));
+    runWriteCommand(() -> getEditor().getDocument().deleteString(14, 15));
 
 
     FoldRegion region = myModel.getCollapsedRegionAtOffset(10);
@@ -317,7 +316,7 @@ public class FoldingTest extends AbstractEditorTest {
 
   public void test1() {
     String text = getEditor().getDocument().getText().codePoints().mapToObj(c -> c + "\n").collect(Collectors.joining());
-    WriteCommandAction.runWriteCommandAction(getProject(), ()-> getEditor().getDocument().setText(text));
+    runWriteCommand(()-> getEditor().getDocument().setText(text));
     addFoldRegion(20, 151, "1");
     addFoldRegion(289, 357, "2");
     addCollapsedFoldRegion(282, 357, "3");
@@ -343,7 +342,7 @@ public class FoldingTest extends AbstractEditorTest {
   public void testIdenticalRegionsOtherCase() {
     FoldRegion inner = addCollapsedFoldRegion(10, 15, "inner");
     addFoldRegion(10, 20, "outer");
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> getEditor().getDocument().deleteString(15, 20));
+    runWriteCommand(() -> getEditor().getDocument().deleteString(15, 20));
     Assert.assertArrayEquals(new FoldRegion[]{inner}, myModel.fetchTopLevel());
   }
   
@@ -364,7 +363,7 @@ public class FoldingTest extends AbstractEditorTest {
     assertNotNull(regions[1]);
     List<FoldRegion> regionsInGroup = myModel.getGroupedRegions(group);
     assertTrue(regionsInGroup.size() == 2 && regionsInGroup.containsAll(Arrays.asList(regions)));
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> getEditor().getDocument().deleteString(0, 3));
+    runWriteCommand(() -> getEditor().getDocument().deleteString(0, 3));
     assertFalse(regions[0].isValid());
     assertTrue(regions[1].isValid());
     List<FoldRegion> newRegionsInGroup = myModel.getGroupedRegions(group);
@@ -382,7 +381,7 @@ public class FoldingTest extends AbstractEditorTest {
     assertNotNull(regions[0]);
     assertNotNull(regions[1]);
     assertNotNull(regions[2]);
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> DocumentUtil.executeInBulk(getEditor().getDocument(), true, () -> {
+    runWriteCommand(() -> DocumentUtil.executeInBulk(getEditor().getDocument(), true, () -> {
       getEditor().getDocument().deleteString(1, 3); // make first two regions belong to the same interval tree node
       getEditor().getDocument().deleteString(1, 2); // invalidate regions
     }));
@@ -406,7 +405,7 @@ public class FoldingTest extends AbstractEditorTest {
     );
     addCollapsedFoldRegion(1, 10, "...");
 
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> getEditor().getDocument().deleteString(0, 1));
+    runWriteCommand(() -> getEditor().getDocument().deleteString(0, 1));
 
     List<FoldRegion> regions = myModel.getGroupedRegions(group);
     assertEmpty(regions);
@@ -424,5 +423,12 @@ public class FoldingTest extends AbstractEditorTest {
     List<Caret> carets = caretModel.getAllCarets();
     assertSize(1, carets);
     assertEquals(0, carets.get(0).getOffset());
+  }
+
+  public void testMousePositionAfterClickOnCollapsedFolding() {
+    initText("\ntext");
+    addCollapsedFoldRegion(0, getEditor().getDocument().getTextLength(), "...");
+    mouse().clickAt(0, 1);
+    assertEquals(new VisualPosition(0, 0), getEditor().getCaretModel().getVisualPosition());
   }
 }

@@ -174,12 +174,7 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent im
   private void listenForProjectsChanges() {
     MavenProjectsManager.getInstance(myProject).addProjectsTreeListener(new MyProjectsListener());
 
-    MavenShortcutsManager.getInstance(myProject).addListener(new MavenShortcutsManager.Listener() {
-      @Override
-      public void shortcutsUpdated() {
-        scheduleStructureRequest(() -> myStructure.updateGoals());
-      }
-    });
+    MavenShortcutsManager.getInstance(myProject).addListener(() -> scheduleStructureRequest(() -> myStructure.updateGoals()));
 
     MavenTasksManager.getInstance(myProject).addListener(new MavenTasksManager.Listener() {
       @Override

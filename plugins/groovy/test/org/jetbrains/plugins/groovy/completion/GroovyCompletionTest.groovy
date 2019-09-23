@@ -1342,6 +1342,7 @@ def foo(Integer a) {
 ''')
   }
 
+
   void testSuperExtendsInTypeParams() {
     myFixture.configureByText("_.groovy", '''\
 def foo(List<? <caret>)''')

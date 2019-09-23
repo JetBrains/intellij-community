@@ -16,6 +16,7 @@ import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.InternalFileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
@@ -125,7 +126,7 @@ public class ScratchFileActions {
       context.filePrefix = "buffer";
       context.createOption = ScratchFileService.Option.create_if_missing;
       context.fileCounter = ScratchFileActions::nextBufferIndex;
-      if (context.language == null) context.language = StdLanguages.TEXT;
+      if (context.language == null) context.language = PlainTextLanguage.INSTANCE;
       doCreateNewScratch(project, context);
     }
   }
@@ -152,7 +153,7 @@ public class ScratchFileActions {
     return context;
   }
 
-  static void doCreateNewScratch(@NotNull Project project, @NotNull ScratchFileCreationHelper.Context context) {
+  static PsiFile doCreateNewScratch(@NotNull Project project, @NotNull ScratchFileCreationHelper.Context context) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("scratch");
     Language language = ObjectUtils.notNull(context.language);
     if (context.fileExtension == null) {
@@ -172,13 +173,14 @@ public class ScratchFileActions {
                                             context.fileExtension);
     VirtualFile file = ScratchRootType.getInstance().createScratchFile(
       project, fileName, language, context.text, context.createOption);
-    if (file == null) return;
+    if (file == null) return null;
 
     PsiNavigationSupport.getInstance().createNavigatable(project, file, context.caretOffset).navigate(true);
     PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
     if (context.ideView != null && psiFile != null) {
       context.ideView.selectElement(psiFile);
     }
+    return psiFile;
   }
 
   private static void checkLanguageAndTryToFixText(@NotNull Project project,
@@ -213,7 +215,7 @@ public class ScratchFileActions {
     PsiElement element = InjectedLanguageManager.getInstance(project).findInjectedElementAt(psiFile, offset);
     PsiFile file = element != null ? element.getContainingFile() : psiFile;
     Language language = file.getLanguage();
-    if (language == StdLanguages.TEXT && file.getFileType() instanceof InternalFileType) {
+    if (language == PlainTextLanguage.INSTANCE && file.getFileType() instanceof InternalFileType) {
       return StdLanguages.XML;
     }
     return language;

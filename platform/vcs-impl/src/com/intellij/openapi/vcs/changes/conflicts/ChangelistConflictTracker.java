@@ -22,7 +22,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashSet;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -45,21 +44,18 @@ public class ChangelistConflictTracker {
   private final FileDocumentManager myDocumentManager;
   private final DocumentListener myDocumentListener;
 
-  private final FileStatusManager myFileStatusManager;
   private final Set<VirtualFile> myCheckSet;
   private final Object myCheckSetLock;
   private final AtomicBoolean myShouldIgnoreModifications = new AtomicBoolean(false);
 
   public ChangelistConflictTracker(@NotNull Project project,
                                    @NotNull ChangeListManager changeListManager,
-                                   @NotNull FileStatusManager fileStatusManager,
                                    @NotNull EditorNotifications editorNotifications) {
     myProject = project;
 
     myChangeListManager = changeListManager;
     myEditorNotifications = editorNotifications;
     myDocumentManager = FileDocumentManager.getInstance();
-    myFileStatusManager = fileStatusManager;
     myCheckSetLock = new Object();
     myCheckSet = new HashSet<>();
 
@@ -154,7 +150,7 @@ public class ChangelistConflictTracker {
     }
 
     if (newConflict && myOptions.HIGHLIGHT_CONFLICTS) {
-      myFileStatusManager.fileStatusChanged(file);
+      FileStatusManager.getInstance(myProject).fileStatusChanged(file);
       myEditorNotifications.updateNotifications(file);
     }
   }
@@ -188,7 +184,7 @@ public class ChangelistConflictTracker {
           }
 
           // we need to update status
-          myFileStatusManager.fileStatusChanged(file);
+          FileStatusManager.getInstance(myProject).fileStatusChanged(file);
         }
       }
     }
@@ -244,7 +240,7 @@ public class ChangelistConflictTracker {
     for (Map.Entry<String, Conflict> entry : copyMap.entrySet()) {
       VirtualFile file = LocalFileSystem.getInstance().findFileByPath(entry.getKey());
       if (file != null) {
-        myFileStatusManager.fileStatusChanged(file);
+        FileStatusManager.getInstance(myProject).fileStatusChanged(file);
         myEditorNotifications.updateNotifications(file);
       }
     }
@@ -292,7 +288,7 @@ public class ChangelistConflictTracker {
     }
     conflict.ignored = ignore;
     myEditorNotifications.updateNotifications(file);
-    myFileStatusManager.fileStatusChanged(file);
+    FileStatusManager.getInstance(myProject).fileStatusChanged(file);
   }
 
   public Project getProject() {

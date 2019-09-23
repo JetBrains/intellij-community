@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorStateLevel;
+import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -126,7 +127,8 @@ public class AsyncEditorLoader {
   private boolean worthWaiting() {
     // cannot perform commitAndRunReadAction in parallel to EDT waiting
     return !PsiDocumentManager.getInstance(myProject).hasUncommitedDocuments() &&
-           !ApplicationManager.getApplication().isWriteAccessAllowed();
+           !ApplicationManager.getApplication().isWriteAccessAllowed() &&
+           !EditorsSplitters.isOpenedInBulk(myTextEditor.myFile);
   }
 
   private static <T> T resultInTimeOrNull(@NotNull Future<T> future) {
@@ -151,10 +153,7 @@ public class AsyncEditorLoader {
       continuation.run();
     }
 
-    if (myEditorComponent.isLoading()) {
-      myEditorComponent.stopLoading();
-    }
-    myEditorComponent.getContentPanel().setVisible(true);
+    myEditorComponent.loadingFinished();
 
     if (myDelayedState != null && PsiDocumentManager.getInstance(myProject).isCommitted(myEditor.getDocument())) {
       TextEditorState state = new TextEditorState();

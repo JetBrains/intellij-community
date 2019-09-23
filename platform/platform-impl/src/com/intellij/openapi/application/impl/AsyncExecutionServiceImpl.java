@@ -11,6 +11,19 @@ import java.util.concurrent.Executor;
  * @author peter
  */
 public class AsyncExecutionServiceImpl extends AsyncExecutionService {
+  private static long ourWriteActionCounter = 0;
+
+  public AsyncExecutionServiceImpl() {
+    Application app = ApplicationManager.getApplication();
+    app.addApplicationListener(new ApplicationListener() {
+      @Override
+      public void writeActionStarted(@NotNull Object action) {
+        //noinspection AssignmentToStaticFieldFromInstanceMethod
+        ourWriteActionCounter++;
+      }
+    }, app);
+  }
+
   @NotNull
   @Override
   protected ExpirableExecutor createExecutor(@NotNull Executor executor) {
@@ -27,5 +40,10 @@ public class AsyncExecutionServiceImpl extends AsyncExecutionService {
   @Override
   public <T> NonBlockingReadAction<T> buildNonBlockingReadAction(@NotNull Callable<T> computation) {
     return new NonBlockingReadActionImpl<>(computation);
+  }
+
+  static long getWriteActionCounter() {
+    ApplicationManager.getApplication().assertReadAccessAllowed();
+    return ourWriteActionCounter;
   }
 }

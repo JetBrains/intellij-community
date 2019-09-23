@@ -113,8 +113,8 @@ public class VcsContextWrapper implements VcsContext {
 
   @NotNull
   @Override
-  public List<VirtualFile> getSelectedUnversionedFiles() {
-    Stream<VirtualFile> result = ChangesListView.UNVERSIONED_FILES_DATA_KEY.getData(myContext);
+  public List<FilePath> getSelectedUnversionedFilePaths() {
+    Stream<FilePath> result = ChangesListView.UNVERSIONED_FILE_PATHS_DATA_KEY.getData(myContext);
 
     return result != null ? result.collect(toList()) : emptyList();
   }

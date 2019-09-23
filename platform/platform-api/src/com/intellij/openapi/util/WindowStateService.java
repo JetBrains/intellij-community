@@ -1,23 +1,10 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
@@ -25,6 +12,13 @@ import java.awt.*;
  * @author Sergey.Malenkov
  */
 public abstract class WindowStateService {
+  private final Project project;
+
+  protected WindowStateService(@Nullable Project project) {
+    this.project = project;
+  }
+
+
   /**
    * @return an instance of the service for the application
    */
@@ -40,6 +34,7 @@ public abstract class WindowStateService {
     return ServiceManager.getService(project, WindowStateService.class);
   }
 
+
   /**
    * Loads a state of the specified component by the specified key.
    *
@@ -48,7 +43,7 @@ public abstract class WindowStateService {
    * @return {@code true} if a state is loaded successfully, {@code false} otherwise
    */
   public final boolean loadState(@NotNull String key, @NotNull Component component) {
-    return loadStateFor(null, key, component);
+    return loadStateFor(project, key, component);
   }
 
   /**
@@ -70,7 +65,7 @@ public abstract class WindowStateService {
    * @param component a component which state should be saved
    */
   public final void saveState(@NotNull String key, @NotNull Component component) {
-    saveStateFor(null, key, component);
+    saveStateFor(project, key, component);
   }
 
   /**
@@ -93,7 +88,7 @@ public abstract class WindowStateService {
    * @return a corresponding location
    */
   public final Point getLocation(@NotNull String key) {
-    return getLocationFor(null, key);
+    return getLocationFor(project, key);
   }
 
   /**
@@ -114,7 +109,7 @@ public abstract class WindowStateService {
    * @param key an unique string key
    */
   public final void putLocation(@NotNull String key, Point location) {
-    putLocationFor(null, key, location);
+    putLocationFor(project, key, location);
   }
 
   /**
@@ -136,7 +131,7 @@ public abstract class WindowStateService {
    * @return a corresponding size
    */
   public final Dimension getSize(@NotNull String key) {
-    return getSizeFor(null, key);
+    return getSizeFor(project, key);
   }
 
   /**
@@ -157,7 +152,7 @@ public abstract class WindowStateService {
    * @param key an unique string key
    */
   public final void putSize(@NotNull String key, Dimension size) {
-    putSizeFor(null, key, size);
+    putSizeFor(project, key, size);
   }
 
   /**
@@ -179,7 +174,7 @@ public abstract class WindowStateService {
    * @return a corresponding bounds
    */
   public final Rectangle getBounds(@NotNull String key) {
-    return getBoundsFor(null, key);
+    return getBoundsFor(project, key);
   }
 
   /**
@@ -200,7 +195,7 @@ public abstract class WindowStateService {
    * @param key an unique string key
    */
   public final void putBounds(@NotNull String key, Rectangle bounds) {
-    putBoundsFor(null, key, bounds);
+    putBoundsFor(project, key, bounds);
   }
 
   /**

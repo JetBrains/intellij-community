@@ -15,9 +15,14 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
-import com.intellij.ui.tabs.*;
-import com.intellij.ui.tabs.impl.JBEditorTabs;
+import com.intellij.ui.tabs.JBTabPainter;
+import com.intellij.ui.tabs.JBTabs;
+import com.intellij.ui.tabs.TabInfo;
+import com.intellij.ui.tabs.TabsListener;
+import com.intellij.ui.tabs.impl.DefaultTabPainterAdapter;
+import com.intellij.ui.tabs.impl.SingleHeightTabs;
 import com.intellij.ui.tabs.impl.TabLabel;
+import com.intellij.ui.tabs.impl.TabPainterAdapter;
 import com.intellij.ui.tabs.impl.singleRow.ScrollableSingleRowLayout;
 import com.intellij.ui.tabs.impl.singleRow.SingleRowLayout;
 import com.intellij.util.SmartList;
@@ -55,26 +60,22 @@ public class GridCellImpl implements GridCell {
     myPlaceholder = placeholder;
     myPlaceholder.setContentProvider(() -> getContents());
     myTabs = new GridCellTabs(context, container);
-    myTabs.setDataProvider(new DataProvider() {
-      @Override
-      @Nullable
-      public Object getData(@NotNull @NonNls final String dataId) {
-        if (ViewContext.CONTENT_KEY.is(dataId)) {
-          TabInfo target = myTabs.getTargetInfo();
-          if (target != null) {
-            return new Content[]{getContentFor(target)};
-          }
+    myTabs.setDataProvider(dataId -> {
+      if (ViewContext.CONTENT_KEY.is(dataId)) {
+        TabInfo target = myTabs.getTargetInfo();
+        if (target != null) {
+          return new Content[]{getContentFor(target)};
         }
-        else if (ViewContext.CONTEXT_KEY.is(dataId)) {
-          return myContext;
-        }
-
-        return null;
       }
+      else if (ViewContext.CONTEXT_KEY.is(dataId)) {
+        return myContext;
+      }
+
+      return null;
     });
 
     myTabs.getPresentation().setSideComponentVertical(!context.getLayoutSettings().isToolbarHorizontal())
-      .setStealthTabMode(false).setFocusCycle(false).setPaintFocus(true)
+      .setFocusCycle(false).setPaintFocus(true)
       .setTabDraggingEnabled(context.isMoveToGridActionEnabled()).setSideComponentOnTabs(false);
 
     myTabs.addTabMouseListener(new MouseAdapter() {
@@ -441,12 +442,12 @@ public class GridCellImpl implements GridCell {
     return ActionCallback.DONE;
   }
 
-  private static class GridCellTabs extends JBEditorTabs {
+  private static class GridCellTabs extends SingleHeightTabs {
     private final ViewContextEx myContext;
 
     @Override
-    protected JBTabPainter createTabPainter() {
-      return JBTabPainter.getDEBUGGER();
+    protected TabPainterAdapter createTabPainterAdapter() {
+      return new DefaultTabPainterAdapter(JBTabPainter.getDEBUGGER());
     }
 
     private GridCellTabs(ViewContextEx context, GridImpl container) {
@@ -486,7 +487,7 @@ public class GridCellImpl implements GridCell {
 
     @Override
     protected TabLabel createTabLabel(TabInfo info) {
-      return new TabLabel(this, info) {
+      return new SingleHeightTabs.SingleHeightLabel(this, info) {
         @Override
         public void setAlignmentToCenter(boolean toCenter) {
           super.setAlignmentToCenter(false);

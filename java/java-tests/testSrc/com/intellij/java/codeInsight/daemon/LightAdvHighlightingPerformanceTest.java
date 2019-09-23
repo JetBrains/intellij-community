@@ -27,6 +27,8 @@ import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.ui.UIUtil;
+import one.util.streamex.IntStreamEx;
+import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -41,7 +43,7 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
     blockUntil(Extensions.getRootArea().getExtensionPoint(LanguageAnnotators.EP_NAME), getTestRootDisposable());
     blockUntil(Extensions.getRootArea().getExtensionPoint(LineMarkerProviders.EP_NAME), getTestRootDisposable());
     blockUntil(ConcatenationInjectorManager.CONCATENATION_INJECTOR_EP_NAME.getPoint(getProject()), getTestRootDisposable());
-    blockUntil(Extensions.getArea(getProject()).getExtensionPoint(MultiHostInjector.MULTIHOST_INJECTOR_EP_NAME), getTestRootDisposable());
+    blockUntil(getProject().getExtensionArea().getExtensionPoint(MultiHostInjector.MULTIHOST_INJECTOR_EP_NAME), getTestRootDisposable());
 
     IntentionManager.getInstance().getAvailableIntentionActions();  // hack to avoid slowdowns in PyExtensionFactory
     PathManagerEx.getTestDataPath(); // to cache stuff
@@ -53,7 +55,7 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
   }
 
   private static <T> void blockUntil(@NotNull ExtensionPoint<T> extensionPoint, @NotNull Disposable parent) {
-    ((ExtensionPointImpl<T>)extensionPoint).maskAll(Collections.emptyList(), parent);
+    ((ExtensionPointImpl<T>)extensionPoint).maskAll(Collections.emptyList(), parent, false);
   }
 
   private String getFilePath(String suffix) {
@@ -105,7 +107,6 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
     List<HighlightInfo> infos = startTest(3_300);
     assertEmpty(infos);
   }
-
 
   public void testGetProjectPerformance() {
     configureByFile("/psi/resolve/ThinletBig.java");

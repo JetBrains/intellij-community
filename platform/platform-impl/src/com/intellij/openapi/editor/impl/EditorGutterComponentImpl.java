@@ -653,10 +653,11 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   void processRangeHighlighters(int startOffset, int endOffset, @NotNull RangeHighlighterProcessor processor) {
-    Document document = myEditor.getDocument();
     // we limit highlighters to process to between line starting at startOffset and line ending at endOffset
-    MarkupIterator<RangeHighlighterEx> docHighlighters = myEditor.getFilteredDocumentMarkupModel().overlappingIterator(startOffset, endOffset);
-    MarkupIterator<RangeHighlighterEx> editorHighlighters = myEditor.getMarkupModel().overlappingIterator(startOffset, endOffset);
+    MarkupIterator<RangeHighlighterEx> docHighlighters =
+      myEditor.getFilteredDocumentMarkupModel().overlappingIterator(startOffset, endOffset, true, false);
+    MarkupIterator<RangeHighlighterEx> editorHighlighters =
+      myEditor.getMarkupModel().overlappingIterator(startOffset, endOffset, true, false);
 
     try {
       RangeHighlighterEx lastDocHighlighter = null;
@@ -697,14 +698,6 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
           lowerHighlighter = lastEditorHighlighter;
           lastEditorHighlighter = null;
         }
-
-        if (!lowerHighlighter.isValid()) continue;
-
-        int startLineIndex = lowerHighlighter.getDocument().getLineNumber(startOffset);
-        if (!isValidLine(document, startLineIndex)) continue;
-
-        int endLineIndex = lowerHighlighter.getDocument().getLineNumber(endOffset);
-        if (!isValidLine(document, endLineIndex)) continue;
 
         processor.process(lowerHighlighter);
       }
@@ -1782,8 +1775,9 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
           usageData.addCurrentFile(file.getLanguage());
         }
       }
+      usageData.addData("icon_id", renderer.getFeatureId());
 
-      FUCounterUsageLogger.getInstance().logEvent("gutter.icon.click", renderer.getFeatureId(), usageData);
+      FUCounterUsageLogger.getInstance().logEvent("gutter.icon.click", "clicked", usageData);
 
       performAction(clickAction, e, ActionPlaces.EDITOR_GUTTER, myEditor.getDataContext());
       repaint();

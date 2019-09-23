@@ -2,30 +2,28 @@
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.diagnostic.ThreadDumper;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.impl.ProjectLifecycleListener;
+import com.intellij.openapi.project.ProjectServiceContainerCustomizer;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.project.ProjectKt;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.HeavyPlatformTestCase;
+import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.util.io.PathKt;
-import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ref.GCWatcher;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NotNull;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -68,18 +66,14 @@ public class EditorHistoryManagerTest extends HeavyPlatformTestCase {
   }
 
   private void useRealFileEditorManager() {
-    MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(getTestRootDisposable());
-    connection.subscribe(ProjectLifecycleListener.TOPIC, new ProjectLifecycleListener() {
-      @Override
-      public void projectComponentsRegistered(@NotNull Project project) {
-        ((ComponentManagerImpl)project).registerComponentImplementation(FileEditorManager.class, PsiAwareFileEditorManagerImpl.class);
-      }
-    });
+    ProjectServiceContainerCustomizer.getEp().maskAll(Collections.singletonList(project -> {
+      ServiceContainerUtil.registerComponentImplementation(project, FileEditorManager.class, PsiAwareFileEditorManagerImpl.class, false);
+    }), getTestRootDisposable(), false);
   }
 
-  private void openProjectPerformTaskCloseProject(Path projectDir, Consumer<Project> task) throws Exception {
+  private void openProjectPerformTaskCloseProject(Path projectDir, Consumer<Project> task) {
     Project project = Files.exists(projectDir.resolve(Project.DIRECTORY_STORE_FOLDER))
-                      ? myProjectManager.loadProject(projectDir.toString())
+                      ? myProjectManager.loadProject(projectDir)
                       : myProjectManager.createProject(null, projectDir.toString());
     try {
       assertThat(myProjectManager.openProject(project)).isTrue();

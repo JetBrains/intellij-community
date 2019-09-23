@@ -105,21 +105,6 @@ public class UIUtil {
     return editor;
   }
 
-  public static JComponent createOptionLine(JComponent... options) {
-    final JPanel tmp = new JPanel();
-
-    tmp.setLayout(new BoxLayout(tmp, BoxLayout.X_AXIS));
-    for (int i = 0; i < options.length; i++) {
-      if (i != 0) {
-        tmp.add(Box.createHorizontalStrut(com.intellij.util.ui.UIUtil.DEFAULT_HGAP));
-      }
-      tmp.add(options[i]);
-    }
-    tmp.add(Box.createHorizontalGlue());
-
-    return tmp;
-  }
-
   public static void setContent(@NotNull final Editor editor, String text) {
     final String value = text != null ? text : "";
     final Document document = editor.getDocument();
@@ -190,7 +175,7 @@ public class UIUtil {
     completeMatchInfo.addMouseListener(new MouseAdapter() {
       @Override
       public void mouseEntered(MouseEvent ignore) {
-        if (Registry.is("ssr.use.editor.inlays.instead.of.tool.tips") && Registry.is("ssr.use.new.search.dialog")) {
+        if (Registry.is("ssr.use.editor.inlays.instead.of.tool.tips")) {
           return;
         }
         final Configuration configuration = configurationProducer.get();

@@ -19,29 +19,35 @@
  */
 package com.intellij.openapi.keymap.impl;
 
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.PlatformUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
+/** @deprecated Use {@link BundledKeymapBean} instead. */
+@ApiStatus.ScheduledForRemoval
+@Deprecated
 public class DefaultBundledKeymaps implements BundledKeymapProvider {
   @NotNull
   @Override
   public List<String> getKeymapFileNames() {
-    return Arrays.asList(
-      "$default.xml",
-      "Mac OS X 10.5+.xml",
-      "Mac OS X.xml",
-      "Emacs.xml",
-      "Visual Studio.xml",
-      "Default for XWin.xml",
-      "Default for GNOME.xml",
-      "Default for KDE.xml",
-      "Eclipse.xml",
-      "Eclipse (Mac OS X).xml",
-      "NetBeans 6.5.xml",
-      "Sublime Text.xml",
-      "Sublime Text (Mac OS X).xml"
-    );
+    Set<String> result = new LinkedHashSet<>();
+    String os = SystemInfo.isMac ? "macos" :
+                SystemInfo.isWindows ? "windows" :
+                SystemInfo.isLinux ? "linux" : "other";
+    for (BundledKeymapBean bean : BundledKeymapBean.EP_NAME.getExtensionList()) {
+      result.add(bean.file.replace("$OS$", os));
+    }
+    if (PlatformUtils.isAppCode()) {
+      result.remove("Default for XWin.xml");
+      result.remove("Default for GNOME.xml");
+      result.remove("Default for KDE.xml");
+    }
+    return new ArrayList<>(result);
   }
 }

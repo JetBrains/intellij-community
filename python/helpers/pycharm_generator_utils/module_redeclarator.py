@@ -1,5 +1,7 @@
+from generator3 import OriginType
 from pycharm_generator_utils.util_methods import *
 from pycharm_generator_utils.util_methods import get_relative_path_by_qname
+from pycharm_generator_utils.docstring_parsing import *
 
 
 class emptylistdict(dict):
@@ -53,11 +55,6 @@ class ClassBuf(Buf):
     def __init__(self, name, indenter):
         super(ClassBuf, self).__init__(indenter)
         self.name = name
-
-class OriginType(object):
-    FILE = 'FILE'
-    BUILTIN = '(built-in)'
-    PREGENERATED = '(pre-generated)'
 
 
 #noinspection PyBroadException
@@ -830,7 +827,7 @@ class ModuleRedeclarator(object):
             if type(item) is module_type: # not isinstance, py2.7 + PyQt4.QtCore on windows have a bug here
                 self.imported_modules[item_name] = item
                 self.add_import_header_if_needed()
-                ref_notice = getattr(item, "__file__", str(item))
+                ref_notice = getattr(item, "__file__", str(item)) if not self.test_mode else '<ref>'
                 if hasattr(item, "__name__"):
                     self.imports_buf.out(0, "import ", item.__name__, " as ", item_name, " # ", ref_notice)
                 else:
@@ -904,7 +901,7 @@ class ModuleRedeclarator(object):
                 except:
                     pass
                     # we assume that module foo.bar never imports foo; foo may import foo.bar. (see pygame and pygame.rect)
-            maybe_import_mod_name = mod_name or ""
+            maybe_import_mod_name = mod_name if isinstance(mod_name, type(p_name)) else ''
             import_is_from_top = len(p_name) > len(maybe_import_mod_name) and p_name.startswith(maybe_import_mod_name)
             note("mod_name = %s, prospective = %s,  from top = %s", mod_name, maybe_import_mod_name, import_is_from_top)
             want_to_import = False

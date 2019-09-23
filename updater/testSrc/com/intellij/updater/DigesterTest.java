@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.updater;
 
 import org.junit.Test;
@@ -64,7 +64,7 @@ public class DigesterTest extends UpdaterTestCase {
       fail("Absolute links should cause indigestion");
     }
     catch (IOException e) {
-      assertThat(e.getMessage()).startsWith("Absolute link");
+      assertThat(e.getMessage()).startsWith("An absolute link");
     }
   }
 

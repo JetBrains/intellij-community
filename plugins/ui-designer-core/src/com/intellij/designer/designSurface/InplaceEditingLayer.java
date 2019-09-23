@@ -17,7 +17,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.wm.FocusWatcher;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
-import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import org.jetbrains.annotations.NotNull;
@@ -230,17 +229,7 @@ public class InplaceEditingLayer extends JComponent {
   }
 
   private void removeInplaceComponent() {
-    // [vova] before removing component from Swing tree we have to
-    // request component into glass layer. Otherwise focus from component being removed
-    // can go to some RadComponent.
-
-    LayoutFocusTraversalPolicyExt.setOverridenDefaultComponent(myDesigner.getPreferredFocusedComponent());
-    try {
-      remove(myInplaceComponent);
-    }
-    finally {
-      LayoutFocusTraversalPolicyExt.setOverridenDefaultComponent(null);
-    }
+    remove(myInplaceComponent);
   }
 
   /**

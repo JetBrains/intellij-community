@@ -3,7 +3,6 @@ import atexit
 import zipfile
 
 from pycharm_generator_utils.clr_tools import *
-from pycharm_generator_utils.module_redeclarator import *
 from pycharm_generator_utils.util_methods import *
 
 # TODO: Move all CLR-specific functions to clr_tools
@@ -64,6 +63,7 @@ def redo_module(module_name, module_file_name, doing_builtins, cache_dir, sdk_di
                 break
     if mod:
         action("restoring")
+        from pycharm_generator_utils.module_redeclarator import ModuleRedeclarator
         r = ModuleRedeclarator(mod, module_name, module_file_name, cache_dir=cache_dir, doing_builtins=doing_builtins)
         create_failed_version_stamp(cache_dir, module_name)
         r.redo(module_name, ".".join(mod_path[:-1]) in MODULES_INSPECT_DIR)
@@ -214,6 +214,11 @@ def file_modification_timestamp(path):
 
 
 def is_source_file(path):
+    # Skip directories, character and block special devices, named pipes
+    # Do not skip regular files and symbolic links to regular files
+    if not os.path.isfile(path):
+        return False
+
     # Want to see that files regardless of their encoding.
     if path.endswith(('-nspkg.pth', '.html', '.pxd', '.py', '.pyi', '.pyx')):
         return True
@@ -395,6 +400,12 @@ def version_to_tuple(version):
     return tuple(map(int, version.split('.')))
 
 
+class OriginType(object):
+    FILE = 'FILE'
+    BUILTIN = '(built-in)'
+    PREGENERATED = '(pre-generated)'
+
+
 class SkeletonStatus(object):
     UP_TO_DATE = 'UP_TO_DATE'
     """
@@ -501,10 +512,7 @@ def read_required_version(mod_qname):
     mod_id = '(built-in)' if mod_qname in sys.builtin_module_names else mod_qname
     versions = read_required_gen_version_file()
     # TODO use glob patterns here
-    for pattern, version in versions.items():
-        if mod_id == pattern:
-            return version
-    return versions.get('(default)')
+    return versions.get(mod_id, versions.get('(default)'))
 
 
 def read_required_gen_version_file():
@@ -613,7 +621,8 @@ def process_one(name, mod_file_name, doing_builtins, sdk_skeletons_dir):
             path = name.split(".")
             redo_imports = not ".".join(path[:-1]) in MODULES_INSPECT_DIR
             if redo_imports:
-                for m in sys.modules.keys():
+                initial_module_set = set(sys.modules)
+                for m in list(sys.modules):
                     if m.startswith("pycharm_generator_utils"): continue
                     action("looking at possible submodule %r", m)
                     if m == name or m in old_modules or m in sys.builtin_module_names:
@@ -627,6 +636,10 @@ def process_one(name, mod_file_name, doing_builtins, sdk_skeletons_dir):
                         try:
                             redo_module(m, mod_file_name, doing_builtins, cache_dir=mod_cache_dir,
                                         sdk_dir=sdk_skeletons_dir)
+                            extra_modules = set(sys.modules) - initial_module_set
+                            if extra_modules:
+                                report('Introspecting submodule %r of %r led to extra content of sys.modules: %s',
+                                       m, name, ', '.join(extra_modules))
                         finally:
                             action("closing %r", mod_cache_dir)
             return GenerationStatus.GENERATED

@@ -14,12 +14,12 @@ import java.util.List;
  */
 public class UIPluginGroup {
   public Component panel;
-  public List<CellPluginComponent> plugins = new ArrayList<>();
+  public List<ListPluginComponent> plugins = new ArrayList<>();
 
   @Nullable
-  public CellPluginComponent findComponent(@NotNull IdeaPluginDescriptor descriptor) {
+  public ListPluginComponent findComponent(@NotNull IdeaPluginDescriptor descriptor) {
     String pluginId = descriptor.getPluginId().getIdString();
-    for (CellPluginComponent component : plugins) {
+    for (ListPluginComponent component : plugins) {
       if (pluginId.equals(component.myPlugin.getPluginId().getIdString())) {
         return component;
       }

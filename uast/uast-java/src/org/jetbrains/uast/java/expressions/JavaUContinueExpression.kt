@@ -26,4 +26,8 @@ class JavaUContinueExpression(
 ) : JavaAbstractUExpression(givenParent), UContinueExpression {
   override val label: String?
     get() = sourcePsi.labelIdentifier?.text
+
+  override val jumpTarget: UElement? by lz {
+    sourcePsi.findContinuedStatement().takeIf { it !== sourcePsi }?.let { JavaConverter.convertStatement(it, null) }
+  }
 }

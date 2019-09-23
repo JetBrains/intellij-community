@@ -35,7 +35,7 @@ import java.util.Set;
  *
  * @author nik
  */
-public class ClipboardSynchronizer implements Disposable {
+public final class ClipboardSynchronizer implements Disposable {
   private static final Logger LOG = Logger.getInstance(ClipboardSynchronizer.class);
 
   private final ClipboardHandler myClipboardHandler;

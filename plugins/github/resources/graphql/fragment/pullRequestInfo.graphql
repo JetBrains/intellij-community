@@ -5,9 +5,7 @@ fragment pullRequestInfo on PullRequest {
   mergeable
 
   author {
-    ...nodeInfo
     ...actorInfo
-    ...userInfo
   }
   createdAt
 

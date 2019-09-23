@@ -9,6 +9,7 @@ import javax.swing.plaf.ComponentUI;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
 
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.isCompact;
 import static com.intellij.ide.ui.laf.intellij.MacIntelliJTextBorder.MINIMUM_HEIGHT;
 
 /**
@@ -47,7 +48,9 @@ public class MacIntelliJPasswordFieldUI extends DarculaPasswordFieldUI {
   }
 
   @Override
-  protected int getMinimumHeight() {
-    return MINIMUM_HEIGHT.get();
+  protected int getMinimumHeight(int originHeight) {
+    JComponent component = getComponent();
+    Insets insets = component.getInsets();
+    return isCompact(component) ? originHeight : MINIMUM_HEIGHT.get() + insets.top + insets.bottom;
   }
 }

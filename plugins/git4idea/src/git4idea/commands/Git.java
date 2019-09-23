@@ -71,19 +71,34 @@ public interface Git {
   @NotNull
   GitCommandResult init(@NotNull Project project, @NotNull VirtualFile root, @NotNull GitLineHandlerListener... listeners);
 
+  @Deprecated
   @NotNull
   Set<VirtualFile> ignoredFiles(@NotNull Project project, @NotNull VirtualFile root, @Nullable Collection<? extends FilePath> paths) throws VcsException;
 
+  Set<FilePath> ignoredFilePaths(@NotNull Project project, @NotNull VirtualFile root, @Nullable Collection<? extends FilePath> paths) throws VcsException;
+
+  @Deprecated
   @NotNull
   Set<VirtualFile> ignoredFilesNoChunk(@NotNull Project project, @NotNull VirtualFile root, @Nullable List<String> paths) throws VcsException;
 
+  Set<FilePath> ignoredFilePathsNoChunk(@NotNull Project project, @NotNull VirtualFile root, @Nullable List<String> paths) throws VcsException;
+
+  @Deprecated
   @NotNull
   Set<VirtualFile> untrackedFiles(@NotNull Project project, @NotNull VirtualFile root,
                                   @Nullable Collection<? extends VirtualFile> files) throws VcsException;
 
+  Set<FilePath> untrackedFilePaths(@NotNull Project project, @NotNull VirtualFile root,
+                                  @Nullable Collection<FilePath> files) throws VcsException;
+
   // relativePaths are guaranteed to fit into command line length limitations.
+  @Deprecated
   @NotNull
   Collection<VirtualFile> untrackedFilesNoChunk(@NotNull Project project, @NotNull VirtualFile root,
+                                                @Nullable List<String> relativePaths) throws VcsException;
+
+  @NotNull
+  Collection<FilePath> untrackedFilePathsNoChunk(@NotNull Project project, @NotNull VirtualFile root,
                                                 @Nullable List<String> relativePaths) throws VcsException;
 
   @NotNull
@@ -123,9 +138,6 @@ public interface Git {
   @NotNull
   GitCommandResult branchDelete(@NotNull GitRepository repository, @NotNull String branchName, boolean force,
                                 @NotNull GitLineHandlerListener... listeners);
-
-  @NotNull
-  GitCommandResult branchContains(@NotNull GitRepository repository, @NotNull String commit);
 
   /**
    * Create branch without checking it out: <br/>
@@ -247,6 +259,9 @@ public interface Git {
                           boolean autoCommit,
                           @NotNull GitLineHandlerListener... listeners);
 
+  @NotNull
+  GitCommandResult getObjectType(@NotNull GitRepository repository, @NotNull String object);
+
   @Nullable
-  String getObjectType(@NotNull GitRepository repository, @NotNull String object);
+  GitObjectType getObjectTypeEnum(@NotNull GitRepository repository, @NotNull String object);
 }

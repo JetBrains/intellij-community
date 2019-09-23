@@ -32,7 +32,7 @@ public class PatchCreatorTest extends PatchingTestCase {
     createChildDataWithContent(myRoot, "f2.txt");
     createChildDataWithContent(myRoot, "f3.txt");
 
-    createPatchBetweenRevisions(6, 1);
+    createPatchBetweenRevisions(6, 2);
     clearRoot();
     applyPatch();
     myRoot.refresh(false, true);

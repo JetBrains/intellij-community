@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.debugger.fragments;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
@@ -15,7 +16,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnAmbiguousClosureContainer;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.imports.*;
 import org.jetbrains.plugins.groovy.lang.resolve.imports.impl.GroovyImportCollector;
 
@@ -23,6 +23,8 @@ import org.jetbrains.plugins.groovy.lang.resolve.imports.impl.GroovyImportCollec
  * @author ven
  */
 public class GroovyCodeFragment extends GroovyFileImpl implements JavaCodeFragment, IntentionFilterOwner, GrUnAmbiguousClosureContainer {
+  private static final Logger LOG = Logger.getInstance(GroovyCodeFragment.class);
+
   private PsiType myThisType;
   private PsiType mySuperType;
   private ExceptionHandler myExceptionChecker;
@@ -95,7 +97,7 @@ public class GroovyCodeFragment extends GroovyFileImpl implements JavaCodeFragme
         buffer.append(((GroovyStarImport)anImport).getFqn());
       }
       else {
-        PsiUtil.LOG.warn("Unsupported import. Class: " + anImport.getClass());
+        LOG.warn("Unsupported import. Class: " + anImport.getClass());
       }
       buffer.append(',');
     }

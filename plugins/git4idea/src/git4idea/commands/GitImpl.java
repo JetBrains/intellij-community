@@ -9,11 +9,12 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsFileUtil;
+import com.intellij.vcsUtil.VcsUtil;
+import git4idea.GitContentRevision;
 import git4idea.branch.GitRebaseParams;
 import git4idea.config.GitVersionSpecialty;
 import git4idea.push.GitPushParams;
@@ -41,7 +42,7 @@ import static java.util.Collections.*;
 public class GitImpl extends GitImplBase {
 
   private static final Logger LOG = Logger.getInstance(Git.class);
-  private static final List<String> REBASE_CONFIG_PARAMS = singletonList("core.commentChar=" + COMMENT_CHAR);
+  public static final List<String> REBASE_CONFIG_PARAMS = singletonList("core.commentChar=" + COMMENT_CHAR);
 
   public GitImpl() {
   }
@@ -65,14 +66,20 @@ public class GitImpl extends GitImplBase {
   @Override
   public Set<VirtualFile> ignoredFiles(@NotNull Project project, @NotNull VirtualFile root, @Nullable Collection<? extends FilePath> paths)
     throws VcsException {
-    Set<VirtualFile> ignoredFiles = new HashSet<>();
+    return ContainerUtil.map2SetNotNull(ignoredFilePaths(project, root, paths), FilePath::getVirtualFile);
+  }
+
+  @Override
+  public Set<FilePath> ignoredFilePaths(@NotNull Project project, @NotNull VirtualFile root, @Nullable Collection<? extends FilePath> paths)
+    throws VcsException {
+    Set<FilePath> ignoredFiles = new HashSet<>();
 
     if (paths == null) {
-      ignoredFiles.addAll(ignoredFilesNoChunk(project, root, null));
+      ignoredFiles.addAll(ignoredFilePathsNoChunk(project, root, null));
     }
     else {
       for (List<String> relativePaths : VcsFileUtil.chunkPaths(root, paths)) {
-        ignoredFiles.addAll(ignoredFilesNoChunk(project, root, relativePaths));
+        ignoredFiles.addAll(ignoredFilePathsNoChunk(project, root, relativePaths));
       }
     }
     return ignoredFiles;
@@ -81,6 +88,12 @@ public class GitImpl extends GitImplBase {
   @NotNull
   @Override
   public Set<VirtualFile> ignoredFilesNoChunk(@NotNull Project project, @NotNull VirtualFile root, @Nullable List<String> paths)
+    throws VcsException {
+    return ContainerUtil.map2SetNotNull(ignoredFilePathsNoChunk(project, root, paths), FilePath::getVirtualFile);
+  }
+
+  @Override
+  public Set<FilePath> ignoredFilePathsNoChunk(@NotNull Project project, @NotNull VirtualFile root, @Nullable List<String> paths)
     throws VcsException {
     GitLineHandler h = new GitLineHandler(project, root, GitCommand.STATUS);
     h.setSilent(true);
@@ -95,26 +108,18 @@ public class GitImpl extends GitImplBase {
   }
 
   @NotNull
-  private static Set<VirtualFile> parseFiles(@NotNull VirtualFile root,
-                                             @Nullable String output,
-                                             @NotNull String fileStatusPrefix) {
+  private static Set<FilePath> parseFiles(@NotNull VirtualFile root,
+                                          @Nullable String output,
+                                          @NotNull String fileStatusPrefix) throws VcsException {
     if (StringUtil.isEmptyOrSpaces(output)) return emptySet();
 
-    final Set<VirtualFile> files = new HashSet<>();
+    final Set<FilePath> files = new HashSet<>();
     for (String relPath : output.split("\u0000")) {
       ProgressManager.checkCanceled();
       if (!fileStatusPrefix.isEmpty() && !relPath.startsWith(fileStatusPrefix)) continue;
 
       String relativePath = relPath.substring(fileStatusPrefix.length());
-      VirtualFile f = VfsUtil.findFileByIoFile(new File(root.getPath(), relativePath), true);
-      if (f == null) {
-        // files was created on disk, but VirtualFile hasn't yet been created,
-        // when the GitChangeProvider has already been requested about changes.
-        LOG.info(String.format("VirtualFile for path [%s] is null", relPath));
-      }
-      else {
-        files.add(f);
-      }
+      files.add(GitContentRevision.createPathFromEscaped(root, relativePath, relativePath.endsWith("/")));
     }
 
     return files;
@@ -133,14 +138,22 @@ public class GitImpl extends GitImplBase {
   @NotNull
   public Set<VirtualFile> untrackedFiles(@NotNull Project project, @NotNull VirtualFile root,
                                          @Nullable Collection<? extends VirtualFile> files) throws VcsException {
-    final Set<VirtualFile> untrackedFiles = new HashSet<>();
+    return ContainerUtil.map2SetNotNull(
+      untrackedFilePaths(project, root,
+                         files != null ? ContainerUtil.mapNotNull(files, VcsUtil::getFilePath) : null), FilePath::getVirtualFile);
+  }
+
+  @Override
+  public Set<FilePath> untrackedFilePaths(@NotNull Project project, @NotNull VirtualFile root, @Nullable Collection<FilePath> files)
+    throws VcsException {
+    final Set<FilePath> untrackedFiles = new HashSet<>();
 
     if (files == null) {
-      untrackedFiles.addAll(untrackedFilesNoChunk(project, root, null));
+      untrackedFiles.addAll(untrackedFilePathsNoChunk(project, root, null));
     }
     else {
-      for (List<String> relativePaths : VcsFileUtil.chunkFiles(root, files)) {
-        untrackedFiles.addAll(untrackedFilesNoChunk(project, root, relativePaths));
+      for (List<String> relativePaths : VcsFileUtil.chunkPaths(root, files)) {
+        untrackedFiles.addAll(untrackedFilePathsNoChunk(project, root, relativePaths));
       }
     }
 
@@ -154,6 +167,14 @@ public class GitImpl extends GitImplBase {
                                                        @NotNull VirtualFile root,
                                                        @Nullable List<String> relativePaths)
     throws VcsException {
+    return ContainerUtil.mapNotNull(untrackedFilePathsNoChunk(project, root, relativePaths), FilePath::getVirtualFile);
+  }
+
+  @NotNull
+  @Override
+  public Collection<FilePath> untrackedFilePathsNoChunk(@NotNull Project project,
+                                                        @NotNull VirtualFile root,
+                                                        @Nullable List<String> relativePaths) throws VcsException {
     GitLineHandler h = new GitLineHandler(project, root, GitCommand.LS_FILES);
     h.setSilent(true);
     h.addParameters("--exclude-standard", "--others", "-z");
@@ -354,18 +375,6 @@ public class GitImpl extends GitImplBase {
     for (GitLineHandlerListener listener : listeners) {
       h.addLineListener(listener);
     }
-    return runCommand(h);
-  }
-
-  /**
-   * Get branches containing the commit.
-   * {@code git branch --contains <commit>}
-   */
-  @Override
-  @NotNull
-  public GitCommandResult branchContains(@NotNull GitRepository repository, @NotNull String commit) {
-    final GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.BRANCH);
-    h.addParameters("--contains", commit);
     return runCommand(h);
   }
 
@@ -769,14 +778,27 @@ public class GitImpl extends GitImplBase {
   }
 
   @Override
-  @Nullable
-  public String getObjectType(@NotNull GitRepository repository, @NotNull String object) {
+  @NotNull
+  public GitCommandResult getObjectType(@NotNull GitRepository repository, @NotNull String object) {
     GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.CAT_FILE);
     h.setSilent(true);
     h.addParameters("-t", object);
-    GitCommandResult result = runCommand(h);
+    return runCommand(h);
+  }
+
+  @Override
+  @Nullable
+  public GitObjectType getObjectTypeEnum(@NotNull GitRepository repository, @NotNull String object) {
+    GitCommandResult result = getObjectType(repository, object);
     if (!result.success()) return null;
-    return result.getOutputAsJoinedString();
+    String string = result.getOutputAsJoinedString();
+    try {
+      return GitObjectType.valueOf(StringUtil.toUpperCase(string));
+    }
+    catch (IllegalArgumentException e) {
+      LOG.warn(e);
+      return null;
+    }
   }
 
   private static void addListeners(@NotNull GitLineHandler handler, @NotNull GitLineHandlerListener... listeners) {

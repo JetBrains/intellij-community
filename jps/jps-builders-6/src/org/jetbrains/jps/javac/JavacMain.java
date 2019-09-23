@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.javac;
 
+import com.intellij.util.BooleanFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.api.CanceledStatus;
@@ -99,7 +100,10 @@ public class JavacMain {
       if (!classpath.isEmpty()) {
         try {
           fileManager.setLocation(StandardLocation.CLASS_PATH, classpath);
-          if (!usingJavac && isAnnotationProcessingEnabled(_options) && !_options.contains("-processorpath")) {
+          if (!usingJavac &&
+              isAnnotationProcessingEnabled(_options) &&
+              !_options.contains("-processorpath") &&
+              (javacBefore9 || !_options.contains("--processor-module-path"))) {
             // for non-javac file manager ensure annotation processor path defaults to classpath
             fileManager.setLocation(StandardLocation.ANNOTATION_PROCESSOR_PATH, classpath);
           }
@@ -134,7 +138,9 @@ public class JavacMain {
       if (!modulePath.isEmpty()) {
         try {
           setLocation(fileManager, "MODULE_PATH", modulePath);
-          if (isAnnotationProcessingEnabled(_options) && getLocation(fileManager, "ANNOTATION_PROCESSOR_MODULE_PATH") == null) {
+          if (isAnnotationProcessingEnabled(_options) &&
+            getLocation(fileManager, "ANNOTATION_PROCESSOR_MODULE_PATH") == null &&
+            fileManager.getLocation(StandardLocation.ANNOTATION_PROCESSOR_PATH) == null) {
             // default annotation processing discovery path to module path if not explicitly set
             setLocation(fileManager, "ANNOTATION_PROCESSOR_MODULE_PATH", modulePath);
           }
@@ -232,17 +238,26 @@ public class JavacMain {
   private static JavaCompiler.CompilationTask tryInstallClientCodeWrapperCallDispatcher(JavaCompiler.CompilationTask task, StandardJavaFileManager delegateTo) {
     try {
       final Class<? extends JavaCompiler.CompilationTask> taskClass = task.getClass();
-      final Field contextField = findFieldOfType(taskClass, Class.forName("com.sun.tools.javac.util.Context", true, taskClass.getClassLoader()));
+      final Field contextField = findField(taskClass, new BooleanFunction<Field>() {
+        private final Class<?> contextClass = Class.forName("com.sun.tools.javac.util.Context", true, taskClass.getClassLoader());
+        @Override
+        public boolean fun(Field field) {
+          return contextClass.equals(field.getType());
+        }
+      });
       if (contextField != null) {
         final Object contextObject = contextField.get(task);
         final Method getMethod = contextObject.getClass().getMethod("get", Class.class);
         final Object currentManager = getMethod.invoke(contextObject, JavaFileManager.class);
-        if (currentManager instanceof StandardJavaFileManager) {
+        if (isClientCodeWrapper(currentManager, delegateTo)) {
           final Method putMethod = contextObject.getClass().getMethod("put", Class.class, Object.class);
           putMethod.invoke(contextObject, JavaFileManager.class, null);  // must clear previous value first
           putMethod.invoke(contextObject, JavaFileManager.class, wrapWithCallDispatcher(
             StandardJavaFileManager.class, (StandardJavaFileManager)currentManager, Object.class, delegateTo)
           );
+        }
+        else {
+          installCallDispatcherRecursively(currentManager, delegateTo, new HashSet<Object>());
         }
       }
     }
@@ -251,18 +266,74 @@ public class JavacMain {
     return task;
   }
 
-  private static Field findFieldOfType(final Class<?> aClass, final Class<?> fieldType) {
+  private static void installCallDispatcherRecursively(final Object obj, final StandardJavaFileManager delegateTo, final Set<Object> visited) {
+    if (obj instanceof JavaFileManager && visited.add(obj)) {
+      forEachField(obj.getClass(), new BooleanFunction<Field>() {
+        @Override
+        public boolean fun(Field field) {
+          try {
+            if (JavaFileManager.class.isAssignableFrom(field.getType())) {
+              final Object value = field.get(obj);
+              if (isClientCodeWrapper(value, delegateTo)) {
+                field.set(obj, wrapWithCallDispatcher(StandardJavaFileManager.class, (StandardJavaFileManager)value, Object.class, delegateTo));
+              }
+              else {
+                installCallDispatcherRecursively(value, delegateTo, visited);
+              }
+            }
+          }
+          catch (Throwable ignored) {
+          }
+          return true;
+        }
+      });
+    }
+  }
+
+  private static boolean isClientCodeWrapper(final Object obj, final StandardJavaFileManager delegateTo) {
+    return obj instanceof StandardJavaFileManager && findField(obj.getClass(), new BooleanFunction<Field>() {
+      @Override
+      public boolean fun(Field f) {
+        try {
+          return f.get(obj) == delegateTo;
+        }
+        catch (Throwable ignored) {
+          return false;
+        }
+      }
+    }) != null;
+  }
+
+  private static Field findField(final Class<?> aClass, final BooleanFunction<Field> cond) {
+    final Field[] res = new Field[]{null};
+    forEachField(aClass, new BooleanFunction<Field>() {
+      @Override
+      public boolean fun(Field field) {
+        if (!cond.fun(field)) {
+          return true; // continue
+        }
+        res[0] = field;
+        return false; // stop
+      }
+    });
+    return res[0];
+  }
+
+  private static void forEachField(final Class<?> aClass, final BooleanFunction<Field> func) {
     for (Class<?> from = aClass; from != null && !Object.class.equals(from); from = from.getSuperclass()) {
       for (Field field : from.getDeclaredFields()) {
-        if (fieldType.equals(field.getType())) {
+        try {
           if (!field.isAccessible()) {
             field.setAccessible(true);
           }
-          return field;
+          if (!func.fun(field)) {
+            return;
+          }
+        }
+        catch (Throwable ignored) {
         }
       }
     }
-    return null;
   }
 
   private static void setLocation(JpsJavacFileManager fileManager, String locationId, Iterable<? extends File> path) throws IOException {

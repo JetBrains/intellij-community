@@ -72,14 +72,30 @@ public class VirtualFilePointerRootsTest extends HeavyPlatformTestCase {
     }).assertTiming();
   }
 
-  public void testMultipleCreationOfTheSamePointerPerformance() {
+  public void testMultipleCreatePointerWithTheSameUrlPerformance() throws IOException {
     VirtualFilePointerListener listener = new VirtualFilePointerListener() { };
-    String url = VfsUtilCore.pathToUrl("/a/b/c/d/e");
+    File f = new File(createTempDirectory(), "a/b/c/d");
+    String url = VfsUtilCore.pathToUrl(f.getPath());
     VirtualFilePointer thePointer = myVirtualFilePointerManager.create(url, disposable, listener);
     assertNotNull(TempFileSystem.getInstance());
     PlatformTestUtil.startPerformanceTest("same url vfp create", 9000, () -> {
-      for (int i = 0; i < 10_000_000; i++) {
+      for (int i = 0; i < 1_000_000; i++) {
         VirtualFilePointer pointer = myVirtualFilePointerManager.create(url, disposable, listener);
+        assertSame(pointer, thePointer);
+      }
+    }).assertTiming();
+  }
+
+  public void testMultipleCreatePointerWithTheSameFilePerformance() throws IOException {
+    VirtualFilePointerListener listener = new VirtualFilePointerListener() { };
+    File f = new File(createTempDirectory(), "a/b/c/d");
+    assertTrue(f.mkdirs());
+    VirtualFile v = refreshAndFindFile(f);
+    VirtualFilePointer thePointer = myVirtualFilePointerManager.create(v, disposable, listener);
+    assertNotNull(TempFileSystem.getInstance());
+    PlatformTestUtil.startPerformanceTest("same url vfp create", 9000, () -> {
+      for (int i = 0; i < 10_000_000; i++) {
+        VirtualFilePointer pointer = myVirtualFilePointerManager.create(v, disposable, listener);
         assertSame(pointer, thePointer);
       }
     }).assertTiming();
@@ -92,7 +108,8 @@ public class VirtualFilePointerRootsTest extends HeavyPlatformTestCase {
     myVirtualFilePointerManager.shelveAllPointersIn(() -> {
       for (int i = 0; i < 100_000; i++) {
         myVirtualFilePointerManager.create(VfsUtilCore.pathToUrl("/a/b/c/d/" + i), disposable, listener);
-        events.add(new VFileCreateEvent(this, temp, "xxx" + i, false, null, null, true, null));
+        String name = "xxx" + (i%20);
+        events.add(new VFileCreateEvent(this, temp, name, true, null, null, true, null));
       }
       PlatformTestUtil.startPerformanceTest("vfp update", 7_500, () -> {
         for (int i = 0; i < 100; i++) {

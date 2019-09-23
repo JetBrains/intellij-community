@@ -7,6 +7,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
+import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -18,243 +19,249 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadInfo;
-import java.lang.management.ThreadMXBean;
 import java.util.*;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
 
-public class IdeaFreezeReporter {
+final class IdeaFreezeReporter implements IdePerformanceListener {
   private static final int FREEZE_THRESHOLD = ApplicationManager.getApplication().isInternal() ? 5 : 25; // seconds
+  private static final String REPORT_PREFIX = "report";
+  private static final String DUMP_PREFIX = "dump";
 
-  public IdeaFreezeReporter() {
+  @SuppressWarnings("FieldMayBeFinal") private static boolean DEBUG = false;
+
+  private SamplingTask myDumpTask;
+  final List<ThreadDump> myCurrentDumps = new ArrayList<>();
+  List<StackTraceElement> myStacktraceCommonPart = null;
+
+  IdeaFreezeReporter() {
     Application app = ApplicationManager.getApplication();
-    if (!app.isEAP() || app.isUnitTestMode() || PluginManagerCore.isRunningFromSources()) {
-      return;
+    if (!DEBUG && (!app.isEAP() || PluginManagerCore.isRunningFromSources())) {
+      throw ExtensionNotApplicableException.INSTANCE;
     }
-
-    app.getMessageBus().connect().subscribe(IdePerformanceListener.TOPIC, new IdePerformanceListener() {
-      private volatile DumpTask myDumpTask;
-      final List<ThreadDump> myCurrentDumps = new ArrayList<>();
-      List<StackTraceElement> myStacktraceCommonPart = null;
-
-      @Override
-      public void uiFreezeStarted() {
-        if (Registry.is("freeze.reporter.enabled") && !DebugAttachDetector.isAttached()) {
-          if (myDumpTask != null) {
-            myDumpTask.cancel();
-          }
-          myDumpTask = new DumpTask();
-        }
-      }
-
-      @Override
-      public void dumpedThreads(@NotNull File toFile, @NotNull ThreadDump dump) {
-        if (myDumpTask != null) {
-          myCurrentDumps.add(dump);
-          StackTraceElement[] edtStack = dump.getEDTStackTrace();
-          if (edtStack != null) {
-            if (myStacktraceCommonPart == null) {
-              myStacktraceCommonPart = ContainerUtil.newArrayList(edtStack);
-            }
-            else {
-              myStacktraceCommonPart = PerformanceWatcher.getStacktraceCommonPart(myStacktraceCommonPart, edtStack);
-            }
-          }
-        }
-      }
-
-      @Override
-      public void uiFreezeFinished(long durationMs, @Nullable File reportDir) {
-        if (myDumpTask == null) {
-          return;
-        }
-        myDumpTask.cancel();
-        int lengthInSeconds = (int)(durationMs / 1000);
-        long dumpingDuration = durationMs - PerformanceWatcher.getUnresponsiveInterval();
-        if (lengthInSeconds > FREEZE_THRESHOLD &&
-            // check that we have at least half of the dumps required
-            (myDumpTask.isValid(dumpingDuration) ||
-             myCurrentDumps.size() >=
-             Math.max(3, Math.min(PerformanceWatcher.getMaxDumpDuration(), dumpingDuration / 2) / PerformanceWatcher.getDumpInterval())) &&
-            !ContainerUtil.isEmpty(myStacktraceCommonPart)) {
-          int size = Math.min(myCurrentDumps.size(), 20); // report up to 20 dumps
-          int step = myCurrentDumps.size() / size;
-          Attachment[] attachments = new Attachment[size];
-          for (int i = 0; i < size; i++) {
-            Attachment attachment = new Attachment("dump-" + i + ".txt", myCurrentDumps.get(i*step).getRawDump());
-            attachment.setIncluded(true);
-            attachments[i] = attachment;
-          }
-          IdeaLoggingEvent event = createEvent(lengthInSeconds, attachments, myDumpTask, reportDir);
-          if (event != null) {
-            Throwable t = event.getThrowable();
-            if (IdeErrorsDialog.getSubmitter(t, IdeErrorsDialog.findPluginId(t)) instanceof ITNReporter) { // only report to JB
-              MessagePool.getInstance().addIdeFatalMessage(event);
-            }
-          }
-        }
-        myDumpTask = null;
-        myCurrentDumps.clear();
-        myStacktraceCommonPart = null;
-      }
-
-      @Nullable
-      private IdeaLoggingEvent createEvent(int lengthInSeconds, Attachment[] attachments, @NotNull DumpTask dumpTask, @Nullable File reportDir) {
-        List<ThreadInfo[]> infos = dumpTask.myThreadInfos;
-        long time = dumpTask.myDumpInterval;
-        if (infos.isEmpty()) {
-          infos = StreamEx.of(myCurrentDumps).map(ThreadDump::getThreadInfos).toList();
-          time = PerformanceWatcher.getDumpInterval();
-        }
-        boolean allInEdt = edts(infos)
-          .map(ThreadInfo::getThreadState)
-          .allMatch(Thread.State.RUNNABLE::equals);
-        List<StackTraceElement[]> reasonStacks;
-        if (allInEdt) {
-          reasonStacks = edts(infos).map(ThreadInfo::getStackTrace).toList();
-        }
-        else {
-          reasonStacks = new ArrayList<>();
-          long causeThreadId = -1;
-          for (ThreadInfo[] threadInfos : infos) {
-            ThreadDumper.sort(threadInfos); // ensure sorted for better read action matching
-            if (causeThreadId == -1) {
-              // find probable cause thread
-              ThreadInfo edt = ContainerUtil.find(threadInfos, ThreadDumper::isEDT);
-              if (edt != null && edt.getThreadState() != Thread.State.RUNNABLE) {
-                String lockName = edt.getLockName();
-                if (lockName != null && lockName.contains("ReadMostlyRWLock")) {
-                  for (ThreadInfo info : threadInfos) {
-                    if (info.getThreadState() == Thread.State.RUNNABLE &&
-                        ContainerUtil.find(info.getStackTrace(), s ->
-                          "runReadAction".equals(s.getMethodName()) || "tryRunReadAction".equals(s.getMethodName())) != null) {
-                      causeThreadId = info.getThreadId();
-                      reasonStacks.add(info.getStackTrace());
-                      break;
-                    }
-                  }
-                }
-              }
-            }
-            else {
-              long finalCauseThreadId = causeThreadId;
-              ThreadInfo causeThread = ContainerUtil.find(threadInfos, i -> i.getThreadId() == finalCauseThreadId);
-              if (causeThread != null) {
-                reasonStacks.add(causeThread.getStackTrace());
-              }
-            }
-          }
-        }
-        if (reasonStacks.isEmpty()) {
-          reasonStacks = edts(infos).map(ThreadInfo::getStackTrace).toList(); // fallback EDT threads
-        }
-        CallTreeNode root = buildTree(reasonStacks, time);
-        List<StackTraceElement> commonStack = findDominantCommonStack(root, reasonStacks.size() / 2);
-        if (ContainerUtil.isEmpty(commonStack)) {
-          commonStack = myStacktraceCommonPart; // fallback to simple EDT common
-        }
-
-        // dump tree
-        StringBuilder sb = new StringBuilder();
-        LinkedList<CallTreeNode> nodes = new LinkedList<>(root.myChildren);
-        while (!nodes.isEmpty()) {
-          CallTreeNode node = nodes.removeFirst();
-          node.appendIndentedString(sb);
-          nodes.addAll(0, ContainerUtil.sorted(node.myChildren, CallTreeNode.TIME_COMPARATOR));
-        }
-        String text = sb.toString();
-        String name = "report-" + lengthInSeconds + "s.txt";
-        Attachment attachment = new Attachment(name, text);
-        attachment.setIncluded(true);
-        attachments = ArrayUtil.append(attachments, attachment);
-
-        try {
-          FileUtil.writeToFile(new File(reportDir, name), text);
-        }
-        catch (IOException ignored) {
-        }
-
-        if (!ContainerUtil.isEmpty(commonStack)) {
-          String edtNote = allInEdt ? "in EDT " : "";
-          return LogMessage.createEvent(new Freeze(commonStack),
-                                        "Freeze " + edtNote + "for " + lengthInSeconds + " seconds",
-                                        attachments);
-        }
-        return null;
-      }
-    });
   }
 
-  private static StreamEx<ThreadInfo> edts(List<ThreadInfo[]> threadInfos) {
-    return StreamEx.of(threadInfos)
-      .flatMap(Arrays::stream)
-      .filter(ThreadDumper::isEDT);
+  @Override
+  public void uiFreezeStarted() {
+    if (DEBUG || !DebugAttachDetector.isAttached()) {
+      if (myDumpTask != null) {
+        myDumpTask.stop();
+      }
+      reset();
+      myDumpTask = new SamplingTask(Registry.intValue("freeze.reporter.dump.interval.ms"),
+                                    Registry.intValue("freeze.reporter.dump.duration.s") * 1000);
+    }
+  }
+
+  @Override
+  public void dumpedThreads(@NotNull File toFile, @NotNull ThreadDump dump) {
+    if (myDumpTask != null) {
+      myCurrentDumps.add(dump);
+      StackTraceElement[] edtStack = dump.getEDTStackTrace();
+      if (edtStack != null) {
+        if (myStacktraceCommonPart == null) {
+          myStacktraceCommonPart = ContainerUtil.newArrayList(edtStack);
+        }
+        else {
+          myStacktraceCommonPart = PerformanceWatcher.getStacktraceCommonPart(myStacktraceCommonPart, edtStack);
+        }
+      }
+    }
+  }
+
+  @Override
+  public void uiFreezeFinished(long durationMs, @Nullable File reportDir) {
+    if (myDumpTask == null) {
+      return;
+    }
+    myDumpTask.stop();
+    if (Registry.is("freeze.reporter.enabled")) {
+      int lengthInSeconds = (int)(durationMs / 1000);
+      long dumpingDuration = durationMs - PerformanceWatcher.getUnresponsiveInterval();
+      if (lengthInSeconds > FREEZE_THRESHOLD &&
+          // check that we have at least half of the dumps required
+          (myDumpTask.isValid(dumpingDuration) ||
+           myCurrentDumps.size() >=
+           Math.max(3, Math.min(PerformanceWatcher.getMaxDumpDuration(), dumpingDuration / 2) / PerformanceWatcher.getDumpInterval())) &&
+          !ContainerUtil.isEmpty(myStacktraceCommonPart)) {
+        int size = Math.min(myCurrentDumps.size(), 20); // report up to 20 dumps
+        int step = myCurrentDumps.size() / size;
+        Attachment[] attachments = new Attachment[size];
+        for (int i = 0; i < size; i++) {
+          Attachment attachment = new Attachment(DUMP_PREFIX + "-" + i + ".txt", myCurrentDumps.get(i * step).getRawDump());
+          attachment.setIncluded(true);
+          attachments[i] = attachment;
+        }
+        IdeaLoggingEvent event = createEvent(lengthInSeconds, attachments, myDumpTask, reportDir);
+        if (event != null) {
+          Throwable t = event.getThrowable();
+          if (IdeErrorsDialog.getSubmitter(t, IdeErrorsDialog.findPluginId(t)) instanceof ITNReporter) { // only report to JB
+            MessagePool.getInstance().addIdeFatalMessage(event);
+          }
+        }
+      }
+    }
+    myDumpTask = null;
+    reset();
+  }
+
+  private void reset() {
+    myCurrentDumps.clear();
+    myStacktraceCommonPart = null;
+  }
+
+  private static ThreadInfo getCauseThread(ThreadInfo[] threadInfos) {
+    ThreadDumper.sort(threadInfos); // ensure sorted for better read action matching
+    ThreadInfo edt = ContainerUtil.find(threadInfos, ThreadDumper::isEDT);
+    if (edt != null && edt.getThreadState() != Thread.State.RUNNABLE) {
+      long id = edt.getLockOwnerId();
+      if (id != -1) {
+        for (ThreadInfo info : threadInfos) {
+          if (info.getThreadId() == id) {
+            return info;
+          }
+        }
+      }
+      String lockName = edt.getLockName();
+      if (lockName != null && lockName.contains("ReadMostlyRWLock")) {
+        ThreadInfo readLockNotRunnable = null;
+        for (ThreadInfo info : threadInfos) {
+          if (isWithReadLock(info)) {
+            if (info.getThreadState() == Thread.State.RUNNABLE) {
+              return info;
+            }
+            if (readLockNotRunnable == null) {
+              readLockNotRunnable = info;
+            }
+          }
+        }
+        if (readLockNotRunnable != null) {
+          return readLockNotRunnable;
+        }
+      }
+    }
+    return edt;
+  }
+
+  private static boolean isWithReadLock(ThreadInfo thread) {
+    boolean read = false;
+    for (StackTraceElement s : thread.getStackTrace()) {
+      if ("runReadAction".equals(s.getMethodName()) || "tryRunReadAction".equals(s.getMethodName())) {
+        read = true;
+      }
+      if ("waitABit".equals(s.getMethodName())) {
+        return false;
+      }
+    }
+    return read;
   }
 
   @Nullable
-  private static List<StackTraceElement> findDominantCommonStack(CallTreeNode root, int threshold) {
-    // find dominant
-    CallTreeNode node = root.getMostHitChild();
-    if (node == null) {
-      return null;
+  private IdeaLoggingEvent createEvent(int lengthInSeconds,
+                                       Attachment[] attachments,
+                                       @NotNull SamplingTask dumpTask,
+                                       @Nullable File reportDir) {
+    List<ThreadInfo[]> infos = dumpTask.getThreadInfos();
+    long time = dumpTask.getDumpInterval();
+    if (infos.isEmpty()) {
+      infos = StreamEx.of(myCurrentDumps).map(ThreadDump::getThreadInfos).toList();
+      time = PerformanceWatcher.getDumpInterval();
     }
-    while (!node.myChildren.isEmpty()) {
-      CallTreeNode mostHitChild = node.getMostHitChild();
-      if (mostHitChild != null && mostHitChild.myTime > threshold) {
-        node = mostHitChild;
+
+    List<ThreadInfo> causeThreads = StreamEx.of(infos).map(IdeaFreezeReporter::getCauseThread).nonNull().toList();
+    boolean allInEdt = causeThreads.stream().allMatch(ThreadDumper::isEDT);
+
+    CallTreeNode root = CallTreeNode.buildTree(causeThreads, time);
+    int classLoadingRatio = countClassLoading(causeThreads) * 100 / causeThreads.size();
+    CallTreeNode commonStackNode = root.findDominantCommonStack(causeThreads.size() * time / 2);
+    List<StackTraceElement> commonStack = commonStackNode != null ? commonStackNode.getStack() : null;
+
+    boolean nonEdtCause = false;
+    if (ContainerUtil.isEmpty(commonStack)) {
+      commonStack = myStacktraceCommonPart; // fallback to simple EDT common
+    }
+    else {
+      nonEdtCause = !ThreadDumper.isEDT(commonStackNode.myThreadInfo);
+    }
+
+    String text = root.dump();
+    String name = REPORT_PREFIX + "-" + lengthInSeconds + "s.txt";
+    Attachment attachment = new Attachment(name, text);
+    attachment.setIncluded(true);
+    attachments = ArrayUtil.append(attachments, attachment);
+
+    try {
+      FileUtil.writeToFile(new File(reportDir, name), text);
+    }
+    catch (IOException ignored) {
+    }
+
+    if (!ContainerUtil.isEmpty(commonStack)) {
+      String edtNote = allInEdt ? "in EDT " : "";
+      long sampled = dumpTask.getSampledTime();
+      long gcTime = dumpTask.getGcTime();
+      String message = "Freeze " + edtNote + "for " + lengthInSeconds + " seconds\n" +
+                       "Sampled time: " + sampled + "ms, sampling rate: " + dumpTask.getDumpInterval() + "ms";
+      if (sampled > 0) {
+        message += ", GC time: " + gcTime + "ms (" + gcTime * 100 / sampled + "%), Class loading: " + classLoadingRatio + "%";
       }
-      else {
-        break;
+      if (DebugAttachDetector.isDebugEnabled()) {
+        message += ", debug agent: on";
       }
+      if (nonEdtCause) {
+        message += "\n\nThe stack is from the thread that was blocking EDT";
+      }
+      return LogMessage.createEvent(new Freeze(commonStack), message, attachments);
     }
-    // build stack
-    List<StackTraceElement> res = new ArrayList<>();
-    while (node != null && node.myStackTraceElement != null) {
-      res.add(node.myStackTraceElement);
-      node = node.myParent;
-    }
-    return res;
+    return null;
   }
 
-  @NotNull
-  private static CallTreeNode buildTree(List<StackTraceElement[]> stacks, long time) {
-    CallTreeNode root = new CallTreeNode(null, null, 0, 0);
-    for (StackTraceElement[] stack : stacks) {
-      CallTreeNode node = root;
-      for (int i = stack.length - 1; i >= 0; i--) {
-        node = node.addCallee(stack[i], time);
-      }
-    }
-    return root;
+  private static int countClassLoading(List<ThreadInfo> causeThreads) {
+    return (int)causeThreads.stream().filter(t -> Arrays.stream(t.getStackTrace()).anyMatch(IdeaFreezeReporter::isClassLoading)).count();
   }
 
-  private static class CallTreeNode {
-    final StackTraceElement myStackTraceElement;
-    final CallTreeNode myParent;
-    final List<CallTreeNode> myChildren = ContainerUtil.newSmartList();
-    long myTime;
-    final int myDepth;
+  private static boolean isClassLoading(StackTraceElement stackTraceElement) {
+    return "loadClass".equals(stackTraceElement.getMethodName()) && "java.lang.ClassLoader".equals(stackTraceElement.getClassName());
+  }
+
+  private static final class CallTreeNode {
+    private final StackTraceElement myStackTraceElement;
+    private final CallTreeNode myParent;
+    private final List<CallTreeNode> myChildren = ContainerUtil.newSmartList();
+    private final int myDepth;
+    private long myTime;
+    private final ThreadInfo myThreadInfo;
 
     static final Comparator<CallTreeNode> TIME_COMPARATOR = Comparator.<CallTreeNode>comparingLong(n -> n.myTime).reversed();
 
-    private CallTreeNode(StackTraceElement element, CallTreeNode parent, int depth, long time) {
+    private CallTreeNode(StackTraceElement element, CallTreeNode parent, long time, ThreadInfo info) {
       myStackTraceElement = element;
       myParent = parent;
-      myDepth = depth;
+      myDepth = parent != null ? parent.myDepth + 1 : 0;
       myTime = time;
+      myThreadInfo = info;
     }
 
-    CallTreeNode addCallee(StackTraceElement e, long time) {
+    @NotNull
+    public static CallTreeNode buildTree(List<ThreadInfo> threadInfos, long time) {
+      CallTreeNode root = new CallTreeNode(null, null, 0, null);
+      for (ThreadInfo thread : threadInfos) {
+        CallTreeNode node = root;
+        StackTraceElement[] stack = thread.getStackTrace();
+        for (int i = stack.length - 1; i >= 0; i--) {
+          node = node.addCallee(stack[i], time, thread);
+        }
+      }
+      return root;
+    }
+
+    CallTreeNode addCallee(StackTraceElement e, long time, ThreadInfo threadInfo) {
       for (CallTreeNode child : myChildren) {
         if (PerformanceWatcher.compareStackTraceElements(child.myStackTraceElement, e)) {
           child.myTime += time;
           return child;
         }
       }
-      CallTreeNode child = new CallTreeNode(e, this, myDepth + 1, time);
+      CallTreeNode child = new CallTreeNode(e, this, time, threadInfo);
       myChildren.add(child);
       return child;
     }
@@ -280,36 +287,45 @@ public class IdeaFreezeReporter {
       builder.append(myStackTraceElement.getClassName()).append(".").append(myStackTraceElement.getMethodName())
         .append(" ").append(myTime).append("ms").append("\n");
     }
-  }
 
-  private static class DumpTask {
-    private final int myDumpInterval;
-    private final int myMaxDumps;
-    private final ScheduledFuture<?> myFuture;
-    private final List<ThreadInfo[]> myThreadInfos = new ArrayList<>();
-    private final static ThreadMXBean THREAD_MX_BEAN = ManagementFactory.getThreadMXBean();
-
-    private DumpTask() {
-      myDumpInterval = Registry.intValue("freeze.reporter.dump.interval.ms");
-      myMaxDumps = Registry.intValue("freeze.reporter.dump.duration.s") * 1000 / myDumpInterval;
-      ScheduledExecutorService executor = PerformanceWatcher.getInstance().getExecutor();
-      myFuture = executor.scheduleWithFixedDelay(this::dumpThreads, 0, myDumpInterval, TimeUnit.MILLISECONDS);
-    }
-
-    void dumpThreads() {
-      ThreadInfo[] infos = ThreadDumper.getThreadInfos(THREAD_MX_BEAN, false);
-      myThreadInfos.add(infos);
-      if (myThreadInfos.size() >= myMaxDumps) {
-        cancel();
+    String dump() {
+      StringBuilder sb = new StringBuilder();
+      LinkedList<CallTreeNode> nodes = new LinkedList<>(myChildren);
+      while (!nodes.isEmpty()) {
+        CallTreeNode node = nodes.removeFirst();
+        node.appendIndentedString(sb);
+        nodes.addAll(0, ContainerUtil.sorted(node.myChildren, TIME_COMPARATOR));
       }
+      return sb.toString();
     }
 
-    boolean isValid(long dumpingDuration) {
-      return myThreadInfos.size() >= Math.max(10, Math.min(myMaxDumps, dumpingDuration / myDumpInterval / 2));
+    private List<StackTraceElement> getStack() {
+      List<StackTraceElement> res = new ArrayList<>();
+      CallTreeNode node = this;
+      while (node != null && node.myStackTraceElement != null) {
+        res.add(node.myStackTraceElement);
+        node = node.myParent;
+      }
+      return res;
     }
 
-    void cancel() {
-      myFuture.cancel(false);
+    @Nullable
+    private CallTreeNode findDominantCommonStack(long threshold) {
+      // find dominant
+      CallTreeNode node = getMostHitChild();
+      if (node == null) {
+        return null;
+      }
+      while (!node.myChildren.isEmpty()) {
+        CallTreeNode mostHitChild = node.getMostHitChild();
+        if (mostHitChild != null && mostHitChild.myTime > threshold) {
+          node = mostHitChild;
+        }
+        else {
+          break;
+        }
+      }
+      return node;
     }
   }
 }

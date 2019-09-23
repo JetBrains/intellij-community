@@ -22,9 +22,9 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.util.Comparing;
 import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonSdkAdditionalData;
 import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.PythonSdkUtil;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import org.jetbrains.annotations.Nullable;
 
@@ -94,10 +94,10 @@ public class PyConfigurableInterpreterList {
         return -Comparing.compare(o1.getName(), o2.getName());
       }
 
-      final boolean isVEnv1 = PythonSdkType.isVirtualEnv(o1);
-      final boolean isVEnv2 = PythonSdkType.isVirtualEnv(o2);
-      final boolean isRemote1 = PySdkUtil.isRemote(o1);
-      final boolean isRemote2 = PySdkUtil.isRemote(o2);
+      final boolean isVEnv1 = PythonSdkUtil.isVirtualEnv(o1);
+      final boolean isVEnv2 = PythonSdkUtil.isVirtualEnv(o2);
+      final boolean isRemote1 = PythonSdkUtil.isRemote(o1);
+      final boolean isRemote2 = PythonSdkUtil.isRemote(o2);
 
       if (isVEnv1) {
         if (isVEnv2) {

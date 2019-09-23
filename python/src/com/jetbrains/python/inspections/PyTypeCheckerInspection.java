@@ -138,7 +138,7 @@ public class PyTypeCheckerInspection extends PyInspection {
           }
         }
 
-        if (PyUtil.isInit(node) && !(getExpectedReturnType(node) instanceof PyNoneType)) {
+        if (PyUtil.isInitMethod(node) && !(getExpectedReturnType(node) instanceof PyNoneType)) {
           registerProblem(annotation != null ? annotation.getValue() : node.getTypeComment(),
                           PyNames.INIT + " should return " + PyNames.NONE);
         }

@@ -36,10 +36,8 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.Processor
-import com.intellij.util.SystemProperties
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.lang.JavaVersion
-import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import org.apache.tools.ant.BuildException
 import org.jetbrains.annotations.NonNls
@@ -51,7 +49,6 @@ import org.jetbrains.jps.api.CmdlineRemoteProto
 import org.jetbrains.jps.api.GlobalOptions
 import org.jetbrains.jps.build.Standalone
 import org.jetbrains.jps.builders.BuildTarget
-import org.jetbrains.jps.builders.impl.BuildTargetChunk
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType
 import org.jetbrains.jps.cmdline.JpsModelLoader
 import org.jetbrains.jps.incremental.MessageHandler
@@ -69,7 +66,6 @@ import org.jetbrains.jps.model.module.JpsModule
 
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
-
 /**
  * @author nik
  */
@@ -299,7 +295,7 @@ class JpsCompilationRunner {
         case BuildMessage.Kind.PROGRESS:
           if (msg instanceof ProgressMessage) {
             progress = ((ProgressMessage)msg).done
-            def currentTargets = getCurrentTargets(msg)
+            def currentTargets = msg.currentTargets
             if (currentTargets != null) {
               Collection<? extends BuildTarget<?>> buildTargets = currentTargets.targets as Collection
               reportProgress(buildTargets, msg.messageText)
@@ -337,17 +333,6 @@ class JpsCompilationRunner {
       def topTargets = compilationTimeForTarget.toSorted { it.second }.reverse().take(10)
       buildMessages.info(" top ${topTargets.size()} targets by compilation time:")
       topTargets.each { entry -> buildMessages.info("  $entry.first: ${TimeUnit.NANOSECONDS.toMillis(entry.second)}ms") }
-    }
-
-    @CompileDynamic
-    private BuildTargetChunk getCurrentTargets(ProgressMessage msg) {
-      try {
-        msg.currentTargets
-      }
-      catch (MissingPropertyException ignored) {
-        //todo[nik] remove this after we update bootstrap JPS version
-        null
-      }
     }
 
     private void reportProgress(Collection<? extends BuildTarget<?>> targets, String targetSpecificMessage) {

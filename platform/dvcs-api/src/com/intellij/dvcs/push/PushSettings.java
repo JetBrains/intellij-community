@@ -23,6 +23,8 @@ public class PushSettings implements PersistentStateComponent<PushSettings.State
   public static class State {
     @XCollection(propertyElementName = "force-push-targets")
     public List<ForcePushTargetInfo> FORCE_PUSH_TARGETS = new ArrayList<>();
+
+    public boolean SHOW_DETAILS_PANEL = true;
   }
 
   @Nullable
@@ -49,6 +51,13 @@ public class PushSettings implements PersistentStateComponent<PushSettings.State
     }
   }
 
+  public boolean getShowDetailsInPushDialog() {
+    return myState.SHOW_DETAILS_PANEL;
+  }
+
+  public void setShowDetailsInPushDialog(boolean value) {
+    myState.SHOW_DETAILS_PANEL = value;
+  }
 
   @Tag("force-push-target")
   private static class ForcePushTargetInfo {

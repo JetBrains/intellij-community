@@ -11,6 +11,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -223,7 +224,7 @@ public class JVMNameUtil {
 
     @Override
     public String getDisplayName(final DebugProcessImpl debugProcess) {
-      return ReadAction.compute(() -> getSourcePositionClassDisplayName(debugProcess, mySourcePosition));
+      return getSourcePositionClassDisplayName(debugProcess, mySourcePosition);
     }
   }
 
@@ -355,34 +356,39 @@ public class JVMNameUtil {
     if (position == null) {
       return null;
     }
-    final PsiFile positionFile = position.getFile();
-    if (positionFile instanceof JspFile) {
-      return positionFile.getName();
-    }
 
-    final PsiClass psiClass = getClassAt(position);
-
-    if(psiClass != null) {
-      final String qName = psiClass.getQualifiedName();
-      if(qName != null) {
-        return qName;
+    Pair<String, Boolean> res = ReadAction.compute(() -> {
+      final PsiFile positionFile = position.getFile();
+      if (positionFile instanceof JspFile) {
+        return Pair.create(positionFile.getName(), false);
       }
-    }
 
-    if(debugProcess != null && debugProcess.isAttached()) {
+      final PsiClass psiClass = getClassAt(position);
+
+      if (psiClass != null) {
+        final String qName = psiClass.getQualifiedName();
+        if (qName != null) {
+          return Pair.create(qName, false);
+        }
+      }
+
+      if (psiClass == null) {
+        if (positionFile instanceof PsiClassOwner) {
+          return Pair.create(positionFile.getName(), true);
+        }
+
+        return Pair.create(DebuggerBundle.message("string.file.line.position", positionFile.getName(), position.getLine()), true);
+      }
+      return Pair.create(calcClassDisplayName(psiClass), true);
+    });
+
+    if (res.second && debugProcess != null && debugProcess.isAttached()) {
       List<ReferenceType> allClasses = debugProcess.getPositionManager().getAllClasses(position);
-      if(!allClasses.isEmpty()) {
+      if (!allClasses.isEmpty()) {
         return allClasses.get(0).name();
       }
     }
-    if (psiClass == null) {
-      if (positionFile instanceof PsiClassOwner) {
-        return positionFile.getName();
-      }
-
-      return DebuggerBundle.message("string.file.line.position", positionFile.getName(), position.getLine());
-    }
-    return calcClassDisplayName(psiClass);
+    return res.first;
   }
 
   static String calcClassDisplayName(final PsiClass aClass) {
@@ -422,33 +428,37 @@ public class JVMNameUtil {
     if (position == null) {
       return null;
     }
-    final PsiFile positionFile = position.getFile();
-    if (positionFile instanceof JspFile) {
-      final PsiDirectory dir = positionFile.getContainingDirectory();
-      return dir != null? dir.getVirtualFile().getPresentableUrl() : null;
-    }
 
-    final PsiClass psiClass = getClassAt(position);
+    String res = ReadAction.compute(() -> {
+      final PsiFile positionFile = position.getFile();
+      if (positionFile instanceof JspFile) {
+        final PsiDirectory dir = positionFile.getContainingDirectory();
+        return dir != null ? dir.getVirtualFile().getPresentableUrl() : null;
+      }
 
-    if(psiClass != null) {
-      PsiClass toplevel = PsiUtil.getTopLevelClass(psiClass);
-      if(toplevel != null) {
-        String qName = toplevel.getQualifiedName();
-        if (qName != null) {
-          int i = qName.lastIndexOf('.');
-          return i > 0 ? qName.substring(0, i) : "";
+      final PsiClass psiClass = getClassAt(position);
+
+      if (psiClass != null) {
+        PsiClass toplevel = PsiUtil.getTopLevelClass(psiClass);
+        if (toplevel != null) {
+          String qName = toplevel.getQualifiedName();
+          if (qName != null) {
+            int i = qName.lastIndexOf('.');
+            return i > 0 ? qName.substring(0, i) : "";
+          }
         }
       }
-    }
 
-    if (positionFile instanceof PsiClassOwner) {
-      String name = ((PsiClassOwner)positionFile).getPackageName();
-      if (!StringUtil.isEmpty(name)) {
-        return name;
+      if (positionFile instanceof PsiClassOwner) {
+        String name = ((PsiClassOwner)positionFile).getPackageName();
+        if (!StringUtil.isEmpty(name)) {
+          return name;
+        }
       }
-    }
+      return null;
+    });
 
-    if(debugProcess != null && debugProcess.isAttached()) {
+    if (res == null && debugProcess != null && debugProcess.isAttached()) {
       List<ReferenceType> allClasses = debugProcess.getPositionManager().getAllClasses(position);
       if(!allClasses.isEmpty()) {
         final String className = allClasses.get(0).name();

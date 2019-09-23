@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.find.findUsages;
 
 import com.intellij.find.FindBundle;
@@ -60,6 +60,9 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
     myIsShowInNewTabVisible = !isSingleFile;
     mySearchForTextOccurrencesAvailable = searchForTextOccurrencesAvailable;
     mySearchInLibrariesAvailable = searchInLibrariesAvailable;
+    if (myFindUsagesOptions instanceof PersistentFindUsagesOptions) {
+      ((PersistentFindUsagesOptions)myFindUsagesOptions).setDefaults(myProject);
+    }
 
     setOKButtonText(FindBundle.message("find.dialog.find.button"));
     setTitle(FindBundle.message(isSingleFile ? "find.usages.in.file.dialog.title" : "find.usages.dialog.title"));
@@ -122,6 +125,9 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
   @NotNull
   public final FindUsagesOptions calcFindUsagesOptions() {
     calcFindUsagesOptions(myFindUsagesOptions);
+    if (myFindUsagesOptions instanceof PersistentFindUsagesOptions) {
+      ((PersistentFindUsagesOptions)myFindUsagesOptions).storeDefaults(myProject);
+    }
     return myFindUsagesOptions;
   }
 
@@ -230,7 +236,7 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
 
   protected void addUsagesOptions(JPanel optionsPanel) {
     if (mySearchForTextOccurrencesAvailable) {
-      myCbToSearchForTextOccurrences = addCheckboxToPanel(FindBundle.message("find.options.search.for.text.occurences.checkbox"),
+      myCbToSearchForTextOccurrences = addCheckboxToPanel(FindBundle.message("find.options.search.for.text.occurrences.checkbox"),
                                                          myFindUsagesOptions.isSearchForTextOccurrences, optionsPanel, false);
 
     }

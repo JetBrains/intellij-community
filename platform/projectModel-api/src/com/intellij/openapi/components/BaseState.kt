@@ -16,7 +16,7 @@ import kotlin.collections.LinkedHashMap
 
 private val LOG = logger<BaseState>()
 
-private val factory: StatePropertyFactory = ServiceLoader.load(StatePropertyFactory::class.java).first()
+private val factory: StatePropertyFactory = ServiceLoader.load(StatePropertyFactory::class.java, BaseState::class.java.classLoader).first()
 
 abstract class BaseState : SerializationFilter, ModificationTracker {
   companion object {

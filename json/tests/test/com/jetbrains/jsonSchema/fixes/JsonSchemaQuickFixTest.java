@@ -33,7 +33,7 @@ public class JsonSchemaQuickFixTest extends JsonSchemaQuickFixTestBase {
            "    }\n" +
            "  },\n" +
            "  \"required\": [\"a\", \"b\"]\n" +
-           "}", "<warning>{\"c\": 5}</warning>", "Add missing properties 'a', 'b'", "{\"c\": 5,\n" +
+           "}", "<warning>{<caret>\"c\": 5}</warning>", "Add missing properties 'a', 'b'", "{\"c\": 5,\n" +
                                                                                     "  \"a\": \"q\",\n" +
                                                                                     "  \"b\":\n" +
                                                                                     "}");
@@ -52,7 +52,7 @@ public class JsonSchemaQuickFixTest extends JsonSchemaQuickFixTestBase {
            "      \"default\": 1\n" +
            "    }\n" +
            "  }\n" +
-           "}", "<warning>{}</warning>", "Add missing properties 'x', 'y'", "{\n" +
+           "}", "<warning>{<caret>}</warning>", "Add missing properties 'x', 'y'", "{\n" +
                                                                             "  \"x\": true,\n" +
                                                                             "  \"y\": 1\n" +
                                                                             "}");
@@ -65,7 +65,7 @@ public class JsonSchemaQuickFixTest extends JsonSchemaQuickFixTestBase {
            "    \"c\": {}\n" +
            "  },\n" +
            "  \"additionalProperties\": false\n" +
-           "}", "{\"a\": 5, <warning>\"b\": 6</warning>, \"c\": 7}", "Remove prohibited property 'b'", "{\"a\": 5,\n" +
+           "}", "{\"a\": 5, <warning><caret>\"b\": 6</warning>, \"c\": 7}", "Remove prohibited property 'b'", "{\"a\": 5,\n" +
                                                                                                        "  \"c\": 7}");
   }
 }

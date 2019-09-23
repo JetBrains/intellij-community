@@ -1,10 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic.startUpPerformanceReporter
 
-import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonGenerator
+import com.intellij.diagnostic.ActivityCategory
 import com.intellij.diagnostic.ActivityImpl
-import com.intellij.diagnostic.ParallelActivity
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManagerCore
@@ -12,42 +11,36 @@ import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
-import com.intellij.ui.icons.IconLoadMeasurer
 import com.intellij.util.SystemProperties
+import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.containers.ObjectLongHashMap
 import com.intellij.util.io.jackson.IntelliJPrettyPrinter
-import com.intellij.util.io.jackson.array
-import com.intellij.util.io.jackson.obj
+import com.intellij.util.io.outputStream
+import com.intellij.util.io.write
 import gnu.trove.THashMap
-import java.io.StringWriter
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicBoolean
+import java.nio.ByteBuffer
+import java.nio.file.Paths
 import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.atomic.AtomicLong
 import java.util.function.Consumer
 import kotlin.Comparator
 
-internal val LOG = logger<StartUpMeasurer>()
-
-class StartUpPerformanceReporter : StartupActivity, DumbAware {
-  private val activationCount = AtomicInteger()
-  // questions like "what if we have several projects to open? what if no projects at all?" are out of scope for now
-  private val isLastEdtOptionTopHitProviderFinished = AtomicBoolean()
-
-  private var startUpEnd = AtomicLong(-1)
+class StartUpPerformanceReporter : StartupActivity.DumbAware {
+  private var startUpFinishedCounter = AtomicInteger()
 
   var pluginCostMap: Map<String, ObjectLongHashMap<String>>? = null
     private set
 
-  var lastReport: ByteArray? = null
+  var lastReport: ByteBuffer? = null
     private set
 
   companion object {
-    // need to be exposed for tests, but I don't want to expose as top-level function, so, as companion object
-    fun sortItems(items: MutableList<ActivityImpl>) {
+    internal val LOG = logger<StartUpMeasurer>()
+
+    internal const val VERSION = "12"
+
+    internal fun sortItems(items: MutableList<ActivityImpl>) {
       items.sortWith(Comparator { o1, o2 ->
         if (o1 == o2.parent) {
           return@Comparator -1
@@ -62,49 +55,58 @@ class StartUpPerformanceReporter : StartupActivity, DumbAware {
   }
 
   override fun runActivity(project: Project) {
-    val end = System.nanoTime()
-    val activationNumber = activationCount.getAndIncrement()
-    if (activationNumber == 0) {
-      LOG.assertTrue(startUpEnd.getAndSet(end) == -1L)
-    }
-    if (isLastEdtOptionTopHitProviderFinished.get()) {
-      // even if this activity executed in a pooled thread, better if it will not affect start-up in any way
-      ApplicationManager.getApplication().executeOnPooledThread {
-        logStats(end, activationNumber)
-      }
-    }
+    reportIfAnotherAlreadySet()
   }
 
-  fun lastEdtOptionTopHitProviderFinishedForProject() {
-    if (!isLastEdtOptionTopHitProviderFinished.compareAndSet(false, true)) {
-      return
-    }
+  fun lastOptionTopHitProviderFinishedForProject() {
+    reportIfAnotherAlreadySet()
+  }
 
-    val end = startUpEnd.get()
-    if (end != -1L) {
-      ApplicationManager.getApplication().executeOnPooledThread {
-        logStats(end, 0)
+  private fun reportIfAnotherAlreadySet() {
+    val end = StartUpMeasurer.getCurrentTime()
+    // or StartUpPerformanceReporter activity will be finished first, or OptionsTopHitProvider.Activity
+    if (startUpFinishedCounter.incrementAndGet() == 2) {
+      startUpFinishedCounter.set(0)
+      // even if this activity executed in a pooled thread, better if it will not affect start-up in any way
+      AppExecutorUtil.getAppExecutorService().execute {
+        logStats(end)
       }
     }
   }
 
   @Synchronized
-  private fun logStats(end: Long, activationNumber: Int) {
+  private fun logStats(end: Long) {
     val items = mutableListOf<ActivityImpl>()
+    val instantEvents = mutableListOf<ActivityImpl>()
     val activities = THashMap<String, MutableList<ActivityImpl>>()
+    val services = mutableListOf<ActivityImpl>()
+
+    val threadNameManager = ThreadNameManager()
 
     StartUpMeasurer.processAndClear(SystemProperties.getBooleanProperty("idea.collect.perf.after.first.project", false), Consumer { item ->
-      val parallelActivity = item.parallelActivity
-      if (parallelActivity == null) {
-        items.add(item)
+      // process it now to ensure that thread will have first name (because report writer can process events in any order)
+      threadNameManager.getThreadName(item)
+
+      if (item.end == -1L) {
+        instantEvents.add(item)
       }
       else {
-        val level = item.level
-        var name = parallelActivity.jsonName
-        if (level != null) {
-          name = "${level.jsonFieldNamePrefix}${name.capitalize()}"
+        val category = item.category
+        if (category == null) {
+          items.add(item)
         }
-        activities.getOrPut(name) { mutableListOf() }.add(item)
+        else if (category == ActivityCategory.APP_COMPONENT ||
+                 category == ActivityCategory.PROJECT_COMPONENT ||
+                 category == ActivityCategory.MODULE_COMPONENT ||
+                 category == ActivityCategory.APP_SERVICE ||
+                 category == ActivityCategory.PROJECT_SERVICE ||
+                 category == ActivityCategory.MODULE_SERVICE ||
+                 category == ActivityCategory.SERVICE_WAITING) {
+          services.add(item)
+        }
+        else {
+          activities.getOrPut(category.jsonName) { mutableListOf() }.add(item)
+        }
       }
     })
 
@@ -115,88 +117,59 @@ class StartUpPerformanceReporter : StartupActivity, DumbAware {
     sortItems(items)
 
     val pluginCostMap = computePluginCostMap()
-
-    val stringWriter = StringWriter()
-    val logPrefix = "=== Start: StartUp Measurement ===\n"
-    stringWriter.write(logPrefix)
-
-    val writer = JsonFactory().createGenerator(stringWriter)
-    writer.prettyPrinter = MyJsonPrettyPrinter()
-    writer.use {
-      writer.obj {
-        writer.writeStringField("version", "8")
-        writeServiceStats(writer)
-        writeIcons(writer)
-
-        var startTime = if (activationNumber == 0) StartUpMeasurer.getClassInitStartTime() else items.first().start
-        for (item in items) {
-          if (item.start < startTime) {
-            startTime = item.start
-          }
-        }
-
-        var totalDuration: Long = 0
-        writer.array("items") {
-          totalDuration = if (activationNumber == 0) writeUnknown(writer, startTime, items.first().start, startTime) else 0
-
-          for ((index, item) in items.withIndex()) {
-            writer.obj {
-              writer.writeStringField("name", item.name)
-              if (item.description != null) {
-                writer.writeStringField("description", item.description)
-              }
-
-              val duration = item.end - item.start
-              if (!isSubItem(item, index, items)) {
-                totalDuration += duration
-              }
-
-              item.pluginId?.let {
-                StartUpMeasurer.doAddPluginCost(it, item.parallelActivity?.name ?: "unknown", duration, pluginCostMap)
-              }
-              writeItemTimeInfo(item, duration, startTime, writer)
-            }
-          }
-          totalDuration += writeUnknown(writer, items.last().end, end, startTime)
-        }
-
-        writeParallelActivities(activities, startTime, writer, pluginCostMap)
-
-        writer.writeNumberField("totalDurationComputed", TimeUnit.NANOSECONDS.toMillis(totalDuration))
-        writer.writeNumberField("totalDurationActual", TimeUnit.NANOSECONDS.toMillis(end - startTime))
-      }
-    }
-
-    lastReport = stringWriter.buffer.substring(logPrefix.length).toByteArray()
-
-    if (SystemProperties.getBooleanProperty("idea.log.perf.stats", ApplicationManager.getApplication().isInternal || ApplicationInfoEx.getInstanceEx().build.isSnapshot)) {
-      stringWriter.write("\n=== Stop: StartUp Measurement ===")
-      LOG.info(stringWriter.toString())
-    }
-  }
-
-  private fun computePluginCostMap(): MutableMap<String, ObjectLongHashMap<String>> {
-    var pluginCostMap: MutableMap<String, ObjectLongHashMap<String>>
-    synchronized(StartUpMeasurer.pluginCostMap) {
-      pluginCostMap = THashMap(StartUpMeasurer.pluginCostMap)
-      StartUpMeasurer.pluginCostMap.clear()
-    }
     this.pluginCostMap = pluginCostMap
 
-
-    for (plugin in PluginManagerCore.getLoadedPlugins()) {
-      val id = plugin.pluginId.idString
-      val classLoader = (plugin as IdeaPluginDescriptorImpl).pluginClassLoader as? PluginClassLoader ?: continue
-      val costPerPhaseMap = pluginCostMap.getOrPut(id) { ObjectLongHashMap() }
-      costPerPhaseMap.put("classloading (EDT)", classLoader.edtTime)
-      costPerPhaseMap.put("classloading (background)", classLoader.backgroundTime)
+    val w = IdeaFormatWriter(activities, pluginCostMap, threadNameManager)
+    val startTime = items.first().start
+    for (item in items) {
+      val pluginId = item.pluginId ?: continue
+      StartUpMeasurer.doAddPluginCost(pluginId, item.category?.name ?: "unknown", item.end - item.start, pluginCostMap)
     }
-    return pluginCostMap
+
+    w.write(startTime, items, services, instantEvents, end)
+
+    val currentReport = w.toByteBuffer()
+    lastReport = currentReport
+
+    if (SystemProperties.getBooleanProperty("idea.log.perf.stats", ApplicationManager.getApplication().isInternal || ApplicationInfoEx.getInstanceEx().build.isSnapshot)) {
+      w.writeToLog(LOG)
+    }
+
+    val perfFilePath = System.getProperty("idea.log.perf.stats.file")
+    if (!perfFilePath.isNullOrBlank()) {
+      LOG.info("StartUp Measurement report was written to: ${perfFilePath}")
+      Paths.get(perfFilePath).write(currentReport)
+    }
+
+    val traceFilePath = System.getProperty("idea.log.perf.trace.file")
+    if (!traceFilePath.isNullOrBlank()) {
+      val traceEventFormat = TraceEventFormatWriter(startTime, instantEvents, threadNameManager)
+      Paths.get(traceFilePath).outputStream().writer().use {
+        traceEventFormat.write(items, activities, services, it)
+      }
+    }
   }
 }
 
+private fun computePluginCostMap(): MutableMap<String, ObjectLongHashMap<String>> {
+  var result: MutableMap<String, ObjectLongHashMap<String>>
+  synchronized(StartUpMeasurer.pluginCostMap) {
+    result = THashMap(StartUpMeasurer.pluginCostMap)
+    StartUpMeasurer.pluginCostMap.clear()
+  }
+
+  for (plugin in PluginManagerCore.getLoadedPlugins()) {
+    val id = plugin.pluginId.idString
+    val classLoader = (plugin as IdeaPluginDescriptorImpl).pluginClassLoader as? PluginClassLoader ?: continue
+    val costPerPhaseMap = result.getOrPut(id) { ObjectLongHashMap() }
+    costPerPhaseMap.put("classloading (EDT)", classLoader.edtTime)
+    costPerPhaseMap.put("classloading (background)", classLoader.backgroundTime)
+  }
+  return result
+}
+
 // to make output more compact (quite a lot slow components)
-private class MyJsonPrettyPrinter : IntelliJPrettyPrinter() {
+internal class MyJsonPrettyPrinter : IntelliJPrettyPrinter() {
   private var objectLevel = 0
 
   override fun writeStartObject(g: JsonGenerator) {
@@ -216,93 +189,7 @@ private class MyJsonPrettyPrinter : IntelliJPrettyPrinter() {
   }
 }
 
-private fun writeParallelActivities(activities: Map<String, MutableList<ActivityImpl>>, startTime: Long, writer: JsonGenerator, pluginCostMap: MutableMap<String, ObjectLongHashMap<String>>) {
-  val ownDurations = ObjectLongHashMap<ActivityImpl>()
-
-  // sorted to get predictable JSON
-  for (name in activities.keys.sorted()) {
-    ownDurations.clear()
-
-    val list = activities.getValue(name)
-    StartUpPerformanceReporter.sortItems(list)
-
-    if (name.endsWith("Component") || name.endsWith("Service")) {
-      computeOwnTime(list, ownDurations)
-    }
-
-    val measureThreshold = if (name == ParallelActivity.PREPARE_APP_INIT.jsonName || name == ParallelActivity.REOPENING_EDITOR.jsonName) -1 else ParallelActivity.MEASURE_THRESHOLD
-    writeActivities(list, startTime, writer, activityNameToJsonFieldName(name), ownDurations, pluginCostMap, measureThreshold = measureThreshold)
-  }
-}
-
-private fun activityNameToJsonFieldName(name: String): String {
-  return when {
-    name.last() == 'y' -> name.substring(0, name.length - 1) + "ies"
-    else -> name.substring(0) + 's'
-  }
-}
-
-private fun writeActivities(activities: List<ActivityImpl>,
-                            offset: Long, writer: JsonGenerator,
-                            fieldName: String,
-                            ownDurations: ObjectLongHashMap<ActivityImpl>,
-                            pluginCostMap: MutableMap<String, ObjectLongHashMap<String>>,
-                            measureThreshold: Long = ParallelActivity.MEASURE_THRESHOLD) {
-  if (activities.isEmpty()) {
-    return
-  }
-
-  writer.array(fieldName) {
-    var skippedDuration = 0L
-    for (item in activities) {
-      val computedOwnDuration = ownDurations.get(item)
-      val duration = if (computedOwnDuration == -1L) item.end - item.start else computedOwnDuration
-      if (duration <= measureThreshold) {
-        skippedDuration += duration
-        continue
-      }
-
-      item.pluginId?.let {
-        StartUpMeasurer.doAddPluginCost(it, item.parallelActivity?.name ?: "unknown", duration, pluginCostMap)
-      }
-
-      writer.obj {
-        writer.writeStringField("name", item.name)
-        writeItemTimeInfo(item, duration, offset, writer)
-      }
-    }
-
-    if (skippedDuration > 0) {
-      writer.obj {
-        writer.writeStringField("name", "Other")
-        writer.writeNumberField("duration", TimeUnit.NANOSECONDS.toMillis(skippedDuration))
-        writer.writeNumberField("start", TimeUnit.NANOSECONDS.toMillis(activities.last().start - offset))
-        writer.writeNumberField("end", TimeUnit.NANOSECONDS.toMillis(activities.last().end - offset))
-      }
-    }
-  }
-}
-
-private fun writeItemTimeInfo(item: ActivityImpl, duration: Long, offset: Long, writer: JsonGenerator) {
-  writer.writeNumberField("duration", TimeUnit.NANOSECONDS.toMillis(duration))
-  writer.writeNumberField("start", TimeUnit.NANOSECONDS.toMillis(item.start - offset))
-  writer.writeNumberField("end", TimeUnit.NANOSECONDS.toMillis(item.end - offset))
-  writer.writeStringField("thread", normalizeThreadName(item.thread))
-  if (item.pluginId != null) {
-    writer.writeStringField("plugin", item.pluginId)
-  }
-}
-
-private fun normalizeThreadName(name: String): String {
-  return when {
-    name.startsWith("AWT-EventQueue-") -> "edt"
-    name.startsWith("Idea Main Thread") -> "idea main"
-    name.startsWith("ApplicationImpl pooled thread ") -> name.replace("ApplicationImpl pooled thread ", "pooled ")
-    else -> name
-  }
-}
-
-private fun isSubItem(item: ActivityImpl, itemIndex: Int, list: List<ActivityImpl>): Boolean {
+internal fun isSubItem(item: ActivityImpl, itemIndex: Int, list: List<ActivityImpl>): Boolean {
   if (item.parent != null) {
     return true
   }
@@ -317,23 +204,7 @@ private fun isSubItem(item: ActivityImpl, itemIndex: Int, list: List<ActivityImp
   }
 }
 
-private fun writeUnknown(writer: JsonGenerator, start: Long, end: Long, offset: Long): Long {
-  val duration = end - start
-  val durationInMs = TimeUnit.NANOSECONDS.toMillis(duration)
-  if (durationInMs <= 1) {
-    return 0
-  }
-
-  writer.obj {
-    writer.writeStringField("name", "unknown")
-    writer.writeNumberField("duration", durationInMs)
-    writer.writeNumberField("start", TimeUnit.NANOSECONDS.toMillis(start - offset))
-    writer.writeNumberField("end", TimeUnit.NANOSECONDS.toMillis(end - offset))
-  }
-  return duration
-}
-
-private fun compareTime(o1: ActivityImpl, o2: ActivityImpl): Int {
+internal fun compareTime(o1: ActivityImpl, o2: ActivityImpl): Int {
   return when {
     o1.start > o2.start -> 1
     o1.start < o2.start -> -1
@@ -343,27 +214,6 @@ private fun compareTime(o1: ActivityImpl, o2: ActivityImpl): Int {
         o1.end < o2.end -> 1
         else -> 0
       }
-    }
-  }
-}
-
-private fun writeIcons(writer: JsonGenerator) {
-  fun writeStats(infoList: List<IconLoadMeasurer>) {
-    writer.obj(infoList[0].type.name.toLowerCase()) {
-      writer.writeNumberField("count", infoList[0].counter)
-      writer.writeNumberField("loading", TimeUnit.NANOSECONDS.toMillis(infoList[0].totalTime.toLong()))
-      writer.writeNumberField("decoding", TimeUnit.NANOSECONDS.toMillis(infoList[1].totalTime.toLong()))
-    }
-  }
-
-  val map = linkedMapOf<String, MutableList<IconLoadMeasurer>>()
-  for (stat in IconLoadMeasurer.getStats()) {
-    map.getOrPut(stat.type.name.toLowerCase()) { mutableListOf() }.add(stat)
-  }
-
-  writer.obj("icons") {
-    for (infoList in map.values) {
-      writeStats(infoList)
     }
   }
 }

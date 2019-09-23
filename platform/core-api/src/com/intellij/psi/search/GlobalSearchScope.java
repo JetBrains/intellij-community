@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.search;
 
 import com.intellij.openapi.fileTypes.FileType;
@@ -24,6 +24,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+/**
+ * Project model-aware search scope.
+ *
+ * @see com.intellij.psi.search.GlobalSearchScopes
+ */
 public abstract class GlobalSearchScope extends SearchScope implements ProjectAwareFileFilter {
   public static final GlobalSearchScope[] EMPTY_ARRAY = new GlobalSearchScope[0];
   @Nullable private final Project myProject;
@@ -43,9 +48,11 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
   }
 
   /**
-   * @return a positive integer (e.g. +1), if file1 is located in the classpath before file2,
-   *         a negative integer (e.e -1), if file1 is located in the classpath after file2
-   *         zero - otherwise or when the files are not comparable.
+   * @return <ul>
+   * <li>a positive integer (e.g. +1), if file1 is located in the classpath before file2</li>
+   * <li>a negative integer (e.e -1), if file1 is located in the classpath after file2</li>
+   * <li>zero - otherwise or when the files are not comparable</li>
+   * </ul>
    */
   public int compare(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
     return 0;
@@ -748,9 +755,10 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
       super(project);
       myVirtualFile = virtualFile;
       myDisplayName = displayName;
-      final FileIndexFacade facade = FileIndexFacade.getInstance(project);
-      myModule = virtualFile == null || project.isDefault() ? null : facade.getModuleForFile(virtualFile);
-      mySearchOutsideContent = project.isDefault() || virtualFile != null && myModule == null && !facade.isInLibraryClasses(virtualFile) && !facade.isInLibrarySource(virtualFile);
+      FileIndexFacade facade = project.isDefault() ? null : FileIndexFacade.getInstance(project);
+      myModule = virtualFile == null || facade == null ? null : facade.getModuleForFile(virtualFile);
+      mySearchOutsideContent = facade == null || virtualFile != null && myModule == null &&
+                                                 !facade.isInContent(virtualFile) && !facade.isInLibrarySource(virtualFile);
     }
 
     @Override

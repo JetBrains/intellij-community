@@ -18,8 +18,8 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
+import static com.intellij.openapi.vcs.Executor.append;
 import static com.intellij.openapi.vcs.Executor.cd;
-import static com.intellij.openapi.vcs.Executor.overwrite;
 import static hg4idea.test.HgExecutor.hg;
 
 public class HgUserFilterTest extends HgPlatformTest {
@@ -35,7 +35,7 @@ public class HgUserFilterTest extends HgPlatformTest {
       @NotNull
       protected String commit(@NotNull VcsUser user) throws IOException {
         String file = "file.txt";
-        overwrite(file, "content" + Math.random());
+        append(file, String.valueOf(Math.random()));
         myProject.getBaseDir().refresh(false, true);
         hg("add " + file);
         hg("commit -m ' Commit by " + user.getName() + "' --user '" + VcsUserUtil.toExactString(user) + "'");

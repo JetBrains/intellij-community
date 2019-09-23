@@ -80,6 +80,10 @@ public class SwitchedFileHolder implements FileHolder {
     return result;
   }
 
+  public boolean isEmpty() {
+    return myMap.isEmpty();
+  }
+
   @NotNull
   public Collection<VirtualFile> values() {
     return myMap.keySet();

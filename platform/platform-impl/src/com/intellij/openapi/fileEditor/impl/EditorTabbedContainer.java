@@ -37,10 +37,7 @@ import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.docking.DockableContent;
 import com.intellij.ui.docking.DragSession;
 import com.intellij.ui.tabs.*;
-import com.intellij.ui.tabs.impl.JBEditorTabPainter;
-import com.intellij.ui.tabs.impl.JBEditorTabsBorder;
-import com.intellij.ui.tabs.impl.JBTabsImpl;
-import com.intellij.ui.tabs.impl.SingleHeightTabs;
+import com.intellij.ui.tabs.impl.*;
 import com.intellij.util.BitUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.TimedDeadzone;
@@ -82,7 +79,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
         () -> (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_EDITOR_TAB_POPUP), ActionPlaces.EDITOR_TAB_POPUP, false)
       .addTabMouseListener(new TabMouseListener()).getPresentation()
       .setTabDraggingEnabled(true)
-      .setTabLabelActionsMouseDeadzone(TimedDeadzone.NULL).setGhostsAlwaysVisible(true).setTabLabelActionsAutoHide(false)
+      .setTabLabelActionsMouseDeadzone(TimedDeadzone.NULL).setTabLabelActionsAutoHide(false)
       .setActiveTabFillIn(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground()).setPaintFocus(false).getJBTabs()
       .addListener(new TabsListener() {
         @Override
@@ -222,6 +219,9 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
         break;
       case SwingConstants.RIGHT:
         myTabs.getPresentation().setTabsPosition(JBTabsPosition.right);
+        break;
+      case UISettings.TABS_NONE:
+        myTabs.getPresentation().setHideTabs(true);
         break;
       default:
         throw new IllegalArgumentException("Unknown tab placement code=" + tabPlacement);
@@ -631,8 +631,31 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
     }
 
     @Override
-    protected JBEditorTabPainter createTabPainter() {
-      return JBTabPainter.getEDITOR();
+    protected void paintChildren(final Graphics g) {
+      super.paintChildren(g);
+      drawBorder(g);
+    }
+
+    @NotNull
+    @Override
+    protected TabLabel createTabLabel(@NotNull TabInfo info) {
+      return new SingleHeightLabel(this, info) {
+        @Override
+        protected int getPreferredHeight() {
+          Insets insets = getInsets();
+          Insets layoutInsets = getLayoutInsets();
+
+          insets.top += layoutInsets.top;
+          insets.bottom += layoutInsets.bottom;
+
+          return super.getPreferredHeight() - insets.top - insets.bottom;
+        }
+      };
+    }
+
+    @Override
+    protected TabPainterAdapter createTabPainterAdapter() {
+      return new EditorTabPainterAdapter();
     }
 
     @Override

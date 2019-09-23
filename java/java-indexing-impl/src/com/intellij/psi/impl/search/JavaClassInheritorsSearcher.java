@@ -77,13 +77,10 @@ public class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClass, Cla
       return;
     }
 
-    Iterable<PsiClass> cached = getOrComputeSubClasses(project, baseClass, searchScope);
+    Iterable<PsiClass> cached = getOrComputeSubClasses(project, baseClass, searchScope, parameters.isIncludeAnonymous());
 
     for (final PsiClass subClass : cached) {
       ProgressManager.checkCanceled();
-      if (subClass instanceof PsiAnonymousClass && !parameters.isIncludeAnonymous()) {
-        continue;
-      }
       if (ReadAction.compute(() ->
         checkCandidate(subClass, parameters) && !consumer.process(subClass))) {
         return;
@@ -92,8 +89,12 @@ public class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClass, Cla
   }
 
   @NotNull
-  private static Iterable<PsiClass> getOrComputeSubClasses(@NotNull Project project, @NotNull PsiClass baseClass, @NotNull SearchScope searchScopeForNonPhysical) {
-    ConcurrentMap<PsiClass, Iterable<PsiClass>> map = HighlightingCaches.getInstance(project).ALL_SUB_CLASSES;
+  private static Iterable<PsiClass> getOrComputeSubClasses(@NotNull Project project,
+                                                           @NotNull PsiClass baseClass,
+                                                           @NotNull SearchScope searchScopeForNonPhysical,
+                                                           boolean includeAnonymous) {
+    HighlightingCaches caches = HighlightingCaches.getInstance(project);
+    ConcurrentMap<PsiClass, Iterable<PsiClass>> map = includeAnonymous ? caches.ALL_SUB_CLASSES : caches.ALL_SUB_CLASSES_NO_ANONYMOUS;
     Iterable<PsiClass> cached = map.get(baseClass);
     if (cached == null) {
       // returns lazy collection of subclasses. Each call to next() leads to calculation of next batch of subclasses.
@@ -105,7 +106,7 @@ public class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClass, Cla
       boolean isPhysical = ReadAction.compute(baseClass::isPhysical);
       SearchScope scopeToUse = isPhysical ? GlobalSearchScope.allScope(project) : searchScopeForNonPhysical;
       LazyConcurrentCollection.MoreElementsGenerator<PsiAnchor, PsiClass> generator = (candidate, processor) ->
-        DirectClassInheritorsSearch.search(candidate, scopeToUse).allowParallelProcessing().forEach(subClass -> {
+        DirectClassInheritorsSearch.search(candidate, scopeToUse, includeAnonymous).allowParallelProcessing().forEach(subClass -> {
           ProgressManager.checkCanceled();
           PsiAnchor pointer = ReadAction.compute(() -> PsiAnchor.create(subClass));
           // append found result to subClasses as early as possible to allow other waiting threads to continue

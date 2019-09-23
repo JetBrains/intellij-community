@@ -96,9 +96,9 @@ public class GitChangeProvider implements ChangeProvider {
             }
           }
         }
-        for (VirtualFile f : collector.getUnversionedFiles()) {
-          builder.processUnversionedFile(f);
-          holder.unversioned(f);
+        for (FilePath path : collector.getUnversionedFilePaths()) {
+          builder.processUnversionedFile(path);
+          holder.unversioned(path);
         }
 
         GitConflictsHolder conflictsHolder = repo.getConflictsHolder();
@@ -177,12 +177,12 @@ public class GitChangeProvider implements ChangeProvider {
       }
     }
 
-    public void unversioned(final VirtualFile vf) {
-      // NB: There was an exception that happened several times: vf == null.
+    public void unversioned(FilePath path) {
+      // NB: There was an exception that happened several times: path == null.
       // Populating myUnversioned in the ChangeCollector makes nulls not possible in myUnversioned,
       // so proposing that the exception was fixed.
       // More detailed analysis will be needed in case the exception appears again. 2010-12-09.
-      myProcessedPaths.add(VcsUtil.getFilePath(vf));
+      myProcessedPaths.add(path);
     }
 
     public void feedBuilder(final ChangelistBuilder builder) throws VcsException {

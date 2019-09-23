@@ -52,7 +52,9 @@ export abstract class BaseChartManager<T extends am4charts.Chart> implements Cha
 }
 
 export abstract class XYChartManager extends BaseChartManager<am4charts.XYChart> {
-  protected constructor(container: HTMLElement, _childHot: __WebpackModuleApi.Hot | null | undefined) {
+  protected readonly blackColor = am4core.color("#000000")
+
+  protected constructor(container: HTMLElement) {
     super(am4core.create(container, am4charts.XYChart))
 
     configureCommonChartSettings(this.chart)
@@ -60,13 +62,13 @@ export abstract class XYChartManager extends BaseChartManager<am4charts.XYChart>
 
   abstract render(data: DataManager): void
 
-  protected configureRangeMarker(range: am4charts.AxisDataItem, label: string, yOffset = 0): void {
+  protected configureRangeMarker(range: am4charts.AxisDataItem, label: string, color: am4core.Color, yOffset = 0): void {
     range.label.inside = true
     range.label.horizontalCenter = "middle"
     range.label.fontSize = 12
     range.label.valign = "bottom"
     range.label.text = label
-    range.grid.stroke = am4core.color("#000000")
+    range.grid.stroke = color
     range.grid.strokeDasharray = "2,2"
     range.grid.strokeOpacity = 1
 
@@ -78,4 +80,9 @@ export abstract class XYChartManager extends BaseChartManager<am4charts.XYChart>
       return rangePoint == null ? x : rangePoint.x
     })
   }
+}
+
+export interface LegendItem {
+  readonly name: string
+  readonly fill: am4core.Color
 }

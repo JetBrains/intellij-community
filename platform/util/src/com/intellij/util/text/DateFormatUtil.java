@@ -22,7 +22,7 @@ import java.util.Locale;
 import java.util.TimeZone;
 
 public class DateFormatUtil {
-  private static final Logger LOG = Logger.getInstance("com.intellij.util.text.DateFormatUtil");
+  private static final Logger LOG = Logger.getInstance(DateFormatUtil.class);
 
   public static final long SECOND = 1000;
   public static final long MINUTE = SECOND * 60;
@@ -241,6 +241,17 @@ public class DateFormatUtil {
     return ABOUT_DATE_FORMAT.format(time);
   }
 
+  /**
+   * Return sample date, that can be used to determine preferred string width.
+   * <p>
+   * We should not use {@code new Date()} to ensure results are reproducible (and to avoid "Today" for pretty formats).
+   * Returned date is expected to return maximum width string for date formats like "d.m.yy H:M".
+   */
+  @NotNull
+  public static Date getSampleDateTime() {
+    //noinspection deprecation
+    return new Date(100, Calendar.DECEMBER, 31, 23, 59);
+  }
 
   //<editor-fold desc="Helpers.">
   private static String someTimeAgoMessage(final Period period, final int n) {

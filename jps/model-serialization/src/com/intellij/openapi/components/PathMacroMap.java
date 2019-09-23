@@ -13,9 +13,11 @@ import org.jetbrains.annotations.Nullable;
 public abstract class PathMacroMap {
   private static final Logger LOG = Logger.getInstance(PathMacroMap.class);
 
-  public abstract String substitute(String text, boolean caseSensitive);
+  @NotNull
+  public abstract String substitute(@NotNull String text, boolean caseSensitive);
 
-  public final String substitute(String text, boolean caseSensitive, boolean recursively) {
+  @NotNull
+  public final String substitute(@NotNull String text, boolean caseSensitive, boolean recursively) {
     return recursively
            ? substituteRecursively(text, caseSensitive)
            : substitute(text, caseSensitive);
@@ -63,6 +65,7 @@ public abstract class PathMacroMap {
     }
   }
 
+  @NotNull
   public String getAttributeValue(@NotNull Attribute attribute, @Nullable PathMacroFilter filter, boolean caseSensitive, boolean recursively) {
     String oldValue = attribute.getValue();
     if (recursively || (filter != null && filter.recursePathMacros(attribute))) {

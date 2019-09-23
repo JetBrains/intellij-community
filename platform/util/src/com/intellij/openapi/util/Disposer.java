@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,14 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
+/**
+ * Manages a parent-child relation of chained objects requiring cleanup.
+ * <p/>
+ * A root node can be created via {@link #newDisposable()} to which children are attached via subsequent calls to {@link #register(Disposable, Disposable)}.
+ * Invoking {@link #dispose(Disposable)} will process all its registered children's {@link Disposable#dispose()} method.
+ *
+ * @see Disposable
+ */
 public class Disposer {
   private static final ObjectTree ourTree = new ObjectTree();
 
@@ -116,6 +124,7 @@ public class Disposer {
   public static void assertIsEmpty() {
     assertIsEmpty(false);
   }
+
   public static void assertIsEmpty(boolean throwError) {
     if (ourDebugMode) {
       ourTree.assertIsEmpty(throwError);
@@ -139,7 +148,7 @@ public class Disposer {
   }
 
   /**
-   * @return object registered on parentDisposable which is equal to object, or null if not found
+   * @return object registered on {@code parentDisposable} which is equal to object, or {@code null} if not found
    */
   @Nullable
   public static <T extends Disposable> T findRegisteredObject(@NotNull Disposable parentDisposable, @NotNull T object) {

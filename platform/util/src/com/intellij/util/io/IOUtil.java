@@ -27,13 +27,21 @@ public class IOUtil {
   private IOUtil() {}
 
   public static String readString(@NotNull DataInput stream) throws IOException {
-    int length = stream.readInt();
-    if (length == -1) return null;
-    if (length == 0) return "";
+    try {
+      int length = stream.readInt();
+      if (length == -1) return null;
+      if (length == 0) return "";
 
-    byte[] bytes = new byte[length * 2];
-    stream.readFully(bytes);
-    return new String(bytes, 0, length * 2, CharsetToolkit.UTF_16BE_CHARSET);
+      byte[] bytes = new byte[length * 2];
+      stream.readFully(bytes);
+      return new String(bytes, 0, length * 2, CharsetToolkit.UTF_16BE_CHARSET);
+    }
+    catch (IOException e) {
+      throw e;
+    }
+    catch (Throwable e) {
+      throw new IOException(e);
+    }
   }
 
   public static void writeString(@Nullable String s, @NotNull DataOutput stream) throws IOException {

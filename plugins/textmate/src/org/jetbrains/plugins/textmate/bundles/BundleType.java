@@ -1,7 +1,6 @@
 package org.jetbrains.plugins.textmate.bundles;
 
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.Constants;
@@ -9,35 +8,28 @@ import org.jetbrains.plugins.textmate.Constants;
 import java.io.File;
 
 public enum BundleType {
-  TEXTMATE("Syntaxes", "Preferences", "Themes", "Snippets", Constants.TEXTMATE_SNIPPET_EXTENSION, "plist"),
-  SUBLIME("", "", "schemes", "", Constants.SUBLIME_SNIPPET_EXTENSION),
-  VSCODE("syntaxes", "", "schemas", "snippets", "json"),
+  TEXTMATE("Syntaxes", "Preferences", "Snippets", Constants.TEXTMATE_SNIPPET_EXTENSION, "plist"),
+  SUBLIME("", "", "", Constants.SUBLIME_SNIPPET_EXTENSION),
+  VSCODE("syntaxes", "", "snippets", "json"),
   UNDEFINED();
 
   private final String mySyntaxesPath;
   private final String myPreferencesPath;
   private final String mySnippetsPath;
   private final String[] mySnippetFileExtensions;
-  private final String myThemesPath;
 
   BundleType() {
-    this(ArrayUtilRt.EMPTY_STRING_ARRAY);
-  }
-
-  BundleType(@NotNull String[] snippetFileExtensions) {
-    this("", "", "", "", snippetFileExtensions);
+    this("", "", "");
   }
 
   BundleType(@NotNull String syntaxesPath,
              @NotNull String preferencesPath,
-             @NotNull String themesPath,
              @NotNull String snippetsPath,
              String... snippetFileExtension) {
     mySyntaxesPath = syntaxesPath;
     myPreferencesPath = preferencesPath;
     mySnippetsPath = snippetsPath;
     mySnippetFileExtensions = snippetFileExtension;
-    myThemesPath = themesPath;
   }
 
   @NotNull
@@ -53,10 +45,6 @@ public enum BundleType {
   @NotNull
   String getSnippetsPath() {
     return mySnippetsPath;
-  }
-
-  public String getThemesPath() {
-    return myThemesPath;
   }
 
   @NotNull

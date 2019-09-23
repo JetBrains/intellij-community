@@ -25,8 +25,6 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface ConverterManager {
 
-  void addConverter(Class clazz, Converter converter);
-
   @NotNull
   Converter getConverterInstance(Class<? extends Converter> converterClass);
 

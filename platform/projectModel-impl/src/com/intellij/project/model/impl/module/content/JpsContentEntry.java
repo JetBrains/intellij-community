@@ -229,11 +229,13 @@ public class JpsContentEntry implements ContentEntry, Disposable {
     }
   }
 
+  @NotNull
   @Override
   public ExcludeFolder addExcludeFolder(@NotNull VirtualFile file) {
     return addExcludeFolder(file.getUrl());
   }
 
+  @NotNull
   @Override
   public ExcludeFolder addExcludeFolder(@NotNull String url) {
     final JpsExcludeFolder folder = new JpsExcludeFolder(url, this);

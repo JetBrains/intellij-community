@@ -5,10 +5,8 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.Consumer;
-import com.intellij.vcs.log.util.VcsLogUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,8 +43,7 @@ public abstract class SingleTaskController<Request, Result> implements Disposabl
 
   private boolean myIsClosed = false;
 
-  public SingleTaskController(@NotNull Project project,
-                              @NotNull String name,
+  public SingleTaskController(@NotNull String name,
                               @NotNull Consumer<? super Result> handler,
                               @NotNull Disposable parent) {
     myName = name;
@@ -54,7 +51,6 @@ public abstract class SingleTaskController<Request, Result> implements Disposabl
     myAwaitingRequests = new LinkedList<>();
 
     Disposer.register(parent, this);
-    VcsLogUtil.registerWithParentAndProject(parent, project, () -> closeQueue());
   }
 
   /**
@@ -191,7 +187,7 @@ public abstract class SingleTaskController<Request, Result> implements Disposabl
     if (!ApplicationManager.getApplication().isDispatchThread()) {
       if (task != null) {
         try {
-          task.waitFor(1, TimeUnit.MINUTES);
+          task.waitFor(1, TimeUnit.SECONDS);
         }
         catch (InterruptedException | ExecutionException e) {
           LOG.debug(e);

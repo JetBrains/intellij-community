@@ -49,8 +49,6 @@ public abstract class SingleRowLayoutStrategy {
 
   public abstract ShapeTransform createShapeTransform(Rectangle rectangle);
 
-  public abstract boolean canBeStretched();
-
   public abstract void layoutComp(SingleRowPassInfo data);
 
   public boolean isSideComponentOnTabs() {
@@ -81,11 +79,6 @@ public abstract class SingleRowLayoutStrategy {
 
     @Override
     public boolean isToCenterTextWhenStretched() {
-      return true;
-    }
-
-    @Override
-    public boolean canBeStretched() {
       return true;
     }
 
@@ -178,7 +171,7 @@ public abstract class SingleRowLayoutStrategy {
         x = data.layoutSize.width - data.moreRectAxisSize - 1;
       }
       else {
-        x = data.position + (data.lastGhostVisible ? data.lastGhost.width : 0);
+        x = data.position;
       }
       return new Rectangle(x, data.insets.top + JBTabsImpl.getSelectionTabVShift(),
                            data.moreRectAxisSize - 1, myTabs.myHeaderFitSize.height);
@@ -192,7 +185,7 @@ public abstract class SingleRowLayoutStrategy {
       } else {
         JComponent vToolbar = data.vToolbar.get();
         final int vToolbarWidth = vToolbar != null ? vToolbar.getPreferredSize().width : 0;
-        final int vSeparatorWidth = vToolbarWidth > 0 ? 1 : 0;
+        final int vSeparatorWidth = vToolbarWidth > 0 ? myTabs.getSeparatorWidth() : 0;
         final int x = vToolbarWidth > 0 ? vToolbarWidth + vSeparatorWidth : 0;
         JComponent hToolbar = data.hToolbar.get();
         final int hToolbarHeight = !myTabs.isSideComponentOnTabs() && hToolbar != null ? hToolbar.getPreferredSize().height : 0;
@@ -276,11 +269,6 @@ public abstract class SingleRowLayoutStrategy {
     @Override
     int getMoreRectAxisSize() {
       return AllIcons.General.MoreTabs.getIconHeight() + 4;
-    }
-
-    @Override
-    public boolean canBeStretched() {
-      return false;
     }
 
     @Override

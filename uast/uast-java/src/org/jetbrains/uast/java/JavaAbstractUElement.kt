@@ -2,6 +2,8 @@
 
 package org.jetbrains.uast.java
 
+import com.intellij.lang.Language
+import com.intellij.lang.java.JavaLanguage
 import com.intellij.psi.*
 import org.jetbrains.uast.*
 import org.jetbrains.uast.java.internal.JavaUElementWithComments
@@ -65,18 +67,18 @@ private fun JavaAbstractUElement.unwrapSwitch(uParent: UElement): UElement {
       val codeBlockParent = uParent.uastParent
       when (codeBlockParent) {
 
-        is JavaUBlockExpression -> {
-          val sourcePsi = codeBlockParent.sourcePsi
-          if (sourcePsi.parent is PsiSwitchLabeledRuleStatement)
-            (codeBlockParent.uastParent as? JavaUSwitchEntry)?.let { return it.body }
-        }
-
         is JavaUSwitchEntryList -> {
           if (branchHasElement(sourcePsi, codeBlockParent.sourcePsi) { it is PsiSwitchLabelStatementBase }) {
             return codeBlockParent
           }
           val psiElement = sourcePsi ?: return uParent
           return codeBlockParent.findUSwitchEntryForBodyStatementMember(psiElement)?.body ?: return codeBlockParent
+        }
+
+        is UExpressionList -> {
+          val sourcePsi = codeBlockParent.sourcePsi
+          if (sourcePsi is PsiSwitchLabeledRuleStatement)
+            (codeBlockParent.uastParent as? JavaUSwitchEntry)?.let { return it.body }
         }
 
         is JavaUSwitchExpression -> return unwrapSwitch(codeBlockParent)
@@ -145,4 +147,7 @@ abstract class JavaAbstractUExpression(givenParent: UElement?) : JavaAbstractUEl
       else -> uParent
     }
   }.let(this::unwrapCompositeQualifiedReference)
+
+  override val lang: Language
+    get() = JavaLanguage.INSTANCE
 }

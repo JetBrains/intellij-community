@@ -78,7 +78,17 @@ class GithubAuthenticationManager internal constructor(private val accountManage
     return registerAccount(dialog.getLogin(), dialog.getServer(), dialog.getToken())
   }
 
-  private fun isAccountUnique(name: String, server: GithubServerPath) = accountManager.accounts.none { it.name == name && it.server == server }
+  internal fun isAccountUnique(name: String, server: GithubServerPath) = accountManager.accounts.none { it.name == name && it.server == server }
+
+  @CalledInAwt
+  internal fun removeAccount(githubAccount: GithubAccount) {
+    accountManager.accounts -= githubAccount
+  }
+
+  @CalledInAwt
+  internal fun updateAccountToken(account: GithubAccount, newToken: String) {
+    accountManager.updateAccountToken(account, newToken)
+  }
 
   private fun registerAccount(name: String, server: GithubServerPath, token: String): GithubAccount {
     val account = GithubAccountManager.createAccount(name, server)
@@ -87,8 +97,8 @@ class GithubAuthenticationManager internal constructor(private val accountManage
     return account
   }
 
-  @TestOnly
-  fun registerAccount(name: String, host: String, token: String): GithubAccount {
+  @CalledInAwt
+  internal fun registerAccount(name: String, host: String, token: String): GithubAccount {
     return registerAccount(name, GithubServerPath.from(host), token)
   }
 

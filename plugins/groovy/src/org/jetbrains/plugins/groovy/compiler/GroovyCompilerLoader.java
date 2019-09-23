@@ -2,13 +2,12 @@
 package org.jetbrains.plugins.groovy.compiler;
 
 import com.intellij.openapi.compiler.CompilerManager;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 
-public class GroovyCompilerLoader implements StartupActivity, DumbAware {
+public class GroovyCompilerLoader implements StartupActivity.DumbAware {
 
   @Override
   public void runActivity(@NotNull Project project) {

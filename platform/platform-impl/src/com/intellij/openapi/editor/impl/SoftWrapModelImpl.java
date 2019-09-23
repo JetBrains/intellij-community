@@ -431,7 +431,10 @@ public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
       myDirty = true;
       return;
     }
-    myApplianceManager.recalculate(Arrays.asList(new TextRange(start, end), new TextRange(base, base + end - start)));
+    int textLength = document.getTextLength();
+    // adding +1, as inlays at the end of the moved range stick to the following text (and impact its layout)
+    myApplianceManager.recalculate(Arrays.asList(new TextRange(start, Math.min(textLength, end + 1)),
+                                                 new TextRange(base, Math.min(textLength, base + end - start + 1))));
   }
 
   void onBulkDocumentUpdateStarted() {

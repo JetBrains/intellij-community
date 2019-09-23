@@ -9,6 +9,7 @@ import com.jetbrains.python.packaging.pipenv.PyPipEnvPackageManager;
 import com.jetbrains.python.packaging.ui.PyCondaManagementService;
 import com.jetbrains.python.packaging.ui.PyPackageManagementService;
 import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.PythonSdkUtil;
 import com.jetbrains.python.sdk.pipenv.PipenvKt;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,13 +35,13 @@ public class PyPackageManagersImpl extends PyPackageManagers {
       if (customPackageManager != null) {
         manager = customPackageManager;
       }
-      else if (PythonSdkType.isRemote(sdk)) {
+      else if (PythonSdkUtil.isRemote(sdk)) {
         manager = new PyUnsupportedPackageManager(sdk);
       }
       else if (PipenvKt.isPipEnv(sdk)) {
         manager = new PyPipEnvPackageManager(sdk);
       }
-      else if (PyCondaPackageManagerImpl.isConda(sdk) &&
+      else if (PythonSdkUtil.isConda(sdk) &&
                homeDirectory != null &&
                PyCondaPackageService.getCondaExecutable(sdk.getHomePath()) != null) {
         manager = new PyCondaPackageManagerImpl(sdk);
@@ -55,7 +56,7 @@ public class PyPackageManagersImpl extends PyPackageManagers {
 
   @Override
   public PyPackageManagementService getManagementService(Project project, Sdk sdk) {
-    if (PyCondaPackageManagerImpl.isConda(sdk)) {
+    if (PythonSdkUtil.isConda(sdk)) {
       return new PyCondaManagementService(project, sdk);
     }
     else if (PipenvKt.isPipEnv(sdk)) {

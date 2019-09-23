@@ -1,28 +1,29 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs;
 
-import com.intellij.diagnostic.LoadingPhase;
+import com.intellij.diagnostic.LoadingState;
+import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.internal.statistic.DelayedIdeActivity;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
-import com.intellij.openapi.wm.impl.WindowManagerImpl;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 final class RefreshProgress extends ProgressIndicatorBase {
   @NotNull
   public static ProgressIndicator create(@NotNull String message) {
-    Application app = LoadingPhase.COMPONENT_LOADED.isComplete() ? ApplicationManager.getApplication() : null;
+    Application app = LoadingState.COMPONENTS_LOADED.isOccurred() ? ApplicationManager.getApplication() : null;
     return app == null || app.isUnitTestMode() ? new EmptyProgressIndicator() : new RefreshProgress(message);
   }
 
   private final String myMessage;
+  private DelayedIdeActivity myActivity;
 
   private RefreshProgress(@NotNull String message) {
     super(true);
@@ -33,28 +34,32 @@ final class RefreshProgress extends ProgressIndicatorBase {
   public void start() {
     super.start();
     updateIndicators(true);
+
+    myActivity = new DelayedIdeActivity("vfs", "refresh").started();
   }
 
   @Override
   public void stop() {
     super.stop();
     updateIndicators(false);
+
+    myActivity.finished();
   }
 
   private void updateIndicators(boolean start) {
     // wrapping in invokeLater here reduces the number of events posted to EDT in case of multiple IDE frames
     UIUtil.invokeLaterIfNeeded(() -> {
-      if (ApplicationManager.getApplication().isDisposed()) {
+      if (ApplicationManager.getApplication().isDisposedOrDisposeInProgress()) {
         return;
       }
 
-      WindowManager windowManager = WindowManagerImpl.getInstance();
-      if (windowManager == null) {
-        return;
-      }
-
-      Project[] projects = ProjectManager.getInstance().getOpenProjects();
+      Project[] projects = ProjectUtil.getOpenProjects();
       if (projects.length == 0) {
+        return;
+      }
+
+      WindowManager windowManager = WindowManager.getInstance();
+      if (windowManager == null) {
         return;
       }
 

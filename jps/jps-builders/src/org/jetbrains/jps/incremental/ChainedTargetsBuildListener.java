@@ -52,7 +52,7 @@ class ChainedTargetsBuildListener implements BuildListener {
           // do not mark files belonging to the target that originated the event
           // It is assumed that those files will be explicitly marked dirty by particular builder, if needed.
           try {
-            fsState.markDirty(myContext, file, desc, pd.timestamps.getStorage(), false);
+            fsState.markDirty(myContext, file, desc, pd.getProjectStamps().getStampStorage(), false);
           }
           catch (IOException ignored) {
           }

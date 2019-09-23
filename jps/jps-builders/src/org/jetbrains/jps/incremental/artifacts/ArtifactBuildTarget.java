@@ -26,6 +26,7 @@ import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.artifacts.builders.LayoutElementBuildersRegistry;
 import org.jetbrains.jps.incremental.artifacts.impl.JpsArtifactUtil;
 import org.jetbrains.jps.incremental.artifacts.instructions.*;
+import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
 import org.jetbrains.jps.indices.IgnoredFileIndex;
 import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.model.JpsModel;
@@ -80,10 +81,12 @@ public class ArtifactBuildTarget extends ArtifactBasedBuildTarget {
 
   @Override
   public void writeConfiguration(ProjectDescriptor pd, PrintWriter out) {
-    out.println(StringUtil.notNullize(getArtifact().getOutputPath()));
+    final PathRelativizerService relativizer = pd.dataManager.getRelativizer();
+    String outputPath = getArtifact().getOutputPath();
+    out.println(StringUtil.isNotEmpty(outputPath) ? relativizer.toRelative(outputPath) : "");
     final BuildRootIndex rootIndex = pd.getBuildRootIndex();
     for (ArtifactRootDescriptor descriptor : rootIndex.getTargetRoots(this, null)) {
-      descriptor.writeConfiguration(out);
+      descriptor.writeConfiguration(out, relativizer);
     }
   }
 

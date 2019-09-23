@@ -22,8 +22,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.intellij.ui.layout.*
 import com.intellij.util.SmartList
+import com.intellij.util.ui.JBUI
+import java.awt.GridLayout
 import javax.swing.JCheckBox
 import javax.swing.JComponent
+import javax.swing.JPanel
 import kotlin.reflect.KMutableProperty0
 
 class AnnotationInlayProvider : InlayHintsProvider<AnnotationInlayProvider.Settings> {
@@ -56,7 +59,8 @@ class AnnotationInlayProvider : InlayHintsProvider<AnnotationInlayProvider.Setti
           }
           val modifierList = element.modifierList
           if (modifierList != null) {
-            val offset = modifierList.textRange.startOffset
+            val textRange = modifierList.textRange ?: return true
+            val offset = textRange.startOffset
             if (presentations.isNotEmpty()) {
               val presentation = SequencePresentation(presentations)
               val prevSibling = element.prevSibling
@@ -133,7 +137,7 @@ class AnnotationInlayProvider : InlayHintsProvider<AnnotationInlayProvider.Setti
         when (val attrName = attribute.name) {
           null -> attrValuePresentation(attribute)
           else -> seq(
-            psiSingleReference(smallText(attrName ?: ""), resolve = { attribute.reference?.resolve() }),
+            psiSingleReference(smallText(attrName), resolve = { attribute.reference?.resolve() }),
             smallText(" = "),
             attrValuePresentation(attribute)
           )
@@ -162,28 +166,16 @@ class AnnotationInlayProvider : InlayHintsProvider<AnnotationInlayProvider.Setti
 
   override fun createConfigurable(settings: Settings): ImmediateConfigurable {
     return object : ImmediateConfigurable {
-      override fun createComponent(listener: ChangeListener): JComponent {
-        return panel {
-          row {
-            val showExternalCheckBox = JCheckBox(ApplicationBundle.message("editor.appearance.show.external.annotations"),
-                                                 settings.showExternal)
-            showExternalCheckBox.addChangeListener {
-              settings.showExternal = showExternalCheckBox.isSelected
-              listener.settingsChanged()
-            }
-            showExternalCheckBox()
-          }
-          row {
-            val showInferredCheckBox = JCheckBox(ApplicationBundle.message("editor.appearance.show.inferred.annotations"),
-                                                 settings.showInferred)
-            showInferredCheckBox.addChangeListener {
-              settings.showInferred = showInferredCheckBox.isSelected
-              listener.settingsChanged()
-            }
-            showInferredCheckBox()
-          }
-        }
-      }
+      override fun createComponent(listener: ChangeListener): JComponent = panel {}
+
+      override val mainCheckboxText: String
+        get() = "Show hints for:"
+
+      override val cases: List<ImmediateConfigurable.Case>
+        get() = listOf(
+          ImmediateConfigurable.Case("Inferred annotations", settings::showInferred),
+          ImmediateConfigurable.Case("External annotations", settings::showExternal)
+        )
     }
   }
 
@@ -203,7 +195,7 @@ class AnnotationInlayProvider : InlayHintsProvider<AnnotationInlayProvider.Setti
 
     override fun actionPerformed(e: AnActionEvent) {
       prop.set(!prop.get())
-      val storage = ServiceManager.getService(InlayHintsSettings::class.java)
+      val storage = InlayHintsSettings.instance()
       storage.storeSettings(ourKey, JavaLanguage.INSTANCE, settings)
       InlayHintsPassFactory.forceHintsUpdateOnNextPass()
     }

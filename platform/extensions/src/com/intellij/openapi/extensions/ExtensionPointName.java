@@ -1,7 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions;
 
-import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.extensions.impl.ExtensionProcessingHelper;
+import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -11,12 +13,14 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 /**
  * For project level extension points please use {@link ProjectExtensionPointName}.
  */
-public final class ExtensionPointName<T> extends BaseExtensionPointName {
+public final class ExtensionPointName<T> extends BaseExtensionPointName<T> {
   public ExtensionPointName(@NotNull String name) {
     super(name);
   }
@@ -31,16 +35,29 @@ public final class ExtensionPointName<T> extends BaseExtensionPointName {
    */
   @NotNull
   public T[] getExtensions() {
-    return getPoint(null).getExtensions();
+    return getPointImpl(null).getExtensions();
   }
 
   @NotNull
   public List<T> getExtensionList() {
-    return getPoint(null).getExtensionList();
+    return getPointImpl(null).getExtensionList();
   }
 
-  public void forEachExtensionSafe(Consumer<T> consumer) {
-    getPoint(null).forEachExtensionSafe(consumer);
+  /**
+   * Invokes the given consumer for each extension registered in this extension point. Logs exceptions thrown by the consumer.
+   */
+  public void forEachExtensionSafe(@NotNull Consumer<? super T> consumer) {
+    ExtensionProcessingHelper.forEachExtensionSafe(consumer, getPointImpl(null));
+  }
+
+  @Nullable
+  public T findFirstSafe(@NotNull Predicate<? super T> predicate) {
+    return ExtensionProcessingHelper.findFirstSafe(predicate, getPointImpl(null));
+  }
+
+  @Nullable
+  public <R> R computeSafeIfAny(@NotNull Function<T, R> processor) {
+    return ExtensionProcessingHelper.computeSafeIfAny(processor, getPointImpl(null));
   }
 
   @NotNull
@@ -50,17 +67,18 @@ public final class ExtensionPointName<T> extends BaseExtensionPointName {
 
   @NotNull
   public List<T> getExtensionsIfPointIsRegistered(@Nullable AreaInstance areaInstance) {
-    ExtensionPoint<T> point = Extensions.getArea(areaInstance).getExtensionPointIfRegistered(getName());
+    ExtensionsArea area = areaInstance == null ? Extensions.getRootArea() : areaInstance.getExtensionArea();
+    ExtensionPoint<T> point = area == null ? null : area.getExtensionPointIfRegistered(getName());
     return point == null ? Collections.emptyList() : point.getExtensionList();
   }
 
   @NotNull
   public Stream<T> extensions() {
-    return getPoint(null).extensions();
+    return getPointImpl(null).extensions();
   }
 
   public boolean hasAnyExtensions() {
-    return getPoint(null).hasAnyExtensions();
+    return getPointImpl(null).hasAnyExtensions();
   }
 
   /**
@@ -68,7 +86,7 @@ public final class ExtensionPointName<T> extends BaseExtensionPointName {
    */
   @NotNull
   public List<T> getExtensionList(@Nullable AreaInstance areaInstance) {
-    return getPoint(areaInstance).getExtensionList();
+    return getPointImpl(areaInstance).getExtensionList();
   }
 
   /**
@@ -76,7 +94,7 @@ public final class ExtensionPointName<T> extends BaseExtensionPointName {
    */
   @NotNull
   public T[] getExtensions(@Nullable AreaInstance areaInstance) {
-    return getPoint(areaInstance).getExtensions();
+    return getPointImpl(areaInstance).getExtensions();
   }
 
   /**
@@ -84,29 +102,34 @@ public final class ExtensionPointName<T> extends BaseExtensionPointName {
    */
   @NotNull
   public Stream<T> extensions(@Nullable AreaInstance areaInstance) {
-    return getPoint(areaInstance).extensions();
+    return getPointImpl(areaInstance).extensions();
   }
 
   @NotNull
   public ExtensionPoint<T> getPoint(@Nullable AreaInstance areaInstance) {
-    return Extensions.getArea(areaInstance).getExtensionPoint(getName());
+    return getPointImpl(areaInstance);
   }
 
   @Nullable
   public <V extends T> V findExtension(@NotNull Class<V> instanceOf) {
-    return findExtension(this, instanceOf, null, false);
+    return getPointImpl(null).findExtension(instanceOf, false, ThreeState.UNSURE);
   }
 
   @NotNull
-  public <V extends T> V findExtensionOrFail(@NotNull Class<V> instanceOf) {
+  public <V extends T> V findExtensionOrFail(@NotNull Class<V> exactClass) {
     //noinspection ConstantConditions
-    return findExtension(this, instanceOf, null, true);
+    return getPointImpl(null).findExtension(exactClass, true, ThreeState.UNSURE);
+  }
+
+  @Nullable
+  public <V extends T> V findFirstAssignableExtension(@NotNull Class<V> instanceOf) {
+    return getPointImpl(null).findExtension(instanceOf, true, ThreeState.NO);
   }
 
   @NotNull
   public <V extends T> V findExtensionOrFail(@NotNull Class<V> instanceOf, @Nullable AreaInstance areaInstance) {
     //noinspection ConstantConditions
-    return findExtension(this, instanceOf, areaInstance, true);
+    return getPointImpl(areaInstance).findExtension(instanceOf, true, ThreeState.UNSURE);
   }
 
   /**
@@ -124,19 +147,17 @@ public final class ExtensionPointName<T> extends BaseExtensionPointName {
    */
   @NotNull
   @ApiStatus.Experimental
-  public Iterable<T> getIterable(@Nullable AreaInstance areaInstance) {
-    return (ExtensionPointImpl<T>)getPoint(areaInstance);
-  }
-
-  @NotNull
-  @ApiStatus.Experimental
-  public Iterable<T> getIterable() {
-    return getIterable(null);
+  public final Iterable<T> getIterable() {
+    return getPointImpl(null);
   }
 
   @ApiStatus.Experimental
   @ApiStatus.Internal
   public void processWithPluginDescriptor(@NotNull BiConsumer<? super T, ? super PluginDescriptor> consumer) {
-    ((ExtensionPointImpl<T>)getPoint(null)).processWithPluginDescriptor(consumer);
+    getPointImpl(null).processWithPluginDescriptor(consumer);
+  }
+
+  public void addExtensionPointListener(@NotNull ExtensionPointListener<T> listener, @Nullable Disposable parentDisposable) {
+    getPointImpl(null).addExtensionPointListener(listener, false, parentDisposable);
   }
 }

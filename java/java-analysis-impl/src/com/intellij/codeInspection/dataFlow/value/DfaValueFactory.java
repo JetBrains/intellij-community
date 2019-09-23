@@ -316,8 +316,24 @@ public class DfaValueFactory {
     }
 
     private static boolean canCallMethodsInConstructors(@NotNull PsiClass aClass, boolean virtual) {
+      boolean inByteCode = false;
+      if (aClass instanceof PsiCompiledElement) {
+        inByteCode = true;
+        PsiElement navigationElement = aClass.getNavigationElement();
+        if (navigationElement instanceof PsiClass) {
+          aClass = (PsiClass)navigationElement;
+        }
+      }
       for (PsiMethod constructor : aClass.getConstructors()) {
         if (!constructor.getLanguage().isKindOf(JavaLanguage.INSTANCE)) return true;
+        if (inByteCode && JavaMethodContractUtil.isPure(constructor) &&
+            !JavaMethodContractUtil.hasExplicitContractAnnotation(constructor)) {
+          // While pure constructor may call pure overridable method, our current implementation
+          // of bytecode inference will not infer the constructor purity in this case.
+          // So if we inferred a constructor purity from bytecode we can currently rely that
+          // no overridable methods are called there.
+          continue;
+        }
 
         PsiCodeBlock body = constructor.getBody();
         if (body == null) continue;

@@ -2,10 +2,12 @@
 package com.intellij.openapi.project;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.intellij.diagnostic.LoadingPhase;
+import com.intellij.diagnostic.LoadingState;
+import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.file.BatchFileChangeListener;
+import com.intellij.internal.statistic.IdeActivity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.impl.ApplicationImpl;
@@ -36,6 +38,7 @@ import com.intellij.ui.AppIcon;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Queue;
+import com.intellij.util.exception.FrequentErrorLogger;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Async;
@@ -53,7 +56,7 @@ import java.util.concurrent.locks.LockSupport;
 
 public class DumbServiceImpl extends DumbService implements Disposable, ModificationTracker {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.project.DumbServiceImpl");
-  private static final Set<String> REPORTED_EXECUTIONS = ContainerUtil.newConcurrentSet();
+  private static final FrequentErrorLogger ourErrorLogger = FrequentErrorLogger.newInstance(LOG);
   private final AtomicReference<State> myState = new AtomicReference<>(State.SMART);
   private volatile Throwable myDumbEnterTrace;
   private volatile Throwable myDumbStart;
@@ -72,14 +75,12 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   private final Queue<Runnable> myRunWhenSmartQueue = new Queue<>(5);
   private final Project myProject;
   private final ThreadLocal<Integer> myAlternativeResolution = new ThreadLocal<>();
-  private final StartupManager myStartupManager;
   private volatile ProgressSuspender myCurrentSuspender;
   private final List<String> myRequestedSuspensions = ContainerUtil.createEmptyCOWList();
 
-  public DumbServiceImpl(Project project, StartupManager startupManager) {
+  public DumbServiceImpl(Project project) {
     myProject = project;
     myPublisher = project.getMessageBus().syncPublisher(DUMB_MODE);
-    myStartupManager = startupManager;
 
     ApplicationManager.getApplication().getMessageBus().connect(project)
                       .subscribe(BatchFileChangeListener.TOPIC, new BatchFileChangeListener() {
@@ -208,9 +209,9 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   @Override
   public boolean isDumb() {
     if (!ApplicationManager.getApplication().isReadAccessAllowed() &&
-        Registry.is("ide.check.is.dumb.contract") &&
-        REPORTED_EXECUTIONS.add(ExceptionUtil.currentStackTrace())) {
-      LOG.error("To avoid race conditions isDumb method should be used only under read action or in EDT thread.");
+        Registry.is("ide.check.is.dumb.contract")) {
+      ourErrorLogger.error("To avoid race conditions isDumb method should be used only under read action or in EDT thread.",
+                           new IllegalStateException());
     }
     return myState.get() != State.SMART;
   }
@@ -229,7 +230,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
   @Override
   public void runWhenSmart(@Async.Schedule @NotNull Runnable runnable) {
-    myStartupManager.runWhenProjectIsInitialized(() -> {
+    StartupManager.getInstance(myProject).runWhenProjectIsInitialized(() -> {
       synchronized (myRunWhenSmartQueue) {
         if (isDumb()) {
           myRunWhenSmartQueue.addLast(runnable);
@@ -350,7 +351,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
       }
     }
 
-    LoadingPhase.compareAndSet(LoadingPhase.PROJECT_OPENED, LoadingPhase.INDEXING_FINISHED);
+    StartUpMeasurer.compareAndSetCurrentState(LoadingState.PROJECT_OPENED, LoadingState.INDEXING_FINISHED);
 
     myDumbEnterTrace = null;
     myDumbStart = null;
@@ -528,6 +529,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
       myCurrentSuspender = suspender;
       suspendIfRequested(suspender);
 
+      IdeActivity activity = IdeActivity.started(myProject, "indexing");
       final ShutDownTracker shutdownTracker = ShutDownTracker.getInstance();
       final Thread self = Thread.currentThread();
       try {
@@ -541,7 +543,9 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
           if (pair == null) break;
 
           task = pair.first;
+          activity.stageStarted(task.getClass());
           ProgressIndicatorEx taskIndicator = pair.second;
+          suspender.attachToProgress(taskIndicator);
           taskIndicator.addStateDelegate(new AbstractProgressIndicatorExBase() {
             @Override
             protected void delegateProgressChange(@NotNull IndicatorAction action) {
@@ -564,6 +568,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
         // the ProgressSuspender close() method called at the exit of this try-with-resources block which removes the hook if it has been
         // previously installed.
         myCurrentSuspender = null;
+        activity.finished();
       }
     }
   }

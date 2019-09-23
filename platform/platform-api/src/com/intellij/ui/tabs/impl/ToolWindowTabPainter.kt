@@ -13,6 +13,7 @@ class ToolWindowTabPainter: JBDefaultTabPainter(ToolWindowTabTheme())  {
                         rect: Rectangle,
                         borderThickness: Int,
                         tabColor: Color?,
+                        active: Boolean,
                         hovered: Boolean) {
     rect.y += borderThickness
     rect.height -= borderThickness
@@ -21,7 +22,7 @@ class ToolWindowTabPainter: JBDefaultTabPainter(ToolWindowTabTheme())  {
       JBTabsPosition.top -> rect.height -= borderThickness
     }
 
-    super.paintTab(position, g, rect, borderThickness, tabColor, hovered)
+    super.paintTab(position, g, rect, borderThickness, tabColor, active, hovered)
   }
 
   override fun paintSelectedTab(position: JBTabsPosition,
@@ -30,11 +31,10 @@ class ToolWindowTabPainter: JBDefaultTabPainter(ToolWindowTabTheme())  {
                                 borderThickness: Int,
                                 tabColor: Color?,
                                 active: Boolean,
-                                hovered: Boolean,
-                                singleTab : Boolean) {
+                                hovered: Boolean) {
     rect.y += borderThickness
     rect.height -= borderThickness
 
-    super.paintSelectedTab(position, g, rect, borderThickness, tabColor, active, hovered, singleTab)
+    super.paintSelectedTab(position, g, rect, borderThickness, tabColor, active, hovered)
   }
 }

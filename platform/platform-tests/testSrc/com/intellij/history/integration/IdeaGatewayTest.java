@@ -36,12 +36,8 @@ public class IdeaGatewayTest extends IntegrationTestCase {
 
   @NotNull
   private VirtualFile findOrCreateFileSafely(String path) throws IOException {
-    return ApplicationManager.getApplication().runWriteAction(new ThrowableComputable<VirtualFile, IOException>() {
-          @Override
-          public VirtualFile compute() throws IOException {
-            return myGateway.findOrCreateFileSafely(path, true);
-          }
-        })
+    return ApplicationManager.getApplication().runWriteAction(
+      (ThrowableComputable<VirtualFile, IOException>)() -> myGateway.findOrCreateFileSafely(path, true))
       ;
   }
 

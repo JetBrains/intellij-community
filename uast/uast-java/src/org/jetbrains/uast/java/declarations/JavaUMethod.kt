@@ -22,7 +22,7 @@ open class JavaUMethod(
 
   override val uastBody: UExpression? by lz {
     val body = sourcePsi.body ?: return@lz null
-    getLanguagePlugin().convertElement(body, this) as? UExpression
+    UastFacade.findPlugin(body)?.convertElement(body, this) as? UExpression
   }
 
   override val uAnnotations: List<JavaUAnnotation> by lz { sourcePsi.annotations.map { JavaUAnnotation(it, this) } }
@@ -33,7 +33,9 @@ open class JavaUMethod(
 
   override val uastAnchor: UIdentifier?
     get() {
-      val psiElement = (sourcePsi.originalElement as? PsiNameIdentifierOwner)?.nameIdentifier ?: sourcePsi.nameIdentifier
+      val psiElement = (sourcePsi as? PsiNameIdentifierOwner)?.nameIdentifier // return elements of library sources, do not switch to binary
+                       ?: (sourcePsi.originalElement as? PsiNameIdentifierOwner)?.nameIdentifier
+                       ?: sourcePsi.nameIdentifier
       if (psiElement?.isPhysical != true) return null // hah there is a Lombok and we have fake PsiElements even in Java (IDEA-216248)
       return UIdentifier(psiElement, this)
     }

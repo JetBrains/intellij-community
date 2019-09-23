@@ -25,7 +25,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-
 public class ProcessListUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.process.impl.ProcessListUtil");
   private static final String WIN_PROCESS_LIST_HELPER_FILENAME = "WinProcessListHelper.exe";
@@ -40,7 +39,7 @@ public class ProcessListUtil {
   private static List<ProcessInfo> doGetProcessList() {
     List<ProcessInfo> result;
     if (SystemInfo.isWindows) {
-      result = getProcessListUsingWinNativeHelper();
+      result = getProcessListUsingWinProcessListHelper();
       if (result != null) return result;
       LOG.info("Cannot get process list via " + WIN_PROCESS_LIST_HELPER_FILENAME + ", fallback to wmic");
 
@@ -259,30 +258,39 @@ public class ProcessListUtil {
     }
   }
 
-  private static List<ProcessInfo> getProcessListUsingWinNativeHelper() {
-    try {
-      File nativeHelper = findNativeHelper();
-      return parseCommandOutput(Collections.singletonList(nativeHelper.getAbsolutePath()), ProcessListUtil::parseWinNativeHelperOutput);
-    }
-    catch (FileNotFoundException e) {
-      LOG.error(e);
+  @Nullable
+  private static List<ProcessInfo> getProcessListUsingWinProcessListHelper() {
+    File exeFile = findWinProcessListHelperFile();
+    if (exeFile == null) {
       return null;
     }
+    return parseCommandOutput(Collections.singletonList(exeFile.getAbsolutePath()), ProcessListUtil::parseWinProcessListHelperOutput);
   }
 
-  private static List<ProcessInfo> parseWinNativeHelperOutput(String output) throws IllegalStateException {
-    String[] strings = StringUtil.splitByLines(output, false);
-    ArrayList<ProcessInfo> result = new ArrayList<>();
-    int processCount = strings.length / 3;
+  @Nullable
+  static List<ProcessInfo> parseWinProcessListHelperOutput(@NotNull String output) {
+    String[] lines = StringUtil.splitByLines(output, false);
+    List<ProcessInfo> result = new ArrayList<>();
+    if (lines.length % 3 != 0) {
+      LOG.info("Broken output of " + WIN_PROCESS_LIST_HELPER_FILENAME + ": output line count is not a multiple of 3");
+      LOG.debug(output);
+      return null;
+    }
+    int processCount = lines.length / 3;
     for (int i = 0; i < processCount; i++) {
       int offset = i * 3;
-      int id = StringUtil.parseInt(strings[offset], -1);
-      if (id == -1 || id == 0) continue;
+      int id = StringUtil.parseInt(lines[offset], -1);
+      if (id == -1) {
+        LOG.info("Broken output of " + WIN_PROCESS_LIST_HELPER_FILENAME + ": process ID is not a number: " + lines[offset]);
+        LOG.debug(output);
+        return null;
+      }
+      if (id == 0) continue;
 
-      String name = strings[offset + 1];
+      String name = lines[offset + 1];
       if (StringUtil.isEmpty(name)) continue;
 
-      String commandLine = strings[offset + 2];
+      String commandLine = lines[offset + 2];
       String args;
       if (commandLine.isEmpty()) {
         commandLine = name;
@@ -296,7 +304,8 @@ public class ProcessListUtil {
     return result;
   }
 
-  private static String extractCommandLineArgs(String fullCommandLine, String executableName) {
+  @NotNull
+  private static String extractCommandLineArgs(@NotNull String fullCommandLine, @NotNull String executableName) {
     List<String> commandLineList = StringUtil.splitHonorQuotes(fullCommandLine, ' ');
     if (commandLineList.isEmpty()) return "";
 
@@ -308,8 +317,15 @@ public class ProcessListUtil {
     return "";
   }
 
-  private static File findNativeHelper() throws FileNotFoundException {
-    return PathManager.findBinFileWithException(WIN_PROCESS_LIST_HELPER_FILENAME);
+  @Nullable
+  private static File findWinProcessListHelperFile() {
+    try {
+      return PathManager.findBinFileWithException(WIN_PROCESS_LIST_HELPER_FILENAME);
+    }
+    catch (FileNotFoundException e) {
+      LOG.error(e);
+      return null;
+    }
   }
 
   @Nullable

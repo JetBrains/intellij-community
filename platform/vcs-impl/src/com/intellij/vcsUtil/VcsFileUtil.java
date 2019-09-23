@@ -19,6 +19,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThrowableConsumer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.SystemIndependent;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -398,11 +399,18 @@ public class VcsFileUtil {
     }
   }
 
+  /**
+   * @see FileUtil#toCanonicalPath
+   */
+  public static boolean isAncestor(@NotNull @SystemIndependent String ancestor, @NotNull @SystemIndependent String path, boolean strict) {
+    return FileUtil.startsWith(path, ancestor, SystemInfo.isFileSystemCaseSensitive, strict);
+  }
+
   public static boolean isAncestor(@NotNull FilePath ancestor, @NotNull FilePath path, boolean strict) {
-    return FileUtil.isAncestor(ancestor.getIOFile(), path.getIOFile(), strict);
+    return isAncestor(ancestor.getPath(), path.getPath(), strict);
   }
 
   public static boolean isAncestor(@NotNull VirtualFile root, @NotNull FilePath path) {
-    return FileUtil.isAncestor(VfsUtilCore.virtualToIoFile(root), path.getIOFile(), false);
+    return isAncestor(root.getPath(), path.getPath(), false);
   }
 }

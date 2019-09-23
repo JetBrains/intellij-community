@@ -74,6 +74,8 @@ public class VfsData {
   private final ConcurrentIntObjectMap<Segment> mySegments = ContainerUtil.createConcurrentIntObjectMap();
   private final ConcurrentBitSet myInvalidatedIds = new ConcurrentBitSet();
   private TIntHashSet myDyingIds = new TIntHashSet();
+
+  private boolean myHasChangedParents; // synchronized by read-write lock; clients outside read-action deserve to get outdated result
   private final IntObjectMap<VirtualDirectoryImpl> myChangedParents = ContainerUtil.createConcurrentIntObjectMap();
 
   public VfsData() {
@@ -124,8 +126,9 @@ public class VfsData {
       throw new AssertionError("nameId=" + nameId + "; data=" + o + "; parent=" + parent + "; parent.id=" + parent.getId() + "; db.parent=" + FSRecords.getParent(id));
     }
 
-    return o instanceof DirectoryData ? persistentFS.getOrCacheDir(id, segment, (DirectoryData)o, parent)
-                                      : new VirtualFileImpl(id, segment, parent);
+    return o instanceof DirectoryData
+           ? persistentFS.getOrCacheDir(id, new VirtualDirectoryImpl(id, segment, (DirectoryData)o, parent, parent.getFileSystem()))
+           : new VirtualFileImpl(id, segment, parent);
   }
 
   private static InvalidVirtualFileAccessException reportDeadFileAccess(VirtualFileSystemEntry file) {
@@ -133,6 +136,7 @@ public class VfsData {
   }
 
   private static int getOffset(int id) {
+    if (id <= 0) throw new IllegalArgumentException("invalid argument id: "+id);
     return id & OFFSET_MASK;
   }
 
@@ -155,8 +159,7 @@ public class VfsData {
     }
   }
 
-  public static void initFile(int id, @NotNull Segment segment, int nameId, @NotNull Object data) throws FileAlreadyCreatedException {
-    assert id > 0;
+  static void initFile(int id, @NotNull Segment segment, int nameId, @NotNull Object data) throws FileAlreadyCreatedException {
     int offset = getOffset(id);
 
     segment.setNameId(id, nameId);
@@ -190,10 +193,12 @@ public class VfsData {
 
   @Nullable
   VirtualDirectoryImpl getChangedParent(int id) {
-    return myChangedParents.get(id);
+    return myHasChangedParents ? myChangedParents.get(id): null;
   }
 
   void changeParent(int id, VirtualDirectoryImpl parent) {
+    ApplicationManager.getApplication().assertWriteAccessAllowed();
+    myHasChangedParents = true;
     myChangedParents.put(id, parent);
   }
 
@@ -204,7 +209,7 @@ public class VfsData {
     }
   }
 
-  public static class Segment {
+  static class Segment {
     // user data for files, DirectoryData for folders
     private final AtomicReferenceArray<Object> myObjectArray = new AtomicReferenceArray<>(SEGMENT_SIZE);
 
@@ -223,6 +228,7 @@ public class VfsData {
     }
 
     void setNameId(int fileId, int nameId) {
+      if (fileId <= 0 || nameId <= 0) throw new IllegalArgumentException("invalid arguments id: "+fileId+"; nameId: "+nameId);
       myIntArray.set(getOffset(fileId) * 2, nameId);
     }
 
@@ -280,7 +286,7 @@ public class VfsData {
   }
 
   // non-final field accesses are synchronized on this instance, but this happens in VirtualDirectoryImpl
-  public static class DirectoryData {
+  static class DirectoryData {
     private static final AtomicFieldUpdater<DirectoryData, KeyFMap> MY_USER_MAP_UPDATER = AtomicFieldUpdater.forFieldOfType(DirectoryData.class, KeyFMap.class);
     @NotNull
     volatile KeyFMap myUserMap = KeyFMap.EMPTY_MAP;

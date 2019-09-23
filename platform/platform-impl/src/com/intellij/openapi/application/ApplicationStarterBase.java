@@ -9,6 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.Future;
 
 /**
@@ -41,7 +42,7 @@ public abstract class ApplicationStarterBase implements ApplicationStarter {
 
   @NotNull
   @Override
-  public Future<CliResult> processExternalCommandLineAsync(@NotNull String[] args, @Nullable String currentDirectory) {
+  public Future<CliResult> processExternalCommandLineAsync(@NotNull List<String> args, @Nullable String currentDirectory) {
     if (!checkArguments(args)) {
       Messages.showMessageDialog(getUsageMessage(), StringUtil.toTitleCase(getCommandName()), Messages.getInformationIcon());
       return CliResult.error(1, getUsageMessage());
@@ -64,17 +65,17 @@ public abstract class ApplicationStarterBase implements ApplicationStarter {
     ApplicationManager.getApplication().saveSettings();
   }
 
-  private boolean checkArguments(String[] args) {
-    return Arrays.binarySearch(myArgsCount, args.length - 1) != -1 && getCommandName().equals(args[0]);
+  private boolean checkArguments(@NotNull List<String> args) {
+    return Arrays.binarySearch(myArgsCount, args.size() - 1) != -1 && getCommandName().equals(args.get(0));
   }
 
   public abstract String getUsageMessage();
 
   @NotNull
-  protected abstract Future<CliResult> processCommand(@NotNull String[] args, @Nullable String currentDirectory) throws Exception;
+  protected abstract Future<CliResult> processCommand(@NotNull List<String> args, @Nullable String currentDirectory) throws Exception;
 
   @Override
-  public void premain(String[] args) {
+  public void premain(@NotNull List<String> args) {
     if (!checkArguments(args)) {
       System.err.println(getUsageMessage());
       System.exit(1);
@@ -85,12 +86,12 @@ public abstract class ApplicationStarterBase implements ApplicationStarter {
   public void main(@NotNull String[] args) {
     int exitCode = 0;
     try {
-      Future<CliResult> commandFuture = processCommand(args, null);
+      Future<CliResult> commandFuture = processCommand(Arrays.asList(args), null);
       CliResult result = commandFuture.get();
-      if (result.getMessage() != null) {
-        System.out.println(result.getMessage());
+      if (result.message != null) {
+        System.out.println(result.message);
       }
-      exitCode = result.getReturnCode();
+      exitCode = result.exitCode;
     }
     catch (Exception e) {
       e.printStackTrace();

@@ -1,27 +1,11 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInspection
 
-import com.intellij.ToolExtensionPoints
+import com.intellij.codeInspection.ex.EntryPointsManagerBase
 import com.intellij.codeInspection.java19modules.Java9ModuleEntryPoint
-import com.intellij.codeInspection.reference.EntryPoint
 import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
 import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.*
 import com.intellij.openapi.application.ex.PathManagerEx
-import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.JavaInspectionTestCase
 import org.intellij.lang.annotations.Language
@@ -105,8 +89,7 @@ class Java9UnusedServiceImplementationsTest : LightJava9ModulesCodeInsightFixtur
     else
       addFile("my/ext/MyServiceExt.java", implText, EXT)
 
-    val extensionPoint = Extensions.getRootArea().getExtensionPoint<EntryPoint>(ToolExtensionPoints.DEAD_CODE_TOOL)
-    val moduleEntryPoint = extensionPoint.extensions.find { it is Java9ModuleEntryPoint }
+    val moduleEntryPoint = EntryPointsManagerBase.DEAD_CODE_EP_NAME.extensions.find { it is Java9ModuleEntryPoint }
     val wasSelected = moduleEntryPoint?.isSelected ?: true
 
     try {

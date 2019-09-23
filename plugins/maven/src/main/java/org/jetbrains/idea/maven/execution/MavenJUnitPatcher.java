@@ -9,22 +9,28 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.PropertiesUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
+import one.util.streamex.StreamEx;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.MavenPropertyResolver;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
+import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectSettings;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.project.MavenTestRunningSettings;
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil;
 
-import java.io.*;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.io.File;
+import java.io.IOException;
+import java.io.Reader;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -32,8 +38,19 @@ import java.util.regex.Pattern;
  * @author Sergey Evdokimov
  */
 public class MavenJUnitPatcher extends JUnitPatcher {
-  public static final Pattern PROPERTY_PATTERN = Pattern.compile("\\$\\{(.+?)\\}");
+  public static final Pattern PROPERTY_PATTERN = Pattern.compile("\\$\\{(.+?)}");
+  public static final Pattern ARG_LINE_PATTERN = Pattern.compile("\\$\\{(.+?)}|@(.+?)@|@\\{(.+?)}");
   private static final Logger LOG = Logger.getInstance(MavenJUnitPatcher.class);
+  private static final Set<String> EXCLUDE_SUBTAG_NAMES =
+    ContainerUtil.immutableSet("classpathDependencyExclude", "classpathDependencyExcludes", "dependencyExclude");
+  // See org.apache.maven.artifact.resolver.filter.AbstractScopeArtifactFilter
+  private static final Map<String, List<String>> SCOPE_FILTER = ContainerUtil.<String, List<String>>immutableMapBuilder()
+    .put("compile", Arrays.asList("system", "provided", "compile"))
+    .put("runtime", Arrays.asList("compile", "runtime"))
+    .put("compile+runtime", Arrays.asList("system", "provided", "compile", "runtime"))
+    .put("runtime+system", Arrays.asList("system", "compile", "runtime"))
+    .put("test", Arrays.asList("system", "provided", "compile", "runtime", "test"))
+    .build();
 
   @Override
   public void patchJavaParameters(@Nullable Module module, JavaParameters javaParameters) {
@@ -64,8 +81,23 @@ public class MavenJUnitPatcher extends JUnitPatcher {
     List<String> paths = MavenJDOMUtil.findChildrenValuesByPath(config, "additionalClasspathElements", "additionalClasspathElement");
 
     if (paths.size() > 0) {
-      for (String path : paths) {
-        javaParameters.getClassPath().add(resolvePluginProperties(plugin, path, domModel));
+      for (String pathLine : paths) {
+        for (String path : pathLine.split(",")) {
+          javaParameters.getClassPath().add(resolvePluginProperties(plugin, path.trim(), domModel));
+        }
+      }
+    }
+
+    List<String> excludes = getExcludedArtifacts(config);
+    String scopeExclude = MavenJDOMUtil.findChildValueByPath(config, "classpathDependencyScopeExclude");
+
+    if (scopeExclude != null || !excludes.isEmpty()) {
+      for (MavenArtifact dependency : mavenProject.getDependencies()) {
+        if (SCOPE_FILTER.getOrDefault(scopeExclude, Collections.emptyList()).contains(dependency.getScope()) ||
+            excludes.contains(dependency.getGroupId() + ":" + dependency.getArtifactId())) {
+          File file = dependency.getFile();
+          javaParameters.getClassPath().remove(file.getAbsolutePath());
+        }
       }
     }
 
@@ -93,15 +125,9 @@ public class MavenJUnitPatcher extends JUnitPatcher {
             systemPropertiesFilePath = mavenProject.getDirectory() + '/' + systemPropertiesFilePath;
           }
           if (StringUtil.isNotEmpty(systemPropertiesFilePath) && new File(systemPropertiesFilePath).exists()) {
-            try {
-              Reader fis = new BufferedReader(new FileReader(systemPropertiesFilePath));
-              try {
-                Map<String, String> properties = PropertiesUtil.loadProperties(fis);
-                properties.forEach((pName, pValue) -> javaParameters.getVMParametersList().addProperty(pName, pValue));
-              }
-              finally {
-                fis.close();
-              }
+            try (Reader fis = Files.newBufferedReader(Paths.get(systemPropertiesFilePath), StandardCharsets.ISO_8859_1)) {
+              Map<String, String> properties = PropertiesUtil.loadProperties(fis);
+              properties.forEach((pName, pValue) -> javaParameters.getVMParametersList().addProperty(pName, pValue));
             }
             catch (IOException e) {
               LOG.warn("Can't read property file '" + systemPropertiesFilePath + "': " + e.getMessage());
@@ -147,11 +173,33 @@ public class MavenJUnitPatcher extends JUnitPatcher {
     }
   }
 
+  @NotNull
+  private static List<String> getExcludedArtifacts(@NotNull Element config) {
+    Element excludesElement = config.getChild("classpathDependencyExcludes");
+    if (excludesElement == null) {
+      return Collections.emptyList();
+    }
+    String rawText = excludesElement.getTextTrim();
+    List<String> excludes = new ArrayList<>();
+    if (!rawText.isEmpty()) {
+      StreamEx.split(rawText, ',').map(String::trim).into(excludes);
+    }
+    for (Element child : excludesElement.getChildren()) {
+      if (EXCLUDE_SUBTAG_NAMES.contains(child.getName())) {
+        String excludeItem = child.getTextTrim();
+        if (!excludeItem.isEmpty()) {
+          StreamEx.split(excludeItem, ',').map(String::trim).into(excludes);
+        }
+      }
+    }
+    return excludes;
+  }
+
   private static String resolvePluginProperties(@NotNull String plugin, @NotNull String value, @Nullable MavenDomProjectModel domModel) {
     if (domModel != null) {
-      value = MavenPropertyResolver.resolve(value, domModel);
+      value = MavenPropertyResolver.resolve(ARG_LINE_PATTERN, value, domModel);
     }
-    return value.replaceAll("\\$\\{" + plugin + "\\.(forkNumber|threadNumber)\\}", "1");
+    return value.replaceAll("\\$\\{" + plugin + "\\.(forkNumber|threadNumber)}", "1");
   }
 
   private static String resolveVmProperties(@NotNull ParametersList vmParameters, @NotNull String value) {

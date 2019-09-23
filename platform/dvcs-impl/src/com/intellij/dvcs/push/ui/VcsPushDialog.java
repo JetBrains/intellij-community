@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.dvcs.push.ui;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -18,6 +18,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.OptionAction;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import net.miginfocom.swing.MigLayout;
@@ -27,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -38,7 +40,10 @@ import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 
 public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvider {
 
-  private static final String ID = "Vcs.Push.Dialog";
+  private static final String DIMENSION_KEY = "Vcs.Push.Dialog.v2";
+  private static final String HELP_ID = "Vcs.Push.Dialog";
+  private static final int CENTER_PANEL_HEIGHT = 450;
+  private static final int CENTER_PANEL_WIDTH = 800;
 
   protected final Project myProject;
   private final PushLog myListPanel;
@@ -78,27 +83,44 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
     setTitle("Push Commits " + (allRepos.size() == 1 ? "to " + DvcsUtil.getShortRepositoryName(getFirstItem(allRepos)) : ""));
   }
 
+  @Nullable
+  @Override
+  protected Border createContentPaneBorder() {
+    return null;
+  }
+
+  @Nullable
+  @Override
+  protected JPanel createSouthAdditionalPanel() {
+    return createOptionsPanel();
+  }
+
+  @Override
+  protected JComponent createSouthPanel() {
+    JComponent southPanel = super.createSouthPanel();
+    southPanel.setBorder(JBUI.Borders.empty(8, 12));
+    return southPanel;
+  }
+
   @Override
   protected JComponent createCenterPanel() {
-    JPanel optionsPanel = createOptionsPanel();
-    return JBUI.Panels.simplePanel(0, 2)
-      .addToCenter(myListPanel)
-      .addToBottom(optionsPanel);
+    JPanel panel = myListPanel;
+    panel.setPreferredSize(new JBDimension(CENTER_PANEL_WIDTH, CENTER_PANEL_HEIGHT));
+    return panel;
   }
 
   @NotNull
   protected JPanel createOptionsPanel() {
-    JPanel optionsPanel = new JPanel(new MigLayout("ins 0 0, flowx"));
+    JPanel optionsPanel = new JPanel(new MigLayout(String.format("ins 0 %dpx 0 0, flowx, gapx %dpx", JBUI.scale(20), JBUI.scale(16))));
     for (VcsPushOptionsPanel panel : myAdditionalPanels.values()) {
       optionsPanel.add(panel);
     }
-    optionsPanel.setBorder(JBUI.Borders.emptyTop(6));
     return optionsPanel;
   }
 
   @Override
   protected String getDimensionServiceKey() {
-    return ID;
+    return DIMENSION_KEY;
   }
 
   @Nullable
@@ -155,7 +177,7 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
 
   @Override
   protected String getHelpId() {
-    return ID;
+    return HELP_ID;
   }
 
   @Override

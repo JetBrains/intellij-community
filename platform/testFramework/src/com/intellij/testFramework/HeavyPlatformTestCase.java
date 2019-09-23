@@ -7,6 +7,7 @@ import com.intellij.ide.GeneratedSourceFileChangeTracker;
 import com.intellij.ide.GeneratedSourceFileChangeTrackerImpl;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.highlighter.ProjectFileType;
+import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.idea.IdeaLogger;
 import com.intellij.idea.IdeaTestApplication;
@@ -36,6 +37,7 @@ import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.project.impl.TooManyProjectLeakedException;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
@@ -177,7 +179,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
   private static final String[] PREFIX_CANDIDATES = {
     "Rider", "GoLand",
     null,
-    "AppCode", "CLion", "CidrCommonTests",
+    "AppCode", "CLion", "SwiftTests", "CidrCommonTests",
     "DataGrip",
     "Python", "PyCharmCore",
     "Ruby",
@@ -228,10 +230,9 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
       myOldSdks = new SdkLeakTracker();
     }
 
+    setUpProject();
     myEditorListenerTracker = new EditorListenerTracker();
     myThreadTracker = new ThreadTracker();
-
-    setUpProject();
 
     boolean isTrackCodeStyleChanges = !(isStressTest() ||
                                         ApplicationManager.getApplication() == null ||
@@ -291,8 +292,11 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
   public static Project createProject(@NotNull Path file) {
     try {
       ProjectManagerImpl projectManager = (ProjectManagerImpl)ProjectManager.getInstance();
+      OpenProjectTask options = new OpenProjectTask();
+      options.useDefaultProjectAsTemplate = false;
       // in tests it is caller responsibility to refresh VFS (because often not only the project file must be refreshed, but the whole dir - so, no need to refresh several times)
-      return Objects.requireNonNull(projectManager.newProject(file, null, /* useDefaultProjectSettings = */ false, /* isRefreshVfsNeeded = */ false));
+      options.isRefreshVfsNeeded = false;
+      return Objects.requireNonNull(projectManager.newProject(file, null, options));
     }
     catch (TooManyProjectLeakedException e) {
       if (ourReportedLeakedProjects) {
@@ -364,9 +368,8 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
   }
 
   protected void runStartupActivities() {
-    final StartupManagerImpl startupManager = (StartupManagerImpl)StartupManager.getInstance(myProject);
+    StartupManagerImpl startupManager = (StartupManagerImpl)StartupManager.getInstance(myProject);
     startupManager.runStartupActivities();
-    startupManager.startCacheUpdate();
     startupManager.runPostStartupActivities();
   }
 
@@ -533,10 +536,19 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
   @Override
   protected void tearDown() throws Exception {
     Project project = myProject;
+    if (project instanceof ProjectImpl) {
+      ((ProjectImpl)project).stopServicePreloading();
+    }
+
     if (project != null && !project.isDisposed()) {
-      AutoPopupController.getInstance(project).cancelAllRequests(); // clear "show param info" delayed requests leaking project
+      // clear "show param info" delayed requests leaking project
+      AutoPopupController autoPopupController = project.getServiceIfCreated(AutoPopupController.class);
+      if (autoPopupController != null) {
+        autoPopupController.cancelAllRequests();
+      }
       waitForProjectLeakingThreads(project, 10, TimeUnit.SECONDS);
     }
+
     // don't use method references here to make stack trace reading easier
     //noinspection Convert2MethodRef
     new RunAll()
@@ -642,8 +654,23 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
     resetClassFields(aClass.getSuperclass());
   }
 
+  protected void registerTestProjectJdk(Sdk jdk) {
+    ProjectJdkTable jdkTable = ProjectJdkTable.getInstance();
+
+    for (Sdk existingSdk : jdkTable.getAllJdks()) {
+      if (existingSdk == jdk) return;
+    }
+
+    WriteAction.runAndWait(()-> jdkTable.addJdk(jdk, myProject));
+  }
+
   protected void setUpJdk() {
     final Sdk jdk = getTestProjectJdk();
+
+    if (jdk != null) {
+      registerTestProjectJdk(jdk);
+    }
+
     Module[] modules = ModuleManager.getInstance(myProject).getModules();
     for (Module module : modules) {
       ModuleRootModificationUtil.setModuleSdk(module, jdk);
@@ -995,6 +1022,10 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
   }
 
   public static void waitForProjectLeakingThreads(@NotNull Project project, long timeout, @NotNull TimeUnit timeUnit) throws Exception {
+    if (project instanceof ProjectImpl) {
+      ((ProjectImpl)project).stopServicePreloading();
+    }
+
     NonBlockingReadActionImpl.cancelAllTasks();
     GeneratedSourceFileChangeTrackerImpl tracker =
       (GeneratedSourceFileChangeTrackerImpl)project.getComponent(GeneratedSourceFileChangeTracker.class);

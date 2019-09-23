@@ -7,7 +7,7 @@ import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
@@ -23,6 +23,8 @@ import org.jetbrains.annotations.SystemIndependent;
 import org.picocontainer.MutablePicoContainer;
 import org.picocontainer.PicoContainer;
 
+import java.util.List;
+
 /**
  * @author peter
  */
@@ -32,21 +34,9 @@ final class DefaultProject extends UserDataHolderBase implements ProjectEx, Proj
   private final DefaultProjectTimed myDelegate = new DefaultProjectTimed(this) {
     @NotNull
     @Override
-    Project compute() {
+    ProjectEx compute() {
       LOG.assertTrue(!ApplicationManager.getApplication().isDisposeInProgress(), "Application is being disposed!");
       return new ProjectImpl() {
-        private MutablePicoContainer myPicoContainer;
-        @Override
-        protected MutablePicoContainer bootstrapPicoContainer(@NotNull String name) {
-          return null;
-        }
-
-        @NotNull
-        @Override
-        public MutablePicoContainer getPicoContainer() {
-          return myPicoContainer;
-        }
-
         @Override
         public boolean isDefault() {
           return true;
@@ -59,7 +49,7 @@ final class DefaultProject extends UserDataHolderBase implements ProjectEx, Proj
 
         @Nullable
         @Override
-        protected String activityNamePrefix() {
+        public String activityNamePrefix() {
           // exclude from measurement because default project initialization is not a sequential activity
           // (so, complicates timeline because not applicable)
           // for now we don't measure default project initialization at all, because it takes only ~10 ms
@@ -73,7 +63,6 @@ final class DefaultProject extends UserDataHolderBase implements ProjectEx, Proj
 
         @Override
         public void init(@Nullable ProgressIndicator indicator) {
-          myPicoContainer = super.bootstrapPicoContainer(TEMPLATE_PROJECT_NAME);
           MutablePicoContainer picoContainer = getPicoContainer();
           // do not leak internal delegate, use DefaultProject everywhere instead
           picoContainer.registerComponentInstance(Project.class, DefaultProject.this);
@@ -129,7 +118,7 @@ final class DefaultProject extends UserDataHolderBase implements ProjectEx, Proj
   }
 
   @NotNull
-  private Project getDelegate() {
+  private ProjectEx getDelegate() {
     return myDelegate.get();
   }
 
@@ -207,10 +196,23 @@ final class DefaultProject extends UserDataHolderBase implements ProjectEx, Proj
     return true;
   }
 
+  @SuppressWarnings("deprecation")
   @Override
   @Deprecated
   public BaseComponent getComponent(@NotNull String name) {
     return getDelegate().getComponent(name);
+  }
+
+  @SuppressWarnings("deprecation")
+  @NotNull
+  @Override
+  public <T> List<T> getComponentInstancesOfType(@NotNull Class<T> baseClass, boolean createIfNotYet) {
+    return getDelegate().getComponentInstancesOfType(baseClass, createIfNotYet);
+  }
+
+  @Override
+  public <T> T getService(@NotNull Class<T> serviceClass, boolean createIfNeeded) {
+    return getDelegate().getService(serviceClass, createIfNeeded);
   }
 
   @Override
@@ -219,26 +221,15 @@ final class DefaultProject extends UserDataHolderBase implements ProjectEx, Proj
   }
 
   @Override
-  public <T> T getComponent(@NotNull Class<T> interfaceClass, T defaultImplementationIfAbsent) {
-    return getDelegate().getComponent(interfaceClass, defaultImplementationIfAbsent);
-  }
-
-  @Override
-  public boolean hasComponent(@NotNull Class interfaceClass) {
-    return getDelegate().hasComponent(interfaceClass);
-  }
-
-  @Override
-  @NotNull
-  @Deprecated
-  public <T> T[] getComponents(@NotNull Class<T> baseClass) {
-    return getDelegate().getComponents(baseClass);
-  }
-
-  @Override
   @NotNull
   public PicoContainer getPicoContainer() {
     return getDelegate().getPicoContainer();
+  }
+
+  @NotNull
+  @Override
+  public ExtensionsArea getExtensionArea() {
+    return getDelegate().getExtensionArea();
   }
 
   @Override
@@ -250,13 +241,6 @@ final class DefaultProject extends UserDataHolderBase implements ProjectEx, Proj
   @Override
   public boolean isDisposed() {
     return ApplicationManager.getApplication().isDisposed();
-  }
-
-  @Override
-  @Deprecated
-  @NotNull
-  public <T> T[] getExtensions(@NotNull ExtensionPointName<T> extensionPointName) {
-    return getDelegate().getExtensions(extensionPointName);
   }
 
   @Override

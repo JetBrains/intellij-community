@@ -101,7 +101,6 @@ DONT_TRACE = {
     'dis.py':LIB_FILE,
 
     #things from pydev that we don't want to trace
-    '_pydev_execfile.py':PYDEV_FILE,
 %(pydev_files)s
 }
 

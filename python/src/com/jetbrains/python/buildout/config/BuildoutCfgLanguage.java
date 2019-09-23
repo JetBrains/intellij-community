@@ -2,9 +2,6 @@
 package com.jetbrains.python.buildout.config;
 
 import com.intellij.lang.Language;
-import com.intellij.openapi.fileTypes.SingleLazyInstanceSyntaxHighlighterFactory;
-import com.intellij.openapi.fileTypes.SyntaxHighlighter;
-import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -15,13 +12,6 @@ public class BuildoutCfgLanguage extends Language {
 
   private BuildoutCfgLanguage() {
     super("BuildoutCfg");
-    SyntaxHighlighterFactory.LANGUAGE_FACTORY.addExplicitExtension(this, new SingleLazyInstanceSyntaxHighlighterFactory() {
-      @Override
-      @NotNull
-      protected SyntaxHighlighter createHighlighter() {
-        return new BuildoutCfgSyntaxHighlighter();
-      }
-    });
   }
 
   @NotNull

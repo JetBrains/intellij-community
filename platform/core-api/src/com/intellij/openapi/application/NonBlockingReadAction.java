@@ -2,6 +2,7 @@
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.Contract;
@@ -46,6 +47,12 @@ public interface NonBlockingReadAction<T> {
    */
   @Contract(pure = true)
   NonBlockingReadAction<T> expireWhen(@NotNull BooleanSupplier expireCondition);
+
+  /**
+   * @return a copy of this builder that cancels submitted read actions once the specified progress indicator is cancelled.
+   */
+  @Contract(pure = true)
+  NonBlockingReadAction<T> cancelWith(@NotNull ProgressIndicator progressIndicator);
 
   /**
    * @return a copy of this builder that cancels submitted read actions once the specified disposable is disposed.

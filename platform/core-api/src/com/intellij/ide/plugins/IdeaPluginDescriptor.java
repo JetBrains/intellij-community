@@ -49,7 +49,7 @@ public interface IdeaPluginDescriptor extends PluginDescriptor {
   String getCategory();
 
   @Nullable
-  List<Element> getAndClearActionDescriptionElements();
+  List<Element> getActionDescriptionElements();
 
   String getVendorEmail();
 
@@ -61,9 +61,9 @@ public interface IdeaPluginDescriptor extends PluginDescriptor {
 
   boolean getUseIdeaClassLoader();
 
-  /** @deprecated doesn't make sense for installed plugins; use PluginNode#getDownloads (to be removed in IDEA 2019) */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2019")
+  /** @deprecated doesn't make sense for installed plugins; use PluginNode#getDownloads */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   default String getDownloads() {
     return null;
   }

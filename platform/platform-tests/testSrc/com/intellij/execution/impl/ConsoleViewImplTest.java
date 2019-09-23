@@ -17,6 +17,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
+import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.TypedAction;
@@ -25,7 +26,6 @@ import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.extensions.ExtensionPoint;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
@@ -203,6 +203,22 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
     myConsole.print("\rMr\rSmith", ConsoleViewContentType.NORMAL_OUTPUT);
     myConsole.flushDeferredText();
     assertEquals("Smith", myConsole.getText());
+  }
+
+  public void testCaretAfterMultilineOutput() {
+    assertCaretAt(0, 0);
+    myConsole.print("Hi", ConsoleViewContentType.NORMAL_OUTPUT);
+    myConsole.flushDeferredText();
+    assertCaretAt(0, 2);
+    myConsole.print("\nprompt:", ConsoleViewContentType.NORMAL_OUTPUT);
+    myConsole.flushDeferredText();
+    assertCaretAt(1, 7);
+  }
+
+  private void assertCaretAt(int line, int column) {
+    LogicalPosition position = myConsole.getEditor().getCaretModel().getLogicalPosition();
+    assertEquals(line, position.line);
+    assertEquals(column, position.column);
   }
 
   @NotNull
@@ -540,7 +556,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
   }
 
   public void testSubsequentFoldsAreCombined() {
-    PlatformTestUtil.registerExtension(Extensions.getRootArea(), ConsoleFolding.EP_NAME, new ConsoleFolding() {
+    ServiceContainerUtil.registerExtension(ApplicationManager.getApplication(), ConsoleFolding.EP_NAME, new ConsoleFolding() {
       @Override
       public boolean shouldFoldLine(@NotNull Project project, @NotNull String line) {
         return line.contains("FOO");

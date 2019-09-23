@@ -5,7 +5,6 @@ import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -21,10 +20,7 @@ import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.HeavyPlatformTestCase
-import com.intellij.testFramework.RunAll
-import com.intellij.testFramework.TestLoggerFactory
-import com.intellij.testFramework.runInEdtAndWait
+import com.intellij.testFramework.*
 import com.intellij.util.ArrayUtil
 import com.intellij.util.ThrowableRunnable
 import com.intellij.vfs.AsyncVfsEventsPostProcessorImpl
@@ -64,22 +60,40 @@ abstract class VcsPlatformTest : HeavyPlatformTestCase() {
     changeListManager = ChangeListManagerImpl.getInstanceImpl(project)
     vcsManager = ProjectLevelVcsManager.getInstance(project) as ProjectLevelVcsManagerImpl
 
-    vcsNotifier = overrideService<VcsNotifier, TestVcsNotifier>(project)
-    vcsNotifier = project.service<VcsNotifier>() as TestVcsNotifier
+    vcsNotifier = TestVcsNotifier(myProject)
+    project.replaceService(VcsNotifier::class.java, vcsNotifier, testRootDisposable)
     cd(testRoot)
   }
 
   @Throws(Exception::class)
   override fun tearDown() {
     RunAll()
-      .append(ThrowableRunnable { AsyncVfsEventsPostProcessorImpl.waitEventsProcessed() })
-      .append(ThrowableRunnable { changeListManager.waitEverythingDoneInTestMode() })
-      .append(ThrowableRunnable { if (wasInit { vcsNotifier }) vcsNotifier.cleanup() })
-      .append(ThrowableRunnable { waitForPendingTasks() })
-      .append(ThrowableRunnable { if (myAssertionsInTestDetected) TestLoggerFactory.dumpLogToStdout(testStartedIndicator) })
+      .append(ThrowableRunnable { selfTearDownRunnable() })
       .append(ThrowableRunnable { clearFields(this) })
       .append(ThrowableRunnable { runInEdtAndWait { super@VcsPlatformTest.tearDown() } })
       .run()
+
+  }
+
+  private fun selfTearDownRunnable() {
+    var tearDownErrorDetected = false
+    try {
+      RunAll()
+        .append(ThrowableRunnable { AsyncVfsEventsPostProcessorImpl.waitEventsProcessed() })
+        .append(ThrowableRunnable { changeListManager.waitEverythingDoneInTestMode() })
+        .append(ThrowableRunnable { if (::vcsNotifier.isInitialized) vcsNotifier.cleanup() })
+        .append(ThrowableRunnable { waitForPendingTasks() })
+        .run()
+    }
+    catch (e: Throwable) {
+      tearDownErrorDetected = true
+      throw e
+    }
+    finally {
+      if (myAssertionsInTestDetected || tearDownErrorDetected) {
+        TestLoggerFactory.dumpLogToStdout(testStartedIndicator)
+      }
+    }
   }
 
   /**
@@ -111,16 +125,6 @@ abstract class VcsPlatformTest : HeavyPlatformTestCase() {
       name = name.substring(1)
     }
     return name
-  }
-
-  protected inline fun wasInit(f: () -> Unit): Boolean {
-    try {
-      f()
-    }
-    catch(e: UninitializedPropertyAccessException) {
-      return false
-    }
-    return true
   }
 
   @JvmOverloads

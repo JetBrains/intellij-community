@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
-import com.intellij.ToolExtensionPoints;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.GlobalInspectionTool;
 import com.intellij.codeInspection.InspectionEP;
@@ -14,7 +13,6 @@ import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.EntryPoint;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.openapi.application.ex.PathManagerEx;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -84,21 +82,21 @@ public abstract class JavaInspectionTestCase extends LightJavaCodeInsightFixture
     doTest(folderName, new GlobalInspectionToolWrapper(tool), checkRange, runDeadCodeFirst);
   }
 
-  public void doTest(@NonNls @NotNull String folderName, @NotNull InspectionToolWrapper tool) {
+  public void doTest(@NonNls @NotNull String folderName, @NotNull InspectionToolWrapper<?,?> tool) {
     doTest(folderName, tool, false);
   }
 
   public void doTest(@NonNls @NotNull String folderName,
-                     @NotNull InspectionToolWrapper tool,
+                     @NotNull InspectionToolWrapper<?,?> tool,
                      boolean checkRange) {
     doTest(folderName, tool, checkRange, false);
   }
 
   public void doTest(@NonNls @NotNull String folderName,
-                     @NotNull InspectionToolWrapper toolWrapper,
+                     @NotNull InspectionToolWrapper<?,?> toolWrapper,
                      boolean checkRange,
                      boolean runDeadCodeFirst,
-                     @NotNull InspectionToolWrapper... additional) {
+                     @NotNull InspectionToolWrapper<?,?>... additional) {
     final String testDir = getTestDataPath() + "/" + folderName;
     final List<InspectionToolWrapper<?, ?>> tools = getTools(runDeadCodeFirst, toolWrapper, additional);
     GlobalInspectionContextImpl context = runTool(folderName, toolWrapper, tools);
@@ -111,7 +109,7 @@ public abstract class JavaInspectionTestCase extends LightJavaCodeInsightFixture
   }
 
   protected GlobalInspectionContextImpl runTool(@NotNull final String testName,
-                                                @NotNull InspectionToolWrapper toolWrapper,
+                                                @NotNull InspectionToolWrapper<?,?> toolWrapper,
                                                 List<? extends InspectionToolWrapper<?, ?>> tools) {
     VirtualFile projectDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(getTestDataPath(), testName));
     assertNotNull(projectDir);
@@ -142,8 +140,8 @@ public abstract class JavaInspectionTestCase extends LightJavaCodeInsightFixture
 
   @NotNull
   private static List<InspectionToolWrapper<?, ?>> getTools(boolean runDeadCodeFirst,
-                                                            @NotNull InspectionToolWrapper toolWrapper,
-                                                            @NotNull InspectionToolWrapper[] additional) {
+                                                            @NotNull InspectionToolWrapper<?,?> toolWrapper,
+                                                            @NotNull InspectionToolWrapper<?,?>[] additional) {
     List<InspectionToolWrapper<?, ?>> toolWrappers = new ArrayList<>();
     if (runDeadCodeFirst) {
       toolWrappers.add(getUnusedDeclarationWrapper());
@@ -203,8 +201,7 @@ public abstract class JavaInspectionTestCase extends LightJavaCodeInsightFixture
       }
     };
 
-    Extensions.getRootArea().<EntryPoint>getExtensionPoint(ToolExtensionPoints.DEAD_CODE_TOOL)
-      .registerExtension(myUnusedCodeExtension, getTestRootDisposable());
+    EntryPointsManagerBase.DEAD_CODE_EP_NAME.getPoint(null).registerExtension(myUnusedCodeExtension, getTestRootDisposable());
   }
 
   @Override

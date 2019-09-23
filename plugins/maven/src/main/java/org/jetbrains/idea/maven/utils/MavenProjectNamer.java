@@ -15,8 +15,6 @@ import java.util.*;
  */
 public class MavenProjectNamer {
 
-  //private static Logger LOG = Logger.getInstance(MavenProjectNamer.class);
-
   public static Map<MavenProject, String> generateNameMap(Collection<MavenProject> mavenProjects) {
     MultiMap<String, MavenProject> artifactIdMap = new MultiMap<>();
 

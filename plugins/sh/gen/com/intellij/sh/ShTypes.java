@@ -136,6 +136,7 @@ public interface ShTypes {
   IElementType HEX = new ShTokenType("hex");
   IElementType IF = new ShTokenType("if");
   IElementType IN = new ShTokenType("in");
+  IElementType INPUT_PROCESS_SUBSTITUTION = new ShTokenType("<(");
   IElementType INT = new ShTokenType("int");
   IElementType LE = new ShTokenType("<=");
   IElementType LEFT_CURLY = new ShTokenType("{");
@@ -158,6 +159,7 @@ public interface ShTypes {
   IElementType OPEN_BACKQUOTE = new ShTokenType("OPEN_BACKQUOTE");
   IElementType OPEN_QUOTE = new ShTokenType("OPEN_QUOTE");
   IElementType OR_OR = new ShTokenType("||");
+  IElementType OUTPUT_PROCESS_SUBSTITUTION = new ShTokenType(">(");
   IElementType PARAMETER_EXPANSION_BODY = new ShTokenType("parameter_expansion_body");
   IElementType PIPE = new ShTokenType("|");
   IElementType PIPE_AMP = new ShTokenType("|&");

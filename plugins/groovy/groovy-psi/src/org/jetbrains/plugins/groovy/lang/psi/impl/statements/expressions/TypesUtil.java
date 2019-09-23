@@ -5,7 +5,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiSubstitutorImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
@@ -31,7 +30,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.impl.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrImmediateClosureSignatureImpl;
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter;
-import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter.ApplicableTo;
+import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter.Position;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
@@ -149,14 +148,14 @@ public class TypesUtil implements TypeConstants {
     if (lType == null || rType == null) {
       return false;
     }
-    return canAssign(lType, rType, context, ApplicableTo.ASSIGNMENT) == ConversionResult.OK;
+    return canAssign(lType, rType, context, Position.ASSIGNMENT) == ConversionResult.OK;
   }
 
   @NotNull
   public static ConversionResult canAssign(@NotNull PsiType targetType,
                                            @NotNull PsiType actualType,
                                            @NotNull PsiElement context,
-                                           @NotNull ApplicableTo position) {
+                                           @NotNull Position position) {
     if (actualType instanceof PsiIntersectionType) {
       ConversionResult min = ConversionResult.ERROR;
       for (PsiType child : ((PsiIntersectionType)actualType).getConjuncts()) {
@@ -209,7 +208,7 @@ public class TypesUtil implements TypeConstants {
                                                            @NotNull PsiElement context) {
 
     if (targetType == null || actualType == null) return false;
-    return canAssign(targetType, actualType, context, ApplicableTo.METHOD_PARAMETER) == ConversionResult.OK;
+    return canAssign(targetType, actualType, context, Position.METHOD_PARAMETER) == ConversionResult.OK;
   }
 
   public static boolean isAssignableByParameter(@Nullable PsiType targetType,
@@ -217,19 +216,19 @@ public class TypesUtil implements TypeConstants {
                                                @NotNull PsiElement context) {
 
     if (targetType == null || actualType == null) return false;
-    return canAssign(targetType, actualType, context, ApplicableTo.GENERIC_PARAMETER) == ConversionResult.OK;
+    return canAssign(targetType, actualType, context, Position.GENERIC_PARAMETER) == ConversionResult.OK;
   }
 
   @Nullable
   private static ConversionResult areTypesConvertible(@NotNull PsiType targetType,
                                                       @NotNull PsiType actualType,
                                                       @NotNull PsiElement context,
-                                                      @NotNull ApplicableTo position) {
+                                                      @NotNull Position position) {
     if (!(context instanceof GroovyPsiElement)) return null;
     if (targetType.equals(actualType)) return ConversionResult.OK;
     for (GrTypeConverter converter : GrTypeConverter.EP_NAME.getExtensions()) {
       if (!converter.isApplicableTo(position)) continue;
-      final ConversionResult result = converter.isConvertibleEx(targetType, actualType, (GroovyPsiElement)context, position);
+      final ConversionResult result = converter.isConvertible(targetType, actualType, position, (GroovyPsiElement)context);
       if (result != null) return result;
     }
     return null;
@@ -261,7 +260,7 @@ public class TypesUtil implements TypeConstants {
 
   @NotNull
   public static ConversionResult canCast(@NotNull PsiType targetType, @NotNull PsiType actualType, @NotNull PsiElement context) {
-    final ConversionResult result = areTypesConvertible(targetType, actualType, context, ApplicableTo.EXPLICIT_CAST);
+    final ConversionResult result = areTypesConvertible(targetType, actualType, context, Position.EXPLICIT_CAST);
     if (result != null) return result;
     return TypeConversionUtil.areTypesConvertible(actualType, targetType) ? ConversionResult.OK : ConversionResult.ERROR;
   }
@@ -544,7 +543,7 @@ public class TypesUtil implements TypeConstants {
         result.put(parameter, map2.get(parameter));
       }
     }
-    return PsiSubstitutorImpl.createSubstitutor(result);
+    return PsiSubstitutor.createSubstitutor(result);
   }
 
   @NotNull

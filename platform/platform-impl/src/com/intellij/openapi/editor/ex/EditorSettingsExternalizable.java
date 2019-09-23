@@ -2,6 +2,7 @@
 package com.intellij.openapi.editor.ex;
 
 import com.intellij.ide.ui.UINumericRange;
+import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.editor.actions.CaretStopOptions;
@@ -80,8 +81,8 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
 
     public boolean REFRAIN_FROM_SCROLLING = false;
 
-    public boolean SHOW_NOTIFICATION_AFTER_REFORMAT_CODE_ACTION = true;
-    public boolean SHOW_NOTIFICATION_AFTER_OPTIMIZE_IMPORTS_ACTION = true;
+    private boolean SHOW_NOTIFICATION_AFTER_REFORMAT_CODE_ACTION = true;
+    private boolean SHOW_NOTIFICATION_AFTER_OPTIMIZE_IMPORTS_ACTION = true;
 
     public boolean ADD_CARETS_ON_DOUBLE_CTRL = true;
 
@@ -510,6 +511,22 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     myOptions.REFRAIN_FROM_SCROLLING = b;
   }
 
+  public boolean isShowNotificationAfterReformat() {
+    return myOptions.SHOW_NOTIFICATION_AFTER_REFORMAT_CODE_ACTION;
+  }
+
+  public void setShowNotificationAfterReformat(boolean b) {
+    myOptions.SHOW_NOTIFICATION_AFTER_REFORMAT_CODE_ACTION = b;
+  }
+
+  public boolean isShowNotificationAfterOptimizeImports() {
+    return myOptions.SHOW_NOTIFICATION_AFTER_OPTIMIZE_IMPORTS_ACTION;
+  }
+
+  public void setShowNotificationAfterOptimizeImports(boolean b) {
+    myOptions.SHOW_NOTIFICATION_AFTER_OPTIMIZE_IMPORTS_ACTION = b;
+  }
+
   public boolean isWhitespacesShown() {
     return myOptions.IS_WHITESPACES_SHOWN;
   }
@@ -655,7 +672,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   }
 
   /**
-   * @deprecated use com.intellij.codeInsight.hints.HintUtilsKt#setShowParameterHintsForLanguage instead
+   * @deprecated use {@link com.intellij.codeInsight.hints.HintUtilsKt#isParameterHintsEnabledForLanguage(Language)} instead
    */
   @Deprecated
   public boolean isShowParameterNameHints() {
@@ -663,7 +680,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   }
 
   /**
-   * @deprecated use com.intellij.codeInsight.hints.HintUtilsKt#setShowParameterHintsForLanguage(boolean, com.intellij.lang.Language) instead
+   * @deprecated use {@link com.intellij.codeInsight.hints.HintUtilsKt#setShowParameterHintsForLanguage(boolean, Language)} instead
    */
   @Deprecated
   public void setShowParameterNameHints(boolean value) {

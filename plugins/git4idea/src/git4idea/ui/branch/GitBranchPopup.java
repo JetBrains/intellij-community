@@ -145,6 +145,7 @@ class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
 
     popupGroup.addSeparator("Common Local Branches");
     List<BranchActionGroup> localBranchActions = myMultiRootBranchConfig.getLocalBranchNames().stream()
+      .filter(branchName -> !branchName.equals(myMultiRootBranchConfig.getCurrentBranch()))
       .map(l -> createLocalBranchActions(allRepositories, l))
       .sorted(FAVORITE_BRANCH_COMPARATOR)
       .collect(toList());

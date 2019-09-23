@@ -4,12 +4,15 @@ package org.jetbrains.plugins.github.pullrequest.ui
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.util.ProgressWindow
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBLoadingPanel
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.log.ui.frame.ProgressStripe
-import org.jetbrains.plugins.github.api.data.*
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestMergeableState
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestState
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsBusyStateTracker
@@ -17,21 +20,23 @@ import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsDataLoade
 import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsMetadataService
 import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsSecurityService
 import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsStateService
-import org.jetbrains.plugins.github.pullrequest.ui.details.GithubPullRequestDetailsModel
 import org.jetbrains.plugins.github.pullrequest.ui.details.GithubPullRequestDetailsPanel
+import org.jetbrains.plugins.github.ui.util.SingleValueModel
 import java.awt.BorderLayout
 
-internal class GithubPullRequestDetailsComponent(private val dataLoader: GithubPullRequestsDataLoader,
+internal class GithubPullRequestDetailsComponent(project: Project,
+                                                 private val dataLoader: GithubPullRequestsDataLoader,
                                                  securityService: GithubPullRequestsSecurityService,
                                                  busyStateTracker: GithubPullRequestsBusyStateTracker,
                                                  metadataService: GithubPullRequestsMetadataService,
                                                  stateService: GithubPullRequestsStateService,
-                                                 iconProviderFactory: CachingGithubAvatarIconsProvider.Factory)
+                                                 avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory)
   : GithubDataLoadingComponent<GHPullRequest>(), Disposable {
 
-  private val detailsModel = GithubPullRequestDetailsModel()
-  private val detailsPanel = GithubPullRequestDetailsPanel(detailsModel, securityService, busyStateTracker, metadataService, stateService,
-                                                           iconProviderFactory)
+  private val detailsModel = SingleValueModel<GHPullRequest?>(null)
+  private val detailsPanel = GithubPullRequestDetailsPanel(project, detailsModel,
+                                                           securityService, busyStateTracker, metadataService, stateService,
+                                                           avatarIconsProviderFactory)
 
   private val loadingPanel = JBLoadingPanel(BorderLayout(), this, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS).apply {
     isOpaque = false
@@ -48,19 +53,17 @@ internal class GithubPullRequestDetailsComponent(private val dataLoader: GithubP
     loadingPanel.add(detailsPanel)
     setContent(backgroundLoadingPanel)
     Disposer.register(this, detailsPanel)
-
-    detailsModel.details = null
   }
 
   override fun extractRequest(provider: GithubPullRequestDataProvider) = provider.detailsRequest
 
   override fun resetUI() {
     detailsPanel.emptyText.text = DEFAULT_EMPTY_TEXT
-    detailsModel.details = null
+    detailsModel.value = null
   }
 
   override fun handleResult(result: GHPullRequest) {
-    detailsModel.details = result
+    detailsModel.value = result
     if (result.state == GHPullRequestState.OPEN && result.mergeable == GHPullRequestMergeableState.UNKNOWN) {
       ApplicationManager.getApplication().invokeLater {
         dataLoader.findDataProvider(result.number)?.reloadDetails()
@@ -79,7 +82,7 @@ internal class GithubPullRequestDetailsComponent(private val dataLoader: GithubP
 
   override fun setBusy(busy: Boolean) {
     if (busy) {
-      if (detailsModel.details == null) {
+      if (detailsModel.value == null) {
         detailsPanel.emptyText.clear()
         loadingPanel.startLoading()
       }

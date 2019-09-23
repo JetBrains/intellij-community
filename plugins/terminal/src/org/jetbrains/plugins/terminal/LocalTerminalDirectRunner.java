@@ -10,7 +10,6 @@ import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessWaitFor;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -137,12 +136,11 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
 
   private Map<String, String> getTerminalEnvironment() {
     Map<String, String> envs = new THashMap<>(SystemInfo.isWindows ? CaseInsensitiveStringHashingStrategy.INSTANCE
-                                                                     : ContainerUtil.canonicalStrategy());
+                                                                   : ContainerUtil.canonicalStrategy());
 
     EnvironmentVariablesData envData = TerminalProjectOptionsProvider.getInstance(myProject).getEnvData();
     if (envData.isPassParentEnvs()) {
       envs.putAll(System.getenv());
-      fixPathEnvOnWindows(envs);
     }
 
     if (!SystemInfo.isWindows) {
@@ -159,32 +157,6 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
       envs.put(env.getKey(), macroManager.expandPath(env.getValue()));
     }
     return envs;
-  }
-
-  // Workaround for https://youtrack.jetbrains.com/issue/IDEA-218032
-  private static void fixPathEnvOnWindows(@NotNull Map<String, String> envs) {
-    if (SystemInfo.isWindows) {
-      final String PATH = "PATH";
-      String path = envs.get(PATH);
-      if (path != null) {
-        // Try to match <PATH> as
-        // C:\Users\my_user\AppData\Local\JetBrains\Toolbox\apps\IDEA-C\ch-0\192.5728.98\jbr\\bin;
-        // C:\Users\my_user\AppData\Local\JetBrains\Toolbox\apps\IDEA-C\ch-0\192.5728.98\jbr\\bin\server;<rest PATH>
-        // and, if OK, set PATH=<rest PATH>
-        String[] parts = path.split(";", 3);
-        if (parts.length == 3 && insideIdeHome(parts[0], "\\jbr\\\\bin") && insideIdeHome(parts[1], "\\jbr\\\\bin\\server")) {
-          envs.put(PATH, parts[2]);
-          if (LOG.isDebugEnabled()) {
-            LOG.debug("PATH changed from " + path + " to " + parts[2]);
-          }
-        }
-      }
-    }
-  }
-
-  private static boolean insideIdeHome(@NotNull String actualPath, @NotNull String ideHomeSubDirectory) {
-    String ideHome = PathManager.getHomePath();
-    return actualPath.equals(ideHome + ideHomeSubDirectory);
   }
 
   @Override

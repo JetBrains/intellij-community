@@ -3,7 +3,6 @@ package com.intellij.ide.actions;
 
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -14,8 +13,9 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.containers.FactoryMap;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import gnu.trove.TLongLongHashMap;
 import gnu.trove.TObjectLongHashMap;
@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.lang.management.*;
+import java.lang.reflect.Method;
 import java.util.*;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -31,6 +32,41 @@ import java.util.concurrent.TimeUnit;
 class ActivityMonitorAction extends DumbAwareAction {
   private static final String[] MEANINGLESS_PREFIXES_1 = {"com.intellij.", "com.jetbrains.", "org.jetbrains.", "org.intellij."};
   private static final String[] MEANINGLESS_PREFIXES_2 = {"util.", "openapi.", "plugins.", "extapi."};
+  private static final String[] INFRASTRUCTURE_PREFIXES = {
+    "sun.",
+    "com.sun.",
+    "com.yourkit.",
+    "com.fasterxml.jackson.",
+    "net.sf.cglib.",
+    "org.jetbrains.org.objectweb.asm.",
+    "org.picocontainer.",
+    "net.jpountz.lz4.",
+    "net.n3.nanoxml.",
+    "org.apache.",
+    "one.util.streamex",
+    "java.",
+    "gnu.",
+    "kotlin.",
+    "groovy.",
+    "org.codehaus.groovy.",
+    "org.gradle.",
+    "com.google.common.",
+    "com.google.gson.",
+    "com.intellij.psi.impl.source.tree.",
+    "com.intellij.psi.util.Cached",
+    "com.intellij.openapi.extensions.",
+    "com.intellij.openapi.util.",
+    "com.intellij.util.",
+    "com.intellij.concurrency.",
+    "com.intellij.semantic.",
+    "com.intellij.jam.",
+    "com.intellij.psi.stubs.",
+    "com.intellij.ide.IdeEventQueue",
+    "com.intellij.openapi.fileTypes.",
+    "com.intellij.openapi.vfs.newvfs.persistent.PersistentFS",
+    "com.intellij.openapi.vfs.newvfs.persistent.FSRecords",
+    "javax."
+  };
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
@@ -39,14 +75,20 @@ class ActivityMonitorAction extends DumbAwareAction {
     ThreadMXBean threadBean = ManagementFactory.getThreadMXBean();
     List<GarbageCollectorMXBean> gcBeans = ManagementFactory.getGarbageCollectorMXBeans();
     CompilationMXBean jitBean = ManagementFactory.getCompilationMXBean();
+    OperatingSystemMXBean osBean = ManagementFactory.getOperatingSystemMXBean();
+    Method getProcessCpuTime = Objects.requireNonNull(ReflectionUtil.getMethod(osBean.getClass().getInterfaces()[0], "getProcessCpuTime"));
     ScheduledFuture<?> future = AppExecutorUtil.getAppScheduledExecutorService().scheduleWithFixedDelay(new Runnable() {
       final TLongLongHashMap lastThreadTimes = new TLongLongHashMap();
       final TObjectLongHashMap<String> subsystemToSamples = new TObjectLongHashMap<>();
       long lastGcTime = totalGcTime();
+      long lastProcessTime = totalProcessTime();
       long lastJitTime = jitBean.getTotalCompilationTime();
       long lastUiUpdate = System.currentTimeMillis();
 
-      private final Map<String, String> classToSubsystem = FactoryMap.create(className -> {
+      private final Map<String, String> classToSubsystem = new HashMap<>();
+
+      @NotNull
+      private String calcSubSystemName(String className) {
         String pkg = StringUtil.getPackageName(className);
         if (pkg.isEmpty()) pkg = className;
 
@@ -55,9 +97,9 @@ class ActivityMonitorAction extends DumbAwareAction {
           pkg = pkg.substring(prefix.length()) + " (in " + StringUtil.trimEnd(prefix, ".") + ")";
         }
 
-        IdeaPluginDescriptor plugin = PluginManager.getPlugin(PluginManagerCore.getPluginByClassName(className));
+        IdeaPluginDescriptor plugin = PluginManagerCore.getPlugin(PluginManagerCore.getPluginByClassName(className));
         return plugin != null ? "Plugin " + plugin.getName() + ": " + pkg : pkg;
-      });
+      }
 
       private String getMeaninglessPrefix(String qname) {
         String result = findPrefix(qname, MEANINGLESS_PREFIXES_1);
@@ -80,29 +122,34 @@ class ActivityMonitorAction extends DumbAwareAction {
         return gcBeans.stream().mapToLong(GarbageCollectorMXBean::getCollectionTime).sum();
       }
 
+      private long totalProcessTime() {
+        try {
+          return (long)getProcessCpuTime.invoke(osBean);
+        }
+        catch (Exception ex) {
+          return 0;
+        }
+      }
+
       @NotNull
       private String getSubsystemName(long threadId) {
         if (threadId == Thread.currentThread().getId()) {
           return "<Activity Monitor>";
         }
 
-        ThreadInfo info = threadBean.getThreadInfo(threadId);
+        ThreadInfo info = threadBean.getThreadInfo(threadId, Integer.MAX_VALUE);
         if (info == null) return "<unidentified: thread finished>";
 
-        if (info.getThreadState() == Thread.State.RUNNABLE) {
-          info = threadBean.getThreadInfo(threadId, Integer.MAX_VALUE);
-          if (info == null) return "<unidentified: thread finished>";
-
-          StackTraceElement[] trace = info.getStackTrace();
-          for (StackTraceElement element : trace) {
+        boolean runnable = info.getThreadState() == Thread.State.RUNNABLE;
+        if (runnable) {
+          for (StackTraceElement element : info.getStackTrace()) {
             String className = element.getClassName();
             if (!isInfrastructureClass(className)) {
-              return classToSubsystem.get(className);
+              return classToSubsystem.computeIfAbsent(className, this::calcSubSystemName);
             }
           }
-          return "<infrastructure: " + getCommonThreadName(info) + ">";
         }
-        return "<unidentified: " + getCommonThreadName(info) + ">";
+        return (runnable ? "<infrastructure: " : "<unidentified: ") + getCommonThreadName(info) + ">";
       }
 
       private String getCommonThreadName(ThreadInfo info) {
@@ -115,37 +162,7 @@ class ActivityMonitorAction extends DumbAwareAction {
       }
 
       private boolean isInfrastructureClass(String className) {
-        return className.startsWith("sun.") ||
-               className.startsWith("com.sun.") ||
-               className.startsWith("com.yourkit.") ||
-               className.startsWith("com.fasterxml.jackson.") ||
-               className.startsWith("net.sf.cglib.") ||
-               className.startsWith("org.jetbrains.org.objectweb.asm.") ||
-               className.startsWith("org.picocontainer.") ||
-               className.startsWith("net.jpountz.lz4.") ||
-               className.startsWith("net.n3.nanoxml.") ||
-               className.startsWith("org.apache.") ||
-               className.startsWith("one.util.streamex") ||
-               className.startsWith("java.") ||
-               className.startsWith("gnu.") ||
-               className.startsWith("kotlin.") ||
-               className.startsWith("groovy.") ||
-               className.startsWith("org.codehaus.groovy.") ||
-               className.startsWith("org.gradle.") ||
-               className.startsWith("com.google.common.") ||
-               className.startsWith("com.google.gson.") ||
-               className.startsWith("com.intellij.psi.impl.source.tree.") ||
-               className.startsWith("com.intellij.psi.util.Cached") ||
-               className.startsWith("com.intellij.openapi.extensions.") ||
-               className.startsWith("com.intellij.openapi.util.") ||
-               className.startsWith("com.intellij.util.") ||
-               className.startsWith("com.intellij.concurrency.") ||
-               className.startsWith("com.intellij.psi.stubs.") ||
-               className.startsWith("com.intellij.ide.IdeEventQueue") ||
-               className.startsWith("com.intellij.openapi.fileTypes.") ||
-               className.startsWith("com.intellij.openapi.vfs.newvfs.persistent.PersistentFS") ||
-               className.startsWith("com.intellij.openapi.vfs.newvfs.persistent.FSRecords") ||
-               className.startsWith("javax.");
+        return ContainerUtil.exists(INFRASTRUCTURE_PREFIXES, className::startsWith);
       }
 
       @Override
@@ -198,6 +215,13 @@ class ActivityMonitorAction extends DumbAwareAction {
           times.add(Pair.create("<JIT compiler>", jitTime - lastJitTime));
           lastJitTime = jitTime;
         }
+
+        long processTime = totalProcessTime();
+        if (processTime != lastProcessTime) {
+          times.add(Pair.create("<Process total CPU usage>", TimeUnit.NANOSECONDS.toMillis(processTime - lastProcessTime)));
+          lastProcessTime = processTime;
+        }
+
         return times;
       }
 

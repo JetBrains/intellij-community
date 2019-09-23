@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight;
 
 import com.intellij.openapi.components.ServiceManager;
@@ -148,17 +148,13 @@ public abstract class NullableNotNullManager {
     return null;
   }
 
-  /** @deprecated use {@link #copyNotNullAnnotation(PsiModifierListOwner, PsiModifierListOwner)} (to be removed in IDEA 17) */
+  /** @deprecated use {@link #copyNotNullAnnotation(PsiModifierListOwner, PsiModifierListOwner)} */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2017")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   public PsiAnnotation copyNotNullAnnotation(@NotNull PsiModifierListOwner owner) {
     NullabilityAnnotationInfo info = findOwnNullabilityInfo(owner);
     if (info == null || info.getNullability() != Nullability.NOT_NULL) return null;
-    return copyAnnotation(owner, info.getAnnotation());
-  }
-
-  private static PsiAnnotation copyAnnotation(@NotNull PsiModifierListOwner owner, @NotNull PsiAnnotation annotation) {
-    String qualifiedName = annotation.getQualifiedName();
+    String qualifiedName = info.getAnnotation().getQualifiedName();
     return qualifiedName != null
            ? JavaPsiFacade.getElementFactory(owner.getProject()).createAnnotationFromText("@" + qualifiedName, owner)
            : null;

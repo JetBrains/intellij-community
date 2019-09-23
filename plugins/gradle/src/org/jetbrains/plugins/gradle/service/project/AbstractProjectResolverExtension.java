@@ -29,7 +29,6 @@ import com.intellij.util.Consumer;
 import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.tooling.model.idea.IdeaModule;
 import org.gradle.tooling.model.idea.IdeaProject;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.ClassSetProjectImportModelProvider;
@@ -174,7 +173,4 @@ public abstract class AbstractProjectResolverExtension implements GradleProjectR
                                     @Nullable String jvmParametersSetup,
                                     @NotNull Consumer<String> initScriptConsumer) {
   }
-
-  @ApiStatus.Experimental
-  public void onResolveEnd(@NotNull DataNode<ProjectData> projectDataNode) {}
 }

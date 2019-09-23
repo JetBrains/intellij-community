@@ -103,7 +103,7 @@ public class GitShowExternalLogAction extends DumbAwareAction {
     for (VirtualFile root : roots) {
       repositoryManager.addExternalRepository(root, GitRepositoryImpl.getInstance(root, project, disposable, true));
     }
-    VcsLogManager manager = new VcsLogManager(project, ServiceManager.getService(project, GitExternalLogTabsProperties.class),
+    VcsLogManager manager = new VcsLogManager(project, ServiceManager.getService(GitExternalLogTabsProperties.class),
                                               ContainerUtil.map(roots, root -> new VcsRoot(vcs, root)));
     Disposer.register(disposable, () -> manager.dispose(() -> {
       for (VirtualFile root : roots) {

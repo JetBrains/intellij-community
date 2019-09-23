@@ -17,21 +17,21 @@ package com.intellij.diagnostic
 
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.concurrency.AppExecutorUtil
 import java.lang.management.GarbageCollectorMXBean
 import java.lang.management.ManagementFactory
-import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
 
 open class GcPauseWatcher {
   private val watchers = ManagementFactory.getGarbageCollectorMXBeans().map(::SingleCollectorWatcher)
+  private val counter = AtomicInteger()
 
   init {
     AppExecutorUtil.getAppScheduledExecutorService().scheduleWithFixedDelay(
       ::checkForPauses, 0, SAMPLING_RATE_MS, TimeUnit.MILLISECONDS)
   }
-  
+
   private inner class SingleCollectorWatcher(val bean: GarbageCollectorMXBean) {
     private var count = bean.collectionCount
     private var cumulativePauseTime = bean.collectionTime
@@ -49,8 +49,8 @@ open class GcPauseWatcher {
   }
 
   protected open fun recordGcPauseTime(name: String, currPauseDuration: Long) {
-    if (!LoadingPhase.isStartupComplete()) {
-      ParallelActivity.GC.record(StartUpMeasurer.getCurrentTime() - TimeUnit.MILLISECONDS.toNanos(currPauseDuration), null, null)
+    if (StartUpMeasurer.isEnabled()) {
+      StartUpMeasurer.addCompletedActivity(StartUpMeasurer.getCurrentTime() - TimeUnit.MILLISECONDS.toNanos(currPauseDuration), Integer.toString(counter.incrementAndGet()), ActivityCategory.GC, null)
     }
   }
 

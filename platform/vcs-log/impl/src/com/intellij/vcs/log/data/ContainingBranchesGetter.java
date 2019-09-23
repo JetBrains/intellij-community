@@ -6,7 +6,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
@@ -16,7 +15,6 @@ import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo;
 import com.intellij.vcs.log.util.SequentialLimitedLifoExecutor;
 import com.intellij.vcs.log.util.StopWatch;
-import com.intellij.vcs.log.util.VcsLogUtil;
 import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,7 +27,6 @@ import java.util.*;
  * Provides capabilities to asynchronously calculate "contained in branches" information.
  */
 public class ContainingBranchesGetter {
-
   private static final Logger LOG = Logger.getInstance(ContainingBranchesGetter.class);
 
   @NotNull private final SequentialLimitedLifoExecutor<Task> myTaskExecutor;
@@ -38,11 +35,12 @@ public class ContainingBranchesGetter {
   // other fields accessed only from EDT
   @NotNull private final List<Runnable> myLoadingFinishedListeners = new ArrayList<>();
   @NotNull private SLRUMap<CommitId, List<String>> myCache = createCache();
-  @NotNull private Map<VirtualFile, Condition<Integer>> myConditions = new HashMap<>();
+  @NotNull private final CurrentBranchConditionCache myConditionsCache;
   private int myCurrentBranchesChecksum;
 
   ContainingBranchesGetter(@NotNull VcsLogData logData, @NotNull Disposable parentDisposable) {
     myLogData = logData;
+    myConditionsCache = new CurrentBranchConditionCache(logData, parentDisposable);
     myTaskExecutor = new SequentialLimitedLifoExecutor<>(parentDisposable, 10, task -> {
       final List<String> branches = task.getContainingBranches(myLogData);
       ApplicationManager.getApplication().invokeLater(() -> {
@@ -65,7 +63,7 @@ public class ContainingBranchesGetter {
   private void clearCache() {
     myCache = createCache();
     myTaskExecutor.clear();
-    myConditions = new HashMap<>();
+    myConditionsCache.clear();
     // re-request containing branches information for the commit user (possibly) currently stays on
     ApplicationManager.getApplication().invokeLater(this::notifyListeners);
   }
@@ -134,31 +132,10 @@ public class ContainingBranchesGetter {
     return branches;
   }
 
+  @CalledInAny
   @NotNull
   public Condition<Integer> getContainedInCurrentBranchCondition(@NotNull VirtualFile root) {
-    LOG.assertTrue(EventQueue.isDispatchThread());
-
-    Condition<Integer> condition = myConditions.get(root);
-    if (condition == null) {
-      condition = doGetContainedInCurrentBranchCondition(root);
-      myConditions.put(root, condition);
-    }
-    return condition;
-  }
-
-  @NotNull
-  private Condition<Integer> doGetContainedInCurrentBranchCondition(@NotNull VirtualFile root) {
-    DataPack dataPack = myLogData.getDataPack();
-    if (dataPack == DataPack.EMPTY) return Conditions.alwaysFalse();
-
-    String branchName = myLogData.getLogProvider(root).getCurrentBranch(root);
-    if (branchName == null) return Conditions.alwaysFalse();
-
-    VcsRef branchRef = VcsLogUtil.findBranch(dataPack.getRefsModel(), root, branchName);
-    if (branchRef == null) return Conditions.alwaysFalse();
-
-    int branchIndex = myLogData.getCommitIndex(branchRef.getCommitHash(), branchRef.getRoot());
-    return dataPack.getPermanentGraph().getContainedInBranchCondition(Collections.singleton(branchIndex));
+    return myConditionsCache.getContainedInCurrentBranchCondition(root);
   }
 
   @NotNull
@@ -178,7 +155,7 @@ public class ContainingBranchesGetter {
   }
 
   private static boolean canUseGraphForComputation(@NotNull VcsLogProvider logProvider) {
-    return VcsLogProperties.get(logProvider, VcsLogProperties.LIGHTWEIGHT_BRANCHES);
+    return VcsLogProperties.LIGHTWEIGHT_BRANCHES.getOrDefault(logProvider);
   }
 
   private static class Task {

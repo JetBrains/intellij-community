@@ -62,7 +62,6 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   private final LockFreeCOWSortedArray<DocumentListener> myDocumentListeners =
     new LockFreeCOWSortedArray<>(PrioritizedDocumentListener.COMPARATOR, DocumentListener.ARRAY_FACTORY);
-  private final List<DocumentBulkUpdateListener> myBulkDocumentInternalListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final RangeMarkerTree<RangeMarkerEx> myRangeMarkers = new RangeMarkerTree<>(this);
   private final RangeMarkerTree<RangeMarkerEx> myPersistentRangeMarkers = new RangeMarkerTree<>(this);
   private final List<RangeMarker> myGuardedBlocks = new ArrayList<>();
@@ -872,7 +871,8 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   private void changedUpdate(@NotNull DocumentEvent event, long newModificationStamp, @NotNull CharSequence prevText, DelayedExceptions exceptions) {
     try {
-      if (LOG.isDebugEnabled()) LOG.debug(event.toString());
+      if (LOG.isTraceEnabled()) LOG.trace(new Throwable(event.toString()));
+      else if (LOG.isDebugEnabled()) LOG.debug(event.toString());
 
       assert event.getOldFragment().length() ==  event.getOldLength() : "event.getOldFragment().length() = " + event.getOldFragment().length()+"; event.getOldLength() = " + event.getOldLength();
       assert event.getNewFragment().length() ==  event.getNewLength() : "event.getNewFragment().length() = " + event.getNewFragment().length()+"; event.getNewLength() = " + event.getNewLength();
@@ -976,14 +976,6 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     if (!success) {
       LOG.error("Can't remove document listener (" + listener + "). Registered listeners: " + Arrays.toString(getListeners()));
     }
-  }
-
-  void addInternalBulkModeListener(@NotNull DocumentBulkUpdateListener listener) {
-    myBulkDocumentInternalListeners.add(listener);
-  }
-
-  void removeInternalBulkModeListener(@NotNull DocumentBulkUpdateListener listener) {
-    myBulkDocumentInternalListeners.remove(listener);
   }
 
   @Override
@@ -1097,14 +1089,14 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     try {
       if (value) {
         getPublisher().updateStarted(this);
-        notifyInternalListenersOnBulkModeStarted();
+        notifyListenersOnBulkModeStarting();
         myBulkUpdateEnteringTrace = new Throwable();
         myDoingBulkUpdate = true;
       }
       else {
         myDoingBulkUpdate = false;
         myBulkUpdateEnteringTrace = null;
-        notifyInternalListenersOnBulkModeFinished();
+        notifyListenersOnBulkModeFinished();
         getPublisher().updateFinished(this);
       }
     }
@@ -1113,16 +1105,32 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     }
   }
 
-  private void notifyInternalListenersOnBulkModeStarted() {
-    for (DocumentBulkUpdateListener listener : myBulkDocumentInternalListeners) {
-      listener.updateStarted(this);
+  private void notifyListenersOnBulkModeStarting() {
+    DelayedExceptions exceptions = new DelayedExceptions();
+    DocumentListener[] listeners = getListeners();
+    for (int i = listeners.length - 1; i >= 0; i--) {
+      try {
+        listeners[i].bulkUpdateStarting(this);
+      }
+      catch (Throwable e) {
+        exceptions.register(e);
+      }
     }
+    exceptions.rethrowPCE();
   }
 
-  private void notifyInternalListenersOnBulkModeFinished() {
-    for (DocumentBulkUpdateListener listener : myBulkDocumentInternalListeners) {
-      listener.updateFinished(this);
+  private void notifyListenersOnBulkModeFinished() {
+    DelayedExceptions exceptions = new DelayedExceptions();
+    DocumentListener[] listeners = getListeners();
+    for (DocumentListener listener : listeners) {
+      try {
+        listener.bulkUpdateFinished(this);
+      }
+      catch (Throwable e) {
+        exceptions.register(e);
+      }
     }
+    exceptions.rethrowPCE();
   }
 
   private static class DocumentBulkUpdateListenerHolder {

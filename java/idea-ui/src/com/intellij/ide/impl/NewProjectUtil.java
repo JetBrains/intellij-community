@@ -31,7 +31,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.wm.*;
-import com.intellij.openapi.wm.ex.IdeFrameEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.ui.UIUtil;
@@ -160,13 +159,9 @@ public class NewProjectUtil {
         ProjectUtil.updateLastProjectLocation(projectFilePath);
 
         if (WindowManager.getInstance().isFullScreenSupportedInCurrentOS()) {
-          IdeFocusManager instance = IdeFocusManager.findInstance();
-          IdeFrame lastFocusedFrame = instance.getLastFocusedFrame();
-          if (lastFocusedFrame instanceof IdeFrameEx) {
-            boolean fullScreen = ((IdeFrameEx)lastFocusedFrame).isInFullScreen();
-            if (fullScreen) {
-              newProject.putUserData(IdeFrameImpl.SHOULD_OPEN_IN_FULL_SCREEN, Boolean.TRUE);
-            }
+          IdeFrame lastFocusedFrame = IdeFocusManager.findInstance().getLastFocusedFrame();
+          if (lastFocusedFrame != null && lastFocusedFrame.isInFullScreen()) {
+            newProject.putUserData(IdeFrameImpl.SHOULD_OPEN_IN_FULL_SCREEN, Boolean.TRUE);
           }
         }
 

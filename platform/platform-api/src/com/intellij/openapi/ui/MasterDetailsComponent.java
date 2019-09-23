@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui;
 
 import com.intellij.CommonBundle;
@@ -681,14 +681,14 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
         final String name = scopeConfigurable.getDisplayName();
         if (name.trim().isEmpty()) {
           selectNodeInTree(node);
-          throw new ConfigurationException("Name should contain non-space characters");
+          throw new ConfigurationException(UIBundle.message("master.detail.err.empty.name"));
         }
         if (names.contains(name)) {
           final NamedConfigurable selectedConfigurable = getSelectedConfigurable();
           if (selectedConfigurable == null || !Comparing.strEqual(selectedConfigurable.getDisplayName(), name)) {
             selectNodeInTree(node);
           }
-          throw new ConfigurationException(CommonBundle.message("smth.already.exist.error.message", prefix, name), title);
+          throw new ConfigurationException(UIBundle.message("master.detail.err.duplicate", prefix, name), title);
         }
         names.add(name);
       }

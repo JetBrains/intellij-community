@@ -1,22 +1,10 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileTypes;
 
 import com.intellij.lang.Language;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.fileTypes.ex.FileTypeIdentifiableByVirtualFile;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.io.ByteSequence;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -27,6 +15,29 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 
 /**
+ * A service for retrieving file types for files.
+ *
+ * <p><b>Performance notice.</b> There are different rules of file type matching for a file: matching by file name, by extension,
+ * by file content, by custom logic providers and so on. They are all executed by the general methods {@code getFileTypeByFile},
+ * thus implying that execution of
+ * such methods is as long as the sum of all possible matching checks in the worst case. That includes reading file contents to
+ * feed to all {@link FileTypeDetector} instances, checking {@link FileTypeIdentifiableByVirtualFile} and so on. Such actions
+ * may lead to considerable slowdowns if used on large {@code VirtualFile} collections, e.g. in
+ * {@link com.intellij.openapi.vfs.newvfs.BulkFileListener} implementations.
+ *
+ * <p> If it is possible and correct to restrict file type matching by particular means (e.g. match only by file name),
+ * it is advised to do so, in order to improve the performance of the check, e.g. use
+ * <pre><code>
+ * FileTypeRegistry.getInstance().getFileTypeByFileName(file.getNameSequence())
+ * </code></pre>
+ * instead of
+ * <pre><code>
+ * file.getFileType()
+ * </code></pre>
+ *
+ * Also, if you are interested not in getting file type, but rather comparing file type with a known one, prefer using
+ * {@link #isFileOfType(VirtualFile, FileType)}, as it is faster than {@link #getFileTypeByFile(VirtualFile)} as well.
+ *
  * @author yole
  */
 public abstract class FileTypeRegistry {
@@ -49,6 +60,10 @@ public abstract class FileTypeRegistry {
   }
 
   public static FileTypeRegistry getInstance() {
+    if (ourInstanceGetter == null) {
+      // in tests FileTypeManager service maybe not preloaded, so, ourInstanceGetter is not set
+      return (FileTypeRegistry)ApplicationManager.getApplication().getPicoContainer().getComponentInstance("com.intellij.openapi.fileTypes.FileTypeManager");
+    }
     return ourInstanceGetter.get();
   }
 
@@ -138,6 +153,16 @@ public abstract class FileTypeRegistry {
     @Nullable
     default Collection<? extends FileType> getDetectedFileTypes() {
       return null;
+    }
+
+    /**
+     * Defines how much content is required for this detector to detect file type reliably. At least such amount of bytes
+     * will be passed to {@link #detect(VirtualFile, ByteSequence, CharSequence)} if present.
+     *
+     * @return number of first bytes to be given
+     */
+    default int getDesiredContentPrefixLength() {
+      return 1024;
     }
 
     int getVersion();

@@ -63,5 +63,4 @@ public abstract class ModuleBasedTarget<R extends BuildRootDescriptor> extends B
   public int hashCode() {
     return 31 * getId().hashCode() + getTargetType().hashCode();
   }
-
 }

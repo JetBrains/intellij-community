@@ -10,7 +10,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.containers.FactoryMap;
 import com.jetbrains.python.console.PydevConsoleRunner;
-import com.jetbrains.python.console.parsing.PyConsoleHighlightingLexer;
+import com.jetbrains.python.parsing.console.PyConsoleHighlightingLexer;
 import com.jetbrains.python.lexer.PythonHighlightingLexer;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyUtil;

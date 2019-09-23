@@ -6,7 +6,7 @@ import com.intellij.configurationStore.BundledSchemeEP;
 import com.intellij.configurationStore.LazySchemeProcessor;
 import com.intellij.configurationStore.SchemeDataHolder;
 import com.intellij.configurationStore.SchemeExtensionProvider;
-import com.intellij.diagnostic.LoadingPhase;
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.ide.WelcomeWizardUtil;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.UITheme;
@@ -145,6 +145,7 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
     initDefaultSchemes();
     loadBundledSchemes();
     loadSchemesFromThemes();
+    loadAdditionalTextAttributes();
     mySchemeManager.loadSchemes();
 
     initEditableDefaultSchemesCopies();
@@ -157,7 +158,6 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
     for (DefaultColorsScheme defaultScheme : DefaultColorSchemesManager.getInstance().getAllSchemes()) {
       mySchemeManager.addScheme(defaultScheme);
     }
-    loadAdditionalTextAttributes();
   }
 
   private void initEditableDefaultSchemesCopies() {
@@ -197,9 +197,9 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
 
   private void loadBundledSchemes() {
     if (!isUnitTestOrHeadlessMode()) {
-      for (BundledSchemeEP ep : BUNDLED_EP_NAME.getIterable()) {
+      BUNDLED_EP_NAME.forEachExtensionSafe(ep -> {
         mySchemeManager.loadBundledScheme(ep.getPath() + ".xml", ep);
-      }
+      });
     }
   }
 
@@ -366,7 +366,7 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
 
   @Override
   public void setGlobalScheme(@Nullable EditorColorsScheme scheme) {
-    boolean notify = LoadingPhase.COMPONENT_LOADED.isComplete();
+    boolean notify = LoadingState.COMPONENTS_LOADED.isOccurred();
     mySchemeManager.setCurrent(scheme == null ? getDefaultScheme() : scheme, notify);
   }
 

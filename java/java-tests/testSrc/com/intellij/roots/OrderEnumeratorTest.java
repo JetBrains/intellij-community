@@ -8,6 +8,7 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -197,6 +198,10 @@ public class OrderEnumeratorTest extends ModuleRootManagerTestCase {
     ModuleRootModificationUtil.addDependency(myModule, dep);
     ModuleRootModificationUtil.setModuleSdk(dep, getMockJdk17WithRtJarOnly());
     ModuleRootModificationUtil.setModuleSdk(myModule, getMockJdk18WithRtJarOnly());
+
+    registerTestProjectJdk(getMockJdk17WithRtJarOnly());
+    registerTestProjectJdk(getMockJdk18WithRtJarOnly());
+
     assertClassRoots(orderEntries(dep), getRtJarJdk17());
     assertClassRoots(orderEntries(myModule).recursively(), getRtJarJdk18());
   }
@@ -216,5 +221,54 @@ public class OrderEnumeratorTest extends ModuleRootManagerTestCase {
       expectedUrls.add(file.getUrl());
     }
     assertOrderedEquals(rootsEnumerator.getUrls(), ArrayUtilRt.toStringArray(expectedUrls));
+  }
+
+  public void testModuleWithNoTestsNoProductionMustProvideNoOutputRoots() throws IOException {
+    addModuleRoots(false, false);
+    assertClassUrls();
+  }
+
+  private void assertClassUrls(String... expectedUrls) {
+    String[] actual = orderEntries(myModule).classes().usingCache().getUrls();
+    assertSameElements(actual, expectedUrls);
+  }
+
+  public void testModuleWithNoTestsMustNotProvideTestOutputRoots() throws IOException {
+    addModuleRoots(true, false);
+    assertClassUrls(outputUrl(false));
+  }
+
+  @NotNull
+  private String outputUrl(boolean isTest) {
+    return CompilerProjectExtension.getInstance(myProject).getCompilerOutputUrl() + "/" + (isTest ? "test" : "production") + "/" + myModule.getName();
+  }
+
+  public void testModuleWithTestsButNoProductionMustNotProvideProductionOutputRoots() throws IOException {
+    addModuleRoots(false, true);
+    assertClassUrls(outputUrl(true));
+  }
+
+  public void testModuleWithTestsAndProductionMustProvideBothOutputRoots() throws IOException {
+    addModuleRoots(true, true);
+    assertClassUrls(outputUrl(false), outputUrl(true));
+  }
+
+  private void addModuleRoots(boolean addSources, boolean addTests) throws IOException {
+    VirtualFile tmp = refreshAndFindFile(createTempDirectory(true));
+    VirtualFile contDir = createChildDirectory(tmp, "content");
+    VirtualFile outDir = createChildDirectory(tmp, "out");
+    CompilerProjectExtension.getInstance(myProject).setCompilerOutputUrl(outDir.getUrl());
+    CompilerModuleExtension.getInstance(myModule).inheritCompilerOutputPath(true);
+    ModuleRootModificationUtil.updateModel(myModule, model -> {
+      ContentEntry content = model.addContentEntry(contDir);
+      if (addSources) {
+        content.addSourceFolder(contDir.getUrl() + "/src", false);
+      }
+      if (addTests) {
+        content.addSourceFolder(contDir.getUrl() + "/test", true);
+      }
+      OrderEntry jdk = ContainerUtil.find(model.getOrderEntries(), o -> o instanceof JdkOrderEntry);
+      model.removeOrderEntry(jdk);
+    });
   }
 }

@@ -5,6 +5,7 @@ APPL_USER=$2
 APPL_PASSWORD=$3
 APP_NAME=$4
 BUNDLE_ID=$5
+FAKE_ROOT="${6:-fake-root}"
 
 if [[ -z "$APP_DIRECTORY" ]] || [[ -z "$APPL_USER" ]] || [[ -z "$APPL_PASSWORD" ]]; then
   echo "Usage: $0 AppDirectory Username Password"
@@ -25,6 +26,31 @@ function publish-log() {
   curl -T "$file" "$ARTIFACTORY_URL/$id" || true
 }
 
+function altool-upload() {
+  # Since altool uses same file for upload token we have to trick it into using different folders for token file location
+  # Also it copies zip into TMPDIR so we override it too, to simplify cleanup
+  OLD_HOME="$HOME"
+  export HOME="$FAKE_ROOT/home"
+  export TMPDIR="$FAKE_ROOT/tmp"
+  mkdir -p "$HOME"
+  mkdir -p "$TMPDIR"
+  export _JAVA_OPTIONS="-Duser.home=$HOME -Djava.io.tmpdir=$TMPDIR"
+  # Reduce amount of downloads, cache transporter libraries
+  shared_itmstransporter="$OLD_HOME/shared-itmstransporter"
+  if [[ -f "$shared_itmstransporter" ]]; then
+    cp -r "$shared_itmstransporter" "$HOME/.itmstransporter"
+  fi
+  # For some reason altool prints everything to stderr, not stdout
+  set +e
+  xcrun altool --notarize-app \
+    --username "$APPL_USER" --password "$APPL_PASSWORD" \
+    --primary-bundle-id "$BUNDLE_ID" \
+    --asc-provider JetBrainssro --file "$1" 2>&1 | tee "altool.init.out"
+  unset TMPDIR
+  export HOME="$OLD_HOME"
+  set -e
+}
+
 #immediately exit script with an error if a command fails
 set -euo pipefail
 
@@ -36,12 +62,7 @@ ditto -c -k --sequesterRsrc --keepParent "$APP_DIRECTORY" "$file"
 
 log "Notarizing $file..."
 rm -rf "altool.init.out" "altool.check.out"
-# For some reason altool prints everything to stderr, not stdout
-xcrun altool --notarize-app \
-  --username "$APPL_USER" --password "$APPL_PASSWORD" \
-  --primary-bundle-id "$BUNDLE_ID" \
-  -itc_provider JetBrainssro --file "$file" >"altool.init.out" 2>&1 || true
-cat "altool.init.out"
+altool-upload "$file"
 
 rm -rf "$file"
 

@@ -19,6 +19,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ObjectsConvertor;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsFileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -248,13 +249,16 @@ public class HgStatusCommand {
 
   @NotNull
   public Collection<VirtualFile> getFiles(@NotNull VirtualFile repo, @Nullable Collection<FilePath> paths) {
-    Collection<VirtualFile> resultFiles = new HashSet<>();
+    return ContainerUtil.mapNotNull(getFilePaths(repo, paths), FilePath::getVirtualFile);
+  }
+
+  @NotNull
+  public Collection<FilePath> getFilePaths(@NotNull VirtualFile repo, @Nullable Collection<FilePath> paths) {
+    Collection<FilePath> resultFiles = new HashSet<>();
     Set<HgChange> change = executeInCurrentThread(repo, paths);
     for (HgChange hgChange : change) {
-      VirtualFile file = hgChange.afterFile().toFilePath().getVirtualFile();
-      if (file != null) {
-        resultFiles.add(file);
-      }
+      FilePath file = hgChange.afterFile().toFilePath();
+      resultFiles.add(file);
     }
     return resultFiles;
   }

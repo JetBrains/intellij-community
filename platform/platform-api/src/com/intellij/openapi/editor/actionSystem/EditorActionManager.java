@@ -57,6 +57,7 @@ public abstract class EditorActionManager {
   /**
    * @deprecated Use {@link TypedAction#getInstance()} instead
    */
+  @Deprecated
   @NotNull
   public abstract TypedAction getTypedAction();
 

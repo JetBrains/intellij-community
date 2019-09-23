@@ -1,5 +1,4 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package com.intellij.openapi.command.impl;
 
 import com.intellij.configurationStore.StorageManagerFileWriteRequestor;
@@ -23,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.util.List;
 
-public class FileUndoProvider implements UndoProvider, BulkFileListener {
+public final class FileUndoProvider implements UndoProvider, BulkFileListener {
   public static final Logger LOG = Logger.getInstance(FileUndoProvider.class);
 
   private final Key<DocumentReference> DELETION_WAS_UNDOABLE = new Key<>(FileUndoProvider.class.getName() + ".DeletionWasUndoable");

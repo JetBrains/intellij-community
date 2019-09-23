@@ -59,12 +59,12 @@ class MethodChainsInlayProvider : InlayHintsProvider<MethodChainsInlayProvider.S
     get() = ourKey
 
   override fun createConfigurable(settings: Settings) = object : ImmediateConfigurable {
-    val uniqueTypeCountName = "Unique type count"
+    val uniqueTypeCountName = "Minimal unique type count to show hints"
 
     private val uniqueTypeCount = JBIntSpinner(1, 1, 10)
 
     override fun createComponent(listener: ChangeListener): JPanel {
-      uniqueTypeCount.value = settings.uniqueTypeCount
+      reset()
       uniqueTypeCount.addChangeListener {
         handleChange(listener)
       }
@@ -76,6 +76,10 @@ class MethodChainsInlayProvider : InlayHintsProvider<MethodChainsInlayProvider.S
       }
       panel.border = JBUI.Borders.empty(5)
       return panel
+    }
+
+    override fun reset() {
+      uniqueTypeCount.value = settings.uniqueTypeCount
     }
 
     private fun handleChange(listener: ChangeListener) {
@@ -157,5 +161,7 @@ class MethodChainsInlayProvider : InlayHintsProvider<MethodChainsInlayProvider.S
     val ourKey: SettingsKey<Settings> = SettingsKey("chain.hints")
   }
 
-  data class Settings(var uniqueTypeCount: Int = 2)
+  data class Settings(var uniqueTypeCount: Int) {
+    constructor() : this(2)
+  }
 }

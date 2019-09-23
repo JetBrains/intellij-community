@@ -2,50 +2,59 @@
 package com.intellij.diagnostic.startUpPerformanceReporter
 
 import com.fasterxml.jackson.core.JsonGenerator
+import com.intellij.diagnostic.ActivityCategory
 import com.intellij.diagnostic.ActivityImpl
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.util.containers.ObjectLongHashMap
 import com.intellij.util.io.jackson.obj
-import java.util.concurrent.TimeUnit
+import gnu.trove.THashMap
 
-internal fun computeOwnTime(list: MutableList<ActivityImpl>, ownDurations: ObjectLongHashMap<ActivityImpl>) {
+// events must be already sorted by time
+internal fun computeOwnTime(allEvents: List<ActivityImpl>, threadNameManager: ThreadNameManager): ObjectLongHashMap<ActivityImpl> {
+  val ownDurations = ObjectLongHashMap<ActivityImpl>()
+
+  val threadToList = THashMap<String, MutableList<ActivityImpl>>()
+  for (event in allEvents) {
+    threadToList.getOrPut(threadNameManager.getThreadName(event)) { mutableListOf() }.add(event)
+  }
+
   val respectedItems = mutableListOf<ActivityImpl>()
-  var computedDurationForAll = 0L
-  for ((index, item) in list.withIndex()) {
-    val totalDuration = item.end - item.start
-    var ownDuration = totalDuration
-    respectedItems.clear()
 
-    if (index > 0 && list.get(index - 1).start > item.start) {
-      LOG.warn("prev ${list.get(index - 1).name} start > ${item.name}")
-    }
-
-    for (j in (index + 1) until list.size) {
-      val otherItem = list.get(j)
-      if (otherItem.end > item.end) {
-        break
+  for (list in threadToList.values) {
+    for ((index, item) in list.withIndex()) {
+      if (item.category == ActivityCategory.SERVICE_WAITING) {
+        continue
       }
 
-      if (isInclusive(otherItem, item) && respectedItems.all { !isInclusive(otherItem, it) }) {
-        ownDuration -= otherItem.end - otherItem.start
-        respectedItems.add(otherItem)
-      }
-    }
+      val totalDuration = item.end - item.start
+      var ownDuration = totalDuration
+      respectedItems.clear()
 
-    computedDurationForAll += ownDuration
-    if (totalDuration != ownDuration) {
-      ownDurations.put(item, ownDuration)
+      if (index > 0 && list.get(index - 1).start > item.start) {
+        StartUpPerformanceReporter.LOG.error("prev ${list.get(index - 1).name} start > ${item.name}")
+      }
+
+      for (i in (index + 1) until list.size) {
+        val otherItem = list.get(i)
+        if (otherItem.end > item.end) {
+          break
+        }
+
+        if (isInclusive(otherItem, item) && !respectedItems.any { isInclusive(otherItem, it) }) {
+          ownDuration -= otherItem.end - otherItem.start
+          respectedItems.add(otherItem)
+        }
+      }
+
+      if (totalDuration != ownDuration) {
+        ownDurations.put(item, ownDuration)
+      }
     }
   }
 
-  val actualTotalDurationForAll = list.last().end - list.first().start
-  val diff = actualTotalDurationForAll - computedDurationForAll
-  val diffInMs = TimeUnit.NANOSECONDS.toMillis(diff)
-  if (diff < 0 || diffInMs > 3) {
-    LOG.debug("computed: $computedDurationForAll, actual: ${actualTotalDurationForAll} (diff: $diff, diffInMs: $diffInMs)")
-  }
+  return ownDurations
 }
 
 private fun isInclusive(otherItem: ActivityImpl, item: ActivityImpl): Boolean {

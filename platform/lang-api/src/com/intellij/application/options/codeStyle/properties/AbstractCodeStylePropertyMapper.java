@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 
 public abstract class AbstractCodeStylePropertyMapper {
   private @NotNull final CodeStyleSettings myRootSettings;
-  private final AtomicNotNullLazyValue<Map<String,CodeStylePropertyAccessor>> myAccessorMap;
+  private final AtomicNotNullLazyValue<Map<String,CodeStylePropertyAccessor<?>>> myAccessorMap;
 
   public AbstractCodeStylePropertyMapper(@NotNull CodeStyleSettings settings) {
     myRootSettings = settings;
@@ -24,8 +24,8 @@ public abstract class AbstractCodeStylePropertyMapper {
     return getAccessorMap().keySet().stream().sorted().collect(Collectors.toList());
   }
 
-  private Map<String, CodeStylePropertyAccessor> createMap() {
-    Map<String, CodeStylePropertyAccessor> accessorMap = new HashMap<>();
+  private Map<String, CodeStylePropertyAccessor<?>> createMap() {
+    Map<String, CodeStylePropertyAccessor<?>> accessorMap = new HashMap<>();
     for (CodeStyleObjectDescriptor descriptor : getSupportedFields()) {
       addAccessorsFor(accessorMap, descriptor.getCodeStyleObject(), descriptor.getSupportedFields());
     }
@@ -36,17 +36,17 @@ public abstract class AbstractCodeStylePropertyMapper {
   @NotNull
   protected abstract List<CodeStyleObjectDescriptor> getSupportedFields();
 
-  protected void addAdditionalAccessors(@NotNull Map<String, CodeStylePropertyAccessor> accessorMap) {
+  protected void addAdditionalAccessors(@NotNull Map<String, CodeStylePropertyAccessor<?>> accessorMap) {
   }
 
-  private void addAccessorsFor(@NotNull Map<String, CodeStylePropertyAccessor> accessorMap,
+  private void addAccessorsFor(@NotNull Map<String, CodeStylePropertyAccessor<?>> accessorMap,
                                @NotNull Object codeStyleObject,
                                @Nullable Set<String> supportedFields) {
-    Class codeStyleClass = getObjectStorageClass(codeStyleObject);
+    Class<?> codeStyleClass = getObjectStorageClass(codeStyleObject);
     for (Field field : getCodeStyleFields(codeStyleClass)) {
       String fieldName = field.getName();
       if (supportedFields == null || supportedFields.contains(fieldName)) {
-        final CodeStylePropertyAccessor accessor = getAccessor(codeStyleObject, field);
+        final CodeStylePropertyAccessor<?> accessor = getAccessor(codeStyleObject, field);
         if (accessor != null) {
           accessorMap.put(accessor.getPropertyName(), accessor);
         }
@@ -54,8 +54,8 @@ public abstract class AbstractCodeStylePropertyMapper {
     }
   }
 
-  private static Class getObjectStorageClass(@NotNull Object codeStyleObject) {
-    Class objectClass = codeStyleObject.getClass();
+  private static Class<?> getObjectStorageClass(@NotNull Object codeStyleObject) {
+    Class<?> objectClass = codeStyleObject.getClass();
     if (CodeStyleSettings.class.isAssignableFrom(objectClass)) {
       return CodeStyleSettings.class;
     }
@@ -63,11 +63,11 @@ public abstract class AbstractCodeStylePropertyMapper {
   }
 
   @Nullable
-  protected CodeStylePropertyAccessor getAccessor(@NotNull Object codeStyleObject, @NotNull Field field) {
+  protected CodeStylePropertyAccessor<?> getAccessor(@NotNull Object codeStyleObject, @NotNull Field field) {
     return new FieldAccessorFactory(field).createAccessor(codeStyleObject);
   }
 
-  private List<Field> getCodeStyleFields(Class codeStyleClass) {
+  private List<Field> getCodeStyleFields(Class<?> codeStyleClass) {
     List<Field> fields = new ArrayList<>();
     Field[] allFields = useDeclaredFields() ? codeStyleClass.getDeclaredFields() : codeStyleClass.getFields();
     for (Field field : allFields) {
@@ -92,7 +92,7 @@ public abstract class AbstractCodeStylePropertyMapper {
   }
 
   @NotNull
-  private Map<String,CodeStylePropertyAccessor> getAccessorMap() {
+  private Map<String,CodeStylePropertyAccessor<?>> getAccessorMap() {
     return myAccessorMap.getValue();
   }
 
@@ -116,7 +116,7 @@ public abstract class AbstractCodeStylePropertyMapper {
     }
   }
 
-  public CodeStylePropertyAccessor getAccessor(@NotNull String property) {
+  public CodeStylePropertyAccessor<?> getAccessor(@NotNull String property) {
     return myAccessorMap.getValue().get(property);
   }
 

@@ -11,8 +11,8 @@ import com.intellij.codeInsight.hint.LineTooltipRenderer
 import com.intellij.codeInsight.hint.TooltipGroup
 import com.intellij.icons.AllIcons
 import com.intellij.ide.TooltipEvent
-import com.intellij.ide.actions.ActionsCollector
 import com.intellij.ide.ui.UISettings
+import com.intellij.internal.statistic.service.fus.collectors.TooltipActionsLogger
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem
@@ -96,10 +96,11 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
                           hintHint: HintHint,
                           newLayout: Boolean,
                           highlightActions: Boolean,
+                          limitWidthToScreen: Boolean,
                           tooltipReloader: TooltipReloader?): LightweightHint {
     return super.createHint(editor, p, alignToRight, group, hintHint, newLayout,
                             highlightActions || !(isShowActions() && tooltipAction != null && hintHint.isAwtTooltip),
-                            tooltipReloader)
+                            limitWidthToScreen, tooltipReloader)
   }
 
   override fun fillPanel(editor: Editor,
@@ -340,7 +341,7 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
     }
 
     override fun setSelected(e: AnActionEvent, state: Boolean) {
-      ActionsCollector.getInstance().record("tooltip.actions.show.description.gear", e.inputEvent, this::class.java)
+      TooltipActionsLogger.logShowDescription(e.project, "gear", e.inputEvent, e.place)
       reloader.reload(state)
     }
 

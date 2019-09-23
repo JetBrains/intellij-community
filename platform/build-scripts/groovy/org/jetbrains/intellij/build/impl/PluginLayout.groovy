@@ -214,7 +214,7 @@ class PluginLayout extends BaseLayout {
 
     /**
      * By default version of a plugin is equal to the build number of the IDE it's built with. This method allows to specify custom version evaluator.
-     * <strong>Don't use this for new plugins</strong>; it is temporary added to keep versioning scheme for some old plugins.
+     * @deprecated it was temporary added to keep versioning scheme for some old plugins.
      */
     void withCustomVersion(Function<BuildContext, String> versionEvaluator) {
       layout.versionEvaluator = versionEvaluator

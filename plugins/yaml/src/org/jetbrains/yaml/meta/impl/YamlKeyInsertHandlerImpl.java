@@ -10,7 +10,7 @@ import org.jetbrains.yaml.meta.model.YamlMetaType;
 import org.jetbrains.yaml.meta.model.YamlMetaType.ForcedCompletionPath;
 import org.jetbrains.yaml.meta.model.YamlMetaType.YamlInsertionMarkup;
 
-@ApiStatus.Experimental
+@ApiStatus.Internal
 public class YamlKeyInsertHandlerImpl extends YamlKeyInsertHandler {
   private final Field myToBeInserted;
 

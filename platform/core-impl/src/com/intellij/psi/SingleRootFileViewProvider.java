@@ -47,7 +47,8 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
   @SuppressWarnings("unused")
   private volatile PsiFile myPsiFile;
   private static final AtomicFieldUpdater<SingleRootFileViewProvider, PsiFile> myPsiFileUpdater = AtomicFieldUpdater.forFieldOfType(SingleRootFileViewProvider.class, PsiFile.class);
-  @NotNull private final Language myBaseLanguage;
+  @NotNull private Language myBaseLanguage;
+  private boolean myLanguageAutodetected = false;
 
   public SingleRootFileViewProvider(@NotNull PsiManager manager, @NotNull VirtualFile file) {
     this(manager, file, true);
@@ -56,29 +57,14 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
   public SingleRootFileViewProvider(@NotNull PsiManager manager,
                                     @NotNull VirtualFile virtualFile,
                                     final boolean eventSystemEnabled) {
-    this(manager, virtualFile, eventSystemEnabled, virtualFile.getFileType());
+    this(manager, virtualFile, eventSystemEnabled, calcBaseLanguage(virtualFile, manager.getProject()));
+    myLanguageAutodetected = true;
   }
-
-  public SingleRootFileViewProvider(@NotNull PsiManager manager,
-                                    @NotNull VirtualFile virtualFile,
-                                    final boolean eventSystemEnabled,
-                                    @NotNull final FileType fileType) {
-    this(manager, virtualFile, eventSystemEnabled, calcBaseLanguage(virtualFile, manager.getProject(), fileType), fileType);
-  }
-
   protected SingleRootFileViewProvider(@NotNull PsiManager manager,
                                        @NotNull VirtualFile virtualFile,
                                        final boolean eventSystemEnabled,
                                        @NotNull Language language) {
-    this(manager, virtualFile, eventSystemEnabled, language, virtualFile.getFileType());
-  }
-
-  protected SingleRootFileViewProvider(@NotNull PsiManager manager,
-                                       @NotNull VirtualFile virtualFile,
-                                       final boolean eventSystemEnabled,
-                                       @NotNull Language language,
-                                       @NotNull FileType type) {
-    super(manager, virtualFile, eventSystemEnabled, type);
+    super(manager, virtualFile, eventSystemEnabled);
     myBaseLanguage = language;
   }
 
@@ -88,7 +74,8 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
     return myBaseLanguage;
   }
 
-  private static Language calcBaseLanguage(@NotNull VirtualFile file, @NotNull Project project, @NotNull final FileType fileType) {
+  private static Language calcBaseLanguage(@NotNull VirtualFile file, @NotNull Project project) {
+    FileType fileType = file.getFileType();
     if (fileType.isBinary()) return Language.ANY;
     if (isTooLargeForIntelligence(file)) return PlainTextLanguage.INSTANCE;
 
@@ -253,5 +240,16 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
       }
     }
     getManager().getFileManager().setViewProvider(getVirtualFile(), this);
+  }
+
+  @Override
+  public void updateLanguage() {
+    if (myLanguageAutodetected) {
+      Language oldLanguage = myBaseLanguage;
+      myBaseLanguage = calcBaseLanguage(getVirtualFile(), getManager().getProject());
+      if (myBaseLanguage != oldLanguage) {
+        myPsiFileUpdater.set(this, null);
+      }
+    }
   }
 }

@@ -121,6 +121,11 @@ public class OverheadView extends BorderLayoutPanel implements Disposable, DataP
       .map(XBreakpoint::getNavigatable).nonNull();
   }
 
+
+  public JComponent getDefaultFocusedComponent() {
+    return myTable;
+  }
+
   @Nullable
   @Override
   public Object getData(@NotNull String dataId) {

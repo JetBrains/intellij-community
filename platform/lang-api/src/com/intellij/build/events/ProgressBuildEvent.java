@@ -15,12 +15,9 @@
  */
 package com.intellij.build.events;
 
-import org.jetbrains.annotations.ApiStatus;
-
 /**
  * @author Vladislav.Soroka
  */
-@ApiStatus.Experimental
 public interface ProgressBuildEvent extends BuildEvent {
   /**
    * Returns the total amount of work that the event operation is in the progress of performing, or -1 if not known.

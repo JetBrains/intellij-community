@@ -2,7 +2,9 @@
 package org.jetbrains.plugins.github.util
 
 import com.google.common.cache.CacheBuilder
+import com.intellij.execution.process.ProcessIOExecutorService
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -10,7 +12,6 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.LowMemoryWatcher
 import com.intellij.util.ImageLoader
-import com.intellij.util.concurrency.AppExecutorUtil
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequests
 import java.awt.Image
@@ -18,10 +19,9 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import java.util.function.Supplier
 
-class CachingGithubUserAvatarLoader(private val progressManager: ProgressManager) : Disposable {
+class CachingGithubUserAvatarLoader : Disposable {
   private val LOG = logger<CachingGithubUserAvatarLoader>()
 
-  private val executor = AppExecutorUtil.getAppExecutorService()
   private val progressIndicator: EmptyProgressIndicator = NonReusableEmptyProgressIndicator()
 
   private val avatarCache = CacheBuilder.newBuilder()
@@ -40,12 +40,12 @@ class CachingGithubUserAvatarLoader(private val progressManager: ProgressManager
     return avatarCache.get(url) {
       CompletableFuture.supplyAsync(Supplier {
         try {
-          progressManager.runProcess(Computable { loadAndDownscale(requestExecutor, indicator, url, imageSize) }, indicator)
+          ProgressManager.getInstance().runProcess(Computable { loadAndDownscale(requestExecutor, indicator, url, imageSize) }, indicator)
         }
         catch (e: ProcessCanceledException) {
           null
         }
-      }, executor)
+      }, ProcessIOExecutorService.INSTANCE)
     }
   }
 
@@ -70,6 +70,9 @@ class CachingGithubUserAvatarLoader(private val progressManager: ProgressManager
   }
 
   companion object {
+    @JvmStatic
+    fun getInstance(): CachingGithubUserAvatarLoader = service()
+
     private const val MAXIMUM_ICON_SIZE = 40
   }
 }

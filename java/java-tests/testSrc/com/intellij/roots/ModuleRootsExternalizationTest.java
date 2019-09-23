@@ -2,10 +2,10 @@
 package com.intellij.roots;
 
 import com.intellij.application.options.ReplacePathToMacroMap;
-import com.intellij.configurationStore.JbXmlOutputter;
+import com.intellij.configurationStore.StoreUtil;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.ExpandMacroToPathMap;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
@@ -13,6 +13,7 @@ import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.IdeaTestUtil;
@@ -20,7 +21,6 @@ import com.intellij.testFramework.JavaModuleTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import org.jdom.Element;
 import org.jdom.JDOMException;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -33,28 +33,36 @@ import static com.intellij.testFramework.assertions.Assertions.assertThat;
  */
 public class ModuleRootsExternalizationTest extends JavaModuleTestCase {
   public void testEmptyModuleWrite() {
-    ModuleRootManagerImpl moduleRootManager = createTempModuleRootManager();
-    Element root = new Element("root");
-    moduleRootManager.getState().writeExternal(root);
-    assertThat(root.getText()).isEmpty();
+    ModuleRootManager moduleRootManager = createTempModuleRootManager();
+    if (moduleRootManager instanceof ModuleRootManagerImpl) {
+      Element root = new Element("root");
+      ((ModuleRootManagerImpl)moduleRootManager).getState().writeExternal(root);
+      assertThat(root.getText()).isEmpty();
+    }
   }
 
-  private ModuleRootManagerImpl createTempModuleRootManager() {
+  private ModuleRootManager createTempModuleRootManager() {
     File tmpModule = getTempDir().createTempFile("tst", ModuleFileType.DOT_DEFAULT_EXTENSION, false);
     myFilesToDelete.add(tmpModule);
     final Module module = createModule(tmpModule);
-    return (ModuleRootManagerImpl)ModuleRootManager.getInstance(module);
+    return ModuleRootManager.getInstance(module);
   }
 
-  public void testContentWrite() throws IOException {
-    File content = getTestRoot();
+  public void testContentWrite() throws IOException, JDOMException {
+    File content = new File(getProject().getBasePath());
     File source = new File(content, "source");
     File testSource = new File(content, "testSource");
     File exclude = new File(content, "exclude");
     File classes = new File(content, "classes");
     File testClasses = new File(content, "testClasses");
-    final VirtualFile contentFile = LocalFileSystem.getInstance().findFileByIoFile(content);
+    FileUtil.createDirectory(source);
+    FileUtil.createDirectory(testSource);
+    FileUtil.createDirectory(exclude);
+    FileUtil.createDirectory(classes);
+    FileUtil.createDirectory(testClasses);
+    final VirtualFile contentFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(content);
     assertNotNull(contentFile);
+    refreshRecursively(contentFile);
     final VirtualFile sourceFile = LocalFileSystem.getInstance().findFileByIoFile(source);
     assertNotNull(sourceFile);
     final VirtualFile testSourceFile = LocalFileSystem.getInstance().findFileByIoFile(testSource);
@@ -71,8 +79,6 @@ public class ModuleRootsExternalizationTest extends JavaModuleTestCase {
 
     final File moduleFile = new File(content, "test.iml");
     final Module module = createModule(moduleFile);
-    final ModuleRootManagerImpl moduleRootManager =
-      (ModuleRootManagerImpl)ModuleRootManager.getInstance(module);
 
     PsiTestUtil.addContentRoot(module, contentFile);
     PsiTestUtil.addSourceRoot(module, sourceFile);
@@ -82,41 +88,78 @@ public class ModuleRootsExternalizationTest extends JavaModuleTestCase {
     PsiTestUtil.setCompilerOutputPath(module, classesFile.getUrl(), false);
     PsiTestUtil.setCompilerOutputPath(module, testClassesFile.getUrl(), true);
 
-    final Element element = new Element("root");
-    moduleRootManager.getState().writeExternal(element);
-    assertElementEquals(element,
-                        "<root>" +
-                        "<output url=\"file://$MODULE_DIR$/classes\" />" +
-                        "<output-test url=\"file://$MODULE_DIR$/testClasses\" />" +
-                        "<exclude-output />" +
-                        "<content url=\"file://$MODULE_DIR$\">" +
-                        "<sourceFolder url=\"file://$MODULE_DIR$/source\" isTestSource=\"false\" />" +
-                        "<sourceFolder url=\"file://$MODULE_DIR$/testSource\" isTestSource=\"true\" />" +
-                        "<excludeFolder url=\"file://$MODULE_DIR$/exclude\" />" +
-                        "</content>" +
-                        "<orderEntry type=\"jdk\" jdkName=\"java 1.7\" jdkType=\"JavaSDK\" />" +
-                        "<orderEntry type=\"sourceFolder\" forTests=\"false\" />" +
-                        "</root>",
-                        module);
+    StoreUtil.saveDocumentsAndProjectSettings(myProject);
+
+    assertEquals(
+      "<component name=\"NewModuleRootManager\">\n" +
+      "  <output url=\"file://$MODULE_DIR$/classes\" />\n" +
+      "  <output-test url=\"file://$MODULE_DIR$/testClasses\" />\n" +
+      "  <exclude-output />\n" +
+      "  <content url=\"file://$MODULE_DIR$\">\n" +
+      "    <sourceFolder url=\"file://$MODULE_DIR$/source\" isTestSource=\"false\" />\n" +
+      "    <sourceFolder url=\"file://$MODULE_DIR$/testSource\" isTestSource=\"true\" />\n" +
+      "    <excludeFolder url=\"file://$MODULE_DIR$/exclude\" />\n" +
+      "  </content>\n" +
+      "  <orderEntry type=\"jdk\" jdkName=\"java 1.7\" jdkType=\"JavaSDK\" />\n" +
+      "  <orderEntry type=\"sourceFolder\" forTests=\"false\" />\n" +
+      "</component>",
+      JDOMUtil.writeElement(JDOMUtil.load(moduleFile).getChild("component"))
+    );
   }
 
-  public void testModuleLibraries() throws IOException {
-    File moduleFile = new File(getTestRoot(), "test.iml");
+  public void testJavaExternalPaths() throws JDOMException, IOException {
+    File content = new File(getProject().getBasePath());
+    VirtualFile contentRoot = refreshAndFindFile(content);
+    File javadocDir = new File(content, "javadoc");
+    File annotationsDir = new File(content, "annotations");
+    FileUtil.createDirectory(javadocDir);
+    FileUtil.createDirectory(annotationsDir);
+    String javadocUrl = refreshAndFindFile(javadocDir).getUrl();
+    String annotationsUrl = refreshAndFindFile(annotationsDir).getUrl();
+    File moduleFile = new File(content, "test.iml");
     Module module = createModule(moduleFile);
-    final ModuleRootManagerImpl moduleRootManager =
-      (ModuleRootManagerImpl)ModuleRootManager.getInstance(module);
+    ModuleRootModificationUtil.updateModel(module, (model) -> {
+      JavaModuleExternalPaths extension = model.getModuleExtension(JavaModuleExternalPaths.class);
+      extension.setExternalAnnotationUrls(new String[]{annotationsUrl});
+      extension.setJavadocUrls(new String[]{javadocUrl});
+      WriteAction.run(() -> extension.commit());
+    });
+
+    StoreUtil.saveDocumentsAndProjectSettings(myProject);
+
+    assertEquals(
+      "<component name=\"NewModuleRootManager\" inherit-compiler-output=\"true\">\n" +
+      "  <exclude-output />\n" +
+      "  <annotation-paths>\n" +
+      "    <root url=\"file://$MODULE_DIR$/annotations\" />\n" +
+      "  </annotation-paths>\n" +
+      "  <javadoc-paths>\n" +
+      "    <root url=\"file://$MODULE_DIR$/javadoc\" />\n" +
+      "  </javadoc-paths>\n" +
+      "  <orderEntry type=\"sourceFolder\" forTests=\"false\" />\n" +
+      "</component>",
+      JDOMUtil.writeElement(JDOMUtil.load(moduleFile).getChild("component"))
+    );
+  }
+
+  public void testModuleLibraries() throws IOException, JDOMException {
+    File moduleFile = new File(myProject.getBasePath(), "test.iml");
+    Module module = createModule(moduleFile);
+    final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
     final ModifiableRootModel rootModel = moduleRootManager.getModifiableModel();
     final LibraryTable moduleLibraryTable = rootModel.getModuleLibraryTable();
 
     final Library unnamedLibrary = moduleLibraryTable.createLibrary();
-    final File unnamedLibClasses = new File(getTestRoot(), "unnamedLibClasses");
-    final VirtualFile unnamedLibClassesRoot = LocalFileSystem.getInstance().findFileByIoFile(unnamedLibClasses);
+    final File unnamedLibClasses = new File(myProject.getBasePath(), "unnamedLibClasses");
+    FileUtil.createDirectory(unnamedLibClasses);
+    final VirtualFile unnamedLibClassesRoot = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(unnamedLibClasses);
     final Library.ModifiableModel libraryModifiableModel = unnamedLibrary.getModifiableModel();
     libraryModifiableModel.addRoot(unnamedLibClassesRoot.getUrl(), OrderRootType.CLASSES);
 
     final Library namedLibrary = moduleLibraryTable.createLibrary("namedLibrary");
-    final File namedLibClasses = new File(getTestRoot(), "namedLibClasses");
-    final VirtualFile namedLibClassesRoot = LocalFileSystem.getInstance().findFileByIoFile(namedLibClasses);
+    final File namedLibClasses = new File(myProject.getBasePath(), "namedLibClasses");
+    FileUtil.createDirectory(namedLibClasses);
+    final VirtualFile namedLibClassesRoot = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(namedLibClasses);
     final Library.ModifiableModel namedLibraryModel = namedLibrary.getModifiableModel();
     namedLibraryModel.addRoot(namedLibClassesRoot.getUrl(), OrderRootType.CLASSES);
 
@@ -130,44 +173,51 @@ public class ModuleRootsExternalizationTest extends JavaModuleTestCase {
     assertEquals(libraryIterator.next(), namedLibrary);
 
     ApplicationManager.getApplication().runWriteAction(rootModel::commit);
-    final Element element = new Element("root");
-    moduleRootManager.getState().writeExternal(element);
-    assertElementEquals(element,
-                        "<root inherit-compiler-output=\"true\">" +
-                        "<exclude-output />" +
-                        "<orderEntry type=\"sourceFolder\" forTests=\"false\" />" +
-                        "<orderEntry type=\"module-library\">" +
-                        "<library>" +
-                        "<CLASSES><root url=\"file://$MODULE_DIR$/unnamedLibClasses\" /></CLASSES>" +
-                        "<JAVADOC />" +
-                        "<SOURCES />" +
-                        "</library>" +
-                        "</orderEntry>" +
-                        "<orderEntry type=\"module-library\">" +
-                        "<library name=\"namedLibrary\">" +
-                        "<CLASSES><root url=\"file://$MODULE_DIR$/namedLibClasses\" /></CLASSES>" +
-                        "<JAVADOC />" +
-                        "<SOURCES />" +
-                        "</library>" +
-                        "</orderEntry>" +
-                        "</root>", module);
+    StoreUtil.saveDocumentsAndProjectSettings(myProject);
+
+    assertEquals(
+      "<component name=\"NewModuleRootManager\" inherit-compiler-output=\"true\">\n" +
+      "  <exclude-output />\n" +
+      "  <orderEntry type=\"sourceFolder\" forTests=\"false\" />\n" +
+      "  <orderEntry type=\"module-library\">\n" +
+      "    <library>\n" +
+      "      <CLASSES>\n" +
+      "        <root url=\"file://$MODULE_DIR$/unnamedLibClasses\" />\n" +
+      "      </CLASSES>\n" +
+      "      <JAVADOC />\n" +
+      "      <SOURCES />\n" +
+      "    </library>\n" +
+      "  </orderEntry>\n" +
+      "  <orderEntry type=\"module-library\">\n" +
+      "    <library name=\"namedLibrary\">\n" +
+      "      <CLASSES>\n" +
+      "        <root url=\"file://$MODULE_DIR$/namedLibClasses\" />\n" +
+      "      </CLASSES>\n" +
+      "      <JAVADOC />\n" +
+      "      <SOURCES />\n" +
+      "    </library>\n" +
+      "  </orderEntry>\n" +
+      "</component>",
+      JDOMUtil.writeElement(JDOMUtil.load(moduleFile).getChild("component"))
+    );
   }
 
-  public void testCompilerOutputInheritance() throws IOException {
-    File moduleFile = new File(getTestRoot(), "test.iml");
+  public void testCompilerOutputInheritance() throws IOException, JDOMException {
+    File moduleFile = new File(myProject.getBasePath(), "test.iml");
     Module module = createModule(moduleFile);
-    final ModuleRootManagerImpl moduleRootManager =
-      (ModuleRootManagerImpl)ModuleRootManager.getInstance(module);
+    final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
     final ModifiableRootModel rootModel = moduleRootManager.getModifiableModel();
     rootModel.getModuleExtension(CompilerModuleExtension.class).inheritCompilerOutputPath(true);
     ApplicationManager.getApplication().runWriteAction(rootModel::commit);
-    Element element = new Element("root");
-    moduleRootManager.getState().writeExternal(element);
-    assertElementEquals(element,
-                        "<root inherit-compiler-output=\"true\">" +
-                        "<exclude-output />" +
-                        "<orderEntry type=\"sourceFolder\" forTests=\"false\" />" +
-                        "</root>", module);
+    StoreUtil.saveDocumentsAndProjectSettings(myProject);
+
+    assertEquals(
+      "<component name=\"NewModuleRootManager\" inherit-compiler-output=\"true\">\n" +
+      "  <exclude-output />\n" +
+      "  <orderEntry type=\"sourceFolder\" forTests=\"false\" />\n" +
+      "</component>",
+      JDOMUtil.writeElement(JDOMUtil.load(moduleFile).getChild("component"))
+    );
   }
 
   public void testMacroSubstituteWin() {
@@ -235,20 +285,5 @@ public class ModuleRootsExternalizationTest extends JavaModuleTestCase {
 
     final String substituted = map.substitute(path, false);
     assertEquals(path, substituted);
-  }
-
-  public static void assertElementEquals(@NotNull Element element, @NotNull String value, @NotNull Module module) throws IOException {
-    try {
-      assertThat(JbXmlOutputter.collapseMacrosAndWrite(element, module)).isEqualTo(JDOMUtil.writeElement(JDOMUtil.load(value)));
-    }
-    catch (JDOMException e) {
-      throw new IOException(e);
-    }
-  }
-
-  private File getTestRoot() {
-    File testRoot = new File(PathManagerEx.getTestDataPath());
-    File moduleRootManagerRoot = new File(testRoot, "moduleRootManager");
-    return new File(moduleRootManagerRoot, getTestName(true));
   }
 }

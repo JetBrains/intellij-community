@@ -4,7 +4,7 @@ package com.intellij.openapi.wm.impl;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.ide.IdeEventQueue;
-import com.intellij.ide.plugins.PluginManager;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.Disposable;
@@ -705,6 +705,7 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
 
   private static GlobalMenuLib _loadLibrary() {
     if (!SystemInfo.isLinux ||
+        ApplicationManager.getApplication() == null || ApplicationManager.getApplication().isUnitTestMode() ||
         Registry.is("linux.native.menu.force.disable") ||
         !Experiments.getInstance().isFeatureEnabled("linux.native.menu") ||
         !JnaLoader.isLoaded() ||
@@ -729,7 +730,7 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
 
   private static boolean isUnderVMWithSwiftPluginInstalled() {
     // Workaround OC-18001 OC-18634 CLion crashes after opening Swift project on Linux
-    if (PluginManager.isPluginInstalled(PluginId.getId("com.intellij.clion-swift"))) {
+    if (PluginManagerCore.isPluginInstalled(PluginId.getId("com.intellij.clion-swift"))) {
       try {
         String stdout = StringUtil.toLowerCase(
           ExecUtil.execAndGetOutput(new GeneralCommandLine("lspci")).getStdout());

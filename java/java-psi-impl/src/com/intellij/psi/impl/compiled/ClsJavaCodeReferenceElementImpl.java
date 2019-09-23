@@ -19,7 +19,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiSubstitutorImpl;
 import com.intellij.psi.impl.ResolveScopeManager;
 import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
@@ -138,7 +137,7 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
         index++;
       }
       collectOuterClassTypeArgs((PsiClass)resolve, myCanonicalText, substitutionMap);
-      return new CandidateInfo(resolve, PsiSubstitutorImpl.createSubstitutor(substitutionMap));
+      return new CandidateInfo(resolve, PsiSubstitutor.createSubstitutor(substitutionMap));
     }
     else {
       return new CandidateInfo(resolve, PsiSubstitutor.EMPTY);

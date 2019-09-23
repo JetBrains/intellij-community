@@ -4,7 +4,9 @@ package com.intellij.openapi.wm.impl.customFrameDecorations.header
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.UISettings
 import com.intellij.jdkEx.JdkEx
+import com.intellij.jna.JnaLoader
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.WindowsRegistryUtil
 import com.intellij.openapi.wm.impl.IdeRootPane
@@ -19,6 +21,9 @@ import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.scale.ScaleType
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
+import com.sun.jna.platform.win32.Advapi32Util
+import com.sun.jna.platform.win32.WinReg
 import java.awt.*
 import java.awt.event.*
 import javax.swing.*
@@ -26,6 +31,8 @@ import javax.swing.border.Border
 
 abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
     companion object {
+        private val LOGGER = logger<CustomHeader>()
+
         val H_GAP
             get() = JBUIScale.scale(7)
         val MIN_HEIGHT
@@ -33,7 +40,21 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
         val GAP_AFTER_MENU
             get() = JBUIScale.scale(18)
 
-        val WINDOWS_VERSION = WindowsRegistryUtil.readRegistryValue("HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", "ReleaseId")
+        val WINDOWS_VERSION = getWindowsReleaseId()
+
+        private fun getWindowsReleaseId(): String? {
+            try {
+                if (JnaLoader.isLoaded()) {
+                    return Advapi32Util.registryGetStringValue(WinReg.HKEY_LOCAL_MACHINE,
+                                                               "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion",
+                                                               "ReleaseId")
+                }
+            }
+            catch (e: Throwable) {
+                LOGGER.warn(e)
+            }
+            return WindowsRegistryUtil.readRegistryValue("HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", "ReleaseId")
+        }
 
         fun create(window: Window): CustomHeader {
             return if (window is JFrame) {
@@ -254,7 +275,7 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
         }
 
         override fun paintBorder(c: Component, g: Graphics, x: Int, y: Int, width: Int, height: Int) {
-            if (isTopNeeded() && (myActive && isAffectsBorder() || !myActive)) {
+            if (isTopNeeded() && (myActive && isAffectsBorder()) || (!myActive && UIUtil.isUnderIntelliJLaF())) {
                 g.color = if (myActive) activeColor else inactiveColor
                 LinePainter2D.paint(g as Graphics2D, x.toDouble(), y.toDouble(), width.toDouble(), y.toDouble())
             }
@@ -267,7 +288,7 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
         }
 
       private fun isAffectsBorder(): Boolean {
-        if(WINDOWS_VERSION.isNullOrEmpty()) return true
+          if (WINDOWS_VERSION.isNullOrEmpty()) return true
 
         val winVersion = WINDOWS_VERSION.toIntOrNull() ?: return affectsBorders
         return if(winVersion >= 1809) affectsBorders else true

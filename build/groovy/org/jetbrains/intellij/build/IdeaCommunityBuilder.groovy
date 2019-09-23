@@ -47,6 +47,6 @@ class IdeaCommunityBuilder {
   }
 
   void buildUnpackedDistribution(String targetDirectory) {
-    BuildTasks.create(buildContext).buildUnpackedDistribution(targetDirectory)
+    BuildTasks.create(buildContext).buildUnpackedDistribution(targetDirectory, false)
   }
 }

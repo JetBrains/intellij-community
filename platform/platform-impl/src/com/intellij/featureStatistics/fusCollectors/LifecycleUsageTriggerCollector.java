@@ -1,13 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.featureStatistics.fusCollectors;
 
-import com.intellij.diagnostic.PluginException;
 import com.intellij.diagnostic.VMOptions;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
-import com.intellij.internal.statistic.utils.PluginInfo;
-import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
@@ -16,6 +14,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.getPlatformPlugin;
 import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.getPluginInfoById;
 
@@ -23,12 +23,16 @@ public final class LifecycleUsageTriggerCollector {
   private static final Logger LOG = Logger.getInstance("#com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector");
   private static final String LIFECYCLE = "lifecycle";
 
+  private static final EventsRateThrottle ourErrorsRateThrottle = new EventsRateThrottle(100, 5L * 60 * 1000); // 100 errors per 5 minutes
+  private static final EventsIdentityThrottle ourErrorsIdentityThrottle = new EventsIdentityThrottle(50, 60L * 60 * 1000); // 1 unique error per 1 hour
+
   public static void onIdeStart() {
-    final FeatureUsageData data = new FeatureUsageData().addData("eap", ApplicationManager.getApplication().isEAP());
+    Application app = ApplicationManager.getApplication();
+    FeatureUsageData data = new FeatureUsageData().addData("eap", app.isEAP());
     addIfTrue(data, "test", StatisticsUploadAssistant.isTestStatisticsEnabled());
-    addIfTrue(data, "command_line", ApplicationManager.getApplication().isCommandLine());
-    addIfTrue(data, "internal", ApplicationManager.getApplication().isInternal());
-    addIfTrue(data, "headless", ApplicationManager.getApplication().isHeadlessEnvironment());
+    addIfTrue(data, "command_line", app.isCommandLine());
+    addIfTrue(data, "internal", app.isInternal());
+    addIfTrue(data, "headless", app.isHeadlessEnvironment());
     FUCounterUsageLogger.getInstance().logEvent(LIFECYCLE, "ide.start", data);
   }
 
@@ -81,13 +85,33 @@ public final class LifecycleUsageTriggerCollector {
                              @Nullable Throwable throwable,
                              @Nullable VMOptions.MemoryKind memoryErrorKind) {
     try {
+      final ThrowableDescription description = new ThrowableDescription(throwable);
+
       final FeatureUsageData data = new FeatureUsageData().
         addPluginInfo(pluginId == null ? getPlatformPlugin() : getPluginInfoById(pluginId)).
-        addData("error", getThrowableClassName(throwable));
+        addData("error", description.getClassName());
 
       if (memoryErrorKind != null) {
         data.addData("memory_error_kind", StringUtil.toLowerCase(memoryErrorKind.name()));
       }
+
+      if (ourErrorsRateThrottle.tryPass(System.currentTimeMillis())) {
+
+        List<String> frames = description.getLastFrames(50);
+        int framesHash = frames.hashCode();
+
+        data.addData("error_hash", framesHash);
+
+        if (ourErrorsIdentityThrottle.tryPass(framesHash, System.currentTimeMillis())) {
+          data.
+            addData("error_frames", frames).
+            addData("error_size", description.getSize());
+        }
+      }
+      else {
+        data.addData("too_many_errors", true);
+      }
+
       FUCounterUsageLogger.getInstance().logEvent(LIFECYCLE, "ide.error", data);
     }
     catch (Exception e) {
@@ -105,18 +129,5 @@ public final class LifecycleUsageTriggerCollector {
       return seconds + "s+";
     }
     return seconds + "s";
-  }
-
-  @NotNull
-  private static String getThrowableClassName(@Nullable Throwable t) {
-    if (t == null) {
-      return "unknown";
-    }
-
-    final boolean isPluginException = t instanceof PluginException && t.getCause() != null;
-    final Class throwableClass = isPluginException ? t.getCause().getClass() : t.getClass();
-
-    final PluginInfo throwableLocation = PluginInfoDetectorKt.getPluginInfo(throwableClass);
-    return (throwableLocation.isSafeToReport()) ? throwableClass.getName() : "third.party";
   }
 }

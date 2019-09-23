@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.AppTopics;
@@ -71,7 +71,7 @@ import java.nio.charset.Charset;
 import java.util.List;
 import java.util.*;
 
-public class FileDocumentManagerImpl extends FileDocumentManager implements AsyncFileListener, VetoableProjectManagerListener, SafeWriteRequestor {
+public class FileDocumentManagerImpl extends FileDocumentManager implements SafeWriteRequestor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl");
 
   public static final Key<Document> HARD_REF_TO_DOCUMENT_KEY = Key.create("HARD_REF_TO_DOCUMENT_KEY");
@@ -118,20 +118,33 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Asyn
     }
   };
 
-  public FileDocumentManagerImpl(@NotNull VirtualFileManager virtualFileManager, @NotNull ProjectManager projectManager) {
-    virtualFileManager.addAsyncFileListener(this, ApplicationManager.getApplication());
-    projectManager.addProjectManagerListener(this);
-
+  public FileDocumentManagerImpl() {
     myBus = ApplicationManager.getApplication().getMessageBus();
-    myBus.connect().subscribe(ProjectManager.TOPIC, this);
 
     InvocationHandler handler = (proxy, method, args) -> {
       multiCast(method, args);
       return null;
     };
 
-    final ClassLoader loader = FileDocumentManagerListener.class.getClassLoader();
+    ClassLoader loader = FileDocumentManagerListener.class.getClassLoader();
     myMultiCaster = (FileDocumentManagerListener)Proxy.newProxyInstance(loader, new Class[]{FileDocumentManagerListener.class}, handler);
+  }
+
+  static final class MyProjectCloseHandler implements ProjectCloseHandler {
+    @Override
+    public boolean canClose(@NotNull Project project) {
+      FileDocumentManagerImpl manager = (FileDocumentManagerImpl)getInstance();
+      if (!manager.myUnsavedDocuments.isEmpty()) {
+        manager.myOnClose = true;
+        try {
+          manager.saveAllDocuments();
+        }
+        finally {
+          manager.myOnClose = false;
+        }
+      }
+      return manager.myUnsavedDocuments.isEmpty();
+    }
   }
 
   private static void unwrapAndRethrow(@NotNull Exception e) {
@@ -513,8 +526,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Asyn
       if (writableStatus.hasReadonlyFiles()) {
         return new WriteAccessStatus(writableStatus.getReadonlyFilesMessage());
       }
-      assert document.isWritable();
-      return WriteAccessStatus.WRITABLE;
+      assert file.isWritable();
     }
     if (document.isWritable()) {
       return WriteAccessStatus.WRITABLE;
@@ -589,79 +601,82 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Asyn
 
   private static boolean isBinaryWithDecompiler(@NotNull VirtualFile file) {
     final FileType ft = file.getFileType();
-    return ft.isBinary() && BinaryFileTypeDecompilers.INSTANCE.forFileType(ft) != null;
+    return ft.isBinary() && BinaryFileTypeDecompilers.getInstance().forFileType(ft) != null;
   }
 
   private static boolean isBinaryWithoutDecompiler(@NotNull VirtualFile file) {
     final FileType fileType = file.getFileType();
-    return fileType.isBinary() && BinaryFileTypeDecompilers.INSTANCE.forFileType(fileType) == null;
+    return fileType.isBinary() && BinaryFileTypeDecompilers.getInstance().forFileType(fileType) == null;
   }
 
-  @Override
-  public ChangeApplier prepareChange(@NotNull List<? extends VFileEvent> events) {
-    List<VirtualFile> toRecompute = new ArrayList<>();
-    Map<VirtualFile, Document> strongRefsToDocuments = new HashMap<>();
-    List<VFileContentChangeEvent> contentChanges = ContainerUtil.findAll(events, VFileContentChangeEvent.class);
-    for (VFileContentChangeEvent event : contentChanges) {
-      ProgressManager.checkCanceled();
-      VirtualFile virtualFile = event.getFile();
+  static final class MyAsyncFileListener implements AsyncFileListener {
+    private final FileDocumentManagerImpl myFileDocumentManager = (FileDocumentManagerImpl)getInstance();
 
-      // when an empty unknown file is written into, re-run file type detection
-      long lastRecordedLength = PersistentFS.getInstance().getLastRecordedLength(virtualFile);
-      if (lastRecordedLength == 0 && FileTypeRegistry.getInstance().isFileOfType(virtualFile, UnknownFileType.INSTANCE)) { // check file type last to avoid content detection running
-        toRecompute.add(virtualFile);
+    @Override
+    public ChangeApplier prepareChange(@NotNull List<? extends VFileEvent> events) {
+      List<VirtualFile> toRecompute = new ArrayList<>();
+      Map<VirtualFile, Document> strongRefsToDocuments = new HashMap<>();
+      List<VFileContentChangeEvent> contentChanges = ContainerUtil.findAll(events, VFileContentChangeEvent.class);
+      for (VFileContentChangeEvent event : contentChanges) {
+        ProgressManager.checkCanceled();
+        VirtualFile virtualFile = event.getFile();
+
+        // when an empty unknown file is written into, re-run file type detection
+        long lastRecordedLength = PersistentFS.getInstance().getLastRecordedLength(virtualFile);
+        if (lastRecordedLength == 0 &&
+            FileTypeRegistry.getInstance()
+              .isFileOfType(virtualFile, UnknownFileType.INSTANCE)) { // check file type last to avoid content detection running
+          toRecompute.add(virtualFile);
+        }
+
+        prepareForRangeMarkerUpdate(strongRefsToDocuments, virtualFile);
       }
 
-      prepareForRangeMarkerUpdate(strongRefsToDocuments, virtualFile);
+      return new ChangeApplier() {
+        @Override
+        public void beforeVfsChange() {
+          for (VFileContentChangeEvent event : contentChanges) {
+            // new range markers could've appeared after "prepareChange" in some read action
+            prepareForRangeMarkerUpdate(strongRefsToDocuments, event.getFile());
+            if (ourConflictsSolverEnabled) {
+              myFileDocumentManager.myConflictResolver.beforeContentChange(event);
+            }
+          }
+
+          for (VirtualFile file : toRecompute) {
+            file.putUserData(MUST_RECOMPUTE_FILE_TYPE, Boolean.TRUE);
+          }
+        }
+
+        @Override
+        public void afterVfsChange() {
+          for (VFileEvent event : events) {
+            if (event instanceof VFileContentChangeEvent && ((VFileContentChangeEvent)event).getFile().isValid()) {
+              myFileDocumentManager.contentsChanged((VFileContentChangeEvent)event);
+            }
+            else if (event instanceof VFileDeleteEvent && ((VFileDeleteEvent)event).getFile().isValid()) {
+              myFileDocumentManager.fileDeleted((VFileDeleteEvent)event);
+            }
+            else if (event instanceof VFilePropertyChangeEvent && ((VFilePropertyChangeEvent)event).getFile().isValid()) {
+              myFileDocumentManager.propertyChanged((VFilePropertyChangeEvent)event);
+            }
+          }
+          ObjectUtils.reachabilityFence(strongRefsToDocuments);
+        }
+      };
     }
 
-    return new ChangeApplier() {
-      @Override
-      public void beforeVfsChange() {
-        for (VFileContentChangeEvent event : contentChanges) {
-          // new range markers could've appeared after "prepareChange" in some read action
-          prepareForRangeMarkerUpdate(strongRefsToDocuments, event.getFile());
-          if (ourConflictsSolverEnabled) {
-            myConflictResolver.beforeContentChange(event);
-          }
-        }
-
-        for (VirtualFile file : toRecompute) {
-          file.putUserData(MUST_RECOMPUTE_FILE_TYPE, Boolean.TRUE);
-        }
+    private void prepareForRangeMarkerUpdate(Map<VirtualFile, Document> strongRefsToDocuments, VirtualFile virtualFile) {
+      Document document = myFileDocumentManager.getCachedDocument(virtualFile);
+      if (document == null && DocumentImpl.areRangeMarkersRetainedFor(virtualFile)) {
+        // re-create document with the old contents prior to this event
+        // then contentChanged() will diff the document with the new contents and update the markers
+        document = myFileDocumentManager.getDocument(virtualFile);
       }
-
-      @Override
-      public void afterVfsChange() {
-        for (VFileEvent event : events) {
-          VirtualFile file = event.getFile();
-          if (file != null && !file.isValid()) continue;
-
-          if (event instanceof VFileContentChangeEvent) {
-            contentsChanged((VFileContentChangeEvent)event);
-          }
-          else if (event instanceof VFileDeleteEvent) {
-            fileDeleted((VFileDeleteEvent)event);
-          }
-          else if (event instanceof VFilePropertyChangeEvent) {
-            propertyChanged((VFilePropertyChangeEvent)event);
-          }
-        }
-        ObjectUtils.reachabilityFence(strongRefsToDocuments);
+      // save document strongly to make it live until contentChanged()
+      if (document != null) {
+        strongRefsToDocuments.put(virtualFile, document);
       }
-    };
-  }
-
-  private void prepareForRangeMarkerUpdate(Map<VirtualFile, Document> strongRefsToDocuments, VirtualFile virtualFile) {
-    Document document = getCachedDocument(virtualFile);
-    if (document == null && DocumentImpl.areRangeMarkersRetainedFor(virtualFile)) {
-      // re-create document with the old contents prior to this event
-      // then contentChanged() will diff the document with the new contents and update the markers
-      document = getDocument(virtualFile);
-    }
-    // save document strongly to make it live until contentChanged()
-    if (document != null) {
-      strongRefsToDocuments.put(virtualFile, document);
     }
   }
 
@@ -754,20 +769,6 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Asyn
       return true;
     }
     return false;
-  }
-
-  @Override
-  public boolean canClose(@NotNull Project project) {
-    if (!myUnsavedDocuments.isEmpty()) {
-      myOnClose = true;
-      try {
-        saveAllDocuments();
-      }
-      finally {
-        myOnClose = false;
-      }
-    }
-    return myUnsavedDocuments.isEmpty();
   }
 
   private void fireUnsavedDocumentsDropped() {

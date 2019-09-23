@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.packaging;
 
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -25,6 +24,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.util.text.DateFormatUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -33,31 +33,26 @@ import java.io.IOException;
  * PyPI cache updater
  * User : catherine
  */
-public class PyPackagesUpdater implements StartupActivity {
+public class PyPackagesUpdater implements StartupActivity.Background {
   private static final Logger LOG = Logger.getInstance(PyPackagesUpdater.class);
   private static final long EXPIRATION_TIMEOUT = DateFormatUtil.DAY;
 
   @Override
-  public void runActivity(@NotNull final Project project) {
-    final Application application = ApplicationManager.getApplication();
-    if (application.isUnitTestMode()) {
-      return;
+  public void runActivity(@NotNull Project project) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) return;
+    if (!checkNeeded(project)) return;
+
+    try {
+      PyPIPackageUtil.INSTANCE.updatePyPICache();
     }
-    if (checkNeeded(project)) {
-      application.executeOnPooledThread(() -> {
-        try {
-          PyPIPackageUtil.INSTANCE.updatePyPICache();
-        }
-        catch (IOException e) {
-          LOG.warn(e.getMessage());
-        }
-      });
+    catch (IOException e) {
+      LOG.warn(e.getMessage());
     }
   }
 
   private static boolean hasPython(Project project) {
     for (Module module : ModuleManager.getInstance(project).getModules()) {
-      final Sdk sdk = PythonSdkType.findPythonSdk(module);
+      Sdk sdk = PythonSdkUtil.findPythonSdk(module);
       if (sdk != null && sdk.getSdkType() instanceof PythonSdkType) {
         return true;
       }
@@ -67,9 +62,9 @@ public class PyPackagesUpdater implements StartupActivity {
 
   private static boolean checkNeeded(Project project) {
     if (!hasPython(project)) return false;
-    final PyPackageService service = PyPackageService.getInstance();
+    PyPackageService service = PyPackageService.getInstance();
     if (service.PYPI_REMOVED) return false;
-    final long timeDelta = System.currentTimeMillis() - service.LAST_TIME_CHECKED;
+    long timeDelta = System.currentTimeMillis() - service.LAST_TIME_CHECKED;
     if (Math.abs(timeDelta) < EXPIRATION_TIMEOUT) return false;
     LOG.debug("Updating outdated PyPI package cache");
     return true;

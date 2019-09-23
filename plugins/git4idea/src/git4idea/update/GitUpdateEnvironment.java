@@ -15,6 +15,7 @@ import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.impl.PostponableLogRefresher;
 import git4idea.config.GitVcsSettings;
+import git4idea.config.UpdateMethod;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.CalledInAwt;
@@ -30,11 +31,9 @@ import static git4idea.GitUtil.*;
 
 public class GitUpdateEnvironment implements UpdateEnvironment {
   private final Project myProject;
-  private final GitVcsSettings mySettings;
 
-  public GitUpdateEnvironment(@NotNull Project project, @NotNull GitVcsSettings settings) {
+  public GitUpdateEnvironment(@NotNull Project project) {
     myProject = project;
-    mySettings = settings;
   }
 
   @Override
@@ -51,7 +50,8 @@ public class GitUpdateEnvironment implements UpdateEnvironment {
     final GitUpdateProcess gitUpdateProcess = new GitUpdateProcess(myProject,
                                                                    progressIndicator, getRepositoriesFromRoots(repositoryManager, roots),
                                                                    updatedFiles, true, true);
-    boolean result = gitUpdateProcess.update(mySettings.getUpdateMethod()).isSuccess();
+    UpdateMethod method = GitVcsSettings.getInstance(myProject).getUpdateMethod();
+    boolean result = gitUpdateProcess.update(method).isSuccess();
 
     Map<GitRepository, HashRange> updatedRanges = gitUpdateProcess.getUpdatedRanges();
     GitUpdateInfoAsLog.NotificationData notificationData = updatedRanges != null ?
@@ -74,7 +74,7 @@ public class GitUpdateEnvironment implements UpdateEnvironment {
   @Override
   @Nullable
   public Configurable createConfigurable(Collection<FilePath> files) {
-    return new GitUpdateConfigurable(mySettings);
+    return new GitUpdateConfigurable(GitVcsSettings.getInstance(myProject));
   }
 
   @Override

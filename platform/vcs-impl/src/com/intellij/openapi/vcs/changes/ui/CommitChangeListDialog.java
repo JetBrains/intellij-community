@@ -90,12 +90,12 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     EventDispatcher.create(CommitWorkflowUiStateListener.class);
   @NotNull private final EventDispatcher<CommitExecutorListener> myExecutorEventDispatcher =
     EventDispatcher.create(CommitExecutorListener.class);
-  @NotNull private final List<DataProvider> myDataProviders = newArrayList();
+  @NotNull private final List<DataProvider> myDataProviders = new ArrayList<>();
   @NotNull private final EventDispatcher<InclusionListener> myInclusionEventDispatcher = EventDispatcher.create(InclusionListener.class);
 
   @NotNull private String myDefaultCommitActionName = "";
   @Nullable private CommitAction myCommitAction;
-  @NotNull private final List<CommitExecutorAction> myExecutorActions = newArrayList();
+  @NotNull private final List<CommitExecutorAction> myExecutorActions = new ArrayList<>();
 
   @NotNull private final CommitOptionsPanel myCommitOptions;
   @NotNull private final ChangeInfoCalculator myChangesInfoCalculator;
@@ -186,7 +186,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     LocalChangeList defaultList = manager.getDefaultChangeList();
     List<LocalChangeList> changeLists = manager.getChangeListsCopy();
 
-    Set<AbstractVcs<?>> affectedVcses = new HashSet<>();
+    Set<AbstractVcs> affectedVcses = new HashSet<>();
     if (forceCommitInVcs != null) affectedVcses.add(forceCommitInVcs);
     for (LocalChangeList list : changeLists) {
       //noinspection unchecked
@@ -205,7 +205,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
       return false;
     }
 
-    AbstractVcs<?>[] vcses = ProjectLevelVcsManager.getInstance(project).getAllActiveVcss();
+    AbstractVcs[] vcses = ProjectLevelVcsManager.getInstance(project).getAllActiveVcss();
     for (BaseCheckinHandlerFactory factory : getCommitHandlerFactories(asList(vcses))) {
       BeforeCheckinDialogHandler handler = factory.createSystemReadyHandler(project);
       if (handler != null && !handler.beforeCommitDialogShown(project, changes, (Iterable<CommitExecutor>)executors, showVcsCommit)) {
@@ -798,7 +798,8 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
 
     @NotNull
     private List<Wrapper> wrap(@NotNull Collection<? extends Change> changes, @NotNull Collection<? extends VirtualFile> unversioned) {
-      return concat(map(changes, ChangeWrapper::new), map(unversioned, UnversionedFileWrapper::new));
+      return concat(map(changes, ChangeWrapper::new),
+                    map(unversioned, UnversionedFileWrapper::new));
     }
 
     @Override

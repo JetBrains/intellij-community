@@ -19,41 +19,36 @@
   <depends>com.intellij.modules.lang</depends>
   <depends>com.intellij.modules.platform</depends>
 
-  <extensions defaultExtensionNs="com.intellij">
+  <extensionPoints>
+    <extensionPoint name="tracker.disabler" interface="com.intellij.stats.completion.CompletionTrackerDisabler" />
+  </extensionPoints>
 
+  <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceImplementation="com.intellij.completion.settings.CompletionMLRankingSettings"/>
 
     <applicationService serviceInterface="com.intellij.stats.completion.CompletionLoggerProvider"
-                        serviceImplementation="com.intellij.stats.completion.CompletionFileLoggerProvider">
-    </applicationService>
+                        serviceImplementation="com.intellij.stats.completion.CompletionFileLoggerProvider"/>
 
     <applicationService serviceInterface="com.intellij.stats.storage.FilePathProvider"
                         serviceImplementation="com.intellij.stats.storage.PluginDirectoryFilePathProvider"
-                        testServiceImplementation="com.intellij.mocks.TestFilePathProvider">
-    </applicationService>
-
+                        testServiceImplementation="com.intellij.mocks.TestFilePathProvider"/>
 
     <applicationService serviceInterface="com.intellij.stats.sender.StatisticSender"
                         serviceImplementation="com.intellij.stats.sender.StatisticSenderImpl"
-                        testServiceImplementation="com.intellij.mocks.TestStatisticSender">
-    </applicationService>
+                        testServiceImplementation="com.intellij.mocks.TestStatisticSender"/>
 
     <applicationService serviceInterface="com.intellij.stats.experiment.WebServiceStatus"
-                        serviceImplementation="com.intellij.stats.experiment.WebServiceStatusProvider">
-    </applicationService>
+                        serviceImplementation="com.intellij.stats.experiment.WebServiceStatusProvider"/>
 
     <applicationService serviceInterface="com.intellij.stats.network.service.RequestService"
                         serviceImplementation="com.intellij.stats.network.service.SimpleRequestService"
-                        testServiceImplementation="com.intellij.mocks.TestRequestService">
-    </applicationService>
+                        testServiceImplementation="com.intellij.mocks.TestRequestService"/>
 
     <applicationService serviceInterface="com.intellij.codeInsight.completion.CompletionFinalSorter$Factory"
-                        serviceImplementation="com.intellij.completion.sorting.MLSorterFactory">
-    </applicationService>
+                        serviceImplementation="com.intellij.completion.sorting.MLSorterFactory"/>
 
     <applicationService serviceInterface="com.intellij.stats.completion.InstallationIdProvider"
-                        serviceImplementation="com.intellij.stats.completion.PermanentInstallationIdProvider">
-    </applicationService>
+                        serviceImplementation="com.intellij.stats.completion.PermanentInstallationIdProvider"/>
 
     <codeCompletionConfigurable provider="com.intellij.completion.settings.MLRankingConfigurableProvider"/>
 
@@ -67,6 +62,10 @@
 
     <projectService serviceImplementation="com.intellij.stats.personalization.impl.ProjectUserFactorStorage"/>
 
+<!--    <completion.ml.model implementation="com.jetbrains.completion.ranker.KotlinMLRankingProvider"/>-->
+<!--    <completion.ml.model implementation="com.jetbrains.completion.ranker.PythonMLRankingProvider"/>-->
+    <weigher key="completion" id="ml_weigh" implementationClass="com.intellij.completion.ml.MLCompletionWeigher" order="last"/>
+
     <registryKey key="completion.stats.exit.experiment" defaultValue="false"
                  description="Do not perform A/B experiment for code completion on this installation"/>
 
@@ -78,13 +77,13 @@
 
     <registryKey key="completion.stats.enable.session.factors" defaultValue="true"
                  description="Use inside single session factors"/>
+
+    <preloadingActivity implementation="com.intellij.stats.sender.SenderPreloadingActivity"/>
+
+    <completion.ml.contextFeatures language="" implementationClass="com.intellij.completion.ml.common.CommonLocationFeatures"/>
   </extensions>
 
   <application-components>
-    <component>
-      <implementation-class>com.intellij.stats.sender.SenderComponent</implementation-class>
-    </component>
-
     <component>
       <implementation-class>com.intellij.stats.completion.CompletionTrackerInitializer</implementation-class>
     </component>

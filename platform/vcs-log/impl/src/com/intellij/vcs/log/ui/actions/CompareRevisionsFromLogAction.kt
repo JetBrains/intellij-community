@@ -19,7 +19,7 @@ class CompareRevisionsFromLogAction : DumbAwareAction() {
     }
 
     val commits = log.selectedCommits
-    
+
     e.presentation.isVisible = commits.size == 2
     e.presentation.isEnabled = commits.size == 2 && commits.first().root == commits.last().root
   }

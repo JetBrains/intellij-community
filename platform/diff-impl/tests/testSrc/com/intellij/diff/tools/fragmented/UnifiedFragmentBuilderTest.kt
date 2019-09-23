@@ -246,7 +246,7 @@ class UnifiedFragmentBuilderTest : DiffTestCase() {
         val actualText = processActualText(builder)
 
         val expectedMapping = processExpectedLineMapping(lineMapping)
-        val actualMapping = processActualLineMapping(builder.blocks, resultLineCount)
+        val actualMapping = processActualLineMapping(builder.changes, resultLineCount)
 
         val expectedChangedLines = processExpectedChangedLines(lineMapping)
         val actualChangedLines = processActualChangedLines(builder.changedLines)
@@ -304,14 +304,14 @@ class UnifiedFragmentBuilderTest : DiffTestCase() {
       return LineMapping(leftSet, rightSet, unchangedSet)
     }
 
-    private fun processActualLineMapping(blocks: List<ChangedBlock>, lineCount: Int): LineMapping {
+    private fun processActualLineMapping(blocks: List<UnifiedDiffChange>, lineCount: Int): LineMapping {
       val leftSet = BitSet()
       val rightSet = BitSet()
       val unchangedSet = BitSet()
 
       blocks.forEach {
-        leftSet.set(it.range1.start, it.range1.end)
-        rightSet.set(it.range2.start, it.range2.end)
+        leftSet.set(it.deletedRange.start, it.deletedRange.end)
+        rightSet.set(it.insertedRange.start, it.insertedRange.end)
       }
 
       unchangedSet.set(0, lineCount)

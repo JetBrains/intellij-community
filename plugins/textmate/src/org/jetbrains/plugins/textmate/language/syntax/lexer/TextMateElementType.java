@@ -6,8 +6,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.textmate.language.TextMateLanguage;
 
 public class TextMateElementType extends IElementType {
-  public static final TextMateElementType EMPTY = new TextMateElementType("empty");
-
   public TextMateElementType(@NotNull @NonNls String debugName) {
     super(debugName, TextMateLanguage.LANGUAGE, false);
   }

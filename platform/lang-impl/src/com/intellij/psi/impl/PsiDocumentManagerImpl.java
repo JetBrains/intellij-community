@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.psi.impl;
 
@@ -8,11 +8,9 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.ex.DocumentBulkUpdateListener;
 import com.intellij.openapi.editor.impl.event.EditorEventMulticasterImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
@@ -29,14 +27,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.core.impl.PomModelImpl;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.FileContentUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -46,20 +42,15 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.*;
 
 //todo listen & notifyListeners readonly events?
-public class PsiDocumentManagerImpl extends PsiDocumentManagerBase {
-  private final DocumentCommitProcessor myDocumentCommitThread;
+public final class PsiDocumentManagerImpl extends PsiDocumentManagerBase {
   private final boolean myUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
 
-  public PsiDocumentManagerImpl(@NotNull final Project project,
-                                @NotNull PsiManager psiManager,
-                                @NotNull EditorFactory editorFactory,
-                                @NotNull MessageBus bus,
-                                @NotNull final DocumentCommitProcessor documentCommitThread) {
-    super(project, psiManager, bus, documentCommitThread);
-    myDocumentCommitThread = documentCommitThread;
-    editorFactory.getEventMulticaster().addDocumentListener(this, this);
-    ((EditorEventMulticasterImpl)editorFactory.getEventMulticaster()).addPrioritizedDocumentListener(new PriorityEventCollector(), this);
-    MessageBusConnection connection = bus.connect(this);
+  public PsiDocumentManagerImpl(@NotNull Project project) {
+    super(project);
+
+    EditorFactory.getInstance().getEventMulticaster().addDocumentListener(this, this);
+    ((EditorEventMulticasterImpl)EditorFactory.getInstance().getEventMulticaster()).addPrioritizedDocumentListener(new PriorityEventCollector(), this);
+    MessageBusConnection connection = project.getMessageBus().connect(this);
     connection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerListener() {
       @Override
       public void fileContentLoaded(@NotNull final VirtualFile virtualFile, @NotNull Document document) {
@@ -67,13 +58,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManagerBase {
         fireDocumentCreated(document, psiFile);
       }
     });
-    connection.subscribe(DocumentBulkUpdateListener.TOPIC, new DocumentBulkUpdateListener.Adapter() {
-      @Override
-      public void updateFinished(@NotNull Document doc) {
-        documentCommitThread.commitAsynchronously(project, doc, "Bulk update finished", TransactionGuard.getInstance().getContextTransaction());
-      }
-    });
-    Disposer.register(this, () -> ((DocumentCommitThread)myDocumentCommitThread).cancelTasksOnProjectDispose(project));
+    Disposer.register(this, () -> ((DocumentCommitThread)myDocumentCommitProcessor).cancelTasksOnProjectDispose(project));
   }
 
   @Nullable
@@ -163,7 +148,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManagerBase {
   @TestOnly
   public void clearUncommittedDocuments() {
     super.clearUncommittedDocuments();
-    ((DocumentCommitThread)myDocumentCommitThread).clearQueue();
+    ((DocumentCommitThread)myDocumentCommitProcessor).clearQueue();
   }
 
   @NotNull

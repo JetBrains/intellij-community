@@ -134,8 +134,7 @@ public class GroovyOptimizeImportsFix implements IntentionAction {
     TransactionGuard.submitTransaction(project, () -> {
       if (editor.isDisposed() || editor.getDocument().getModificationStamp() != stamp) return;
       //no need to optimize imports on the fly during undo/redo
-      final UndoManager undoManager = UndoManager.getInstance(project);
-      if (undoManager.isUndoInProgress() || undoManager.isRedoInProgress()) return;
+      if (UndoManager.getInstance(project).isUndoOrRedoInProgress()) return;
       PsiDocumentManager.getInstance(project).commitAllDocuments();
       String beforeText = file.getText();
       final long oldStamp = editor.getDocument().getModificationStamp();

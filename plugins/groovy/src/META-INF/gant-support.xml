@@ -1,0 +1,19 @@
+<idea-plugin>
+  <extensions defaultExtensionNs="com.intellij">
+    <fileType name="Groovy" extensions="gant"/>
+    <projectConfigurable id="reference.settingsdialog.project.gant"
+                         groupId="build.tools" groupWeight="100" displayName="Gant"
+                         instance="org.jetbrains.plugins.groovy.gant.GantConfigurable"/>
+    <library.presentationProvider implementation="org.jetbrains.plugins.groovy.gant.GantLibraryPresentationProvider" order="last"/>
+  </extensions>
+  <extensions defaultExtensionNs="org.intellij.groovy">
+    <scriptTypeDetector implementation="org.jetbrains.plugins.groovy.gant.GantScriptTypeDetector"/>
+    <positionManagerDelegate implementation="org.jetbrains.plugins.groovy.gant.GantPositionManagerHelper"/>
+  </extensions>
+  <actions>
+    <action id="Gant.NewScript" text="Gant Script" description="Create new Gant script"
+            class="org.jetbrains.plugins.groovy.gant.NewGantScriptAction">
+      <add-to-group group-id="NewGroup" anchor="last"/>
+    </action>
+  </actions>
+</idea-plugin>

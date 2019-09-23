@@ -5,9 +5,10 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.vcs.changes.Change
 import git4idea.GitCommit
 import org.jetbrains.annotations.CalledInAwt
-import org.jetbrains.plugins.github.api.data.GHPullRequest
 import org.jetbrains.plugins.github.api.data.GithubCommit
-import org.jetbrains.plugins.github.pullrequest.data.model.GithubPullRequestFileCommentsThreadMapping
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
+import org.jetbrains.plugins.github.pullrequest.data.model.GHPRDiffReviewThreadMapping
 import java.util.*
 import java.util.concurrent.CompletableFuture
 
@@ -18,7 +19,8 @@ interface GithubPullRequestDataProvider {
   val branchFetchRequest: CompletableFuture<Unit>
   val apiCommitsRequest: CompletableFuture<List<GithubCommit>>
   val logCommitsRequest: CompletableFuture<List<GitCommit>>
-  val filesCommentThreadsRequest: CompletableFuture<Map<Change, List<GithubPullRequestFileCommentsThreadMapping>>>
+  val reviewThreadsRequest: CompletableFuture<List<GHPullRequestReviewThread>>
+  val filesReviewThreadsRequest: CompletableFuture<Map<Change, List<GHPRDiffReviewThreadMapping>>>
 
   fun addRequestsChangesListener(listener: RequestsChangedListener)
   fun addRequestsChangesListener(disposable: Disposable, listener: RequestsChangedListener)
@@ -36,7 +38,7 @@ interface GithubPullRequestDataProvider {
   interface RequestsChangedListener : EventListener {
     fun detailsRequestChanged() {}
     fun commitsRequestChanged() {}
-    fun commentsRequestChanged() {}
+    fun reviewThreadsRequestChanged() {}
 
   }
 }

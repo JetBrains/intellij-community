@@ -49,20 +49,14 @@ public class JBEditorTabs extends JBTabsImpl implements JBEditorTabsBase {
     if (!UISettings.getInstance().getHideTabsIfNeeded() && supportsCompression()) {
       return new CompressibleSingleRowLayout(this);
     }
-    else if (ApplicationManager.getApplication().isInternal() || Registry.is("editor.use.scrollable.tabs")) {
+    else {
       return new ScrollableSingleRowLayout(this);
     }
-    return super.createSingleRowLayout();
   }
 
   @Override
   public boolean isEditorTabs() {
     return true;
-  }
-
-  @Override
-  public boolean isGhostsAlwaysVisible() {
-    return false;
   }
 
   @Override

@@ -269,12 +269,6 @@ public class StringUtilTest {
   }
 
   @Test
-  public void testEscapeTextBlockCharacters() {
-    assertEquals("\\\"\"\"\\\"\"\"\\\"\\\"", StringUtil.escapeTextBlockCharacters("\"\"\"\"\"\"\"\"", false, true));
-    assertEquals("\\\\", StringUtil.escapeTextBlockCharacters("\\", false, true));
-  }
-
-  @Test
   public void testEscapeStringCharacters() {
     assertEquals("\\\"\\n", StringUtil.escapeStringCharacters(3, "\\\"\n", "\"", false, new StringBuilder()).toString());
     assertEquals("\\\"\\n", StringUtil.escapeStringCharacters(2, "\"\n", "\"", false, new StringBuilder()).toString());
@@ -868,5 +862,12 @@ public class StringUtilTest {
     assertEquals("", StringUtil.trim("", CharFilter.WHITESPACE_FILTER));
     assertEquals("", StringUtil.trim("\n   my string ", (ch) -> false));
     assertEquals("\n   my string ", StringUtil.trim("\n   my string ", (ch) -> true));
+  }
+
+  @Test
+  public void testEscapeToRegexp() {
+    assertEquals("a\\nb", StringUtil.escapeToRegexp("a\nb"));
+    assertEquals("a\\&\\%\\$b", StringUtil.escapeToRegexp("a&%$b"));
+    assertEquals("\uD83D\uDE80", StringUtil.escapeToRegexp("\uD83D\uDE80"));
   }
 }

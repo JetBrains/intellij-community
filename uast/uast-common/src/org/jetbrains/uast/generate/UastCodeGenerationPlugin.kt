@@ -18,8 +18,15 @@ interface UastCodeGenerationPlugin {
     fun byLanguage(language: Language) = extensions.firstOrNull { it.language == language }
   }
 
+  fun getElementFactory(project: Project): UastElementFactory
+
   val language: Language
 
+  fun <T : UElement> replace(oldElement: UElement, newElement: T, elementType: Class<T>): T?
+}
+
+@ApiStatus.Experimental
+interface UastElementFactory {
   fun createBinaryExpression(leftOperand: UExpression, rightOperand: UExpression, operator: UastBinaryOperator): UBinaryExpression?
 
   /**
@@ -30,29 +37,44 @@ interface UastCodeGenerationPlugin {
   fun createFlatBinaryExpression(leftOperand: UExpression, rightOperand: UExpression, operator: UastBinaryOperator): UPolyadicExpression? =
     createBinaryExpression(leftOperand, rightOperand, operator)
 
-  fun createSimpleReference(name: String, project: Project): USimpleNameReferenceExpression?
+  fun createSimpleReference(name: String): USimpleNameReferenceExpression?
 
   fun createSimpleReference(variable: UVariable): USimpleNameReferenceExpression?
 
+  fun createQualifiedReference(qualifiedName: String, context: UElement?): UQualifiedReferenceExpression?
+
   fun createParenthesizedExpression(expression: UExpression): UParenthesizedExpression?
 
-  fun createReturnExpresion(expression: UExpression, inLambda: Boolean = false): UReturnExpression?
+  fun createReturnExpresion(expression: UExpression?,
+                            inLambda: Boolean = false): UReturnExpression?
 
-  fun createLocalVariable(name: String?, type: PsiType?, initializer: UExpression, immutable: Boolean = false): ULocalVariable?
+  fun createLocalVariable(suggestedName: String?, type: PsiType?, initializer: UExpression, immutable: Boolean = false): ULocalVariable?
 
-  fun createBlockExpression(expressions: List<UExpression>, project: Project): UBlockExpression?
+  fun createBlockExpression(expressions: List<UExpression>): UBlockExpression?
 
-  fun createLambdaExpression(parameters: List<UParameter>, body: UExpression): ULambdaExpression?
+  fun createLambdaExpression(parameters: List<UParameterInfo>, body: UExpression): ULambdaExpression?
 
-  fun createDeclarationExpression(declarations: List<UDeclaration>, project: Project): UDeclarationsExpression?
+  fun createDeclarationExpression(declarations: List<UDeclaration>): UDeclarationsExpression?
 
-  fun <T: UElement> replace(oldElement: UElement, newElement: T, elementType: Class<T>): T?
+  fun createCallExpression(receiver: UExpression?,
+                           methodName: String,
+                           parameters: List<UExpression>,
+                           expectedReturnType: PsiType?,
+                           kind: UastCallKind): UCallExpression?
+
+  fun createIfExpression(condition: UExpression, thenBranch: UExpression, elseBranch: UExpression? = null): UIfExpression?
+
 }
 
 @ApiStatus.Experimental
-inline fun <reified T: UElement> UElement.replace(newElement: T): T? =
-  this.getLanguagePlugin()
-    .let { UastCodeGenerationPlugin.byLanguage(it.language) }
+data class UParameterInfo(val type: PsiType?, val suggestedName: String?)
+
+@ApiStatus.Experimental
+infix fun String?.ofType(type: PsiType?): UParameterInfo = UParameterInfo(type, this)
+
+@ApiStatus.Experimental
+inline fun <reified T : UElement> UElement.replace(newElement: T): T? =
+  UastCodeGenerationPlugin.byLanguage(this.lang)
     ?.replace(this, newElement, T::class.java)
 
 @ApiStatus.Experimental
@@ -60,4 +82,9 @@ inline fun <reified T : UElement> T.refreshed() = sourcePsi?.toUElementOfType<T>
 
 val UElement.generationPlugin: UastCodeGenerationPlugin?
   @ApiStatus.Experimental
-  get() = getLanguagePlugin().let { UastCodeGenerationPlugin.byLanguage(it.language) }
+  get() = UastCodeGenerationPlugin.byLanguage(this.lang)
+
+@ApiStatus.Experimental
+fun UElement.getUastElementFactory(project: Project): UastElementFactory? =
+  generationPlugin?.getElementFactory(project)
+

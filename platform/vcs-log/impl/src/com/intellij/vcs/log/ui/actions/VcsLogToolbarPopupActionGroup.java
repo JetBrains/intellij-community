@@ -50,7 +50,8 @@ public class VcsLogToolbarPopupActionGroup extends DefaultActionGroup {
     InputEvent inputEvent = e.getInputEvent();
     if (inputEvent == null) {
       popup.showInFocusCenter();
-    } else {
+    }
+    else {
       Component component = inputEvent.getComponent();
       if (component instanceof ActionButtonComponent) {
         popup.showUnderneathOf(component);

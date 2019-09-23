@@ -281,8 +281,9 @@ public abstract class AbstractEclipseClasspathReader<T> {
     return idx < 0 || idx == path.length() - 1 ? null : path.substring(idx + 1);
   }
 
-  protected static String getVariableRelatedPath(String var, String path) {
-    return var == null ? null : ("$" + var + "$" + (path == null ? "" : ("/" + path)));
+  @NotNull
+  protected static String getVariableRelatedPath(@NotNull String var, String path) {
+    return "$" + var + "$" + (path == null ? "" : "/" + path);
   }
 
   @NotNull
@@ -370,10 +371,11 @@ public abstract class AbstractEclipseClasspathReader<T> {
   }
 
   protected static class EPathVariable {
+    @NotNull
     private final String myVariable;
     private final String myRelatedPath;
 
-    protected EPathVariable(final String variable, final String relatedPath) {
+    protected EPathVariable(@NotNull String variable, final String relatedPath) {
       myVariable = variable;
       myRelatedPath = relatedPath;
     }

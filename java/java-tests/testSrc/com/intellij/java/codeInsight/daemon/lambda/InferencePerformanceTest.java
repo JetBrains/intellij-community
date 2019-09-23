@@ -17,8 +17,11 @@ package com.intellij.java.codeInsight.daemon.lambda;
 
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.psi.PsiManager;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
+import one.util.streamex.IntStreamEx;
+import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 
 public class InferencePerformanceTest extends LightDaemonAnalyzerTestCase {
@@ -38,6 +41,34 @@ public class InferencePerformanceTest extends LightDaemonAnalyzerTestCase {
 
   public void testLeastUpperBoundWithLotsOfSupers() {
     PlatformTestUtil.startPerformanceTest("7 unrelated intersection conjuncts", 12000, this::doTest).usesAllCPUCores().assertTiming();
+  }
+
+  public void testVarArgPoly() {
+    @Language("JAVA")
+    String template = "import java.util.Map;\n" +
+                      "\n" +
+                      "class X {\n" +
+                      "  " +
+                      "public void foo() {\n" +
+                      "    Map<Integer, Class<?>> map = ofEntries(\n" +
+                      "      $entries$\n" +
+                      "    );\n" +
+                      "  }\n" +
+                      "\n" +
+                      "  static native <K, V> Map<K, V> ofEntries(Map.Entry<? extends K, ? extends V>... entries);\n" +
+                      "  static native <K, V> Map.Entry<K, V> entry(K k, V v);\n" +
+                      "}\n";
+    int count = 70;
+    String entries = IntStreamEx.range(count).mapToObj(i -> "entry(" + i + ", String.class)").joining(",\n      ");
+    configureFromFileText("Test.java", template.replace("$entries$", entries));
+    PlatformTestUtil.startPerformanceTest(count + " arguments to Map.ofEntries", 3000, () -> doHighlighting())
+      .setup(() -> PsiManager.getInstance(getProject()).dropPsiCaches())
+      .usesAllCPUCores().assertTiming();
+    assertEmpty(highlightErrors());
+  }
+
+  public void testLongQualifierChainInsideLambda() {
+    PlatformTestUtil.startPerformanceTest("long qualifier chain", 12000, this::doTest).usesAllCPUCores().assertTiming();
   }
 
   private void doTest() {

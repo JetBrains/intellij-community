@@ -186,7 +186,7 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
     editor.getSelectionModel().setSelection(textLength - 1, textLength);
 
     myManager.openFile(getFile("/src/1.txt"), false);
-    assertEquals(0, myManager.getEditors(file).length);
+    assertEquals(1, myManager.getEditors(file).length);
     editors = myManager.openFile(file, false);
 
     assertEquals(1, editors.length);

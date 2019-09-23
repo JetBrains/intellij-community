@@ -11,6 +11,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -39,7 +40,8 @@ import javax.swing.event.DocumentEvent
 class PyAddNewCondaEnvPanel(private val project: Project?,
                             private val module: Module?,
                             private val existingSdks: List<Sdk>,
-                            newProjectPath: String?) : PyAddNewEnvPanel() {
+                            newProjectPath: String?,
+                            context: UserDataHolder) : PyAddNewEnvPanel() {
   override val envName: String = "Conda"
   override val panelName: String = "New environment"
   override val icon: Icon = PythonIcons.Python.Anaconda

@@ -89,7 +89,6 @@ public final class EditExternallyAction extends AnAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-
     doUpdate(e);
   }
 

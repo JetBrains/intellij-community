@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectWizard;
 
 import com.intellij.framework.addSupport.FrameworkSupportInModuleProvider;
@@ -436,6 +436,11 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
     return true;
   }
 
+  @TestOnly
+  public ModuleWizardStep getFrameworksStep() {
+    return getCustomStep();
+  }
+
   @Nullable
   private ModuleWizardStep getCustomStep() {
     return myCustomSteps.get(myCurrentCard);
@@ -557,11 +562,12 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
             map.putValue(ep.projectType, template);
           }
         }
-        catch(Exception e) {
-          LOG.error("Error loading template from URL " + ep.templatePath, e);
+        catch (Exception e) {
+          LOG.error("Error loading template from URL '" + ep.templatePath + "' [Plugin: " + ep.getPluginId() + "]", e);
         }
-      } else {
-        LOG.error("Can't find resource for project template " + ep.templatePath);
+      }
+      else {
+        LOG.error("Can't find resource for project template '" + ep.templatePath + "' [Plugin: " + ep.getPluginId() + "]");
       }
     }
     return map;
@@ -625,7 +631,9 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
 
     myContext.setProjectBuilder(builder);
     if (builder != null) {
-      myWizard.getSequence().setType(builder.getBuilderId());
+      StepSequence sequence = myWizard.getSequence();
+      sequence.setType(builder.getBuilderId());
+      sequence.setIgnoredSteps(builder.getIgnoredSteps());
     }
     myWizard.setDelegate(builder instanceof WizardDelegate ? (WizardDelegate)builder : null);
     myWizard.updateWizardButtons();

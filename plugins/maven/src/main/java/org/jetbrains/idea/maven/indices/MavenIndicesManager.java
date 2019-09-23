@@ -59,6 +59,7 @@ public class MavenIndicesManager implements Disposable {
   private final Object myUpdatingIndicesLock = new Object();
   private final List<MavenSearchIndex> myWaitingIndices = new ArrayList<>();
   private volatile MavenSearchIndex myUpdatingIndex;
+  private final IndexFixer myIndexFixer = new IndexFixer();
   private final BackgroundTaskQueue myUpdatingQueue = new BackgroundTaskQueue(null, IndicesBundle.message("maven.indices.updating"));
 
   private volatile List<MavenArchetype> myUserArchetypes = new ArrayList<>();
@@ -202,6 +203,13 @@ public class MavenIndicesManager implements Disposable {
     MavenIndex index = getIndicesObject().find(repositoryPath, MavenSearchIndex.Kind.LOCAL);
     if (index != null) {
       index.addArtifact(artifactFile);
+    }
+  }
+
+  public void fixArtifactIndex(File artifactFile, File localRepository) {
+    MavenIndex index = getIndicesObject().find(localRepository.getPath(), MavenSearchIndex.Kind.LOCAL);
+    if (index != null) {
+      myIndexFixer.fixIndex(artifactFile, index);
     }
   }
 
@@ -418,5 +426,25 @@ public class MavenIndicesManager implements Disposable {
   @NotNull
   private Path getUserArchetypesFile() {
     return getIndicesDir().resolve("UserArchetypes.xml");
+  }
+
+
+  private static class IndexFixer {
+    private final static Set<String> INDEXED = Collections.newSetFromMap(new WeakHashMap<>());
+
+    public void fixIndex(File file, MavenIndex index) {
+      synchronized (INDEXED) {
+        if (INDEXED.contains(file.getName())) {
+          return;
+        }
+      }
+
+      ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        index.addArtifact(file);
+        synchronized (INDEXED) {
+          INDEXED.add(file.getName());
+        }
+      });
+    }
   }
 }

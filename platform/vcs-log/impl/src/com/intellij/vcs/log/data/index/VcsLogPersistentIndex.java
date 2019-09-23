@@ -143,11 +143,8 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
     if (myCommitsToIndex.isEmpty() || myIndexStorage == null) return;
     // for fresh index, wait for complete log to load and index everything in one command
     if (myIndexStorage.isFresh() && !full) return;
-    Map<VirtualFile, TIntHashSet> commitsToIndex = myCommitsToIndex;
 
-    for (VirtualFile root : commitsToIndex.keySet()) {
-      myNumberOfTasks.get(root).incrementAndGet();
-    }
+    Map<VirtualFile, TIntHashSet> commitsToIndex = myCommitsToIndex;
     myCommitsToIndex = new HashMap<>();
 
     boolean isFull = full && myIndexStorage.isFresh();
@@ -227,7 +224,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
     }
     return false;
   }
-  
+
   @Override
   public synchronized boolean isIndexed(@NotNull VirtualFile root) {
     return isIndexingEnabled(root) &&
@@ -273,7 +270,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
     for (Map.Entry<VirtualFile, VcsLogProvider> entry : providers.entrySet()) {
       VirtualFile root = entry.getKey();
       VcsLogProvider provider = entry.getValue();
-      if (VcsLogProperties.get(provider, VcsLogProperties.SUPPORTS_INDEXING) && provider instanceof VcsIndexableLogProvider) {
+      if (VcsLogProperties.SUPPORTS_INDEXING.getOrDefault(provider) && provider instanceof VcsIndexableLogProvider) {
         indexers.put(root, ((VcsIndexableLogProvider)provider).getIndexer());
       }
     }
@@ -393,7 +390,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
     @NotNull private final HeavyAwareExecutor myHeavyAwareExecutor;
 
     MySingleTaskController(@NotNull Project project, @NotNull Disposable parent) {
-      super(project, "index", EmptyConsumer.getInstance(), parent);
+      super("index", EmptyConsumer.getInstance(), parent);
       myHeavyAwareExecutor = new HeavyAwareExecutor(project, 50, 100, VcsLogPersistentIndex.this);
     }
 
@@ -423,7 +420,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
           resetPriority(previousPriority);
         }
       };
-      Future<?> future = myHeavyAwareExecutor.executeOutOfHeavyOrPowerSave(task, "Indexing Commit Data", indicator);
+      Future<?> future = myHeavyAwareExecutor.executeOutOfHeavyOrPowerSave(task, indicator);
       return new SingleTaskImpl(future, indicator);
     }
 
@@ -463,11 +460,15 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
       myPathsEncoder = encoder;
       myCommits = commits;
       myFull = full;
+
+      myNumberOfTasks.get(root).incrementAndGet();
     }
 
     public void run(@NotNull ProgressIndicator indicator) {
       if (myBigRepositoriesList.isBig(myRoot)) {
         LOG.info("Indexing repository " + myRoot.getName() + " is skipped since it is too big");
+        markCommits();
+        myNumberOfTasks.get(myRoot).decrementAndGet();
         return;
       }
 
@@ -476,7 +477,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
 
       myStartTime = getCurrentTimeMillis();
 
-      LOG.debug("Indexing " + (myFull ? "full repository" : myCommits.size() + " commits") + " in " + myRoot.getName());
+      LOG.info("Indexing " + (myFull ? "full repository" : myCommits.size() + " commits") + " in " + myRoot.getName());
 
       try {
         try {
@@ -527,19 +528,19 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
     private void report() {
       String formattedTime = StopWatch.formatTime(getCurrentTimeMillis() - myStartTime);
       if (myFull) {
-        LOG.debug(formattedTime +
-                  " for indexing " +
-                  myNewIndexedCommits + " commits in " + myRoot.getName());
+        LOG.info(formattedTime +
+                 " for indexing " +
+                 myNewIndexedCommits + " commits in " + myRoot.getName());
       }
       else {
         int leftCommits = myCommits.size() - myNewIndexedCommits.get() - myOldCommits.get();
         String leftCommitsMessage = (leftCommits > 0) ? ". " + leftCommits + " commits left" : "";
 
-        LOG.debug(formattedTime +
-                  " for indexing " +
-                  myNewIndexedCommits +
-                  " new commits out of " +
-                  myCommits.size() + " in " + myRoot.getName() + leftCommitsMessage);
+        LOG.info(formattedTime +
+                 " for indexing " +
+                 myNewIndexedCommits +
+                 " new commits out of " +
+                 myCommits.size() + " in " + myRoot.getName() + leftCommitsMessage);
       }
     }
 
@@ -548,11 +549,15 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
                 (myCommits.size() - myNewIndexedCommits.get() - myOldCommits.get()) +
                 " commits in " +
                 myRoot.getName());
+      markCommits();
+      scheduleIndex(false);
+    }
+
+    private void markCommits() {
       myCommits.forEach(value -> {
         markForIndexing(value, myRoot);
         return true;
       });
-      scheduleIndex(false);
     }
 
     private void indexOneByOne(@NotNull IntStream commits, @NotNull ProgressIndicator indicator) throws VcsException {
@@ -569,21 +574,16 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
 
           checkRunningTooLong(indicator);
         });
-
-        displayProgress(indicator);
       });
     }
 
     public void indexAll(@NotNull ProgressIndicator indicator) throws VcsException {
-      displayProgress(indicator);
-
       myIndexers.get(myRoot).readAllFullDetails(myRoot, myPathsEncoder, details -> {
         storeDetail(details);
 
         if (myNewIndexedCommits.incrementAndGet() % FLUSHED_COMMITS_NUMBER == 0) flush();
 
         checkRunningTooLong(indicator);
-        displayProgress(indicator);
       });
     }
 
@@ -598,10 +598,6 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
                                                            (int)((time / (getIndexingLimit() * 60000) + 1) * getIndexingLimit())));
         indicator.cancel();
       }
-    }
-
-    public void displayProgress(@NotNull ProgressIndicator indicator) {
-      indicator.setFraction(((double)myNewIndexedCommits.get() + myOldCommits.get()) / myCommits.size());
     }
 
     @Override

@@ -16,17 +16,19 @@ import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.extensions.ExtensionNotApplicableException;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.openapi.wm.impl.IdeFrameImpl;
+import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.ui.BalloonLayout;
 import com.intellij.ui.BalloonLayoutImpl;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.Collections;
@@ -37,7 +39,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-public class StatisticsJobsScheduler implements ApplicationInitializedListener {
+final class StatisticsJobsScheduler implements ApplicationInitializedListener {
   private static final int SEND_STATISTICS_INITIAL_DELAY_IN_MILLIS = 5 * 60 * 1000;
   private static final int CHECK_STATISTICS_PROVIDERS_DELAY_IN_MIN = 20;
 
@@ -46,18 +48,24 @@ public class StatisticsJobsScheduler implements ApplicationInitializedListener {
   public static final int LOG_PROJECTS_STATES_INITIAL_DELAY_IN_MIN = 30;
   public static final int LOG_PROJECTS_STATES_DELAY_IN_MIN = 12 * 60;
 
-  private static final Map<Project, Future> myPersistStatisticsSessionsMap = Collections.synchronizedMap(new HashMap<>());
+  private static final Map<Project, Future<?>> myPersistStatisticsSessionsMap = Collections.synchronizedMap(new HashMap<>());
+
+  StatisticsJobsScheduler() {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      throw ExtensionNotApplicableException.INSTANCE;
+    }
+
+    NotificationsConfigurationImpl.remove("SendUsagesStatistics");
+  }
 
   @Override
   public void componentsInitialized() {
-    if (ApplicationManager.getApplication().isUnitTestMode()) return;
-
     if (StatisticsUploadAssistant.isShouldShowNotification()) {
       Disposable disposable = Disposer.newDisposable();
       Topics.subscribe(FrameStateListener.TOPIC, disposable, new FrameStateListener() {
         @Override
         public void onFrameActivated() {
-          if (isEmpty(((WindowManagerEx)WindowManager.getInstance()).getMostRecentFocusedWindow())) {
+          if (isEmpty(WindowManagerEx.getInstanceEx().getMostRecentFocusedWindow())) {
             final StatisticsService statisticsService = StatisticsUploadAssistant.getEventLogStatisticsService("FUS");
             ApplicationManager.getApplication().invokeLater(() -> StatisticsNotificationManager.showNotification(statisticsService));
             Disposer.dispose(disposable);
@@ -106,24 +114,23 @@ public class StatisticsJobsScheduler implements ApplicationInitializedListener {
     connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectOpened(@NotNull Project project) {
-        ScheduledFuture<?> future =
-          JobScheduler.getScheduler().scheduleWithFixedDelay(() -> FUStateUsagesLogger.create().logProjectStates(project),
-                                                             LOG_PROJECTS_STATES_INITIAL_DELAY_IN_MIN,
-                                                             LOG_PROJECTS_STATES_DELAY_IN_MIN, TimeUnit.MINUTES);
+        ScheduledFuture<?> future = JobScheduler.getScheduler().scheduleWithFixedDelay(
+          () -> FUStateUsagesLogger.create().logProjectStates(project, new EmptyProgressIndicator()),
+          LOG_PROJECTS_STATES_INITIAL_DELAY_IN_MIN,
+          LOG_PROJECTS_STATES_DELAY_IN_MIN, TimeUnit.MINUTES);
         myPersistStatisticsSessionsMap.put(project, future);
         LegacyFUSProjectUsageTrigger.cleanup(project);
       }
 
       @Override
       public void projectClosed(@NotNull Project project) {
-        Future future = myPersistStatisticsSessionsMap.remove(project);
+        Future<?> future = myPersistStatisticsSessionsMap.remove(project);
         if (future != null) {
           future.cancel(true);
         }
       }
     });
   }
-
 
   private static void runLegacyDataCleanupService() {
     JobScheduler.getScheduler().schedule(() -> {
@@ -137,13 +144,10 @@ public class StatisticsJobsScheduler implements ApplicationInitializedListener {
     );
   }
 
-  public StatisticsJobsScheduler() {
-    NotificationsConfigurationImpl.remove("SendUsagesStatistics");
-  }
-
-  private static boolean isEmpty(Window window) {
-    if (window instanceof IdeFrameImpl) {
-      BalloonLayout layout = ((IdeFrameImpl)window).getBalloonLayout();
+  private static boolean isEmpty(@Nullable Window window) {
+    ProjectFrameHelper frameHelper = ProjectFrameHelper.getFrameHelper(window);
+    if (frameHelper != null) {
+      BalloonLayout layout = frameHelper.getBalloonLayout();
       if (layout instanceof BalloonLayoutImpl) {
         // do not show notification if others exist
         return ((BalloonLayoutImpl)layout).isEmpty();

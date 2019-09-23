@@ -17,6 +17,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
+import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
@@ -27,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -87,9 +89,15 @@ public class DirectoryIndexImpl extends DirectoryIndex {
 
   private static boolean shouldResetOnEvents(@NotNull List<? extends VFileEvent> events) {
     for (VFileEvent event : events) {
-      VirtualFile file = event.getFile();
-      if (file == null || file.isDirectory()) {
-        return true;
+      // VFileCreateEvent.getFile() is expensive
+      if (event instanceof VFileCreateEvent) {
+        if (((VFileCreateEvent)event).isDirectory()) return true;
+      }
+      else {
+        VirtualFile file = event.getFile();
+        if (file == null || file.isDirectory()) {
+          return true;
+        }
       }
     }
     return false;
@@ -161,6 +169,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
   @Override
   public List<OrderEntry> getOrderEntries(@NotNull DirectoryInfo info) {
     checkAvailability();
+    if (myProject.isDefault()) return Collections.emptyList();
     return getRootIndex().getOrderEntries(info);
   }
 

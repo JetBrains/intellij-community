@@ -30,7 +30,7 @@ PyFile:InvalidAssignmentExpressions.py
   PyExpressionStatement
     PyParenthesizedExpression
       PsiElement(Py:LPAR)('(')
-      PsiErrorElement:Identifier expected
+      PyAssignmentExpression
         PySubscriptionExpression
           PyReferenceExpression: a
             PsiElement(Py:IDENTIFIER)('a')
@@ -38,28 +38,32 @@ PyFile:InvalidAssignmentExpressions.py
           PyReferenceExpression: i
             PsiElement(Py:IDENTIFIER)('i')
           PsiElement(Py:RBRACKET)(']')
-      PsiWhiteSpace(' ')
-      PsiErrorElement:Unexpected expression syntax
+        PsiErrorElement:Identifier expected
+          <empty list>
+        PsiWhiteSpace(' ')
         PsiElement(Py:COLONEQ)(':=')
         PsiWhiteSpace(' ')
-        PsiElement(Py:IDENTIFIER)('x')
+        PyReferenceExpression: x
+          PsiElement(Py:IDENTIFIER)('x')
       PsiElement(Py:RPAR)(')')
   PsiWhiteSpace('\n')
   PyExpressionStatement
     PyParenthesizedExpression
       PsiElement(Py:LPAR)('(')
-      PsiErrorElement:Identifier expected
+      PyAssignmentExpression
         PyReferenceExpression: rest
           PyReferenceExpression: self
             PsiElement(Py:IDENTIFIER)('self')
           PsiElement(Py:DOT)('.')
           PsiElement(Py:IDENTIFIER)('rest')
-      PsiWhiteSpace(' ')
-      PsiErrorElement:Unexpected expression syntax
+        PsiErrorElement:Identifier expected
+          <empty list>
+        PsiWhiteSpace(' ')
         PsiElement(Py:COLONEQ)(':=')
         PsiWhiteSpace(' ')
-        PsiElement(Py:LBRACKET)('[')
-        PsiElement(Py:RBRACKET)(']')
+        PyListLiteralExpression
+          PsiElement(Py:LBRACKET)('[')
+          PsiElement(Py:RBRACKET)(']')
       PsiElement(Py:RPAR)(')')
   PsiWhiteSpace('\n\n')
   PyExpressionStatement
@@ -79,3 +83,63 @@ PyFile:InvalidAssignmentExpressions.py
         PsiWhiteSpace(' ')
         PsiElement(Py:NONE_KEYWORD)('None')
       PsiElement(Py:RPAR)(')')
+  PsiWhiteSpace('\n\n')
+  PyExpressionStatement
+    PyParenthesizedExpression
+      PsiElement(Py:LPAR)('(')
+      PyAssignmentExpression
+        PyTargetExpression: b
+          PsiElement(Py:IDENTIFIER)('b')
+        PsiWhiteSpace(' ')
+        PsiElement(Py:COLONEQ)(':=')
+        PsiWhiteSpace(' ')
+        PyPrefixExpression
+          PsiElement(Py:MINUS)('-')
+          PsiErrorElement:expression expected
+            <empty list>
+      PsiElement(Py:RPAR)(')')
+  PsiWhiteSpace('\n')
+  PyExpressionStatement
+    PyParenthesizedExpression
+      PsiElement(Py:LPAR)('(')
+      PyAssignmentExpression
+        PyTargetExpression: x
+          PsiElement(Py:IDENTIFIER)('x')
+        PsiWhiteSpace(' ')
+        PsiElement(Py:COLONEQ)(':=')
+        PsiErrorElement:expression expected
+          <empty list>
+      PsiWhiteSpace(' ')
+      PsiElement(Py:RPAR)(')')
+  PsiWhiteSpace('\n\n')
+  PyAssignmentStatement
+    PyTargetExpression: x
+      PsiElement(Py:IDENTIFIER)('x')
+    PsiWhiteSpace(' ')
+    PsiElement(Py:EQ)('=')
+    PsiWhiteSpace(' ')
+    PyParenthesizedExpression
+      PsiElement(Py:LPAR)('(')
+      PyAssignmentExpression
+        PySubscriptionExpression
+          PyReferenceExpression: b
+            PsiElement(Py:IDENTIFIER)('b')
+          PsiElement(Py:LBRACKET)('[')
+          PyReferenceExpression: j
+            PsiElement(Py:IDENTIFIER)('j')
+          PsiElement(Py:RBRACKET)(']')
+        PsiErrorElement:Identifier expected
+          <empty list>
+        PsiWhiteSpace(' ')
+        PsiElement(Py:COLONEQ)(':=')
+        PsiWhiteSpace(' ')
+        PyReferenceExpression: z
+          PsiElement(Py:IDENTIFIER)('z')
+      PsiElement(Py:RPAR)(')')
+    PsiWhiteSpace(' ')
+    PsiElement(Py:EQ)('=')
+    PsiWhiteSpace(' ')
+    PyStringLiteralExpression: spam
+      PsiElement(Py:SINGLE_QUOTED_STRING)(''spam'')
+    PsiWhiteSpace('  ')
+    PsiComment(Py:END_OF_LINE_COMMENT)('# z is a reference')

@@ -230,7 +230,6 @@ public class MavenRepositoriesConfigurable implements SearchableConfigurable, Co
           }
           long timestamp = i.getUpdateTimestamp();
           if (timestamp == -1) return IndicesBundle.message("maven.index.updated.never");
-          if (i.getKind() != REMOTE) return IndicesBundle.message("maven.index.updated.notapplicable");
           return DateFormatUtil.formatDate(timestamp);
         case 3:
           return myManager.getUpdatingState(i);

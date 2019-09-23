@@ -55,6 +55,7 @@ import javax.swing.AbstractAction
 import javax.swing.Action
 import javax.swing.JButton
 import javax.swing.JComponent
+import javax.swing.table.AbstractTableModel
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.TreeNode
 
@@ -103,6 +104,7 @@ open class MultipleFileMergeDialog(
 
     updateTree()
     table.tree.selectionModel.addTreeSelectionListener { updateButtonState() }
+    updateButtonState()
     selectFirstFile()
     object : DoubleClickListener() {
       override fun onDoubleClick(event: MouseEvent): Boolean {
@@ -132,7 +134,7 @@ open class MultipleFileMergeDialog(
   }
 
   override fun createCenterPanel(): JComponent {
-    return panel(LCFlags.disableMagic) {
+    return panel {
       row {
         descriptionLabel()
       }
@@ -222,6 +224,7 @@ open class MultipleFileMergeDialog(
     val model = TreeModelBuilder.buildFromVirtualFiles(project, factory, unresolvedFiles)
     tableModel.setRoot(model.root as TreeNode)
     TreeUtil.expandAll(table.tree)
+    (table.model as? AbstractTableModel)?.fireTableDataChanged()
   }
 
   private fun updateButtonState() {
@@ -354,6 +357,7 @@ open class MultipleFileMergeDialog(
         selIndex = table.rowCount - 1
       }
       table.selectionModel.setSelectionInterval(selIndex, selIndex)
+      table.requestFocusInWindow()
     }
   }
 
@@ -426,7 +430,6 @@ open class MultipleFileMergeDialog(
       DiffManager.getInstance().showMerge(project, request)
     }
     updateModelFromFiles()
-    IdeFocusManager.getInstance(project).requestFocus(table, false)
   }
 
   private fun getSessionResolution(result: MergeResult): MergeSession.Resolution = when (result) {

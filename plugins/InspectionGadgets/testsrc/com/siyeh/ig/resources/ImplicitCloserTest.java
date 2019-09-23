@@ -1,13 +1,11 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.resources;
 
-import com.intellij.codeInspection.resources.ImplicitResourceCloser;
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.openapi.extensions.Extensions;
+import com.intellij.codeInspection.resources.ImplicitResourceCloser;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiVariable;
-import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.ServiceContainerUtil;
 import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,13 +31,11 @@ public class ImplicitCloserTest extends LightJavaInspectionTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    PlatformTestUtil.registerExtension(Extensions.getRootArea(), ImplicitResourceCloser.EP_NAME, NAME_RESOURCE_CLOSER, getTestRootDisposable());
+    ServiceContainerUtil.registerExtension(ApplicationManager.getApplication(), ImplicitResourceCloser.EP_NAME, NAME_RESOURCE_CLOSER, getTestRootDisposable());
   }
 
   @Override
   protected LocalInspectionTool getInspection() {
     return new AutoCloseableResourceInspection();
   }
-
-
 }

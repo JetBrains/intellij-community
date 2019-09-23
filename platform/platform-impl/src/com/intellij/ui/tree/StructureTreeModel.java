@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tree;
 
 import com.intellij.ide.util.treeView.AbstractTreeNode;
@@ -7,6 +7,7 @@ import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.ValidateableNode;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.concurrency.Invoker;
 import com.intellij.util.concurrency.InvokerSupplier;
@@ -50,7 +51,7 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
     this.structure = structure;
     description = format(structure.toString());
     invoker = background
-              ? new Invoker.BackgroundThread(this)
+              ? new Invoker.Background(this)
               : new Invoker.EDT(this);
     Disposer.register(parentDisposable, this);
   }
@@ -279,7 +280,7 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
    * @param consumer a path consumer called on EDT if path is found and selected
    */
   public final void select(@NotNull Object element, @NotNull JTree tree, @NotNull Consumer<? super TreePath> consumer) {
-    promiseVisitor(element).onSuccess(visitor -> TreeUtil.select(tree, visitor, consumer));
+    promiseVisitor(element).onSuccess(visitor -> TreeUtil.promiseSelect(tree, visitor).onSuccess(consumer));
   }
 
   /**
@@ -405,6 +406,7 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
 
     List<Node> list = new ArrayList<>(elements.length);
     for (Object element : elements) {
+      ProgressManager.checkCanceled();
       if (isValid(structure, element)) {
         list.add(new Node(structure, element, descriptor)); // an exception may be thrown while getting children
       }

@@ -19,7 +19,7 @@ import com.intellij.vcs.log.graph.EdgePrintElement;
 import com.intellij.vcs.log.graph.PrintElement;
 import com.intellij.vcs.log.paint.GraphCellPainter;
 import com.intellij.vcs.log.paint.PaintParameters;
-import com.intellij.vcs.log.ui.table.GraphTableModel;
+import com.intellij.vcs.log.ui.table.VcsLogColumn;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,15 +43,13 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
 
   public GraphCommitCellRenderer(@NotNull VcsLogData logData,
                                  @NotNull GraphCellPainter painter,
-                                 @NotNull VcsLogGraphTable table,
-                                 boolean compact,
-                                 boolean showTagNames) {
+                                 @NotNull VcsLogGraphTable table) {
     myLogData = logData;
     myGraphTable = table;
 
     LabelIconCache iconCache = new LabelIconCache();
-    myComponent = new MyComponent(logData, painter, table, iconCache, compact, showTagNames);
-    myTemplateComponent = new MyComponent(logData, painter, table, iconCache, compact, showTagNames);
+    myComponent = new MyComponent(logData, painter, table, iconCache);
+    myTemplateComponent = new MyComponent(logData, painter, table, iconCache);
   }
 
   @Override
@@ -90,14 +88,14 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
   }
 
   private int getReferencesWidth(int row) {
-    return getReferencesWidth(row, getValue(myGraphTable.getModel().getValueAt(row, GraphTableModel.COMMIT_COLUMN)));
+    return getReferencesWidth(row, getValue(myGraphTable.getModel().getValueAt(row, VcsLogColumn.COMMIT)));
   }
 
   private int getReferencesWidth(int row, @NotNull GraphCommitCell cell) {
     Collection<VcsRef> refs = cell.getRefsToThisCommit();
     if (!refs.isEmpty()) {
       myTemplateComponent.customize(cell, myGraphTable.isRowSelected(row), myGraphTable.hasFocus(),
-                                    row, GraphTableModel.COMMIT_COLUMN);
+                                    row, VcsLogColumn.COMMIT.ordinal());
       return myTemplateComponent.getReferencePainter().getSize().width;
     }
 
@@ -105,7 +103,7 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
   }
 
   private int getGraphWidth(int row) {
-    GraphCommitCell cell = getValue(myGraphTable.getModel().getValueAt(row, GraphTableModel.COMMIT_COLUMN));
+    GraphCommitCell cell = getValue(myGraphTable.getModel().getValueAt(row, VcsLogColumn.COMMIT));
     return myTemplateComponent.getGraphWidth(cell.getPrintElements());
   }
 
@@ -132,6 +130,11 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
     myTemplateComponent.getReferencePainter().setShowTagNames(showTagNames);
   }
 
+  public void setLeftAligned(boolean leftAligned) {
+    myComponent.getReferencePainter().setLeftAligned(leftAligned);
+    myTemplateComponent.getReferencePainter().setLeftAligned(leftAligned);
+  }
+
   public static Font getLabelFont() {
     return UIUtil.getLabelFont();
   }
@@ -151,13 +154,11 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
     MyComponent(@NotNull VcsLogData data,
                 @NotNull GraphCellPainter painter,
                 @NotNull VcsLogGraphTable table,
-                @NotNull LabelIconCache iconCache,
-                boolean compact,
-                boolean showTags) {
+                @NotNull LabelIconCache iconCache) {
       myPainter = painter;
       myGraphTable = table;
 
-      myReferencePainter = new LabelPainter(data, table, iconCache, compact, showTags);
+      myReferencePainter = new LabelPainter(data, table, iconCache);
       myIssueLinkRenderer = new IssueLinkRenderer(data.getProject(), this);
 
       myFont = getLabelFont();
@@ -220,7 +221,9 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
         myReferencePainter.customizePainter(refs, getBackground(), baseForeground, isSelected,
                                             getAvailableWidth(column, myGraphImage.getWidth()));
 
-        appendTextPadding(myGraphImage.getWidth() + myReferencePainter.getSize().width + LabelPainter.RIGHT_PADDING.get());
+        int referencesWidth = myReferencePainter.getSize().width;
+        if (referencesWidth > 0) referencesWidth += LabelPainter.RIGHT_PADDING.get();
+        appendTextPadding(myGraphImage.getWidth() + referencesWidth);
         appendText(cell, style, isSelected);
       }
       else {

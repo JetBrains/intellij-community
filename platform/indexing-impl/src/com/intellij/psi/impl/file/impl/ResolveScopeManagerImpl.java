@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.file.impl;
 
 import com.intellij.injected.editor.VirtualFileWindow;
@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.Map;
 
-public class ResolveScopeManagerImpl extends ResolveScopeManager {
+public final class ResolveScopeManagerImpl extends ResolveScopeManager {
   private final Project myProject;
   private final ProjectRootManager myProjectRootManager;
   private final PsiManager myManager;
@@ -32,10 +32,10 @@ public class ResolveScopeManagerImpl extends ResolveScopeManager {
   private final Map<VirtualFile, GlobalSearchScope> myDefaultResolveScopesCache;
   private final AdditionalIndexableFileSet myAdditionalIndexableFileSet;
 
-  public ResolveScopeManagerImpl(Project project, ProjectRootManager projectRootManager, PsiManager psiManager) {
+  public ResolveScopeManagerImpl(Project project) {
     myProject = project;
-    myProjectRootManager = projectRootManager;
-    myManager = psiManager;
+    myProjectRootManager = ProjectRootManager.getInstance(project);
+    myManager = PsiManager.getInstance(project);
     myAdditionalIndexableFileSet = new AdditionalIndexableFileSet(project);
 
     myDefaultResolveScopesCache = ConcurrentFactoryMap.create(
@@ -56,7 +56,7 @@ public class ResolveScopeManagerImpl extends ResolveScopeManager {
       },
       ContainerUtil::createConcurrentWeakKeySoftValueMap);
 
-    ((PsiManagerImpl)psiManager).registerRunnableToRunOnChange(myDefaultResolveScopesCache::clear);
+    ((PsiManagerImpl)myManager).registerRunnableToRunOnChange(myDefaultResolveScopesCache::clear);
   }
 
   private GlobalSearchScope getResolveScopeFromProviders(@NotNull final VirtualFile vFile) {
@@ -126,8 +126,9 @@ public class ResolveScopeManagerImpl extends ResolveScopeManager {
   }
 
 
+  @NotNull
   @Override
-  public GlobalSearchScope getDefaultResolveScope(final VirtualFile vFile) {
+  public GlobalSearchScope getDefaultResolveScope(@NotNull final VirtualFile vFile) {
     final PsiFile psiFile = myManager.findFile(vFile);
     assert psiFile != null : "directory=" + vFile.isDirectory() + "; " + myProject;
     return getResolveScopeFromProviders(vFile);

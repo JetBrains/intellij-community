@@ -2,6 +2,7 @@
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.CommonBundle;
+import com.intellij.build.BuildProgressListener;
 import com.intellij.build.SyncViewManager;
 import com.intellij.configurationStore.SettingsSavingComponentJavaAdapter;
 import com.intellij.ide.startup.StartupManagerEx;
@@ -110,7 +111,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     EventDispatcher.create(MavenProjectsTree.Listener.class);
   private final List<Listener> myManagerListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final ModificationTracker myModificationTracker;
-  private final SyncViewManager mySyncViewManager;
+  private BuildProgressListener myProgressListener;
 
   private MavenWorkspaceSettings myWorkspaceSettings;
 
@@ -129,7 +130,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     myModificationTracker = new MavenModificationTracker(this);
     myInitializationAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
     mySaveQueue = new MavenMergingUpdateQueue("Maven save queue", SAVE_DELAY, !isUnitTestMode(), this);
-    mySyncViewManager = ServiceManager.getService(myProject, SyncViewManager.class);
+    myProgressListener = ServiceManager.getService(myProject, SyncViewManager.class);
   }
 
   @Override
@@ -573,7 +574,9 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
       if (m.isDisposed()) continue;
       ExternalSystemModulePropertyManager.getInstance(m).setMavenized(mavenized);
       // force re-save (since can be stored externally)
-      ((ModuleRootManagerImpl)ModuleRootManager.getInstance(m)).stateChanged();
+      if (ModuleRootManager.getInstance(m) instanceof ModuleRootManagerImpl) {
+        ((ModuleRootManagerImpl)ModuleRootManager.getInstance(m)).stateChanged();
+      }
     }
   }
 
@@ -875,11 +878,17 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     return scheduleImportAndResolve(false);
   }
 
+  public void terminateImport(int exitCode) {
+    getSyncConsole().terminated(exitCode);
+  }
+
   public Promise<List<Module>> scheduleImportAndResolve(boolean fromAutoImport) {
-    getSyncConsole().startImport(mySyncViewManager, fromAutoImport);
+    getSyncConsole().startImport(myProgressListener, fromAutoImport);
     MavenSyncConsole console = getSyncConsole();
     AsyncPromise<List<Module>> promise = scheduleResolve();
-    promise.onProcessed(m -> completeMavenSyncOnImportCompletion(console));
+    promise.onProcessed(m -> {
+      completeMavenSyncOnImportCompletion(console);
+    });
     fireImportAndResolveScheduled();
     return promise;
   }
@@ -1163,6 +1172,12 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   public void unscheduleAllTasksInTests() {
     unscheduleAllTasks(getProjects());
   }
+
+  @TestOnly
+  public void waitForImportFinishCompletion() {
+    completeMavenSyncOnImportCompletion(mySyncConsole);
+  }
+
 
   public void waitForReadingCompletion() {
     waitForTasksCompletion(null);

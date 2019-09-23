@@ -32,7 +32,7 @@ import java.util.List;
 /**
  * @author peter
  */
-public class CollectionElementInvocationHandler extends DomInvocationHandler<AbstractDomChildDescriptionImpl, ElementStub> {
+public class CollectionElementInvocationHandler extends DomInvocationHandler {
 
   public CollectionElementInvocationHandler(final Type type, @NotNull final XmlTag tag,
                                             final AbstractCollectionChildDescription description,
@@ -52,7 +52,7 @@ public class CollectionElementInvocationHandler extends DomInvocationHandler<Abs
   @Nullable
   @Override
   protected String getValue() {
-    return myStub == null ? super.getValue() : myStub.getValue();
+    return myStub == null ? super.getValue() : ((ElementStub)myStub).getValue();
   }
 
   @Override
@@ -87,7 +87,6 @@ public class CollectionElementInvocationHandler extends DomInvocationHandler<Abs
     final XmlTag tag = getXmlTag();
     if (tag == null) return;
 
-    getManager().cacheHandler(getCacheKey(), tag, null);
     setXmlElement(null);
     deleteTag(tag);
     getManager().fireEvent(new DomEvent(parent, false));
@@ -95,7 +94,7 @@ public class CollectionElementInvocationHandler extends DomInvocationHandler<Abs
 
   @Override
   public DomElement createPathStableCopy() {
-    final AbstractDomChildDescriptionImpl description = getChildDescription();
+    AbstractDomChildDescriptionImpl description = getChildDescription();
     final DomElement parent = getParent();
     assert parent != null;
     final DomElement parentCopy = parent.createStableCopy();
@@ -113,7 +112,7 @@ public class CollectionElementInvocationHandler extends DomInvocationHandler<Abs
 
   @Override
   public int hashCode() {
-    ElementStub stub = getStub();
+    ElementStub stub = (ElementStub)getStub();
     if (stub != null) {
       return stub.getName().hashCode() + stub.getStubId();
     }

@@ -3,13 +3,13 @@ package com.intellij.openapi.extensions;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.impl.ExtensionComponentAdapter;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.List;
 import java.util.function.BiPredicate;
-import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -51,24 +51,29 @@ public interface ExtensionPoint<T> {
   @NotNull
   List<T> getExtensionList();
 
-  /**
-   * Invokes the given lambda for each extension registered in this extension point. Logs exceptions thrown by the lambda.
-   */
-  void forEachExtensionSafe(@NotNull Consumer<? super T> extensionConsumer);
-
   @NotNull
   Stream<T> extensions();
 
   boolean hasAnyExtensions();
 
+  /**
+   * @deprecated Use another solution, because this method instantiates all extensions.
+   */
   @Nullable
-  T getExtension();
+  @Deprecated
+  default T getExtension() {
+    // method is deprecated and not used, ignore not efficient implementation
+    return ContainerUtil.getFirstItem(getExtensionList());
+  }
 
   /**
    * @deprecated Use another solution, because this method instantiates all extensions.
    */
   @Deprecated
-  boolean hasExtension(@NotNull T extension);
+  default boolean hasExtension(@NotNull T extension) {
+    // method is deprecated and used only by one external plugin, ignore not efficient implementation
+    return ContainerUtil.containsIdentity(getExtensionList(), extension);
+  }
 
   /**
    * @deprecated Use another solution to unregister not applicable extension, because this method instantiates all extensions.
@@ -93,7 +98,7 @@ public interface ExtensionPoint<T> {
   void unregisterExtension(@NotNull Class<? extends T> extensionClass);
 
   /**
-   * Unregisters an extension of the specified type.
+   * Unregisters extensions for which the specified predicate returns false.
    *
    * Consider to use {@link ExtensionNotApplicableException} instead.
    */
@@ -112,10 +117,12 @@ public interface ExtensionPoint<T> {
   void reset();
 
   @NotNull
-  Class<T> getExtensionClass();
-
-  @NotNull
   String getClassName();
+
+  /**
+   * @return true if the EP allows adding/removing extensions at runtime
+   */
+  boolean isDynamic();
 
   enum Kind {INTERFACE, BEAN_CLASS}
 }

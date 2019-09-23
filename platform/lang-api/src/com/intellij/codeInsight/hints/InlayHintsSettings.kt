@@ -5,6 +5,7 @@ import com.intellij.configurationStore.deserializeInto
 import com.intellij.configurationStore.serialize
 import com.intellij.lang.Language
 import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import org.jdom.Element
@@ -18,6 +19,8 @@ class InlayHintsSettings : PersistentStateComponent<InlayHintsSettings.State> {
     var disabledHintProviderIds: MutableSet<String> = hashSetOf()
     // We can't store Map<String, Any> directly, because values deserialized as Object
     var settingsMapElement = Element("settingsMapElement")
+
+    var lastViewedProviderKeyId: String? = null
   }
 
   private val myCachedSettingsMap: MutableMap<String, Any> = hashMapOf()
@@ -29,6 +32,14 @@ class InlayHintsSettings : PersistentStateComponent<InlayHintsSettings.State> {
     } else {
       myState.disabledHintProviderIds.add(id)
     }
+  }
+
+  fun saveLastViewedProviderId(providerId: String) = synchronized(lock) {
+    state.lastViewedProviderKeyId = providerId
+  }
+
+  fun getLastViewedProviderId() : String? {
+    return state.lastViewedProviderKeyId
   }
 
   fun invertHintTypeStatus(key: SettingsKey<*>, language: Language) = synchronized(lock) {
@@ -102,6 +113,13 @@ class InlayHintsSettings : PersistentStateComponent<InlayHintsSettings.State> {
     settingsElementChildren.first().deserializeInto(settings)
     myCachedSettingsMap[id] = settings
     return settings
+  }
+
+  companion object {
+    @JvmStatic
+    fun instance(): InlayHintsSettings {
+      return ServiceManager.getService(InlayHintsSettings::class.java)
+    }
   }
 }
 

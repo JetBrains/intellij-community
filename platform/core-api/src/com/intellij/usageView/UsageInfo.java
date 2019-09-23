@@ -89,9 +89,7 @@ public class UsageInfo {
     if (file != null &&
         !isNullOrBinary &&
         (effectiveStart != element.getTextOffset() - elementRange.getStartOffset() || effectiveEnd != elementRange.getLength())) {
-      TextRange rangeToStore = InjectedLanguageManager.getInstance(project).isInjectedFragment(file)
-                               ? elementRange
-                               : TextRange.create(effectiveStart, effectiveEnd).shiftRight(elementRange.getStartOffset());
+      TextRange rangeToStore = TextRange.create(effectiveStart, effectiveEnd).shiftRight(elementRange.getStartOffset());
       myPsiFileRange = smartPointerManager.createSmartPsiFileRangePointer(file, rangeToStore);
     }
     else {

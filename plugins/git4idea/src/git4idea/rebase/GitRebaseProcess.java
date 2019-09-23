@@ -63,6 +63,7 @@ import java.util.regex.Pattern;
 
 import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
 import static com.intellij.openapi.ui.Messages.getWarningIcon;
+import static com.intellij.openapi.util.text.StringUtil.capitalize;
 import static com.intellij.openapi.vcs.VcsNotifier.IMPORTANT_ERROR_NOTIFICATION;
 import static com.intellij.util.ObjectUtils.*;
 import static com.intellij.util.containers.ContainerUtil.*;
@@ -89,12 +90,7 @@ public class GitRebaseProcess {
     notification.expire();
   });
 
-  private final NotificationAction VIEW_STASH_ACTION = new NotificationAction("View Stash...") {
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
-      mySaver.showSavedChanges();
-    }
-  };
+  private final NotificationAction VIEW_STASH_ACTION;
 
   @NotNull private final Project myProject;
   @NotNull private final Git myGit;
@@ -120,6 +116,9 @@ public class GitRebaseProcess {
     myRepositoryManager = getRepositoryManager(myProject);
     myProgressManager = ProgressManager.getInstance();
     myDirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
+
+    VIEW_STASH_ACTION = NotificationAction.createSimple("View " + capitalize(mySaver.getSaverName()) + "...",
+                                                        () -> mySaver.showSavedChanges());
   }
 
   public void rebase() {
@@ -419,7 +418,7 @@ public class GitRebaseProcess {
       .Params(myProject)
       .setMergeDialogCustomizer(createDialogCustomizer(conflicting, myRebaseSpec))
       .setReverse(true);
-    RebaseConflictResolver conflictResolver = new RebaseConflictResolver(myProject, myGit, conflicting, params, calledFromNotification);
+    RebaseConflictResolver conflictResolver = new RebaseConflictResolver(myProject, conflicting, params, calledFromNotification);
     boolean allResolved = conflictResolver.merge();
     if (conflictResolver.myWasNothingToMerge) return ResolveConflictResult.NOTHING_TO_MERGE;
     if (allResolved) return ResolveConflictResult.ALL_RESOLVED;
@@ -630,7 +629,6 @@ public class GitRebaseProcess {
     private boolean myWasNothingToMerge;
 
     RebaseConflictResolver(@NotNull Project project,
-                           @NotNull Git git,
                            @NotNull GitRepository repository,
                            @NotNull Params params, boolean calledFromNotification) {
       super(project, singleton(repository.getRoot()), params);

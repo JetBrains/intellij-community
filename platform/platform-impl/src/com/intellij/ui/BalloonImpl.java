@@ -98,7 +98,8 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaConsumer {
 
   private final Color myBorderColor;
   private final Insets myBorderInsets;
-  private final Color myFillColor;
+  private Color myFillColor;
+  private Color myPointerColor;
 
   private final Insets myContainerInsets;
 
@@ -219,6 +220,18 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaConsumer {
       }
     }
     return false;
+  }
+
+  public void setFillColor(Color fillColor) {
+    myFillColor = fillColor;
+  }
+
+  public Color getPointerColor() {
+    return myPointerColor;
+  }
+
+  public void setPointerColor(Color pointerColor) {
+    myPointerColor = pointerColor;
   }
 
   private final long myFadeoutTime;
@@ -1213,11 +1226,18 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaConsumer {
         shape = getPointingShape(bounds, pointTarget, balloon);
       }
       else {
-        shape = new RoundRectangle2D.Double(bounds.x, bounds.y, bounds.width - JBUIScale.scale(1), bounds.height - JBUIScale.scale(1), balloon.getArc(), balloon.getArc());
+        shape = getPointlessShape(balloon, bounds);
       }
 
-      g.setColor(balloon.myFillColor);
+      g.setPaint(balloon.myFillColor);
       g.fill(shape);
+      if (balloon.myShowPointer && balloon.myPointerColor != null) {
+        Shape balloonShape = getPointlessContentRec(bounds, getPointerLength(this, balloon.myDialogMode) + 1);
+        Area area = new Area(shape);
+        area.subtract(new Area(balloonShape));
+        g.setColor(balloon.myPointerColor);
+        g.fill(area);
+      }
       g.setColor(balloon.myBorderColor);
 
       if (balloon.myTitleLabel != null) {
@@ -1252,6 +1272,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaConsumer {
       g.draw(shape);
       cfg.restore();
     }
+
 
     protected abstract Insets getTitleInsets(int normalInset, int pointerLength);
 
@@ -1316,6 +1337,12 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaConsumer {
     public String toString() {
       return getClass().getSimpleName();
     }
+  }
+
+  @NotNull
+  private static RoundRectangle2D.Double getPointlessShape(BalloonImpl balloon, Rectangle bounds) {
+    return new RoundRectangle2D.Double(bounds.x, bounds.y, bounds.width - JBUIScale.scale(1), bounds.height - JBUIScale.scale(1),
+                                       balloon.getArc(), balloon.getArc());
   }
 
   public static final AbstractPosition BELOW = new Below();
@@ -1685,6 +1712,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaConsumer {
     private MyComponent(JComponent content, BalloonImpl balloon, EmptyBorder shapeBorder) {
       setOpaque(false);
       setLayout(null);
+      putClientProperty(UIUtil.TEXT_COPY_ROOT, Boolean.TRUE);
       myBalloon = balloon;
 
       // When a screen reader is active, TAB/Shift-TAB should allow moving the focus
@@ -1784,7 +1812,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaConsumer {
       BufferedImage image = ImageUtil.createImage(g, getWidth(), getHeight(), BufferedImage.TYPE_INT_RGB);//new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_RGB);
       useSafely(image.createGraphics(), imageGraphics -> {
         //noinspection UseJBColor
-        imageGraphics.setColor(new Color(myFillColor.getRGB())); // create a copy to remove alpha
+        imageGraphics.setPaint(new Color(myFillColor.getRGB())); // create a copy to remove alpha
         imageGraphics.fillRect(0, 0, getWidth(), getHeight());
 
         super.paintChildren(imageGraphics);
@@ -1880,11 +1908,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaConsumer {
         shape = myBalloon.myPosition.getPointingShape(bounds, pointTarget, myBalloon);
       }
       else {
-        shape = new RoundRectangle2D.Double(bounds.x,
-                                            bounds.y,
-                                            bounds.width - JBUIScale.scale(1),
-                                            bounds.height - JBUIScale.scale(1),
-                                            myBalloon.getArc(), myBalloon.getArc());
+        shape = getPointlessShape(myBalloon, bounds);
       }
       return shape.contains(x, y);
     }

@@ -127,10 +127,8 @@ public class MavenProjectsManagerWatcher {
       @Override
       public void moduleAdded(@NotNull final Project project, @NotNull final Module module) {
         // this method is needed to return non-ignored status for modules that were deleted (and thus ignored) and then created again with a different module type
-        if (myManager.isMavenizedModule(module)) {
-          MavenProject mavenProject = myManager.findProject(module);
-          if (mavenProject != null) myManager.setIgnoredState(Collections.singletonList(mavenProject), false);
-        }
+        MavenProject mavenProject = myManager.findProject(module);
+        if (mavenProject != null) myManager.setIgnoredState(Collections.singletonList(mavenProject), false);
       }
     });
 
@@ -270,7 +268,6 @@ public class MavenProjectsManagerWatcher {
                                       final boolean forceImportAndResolve) {
     final AsyncPromise<Void> promise = new AsyncPromise<>();
     Runnable onCompletion = createScheduleImportAction(forceImportAndResolve, promise);
-
     if (LOG.isDebugEnabled()) {
       String withForceOptionMessage = force ? " with force option" : "";
       LOG.debug("Scheduling update for " + myProjectsTree + withForceOptionMessage +
@@ -295,7 +292,7 @@ public class MavenProjectsManagerWatcher {
       }
 
       if (forceImportAndResolve || myManager.getImportingSettings().isImportAutomatically()) {
-        myManager.scheduleImportAndResolve(!forceImportAndResolve).onSuccess(modules -> promise.setResult(null));
+        myManager.scheduleImportAndResolve(myManager.getImportingSettings().isImportAutomatically()).onSuccess(modules -> promise.setResult(null));
       }
       else {
         promise.setResult(null);
@@ -331,7 +328,10 @@ public class MavenProjectsManagerWatcher {
         if (!f.isValid()) deletedFiles.add(f);
       }
 
-      scheduleUpdate(newFiles, deletedFiles, false, false);
+      if (!deletedFiles.isEmpty() || !newFiles.isEmpty()) {
+        scheduleUpdate(newFiles, deletedFiles, false, false);
+      }
+
     }
   }
 

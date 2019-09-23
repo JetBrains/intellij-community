@@ -20,7 +20,7 @@ class MavenOutputActionProcessor(private val myProject: Project, private val myW
     val manager = MavenProjectsManager.getInstance(myProject)
     val mavenProject = manager.rootProjects.filter {
       it.directoryFile == LocalFileSystem.getInstance().findFileByIoFile(File(myWorkingDir))
-    }.firstOrNull();
+    }.firstOrNull()
 
     if (mavenProject == null) {
       MavenLog.LOG.warn("Cannot find appropriate maven project,project =  ${myProject.name}, workingdir = ${myWorkingDir}")
@@ -30,6 +30,6 @@ class MavenOutputActionProcessor(private val myProject: Project, private val myW
     MavenProjectsTree.showNotificationInvalidConfig(myProject, mavenProject, message)
     mavenProject.configFileError = message
 
-    MavenUtil.restartConfigHighlightning(SmartList(mavenProject))
+    MavenUtil.restartConfigHighlightning(myProject, SmartList(mavenProject))
   }
 }

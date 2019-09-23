@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.numeric;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
@@ -30,10 +30,10 @@ abstract class CastedLiteralMaybeJustLiteralInspection extends BaseInspection {
   abstract String getSuffix();
 
   @NotNull
-  abstract PsiType getLiteralBeforeType();
+  abstract PsiType getTypeBeforeCast();
 
   @NotNull
-  abstract PsiType getCastType();
+  abstract PsiPrimitiveType getCastType();
 
   private StringBuilder buildReplacementText(PsiExpression expression, StringBuilder out) {
     if (expression instanceof PsiLiteralExpression) {
@@ -109,7 +109,7 @@ abstract class CastedLiteralMaybeJustLiteralInspection extends BaseInspection {
     public void visitLiteralExpression(PsiLiteralExpression expression) {
       super.visitLiteralExpression(expression);
       final PsiType type = expression.getType();
-      if (!getLiteralBeforeType().equals(type)) {
+      if (!getTypeBeforeCast().equals(type)) {
         return;
       }
       PsiElement parent = expression.getParent();
@@ -125,9 +125,16 @@ abstract class CastedLiteralMaybeJustLiteralInspection extends BaseInspection {
         return;
       }
       final PsiType expectedType = ExpectedTypeUtils.findExpectedType(typeCastExpression, false);
-      if (expectedType != null && !getCastType().equals(expectedType)) {
-        // don't warn on red code.
+      // don't warn on red code.
+      if (expectedType == null) {
         return;
+      }
+      else if (!getCastType().equals(expectedType)) {
+        final PsiClassType boxedType = getCastType().getBoxedType(expression);
+        assert boxedType != null;
+        if (!boxedType.equals(expectedType)) {
+          return;
+        }
       }
       registerError(typeCastExpression, typeCastExpression);
     }

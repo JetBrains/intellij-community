@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.editorActions;
 
+import com.google.common.base.Strings;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
@@ -14,6 +15,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.impl.source.resolve.reference.impl.manipulators.StringLiteralManipulator;
+import com.intellij.psi.util.PsiLiteralUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -112,7 +114,7 @@ public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
       return text;
     }
 
-    if (rawText != null && wasUnescaped(text, rawText.rawText)) return rawText.rawText;
+    if (rawText != null && wasUnescaped(text, rawText.rawText) && isSuitableForContext(rawText.rawText, token)) return rawText.rawText;
     
     if (isStringLiteral(token)) {
       text = escapeAndSplit(text, token);
@@ -123,9 +125,45 @@ public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
     else if (isTextBlock(token)) {
       final String before = document.getText(new TextRange(selectionStart - 1, selectionStart));
       final String after = document.getText(new TextRange(selectionEnd, selectionEnd + 1));
-      return escapeTextBlock(text, "\"".equals(before), "\"".equals(after));
+      int caretOffset = editor.getCaretModel().getOffset();
+      int offset = caretOffset - document.getLineStartOffset(document.getLineNumber(caretOffset));
+      return escapeTextBlock(text, offset, "\"".equals(before), "\"".equals(after));
     }
     return text;
+  }
+
+  private boolean isSuitableForContext(String text, PsiElement context) {
+    if (isStringLiteral(context)) {
+      return !containsUnescapedChars(text, '"', '\n');
+    }
+    else if (isCharLiteral(context)) {
+      return !containsUnescapedChars(text, '\'', '\n');
+    }
+    else if (isTextBlock(context)) {
+      return !text.contains("\"\"\"");
+    }
+    else {
+      return true;
+    }
+  }
+
+  private static boolean containsUnescapedChars(String text, char... cs) {
+    boolean slash = false;
+    for (int i = 0; i < text.length(); i++) {
+      char ch = text.charAt(i);
+      if (ch == '\\') {
+        slash = !slash;
+      }
+      else {
+        if (!slash) {
+          for (char c : cs) {
+            if (ch == c) return true;
+          }
+        }
+        slash = false;
+      }
+    }
+    return false;
   }
 
   public String escapeAndSplit(String text, PsiElement token) {
@@ -163,28 +201,18 @@ public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
   @Nullable
   protected PsiElement findLiteralTokenType(PsiFile file, int selectionStart, int selectionEnd) {
     final PsiElement elementAtSelectionStart = file.findElementAt(selectionStart);
-    if (elementAtSelectionStart == null) {
+    final PsiElement elementAtSelectionEnd = file.findElementAt(selectionEnd);
+    if (elementAtSelectionStart == null || elementAtSelectionEnd == null ||
+        elementAtSelectionEnd.getNode().getElementType() != elementAtSelectionStart.getNode().getElementType()) {
       return null;
     }
-    final boolean isTextBlock = isTextBlock(elementAtSelectionStart);
-    if (!isStringLiteral(elementAtSelectionStart) && !isCharLiteral(elementAtSelectionStart) && !isTextBlock) {
+    if (!isStringLiteral(elementAtSelectionStart) && !isCharLiteral(elementAtSelectionStart) && !isTextBlock(elementAtSelectionStart)) {
       return null;
     }
-
-    final TextRange range = elementAtSelectionStart.getTextRange();
-    final TextRange textRange = isTextBlock ? new TextRange(range.getStartOffset() + 3, range.getEndOffset() - 2) : range;
-    if (textRange.getEndOffset() < selectionEnd) {
-      final PsiElement elementAtSelectionEnd = file.findElementAt(selectionEnd);
-      if (elementAtSelectionEnd == null) {
-        return null;
-      }
-      if (elementAtSelectionEnd.getNode().getElementType() == elementAtSelectionStart.getNode().getElementType() &&
-          elementAtSelectionEnd.getTextRange().getStartOffset() < selectionEnd) {
-        return elementAtSelectionStart;
-      }
-    }
-    
-    if (selectionStart <= textRange.getStartOffset() || selectionEnd >= textRange.getEndOffset()) {
+    final TextRange startTextRange = getEscapedRange(elementAtSelectionStart);
+    final TextRange endTextRange = getEscapedRange(elementAtSelectionEnd);
+    if (startTextRange == null || endTextRange == null ||
+        !startTextRange.containsOffset(selectionStart) || !endTextRange.containsOffset(selectionEnd)) {
       return null;
     }
     return elementAtSelectionStart;
@@ -207,18 +235,10 @@ public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
 
   @Nullable
   protected TextRange getEscapedRange(@NotNull PsiElement token) {
-    if (isCharLiteral(token) || isStringLiteral(token)) {
-      TextRange tokenRange = token.getTextRange();
-      return new TextRange(tokenRange.getStartOffset() + 1, tokenRange.getEndOffset() - 1); // Excluding String/char literal quotes
-    }
-    else if (isTextBlock(token)) {
-      PsiElement parent = token.getParent();
-      if (parent instanceof PsiLiteralExpression && ((PsiLiteralExpression)parent).getValue() != null) {
-        TextRange rangeInParent = StringLiteralManipulator.getValueRange((PsiLiteralExpression)parent);
-        return rangeInParent.shiftRight(parent.getTextRange().getStartOffset());
-      }
-    }
-    return null;
+    PsiElement parent = token.getParent();
+    if (!(parent instanceof PsiLiteralExpression)) return null;
+    final TextRange valueTextRange = StringLiteralManipulator.getValueRange((PsiLiteralExpression)token.getParent());
+    return valueTextRange.shiftRight(token.getTextRange().getStartOffset());
   }
 
   @NotNull
@@ -229,13 +249,17 @@ public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
   }
 
   @NotNull
-  protected String escapeTextBlock(@NotNull String text, boolean escapeStartQuote, boolean escapeEndQuote) {
+  protected String escapeTextBlock(@NotNull String text, int offset, boolean escapeStartQuote, boolean escapeEndQuote) {
     StringBuilder buffer = new StringBuilder(text.length());
-    final String[] lines = LineTokenizer.tokenize(text.toCharArray(), false, true);
+    final String[] lines = LineTokenizer.tokenize(text.toCharArray(), false, false);
+    String indent = Strings.repeat(" ", offset);
     for (int i = 0; i < lines.length; i++) {
-      buffer.append(StringUtil.escapeTextBlockCharacters(lines[i], i == 0 && escapeStartQuote, i == lines.length - 1 && escapeEndQuote));
+      String content = PsiLiteralUtil.escapeBackSlashesInTextBlock(lines[i]);
+      content = PsiLiteralUtil.escapeTextBlockCharacters(content, i == 0 && escapeStartQuote,
+                                                         i == lines.length - 1 && escapeEndQuote, true);
+      buffer.append(content);
       if (i < lines.length - 1) {
-        buffer.append("\n");
+        buffer.append('\n').append(indent);
       }
     }
     return buffer.toString();

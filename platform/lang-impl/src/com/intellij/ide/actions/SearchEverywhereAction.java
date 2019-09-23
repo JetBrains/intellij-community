@@ -199,6 +199,10 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   private FileEditor myFileEditor;
   private HistoryItem myHistoryItem;
 
+  public SearchEverywhereAction() {
+    setEnabledInModalContext(false);
+  }
+
   @NotNull
   @Override
   public JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
@@ -1019,8 +1023,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       }
     };
     SearchEverywherePsiRenderer myFileRenderer = new SearchEverywherePsiRenderer();
-    @SuppressWarnings("unchecked")
-    ListCellRenderer myActionsRenderer = new GotoActionModel.GotoActionListCellRenderer(Function.TO_STRING);
+    ListCellRenderer myActionsRenderer = new GotoActionModel.GotoActionListCellRenderer(Functions.TO_STRING());
 
     private String myLocationString;
     private Icon myLocationIcon;

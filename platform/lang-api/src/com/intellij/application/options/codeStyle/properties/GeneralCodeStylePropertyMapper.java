@@ -60,7 +60,7 @@ public class GeneralCodeStylePropertyMapper extends AbstractCodeStylePropertyMap
 
   @Nullable
   @Override
-  protected CodeStylePropertyAccessor getAccessor(@NotNull Object codeStyleObject, @NotNull Field field) {
+  protected CodeStylePropertyAccessor<?> getAccessor(@NotNull Object codeStyleObject, @NotNull Field field) {
     if (codeStyleObject instanceof CodeStyleSettings) {
       if ("LINE_SEPARATOR".equals(field.getName())) {
         return new LineSeparatorAccessor(codeStyleObject, field);
@@ -120,7 +120,7 @@ public class GeneralCodeStylePropertyMapper extends AbstractCodeStylePropertyMap
   }
 
   @Override
-  protected void addAdditionalAccessors(@NotNull Map<String, CodeStylePropertyAccessor> accessorMap) {
+  protected void addAdditionalAccessors(@NotNull Map<String, CodeStylePropertyAccessor<?>> accessorMap) {
     accessorMap.put(VisualGuidesAccessor.VISUAL_GUIDES_PROPERTY_NAME, new VisualGuidesAccessor(getRootSettings(), null));
   }
 }

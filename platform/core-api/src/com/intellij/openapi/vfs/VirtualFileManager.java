@@ -8,6 +8,7 @@ import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -69,8 +70,7 @@ public abstract class VirtualFileManager implements ModificationTracker {
   public abstract void refreshWithoutFileWatcher(boolean asynchronous);
 
   /**
-   * Searches for the file specified by given URL. URL is a string which uniquely identifies file in all
-   * file systems.
+   * Searches for a file specified by the given {@link VirtualFile#getUrl() URL}.
    *
    * @param url the URL to find file by
    * @return <code>{@link VirtualFile}</code> if the file was found, {@code null} otherwise
@@ -82,13 +82,13 @@ public abstract class VirtualFileManager implements ModificationTracker {
   public abstract VirtualFile findFileByUrl(@NonNls @NotNull String url);
 
   /**
-   * Refreshes only the part of the file system needed for searching the file by the given URL and finds file
-   * by the given URL.<br>
-   * <p/>
-   * This method is useful when the file was created externally and you need to find <code>{@link VirtualFile}</code>
-   * corresponding to it.<p>
-   * <p/>
-   * If this method is invoked not from Swing event dispatch thread, then it must not happen inside a read action.
+   * <p>Refreshes only the part of the file system needed for searching the file by the given URL and finds file
+   * by the given URL.</p>
+   *
+   * <p>This method is useful when the file was created externally and you need to find <code>{@link VirtualFile}</code>
+   * corresponding to it.</p>
+   *
+   * <p>If this method is invoked not from Swing event dispatch thread, then it must not happen inside a read action.</p>
    *
    * @param url the URL
    * @return <code>{@link VirtualFile}</code> if the file was found, {@code null} otherwise
@@ -99,31 +99,35 @@ public abstract class VirtualFileManager implements ModificationTracker {
   public abstract VirtualFile refreshAndFindFileByUrl(@NotNull String url);
 
   /**
-   * Adds listener to the file system.
-   *
-   * @param listener the listener
-   * @see VirtualFileListener
+   * @deprecated Use {@link #VFS_CHANGES} message bus topic.
    */
+  @Deprecated
   public abstract void addVirtualFileListener(@NotNull VirtualFileListener listener);
 
+  /**
+   * @deprecated Use {@link #VFS_CHANGES} message bus topic.
+   */
+  @Deprecated
   public abstract void addVirtualFileListener(@NotNull VirtualFileListener listener, @NotNull Disposable parentDisposable);
 
   /**
-   * Removes listener form the file system.
-   *
-   * @param listener the listener
+   * @deprecated Use {@link #VFS_CHANGES} message bus topic.
    */
+  @Deprecated
   public abstract void removeVirtualFileListener(@NotNull VirtualFileListener listener);
 
+  /**
+   * Consider using extension point {@code vfs.asyncListener}.
+   */
   public abstract void addAsyncFileListener(@NotNull AsyncFileListener listener, @NotNull Disposable parentDisposable);
 
   /**
-   * Constructs URL by specified protocol and path. URL is a string which uniquely identifies file in all
-   * file systems.
+   * Constructs a {@link VirtualFile#getUrl() URL} by specified protocol and path.
    *
    * @param protocol the protocol
    * @param path     the path
    * @return URL
+   * @see VirtualFile#getUrl
    */
   @NotNull
   public static String constructUrl(@NotNull String protocol, @NotNull String path) {
@@ -186,4 +190,11 @@ public abstract class VirtualFileManager implements ModificationTracker {
   public VirtualFile findFileById(int id) {
     return null;
   }
+
+  @ApiStatus.Internal
+  public abstract int storeName(@NotNull String name);
+
+  @ApiStatus.Internal
+  @NotNull
+  public abstract CharSequence getVFileName(int nameId);
 }

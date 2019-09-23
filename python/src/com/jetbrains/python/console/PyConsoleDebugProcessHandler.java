@@ -55,10 +55,9 @@ public class PyConsoleDebugProcessHandler extends ProcessHandler implements Posi
 
       @Override
       public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
+        PyConsoleDebugProcessHandler.this.notifyTextAvailable(event.getText(), outputType);
       }
     });
-
-    processHandler.addColoredTextListener((text, attributes) -> PyConsoleDebugProcessHandler.this.notifyTextAvailable(text, attributes));
   }
 
   @Override

@@ -2,6 +2,7 @@
 package com.intellij.openapi.util.registry
 
 import com.intellij.internal.statistic.utils.getPluginInfoById
+import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginAware
 import com.intellij.openapi.extensions.PluginDescriptor
@@ -22,11 +23,23 @@ class RegistryKeyBean : PluginAware {
   companion object {
     @JvmStatic
     fun addKeysFromPlugins() {
-      Registry.addKeys(EP_NAME.iterable.map { extension ->
-        val contributedByThirdParty = extension.descriptor?.let { !getPluginInfoById(it.pluginId).isSafeToReport() } ?: false
-        RegistryKeyDescriptor(extension.key, extension.description.unescapeString(), extension.defaultValue, extension.restartRequired,
-                              contributedByThirdParty)
-      })
+      Registry.addKeys(EP_NAME.iterable.map { createRegistryKeyDescriptor(it) })
+
+      EP_NAME.addExtensionPointListener(object : ExtensionPointListener<RegistryKeyBean> {
+        override fun extensionAdded(extension: RegistryKeyBean, pluginDescriptor: PluginDescriptor) {
+          Registry.addKeys(listOf(createRegistryKeyDescriptor(extension)))
+        }
+
+        override fun extensionRemoved(extension: RegistryKeyBean, pluginDescriptor: PluginDescriptor) {
+          Registry.removeKey(extension.key)
+        }
+      }, null)
+    }
+
+    private fun createRegistryKeyDescriptor(extension: RegistryKeyBean): RegistryKeyDescriptor {
+      val contributedByThirdParty = extension.descriptor?.let { !getPluginInfoById(it.pluginId).isSafeToReport() } ?: false
+      return RegistryKeyDescriptor(extension.key, extension.description.unescapeString(), extension.defaultValue, extension.restartRequired,
+                                   contributedByThirdParty)
     }
   }
 

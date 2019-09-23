@@ -3,7 +3,6 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -14,6 +13,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
@@ -233,13 +233,9 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
 
   private static boolean hasAncestor(@NotNull Set<? extends FilePath> dirs, @NotNull FilePath filePath) {
     for (FilePath parent : dirs) {
-      if (isAncestor(filePath, parent)) return true;
+      if (VcsFileUtil.isAncestor(parent, filePath, false)) return true;
     }
     return false;
-  }
-
-  private static boolean isAncestor(@NotNull FilePath filePath, @NotNull FilePath parent) {
-    return FileUtil.startsWith(filePath.getPath(), parent.getPath());
   }
 
   @NotNull
@@ -267,7 +263,7 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
         if (files != null) {
           for (Iterator<FilePath> it = files.iterator(); it.hasNext();) {
             FilePath oldBoy = it.next();
-            if (isAncestor(oldBoy, newcomer)) {
+            if (VcsFileUtil.isAncestor(newcomer, oldBoy, false)) {
               it.remove();
             }
           }
@@ -283,11 +279,11 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
     else {
       for (Iterator<FilePath> it = dirsByRoot.iterator(); it.hasNext();) {
         FilePath oldBoy = it.next();
-        if (isAncestor(newcomer, oldBoy)) {
+        if (VcsFileUtil.isAncestor(oldBoy, newcomer, false)) {
           return;
         }
 
-        if (isAncestor(oldBoy, newcomer)) {
+        if (VcsFileUtil.isAncestor(newcomer, oldBoy, false)) {
           it.remove();
         }
       }

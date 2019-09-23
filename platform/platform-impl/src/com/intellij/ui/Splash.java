@@ -1,17 +1,18 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
+import com.intellij.diagnostic.Activity;
+import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.ex.ProgressSlide;
-import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.ImageLoader;
-import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -37,8 +38,6 @@ public final class Splash extends Window {
   private final List<ProgressSlideAndImage> myProgressSlideImages = new ArrayList<>();
   private final Image myImage;
 
-  private final NotNullLazyValue<Font> myFont = createFont();
-
   public Splash(@NotNull ApplicationInfoEx info) {
     super(null);
 
@@ -53,15 +52,18 @@ public final class Splash extends Window {
     myWidth = myImage.getWidth(null);
     myHeight = myImage.getHeight(null);
     Dimension size = new Dimension(myWidth, myHeight);
-    if (!"false".equals(System.getProperty("suppress.focus.stealing")) && !"false".equals(System.getProperty("suppress.focus.stealing.auto.request.focus")) && Boolean.getBoolean("suppress.focus.stealing.linux")) {
-      setAutoRequestFocus(false);
-    }
+    setAutoRequestFocus(false);
     setSize(size);
     setLocationInTheCenterOfScreen();
+  }
 
+  public void initAndShow() {
     initImages();
 
+    StartUpMeasurer.addInstantEvent("splash shown");
+    Activity activity = StartUpMeasurer.startActivity("splash set visible");
     setVisible(true);
+    activity.end();
     paint(getGraphics());
     toFront();
   }
@@ -78,25 +80,6 @@ public final class Splash extends Window {
       throw new IllegalStateException("Cannot find image: " + path);
     }
     return result;
-  }
-
-  @NotNull
-  public static NotNullLazyValue<Font> createFont() {
-    return NotNullLazyValue.createValue(() -> {
-      Font font;
-      if (SystemInfo.isMacOSElCapitan) {
-        font = createFont(".SF NS Text");
-      }
-      else {
-        //noinspection SpellCheckingInspection
-        font = SystemInfo.isMacOSYosemite ? createFont("HelveticaNeue-Regular") : null;
-      }
-
-      if (font == null || StartupUiUtil.isDialogFont(font)) {
-        font = createFont(StartupUiUtil.ARIAL_FONT_NAME);
-      }
-      return font;
-    });
   }
 
   @Override
@@ -132,11 +115,17 @@ public final class Splash extends Window {
 
     if (((progress - myProgress) > 0.01) || (progress > 0.99)) {
       myProgress = progress;
-      paintProgress(getGraphics());
+      Graphics graphics = getGraphics();
+      // not yet initialized
+      if (graphics != null) {
+        paintProgress(graphics);
+      }
     }
   }
 
-  private void paintProgress(@NotNull Graphics g) {
+  private void paintProgress(@Nullable Graphics g) {
+    if (g == null) return;
+
     boolean hasSlides = !myProgressSlideImages.isEmpty();
     if (hasSlides) {
       paintSlides(g);
@@ -147,7 +136,7 @@ public final class Splash extends Window {
       return;
     }
 
-    final int progressWidth = (int)(myWidth * myProgress);
+    int progressWidth = (int)(myWidth * myProgress);
     int currentWidth = progressWidth - myProgressLastPosition;
     if (currentWidth == 0) {
       return;
@@ -157,9 +146,9 @@ public final class Splash extends Window {
     int y = hasSlides ? myHeight - myProgressHeight : myProgressY;
     g.fillRect(myProgressLastPosition, y, currentWidth, myProgressHeight);
     if (myProgressTail != null) {
-      float onePixel = JBUI_INIT_SCALE;
-      myProgressTail.paintIcon(this, g, (int)(currentWidth - (myProgressTail.getIconWidth() / onePixel / 2f * onePixel)),
-                               (int)(myProgressY - (myProgressTail.getIconHeight() - myProgressHeight) / onePixel / 2f * onePixel)); //I'll buy you a beer if you understand this line without playing with it
+      int tx = (int)(currentWidth - (myProgressTail.getIconWidth() / JBUI_INIT_SCALE / 2f * JBUI_INIT_SCALE));
+      int ty = (int)(myProgressY - (myProgressTail.getIconHeight() - myProgressHeight) / JBUI_INIT_SCALE / 2f * JBUI_INIT_SCALE);
+      myProgressTail.paintIcon(this, g, tx, ty);
     }
     myProgressLastPosition = progressWidth;
   }
@@ -167,55 +156,13 @@ public final class Splash extends Window {
   private void paintSlides(@NotNull Graphics g) {
     for (ProgressSlideAndImage progressSlide : myProgressSlideImages) {
       if (progressSlide.slide.getProgressRation() <= myProgress) {
-        if(progressSlide.isDrawn)
+        if (progressSlide.isDrawn) {
           continue;
-
+        }
         StartupUiUtil.drawImage(g, progressSlide.image, 0, 0, null);
         progressSlide.isDrawn = true;
       }
     }
-  }
-
-  public void paintLicenseeInfo() {
-    showLicenseeInfo(getGraphics(), 0, 0, myHeight, myInfo, myFont);
-  }
-
-  public static boolean showLicenseeInfo(@NotNull Graphics g, int x, int y, final int height, @NotNull ApplicationInfoEx info, @NotNull NotNullLazyValue<? extends Font> font) {
-    if (!info.showLicenseeInfo()) {
-      return false;
-    }
-
-    LicensingFacade provider = LicensingFacade.getInstance();
-    if (provider == null) {
-      return true;
-    }
-
-    String licensedToMessage = provider.getLicensedToMessage();
-    List<String> licenseRestrictionsMessages = provider.getLicenseRestrictionsMessages();
-    if (licensedToMessage == null && licenseRestrictionsMessages.isEmpty()) {
-      return true;
-    }
-
-    GraphicsUtil.applyRenderingHints(g);
-    g.setFont(font.getValue());
-    g.setColor(info.getSplashTextColor());
-
-    int offsetX = Math.max(uiScale(15), uiScale(info.getLicenseOffsetX()));
-    int offsetYUnscaled = info.getLicenseOffsetY();
-
-    if (licensedToMessage != null) {
-      g.drawString(licensedToMessage, x + offsetX, y + height - uiScale(offsetYUnscaled));
-    }
-
-    if (!licenseRestrictionsMessages.isEmpty()) {
-      g.drawString(licenseRestrictionsMessages.get(0), x + offsetX, y + height - uiScale(offsetYUnscaled - 16));
-    }
-    return true;
-  }
-
-  @NotNull
-  private static Font createFont(String name) {
-    return new Font(name, Font.PLAIN, uiScale(12));
   }
 
   private static int uiScale(int i) {

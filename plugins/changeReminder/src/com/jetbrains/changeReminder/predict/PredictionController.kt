@@ -17,7 +17,7 @@ internal abstract class PredictionController(private val project: Project,
                                              name: String,
                                              parent: Disposable,
                                              handler: (Collection<FilePath>) -> Unit
-) : SingleTaskController<PredictionRequest, Collection<FilePath>>(project, name, Consumer { handler(it) }, parent) {
+) : SingleTaskController<PredictionRequest, Collection<FilePath>>(name, Consumer { handler(it) }, parent) {
   var inProgress = false
     private set(value) {
       field = value

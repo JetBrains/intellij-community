@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
-import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.SortableColumnModel;
@@ -13,7 +12,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 
 /**
  * @author stathik
@@ -24,13 +22,8 @@ public abstract class PluginTableModel extends AbstractTableModel implements Sor
 
   protected ColumnInfo[] columns;
   protected final List<IdeaPluginDescriptor> view = new ArrayList<>();
-  protected final List<IdeaPluginDescriptor> filtered = new ArrayList<>();
 
   private RowSorter.SortKey myDefaultSortKey;
-  private boolean mySortByStatus;
-  private boolean mySortByRating;
-  private boolean mySortByDownloads;
-  private boolean mySortByUpdated;
 
   protected PluginTableModel() { }
 
@@ -115,30 +108,7 @@ public abstract class PluginTableModel extends AbstractTableModel implements Sor
     return list;
   }
 
-  public abstract void updatePluginsList(List<? extends IdeaPluginDescriptor> list);
-
-  protected void filter(String filter) {
-    Set<String> search = SearchableOptionsRegistrar.getInstance().getProcessedWords(filter);
-    List<IdeaPluginDescriptor> allPlugins = getAllPlugins();
-
-    view.clear();
-    filtered.clear();
-
-    for (IdeaPluginDescriptor descriptor : allPlugins) {
-      if (isPluginDescriptorAccepted(descriptor) && PluginManagerMain.isAccepted(filter, search, descriptor)) {
-        view.add(descriptor);
-      }
-      else {
-        filtered.add(descriptor);
-      }
-    }
-
-    fireTableDataChanged();
-  }
-
   public abstract int getNameColumn();
-
-  public abstract boolean isPluginDescriptorAccepted(IdeaPluginDescriptor descriptor);
 
   public void sort() {
     try {
@@ -155,43 +125,8 @@ public abstract class PluginTableModel extends AbstractTableModel implements Sor
     }
   }
 
-  public boolean isSortByStatus() {
-    return mySortByStatus;
-  }
-
-  public void setSortByStatus(boolean sortByStatus) {
-    mySortByStatus = sortByStatus;
-  }
-
-  public boolean isSortByRating() {
-    return mySortByRating;
-  }
-
-  public void setSortByRating(boolean sortByRating) {
-    mySortByRating = sortByRating;
-  }
-
-  public boolean isSortByDownloads() {
-    return mySortByDownloads;
-  }
-
-  public void setSortByDownloads(boolean sortByDownloads) {
-    mySortByDownloads = sortByDownloads;
-  }
-
-  public boolean isSortByUpdated() {
-    return mySortByUpdated;
-  }
-
-  public void setSortByUpdated(boolean sortByUpdated) {
-    mySortByUpdated = sortByUpdated;
-  }
-
   public List<IdeaPluginDescriptor> getAllPlugins() {
-    List<IdeaPluginDescriptor> list = new ArrayList<>(view.size() + filtered.size());
-    list.addAll(view);
-    list.addAll(filtered);
-    return list;
+    return new ArrayList<>(view);
   }
 
   public List<IdeaPluginDescriptor> getAllRepoPlugins() {

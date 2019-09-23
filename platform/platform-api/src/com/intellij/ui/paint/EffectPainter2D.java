@@ -145,7 +145,11 @@ public enum EffectPainter2D implements RegionPainter2D<Font> {
           if (font == null) font = g.getFont();
           LineMetrics metrics = font.getLineMetrics("", g.getFontRenderContext());
           double offset = PaintUtil.alignToInt(-metrics.getStrikethroughOffset(), g, RoundingMode.FLOOR);
-          double thickness = PaintUtil.alignToInt(maybeScaleFontMetricsThickness(metrics.getStrikethroughThickness(), font), g, RoundingMode.FLOOR);
+          float strikeThroughThickness = metrics.getStrikethroughThickness();
+          double thickness = PaintUtil.alignToInt(maybeScaleFontMetricsThickness(strikeThroughThickness, font), g, RoundingMode.FLOOR);
+          if (strikeThroughThickness > 0 && thickness <= 0) {
+            thickness = PaintUtil.devPixel(g);
+          }
           drawLine(g, x, y - offset, width, thickness, this);
         }
       }
@@ -167,7 +171,11 @@ public enum EffectPainter2D implements RegionPainter2D<Font> {
         double underlineThickness = maybeScaleFontMetricsThickness(metrics.getUnderlineThickness(), font);
         double underlineOffset = Math.max(devPixel, metrics.getUnderlineOffset());
 
+        boolean positive = thickness * underlineThickness > 0;
         thickness = PaintUtil.alignToInt(thickness * underlineThickness, g, roundingMode);
+        if (positive && thickness <= 0) {
+          thickness = devPixel;
+        }
         double offset = Math.min(height - thickness, underlineOffset);
 
         if (offset < devPixel) {
@@ -304,7 +312,7 @@ public enum EffectPainter2D implements RegionPainter2D<Font> {
       }
     };
 
-    // we should not recalculate caches when IDEA is on Retina and non-Retina
+    // we should not recalculate caches when IDE is on Retina and non-Retina
     private final ConcurrentHashMap<Integer, BufferedImage> myNormalCache = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<Integer, BufferedImage> myHiDPICache = new ConcurrentHashMap<>();
 

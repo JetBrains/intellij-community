@@ -15,7 +15,7 @@
  */
 package org.jetbrains.jps.model.java;
 
-import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
@@ -25,10 +25,10 @@ import java.util.Set;
  * @author nik
  */
 public class JavaModuleSourceRootTypes {
-  public static final Set<JavaSourceRootType> SOURCES = ContainerUtilRt.newHashSet(JavaSourceRootType.SOURCE, JavaSourceRootType.TEST_SOURCE);
-  public static final Set<JavaResourceRootType> RESOURCES = ContainerUtilRt.newHashSet(JavaResourceRootType.RESOURCE, JavaResourceRootType.TEST_RESOURCE);
-  public static final Set<? extends JpsModuleSourceRootType<?>> PRODUCTION = ContainerUtilRt.newHashSet(JavaSourceRootType.SOURCE, JavaResourceRootType.RESOURCE);
-  public static final Set<? extends JpsModuleSourceRootType<?>> TESTS = ContainerUtilRt.newHashSet(JavaSourceRootType.TEST_SOURCE, JavaResourceRootType.TEST_RESOURCE);
+  public static final Set<JavaSourceRootType> SOURCES = ContainerUtil.newHashSet(JavaSourceRootType.SOURCE, JavaSourceRootType.TEST_SOURCE);
+  public static final Set<JavaResourceRootType> RESOURCES = ContainerUtil.newHashSet(JavaResourceRootType.RESOURCE, JavaResourceRootType.TEST_RESOURCE);
+  public static final Set<? extends JpsModuleSourceRootType<?>> PRODUCTION = ContainerUtil.newHashSet(JavaSourceRootType.SOURCE, JavaResourceRootType.RESOURCE);
+  public static final Set<? extends JpsModuleSourceRootType<?>> TESTS = ContainerUtil.newHashSet(JavaSourceRootType.TEST_SOURCE, JavaResourceRootType.TEST_RESOURCE);
 
   /**
    * @deprecated in order to check that a source root is a java-specific tests root, use {@link #TESTS} set, for arbitrary roots use

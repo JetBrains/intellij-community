@@ -328,6 +328,7 @@ public class CodeInsightUtil {
       Query<PsiClass> baseQuery = ClassInheritorsSearch.search(baseClass, scope, true, true, false);
       Query<PsiClass> query = new FilteredQuery<>(baseQuery, psiClass ->
         !(psiClass instanceof PsiTypeParameter) &&
+        psiClass.getName() != null &&
         ContainerUtil.exists(JavaCompletionUtil.getAllLookupStrings(psiClass), matcher::prefixMatches) &&
         !imported.contains(psiClass));
       query.forEach(inheritorsProcessor);

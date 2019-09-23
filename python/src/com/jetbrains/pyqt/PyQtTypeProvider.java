@@ -17,10 +17,10 @@ package com.jetbrains.pyqt;
 
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.util.QualifiedName;
-import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyCallable;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.types.PyClassTypeImpl;
 import com.jetbrains.python.psi.types.PyType;
@@ -38,19 +38,16 @@ public class PyQtTypeProvider extends PyTypeProviderBase {
 
   @Override
   public Ref<PyType> getReturnType(@NotNull PyCallable callable, @NotNull TypeEvalContext context) {
-    if (PyNames.INIT.equals(callable.getName()) && callable instanceof PyFunction) {
-      final PyFunction function = (PyFunction)callable;
-      final PyClass containingClass = function.getContainingClass();
-      if (containingClass != null && ourQt4Signal.equals(containingClass.getName())) {
-        final String classQName = containingClass.getQualifiedName();
-        if (classQName != null) {
-          final QualifiedName name = QualifiedName.fromDottedString(classQName);
-          final String qtVersion = name.getComponents().get(0);
-          final PyClass aClass = PyClassNameIndex.findClass(qtVersion + "." + ourQtBoundSignal, function.getProject());
-          if (aClass != null) {
-            final PyType type = new PyClassTypeImpl(aClass, false);
-            return Ref.create(type);
-          }
+    final PyClass containingClass = PyUtil.turnConstructorIntoClass(PyUtil.as(callable, PyFunction.class));
+    if (containingClass != null && ourQt4Signal.equals(containingClass.getName())) {
+      final String classQName = containingClass.getQualifiedName();
+      if (classQName != null) {
+        final QualifiedName name = QualifiedName.fromDottedString(classQName);
+        final String qtVersion = name.getComponents().get(0);
+        final PyClass aClass = PyClassNameIndex.findClass(qtVersion + "." + ourQtBoundSignal, callable.getProject());
+        if (aClass != null) {
+          final PyType type = new PyClassTypeImpl(aClass, false);
+          return Ref.create(type);
         }
       }
     }

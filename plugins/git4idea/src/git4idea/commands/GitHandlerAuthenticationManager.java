@@ -106,6 +106,10 @@ public class GitHandlerAuthenticationManager implements AutoCloseable {
     myHandler.addLineListener(new GitLineHandlerListener() {
       @Override
       public void onLineAvailable(@NonNls String line, Key outputType) {
+        if (!httpAuthenticator.wasRequested()) {
+          return;
+        }
+
         String lowerCaseLine = StringUtil.toLowerCase(line);
         if (lowerCaseLine.contains("authentication failed") ||
             lowerCaseLine.contains("403 forbidden") ||
@@ -120,6 +124,10 @@ public class GitHandlerAuthenticationManager implements AutoCloseable {
 
       @Override
       public void processTerminated(int exitCode) {
+        if (!httpAuthenticator.wasRequested()) {
+          return;
+        }
+
         LOG.debug("auth listener: process terminated. auth failed=" + myHttpAuthFailed + ", cancelled=" + httpAuthenticator.wasCancelled());
         if (!httpAuthenticator.wasCancelled()) {
           if (myHttpAuthFailed) {

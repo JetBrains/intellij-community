@@ -1,6 +1,5 @@
 package com.intellij.configurationScript
 
-import com.intellij.codeInsight.completion.JavaCompletionTestCase
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.configurationScript.schemaGenerators.ComponentStateJsonSchemaGenerator
@@ -11,14 +10,16 @@ import com.intellij.testFramework.EditorTestUtil
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.testFramework.PlatformTestUtil.getCommunityPath
 import com.intellij.testFramework.assertions.Assertions.assertThat
+import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.io.sanitizeFileName
 import com.jetbrains.jsonSchema.impl.JsonSchemaCompletionContributor
 import com.jetbrains.jsonSchema.impl.JsonSchemaReader
 import org.intellij.lang.annotations.Language
+import org.jetbrains.io.JsonObjectBuilder
 import java.nio.file.Paths
 
 // this test requires YamlJsonSchemaCompletionContributor, that's why intellij.yaml is added as test dependency
-internal class ConfigurationSchemaTest : JavaCompletionTestCase() {
+internal class ConfigurationSchemaTest : BasePlatformTestCase() {
   companion object {
     private val testSnapshotDir = Paths.get(getCommunityPath(), "plugins/configuration-script", "testSnapshots")
   }
@@ -111,15 +112,15 @@ internal class ConfigurationSchemaTest : JavaCompletionTestCase() {
     assertThat(position).isGreaterThan(0)
 
     @Suppress("SpellCheckingInspection")
-    val file = createFile(myModule, "intellij.yaml", text.replace("<caret>", "IntelliJIDEARulezzz"))
-    val element = file.findElementAt(position)
+    val file = myFixture.configureByText("intellij.yaml", text.replace("<caret>", "<caret>IntelliJIDEARulezzz"))
+    val element = file.findElementAt(myFixture.editor.caretModel.offset)
     assertThat(element).isNotNull
 
     val schemaContent = doGenerateConfigurationSchema(generators)
     schemaValidator?.invoke(schemaContent)
     val schemaFile = LightVirtualFile("scheme.json", JsonFileType.INSTANCE, schemaContent, Charsets.UTF_8, 0)
 
-    val schemaObject = JsonSchemaReader.readFromFile(myProject, schemaFile)
+    val schemaObject = JsonSchemaReader.readFromFile(project, schemaFile)
     assertThat(schemaObject).isNotNull
 
     return JsonSchemaCompletionContributor.getCompletionVariants(schemaObject, element!!, element)

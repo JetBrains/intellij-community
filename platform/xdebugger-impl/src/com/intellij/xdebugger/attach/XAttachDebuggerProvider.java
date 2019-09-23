@@ -6,7 +6,6 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -15,14 +14,9 @@ import java.util.List;
 /**
  * This provider used to obtain debuggers, which can debug the process with specified {@link XAttachHost} and {@link ProcessInfo}
  */
-@ApiStatus.Experimental
 public interface XAttachDebuggerProvider {
   ExtensionPointName<XAttachDebuggerProvider> EP = ExtensionPointName.create("com.intellij.xdebugger.attachDebuggerProvider");
 
-  /**
-   * will be removed in 2018.2, right after {@link XLocalAttachDebuggerProvider}
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2018.2")
   @NotNull
   static List<XAttachDebuggerProvider> getAttachDebuggerProviders() {
     return ContainerUtil.concat(new ArrayList<>(EP.getExtensionList()),

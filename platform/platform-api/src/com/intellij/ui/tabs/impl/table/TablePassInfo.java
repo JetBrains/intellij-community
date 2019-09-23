@@ -4,7 +4,6 @@ package com.intellij.ui.tabs.impl.table;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.ui.tabs.impl.LayoutPassInfo;
-import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -28,20 +27,6 @@ public class TablePassInfo extends LayoutPassInfo {
     myTabs = tabs;
   }
 
-  @Override
-  @Nullable
-  public TabInfo getPreviousFor(final TabInfo info) {
-    final TableRow row = myInfo2Row.get(info);
-    return row != null ? getPrevious(row.myColumns, row.myColumns.indexOf(info)) : null;
-  }
-
-  @Override
-  @Nullable
-  public TabInfo getNextFor(final TabInfo info) {
-    final TableRow row = myInfo2Row.get(info);
-    return row != null ? getNext(row.myColumns, row.myColumns.indexOf(info)) : null;
-  }
-
   public boolean isInSelectionRow(final TabInfo tabInfo) {
     final TableRow row = myInfo2Row.get(tabInfo);
     final int index = table.indexOf(row);
@@ -61,12 +46,6 @@ public class TablePassInfo extends LayoutPassInfo {
   @Override
   public TabInfo getTabAt(final int row, final int column) {
     return table.get(row).myColumns.get(column);
-  }
-
-  @Override
-  public boolean hasCurveSpaceFor(final TabInfo tabInfo) {
-    final TableRow row = myInfo2Row.get(tabInfo);
-    return row != null ? row.myColumns.indexOf(tabInfo) < row.myColumns.size() - 1 : false;
   }
 
   @Override

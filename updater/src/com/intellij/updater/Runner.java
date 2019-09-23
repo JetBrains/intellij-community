@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.updater;
 
 import org.apache.log4j.FileAppender;
@@ -214,11 +214,11 @@ public class Runner {
       "  <new_version>: A description of the version to generate the patch to.\n" +
       "  <old_folder>: The folder where to find the old version.\n" +
       "  <new_folder>: The folder where to find the new version.\n" +
-      "  <patch_file>: The .jar patch file to create which contains the patch and the patcher.\n" +
+      "  <patch_file>: The .jar patch file to create, which will contain the patch and the patcher.\n" +
       "  <file_set>: Can be one of:\n" +
       "    ignored: The set of files that will not be included in the patch.\n" +
-      "    critical: Fully included in the patch, so they can be replaced at destination even if they have changed.\n" +
-      "    optional: A set of files that is ok for them no to exist when applying the patch.\n" +
+      "    critical: Fully included in the patch, so they can be replaced at the destination even if they have changed.\n" +
+      "    optional: A set of files that is okay for them not to exist when applying the patch.\n" +
       "    delete: A set of regular expressions for paths that is safe to delete without user confirmation.\n" +
       "  <flags>: Can be:\n" +
       "    --zip_as_binary: Zip and jar files will be treated as binary files and not inspected internally.\n" +
@@ -231,8 +231,8 @@ public class Runner {
       "                  The root directory is relative to <old_folder> and uses forwards-slashes as separators.\n" +
       "    --normalized: This creates a normalized patch. This flag only makes sense in addition to --zip_as_binary\n" +
       "                  A normalized patch must be used to move from an installation that was patched\n" +
-      "                  in a non-binary way to a fully binary patch. This will yield a larger patch, but the\n" +
-      "                  generated patch can be applied on versions where non-binary patches have been applied to and it\n" +
+      "                  in a non-binary way to a fully binary patch. This will yield a larger patch, but\n" +
+      "                  the generated patch can be applied on versions where non-binary patches have been applied to and it\n" +
       "                  guarantees that the patched version will match exactly the original one.\n" +
       "  <folder>: The folder where product was installed. For example: c:/Program Files/JetBrains/IntelliJ IDEA 2017.3.4");
   }
@@ -320,7 +320,7 @@ public class Runner {
 
         if (doBackup) {
           backupDir = Utils.getTempFile("backup");
-          if (!backupDir.mkdir()) throw new IOException("Cannot create backup directory: " + backupDir);
+          if (!backupDir.mkdir()) throw new IOException("Cannot create a backup directory: " + backupDir);
         }
 
         applicationResult = PatchFileCreator.apply(preparationResult, resolutions, backupDir, ui);
@@ -414,7 +414,7 @@ public class Runner {
 
         if (backup) {
           backupDir = Utils.getTempFile("backup");
-          if (!backupDir.mkdir()) throw new IOException("Cannot create backup directory: " + backupDir);
+          if (!backupDir.mkdir()) throw new IOException("Cannot create a backup directory: " + backupDir);
 
           logger().info("Backing up files...");
           ui.startProcess("Backing up files...");

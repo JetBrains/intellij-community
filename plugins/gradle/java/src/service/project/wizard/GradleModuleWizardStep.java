@@ -9,8 +9,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.model.project.ProjectId;
 import com.intellij.openapi.externalSystem.service.project.wizard.ExternalModuleSettingsStep;
-import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -19,7 +17,6 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -27,7 +24,10 @@ import java.awt.event.ActionListener;
 
 /**
  * @author Vladislav.Soroka
+ * @deprecated Use {@link GradleStructureWizardStep} instead
  */
+@SuppressWarnings("DeprecatedIsStillUsed")
+@Deprecated
 public class GradleModuleWizardStep extends ModuleWizardStep {
   private static final Icon WIZARD_ICON = null;
 
@@ -203,13 +203,6 @@ public class GradleModuleWizardStep extends ModuleWizardStep {
     return "";
   }
 
-  public static boolean isGradleModuleExist(WizardContext myContext) {
-    for (Module module : myContext.getModulesProvider().getModules()) {
-      if (ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module)) return true;
-    }
-    return false;
-  }
-
   @Override
   public void updateDataModel() {
     myContext.setProjectBuilder(myBuilder);
@@ -264,6 +257,11 @@ public class GradleModuleWizardStep extends ModuleWizardStep {
   @TestOnly
   public void setArtifactId(@NotNull String artifactId) {
     myArtifactIdField.setText(artifactId);
+  }
+
+  @TestOnly
+  public void setVersion(@NotNull String version) {
+    myVersionField.setText(version);
   }
 
   @TestOnly

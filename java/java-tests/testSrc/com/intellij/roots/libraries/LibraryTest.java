@@ -2,19 +2,23 @@
 package com.intellij.roots.libraries;
 
 import com.intellij.ProjectTopics;
+import com.intellij.configurationStore.StoreUtil;
 import com.intellij.java.codeInsight.daemon.quickFix.OrderEntryTest;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.OrderEntryUtil;
-import com.intellij.openapi.roots.impl.libraries.*;
+import com.intellij.openapi.roots.impl.libraries.LibraryEx;
+import com.intellij.openapi.roots.impl.libraries.LibraryTableBase;
+import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil;
+import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTableImpl;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.*;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -69,26 +73,33 @@ public class LibraryTest extends ModuleRootManagerTestCase {
     assertFalse(LibraryTableImplUtil.isValidLibrary(library));
   }
 
-  public void testLibrarySerialization() {
+  public void testLibrarySerialization() throws IOException {
     final long moduleModificationCount = ModuleRootManagerEx.getInstanceEx(myModule).getModificationCountForTests();
-    Library library = PsiTestUtil.addProjectLibrary(myModule, "junit", Collections.singletonList(getJDomJar()),
-                                                    Collections.singletonList(getJDomSources()));
+
+    File projectDir = new File(myProject.getBasePath());
+    File localJDomJar = new File(projectDir, getJDomJar().getName());
+    File localJDomSources = new File(projectDir, getJDomSources().getName());
+
+    FileUtil.copy(new File(getJDomJar().getPath().replace("!", "")), localJDomJar);
+    FileUtil.copy(new File(getJDomSources().getPath().replace("!", "")), localJDomSources);
+
+    PsiTestUtil.addProjectLibrary(
+      myModule, "junit",
+      Collections.singletonList(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(localJDomJar)),
+      Collections.singletonList(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(localJDomSources)));
 
     assertThat(ModuleRootManagerEx.getInstanceEx(myModule).getModificationCountForTests()).isGreaterThan(moduleModificationCount);
-    Element element = serialize(library);
-    String classesUrl = getJDomJar().getUrl();
-    String sourcesUrl = getJDomSources().getUrl();
-    assertThat(element).isEqualTo("<root>\n" +
-                                  "  <library name=\"junit\">\n" +
-                                  "    <CLASSES>\n" +
-                                  "      <root url=\"" + classesUrl + "\" />\n" +
-                                  "    </CLASSES>\n" +
-                                  "    <JAVADOC />\n" +
-                                  "    <SOURCES>\n" +
-                                  "      <root url=\"" + sourcesUrl + "\" />\n" +
-                                  "    </SOURCES>\n" +
-                                  "  </library>\n" +
-                                  "</root>");
+    assertThat(serializeLibraries()).isEqualTo(
+      "<library name=\"junit\">\n" +
+      "  <CLASSES>\n" +
+      "    <root url=\"file://$PROJECT_DIR$/jdom-2.0.6.jar\" />\n" +
+      "  </CLASSES>\n" +
+      "  <JAVADOC />\n" +
+      "  <SOURCES>\n" +
+      "    <root url=\"file://$PROJECT_DIR$/jdom.zip\" />\n" +
+      "  </SOURCES>\n" +
+      "</library>"
+    );
   }
 
   public void testResolveDependencyToAddedLibrary() {
@@ -265,22 +276,21 @@ public class LibraryTest extends ModuleRootManagerTestCase {
 
   public void testNativePathSerialization() {
     LibraryTable table = getProjectLibraryTable();
-    Library library = WriteAction.compute(()-> table.createLibrary("native"));
+    Library library = WriteAction.compute(() -> table.createLibrary("native"));
     Library.ModifiableModel model = library.getModifiableModel();
     model.addRoot("file://native-lib-root", NativeLibraryOrderRootType.getInstance());
     commit(model);
 
-    Element element = serialize(library);
-    assertThat(element).isEqualTo("<root>\n" +
-                                  "  <library name=\"native\">\n" +
-                                  "    <CLASSES />\n" +
-                                  "    <JAVADOC />\n" +
-                                  "    <NATIVE>\n" +
-                                  "      <root url=\"file://native-lib-root\" />\n" +
-                                  "    </NATIVE>\n" +
-                                  "    <SOURCES />\n" +
-                                  "  </library>\n" +
-                                  "</root>");
+    assertThat(serializeLibraries()).isEqualTo(
+      "<library name=\"native\">\n" +
+      "  <CLASSES />\n" +
+      "  <JAVADOC />\n" +
+      "  <NATIVE>\n" +
+      "    <root url=\"file://native-lib-root\" />\n" +
+      "  </NATIVE>\n" +
+      "  <SOURCES />\n" +
+      "</library>"
+    );
   }
 
   @NotNull
@@ -297,27 +307,41 @@ public class LibraryTest extends ModuleRootManagerTestCase {
     model.addJarDirectory("file://jar-dir-src", false, OrderRootType.SOURCES);
     commit(model);
 
-    assertThat(serialize(library)).isEqualTo("<root>\n" +
-                                             "  <library name=\"jarDirs\">\n" +
-                                             "    <CLASSES>\n" +
-                                             "      <root url=\"file://jar-dir\" />\n" +
-                                             "      <root url=\"file://jar-dir-rec\" />\n" +
-                                             "    </CLASSES>\n" +
-                                             "    <JAVADOC />\n" +
-                                             "    <SOURCES>\n" +
-                                             "      <root url=\"file://jar-dir-src\" />\n" +
-                                             "    </SOURCES>\n" +
-                                             "    <jarDirectory url=\"file://jar-dir\" recursive=\"false\" />\n" +
-                                             "    <jarDirectory url=\"file://jar-dir-rec\" recursive=\"true\" />\n" +
-                                             "    <jarDirectory url=\"file://jar-dir-src\" recursive=\"false\" type=\"SOURCES\" />\n" +
-                                             "  </library>\n" +
-                                             "</root>");
+    assertThat(serializeLibraries()).isEqualTo(
+      "<library name=\"jarDirs\">\n" +
+      "  <CLASSES>\n" +
+      "    <root url=\"file://jar-dir\" />\n" +
+      "    <root url=\"file://jar-dir-rec\" />\n" +
+      "  </CLASSES>\n" +
+      "  <JAVADOC />\n" +
+      "  <SOURCES>\n" +
+      "    <root url=\"file://jar-dir-src\" />\n" +
+      "  </SOURCES>\n" +
+      "  <jarDirectory url=\"file://jar-dir\" recursive=\"false\" />\n" +
+      "  <jarDirectory url=\"file://jar-dir-rec\" recursive=\"true\" />\n" +
+      "  <jarDirectory url=\"file://jar-dir-src\" recursive=\"false\" type=\"SOURCES\" />\n" +
+      "</library>"
+    );
   }
 
-  private static Element serialize(Library library) {
-    Element element = new Element("root");
-    library.writeExternal(element);
-    return element;
+  private String serializeLibraries() {
+    StoreUtil.saveSettings(myProject);
+
+    try {
+      StringBuilder sb = new StringBuilder();
+      Element root = JDOMUtil.load(new File(myProject.getProjectFilePath()));
+      for (Element componentElement : root.getChildren("component")) {
+        if ("libraryTable".equals(componentElement.getAttributeValue("name"))) {
+          for (Element libraryElement : componentElement.getChildren("library")) {
+            sb.append(JDOMUtil.writeElement(libraryElement));
+          }
+        }
+      }
+      return sb.toString();
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
+    }
   }
 
   public void testAddRemoveJarDirectory() {
@@ -397,7 +421,9 @@ public class LibraryTest extends ModuleRootManagerTestCase {
     assertNotNull(aClass);
 
     // wait until unlock the file?
-    while (!FileUtil.delete(new File(libDir.getPath(), "lib.jar"))) {}
+    while (!FileUtil.delete(new File(libDir.getPath(), "lib.jar"))) {
+      UIUtil.dispatchAllInvocationEvents();
+    }
     UIUtil.dispatchAllInvocationEvents();
     libDir.refresh(false, false);
     UIUtil.dispatchAllInvocationEvents();

@@ -150,7 +150,7 @@ fun setupPipEnvSdkUnderProgress(project: Project?,
     override fun compute(indicator: ProgressIndicator): String {
       indicator.isIndeterminate = true
       val pipEnv = setupPipEnv(FileUtil.toSystemDependentName(projectPath), python, installPackages)
-      return PythonSdkType.getPythonExecutable(pipEnv) ?: FileUtil.join(pipEnv, "bin", "python")
+      return PythonSdkUtil.getPythonExecutable(pipEnv) ?: FileUtil.join(pipEnv, "bin", "python")
     }
   }
   val suggestedName = "Pipenv (${PathUtil.getFileName(projectPath)})"
@@ -389,7 +389,7 @@ class PipEnvPipFileWatcherComponent(val project: Project) : ProjectComponent {
               }
             }
             finally {
-              PythonSdkType.getSitePackagesDirectory(sdk)?.refresh(true, true)
+              PythonSdkUtil.getSitePackagesDirectory(sdk)?.refresh(true, true)
               sdk.associatedModule?.baseDir?.refresh(true, false)
             }
           }

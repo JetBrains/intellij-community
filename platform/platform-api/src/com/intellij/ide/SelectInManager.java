@@ -2,21 +2,22 @@
 package com.intellij.ide;
 
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.extensions.SimpleSmartExtensionPoint;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
-import java.util.stream.Stream;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Objects;
 
 public class SelectInManager  {
   private final Project myProject;
-  private final List<SelectInTarget> myTargets = new ArrayList<>();
-  private boolean myLoadedExtensions = false;
+  private final SimpleSmartExtensionPoint<SelectInTarget> myTargets;
   @NonNls public static final String PROJECT = IdeBundle.message("select.in.project");
   @NonNls public static final String PACKAGES = IdeBundle.message("select.in.packages");
-  @NonNls public static final String ASPECTS = IdeBundle.message("select.in.aspects");
   @NonNls public static final String COMMANDER = IdeBundle.message("select.in.commander");
   @NonNls public static final String FAVORITES = IdeBundle.message("select.in.favorites");
   @NonNls public static final String NAV_BAR = IdeBundle.message("select.in.nav.bar");
@@ -24,34 +25,27 @@ public class SelectInManager  {
 
   public SelectInManager(final Project project) {
     myProject = project;
+    myTargets = SimpleSmartExtensionPoint.create(myProject.getExtensionArea(), SelectInTarget.EP_NAME);
   }
 
   /**
-   * @deprecated "Select In" targets should be registered as extension points ({@link SelectInTarget#EP_NAME}).
+   * @deprecated targets should be registered as extension points ({@link SelectInTarget#EP_NAME}).
    */
   @Deprecated
   public void addTarget(SelectInTarget target) {
-    myTargets.add(target);
+    myTargets.addExplicitExtension(target);
   }
 
   public void removeTarget(SelectInTarget target) {
-    myTargets.remove(target);
+    myTargets.removeExplicitExtension(target);
   }
 
   public SelectInTarget[] getTargets() {
-    checkLoadExtensions();
-    Stream<SelectInTarget> stream = myTargets.stream();
+    List<SelectInTarget> targets = myTargets.getExtensions();
     if (DumbService.getInstance(myProject).isDumb()) {
-      stream = stream.filter(target -> DumbService.isDumbAware(target));
+      targets = ContainerUtil.filter(targets, target -> DumbService.isDumbAware(target));
     }
-    return stream.sorted(SelectInTargetComparator.INSTANCE).toArray(SelectInTarget[]::new);
-  }
-
-  private void checkLoadExtensions() {
-    if (!myLoadedExtensions) {
-      myLoadedExtensions = true;
-      Collections.addAll(myTargets, SelectInTarget.EP_NAME.getExtensions(myProject));
-    }
+    return ContainerUtil.sorted(targets, SelectInTargetComparator.INSTANCE).toArray(new SelectInTarget[0]);
   }
 
   public static SelectInManager getInstance(Project project) {

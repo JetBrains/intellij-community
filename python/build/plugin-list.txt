@@ -1,6 +1,7 @@
 intellij.configurationScript
 intellij.copyright
 intellij.editorconfig
+intellij.markdown
 intellij.platform.langInjection
 intellij.properties
 intellij.python.copyright

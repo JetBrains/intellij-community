@@ -280,14 +280,13 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator {
       return cachedInfo;
     }
 
-    for (JavaCoverageEngineExtension extension : JavaCoverageEngineExtension.EP_NAME.getIterable(null)) {
+    return JavaCoverageEngineExtension.EP_NAME.computeSafeIfAny(extension -> {
       PackageAnnotator.SummaryCoverageInfo info = extension.getSummaryCoverageInfo(this, value);
       if (info != null) {
         myExtensionCoverageInfos.put(value, info);
         return info;
       }
-    }
-
-    return null;
+      return null;
+    });
   }
 }

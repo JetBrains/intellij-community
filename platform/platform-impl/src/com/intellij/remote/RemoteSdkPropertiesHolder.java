@@ -75,26 +75,6 @@ public class RemoteSdkPropertiesHolder implements RemoteSdkProperties {
     return myHelpersDefaultDirName;
   }
 
-  @Override
-  public void addRemoteRoot(String remoteRoot) {
-    myRemoteRoots.add(remoteRoot);
-  }
-
-  @Override
-  public void clearRemoteRoots() {
-    myRemoteRoots.clear();
-  }
-
-  @Override
-  public List<String> getRemoteRoots() {
-    return Lists.newArrayList(myRemoteRoots);
-  }
-
-  @Override
-  public void setRemoteRoots(List<String> remoteRoots) {
-    myRemoteRoots = Sets.newTreeSet(remoteRoots);
-  }
-
   @NotNull
   @Override
   public PathMappingSettings getPathMappings() {
@@ -164,8 +144,6 @@ public class RemoteSdkPropertiesHolder implements RemoteSdkProperties {
     copy.setHelpersPath(getHelpersPath());
     copy.setHelpersVersionChecked(isHelpersVersionChecked());
 
-    copy.setRemoteRoots(getRemoteRoots());
-
     copy.setInitialized(isInitialized());
 
     copy.setValid(isValid());
@@ -182,19 +160,11 @@ public class RemoteSdkPropertiesHolder implements RemoteSdkProperties {
     rootElement.setAttribute(RUN_AS_ROOT_VIA_SUDO, Boolean.toString(isRunAsRootViaSudo()));
 
     PathMappingSettings.writeExternal(rootElement, myPathMappings);
-
-    for (String remoteRoot : getRemoteRoots()) {
-      final Element child = new Element(REMOTE_ROOTS);
-      child.setAttribute(REMOTE_PATH, remoteRoot);
-      rootElement.addContent(child);
-    }
   }
 
   public void load(Element element) {
     setInterpreterPath(StringUtil.nullize(element.getAttributeValue(INTERPRETER_PATH)));
     setHelpersPath(StringUtil.nullize(element.getAttributeValue(HELPERS_PATH)));
-
-    setRemoteRoots(JDOMExternalizer.loadStringsList(element, REMOTE_ROOTS, REMOTE_PATH));
 
     setInitialized(Boolean.parseBoolean(element.getAttributeValue(INITIALIZED)));
 

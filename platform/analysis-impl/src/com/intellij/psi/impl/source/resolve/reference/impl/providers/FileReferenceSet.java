@@ -37,8 +37,7 @@ public class FileReferenceSet {
     DEFAULT_PATH_EVALUATOR_OPTION =
     new CustomizableReferenceProvider.CustomizationKey<>(
       PsiBundle.message("default.path.evaluator.option"));
-  public static final Function<PsiFile, Collection<PsiFileSystemItem>> ABSOLUTE_TOP_LEVEL =
-    file -> getAbsoluteTopLevelDirLocations(file);
+  public static final Function<PsiFile, Collection<PsiFileSystemItem>> ABSOLUTE_TOP_LEVEL = new AbsoluteTopLevelEvaluator();
 
   public static final Condition<PsiFileSystemItem> FILE_FILTER = item -> item instanceof PsiFile;
 
@@ -51,7 +50,7 @@ public class FileReferenceSet {
   private final String myPathStringNonTrimmed;
   private final String myPathString;
 
-  private Collection<PsiFileSystemItem> myDefaultContexts;
+  private volatile Collection<PsiFileSystemItem> myDefaultContexts;
 
   private final boolean myEndingSlashNotAllowed;
   private boolean myEmptyPathAllowed;
@@ -298,10 +297,11 @@ public class FileReferenceSet {
 
   @NotNull
   public Collection<PsiFileSystemItem> getDefaultContexts() {
-    if (myDefaultContexts == null) {
-      myDefaultContexts = computeDefaultContexts();
+    Collection<PsiFileSystemItem> result = myDefaultContexts;
+    if (result == null) {
+      myDefaultContexts = result = computeDefaultContexts();
     }
-    return myDefaultContexts;
+    return result;
   }
 
   @NotNull
@@ -406,11 +406,11 @@ public class FileReferenceSet {
     PsiFile file = getContainingFile();
     if (file == null) return emptyList();
 
-    Collection<PsiFileSystemItem> contexts = getCustomizationContexts(file);
+    Collection<FileTargetContext> customizationContexts = getTargetCustomizationContexts(file);
 
     Collection<FileTargetContext> targetContexts;
-    if (contexts != null) {
-      targetContexts = toTargetContexts(contexts);
+    if (customizationContexts != null) {
+      targetContexts = customizationContexts;
     } else {
       targetContexts = getTargetContextByFile(file);
     }
@@ -440,6 +440,26 @@ public class FileReferenceSet {
           }
           return roots;
         }
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private Collection<FileTargetContext> getTargetCustomizationContexts(@NotNull PsiFile file) {
+    if (myOptions != null) {
+      Function<PsiFile, Collection<PsiFileSystemItem>> value = DEFAULT_PATH_EVALUATOR_OPTION.getValue(myOptions);
+      if (value != null) {
+        Collection<FileTargetContext> roots;
+        if (value instanceof TargetContextEvaluator) {
+          roots = ((TargetContextEvaluator)value).getTargetContexts(file);
+        }
+        else {
+          Collection<PsiFileSystemItem> items = value.fun(file);
+          roots = items != null ? toTargetContexts(items) : emptyList();
+        }
+
+        return roots;
       }
     }
     return null;
@@ -530,11 +550,11 @@ public class FileReferenceSet {
     final Module module = ModuleUtilCore.findModuleForPsiElement(parent == null ? file : parent);
     if (module == null) return emptyList();
 
-    final List<PsiFileSystemItem> list = new ArrayList<>();
+    Set<PsiFileSystemItem> result = new LinkedHashSet<>();
     final Project project = file.getProject();
     for (FileReferenceHelper helper : FileReferenceHelperRegistrar.getHelpers()) {
       if (helper.isMine(project, virtualFile)) {
-        if (helper.isFallback() && !list.isEmpty()) {
+        if (helper.isFallback() && !result.isEmpty()) {
           continue;
         }
         Collection<PsiFileSystemItem> roots = helper.getRoots(module);
@@ -543,10 +563,33 @@ public class FileReferenceSet {
             LOG.error("Helper " + helper + " produced a null root for " + file);
           }
         }
-        list.addAll(roots);
+        result.addAll(roots);
       }
     }
-    return list;
+    return new ArrayList<>(result);
+  }
+
+  @NotNull
+  private static Collection<FileTargetContext> getTargetAbsoluteTopLevelContexts(@NotNull PsiFile file) {
+    VirtualFile virtualFile = file.getVirtualFile();
+    if (virtualFile == null) return emptyList();
+
+    PsiDirectory parent = file.getParent();
+    Module module = ModuleUtilCore.findModuleForPsiElement(parent == null ? file : parent);
+    if (module == null) return emptyList();
+
+    Set<FileTargetContext> result = new LinkedHashSet<>();
+    Project project = file.getProject();
+    for (FileReferenceHelper helper : FileReferenceHelperRegistrar.getHelpers()) {
+      if (helper.isMine(project, virtualFile)) {
+        if (helper.isFallback() && !result.isEmpty()) {
+          continue;
+        }
+        Collection<FileTargetContext> roots = helper.getTargetContexts(project, virtualFile, true);
+        result.addAll(roots);
+      }
+    }
+    return new ArrayList<>(result);
   }
 
   @NotNull
@@ -594,5 +637,29 @@ public class FileReferenceSet {
 
   public boolean supportsExtendedCompletion() {
     return true;
+  }
+
+  /**
+   * Enables custom handling of target locations for {@link #DEFAULT_PATH_EVALUATOR_OPTION} in customizations.
+   */
+  public interface TargetContextEvaluator {
+    /**
+     * Returns target file locations for "Create File" quick fixes.
+     */
+    @NotNull
+    Collection<FileTargetContext> getTargetContexts(@NotNull PsiFile file);
+  }
+
+  private static class AbsoluteTopLevelEvaluator implements Function<PsiFile, Collection<PsiFileSystemItem>>, TargetContextEvaluator {
+    @Override
+    @NotNull
+    public Collection<FileTargetContext> getTargetContexts(@NotNull PsiFile file) {
+      return getTargetAbsoluteTopLevelContexts(file);
+    }
+
+    @Override
+    public Collection<PsiFileSystemItem> fun(PsiFile file) {
+      return getAbsoluteTopLevelDirLocations(file);
+    }
   }
 }

@@ -25,6 +25,7 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -217,7 +218,7 @@ public class JavaPushDownDelegate extends PushDownDelegate<MemberInfo, PsiMember
               if (!(resolve instanceof PsiClass) || resolve != sourceClass) {
                 continue;
               }
-              PsiClass inheritor = InheritanceUtil.findEnclosingInstanceInScope(sourceClass, element, Condition.TRUE, false);
+              PsiClass inheritor = InheritanceUtil.findEnclosingInstanceInScope(sourceClass, element, Conditions.alwaysTrue(), false);
               if (inheritor != null && inheritor != targetClass) {
                 //usages in other targets should be updated on corresponding turns
                 continue;

@@ -35,7 +35,7 @@ import java.util.stream.Collectors;
 //TeamCity inherits StringUtil: do not add private constructors!!!
 @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
 public class StringUtil extends StringUtilRt {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.text.StringUtil");
+  private static final Logger LOG = Logger.getInstance(StringUtil.class);
 
   @SuppressWarnings("SpellCheckingInspection") private static final String VOWELS = "aeiouy";
   private static final Pattern EOL_SPLIT_KEEP_SEPARATORS = Pattern.compile("(?<=(\r\n|\n))|(?<=\r)(?=[^\n])");
@@ -643,51 +643,6 @@ public class StringUtil extends StringUtilRt {
 
   @NotNull
   @Contract(pure = true)
-  public static String escapeTextBlockCharacters(@NotNull String s) {
-    return escapeTextBlockCharacters(s, false, true);
-  }
-
-    @NotNull
-  @Contract(pure = true)
-  public static String escapeTextBlockCharacters(@NotNull String s, boolean escapeStartQuote, boolean escapeEndQuote) {
-    int length = s.length();
-    StringBuilder result = new StringBuilder(length);
-    int q = 0;
-    for (int i = 0; i < length; i++) {
-      char c = s.charAt(i);
-      if (c == '"') {
-        if (escapeStartQuote && i == 0) result.append('\\');
-        q++;
-      }
-      else {
-        appendQuotes(q, result);
-        if (c == '\\') result.append('\\');
-        result.append(c);
-        q = 0;
-      }
-    }
-    appendQuotes(q, result);
-    if (escapeEndQuote && result.charAt(result.length() - 1) == '"') {
-      result.insert(result.length() - 1, '\\');
-    }
-    return result.toString();
-  }
-
-  private static void appendQuotes(int quotes, StringBuilder result) {
-    int q = quotes;
-    while (q > 0) {
-      if (quotes >= 3) result.append('\\');
-      switch (q) {
-        default: result.append('"');
-        case 2: result.append('"');
-        case 1: result.append('"');
-      }
-      q -= 3;
-    }
-  }
-
-  @NotNull
-  @Contract(pure = true)
   public static String escapeStringCharacters(@NotNull String s) {
     StringBuilder buffer = new StringBuilder(s.length());
     escapeStringCharacters(s.length(), s, "\"", buffer);
@@ -921,7 +876,12 @@ public class StringUtil extends StringUtilRt {
 
   @Contract(pure = true)
   public static int stringHashCode(@NotNull CharSequence chars, int from, int to) {
-    int h = 0;
+    return stringHashCode(chars, from, to, 0);
+  }
+
+  @Contract(pure = true)
+  public static int stringHashCode(@NotNull CharSequence chars, int from, int to, int prefixHash) {
+    int h = prefixHash;
     for (int off = from; off < to; off++) {
       h = 31 * h + chars.charAt(off);
     }
@@ -948,7 +908,12 @@ public class StringUtil extends StringUtilRt {
 
   @Contract(pure = true)
   public static int stringHashCodeInsensitive(@NotNull CharSequence chars, int from, int to) {
-    int h = 0;
+    return stringHashCodeInsensitive(chars, from, to, 0);
+  }
+
+  @Contract(pure = true)
+  public static int stringHashCodeInsensitive(@NotNull CharSequence chars, int from, int to, int prefixHash) {
+    int h = prefixHash;
     for (int off = from; off < to; off++) {
       h = 31 * h + toLowerCase(chars.charAt(off));
     }
@@ -1890,6 +1855,18 @@ public class StringUtil extends StringUtilRt {
     return StringUtilRt.endsWith(text, suffix);
   }
 
+  @Contract(pure = true)
+  public static boolean endsWith(@NotNull CharSequence text, int start, int end, @NotNull CharSequence suffix) {
+    int suffixLen = suffix.length();
+    if (end < suffixLen) return false;
+
+    for (int i = end - 1; i >= end - suffixLen && i >= start; i--) {
+      if (text.charAt(i) != suffix.charAt(i + suffixLen - end)) return false;
+    }
+
+    return true;
+  }
+
   @NotNull
   @Contract(pure = true)
   public static String commonPrefix(@NotNull String s1, @NotNull String s2) {
@@ -2346,7 +2323,12 @@ public class StringUtil extends StringUtilRt {
         builder.append("\\r");
       }
       else {
-        builder.append('\\').append(c);
+        final Character.UnicodeBlock block = Character.UnicodeBlock.of(c);
+        if (block == Character.UnicodeBlock.HIGH_SURROGATES || block == Character.UnicodeBlock.LOW_SURROGATES) {
+          builder.append(c);
+        } else {
+          builder.append('\\').append(c);
+        }
       }
     }
 
@@ -3440,9 +3422,9 @@ public class StringUtil extends StringUtilRt {
     return bytes;
   }
 
-  /** @deprecated use {@link #startsWithConcatenation(String, String...)} (to remove in IDEA 15) */
+  /** @deprecated use {@link #startsWithConcatenation(String, String...)} */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2015")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   public static boolean startsWithConcatenationOf(@NotNull String string, @NotNull String firstPrefix, @NotNull String secondPrefix) {
     return startsWithConcatenation(string, firstPrefix, secondPrefix);
   }
@@ -3469,5 +3451,38 @@ public class StringUtil extends StringUtilRt {
   @Contract(value = "null -> null; !null->!null", pure = true)
   public static String internEmptyString(String s) {
     return s == null ? null : s.isEmpty() ? "" : s;
+  }
+
+  /**
+   * Finds the next position in the supplied CharSequence which is neither a space nor a tab.
+   * @param text text
+   * @param pos starting position
+   * @return position of the first non-whitespace character after or equal to pos; or the length of the CharSequence
+   * if no non-whitespace character found
+   */
+  public static int skipWhitespaceForward(@NotNull CharSequence text, int pos) {
+    int length = text.length();
+    while (pos < length && isWhitespaceOrTab(text.charAt(pos))) {
+      pos++;
+    }
+    return pos;
+  }
+
+  /**
+   * Finds the previous position in the supplied CharSequence which is neither a space nor a tab.
+   * @param text text
+   * @param pos starting position
+   * @return position of the character before or equal to pos which has no space or tab before;
+   * or zero if no non-whitespace character found
+   */
+  public static int skipWhitespaceBackward(@NotNull CharSequence text, int pos) {
+    while (pos > 0 && isWhitespaceOrTab(text.charAt(pos - 1))) {
+      pos--;
+    }
+    return pos;
+  }
+
+  private static boolean isWhitespaceOrTab(char c) {
+    return c == ' ' || c == '\t';
   }
 }

@@ -19,6 +19,7 @@ import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.FileBasedTestCaseHelper;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -56,6 +57,11 @@ public class MatchBraceTest extends LightPlatformCodeInsightTestCase implements 
 
   private String getAfterFileName() {
     int pos = myFileSuffix.indexOf('(');
-    return myFileSuffix.substring(0, pos) + "-after." + myFileSuffix.substring(pos + 1, myFileSuffix.length() - 1);
+    return myFileSuffix.substring(0, pos) + getAnswersSuffix() + myFileSuffix.substring(pos + 1, myFileSuffix.length() - 1);
+  }
+
+  @NotNull
+  protected String getAnswersSuffix() {
+    return "-after.";
   }
 }

@@ -20,6 +20,8 @@ import com.jetbrains.python.testing.PythonTestConfigurationType;
 import com.jetbrains.python.testing.doctest.PythonDocTestRunConfiguration;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
+
 /**
  * {@link ProcessWithConsoleRunner} to run doctest
  *
@@ -29,5 +31,11 @@ public class PyDocTestProcessRunner extends PyScriptTestProcessRunner<PythonDocT
   public PyDocTestProcessRunner(@NotNull final String scriptName, final int timesToRerunFailedTests) {
     super(PythonTestConfigurationType.getInstance().PY_DOCTEST_FACTORY,
           PythonDocTestRunConfiguration.class, scriptName, timesToRerunFailedTests);
+  }
+
+  @Override
+  protected void configurationCreatedAndWillLaunch(@NotNull final PythonDocTestRunConfiguration configuration) throws IOException {
+    super.configurationCreatedAndWillLaunch(configuration);
+    configuration.setInterpreterOptions(configuration.getInterpreterOptions() + " -W error");
   }
 }

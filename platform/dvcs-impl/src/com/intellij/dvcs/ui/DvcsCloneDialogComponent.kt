@@ -13,6 +13,9 @@ import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.layout.*
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.ui.JBEmptyBorder
+import com.intellij.util.ui.UIUtil
+import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.event.DocumentEvent
 
@@ -32,9 +35,11 @@ abstract class DvcsCloneDialogComponent(var project: Project,
                                            project,
                                            fcd)
     mainPanel = panel {
-      row("URL:") { urlEditor(CCFlags.growX) }
-      row("Directory:") { directoryField(CCFlags.growX) }
+      row("URL:") { urlEditor(growX) }
+      row("Directory:") { directoryField(growX) }
     }
+    val insets = UIUtil.PANEL_REGULAR_INSETS
+    mainPanel.border = JBEmptyBorder(insets.top / 2, insets.left, insets.bottom, insets.right)
 
     urlEditor.document.addDocumentListener(object : DocumentAdapter() {
       override fun textChanged(e: DocumentEvent) {
@@ -42,6 +47,8 @@ abstract class DvcsCloneDialogComponent(var project: Project,
       }
     })
   }
+
+  override fun getPreferredFocusedComponent(): JComponent = urlEditor
 
   private fun defaultDirectoryPath(url: String): String {
     return StringUtil.trimEnd(ClonePathProvider.relativeDirectoryPathForVcsUrl(project, url), vcsDirectoryName)

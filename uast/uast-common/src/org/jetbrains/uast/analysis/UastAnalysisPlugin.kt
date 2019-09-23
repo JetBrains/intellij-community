@@ -18,7 +18,7 @@ interface UastAnalysisPlugin {
 
   val language: Language
 
-  fun <T : Any> getExpressionFact(expression: UExpression, fact: UExpressionFact<T>): T?
+  fun <T : Any> UExpression.getExpressionFact(fact: UExpressionFact<T>): T?
 }
 
 sealed class UExpressionFact<T : Any> {

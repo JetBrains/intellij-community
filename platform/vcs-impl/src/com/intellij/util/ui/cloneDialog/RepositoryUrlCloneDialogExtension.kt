@@ -11,13 +11,16 @@ import com.intellij.openapi.vcs.ui.VcsCloneComponent
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtensionComponent
 import com.intellij.ui.SimpleListCellRenderer
+import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.layout.*
-import com.intellij.util.ui.JBEmptyBorder
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
 import java.awt.BorderLayout
-import java.awt.CardLayout
 import java.awt.event.ItemEvent
 import java.util.*
+import javax.swing.DefaultComboBoxModel
 import javax.swing.Icon
+import javax.swing.JComponent
 import javax.swing.JPanel
 
 class RepositoryUrlCloneDialogExtension : VcsCloneDialogExtension {
@@ -43,38 +46,43 @@ class RepositoryUrlCloneDialogExtension : VcsCloneDialogExtension {
       dialogStateListener.onOkActionEnabled(true)
     }
 
-    private val vcsComponents = HashMap<String, VcsCloneComponent>()
-    private val cardLayout = CardLayout()
+    private val vcsComponents = HashMap<CheckoutProvider, VcsCloneComponent>()
     private val mainPanel = JPanel(BorderLayout())
+    private val centerPanel = Wrapper()
+
     private val comboBox: ComboBox<CheckoutProvider> = ComboBox<CheckoutProvider>().apply {
       renderer = SimpleListCellRenderer.create<CheckoutProvider>("") { it.vcsName.removePrefix("_") }
     }
 
     init {
-      mainPanel.border = JBEmptyBorder(VcsCloneDialogUiSpec.Components.rightInsets)
       val northPanel = panel {
-        row("Version control:") { comboBox() }
+        row("Version control:") {
+          comboBox()
+        }
       }
+      val insets = UIUtil.PANEL_REGULAR_INSETS
+      northPanel.border = JBUI.Borders.empty(insets.top, insets.left, 0, insets.right)
       mainPanel.add(northPanel, BorderLayout.NORTH)
-
-      val centerPanel = JPanel(cardLayout)
       mainPanel.add(centerPanel, BorderLayout.CENTER)
 
+      val providers = CheckoutProvider.EXTENSION_POINT_NAME.extensions
+      val selectedByDefaultProvider: CheckoutProvider? = if (providers.isNotEmpty()) providers[0] else null
+      providers.sortWith(CheckoutProvider.CheckoutProviderComparator())
+      comboBox.model = DefaultComboBoxModel(providers).apply {
+        selectedItem = null
+      }
       comboBox.addItemListener { e: ItemEvent ->
         if (e.stateChange == ItemEvent.SELECTED) {
           val provider = e.item as CheckoutProvider
+          centerPanel.setContent(vcsComponents.getOrPut(provider, {
+            provider.buildVcsCloneComponent(project)
+          }).getView())
+          centerPanel.revalidate()
+          centerPanel.repaint()
           onComponentSelected()
-          cardLayout.show(centerPanel, provider.vcsName)
         }
       }
-
-      for (checkoutProvider in CheckoutProvider.EXTENSION_POINT_NAME.extensions) {
-        comboBox.addItem(checkoutProvider)
-        val vcsComponent = checkoutProvider.buildVcsCloneComponent(project)
-        vcsComponents[checkoutProvider.vcsName] = vcsComponent
-        val view = vcsComponent.getView()
-        centerPanel.add(view, checkoutProvider.vcsName)
-      }
+      comboBox.selectedItem = selectedByDefaultProvider
     }
 
     override fun getView() = mainPanel
@@ -93,11 +101,8 @@ class RepositoryUrlCloneDialogExtension : VcsCloneDialogExtension {
       return getCurrentVcsComponent()?.doValidateAll() ?: emptyList()
     }
 
-    private fun getCurrentVcsComponent() = vcsComponents[getCurrentVcsName()]
+    override fun getPreferredFocusedComponent(): JComponent? = getCurrentVcsComponent()?.getPreferredFocusedComponent()
 
-    private fun getCurrentVcsName(): String {
-      val checkoutProvider = comboBox.selectedItem as CheckoutProvider
-      return checkoutProvider.vcsName
-    }
+    private fun getCurrentVcsComponent() = vcsComponents[comboBox.selectedItem as CheckoutProvider]
   }
 }

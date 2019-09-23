@@ -60,11 +60,7 @@ public class HgResolveCommand {
     executor.setSilent(true);
     BackgroundTaskUtil.executeOnPooledThread(myProject, () -> {
       HgCommandResult result = executor.executeInCurrentThread(repo, "resolve", Collections.singletonList("--list"));
-      if (result == null) {
-        resultHandler.consume(Collections.emptyMap());
-      }
-      Map<HgFile, HgResolveStatusEnum> resolveStatus = handleResult(repo, result);
-      resultHandler.consume(resolveStatus);
+      resultHandler.consume(result == null ? Collections.emptyMap() : handleResult(repo, result));
     });
   }
 

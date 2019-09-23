@@ -120,7 +120,7 @@ public class GithubServerPath {
   @NotNull
   public String toApiUrl() {
     StringBuilder builder = new StringBuilder(getSchemaUrlPart());
-    if (myHost.equalsIgnoreCase(DEFAULT_HOST)) {
+    if (isGithubDotCom()) {
       builder.append(API_PREFIX).append(myHost).append(getPortUrlPart()).append(StringUtil.notNullize(mySuffix));
     }
     else {
@@ -133,13 +133,17 @@ public class GithubServerPath {
   @NotNull
   public String toGraphQLUrl() {
     StringBuilder builder = new StringBuilder(getSchemaUrlPart());
-    if (myHost.equalsIgnoreCase(DEFAULT_HOST)) {
+    if (isGithubDotCom()) {
       builder.append(API_PREFIX).append(myHost).append(getPortUrlPart()).append(StringUtil.notNullize(mySuffix)).append(GRAPHQL_SUFFIX);
     }
     else {
       builder.append(myHost).append(getPortUrlPart()).append(StringUtil.notNullize(mySuffix)).append(API_SUFFIX).append(GRAPHQL_SUFFIX);
     }
     return builder.toString();
+  }
+
+  public boolean isGithubDotCom() {
+    return myHost.equalsIgnoreCase(DEFAULT_HOST);
   }
 
   public String toString() {

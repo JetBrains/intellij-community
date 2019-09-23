@@ -20,11 +20,11 @@ import com.intellij.ide.DataManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.vcs.AbstractVcs
+import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.ChangeListOwner
 import com.intellij.openapi.vcs.changes.IgnoredViewDialog
 import com.intellij.openapi.vcs.changes.VcsIgnoreManagerImpl
 import com.intellij.openapi.vcs.changes.ignore.actions.IgnoreFileActionGroup
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.vcsUtil.VcsUtil
@@ -32,8 +32,8 @@ import javax.swing.tree.TreePath
 
 
 class ChangesBrowserIgnoredFilesNode(val project: Project,
-                                     files: List<VirtualFile>,
-                                     private val myUpdatingMode: Boolean) : ChangesBrowserSpecificFilesNode(
+                                     files: List<FilePath>,
+                                     private val myUpdatingMode: Boolean) : ChangesBrowserSpecificFilePathsNode(
   ChangesBrowserNode.IGNORED_FILES_TAG, files, { if (!project.isDisposed) IgnoredViewDialog(project).show() }) {
 
   override fun render(renderer: ChangesBrowserNodeRenderer, selected: Boolean, expanded: Boolean, hasFocus: Boolean) {
@@ -63,5 +63,5 @@ class ChangesBrowserIgnoredFilesNode(val project: Project,
 
   override fun getSortWeight() = ChangesBrowserNode.IGNORED_SORT_WEIGHT
 
-  private fun List<VirtualFile>.getVcs(): AbstractVcs<*>? = mapNotNull { file -> VcsUtil.getVcsFor(project, file) }.firstOrNull()
+  private fun List<FilePath>.getVcs(): AbstractVcs? = mapNotNull { file -> VcsUtil.getVcsFor(project, file) }.firstOrNull()
 }

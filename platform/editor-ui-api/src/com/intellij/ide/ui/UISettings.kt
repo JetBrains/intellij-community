@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui
 
-import com.intellij.diagnostic.LoadingPhase
+import com.intellij.diagnostic.LoadingState
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
@@ -73,6 +73,12 @@ class UISettings constructor(private val notRoamableOptions: NotRoamableUiSettin
     get() = state.colorBlindness
     set(value) {
       state.colorBlindness = value
+    }
+
+  var useContrastScrollbars: Boolean
+    get() = state.useContrastScrollBars
+    set(value) {
+      state.useContrastScrollBars = value
     }
 
   var hideToolStripes: Boolean
@@ -379,10 +385,10 @@ class UISettings constructor(private val notRoamableOptions: NotRoamableUiSettin
 
   init {
     // TODO Remove the registry keys and migration code in 2019.3
-    if (Registry.`is`("tabs.alphabetical")) {
+    if (Registry.`is`("tabs.alphabetical", false)) {
       sortTabsAlphabetically = true
     }
-    if (Registry.`is`("ide.editor.tabs.open.at.the.end")) {
+    if (Registry.`is`("ide.editor.tabs.open.at.the.end", false)) {
       openTabsAtTheEnd = true
     }
   }
@@ -406,19 +412,26 @@ class UISettings constructor(private val notRoamableOptions: NotRoamableUiSettin
 
     @Suppress("ObjectPropertyName")
     @Volatile
-    private var _instance: UISettings? = null
+    private var cachedInstance: UISettings? = null
 
     @JvmStatic
     val instance: UISettings
-      get() = instanceOrNull!!
+      get() {
+        var result = cachedInstance
+        if (result == null) {
+          LoadingState.CONFIGURATION_STORE_INITIALIZED.checkOccurred()
+          result = ApplicationManager.getApplication().getService(UISettings::class.java)!!
+          cachedInstance = result
+        }
+        return result
+      }
 
     @JvmStatic
     val instanceOrNull: UISettings?
       get() {
-        var result = _instance
-        if (result == null && LoadingPhase.CONFIGURATION_STORE_INITIALIZED.isComplete) {
-          result = ServiceManager.getService(UISettings::class.java)
-          _instance = result
+        val result = cachedInstance
+        if (result == null && LoadingState.CONFIGURATION_STORE_INITIALIZED.isOccurred) {
+          return instance
         }
         return result
       }
@@ -448,26 +461,18 @@ class UISettings constructor(private val notRoamableOptions: NotRoamableUiSettin
      */
     @JvmStatic
     fun setupAntialiasing(g: Graphics) {
-      val g2d = g as Graphics2D
-      g2d.setRenderingHint(RenderingHints.KEY_TEXT_LCD_CONTRAST, UIUtil.getLcdContrastValue())
+      g as Graphics2D
+      g.setRenderingHint(RenderingHints.KEY_TEXT_LCD_CONTRAST, UIUtil.getLcdContrastValue())
 
-      val application = ApplicationManager.getApplication()
-      if (application == null) {
-        // We cannot use services while Application has not been loaded yet
-        // So let's apply the default hints.
-        UIUtil.applyRenderingHints(g)
+      if (LoadingState.CONFIGURATION_STORE_INITIALIZED.isOccurred && ApplicationManager.getApplication() == null) {
+        // cannot use services while Application has not been loaded yet, so let's apply the default hints
+        GraphicsUtil.applyRenderingHints(g)
         return
       }
 
-      val uiSettings = ServiceManager.getService(UISettings::class.java)
-      if (uiSettings != null) {
-        g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, AntialiasingType.getKeyForCurrentScope(false))
-      }
-      else {
-        g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF)
-      }
+      g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, AntialiasingType.getKeyForCurrentScope(false))
 
-      setupFractionalMetrics(g2d)
+      setupFractionalMetrics(g)
     }
 
     /**
@@ -539,7 +544,7 @@ class UISettings constructor(private val notRoamableOptions: NotRoamableUiSettin
     IconLoader.setFilter(ColorBlindnessSupport.get(state.colorBlindness)?.filter)
 
     // if this is the main UISettings instance (and not on first call to getInstance) push event to bus and to all current components
-    if (this === _instance) {
+    if (this === cachedInstance) {
       myTreeDispatcher.multicaster.uiSettingsChanged(this)
       ApplicationManager.getApplication().messageBus.syncPublisher(UISettingsListener.TOPIC).uiSettingsChanged(this)
     }

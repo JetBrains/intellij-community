@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,10 +24,13 @@ package com.intellij.openapi;
  * there might be any object registered in chain.
  */
 public interface Disposable {
+
+  /**
+   * Usually not invoked directly, see class javadoc.
+   */
   void dispose();
 
   interface Parent extends Disposable {
     void beforeTreeDispose();
   }
-
 }

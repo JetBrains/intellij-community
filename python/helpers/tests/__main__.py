@@ -8,13 +8,13 @@ _helpers_dir = os.path.dirname(_tests_dir)
 
 def run_specified_tests():
     runner = get_test_runner()
-    unittest.main(module=None, testRunner=runner, argv=sys.argv)
+    unittest.main(module=None, testRunner=runner, argv=sys.argv, exit=True)
 
 
 def discover_and_run_all_tests():
     runner = get_test_runner()
     suite = unittest.TestLoader().discover(_tests_dir)
-    runner.run(suite)
+    sys.exit(not runner.run(suite).wasSuccessful())
 
 
 def get_test_runner():

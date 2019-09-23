@@ -10,7 +10,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.StatusBar;
-import com.intellij.openapi.wm.impl.IdeFrameImpl;
+import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.util.Alarm;
 import com.intellij.util.BitUtil;
 import com.intellij.util.ReflectionUtil;
@@ -56,9 +56,7 @@ public final class SwingCleanuper {
           myAlarm.addRequest(
             () -> {
               // request focus into some focusable component inside IdeFrame
-              final Window window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
-              IdeFrameImpl frame = (IdeFrameImpl)(window instanceof IdeFrameImpl ? window :
-                                                  SwingUtilities.getAncestorOfClass(IdeFrameImpl.class, window));
+              ProjectFrameHelper frame = ProjectFrameHelper.getFrameHelper(KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow());
               if (frame != null) {
                 final Application app = ApplicationManager.getApplication();
                 if (app != null && app.isActive()) {

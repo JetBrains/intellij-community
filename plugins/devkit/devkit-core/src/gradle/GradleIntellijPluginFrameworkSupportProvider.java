@@ -10,6 +10,7 @@ import com.intellij.framework.addSupport.FrameworkSupportInModuleProvider;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
@@ -55,7 +56,7 @@ public class GradleIntellijPluginFrameworkSupportProvider extends KotlinDslGradl
   private static final String LATEST_GRADLE_VERSION_KEY = "LATEST_GRADLE_VERSION_KEY";
   private static final String LATEST_UPDATING_TIME_KEY = "LATEST_UPDATING_TIME_KEY";
 
-  private static final String FALLBACK_VERSION = "0.4.2";
+  private static final String FALLBACK_VERSION = "0.4.10";
   protected static final String HELP_COMMENT = "// See https://github.com/JetBrains/gradle-intellij-plugin/\n";
 
   private static class Lazy {
@@ -133,7 +134,7 @@ public class GradleIntellijPluginFrameworkSupportProvider extends KotlinDslGradl
     long timeCheck = PropertiesComponent.getInstance().getOrInitLong(LATEST_UPDATING_TIME_KEY, System.currentTimeMillis());
     if (latestVersion == null || TimeUnit.MILLISECONDS.toDays(System.currentTimeMillis() - timeCheck) >= 1) {
       ModalityState modalityState = ModalityState.defaultModalityState();
-      Lazy.EXECUTOR.submit(() -> {
+      Lazy.EXECUTOR.execute(() -> {
         try {
           // sadly plugins.gradle.org has no API and doesn't support meta-versions like latest.
           // Let's parse HTML with REGEXPs muhahaha
@@ -164,11 +165,11 @@ public class GradleIntellijPluginFrameworkSupportProvider extends KotlinDslGradl
       if (metaInf == null) {
         return false;
       }
-      if (metaInf.findChild("plugin.xml") != null) {
+      if (metaInf.findChild(PluginManagerCore.PLUGIN_XML) != null) {
         return true;
       }
       Project project = module.getProject();
-      VirtualFile pluginXml = metaInf.createChildData(this, "plugin.xml");
+      VirtualFile pluginXml = metaInf.createChildData(this, PluginManagerCore.PLUGIN_XML);
       FileTemplateManager templateManager = FileTemplateManager.getInstance(project);
       FileTemplate template = templateManager.getJ2eeTemplate("gradleBasedPlugin.xml");
 

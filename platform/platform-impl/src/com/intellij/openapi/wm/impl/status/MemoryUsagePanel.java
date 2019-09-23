@@ -127,7 +127,7 @@ public final class MemoryUsagePanel extends JButton implements CustomStatusBarWi
       Insets insets = getInsets();
 
       int barWidth = size.width - INDENT;
-      myBufferedImage = ImageUtil.createImage(g, barWidth, size.height, BufferedImage.TYPE_INT_ARGB);
+      myBufferedImage = ImageUtil.createImage(g, barWidth, size.height, BufferedImage.TYPE_INT_RGB);
       Graphics2D g2 = JBSwingUtilities.runGlobalCGTransform(this, myBufferedImage.createGraphics());
       UISettings.setupAntialiasing(g2);
 

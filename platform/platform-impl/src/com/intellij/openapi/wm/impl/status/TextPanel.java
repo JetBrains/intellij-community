@@ -28,6 +28,7 @@ public class TextPanel extends JComponent implements Accessible {
 
   protected TextPanel() {
     setOpaque(true);
+    UISettings.setupComponentAntialiasing(this);
   }
 
   @Override
@@ -99,7 +100,7 @@ public class TextPanel extends JComponent implements Accessible {
   }
 
   protected String truncateText(String text, Rectangle bounds, FontMetrics fm, Rectangle textR, Rectangle iconR, int maxWidth) {
-    return SwingUtilities.layoutCompoundLabel(fm, text, null, SwingConstants.CENTER, SwingConstants.CENTER, SwingConstants.CENTER,
+    return SwingUtilities.layoutCompoundLabel(this, fm, text, null, SwingConstants.CENTER, SwingConstants.CENTER, SwingConstants.CENTER,
                                               SwingConstants.TRAILING,
                                               bounds, iconR, textR, 0);
   }

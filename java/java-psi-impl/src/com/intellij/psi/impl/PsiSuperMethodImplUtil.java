@@ -165,7 +165,7 @@ public class PsiSuperMethodImplUtil {
       }
     });
 
-    PsiMethod[] methods = aClass.getMethods();
+    PsiMethod[] methods = nameHint == null ? aClass.getMethods() : aClass.findMethodsByName(nameHint, false);
     if ((nameHint == null || "values".equals(nameHint)) && aClass instanceof PsiClassImpl) {
       final PsiMethod valuesMethod = ((PsiClassImpl)aClass).getValuesMethod();
       if (valuesMethod != null) {
@@ -177,7 +177,6 @@ public class PsiSuperMethodImplUtil {
       if (!method.isValid()) {
         throw new PsiInvalidElementAccessException(method, "class.valid=" + aClass.isValid() + "; name=" + method.getName());
       }
-      if (nameHint != null && !nameHint.equals(method.getName())) continue;
       if (!includePrivates && method.hasModifierProperty(PsiModifier.PRIVATE)) continue;
       final MethodSignatureBackedByPsiMethod signature = MethodSignatureBackedByPsiMethod.create(method, PsiSubstitutor.EMPTY, isInRawContext);
       HierarchicalMethodSignatureImpl newH = new HierarchicalMethodSignatureImpl(MethodSignatureBackedByPsiMethod.create(method, substitutor, isInRawContext));

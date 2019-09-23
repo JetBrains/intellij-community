@@ -1,8 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.commands
 
 import com.google.common.annotations.VisibleForTesting
-import com.intellij.CommonBundle
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
@@ -10,6 +9,7 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.ui.UIBundle
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBOptionButton
 import com.intellij.ui.components.JBPasswordField
@@ -33,7 +33,7 @@ class GitHttpLoginDialog @JvmOverloads constructor(project: Project,
                                                    private val showActionForCredHelper: Boolean = false) : DialogWrapper(project, true) {
   private val usernameField = JBTextField(username).apply { isEditable = editableUsername }
   private val passwordField = JBPasswordField()
-  private val rememberCheckbox = JBCheckBox(CommonBundle.message("checkbox.remember.password"), rememberPassword)
+  private val rememberCheckbox = JBCheckBox(UIBundle.message("auth.remember.cb"), rememberPassword)
   private val additionalProvidersButton = JBOptionButton(null, null).apply { isVisible = false }
   private var useCredentialHelper = false
   private lateinit var dialogPanel: DialogPanel
@@ -81,8 +81,8 @@ class GitHttpLoginDialog @JvmOverloads constructor(project: Project,
   }
 
   private fun RowBuilder.buildCredentialsPanel() {
-    row("Username:") { usernameField(CCFlags.growX) }
-    row("Password:") { passwordField(CCFlags.growX) }
+    row("Username:") { usernameField(growX) }
+    row("Password:") { passwordField(growX) }
     row { rememberCheckbox() }
   }
 

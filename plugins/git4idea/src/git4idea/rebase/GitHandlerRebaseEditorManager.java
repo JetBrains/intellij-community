@@ -9,6 +9,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.UUID;
 
+import static git4idea.commands.GitCommand.GIT_EDITOR_ENV;
+
 public class GitHandlerRebaseEditorManager implements AutoCloseable {
   @NotNull private final GitHandler myHandler;
   @NotNull private final GitRebaseEditorHandler myEditorHandler;
@@ -35,6 +37,7 @@ public class GitHandlerRebaseEditorManager implements AutoCloseable {
   }
 
   private void prepareEditor() {
+    if (myHandler.containsCustomEnvironmentVariable(GIT_EDITOR_ENV)) return;
     myHandlerId = myService.registerHandler(myEditorHandler);
     myHandler.addCustomEnvironmentVariable(GitCommand.GIT_EDITOR_ENV, myService.getEditorCommand());
     myHandler.addCustomEnvironmentVariable(GitRebaseEditorMain.IDEA_REBASE_HANDER_NO, myHandlerId.toString());

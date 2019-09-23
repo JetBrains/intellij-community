@@ -24,7 +24,6 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
@@ -49,7 +48,7 @@ import java.util.function.Predicate;
 /**
  * @author gregsh
  */
-public class RepositoryLibrarySynchronizer implements StartupActivity, DumbAware{
+public class RepositoryLibrarySynchronizer implements StartupActivity.DumbAware {
   private static boolean isLibraryNeedToBeReloaded(LibraryEx library, RepositoryLibraryProperties properties) {
     String version = properties.getVersion();
     if (version == null) {

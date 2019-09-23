@@ -20,6 +20,10 @@ interface SuspendContext<out CALL_FRAME : CallFrame> {
 
   val topFrame: CALL_FRAME?
 
+  var methodReturnValue: Variable?
+    get() = null
+    set(v) {}
+
   /**
    * Call frames for the current suspended state (from the innermost (top) frame to the main (bottom) frame)
    */

@@ -15,7 +15,9 @@
  */
 package com.intellij.execution.rmi;
 
+import com.intellij.execution.rmi.ssl.SslKeyStore;
 import com.intellij.execution.rmi.ssl.SslSocketFactory;
+import com.intellij.execution.rmi.ssl.SslTrustStore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,10 +31,13 @@ import java.lang.reflect.Proxy;
 import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.ServerSocket;
+import java.net.Socket;
 import java.rmi.Remote;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
-import java.rmi.server.*;
+import java.rmi.server.ExportException;
+import java.rmi.server.RMISocketFactory;
+import java.rmi.server.UnicastRemoteObject;
 import java.security.Security;
 import java.util.Hashtable;
 import java.util.Random;
@@ -57,21 +62,13 @@ public class RemoteServer {
     if (ourRemote != null) throw new AssertionError("Already started");
     ourRemote = remote;
 
-    RMIClientSocketFactory clientSocketFactory = RMISocketFactory.getDefaultSocketFactory();
-    RMIServerSocketFactory serverSocketFactory = new RMIServerSocketFactory() {
-      final InetAddress loopbackAddress = InetAddress.getByName(getLoopbackAddress());
-      public ServerSocket createServerSocket(int port) throws IOException {
-        return new ServerSocket(port, 0, loopbackAddress);
-      }
-    };
-
     Registry registry;
     int port;
     for (Random random = new Random(); ;) {
       port = random.nextInt(0xffff);
       if (port < 4000) continue;
       try {
-        registry = LocateRegistry.createRegistry(port, clientSocketFactory, serverSocketFactory);
+        registry = LocateRegistry.createRegistry(port);
         break;
       }
       catch (ExportException ignored) { }
@@ -113,6 +110,25 @@ public class RemoteServer {
     }
     // do not use HTTP tunnelling
     System.setProperty("java.rmi.server.disableHttp", "true");
+
+    // bind to localhost only
+    try {
+      RMISocketFactory.setSocketFactory(new RMISocketFactory() {
+        final InetAddress loopbackAddress = InetAddress.getByName(getLoopbackAddress());
+        @Override
+        public Socket createSocket(String host, int port) throws IOException {
+          return new Socket(host, port);
+        }
+
+        @Override
+        public ServerSocket createServerSocket(int port) throws IOException {
+          return new ServerSocket(port, 0, loopbackAddress);
+        }
+      });
+    }
+    catch (IOException e) {
+      throw new AssertionError(e);
+    }
   }
 
   private static void banJNDI() {
@@ -125,8 +141,15 @@ public class RemoteServer {
     boolean caCert = System.getProperty(SslSocketFactory.SSL_CA_CERT_PATH) != null;
     boolean clientCert = System.getProperty(SslSocketFactory.SSL_CLIENT_CERT_PATH) != null;
     boolean clientKey = System.getProperty(SslSocketFactory.SSL_CLIENT_KEY_PATH) != null;
-    if (caCert || clientCert && clientKey) {
-      Security.setProperty("ssl.SocketFactory.provider", "com.intellij.execution.rmi.ssl.SslSocketFactory");
+    boolean useFactory = "true".equals(System.getProperty(SslSocketFactory.SSL_USE_FACTORY));
+    if (useFactory) {
+      if (caCert || clientCert && clientKey) {
+        Security.setProperty("ssl.SocketFactory.provider", SslSocketFactory.class.getName());
+      }
+    }
+    else {
+      if (caCert) SslTrustStore.setDefault();
+      if (clientCert && clientKey) SslKeyStore.setDefault();
     }
   }
 

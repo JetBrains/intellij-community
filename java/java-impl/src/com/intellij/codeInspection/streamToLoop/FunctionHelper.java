@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.streamToLoop;
 
-import com.intellij.codeInspection.streamToLoop.StreamToLoopInspection.StreamToLoopReplacementContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -34,28 +33,28 @@ import java.util.function.Consumer;
  *
  * @author Tagir Valeev
  */
-abstract class FunctionHelper {
+public abstract class FunctionHelper {
   private static final Logger LOG = Logger.getInstance(FunctionHelper.class);
 
   private final PsiType myResultType;
 
-  FunctionHelper(PsiType resultType) {
+  public FunctionHelper(PsiType resultType) {
     myResultType = resultType;
   }
 
-  PsiType getResultType() {
+  public PsiType getResultType() {
     return myResultType;
   }
 
-  final String getText() {
+  public final String getText() {
     return getExpression().getText();
   }
 
-  String getStatementText() {
+  public String getStatementText() {
     return getText() + ";\n";
   }
 
-  abstract PsiExpression getExpression();
+  public abstract PsiExpression getExpression();
 
   /**
    * Try to perform "light" transformation. Works only for single-argument SAM. The function helper decides by itself
@@ -63,7 +62,7 @@ abstract class FunctionHelper {
    *
    * @return SAM argument name or null if function helper refused to perform a transformation.
    */
-  String tryLightTransform() {
+  public String tryLightTransform() {
     return null;
   }
 
@@ -77,7 +76,7 @@ abstract class FunctionHelper {
    *                       Usually it's just the references to the existing variables, but other expressions
    *                       (e.g. constant literals) could be used as well if necessary.
    */
-  abstract void transform(StreamToLoopReplacementContext context, String... argumentValues);
+  public abstract void transform(ChainContext context, String... argumentValues);
 
   /**
    * Rename the references of some variable if it's used inside this function
@@ -86,25 +85,25 @@ abstract class FunctionHelper {
    * @param newName new variable name
    * @param context a context
    */
-  void rename(String oldName, String newName, StreamToLoopReplacementContext context) {}
+  public void rename(String oldName, String newName, ChainContext context) {}
 
-  void registerReusedElements(Consumer<? super PsiElement> consumer) {}
+  public void registerReusedElements(Consumer<? super PsiElement> consumer) {}
 
   @Nullable
-  String getParameterName(int index) {
+  public String getParameterName(int index) {
     return null;
   }
 
-  void preprocessVariable(StreamToLoopReplacementContext context, StreamVariable var, int index) {
+  public void preprocessVariable(ChainContext context, ChainVariable var, int index) {
     String name = getParameterName(index);
     if (name != null) {
       var.addBestNameCandidate(name);
     }
   }
 
-  void suggestOutputNames(StreamToLoopReplacementContext context, StreamVariable var) {}
+  public void suggestOutputNames(ChainContext context, ChainVariable var) {}
 
-  List<String> suggestFinalOutputNames(StreamToLoopReplacementContext context, String desiredName, String worstCaseName) {
+  List<String> suggestFinalOutputNames(ChainContext context, String desiredName, String worstCaseName) {
     List<String> candidates = Arrays.asList(JavaCodeStyleManager.getInstance(context.getProject())
                                               .suggestVariableName(VariableKind.LOCAL_VARIABLE, desiredName,
                                                                    getExpression(), getResultType()).names);
@@ -112,7 +111,7 @@ abstract class FunctionHelper {
     return candidates;
   }
 
-  private static void suggestFromExpression(StreamVariable var, Project project, PsiExpression expression) {
+  public static void suggestFromExpression(ChainVariable var, Project project, PsiExpression expression) {
     SuggestedNameInfo info = JavaCodeStyleManager.getInstance(project)
       .suggestVariableName(VariableKind.LOCAL_VARIABLE, null, expression, null, true);
     List<String> names = new ArrayList<>(Arrays.asList(info.names));
@@ -128,13 +127,13 @@ abstract class FunctionHelper {
 
   @Contract("null, _ -> null")
   @Nullable
-  static FunctionHelper create(PsiExpression expression, int paramCount) {
+  public static FunctionHelper create(PsiExpression expression, int paramCount) {
     return create(expression, paramCount, false);
   }
 
   @Contract("null, _, _ -> null")
   @Nullable
-  static FunctionHelper create(PsiExpression expression, int paramCount, boolean allowReturns) {
+  public static FunctionHelper create(PsiExpression expression, int paramCount, boolean allowReturns) {
     expression = PsiUtil.skipParenthesizedExprDown(expression);
     if(expression == null) return null;
     PsiType type = FunctionalExpressionUtils.getFunctionalExpressionType(expression);
@@ -241,19 +240,19 @@ abstract class FunctionHelper {
       PsiExpression myExpression;
 
       @Override
-      PsiExpression getExpression() {
+      public PsiExpression getExpression() {
         return myExpression;
       }
 
       @Override
-      void transform(StreamToLoopReplacementContext context, String... argumentValues) {
+      public void transform(ChainContext context, String... argumentValues) {
         LOG.assertTrue(argumentValues.length == 0);
         myExpression = context.createExpression("new "+instanceClassName+"<>()");
       }
     };
   }
 
-  static boolean hasVarReference(PsiElement expressionOrCodeBlock, String name, StreamToLoopReplacementContext context) {
+  static boolean hasVarReference(PsiElement expressionOrCodeBlock, String name, ChainContext context) {
     PsiLambdaExpression lambda = (PsiLambdaExpression)context.createExpression(name + "->" + expressionOrCodeBlock.getText());
     PsiParameter var = lambda.getParameterList().getParameters()[0];
     PsiElement body = lambda.getBody();
@@ -275,10 +274,10 @@ abstract class FunctionHelper {
    * @return resulting expression (might be the same as input expression)
    */
   @NotNull
-  static <T extends PsiElement> T replaceVarReference(@NotNull T expressionOrCodeBlock,
-                                                      @NotNull String name,
-                                                      String replacement,
-                                                      StreamToLoopReplacementContext context) {
+  public static <T extends PsiElement> T replaceVarReference(@NotNull T expressionOrCodeBlock,
+                                                             @NotNull String name,
+                                                             String replacement,
+                                                             ChainContext context) {
     if (name.equals(replacement)) return expressionOrCodeBlock;
     PsiLambdaExpression lambda = (PsiLambdaExpression)context.createExpression(name + "->" + expressionOrCodeBlock.getText());
     PsiParameter var = lambda.getParameterList().getParameters()[0];
@@ -326,7 +325,7 @@ abstract class FunctionHelper {
     }
 
     @Override
-    String tryLightTransform() {
+    public String tryLightTransform() {
       PsiLambdaExpression lambdaExpression = LambdaRefactoringUtil.createLambda(myMethodRef, true);
       if(lambdaExpression == null) return null;
       String typedParamList = LambdaRefactoringUtil.createLambdaParameterListWithFormalTypes(myType, lambdaExpression, false);
@@ -342,18 +341,18 @@ abstract class FunctionHelper {
     }
 
     @Override
-    PsiExpression getExpression() {
+    public PsiExpression getExpression() {
       LOG.assertTrue(myExpression != null);
       return myExpression;
     }
 
     @Override
-    void registerReusedElements(Consumer<? super PsiElement> consumer) {
+    public void registerReusedElements(Consumer<? super PsiElement> consumer) {
       consumer.accept(myMethodRef.getQualifier());
     }
 
     @Override
-    void transform(StreamToLoopReplacementContext context, String... argumentValues) {
+    public void transform(ChainContext context, String... argumentValues) {
       PsiMethodReferenceExpression methodRef = myMethodRef;
       PsiExpression qualifier = methodRef.getQualifierExpression();
       if(qualifier != null) {
@@ -393,7 +392,7 @@ abstract class FunctionHelper {
     }
 
     @Override
-    void suggestOutputNames(StreamToLoopReplacementContext context, StreamVariable var) {
+    public void suggestOutputNames(ChainContext context, ChainVariable var) {
       PsiLambdaExpression lambda = LambdaRefactoringUtil.createLambda(myMethodRef, true);
       if(lambda != null) {
         PsiExpression body = LambdaUtil.extractSingleExpressionFromBody(lambda.getBody());
@@ -404,7 +403,7 @@ abstract class FunctionHelper {
     }
 
     @NotNull
-    private PsiMethodReferenceExpression fromText(StreamToLoopReplacementContext context, String text) {
+    private PsiMethodReferenceExpression fromText(ChainContext context, String text) {
       PsiTypeCastExpression castExpr = (PsiTypeCastExpression)context.createExpression("(" + myType.getCanonicalText() + ")" + text);
       PsiMethodReferenceExpression methodRef = (PsiMethodReferenceExpression)castExpr.getOperand();
       LOG.assertTrue(methodRef != null);
@@ -412,7 +411,7 @@ abstract class FunctionHelper {
     }
 
     @Override
-    void rename(String oldName, String newName, StreamToLoopReplacementContext context) {
+    public void rename(String oldName, String newName, ChainContext context) {
       if(oldName.equals(newName)) return;
       PsiExpression qualifier = myMethodRef.getQualifierExpression();
       if(qualifier == null) return;
@@ -459,23 +458,23 @@ abstract class FunctionHelper {
     }
 
     @Override
-    PsiExpression getExpression() {
+    public PsiExpression getExpression() {
       LOG.assertTrue(myFinalExpression != null);
       return myFinalExpression;
     }
 
     @Override
-    void rename(String oldName, String newName, StreamToLoopReplacementContext context) {
+    public void rename(String oldName, String newName, ChainContext context) {
       myExpression = replaceVarReference(myExpression, oldName, newName, context);
     }
 
     @Override
-    void registerReusedElements(Consumer<? super PsiElement> consumer) {
+    public void registerReusedElements(Consumer<? super PsiElement> consumer) {
       consumer.accept(myExpression);
     }
 
     @Override
-    void transform(StreamToLoopReplacementContext context, String... argumentValues) {
+    public void transform(ChainContext context, String... argumentValues) {
       String varName = context.declare(myNameCandidate, myFnType, myExpression.getText());
       myFinalExpression = context.createExpression(varName + "." + myMethodName + "(" + String.join(",", argumentValues) + ")");
     }
@@ -493,23 +492,23 @@ abstract class FunctionHelper {
     }
 
     @Override
-    PsiExpression getExpression() {
+    public PsiExpression getExpression() {
       LOG.assertTrue(myExpression != null);
       return myExpression;
     }
 
     @Override
-    void transform(StreamToLoopReplacementContext context, String... argumentValues) {
+    public void transform(ChainContext context, String... argumentValues) {
       myExpression = context.createExpression(myReference.getText() + "." + myName + "(" + String.join(",", argumentValues) + ")");
     }
 
     @Override
-    void rename(String oldName, String newName, StreamToLoopReplacementContext context) {
+    public void rename(String oldName, String newName, ChainContext context) {
       myReference = replaceVarReference(myReference, oldName, newName, context);
     }
 
     @Override
-    void registerReusedElements(Consumer<? super PsiElement> consumer) {
+    public void registerReusedElements(Consumer<? super PsiElement> consumer) {
       consumer.accept(myReference);
     }
   }
@@ -526,13 +525,13 @@ abstract class FunctionHelper {
     }
 
     @Override
-    PsiExpression getExpression() {
+    public PsiExpression getExpression() {
       LOG.assertTrue(myExpression != null);
       return myExpression;
     }
 
     @Override
-    void transform(StreamToLoopReplacementContext context, String... argumentValues) {
+    public void transform(ChainContext context, String... argumentValues) {
       LOG.assertTrue(argumentValues.length == myArgCount);
       myExpression = context.createExpression(MessageFormat.format(myTemplate, (Object[])argumentValues));
     }
@@ -549,26 +548,26 @@ abstract class FunctionHelper {
     }
 
     @Override
-    String tryLightTransform() {
+    public String tryLightTransform() {
       LOG.assertTrue(myParameters.length == 1);
       return myParameters[0];
     }
 
     @Override
-    PsiExpression getExpression() {
+    public PsiExpression getExpression() {
       // Usage logic presume that this method is called only if myBody is PsiExpression
       return (PsiExpression)myBody;
     }
 
     @Override
-    void transform(StreamToLoopReplacementContext context, String... argumentValues) {
+    public void transform(ChainContext context, String... argumentValues) {
       LOG.assertTrue(argumentValues.length == myParameters.length);
       EntryStream.zip(myParameters, argumentValues).forKeyValue(
         (oldName, newName) -> myBody = replaceVarReference(myBody, oldName, newName, context));
     }
 
     @Override
-    void rename(String oldName, String newName, StreamToLoopReplacementContext context) {
+    public void rename(String oldName, String newName, ChainContext context) {
       int idx = ArrayUtil.indexOf(myParameters, newName);
       if(idx >= 0) {
         // If new name collides with existing parameter, rename it
@@ -585,17 +584,17 @@ abstract class FunctionHelper {
     }
 
     @Override
-    void registerReusedElements(Consumer<? super PsiElement> consumer) {
+    public void registerReusedElements(Consumer<? super PsiElement> consumer) {
       consumer.accept(myBody);
     }
 
     @Override
-    String getParameterName(int index) {
+    public String getParameterName(int index) {
       return myParameters[index];
     }
 
     @Override
-    void preprocessVariable(StreamToLoopReplacementContext context, StreamVariable var, int index) {
+    public void preprocessVariable(ChainContext context, ChainVariable var, int index) {
       super.preprocessVariable(context, var, index);
       boolean hasClassOrLambda =
         StreamEx.ofTree(myBody, e -> StreamEx.of(e.getChildren())).anyMatch(e -> e instanceof PsiLambdaExpression || e instanceof PsiClass);
@@ -613,7 +612,7 @@ abstract class FunctionHelper {
     }
 
     @Override
-    void suggestOutputNames(StreamToLoopReplacementContext context, StreamVariable var) {
+    public void suggestOutputNames(ChainContext context, ChainVariable var) {
       if(myBody instanceof PsiExpression) {
         suggestFromExpression(var, context.getProject(), (PsiExpression)myBody);
       }
@@ -626,7 +625,7 @@ abstract class FunctionHelper {
     }
 
     @Override
-    String getStatementText() {
+    public String getStatementText() {
       PsiElement[] children = myBody.getChildren();
       // Keep everything except braces
       return StreamEx.of(children, 1, children.length - 1)
@@ -635,7 +634,7 @@ abstract class FunctionHelper {
     }
 
     @Override
-    void transform(StreamToLoopReplacementContext context, String... argumentValues) {
+    public void transform(ChainContext context, String... argumentValues) {
       super.transform(context, argumentValues);
       List<PsiReturnStatement> returns = getReturns(myBody);
       String continueStatement = "continue;";

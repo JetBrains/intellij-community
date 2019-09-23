@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.auth
 
 import com.intellij.concurrency.JobScheduler
@@ -109,15 +109,15 @@ class SvnAuthenticationNotifier(private val myVcs: SvnVcs) : GenericNotifierImpl
   }
 
   private fun showAlreadyChecking() {
-    val frameFor = WindowManagerEx.getInstanceEx().findFrameFor(myProject)
-    if (frameFor != null) {
-      val component = frameFor.component
-      val point = component.mousePosition ?: Point((component.width * 0.7).toInt(), 0)
+    val frameFor = WindowManagerEx.getInstanceEx().findFrameFor(myProject) ?: return
+    val component = frameFor.component
+    val point = component.mousePosition ?: Point((component.width * 0.7).toInt(), 0)
 
-      SwingUtilities.convertPointToScreen(point, component)
-      JBPopupFactory.getInstance().createHtmlTextBalloonBuilder("Already checking...", MessageType.WARNING, null).createBalloon().show(
-        RelativePoint(point), Balloon.Position.below)
-    }
+    SwingUtilities.convertPointToScreen(point, component)
+    JBPopupFactory.getInstance()
+      .createHtmlTextBalloonBuilder("Already checking...", MessageType.WARNING, null)
+      .createBalloon()
+      .show(RelativePoint(point), Balloon.Position.below)
   }
 
   private fun onStateChangedToSuccess(obj: AuthenticationRequest) {
@@ -233,7 +233,7 @@ class SvnAuthenticationNotifier(private val myVcs: SvnVcs) : GenericNotifierImpl
             CommonProxy.getInstance().select(URI(url.toString()))
           }
           catch (e: URISyntaxException) {
-            LOG.info("wrong URL: " + url.toString())
+            LOG.info("wrong URL: $url")
             return false
           }
 

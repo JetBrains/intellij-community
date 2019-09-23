@@ -69,6 +69,10 @@ open class UElementPattern<T : UElement, Self : UElementPattern<T, Self>>(clazz:
 
   fun withUastParent(parentPattern: ElementPattern<out UElement>): Self = filter { it.uastParent?.let { parentPattern.accepts(it) } ?: false }
 
+  fun withUastParentOrSelf(parentPattern: ElementPattern<out UElement>): Self = filter {
+    parentPattern.accepts(it) || it.uastParent?.let { parentPattern.accepts(it) } ?: false
+  }
+
   class Capture<T : UElement>(clazz: Class<T>) : UElementPattern<T, Capture<T>>(clazz)
 }
 

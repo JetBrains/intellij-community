@@ -57,12 +57,12 @@ public class InvokerTest {
 
   @Test
   public void testValidBgPool() {
-    testValidThread(new Invoker.BackgroundPool(parent));
+    testValidThread(new Invoker.Background(parent, 10));
   }
 
   @Test
   public void testValidBgThread() {
-    testValidThread(new Invoker.BackgroundThread(parent));
+    testValidThread(new Invoker.Background(parent));
   }
 
   private static void testValidThread(Invoker invoker) {
@@ -77,12 +77,12 @@ public class InvokerTest {
 
   @Test
   public void testInvokeLaterOnBgPool() {
-    testInvokeLater(new Invoker.BackgroundPool(parent));
+    testInvokeLater(new Invoker.Background(parent, 10));
   }
 
   @Test
   public void testInvokeLaterOnBgThread() {
-    testInvokeLater(new Invoker.BackgroundThread(parent));
+    testInvokeLater(new Invoker.Background(parent));
   }
 
   private static void testInvokeLater(Invoker invoker) {
@@ -101,12 +101,12 @@ public class InvokerTest {
 
   @Test
   public void testScheduleOnBgPool() {
-    testSchedule(new Invoker.BackgroundPool(parent));
+    testSchedule(new Invoker.Background(parent, 10));
   }
 
   @Test
   public void testScheduleOnBgThread() {
-    testSchedule(new Invoker.BackgroundThread(parent));
+    testSchedule(new Invoker.Background(parent));
   }
 
   private static void testSchedule(Invoker invoker) {
@@ -125,12 +125,12 @@ public class InvokerTest {
 
   @Test
   public void testInvokeLaterIfNeededOnBgPool() {
-    testInvokeLaterIfNeeded(new Invoker.BackgroundPool(parent));
+    testInvokeLaterIfNeeded(new Invoker.Background(parent, 10));
   }
 
   @Test
   public void testInvokeLaterIfNeededOnBgThread() {
-    testInvokeLaterIfNeeded(new Invoker.BackgroundThread(parent));
+    testInvokeLaterIfNeeded(new Invoker.Background(parent));
   }
 
   private static void testInvokeLaterIfNeeded(Invoker invoker) {
@@ -187,12 +187,12 @@ public class InvokerTest {
 
   @Test
   public void testRestartOnBgPool() {
-    testRestartOnPCE(new Invoker.BackgroundPool(parent));
+    testRestartOnPCE(new Invoker.Background(parent, 10));
   }
 
   @Test
   public void testRestartOnBgThread() {
-    testRestartOnPCE(new Invoker.BackgroundThread(parent));
+    testRestartOnPCE(new Invoker.Background(parent));
   }
 
   private static void testRestartOnPCE(Invoker invoker) {
@@ -211,12 +211,12 @@ public class InvokerTest {
 
   @Test
   public void testQueueOnBgPool() {
-    testQueue(new Invoker.BackgroundPool(parent), false);
+    testQueue(new Invoker.Background(parent, 10), false);
   }
 
   @Test
   public void testQueueOnBgThread() {
-    testQueue(new Invoker.BackgroundThread(parent), true);
+    testQueue(new Invoker.Background(parent), true);
   }
 
   private static void testQueue(Invoker invoker, boolean ordered) {
@@ -236,12 +236,12 @@ public class InvokerTest {
 
   @Test
   public void testThreadChangingOnBgPool() {
-    testThreadChanging(new Invoker.BackgroundPool(parent));
+    testThreadChanging(new Invoker.Background(parent, 10));
   }
 
   @Test
   public void testThreadChangingOnBgThread() {
-    testThreadChanging(new Invoker.BackgroundThread(parent));
+    testThreadChanging(new Invoker.Background(parent));
   }
 
   private static void testThreadChanging(Invoker invoker) {
@@ -255,42 +255,42 @@ public class InvokerTest {
 
   @Test
   public void testThreadChangingOnEDTfromBgPool() {
-    testThreadChanging(new Invoker.EDT(parent), new Invoker.BackgroundPool(parent), false);
+    testThreadChanging(new Invoker.EDT(parent), new Invoker.Background(parent, 10), false);
   }
 
   @Test
   public void testThreadChangingOnEDTfromBgThread() {
-    testThreadChanging(new Invoker.EDT(parent), new Invoker.BackgroundThread(parent), false);
+    testThreadChanging(new Invoker.EDT(parent), new Invoker.Background(parent), false);
   }
 
   @Test
   public void testThreadChangingOnBgPoolFromEDT() {
-    testThreadChanging(new Invoker.BackgroundPool(parent), new Invoker.EDT(parent), false);
+    testThreadChanging(new Invoker.Background(parent, 10), new Invoker.EDT(parent), false);
   }
 
   @Test
   public void testThreadChangingOnBgPoolFromBgPool() {
-    testThreadChanging(new Invoker.BackgroundPool(parent), new Invoker.BackgroundPool(parent), true);
+    testThreadChanging(new Invoker.Background(parent, 10), new Invoker.Background(parent, 10), false);
   }
 
   @Test
   public void testThreadChangingOnBgPoolFromBgThread() {
-    testThreadChanging(new Invoker.BackgroundPool(parent), new Invoker.BackgroundThread(parent), true);
+    testThreadChanging(new Invoker.Background(parent, 10), new Invoker.Background(parent), false);
   }
 
   @Test
   public void testThreadChangingOnBgThreadFromEDT() {
-    testThreadChanging(new Invoker.BackgroundThread(parent), new Invoker.EDT(parent), false);
+    testThreadChanging(new Invoker.Background(parent), new Invoker.EDT(parent), false);
   }
 
   @Test
   public void testThreadChangingOnBgThreadFromBgPool() {
-    testThreadChanging(new Invoker.BackgroundThread(parent), new Invoker.BackgroundPool(parent), null);
+    testThreadChanging(new Invoker.Background(parent), new Invoker.Background(parent, 10), false);
   }
 
   @Test
   public void testThreadChangingOnBgThreadFromBgThread() {
-    testThreadChanging(new Invoker.BackgroundThread(parent), new Invoker.BackgroundThread(parent), null);
+    testThreadChanging(new Invoker.Background(parent), new Invoker.Background(parent), false);
   }
 
   private static void testThreadChanging(Invoker foreground, Invoker background, Boolean equal) {
@@ -343,13 +343,13 @@ public class InvokerTest {
   @Test
   public void testDisposeOnBgThread() {
     Disposable parent = Disposer.newDisposable("disposed");
-    testInterrupt(parent, new Invoker.BackgroundThread(parent), promise -> Disposer.dispose(parent));
+    testInterrupt(parent, new Invoker.Background(parent), promise -> Disposer.dispose(parent));
   }
 
   @Test
   public void testDisposeOnBgPool() {
     Disposable parent = Disposer.newDisposable("disposed");
-    testInterrupt(parent, new Invoker.BackgroundPool(parent), promise -> Disposer.dispose(parent));
+    testInterrupt(parent, new Invoker.Background(parent, 10), promise -> Disposer.dispose(parent));
   }
 
   @Test
@@ -361,13 +361,13 @@ public class InvokerTest {
   @Test
   public void testCancelOnBgThread() {
     Disposable parent = Disposer.newDisposable("cancelled");
-    testInterrupt(parent, new Invoker.BackgroundThread(parent), promise -> promise.cancel());
+    testInterrupt(parent, new Invoker.Background(parent), promise -> promise.cancel());
   }
 
   @Test
   public void testCancelOnBgPool() {
     Disposable parent = Disposer.newDisposable("cancelled");
-    testInterrupt(parent, new Invoker.BackgroundPool(parent), promise -> promise.cancel());
+    testInterrupt(parent, new Invoker.Background(parent, 10), promise -> promise.cancel());
   }
 
   private static void testInterrupt(Disposable parent, Invoker invoker, Consumer<CancellablePromise<?>> interrupt) {

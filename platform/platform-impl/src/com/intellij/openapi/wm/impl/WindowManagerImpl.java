@@ -2,9 +2,6 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.configurationStore.XmlSerializer;
-import com.intellij.ide.DataManager;
-import com.intellij.ide.impl.DataManagerImpl;
-import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponentWithModificationTracker;
@@ -16,19 +13,18 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManagerListener;
+import com.intellij.openapi.wm.ex.IdeFrameEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
-import com.intellij.ui.JreHiDpiUtil;
+import com.intellij.platform.ProjectFrameAllocatorKt;
 import com.intellij.ui.ScreenUtil;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.ui.JBInsets;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.sun.jna.platform.WindowUtils;
 import gnu.trove.THashMap;
@@ -42,14 +38,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.awt.geom.Point2D;
-import java.awt.geom.Rectangle2D;
-import java.io.EOFException;
-import java.io.IOException;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.List;
+import java.util.*;
 
 @State(
   name = "WindowManager",
@@ -61,8 +51,6 @@ import java.util.Set;
 )
 public final class WindowManagerImpl extends WindowManagerEx implements PersistentStateComponentWithModificationTracker<Element> {
   private static final Logger LOG = Logger.getInstance(WindowManagerImpl.class);
-
-  @NonNls public static final String FULL_SCREEN = "ide.frame.full.screen";
 
   @NonNls private static final String FOCUSED_WINDOW_PROPERTY_NAME = "focusedWindow";
   @NonNls private static final String FRAME_ELEMENT = "frame";
@@ -80,7 +68,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
 
   // null keys must be supported
   // null key - root frame
-  private final Map<Project, IdeFrameImpl> myProjectToFrame = new HashMap<>();
+  private final Map<Project, ProjectFrameHelper> myProjectToFrame = new HashMap<>();
 
   private final Map<Project, Set<JDialog>> myDialogsToDispose = new THashMap<>();
 
@@ -90,12 +78,10 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
     @Override
     public void windowActivated(WindowEvent e) {
       Window activeWindow = e.getWindow();
-      // must be
-      if (activeWindow instanceof IdeFrameImpl) {
-        Project project = ((IdeFrameImpl)activeWindow).getProject();
-        if (project != null) {
-          proceedDialogDisposalQueue(project);
-        }
+      ProjectFrameHelper frameHelper = ProjectFrameHelper.getFrameHelper(activeWindow);
+      Project project = frameHelper == null ? null : frameHelper.getProject();
+      if (project != null) {
+        proceedDialogDisposalQueue(project);
       }
     }
   };
@@ -116,20 +102,19 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
 
       int extendedState = frame.getExtendedState();
       Rectangle bounds = frame.getBounds();
-      if (extendedState == Frame.NORMAL) {
-        JRootPane rootPane = frame.getRootPane();
-        if (rootPane != null) {
-          rootPane.putClientProperty(IdeFrameImpl.NORMAL_STATE_BOUNDS, bounds);
-        }
+      JRootPane rootPane = frame.getRootPane();
+      if (extendedState == Frame.NORMAL && rootPane != null) {
+        rootPane.putClientProperty(IdeFrameImpl.NORMAL_STATE_BOUNDS, bounds);
       }
 
-      Project project = frame.getProject();
+      ProjectFrameHelper frameHelper = ProjectFrameHelper.getFrameHelper(frame);
+      Project project = frameHelper == null ? null : frameHelper.getProject();
       if (project == null) {
         // Component moved during project loading - update myDefaultFrameInfo directly.
         // Cannot mark as dirty and compute later, because to convert user space info to device space,
         // we need graphicsConfiguration, but we can get graphicsConfiguration only from frame,
         // but later, when getStateModificationCount or getState is called, may be no frame at all.
-        defaultFrameInfoHelper.updateFrameInfo(frame);
+        defaultFrameInfoHelper.updateFrameInfo(frameHelper);
       }
       else {
         ProjectFrameBounds projectFrameBounds = ProjectFrameBounds.getInstance(project);
@@ -139,18 +124,12 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
   };
 
   public WindowManagerImpl() {
-    DataManager dataManager = DataManager.getInstance();
-    if (dataManager instanceof DataManagerImpl) {
-      ((DataManagerImpl)dataManager).setWindowManager(this);
-    }
-
-    final Application application = ApplicationManager.getApplication();
+    Application application = ApplicationManager.getApplication();
     if (!application.isUnitTestMode()) {
       Disposer.register(application, this::disposeRootFrame);
     }
 
-    final KeyboardFocusManager keyboardFocusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
-    keyboardFocusManager.addPropertyChangeListener(FOCUSED_WINDOW_PROPERTY_NAME, myWindowWatcher);
+    KeyboardFocusManager.getCurrentKeyboardFocusManager().addPropertyChangeListener(FOCUSED_WINDOW_PROPERTY_NAME, myWindowWatcher);
 
     if (UIUtil.hasLeakingAppleListeners()) {
       UIUtil.addAwtListener(event -> {
@@ -165,24 +144,35 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
 
   @Override
   @NotNull
-  public IdeFrameImpl[] getAllProjectFrames() {
-    final Collection<IdeFrameImpl> ideFrames = myProjectToFrame.values();
-    return ideFrames.toArray(new IdeFrameImpl[0]);
+  public ProjectFrameHelper[] getAllProjectFrames() {
+    return myProjectToFrame.values().toArray(new ProjectFrameHelper[0]);
+  }
+
+  @NotNull
+  @Override
+  public List<ProjectFrameHelper> getProjectFrameHelpers() {
+    return new ArrayList<>(myProjectToFrame.values());
   }
 
   @Override
   public JFrame findVisibleFrame() {
-    IdeFrameImpl[] frames = getAllProjectFrames();
-    return frames.length > 0 ? frames[0] : (JFrame)WelcomeFrame.getInstance();
+    ProjectFrameHelper firstFrameHelper = ContainerUtil.getFirstItem(myProjectToFrame.values());
+    return firstFrameHelper == null ? (JFrame)WelcomeFrame.getInstance() : firstFrameHelper.getFrame();
   }
 
   @Override
-  public void addListener(final WindowManagerListener listener) {
+  @Nullable
+  public IdeFrameEx findFirstVisibleFrameHelper() {
+    return ContainerUtil.getFirstItem(myProjectToFrame.values());
+  }
+
+  @Override
+  public void addListener(@NotNull WindowManagerListener listener) {
     myEventDispatcher.addListener(listener);
   }
 
   @Override
-  public void removeListener(final WindowManagerListener listener) {
+  public void removeListener(@NotNull WindowManagerListener listener) {
     myEventDispatcher.removeListener(listener);
   }
 
@@ -330,7 +320,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
       dialog.dispose();
     }
     else {
-      IdeFrameImpl frame = getFrame(project);
+      JFrame frame = getFrame(project);
       if (frame.isActive()) {
         dialog.dispose();
       }
@@ -373,12 +363,12 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
   @Override
   @Nullable
   public final Window suggestParentWindow(@Nullable Project project) {
-    return myWindowWatcher.suggestParentWindow(project);
+    return myWindowWatcher.suggestParentWindow(project, this);
   }
 
   @Override
   public StatusBar getStatusBar(@NotNull Project project) {
-    IdeFrameImpl frame = myProjectToFrame.get(project);
+    ProjectFrameHelper frame = getFrameHelper(project);
     return frame == null ? null : frame.getStatusBar();
   }
 
@@ -395,73 +385,100 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
     }
 
     assert false : "Cannot find status bar for " + c;
-
     return null;
   }
 
   @Override
-  public IdeFrame findFrameFor(@Nullable final Project project) {
-    IdeFrame frame = null;
+  public IdeFrame findFrameFor(@Nullable Project project) {
+    IdeFrame frame;
     if (project != null) {
-      frame = project.isDefault() ? WelcomeFrame.getInstance() : getFrame(project);
+      frame = project.isDefault() ? WelcomeFrame.getInstance() : getFrameHelper(project);
       if (frame == null) {
-        frame = myProjectToFrame.get(null);
+        frame = getFrameHelper(null);
       }
     }
     else {
-      Container eachParent = getMostRecentFocusedWindow();
-      while(eachParent != null) {
-        if (eachParent instanceof IdeFrame) {
-          frame = (IdeFrame)eachParent;
-          break;
-        }
-        eachParent = eachParent.getParent();
-      }
-
+      frame = ProjectFrameHelper.getFrameHelper(getMostRecentFocusedWindow());
       if (frame == null) {
         frame = tryToFindTheOnlyFrame();
       }
     }
-
     return frame;
   }
 
+  @Nullable
   private static IdeFrame tryToFindTheOnlyFrame() {
-    IdeFrame candidate = null;
-    final Frame[] all = Frame.getFrames();
-    for (Frame each : all) {
-      if (each instanceof IdeFrame) {
+    IdeFrameImpl candidate = null;
+    for (Frame each : Frame.getFrames()) {
+      if (each instanceof IdeFrameImpl) {
         if (candidate == null) {
-          candidate = (IdeFrame)each;
-        } else {
+          candidate = (IdeFrameImpl)each;
+        }
+        else {
           candidate = null;
           break;
         }
       }
     }
-    return candidate;
+    return candidate == null ? null : ProjectFrameHelper.getFrameHelper(candidate);
   }
 
   @Override
-  public final IdeFrameImpl getFrame(@Nullable final Project project) {
+  public final IdeFrameImpl getFrame(@Nullable Project project) {
     // no assert! otherwise WindowWatcher.suggestParentWindow fails for default project
     //LOG.assertTrue(myProject2Frame.containsKey(project));
+    ProjectFrameHelper helper = getFrameHelper(project);
+    return helper == null ? null : helper.getFrame();
+  }
+
+  @Override
+  @Nullable
+  @ApiStatus.Internal
+  public ProjectFrameHelper getFrameHelper(@Nullable Project project) {
     return myProjectToFrame.get(project);
   }
 
+  @Nullable
   @Override
-  public IdeFrame getIdeFrame(@Nullable final Project project) {
-    if (project != null) {
-      return getFrame(project);
-    }
-    final Window window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
-    final Component parent = UIUtil.findUltimateParent(window);
-    if (parent instanceof IdeFrame) return (IdeFrame)parent;
+  public ProjectFrameHelper findFrameHelper(@Nullable Project project) {
+    if (project == null) {
+      IdeFrame frame = IdeFocusManager.getGlobalInstance().getLastFocusedFrame();
+      if (frame == null) {
+        return null;
+      }
 
-    final Frame[] frames = Frame.getFrames();
-    for (Frame each : frames) {
-      if (each instanceof IdeFrame) {
-        return (IdeFrame)each;
+      project = frame.getProject();
+      if (project == null) {
+        return null;
+      }
+    }
+    return getFrameHelper(project);
+  }
+
+  @Nullable
+  @ApiStatus.Internal
+  public IdeRootPane getProjectFrameRootPane(@Nullable Project project) {
+    ProjectFrameHelper helper = myProjectToFrame.get(project);
+    return helper == null ? null : helper.getRootPane();
+  }
+
+  @Override
+  @Nullable
+  public IdeFrame getIdeFrame(@Nullable Project project) {
+    if (project != null) {
+      return getFrameHelper(project);
+    }
+
+    Window window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
+    IdeFrame result = getIdeFrame(UIUtil.findUltimateParent(window));
+    if (result != null) {
+      return result;
+    }
+
+    for (Frame each : Frame.getFrames()) {
+      result = getIdeFrame(each);
+      if (result != null) {
+        return result;
       }
     }
 
@@ -469,89 +486,48 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
   }
 
   @Nullable
-  @ApiStatus.Internal
-  public IdeFrameImpl getRootFrame() {
-    return myProjectToFrame.get(null);
+  private static IdeFrame getIdeFrame(@NotNull Component component) {
+    if (component instanceof IdeFrameImpl) {
+      return ProjectFrameHelper.getFrameHelper((IdeFrameImpl)component);
+    }
+    else if (component instanceof IdeFrame) {
+      return (IdeFrame)component;
+    }
+    else {
+      return null;
+    }
   }
 
-  public void assignFrame(@NotNull IdeFrameImpl frame, @NotNull Project project) {
+  @Nullable
+  @ApiStatus.Internal
+  public ProjectFrameHelper removeAndGetRootFrame() {
+    return myProjectToFrame.remove(null);
+  }
+
+  public void assignFrame(@NotNull ProjectFrameHelper frame, @NotNull Project project) {
     LOG.assertTrue(!myProjectToFrame.containsKey(project));
 
     frame.setProject(project);
     myProjectToFrame.put(project, frame);
 
-    frame.addWindowListener(myActivationListener);
-    frame.addComponentListener(myFrameStateListener);
-  }
-
-  /**
-   * This method is called when there is some opened project (IDE will not open Welcome Frame, but project).
-   *
-   * {@link IdeFrameImpl#init()} must be called explicitly.
-   */
-  @NotNull
-  @ApiStatus.Internal
-  public IdeFrameImpl createFrame(@NotNull OpenProjectTask options) {
-    LOG.assertTrue(!myProjectToFrame.containsKey(null));
-
-    IdeFrameImpl frame = new IdeFrameImpl();
-    if (options.getSendFrameBack()) {
-      frame.setAutoRequestFocus(false);
-    }
-
-    if (options.getProjectWorkspaceId() != null && Registry.is("ide.project.loading.show.last.state")) {
-      try {
-        frame.setProjectWorkspaceId(options.getProjectWorkspaceId());
-      }
-      catch (IOException e) {
-        if (!(e.getCause() instanceof EOFException)) {
-          LOG.warn(e);
-        }
-      }
-    }
-    return frame;
-  }
-
-  public void restoreFrameState(@NotNull IdeFrameImpl frame, @NotNull FrameInfo frameInfo) {
-    Rectangle deviceBounds = frameInfo.getBounds();
-    Rectangle bounds = deviceBounds == null ? null : validateFrameBounds(FrameBoundsConverter.convertFromDeviceSpace(deviceBounds));
-    frame.setExtendedState(frameInfo, bounds);
-    if (bounds != null) {
-      frame.setBounds(bounds);
-    }
-
-    if (frameInfo.getFullScreen() && FrameInfoHelper.isFullScreenSupportedInCurrentOs()) {
-      frame.toggleFullScreen(true);
-    }
-  }
-
-  @NotNull
-  private static Rectangle validateFrameBounds(@Nullable Rectangle frameBounds) {
-    Rectangle bounds = frameBounds != null ? frameBounds.getBounds() : null;
-    if (bounds == null || !ScreenUtil.isVisible(bounds)) {
-      bounds = ScreenUtil.getMainScreenBounds();
-      int xOff = bounds.width / 8;
-      int yOff = bounds.height / 8;
-      //noinspection UseDPIAwareInsets
-      JBInsets.removeFrom(bounds, new Insets(yOff, xOff, yOff, xOff));
-    }
-    return bounds;
+    frame.getFrame().addWindowListener(myActivationListener);
+    frame.getFrame().addComponentListener(myFrameStateListener);
   }
 
   @Override
   @NotNull
-  public final IdeFrameImpl allocateFrame(@NotNull Project project) {
-    IdeFrameImpl frame = myProjectToFrame.get(project);
+  public final ProjectFrameHelper allocateFrame(@NotNull Project project) {
+    ProjectFrameHelper frame = getFrameHelper(project);
     if (frame != null) {
       myEventDispatcher.getMulticaster().frameCreated(frame);
       return frame;
     }
 
-    frame = myProjectToFrame.remove(null);
+    frame = removeAndGetRootFrame();
     boolean isNewFrame = frame == null;
     FrameInfo frameInfo = null;
     if (isNewFrame) {
-      frame = new IdeFrameImpl();
+      frame = new ProjectFrameHelper(ProjectFrameAllocatorKt.createNewProjectFrame(), null);
       frame.init();
 
       frameInfo = ProjectFrameBounds.getInstance(project).getFrameInfoInDeviceSpace();
@@ -573,7 +549,10 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
           defaultFrameInfoHelper.copyFrom(frameInfo);
         }
 
-        setFrameBoundsFromDeviceSpace(frame, frameInfo);
+        Rectangle bounds = frameInfo.getBounds();
+        if (bounds != null) {
+          frame.getFrame().setBounds(FrameBoundsConverter.convertFromDeviceSpaceAndFitToScreen(bounds));
+        }
       }
     }
 
@@ -582,9 +561,9 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
 
     if (isNewFrame) {
       if (frameInfo != null) {
-        frame.setExtendedState(frameInfo.getExtendedState());
+        frame.getFrame().setExtendedState(frameInfo.getExtendedState());
       }
-      frame.setVisible(true);
+      frame.getFrame().setVisible(true);
 
       if (FrameInfoHelper.isFullScreenSupportedInCurrentOs() &&
           ((frameInfo != null && frameInfo.getFullScreen()) || IdeFrameImpl.SHOULD_OPEN_IN_FULL_SCREEN.get(project) == Boolean.TRUE)) {
@@ -592,22 +571,15 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
       }
     }
 
-    frame.addWindowListener(myActivationListener);
+    frame.getFrame().addWindowListener(myActivationListener);
     if (isNewFrame) {
-      frame.addComponentListener(myFrameStateListener);
-      IdeMenuBar.installAppMenuIfNeeded(frame);
+      frame.getFrame().addComponentListener(myFrameStateListener);
+      IdeMenuBar.installAppMenuIfNeeded(frame.getFrame());
     }
 
     myEventDispatcher.getMulticaster().frameCreated(frame);
 
     return frame;
-  }
-
-  public static void setFrameBoundsFromDeviceSpace(@NotNull IdeFrameImpl frame, @NotNull FrameInfo frameInfo) {
-    Rectangle bounds = frameInfo.getBounds();
-    if (bounds != null) {
-      frame.setBounds(validateFrameBounds(FrameBoundsConverter.convertFromDeviceSpace(bounds)));
-    }
   }
 
   private void proceedDialogDisposalQueue(@NotNull Project project) {
@@ -622,25 +594,26 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
   }
 
   @Override
-  public final void releaseFrame(@NotNull final IdeFrameImpl frame) {
-    myEventDispatcher.getMulticaster().beforeFrameReleased(frame);
+  public final void releaseFrame(@NotNull ProjectFrameHelper frameHelper) {
+    myEventDispatcher.getMulticaster().beforeFrameReleased(frameHelper);
 
-    final Project project = frame.getProject();
+    JFrame frame = frameHelper.getFrame();
+    Project project = frameHelper.getProject();
     LOG.assertTrue(project != null);
 
-    frame.removeWindowListener(myActivationListener);
+    frameHelper.getFrame().removeWindowListener(myActivationListener);
     proceedDialogDisposalQueue(project);
 
-    frame.setProject(null);
+    frameHelper.setProject(null);
     frame.setTitle(null);
-    frame.setFileTitle(null, null);
+    frameHelper.setFileTitle(null, null);
 
     myProjectToFrame.remove(project);
     if (myProjectToFrame.isEmpty()) {
-      myProjectToFrame.put(null, frame);
+      myProjectToFrame.put(null, frameHelper);
     }
     else {
-      StatusBar statusBar = frame.getStatusBar();
+      StatusBar statusBar = frameHelper.getStatusBar();
       if (statusBar != null) {
         Disposer.dispose(statusBar);
       }
@@ -650,10 +623,10 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
 
   public final void disposeRootFrame() {
     if (myProjectToFrame.size() == 1) {
-      final IdeFrameImpl rootFrame = myProjectToFrame.remove(null);
+      final ProjectFrameHelper rootFrame = removeAndGetRootFrame();
       if (rootFrame != null) {
         // disposing last frame if quitting
-        rootFrame.dispose();
+        rootFrame.getFrame().dispose();
       }
     }
   }
@@ -769,86 +742,5 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
   static boolean isPerPixelTransparencySupported() {
     GraphicsDevice device = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
     return device.isWindowTranslucencySupported(GraphicsDevice.WindowTranslucency.PERPIXEL_TRANSPARENT);
-  }
-
-  /**
-   * Converts the frame bounds b/w the user space (JRE-managed HiDPI mode) and the device space (IDE-managed HiDPI mode).
-   * See {@link JreHiDpiUtil#isJreHiDPIEnabled()}
-   */
-  static class FrameBoundsConverter {
-    /**
-     * @param bounds the bounds in the device space
-     * @return the bounds in the user space
-     */
-    @NotNull
-    static Rectangle convertFromDeviceSpace(@NotNull Rectangle bounds) {
-      Rectangle b = bounds.getBounds();
-      if (!shouldConvert()) return b;
-
-      try {
-        for (GraphicsDevice gd : GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices()) {
-          Rectangle devBounds = gd.getDefaultConfiguration().getBounds(); // in user space
-          scaleUp(devBounds, gd.getDefaultConfiguration()); // to device space
-          Rectangle2D.Float devBounds2D = new Rectangle2D.Float(devBounds.x, devBounds.y, devBounds.width, devBounds.height);
-          Point2D.Float center2d = new Point2D.Float(b.x + b.width / 2, b.y + b.height / 2);
-          if (devBounds2D.contains(center2d)) {
-            scaleDown(b, gd.getDefaultConfiguration());
-            break;
-          }
-        }
-      }
-      catch (HeadlessException ignore) {
-      }
-      return b;
-    }
-
-    /**
-     * @param gc the graphics config
-     * @param bounds the bounds in the user space
-     * @return the bounds in the device space
-     */
-    public static Rectangle convertToDeviceSpace(GraphicsConfiguration gc, @NotNull Rectangle bounds) {
-      Rectangle b = bounds.getBounds();
-      if (!shouldConvert()) return b;
-
-      try {
-        scaleUp(b, gc);
-      }
-      catch (HeadlessException ignore) {
-      }
-      return b;
-    }
-
-    private static boolean shouldConvert() {
-      if (SystemInfo.isLinux || // JRE-managed HiDPI mode is not yet implemented (pending)
-          SystemInfo.isMac)     // JRE-managed HiDPI mode is permanent
-      {
-        return false;
-      }
-      // device space equals user space
-      return JreHiDpiUtil.isJreHiDPIEnabled();
-    }
-
-    private static void scaleUp(@NotNull Rectangle bounds, @NotNull GraphicsConfiguration gc) {
-      scale(bounds, gc.getBounds(), JBUIScale.sysScale(gc));
-    }
-
-    private static void scaleDown(@NotNull Rectangle bounds, @NotNull GraphicsConfiguration gc) {
-      float scale = JBUIScale.sysScale(gc);
-      assert scale != 0;
-      scale(bounds, gc.getBounds(), 1 / scale);
-    }
-
-    private static void scale(@NotNull Rectangle bounds, @NotNull Rectangle deviceBounds, float scale) {
-      // On Windows, JB SDK transforms the screen bounds to the user space as follows:
-      // [x, y, width, height] -> [x, y, width / scale, height / scale]
-      // xy are not transformed in order to avoid overlapping of the screen bounds in multi-dpi env.
-
-      // scale the delta b/w xy and deviceBounds.xy
-      int x = (int)Math.floor(deviceBounds.x + (bounds.x - deviceBounds.x) * scale);
-      int y = (int)Math.floor(deviceBounds.y + (bounds.y - deviceBounds.y) * scale);
-
-      bounds.setBounds(x, y, (int)Math.ceil(bounds.width * scale), (int)Math.ceil(bounds.height * scale));
-    }
   }
 }

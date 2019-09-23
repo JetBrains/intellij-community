@@ -197,13 +197,10 @@ class MacDmgBuilder {
                            macHostProperties.userName,
                            macHostProperties.password,
                            "\"${macHostProperties.codesignString}\"",
-                           (customizer.helpId != null ? "${customizer.helpId}.help" : "no-help"),
+                           jreArchivePath != null ? '"' + PathUtilRt.getFileName(jreArchivePath) + '"' : "no-jdk",
                            notarize ? "yes" : "no",
-                           customizer.bundleIdentifier
+                           customizer.bundleIdentifier,
       ]
-      if (jreArchivePath != null) {
-        args += '"' + PathUtilRt.getFileName(jreArchivePath) + '"'
-      }
       def env = ''
       ENV_FOR_MAC_BUILDER.each {
         def value = System.getenv(it)

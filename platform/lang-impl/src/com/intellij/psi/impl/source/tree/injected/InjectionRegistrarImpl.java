@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.psi.impl.source.tree.injected;
 
@@ -21,12 +7,16 @@ import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.*;
 import com.intellij.lang.injection.MultiHostRegistrar;
-import com.intellij.lexer.Lexer;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.highlighter.EditorHighlighter;
+import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
-import com.intellij.openapi.fileTypes.SyntaxHighlighter;
-import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
+import com.intellij.openapi.fileTypes.EditorHighlighterProvider;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeEditorHighlighterProviders;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -49,7 +39,6 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -85,13 +74,6 @@ class InjectionRegistrarImpl extends MultiHostRegistrarImpl implements MultiHost
     myHostVirtualFile = viewProvider.getVirtualFile();
     myDocumentManagerBase = (PsiDocumentManagerBase)docManager;
     myHostDocument = (DocumentEx)viewProvider.getDocument();
-  }
-
-  @Override
-  @Nullable("null means nobody cared to call .doneInjecting()")
-  @Deprecated
-  public List<Pair<Place, PsiFile>> getResult() {
-    return resultFiles == null ? null : ContainerUtil.map(resultFiles, file -> Pair.create(InjectedLanguageUtil.getShreds(file), file));
   }
 
   @Nullable
@@ -370,7 +352,7 @@ class InjectionRegistrarImpl extends MultiHostRegistrarImpl implements MultiHost
     resultReferences.add(Pair.create(injector, place));
     clear();
   }
-  
+
   // returns true if shreds were set, false if old ones were reused
   private static boolean cacheEverything(@NotNull Place place,
                                          @NotNull DocumentWindowImpl documentWindow,
@@ -532,7 +514,7 @@ class InjectionRegistrarImpl extends MultiHostRegistrarImpl implements MultiHost
    * and corresponding injected {@code oldInjectedPsi} (along with {@code oldDocumentWindow} and {@code oldInjectedVirtualFile}) were created.
    * Then the user came along and changed the host document in {@code hostVirtualFile}.
    * Document commit started and produced PSI diff {@code oldRoot} -> {@code newRoot} in the host PSI.
-   * 
+   *
    * Now we try to produce similar diff for the injected fragment PSI.
    * To do that, we:
    * <pre>
@@ -665,7 +647,7 @@ class InjectionRegistrarImpl extends MultiHostRegistrarImpl implements MultiHost
                                    @NotNull StringBuilder decodedChars,
                                    @NotNull String fileName, @NotNull PsiDocumentManagerBase documentManager) {
     VirtualFileWindowImpl virtualFile = new VirtualFileWindowImpl(fileName, hostVirtualFile, documentWindow, language, decodedChars);
-    Language finalLanguage = forcedLanguage == null ? LanguageSubstitutors.INSTANCE.substituteLanguage(language, virtualFile, project) : forcedLanguage;
+    Language finalLanguage = forcedLanguage == null ? LanguageSubstitutors.getInstance().substituteLanguage(language, virtualFile, project) : forcedLanguage;
     InjectedFileViewProvider viewProvider = new InjectedFileViewProvider(PsiManager.getInstance(project), virtualFile, documentWindow, finalLanguage);
     ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(finalLanguage);
     assert parserDefinition != null : "Parser definition for language " + finalLanguage + " is null";
@@ -772,9 +754,13 @@ class InjectionRegistrarImpl extends MultiHostRegistrarImpl implements MultiHost
                                          @NotNull VirtualFileWindow virtualFile,
                                          @NotNull Project project,
                                          @NotNull List<? extends PlaceInfo> placeInfos) {
-    SyntaxHighlighter syntaxHighlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(language, project, (VirtualFile)virtualFile);
-    Lexer lexer = syntaxHighlighter.getHighlightingLexer();
-    lexer.start(outChars);
+    VirtualFile file = (VirtualFile)virtualFile;
+    FileType fileType = file.getFileType();
+    EditorHighlighterProvider provider = FileTypeEditorHighlighterProviders.INSTANCE.forFileType(fileType);
+    EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
+    EditorHighlighter highlighter = provider.getEditorHighlighter(project, fileType, file, scheme);
+    highlighter.setText(outChars);
+    HighlighterIterator iterator = highlighter.createIterator(0);
     int hostNum = -1;
     int prevHostEndOffset = 0;
     LiteralTextEscaper escaper = null;
@@ -783,8 +769,9 @@ class InjectionRegistrarImpl extends MultiHostRegistrarImpl implements MultiHost
     TextRange rangeInsideHost = null;
     int shredEndOffset = -1;
     List<InjectedLanguageUtil.TokenInfo> tokens = new ArrayList<>(outChars.length()/5); // avg. token per 5 chars
-    for (IElementType tokenType = lexer.getTokenType(); tokenType != null; lexer.advance(), tokenType = lexer.getTokenType()) {
-      TextRange range = new ProperTextRange(lexer.getTokenStart(), lexer.getTokenEnd());
+    while (!iterator.atEnd()) {
+      IElementType tokenType = iterator.getTokenType();
+      TextRange range = new ProperTextRange(iterator.getStart(), iterator.getEnd());
       while (range != null && !range.isEmpty()) {
         if (range.getStartOffset() >= shredEndOffset) {
           hostNum++;
@@ -814,10 +801,11 @@ class InjectionRegistrarImpl extends MultiHostRegistrarImpl implements MultiHost
             prevHostEndOffset = shredEndOffset;
           }
           ProperTextRange rangeInHost = new ProperTextRange(start, end);
-          tokens.add(new InjectedLanguageUtil.TokenInfo(tokenType, rangeInHost,hostNum));
+          tokens.add(new InjectedLanguageUtil.TokenInfo(tokenType, rangeInHost, hostNum, iterator.getTextAttributes()));
         }
         range = spilled;
       }
+      iterator.advance();
     }
     return tokens;
   }

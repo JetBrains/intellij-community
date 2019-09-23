@@ -34,7 +34,10 @@ fun Module.addContentRoot(vDir: VirtualFile): ContentEntry? {
   ModuleRootModificationUtil.updateModel(this) { model -> model.addContentEntry(vDir) }
   for (entry in ModuleRootManager.getInstance(this).contentEntries) {
     if (Comparing.equal(entry.file, vDir)) {
-      assertFalse((entry as ContentEntryImpl).isDisposed)
+      if (entry is ContentEntryImpl) {
+        assertFalse(entry.isDisposed)
+      }
+
       return entry
     }
   }

@@ -34,8 +34,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import static com.intellij.vcs.log.util.VcsLogUtil.registerWithParentAndProject;
-
 public class VcsLogData implements Disposable, VcsLogDataProvider {
   private static final Logger LOG = Logger.getInstance(VcsLogData.class);
   public static final int RECENT_COMMITS_COUNT = Registry.intValue("vcs.log.recent.commits.count");
@@ -81,7 +79,7 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
     myUserRegistry = (VcsUserRegistryImpl)ServiceManager.getService(project, VcsUserRegistry.class);
     myFatalErrorsConsumer = fatalErrorsConsumer;
 
-    VcsLogProgress progress = new VcsLogProgress(project, this);
+    VcsLogProgress progress = new VcsLogProgress(this);
 
     if (VcsLogCachesInvalidator.getInstance().isValid()) {
       myStorage = createStorage();
@@ -116,7 +114,7 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
     myContainingBranchesGetter = new ContainingBranchesGetter(this, this);
 
     Disposer.register(parentDisposable, this);
-    registerWithParentAndProject(this, project, () -> {
+    Disposer.register(this, () -> {
       synchronized (myLock) {
         if (myInitialization != null) {
           myInitialization.cancel();

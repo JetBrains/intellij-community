@@ -16,14 +16,18 @@
 
 package org.jetbrains.uast.java
 
-import com.intellij.psi.PsiReturnStatement
-import org.jetbrains.uast.UElement
-import org.jetbrains.uast.UExpression
-import org.jetbrains.uast.UReturnExpression
+import com.intellij.psi.*
+import com.intellij.psi.util.PsiMethodUtil
+import com.intellij.psi.util.PsiUtil
+import com.intellij.psi.util.parentOfType
+import org.jetbrains.uast.*
 
 class JavaUReturnExpression(
   override val sourcePsi: PsiReturnStatement,
   givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), UReturnExpression {
+  override val label: String?
+    get() = null
+
   override val returnExpression: UExpression? by lz { JavaConverter.convertOrNull(sourcePsi.returnValue, this) }
 }

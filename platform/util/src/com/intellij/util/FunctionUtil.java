@@ -27,20 +27,18 @@ public class FunctionUtil {
 
   @NotNull
   public static <T> Function<T, T> id() {
-    //noinspection unchecked
-    return (Function<T, T>)Function.ID;
+    return Functions.identity();
   }
 
   @NotNull
   public static <A, B> NullableFunction<A, B> nullConstant() {
-    //noinspection unchecked
+    //noinspection unchecked,deprecation
     return (NullableFunction<A, B>)NullableFunction.NULL;
   }
 
   @NotNull
   public static <T> Function<T, String> string() {
-    //noinspection unchecked
-    return (Function<T, String>)Function.TO_STRING;
+    return Functions.TO_STRING();
   }
 
   @NotNull

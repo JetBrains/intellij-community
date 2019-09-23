@@ -11,4 +11,8 @@ public class IntLiteralMayBeLongLiteral {
     void error() {
         <error descr="Incompatible types. Found: 'long', required: 'int'">int answer = (long)42;</error>
     }
+
+    Long boxed() {
+        return <warning descr="'(long) -5' could be replaced with '-5L'">(long) -5</warning>;
+    }
 }

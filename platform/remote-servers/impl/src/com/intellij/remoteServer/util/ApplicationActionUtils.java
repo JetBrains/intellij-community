@@ -2,8 +2,10 @@
 package com.intellij.remoteServer.util;
 
 import com.intellij.execution.services.ServiceViewActionUtils;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.impl.runtime.ui.tree.DeploymentNode;
 import com.intellij.remoteServer.impl.runtime.ui.tree.ServersTreeNodeSelector;
@@ -11,6 +13,7 @@ import com.intellij.remoteServer.runtime.Deployment;
 import com.intellij.remoteServer.runtime.ServerConnection;
 import com.intellij.remoteServer.runtime.ServerConnectionManager;
 import com.intellij.remoteServer.runtime.deployment.DeploymentRuntime;
+import com.intellij.ui.AppUIUtil;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
@@ -46,18 +49,49 @@ public class ApplicationActionUtils {
   }
 
   @NotNull
-  public static Runnable createLogSelector(@NotNull ServersTreeNodeSelector selector,
+  public static Runnable createLogSelector(@NotNull Project project,
+                                           @NotNull ServersTreeNodeSelector selector,
                                            @NotNull DeploymentNode node,
                                            @NotNull String logName) {
-    return new SelectLogRunnable(selector, node, logName);
+    SelectLogRunnable selectLogRunnable = new SelectLogRunnable(project, selector, node, logName);
+    DisposableSelectLogRunnableWrapper wrapper = new DisposableSelectLogRunnableWrapper(selectLogRunnable);
+    Disposer.register(project, wrapper);
+    return wrapper;
+  }
+
+  private static class DisposableSelectLogRunnableWrapper implements Runnable, Disposable {
+    private volatile Runnable mySelectLogRunnable;
+
+    private DisposableSelectLogRunnableWrapper(Runnable selectLogRunnable) {
+      mySelectLogRunnable = selectLogRunnable;
+    }
+
+    @Override
+    public void dispose() {
+      mySelectLogRunnable = null;
+    }
+
+    @Override
+    public void run() {
+      Runnable selectLogRunnable = mySelectLogRunnable;
+      if (selectLogRunnable != null) {
+        selectLogRunnable.run();
+        Disposer.dispose(this);
+      }
+    }
   }
 
   private static class SelectLogRunnable implements Runnable {
+    private final Project myProject;
     private final ServersTreeNodeSelector mySelector;
     private final DeploymentNode myNode;
     private final String myLogName;
 
-    SelectLogRunnable(@NotNull ServersTreeNodeSelector selector, @NotNull DeploymentNode node, @NotNull String logName) {
+    SelectLogRunnable(@NotNull Project project,
+                      @NotNull ServersTreeNodeSelector selector,
+                      @NotNull DeploymentNode node,
+                      @NotNull String logName) {
+      myProject = project;
       mySelector = selector;
       myNode = node;
       myLogName = logName;
@@ -72,7 +106,7 @@ public class ApplicationActionUtils {
       Deployment deployment = findDeployment(connection);
       if (deployment == null) return;
 
-      ApplicationManager.getApplication().invokeLater(() -> mySelector.select(connection, deployment.getName(), myLogName));
+      AppUIUtil.invokeOnEdt(() -> mySelector.select(connection, deployment.getName(), myLogName), myProject.getDisposed());
     }
 
     private Deployment findDeployment(ServerConnection<?> connection) {

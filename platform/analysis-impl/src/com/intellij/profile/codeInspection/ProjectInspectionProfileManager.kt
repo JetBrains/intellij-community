@@ -9,7 +9,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.options.SchemeManager
 import com.intellij.openapi.options.SchemeManagerFactory
-import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
@@ -130,7 +129,7 @@ class ProjectInspectionProfileManager(val project: Project) : BaseInspectionProf
   }
 
   @Suppress("unused")
-  private class ProjectInspectionProfileStartUpActivity : StartupActivity, DumbAware {
+  private class ProjectInspectionProfileStartUpActivity : StartupActivity.DumbAware {
     override fun runActivity(project: Project) {
       val profileManager = getInstance(project)
       profileManager.initialLoadSchemesFuture

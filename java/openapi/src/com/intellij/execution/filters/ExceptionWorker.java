@@ -163,6 +163,10 @@ public class ExceptionWorker {
     }
   }
 
+  @NotNull
+  Project getProject() {
+    return myProject;
+  }
   public Filter.Result getResult() {
     return myResult;
   }

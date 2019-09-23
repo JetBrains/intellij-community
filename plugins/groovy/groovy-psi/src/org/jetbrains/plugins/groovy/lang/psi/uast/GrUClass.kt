@@ -86,7 +86,7 @@ class GrUParameter(val grElement: GrParameter,
 
   override val uastInitializer: UExpression? by lazy {
     val initializer = grElement.initializerGroovy ?: return@lazy null
-    getLanguagePlugin().convertElement(initializer, this) as? UExpression
+    UastFacade.findPlugin(initializer)?.convertElement(initializer, this) as? UExpression
   }
 
   override val typeReference: UTypeReferenceExpression? = null //not implemented

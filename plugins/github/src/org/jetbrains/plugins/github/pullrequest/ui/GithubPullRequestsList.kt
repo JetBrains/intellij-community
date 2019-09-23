@@ -11,13 +11,16 @@ import com.intellij.ui.ListUtil
 import com.intellij.ui.ScrollingUtil
 import com.intellij.ui.components.JBList
 import com.intellij.util.text.DateFormatUtil
-import com.intellij.util.ui.*
+import com.intellij.util.ui.JBDimension
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.ListUiUtil
+import com.intellij.util.ui.UIUtil
 import icons.GithubIcons
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
-import org.jetbrains.plugins.github.api.data.GHPullRequestShort
-import org.jetbrains.plugins.github.api.data.GHPullRequestState
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestState
 import org.jetbrains.plugins.github.pullrequest.action.GithubPullRequestKeys
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.util.GithubUIUtil
@@ -32,8 +35,7 @@ internal class GithubPullRequestsList(private val copyPasteManager: CopyPasteMan
                                       model: ListModel<GHPullRequestShort>)
   : JBList<GHPullRequestShort>(model), CopyProvider, DataProvider, Disposable {
 
-  private val avatarIconSize = JBValue.UIInteger("Github.PullRequests.List.Assignee.Avatar.Size", 20)
-  private val avatarIconsProvider = avatarIconsProviderFactory.create(avatarIconSize, this)
+  private val avatarIconsProvider = avatarIconsProviderFactory.create(GithubUIUtil.avatarSize, this)
 
   init {
     selectionModel.selectionMode = ListSelectionModel.SINGLE_SELECTION
@@ -159,7 +161,7 @@ internal class GithubPullRequestsList(private val copyPasteManager: CopyPasteMan
 
   private inner class RightClickSelectionListener : MouseAdapter() {
     override fun mousePressed(e: MouseEvent) {
-      if (JBSwingUtilities.isRightMouseButton(e)) {
+      if (SwingUtilities.isRightMouseButton(e)) {
         val row = locationToIndex(e.point)
         if (row != -1) selectionModel.setSelectionInterval(row, row)
       }

@@ -30,13 +30,13 @@ public class DomApplicationComponent {
   private final ImplementationClassCache myCachedImplementationClasses = new ImplementationClassCache(DomImplementationClassEP.EP_NAME);
   private final TypeChooserManager myTypeChooserManager = new TypeChooserManager();
   final ReflectionAssignabilityCache assignabilityCache = new ReflectionAssignabilityCache();
-  private final Map<Class, DomElementsAnnotator> myClass2Annotator = ConcurrentFactoryMap.createMap(key-> {
-      final DomFileDescription desc = findFileDescription(key);
+  private final Map<Class<?>, DomElementsAnnotator> myClass2Annotator = ConcurrentFactoryMap.createMap(key-> {
+      final DomFileDescription<?> desc = findFileDescription(key);
       return desc == null ? null : desc.createAnnotator();
     }
   );
 
-  private final Map<Class, InvocationCache> myInvocationCaches = ConcurrentFactoryMap.create(InvocationCache::new,
+  private final Map<Class<?>, InvocationCache> myInvocationCaches = ConcurrentFactoryMap.create(InvocationCache::new,
                                                                                                 ContainerUtil::createConcurrentSoftValueMap);
   private final Map<Class<? extends DomElementVisitor>, VisitorDescription> myVisitorDescriptions =
     ConcurrentFactoryMap.createMap(VisitorDescription::new);
@@ -44,7 +44,7 @@ public class DomApplicationComponent {
 
   public DomApplicationComponent() {
     //noinspection deprecation
-    for (final DomFileDescription description : DomFileDescription.EP_NAME.getExtensionList()) {
+    for (DomFileDescription<?> description : DomFileDescription.EP_NAME.getExtensionList()) {
       registerFileDescription(description);
     }
     for (DomFileMetaData meta : DomFileMetaData.EP_NAME.getExtensionList()) {
@@ -78,15 +78,15 @@ public class DomApplicationComponent {
   }
 
   @Nullable
-  public synchronized DomFileMetaData findMeta(DomFileDescription description) {
+  public synchronized DomFileMetaData findMeta(DomFileDescription<?> description) {
     return ContainerUtil.find(allMetas(), m -> m.lazyInstance == description);
   }
 
-  public synchronized Set<DomFileDescription> getFileDescriptions(String rootTagName) {
+  public synchronized Set<DomFileDescription<?>> getFileDescriptions(String rootTagName) {
     return ContainerUtil.map2Set(myRootTagName2FileDescription.get(rootTagName), DomFileMetaData::getDescription);
   }
 
-  public synchronized Set<DomFileDescription> getAcceptingOtherRootTagNameDescriptions() {
+  public synchronized Set<DomFileDescription<?>> getAcceptingOtherRootTagNameDescriptions() {
     return ContainerUtil.map2Set(myAcceptingOtherRootTagNamesDescriptions, DomFileMetaData::getDescription);
   }
 
@@ -119,9 +119,9 @@ public class DomApplicationComponent {
   }
 
   @Nullable
-  private synchronized DomFileDescription findFileDescription(Class rootElementClass) {
+  private synchronized DomFileDescription<?> findFileDescription(Class<?> rootElementClass) {
     for (DomFileMetaData meta : allMetas()) {
-      DomFileDescription description = meta.lazyInstance;
+      DomFileDescription<?> description = meta.lazyInstance;
       if (description != null && description.getRootElementClass() == rootElementClass) {
         return description;
       }
@@ -129,12 +129,12 @@ public class DomApplicationComponent {
     return null;
   }
 
-  public DomElementsAnnotator getAnnotator(Class rootElementClass) {
+  public DomElementsAnnotator getAnnotator(Class<?> rootElementClass) {
     return myClass2Annotator.get(rootElementClass);
   }
 
   @Nullable
-  final Class<? extends DomElement> getImplementation(final Class concreteInterface) {
+  final Class<? extends DomElement> getImplementation(Class<?> concreteInterface) {
     //noinspection unchecked
     return myCachedImplementationClasses.get(concreteInterface);
   }
@@ -152,7 +152,7 @@ public class DomApplicationComponent {
     return getInvocationCache(ReflectionUtil.getRawType(type)).genericInfo;
   }
 
-  final InvocationCache getInvocationCache(final Class type) {
+  final InvocationCache getInvocationCache(Class<?> type) {
     return myInvocationCaches.get(type);
   }
 

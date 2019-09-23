@@ -7,10 +7,13 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "__typename", visible = false,
               defaultImpl = GHActor::class)
 @JsonSubTypes(
-  JsonSubTypes.Type(name = "User", value = GHUser::class)
+  JsonSubTypes.Type(name = "User", value = GHUser::class),
+  JsonSubTypes.Type(name = "Bot", value = GHBot::class),
+  JsonSubTypes.Type(name = "Mannequin", value = GHMannequin::class),
+  JsonSubTypes.Type(name = "Organization", value = GHOrganization::class)
 )
-open class GHActor(id: String,
-                   val login: String,
-                   val url: String,
-                   val avatarUrl: String)
-  : GHNode(id)
+interface GHActor {
+  val login: String
+  val url: String
+  val avatarUrl: String
+}

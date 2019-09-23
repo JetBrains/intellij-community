@@ -289,15 +289,18 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
     List<HighlightInfo> infos = DaemonCodeAnalyzerEx.getInstanceEx(file.getProject()).getFileLevelHighlights(file.getProject(), file);
     for (HighlightInfo info : infos) {
-      for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> pair : info.quickFixActionRanges) {
-        HighlightInfo.IntentionActionDescriptor actionInGroup = pair.first;
-        if (actionInGroup.getAction().isAvailable(file.getProject(), editor, file)) {
-          result.add(actionInGroup.getAction());
-          List<IntentionAction> options = actionInGroup.getOptions(file, editor);
-          if (options != null) {
-            for (IntentionAction subAction : options) {
-              if (subAction.isAvailable(file.getProject(), editor, file)) {
-                result.add(subAction);
+      List<Pair<HighlightInfo.IntentionActionDescriptor, TextRange>> fixRanges = info.quickFixActionRanges;
+      if (fixRanges != null) {
+        for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> pair : fixRanges) {
+          HighlightInfo.IntentionActionDescriptor actionInGroup = pair.first;
+          if (actionInGroup.getAction().isAvailable(file.getProject(), editor, file)) {
+            result.add(actionInGroup.getAction());
+            List<IntentionAction> options = actionInGroup.getOptions(file, editor);
+            if (options != null) {
+              for (IntentionAction subAction : options) {
+                if (subAction.isAvailable(file.getProject(), editor, file)) {
+                  result.add(subAction);
+                }
               }
             }
           }
@@ -1208,10 +1211,21 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
           return;
         }
 
-        Project project = getProject();
+        Project project;
+        try {
+          project = myProjectFixture.getProject();
+        }
+        catch (AssertionError ignore) {
+          project = null;
+        }
+
         if (project != null) {
           CodeStyle.dropTemporarySettings(project);
-          AutoPopupController.getInstance(project).cancelAllRequests(); // clear "show param info" delayed requests leaking project
+          // clear "show param info" delayed requests leaking project
+          AutoPopupController autoPopupController = project.getServiceIfCreated(AutoPopupController.class);
+          if (autoPopupController != null) {
+            autoPopupController.cancelAllRequests();
+          }
         }
 
         // return default value to avoid unnecessary save
@@ -1383,7 +1397,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
       Module module = getModule();
       if (module != null) {
-        for (Facet facet : FacetManager.getInstance(module).getAllFacets()) {
+        for (Facet<?> facet : FacetManager.getInstance(module).getAllFacets()) {
           module.getMessageBus().syncPublisher(FacetManager.FACETS_TOPIC).facetConfigurationChanged(facet);
         }
       }
@@ -1530,7 +1544,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   @Override
-  public Project getProject() {
+  public final Project getProject() {
     return myProjectFixture.getProject();
   }
 

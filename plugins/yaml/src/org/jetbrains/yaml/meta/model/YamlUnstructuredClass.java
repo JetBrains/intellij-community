@@ -3,34 +3,46 @@
  */
 package org.jetbrains.yaml.meta.model;
 
-import com.intellij.codeInspection.ProblemsHolder;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.yaml.psi.YAMLKeyValue;
 
 /**
  * Like {@link YamlDictionaryClass} but allows arbitrary level of unstructured nesting
  */
-@ApiStatus.Experimental
+@ApiStatus.Internal
 public class YamlUnstructuredClass extends YamlMetaClass {
+  @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
   private static YamlUnstructuredClass ourInstance;
+  private static final Object ourLock = new Object();
 
   public static YamlMetaClass getInstance() {
-    if (ourInstance == null) {
-      ourInstance = new YamlUnstructuredClass();
-      ourInstance.addFeature(new Field("anything:<any-key>", ourInstance))
-        .withAnyName()
-        .withEmptyValueAllowed(true);
+    if(ourInstance != null)
+      return ourInstance;
+
+    synchronized(ourLock) {
+      if (ourInstance == null) {
+        ourInstance = new YamlUnstructuredClass();
+        addUnstructuredFeature(ourInstance);
+      }
     }
     return ourInstance;
   }
 
-  public YamlUnstructuredClass() {
-    super("yaml:anything");
+  /**
+   * convenience method for adding an all-permissive unstructured field
+   * @param metaClass target metaclass
+   * @return the added field
+   */
+  @NotNull
+  public static Field addUnstructuredFeature(@NotNull YamlMetaClass metaClass) {
+    return metaClass.addFeature(new Field("anything:<any-key>", getInstance()))
+      .withAnyName()
+      .withRelationSpecificType(Field.Relation.SEQUENCE_ITEM, getInstance())
+      .withRelationSpecificType(Field.Relation.SCALAR_VALUE, YamlAnyScalarType.getInstance())
+      .withEmptyValueAllowed(true);
   }
 
-  @Override
-  public void validateKeyValue(@NotNull YAMLKeyValue keyValue, @NotNull ProblemsHolder problemsHolder) {
-    // allow everything
+  public YamlUnstructuredClass() {
+    super("yaml:anything");
   }
 }

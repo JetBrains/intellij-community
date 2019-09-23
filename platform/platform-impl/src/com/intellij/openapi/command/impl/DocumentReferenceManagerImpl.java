@@ -8,13 +8,16 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileEvent;
-import com.intellij.openapi.vfs.VirtualFileListener;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.NotNullList;
+import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -32,26 +35,35 @@ public final class DocumentReferenceManagerImpl extends DocumentReferenceManager
   private static final Key<DocumentReference> FILE_TO_STRONG_REF_KEY = Key.create("FILE_TO_STRONG_REF_KEY");
   private final Map<FilePath, DocumentReference> myDeletedFilePathToRef = ContainerUtil.createWeakValueMap();
 
-  DocumentReferenceManagerImpl() {
-    VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileListener() {
+  DocumentReferenceManagerImpl(@NotNull MessageBus messageBus) {
+    messageBus.connect().subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
-      public void fileCreated(@NotNull VirtualFileEvent event) {
-        VirtualFile f = event.getFile();
-        DocumentReference ref = myDeletedFilePathToRef.remove(new FilePath(f.getUrl()));
-        if (ref != null) {
-          f.putUserData(FILE_TO_REF_KEY, new WeakReference<>(ref));
-          ((DocumentReferenceByVirtualFile)ref).update(f);
+      public void before(@NotNull List<? extends VFileEvent> events) {
+        for (VFileEvent event : events) {
+          if (event instanceof VFileDeleteEvent) {
+            beforeFileDeletion((VFileDeleteEvent)event);
+          }
         }
       }
 
       @Override
-      public void beforeFileDeletion(@NotNull VirtualFileEvent event) {
+      public void after(@NotNull List<? extends VFileEvent> events) {
+        for (VFileEvent event : events) {
+          if (event instanceof VFileCreateEvent) {
+            fileCreated((VFileCreateEvent)event);
+          }
+          else if (event instanceof VFileDeleteEvent) {
+            fileDeleted((VFileDeleteEvent)event);
+          }
+        }
+      }
+
+      private void beforeFileDeletion(@NotNull VFileDeleteEvent event) {
         VirtualFile f = event.getFile();
         f.putUserData(DELETED_FILES, collectDeletedFiles(f, new NotNullList<>()));
       }
 
-      @Override
-      public void fileDeleted(@NotNull VirtualFileEvent event) {
+      private void fileDeleted(@NotNull VFileDeleteEvent event) {
         VirtualFile f = event.getFile();
         List<VirtualFile> files = f.getUserData(DELETED_FILES);
         f.putUserData(DELETED_FILES, null);
@@ -63,6 +75,15 @@ public final class DocumentReferenceManagerImpl extends DocumentReferenceManager
           if (ref != null) {
             myDeletedFilePathToRef.put(new FilePath(each.getUrl()), ref);
           }
+        }
+      }
+
+      private void fileCreated(@NotNull VFileCreateEvent event) {
+        VirtualFile f = event.getFile();
+        DocumentReference ref = f == null ? null : myDeletedFilePathToRef.remove(new FilePath(f.getUrl()));
+        if (ref != null) {
+          f.putUserData(FILE_TO_REF_KEY, new WeakReference<>(ref));
+          ((DocumentReferenceByVirtualFile)ref).update(f);
         }
       }
     });

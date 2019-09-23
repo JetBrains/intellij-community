@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInspection.streamToLoop;
 
-import com.intellij.codeInspection.streamToLoop.StreamToLoopInspection.StreamToLoopReplacementContext;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -41,8 +40,8 @@ abstract class Operation {
 
   void rename(String oldName, String newName, StreamToLoopReplacementContext context) {}
 
-  abstract String wrap(StreamVariable inVar,
-                       StreamVariable outVar,
+  abstract String wrap(ChainVariable inVar,
+                       ChainVariable outVar,
                        String code,
                        StreamToLoopReplacementContext context);
 
@@ -52,11 +51,11 @@ abstract class Operation {
 
   public void registerReusedElements(Consumer<? super PsiElement> consumer) {}
 
-  public void preprocessVariables(StreamToLoopReplacementContext context, StreamVariable inVar, StreamVariable outVar) {}
+  public void preprocessVariables(StreamToLoopReplacementContext context, ChainVariable inVar, ChainVariable outVar) {}
 
   @Nullable
   static Operation createIntermediate(@NotNull String name, @NotNull PsiExpression[] args,
-                                      @NotNull StreamVariable outVar, @NotNull PsiType inType, boolean supportUnknownSources) {
+                                      @NotNull ChainVariable outVar, @NotNull PsiType inType, boolean supportUnknownSources) {
     if(name.equals("distinct") && args.length == 0) {
       return new DistinctOperation();
     }
@@ -119,12 +118,12 @@ abstract class Operation {
     }
 
     @Override
-    final String wrap(StreamVariable inVar, StreamVariable outVar, String code, StreamToLoopReplacementContext context) {
+    final String wrap(ChainVariable inVar, ChainVariable outVar, String code, StreamToLoopReplacementContext context) {
       myFn.transform(context, inVar.getName());
       return wrap(outVar, code, context);
     }
 
-    abstract String wrap(StreamVariable outVar, String code, StreamToLoopReplacementContext context);
+    abstract String wrap(ChainVariable outVar, String code, StreamToLoopReplacementContext context);
 
     @Override
     void rename(String oldName, String newName, StreamToLoopReplacementContext context) {
@@ -132,7 +131,7 @@ abstract class Operation {
     }
 
     @Override
-    public void preprocessVariables(StreamToLoopReplacementContext context, StreamVariable inVar, StreamVariable outVar) {
+    public void preprocessVariables(StreamToLoopReplacementContext context, ChainVariable inVar, ChainVariable outVar) {
       myFn.preprocessVariable(context, inVar, 0);
     }
   }
@@ -143,7 +142,7 @@ abstract class Operation {
     }
 
     @Override
-    String wrap(StreamVariable outVar, String code, StreamToLoopReplacementContext context) {
+    String wrap(ChainVariable outVar, String code, StreamToLoopReplacementContext context) {
       return "if(" + myFn.getText() + ") {\n" + code + "}\n";
     }
   }
@@ -154,7 +153,7 @@ abstract class Operation {
     }
 
     @Override
-    String wrap(StreamVariable outVar, String code, StreamToLoopReplacementContext context) {
+    String wrap(ChainVariable outVar, String code, StreamToLoopReplacementContext context) {
       return "if(" + BoolUtils.getNegatedExpressionText(myFn.getExpression()) + ") {\n" +
              context.getBreakStatement() + "}\n" + code;
     }
@@ -166,7 +165,7 @@ abstract class Operation {
     }
 
     @Override
-    String wrap(StreamVariable outVar, String code, StreamToLoopReplacementContext context) {
+    String wrap(ChainVariable outVar, String code, StreamToLoopReplacementContext context) {
       String dropping = context.declare("dropping", "boolean", "true");
       return "if(" + dropping + ") {\n" +
              "if(" + myFn.getText() + ") {\ncontinue;\n}\n" +
@@ -181,7 +180,7 @@ abstract class Operation {
     }
 
     @Override
-    String wrap(StreamVariable outVar, String code, StreamToLoopReplacementContext context) {
+    String wrap(ChainVariable outVar, String code, StreamToLoopReplacementContext context) {
       return myFn.getStatementText() + code;
     }
   }
@@ -192,13 +191,13 @@ abstract class Operation {
     }
 
     @Override
-    public void preprocessVariables(StreamToLoopReplacementContext context, StreamVariable inVar, StreamVariable outVar) {
+    public void preprocessVariables(StreamToLoopReplacementContext context, ChainVariable inVar, ChainVariable outVar) {
       super.preprocessVariables(context, inVar, outVar);
       myFn.suggestOutputNames(context, outVar);
     }
 
     @Override
-    String wrap(StreamVariable outVar, String code, StreamToLoopReplacementContext context) {
+    String wrap(ChainVariable outVar, String code, StreamToLoopReplacementContext context) {
       return outVar.getDeclaration(myFn.getText()) + code;
     }
 
@@ -210,8 +209,8 @@ abstract class Operation {
 
   static class WideningOperation extends Operation {
     @Override
-    String wrap(StreamVariable inVar,
-                StreamVariable outVar,
+    String wrap(ChainVariable inVar,
+                ChainVariable outVar,
                 String code,
                 StreamToLoopReplacementContext context) {
       return outVar.getDeclaration(inVar.getName()) + code;
@@ -252,7 +251,7 @@ abstract class Operation {
     }
 
     @Override
-    public void preprocessVariables(StreamToLoopReplacementContext context, StreamVariable inVar, StreamVariable outVar) {
+    public void preprocessVariables(StreamToLoopReplacementContext context, ChainVariable inVar, ChainVariable outVar) {
       String name = myFn.getParameterName(0);
       if (name != null) {
         inVar.addBestNameCandidate(name);
@@ -276,7 +275,7 @@ abstract class Operation {
     }
 
     @Override
-    String wrap(StreamVariable inVar, StreamVariable outVar, String code, StreamToLoopReplacementContext context) {
+    String wrap(ChainVariable inVar, ChainVariable outVar, String code, StreamToLoopReplacementContext context) {
       if(!myVarName.equals(inVar.getName())) {
         rename(myVarName, inVar.getName(), context);
       }
@@ -296,7 +295,7 @@ abstract class Operation {
     }
 
     @Nullable
-    public static FlatMapOperation from(StreamVariable outVar, PsiExpression arg, boolean supportUnknownSources) {
+    public static FlatMapOperation from(ChainVariable outVar, PsiExpression arg, boolean supportUnknownSources) {
       FunctionHelper fn = FunctionHelper.create(arg, 1);
       if(fn == null) return null;
       String varName = fn.tryLightTransform();
@@ -329,7 +328,7 @@ abstract class Operation {
 
   static class DistinctOperation extends Operation {
     @Override
-    String wrap(StreamVariable inVar, StreamVariable outVar, String code, StreamToLoopReplacementContext context) {
+    String wrap(ChainVariable inVar, ChainVariable outVar, String code, StreamToLoopReplacementContext context) {
       String set =
         context.declare("uniqueValues", "java.util.Set<" + PsiTypesUtil.boxIfPossible(inVar.getType().getCanonicalText()) + ">",
                         "new java.util.HashSet<>()");
@@ -355,7 +354,7 @@ abstract class Operation {
     }
 
     @Override
-    String wrap(StreamVariable inVar, StreamVariable outVar, String code, StreamToLoopReplacementContext context) {
+    String wrap(ChainVariable inVar, ChainVariable outVar, String code, StreamToLoopReplacementContext context) {
       if (ExpressionUtils.isLiteral(myExpression, 1)) {
         String first = context.declare("first", "boolean", "true");
         return "if(" + first + ") {\n" + first + "=false;\ncontinue;\n}\n" + code;
@@ -383,7 +382,7 @@ abstract class Operation {
     }
 
     @Override
-    String wrap(StreamVariable inVar, StreamVariable outVar, String code, StreamToLoopReplacementContext context) {
+    String wrap(ChainVariable inVar, ChainVariable outVar, String code, StreamToLoopReplacementContext context) {
       String limit = context.declare("limit", "long", myLimit.getText());
       return "if(" + limit + "--==0) " + context.getBreakStatement() + code;
     }
@@ -407,7 +406,7 @@ abstract class Operation {
     }
 
     @Override
-    String wrap(StreamVariable inVar, StreamVariable outVar, String code, StreamToLoopReplacementContext context) {
+    String wrap(ChainVariable inVar, ChainVariable outVar, String code, StreamToLoopReplacementContext context) {
       String list = context.registerVarName(Arrays.asList("toSort", "listToSort"));
       context.addAfterStep(new SourceOperation.ForEachSource(context.createExpression(list)).wrap(null, outVar, code, context));
       context.addAfterStep(list + ".sort(" + (myComparator == null ? "null" : myComparator.getText()) + ");\n");

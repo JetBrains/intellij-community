@@ -6,6 +6,8 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.RecursionGuard;
+import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
@@ -34,7 +36,10 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.*;
+import com.intellij.util.CharTable;
+import com.intellij.util.Function;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -44,6 +49,7 @@ import java.util.*;
 
 public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements PsiReferenceExpression, SourceJavaCodeReference {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl");
+  private static final ThreadLocal<Map<PsiReferenceExpression, ResolveResult[]>> ourQualifierCache = ThreadLocal.withInitial(() -> new HashMap<>());
 
   private volatile String myCachedQName;
   private volatile String myCachedNormalizedText;
@@ -181,28 +187,44 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
       PsiReferenceExpressionImpl expression = (PsiReferenceExpressionImpl)ref;
       CompositeElement treeParent = expression.getTreeParent();
       IElementType parentType = treeParent == null ? null : treeParent.getElementType();
-
-      List<ResolveResult[]> qualifiers = resolveAllQualifiers(expression, containingFile);
-      JavaResolveResult[] result = expression.resolve(parentType, containingFile);
-
-      if (result.length == 0 && incompleteCode && parentType != JavaElementType.REFERENCE_EXPRESSION) {
-        result = expression.resolve(JavaElementType.REFERENCE_EXPRESSION, containingFile);
+      if (!incompleteCode) {
+        //optimization:
+        //for the expression foo().bar().baz(), first foo() is resolved during resolveAllQualifiers traversal
+        //then next qualifier is picked: foo().bar(); to resolve bar(), foo() should be resolved again
+        //if the global cache worked, then the result is already in ResolveCache
+        //if top level resolve was started in the context where caching is prohibited,
+        //foo() is already in the local cache ourQualifiersCache
+        ResolveResult[] result = ourQualifierCache.get().get(ref);
+        if (result != null) {
+          return result;
+        }
       }
 
-      JavaResolveUtil.substituteResults(expression, result);
+      boolean empty = ourQualifierCache.get().isEmpty();
+      try {
+        resolveAllQualifiers(expression, containingFile);
+        JavaResolveResult[] result = expression.resolve(parentType, containingFile);
 
-      qualifiers.clear(); // hold qualifier target list until this moment to avoid psi elements inside to GC
+        if (result.length == 0 && incompleteCode && parentType != JavaElementType.REFERENCE_EXPRESSION) {
+          result = expression.resolve(JavaElementType.REFERENCE_EXPRESSION, containingFile);
+        }
 
-      return result;
+        JavaResolveUtil.substituteResults(expression, result);
+        return result;
+      }
+      finally {
+        //clear cache for the top level expression
+        if (empty) {
+          ourQualifierCache.remove();
+        }
+      }
     }
 
-    @NotNull
-    private static List<ResolveResult[]> resolveAllQualifiers(@NotNull PsiReferenceExpressionImpl expression, @NotNull PsiFile containingFile) {
+    private static void resolveAllQualifiers(@NotNull PsiReferenceExpressionImpl expression, @NotNull PsiFile containingFile) {
       // to avoid SOE, resolve all qualifiers starting from the innermost
       PsiElement qualifier = expression.getQualifier();
-      if (qualifier == null) return Collections.emptyList();
+      if (qualifier == null) return;
 
-      final List<ResolveResult[]> qualifiers = new SmartList<>();
       final ResolveCache resolveCache = ResolveCache.getInstance(containingFile.getProject());
       boolean physical = containingFile.isPhysical();
       qualifier.accept(new JavaRecursiveElementWalkingVisitor() {
@@ -221,8 +243,12 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
         @Override
         protected void elementFinished(@NotNull PsiElement element) {
           if (!(element instanceof PsiReferenceExpressionImpl)) return;
-          PsiReferenceExpressionImpl expression = (PsiReferenceExpressionImpl)element;
-          qualifiers.add(resolveCache.resolveWithCaching(expression, INSTANCE, false, false, containingFile));
+          PsiReferenceExpressionImpl chainedQualifier = (PsiReferenceExpressionImpl)element;
+          RecursionGuard.StackStamp stamp = RecursionManager.markStack();
+          ResolveResult[] res = resolveCache.resolveWithCaching(chainedQualifier, INSTANCE, false, false, containingFile);
+          if (stamp.mayCacheNow()) {
+            ourQualifierCache.get().put(chainedQualifier, res);
+          }
         }
 
         // walk only qualifiers, not their argument and other associated stuff
@@ -236,7 +262,6 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
         @Override
         public void visitClass(PsiClass aClass) { }
       });
-      return qualifiers;
     }
   }
 

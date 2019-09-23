@@ -15,7 +15,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public abstract class SettingsConnectionService {
-  private static final Logger LOG = Logger.getInstance("com.intellij.facet.frameworks.SettingsConnectionService");
+  private static final Logger LOG = Logger.getInstance(SettingsConnectionService.class);
 
   protected static final String SERVICE_URL_ATTR_NAME = "url";
 

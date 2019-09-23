@@ -6,6 +6,7 @@ import com.intellij.dvcs.repo.RepoStateException;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -19,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.*;
 
 import static git4idea.GitBranch.REFS_HEADS_PREFIX;
@@ -75,8 +77,37 @@ class GitRepositoryReader {
     }
     if (currentBranch == null && currentRevision == null) {
       LOG.error("Couldn't identify neither current branch nor current revision. .git/HEAD content: [" + headInfo.content + "]");
+      LOG.debug("Dumping files in .git/refs/, and the content of .git/packed-refs. Debug enabled: " + LOG.isDebugEnabled());
+      logDebugAllRefsFiles();
     }
     return new GitBranchState(currentRevision, currentBranch, state, localBranches, branches.second);
+  }
+
+  private void logDebugAllRefsFiles() {
+    if (LOG.isDebugEnabled()) {
+      logDebugAllFilesIn(myRefsHeadsDir);
+      logDebugAllFilesIn(myRefsRemotesDir);
+      if (myPackedRefsFile.exists()) {
+        try {
+          LOG.debug("packed-refs file content: [\n" + FileUtil.loadFile(myPackedRefsFile) + "\n]");
+        }
+        catch (IOException e) {
+          LOG.debug("Couldn't load the file " + myPackedRefsFile, e);
+        }
+      }
+      else {
+        LOG.debug("The file " + myPackedRefsFile + " doesn't exist.");
+      }
+    }
+  }
+
+  private static void logDebugAllFilesIn(@NotNull File dir) {
+    List<String> paths = new ArrayList<>();
+    FileUtil.processFilesRecursively(dir, (file) -> {
+      if (!file.isDirectory()) paths.add(FileUtil.getRelativePath(dir, file));
+      return true;
+    });
+    LOG.debug("Files in " + dir + ": " + paths);
   }
 
   @NotNull
@@ -135,8 +166,11 @@ class GitRepositoryReader {
     if (!headInfo.isBranch) {
       return Repository.State.DETACHED;
     }
-    if (isCherryPickInProgress() || isRevertInProgress()) {
+    if (isCherryPickInProgress()) {
       return Repository.State.GRAFTING;
+    }
+    if (isRevertInProgress()) {
+      return Repository.State.REVERTING;
     }
     return Repository.State.NORMAL;
   }
@@ -240,26 +274,34 @@ class GitRepositoryReader {
   }
 
   @NotNull
-  private static Map<String, String> readFromBranchFiles(@NotNull final File refsRootDir, @NotNull final String prefix) {
+  private Map<String, String> readFromBranchFiles(@NotNull final File refsRootDir, @NotNull final String prefix) {
     if (!refsRootDir.exists()) {
       return Collections.emptyMap();
     }
     final Map<String, String> result = new HashMap<>();
-    FileUtil.processFilesRecursively(refsRootDir,  file-> {
-        if (!file.isDirectory() && !isHidden(file)) {
-          String relativePath = FileUtil.getRelativePath(refsRootDir, file);
-          if (relativePath != null) {
-            String branchName = prefix + FileUtil.toSystemIndependentName(relativePath);
-            boolean isBranchNameValid = GitRefNameValidator.getInstance().checkInput(branchName);
-            if (isBranchNameValid) {String hash = loadHashFromBranchFile(file);
-            if (hash != null) {
-              result.put(branchName, hash);}
-            }
-          }
+    Ref<Boolean> couldNotLoadFile = Ref.create(false);
+    FileUtil.processFilesRecursively(refsRootDir, file -> {
+      if (!file.isDirectory() && !isHidden(file)) {
+        String relativePath = FileUtil.getRelativePath(refsRootDir, file);
+        if (relativePath != null) {
+         String branchName = prefix + FileUtil.toSystemIndependentName(relativePath);
+         boolean isBranchNameValid = GitRefNameValidator.getInstance().checkInput(branchName);
+         if (isBranchNameValid) {
+           String hash = loadHashFromBranchFile(file);
+           if (hash != null) {
+             result.put(branchName, hash);
+           }
+           else {
+             couldNotLoadFile.set(true);
+           }
+         }
         }
-        return true;
       }
-    , dir -> !isHidden(dir));
+      return true;
+    }, dir -> !isHidden(dir));
+    if (couldNotLoadFile.get()) {
+      logDebugAllRefsFiles();
+    }
     return result;
   }
 

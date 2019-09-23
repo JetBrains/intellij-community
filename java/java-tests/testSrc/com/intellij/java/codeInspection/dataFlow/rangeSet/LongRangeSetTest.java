@@ -102,7 +102,7 @@ public class LongRangeSetTest {
     assertEquals("{Long.MIN_VALUE}", all().subtract(range(Long.MIN_VALUE + 1, Long.MAX_VALUE)).toString());
     assertEquals("{Long.MAX_VALUE}", all().subtract(range(Long.MIN_VALUE, Long.MAX_VALUE - 1)).toString());
     assertTrue(all().subtract(range(Long.MIN_VALUE, Long.MAX_VALUE)).isEmpty());
-    assertEquals(indexRange(), fromTypeStrict(PsiType.INT).subtract(range(Long.MIN_VALUE, (long)-1)));
+    assertEquals(indexRange(), fromTypeStrict(PsiType.INT).subtract(range(Long.MIN_VALUE, -1)));
     assertTrue(all().subtract(all()).isEmpty());
   }
 
@@ -807,6 +807,36 @@ public class LongRangeSetTest {
     assertEquals("in {Integer.MIN_VALUE+1..Integer.MAX_VALUE}; odd", modRange(Integer.MIN_VALUE, Integer.MAX_VALUE, 2, 2).getPresentationText(PsiType.LONG));
     assertEquals("!= 1", fromTypeStrict(PsiType.INT).without(1).getPresentationText(PsiType.INT));
     assertEquals("in {Integer.MIN_VALUE..0, 2..Integer.MAX_VALUE}", fromTypeStrict(PsiType.INT).without(1).getPresentationText(PsiType.LONG));
+  }
+
+  @Test
+  public void testIsCardinalityBigger() {
+    assertTrue(empty().isCardinalityBigger(-1));
+    assertTrue(empty().isCardinalityBigger(Long.MIN_VALUE));
+    assertFalse(empty().isCardinalityBigger(0));
+    assertFalse(empty().isCardinalityBigger(Long.MAX_VALUE));
+    assertTrue(point(0).isCardinalityBigger(-1));
+    assertTrue(empty().isCardinalityBigger(Long.MIN_VALUE));
+    assertTrue(point(0).isCardinalityBigger(0));
+    assertFalse(empty().isCardinalityBigger(1));
+    assertFalse(empty().isCardinalityBigger(Long.MAX_VALUE));
+
+    assertFalse(range(0,100).isCardinalityBigger(101));
+    assertTrue(range(0,100).isCardinalityBigger(100));
+    assertTrue(range(0,100).isCardinalityBigger(99));
+    assertTrue(all().isCardinalityBigger(Long.MIN_VALUE));
+    assertTrue(all().isCardinalityBigger(0));
+    assertTrue(all().isCardinalityBigger(1));
+    assertTrue(all().isCardinalityBigger(Long.MAX_VALUE));
+    assertTrue(range(0, Long.MAX_VALUE).isCardinalityBigger(Long.MAX_VALUE));
+    assertFalse(range(1, Long.MAX_VALUE).isCardinalityBigger(Long.MAX_VALUE));
+
+    assertTrue(range(1, Long.MAX_VALUE).unite(point(-10)).isCardinalityBigger(Long.MAX_VALUE));
+
+    assertTrue(modRange(0, 10, 2, 0b01).isCardinalityBigger(5));
+    assertFalse(modRange(0, 10, 2, 0b01).isCardinalityBigger(6));
+    assertTrue(modRange(-3, 10, 4, 0b0011).isCardinalityBigger(6));
+    assertFalse(modRange(-3, 10, 4, 0b0011).isCardinalityBigger(7));
   }
 
   void checkAdd(LongRangeSet addend1, LongRangeSet addend2, boolean isLong, String expected) {

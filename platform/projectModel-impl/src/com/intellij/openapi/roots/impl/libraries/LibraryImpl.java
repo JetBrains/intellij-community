@@ -261,8 +261,10 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
     return roots;
   }
 
-  // just to maintain .xml compatibility
-  // VirtualFilePointerContainerImpl does the same but stores its jar dirs attributes inside <root> element
+  /**
+   * @deprecated just to maintain .xml compatibility.
+   * VirtualFilePointerContainerImpl does the same but stores its jar dirs attributes inside <root> element
+   */
   @Deprecated // todo to remove sometime later
   private void readJarDirectories(@NotNull Element element) {
     final List<Element> jarDirs = element.getChildren(VirtualFilePointerContainerImpl.JAR_DIRECTORY_ELEMENT);
@@ -402,8 +404,10 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
     rootElement.addContent(element);
   }
 
-  // just to maintain .xml compatibility
-  // VirtualFilePointerContainerImpl does the same but stores its jar dirs attributes inside <root> element
+  /**
+   * @deprecated just to maintain .xml compatibility.
+   * VirtualFilePointerContainerImpl does the same but stores its jar dirs attributes inside <root> element
+   */
   @Deprecated // todo to remove sometime later
   private void writeJarDirectories(@NotNull Element element) {
     final List<OrderRootType> rootTypes = sortRootTypes(myRoots.keySet());
@@ -702,6 +706,7 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
     return "Library: name:" + myName + "; roots:" + myRoots.values();
   }
 
+  @Override
   @Nullable("will return non-null value only for module level libraries")
   public Module getModule() {
     return myRootModel == null ? null : myRootModel.getModule();

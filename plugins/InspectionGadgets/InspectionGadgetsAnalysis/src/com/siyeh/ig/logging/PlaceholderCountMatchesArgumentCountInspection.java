@@ -3,7 +3,7 @@ package com.siyeh.ig.logging;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -21,7 +21,7 @@ import java.util.Set;
 public class PlaceholderCountMatchesArgumentCountInspection extends BaseInspection {
 
   @NonNls
-  static final Set<String> loggingMethodNames = ContainerUtilRt.newHashSet("log", "trace", "debug", "info", "warn", "error", "fatal");
+  static final Set<String> loggingMethodNames = ContainerUtil.newHashSet("log", "trace", "debug", "info", "warn", "error", "fatal");
 
   @Nls
   @NotNull

@@ -13,7 +13,8 @@ abstract class BaseXmlOutputter(protected val lineSeparator: String) {
         val isRemember = name.contains("remember", ignoreCase = true) ||
                          name.contains("keep", ignoreCase = true) ||
                          name.contains("use", ignoreCase = true) ||
-                         name.contains("save", ignoreCase = true)
+                         name.contains("save", ignoreCase = true) ||
+                         name.contains("stored", ignoreCase = true)
         return !isRemember
       }
       return false

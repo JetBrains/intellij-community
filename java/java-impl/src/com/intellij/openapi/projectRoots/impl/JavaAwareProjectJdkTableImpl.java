@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.application.WriteAction;
@@ -14,24 +14,19 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.jps.model.java.JdkVersionDetector;
 
-public class JavaAwareProjectJdkTableImpl extends ProjectJdkTableImpl {
+public final class JavaAwareProjectJdkTableImpl extends ProjectJdkTableImpl {
   public static JavaAwareProjectJdkTableImpl getInstanceEx() {
     return (JavaAwareProjectJdkTableImpl)ServiceManager.getService(ProjectJdkTable.class);
   }
 
-  private final JavaSdk myJavaSdk;
   private Sdk myInternalJdk;
-
-  public JavaAwareProjectJdkTableImpl(@NotNull JavaSdk javaSdk) {
-    myJavaSdk = javaSdk;
-  }
 
   @NotNull
   public Sdk getInternalJdk() {
     if (myInternalJdk == null) {
       String jdkHome = SystemProperties.getJavaHome();
       String versionName = JdkVersionDetector.formatVersionString(JavaVersion.current());
-      myInternalJdk = myJavaSdk.createJdk(versionName, jdkHome);
+      myInternalJdk = JavaSdk.getInstance().createJdk(versionName, jdkHome);
     }
     return myInternalJdk;
   }
@@ -47,7 +42,7 @@ public class JavaAwareProjectJdkTableImpl extends ProjectJdkTableImpl {
   @NotNull
   @Override
   public SdkTypeId getDefaultSdkType() {
-    return myJavaSdk;
+    return JavaSdk.getInstance();
   }
 
   @Override

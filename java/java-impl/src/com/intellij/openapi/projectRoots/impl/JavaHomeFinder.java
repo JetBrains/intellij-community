@@ -3,7 +3,6 @@ package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.util.ExecUtil;
-import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
@@ -11,6 +10,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.lang.JavaVersion;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -28,7 +28,7 @@ public abstract class JavaHomeFinder {
   @NotNull
   public static List<String> suggestHomePaths() {
     List<String> paths = new ArrayList<>(new HashSet<>(getFinder().findExistingJdks()));
-    paths.sort((o1, o2) -> Comparing.compare(JavaSdkVersion.fromVersionString(o2), JavaSdkVersion.fromVersionString(o1)));
+    paths.sort((o1, o2) -> Comparing.compare(JavaVersion.tryParse(o2), JavaVersion.tryParse(o1)));
     return paths;
   }
 

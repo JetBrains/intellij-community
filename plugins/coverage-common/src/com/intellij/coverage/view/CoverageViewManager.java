@@ -30,17 +30,15 @@ public class CoverageViewManager implements PersistentStateComponent<CoverageVie
   private static final Logger LOG = Logger.getInstance(CoverageViewManager.class);
   public static final String TOOLWINDOW_ID = "Coverage";
   private final Project myProject;
-  private final CoverageDataManager myDataManager;
   private final ContentManager myContentManager;
   private StateBean myStateBean = new StateBean();
   private final Map<String, CoverageView> myViews = new HashMap<>();
   private boolean myReady;
-
-  public CoverageViewManager(Project project, ToolWindowManager toolWindowManager, CoverageDataManager dataManager) {
+  
+  public CoverageViewManager(Project project) {
     myProject = project;
-    myDataManager = dataManager;
 
-    ToolWindow toolWindow = toolWindowManager.registerToolWindow(TOOLWINDOW_ID, true, ToolWindowAnchor.RIGHT, myProject, true, true);
+    ToolWindow toolWindow = ToolWindowManager.getInstance(project).registerToolWindow(TOOLWINDOW_ID, true, ToolWindowAnchor.RIGHT, myProject, true, true);
     toolWindow.setHelpId(CoverageView.HELP_ID);
     toolWindow.setIcon(AllIcons.Toolwindows.ToolWindowCoverage);
     myContentManager = toolWindow.getContentManager();
@@ -75,7 +73,7 @@ public class CoverageViewManager implements PersistentStateComponent<CoverageVie
   }
 
   public void createToolWindow(String displayName, boolean defaultFileProvider) {
-    final CoverageView coverageView = new CoverageView(myProject, myDataManager, myStateBean);
+    final CoverageView coverageView = new CoverageView(myProject, CoverageDataManager.getInstance(myProject), myStateBean);
     myViews.put(displayName, coverageView);
     Content content = myContentManager.getFactory().createContent(coverageView, displayName, true);
     myContentManager.addContent(content);

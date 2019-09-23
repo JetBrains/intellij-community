@@ -692,6 +692,7 @@ public final class PsiUtil extends PsiUtilCore {
                                                   @NotNull PsiClass aClass,
                                                   @NotNull PsiSubstitutor s2,
                                                   @NotNull PsiClass bClass) {
+    if (s1 == s2 && aClass == bClass) return true;
     // assume generic class equals to non-generic
     if (aClass.hasTypeParameters() != bClass.hasTypeParameters()) return true;
     final PsiTypeParameter[] typeParameters1 = aClass.getTypeParameters();
@@ -711,12 +712,6 @@ public final class PsiUtil extends PsiUtilCore {
     }
 
     return containingClass1 == null && containingClass2 == null;
-  }
-
-  /** @deprecated use more generic {@link #isCompileTimeConstant(PsiVariable)} instead */
-  @Deprecated
-  public static boolean isCompileTimeConstant(@NotNull final PsiField field) {
-    return isCompileTimeConstant((PsiVariable)field);
   }
 
   /**
@@ -963,15 +958,30 @@ public final class PsiUtil extends PsiUtilCore {
 
   @NotNull
   public static Iterable<PsiTypeParameter> typeParametersIterable(@NotNull final PsiTypeParameterListOwner owner) {
-    List<PsiTypeParameter> result = null;
+    Iterable<PsiTypeParameter> result = null;
 
     PsiTypeParameterListOwner currentOwner = owner;
     while (currentOwner != null) {
       PsiTypeParameter[] typeParameters = currentOwner.getTypeParameters();
       if (typeParameters.length > 0) {
-        if (result == null) result = new ArrayList<>(typeParameters.length);
-        for (int i = typeParameters.length - 1; i >= 0; i--) {
-          result.add(typeParameters[i]);
+        Iterable<PsiTypeParameter> iterable = () -> new Iterator<PsiTypeParameter>() {
+          int idx = typeParameters.length - 1;
+
+          @Override
+          public boolean hasNext() {
+            return idx >= 0;
+          }
+
+          @Override
+          public PsiTypeParameter next() {
+            if (idx < 0) throw new NoSuchElementException();
+            return typeParameters[idx--];
+          }
+        };
+        if (result == null) {
+          result = iterable;
+        } else {
+          result = ContainerUtil.concat(result, iterable);
         }
       }
 
@@ -992,13 +1002,6 @@ public final class PsiUtil extends PsiUtilCore {
            !method.hasModifierProperty(PsiModifier.PRIVATE) &&
            !(parentClass instanceof PsiAnonymousClass) &&
            !parentClass.hasModifierProperty(PsiModifier.FINAL);
-  }
-
-  /** @deprecated Use {@link #canBeOverridden(PsiMethod)} instead */
-  @SuppressWarnings("SpellCheckingInspection")
-  @Deprecated
-  public static boolean canBeOverriden(@NotNull PsiMethod method) {
-    return canBeOverridden(method);
   }
 
   @NotNull

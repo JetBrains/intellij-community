@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
 
@@ -14,14 +15,16 @@ import java.util.EventObject;
 public class VirtualFileEvent extends EventObject {
   private final Object myRequestor;
   private final VirtualFile myFile;
-  private final String myFileName;
   private final VirtualFile myParent;
 
   private final long myOldModificationStamp;
   private final long myNewModificationStamp;
 
-  public VirtualFileEvent(@Nullable Object requestor, @NotNull VirtualFile file, @NotNull String fileName, @Nullable VirtualFile parent) {
-    this(requestor, file, fileName, parent, 0, 0);
+  /** @deprecated Use {@link #VirtualFileEvent(Object, VirtualFile, VirtualFile, long, long)} instead */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  public VirtualFileEvent(@Nullable Object requestor, @NotNull VirtualFile file, @SuppressWarnings("unused") @NotNull String fileName, @Nullable VirtualFile parent) {
+    this(requestor, file, parent, 0, 0);
   }
 
   public VirtualFileEvent(@Nullable Object requestor,
@@ -29,19 +32,9 @@ public class VirtualFileEvent extends EventObject {
                           @Nullable VirtualFile parent,
                           long oldModificationStamp,
                           long newModificationStamp) {
-    this(requestor, file, file.getName(), parent, oldModificationStamp, newModificationStamp);
-  }
-
-  private VirtualFileEvent(@Nullable Object requestor,
-                           @NotNull VirtualFile file,
-                           @NotNull String fileName,
-                           @Nullable VirtualFile parent,
-                           long oldModificationStamp,
-                           long newModificationStamp) {
     super(file);
     myRequestor = requestor;
     myFile = file;
-    myFileName = fileName;
     myParent = parent;
     myOldModificationStamp = oldModificationStamp;
     myNewModificationStamp = newModificationStamp;
@@ -60,7 +53,7 @@ public class VirtualFileEvent extends EventObject {
    */
   @NotNull
   public String getFileName() {
-    return myFileName;
+    return myFile.getName();
   }
 
   /**
@@ -73,7 +66,7 @@ public class VirtualFileEvent extends EventObject {
   }
 
   /**
-   * Returns the object which performed the operation changing the VFS, or {@code null} if the change was
+   * Returns the object that requested the operation changing the VFS, or {@code null} if the change was
    * caused by an external process and detected during VFS refresh.
    */
   @Nullable

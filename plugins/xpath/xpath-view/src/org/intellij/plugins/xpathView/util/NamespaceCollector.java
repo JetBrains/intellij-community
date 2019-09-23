@@ -29,7 +29,7 @@ import java.util.*;
  * Helper class to collect all used namespaces and their prefixes from an xml document
  */
 public class NamespaceCollector extends XmlRecursiveElementVisitor {
-    private static final Logger LOG = Logger.getInstance("org.intellij.plugins.xpathView.util.NamespaceCollector");
+    private static final Logger LOG = Logger.getInstance(NamespaceCollector.class);
 
     public static class CollectedInfo {
         public final Set<Namespace> namespaces;

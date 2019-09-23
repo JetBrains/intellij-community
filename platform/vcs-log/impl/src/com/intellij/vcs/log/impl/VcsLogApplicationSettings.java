@@ -4,19 +4,17 @@ package com.intellij.vcs.log.impl;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
-import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.log.ui.table.VcsLogColumn;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static com.intellij.vcs.log.impl.CommonUiProperties.COLUMN_ORDER;
 import static com.intellij.vcs.log.impl.CommonUiProperties.SHOW_DIFF_PREVIEW;
 import static com.intellij.vcs.log.impl.MainVcsLogUiProperties.*;
-import static com.intellij.vcs.log.ui.table.GraphTableModel.*;
 
 @State(name = "Vcs.Log.App.Settings", storages = {@Storage("vcs.xml")})
 public class VcsLogApplicationSettings implements PersistentStateComponent<VcsLogApplicationSettings.State>, VcsLogUiProperties {
@@ -44,6 +42,9 @@ public class VcsLogApplicationSettings implements PersistentStateComponent<VcsLo
     else if (SHOW_TAG_NAMES.equals(property)) {
       return (T)Boolean.valueOf(myState.SHOW_TAG_NAMES);
     }
+    else if (LABELS_LEFT_ALIGNED.equals(property)) {
+      return (T)Boolean.valueOf(myState.LABELS_LEFT_ALIGNED);
+    }
     else if (SHOW_CHANGES_FROM_PARENTS.equals(property)) {
       return (T)Boolean.valueOf(myState.SHOW_CHANGES_FROM_PARENTS);
     }
@@ -53,7 +54,8 @@ public class VcsLogApplicationSettings implements PersistentStateComponent<VcsLo
     else if (COLUMN_ORDER.equals(property)) {
       List<Integer> order = myState.COLUMN_ORDER;
       if (order == null || order.isEmpty()) {
-        order = ContainerUtilRt.newArrayList(ROOT_COLUMN, COMMIT_COLUMN, AUTHOR_COLUMN, DATE_COLUMN);
+        order = ContainerUtil.map(Arrays.asList(VcsLogColumn.ROOT, VcsLogColumn.COMMIT, VcsLogColumn.AUTHOR, VcsLogColumn.DATE),
+                                  VcsLogColumn::ordinal);
       }
       return (T)order;
     }
@@ -67,6 +69,9 @@ public class VcsLogApplicationSettings implements PersistentStateComponent<VcsLo
     }
     else if (SHOW_TAG_NAMES.equals(property)) {
       myState.SHOW_TAG_NAMES = (Boolean)value;
+    }
+    else if (LABELS_LEFT_ALIGNED.equals(property)) {
+      myState.LABELS_LEFT_ALIGNED = (Boolean)value;
     }
     else if (SHOW_CHANGES_FROM_PARENTS.equals(property)) {
       myState.SHOW_CHANGES_FROM_PARENTS = (Boolean)value;
@@ -86,7 +91,7 @@ public class VcsLogApplicationSettings implements PersistentStateComponent<VcsLo
 
   @Override
   public <T> boolean exists(@NotNull VcsLogUiProperty<T> property) {
-    return COMPACT_REFERENCES_VIEW.equals(property) || SHOW_TAG_NAMES.equals(property) ||
+    return COMPACT_REFERENCES_VIEW.equals(property) || SHOW_TAG_NAMES.equals(property) || LABELS_LEFT_ALIGNED.equals(property) ||
            SHOW_CHANGES_FROM_PARENTS.equals(property) || SHOW_DIFF_PREVIEW.equals(property) ||
            COLUMN_ORDER.equals(property);
   }
@@ -111,6 +116,7 @@ public class VcsLogApplicationSettings implements PersistentStateComponent<VcsLo
   public static class State {
     public boolean COMPACT_REFERENCES_VIEW = true;
     public boolean SHOW_TAG_NAMES = false;
+    public boolean LABELS_LEFT_ALIGNED = Registry.is("vcs.log.labels.left.aligned");
     public boolean SHOW_CHANGES_FROM_PARENTS = false;
     public boolean SHOW_DIFF_PREVIEW = false;
     public List<Integer> COLUMN_ORDER = new ArrayList<>();

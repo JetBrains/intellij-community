@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight.codeFragment;
 
 import com.intellij.codeInsight.codeFragment.CannotCreateCodeFragmentException;
@@ -20,22 +6,25 @@ import com.intellij.codeInsight.codeFragment.CodeFragmentUtil;
 import com.intellij.codeInsight.codeFragment.Position;
 import com.intellij.codeInsight.controlflow.ControlFlow;
 import com.intellij.codeInsight.controlflow.Instruction;
+import com.intellij.find.findUsages.FindUsagesHandler;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.usageView.UsageInfo;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.codeInsight.codeFragment.PyCodeFragment;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
+import com.jetbrains.python.findUsages.PyFindUsagesHandlerFactory;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyForStatementNavigator;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
-import com.jetbrains.python.refactoring.PyRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,10 +50,10 @@ public class PyCodeFragmentUtil {
     if ((subGraphAnalysis.regularExits > 0 && subGraphAnalysis.returns > 0) ||
         subGraphAnalysis.targetInstructions > 1 ||
         subGraphAnalysis.outerLoopBreaks > 0) {
-      throw new CannotCreateCodeFragmentException(PyBundle.message("refactoring.extract.method.error.interrupted.execution.flow"));
+      throw new CannotCreateCodeFragmentException(PyPsiBundle.message("refactoring.extract.method.error.interrupted.execution.flow"));
     }
     if (subGraphAnalysis.starImports > 0) {
-      throw new CannotCreateCodeFragmentException(PyBundle.message("refactoring.extract.method.error.star.import"));
+      throw new CannotCreateCodeFragmentException(PyPsiBundle.message("refactoring.extract.method.error.star.import"));
     }
 
     final Set<String> globalWrites = getGlobalWrites(subGraph, owner);
@@ -98,7 +87,7 @@ public class PyCodeFragmentUtil {
 
     final boolean yieldsFound = subGraphAnalysis.yieldExpressions > 0;
     if (yieldsFound && LanguageLevel.forElement(owner).isPython2()) {
-      throw new CannotCreateCodeFragmentException(PyBundle.message("refactoring.extract.method.error.yield"));
+      throw new CannotCreateCodeFragmentException(PyPsiBundle.message("refactoring.extract.method.error.yield"));
     }
     final boolean isAsync = owner instanceof PyFunction && ((PyFunction)owner).isAsync();
 
@@ -176,6 +165,25 @@ public class PyCodeFragmentUtil {
       }
     }
     return instructions;
+  }
+
+  @NotNull
+  public static List<UsageInfo> findUsages(@NotNull PsiNamedElement element, boolean forHighlightUsages) {
+    final List<UsageInfo> usages = new ArrayList<>();
+    final FindUsagesHandler handler = new PyFindUsagesHandlerFactory().createFindUsagesHandler(element, forHighlightUsages);
+    assert handler != null;
+    final List<PsiElement> elementsToProcess = new ArrayList<>();
+    Collections.addAll(elementsToProcess, handler.getPrimaryElements());
+    Collections.addAll(elementsToProcess, handler.getSecondaryElements());
+    for (PsiElement e : elementsToProcess) {
+      handler.processElementUsages(e, usageInfo -> {
+        if (!usageInfo.isNonCodeUsage) {
+          usages.add(usageInfo);
+        }
+        return true;
+      }, FindUsagesHandler.createFindUsagesOptions(element.getProject(), null));
+    }
+    return usages;
   }
 
   private static class AnalysisResult {
@@ -376,7 +384,7 @@ public class PyCodeFragmentUtil {
 
   private static boolean isUsedOutside(@NotNull PsiNamedElement element, @NotNull List<Instruction> subGraph) {
     final Set<PsiElement> subGraphElements = getSubGraphElements(subGraph);
-    return ContainerUtil.exists(PyRefactoringUtil.findUsages(element, false),
+    return ContainerUtil.exists(findUsages(element, false),
                                 usageInfo -> !subGraphElements.contains(usageInfo.getElement()));
   }
 

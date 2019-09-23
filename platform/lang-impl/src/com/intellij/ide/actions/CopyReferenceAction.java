@@ -69,6 +69,10 @@ public class CopyReferenceAction extends DumbAwareAction {
     e.getPresentation().setText(
       paths ? plural ? "Cop&y Relative Paths" : "Cop&y Relative Path"
             : plural ? "Cop&y References" : "Cop&y Reference");
+
+    if (paths) {
+      e.getPresentation().setEnabledAndVisible(false);
+    }
   }
 
   @Override

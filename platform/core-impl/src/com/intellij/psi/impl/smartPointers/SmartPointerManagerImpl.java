@@ -1,19 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.smartPointers;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -38,15 +23,15 @@ import org.jetbrains.annotations.TestOnly;
 import java.lang.ref.Reference;
 import java.util.List;
 
-public class SmartPointerManagerImpl extends SmartPointerManager {
+public final class SmartPointerManagerImpl extends SmartPointerManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl");
   private final Project myProject;
   private final Key<SmartPointerTracker> POINTERS_KEY;
   private final PsiDocumentManagerBase myPsiDocManager;
 
-  public SmartPointerManagerImpl(Project project, PsiDocumentManagerBase psiDocManager) {
+  public SmartPointerManagerImpl(@NotNull Project project) {
     myProject = project;
-    myPsiDocManager = psiDocManager;
+    myPsiDocManager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(project);
     POINTERS_KEY = Key.create("SMART_POINTERS " + (project.isDefault() ? "default" : project.hashCode()));
   }
 
@@ -63,7 +48,7 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
     if (pointers != null) pointers.fastenBelts(this);
   }
 
-  private static final Key<Reference<SmartPsiElementPointerImpl>> CACHED_SMART_POINTER_KEY = Key.create("CACHED_SMART_POINTER_KEY");
+  private static final Key<Reference<SmartPsiElementPointerImpl<?>>> CACHED_SMART_POINTER_KEY = Key.create("CACHED_SMART_POINTER_KEY");
   @Override
   @NotNull
   public <E extends PsiElement> SmartPsiElementPointer<E> createSmartPsiElementPointer(@NotNull E element) {
@@ -116,8 +101,8 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
   }
 
   private static <E extends PsiElement> SmartPsiElementPointerImpl<E> getCachedPointer(@NotNull E element) {
-    Reference<SmartPsiElementPointerImpl> data = element.getUserData(CACHED_SMART_POINTER_KEY);
-    SmartPsiElementPointerImpl cachedPointer = SoftReference.dereference(data);
+    Reference<SmartPsiElementPointerImpl<?>> data = element.getUserData(CACHED_SMART_POINTER_KEY);
+    SmartPsiElementPointerImpl<?> cachedPointer = SoftReference.dereference(data);
     if (cachedPointer != null) {
       PsiElement cachedElement = cachedPointer.getElement();
       if (cachedElement != element) {
@@ -125,7 +110,7 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
       }
     }
     //noinspection unchecked
-    return cachedPointer;
+    return (SmartPsiElementPointerImpl<E>)cachedPointer;
   }
 
   @Override
@@ -168,22 +153,22 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
       return;
     }
     ensureMyProject(pointer.getProject());
-    int refCount = ((SmartPsiElementPointerImpl)pointer).incrementAndGetReferenceCount(-1);
+    int refCount = ((SmartPsiElementPointerImpl<?>)pointer).incrementAndGetReferenceCount(-1);
     if (refCount == -1) {
       LOG.error("Double smart pointer removal");
       return;
     }
 
     if (refCount == 0) {
-      PsiElement element = ((SmartPointerEx)pointer).getCachedElement();
+      PsiElement element = ((SmartPointerEx<?>)pointer).getCachedElement();
       if (element != null) {
         element.putUserData(CACHED_SMART_POINTER_KEY, null);
       }
 
-      SmartPointerElementInfo info = ((SmartPsiElementPointerImpl)pointer).getElementInfo();
+      SmartPointerElementInfo info = ((SmartPsiElementPointerImpl<?>)pointer).getElementInfo();
       info.cleanup();
 
-      SmartPointerTracker.PointerReference reference = ((SmartPsiElementPointerImpl)pointer).pointerReference;
+      SmartPointerTracker.PointerReference reference = ((SmartPsiElementPointerImpl<?>)pointer).pointerReference;
       if (reference != null) {
         if (reference.get() != pointer) {
           throw new IllegalStateException("Reference points to " + reference.get());

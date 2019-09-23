@@ -6,24 +6,18 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.DialogManager;
-import git4idea.GitUtil;
-import git4idea.config.GitConfigUtil;
-import one.util.streamex.StreamEx;
+import git4idea.commands.GitImplBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
 import static com.intellij.CommonBundle.getCancelButtonText;
 import static com.intellij.CommonBundle.getOkButtonText;
 import static com.intellij.openapi.ui.Messages.getQuestionIcon;
-import static com.intellij.openapi.util.text.StringUtil.splitByLinesKeepSeparators;
-import static com.intellij.openapi.util.text.StringUtil.trimLeading;
 import static git4idea.DialogManager.showOkCancelDialog;
 import static git4idea.rebase.GitRebaseEditorMain.ERROR_EXIT_CODE;
 
@@ -77,39 +71,7 @@ public class GitInteractiveRebaseEditorHandler implements GitRebaseEditorHandler
   }
 
   protected boolean handleUnstructuredEditor(@NotNull String path) throws IOException {
-    String encoding = GitConfigUtil.getCommitEncoding(myProject, myRoot);
-    File file = new File(path);
-    String initialText = trimLeading(ignoreComments(FileUtil.loadFile(file, encoding)));
-
-    String newText = showUnstructuredEditor(initialText);
-    if (newText == null) {
-      return false;
-    }
-    else {
-      FileUtil.writeToFile(file, newText.getBytes(encoding));
-      return true;
-    }
-  }
-
-  @NotNull
-  private static String ignoreComments(@NotNull String text) {
-    String[] lines = splitByLinesKeepSeparators(text);
-    return StreamEx.of(lines)
-      .filter(line -> !line.startsWith(GitUtil.COMMENT_CHAR))
-      .joining();
-  }
-
-  @Nullable
-  private String showUnstructuredEditor(@NotNull String initialText) {
-    Ref<String> newText = Ref.create();
-    ApplicationManager.getApplication().invokeAndWait(() -> {
-      GitRebaseUnstructuredEditor editor = new GitRebaseUnstructuredEditor(myProject, myRoot, initialText);
-      DialogManager.show(editor);
-      if (editor.isOK()) {
-        newText.set(editor.getText());
-      }
-    });
-    return newText.get();
+    return GitImplBase.loadFileAndShowInSimpleEditor(myProject, myRoot, path, "Git Commit Message", "Continue Rebasing");
   }
 
   protected boolean handleInteractiveEditor(@NotNull String path) throws IOException {

@@ -15,169 +15,43 @@
  */
 package com.intellij.diff.tools.simple;
 
-import com.intellij.diff.fragments.DiffFragment;
 import com.intellij.diff.fragments.LineFragment;
-import com.intellij.diff.util.*;
-import com.intellij.openapi.actionSystem.Shortcut;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.markup.GutterIconRenderer;
-import com.intellij.openapi.editor.markup.HighlighterLayer;
-import com.intellij.openapi.editor.markup.HighlighterTargetArea;
-import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.keymap.KeymapManager;
-import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.diff.util.DiffUtil;
+import com.intellij.diff.util.Side;
+import com.intellij.diff.util.TextDiffType;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
-import java.util.ArrayList;
-import java.util.List;
 
 public class SimpleDiffChange {
-  @NotNull protected final SimpleDiffViewer myViewer;
+  private final int myIndex;
 
   @NotNull private final LineFragment myFragment;
-  @Nullable private final List<DiffFragment> myInnerFragments;
   private final boolean myIsExcluded;
   private final boolean myIsSkipped;
 
-  @NotNull protected final List<RangeHighlighter> myHighlighters = new ArrayList<>();
-  @NotNull protected final List<GutterOperation> myOperations = new ArrayList<>();
-
   private boolean myIsValid = true;
+  private boolean myIsDestroyed;
   private final int[] myLineStartShifts = new int[2];
   private final int[] myLineEndShifts = new int[2];
 
-  public SimpleDiffChange(@NotNull SimpleDiffViewer viewer,
+  public SimpleDiffChange(int index,
                           @NotNull LineFragment fragment) {
-    this(viewer, fragment, false, false);
+    this(index, fragment, false, false);
   }
 
-  public SimpleDiffChange(@NotNull SimpleDiffViewer viewer,
+  public SimpleDiffChange(int index,
                           @NotNull LineFragment fragment,
                           boolean isExcluded,
                           boolean isSkipped) {
-    myViewer = viewer;
+    myIndex = index;
 
     myFragment = fragment;
-    myInnerFragments = fragment.getInnerFragments();
     myIsExcluded = isExcluded;
     myIsSkipped = isSkipped;
   }
 
-  public void installHighlighter(@Nullable LineFragment previousFragment) {
-    assert myHighlighters.isEmpty();
-
-    if (myInnerFragments != null) {
-      doInstallHighlighterWithInner();
-    }
-    else {
-      doInstallHighlighterSimple();
-    }
-    doInstallNonSquashedChangesSeparator(previousFragment);
-
-    doInstallActionHighlighters();
+  public int getIndex() {
+    return myIndex;
   }
-
-  public void destroyHighlighter() {
-    for (RangeHighlighter highlighter : myHighlighters) {
-      highlighter.dispose();
-    }
-    myHighlighters.clear();
-
-    for (GutterOperation operation : myOperations) {
-      operation.dispose();
-    }
-    myOperations.clear();
-  }
-
-  private void doInstallHighlighterSimple() {
-    createHighlighter(Side.LEFT, false);
-    createHighlighter(Side.RIGHT, false);
-  }
-
-  private void doInstallHighlighterWithInner() {
-    assert myInnerFragments != null;
-
-    createHighlighter(Side.LEFT, true);
-    createHighlighter(Side.RIGHT, true);
-
-    for (DiffFragment fragment : myInnerFragments) {
-      createInlineHighlighter(fragment, Side.LEFT);
-      createInlineHighlighter(fragment, Side.RIGHT);
-    }
-  }
-
-  private void doInstallNonSquashedChangesSeparator(@Nullable LineFragment previousFragment) {
-    createNonSquashedChangesSeparator(previousFragment, Side.LEFT);
-    createNonSquashedChangesSeparator(previousFragment, Side.RIGHT);
-  }
-
-  protected void doInstallActionHighlighters() {
-    if (myIsSkipped) return;
-
-    myOperations.add(new AcceptGutterOperation(Side.LEFT));
-    myOperations.add(new AcceptGutterOperation(Side.RIGHT));
-  }
-
-  private void createHighlighter(@NotNull Side side, boolean ignored) {
-    Editor editor = myViewer.getEditor(side);
-
-    TextDiffType type = DiffUtil.getLineDiffType(myFragment);
-    int startLine = side.getStartLine(myFragment);
-    int endLine = side.getEndLine(myFragment);
-
-    myHighlighters.addAll(new DiffDrawUtil.LineHighlighterBuilder(editor, startLine, endLine, type)
-                            .withIgnored(ignored)
-                            .withExcludedInEditor(myIsSkipped)
-                            .withExcludedInGutter(myIsExcluded)
-                            .done());
-  }
-
-  private void createInlineHighlighter(@NotNull DiffFragment fragment, @NotNull Side side) {
-    if (myIsSkipped) return;
-
-    int start = side.getStartOffset(fragment);
-    int end = side.getEndOffset(fragment);
-    TextDiffType type = DiffUtil.getDiffType(fragment);
-
-    int startOffset = side.getStartOffset(myFragment);
-    start += startOffset;
-    end += startOffset;
-
-    Editor editor = myViewer.getEditor(side);
-    myHighlighters.addAll(DiffDrawUtil.createInlineHighlighter(editor, start, end, type));
-  }
-
-  private void createNonSquashedChangesSeparator(@Nullable LineFragment previousFragment, @NotNull Side side) {
-    if (previousFragment == null) return;
-
-    int startLine = side.getStartLine(myFragment);
-    int endLine = side.getEndLine(myFragment);
-
-    int prevStartLine = side.getStartLine(previousFragment);
-    int prevEndLine = side.getEndLine(previousFragment);
-
-    if (startLine == endLine) return;
-    if (prevStartLine == prevEndLine) return;
-    if (prevEndLine != startLine) return;
-
-    myHighlighters.addAll(DiffDrawUtil.createLineMarker(myViewer.getEditor(side), startLine, TextDiffType.MODIFIED));
-  }
-
-  public void updateGutterActions(boolean force) {
-    for (GutterOperation operation : myOperations) {
-      operation.update(force);
-    }
-  }
-
-  //
-  // Getters
-  //
 
   public int getStartLine(@NotNull Side side) {
     return side.getStartLine(myFragment) + side.select(myLineStartShifts);
@@ -204,16 +78,16 @@ public class SimpleDiffChange {
     return myIsValid;
   }
 
+  public boolean isDestroyed() {
+    return myIsDestroyed;
+  }
+
   @NotNull
   public LineFragment getFragment() {
     return myFragment;
   }
 
-  //
-  // Shift
-  //
-
-  public boolean processChange(int oldLine1, int oldLine2, int shift, @NotNull Side side) {
+  public boolean processDocumentChange(int oldLine1, int oldLine2, int shift, @NotNull Side side) {
     int line1 = getStartLine(side);
     int line2 = getEndLine(side);
     int sideIndex = side.getIndex();
@@ -223,124 +97,13 @@ public class SimpleDiffChange {
     myLineEndShifts[sideIndex] += newRange.endLine - line2;
 
     if (newRange.damaged) {
-      for (GutterOperation operation : myOperations) {
-        operation.dispose();
-      }
-      myOperations.clear();
-
       myIsValid = false;
     }
 
     return newRange.damaged;
   }
 
-  //
-  // Helpers
-  //
-
-  protected abstract class GutterOperation {
-    @NotNull protected final Side mySide;
-    @NotNull private final RangeHighlighter myHighlighter;
-
-    protected boolean myCtrlPressed;
-
-    public GutterOperation(@NotNull Side side) {
-      mySide = side;
-
-      int offset = side.getStartOffset(myFragment);
-      EditorEx editor = myViewer.getEditor(side);
-      myHighlighter = editor.getMarkupModel().addRangeHighlighter(offset, offset,
-                                                                  HighlighterLayer.ADDITIONAL_SYNTAX,
-                                                                  null,
-                                                                  HighlighterTargetArea.LINES_IN_RANGE);
-
-      update(true);
-    }
-
-    public void dispose() {
-      myHighlighter.dispose();
-    }
-
-    public void update(boolean force) {
-      if (!force && !areModifiersChanged()) {
-        return;
-      }
-      if (myHighlighter.isValid()) myHighlighter.setGutterIconRenderer(createRenderer());
-    }
-
-    private boolean areModifiersChanged() {
-      return myCtrlPressed != myViewer.getModifierProvider().isCtrlPressed();
-    }
-
-    @Nullable
-    public abstract GutterIconRenderer createRenderer();
-  }
-
-  private class AcceptGutterOperation extends GutterOperation {
-    AcceptGutterOperation(@NotNull Side side) {
-      super(side);
-    }
-
-    @Nullable
-    @Override
-    public GutterIconRenderer createRenderer() {
-      myCtrlPressed = myViewer.getModifierProvider().isCtrlPressed();
-
-      boolean isOtherEditable = DiffUtil.isEditable(myViewer.getEditor(mySide.other()));
-      boolean isAppendable = myFragment.getStartLine1() != myFragment.getEndLine1() &&
-                             myFragment.getStartLine2() != myFragment.getEndLine2();
-
-      if (isOtherEditable) {
-        if (myCtrlPressed && isAppendable) {
-          return createAppendRenderer(mySide);
-        }
-        else {
-          return createApplyRenderer(mySide);
-        }
-      }
-      return null;
-    }
-  }
-
-  @Nullable
-  private GutterIconRenderer createApplyRenderer(@NotNull final Side side) {
-    String text;
-    Icon icon = DiffUtil.getArrowIcon(side);
-
-    if (side == Side.LEFT && myViewer.isDiffForLocalChanges()) {
-      text = "Revert";
-    }
-    else {
-      text = "Accept";
-    }
-
-    String actionId = side.select("Diff.ApplyLeftSide", "Diff.ApplyRightSide");
-    Shortcut[] shortcuts = KeymapManager.getInstance().getActiveKeymap().getShortcuts(actionId);
-    String shortcutsText = StringUtil.nullize(KeymapUtil.getShortcutsText(shortcuts));
-    String tooltipText = DiffUtil.createTooltipText(text, shortcutsText);
-
-    return createIconRenderer(side, tooltipText, icon, () -> myViewer.replaceChange(this, side));
-  }
-
-  @Nullable
-  private GutterIconRenderer createAppendRenderer(@NotNull final Side side) {
-    return createIconRenderer(side, "Append", DiffUtil.getArrowDownIcon(side), () -> myViewer.appendChange(this, side));
-  }
-
-  @Nullable
-  private GutterIconRenderer createIconRenderer(@NotNull final Side sourceSide,
-                                                @NotNull final String tooltipText,
-                                                @NotNull final Icon icon,
-                                                @NotNull final Runnable perform) {
-    if (!DiffUtil.isEditable(myViewer.getEditor(sourceSide.other()))) return null;
-    return new DiffGutterRenderer(icon, tooltipText) {
-      @Override
-      protected void handleMouseClick() {
-        if (!myIsValid) return;
-        final Project project = myViewer.getProject();
-        final Document document = myViewer.getEditor(sourceSide.other()).getDocument();
-        DiffUtil.executeWriteCommand(document, project, "Replace change", perform);
-      }
-    };
+  public void markDestroyed() {
+    myIsDestroyed = true;
   }
 }

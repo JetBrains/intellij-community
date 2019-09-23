@@ -20,11 +20,13 @@ import java.util.concurrent.Executor;
  *   <li>For background processes started by user actions, where people would wait for results, staring at the screen impatiently.</li>
  * </ul>
  */
-public class NonUrgentExecutor implements Executor {
+public final class NonUrgentExecutor implements Executor {
   private static final NonUrgentExecutor ourInstance = new NonUrgentExecutor();
-  private final Executor myBackend = AppExecutorUtil.createBoundedApplicationPoolExecutor("NonUrgentExecutor", 2);
+  private final Executor myBackend;
 
-  private NonUrgentExecutor() {}
+  private NonUrgentExecutor() {
+    myBackend = AppExecutorUtil.createBoundedApplicationPoolExecutor("NonUrgentExecutor", 2, false);
+  }
 
   @Override
   public void execute(@NotNull Runnable command) {

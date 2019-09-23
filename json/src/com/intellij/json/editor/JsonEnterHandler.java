@@ -59,7 +59,9 @@ public class JsonEnterHandler extends EnterHandlerDelegateAdapter {
 
   private static boolean handleComma(@NotNull Ref<Integer> caretOffsetRef, @NotNull PsiElement psiAtOffset, @NotNull Editor editor) {
     PsiElement nextSibling = psiAtOffset;
+    boolean hasNewlineBefore = false;
     while (nextSibling instanceof PsiWhiteSpace) {
+      hasNewlineBefore = nextSibling.getText().contains("\n");
       nextSibling = nextSibling.getNextSibling();
     }
 
@@ -74,7 +76,7 @@ public class JsonEnterHandler extends EnterHandlerDelegateAdapter {
       if (prevSibling instanceof JsonProperty && ((JsonProperty)prevSibling).getValue() != null) {
         int offset = elementType == JsonElementTypes.COMMA ? nextSibling.getTextRange().getEndOffset() : prevSibling.getTextRange().getEndOffset();
         if (offset < editor.getDocument().getTextLength()) {
-          if (elementType == JsonElementTypes.R_CURLY) {
+          if (elementType == JsonElementTypes.R_CURLY && hasNewlineBefore) {
             editor.getDocument().insertString(offset, ",");
             offset++;
           }

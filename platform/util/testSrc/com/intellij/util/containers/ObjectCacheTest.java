@@ -26,7 +26,7 @@ import java.util.HashSet;
 public class ObjectCacheTest extends TestCase {
   public void testCacheFiniteness() {
     ObjectCache<String, String> cache = new ObjectCache<>(4);
-    cache.put("Eclipse", "Sucking IDE");
+    cache.put("Eclipse", "Another IDE");
     cache.put("IDEA", "good");
     cache.put("IDEA 4.5", "better");
     cache.put("IDEA 5.0", "perfect");
@@ -37,7 +37,7 @@ public class ObjectCacheTest extends TestCase {
 
   public void testCacheIterator() {
     ObjectCache<String, String> cache = new ObjectCache<>(4);
-    cache.put("Eclipse", "Sucking IDE");
+    cache.put("Eclipse", "Another IDE");
     cache.put("IDEA", "good IDEA");
     cache.put("IDEA 4.5", "better IDEA");
     cache.put("IDEA 5.0", "perfect IDEA");
@@ -47,7 +47,7 @@ public class ObjectCacheTest extends TestCase {
       values.add((String)obj);
     }
     Assert.assertNull(cache.get("Eclipse"));
-    Assert.assertFalse(values.contains("Sucking IDE"));
+    Assert.assertFalse(values.contains("Another IDE"));
     Assert.assertTrue(values.contains("good IDEA"));
     Assert.assertTrue(values.contains("better IDEA"));
     Assert.assertTrue(values.contains("perfect IDEA"));
@@ -67,14 +67,14 @@ public class ObjectCacheTest extends TestCase {
     ObjectCache<String, String> cache = new ObjectCache<>(4);
     cache.addDeletedPairsListener(new CacheDeletedPairsListener());
     removedPairs.clear();
-    cache.put("Eclipse", "Sucking IDE");
-    cache.put("Eclipses", "Sucking IDEs");
+    cache.put("Eclipse", "Another IDE");
+    cache.put("Eclipses", "Another IDEs");
     cache.put("IDEA", "good IDEA");
     cache.put("IDEA 4.5", "better IDEA");
     cache.put("IDEA 5.0", "perfect IDEA");
     cache.put("IDEA 6.0", "IDEAL");
-    Assert.assertEquals("Sucking IDE", removedPairs.get("Eclipse"));
-    Assert.assertEquals("Sucking IDEs", removedPairs.get("Eclipses"));
+    Assert.assertEquals("Another IDE", removedPairs.get("Eclipse"));
+    Assert.assertEquals("Another IDEs", removedPairs.get("Eclipses"));
   }
 
   public void testIntCacheFiniteness() {

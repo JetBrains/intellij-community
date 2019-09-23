@@ -24,7 +24,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
-@ApiStatus.Experimental
 public class InvertedIndexUtil {
   @NotNull
   public static <K, V, I> TIntHashSet collectInputIdsContainingAllKeys(@NotNull InvertedIndex<? super K, V, I> index,

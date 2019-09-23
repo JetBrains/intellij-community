@@ -12,7 +12,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.EnvironmentUtil
-import com.jetbrains.python.sdk.PythonSdkType
+import com.jetbrains.python.sdk.PythonSdkUtil
 
 /**
  * @author vlan
@@ -25,7 +25,7 @@ internal val DataContext.virtualFile: VirtualFile?
 
 internal fun VirtualFile.findPythonSdk(project: Project): Sdk? {
   val module = ModuleUtil.findModuleForFile(this, project)
-  return PythonSdkType.findPythonSdk(module)
+  return PythonSdkUtil.findPythonSdk(module)
 }
 
 internal fun GeneralCommandLine.findExecutableInPath(): String? {

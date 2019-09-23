@@ -330,6 +330,10 @@ public class FoldingModelImpl extends InlayModel.SimpleAdapter
           caret.putUserData(MARK_FOR_UPDATE, Boolean.TRUE);
         }
       }
+      else if (caret.getOffset() == region.getStartOffset()) {
+        caret.putUserData(MARK_FOR_UPDATE, Boolean.TRUE);
+        caret.putUserData(SAVED_CARET_POSITION, new SavedCaretPosition(caret));
+      }
     }
 
     myFoldRegionsProcessed = true;
@@ -349,15 +353,11 @@ public class FoldingModelImpl extends InlayModel.SimpleAdapter
     List<Caret> carets = myEditor.getCaretModel().getAllCarets();
     if (myDoNotCollapseCaret) {
       for (Caret caret : carets) {
-        LogicalPosition caretPosition = caret.getLogicalPosition();
-        int caretOffset = myEditor.logicalPositionToOffset(caretPosition);
-
-        if (FoldRegionsTree.containsStrict(region, caretOffset)) return;
+        if (FoldRegionsTree.containsStrict(region, caret.getOffset())) return;
       }
     }
     for (Caret caret : carets) {
-      int caretOffset = caret.getOffset();
-      if (FoldRegionsTree.containsStrict(region, caretOffset)) {
+      if (FoldRegionsTree.containsStrict(region, caret.getOffset())) {
         SavedCaretPosition savedPosition = caret.getUserData(SAVED_CARET_POSITION);
         if (savedPosition == null || !savedPosition.isUpToDate(myEditor)) {
           caret.putUserData(SAVED_CARET_POSITION, new SavedCaretPosition(caret));
@@ -385,18 +385,9 @@ public class FoldingModelImpl extends InlayModel.SimpleAdapter
 
     myEditor.getCaretModel().runBatchCaretOperation(() -> {
       for (Caret caret : myEditor.getCaretModel().getAllCarets()) {
-        // There is a possible case that caret position is already visual position aware. But visual position depends on number of folded
-        // logical lines as well, hence, we can't be sure that target logical position defines correct visual position because fold
-        // regions have just changed. Hence, we use 'raw' logical position instead.
-        LogicalPosition caretPosition = caret.getLogicalPosition();
-        int caretOffset = myEditor.logicalPositionToOffset(caretPosition);
-        int selectionStart = caret.getSelectionStart();
-        int selectionEnd = caret.getSelectionEnd();
-
         LogicalPosition positionToUse = null;
         int offsetToUse = -1;
 
-        FoldRegion collapsed = myFoldTree.fetchOutermost(caretOffset);
         SavedCaretPosition savedPosition = caret.getUserData(SAVED_CARET_POSITION);
         boolean markedForUpdate = caret.getUserData(MARK_FOR_UPDATE) != null;
 
@@ -409,10 +400,6 @@ public class FoldingModelImpl extends InlayModel.SimpleAdapter
           else {
             offsetToUse = collapsedAtSaved.getStartOffset();
           }
-        }
-
-        if (collapsed != null && positionToUse == null) {
-          //positionToUse = myEditor.offsetToLogicalPosition(collapsed.getStartOffset());
         }
 
         if ((markedForUpdate || moveCaretFromCollapsedRegion) && caret.isUpToDate()) {
@@ -430,6 +417,8 @@ public class FoldingModelImpl extends InlayModel.SimpleAdapter
         caret.putUserData(SAVED_CARET_POSITION, savedPosition);
         caret.putUserData(MARK_FOR_UPDATE, null);
 
+        int selectionStart = caret.getSelectionStart();
+        int selectionEnd = caret.getSelectionEnd();
         if (isOffsetInsideCollapsedRegion(selectionStart) || isOffsetInsideCollapsedRegion(selectionEnd)) {
           caret.removeSelection();
         } else if (selectionStart < myEditor.getDocument().getTextLength()) {

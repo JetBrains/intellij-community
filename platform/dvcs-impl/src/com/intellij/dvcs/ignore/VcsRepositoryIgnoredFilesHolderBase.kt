@@ -9,8 +9,9 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsException
+import com.intellij.openapi.vcs.changes.ChangeListListener
+import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
 import com.intellij.openapi.vcs.changes.VcsIgnoreManagerImpl
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.events.*
 import com.intellij.util.EventDispatcher
 import com.intellij.util.ui.update.ComparableObject
@@ -31,31 +32,35 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
   @JvmField
   protected val repository: REPOSITORY,
   private val repositoryManager: AbstractRepositoryManager<REPOSITORY>
-) : VcsRepositoryIgnoredFilesHolder, AsyncVfsEventsListener {
+) : VcsRepositoryIgnoredFilesHolder, AsyncVfsEventsListener, ChangeListListener {
 
   private val inUpdateMode = AtomicBoolean(false)
   private val updateQueue = VcsIgnoreManagerImpl.getInstanceImpl(repository.project).ignoreRefreshQueue
-  private val ignoredSet = hashSetOf<VirtualFile>()
+  private val ignoredSet = hashSetOf<FilePath>()
+  private val unprocessedFiles = hashSetOf<FilePath>()
   private val SET_LOCK = ReentrantReadWriteLock()
+  private val UNPROCESSED_FILES_LOCK = ReentrantReadWriteLock()
   private val listeners = EventDispatcher.create(VcsIgnoredHolderUpdateListener::class.java)
+  private val repositoryRootPath = VcsUtil.getFilePath(repository.root)
+  private val changeListManager = ChangeListManagerImpl.getInstanceImpl(repository.project)
 
   override fun addUpdateStateListener(listener: VcsIgnoredHolderUpdateListener) {
     listeners.addListener(listener, this)
   }
 
-  override fun addFiles(files: Collection<VirtualFile>) {
+  override fun addFiles(files: Collection<FilePath>) {
     SET_LOCK.write { ignoredSet.addAll(files) }
   }
 
-  override fun addFile(file: VirtualFile) {
+  override fun addFile(file: FilePath) {
     SET_LOCK.write { ignoredSet.add(file) }
   }
 
   override fun isInUpdateMode() = inUpdateMode.get()
 
-  override fun getIgnoredFiles(): Set<VirtualFile> = SET_LOCK.read { ignoredSet.toHashSet() }
+  override fun getIgnoredFilePaths(): Set<FilePath> = SET_LOCK.read { ignoredSet.toHashSet() }
 
-  override fun containsFile(file: VirtualFile) =
+  override fun containsFile(file: FilePath) =
     SET_LOCK.read { isUnder(ignoredSet, file) }
 
   override fun getSize() = SET_LOCK.read { ignoredSet.size }
@@ -66,30 +71,47 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
     }
   }
 
-  override fun filesChanged(events: List<VFileEvent>) {
-    val affectedFiles = events
-      .asSequence()
-      .mapNotNull(::getAffectedFile)
-      .filter { repository.root == VcsUtil.getVcsRootFor(repository.project, it) }
-      .map(VcsUtil::getFilePath)
-      .toList()
+  override fun changeListUpdateDone() {
+    if (scanTurnedOff()) return
 
-    if (affectedFiles.isNotEmpty()) {
-      removeIgnoredFiles(affectedFiles)
-      checkIgnored(affectedFiles)
+    val filesToCheck = UNPROCESSED_FILES_LOCK.read { unprocessedFiles.toHashSet() }
+
+    UNPROCESSED_FILES_LOCK.write {
+      unprocessedFiles.removeAll(filesToCheck)
+    }
+    //if the files already unversioned, there is no need to check it for ignore
+    filesToCheck.removeAll(changeListManager.unversionedFilesPaths)
+
+    if (filesToCheck.isNotEmpty()) {
+      removeIgnoredFiles(filesToCheck)
+      checkIgnored(filesToCheck)
     }
   }
 
-  fun setupVfsListener() =
+  override fun filesChanged(events: List<VFileEvent>) {
+    if (scanTurnedOff()) return
+
+    val affectedFiles = events
+      .flatMap(::getAffectedFilePaths)
+      .filter { repository.root == VcsUtil.getVcsRootFor(repository.project, it) }
+      .toList()
+
+    UNPROCESSED_FILES_LOCK.write {
+      unprocessedFiles.addAll(affectedFiles)
+    }
+  }
+
+  fun setupListeners() =
     runReadAction {
       if (repository.project.isDisposed) return@runReadAction
       AsyncVfsEventsPostProcessor.getInstance().addListener(this, this)
+      changeListManager.addChangeListListener(this, this)
     }
 
   @Throws(VcsException::class)
-  protected abstract fun requestIgnored(paths: Collection<FilePath>? = null): Set<VirtualFile>
+  protected abstract fun requestIgnored(paths: Collection<FilePath>? = null): Set<FilePath>
 
-  private fun tryRequestIgnored(paths: Collection<FilePath>? = null): Set<VirtualFile> =
+  private fun tryRequestIgnored(paths: Collection<FilePath>? = null): Set<FilePath> =
     try {
       requestIgnored(paths)
     }
@@ -113,19 +135,20 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
   }
 
   override fun removeIgnoredFiles(filePaths: Collection<FilePath>): List<FilePath> {
-    val removedIgnoredFiles = arrayListOf<FilePath>()
+    val removedIgnoredFilePaths = arrayListOf<FilePath>()
     val filePathsSet = filePaths.toHashSet()
-    SET_LOCK.write {
-      val iter = ignoredSet.iterator()
-      while (iter.hasNext()) {
-        val filePath = VcsUtil.getFilePath(iter.next())
-        if (isUnder(filePathsSet, filePath)) {
-          iter.remove()
-          removedIgnoredFiles.add(filePath)
-        }
+    val ignored = SET_LOCK.read { ignoredSet.toHashSet() }
+
+    for (filePath in ignored) {
+      if (isUnder(filePathsSet, filePath)) {
+        removedIgnoredFilePaths.add(filePath)
       }
     }
-    return removedIgnoredFiles
+
+    SET_LOCK.write {
+      ignoredSet.removeAll(removedIgnoredFilePaths)
+    }
+    return removedIgnoredFilePaths
   }
 
   private fun checkIgnored(paths: Collection<FilePath>) {
@@ -168,10 +191,10 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
     LOG.debug("Check ignored for paths: ", paths)
     LOG.debug("Ignored found for paths: ", ignored)
     addNotContainedIgnores(ignored)
-    return ignored.map(VcsUtil::getFilePath).toSet()
+    return ignored.toSet()
   }
 
-  private fun addNotContainedIgnores(ignored: Collection<VirtualFile>) =
+  private fun addNotContainedIgnores(ignored: Collection<FilePath>) =
     SET_LOCK.write {
       ignored.forEach { ignored ->
         if (!isUnder(ignoredSet, ignored)) {
@@ -187,10 +210,10 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
       ignoredSet.clear()
       ignoredSet.addAll(ignored)
     }
-    return ignored.map(VcsUtil::getFilePath).toSet()
+    return ignored.toSet()
   }
 
-  private fun <REPOSITORY> Set<VirtualFile>.filterByRepository(repository: REPOSITORY) =
+  private fun <REPOSITORY> Set<FilePath>.filterByRepository(repository: REPOSITORY) =
     filter { repositoryManager.getRepositoryForFileQuick(it) == repository }
 
   private fun fireUpdateStarted() {
@@ -201,8 +224,8 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
     listeners.multicaster.updateFinished(paths, isFullRescan)
   }
 
-  private fun isUnder(parents: Set<VirtualFile>, child: VirtualFile) = generateSequence(child) { it.parent }.any { it in parents }
-  private fun isUnder(parents: Set<FilePath>, child: FilePath) = generateSequence(child) { it.parentPath }.any { it in parents }
+  private fun isUnder(parents: Set<FilePath>, child: FilePath) =
+    generateSequence(child) { if (repositoryRootPath == it) null else it.parentPath }.any { it in parents }
 
   @TestOnly
   inner class Waiter : VcsIgnoredHolderUpdateListener {
@@ -229,16 +252,22 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
 
   companion object {
     @JvmStatic
-    fun getAffectedFile(event: VFileEvent): VirtualFile? =
-      runReadAction {
-        when {
-          event is VFileCreateEvent && event.parent.isValid -> event.file
-          event is VFileDeleteEvent || event is VFileMoveEvent || event.isRename() -> event.file
-          event is VFileCopyEvent && event.newParent.isValid -> event.newParent.findChild(event.newChildName)
-          else -> null
-        }
+    fun getAffectedFilePaths(event: VFileEvent): Set<FilePath> {
+      if (event is VFileContentChangeEvent) return emptySet()
+
+      val affectedFilePaths = HashSet<FilePath>(2)
+      val isDirectory = if (event is VFileCreateEvent) event.isDirectory else event.file!!.isDirectory
+
+      affectedFilePaths.add(VcsUtil.getFilePath(event.path, isDirectory))
+
+      if (event is VFileMoveEvent) {
+        affectedFilePaths.add(VcsUtil.getFilePath(event.oldPath, isDirectory))
+      }
+      else if (event is VFilePropertyChangeEvent && event.isRename) {
+        affectedFilePaths.add(VcsUtil.getFilePath(event.oldPath, isDirectory))
       }
 
-    private fun VFileEvent.isRename() = this is VFilePropertyChangeEvent && isRename
+      return affectedFilePaths
+    }
   }
 }

@@ -1,31 +1,15 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.javadoc;
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.psi.PsiKeyword;
 import com.intellij.ui.Gray;
+import com.intellij.ui.JBColor;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-import java.awt.*;
 import java.util.Dictionary;
 import java.util.Enumeration;
 import java.util.Hashtable;
@@ -52,28 +36,10 @@ final class JavadocGenerationPanel extends JPanel {
 
   JavadocGenerationPanel() {
     myTfOutputDir.addBrowseFolderListener(JavadocBundle.message("javadoc.generate.output.directory.browse"), null, null, FileChooserDescriptorFactory.createSingleFolderDescriptor());
+    myIndex.addChangeListener(e -> mySeparateIndex.setEnabled(myIndex.isSelected()));
+    myTagDeprecated.addChangeListener(e -> myDeprecatedList.setEnabled(myTagDeprecated.isSelected()));
 
-
-    myIndex.addChangeListener(
-      new ChangeListener() {
-        @Override
-        public void stateChanged(ChangeEvent e) {
-          mySeparateIndex.setEnabled(myIndex.isSelected());
-        }
-      }
-    );
-
-      myTagDeprecated.addChangeListener(
-      new ChangeListener() {
-        @Override
-        public void stateChanged(ChangeEvent e) {
-          myDeprecatedList.setEnabled(myTagDeprecated.isSelected());
-        }
-      }
-   );
-
-    //noinspection UseOfObsoleteCollectionType
-    Hashtable<Integer, JComponent> labelTable = new Hashtable<>();
+    @SuppressWarnings("UseOfObsoleteCollectionType") Hashtable<Integer, JComponent> labelTable = new Hashtable<>();
     labelTable.put(new Integer(1), new JLabel(PsiKeyword.PUBLIC));
     labelTable.put(new Integer(2), new JLabel(PsiKeyword.PROTECTED));
     labelTable.put(new Integer(3), new JLabel(PsiKeyword.PACKAGE));
@@ -87,22 +53,16 @@ final class JavadocGenerationPanel extends JPanel {
     myScopeSlider.setPreferredSize(JBUI.size(80, 50));
     myScopeSlider.setPaintLabels(true);
     myScopeSlider.setSnapToTicks(true);
-    myScopeSlider.addChangeListener(new ChangeListener() {
-      @Override
-      public void stateChanged(ChangeEvent e) {
-        handleSlider();
-      }
-    });
-
+    myScopeSlider.addChangeListener(e -> handleSlider());
   }
+
   private void handleSlider() {
     int value = myScopeSlider.getValue();
-
-    Dictionary labelTable = myScopeSlider.getLabelTable();
-    for (Enumeration enumeration = labelTable.keys();  enumeration.hasMoreElements();) {
+    Dictionary<?, ?> labelTable = myScopeSlider.getLabelTable();
+    for (Enumeration<?> enumeration = labelTable.keys(); enumeration.hasMoreElements(); ) {
       Integer key = (Integer)enumeration.nextElement();
       JLabel label = (JLabel)labelTable.get(key);
-      label.setForeground(key.intValue() <= value ? Color.black : Gray._100);
+      label.setForeground(key.intValue() <= value ? JBColor.BLACK : Gray._100);
     }
   }
 

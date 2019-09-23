@@ -42,14 +42,14 @@ public class DomFileMetaData extends AbstractExtensionPointBean {
   @Attribute("stubVersion")
   public Integer stubVersion;
 
-  volatile DomFileDescription lazyInstance;
+  volatile DomFileDescription<?> lazyInstance;
 
   // created by reflection
   @SuppressWarnings("unused")
   public DomFileMetaData() {}
 
   @SuppressWarnings("deprecation")
-  public DomFileMetaData(DomFileDescription description) {
+  public DomFileMetaData(DomFileDescription<?> description) {
     lazyInstance = description;
     implementation = description.getClass().getName();
     rootTagName = description.acceptsOtherRootTagNames() ? null : description.getRootTagName();
@@ -58,8 +58,8 @@ public class DomFileMetaData extends AbstractExtensionPointBean {
   }
 
   // synchronized under DomApplicationComponent lock
-  DomFileDescription getDescription() {
-    DomFileDescription instance = lazyInstance;
+  DomFileDescription<?> getDescription() {
+    DomFileDescription<?> instance = lazyInstance;
     if (instance == null) {
       try {
         instance = instantiate(findExtensionClass(implementation), ApplicationManager.getApplication().getPicoContainer());

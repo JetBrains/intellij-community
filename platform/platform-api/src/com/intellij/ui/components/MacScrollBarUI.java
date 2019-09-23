@@ -4,7 +4,6 @@ package com.intellij.ui.components;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.mac.foundation.ID;
 import com.intellij.util.Alarm;
@@ -31,7 +30,6 @@ import static com.intellij.ui.mac.foundation.Foundation.*;
  * @author Sergey.Malenkov
  */
 final class MacScrollBarUI extends DefaultScrollBarUI {
-  private static final RegistryValue DISABLED = Registry.get("ide.mac.disableMacScrollbars");
   private static final List<Reference<MacScrollBarUI>> UI = new ArrayList<>();
   private final Alarm myAlarm = new Alarm();
   private boolean myTrackHovered;
@@ -256,7 +254,7 @@ final class MacScrollBarUI extends DefaultScrollBarUI {
       @Override
       public void run() {
         Style oldStyle = get();
-        if (!DISABLED.asBoolean() && SystemInfo.isMacOSMountainLion) super.run();
+        if (!Registry.is("ide.mac.disableMacScrollbars", false) && SystemInfo.isMacOSMountainLion) super.run();
         Style newStyle = get();
         if (newStyle != oldStyle) {
           List<MacScrollBarUI> list = new ArrayList<>();

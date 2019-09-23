@@ -66,6 +66,7 @@ public class AllIcons {
     /** 16x16 */ public static final Icon GroupByTestProduction = load("/actions/groupByTestProduction.svg");
     /** 16x16 */ public static final Icon Help = load("/actions/help.svg");
     /** 16x16 */ public static final Icon Highlighting = load("/actions/highlighting.svg");
+    /** 16x16 */ public static final Icon InSelection = load("/actions/inSelection.svg");
     /** 16x16 */ public static final Icon Install = load("/actions/install.svg");
     /** 16x16 */ public static final Icon IntentionBulb = load("/actions/intentionBulb.svg");
     /** 16x16 */ public static final Icon IntentionBulbGrey = load("/actions/intentionBulbGrey.svg");
@@ -2167,6 +2168,7 @@ public class AllIcons {
     /** 16x16 */ public static final Icon ClassInitializer = load("/nodes/classInitializer.svg");
     /** 16x16 */ public static final Icon CompiledClassesFolder = load("/nodes/compiledClassesFolder.svg");
     /** 16x16 */ public static final Icon ConfigFolder = load("/nodes/configFolder.svg");
+    /** 16x16 */ public static final Icon Console = load("/nodes/console.svg");
     /** 16x16 */ public static final Icon Constant = load("/nodes/constant.svg");
     /** 16x16 */ public static final Icon Controller = load("/nodes/controller.svg");
     /** 16x16 */ public static final Icon CopyOfFolder = load("/nodes/copyOfFolder.svg");
@@ -2178,6 +2180,7 @@ public class AllIcons {
     /** 16x16 */ public static final Icon DataTables = load("/nodes/DataTables.svg");
     /** 16x16 */ public static final Icon Deploy = load("/nodes/deploy.svg");
     /** 16x16 */ public static final Icon Desktop = load("/nodes/desktop.svg");
+    /** 16x16 */ public static final Icon DoneMark = load("/nodes/doneMark.svg");
     /** 16x16 */ public static final Icon Editorconfig = load("/nodes/editorconfig.svg");
     /** 16x16 */ public static final Icon Ejb = load("/nodes/ejb.svg");
     /** 16x16 */ public static final Icon EjbBusinessMethod = load("/nodes/ejbBusinessMethod.svg");
@@ -2274,6 +2277,7 @@ public class AllIcons {
     /** 16x16 */ public static final Icon PpLib = load("/nodes/ppLib.svg");
     /** 16x16 */ public static final Icon PpLibFolder = load("/nodes/ppLibFolder.svg");
     /** 16x16 */ public static final Icon PpWeb = load("/nodes/ppWeb.svg");
+    /** 16x16 */ public static final Icon ProcessMark = load("/nodes/processMark.svg");
     /** 16x16 */ public static final Icon Project = load("/nodes/project.svg");
     /** 16x16 */ public static final Icon Property = load("/nodes/property.svg");
     /** 16x16 */ public static final Icon PropertyRead = load("/nodes/propertyRead.svg");
@@ -2297,7 +2301,7 @@ public class AllIcons {
     /** 16x16 */ public static final Icon TabAlert = load("/nodes/tabAlert.svg");
     /** 16x16 */ public static final Icon TabPin = load("/nodes/tabPin.svg");
     /** 16x16 */ public static final Icon Tag = load("/nodes/tag.svg");
-    /** 13x13 */ public static final Icon Target = load("/nodes/target.svg");
+    /** 16x16 */ public static final Icon Target = load("/nodes/target.svg");
     /** 16x16 */ public static final Icon Test = load("/nodes/test.svg");
     /** 16x16 */ public static final Icon TestGroup = load("/nodes/testGroup.svg");
     /** 16x16 */ public static final Icon TestIgnored = load("/nodes/testIgnored.svg");
@@ -2741,6 +2745,7 @@ public class AllIcons {
     /** 16x16 */ public static final Icon Azure = load("/providers/azure.svg");
     /** 16x16 */ public static final Icon Cassandra = load("/providers/cassandra.svg");
     /** 16x16 */ public static final Icon ClickHouse = load("/providers/clickHouse.svg");
+    /** 16x16 */ public static final Icon CockroachDB = load("/providers/cockroachDB.svg");
     /** 16x16 */ public static final Icon DB2 = load("/providers/DB2.svg");
     /** 16x16 */ public static final Icon Eclipse = load("/providers/eclipse.svg");
     /** 16x16 */ public static final Icon Exasol = load("/providers/exasol.svg");
@@ -2792,6 +2797,7 @@ public class AllIcons {
     /** 16x16 */ public static final Icon InvalidConfigurationLayer = load("/runConfigurations/invalidConfigurationLayer.svg");
     /** 16x16 */ public static final Icon Junit = load("/runConfigurations/junit.svg");
     /** 16x16 */ public static final Icon Remote = load("/runConfigurations/remote.svg");
+    /** 16x16 */ public static final Icon RemoteDebug = load("/runConfigurations/remoteDebug.svg");
     /** 16x16 */ public static final Icon RerunFailedTests = load("/runConfigurations/rerunFailedTests.svg");
     /** 16x16 */ public static final Icon Scroll_down = load("/runConfigurations/scroll_down.svg");
     /** 16x16 */ public static final Icon ShowIgnored = load("/runConfigurations/showIgnored.svg");
@@ -2825,6 +2831,7 @@ public class AllIcons {
     /** 16x16 */ public static final Icon ToolbarTerminated = load("/runConfigurations/toolbarTerminated.svg");
     /** 16x16 */ public static final Icon TrackCoverage = load("/runConfigurations/trackCoverage.svg");
     /** 16x16 */ public static final Icon Web_app = load("/runConfigurations/web_app.svg");
+    /** 16x16 */ public static final Icon Wsl = load("/runConfigurations/wsl.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.BalloonError */
     @SuppressWarnings("unused")

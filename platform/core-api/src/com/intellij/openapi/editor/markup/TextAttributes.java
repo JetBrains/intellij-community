@@ -38,7 +38,7 @@ public class TextAttributes implements Cloneable {
 
   public static final TextAttributes ERASE_MARKER = new TextAttributes();
 
-  @SuppressWarnings("NullableProblems")
+  @SuppressWarnings({"NullableProblems", "NotNullFieldNotInitialized"})
   @NotNull
   private AttributesFlyweight myAttrs;
 

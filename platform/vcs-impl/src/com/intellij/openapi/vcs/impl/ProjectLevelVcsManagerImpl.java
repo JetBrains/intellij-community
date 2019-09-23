@@ -11,7 +11,10 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -32,7 +35,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.VcsAnnotationLocalChangesListener;
-import com.intellij.openapi.vcs.changes.VcsAnnotationLocalChangesListenerImpl;
 import com.intellij.openapi.vcs.checkout.CompositeCheckoutListener;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.history.VcsHistoryCache;
@@ -41,7 +43,6 @@ import com.intellij.openapi.vcs.roots.VcsRootScanner;
 import com.intellij.openapi.vcs.update.ActionInfo;
 import com.intellij.openapi.vcs.update.UpdateInfoTree;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
-import com.intellij.openapi.vcs.update.UpdatedFilesListener;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
@@ -66,7 +67,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @State(name = "ProjectLevelVcsManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
-public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx implements ProjectComponent, PersistentStateComponent<Element>, Disposable {
+public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx implements PersistentStateComponent<Element>, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl");
   @NonNls private static final String SETTINGS_EDITED_MANUALLY = "settingsEditedManually";
 
@@ -75,8 +76,6 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   private final NewMappings myMappings;
   private final Project myProject;
-  private final ToolWindowManager myToolWindowManager;
-  private final MappingsToRoots myMappingsToRoots;
 
   private ConsoleView myConsole;
 
@@ -98,52 +97,39 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   private final List<Pair<String, ConsoleViewContentType>> myPendingOutput = new ArrayList<>();
 
-  private final VcsHistoryCache myVcsHistoryCache;
-  private final ContentRevisionCache myContentRevisionCache;
   private final FileIndexFacade myExcludedIndex;
-  private final FileTypeManager myFileTypeManager;
-  private final VcsAnnotationLocalChangesListenerImpl myAnnotationLocalChangesListener;
 
-  public ProjectLevelVcsManagerImpl(Project project,
-                                    FileStatusManager manager,
-                                    FileIndexFacade excludedFileIndex,
-                                    ProjectManager projectManager,
-                                    FileTypeManager fileTypeManager,
-                                    DefaultVcsRootPolicy defaultVcsRootPolicy) {
+  public ProjectLevelVcsManagerImpl(@NotNull Project project) {
     myProject = project;
+    myExcludedIndex = FileIndexFacade.getInstance(project);
+
     mySerialization = new ProjectLevelVcsManagerSerialization();
     myOptionsAndConfirmations = new OptionsAndConfirmations();
 
     if (project.isDefault()) {
       myInitialization = null;
-      myToolWindowManager = null;
     }
     else {
-      // there is no ToolWindowManager for default project, can't pass it via parameter
-      myToolWindowManager = ToolWindowManager.getInstance(project);
       myInitialization = new VcsInitialization(myProject);
-      Disposer.register(project, myInitialization); // wait for the thread spawned in VcsInitialization to terminate
-      projectManager.addProjectManagerListener(project, new ProjectManagerListener() {
+      // wait for the thread spawned in VcsInitialization to terminate
+      Disposer.register(this, myInitialization);
+
+      ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
         @Override
         public void projectClosing(@NotNull Project project) {
-          Disposer.dispose(myInitialization);
+          if (project == myProject) {
+            Disposer.dispose(myInitialization);
+          }
         }
       });
     }
 
-    myMappings = new NewMappings(myProject, this, manager, defaultVcsRootPolicy);
-    myMappingsToRoots = new MappingsToRoots(myMappings, myProject);
+    myMappings = new NewMappings(myProject, this);
+    Disposer.register(this, myMappings);
+  }
 
-    myVcsHistoryCache = new VcsHistoryCache();
-    myContentRevisionCache = new ContentRevisionCache();
-    VcsListener vcsListener = () -> myVcsHistoryCache.clearHistory();
-    myExcludedIndex = excludedFileIndex;
-    myFileTypeManager = fileTypeManager;
-    MessageBusConnection connection = myProject.getMessageBus().connect();
-    connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, vcsListener);
-    connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED_IN_PLUGIN, vcsListener);
-    connection.subscribe(UpdatedFilesListener.UPDATED_FILES, myContentRevisionCache::clearCurrent);
-    myAnnotationLocalChangesListener = new VcsAnnotationLocalChangesListenerImpl(myProject, this);
+  public static ProjectLevelVcsManagerImpl getInstanceImpl(@NotNull Project project) {
+    return (ProjectLevelVcsManagerImpl)getInstance(project);
   }
 
   public void registerVcs(AbstractVcs vcs) {
@@ -184,41 +170,12 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   @Override
   public void dispose() {
     releaseConsole();
-    Disposer.dispose(myMappings);
-    Disposer.dispose(myAnnotationLocalChangesListener);
-
-    if (myToolWindowManager != null && myToolWindowManager.getToolWindow(ToolWindowId.VCS) != null) {
-      myToolWindowManager.unregisterToolWindow(ToolWindowId.VCS);
-    }
   }
 
   @NotNull
   @Override
   public VcsAnnotationLocalChangesListener getAnnotationLocalChangesListener() {
-    return myAnnotationLocalChangesListener;
-  }
-
-  @Override
-  public void projectOpened() {
-    addInitializationRequest(VcsInitObject.AFTER_COMMON, () -> {
-      if (!ApplicationManager.getApplication().isUnitTestMode()) {
-        List<VcsRootChecker> checkers = VcsRootChecker.EXTENSION_POINT_NAME.getExtensionList();
-        if (checkers.size() != 0) {
-          VcsRootScanner.start(myProject, checkers);
-        }
-      }
-    });
-  }
-
-  @Override
-  public void projectClosed() {
-    releaseConsole();
-  }
-
-  @Override
-  @NotNull
-  public String getComponentName() {
-    return "ProjectLevelVcsManager";
+    return myProject.getService(VcsAnnotationLocalChangesListener.class);
   }
 
   @Override
@@ -470,13 +427,15 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   }
 
   @Override
-  @Deprecated
   public void setDirectoryMapping(@NotNull String path, @Nullable String activeVcsName) {
     if (myMappingsLoaded) return;            // ignore per-module VCS settings if the mapping table was loaded from .ipr
     myHaveLegacyVcsConfiguration = true;
     myMappings.setMapping(FileUtil.toSystemIndependentName(path), activeVcsName);
   }
 
+  /**
+   * @deprecated use {@link #setAutoDirectoryMappings(List)}
+   */
   @Deprecated
   public void setAutoDirectoryMapping(@NotNull String path, @Nullable String activeVcsName) {
     setAutoDirectoryMappings(ContainerUtil.append(myMappings.getDirectoryMappings(), new VcsDirectoryMapping(path, activeVcsName)));
@@ -514,7 +473,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     VcsRootIterator.iterateVcsRoot(myProject, root, iterator, directoryFilter);
   }
 
-  @Nullable
+  @NotNull
   @Override
   public Element getState() {
     Element element = new Element("state");
@@ -603,12 +562,12 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   @Override
   @NotNull
   public VirtualFile[] getRootsUnderVcs(@NotNull AbstractVcs vcs) {
-    return myMappingsToRoots.getRootsUnderVcs(vcs);
+    return MappingsToRoots.getRootsUnderVcs(myProject, myMappings, vcs);
   }
 
   @Override
-  public List<VirtualFile> getDetailedVcsMappings(final AbstractVcs vcs) {
-    return myMappingsToRoots.getDetailedVcsMappings(vcs);
+  public List<VirtualFile> getDetailedVcsMappings(@NotNull AbstractVcs vcs) {
+    return MappingsToRoots.getDetailedVcsMappings(myProject, myMappings, vcs);
   }
 
   @Override
@@ -762,7 +721,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   }
 
   /**
-   * @deprecated {@link BackgroundableActionLock}
+   * @deprecated use {@link BackgroundableActionLock}
    */
   @Deprecated
   public BackgroundableActionEnabledHandler getBackgroundableActionHandler(final VcsBackgroundableActions action) {
@@ -831,8 +790,11 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
         return vf != null && myExcludedIndex.isExcludedFile(vf);
       }
       else {
+        FileTypeManager fileTypeManager = FileTypeManager.getInstance();
         for (String name : StringUtil.tokenize(filePath.getPath(), "/")) {
-          if (myFileTypeManager.isFileIgnored(name)) return true;
+          if (fileTypeManager.isFileIgnored(name)) {
+            return true;
+          }
         }
         return false;
       }
@@ -865,12 +827,12 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   @Override
   public VcsHistoryCache getVcsHistoryCache() {
-    return myVcsHistoryCache;
+    return VcsCacheManager.getInstance(myProject).getVcsHistoryCache();
   }
 
   @Override
   public ContentRevisionCache getContentRevisionCache() {
-    return myContentRevisionCache;
+    return VcsCacheManager.getInstance(myProject).getContentRevisionCache();
   }
 
   @TestOnly
@@ -901,6 +863,30 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     @Override
     public String toString() {
       return getClass() + " - " + Arrays.toString(myObjects);
+    }
+  }
+
+  static final class MyProjectManagerListener implements ProjectManagerListener {
+    @Override
+    public void projectOpened(@NotNull Project project) {
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        return;
+      }
+
+      getInstanceImpl(project).addInitializationRequest(VcsInitObject.AFTER_COMMON, () -> {
+        List<VcsRootChecker> checkers = VcsRootChecker.EXTENSION_POINT_NAME.getExtensionList();
+        if (checkers.size() != 0) {
+          VcsRootScanner.start(project, checkers);
+        }
+      });
+    }
+
+    @Override
+    public void projectClosed(@NotNull Project project) {
+      ProjectLevelVcsManagerImpl manager = (ProjectLevelVcsManagerImpl)project.getServiceIfCreated(ProjectLevelVcsManager.class);
+      if (manager != null) {
+        manager.releaseConsole();
+      }
     }
   }
 }

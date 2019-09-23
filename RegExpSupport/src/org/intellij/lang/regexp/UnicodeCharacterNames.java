@@ -84,7 +84,13 @@ public class UnicodeCharacterNames {
       catch (IllegalArgumentException e) {
         return -1;
       }
-      catch (IllegalAccessException | InvocationTargetException e) {
+      catch (InvocationTargetException e) {
+        if (e.getCause() instanceof IllegalArgumentException) {
+          return -1;
+        }
+        throw new RuntimeException(e);
+      }
+      catch (IllegalAccessException e) {
         throw new RuntimeException(e);
       }
     }

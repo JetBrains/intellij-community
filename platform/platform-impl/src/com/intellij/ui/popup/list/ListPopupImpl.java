@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.popup.list;
 
 import com.intellij.icons.AllIcons;
@@ -55,12 +55,18 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
   private int myMaxRowCount = 30;
   private boolean myAutoHandleBeforeShow;
 
+  /**
+   * @deprecated use {@link #ListPopupImpl(Project, ListPopupStep)} + {@link #setMaxRowCount(int)}
+   */
   @Deprecated
   public ListPopupImpl(@NotNull ListPopupStep aStep, int maxRowCount) {
     this(aStep);
     setMaxRowCount(maxRowCount);
   }
 
+  /**
+   * @deprecated use {@link #ListPopupImpl(Project, ListPopupStep)}
+   */
   @Deprecated
   public ListPopupImpl(@NotNull ListPopupStep aStep) {
     this(CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext()), null, aStep, null);
@@ -483,12 +489,18 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
       Point point = e.getPoint();
       int index = myList.locationToIndex(point);
 
-      if (index != myLastSelectedIndex && isSelectableAt(index)) {
-        if (!isMultiSelectionEnabled() || !UIUtil.isSelectionButtonDown(e) && myList.getSelectedIndices().length <= 1) {
-          myList.setSelectedIndex(index);
+      if (isSelectableAt(index)) {
+        if (index != myLastSelectedIndex) {
+          if (!isMultiSelectionEnabled() || !UIUtil.isSelectionButtonDown(e) && myList.getSelectedIndices().length <= 1) {
+            myList.setSelectedIndex(index);
+          }
+          restartTimer();
+          myLastSelectedIndex = index;
         }
-        restartTimer();
-        myLastSelectedIndex = index;
+      }
+      else {
+        myList.clearSelection();
+        myLastSelectedIndex = -1;
       }
 
       notifyParentOnChildSelection();
@@ -565,7 +577,11 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
       if (UIUtil.isActionClick(e, MouseEvent.MOUSE_PRESSED) && isOnNextStepButton(e)) {
         e.consume();
       }
-      super.processMouseEvent(e);
+
+      boolean isClick = UIUtil.isActionClick(e, MouseEvent.MOUSE_PRESSED) || UIUtil.isActionClick(e, MouseEvent.MOUSE_RELEASED);
+      if (!isClick || myList.locationToIndex(e.getPoint()) == myList.getSelectedIndex()) {
+        super.processMouseEvent(e);
+      }
     }
 
     @Override

@@ -8,13 +8,14 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
+import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.util.ArrayUtilRt;
 import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension;
 
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author nik
@@ -30,6 +31,7 @@ public class JavaModuleExternalPathsImpl extends JavaModuleExternalPaths {
     this(null);
   }
 
+  @NonInjectable
   private JavaModuleExternalPathsImpl(JavaModuleExternalPathsImpl source) {
     mySource = source;
     if (source != null) {
@@ -118,12 +120,22 @@ public class JavaModuleExternalPathsImpl extends JavaModuleExternalPaths {
 
   @Override
   public void writeExternal(@NotNull Element element) throws WriteExternalException {
+    List<Element> toWrite = null;
     for (OrderRootType orderRootType : myOrderRootPointerContainers.keySet()) {
       VirtualFilePointerContainer container = myOrderRootPointerContainers.get(orderRootType);
       if (container != null && container.size() > 0) {
-        final Element javaDocPaths = new Element(((PersistentOrderRootType)orderRootType).getModulePathsName());
-        container.writeExternal(javaDocPaths, ROOT_ELEMENT, false);
-        element.addContent(javaDocPaths);
+        final Element content = new Element(((PersistentOrderRootType)orderRootType).getModulePathsName());
+        container.writeExternal(content, ROOT_ELEMENT, false);
+        if (toWrite == null) {
+          toWrite = new ArrayList<>();
+        }
+        toWrite.add(content);
+      }
+    }
+    if (toWrite != null) {
+      Collections.sort(toWrite, Comparator.comparing(Element::getName));
+      for (Element content : toWrite) {
+        element.addContent(content);
       }
     }
   }

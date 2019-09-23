@@ -80,6 +80,16 @@ public class PythonHighlightingTest extends PyTestCase {
     doTest(false, false);
   }
 
+  // PY-36003
+  public void testContinueInFinallyBlockBefore38() {
+    doTest(LanguageLevel.PYTHON37, false, false);
+  }
+
+  // PY-36003
+  public void testContinueInFinallyBlock() {
+    doTest(LanguageLevel.PYTHON38, false, false);
+  }
+
   public void testReturnWithArgumentsInGenerator() {
     doTest();
   }
@@ -109,11 +119,9 @@ public class PythonHighlightingTest extends PyTestCase {
     doTest(false, false);
   }
 
-  /*
   public void testStringEscapedOK() {
     doTest();
   }
-  */
 
   public void testStringMixedSeparatorsOK() {   // PY-299
     doTest();

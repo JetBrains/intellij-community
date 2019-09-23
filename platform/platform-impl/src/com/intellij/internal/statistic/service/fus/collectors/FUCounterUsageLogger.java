@@ -7,6 +7,9 @@ import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.eventLog.FeatureUsageGroup;
 import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPointListener;
+import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -17,7 +20,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 public class FUCounterUsageLogger {
-  private static final Logger LOG = Logger.getInstance("com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger");
+  private static final Logger LOG = Logger.getInstance(FUCounterUsageLogger.class);
 
   private static final int LOG_REGISTERED_DELAY_MIN = 24 * 60;
   private static final int LOG_REGISTERED_INITIAL_DELAY_MIN = 5;
@@ -50,15 +53,28 @@ public class FUCounterUsageLogger {
     }
 
     for (CounterUsageCollectorEP ep : CounterUsageCollectorEP.EP_NAME.getExtensionList()) {
-      final String id = ep.getGroupId();
-      if (StringUtil.isNotEmpty(id)) {
-        register(new EventLogGroup(id, ep.version));
-      }
+      registerGroupFromEP(ep);
     }
+    Extensions.getRootArea().getExtensionPoint(CounterUsageCollectorEP.EP_NAME).addExtensionPointListener(
+      new ExtensionPointListener<CounterUsageCollectorEP>() {
+        @Override
+        public void extensionAdded(@NotNull CounterUsageCollectorEP extension, @NotNull PluginDescriptor pluginDescriptor) {
+          registerGroupFromEP(extension);
+        }
+
+        // Not unregistering groups when a plugin is unloaded is harmless
+      });
 
     JobScheduler.getScheduler().scheduleWithFixedDelay(
       () -> logRegisteredGroups(), LOG_REGISTERED_INITIAL_DELAY_MIN, LOG_REGISTERED_DELAY_MIN, TimeUnit.MINUTES
     );
+  }
+
+  private void registerGroupFromEP(CounterUsageCollectorEP ep) {
+    final String id = ep.getGroupId();
+    if (StringUtil.isNotEmpty(id)) {
+      register(new EventLogGroup(id, ep.version));
+    }
   }
 
   /**
@@ -92,7 +108,7 @@ public class FUCounterUsageLogger {
    *
    * @see FUCounterUsageLogger#logEvent(Project, String, String, FeatureUsageData)
    */
-  public void logEvent(@NotNull Project project,
+  public void logEvent(@Nullable Project project,
                        @NotNull String groupId,
                        @NotNull String eventId) {
     final EventLogGroup group = findRegisteredGroupById(groupId);
@@ -114,7 +130,7 @@ public class FUCounterUsageLogger {
    * @param eventId should be a <strong>verb</strong> because it shows which action happened, e.g. 'dialog.shown', 'project.opened'.
    * @param data information about event context or related "items", e.g. "input_event":"Alt+Enter", "place":"MainMenu".
    */
-  public void logEvent(@NotNull Project project,
+  public void logEvent(@Nullable Project project,
                        @NotNull String groupId,
                        @NotNull String eventId,
                        @NotNull FeatureUsageData data) {

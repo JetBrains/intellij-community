@@ -6,7 +6,6 @@ import com.intellij.lang.PsiBuilder.Marker;
 import static com.intellij.sh.ShTypes.*;
 import static com.intellij.sh.parser.ShParserUtil.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.IFileElementType;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.lang.PsiParser;
@@ -24,16 +23,15 @@ public class ShParser implements PsiParser, LightPsiParser {
     boolean r;
     b = adapt_builder_(t, b, this, EXTENDS_SETS_);
     Marker m = enter_section_(b, 0, _COLLAPSE_, null);
-    if (t instanceof IFileElementType) {
-      r = parse_root_(t, b, 0);
-    }
-    else {
-      r = parse_extra_roots_(t, b, 0);
-    }
+    r = parse_root_(t, b);
     exit_section_(b, 0, m, t, r, true, TRUE_CONDITION);
   }
 
-  static boolean parse_extra_roots_(IElementType t, PsiBuilder b, int l) {
+  protected boolean parse_root_(IElementType t, PsiBuilder b) {
+    return parse_root_(t, b, 0);
+  }
+
+  static boolean parse_root_(IElementType t, PsiBuilder b, int l) {
     boolean r;
     if (t == BLOCK) {
       r = block(b, l + 1);
@@ -42,13 +40,9 @@ public class ShParser implements PsiParser, LightPsiParser {
       r = do_block(b, l + 1);
     }
     else {
-      r = false;
+      r = file(b, l + 1);
     }
     return r;
-  }
-
-  protected boolean parse_root_(IElementType t, PsiBuilder b, int l) {
-    return file(b, l + 1);
   }
 
   public static final TokenSet[] EXTENDS_SETS_ = new TokenSet[] {
@@ -2066,48 +2060,29 @@ public class ShParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // ('<' '<'?| '>') '(' list ')'
+  // ('<(' | '>(') list ')'
   public static boolean process_substitution(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "process_substitution")) return false;
-    if (!nextTokenIs(b, "<process substitution>", GT, LT)) return false;
+    if (!nextTokenIs(b, "<process substitution>", INPUT_PROCESS_SUBSTITUTION, OUTPUT_PROCESS_SUBSTITUTION)) return false;
     boolean r, p;
     Marker m = enter_section_(b, l, _NONE_, PROCESS_SUBSTITUTION, "<process substitution>");
     r = process_substitution_0(b, l + 1);
     p = r; // pin = 1
-    r = r && report_error_(b, consumeToken(b, LEFT_PAREN));
-    r = p && report_error_(b, list(b, l + 1)) && r;
+    r = r && report_error_(b, list(b, l + 1));
     r = p && consumeToken(b, RIGHT_PAREN) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
   }
 
-  // '<' '<'?| '>'
+  // '<(' | '>('
   private static boolean process_substitution_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "process_substitution_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = process_substitution_0_0(b, l + 1);
-    if (!r) r = consumeToken(b, GT);
+    r = consumeToken(b, INPUT_PROCESS_SUBSTITUTION);
+    if (!r) r = consumeToken(b, OUTPUT_PROCESS_SUBSTITUTION);
     exit_section_(b, m, null, r);
     return r;
-  }
-
-  // '<' '<'?
-  private static boolean process_substitution_0_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "process_substitution_0_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, LT);
-    r = r && process_substitution_0_0_1(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // '<'?
-  private static boolean process_substitution_0_0_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "process_substitution_0_0_1")) return false;
-    consumeToken(b, LT);
-    return true;
   }
 
   /* ********************************************************** */
@@ -2148,7 +2123,7 @@ public class ShParser implements PsiParser, LightPsiParser {
 
   /* ********************************************************** */
   // ('<&' | '>&') (number | '-')
-  //                             | ('>' | '<' | '>>' | '<<<' | '<<' | '<&' | '>&' | '&>>' | '<>' | '>|') w+
+  //                             | ('>' | '<' | '>>' | '<<<' | '<<' | '<&' | '>&' | '&>>' | '<>' | '>|') (process_substitution | w+ )
   static boolean redirection_inner(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "redirection_inner")) return false;
     boolean r;
@@ -2192,7 +2167,7 @@ public class ShParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // ('>' | '<' | '>>' | '<<<' | '<<' | '<&' | '>&' | '&>>' | '<>' | '>|') w+
+  // ('>' | '<' | '>>' | '<<<' | '<<' | '<&' | '>&' | '&>>' | '<>' | '>|') (process_substitution | w+ )
   private static boolean redirection_inner_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "redirection_inner_1")) return false;
     boolean r;
@@ -2222,16 +2197,27 @@ public class ShParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // w+
+  // process_substitution | w+
   private static boolean redirection_inner_1_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "redirection_inner_1_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = process_substitution(b, l + 1);
+    if (!r) r = redirection_inner_1_1_1(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // w+
+  private static boolean redirection_inner_1_1_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "redirection_inner_1_1_1")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = w(b, l + 1);
     while (r) {
       int c = current_position_(b);
       if (!w(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "redirection_inner_1_1", c)) break;
+      if (!empty_element_parsed_guard_(b, "redirection_inner_1_1_1", c)) break;
     }
     exit_section_(b, m, null, r);
     return r;

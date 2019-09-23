@@ -20,7 +20,6 @@ import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashSet;
@@ -66,8 +65,7 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
                         String comment,
                         List<VcsException> exception,
                         final Set<String> feedback) {
-    //noinspection unchecked
-    MultiMap<Pair<Url, WorkingCopyFormat>, FilePath> map = SvnUtil.splitIntoRepositoriesMap(mySvnVcs, committables, Convertor.SELF);
+    MultiMap<Pair<Url, WorkingCopyFormat>, FilePath> map = SvnUtil.splitIntoRepositoriesMap(mySvnVcs, committables, Convertor.self());
 
     for (Map.Entry<Pair<Url, WorkingCopyFormat>, Collection<FilePath>> entry : map.entrySet()) {
       try {
@@ -119,7 +117,7 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
 
   @NotNull
   private Collection<FilePath> getCommitables(@NotNull List<Change> changes) {
-    THashSet<FilePath> result = ContainerUtil.newTroveSet(ChangesUtil.CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY);
+    THashSet<FilePath> result = new THashSet<>(ChangesUtil.CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY);
 
     ChangesUtil.getPaths(changes.stream()).forEach(path -> {
       if (result.add(path)) {

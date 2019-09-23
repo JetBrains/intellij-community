@@ -22,7 +22,7 @@ import com.intellij.openapi.options.BeanConfigurable;
 
 public class JavaCodeFoldingOptionsProvider extends BeanConfigurable<JavaCodeFoldingSettings> implements CodeFoldingOptionsProvider {
   public JavaCodeFoldingOptionsProvider() {
-    super(JavaCodeFoldingSettings.getInstance());
+    super(JavaCodeFoldingSettings.getInstance(), "Java");
     JavaCodeFoldingSettings settings = getInstance();
     
     checkBox(ApplicationBundle.message("checkbox.collapse.one.line.methods"), settings::isCollapseOneLineMethods, settings::setCollapseOneLineMethods);

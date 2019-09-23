@@ -323,8 +323,8 @@ class CollectMigration extends BaseStreamApiMigration {
     else {
       PsiExpression copy = JavaPsiFacade.getElementFactory(initializer.getProject())
         .createExpressionFromText(ct.text(initializer), initializer);
-      if (copy instanceof PsiNewExpression) {
-        PsiExpressionList argumentList = ((PsiNewExpression)copy).getArgumentList();
+      if (copy instanceof PsiCallExpression && ConstructionUtils.isPrepopulatedCollectionInitializer(copy)) {
+        PsiExpressionList argumentList = ((PsiCallExpression)copy).getArgumentList();
         if (argumentList != null) {
           PsiExpression arg = ArrayUtil.getFirstElement(argumentList.getExpressions());
           if (arg != null && !(arg.getType() instanceof PsiPrimitiveType)) {
@@ -850,7 +850,7 @@ class CollectMigration extends BaseStreamApiMigration {
     NewListTerminal(CollectTerminal upstream,
                     PsiLocalVariable variable,
                     String intermediate,
-                    PsiNewExpression newListExpression,
+                    PsiCallExpression newListExpression,
                     PsiType resultType) {
       super(upstream, variable, intermediate, newListExpression);
       myResultType = resultType;
@@ -863,8 +863,11 @@ class CollectMigration extends BaseStreamApiMigration {
 
     @Override
     StreamEx<String> fusedElements() {
-      PsiJavaCodeReferenceElement reference = ((PsiNewExpression)myCreateExpression).getClassReference();
-      return myUpstream.fusedElements().append(Objects.requireNonNull(reference).getReferenceName());
+      if (myCreateExpression instanceof PsiNewExpression) {
+        PsiJavaCodeReferenceElement reference = ((PsiNewExpression)myCreateExpression).getClassReference();
+        return myUpstream.fusedElements().append(Objects.requireNonNull(reference).getReferenceName());
+      }
+      return myUpstream.fusedElements().append(((PsiMethodCallExpression)myCreateExpression).getMethodExpression().getReferenceName());
     }
 
     @Nullable
@@ -875,14 +878,19 @@ class CollectMigration extends BaseStreamApiMigration {
 
       WrapperCandidate candidate = WrapperCandidate.tryExtract(terminal, element);
       if (candidate == null) return null;
-      if (!(candidate.myCandidate instanceof PsiNewExpression)) return null;
-      if (!InheritanceUtil.isInheritor(candidate.myType, CommonClassNames.JAVA_UTIL_COLLECTION)) return null;
-      PsiNewExpression newExpression = (PsiNewExpression)candidate.myCandidate;
-      PsiExpressionList argumentList = newExpression.getArgumentList();
+      if (!(candidate.myCandidate instanceof PsiCallExpression)) return null;
+      PsiClass targetClass = PsiUtil.resolveClassInClassTypeOnly(candidate.myCandidate.getType());
+      if (!InheritanceUtil.isInheritor(targetClass, CommonClassNames.JAVA_UTIL_COLLECTION)) return null;
+      PsiCallExpression callExpression = (PsiCallExpression)candidate.myCandidate;
+      if (!ConstructionUtils.isPrepopulatedCollectionInitializer(callExpression)) return null;
+      if (CommonClassNames.JAVA_UTIL_HASH_SET.equals(targetClass.getQualifiedName()) && intermediateSteps.equals(".distinct()")) {
+        intermediateSteps = "";
+      }
+      PsiExpressionList argumentList = callExpression.getArgumentList();
       if (argumentList == null) return null;
       PsiExpression[] args = argumentList.getExpressions();
       if (args.length != 1 || !terminal.isTargetReference(args[0])) return null;
-      return new NewListTerminal(terminal, candidate.myVar, intermediateSteps, newExpression, candidate.myType);
+      return new NewListTerminal(terminal, candidate.myVar, intermediateSteps, callExpression, candidate.myType);
     }
   }
 

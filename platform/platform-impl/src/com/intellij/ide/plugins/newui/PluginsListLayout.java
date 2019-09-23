@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.newui;
 
-import com.intellij.ide.plugins.PluginManagerConfigurableNew;
+import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.util.ui.AbstractLayoutManager;
 import org.jetbrains.annotations.NotNull;
 
@@ -45,7 +45,7 @@ public class PluginsListLayout extends AbstractLayoutManager implements PagePlug
       component.setBounds(0, y, width, height);
       y += height;
 
-      for (CellPluginComponent plugin : group.plugins) {
+      for (ListPluginComponent plugin : group.plugins) {
         plugin.setBounds(0, y, width, myLineHeight);
         y += myLineHeight;
       }
@@ -58,20 +58,12 @@ public class PluginsListLayout extends AbstractLayoutManager implements PagePlug
     }
 
     List<UIPluginGroup> groups = ((PluginsGroupComponent)parent).getGroups();
-    int width = PluginManagerConfigurableNew.getParentWidth(parent) - parent.getInsets().right;
+    int width = PluginManagerConfigurable.getParentWidth(parent) - parent.getInsets().right;
 
     myLineHeight = 0;
 
     for (UIPluginGroup group : groups) {
-      for (CellPluginComponent plugin : group.plugins) {
-        JEditorPane description = plugin.myDescription;
-        if (description != null) {
-          plugin.doLayout();
-          int parentWidth = width - SwingUtilities.convertPoint(description.getParent(), description.getLocation(), plugin).x;
-          if (parentWidth > 0) {
-            description.putClientProperty("parent.width", new Integer(parentWidth));
-          }
-        }
+      for (ListPluginComponent plugin : group.plugins) {
 
         plugin.doLayout();
         myLineHeight = Math.max(myLineHeight, plugin.getPreferredSize().height);

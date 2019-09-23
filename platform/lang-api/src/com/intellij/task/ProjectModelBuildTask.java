@@ -5,9 +5,10 @@ import com.intellij.openapi.roots.ProjectModelBuildableElement;
 import org.jetbrains.annotations.ApiStatus;
 
 /**
+  * An {@link ProjectModelBuildTask} represents an IDE task to build {@link ProjectModelBuildableElement}s, e.g. IDE artifacts.
+ *
  * @author Vladislav.Soroka
  */
-@ApiStatus.Experimental
 public interface ProjectModelBuildTask<T extends ProjectModelBuildableElement> extends BuildTask {
   T getBuildableElement();
 }

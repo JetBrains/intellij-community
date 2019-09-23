@@ -8,7 +8,7 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.exception.FrequentErrorLogger;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -66,7 +66,7 @@ import java.util.function.Supplier;
 public class AstLoadingFilter {
 
   private static final Logger LOG = Logger.getInstance(AstLoadingFilter.class);
-  private static final Set<String> ourReportedTraces = ContainerUtil.newConcurrentSet();
+  private static final FrequentErrorLogger ourErrorLogger = FrequentErrorLogger.newInstance(LOG);
   /**
    * Holds not-null value if loading was disabled in current thread.
    * Initial value is {@code null} meaning loading is enabled by default.
@@ -89,9 +89,7 @@ public class AstLoadingFilter {
     }
     else {
       AstLoadingException throwable = new AstLoadingException();
-      if (ourReportedTraces.add(ExceptionUtil.getThrowableText(throwable))) {
-        LOG.error("Tree access disabled", throwable, new Attachment("debugInfo", buildDebugInfo(file, disallowedInfo)));
-      }
+      ourErrorLogger.error("Tree access disabled", throwable, new Attachment("debugInfo", buildDebugInfo(file, disallowedInfo)));
     }
   }
 

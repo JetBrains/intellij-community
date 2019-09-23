@@ -5,7 +5,6 @@ import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoGenerator
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoValidator
-
 /**
  * @author nik
  */
@@ -27,8 +26,7 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
   }
 
   @Override
-  String copyFilesForOsDistribution() {
-    String unixDistPath = "$buildContext.paths.buildOutputRoot/dist.$targetOs.distSuffix"
+  void copyFilesForOsDistribution(String unixDistPath) {
     buildContext.messages.progress("Building distributions for $targetOs.osName")
     buildContext.ant.copy(todir: "$unixDistPath/bin") {
       fileset(dir: "$buildContext.paths.communityHome/bin/linux")
@@ -46,7 +44,6 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
     generateVMOptions(unixDistPath)
     generateReadme(unixDistPath)
     customizer.copyAdditionalFiles(buildContext, unixDistPath)
-    return unixDistPath
   }
 
   @Override
@@ -120,10 +117,10 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
     JvmArchitecture.values().each {
       def fileName = "${buildContext.productProperties.baseFileName}${it.fileSuffix}.vmoptions"
       def vmOptions = VmOptionsGenerator.computeVmOptions(it, buildContext.applicationInfo.isEAP, buildContext.productProperties) +
-                      " -Dawt.useSystemAAFontSettings=lcd" +
-                      " -Dsun.java2d.renderer=sun.java2d.marlin.MarlinRenderingEngine" +
-                      " -Dsun.tools.attach.tmp.only=true"
-      new File(unixDistPath, "bin/$fileName").text = vmOptions.replace(' ', '\n') + "\n"
+                      ['-Dawt.useSystemAAFontSettings=lcd',
+                       '-Dsun.java2d.renderer=sun.java2d.marlin.MarlinRenderingEngine',
+                       '-Dsun.tools.attach.tmp.only=true']
+      new File(unixDistPath, "bin/$fileName").text = vmOptions.join("\n") + "\n"
     }
   }
 
@@ -138,33 +135,42 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
     buildContext.ant.fixcrlf(file: "$unixDistPath/bin/Install-Linux-tar.txt", eol: "unix")
   }
 
+  @Override
+  List<String> generateExecutableFilesPatterns(boolean includeJre) {
+    def patterns = [
+      "bin/*.sh",
+      "bin/*.py",
+      "bin/fsnotifier*"
+    ] + customizer.extraExecutables
+    if (includeJre) {
+      patterns += "jbr/bin/*"
+    }
+    return patterns
+  }
+
   private void buildTarGz(String jreDirectoryPath, String unixDistPath, String suffix) {
     def tarRoot = customizer.getRootDirectoryName(buildContext.applicationInfo, buildContext.buildNumber)
     def baseName = buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)
     def tarPath = "${buildContext.paths.artifacts}/${baseName}${suffix}.tar.gz"
-    def extraBins = customizer.extraExecutables
     def paths = [buildContext.paths.distAll, unixDistPath]
 
     String javaExecutablePath = null
     if (jreDirectoryPath != null) {
       paths += jreDirectoryPath
-      extraBins += "jbr/bin/*"
       javaExecutablePath = "jbr/bin/java"
     }
     def productJsonDir = new File(buildContext.paths.temp, "linux.dist.product-info.json$suffix").absolutePath
     generateProductJson(productJsonDir, javaExecutablePath)
     paths += productJsonDir
 
+    def executableFilesPatterns = generateExecutableFilesPatterns(jreDirectoryPath != null)
     def description = "archive${jreDirectoryPath != null ? "" : " (without JRE)"}"
     buildContext.messages.block("Build Linux tar.gz $description") {
       buildContext.messages.progress("Building Linux tar.gz $description")
       buildContext.ant.tar(tarfile: tarPath, longfile: "gnu", compression: "gzip") {
         paths.each {
           tarfileset(dir: it, prefix: tarRoot) {
-            exclude(name: "bin/*.sh")
-            exclude(name: "bin/*.py")
-            exclude(name: "bin/fsnotifier*")
-            extraBins.each {
+            executableFilesPatterns.each {
               exclude(name: it)
             }
             type(type: "file")
@@ -173,10 +179,7 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
 
         paths.each {
           tarfileset(dir: it, prefix: tarRoot, filemode: "755") {
-            include(name: "bin/*.sh")
-            include(name: "bin/*.py")
-            include(name: "bin/fsnotifier*")
-            extraBins.each {
+            executableFilesPatterns.each {
               include(name: it)
             }
             type(type: "file")

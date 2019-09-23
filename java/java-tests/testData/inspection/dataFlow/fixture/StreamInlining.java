@@ -301,4 +301,10 @@ public class StreamInlining {
         <error descr="Cannot resolve symbol 'bb'">bb</error>, 
         <error descr="Cannot resolve symbol 'cc'">cc</error>));
   }
+
+  void testNotTooComplexForEach(List<String> list) {
+    int[] count = {0};
+    list.stream().forEach(l -> count[0]++);
+    System.out.println(count[0]);
+  }
 }

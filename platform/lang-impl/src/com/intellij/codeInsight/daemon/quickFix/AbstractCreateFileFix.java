@@ -3,23 +3,25 @@ package com.intellij.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.roots.impl.ProjectFileIndexImpl;
-import com.intellij.openapi.ui.popup.*;
-import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.ui.popup.JBPopupAdapter;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.util.IconUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -29,6 +31,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.List;
 
+import static com.intellij.openapi.project.ProjectUtilCore.displayUrlRelativeToProject;
+import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName;
 import static com.intellij.openapi.vfs.VfsUtilCore.VFS_SEPARATOR_CHAR;
 
 public abstract class AbstractCreateFileFix extends LocalQuickFixAndIntentionActionOnPsiElement {
@@ -87,7 +91,7 @@ public abstract class AbstractCreateFileFix extends LocalQuickFixAndIntentionAct
                      @NotNull PsiElement endElement) {
     if (isAvailable(project, null, file)) {
       if (myDirectories.size() == 1) {
-        apply(myStartElement.getProject(), myDirectories.get(0));
+        apply(myStartElement.getProject(), myDirectories.get(0), editor);
       }
       else {
         List<TargetDirectory> directories = ContainerUtil.filter(myDirectories, d -> d.getDirectory() != null);
@@ -98,7 +102,7 @@ public abstract class AbstractCreateFileFix extends LocalQuickFixAndIntentionAct
 
         if (editor == null || ApplicationManager.getApplication().isUnitTestMode()) {
           // run on first item of sorted list in batch mode
-          apply(myStartElement.getProject(), directories.get(0));
+          apply(myStartElement.getProject(), directories.get(0), editor);
         }
         else {
           showOptionsPopup(project, editor, directories);
@@ -107,9 +111,44 @@ public abstract class AbstractCreateFileFix extends LocalQuickFixAndIntentionAct
     }
   }
 
-  protected abstract void apply(@NotNull Project project, TargetDirectory directory) throws IncorrectOperationException;
+  private void apply(@NotNull Project project, @NotNull TargetDirectory directory, @Nullable Editor editor) {
+    myIsAvailableTimeStamp = 0; // to revalidate applicability
 
-  protected static PsiDirectory findOrCreateSubdirectory(PsiDirectory directory, String subDirectoryName) {
+    PsiDirectory currentDirectory = directory.getDirectory();
+    if (currentDirectory == null) {
+      return;
+    }
+
+    try {
+      for (String pathPart : directory.getPathToCreate()) {
+        currentDirectory = findOrCreateSubdirectory(currentDirectory, pathPart);
+      }
+      for (String pathPart : mySubPath) {
+        currentDirectory = findOrCreateSubdirectory(currentDirectory, pathPart);
+      }
+      if (currentDirectory == null) {
+        if (editor != null) {
+          HintManager hintManager = HintManager.getInstance();
+          hintManager.showErrorHint(editor, CodeInsightBundle.message("create.file.incorrect.path.hint", myNewFileName));
+        }
+        return;
+      }
+
+      apply(project, currentDirectory, editor);
+    }
+    catch (IncorrectOperationException e) {
+      myIsAvailable = false;
+    }
+  }
+
+  protected abstract void apply(@NotNull Project project, @NotNull PsiDirectory targetDirectory, @Nullable Editor editor)
+    throws IncorrectOperationException;
+
+  @Nullable
+  private static PsiDirectory findOrCreateSubdirectory(@Nullable PsiDirectory directory, @NotNull String subDirectoryName) {
+    if (directory == null) {
+      return null;
+    }
     if (CURRENT_DIRECTORY_REF.equals(subDirectoryName)) {
       return directory;
     }
@@ -124,53 +163,51 @@ public abstract class AbstractCreateFileFix extends LocalQuickFixAndIntentionAct
     return existingDirectory;
   }
 
-  protected void showOptionsPopup(@NotNull Project project,
-                                  @NotNull Editor editor,
-                                  List<TargetDirectory> directories) {
+  private void showOptionsPopup(@NotNull Project project,
+                                @NotNull Editor editor,
+                                List<TargetDirectory> directories) {
     List<TargetDirectoryListItem> items = getTargetDirectoryListItems(directories);
 
     String filePath = myNewFileName;
     if (mySubPath.length > 0) {
-      filePath = StringUtil.join(mySubPath, VFS_SEPARATOR_CHAR + "") + VFS_SEPARATOR_CHAR + myNewFileName;
+      filePath = toSystemDependentName(
+        StringUtil.join(mySubPath, Character.toString(VFS_SEPARATOR_CHAR))
+        + VFS_SEPARATOR_CHAR + myNewFileName
+      );
     }
 
-    BaseListPopupStep<TargetDirectoryListItem> step =
-      new BaseListPopupStep<TargetDirectoryListItem>(CodeInsightBundle.message(myKey, filePath), items) {
-        @Override
-        public Icon getIconFor(TargetDirectoryListItem value) {
-          return value.getIcon();
-        }
-
-        @NotNull
-        @Override
-        public String getTextFor(TargetDirectoryListItem value) {
-          return value.getPresentablePath();
-        }
-
-        @Nullable
-        @Override
-        public PopupStep onChosen(TargetDirectoryListItem selectedValue, boolean finalChoice) {
-          WriteCommandAction.writeCommandAction(project)
-            .withName(CodeInsightBundle.message("create.file.text", myNewFileName))
-            .run(() -> apply(project, selectedValue.getTarget()));
-
-          return super.onChosen(selectedValue, finalChoice);
-        }
-      };
-
-    ListPopup popup = JBPopupFactory.getInstance().createListPopup(step);
-    popup.addListener(new JBPopupListener() {
-      @Override
-      public void onClosed(@NotNull LightweightWindowEvent event) {
-        // rerun code-insight after popup close
-        PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-        if (file != null) {
-          DaemonCodeAnalyzer.getInstance(project).restart(file);
-        }
-      }
+    SimpleListCellRenderer<TargetDirectoryListItem> renderer = SimpleListCellRenderer.create((label, value, index) -> {
+      label.setIcon(value.getIcon());
+      label.setText(value.getPresentablePath());
     });
 
-    popup.showInBestPositionFor(editor);
+    JBPopupFactory.getInstance()
+      .createPopupChooserBuilder(items)
+      .setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
+      .setTitle(CodeInsightBundle.message(myKey, filePath))
+      .setMovable(false)
+      .setResizable(false)
+      .setRequestFocus(true)
+      .setRenderer(renderer)
+      .setNamerForFiltering(item -> item.getPresentablePath())
+      .setItemChosenCallback(chosenValue -> {
+
+        WriteCommandAction.writeCommandAction(project)
+          .withName(CodeInsightBundle.message("create.file.text", myNewFileName))
+          .run(() -> apply(project, chosenValue.getTarget(), editor));
+      })
+      .addListener(new JBPopupAdapter() {
+        @Override
+        public void onClosed(@NotNull LightweightWindowEvent event) {
+          // rerun code-insight after popup close
+          PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+          if (file != null) {
+            DaemonCodeAnalyzer.getInstance(project).restart(file);
+          }
+        }
+      })
+      .createPopup()
+      .showInBestPositionFor(editor);
   }
 
   @NotNull
@@ -206,12 +243,13 @@ public abstract class AbstractCreateFileFix extends LocalQuickFixAndIntentionAct
     VirtualFile f = directory.getVirtualFile();
     Project project = directory.getProject();
 
-    String toProjectPath = ProjectUtil.calcRelativeToProjectPath(f, project, true, false, true);
+    String path = f.getPath();
     if (pathToCreate.length > 0) {
-      toProjectPath += VFS_SEPARATOR_CHAR + StringUtil.join(pathToCreate, VFS_SEPARATOR_CHAR + "");
+      path += VFS_SEPARATOR_CHAR + StringUtil.join(pathToCreate, VFS_SEPARATOR_CHAR + "");
     }
+    String presentablePath = f.getFileSystem().extractPresentableUrl(path);
 
-    return toProjectPath;
+    return displayUrlRelativeToProject(f, presentablePath, project, true, true);
   }
 
   protected static class TargetDirectoryListItem {

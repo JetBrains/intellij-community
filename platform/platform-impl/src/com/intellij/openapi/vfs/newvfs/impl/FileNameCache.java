@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vfs.newvfs.impl;
 
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.util.IntSLRUCache;
@@ -30,8 +31,8 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author peter
  */
 public class FileNameCache {
-  
-  @SuppressWarnings("unchecked") private static final IntSLRUCache<IntObjectLinkedMap.MapEntry<CharSequence>>[] ourNameCache = new IntSLRUCache[16];
+
+  @SuppressWarnings("unchecked") private static final IntSLRUCache<CharSequence>[] ourNameCache = new IntSLRUCache[16];
 
   static {
     final int protectedSize = 40000 / ourNameCache.length;
@@ -43,12 +44,18 @@ public class FileNameCache {
 
   private static final String FS_SEPARATORS = "/" + (File.separatorChar == '/' ? "" : File.separatorChar);
   public static int storeName(@NotNull String name) {
-    if (name.length() > 1 && StringUtil.containsAnyChar(name, FS_SEPARATORS)) {
-      throw new IllegalArgumentException("Must not intern long path: '" + name + "'");
-    }
+    assertShortFileName(name);
     final int idx = FSRecords.getNameId(name);
     cacheData(name, idx, calcStripeIdFromNameId(idx));
     return idx;
+  }
+
+  private static void assertShortFileName(@NotNull String name) {
+    if (name.length() <= 1) return;
+    int start = SystemInfo.isWindows && name.startsWith("//") ? 2 : 0;
+    if (StringUtil.containsAnyChar(name, FS_SEPARATORS, start, name.length())) {
+      throw new IllegalArgumentException("Must not intern long path: '" + name + "'");
+    }
   }
 
   @NotNull
@@ -58,11 +65,10 @@ public class FileNameCache {
     }
 
     CharSequence rawName = ByteArrayCharSequence.convertToBytesIfPossible(name);
-    IntObjectLinkedMap.MapEntry<CharSequence> entry = new IntObjectLinkedMap.MapEntry<>(id, rawName);
-    IntSLRUCache<IntObjectLinkedMap.MapEntry<CharSequence>> cache = ourNameCache[stripe];
+    IntSLRUCache<CharSequence> cache = ourNameCache[stripe];
     //noinspection SynchronizationOnLocalVariableOrMethodParameter
     synchronized (cache) {
-      return cache.cacheEntry(entry);
+      return cache.cacheEntry(id, rawName);
     }
   }
 
@@ -80,6 +86,7 @@ public class FileNameCache {
 
   private static final boolean ourTrackStats = false;
   private static final int ourLOneSize = 1024;
+  @SuppressWarnings("unchecked")
   private static final IntObjectLinkedMap.MapEntry<CharSequence>[] ourArrayCache = new IntObjectLinkedMap.MapEntry[ourLOneSize];
 
   private static final AtomicInteger ourQueries = new AtomicInteger();
@@ -90,7 +97,7 @@ public class FileNameCache {
   public interface NameComputer {
     String compute(int id) throws IOException;
   }
-  
+
   @NotNull
   public static CharSequence getVFileName(int nameId, @NotNull NameComputer computeName) throws IOException {
     assert nameId > 0 : nameId;
@@ -117,7 +124,7 @@ public class FileNameCache {
     }
 
     final int stripe = calcStripeIdFromNameId(nameId);
-    IntSLRUCache<IntObjectLinkedMap.MapEntry<CharSequence>> cache = ourNameCache[stripe];
+    IntSLRUCache<CharSequence> cache = ourNameCache[stripe];
     //noinspection SynchronizationOnLocalVariableOrMethodParameter
     synchronized (cache) {
       entry = cache.getCachedEntry(nameId);

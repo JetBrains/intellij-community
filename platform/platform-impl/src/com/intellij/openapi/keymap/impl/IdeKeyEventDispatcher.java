@@ -36,8 +36,8 @@ import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.impl.FloatingDecorator;
-import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.IdeGlassPaneEx;
+import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ComponentWithMnemonics;
 import com.intellij.ui.KeyStrokeAdapter;
@@ -256,7 +256,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
     Window window = UIUtil.getWindow(component);
 
     if (window instanceof IdeFrameImpl) {
-      final Component pane = ((IdeFrameImpl) window).getGlassPane();
+      Component pane = ((JFrame)window).getGlassPane();
       if (pane instanceof IdeGlassPaneEx) {
         return ((IdeGlassPaneEx) pane).isInModalContext();
       }
@@ -341,7 +341,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
       return false;
     } else if (KeyEvent.KEY_RELEASED == eventId) {
 
-      updateCurrentContext(myContext.getFoundComponent(), new KeyboardShortcut(keyStroke, null), myContext.isModalContext());
+      updateCurrentContext(myContext.getFoundComponent(), new KeyboardShortcut(keyStroke, null));
 
       if (myContext.getActions().isEmpty()) {
         return false;
@@ -371,7 +371,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
     }
     KeyStroke keyStroke=getKeyStrokeWithoutMouseModifiers(originalKeyStroke);
 
-    updateCurrentContext(myContext.getFoundComponent(), new KeyboardShortcut(myFirstKeyStroke, keyStroke), myContext.isModalContext());
+    updateCurrentContext(myContext.getFoundComponent(), new KeyboardShortcut(myFirstKeyStroke, keyStroke));
 
     // consume the wrong second stroke and keep on waiting
     if (myContext.getActions().isEmpty()) {
@@ -447,7 +447,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
       }
     }
 
-    updateCurrentContext(focusOwner, new KeyboardShortcut(keyStroke, null), isModalContext);
+    updateCurrentContext(focusOwner, new KeyboardShortcut(keyStroke, null));
     if(myContext.getActions().isEmpty()) {
       // there's nothing mapped for this stroke
       return false;
@@ -682,15 +682,13 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
   /**
    * This method fills {@code myActions} list.
-   * @return true if there is a shortcut with second stroke found.
    */
-  public KeyProcessorContext updateCurrentContext(Component component, @NotNull Shortcut sc, boolean isModalContext){
+  public void updateCurrentContext(Component component, @NotNull Shortcut sc) {
     myContext.setFoundComponent(null);
+    myContext.setHasSecondStroke(false);
     myContext.getActions().clear();
 
-    if (isControlEnterOnDialog(component, sc)) return myContext;
-
-    boolean hasSecondStroke = false;
+    if (isControlEnterOnDialog(component, sc)) return;
 
     // here we try to find "local" shortcuts
     for (; component != null; component = component.getParent()) {
@@ -702,7 +700,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
         continue;
       }
       for (AnAction action : listOfActions) {
-        hasSecondStroke |= addAction(action, sc);
+        addAction(action, sc);
       }
       // once we've found a proper local shortcut(s), we continue with non-local shortcuts
       if (!myContext.getActions().isEmpty()) {
@@ -711,22 +709,9 @@ public final class IdeKeyEventDispatcher implements Disposable {
       }
     }
 
-    // search in main keymap
-    KeymapManager keymapManager = KeymapManager.getInstance();
-    Keymap keymap = keymapManager == null ? null : keymapManager.getActiveKeymap();
-    String[] actionIds = keymap == null ? ArrayUtilRt.EMPTY_STRING_ARRAY : keymap.getActionIds(sc);
-    ActionManager actionManager = ActionManager.getInstance();
-    for (String actionId : actionIds) {
-      AnAction action = actionManager.getAction(actionId);
-      if (action != null) {
-        if (isModalContext && !action.isEnabledInModalContext()) {
-          continue;
-        }
-        hasSecondStroke |= addAction(action, sc);
-      }
-    }
+    addActionsFromActiveKeymap(sc);
 
-    if (!hasSecondStroke && sc instanceof KeyboardShortcut) {
+    if (!myContext.isHasSecondStroke() && sc instanceof KeyboardShortcut) {
       // little trick to invoke action which second stroke is a key w/o modifiers, but user still
       // holds the modifier key(s) of the first stroke
 
@@ -736,20 +721,10 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
       if (secondKeyStroke != null && secondKeyStroke.getModifiers() != 0 && firstKeyStroke.getModifiers() != 0) {
         final KeyboardShortcut altShortCut = new KeyboardShortcut(firstKeyStroke, KeyStroke.getKeyStroke(secondKeyStroke.getKeyCode(), 0));
-        final String[] additionalActions = keymap == null ? ArrayUtilRt.EMPTY_STRING_ARRAY : keymap.getActionIds(altShortCut);
-        for (final String actionId : additionalActions) {
-          AnAction action = actionManager.getAction(actionId);
-          if (action != null) {
-            if (isModalContext && !action.isEnabledInModalContext()) {
-              continue;
-            }
-            hasSecondStroke |= addAction(action, altShortCut);
-          }
-        }
+        addActionsFromActiveKeymap(altShortCut);
       }
     }
 
-    myContext.setHasSecondStroke(hasSecondStroke);
     final List<AnAction> actions = myContext.getActions();
 
     if (actions.size() > 1) {
@@ -762,8 +737,19 @@ public final class IdeKeyEventDispatcher implements Disposable {
         actions.addAll(0, promoted);
       }
     }
+  }
 
-    return myContext;
+  private void addActionsFromActiveKeymap(@NotNull Shortcut sc) {
+    KeymapManager keymapManager = KeymapManager.getInstance();
+    Keymap keymap = keymapManager == null ? null : keymapManager.getActiveKeymap();
+    String[] actionIds = keymap == null ? ArrayUtilRt.EMPTY_STRING_ARRAY : keymap.getActionIds(sc);
+    ActionManager actionManager = ActionManager.getInstance();
+    for (String actionId : actionIds) {
+      AnAction action = actionManager.getAction(actionId);
+      if (action != null && (!myContext.isModalContext() || action.isEnabledInModalContext())) {
+        addAction(action, sc);
+      }
+    }
   }
 
   private static final KeyboardShortcut CONTROL_ENTER = KeyboardShortcut.fromString("control ENTER");
@@ -774,12 +760,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
            && DialogWrapper.findInstance(component) != null;
   }
 
-  /**
-   * @return true if action is added and has second stroke
-   */
-  private boolean addAction(AnAction action, @NotNull Shortcut sc) {
-    boolean hasSecondStroke = false;
-
+  private void addAction(AnAction action, @NotNull Shortcut sc) {
     Shortcut[] shortcuts = action.getShortcutSet().getShortcuts();
     for (Shortcut each : shortcuts) {
       if (each == null) throw new NullPointerException("unexpected shortcut of action: " + action.toString());
@@ -790,13 +771,11 @@ public final class IdeKeyEventDispatcher implements Disposable {
           myContext.getActions().add(action);
         }
 
-        if (each instanceof KeyboardShortcut) {
-          hasSecondStroke |= ((KeyboardShortcut)each).getSecondKeyStroke() != null;
+        if (each instanceof KeyboardShortcut && ((KeyboardShortcut)each).getSecondKeyStroke() != null) {
+          myContext.setHasSecondStroke(true);
         }
       }
     }
-
-    return hasSecondStroke;
   }
 
   public KeyProcessorContext getContext() {

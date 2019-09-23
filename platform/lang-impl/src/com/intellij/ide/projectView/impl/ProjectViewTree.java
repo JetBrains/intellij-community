@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.projectView.impl;
 
@@ -32,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
@@ -52,8 +53,18 @@ public class ProjectViewTree extends DnDAwareTree {
   }
 
   public ProjectViewTree(TreeModel model) {
-    super(model);
+    super((TreeModel)null);
+    setLargeModel(true);
+    setModel(model);
+    setCellRenderer(createCellRenderer());
+    HintUpdateSupply.installDataContextHintUpdateSupply(this);
+  }
 
+  /**
+   * @return custom renderer for tree nodes
+   */
+  @NotNull
+  protected TreeCellRenderer createCellRenderer() {
     final NodeRenderer cellRenderer = new NodeRenderer() {
       @Override
       protected void doPaint(Graphics2D g) {
@@ -72,8 +83,8 @@ public class ProjectViewTree extends DnDAwareTree {
         super.customizeCellRenderer(tree, value, selected, expanded, leaf, row, hasFocus);
         Object object = TreeUtil.getUserObject(value);
         if (object instanceof ProjectViewNode && UISettings.getInstance().getShowInplaceComments()) {
-          ProjectViewNode node = (ProjectViewNode)object;
-          AbstractTreeNode parentNode = node.getParent();
+          ProjectViewNode<?> node = (ProjectViewNode<?>)object;
+          AbstractTreeNode<?> parentNode = node.getParent();
           Object content = node.getValue();
           VirtualFile file =
             content instanceof PsiFileSystemItem ||
@@ -101,10 +112,8 @@ public class ProjectViewTree extends DnDAwareTree {
     };
     cellRenderer.setOpaque(false);
     cellRenderer.setIconOpaque(false);
-    setCellRenderer(cellRenderer);
     cellRenderer.setTransparentIconBackground(true);
-
-    HintUpdateSupply.installDataContextHintUpdateSupply(this);
+    return cellRenderer;
   }
 
   /**
@@ -122,7 +131,7 @@ public class ProjectViewTree extends DnDAwareTree {
     int count = super.getToggleClickCount();
     TreePath path = getSelectionPath();
     if (path != null) {
-      NodeDescriptor descriptor = TreeUtil.getLastUserObject(NodeDescriptor.class, path);
+      NodeDescriptor<?> descriptor = TreeUtil.getLastUserObject(NodeDescriptor.class, path);
       if (descriptor != null && !descriptor.expandOnDoubleClick()) {
         LOG.debug("getToggleClickCount: -1 for ", descriptor.getClass().getName());
         return -1;
@@ -162,14 +171,14 @@ public class ProjectViewTree extends DnDAwareTree {
       object = node.getUserObject();
     }
     if (object instanceof AbstractTreeNode) {
-      AbstractTreeNode node = (AbstractTreeNode)object;
+      AbstractTreeNode<?> node = (AbstractTreeNode<?>)object;
       Object value = node.getValue();
       if (value instanceof PsiElement) {
         return getColorForElement((PsiElement)value);
       }
     }
     if (object instanceof ProjectViewNode) {
-      ProjectViewNode node = (ProjectViewNode)object;
+      ProjectViewNode<?> node = (ProjectViewNode<?>)object;
       VirtualFile file = node.getVirtualFile();
       if (file != null) {
         Project project = node.getProject();

@@ -49,7 +49,7 @@ public abstract class CodeStyleFieldAccessor<T,V> extends CodeStylePropertyAcces
   }
 
   @NotNull
-  public Class getObjectClass() {
+  public Class<?> getObjectClass() {
     return myObject.getClass();
   }
 

@@ -35,6 +35,7 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.pom.Navigatable;
@@ -78,27 +79,29 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     DumbService.getInstance(project).setAlternativeResolveEnabled(true);
     try {
       int offset = editor.getCaretModel().getOffset();
-      PsiElement[] elements = underModalProgress(project, "Resolving Reference...", () -> findAllTargetElements(project, editor, offset));
+      Pair<PsiElement[], PsiElement> pair = underModalProgress(project, "Resolving Reference...", () -> doSelectCandidate(project, editor, offset));
       FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.goto.declaration");
 
-      if (elements.length != 1) {
-        if (elements.length == 0 && suggestCandidates(TargetElementUtil.findReference(editor, offset)).isEmpty()) {
-          PsiElement element = findElementToShowUsagesOf(editor, editor.getCaretModel().getOffset());
+      PsiElement[] elements = pair.first;
+      PsiElement usage = pair.second;
 
-          if (element != null) {
-            startFindUsages(editor, project, element);
+      if (elements.length != 1) {
+        if (elements.length == 0) {
+          if (usage != null) {
+            startFindUsages(editor, project, usage);
             return;
           }
-
-          //disable 'no declaration found' notification for keywords
-          if (isKeywordUnderCaret(project, file, offset)) return;
         }
-        chooseAmbiguousTarget(editor, offset, elements, file);
+
+        //disable 'no declaration found' notification for keywords
+        if (isKeywordUnderCaret(project, file, offset)) return;
+
+        chooseAmbiguousTarget(project, editor, offset, elements, file);
         return;
       }
 
       PsiElement element = elements[0];
-      if (element == findElementToShowUsagesOf(editor, editor.getCaretModel().getOffset())) {
+      if (element == usage) {
         startFindUsages(editor, project, element);
         return;
       }
@@ -115,6 +118,21 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     finally {
       DumbService.getInstance(project).setAlternativeResolveEnabled(false);
     }
+  }
+
+  @NotNull
+  private static Pair<PsiElement[], PsiElement> doSelectCandidate(@NotNull Project project, @NotNull Editor editor, int offset) {
+    PsiElement[] elements = findAllTargetElements(project, editor, offset);
+    PsiElement usage = null;
+    if (elements.length != 1) {
+      if (elements.length == 0 && suggestCandidates(TargetElementUtil.findReference(editor, offset)).isEmpty()) {
+        usage = findElementToShowUsagesOf(editor, editor.getCaretModel().getOffset());
+      }
+      return new Pair<>(elements, usage);
+    }
+
+    usage = findElementToShowUsagesOf(editor, editor.getCaretModel().getOffset());
+    return new Pair<>(elements, usage);
   }
 
   public static void startFindUsages(@NotNull Editor editor, @NotNull Project project, @NotNull PsiElement element) {
@@ -148,14 +166,19 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     return TargetElementUtil.getInstance().findTargetElement(editor, TargetElementUtil.ELEMENT_NAME_ACCEPTED, offset);
   }
 
-  private static void chooseAmbiguousTarget(final Editor editor, int offset, PsiElement[] elements, PsiFile currentFile) {
+  private static void chooseAmbiguousTarget(@NotNull final Project project,
+                                            final Editor editor,
+                                            int offset,
+                                            PsiElement[] elements,
+                                            PsiFile currentFile) {
     if (!editor.getComponent().isShowing()) return;
     PsiElementProcessor<PsiElement> navigateProcessor = element -> {
       gotoTargetElement(element, editor, currentFile);
       return true;
     };
     boolean found =
-      chooseAmbiguousTarget(editor, offset, navigateProcessor, CodeInsightBundle.message("declaration.navigation.title"), elements);
+      chooseAmbiguousTarget(project, editor, offset, navigateProcessor, CodeInsightBundle.message("declaration.navigation.title"),
+                            elements);
     if (!found) {
       HintManager.getInstance().showErrorHint(editor, "Cannot find declaration to go to");
     }
@@ -188,8 +211,26 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     }
   }
 
-  // returns true if processor is run or is going to be run after showing popup
+  /**
+   * @deprecated use chooseAmbiguousTarget(Project, Editor, int, PsiElementProcessor, String, PsiElement[])
+   */
+  @Deprecated
+  @SuppressWarnings("unused") // for external usages only
   public static boolean chooseAmbiguousTarget(@NotNull Editor editor,
+                                              int offset,
+                                              @NotNull PsiElementProcessor<? super PsiElement> processor,
+                                              @NotNull String titlePattern,
+                                              @Nullable PsiElement[] elements) {
+    Project project = editor.getProject();
+    if (project == null) {
+      return false;
+    }
+    return chooseAmbiguousTarget(project, editor, offset, processor, titlePattern, elements);
+  }
+
+  // returns true if processor is run or is going to be run after showing popup
+  public static boolean chooseAmbiguousTarget(@NotNull final Project project,
+                                              @NotNull Editor editor,
                                               int offset,
                                               @NotNull PsiElementProcessor<? super PsiElement> processor,
                                               @NotNull String titlePattern,
@@ -198,14 +239,12 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
       return false;
     }
 
-    final PsiReference reference = TargetElementUtil.findReference(editor, offset);
+    final PsiElement[] finalElements = elements;
+    Pair<PsiElement[], PsiReference> pair =
+      underModalProgress(project, "Resolving Reference...", () -> doChooseAmbiguousTarget(editor, offset, finalElements));
 
-    if (elements == null || elements.length == 0) {
-      elements = reference == null ? PsiElement.EMPTY_ARRAY
-                                   : PsiUtilCore.toPsiElementArray(
-                                     underModalProgress(reference.getElement().getProject(), "Resolving Reference...",
-                                                        () -> suggestCandidates(reference)));
-    }
+    elements = pair.first;
+    PsiReference reference = pair.second;
 
     if (elements.length == 1) {
       PsiElement element = elements[0];
@@ -231,6 +270,19 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
       return true;
     }
     return false;
+  }
+
+  @NotNull
+  private static Pair<PsiElement[], PsiReference> doChooseAmbiguousTarget(@NotNull Editor editor,
+                                                                          int offset,
+                                                                          @Nullable PsiElement[] elements) {
+    final PsiReference reference = TargetElementUtil.findReference(editor, offset);
+
+    if (elements == null || elements.length == 0) {
+      elements = reference == null ? PsiElement.EMPTY_ARRAY
+                                   : PsiUtilCore.toPsiElementArray(suggestCandidates(reference));
+    }
+    return new Pair<>(elements, reference);
   }
 
   @NotNull
@@ -322,7 +374,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
 
     InputEvent inputEvent = event.getInputEvent();
     Editor editor = event.getData(CommonDataKeys.EDITOR);
-    if (editor != null && inputEvent instanceof MouseEvent &&
+    if (editor != null && inputEvent instanceof MouseEvent && event.getPlace().equals(ActionPlaces.MOUSE_SHORTCUT) &&
         !EditorUtil.isPointOverText(editor, new RelativePoint((MouseEvent)inputEvent).getPoint(editor.getContentComponent()))) {
       event.getPresentation().setEnabled(false);
       return;

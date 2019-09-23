@@ -69,7 +69,7 @@ public class ShelfProjectConfigurationPanel extends JPanel {
   private void layoutComponents() {
     JPanel contentPanel = new JPanel(new GridBagLayout());
     final GridBagConstraints gb = new GridBagConstraints(0, 0, 1, 1, 1, 1, NORTHWEST, NONE,
-                                                         JBUI.insets(3), 0, 0);
+                                                         JBUI.insets(3, 0), 0, 0);
     contentPanel.add(createStoreBaseRevisionOption(), gb);
 
     JPanel shelfConfigurablePanel = new JPanel(new BorderLayout(DEFAULT_HGAP, DEFAULT_VGAP));

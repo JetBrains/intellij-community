@@ -15,11 +15,18 @@
  */
 package com.intellij.util.io
 
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ex.ApplicationUtil
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.testFramework.LightPlatformTestCase
+import com.intellij.util.ConcurrencyUtil
+import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.UIUtil
 import junit.framework.TestCase
 import java.io.File
+import java.util.ArrayList
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Future
 import java.util.concurrent.atomic.AtomicLong
 
 class CompressedAppendableFileTest : TestCase() {
@@ -89,7 +96,11 @@ class CompressedAppendableFileTest : TestCase() {
           proceedLatch.countDown()
         }
       }
-      for(i in 1..numberOfThreads) Thread(writer).start()
+
+      val futures: MutableList<Future<*>> = ArrayList()
+      for(i in 1..numberOfThreads) {
+        futures.add(AppExecutorUtil.getAppExecutorService().submit(writer))
+      }
 
       val flusher = {
         startLatch.await()
@@ -98,8 +109,8 @@ class CompressedAppendableFileTest : TestCase() {
           UIUtil.pump()
         }
       }
-      val thread = Thread(flusher)
-      thread.start()
+      val thread = AppExecutorUtil.getAppExecutorService().submit(flusher)
+
       try {
         startLatch.countDown()
         proceedLatch.await()
@@ -111,7 +122,8 @@ class CompressedAppendableFileTest : TestCase() {
         appendableFile2.dispose()
       }
       finally {
-        thread.join()
+        thread.get()
+        futures.forEach { it.get() }
       }
     }
     finally {

@@ -22,13 +22,13 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author peter
  */
-public class IntSLRUCache<Entry extends IntObjectLinkedMap.MapEntry> {
+public class IntSLRUCache<T> {
   private static final boolean ourPrintDebugStatistics = false;
-  private final IntObjectLinkedMap<Entry> myProtectedQueue;
-  private final IntObjectLinkedMap<Entry> myProbationalQueue;
-  private int probationalHits = 0;
-  private int protectedHits = 0;
-  private int misses = 0;
+  private final IntObjectLinkedMap<T> myProtectedQueue;
+  private final IntObjectLinkedMap<T> myProbationalQueue;
+  private int probationalHits;
+  private int protectedHits;
+  private int misses;
 
   public IntSLRUCache(int protectedQueueSize, int probationalQueueSize) {
     myProtectedQueue = new IntObjectLinkedMap<>(protectedQueueSize);
@@ -36,27 +36,28 @@ public class IntSLRUCache<Entry extends IntObjectLinkedMap.MapEntry> {
   }
 
   @NotNull
-  public Entry cacheEntry(@NotNull Entry entry) {
-    Entry cached = myProtectedQueue.getEntry(entry.key);
+  public IntObjectLinkedMap.MapEntry<T> cacheEntry(int key, T value) {
+    IntObjectLinkedMap.MapEntry<T> cached = myProtectedQueue.getEntry(key);
     if (cached == null) {
-      cached = myProbationalQueue.getEntry(entry.key);
+      cached = myProbationalQueue.getEntry(key);
     }
     if (cached != null) {
       return cached;
     }
 
+    IntObjectLinkedMap.MapEntry<T> entry = new IntObjectLinkedMap.MapEntry<>(key, value);
     myProbationalQueue.putEntry(entry);
     return entry;
   }
 
   @Nullable
-  public Entry getCachedEntry(int id) {
+  public IntObjectLinkedMap.MapEntry<T> getCachedEntry(int id) {
     return getCachedEntry(id, true);
   }
 
   @Nullable
-  public Entry getCachedEntry(int id, boolean allowMutation) {
-    Entry entry = myProtectedQueue.getEntry(id);
+  public IntObjectLinkedMap.MapEntry<T> getCachedEntry(int id, boolean allowMutation) {
+    IntObjectLinkedMap.MapEntry<T> entry = myProtectedQueue.getEntry(id);
     if (entry != null) {
       protectedHits++;
       return entry;
@@ -68,7 +69,7 @@ public class IntSLRUCache<Entry extends IntObjectLinkedMap.MapEntry> {
 
       if (allowMutation) {
         myProbationalQueue.removeEntry(entry.key);
-        Entry demoted = myProtectedQueue.putEntry(entry);
+        IntObjectLinkedMap.MapEntry<T> demoted = myProtectedQueue.putEntry(entry);
         if (demoted != null) {
           myProbationalQueue.putEntry(demoted);
         }

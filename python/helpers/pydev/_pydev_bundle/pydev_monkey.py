@@ -3,7 +3,7 @@ import os
 import sys
 import traceback
 from _pydev_imps._pydev_saved_modules import threading
-from _pydevd_bundle.pydevd_constants import get_global_debugger, IS_WINDOWS, IS_JYTHON, get_current_thread_id
+from _pydevd_bundle.pydevd_constants import get_global_debugger, IS_WINDOWS, IS_MACOS, IS_JYTHON, IS_PY36_OR_LESSER, get_current_thread_id
 from _pydev_bundle import pydev_log
 
 try:
@@ -113,7 +113,7 @@ def is_python(path):
     for name in PYTHON_NAMES:
         if filename.find(name) != -1:
             return True
-    return sys.platform != 'win32' and is_executable(path) and starts_with_python_shebang(path)
+    return not IS_WINDOWS and is_executable(path) and starts_with_python_shebang(path)
 
 
 def remove_quotes_from_args(args):
@@ -551,6 +551,19 @@ def create_CreateProcessWarnMultiproc(original_name):
     return new_CreateProcess
 
 
+def apply_foundation_framework_hack():
+    # Hack in order to prevent the crash on macOS - load the Foundation framework before any forking in the debugger.
+    # See: https://bugs.python.org/issue35219.
+    import ctypes
+    try:
+        ctypes.cdll.LoadLibrary('/System/Library/Frameworks/Foundation.framework/Foundation')
+    except OSError:
+        log_error_once('Failed to load the Foundation framework shared library. Debugging of code that uses `os.fork()` may not work.\n'
+                       'Consider setting the `OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES` environment variable.')
+    else:
+        log_debug('Successfully loaded the Foundation framework shared library.')
+
+
 def create_fork(original_name):
     def new_fork():
         import os
@@ -573,6 +586,11 @@ def create_fork(original_name):
 
             frame = frame.f_back
         frame = None  # Just make sure we don't hold on to it.
+
+        if IS_MACOS and IS_PY36_OR_LESSER:
+            is_fork_safety_disabled = os.environ.get('OBJC_DISABLE_INITIALIZE_FORK_SAFETY') == 'YES'
+            if not is_fork_safety_disabled:
+                apply_foundation_framework_hack()
 
         child_process = getattr(os, original_name)()  # fork
         if not child_process:

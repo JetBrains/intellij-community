@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.vcs.changes;
 
@@ -26,6 +26,9 @@ public abstract class ChangeListManager implements ChangeListModification {
 
   public abstract void scheduleUpdate();
 
+  /**
+   * @deprecated use {@link #scheduleUpdate()}
+   */
   @Deprecated
   public abstract void scheduleUpdate(boolean updateUnversionedFiles);
 
@@ -35,6 +38,9 @@ public abstract class ChangeListManager implements ChangeListModification {
                                          @Nullable String title,
                                          @Nullable ModalityState state);
 
+  /**
+   * @deprecated use {@link #invokeAfterUpdate(Runnable, InvokeAfterUpdateMode, String, ModalityState)}
+   */
   @Deprecated
   public abstract void invokeAfterUpdate(@NotNull Runnable afterUpdate,
                                          @NotNull InvokeAfterUpdateMode mode,
@@ -156,6 +162,8 @@ public abstract class ChangeListManager implements ChangeListModification {
   public abstract IgnoredFileBean[] getFilesToIgnore();
 
   public abstract boolean isIgnoredFile(@NotNull VirtualFile file);
+
+  public abstract boolean isIgnoredFile(@NotNull FilePath file);
 
   /**
    * @deprecated All potential ignores should be contributed to VCS native ignores by corresponding {@link IgnoredFileProvider}.

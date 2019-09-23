@@ -3,7 +3,6 @@ package com.intellij.testFramework;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ExpandMacroToPathMap;
-import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
@@ -34,7 +33,6 @@ import java.util.concurrent.TimeoutException;
  */
 public abstract class FileEditorManagerTestCase extends BasePlatformTestCase {
   protected FileEditorManagerImpl myManager;
-  private FileEditorManager myOldManager;
   private Set<DockContainer> myOldDockContainers;
 
   @Override
@@ -43,7 +41,7 @@ public abstract class FileEditorManagerTestCase extends BasePlatformTestCase {
 
     myOldDockContainers = DockManager.getInstance(getProject()).getContainers();
     myManager = new FileEditorManagerImpl(getProject());
-    myOldManager = ((ComponentManagerImpl)getProject()).registerComponentInstance(FileEditorManager.class, myManager);
+    ServiceContainerUtil.registerComponentInstance(getProject(), FileEditorManager.class, myManager, getTestRootDisposable());
     ((FileEditorProviderManagerImpl)FileEditorProviderManager.getInstance()).clearSelectedProviders();
   }
 
@@ -58,14 +56,12 @@ public abstract class FileEditorManagerTestCase extends BasePlatformTestCase {
         }
 
         myOldDockContainers = null;
-        ((ComponentManagerImpl)getProject()).registerComponentInstance(FileEditorManager.class, myOldManager);
         myManager.closeAllFiles();
         EditorHistoryManager.getInstance(getProject()).removeAllFiles();
         ((FileEditorProviderManagerImpl)FileEditorProviderManager.getInstance()).clearSelectedProviders();
       },
       () -> Disposer.dispose(myManager), () -> {
       myManager = null;
-      myOldManager = null;
     },
       () -> super.tearDown()
     ).run();

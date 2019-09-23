@@ -267,7 +267,6 @@ public final class DesktopLayout {
       }
     }
 
-    myIdToInfo.clear();
     for (Element e : layoutElement.getChildren(WindowInfoImpl.TAG)) {
       WindowInfoImpl info = XmlSerializer.deserialize(e, WindowInfoImpl.class);
       info.normalizeAfterRead();

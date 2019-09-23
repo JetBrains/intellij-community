@@ -15,10 +15,9 @@ import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.panels.NonOpaquePanel;
-import com.intellij.ui.tabs.impl.TabsHeightController;
+import com.intellij.ui.tabs.impl.SingleHeightTabs;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
-import kotlin.Unit;
 import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.NotNull;
 
@@ -61,9 +60,6 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
 
     add(myWestPanel, "grow");
     myWestPanel.add(toolWindow.getContentUI().getTabComponent(), "growy");
-
-    TabsHeightController.registerActive(this, this);
-
 
     ToolWindowContentUi.initMouseListeners(myWestPanel, toolWindow.getContentUI(), true);
 
@@ -182,9 +178,6 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
     if (actions.length > 0) {
       myActionGroup.addSeparator();
     }
-    if (myToolbar != null) {
-      myToolbar.updateActionsImmediately();
-    }
   }
 
   @Override
@@ -268,23 +261,11 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
   protected abstract void hideToolWindow();
 
   @Override
-  public void addNotify() {
-    super.addNotify();
-    TabsHeightController.registerAdjective(this, height -> {
-      updateHeight(height);
-      return Unit.INSTANCE;
-    }, this);
-  }
-
-  private void updateHeight(int value) {
-    Dimension size = super.getMinimumSize();
+  public Dimension getPreferredSize() {
+    Dimension size = super.getPreferredSize();
     Insets insets = getInsets();
-    value = value - insets.top - insets.bottom;
-
-    if(size.height != value) {
-      Dimension newSize = new Dimension(size.width, value);
-      setMinimumSize(newSize);
-    }
+    int height = JBUI.scale(SingleHeightTabs.getUNSCALED_PREF_HEIGHT()) - insets.top - insets.bottom;
+    return new Dimension(size.width, height);
   }
 
   private class ShowOptionsAction extends DumbAwareAction {

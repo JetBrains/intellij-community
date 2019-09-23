@@ -4,8 +4,7 @@ package com.intellij.openapi.vcs.changes.ignore.codeInsight
 import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.fileTypes.FileTypeRegistry
-import com.intellij.patterns.StandardPatterns
-import com.intellij.psi.PsiElement
+import com.intellij.patterns.PlatformPatterns
 import com.intellij.util.ProcessingContext
 
 /**
@@ -13,8 +12,7 @@ import com.intellij.util.ProcessingContext
  */
 class FileExtensionCompletionContributor : CompletionContributor() {
   init {
-    extend(CompletionType.BASIC,
-           StandardPatterns.instanceOf(PsiElement::class.java),
+    extend(CompletionType.BASIC, PlatformPatterns.psiElement(),
            object : CompletionProvider<CompletionParameters>() {
              override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
                val current = parameters.position
@@ -34,7 +32,7 @@ class FileExtensionCompletionContributor : CompletionContributor() {
     private const val EXTENSION_MASK = "*."
 
     fun completionSupported(text: String): Boolean {
-      return text.contains(EXTENSION_MASK)
+      return text.startsWith(EXTENSION_MASK) || text.contains("/$EXTENSION_MASK")
     }
   }
 }

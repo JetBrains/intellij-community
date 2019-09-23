@@ -20,6 +20,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.UtilKt;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.vcsUtil.VcsUtil;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,20 +36,20 @@ import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
-import static com.intellij.openapi.vcs.changes.ChangesUtil.getAfterRevisionsFiles;
-import static com.intellij.openapi.vcs.changes.ChangesUtil.getFiles;
+import static com.intellij.openapi.vcs.changes.ChangesUtil.*;
 import static com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.*;
 import static com.intellij.util.containers.UtilKt.getIfSingle;
 import static com.intellij.util.containers.UtilKt.stream;
+import static com.intellij.vcs.commit.ChangesViewCommitPanelKt.subtreeRootObject;
 import static java.util.stream.Collectors.toList;
 
 // TODO: Check if we could extend DnDAwareTree here instead of directly implementing DnDAware
 public class ChangesListView extends ChangesTree implements DataProvider, DnDAware {
   @NonNls public static final String HELP_ID = "ideaInterface.changes";
   @NonNls public static final DataKey<ChangesListView> DATA_KEY = DataKey.create("ChangeListView");
-  @NonNls public static final DataKey<Stream<VirtualFile>> UNVERSIONED_FILES_DATA_KEY = DataKey.create("ChangeListView.UnversionedFiles");
+  @NonNls public static final DataKey<Stream<FilePath>> UNVERSIONED_FILE_PATHS_DATA_KEY = DataKey.create("ChangeListView.UnversionedFiles");
   @NonNls public static final DataKey<Stream<VirtualFile>> EXACTLY_SELECTED_FILES_DATA_KEY = DataKey.create("ChangeListView.ExactlySelectedFiles");
-  @NonNls public static final DataKey<Stream<VirtualFile>> IGNORED_FILES_DATA_KEY = DataKey.create("ChangeListView.IgnoredFiles");
+  @NonNls public static final DataKey<Stream<FilePath>> IGNORED_FILE_PATHS_DATA_KEY = DataKey.create("ChangeListView.IgnoredFiles");
   @NonNls public static final DataKey<List<FilePath>> MISSING_FILES_DATA_KEY = DataKey.create("ChangeListView.MissingFiles");
   @NonNls public static final DataKey<List<LocallyDeletedChange>> LOCALLY_DELETED_CHANGES = DataKey.create("ChangeListView.LocallyDeletedChanges");
 
@@ -80,6 +81,15 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
   }
 
   @Override
+  protected boolean isInclusionVisible(@NotNull ChangesBrowserNode<?> node) {
+    Object subtreeRootObject = subtreeRootObject(node);
+
+    if (subtreeRootObject instanceof LocalChangeList) return !((LocalChangeList)subtreeRootObject).getChanges().isEmpty();
+    if (subtreeRootObject == UNVERSIONED_FILES_TAG) return true;
+    return false;
+  }
+
+  @Override
   public DefaultTreeModel getModel() {
     return (DefaultTreeModel)super.getModel();
   }
@@ -87,9 +97,9 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
   public void updateModel(@NotNull DefaultTreeModel newModel) {
     TreeState state = TreeState.createOn(this, getRoot());
     state.setScrollToSelection(false);
-    ChangesBrowserNode oldRoot = getRoot();
+    ChangesBrowserNode<?> oldRoot = getRoot();
     setModel(newModel);
-    ChangesBrowserNode newRoot = getRoot();
+    ChangesBrowserNode<?> newRoot = getRoot();
     state.applyTo(this, newRoot);
 
     initTreeStateIfNeeded(oldRoot, newRoot);
@@ -100,8 +110,8 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
     // currently not used in ChangesListView code flow
   }
 
-  private void initTreeStateIfNeeded(ChangesBrowserNode oldRoot, ChangesBrowserNode newRoot) {
-    ChangesBrowserNode defaultListNode = getDefaultChangelistNode(newRoot);
+  private void initTreeStateIfNeeded(ChangesBrowserNode<?> oldRoot, ChangesBrowserNode<?> newRoot) {
+    ChangesBrowserNode<?> defaultListNode = getDefaultChangelistNode(newRoot);
     if (defaultListNode == null) return;
 
     if (getSelectionCount() == 0) {
@@ -117,9 +127,9 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
   }
 
   @Nullable
-  private static ChangesBrowserNode getDefaultChangelistNode(@NotNull ChangesBrowserNode root) {
+  private static ChangesBrowserNode<?> getDefaultChangelistNode(@NotNull ChangesBrowserNode<?> root) {
     //noinspection unchecked
-    Iterator<ChangesBrowserNode> nodes = ContainerUtil.<ChangesBrowserNode>iterate(root.children());
+    Iterator<ChangesBrowserNode<?>> nodes = ContainerUtil.<ChangesBrowserNode<?>>iterate(root.children());
     return ContainerUtil.find(nodes, node -> {
       if (node instanceof ChangesBrowserChangeListNode) {
         ChangeList list = ((ChangesBrowserChangeListNode)node).getUserObject();
@@ -156,20 +166,20 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
                                                                        .createNavigatable(myProject, file, 0) : null;
     }
     if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
-      return ChangesUtil.getNavigatableArray(myProject, getNavigatableFiles());
+      return getNavigatableArray(myProject, getNavigatableFiles());
     }
     if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
       return getSelectionObjectsStream().anyMatch(userObject -> !(userObject instanceof ChangeList))
              ? new VirtualFileDeleteProvider()
              : null;
     }
-    if (UNVERSIONED_FILES_DATA_KEY.is(dataId)) {
+    if (UNVERSIONED_FILE_PATHS_DATA_KEY.is(dataId)) {
       return getSelectedUnversionedFiles();
     }
     if (EXACTLY_SELECTED_FILES_DATA_KEY.is(dataId)) {
       return getExactlySelectedVirtualFiles(this);
     }
-    if (IGNORED_FILES_DATA_KEY.is(dataId)) {
+    if (IGNORED_FILE_PATHS_DATA_KEY.is(dataId)) {
       return getSelectedIgnoredFiles();
     }
     if (VcsDataKeys.MODIFIED_WITHOUT_EDITING_DATA_KEY.is(dataId)) {
@@ -197,23 +207,23 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
   }
 
   @NotNull
-  public Stream<VirtualFile> getUnversionedFiles() {
+  public Stream<FilePath> getUnversionedFiles() {
     //noinspection unchecked
-    Enumeration<ChangesBrowserNode> nodes = getRoot().children();
+    Enumeration<ChangesBrowserNode<?>> nodes = getRoot().children();
     ChangesBrowserUnversionedFilesNode node = ContainerUtil.findInstance(ContainerUtil.iterate(nodes),
                                                                          ChangesBrowserUnversionedFilesNode.class);
     if (node == null) return Stream.empty();
-    return node.getFilesUnderStream();
+    return node.getFilePathsUnderStream();
   }
 
   @NotNull
-  public Stream<VirtualFile> getSelectedUnversionedFiles() {
-    return getSelectedVirtualFiles(UNVERSIONED_FILES_TAG);
+  public Stream<FilePath> getSelectedUnversionedFiles() {
+    return getSelectedFilePaths(UNVERSIONED_FILES_TAG);
   }
 
   @NotNull
-  private Stream<VirtualFile> getSelectedIgnoredFiles() {
-    return getSelectedVirtualFiles(IGNORED_FILES_TAG);
+  private Stream<FilePath> getSelectedIgnoredFiles() {
+    return getSelectedFilePaths(IGNORED_FILES_TAG);
   }
 
   @NotNull
@@ -225,6 +235,13 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
   protected Stream<VirtualFile> getSelectedVirtualFiles(@Nullable Object tag) {
     return getSelectionNodesStream(tag)
       .flatMap(ChangesBrowserNode::getFilesUnderStream)
+      .distinct();
+  }
+
+  @NotNull
+  protected Stream<FilePath> getSelectedFilePaths(@Nullable Object tag) {
+    return getSelectionNodesStream(tag)
+      .flatMap(ChangesBrowserNode::getFilePathsUnderStream)
       .distinct();
   }
 
@@ -267,11 +284,21 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
       .distinct();
   }
 
+  @NotNull
+  static Stream<FilePath> getFilePaths(@Nullable TreePath[] paths, @Nullable Object tag) {
+    return stream(paths)
+      .filter(path -> isUnderTag(path, tag))
+      .map(TreePath::getLastPathComponent)
+      .map(node -> ((ChangesBrowserNode<?>)node))
+      .flatMap(ChangesBrowserNode::getFilePathsUnderStream)
+      .distinct();
+  }
+
   static boolean isUnderTag(@NotNull TreePath path, @Nullable Object tag) {
     boolean result = true;
 
     if (tag != null) {
-      result = path.getPathCount() > 1 && ((ChangesBrowserNode)path.getPathComponent(1)).getUserObject() == tag;
+      result = path.getPathCount() > 1 && ((ChangesBrowserNode<?>)path.getPathComponent(1)).getUserObject() == tag;
     }
 
     return result;
@@ -318,7 +345,7 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
   private Stream<VirtualFile> getSelectedFiles() {
     return Stream.concat(
       getAfterRevisionsFiles(getSelectedChanges()),
-      getSelectedVirtualFiles(null)
+      Stream.concat(getSelectedVirtualFiles(null), getFilesFromPaths(getSelectedFilePaths(null)))
     ).distinct();
   }
 
@@ -326,7 +353,7 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
   private Stream<VirtualFile> getNavigatableFiles() {
     return Stream.concat(
       getFiles(getSelectedChanges()),
-      getSelectedVirtualFiles(null)
+      Stream.concat(getSelectedVirtualFiles(null), getFilesFromPaths(getSelectedFilePaths(null)))
     ).distinct();
   }
 
@@ -412,6 +439,9 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
 
   @Nullable
   public DefaultMutableTreeNode findNodeInTree(Object userObject) {
+    if (userObject instanceof LocalChangeList) {
+      return TreeUtil.nodeChildren(getRoot()).filter(DefaultMutableTreeNode.class).find(node -> userObject.equals(node.getUserObject()));
+    }
     if (userObject instanceof ChangeListChange) {
       return TreeUtil.findNode(getRoot(), node -> ChangeListChange.HASHING_STRATEGY.equals(node.getUserObject(), userObject));
     }
@@ -425,7 +455,7 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
   }
 
   private static class DistinctChangePredicate implements Predicate<Change> {
-    private final Set<Object> seen = ContainerUtil.newTroveSet(ChangeListChange.HASHING_STRATEGY);
+    private final Set<Object> seen = new THashSet<>(ChangeListChange.HASHING_STRATEGY);
 
     @Override
     public boolean test(Change change) {

@@ -1,15 +1,16 @@
 package com.jetbrains.jsonSchema.impl;
 
-import com.intellij.codeInsight.completion.JavaCompletionTestCase;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.util.concurrency.Semaphore;
 import com.jetbrains.jsonSchema.JsonSchemaTestServiceImpl;
 import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider;
@@ -22,6 +23,7 @@ import org.junit.Assert;
 import java.io.File;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -29,7 +31,7 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * @author Irina.Chernushina on 8/29/2015.
  */
-public class JsonSchemaReadTest extends JavaCompletionTestCase {
+public class JsonSchemaReadTest extends BasePlatformTestCase {
   @NotNull
   @Override
   protected String getTestDataPath() {
@@ -56,15 +58,15 @@ public class JsonSchemaReadTest extends JavaCompletionTestCase {
   }
 
   public void testMainSchemaHighlighting() {
-    final JsonSchemaService service = JsonSchemaService.Impl.get(myProject);
-    final List<JsonSchemaFileProvider> providers = new JsonSchemaProjectSelfProviderFactory().getProviders(myProject);
+    final JsonSchemaService service = JsonSchemaService.Impl.get(getProject());
+    final List<JsonSchemaFileProvider> providers = new JsonSchemaProjectSelfProviderFactory().getProviders(getProject());
     Assert.assertEquals(JsonSchemaProjectSelfProviderFactory.TOTAL_PROVIDERS, providers.size());
     for (JsonSchemaFileProvider provider: providers) {
       final VirtualFile mainSchema = provider.getSchemaFile();
       assertNotNull(mainSchema);
       assertTrue(service.isSchemaFile(mainSchema));
 
-      enableInspectionTool(new JsonSchemaComplianceInspection());
+      myFixture.enableInspections(new JsonSchemaComplianceInspection());
       Disposer.register(getTestRootDisposable(), new Disposable() {
         @Override
         public void dispose() {
@@ -72,12 +74,12 @@ public class JsonSchemaReadTest extends JavaCompletionTestCase {
         }
       });
 
-      configureByExistingFile(mainSchema);
-      final List<HighlightInfo> infos = doHighlighting();
+      myFixture.configureFromExistingVirtualFile(mainSchema);
+      final List<HighlightInfo> infos = myFixture.doHighlighting();
       for (HighlightInfo info : infos) {
         if (!HighlightSeverity.INFORMATION.equals(info.getSeverity())) {
           fail(String.format("%s in: %s", info.getDescription(),
-                             myEditor.getDocument().getText(new TextRange(info.getStartOffset(), info.getEndOffset()))));
+                             myFixture.getEditor().getDocument().getText(new TextRange(info.getStartOffset(), info.getEndOffset()))));
         }
       }
     }
@@ -87,7 +89,7 @@ public class JsonSchemaReadTest extends JavaCompletionTestCase {
     Assert.assertTrue(file.exists());
     final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
     Assert.assertNotNull(virtualFile);
-    return JsonSchemaReader.readFromFile(myProject, virtualFile);
+    return JsonSchemaReader.readFromFile(getProject(), virtualFile);
   }
 
   public void testReadSchemaWithCustomTags() throws Exception {
@@ -138,7 +140,7 @@ public class JsonSchemaReadTest extends JavaCompletionTestCase {
     final AtomicReference<Exception> error = new AtomicReference<>();
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
-    final Thread thread = new Thread(() -> {
+    Future<?> thread = ApplicationManager.getApplication().executeOnPooledThread(() -> {
       try {
         ReadAction.run(() -> getSchemaObject(file));
         done.set(true);
@@ -149,15 +151,14 @@ public class JsonSchemaReadTest extends JavaCompletionTestCase {
       finally {
         semaphore.up();
       }
-    }, getClass().getName() + ": read test json schema " + file.getName());
-    thread.setDaemon(true);
+    });
     try {
-      thread.start();
       semaphore.waitFor(TimeUnit.SECONDS.toMillis(120));
       if (error.get() != null) throw error.get();
       Assert.assertTrue("Reading test schema hung!", done.get());
-    } finally {
-      thread.interrupt();
+    }
+    finally {
+      thread.get();
     }
   }
 }

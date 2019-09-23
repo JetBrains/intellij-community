@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.impl.statistics;
 
 import com.intellij.execution.RunManager;
@@ -16,14 +16,19 @@ import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomWhite
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ui.UIUtil;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.AsyncPromise;
+import org.jetbrains.concurrency.CancellablePromise;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
@@ -45,42 +50,56 @@ public class RunConfigurationTypeUsagesCollector extends ProjectUsagesCollector 
 
   @NotNull
   @Override
-  public Set<MetricEvent> getMetrics(@NotNull Project project) {
-    final TObjectIntHashMap<Template> templates = new TObjectIntHashMap<>();
-    ApplicationManager.getApplication().invokeAndWait(() -> {
-      if (project.isDisposed()) return;
-      final RunManager runManager = RunManager.getInstance(project);
-      for (RunnerAndConfigurationSettings settings : runManager.getAllSettings()) {
-        RunConfiguration runConfiguration = settings.getConfiguration();
-        final ConfigurationFactory configurationFactory = runConfiguration.getFactory();
-        if (configurationFactory == null) {
-          // not realistic
-          continue;
+  public CancellablePromise<Set<MetricEvent>> getMetrics(@NotNull Project project, @NotNull ProgressIndicator indicator) {
+    AsyncPromise<Set<MetricEvent>> result = new AsyncPromise<>();
+    UIUtil.invokeLaterIfNeeded(() -> {
+      try {
+        TObjectIntHashMap<Template> templates = new TObjectIntHashMap<>();
+        if (project.isDisposed()) {
+          result.setResult(Collections.emptySet());
+          return;
         }
+        RunManager runManager = RunManager.getInstance(project);
+        for (RunnerAndConfigurationSettings settings : runManager.getAllSettings()) {
+          ProgressManager.checkCanceled();
+          RunConfiguration runConfiguration = settings.getConfiguration();
+          final ConfigurationFactory configurationFactory = runConfiguration.getFactory();
+          if (configurationFactory == null) {
+            // not realistic
+            continue;
+          }
 
-        final ConfigurationType configurationType = configurationFactory.getType();
-        final FeatureUsageData data = newFeatureUsageData(configurationType, configurationFactory);
-        fillSettings(data, settings, runConfiguration);
-        final Template template = new Template("configured.in.project", data);
-        if (templates.containsKey(template)) {
-          templates.increment(template);
+          final ConfigurationType configurationType = configurationFactory.getType();
+          final FeatureUsageData data = newFeatureUsageData(configurationType, configurationFactory);
+          fillSettings(data, settings, runConfiguration);
+          final Template template = new Template("configured.in.project", data);
+          if (templates.containsKey(template)) {
+            templates.increment(template);
+          }
+          else {
+            templates.put(template, 1);
+          }
         }
-        else {
-          templates.put(template, 1);
-        }
+        Set<MetricEvent> metrics = new HashSet<>();
+        templates.forEachEntry((template, value) -> {
+          metrics.add(template.createMetricEvent(value));
+          return true;
+        });
+        result.setResult(metrics);
+      }
+      catch (Throwable t) {
+        result.setError(t);
+        throw t;
       }
     });
-
-    final Set<MetricEvent> result = new HashSet<>();
-    templates.forEachEntry((template, value) -> result.add(template.createMetricEvent(value)));
     return result;
   }
 
   @NotNull
-  public static FeatureUsageData newFeatureUsageData(@NotNull ConfigurationType configuration, @NotNull ConfigurationFactory factory) {
+  public static FeatureUsageData newFeatureUsageData(@NotNull ConfigurationType configuration, @Nullable ConfigurationFactory factory) {
     final String id = configuration instanceof UnknownConfigurationType ? "unknown" : configuration.getId();
     final FeatureUsageData data = new FeatureUsageData().addData(ID_FIELD, id);
-    if (configuration.getConfigurationFactories().length > 1) {
+    if (factory != null && configuration.getConfigurationFactories().length > 1) {
       data.addData(FACTORY_FIELD, factory.getId());
     }
     return data;
@@ -136,8 +155,8 @@ public class RunConfigurationTypeUsagesCollector extends ProjectUsagesCollector 
     protected ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
       if (isThirdPartyValue(data) || "unknown".equals(data)) return ValidationResultType.ACCEPTED;
 
-      final String configurationId = getDataField(context, ID_FIELD);
-      final String factoryId = getDataField(context, FACTORY_FIELD);
+      final String configurationId = getEventDataField(context, ID_FIELD);
+      final String factoryId = getEventDataField(context, FACTORY_FIELD);
       if (configurationId == null) {
         return ValidationResultType.REJECTED;
       }
@@ -155,11 +174,6 @@ public class RunConfigurationTypeUsagesCollector extends ProjectUsagesCollector 
         }
       }
       return ValidationResultType.REJECTED;
-    }
-
-    @Nullable
-    private static String getDataField(@NotNull EventContext context, @NotNull String fieldName) {
-      return context.eventData.containsKey(fieldName) ? context.eventData.get(fieldName).toString() : null;
     }
 
     @NotNull

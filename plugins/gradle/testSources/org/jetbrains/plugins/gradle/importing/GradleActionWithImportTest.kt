@@ -8,6 +8,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.gradle.tooling.BuildController
 import org.gradle.tooling.GradleConnectionException
 import org.gradle.tooling.model.Model
+import org.gradle.tooling.model.gradle.GradleBuild
 import org.jetbrains.plugins.gradle.GradleManager
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider
 import org.jetbrains.plugins.gradle.service.project.AbstractProjectResolverExtension
@@ -94,9 +95,8 @@ class GradleActionWithImportTest: GradleImportingTestCase() {
 }
 
 class TestModelProvider : ProjectImportModelProvider {
-
   override fun populateBuildModels(controller: BuildController,
-                                   project: Model,
+                                   buildModel: GradleBuild,
                                    consumer: ProjectImportModelProvider.BuildModelConsumer) {
     controller.findModel(Object::class.java)
   }
@@ -141,6 +141,9 @@ class TestProjectResolverExtension : AbstractProjectResolverExtension() {
       return ext.buildFinished.get(timeout.toLong(), unit)
     }
 
-    fun cleanup() { extensions.clear() }
+    fun cleanup() {
+      GradleManager.clearPreloadedExtensions()
+      extensions.clear()
+    }
   }
 }

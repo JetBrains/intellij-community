@@ -173,12 +173,15 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   }
   public void testStreamInlining() { doTest(); }
   public void testStreamCollectorInlining() { doTest(); }
+  public void testStreamToMapInlining() { doTest(); }
+  public void testStreamToCollectionInlining() { doTest(); }
   public void testStreamComparatorInlining() { doTest(); }
   public void testStreamKnownSource() { doTest(); }
   public void testStreamTypeAnnoInlining() {
     setupTypeUseAnnotations("foo", myFixture);
     doTest();
   }
+  public void testStreamAnyMatchIsNull() { doTest(); }
   
   public void testMapGetWithNotNullKeys() { doTestWithCustomAnnotations(); }
   public void testInferNestedForeachNullability() { doTestWithCustomAnnotations(); }

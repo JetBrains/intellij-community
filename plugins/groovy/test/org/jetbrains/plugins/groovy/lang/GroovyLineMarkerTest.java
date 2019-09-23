@@ -74,7 +74,7 @@ public class GroovyLineMarkerTest extends LightJavaCodeInsightFixtureTestCase {
 
     myFixture.doHighlighting();
 
-    final List<LineMarkerInfo> infoList = DaemonCodeAnalyzerImpl.getLineMarkers(editor.getDocument(), project);
+    final List<LineMarkerInfo<?>> infoList = DaemonCodeAnalyzerImpl.getLineMarkers(editor.getDocument(), project);
     assertEquals(count, infoList.size());
   }
 }

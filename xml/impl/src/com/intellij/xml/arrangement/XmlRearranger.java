@@ -27,7 +27,7 @@ import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.std.*;
-import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,7 +47,7 @@ public class XmlRearranger
   implements Rearranger<XmlElementArrangementEntry>,
              ArrangementStandardSettingsAware {
 
-  private static final Set<ArrangementSettingsToken> SUPPORTED_TYPES = ContainerUtilRt.newLinkedHashSet(XML_TAG, XML_ATTRIBUTE); 
+  private static final Set<ArrangementSettingsToken> SUPPORTED_TYPES = ContainerUtil.newLinkedHashSet(XML_TAG, XML_ATTRIBUTE);
   private static final List<StdArrangementMatchRule> DEFAULT_MATCH_RULES = new ArrayList<>();
 
   private static final StdArrangementSettings DEFAULT_SETTINGS;
@@ -146,7 +146,7 @@ public class XmlRearranger
   @Nullable
   @Override
   public List<CompositeArrangementSettingsToken> getSupportedMatchingTokens() {
-    return ContainerUtilRt.newArrayList(
+    return ContainerUtil.newArrayList(
       new CompositeArrangementSettingsToken(TYPE, SUPPORTED_TYPES),
       new CompositeArrangementSettingsToken(StdArrangementTokens.Regexp.NAME),
       new CompositeArrangementSettingsToken(StdArrangementTokens.Regexp.XML_NAMESPACE),

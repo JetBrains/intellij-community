@@ -8,11 +8,11 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.CheckinProjectPanel
+import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.actions.DefaultCommitExecutorAction
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.commit.AbstractCommitWorkflow.Companion.getCommitExecutors
 import gnu.trove.THashSet
 
@@ -62,19 +62,25 @@ class ChangesViewCommitWorkflowHandler(
     return commitOptions
   }
 
-  private fun isDefaultCommitEnabled() = workflow.vcses.isNotEmpty() && !isCommitEmpty()
+  private fun isDefaultCommitEnabled() = workflow.vcses.isNotEmpty() && !workflow.isExecuting && !isCommitEmpty()
 
   override fun vcsesChanged() {
-    updateDefaultCommitAction()
-
     initCommitHandlers()
     workflow.initCommitExecutors(getCommitExecutors(project, workflow.vcses))
 
+    updateDefaultCommitActionEnabled()
+    ui.defaultCommitActionName = getCommitActionName()
     ui.setCustomCommitActions(createCommitExecutorActions())
   }
 
-  private fun updateDefaultCommitAction() {
-    ui.defaultCommitActionName = getDefaultCommitActionName(workflow.vcses)
+  override fun executionStarted() = updateDefaultCommitActionEnabled()
+  override fun executionEnded() {
+    // Local Changes tree is not yet updated here. So calling `updateDefaultCommitActionEnabled()` leads to button blinking.
+    // Next `inclusionChanged()` (likely because of `synchronizeInclusion()` after committed changes refresh) will set correct button
+    // state without blinking.
+  }
+
+  private fun updateDefaultCommitActionEnabled() {
     ui.isDefaultCommitActionEnabled = isDefaultCommitEnabled()
   }
 
@@ -85,7 +91,7 @@ class ChangesViewCommitWorkflowHandler(
     return group.getChildren(null).toList() + executors.filter { it.useDefaultAction() }.map { DefaultCommitExecutorAction(it) }
   }
 
-  fun synchronizeInclusion(changeLists: List<LocalChangeList>, unversionedFiles: List<VirtualFile>) {
+  fun synchronizeInclusion(changeLists: List<LocalChangeList>, unversionedFiles: List<FilePath>) {
     if (!inclusionModel.isInclusionEmpty()) {
       val possibleInclusion = changeLists.flatMapTo(THashSet(ChangeListChange.HASHING_STRATEGY)) { it.changes }
       possibleInclusion.addAll(unversionedFiles)
@@ -102,7 +108,15 @@ class ChangesViewCommitWorkflowHandler(
     ui.setCompletionContext(changeLists)
   }
 
-  fun setCommitState(items: Collection<Any>, force: Boolean) {
+  fun setCommitState(changeList: LocalChangeList, items: Collection<Any>, force: Boolean) {
+    setInclusion(items, force)
+
+    val inclusion = inclusionModel.getInclusion()
+    val isChangeListFullyIncluded = changeList.changes.run { isNotEmpty() && all { it in inclusion } }
+    if (isChangeListFullyIncluded) ui.select(changeList) else ui.selectFirst(inclusion)
+  }
+
+  private fun setInclusion(items: Collection<Any>, force: Boolean) {
     val activeChanges = changeListManager.defaultChangeList.changes
 
     if (force || inclusionModel.isInclusionEmpty()) {
@@ -125,7 +139,7 @@ class ChangesViewCommitWorkflowHandler(
   fun activate(): Boolean = ui.activate()
 
   fun showCommitOptions(isFromToolbar: Boolean, dataContext: DataContext) =
-    ui.showCommitOptions(ensureCommitOptions(), isFromToolbar, dataContext)
+    ui.showCommitOptions(ensureCommitOptions(), getCommitActionName(), isFromToolbar, dataContext)
 
   override fun inclusionChanged() {
     val inclusion = inclusionModel.getInclusion()
@@ -137,7 +151,7 @@ class ChangesViewCommitWorkflowHandler(
       knownActiveChanges = activeChanges
     }
 
-    ui.isDefaultCommitActionEnabled = isDefaultCommitEnabled()
+    updateDefaultCommitActionEnabled()
     super.inclusionChanged()
   }
 
@@ -165,6 +179,8 @@ class ChangesViewCommitWorkflowHandler(
 
       workflow.clearCommitContext()
       initCommitHandlers()
+
+      ui.defaultCommitActionName = getCommitActionName() // to remove "Amend" prefix if any
     }
   }
 }

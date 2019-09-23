@@ -365,8 +365,7 @@ public class SymlinkHandlingTest extends BareTestFixtureTestCase {
 
     tempDir.getChildren();
     tempDir.refresh(false, true);
-    VfsUtilCore.visitChildrenRecursively(tempDir, new VirtualFileVisitor() {
-    });
+    VfsUtilCore.visitChildrenRecursively(tempDir, new VirtualFileVisitor<Void>() { });
   }
 
   private static void assertBrokenLink(@NotNull VirtualFile link) {
@@ -386,7 +385,7 @@ public class SymlinkHandlingTest extends BareTestFixtureTestCase {
     Set<String> expectedSet = StreamEx.of(expected).map(FileUtil::toSystemIndependentName).append(vDir.getPath()).toSet();
 
     Set<String> actualSet = new HashSet<>();
-    VfsUtilCore.visitChildrenRecursively(vDir, new VirtualFileVisitor() {
+    VfsUtilCore.visitChildrenRecursively(vDir, new VirtualFileVisitor<Void>() {
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {
         if (!actualSet.add(file.getPath())) {

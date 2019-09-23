@@ -15,9 +15,8 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.components.*
-import com.intellij.openapi.components.impl.ServiceManagerImpl
+import com.intellij.openapi.components.impl.ComponentManagerImpl
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.options.OptionsBundle
 import com.intellij.openapi.options.SchemeManagerFactory
@@ -25,6 +24,7 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.showOkCancelDialog
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.serviceContainer.ServiceManagerImpl
 import com.intellij.util.ArrayUtil
 import com.intellij.util.PlatformUtils
 import com.intellij.util.ReflectionUtil
@@ -101,7 +101,7 @@ open class ExportSettingsAction : AnAction(), DumbAware {
 
 fun exportSettings(exportFiles: Set<Path>, out: OutputStream, configPath: String) {
   val filter = THashSet<String>()
-  Compressor.Zip(out).filter { path, isDir -> isDir || filter.add(path) }.use { zip ->
+  Compressor.Zip(out).filter { entryName, _ -> filter.add(entryName) }.use { zip ->
     for (file in exportFiles) {
       val fileInfo = file.basicAttributesIfExists() ?: continue
       val relativePath = FileUtil.getRelativePath(configPath, file.toAbsolutePath().systemIndependentPath, '/')!!
@@ -159,10 +159,10 @@ fun getExportableComponentsMap(isOnlyExisting: Boolean,
     }
   }
 
-  val app = ApplicationManager.getApplication() as ApplicationImpl
+  val app = ApplicationManager.getApplication() as ComponentManagerImpl
 
   @Suppress("DEPRECATION")
-  app.getComponents(ExportableApplicationComponent::class.java).forEach(processor)
+  app.getComponentInstancesOfType(ExportableApplicationComponent::class.java).forEach(processor)
   @Suppress("DEPRECATION")
   ServiceBean.loadServicesFromBeans(ExportableComponent.EXTENSION_POINT, ExportableComponent::class.java).forEach(processor)
 

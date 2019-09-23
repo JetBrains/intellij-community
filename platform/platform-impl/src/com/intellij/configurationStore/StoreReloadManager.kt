@@ -6,6 +6,7 @@ import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 
 interface StoreReloadManager {
@@ -22,12 +23,14 @@ interface StoreReloadManager {
 
   fun unblockReloadingProjectOnExternalChanges()
 
+  @ApiStatus.Internal
+  fun isReloadBlocked(): Boolean
+
   @TestOnly
   fun flushChangedProjectFileAlarm()
 
   fun saveChangedProjectFile(file: VirtualFile, project: Project)
 
   suspend fun reloadChangedStorageFiles()
-
   fun storageFilesChanged(componentManagerToStorages: Map<ComponentManager, Collection<StateStorage>>)
 }

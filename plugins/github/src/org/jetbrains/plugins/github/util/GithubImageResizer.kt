@@ -1,7 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.util
 
+import com.intellij.execution.process.ProcessIOExecutorService
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Computable
@@ -12,10 +14,13 @@ import com.intellij.util.ui.ImageUtil
 import java.awt.Image
 import java.util.concurrent.CompletableFuture
 import java.util.function.Supplier
+import kotlin.math.max
 
 class GithubImageResizer(private val progressManager: ProgressManager) : Disposable {
 
-  private val executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("GitHub Image Resizer", getThreadPoolSize())
+  private val executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("GitHub Image Resizer",
+                                                                              ProcessIOExecutorService.INSTANCE,
+                                                                              getThreadPoolSize())
   private val progressIndicator: EmptyProgressIndicator = NonReusableEmptyProgressIndicator()
 
   fun requestImageResize(image: Image, size: Int, scaleContext: ScaleContext): CompletableFuture<Image> {
@@ -37,6 +42,9 @@ class GithubImageResizer(private val progressManager: ProgressManager) : Disposa
   }
 
   companion object {
-    private fun getThreadPoolSize() = Math.max(Runtime.getRuntime().availableProcessors() / 2, 1)
+    private fun getThreadPoolSize() = max(Runtime.getRuntime().availableProcessors() / 2, 1)
+
+    @JvmStatic
+    fun getInstance(): GithubImageResizer = service()
   }
 }

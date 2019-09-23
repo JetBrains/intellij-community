@@ -19,12 +19,12 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.WindowStateService;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.*;
-import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
+import com.intellij.openapi.wm.ex.IdeFrameEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameDecorator;
-import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.openapi.wm.impl.IdeMenuBar;
+import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomFrameDialogContent;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.BalloonLayout;
@@ -35,6 +35,8 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
 import java.awt.*;
@@ -350,7 +352,7 @@ public class FrameWrapper implements Disposable, DataProvider {
     myStatusBar = statusBar;
   }
 
-  private static class MyJFrame extends JFrame implements DataProvider, IdeFrame.Child {
+  private static class MyJFrame extends JFrame implements DataProvider, IdeFrame.Child, IdeFrameEx {
     private static final boolean USE_SINGLE_SYSTEM_MENUBAR = SystemInfo.isMacSystemMenu && "true".equalsIgnoreCase(System.getProperty("mac.system.menu.singleton"));
     private FrameWrapper myOwner;
     private final IdeFrame myParent;
@@ -372,7 +374,18 @@ public class FrameWrapper implements Disposable, DataProvider {
       }
 
       MouseGestureManager.getInstance().add(this);
-      setFocusTraversalPolicy(new LayoutFocusTraversalPolicyExt());
+      setFocusTraversalPolicy(new LayoutFocusTraversalPolicy());
+    }
+
+    @Override
+    public boolean isInFullScreen() {
+      return false;
+    }
+
+    @NotNull
+    @Override
+    public Promise<?> toggleFullScreen(boolean state) {
+      return Promises.resolvedPromise();
     }
 
     @Override
@@ -388,12 +401,14 @@ public class FrameWrapper implements Disposable, DataProvider {
       return getRootPane();
     }
 
+    @Nullable
     @Override
     public StatusBar getStatusBar() {
       StatusBar ownerBar = myOwner != null ? myOwner.myStatusBar : null;
       return ownerBar != null ? ownerBar : myParent != null ? myParent.getStatusBar() : null;
     }
 
+    @NotNull
     @Override
     public Rectangle suggestChildFrameBounds() {
       return myParent.suggestChildFrameBounds();
@@ -417,18 +432,20 @@ public class FrameWrapper implements Disposable, DataProvider {
       updateTitle();
     }
 
+    @Nullable
     @Override
     public IdeRootPaneNorthExtension getNorthExtension(String key) {
       return myOwner.getNorthExtension(key);
     }
 
+    @Nullable
     @Override
     public BalloonLayout getBalloonLayout() {
       return null;
     }
 
     private void updateTitle() {
-      IdeFrameImpl.updateTitle(this, myFrameTitle, myFileTitle, myFile);
+      ProjectFrameHelper.updateTitle(this, myFrameTitle, myFileTitle, myFile);
     }
 
     @Override
@@ -470,7 +487,7 @@ public class FrameWrapper implements Disposable, DataProvider {
       getRootPane().putClientProperty("Window.style", "small");
       setBackground(UIUtil.getPanelBackground());
       MouseGestureManager.getInstance().add(this);
-      setFocusTraversalPolicy(new LayoutFocusTraversalPolicyExt());
+      setFocusTraversalPolicy(new LayoutFocusTraversalPolicy());
     }
 
     @Override
@@ -478,6 +495,7 @@ public class FrameWrapper implements Disposable, DataProvider {
       return getRootPane();
     }
 
+    @Nullable
     @Override
     public StatusBar getStatusBar() {
       return null;
@@ -489,6 +507,7 @@ public class FrameWrapper implements Disposable, DataProvider {
       return null;
     }
 
+    @NotNull
     @Override
     public Rectangle suggestChildFrameBounds() {
       return myParent.suggestChildFrameBounds();
@@ -502,16 +521,6 @@ public class FrameWrapper implements Disposable, DataProvider {
     @Override
     public void setFrameTitle(String title) {
       setTitle(title);
-    }
-
-    @Override
-    public void setFileTitle(String fileTitle, File ioFile) {
-      setTitle(fileTitle);
-    }
-
-    @Override
-    public IdeRootPaneNorthExtension getNorthExtension(String key) {
-      return null;
     }
 
     @Override

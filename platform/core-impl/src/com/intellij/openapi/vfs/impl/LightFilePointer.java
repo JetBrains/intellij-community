@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.vfs.impl;
 
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -25,8 +27,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class LightFilePointer implements VirtualFilePointer {
+  
+  @NotNull
   private final String myUrl;
-  private VirtualFile myFile;
+  @Nullable
+  private volatile VirtualFile myFile;
+  private volatile boolean myRefreshed = false;
 
   public LightFilePointer(@NotNull String url) {
     myUrl = url;
@@ -53,8 +59,9 @@ public class LightFilePointer implements VirtualFilePointer {
   @Override
   @NotNull
   public String getFileName() {
-    if (myFile != null) {
-      return myFile.getName();
+    VirtualFile file = myFile;
+    if (file != null) {
+      return file.getName();
     }
     int index = myUrl.lastIndexOf('/');
     return index >= 0 ? myUrl.substring(index + 1) : myUrl;
@@ -82,8 +89,21 @@ public class LightFilePointer implements VirtualFilePointer {
   }
 
   private void refreshFile() {
-    if (myFile != null && myFile.isValid()) return;
-    VirtualFile virtualFile = VirtualFileManager.getInstance().findFileByUrl(myUrl);
+    VirtualFile file = myFile;
+    if (file != null && file.isValid()) return;
+    VirtualFileManager vfManager = VirtualFileManager.getInstance();
+    VirtualFile virtualFile = vfManager.findFileByUrl(myUrl);
+    if (virtualFile == null && !myRefreshed) {
+      myRefreshed = true;
+      Application application = ApplicationManager.getApplication();
+      if (application.isDispatchThread() || !application.isReadAccessAllowed()) {
+        virtualFile = vfManager.refreshAndFindFileByUrl(myUrl);
+      }
+      else {
+        application.executeOnPooledThread(() -> vfManager.refreshAndFindFileByUrl(myUrl));
+      }
+    }
+    
     myFile = virtualFile != null && virtualFile.isValid() ? virtualFile : null;
   }
 

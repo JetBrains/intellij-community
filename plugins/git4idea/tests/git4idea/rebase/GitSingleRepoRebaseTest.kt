@@ -473,9 +473,9 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
     }, null))
 
     var receivedMessage : String? = null
-    dialogManager.onDialog(GitRebaseUnstructuredEditor::class.java, { it ->
+    dialogManager.onDialog(GitUnstructuredEditor::class.java, { it ->
       receivedMessage = it.text
-      val field = GitRebaseUnstructuredEditor::class.java.getDeclaredField("myTextEditor")
+      val field = GitUnstructuredEditor::class.java.getDeclaredField("myTextEditor")
       field.isAccessible = true
       val commitMessage = field.get (it) as CommitMessage
       commitMessage.setText(newMessage)
@@ -508,7 +508,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
 
     dialogManager.onMessage { Messages.CANCEL }
 
-    assertNoNotification()
+    assertNoErrorNotification()
     assertNoRebaseInProgress(repo)
     repo.`assert feature not rebased on master`()
   }

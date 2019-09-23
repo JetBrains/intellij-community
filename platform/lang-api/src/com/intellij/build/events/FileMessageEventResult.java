@@ -2,12 +2,10 @@
 package com.intellij.build.events;
 
 import com.intellij.build.FilePosition;
-import org.jetbrains.annotations.ApiStatus;
 
 /**
  * @author Vladislav.Soroka
  */
-@ApiStatus.Experimental
 public interface FileMessageEventResult extends MessageEventResult {
   FilePosition getFilePosition();
 }

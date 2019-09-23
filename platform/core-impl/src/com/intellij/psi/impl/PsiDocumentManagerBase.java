@@ -36,7 +36,6 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.messages.MessageBus;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.*;
 
@@ -51,7 +50,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
 
   protected final Project myProject;
   private final PsiManager myPsiManager;
-  private final DocumentCommitProcessor myDocumentCommitProcessor;
+  protected final DocumentCommitProcessor myDocumentCommitProcessor;
   final Set<Document> myUncommittedDocuments = ContainerUtil.newConcurrentSet();
   private final Map<Document, UncommittedInfo> myUncommittedInfos = ContainerUtil.newConcurrentMap();
   boolean myStopTrackingDocuments;
@@ -63,18 +62,16 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
 
   private final List<Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  protected PsiDocumentManagerBase(@NotNull final Project project,
-                                   @NotNull PsiManager psiManager,
-                                   @NotNull MessageBus bus,
-                                   @NotNull DocumentCommitProcessor documentCommitProcessor) {
+  protected PsiDocumentManagerBase(@NotNull Project project) {
     myProject = project;
-    myPsiManager = psiManager;
-    myDocumentCommitProcessor = documentCommitProcessor;
-    mySynchronizer = new PsiToDocumentSynchronizer(this, bus);
+    myPsiManager = PsiManager.getInstance(project);
+    myDocumentCommitProcessor = ApplicationManager.getApplication().getService(DocumentCommitProcessor.class);
+    mySynchronizer = new PsiToDocumentSynchronizer(this, project.getMessageBus());
     myPsiManager.addPsiTreeChangeListener(mySynchronizer);
 
-    bus.connect(this).subscribe(PsiDocumentTransactionListener.TOPIC,
-                                (document, file) -> myUncommittedDocuments.remove(document));
+    project.getMessageBus().connect(this).subscribe(PsiDocumentTransactionListener.TOPIC, (document, file) -> {
+      myUncommittedDocuments.remove(document);
+    });
   }
 
   @Override
@@ -214,6 +211,31 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     }
 
     assertEverythingCommitted();
+  }
+
+  @Override
+  public boolean commitAllDocumentsUnderProgress() {
+    Application application = ApplicationManager.getApplication();
+    //backward compatibility with unit tests
+    if (application.isUnitTestMode()) {
+      commitAllDocuments();
+      return true;
+    }
+    assert !application.isWriteAccessAllowed() : "Do not call commitAllDocumentsUnderProgress inside write-action";
+    final int semaphoreTimeoutInMs = 50;
+    final Runnable commitAllDocumentsRunnable = () -> {
+      Semaphore semaphore = new Semaphore(1);
+      application.invokeLater(() -> {
+        PsiDocumentManager.getInstance(myProject).performWhenAllCommitted(() -> {
+          semaphore.up();
+        });
+      });
+      while (!semaphore.waitFor(semaphoreTimeoutInMs)) {
+        ProgressManager.checkCanceled();
+      }
+    };
+    return ProgressManager.getInstance().runProcessWithProgressSynchronously(commitAllDocumentsRunnable, "Processing Documents",
+                                                                             true, myProject);
   }
 
   private void assertEverythingCommitted() {
@@ -868,13 +890,24 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       if (forceCommit) {
         commitDocument(document);
       }
-      else if (!((DocumentEx)document).isInBulkUpdate() && myPerformBackgroundCommit) {
+      else if (!document.isInBulkUpdate() && myPerformBackgroundCommit) {
         myDocumentCommitProcessor.commitAsynchronously(myProject, document, event, TransactionGuard.getInstance().getContextTransaction());
       }
     }
     else {
       clearUncommittedInfo(document);
     }
+  }
+
+  @Override
+  public void bulkUpdateStarting(@NotNull Document document) {
+    document.putUserData(BlockSupport.DO_NOT_REPARSE_INCREMENTALLY, Boolean.TRUE);
+  }
+
+  @Override
+  public void bulkUpdateFinished(@NotNull Document document) {
+    myDocumentCommitProcessor.commitAsynchronously(myProject, document, "Bulk update finished",
+                                                   TransactionGuard.getInstance().getContextTransaction());
   }
 
   class PriorityEventCollector implements PrioritizedInternalDocumentListener {

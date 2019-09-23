@@ -2,12 +2,16 @@
 package com.intellij.task.impl;
 
 import com.intellij.execution.ExecutionException;
+import com.intellij.internal.statistic.IdeActivity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectModelBuildableElement;
 import com.intellij.openapi.util.Pair;
@@ -17,6 +21,7 @@ import com.intellij.ui.GuiUtils;
 import com.intellij.util.Consumer;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,6 +31,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import static com.intellij.util.containers.ContainerUtil.map;
 import static java.util.Arrays.stream;
@@ -136,6 +142,9 @@ public class ProjectTaskManagerImpl extends ProjectTaskManager {
             try {
               return runner.canRun(myProject, aTask);
             }
+            catch (ProcessCanceledException e) {
+              throw e;
+            }
             catch (Exception e) {
               LOG.error("Broken project task runner: " + runner.getClass().getName(), e);
             }
@@ -160,6 +169,12 @@ public class ProjectTaskManagerImpl extends ProjectTaskManager {
         return tasks;
       }
     });
+
+
+    IdeActivity activity = new IdeActivity(myProject, "build").startedWithData(data -> {
+      data.addData("task_runner_class", map(toRun, it -> it.first.getClass().getName()));
+    });
+
     myEventPublisher.started(context);
 
     Runnable runnable = () -> {
@@ -169,24 +184,33 @@ public class ProjectTaskManagerImpl extends ProjectTaskManager {
         }
         catch (ExecutionException e) {
           sendAbortedNotify(context, new ListenerNotificator(callback));
+          activity.finished();
           return;
         }
       }
 
       if (toRun.isEmpty()) {
         sendSuccessNotify(context, new ListenerNotificator(callback));
+        activity.finished();
         return;
       }
 
       ProjectTaskResultsAggregator callbacksCollector =
-        new ProjectTaskResultsAggregator(context, new ListenerNotificator(callback), toRun.size());
+        new ProjectTaskResultsAggregator(context, new ListenerNotificator(callback), toRun.size(), activity);
       for (Pair<ProjectTaskRunner, Collection<? extends ProjectTask>> pair : toRun) {
         ProjectTaskRunnerNotification notification = new ProjectTaskRunnerNotification(pair.second, callbacksCollector);
         if (pair.second.isEmpty()) {
           sendSuccessNotify(context, notification);
         }
         else {
-          pair.first.run(myProject, context, notification, pair.second);
+          ProjectTaskRunner runner = pair.first;
+          if (context.isCollectionOfGeneratedFilesEnabled() && !runner.isFileGeneratedEventsSupported()) {
+            pair.second.stream()
+              .filter(ModuleBuildTask.class::isInstance)
+              .map(task -> ((ModuleBuildTask)task).getModule())
+              .forEach(module -> context.addDirtyOutputPathsProvider(moduleOutputPathsProvider(module)));
+          }
+          runner.run(myProject, context, notification, pair.second);
         }
       }
     };
@@ -197,6 +221,14 @@ public class ProjectTaskManagerImpl extends ProjectTaskManager {
     else {
       runnable.run();
     }
+  }
+
+  @NotNull
+  private static Supplier<List<String>> moduleOutputPathsProvider(@NotNull Module module) {
+    return () -> ReadAction.compute(() -> {
+      return JBIterable.of(OrderEnumerator.orderEntries(module).withoutSdk().withoutLibraries().getClassesRoots())
+        .filterMap(file -> file.isDirectory() && !file.getFileSystem().isReadOnly() ? file.getPath() : null).toList();
+    });
   }
 
   public final void addListener(@NotNull ProjectTaskManagerListener listener) {
@@ -345,6 +377,7 @@ public class ProjectTaskManagerImpl extends ProjectTaskManager {
     private final ProjectTaskContext myContext;
     private final ProjectTaskNotification myDelegate;
     private final AtomicInteger myProgressCounter;
+    private final IdeActivity myActivity;
     private final AtomicInteger myErrorsCounter;
     private final AtomicInteger myWarningsCounter;
     private final AtomicBoolean myAbortedFlag;
@@ -352,10 +385,12 @@ public class ProjectTaskManagerImpl extends ProjectTaskManager {
 
     private ProjectTaskResultsAggregator(@NotNull ProjectTaskContext context,
                                          @NotNull ProjectTaskNotification delegate,
-                                         int expectedResults) {
+                                         int expectedResults,
+                                         @NotNull IdeActivity activity) {
       myContext = context;
       myDelegate = delegate;
       myProgressCounter = new AtomicInteger(expectedResults);
+      myActivity = activity;
       myErrorsCounter = new AtomicInteger();
       myWarningsCounter = new AtomicInteger();
       myAbortedFlag = new AtomicBoolean(false);
@@ -370,8 +405,13 @@ public class ProjectTaskManagerImpl extends ProjectTaskManager {
         myAbortedFlag.set(true);
       }
       if (inProgress <= 0) {
-        ProjectTaskResult result = new ProjectTaskResult(myAbortedFlag.get(), allErrors, allWarnings, myTasksState);
-        myDelegate.finished(myContext, result);
+        try {
+          ProjectTaskResult result = new ProjectTaskResult(myAbortedFlag.get(), allErrors, allWarnings, myTasksState);
+          myDelegate.finished(myContext, result);
+        }
+        finally {
+          myActivity.finished();
+        }
       }
     }
   }

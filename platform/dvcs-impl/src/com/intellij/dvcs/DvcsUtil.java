@@ -32,8 +32,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.status.StatusBarUtil;
+import com.intellij.util.CommonProcessors;
 import com.intellij.util.Function;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.vcs.log.TimedVcsCommit;
@@ -110,9 +110,7 @@ public class DvcsUtil {
     if (file.isDirectory()) {
       return "folder";
     }
-    else {
-      return "file";
-    }
+    return "file";
   }
 
   public static boolean anyRepositoryIsFresh(Collection<? extends Repository> repositories) {
@@ -279,8 +277,7 @@ public class DvcsUtil {
 
   public static void ensureAllChildrenInVfs(@Nullable VirtualFile dir) {
     if (dir != null) {
-      //noinspection unchecked
-      VfsUtilCore.processFilesRecursively(dir, Processor.TRUE);
+      VfsUtilCore.processFilesRecursively(dir, CommonProcessors.alwaysTrue());
     }
   }
 
@@ -350,14 +347,13 @@ public class DvcsUtil {
       LOG.debug("Project base dir is null, returning the first root: " + firstRoot);
       return firstRoot;
     }
-    VirtualFile rootCandidate;
     for (VirtualFile root : vcsRoots) {
       if (root.equals(projectBaseDir) || VfsUtilCore.isAncestor(root, projectBaseDir, true)) {
         LOG.debug("The best candidate: " + root);
         return root;
       }
     }
-    rootCandidate = vcsRoots[0];
+    VirtualFile rootCandidate = vcsRoots[0];
     LOG.debug("Returning the best candidate: " + rootCandidate);
     return rootCandidate;
   }
@@ -390,7 +386,7 @@ public class DvcsUtil {
       }
     }
 
-    if (libraryRoots.size() == 0) {
+    if (libraryRoots.isEmpty()) {
       LOGGER.debug("No library roots");
       return null;
     }
@@ -432,11 +428,7 @@ public class DvcsUtil {
         LOGGER.info("No repository found for commit " + commit);
         continue;
       }
-      List<VcsFullCommitDetails> commitsInRoot = groupedCommits.get(repository);
-      if (commitsInRoot == null) {
-        commitsInRoot = new ArrayList<>();
-        groupedCommits.put(repository, commitsInRoot);
-      }
+      List<VcsFullCommitDetails> commitsInRoot = groupedCommits.computeIfAbsent(repository, __ -> new ArrayList<>());
       commitsInRoot.add(commit);
     }
     return groupedCommits;

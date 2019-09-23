@@ -42,7 +42,7 @@ import static com.intellij.patterns.PsiJavaPatterns.psiElement;
  * @author ven
  */
 public class AnnotationsHighlightUtil {
-  private static final Logger LOG = Logger.getInstance("com.intellij.codeInsight.daemon.impl.analysis.AnnotationsHighlightUtil");
+  private static final Logger LOG = Logger.getInstance(AnnotationsHighlightUtil.class);
 
   @Nullable
   static HighlightInfo checkNameValuePair(@NotNull PsiNameValuePair pair,

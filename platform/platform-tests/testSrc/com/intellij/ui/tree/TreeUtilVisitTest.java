@@ -494,7 +494,7 @@ public final class TreeUtilVisitTest {
 
   private static void testSelect(TreeVisitor visitor, String expected) {
     TreeTest.test(TreeUtilVisitTest::rootDeep, test
-      -> TreeUtil.select(test.getTree(), visitor, path
+      -> TreeUtil.promiseSelect(test.getTree(), visitor).onSuccess(path
       -> test.assertTree(expected, true, test::done)));
   }
 
@@ -845,6 +845,16 @@ public final class TreeUtilVisitTest {
   @Test
   public void testSelectFirstLeafEmpty() {
     testSelectFirstLeaf(() -> null, true, "");
+  }
+
+  @Test
+  public void testSelectFirstLeafInvisibleRoot() {
+    testSelectFirstLeaf(() -> node("root"), false, "");
+  }
+
+  @Test
+  public void testSelectFirstLeafWhenNoMoreLeafs() {
+    testSelectFirstLeaf(() -> node("root", node("middle", node("leaf"))), false, " -middle\n  [leaf]\n");
   }
 
   @Test

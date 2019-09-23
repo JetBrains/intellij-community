@@ -7,6 +7,7 @@ import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.fixtures.PyTestCase;
@@ -214,7 +215,7 @@ public class PyChangeSignatureTest extends PyTestCase {
 
   public void testNonDefaultAfterDefault1() {
     doValidationTest(null, Arrays.asList(new PyParameterInfo(0, "b", "1", true), new PyParameterInfo(-1, "a", "2", false)),
-                     PyBundle.message("ANN.non.default.param.after.default"));
+                     PyPsiBundle.message("ANN.non.default.param.after.default"));
   }
 
   // PY-14774
@@ -234,7 +235,7 @@ public class PyChangeSignatureTest extends PyTestCase {
     final PyParameterInfo firstParam = new PyParameterInfo(0, "*foo", null, false);
     firstParam.setName("*bar");
     doValidationTest(null, Arrays.asList(firstParam, new PyParameterInfo(1, "**bar", null, false)),
-                     PyBundle.message("ANN.duplicate.param.name"));
+                     PyPsiBundle.message("ANN.duplicate.param.name"));
   }
 
   public void testMultipleSingleStarredParameters() {

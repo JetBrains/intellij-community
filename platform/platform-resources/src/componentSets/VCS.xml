@@ -6,14 +6,6 @@
   </application-components>
   <project-components>
     <component>
-      <interface-class>com.intellij.openapi.vcs.ProjectLevelVcsManager</interface-class>
-      <implementation-class>com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl</implementation-class>
-      <loadForDefaultProject/>
-    </component>
-    <component>
-      <implementation-class>com.intellij.openapi.vcs.changes.VcsEventWatcher</implementation-class>
-    </component>
-    <component>
       <implementation-class>com.intellij.openapi.vcs.annotate.AnnotationsPreloader</implementation-class>
     </component>
     <component>
@@ -42,6 +34,10 @@
       <option name="workspace" value="true"/>
     </component>
     <component>
+      <implementation-class>com.intellij.vcs.commit.CommitWorkflowManager</implementation-class>
+      <headless-implementation-class/>
+    </component>
+    <component>
       <interface-class>com.intellij.openapi.vcs.changes.VcsDirtyScopeManager</interface-class>
       <implementation-class>com.intellij.openapi.vcs.changes.VcsDirtyScopeManagerImpl</implementation-class>
       <option name="workspace" value="true"/>
@@ -56,7 +52,7 @@
     </component>
     <component>
       <implementation-class>com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager</implementation-class>
-      <headless-implementation-class></headless-implementation-class>
+      <headless-implementation-class/>
       <option name="workspace" value="true"/>
     </component>
     <component>
@@ -75,12 +71,6 @@
     <component>
       <implementation-class>com.intellij.openapi.vcs.changes.committed.IncomingChangesIndicator</implementation-class>
       <headless-implementation-class/>
-    </component>
-    <component>
-      <implementation-class>com.intellij.openapi.vcs.impl.VcsFileStatusProvider</implementation-class>
-    </component>
-    <component><interface-class>com.intellij.openapi.vcs.impl.VcsBaseContentProvider</interface-class>
-      <implementation-class>com.intellij.openapi.vcs.impl.VcsFileStatusProvider</implementation-class>
     </component>
     <component>
       <implementation-class>com.intellij.openapi.vcs.changes.VcsIgnoreFilesChecker</implementation-class>

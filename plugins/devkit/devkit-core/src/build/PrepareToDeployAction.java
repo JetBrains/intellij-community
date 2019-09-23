@@ -31,16 +31,18 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.PathUtil;
 import com.intellij.util.io.Compressor;
-import com.intellij.util.xml.DomFileElement;
-import com.intellij.util.xml.DomManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.Extensions;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
+import org.jetbrains.idea.devkit.util.DescriptorUtil;
 
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.*;
 import java.util.jar.Manifest;
 
@@ -147,11 +149,10 @@ public class PrepareToDeployAction extends AnAction {
     XmlFile pluginXml = PluginModuleType.getPluginXml(module);
     if (pluginXml == null) return Collections.emptyMap();
 
-    DomFileElement<IdeaPlugin> fileElement = DomManager.getDomManager(module.getProject()).getFileElement(pluginXml, IdeaPlugin.class);
-    if (fileElement == null) return Collections.emptyMap();
+    IdeaPlugin plugin = DescriptorUtil.getIdeaPlugin(pluginXml);
+    if (plugin == null) return Collections.emptyMap();
 
     Map<Module, String> jpsPluginToOutputPath = new HashMap<>();
-    IdeaPlugin plugin = fileElement.getRootElement();
     List<Extensions> extensions = plugin.getExtensions();
     for (Extensions extensionGroup : extensions) {
       XmlTag extensionsTag = extensionGroup.getXmlTag();
@@ -242,7 +243,7 @@ public class PrepareToDeployAction extends AnAction {
     try {
       try (Compressor tempZip = new Compressor.Zip(tempFile)) {
         FileTypeManager manager = FileTypeManager.getInstance();
-        tempZip.filter((entryName, isDir) -> !manager.isFileIgnored(PathUtil.getFileName(entryName)));
+        tempZip.filter((entryName, file) -> !manager.isFileIgnored(PathUtil.getFileName(entryName)));
         tempZip.addDirectory(VfsUtilCore.virtualToIoFile(root));
       }
       String jarName = getLibraryJarName(root.getName() + JAR_EXTENSION, usedJarNames, preferredName == null ? null : preferredName + JAR_EXTENSION);
@@ -288,7 +289,7 @@ public class PrepareToDeployAction extends AnAction {
     try (Compressor.Jar jar = new Compressor.Jar(tempFile)) {
       FileTypeManager manager = FileTypeManager.getInstance();
       Set<String> uniqueEntries = new HashSet<>();
-      jar.filter((entryName, isDir) -> isDir || !manager.isFileIgnored(PathUtil.getFileName(entryName)) && uniqueEntries.add(entryName));
+      jar.filter((entryName, file) -> !manager.isFileIgnored(PathUtil.getFileName(entryName)) && uniqueEntries.add(entryName));
 
       if (manifest != null) {
         jar.addManifest(manifest);

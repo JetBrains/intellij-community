@@ -11,22 +11,21 @@ import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtensionComponent
 import com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrame
 import com.intellij.ui.*
-import com.intellij.util.ui.JBEmptyBorder
+import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.cloneDialog.RepositoryUrlCloneDialogExtension.RepositoryUrlMainExtensionComponent
 import java.awt.CardLayout
 import java.util.*
 import javax.swing.JComponent
 import javax.swing.JPanel
-import javax.swing.ScrollPaneConstants
 import javax.swing.event.ListSelectionListener
 
 /**
  * Top-level UI-component for new clone/checkout dialog
  */
-internal class VcsCloneDialog private constructor(private val project: Project,
-                                                  initialExtensionClass: Class<out VcsCloneDialogExtension>,
-                                                  private var initialVcs: Class<out CheckoutProvider>? = null) : DialogWrapper(project) {
+class VcsCloneDialog private constructor(private val project: Project,
+                                         initialExtensionClass: Class<out VcsCloneDialogExtension>,
+                                         private var initialVcs: Class<out CheckoutProvider>? = null) : DialogWrapper(project) {
   private lateinit var extensionList: VcsCloneDialogExtensionList
   private val cardLayout = CardLayout()
   private val mainPanel = JPanel(cardLayout)
@@ -40,21 +39,16 @@ internal class VcsCloneDialog private constructor(private val project: Project,
       isOKActionEnabled = enabled
     }
 
-    override fun onListItemChanged() {
-      listModel.allContentsChanged()
-      pack()
-    }
+    override fun onListItemChanged() = listModel.allContentsChanged()
   }
 
   init {
     init()
-    title = "Get From Version Control"
+    title = "Get from Version Control"
     JBUI.size(FlatWelcomeFrame.MAX_DEFAULT_WIDTH, FlatWelcomeFrame.DEFAULT_HEIGHT).let {
       rootPane.minimumSize = it
       rootPane.preferredSize = it
     }
-
-    mainPanel.border = JBEmptyBorder(VcsCloneDialogUiSpec.Dialog.mainComponentParentInsets)
 
     VcsCloneDialogExtension.EP_NAME.findExtension(initialExtensionClass)?.let {
       ScrollingUtil.selectItem(extensionList, it)
@@ -69,6 +63,7 @@ internal class VcsCloneDialog private constructor(private val project: Project,
         val source = e.source as VcsCloneDialogExtensionList
         switchComponent(source.selectedValue)
       })
+      preferredSize = JBDimension(200, 0) // width fixed by design
     }
     val scrollableList = ScrollPaneFactory.createScrollPane(extensionList, true).apply {
 
@@ -83,6 +78,8 @@ internal class VcsCloneDialog private constructor(private val project: Project,
     return getSelectedComponent()?.doValidateAll() ?: emptyList()
   }
 
+  override fun getPreferredFocusedComponent(): JComponent? = getSelectedComponent()?.getPreferredFocusedComponent()
+
   fun doClone() {
     getSelectedComponent()?.doClone()
   }
@@ -91,10 +88,7 @@ internal class VcsCloneDialog private constructor(private val project: Project,
     val extensionId = extension.javaClass.name
     val mainComponent = extensionComponents.getOrPut(extensionId, {
       val component = extension.createMainComponent(project)
-      val scrollableMainPanel = ScrollPaneFactory.createScrollPane(component.getView(), true)
-      scrollableMainPanel.verticalScrollBarPolicy = ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED
-      scrollableMainPanel.horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
-      mainPanel.add(scrollableMainPanel, extensionId)
+      mainPanel.add(component.getView(), extensionId)
       disposable.attachChild(component)
       component.addComponentStateListener(listener)
       component

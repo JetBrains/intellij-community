@@ -35,6 +35,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.ui.JBSplitter;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.xdebugger.impl.frame.XStandaloneVariablesView;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.console.completion.PythonConsoleAutopopupBlockingHandler;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
@@ -49,6 +50,7 @@ import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.testing.PyTestsSharedKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
@@ -444,5 +446,11 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
 
   public void whenInitialized(Runnable runnable) {
     myInitialized.doWhenDone(runnable);
+  }
+
+  @Nullable
+  @TestOnly
+  public XDebuggerTreeNode getDebuggerTreeRootNode() {
+    return mySplitView.getTree().getRoot();
   }
 }

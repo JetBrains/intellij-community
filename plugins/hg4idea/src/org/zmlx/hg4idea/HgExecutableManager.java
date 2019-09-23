@@ -1,6 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.zmlx.hg4idea;
 
+import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
@@ -8,6 +10,7 @@ import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -30,17 +33,15 @@ public class HgExecutableManager {
   @NonNls private static final String DEFAULT_WINDOWS_HG = "hg.exe";
   @NonNls private static final String DEFAULT_UNIX_HG = "hg";
 
-  @NotNull private final HgGlobalSettings myGlobalSettings;
   @NotNull private final AtomicNotNullLazyValue<String> myDetectedExecutable;
 
-  public HgExecutableManager(@NotNull HgGlobalSettings globalSettings) {
-    myGlobalSettings = globalSettings;
+  public HgExecutableManager() {
     myDetectedExecutable = AtomicNotNullLazyValue.createValue(HgExecutableManager::identifyDefaultHgExecutable);
   }
 
   @NotNull
   public String getHgExecutable() {
-    String path = myGlobalSettings.getHgExecutable();
+    String path = ApplicationManager.getApplication().getService(HgGlobalSettings.class).getHgExecutable();
     return path == null ? getDefaultExecutable() : path;
   }
 
@@ -63,6 +64,13 @@ public class HgExecutableManager {
    */
   @NotNull
   private static String identifyDefaultHgExecutable() {
+    File hgExecutableFromPath = PathEnvironmentVariableUtil.findInPath(SystemInfo.isWindows ? DEFAULT_WINDOWS_HG : DEFAULT_UNIX_HG,
+                                                                       PathEnvironmentVariableUtil.getPathVariableValue(),
+                                                                       null);
+    if (hgExecutableFromPath != null) {
+      return hgExecutableFromPath.getPath();
+    }
+
     String[] paths;
     String programName;
     if (SystemInfo.isWindows) {

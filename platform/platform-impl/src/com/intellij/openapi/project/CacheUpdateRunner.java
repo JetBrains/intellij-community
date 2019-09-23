@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project;
 
 import com.intellij.ide.caches.FileContent;
@@ -7,6 +7,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -210,9 +211,10 @@ public class CacheUpdateRunner {
     @Override
     public void run() {
       while (true) {
-        if (myProject.isDisposed() || myInnerIndicator.isCanceled()) {
+        if (myProject.isDisposedOrDisposeInProgress() || myInnerIndicator.isCanceled()) {
           return;
         }
+
         try {
           mySuspendableIndicator.checkCanceled();
 
@@ -224,7 +226,7 @@ public class CacheUpdateRunner {
 
           final Runnable action = () -> {
             myInnerIndicator.checkCanceled();
-            if (!myProject.isDisposed()) {
+            if (!myProject.isDisposedOrDisposeInProgress()) {
               final VirtualFile file = fileContent.getVirtualFile();
               try {
                 myProgressUpdater.processingStarted(file);
@@ -242,15 +244,13 @@ public class CacheUpdateRunner {
             }
           };
           try {
-            ProgressManager.getInstance().runProcess(
-              () -> {
-                // in wait methods we don't want to deadlock by grabbing write lock (or having it in queue) and trying to run read action in separate thread
-                if (!ApplicationManagerEx.getApplicationEx().tryRunReadAction(action)) {
-                  throw new ProcessCanceledException();
-                }
-              },
-              ProgressWrapper.wrap(myInnerIndicator)
-            );
+            ProgressManager.getInstance().runProcess(() -> {
+              // in wait methods we don't want to deadlock by grabbing write lock (or having it in queue) and trying to run read action in separate thread
+              ApplicationEx app = ApplicationManagerEx.getApplicationEx();
+              if (app.isDisposedOrDisposeInProgress() || !app.tryRunReadAction(action)) {
+                throw new ProcessCanceledException();
+              }
+            }, ProgressWrapper.wrap(myInnerIndicator));
           }
           catch (ProcessCanceledException e) {
             myQueue.pushBack(fileContent);

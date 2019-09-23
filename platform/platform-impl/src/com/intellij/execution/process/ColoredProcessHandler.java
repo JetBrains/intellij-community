@@ -8,8 +8,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * <p>This process handler supports ANSI coloring.</p>
@@ -18,8 +16,6 @@ import java.util.List;
  */
 public class ColoredProcessHandler extends KillableProcessHandler implements AnsiEscapeDecoder.ColoredTextAcceptor {
   private final AnsiEscapeDecoder myAnsiEscapeDecoder = new AnsiEscapeDecoder();
-
-  private final List<AnsiEscapeDecoder.ColoredTextAcceptor> myColoredTextListeners = new ArrayList<>();
 
   public ColoredProcessHandler(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
     super(commandLine);
@@ -56,31 +52,37 @@ public class ColoredProcessHandler extends KillableProcessHandler implements Ans
   @Override
   public void coloredTextAvailable(@NotNull String text, @NotNull Key attributes) {
     textAvailable(text, attributes);
-    notifyColoredListeners(text, attributes);
-  }
-
-  protected void notifyColoredListeners(String text, Key attributes) { //TODO: call super.coloredTextAvailable after textAvailable removed
-    for (AnsiEscapeDecoder.ColoredTextAcceptor listener: myColoredTextListeners) {
-      listener.coloredTextAvailable(text, attributes);
-    }
-  }
-
-  public void addColoredTextListener(AnsiEscapeDecoder.ColoredTextAcceptor listener) {
-    myColoredTextListeners.add(listener);
-  }
-
-  public void removeColoredTextListener(AnsiEscapeDecoder.ColoredTextAcceptor listener) {
-    myColoredTextListeners.remove(listener);
   }
 
   /**
-   * @deprecated Inheritors should override coloredTextAvailable method
-   * or implement {@link com.intellij.execution.process.AnsiEscapeDecoder.ColoredChunksAcceptor}
-   * and override method coloredChunksAvailable to process colored chunks.
-   * To be removed in IDEA 14.
+   * @deprecated the method is kept for backward compatibility only
+   */
+  @SuppressWarnings("rawtypes")
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020")
+  protected void notifyColoredListeners(String text, Key attributes) {
+  }
+
+  /**
+     * @deprecated use {@link #addProcessListener(ProcessListener)} instead and
+     *             listen for {@link ProcessListener#onTextAvailable(ProcessEvent, Key)} events
+     */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020")
+  public void addColoredTextListener(AnsiEscapeDecoder.ColoredTextAcceptor listener) {
+    addProcessListener(new ProcessAdapter() {
+      @Override
+      public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
+        listener.coloredTextAvailable(event.getText(), outputType);
+      }
+    });
+  }
+
+  /**
+   * @deprecated override {@link #coloredTextAvailable(String, Key)} instead
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2014")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021")
   protected void textAvailable(final String text, final Key attributes) {
     super.notifyTextAvailable(text, attributes);
   }

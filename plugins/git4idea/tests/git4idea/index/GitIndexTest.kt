@@ -5,6 +5,8 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vcs.Executor.*
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.vcsUtil.VcsUtil
+import git4idea.commands.Git
+import git4idea.commands.GitObjectType
 import git4idea.repo.GitRepository
 import git4idea.test.GitPlatformTest
 import git4idea.test.git
@@ -88,6 +90,17 @@ class GitIndexTest : GitPlatformTest() {
 
     setExecutableFlagInIndex(FILE, true)
     assertEquals(true, readFilePermissions())
+  }
+
+  fun `test object types`() {
+    assertObjectType(null, "0".repeat(40))
+    assertObjectType(GitObjectType.COMMIT, "HEAD")
+    assertObjectType(GitObjectType.BLOB, "HEAD:$FILE")
+    assertObjectType(GitObjectType.TREE, "HEAD:")
+  }
+
+  private fun assertObjectType(expected: GitObjectType?, obj: String) {
+    assertEquals(expected, Git.getInstance().getObjectTypeEnum(repository, obj))
   }
 
   private fun readFileContent(path: String): String {

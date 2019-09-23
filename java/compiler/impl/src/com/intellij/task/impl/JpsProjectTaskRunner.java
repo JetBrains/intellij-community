@@ -50,17 +50,26 @@ public class JpsProjectTaskRunner extends ProjectTaskRunner {
                   @Nullable ProjectTaskNotification callback,
                   @NotNull Collection<? extends ProjectTask> tasks) {
     context.putUserData(JPS_BUILD_DATA_KEY, new MyJpsBuildData());
-    MessageBusConnection connection = project.getMessageBus().connect(project);
-    connection.subscribe(CompilerTopics.COMPILATION_STATUS, new CompilationStatusListener() {
-      @Override
-      public void fileGenerated(@NotNull String outputRoot, @NotNull String relativePath) {
-        context.fileGenerated(outputRoot, relativePath);
-      }
-    });
-
+    MessageBusConnection fileGeneratedTopicConnection;
+    if (context.isCollectionOfGeneratedFilesEnabled()) {
+      fileGeneratedTopicConnection = project.getMessageBus().connect(project);
+      fileGeneratedTopicConnection.subscribe(CompilerTopics.COMPILATION_STATUS, new CompilationStatusListener() {
+        @Override
+        public void fileGenerated(@NotNull String outputRoot, @NotNull String relativePath) {
+          context.fileGenerated(outputRoot, relativePath);
+        }
+      });
+    }
+    else {
+      fileGeneratedTopicConnection = null;
+    }
     Map<Class<? extends ProjectTask>, List<ProjectTask>> taskMap = groupBy(tasks);
     GuiUtils.invokeLaterIfNeeded(() -> {
-      try (MyNotificationCollector notificationCollector = new MyNotificationCollector(context, callback, () -> connection.disconnect())) {
+      try (MyNotificationCollector notificationCollector = new MyNotificationCollector(context, callback, () -> {
+        if (fileGeneratedTopicConnection != null) {
+          fileGeneratedTopicConnection.disconnect();
+        }
+      })) {
         runModulesResourcesBuildTasks(project, context, notificationCollector, taskMap);
         runModulesBuildTasks(project, context, notificationCollector, taskMap);
         runFilesBuildTasks(project, notificationCollector, taskMap);
@@ -74,6 +83,11 @@ public class JpsProjectTaskRunner extends ProjectTaskRunner {
   public boolean canRun(@NotNull ProjectTask projectTask) {
     return projectTask instanceof ModuleBuildTask || projectTask instanceof EmptyCompileScopeBuildTask ||
            (projectTask instanceof ProjectModelBuildTask && ((ProjectModelBuildTask)projectTask).getBuildableElement() instanceof Artifact);
+  }
+
+  @Override
+  public boolean isFileGeneratedEventsSupported() {
+    return true;
   }
 
   public static Map<Class<? extends ProjectTask>, List<ProjectTask>> groupBy(@NotNull Collection<? extends ProjectTask> tasks) {

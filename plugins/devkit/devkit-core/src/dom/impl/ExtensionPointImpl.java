@@ -29,6 +29,12 @@ public abstract class ExtensionPointImpl implements ExtensionPoint {
 
   @Nullable
   @Override
+  public PsiClass getEffectiveClass() {
+    return DomUtil.hasXml(getInterface()) ? getInterface().getValue() : getBeanClass().getValue();
+  }
+
+  @Nullable
+  @Override
   public String getNamePrefix() {
     if (DomUtil.hasXml(getQualifiedName())) {
       return null;

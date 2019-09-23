@@ -5,15 +5,13 @@ import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaLensSettings;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaTelescope;
 import com.intellij.codeInsight.hints.*;
-import com.intellij.codeInsight.hints.config.SingleLanguageInlayHintsConfigurable;
+import com.intellij.codeInsight.hints.config.InlayHintsConfigurable;
 import com.intellij.codeInsight.hints.presentation.AttributesTransformerPresentation;
 import com.intellij.codeInsight.hints.presentation.InlayPresentation;
 import com.intellij.codeInsight.hints.presentation.MouseButton;
 import com.intellij.codeInsight.hints.presentation.PresentationFactory;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
-import com.intellij.ide.actions.ShowSettingsUtilImpl;
 import com.intellij.lang.Language;
-import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -51,7 +49,7 @@ public class JavaLensProvider implements InlayHintsProvider<JavaLensSettings>, E
     ApplicationManager.getApplication().getMessageBus()
     .connect().subscribe(JavaLensSettings.JAVA_LENS_SETTINGS_CHANGED, settings->{
       if (settings.isShowUsages() || settings.isShowImplementations()) {
-        EditorFactory.getInstance().getEventMulticaster().addEditorMouseMotionListener(this);
+        EditorFactory.getInstance().getEventMulticaster().addEditorMouseMotionListener(this, ApplicationManager.getApplication());
       }
       else {
         EditorFactory.getInstance().getEventMulticaster().removeEditorMouseMotionListener(this);
@@ -212,8 +210,7 @@ public class JavaLensProvider implements InlayHintsProvider<JavaLensSettings>, E
       @Override
       public void onClick(@NotNull Editor editor, @NotNull PsiElement element) {
         Project project = element.getProject();
-        String id = new SingleLanguageInlayHintsConfigurable(project, JavaLanguage.INSTANCE).getId();
-        ShowSettingsUtilImpl.showSettingsDialog(project, id, null);
+        InlayHintsConfigurable.showSettingsDialogForLanguage(project, element.getLanguage());
       }
 
       @NotNull

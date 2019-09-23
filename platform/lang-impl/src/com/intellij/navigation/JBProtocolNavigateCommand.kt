@@ -26,6 +26,7 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiElement
 import com.intellij.util.PsiNavigateUtil
 import java.io.File
+import java.nio.file.Paths
 import java.util.regex.Pattern
 
 open class JBProtocolNavigateCommand : JBProtocolCommand(NAVIGATE_COMMAND) {
@@ -67,7 +68,7 @@ open class JBProtocolNavigateCommand : JBProtocolCommand(NAVIGATE_COMMAND) {
       } ?: run {
         ApplicationManager.getApplication().invokeLater(
           {
-            recentProjectManager.doOpenProject(recentProjectAction.projectPath, OpenProjectTask())?.let {
+            recentProjectManager.openProject(Paths.get(recentProjectAction.projectPath), OpenProjectTask())?.let {
               StartupManager.getInstance(it).registerPostStartupActivity { findAndNavigateToReference(it, parameters) }
             }
           }, ModalityState.NON_MODAL)
@@ -87,7 +88,7 @@ open class JBProtocolNavigateCommand : JBProtocolCommand(NAVIGATE_COMMAND) {
     private const val PATH_GROUP = "path"
     private const val LINE_GROUP = "line"
     private const val COLUMN_GROUP = "column"
-    private val PATH_WITH_LOCATION: Pattern = Pattern.compile("(?<$PATH_GROUP>[^:]*)(?<$LINE_GROUP>:[\\d]+)?(?<$COLUMN_GROUP>:[\\d]+)?")
+    private val PATH_WITH_LOCATION: Pattern = Pattern.compile("(?<$PATH_GROUP>[^:]*)(:(?<$LINE_GROUP>[\\d]+))?(:(?<$COLUMN_GROUP>[\\d]+))?")
 
     private fun findAndNavigateToReference(project: Project, parameters: Map<String, String>) {
       parameters.filter { it.key.startsWith(FQN_KEY) }.forEach {

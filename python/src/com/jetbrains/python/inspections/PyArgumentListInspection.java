@@ -143,7 +143,7 @@ public class PyArgumentListInspection extends PyInspection {
   private static boolean decoratedClassInitCall(@Nullable PyExpression callee,
                                                 @NotNull PyFunction function,
                                                 @NotNull TypeEvalContext context) {
-    if (callee instanceof PyReferenceExpression && PyUtil.isInit(function)) {
+    if (callee instanceof PyReferenceExpression && PyUtil.isInitMethod(function)) {
       final PsiPolyVariantReference classReference = ((PyReferenceExpression)callee).getReference();
 
       return Arrays

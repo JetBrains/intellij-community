@@ -22,7 +22,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.DefUseUtil;
-import com.intellij.psi.impl.PsiSubstitutorImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
@@ -654,11 +653,11 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
     TypeView(PsiVariable var, PsiSubstitutor varSubstitutor, PsiSubstitutor evalSubstitutor) {
       myOriginType = varSubstitutor != null ? varSubstitutor.substitute(var.getType()) : var.getType();
 
-      Map<PsiTypeParameter, PsiType> realMap = new HashMap<>();
-      if (varSubstitutor != null) realMap.putAll(varSubstitutor.getSubstitutionMap());
-      if (evalSubstitutor != null) realMap.putAll(evalSubstitutor.getSubstitutionMap());
+      PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
+      if (varSubstitutor != null) substitutor = substitutor.putAll(varSubstitutor);
+      if (evalSubstitutor != null) substitutor = substitutor.putAll(evalSubstitutor);
 
-      myType = PsiSubstitutorImpl.createSubstitutor(realMap).substitute(myTypeEvaluator.getType(var));
+      myType = substitutor.substitute(myTypeEvaluator.getType(var));
       myChanged = !(myOriginType == null || myType == null) && !myType.equals(myOriginType);
     }
 
@@ -735,7 +734,7 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
     if (required == PsiSubstitutor.EMPTY) {
       return actual;
     }
-    PsiSubstitutor result = PsiSubstitutorImpl.createSubstitutor(actual.getSubstitutionMap());
+    PsiSubstitutor result = PsiSubstitutor.createSubstitutor(actual.getSubstitutionMap());
     for (Map.Entry<PsiTypeParameter, PsiType> e : required.getSubstitutionMap().entrySet()) {
       final PsiTypeParameter typeParameter = e.getKey();
       final PsiType requiredType = e.getValue();

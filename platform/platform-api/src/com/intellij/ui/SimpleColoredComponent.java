@@ -51,6 +51,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   private final List<ColoredFragment> myFragments;
   private ColoredFragment myCurrentFragment;
   private Font myLayoutFont;
+  private FontRenderContext myLayoutFRC;
 
   /**
    * Component's icon. It can be {@code null}.
@@ -200,16 +201,6 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
       append(fragment, attributes);
       if (tag != null) myCurrentFragment.tag = tag;
     }
-  }
-
-  /**
-   * fragment width isn't a right name, it is actually a padding
-   * @deprecated remove in IDEA 16
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2016")
-  @Deprecated
-  public void appendFixedTextFragmentWidth(int width) {
-    appendTextPadding(width);
   }
 
   public void appendTextPadding(int padding) {
@@ -468,41 +459,35 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   @NotNull
   private Font getBaseFont() {
     Font font = getFont();
-    if (font == null) font = UIUtil.getLabelFont();
+    if (font == null) font = StartupUiUtil.getLabelFont();
     return font;
   }
 
-  private TextLayout getTextLayout(@NotNull ColoredFragment fragment, Font font, FontRenderContext frc) {
-    if (getBaseFont() != myLayoutFont) myFragments.forEach(each -> each.layout = null);
-    TextLayout layout = fragment.layout;
-    if (layout == null && needFontFallback(font, fragment.text)) {
-      layout = createAndCacheTextLayout(fragment, font, frc);
+  private TextRenderer getTextRenderer(@NotNull ColoredFragment fragment, Font font) {
+    FontRenderContext frc = getFontMetrics(font).getFontRenderContext();
+    Font baseFont = getBaseFont();
+    if (!baseFont.equals(myLayoutFont) || !frc.equals(myLayoutFRC)) {
+      myFragments.forEach(ColoredFragment::invalidateLayout);
+      myLayoutFont = baseFont;
+      myLayoutFRC = frc;
     }
-    return layout;
+    return fragment.getAndCacheRenderer(font, frc);
   }
 
   private void doDrawString(Graphics2D g, @NotNull ColoredFragment fragment, float x, float y) {
     String text = fragment.text;
     if (StringUtil.isEmpty(text)) return;
-    TextLayout layout = getTextLayout(fragment, g.getFont(), g.getFontRenderContext());
-    if (layout != null) {
-      layout.draw(g, x, y);
-    }
-    else {
-      g.drawString(text, x, y);
-    }
+    getTextRenderer(fragment, g.getFont()).draw(g, x, y);
   }
 
   private float computeStringWidth(@NotNull ColoredFragment fragment, Font font) {
     String text = fragment.text;
     if (StringUtil.isEmpty(text)) return 0;
-    FontRenderContext fontRenderContext = getFontMetrics(font).getFontRenderContext();
-    TextLayout layout = getTextLayout(fragment, font, fontRenderContext);
-    return layout != null ? layout.getAdvance() : (float)font.getStringBounds(text, fontRenderContext).getWidth();
+    return getTextRenderer(fragment, font).getWidth();
   }
 
-  private TextLayout createAndCacheTextLayout(@NotNull ColoredFragment fragment, Font basefont, FontRenderContext fontRenderContext) {
-    String text = fragment.text;
+  @NotNull
+  private static TextLayout createTextLayout(String text, Font basefont, FontRenderContext fontRenderContext) {
     AttributedString string = new AttributedString(text);
     int start = 0;
     int end = text.length();
@@ -529,10 +514,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     if (currentIndex < end) {
       string.addAttribute(TextAttribute.FONT, currentFont, currentIndex, end);
     }
-    TextLayout layout = new TextLayout(string.getIterator(), fontRenderContext);
-    fragment.layout = layout;
-    myLayoutFont = getBaseFont();
-    return layout;
+    return new TextLayout(string.getIterator(), fontRenderContext);
   }
 
   private static boolean needFontFallback(Font font, String text) {
@@ -821,22 +803,24 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
           endOffset = offset + fragmentWidth;
         }
 
-        if (!secondPass) {
-          if (shouldDrawDimmed()) {
-            color = ColorUtil.dimmer(color);
+        if (offset < area.getMaxX()) {
+          if (!secondPass) {
+            if (shouldDrawDimmed()) {
+              color = ColorUtil.dimmer(color);
+            }
+
+            g.setColor(color);
+            doDrawString(g, fragment, offset, textBaseline);
+
+            // for some reason strokeState here may be incorrect, resetting the stroke helps
+            g.setStroke(g.getStroke());
+
+            drawTextAttributes(g, attributes, (int)offset, textBaseline, (int)fragmentWidth, metrics, font);
           }
 
-          g.setColor(color);
-          doDrawString(g, fragment, offset, textBaseline);
-
-          // for some reason strokeState here may be incorrect, resetting the stroke helps
-          g.setStroke(g.getStroke());
-
-          drawTextAttributes(g, attributes, (int)offset, textBaseline, (int)fragmentWidth, metrics, font);
-        }
-
-        if (secondPass) {
-          secondPassFrag = new Frag(i, offset, offset + fragmentWidth, textBaseline, font, secondPassFrag);
+          if (secondPass) {
+            secondPassFrag = new Frag(i, offset, offset + fragmentWidth, textBaseline, font, secondPassFrag);
+          }
         }
 
         offset = endOffset;
@@ -1163,7 +1147,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
         else if (offset > 0) {   // split
           String text = getFragment();
           ColoredFragment newFragment = new ColoredFragment(text.substring(offset), oldFragment.attributes);
-          oldFragment.text = text.substring(0, offset);
+          oldFragment.setText(text.substring(0, offset));
           oldFragment.attributes = attributes;
           newFragment.tag = oldFragment;
           myFragments.add(myIndex + 1, newFragment);
@@ -1197,7 +1181,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     @Override
     public void setFragment(@NotNull String text) {
       synchronized (myFragments) {
-        myFragments.get(myIndex).text = text;
+        myFragments.get(myIndex).setText(text);
       }
     }
 
@@ -1217,16 +1201,85 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   }
 
   private static class ColoredFragment {
-    @NotNull volatile String text;
+    @NotNull private volatile String text;
     @NotNull volatile SimpleTextAttributes attributes;
     @Nullable volatile Object tag;
-    @Nullable volatile TextLayout layout;
+    @Nullable private volatile TextRenderer renderer;
     volatile int padding;
     volatile int alignment;
 
     ColoredFragment(@NotNull String text, @NotNull SimpleTextAttributes attributes) {
       this.text = text;
       this.attributes = attributes;
+    }
+
+    private void setText(@NotNull String text) {
+      if (!this.text.equals(text)) {
+        this.text = text;
+        invalidateLayout();
+      }
+    }
+
+    void invalidateLayout() {
+      renderer = null;
+    }
+
+    @NotNull
+    private TextRenderer getAndCacheRenderer(Font font, FontRenderContext frc) {
+      TextRenderer renderer = this.renderer;
+      if (renderer == null) {
+        String text = this.text;
+        if (needFontFallback(font, text)) {
+          renderer = new LayoutTextRenderer(createTextLayout(text, font, frc));
+        } else {
+          renderer = new SimpleTextRenderer(text, (float)font.getStringBounds(text, frc).getWidth());
+        }
+        this.renderer = renderer;
+      }
+      return renderer;
+    }
+  }
+
+  private interface TextRenderer {
+    float getWidth();
+    void draw(Graphics2D g2, float x, float y);
+  }
+
+  private static class LayoutTextRenderer implements TextRenderer {
+    private final TextLayout myLayout;
+
+    private LayoutTextRenderer(TextLayout layout) {
+      myLayout = layout;
+    }
+
+    @Override
+    public float getWidth() {
+      return myLayout.getAdvance();
+    }
+
+    @Override
+    public void draw(Graphics2D g2, float x, float y) {
+      myLayout.draw(g2, x, y);
+    }
+  }
+
+  private static class SimpleTextRenderer implements TextRenderer {
+    private final String myText;
+    private final float myWidth;
+
+    private SimpleTextRenderer(String text, float width) {
+      myText = text;
+      myWidth = width;
+    }
+
+    @Override
+    public float getWidth() {
+      return myWidth;
+    }
+
+    @Override
+    public void draw(Graphics2D g2, float x, float y) {
+      g2.drawString(myText, x, y);
     }
   }
 }
