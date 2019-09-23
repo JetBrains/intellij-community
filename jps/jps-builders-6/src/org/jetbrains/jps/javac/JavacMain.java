@@ -221,7 +221,7 @@ public class JavacMain {
           handleCancelException(diagnosticConsumer);
         }
         else {
-          diagnosticConsumer.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, e.getMessage()));
+          diagnosticConsumer.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, buildCompilerErrorMessage(e)));
         }
       }
       else {
@@ -236,6 +236,26 @@ public class JavacMain {
     }
     return false;
   }
+
+  private static String buildCompilerErrorMessage(Throwable e) {
+    return new Object() {
+      final StringBuilder buf = new StringBuilder();
+      String collectAllMessages(Throwable e, Set<Throwable> processed) {
+        if (e != null && processed.add(e)) {
+          final String msg = e.getMessage();
+          if (msg != null && !msg.trim().isEmpty() && buf.indexOf(msg) < 0) {
+            if (buf.length() > 0) {
+              buf.append("\n");
+            }
+            buf.append(msg);
+          }
+          return collectAllMessages(e.getCause(), processed);
+        }
+        return buf.toString();
+      }
+    }.collectAllMessages(e, new HashSet<Throwable>());
+  }
+
 
   // Workaround for javac bug:
   // the internal ClientCodeWrapper class may not implement some interface-declared methods
