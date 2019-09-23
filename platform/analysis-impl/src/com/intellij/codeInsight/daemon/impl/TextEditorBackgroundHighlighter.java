@@ -15,6 +15,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
@@ -33,26 +34,20 @@ public class TextEditorBackgroundHighlighter implements BackgroundEditorHighligh
   private final Project myProject;
   private final Editor myEditor;
   private final Document myDocument;
-  private PsiFile myFile;
 
   public TextEditorBackgroundHighlighter(@NotNull Project project, @NotNull Editor editor) {
     myProject = project;
     myEditor = editor;
     myDocument = myEditor.getDocument();
-    renewFile();
   }
 
-  private void renewFile() {
-    if (myFile == null || !myFile.isValid()) {
-      myFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myDocument);
-      if (myFile != null && !myFile.isValid()) {
-        myFile = null;
-      }
+  @Nullable
+  private PsiFile renewFile() {
+    PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(myDocument);
+    if (file != null) {
+      file.putUserData(PsiFileEx.BATCH_REFERENCE_PROCESSING, Boolean.TRUE);
     }
-
-    if (myFile != null) {
-      myFile.putUserData(PsiFileEx.BATCH_REFERENCE_PROCESSING, Boolean.TRUE);
-    }
+    return file;
   }
 
   @NotNull
@@ -61,8 +56,7 @@ public class TextEditorBackgroundHighlighter implements BackgroundEditorHighligh
 
     LOG.assertTrue(PsiDocumentManager.getInstance(myProject).isCommitted(myDocument));
 
-    renewFile();
-    PsiFile file = myFile;
+    PsiFile file = renewFile();
     if (file == null) return Collections.emptyList();
 
     boolean compiled = file instanceof PsiCompiledFile;
