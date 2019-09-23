@@ -978,7 +978,9 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       myMatchingVisitor.setResult(myMatchingVisitor.matchOptionally(initializer, var2Initializer));
     }
     finally {
-      final PsiIdentifier identifier = other.getNameIdentifier();
+      final PsiElement identifier = other instanceof PsiReceiverParameter
+                                    ? ((PsiReceiverParameter)other).getIdentifier()
+                                    : other.getNameIdentifier();
       final String name;
       if (identifier == null && (name = other.getName()) != null) {
         // when matching a stub or compiled code
@@ -1716,11 +1718,35 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
         return;
       }
 
-      myMatchingVisitor.setResult((!method.isConstructor() || other.isConstructor()) &&
-                                  (isTypedVar || myMatchingVisitor.matchText(methodNameNode, other.getNameIdentifier())) &&
-                                  myMatchingVisitor.match(method.getModifierList(), other.getModifierList()) &&
-                                  myMatchingVisitor.matchSons(method.getParameterList(), other.getParameterList()) &&
-                                  myMatchingVisitor.matchOptionally(method.getReturnTypeElement(), other.getReturnTypeElement()) &&
+      if (!myMatchingVisitor.setResult((!method.isConstructor() || other.isConstructor()) &&
+                                       (isTypedVar || myMatchingVisitor.matchText(methodNameNode, other.getNameIdentifier())) &&
+                                       myMatchingVisitor.match(method.getModifierList(), other.getModifierList()))) {
+        return;
+      }
+      final PsiParameterList otherParameterList = other.getParameterList();
+      final PsiReceiverParameter receiverParameter = PsiTreeUtil.findChildOfType(otherParameterList, PsiReceiverParameter.class);
+      if (receiverParameter != null) {
+        final PsiParameterList parameterList = method.getParameterList();
+        final PsiVariable firstParameter = PsiTreeUtil.findChildOfType(parameterList, PsiVariable.class);
+        if (firstParameter != null) {
+          final MatchingHandler handler = myMatchingVisitor.getMatchContext().getPattern().getHandler(firstParameter);
+          if (handler instanceof SubstitutionHandler) {
+            final SubstitutionHandler substHandler = (SubstitutionHandler)handler;
+            if (substHandler.handle(receiverParameter, context) && !myMatchingVisitor.setResult(substHandler.getMaxOccurs() != 0)) {
+              return;
+            }
+          }
+        }
+        if (!myMatchingVisitor.setResult(myMatchingVisitor.matchSons(method.getParameterList(), otherParameterList) ||
+                                         myMatchingVisitor.matchSequentially(parameterList.getFirstChild(),
+                                                                             receiverParameter.getNextSibling()))) {
+          return;
+        }
+      }
+      else if (!myMatchingVisitor.setResult(myMatchingVisitor.matchSons(method.getParameterList(), otherParameterList))) {
+        return;
+      }
+      myMatchingVisitor.setResult(myMatchingVisitor.matchOptionally(method.getReturnTypeElement(), other.getReturnTypeElement()) &&
                                   matchInAnyOrder(method.getThrowsList(), other.getThrowsList()) &&
                                   myMatchingVisitor.matchSonsOptionally(method.getBody(), other.getBody()));
     }

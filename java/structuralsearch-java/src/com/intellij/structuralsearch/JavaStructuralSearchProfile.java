@@ -102,7 +102,10 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
   public String getTypedVarString(final PsiElement element) {
     String text;
 
-    if (element instanceof PsiNamedElement) {
+    if (element instanceof PsiReceiverParameter) {
+      text = ((PsiReceiverParameter)element).getIdentifier().getText();
+    }
+    else if (element instanceof PsiNamedElement) {
       text = ((PsiNamedElement)element).getName();
     }
     else if (element instanceof PsiAnnotation) {
