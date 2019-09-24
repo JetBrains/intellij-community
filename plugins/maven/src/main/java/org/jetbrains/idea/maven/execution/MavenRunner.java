@@ -23,8 +23,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 @State(name = "MavenRunner", storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)})
-public class MavenRunner implements PersistentStateComponent<MavenRunnerSettings> {
-
+public final class MavenRunner implements PersistentStateComponent<MavenRunnerSettings> {
   private static final Logger LOG = Logger.getInstance(MavenRunner.class);
 
   private MavenRunnerSettings mySettings = new MavenRunnerSettings();

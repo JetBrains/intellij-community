@@ -35,7 +35,6 @@ public final class MavenTasksManager extends MavenSimpleProjectComponent impleme
   private MavenTasksManagerState myState = new MavenTasksManagerState();
 
   private final MavenProjectsManager myProjectsManager;
-  private final MavenRunner myRunner;
 
   private final List<Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
@@ -58,8 +57,8 @@ public final class MavenTasksManager extends MavenSimpleProjectComponent impleme
 
   public MavenTasksManager(@NotNull Project project) {
     super(project);
+
     myProjectsManager = MavenProjectsManager.getInstance(project);
-    myRunner = MavenRunner.getInstance(project);
   }
 
   @Override
@@ -128,7 +127,7 @@ public final class MavenTasksManager extends MavenSimpleProjectComponent impleme
                                                      explicitProfiles.getDisabledProfiles()));
       }
     }
-    return myRunner
+    return MavenRunner.getInstance(myProject)
       .runBatch(parametersList, null, null, TasksBundle.message("maven.tasks.executing"), context.getProgressIndicator(), null);
   }
 
