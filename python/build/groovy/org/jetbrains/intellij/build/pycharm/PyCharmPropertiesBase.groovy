@@ -30,7 +30,6 @@ abstract class PyCharmPropertiesBase extends ProductProperties {
     baseFileName = "pycharm"
     reassignAltClickToMultipleCarets = true
     productLayout.mainJarName = "pycharm.jar"
-    productLayout.prepareCustomPluginRepositoryForPublishedPlugins = false
     productLayout.additionalPlatformJars.put("pycharm-pydev.jar", "intellij.python.pydev")
     productLayout.additionalPlatformJars.putAll("testFramework.jar",
                                                 "intellij.platform.testFramework.core",
@@ -42,6 +41,10 @@ abstract class PyCharmPropertiesBase extends ProductProperties {
     mavenArtifacts.additionalModules = [
       "intellij.java.compiler.antTasks",
       "intellij.platform.testFramework"
+    ]
+    productLayout.buildAllCompatiblePlugins = true
+    productLayout.compatiblePluginsToIgnore = [
+      "intellij.python.community.plugin.resources"
     ]
   }
 
