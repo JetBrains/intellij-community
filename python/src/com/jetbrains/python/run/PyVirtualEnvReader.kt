@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.run
 
 import com.intellij.openapi.diagnostic.Logger
@@ -9,12 +9,7 @@ import com.jetbrains.python.packaging.PyCondaPackageService
 import com.jetbrains.python.sdk.PythonSdkUtil
 import java.io.File
 
-/**
- * @author traff
- */
-
-
-class PyVirtualEnvReader(val virtualEnvSdkPath: String) : EnvironmentUtil.ShellEnvReader() {
+internal class PyVirtualEnvReader(private val virtualEnvSdkPath: String) : EnvironmentUtil.ShellEnvReader() {
   private val LOG = Logger.getInstance("#com.jetbrains.python.run.PyVirtualEnvReader")
 
   companion object {
@@ -35,16 +30,11 @@ class PyVirtualEnvReader(val virtualEnvSdkPath: String) : EnvironmentUtil.ShellE
   val activate: Pair<String, String?>? = findActivateScript(virtualEnvSdkPath, shell)
 
   override fun getShell(): String? {
-    if (File("/bin/bash").exists()) {
-      return "/bin/bash"
+    return when {
+      File("/bin/bash").exists() -> "/bin/bash"
+      File("/bin/sh").exists() -> "/bin/sh"
+      else -> super.getShell()
     }
-    else
-      if (File("/bin/sh").exists()) {
-        return "/bin/sh"
-      }
-      else {
-        return super.getShell()
-      }
   }
 
   fun readPythonEnv(): MutableMap<String, String> {
@@ -70,9 +60,8 @@ class PyVirtualEnvReader(val virtualEnvSdkPath: String) : EnvironmentUtil.ShellE
 
   override fun getShellProcessCommand(): MutableList<String> {
     val shellPath = shell
-
     if (shellPath == null || !File(shellPath).canExecute()) {
-      throw Exception("shell:" + shellPath)
+      throw RuntimeException("shell:$shellPath")
     }
 
     return if (activate != null) {
@@ -81,7 +70,6 @@ class PyVirtualEnvReader(val virtualEnvSdkPath: String) : EnvironmentUtil.ShellE
     }
     else super.getShellProcessCommand()
   }
-
 }
 
 fun findActivateScript(sdkPath: String?, shellPath: String?): Pair<String, String?>? {

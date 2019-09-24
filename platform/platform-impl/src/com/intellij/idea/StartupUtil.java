@@ -510,8 +510,8 @@ public final class StartupUtil {
       System.setProperty("__idea.mac.env.lock", "unlocked");
     }
 
-    EnvironmentUtil.loadEnv();
-    subActivity.end();
+    EnvironmentUtil.loadEnv()
+      .thenRun(() -> subActivity.end());
   }
 
   @SuppressWarnings("SpellCheckingInspection")
