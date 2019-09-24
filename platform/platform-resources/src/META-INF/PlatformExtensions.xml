@@ -531,6 +531,7 @@
     <statistics.counterUsagesCollector groupId="vcs.back.forward.trigger" version="1"/>
     <statistics.counterUsagesCollector groupId="ide.self.update" version="2"/>
     <statistics.counterUsagesCollector groupId="import.old.config" version="1"/>
+    <statistics.counterUsagesCollector groupId="file.editor" version="1"/>
     <statistics.counterUsagesCollector groupId="ui.tips" version="2"/>
     <statistics.counterUsagesCollector groupId="gutter.icon.click" version="2"/>
 
