@@ -113,10 +113,11 @@ abstract class SourceMapBase(protected val sourceMapData: SourceMapData,
   }
 }
 
-class OneLevelSourceMap(sourceMapData: SourceMapData,
-                        sourceResolver: SourceResolver) : SourceMapBase(sourceMapData, sourceResolver) {
+class OneLevelSourceMap(sourceMapDataEx: SourceMapDataEx,
+                        sourceResolver: SourceResolver)
+  : SourceMapBase(sourceMapDataEx.sourceMapData, sourceResolver) {
 
-  override val sourceIndexToMappings: Array<MappingList?> = calculateReverseMappings(sourceMapData)
+  override val sourceIndexToMappings: Array<MappingList?> = sourceMapDataEx.sourceIndexToMappings
 
-  override val generatedMappings: Mappings = GeneratedMappingList(sourceMapData.mappings)
+  override val generatedMappings: Mappings = sourceMapDataEx.generatedMappings
 }
