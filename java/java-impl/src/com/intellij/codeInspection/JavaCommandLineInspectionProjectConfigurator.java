@@ -21,7 +21,7 @@ import java.util.Set;
  */
 public class JavaCommandLineInspectionProjectConfigurator implements CommandLineInspectionProjectConfigurator {
   @Override
-  public boolean isApplicable(@NotNull Path projectPath, @NotNull CommandLineInspectionLogger logger) {
+  public boolean isApplicable(@NotNull Path projectPath, @NotNull CommandLineInspectionProgressReporter logger) {
     JavaSdk javaSdk = JavaSdk.getInstance();
     List<Sdk> sdks = ProjectJdkTable.getInstance().getSdksOfType(javaSdk);
     if (!sdks.isEmpty()) return false;
@@ -29,7 +29,7 @@ public class JavaCommandLineInspectionProjectConfigurator implements CommandLine
     try {
       boolean hasAnyJavaFiles = Files.walk(projectPath).anyMatch(f -> f.toString().endsWith(".java"));
       if (!hasAnyJavaFiles) {
-        logger.logMessageLn(3, "Skipping JDK autodetection because the project doesn't contain any Java files");
+        logger.reportMessage(3, "Skipping JDK autodetection because the project doesn't contain any Java files");
       }
       return hasAnyJavaFiles;
     }
@@ -39,7 +39,7 @@ public class JavaCommandLineInspectionProjectConfigurator implements CommandLine
   }
 
   @Override
-  public void configureEnvironment(@NotNull Path projectPath, @NotNull CommandLineInspectionLogger logger) {
+  public void configureEnvironment(@NotNull Path projectPath, @NotNull CommandLineInspectionProgressReporter logger) {
     JavaSdk javaSdk = JavaSdk.getInstance();
     List<Sdk> sdks = ProjectJdkTable.getInstance().getSdksOfType(javaSdk);
     if (!sdks.isEmpty()) {
@@ -55,7 +55,7 @@ public class JavaCommandLineInspectionProjectConfigurator implements CommandLine
       if (existingVersions.contains(version)) continue;
       existingVersions.add(version);
       String name = javaSdk.suggestSdkName(null, path);
-      logger.logMessageLn(2, "Detected JDK with name " + name + " at " + path);
+      logger.reportMessage(2, "Detected JDK with name " + name + " at " + path);
       Sdk jdk = javaSdk.createJdk(name, path, false);
       ApplicationManager.getApplication().runWriteAction(() ->  ProjectJdkTable.getInstance().addJdk(jdk));
     }
