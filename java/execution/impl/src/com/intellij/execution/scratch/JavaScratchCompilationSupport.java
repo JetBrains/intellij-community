@@ -35,10 +35,6 @@ import java.util.*;
  * @author Eugene Zhuravlev
  */
 final class JavaScratchCompilationSupport implements CompileTask {
-  JavaScratchCompilationSupport(@NotNull Project project) {
-    CompilerManager.getInstance(project).addAfterTask(this);
-  }
-
   @Nullable
   public static File getScratchOutputDirectory(Project project) {
     final File root = CompilerManager.getInstance(project).getJavacCompilerWorkingDir();

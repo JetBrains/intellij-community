@@ -64,10 +64,6 @@
     </component>
 
     <component>
-      <implementation-class>com.intellij.execution.scratch.JavaScratchCompilationSupport</implementation-class>
-    </component>
-
-    <component>
       <interface-class>com.intellij.compiler.CompilerReferenceService</interface-class>
       <implementation-class>com.intellij.compiler.backwardRefs.CompilerReferenceServiceImpl</implementation-class>
     </component>
@@ -75,7 +71,6 @@
       <implementation-class>com.intellij.execution.testDiscovery.AffectedTestsInChangeListPainter</implementation-class>
       <headless-implementation-class/>
     </component>
-
   </project-components>
 
   <extensionPoints>
@@ -1950,6 +1945,8 @@
     <fileBasedIndex.providedLocator implementation="com.intellij.index.BasicProvidedExtensionLocator"/>
 
     <commandLineInspectionProjectConfigurator implementation="com.intellij.codeInspection.JavaCommandLineInspectionProjectConfigurator"/>
+
+    <compiler.task implementation="com.intellij.execution.scratch.JavaScratchCompilationSupport"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">
