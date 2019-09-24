@@ -65,8 +65,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       other = (PsiComment)myMatchingVisitor.getElement();
     }
 
-    if (other == null) {
-      myMatchingVisitor.setResult(false);
+    if (!myMatchingVisitor.setResult(other != null)) {
       return;
     }
 
@@ -123,14 +122,12 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
                 }
               }
 
-              if (!matchedOne) {
-                myMatchingVisitor.setResult(false);
+              if (!myMatchingVisitor.setResult(matchedOne)) {
                 return;
               }
             }
             else {
-              if (!annotationValueMatchesModifierList(other, value)) {
-                myMatchingVisitor.setResult(false);
+              if (!myMatchingVisitor.setResult(annotationValueMatchesModifierList(other, value))) {
                 return;
               }
             }
@@ -152,9 +149,6 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
           myMatchingVisitor.getMatchContext().popMatchedElementsListener();
         }
       }
-    }
-    else {
-      myMatchingVisitor.setResult(true);
     }
   }
 
@@ -211,17 +205,15 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     if (myMatchingVisitor.getElement() instanceof PsiDocCommentOwner) {
       other = ((PsiDocCommentOwner)myMatchingVisitor.getElement()).getDocComment();
 
-      if (other == null) {
+      if (!myMatchingVisitor.setResult(other != null)) {
         // doc comment are not collapsed for inner classes!
-        myMatchingVisitor.setResult(false);
         return;
       }
     }
     else {
       other = (PsiDocComment)myMatchingVisitor.getElement();
 
-      if (myMatchingVisitor.getElement().getParent() instanceof PsiDocCommentOwner) {
-        myMatchingVisitor.setResult(false);
+      if (!myMatchingVisitor.setResult(!(myMatchingVisitor.getElement().getParent() instanceof PsiDocCommentOwner))) {
         return; // we should matched the doc before
       }
     }
@@ -615,7 +607,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     }
 
     // handle field selection
-    if (!(other.getParent() instanceof PsiMethodCallExpression) && qualifier != null) {
+    if (myMatchingVisitor.setResult(!(other.getParent() instanceof PsiMethodCallExpression) && qualifier != null)) {
       final PsiElement referenceElement = reference.getReferenceNameElement();
       final PsiElement referenceElement2 = reference2.getReferenceNameElement();
 
@@ -629,9 +621,6 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       if (!myMatchingVisitor.setResult(qualifier instanceof PsiThisExpression && qualifier2 == null ||
                                        myMatchingVisitor.matchOptionally(qualifier, qualifier2))) return;
       if (qualifier2 == null) myMatchingVisitor.setResult(matchImplicitQualifier(qualifier, other, context));
-    }
-    else {
-      myMatchingVisitor.setResult(false);
     }
   }
 
@@ -1416,14 +1405,10 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     final PsiCodeBlock finally2 = other.getFinallyBlock();
 
     final MatchContext context = myMatchingVisitor.getMatchContext();
-    if (!context.getOptions().isLooseMatching() &&
-        ((catches1.length == 0 && catches2.length != 0) ||
-         (finally1 == null && finally2 != null) ||
-         (resourceList1 == null && resourceList2 != null))
-      ) {
-      myMatchingVisitor.setResult(false);
-    }
-    else {
+    if (myMatchingVisitor.setResult(context.getOptions().isLooseMatching() ||
+                                    ((catches1.length != 0 || catches2.length == 0) &&
+                                     (finally1 != null || finally2 == null) &&
+                                     (resourceList1 != null || resourceList2 == null)))) {
       final List<PsiElement> unmatchedElements = new SmartList<>();
       if (resourceList1 != null) {
         final List<PsiResourceListElement> resources1 = PsiTreeUtil.getChildrenOfTypeAsList(resourceList1, PsiResourceListElement.class);
@@ -1667,8 +1652,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
 
     final PsiModifierList modifierList = clazz.getModifierList();
     if (modifierList != null && modifierList.getTextLength() > 0) {
-      if (!myMatchingVisitor.match(modifierList, other.getModifierList())) {
-        myMatchingVisitor.setResult(false);
+      if (!myMatchingVisitor.setResult(myMatchingVisitor.match(modifierList, other.getModifierList()))) {
         return;
       }
     }
@@ -1713,8 +1697,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       if (method.hasTypeParameters() && !myMatchingVisitor.setResult(
         myMatchingVisitor.match(method.getTypeParameterList(), ((PsiMethod)myMatchingVisitor.getElement()).getTypeParameterList()))) return;
 
-      if (!checkHierarchy(other, method)) {
-        myMatchingVisitor.setResult(false);
+      if (!myMatchingVisitor.setResult(checkHierarchy(other, method))) {
         return;
       }
 
