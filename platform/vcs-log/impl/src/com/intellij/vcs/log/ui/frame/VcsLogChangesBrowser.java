@@ -77,7 +77,7 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
 
   @NotNull private final Set<VirtualFile> myRoots = new HashSet<>();
   @NotNull private final List<Change> myChanges = new ArrayList<>();
-  @NotNull private final Map<CommitId, Set<Change>> myChangesToParents = new HashMap<>();
+  @NotNull private final Map<CommitId, Set<Change>> myChangesToParents = new LinkedHashMap<>();
   @Nullable private Collection<FilePath> myAffectedPaths;
   @NotNull private final Wrapper myToolbarWrapper;
   @NotNull private final EventDispatcher<Listener> myDispatcher = EventDispatcher.create(Listener.class);
@@ -235,7 +235,7 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
   @Override
   protected DefaultTreeModel buildTreeModel() {
     Collection<Change> changes = collectAffectedChanges(myChanges);
-    Map<CommitId, Collection<Change>> changesToParents = new HashMap<>();
+    Map<CommitId, Collection<Change>> changesToParents = new LinkedHashMap<>();
     for (Map.Entry<CommitId, Set<Change>> entry : myChangesToParents.entrySet()) {
       changesToParents.put(entry.getKey(), collectAffectedChanges(entry.getValue()));
     }
