@@ -173,9 +173,11 @@ private fun startApp(app: ApplicationImpl,
 
     WeakFocusStackManager.getInstance()
 
-    invokeLaterWithAnyModality("migLayout") {
-      //IDEA-170295
-      PlatformDefaults.setLogicalPixelBase(PlatformDefaults.BASE_FONT_SIZE)
+    NonUrgentExecutor.getInstance().execute {
+      runActivity("migLayout") {
+        //IDEA-170295
+        PlatformDefaults.setLogicalPixelBase(PlatformDefaults.BASE_FONT_SIZE)
+      }
     }
 
     NonUrgentExecutor.getInstance().execute {
