@@ -29,7 +29,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @State(name = "MavenCompilerTasksManager")
-public class MavenTasksManager extends MavenSimpleProjectComponent implements PersistentStateComponent<MavenTasksManagerState> {
+public final class MavenTasksManager extends MavenSimpleProjectComponent implements PersistentStateComponent<MavenTasksManagerState> {
   private final AtomicBoolean isInitialized = new AtomicBoolean();
 
   private MavenTasksManagerState myState = new MavenTasksManagerState();
@@ -52,14 +52,14 @@ public class MavenTasksManager extends MavenSimpleProjectComponent implements Pe
     }
   }
 
-  public static MavenTasksManager getInstance(Project project) {
+  public static MavenTasksManager getInstance(@NotNull Project project) {
     return project.getComponent(MavenTasksManager.class);
   }
 
-  public MavenTasksManager(Project project, MavenProjectsManager projectsManager, MavenRunner runner) {
+  public MavenTasksManager(@NotNull Project project) {
     super(project);
-    myProjectsManager = projectsManager;
-    myRunner = runner;
+    myProjectsManager = MavenProjectsManager.getInstance(project);
+    myRunner = MavenRunner.getInstance(project);
   }
 
   @Override
@@ -87,8 +87,6 @@ public class MavenTasksManager extends MavenSimpleProjectComponent implements Pe
     if (!isNormalProject()) return;
     if (isInitialized.getAndSet(true)) return;
 
-    CompilerManager compilerManager = CompilerManager.getInstance(myProject);
-
     class MyCompileTask implements CompileTask {
 
       private final boolean myBefore;
@@ -103,6 +101,7 @@ public class MavenTasksManager extends MavenSimpleProjectComponent implements Pe
       }
     }
 
+    CompilerManager compilerManager = CompilerManager.getInstance(myProject);
     compilerManager.addBeforeTask(new MyCompileTask(true));
     compilerManager.addAfterTask(new MyCompileTask(false));
   }
