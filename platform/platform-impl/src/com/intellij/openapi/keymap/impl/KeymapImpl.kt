@@ -727,7 +727,8 @@ private fun notifyAboutMissingParentKeymap(childName: String, parentName: String
       "VSCode" to "com.intellij.plugins.vscodekeymap",
       "Visual Studio OSX" to "com.intellij.plugins.visualstudiokeymap",
       "Visual Studio" to "com.intellij.plugins.visualstudiokeymap",
-      "Sublime Text" to "com.intellij.plugins.sublimetextkeymap"
+      "Sublime Text" to "com.intellij.plugins.sublimetextkeymap",
+      "NetBeans 6.5" to "com.intellij.plugins.netbeanskeymap"
     )
     val action: AnAction? = when (val pluginId = nameToPluginId.get(parentName)) {
       null -> {
