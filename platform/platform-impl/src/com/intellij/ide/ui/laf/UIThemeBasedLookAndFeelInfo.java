@@ -98,14 +98,15 @@ public class UIThemeBasedLookAndFeelInfo extends UIManager.LookAndFeelInfo {
 
             PropertiesComponent.getInstance().setValue(IdeBackgroundUtil.EDITOR_PROP, spec);
             IdeBackgroundUtil.repaintAllWindows();
-          } else {
+          }
+          else {
             throw new IllegalArgumentException("Can't load background: " + path);
           }
         }
       }
     }
-    catch (IOException boom) {
-      Logger.getInstance(getClass()).error(boom);
+    catch (IOException e) {
+      Logger.getInstance(getClass()).error(e);
     }
   }
 
@@ -128,14 +129,15 @@ public class UIThemeBasedLookAndFeelInfo extends UIManager.LookAndFeelInfo {
     }
     SVGLoader.setColorPatcherProvider(null);
 
-    String value = PropertiesComponent.getInstance().getValue("old." + IdeBackgroundUtil.EDITOR_PROP);
-    PropertiesComponent.getInstance().unsetValue("old." + IdeBackgroundUtil.EDITOR_PROP);
+    PropertiesComponent propertyManager = PropertiesComponent.getInstance();
+    String value = propertyManager.getValue("old." + IdeBackgroundUtil.EDITOR_PROP);
+    propertyManager.unsetValue("old." + IdeBackgroundUtil.EDITOR_PROP);
     if (value == null) {
       if (myTheme.getBackground() != null) {
-        PropertiesComponent.getInstance().unsetValue(IdeBackgroundUtil.EDITOR_PROP);
+        propertyManager.unsetValue(IdeBackgroundUtil.EDITOR_PROP);
       }
     } else {
-      PropertiesComponent.getInstance().setValue(IdeBackgroundUtil.EDITOR_PROP, value);
+      propertyManager.setValue(IdeBackgroundUtil.EDITOR_PROP, value);
     }
   }
 }
