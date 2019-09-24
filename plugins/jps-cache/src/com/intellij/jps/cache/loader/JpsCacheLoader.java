@@ -14,6 +14,7 @@ import java.io.IOException;
 class JpsCacheLoader implements JpsOutputLoader {
   private static final Logger LOG = Logger.getInstance("com.intellij.jps.loader.JpsCacheLoader");
   private static final String TIMESTAMPS_FOLDER_NAME = "timestamps";
+  private static final String FS_STATE_FILE = "fs_state.dat";
   private final BuildManager myBuildManager;
   private final JpsServerClient myClient;
   private final Project myProject;
@@ -56,6 +57,7 @@ class JpsCacheLoader implements JpsOutputLoader {
       File newTimestampFolder = new File(myTmpCacheFolder, TIMESTAMPS_FOLDER_NAME);
       if (newTimestampFolder.exists()) FileUtil.delete(newTimestampFolder);
 
+      // Copy timestamp old folder to new cache dir
       File timestamps = new File(currentDirForBuildCache, TIMESTAMPS_FOLDER_NAME);
       if (timestamps.exists()) {
         try {
@@ -66,6 +68,18 @@ class JpsCacheLoader implements JpsOutputLoader {
           LOG.warn("Couldn't copy timestamps from old JPS cache", e);
         }
       }
+
+      // Create new empty fsStateFile
+      File fsStateFile = new File(myTmpCacheFolder, FS_STATE_FILE);
+      fsStateFile.delete();
+      try {
+        fsStateFile.createNewFile();
+      }
+      catch (IOException e) {
+        LOG.warn("Couldn't create new empty FsState file", e);
+      }
+
+      // Remove old cache dir
       FileUtil.delete(currentDirForBuildCache);
       try {
         FileUtil.rename(myTmpCacheFolder, currentDirForBuildCache);
