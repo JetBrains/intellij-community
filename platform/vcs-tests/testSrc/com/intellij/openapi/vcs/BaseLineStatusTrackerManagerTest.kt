@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs
 
+import com.intellij.diff.comparison.iterables.DiffIterableUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.command.CommandProcessor
@@ -10,6 +11,7 @@ import com.intellij.openapi.command.undo.DocumentReferenceProvider
 import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileEditor
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.BaseLineStatusTrackerTestCase.Companion.parseInput
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager
 import com.intellij.openapi.vcs.ex.*
@@ -28,6 +30,7 @@ abstract class BaseLineStatusTrackerManagerTest : BaseChangeListsTest() {
   override fun setUp() {
     super.setUp()
 
+    DiffIterableUtil.setVerifyEnabled(true)
     lstm = LineStatusTrackerManager.getInstanceImpl(getProject())
     undoManager = UndoManager.getInstance(getProject()) as UndoManagerImpl
     shelveManager = ShelveChangesManager.getInstance(getProject())
@@ -39,6 +42,7 @@ abstract class BaseLineStatusTrackerManagerTest : BaseChangeListsTest() {
       .append(ThrowableRunnable { UIUtil.dispatchAllInvocationEvents() })
       .append(ThrowableRunnable { lstm.resetExcludedFromCommitMarkers() })
       .append(ThrowableRunnable { lstm.releaseAllTrackers() })
+      .append(ThrowableRunnable { DiffIterableUtil.setVerifyEnabled(Registry.`is`("diff.verify.iterable")) })
       .append(ThrowableRunnable { super.tearDown() })
       .run()
   }

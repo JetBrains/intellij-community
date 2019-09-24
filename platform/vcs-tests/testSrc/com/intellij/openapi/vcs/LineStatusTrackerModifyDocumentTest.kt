@@ -18,6 +18,52 @@ package com.intellij.openapi.vcs
 import com.intellij.openapi.vcs.ex.Range
 
 class LineStatusTrackerModifyDocumentTest : BaseLineStatusTrackerTestCase() {
+  fun testInitialEmpty() {
+    test("", "") {
+      assertRanges()
+      compareRanges()
+    }
+  }
+
+  fun testInitialEquals() {
+    test("1234_2345_3456",
+         "1234_2345_3456") {
+      assertRanges()
+      compareRanges()
+    }
+  }
+
+  fun testInitialInsertion() {
+    test("1234_2345_3456",
+         "1234_3456") {
+      assertRanges(Range(1, 2, 1, 1))
+      compareRanges()
+    }
+  }
+
+  fun testInitialDeletion() {
+    test("1234_3456", "1234_2345_3456") {
+      assertRanges(Range(1, 1, 1, 2))
+      compareRanges()
+    }
+  }
+
+  fun testInitialModification1() {
+    test("1234_x_3456", "1234_2345_3456") {
+      assertRanges(Range(1, 2, 1, 2))
+      compareRanges()
+    }
+  }
+
+  fun testInitialModification2() {
+    test("1_3_4_5_6_7", "1_2_3_5_6_12") {
+      assertRanges(Range(1, 1, 1, 2),
+                   Range(2, 3, 3, 3),
+                   Range(5, 6, 5, 6))
+      compareRanges()
+    }
+  }
+
   fun testSimpleInsert() {
     test("1234_2345_3456") {
       "12".insertAfter("a")
