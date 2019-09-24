@@ -156,8 +156,7 @@ public class BasicStepMethodFilter implements NamedMethodFilter {
           Value proxyValue = argumentValues.get(0);
           if (proxyValue != null) {
             Type proxyType = proxyValue.type();
-            if (proxyType instanceof ReferenceType &&
-                DebuggerUtilsEx.isAssignableFrom(myDeclaringClassName.getName(process), (ReferenceType)proxyType)) {
+            if (proxyType instanceof ReferenceType && DebuggerUtilsEx.isAssignableFrom(myDeclaringClassName.getName(process), proxyType)) {
               Value methodValue = argumentValues.get(1);
               if (methodValue instanceof ObjectReference) {
                 // TODO: no signature check for now
