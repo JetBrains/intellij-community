@@ -263,7 +263,7 @@ public final class FileManagerImpl implements FileManager {
 
   private boolean myProcessingFileTypesChange;
 
-  void processFileTypesChanged(boolean fileTypeRemoved) {
+  void processFileTypesChanged(boolean clearViewProviders) {
     if (myProcessingFileTypesChange) return;
     myProcessingFileTypesChange = true;
     DebugUtil.performPsiModification(null, () -> {
@@ -274,7 +274,7 @@ public final class FileManagerImpl implements FileManager {
           myManager.beforePropertyChange(event);
 
           possiblyInvalidatePhysicalPsi();
-          if (fileTypeRemoved) {
+          if (clearViewProviders) {
             clearViewProviders();
           }
 
