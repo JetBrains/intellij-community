@@ -34,8 +34,8 @@ import java.util.*;
 /**
  * @author Eugene Zhuravlev
  */
-public class JavaScratchCompilationSupport implements CompileTask {
-  public JavaScratchCompilationSupport(@NotNull Project project) {
+final class JavaScratchCompilationSupport implements CompileTask {
+  JavaScratchCompilationSupport(@NotNull Project project) {
     CompilerManager.getInstance(project).addAfterTask(this);
   }
 
