@@ -106,7 +106,9 @@ class BuiltInServerManagerImpl : BuiltInServerManager() {
   fun createServerBootstrap() = serverBootstrap(server!!.eventLoopGroup)
 
   override fun waitForStart(): BuiltInServerManager {
-    LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode || !ApplicationManager.getApplication().isDispatchThread)
+    LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode ||
+                   ApplicationManager.getApplication().isHeadlessEnvironment ||
+                   !ApplicationManager.getApplication().isDispatchThread)
 
     var future: Future<*>?
     synchronized(this) {
