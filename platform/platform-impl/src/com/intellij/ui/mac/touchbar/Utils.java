@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.mac.touchbar;
 
 import com.intellij.execution.ExecutionException;
@@ -21,24 +21,27 @@ public class Utils {
   private static final String TB_SERVER_PROCESS = SystemInfo.isMacOSHighSierra ? "TouchBarServer" : "TouchBarAgent";
 
   public static boolean isTouchBarServerRunning() {
-    final GeneralCommandLine cmdLine = new GeneralCommandLine("pgrep", TB_SERVER_PROCESS);
+    final GeneralCommandLine cmdLine = new GeneralCommandLine("pgrep", TB_SERVER_PROCESS)
+      .withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.SYSTEM);
     try {
       final ProcessOutput out = ExecUtil.execAndGetOutput(cmdLine);
       return !out.getStdout().isEmpty();
-    } catch (ExecutionException e) {
+    }
+    catch (ExecutionException e) {
       LOG.error(e);
     }
     return false;
   }
 
-  // returns true when success
+  // returns true on success
   public static boolean restartTouchBarServer() {
     try {
-      final ProcessOutput out = ExecUtil.sudoAndGetOutput(new GeneralCommandLine("pkill", TB_SERVER_PROCESS), "");
+      final GeneralCommandLine cmdLine = new GeneralCommandLine("pkill", TB_SERVER_PROCESS)
+        .withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.SYSTEM);
+      final ProcessOutput out = ExecUtil.sudoAndGetOutput(cmdLine, "");
       return out.getStderr().isEmpty();
-    } catch (ExecutionException e) {
-      LOG.error(e);
-    } catch (IOException e) {
+    }
+    catch (ExecutionException | IOException e) {
       LOG.error(e);
     }
 
