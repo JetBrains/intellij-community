@@ -177,9 +177,9 @@ public class PluginInstallOperation {
         try {
           ApplicationManager.getApplication().invokeAndWait(() -> {
             String title = IdeBundle.message("plugin.manager.dependencies.detected.title");
-            String deps = StringUtil.join(depends, node -> node.getName(), ", ");
-            String message = IdeBundle.message("plugin.manager.dependencies.detected.message", depends.size(), deps);
-            proceed[0] = Messages.showYesNoDialog(message, title, Messages.getWarningIcon()) == Messages.YES;
+            String deps = getPluginsText(depends);
+            String message = IdeBundle.message("plugin.manager.dependencies.detected.message", pluginNode.getName(), deps);
+            proceed[0] = Messages.showYesNoDialog(message, title, "Install", Messages.NO_BUTTON, Messages.getWarningIcon()) == Messages.YES;
           }, ModalityState.any());
         }
         catch (Exception e) {
@@ -194,10 +194,10 @@ public class PluginInstallOperation {
         final boolean[] proceed = new boolean[1];
         try {
           ApplicationManager.getApplication().invokeAndWait(() -> {
-            String title = IdeBundle.message("plugin.manager.dependencies.detected.title");
-            String deps = StringUtil.join(optionalDeps, node -> node.getName(), ", ");
-            String message = IdeBundle.message("plugin.manager.optional.dependencies.detected.message", optionalDeps.size(), deps);
-            proceed[0] = Messages.showYesNoDialog(message, title, Messages.getWarningIcon()) == Messages.YES;
+            String title = IdeBundle.message("plugin.manager.optional.dependencies.detected.title");
+            String deps = getPluginsText(optionalDeps);
+            String message = IdeBundle.message("plugin.manager.optional.dependencies.detected.message", pluginNode.getName(), deps);
+            proceed[0] = Messages.showYesNoDialog(message, title, "Install", Messages.NO_BUTTON, Messages.getWarningIcon()) == Messages.YES;
           }, ModalityState.any());
         }
         catch (Exception e) {
@@ -221,10 +221,10 @@ public class PluginInstallOperation {
         ApplicationManager.getApplication().invokeAndWait(() -> {
           String title = IdeBundle.message("plugin.manager.obsolete.plugins.detected.title");
           String message = pluginReplacement.getReplacementMessage(oldPlugin, pluginNode);
-          if (Messages.showYesNoDialog(message, title, Messages.getWarningIcon()) == Messages.YES) {
+          if (Messages.showYesNoDialog(message, title, "Disabled", Messages.NO_BUTTON, Messages.getWarningIcon()) == Messages.YES) {
             toDisable.set(oldPlugin);
           }
-        });
+        }, ModalityState.any());
       }
     }
 
@@ -254,6 +254,16 @@ public class PluginInstallOperation {
     }
 
     return true;
+  }
+
+  @NotNull
+  private static String getPluginsText(@NotNull List<PluginNode> pluginNodes) {
+    int size = pluginNodes.size();
+    if (size == 1) {
+      return "\"" + pluginNodes.get(0).getName() + "\" plugin";
+    }
+    return StringUtil.join(pluginNodes.subList(0, size - 1), node -> "\"" + node.getName() + "\"", ", ") +
+           " and \"" + pluginNodes.get(size - 1) + "\" plugins";
   }
 
   @Nullable
