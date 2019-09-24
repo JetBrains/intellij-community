@@ -129,7 +129,8 @@ public class MavenTasksManager extends MavenSimpleProjectComponent implements Pe
                                                      explicitProfiles.getDisabledProfiles()));
       }
     }
-    return myRunner.runBatch(parametersList, null, null, TasksBundle.message("maven.tasks.executing"), context.getProgressIndicator());
+    return myRunner
+      .runBatch(parametersList, null, null, TasksBundle.message("maven.tasks.executing"), context.getProgressIndicator(), null);
   }
 
   public synchronized boolean isCompileTaskOfPhase(@NotNull MavenCompilerTask task, @NotNull Phase phase) {

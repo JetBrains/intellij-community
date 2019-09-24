@@ -32,7 +32,6 @@ import org.jetbrains.idea.maven.execution.MavenRunner;
 import org.jetbrains.idea.maven.execution.MavenRunnerParameters;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
-import org.jetbrains.idea.maven.project.MavenConsole;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenLog;
@@ -174,7 +173,6 @@ public class MavenBeforeRunTasksProvider extends BeforeRunTaskProvider<MavenBefo
 
         final MavenExplicitProfiles explicitProfiles = MavenProjectsManager.getInstance(project).getExplicitProfiles();
         final MavenRunner mavenRunner = MavenRunner.getInstance(project);
-        final MavenConsole console = MavenRunner.createConsole(myProject, myProject.getBasePath(), "Maven: " + task.getGoal(), env.getExecutionId());
 
         targetDone.down();
         new Task.Backgroundable(project, TasksBundle.message("maven.tasks.executing"), true) {
@@ -191,19 +189,12 @@ public class MavenBeforeRunTasksProvider extends BeforeRunTaskProvider<MavenBefo
 
               RunnerAndConfigurationSettings configuration =
                 MavenRunConfigurationType.createRunnerAndConfigurationSettings(null, null, params, myProject);
-              if (console != null) {
-                console.addAttachProcessListener(processHandler -> {
-                  processHandler.putUserData(RunContentManagerImpl.TEMPORARY_CONFIGURATION_KEY, configuration);
-                });
-              }
-
               result[0] = mavenRunner.runBatch(Collections.singletonList(params),
-                                            null,
-                                            null,
-                                            TasksBundle.message("maven.tasks.executing"),
-                                            indicator,
-                                            console);
-              //noinspection ConstantConditions
+                                               null,
+                                               null,
+                                               TasksBundle.message("maven.tasks.executing"),
+                                               indicator,
+                                               ph -> ph.putUserData(RunContentManagerImpl.TEMPORARY_CONFIGURATION_KEY, configuration));
               myProject.getMessageBus().syncPublisher(RunDashboardManager.DASHBOARD_TOPIC)
                 .configurationChanged(configuration.getConfiguration(), true);
             }
