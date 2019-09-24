@@ -249,6 +249,8 @@ public class ChangesViewManager implements ChangesViewEx,
 
   private static class ChangesViewToolWindowPanel extends SimpleToolWindowPanel implements Disposable {
     @NotNull private static final RegistryValue isToolbarHorizontalSetting = Registry.get("vcs.local.changes.toolbar.horizontal");
+    @NotNull private static final RegistryValue isCommitSplitHorizontal =
+      Registry.get("vcs.non.modal.commit.split.horizontal.if.no.diff.preview");
 
     @NotNull private final Project myProject;
     @NotNull private final ChangesViewManager myChangesViewManager;
@@ -329,6 +331,14 @@ public class ChangesViewManager implements ChangesViewEx,
       BorderLayoutPanel mainPanel = simplePanel(myDiffPreviewSplitter).addToBottom(myProgressLabel);
       setContent(mainPanel);
 
+      setCommitSplitOrientation();
+      isCommitSplitHorizontal.addListener(new RegistryValueListener.Adapter() {
+        @Override
+        public void afterValueChanged(@NotNull RegistryValue value) {
+          setCommitSplitOrientation();
+        }
+      }, this);
+
       MessageBusConnection busConnection = myProject.getMessageBus().connect(this);
       busConnection.subscribe(RemoteRevisionsCache.REMOTE_VERSION_CHANGED, () -> scheduleRefresh());
       busConnection.subscribe(ProblemListener.TOPIC, new ProblemListener() {
@@ -387,6 +397,15 @@ public class ChangesViewManager implements ChangesViewEx,
 
     public boolean isAllowExcludeFromCommit() {
       return myCommitWorkflowHandler != null;
+    }
+
+    private void setDiffPreviewVisible(boolean isDiffPreviewVisible) {
+      myDiffPreviewSplitter.setDetailsOn(isDiffPreviewVisible);
+      setCommitSplitOrientation();
+    }
+
+    private void setCommitSplitOrientation() {
+      myCommitPanelSplitter.setOrientation(myDiffPreviewSplitter.isDetailsOn() || !isCommitSplitHorizontal.asBoolean());
     }
 
     @NotNull
@@ -619,7 +638,7 @@ public class ChangesViewManager implements ChangesViewEx,
     private class ToggleDetailsAction extends ShowDiffPreviewAction {
       @Override
       public void setSelected(@NotNull AnActionEvent e, boolean state) {
-        myDiffPreviewSplitter.setDetailsOn(state);
+        setDiffPreviewVisible(state);
         myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN = state;
       }
 
