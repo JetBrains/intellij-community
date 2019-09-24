@@ -3,6 +3,8 @@ import * as am4charts from "@amcharts/amcharts4/charts"
 import * as am4core from "@amcharts/amcharts4/core"
 import {DataManager} from "@/state/DataManager"
 
+am4core.options.onlyShowOnViewport = true
+
 export interface ChartManager {
   render(data: DataManager): void
 
