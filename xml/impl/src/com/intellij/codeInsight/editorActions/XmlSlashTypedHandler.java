@@ -79,7 +79,9 @@ public class XmlSlashTypedHandler extends TypedHandlerDelegate {
       final String prevLeafText = prevLeaf.getText();
       if ("</".equals(prevLeafText) && prevLeaf.getElementType() == XmlTokenType.XML_END_TAG_START) {
         XmlTag tag = PsiTreeUtil.getParentOfType(element, XmlTag.class);
-        if (tag != null && StringUtil.isNotEmpty(tag.getName()) && TreeUtil.findSibling(prevLeaf, XmlTokenType.XML_NAME) == null) {
+        if (tag != null && StringUtil.isNotEmpty(tag.getName()) &&
+            TreeUtil.findSibling(prevLeaf, XmlTokenType.XML_NAME) == null &&
+            TreeUtil.findSibling(prevLeaf, XmlTokenType.XML_TAG_NAME) == null) {
           // check for template language like JSP
           if (provider instanceof MultiplePsiFilesPerDocumentFileViewProvider) {
             PsiElement element1 = AbstractFileViewProvider.findElementAt(file, offset - 1);
