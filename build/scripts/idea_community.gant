@@ -35,7 +35,7 @@ target('update-from-sources': 'Update locally installed distribution from compil
   options.buildStepsToSkip << BuildOptions.SVGICONS_PREBUILD_STEP
   //when IDEA CE is updated from IDEA UE sources project should be loaded from IDEA UE directory
   String projectHome = isDefined("devIdeaHome") ? devIdeaHome : home
-  new IdeaCommunityBuilder(home, options, projectHome).buildUnpackedDistribution(deploy)
+  new IdeaCommunityBuilder(home, options, projectHome).buildUnpackedDistribution("$options.outputRootPath/$distOutputRelativePath")
 }
 
 private boolean isDefined(String key) {

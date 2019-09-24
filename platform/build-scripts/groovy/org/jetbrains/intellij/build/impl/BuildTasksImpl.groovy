@@ -778,9 +778,7 @@ idea.fatal.error.notification=disabled
 
     setupBundledMaven()
     def patchedApplicationInfo = patchApplicationInfo()
-    def jarsBuilder = new DistributionJARsBuilder(buildContext, patchedApplicationInfo)
-    CompilationTasks.create(buildContext).buildProjectArtifacts(jarsBuilder.includedProjectArtifacts)
-    jarsBuilder.buildJARs()
+    compileModulesForDistribution(patchedApplicationInfo).buildJARs()
     if (includeBinAndRuntime) {
       setupJBre()
     }

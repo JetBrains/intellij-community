@@ -49,7 +49,7 @@ rm -rf "$WORK_IDEA_HOME/plugins" &
 
 wait
 
-cp -R "$DEV_IDEA_HOME/out/deploy/"* "$WORK_IDEA_HOME" &
+cp -R "$DEV_IDEA_HOME/out/deploy/dist/"* "$WORK_IDEA_HOME" &
 
 OS_TYPE=`uname -s`
 if [ "$OS_TYPE" = "Linux" ]; then

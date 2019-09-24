@@ -88,13 +88,14 @@ open class UpdateIdeFromSourcesAction
     }
 
     val deployDir = "$devIdeaHome/out/deploy"
+    val distRelativePath = "dist"
     val backupDir = "$devIdeaHome/out/backup-before-update-from-sources"
-    val params = createScriptJavaParameters(devIdeaHome, project, deployDir, scriptFile, bundledPluginDirsToSkip) ?: return
+    val params = createScriptJavaParameters(devIdeaHome, project, deployDir, distRelativePath, scriptFile, bundledPluginDirsToSkip) ?: return
     ProjectTaskManager.getInstance(project)
       .buildAllModules()
       .onSuccess {
         if (!it.isAborted && !it.hasErrors()) {
-          runUpdateScript(params, project, workIdeHome, deployDir, backupDir)
+          runUpdateScript(params, project, workIdeHome, "$deployDir/$distRelativePath", backupDir)
         }
       }
   }
@@ -115,14 +116,14 @@ open class UpdateIdeFromSourcesAction
   private fun runUpdateScript(params: JavaParameters,
                               project: Project,
                               workIdeHome: String,
-                              deployDir: String,
+                              builtDistPath: String,
                               backupDir: String) {
     object : Task.Backgroundable(project, "Updating from Sources", true) {
       override fun run(indicator: ProgressIndicator) {
         indicator.text = "Updating IDE from sources..."
         backupImportantFilesIfNeeded(workIdeHome, backupDir, indicator)
-        indicator.text2 = "Deleting $deployDir"
-        FileUtil.delete(File(deployDir))
+        indicator.text2 = "Deleting $builtDistPath"
+        FileUtil.delete(File(builtDistPath))
         indicator.text2 = "Starting gant script"
         val scriptHandler = params.createOSProcessHandler()
         val errorLines = Collections.synchronizedList(ArrayList<String>())
@@ -150,11 +151,11 @@ open class UpdateIdeFromSourcesAction
             }
 
             if (!FileUtil.pathsEqual(workIdeHome, PathManager.getHomePath())) {
-              startCopyingFiles(deployDir, workIdeHome, project)
+              startCopyingFiles(builtDistPath, workIdeHome, project)
               return
             }
 
-            val command = generateUpdateCommand(deployDir, workIdeHome)
+            val command = generateUpdateCommand(builtDistPath, workIdeHome)
             if (indicator.isShowing) {
               restartWithCommand(command)
             }
@@ -197,7 +198,7 @@ open class UpdateIdeFromSourcesAction
       ?.forEach { FileUtil.copyFileOrDir(it, File(backupDir, it.name)) }
   }
 
-  private fun startCopyingFiles(deployDir: String, workIdeHome: String, project: Project) {
+  private fun startCopyingFiles(builtDistPath: String, workIdeHome: String, project: Project) {
     object : Task.Backgroundable(project, "Updating from Sources", true) {
       override fun run(indicator: ProgressIndicator) {
         indicator.text = "Copying files to IDE distribution..."
@@ -205,7 +206,7 @@ open class UpdateIdeFromSourcesAction
         FileUtil.delete(File(workIdeHome))
         indicator.checkCanceled()
         indicator.text2 = "Copying new files"
-        FileUtil.copyDir(File(deployDir), File(workIdeHome))
+        FileUtil.copyDir(File(builtDistPath), File(workIdeHome))
         indicator.checkCanceled()
         Notification("Update from Sources", "Update from Sources", "New installation is prepared at $workIdeHome.",
                      NotificationType.INFORMATION).notify(project)
@@ -213,7 +214,7 @@ open class UpdateIdeFromSourcesAction
     }.queue()
   }
 
-  private fun generateUpdateCommand(deployDir: String, workIdeHome: String): Array<String> {
+  private fun generateUpdateCommand(builtDistPath: String, workIdeHome: String): Array<String> {
     if (SystemInfo.isWindows) {
       val restartLogFile = File(PathManager.getLogPath(), "update-from-sources.log")
       val updateScript = FileUtil.createTempFile("update", ".cmd", false)
@@ -239,7 +240,7 @@ open class UpdateIdeFromSourcesAction
           ) 
         )
         
-        XCOPY "${File(deployDir).absolutePath}" "$workHomePath"\ /Q /E /Y
+        XCOPY "${File(builtDistPath).absolutePath}" "$workHomePath"\ /Q /E /Y
         START /b "" cmd /c DEL /Q /F "${updateScript.absolutePath}" & EXIT /b
       """.trimIndent())
       // 'Runner' class specified as a parameter which is actually not used by the script; this is needed to use a copy of restarter (see com.intellij.util.Restarter.runRestarter)
@@ -247,7 +248,7 @@ open class UpdateIdeFromSourcesAction
     }
     val command = arrayOf(
       "rm -rf \"$workIdeHome\"/*",
-      "cp -r \"$deployDir\"/* \"$workIdeHome\""
+      "cp -r \"$builtDistPath\"/* \"$workIdeHome\""
     )
     return arrayOf("/bin/sh", "-c", command.joinToString(" && "))
   }
@@ -260,6 +261,7 @@ open class UpdateIdeFromSourcesAction
   private fun createScriptJavaParameters(devIdeaHome: String,
                                          project: Project,
                                          deployDir: String,
+                                         distRelativePath: String,
                                          scriptFile: File,
                                          bundledPluginDirsToSkip: List<String>): JavaParameters? {
     val sdk = ProjectRootManager.getInstance(project).projectSdk
@@ -304,8 +306,8 @@ open class UpdateIdeFromSourcesAction
     if (bundledPluginDirsToSkip.isNotEmpty()) {
       params.vmParametersList.add("-Dintellij.build.bundled.plugin.dirs.to.skip=${bundledPluginDirsToSkip.joinToString(",")}")
     }
-    params.vmParametersList.add("-Ddeploy=$deployDir")
-    params.vmParametersList.add("-DdevIdeaHome=$devIdeaHome")
+    params.vmParametersList.add("-Dintellij.build.output.root=$deployDir")
+    params.vmParametersList.add("-DdistOutputRelativePath=$distRelativePath")
     return params
   }
 
