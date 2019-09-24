@@ -14,24 +14,10 @@ import java.util.Collection;
 import java.util.List;
 
 abstract class ThreadLocalAnnotatorMap<K, V> {
-  private volatile int version;
   @NotNull
   public abstract Collection<V> initialValue(@NotNull K key);
 
-  private static class VersionedMap<K, V> extends THashMap<K, List<V>> {
-    private final int version;
-
-    private VersionedMap(int version) {
-      this.version = version;
-    }
-  }
-
-  private final ThreadLocal<VersionedMap<K, V>> CACHE = new ThreadLocal<VersionedMap<K, V>>(){
-    @Override
-    protected VersionedMap<K, V> initialValue() {
-      return new VersionedMap<>(version);
-    }
-  };
+  private final ThreadLocal<THashMap<K, List<V>>> CACHE = ThreadLocal.withInitial(() -> new THashMap<>());
 
   @SuppressWarnings("unchecked")
   @NotNull
@@ -55,11 +41,7 @@ abstract class ThreadLocalAnnotatorMap<K, V> {
 
   @NotNull
   public List<V> get(@NotNull K key) {
-    VersionedMap<K, V> map = CACHE.get();
-    if (version != map.version) {
-      CACHE.remove();
-      map = CACHE.get();
-    }
+    THashMap<K, List<V>> map = CACHE.get();
     List<V> cached = map.get(key);
     if (cached == null) {
       Collection<V> templates = initialValue(key);
@@ -67,9 +49,5 @@ abstract class ThreadLocalAnnotatorMap<K, V> {
       map.put(key, cached);
     }
     return cached;
-  }
-
-  public void clear() {
-    version++; //we don't care about atomicity here
   }
 }
