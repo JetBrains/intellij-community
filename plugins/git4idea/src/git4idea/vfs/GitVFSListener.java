@@ -273,6 +273,11 @@ public class GitVFSListener extends VcsVFSListener {
   }
 
   @Override
+  protected boolean isFileCopyingFromTrackingSupported() {
+    return false;
+  }
+
+  @Override
   protected Collection<FilePath> selectFilePathsToDelete(@NotNull final List<FilePath> deletedFiles) {
     // For git asking about vcs delete does not make much sense. The result is practically identical.
     return deletedFiles;

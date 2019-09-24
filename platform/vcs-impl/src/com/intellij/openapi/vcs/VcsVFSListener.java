@@ -162,7 +162,9 @@ public abstract class VcsVFSListener implements Disposable {
           iterator.remove();
           myAddedFiles.remove(oldAdded);
           myAddedFiles.add(movedFile.myFile);
-          myCopyFromMap.put(oldAdded, movedFile.myFile);
+          if (isFileCopyingFromTrackingSupported()) {
+            myCopyFromMap.put(oldAdded, movedFile.myFile);
+          }
         }
       }
     }
@@ -240,7 +242,7 @@ public abstract class VcsVFSListener implements Disposable {
       if (newFile == null || myChangeListManager.isIgnoredFile(newFile)) return;
       VirtualFile originalFile = event.getFile();
       runUnderLock(PROCESSING_LOCK.writeLock(), () -> {
-        if (isUnderMyVcs(originalFile)) {
+        if (isFileCopyingFromTrackingSupported() && isUnderMyVcs(originalFile)) {
           myAddedFiles.add(newFile);
           myCopyFromMap.put(newFile, originalFile);
         }
@@ -411,7 +413,7 @@ public abstract class VcsVFSListener implements Disposable {
     LOG.debug("executeAdd. addedFiles: ", addedFiles);
     addedFiles.removeIf(myVcsFileListenerContextHelper::isAdditionIgnored);
     addedFiles.removeIf(myVcsIgnoreManager::isPotentiallyIgnoredFile);
-    Map<VirtualFile, VirtualFile> copyFromMap = myProcessor.acquireCopiedFiles();
+    Map<VirtualFile, VirtualFile> copyFromMap = isFileCopyingFromTrackingSupported() ? myProcessor.acquireCopiedFiles() : emptyMap();
     if (!addedFiles.isEmpty()) {
       executeAdd(addedFiles, copyFromMap);
     }
@@ -573,6 +575,10 @@ public abstract class VcsVFSListener implements Disposable {
 
   protected boolean isRecursiveDeleteSupported() {
     return false;
+  }
+
+  protected boolean isFileCopyingFromTrackingSupported() {
+    return true;
   }
 
   @SuppressWarnings("unchecked")
