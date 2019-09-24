@@ -1349,15 +1349,6 @@
     <depends>com.intellij.modules.xml</depends>
     <depends>com.intellij.modules.ultimate</depends>
   </idea-plugin>
-  <idea-plugin url="file://out/intellij.clouds.heroku/META-INF/plugin.xml">
-    <id>Heroku</id>
-    <name>Heroku</name>
-    <depends>com.intellij.modules.vcs</depends>
-    <depends>com.intellij.modules.ultimate</depends>
-    <depends>Git4Idea</depends>
-    <depends optional="true" config-file="???">com.intellij.modules.java</depends>
-    <depends optional="true" config-file="intellij.clouds.heroku">com.intellij.javaee</depends>
-  </idea-plugin>
   <idea-plugin url="file://out/intellij.javaee.appServers.glassfish/META-INF/plugin.xml">
     <id>GlassFish</id>
     <name>GlassFish</name>
@@ -1387,7 +1378,6 @@
     <depends>com.intellij.modules.json</depends>
     <depends optional="true" config-file="intellij.clouds.docker.file">com.intellij.modules.lang</depends>
     <depends optional="true" config-file="intellij.clouds.docker.impl">org.jetbrains.plugins.remote-run</depends>
-    <depends optional="true" config-file="intellij.clouds.heroku">com.intellij.javaee</depends>
     <depends optional="true" config-file="intellij.clouds.docker.java">com.intellij.modules.java</depends>
     <depends optional="true" config-file="intellij.clouds.docker.compose">org.jetbrains.plugins.yaml</depends>
   </idea-plugin>

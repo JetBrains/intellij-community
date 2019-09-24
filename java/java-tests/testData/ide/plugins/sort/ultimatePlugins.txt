@@ -45,7 +45,6 @@
 + Emma
 + Git4Idea
 + GlassFish
-+ Heroku
 + HtmlTools
 + JBoss
 + JSIntentionPowerPack
