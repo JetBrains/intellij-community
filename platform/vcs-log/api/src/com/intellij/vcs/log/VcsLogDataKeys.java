@@ -18,7 +18,6 @@ package com.intellij.vcs.log;
 import com.intellij.openapi.actionSystem.DataKey;
 
 import java.util.List;
-import java.util.Set;
 
 /**
  * Provides {@link DataKey DataKeys} which can be used by actions to access data available in the VCS log.
@@ -30,8 +29,4 @@ public class VcsLogDataKeys {
   public static final DataKey<VcsLogDataProvider> VCS_LOG_DATA_PROVIDER = DataKey.create("Vcs.Log.DataProvider");
   public static final DataKey<List<VcsRef>> VCS_LOG_BRANCHES = DataKey.create("Vcs.Log.Branches");
   public static final DataKey<List<VcsRef>> VCS_LOG_REFS = DataKey.create("Vcs.Log.Refs");
-  /**
-   * Set of log providers for selected rows
-   */
-  public static final DataKey<Set<VcsLogProvider>> VCS_LOG_PROVIDERS = DataKey.create("Vcs.Log.Provider");
 }

@@ -142,6 +142,7 @@
       <reference id="Vcs.Log.AlignLabels"/>
       <reference id="Vcs.Log.ShowTagNames"/>
       <reference id="Vcs.Log.ShowLongEdges"/>
+      <reference id="Vcs.Log.PreferCommitDate"/>
       <separator/>
       <reference id="Vcs.Log.CollapseAll"/>
       <reference id="Vcs.Log.ExpandAll"/>
@@ -164,7 +165,6 @@
     <group id="Vcs.Log.ContextMenu">
       <reference id="Vcs.CopyRevisionNumberAction"/>
       <reference id="ChangesView.CreatePatchFromChanges"/>
-      <reference id="Vcs.Log.PreferCommitDate"/>
       <separator/>
       <reference id="Vcs.Log.CompareRevisions"/>
       <reference id="Vcs.ShowDiffWithLocal"/>
@@ -198,7 +198,6 @@
     <group id="Vcs.FileHistory.ContextMenu">
       <reference id="Vcs.CopyRevisionNumberAction"/>
       <reference id="ChangesView.CreatePatchFromChanges"/>
-      <reference id="Vcs.Log.PreferCommitDate"/>
       <separator/>
       <reference id="Vcs.Log.GetVersion"/>
       <reference id="Vcs.Log.OpenRepositoryVersion"/>
@@ -208,6 +207,12 @@
       <reference id="Vcs.Log.AnnotateRevisionAction"/>
       <reference id="VcsHistoryActionsGroup"/>
     </group>
+    <group id="Vcs.FileHistory.PresentationSettings" class="com.intellij.vcs.log.ui.actions.VcsLogToolbarPopupActionGroup"
+           icon="AllIcons.Actions.Show" text="Presentation Settings"
+           description="Configure presentation of the File History" popup="true">
+      <reference id="Vcs.Log.PreferCommitDate"/>
+      <reference id="Vcs.Log.ToggleColumns"/>
+    </group>
     <group id="Vcs.FileHistory.Toolbar">
       <reference id="Vcs.Log.Refresh"/>
       <reference id="Diff.ShowDiff"/>
@@ -215,7 +220,7 @@
       <reference id="Vcs.Log.ShowDiffPreviewInEditor"/>
       <separator/>
       <reference id="Vcs.Log.ShowOtherBranches"/>
-      <reference id="Vcs.Log.ToggleColumns"/>
+      <reference id="Vcs.FileHistory.PresentationSettings"/>
       <separator/>
       <reference id="Vcs.Log.LayoutConfiguration"/>
       <separator/>

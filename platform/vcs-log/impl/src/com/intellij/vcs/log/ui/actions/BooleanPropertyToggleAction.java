@@ -58,12 +58,9 @@ public abstract class BooleanPropertyToggleAction extends ToggleAction implement
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    e.getPresentation().setEnabledAndVisible(isVisible(e));
-    super.update(e);
-  }
-
-  protected boolean isVisible(@NotNull AnActionEvent e) {
     VcsLogUiProperties properties = e.getData(VcsLogInternalDataKeys.LOG_UI_PROPERTIES);
-    return properties != null && properties.exists(getProperty());
+    e.getPresentation().setEnabledAndVisible(properties != null && properties.exists(getProperty()));
+    
+    super.update(e);
   }
 }
