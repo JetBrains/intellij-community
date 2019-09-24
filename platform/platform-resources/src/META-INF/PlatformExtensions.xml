@@ -311,7 +311,7 @@
     <projectService serviceInterface="com.intellij.openapi.vfs.ReadonlyStatusHandler"
                     serviceImplementation="com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl"/>
     <projectService serviceInterface="com.intellij.openapi.startup.StartupManager"
-                    serviceImplementation="com.intellij.ide.startup.impl.StartupManagerImpl"/>
+                    serviceImplementation="com.intellij.ide.startup.impl.StartupManagerImpl" preload="notHeadless"/>
     <projectService serviceImplementation="com.intellij.openapi.project.ProjectTypeService"/>
     <projectService serviceImplementation="com.intellij.openapi.ui.MasterDetailsStateService"/>
     <projectService serviceImplementation="com.intellij.ide.SelectInManager"/>
