@@ -21,7 +21,6 @@ class InferenceUnitNode internal constructor(val core: InferenceUnit,
                                              parents: Set<() -> InferenceUnitNode>,
                                              children: Set<() -> InferenceUnitNode>,
                                              val typeInstantiation: PsiType,
-                                             val forbiddenToInstantiate: Boolean = false,
                                              val direct: Boolean = false) {
 
   companion object {
@@ -66,7 +65,7 @@ class InferenceUnitNode internal constructor(val core: InferenceUnit,
         return typeInstantiation to REIFIED_AS_PROPER_TYPE
       }
       val flushedTypeInstantiation = removeWildcard(typeInstantiation)
-      if(flushedTypeInstantiation is PsiIntersectionType) {
+      if (flushedTypeInstantiation is PsiIntersectionType) {
         return flushedTypeInstantiation to NEW_TYPE_PARAMETER
       }
     }

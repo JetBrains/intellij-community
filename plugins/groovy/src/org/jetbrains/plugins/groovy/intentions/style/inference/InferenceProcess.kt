@@ -27,7 +27,7 @@ fun runInferenceProcess(method: GrMethod, scope: SearchScope): GrMethod {
   val virtualMethod = createVirtualMethod(method) ?: return method
   val parameterizedDriver = driver.createParameterizedDriver(ParameterizationManager(method), virtualMethod, signatureSubstitutor)
   val typeUsage = parameterizedDriver.collectInnerConstraints()
-  val graph = setUpGraph(parameterizedDriver, virtualMethod, method.typeParameters.asList(), typeUsage)
+  val graph = setUpGraph(virtualMethod, method.typeParameters.asList(), typeUsage)
   val inferredGraph = determineDependencies(graph)
   return instantiateTypeParameters(parameterizedDriver, inferredGraph, method, typeUsage)
 }
@@ -39,12 +39,11 @@ private fun createDriver(method: GrMethod,
   return CommonDriver.createFromMethod(method, virtualMethod, generator, scope)
 }
 
-private fun setUpGraph(driver: InferenceDriver,
-                       virtualMethod: GrMethod,
+private fun setUpGraph(virtualMethod: GrMethod,
                        constantTypes: List<PsiTypeParameter>,
                        typeUsage: TypeUsageInformation): InferenceUnitGraph {
   val inferenceSession = CollectingGroovyInferenceSession(virtualMethod.typeParameters, context = virtualMethod)
   typeUsage.constraints.forEach { inferenceSession.addConstraint(it) }
   inferenceSession.infer()
-  return createGraphFromInferenceVariables(inferenceSession, virtualMethod, driver.forbiddingTypes(), typeUsage, constantTypes)
+  return createGraphFromInferenceVariables(inferenceSession, virtualMethod, typeUsage, constantTypes)
 }

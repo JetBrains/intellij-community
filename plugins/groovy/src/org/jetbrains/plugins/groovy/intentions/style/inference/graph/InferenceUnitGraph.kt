@@ -96,9 +96,6 @@ private fun condense(graph: InferenceUnitGraph): InferenceUnitGraph {
         builder.setType(it.core, representative.core.type).setDirect(it.core)
       }
     }
-    if (component.any(InferenceUnitNode::forbiddenToInstantiate)) {
-      builder.forbidInstantiation(representative.core)
-    }
   }
   graph.units.filter { representativeMap[it.core] == it.core }.forEach { unit ->
     builder.register(unit)

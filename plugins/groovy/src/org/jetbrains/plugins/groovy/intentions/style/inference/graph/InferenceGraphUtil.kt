@@ -27,7 +27,6 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
 
 fun createGraphFromInferenceVariables(session: GroovyInferenceSession,
                                       virtualMethod: GrMethod,
-                                      forbiddingTypes: Collection<PsiType>,
                                       usageInformation: TypeUsageInformation,
                                       constantTypes: List<PsiTypeParameter>): InferenceUnitGraph {
   val variableMap = BidirectionalMap<InferenceUnit, InferenceVariable>()
@@ -44,9 +43,6 @@ fun createGraphFromInferenceVariables(session: GroovyInferenceSession,
     }
     else {
       builder.setType(core, variable.parameter.extendsListTypes.firstOrNull() ?: PsiType.NULL)
-    }
-    if (variableType in forbiddingTypes) {
-      builder.forbidInstantiation(core)
     }
     if (isStrict) {
       builder.setDirect(core)

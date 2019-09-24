@@ -75,7 +75,6 @@ class CommonDriver private constructor(private val targetParameters: Set<GrParam
     }
 
     private fun GrParameter.setTypeWithoutFormatting(type: PsiType?) {
-      assert(type != null) { "null!" }
       if (type == null || type == PsiType.NULL || (type is PsiWildcardType && !type.isBounded)) {
         typeElementGroovy?.delete()
       }
@@ -250,9 +249,5 @@ class CommonDriver private constructor(private val targetParameters: Set<GrParam
     val newTypeParameters = typeParameters.mapNotNull { param -> resultMethod.typeParameters.find { it.name == param.name } }
     val newTargetParameters = targetParameters.map { mapping.getValue(it) }.toSet()
     return CommonDriver(newTargetParameters, mapping[varargParameter], newClosureDriver, originalMethod, newTypeParameters)
-  }
-
-  override fun forbiddingTypes(): List<PsiType> {
-    return listOf(varargParameter?.type ?: return emptyList())
   }
 }
