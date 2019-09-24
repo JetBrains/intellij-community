@@ -176,7 +176,8 @@ public class GraphTableModel extends AbstractTableModel {
   @NotNull
   private String getDateSafely(@NotNull VcsShortCommitDetails data) {
     return getOrLogAndReturnStub(() -> {
-      long timeStamp = Boolean.TRUE.equals(myProperties.get(CommonUiProperties.PREFER_COMMIT_DATE)) ?
+      long timeStamp = myProperties.exists(CommonUiProperties.PREFER_COMMIT_DATE) &&
+                       Boolean.TRUE.equals(myProperties.get(CommonUiProperties.PREFER_COMMIT_DATE)) ?
                        data.getCommitTime() : data.getAuthorTime();
       return timeStamp < 0 ? "" : JBDateFormat.getFormatter("vcs.log").formatDateTime(timeStamp);
     }, "");
