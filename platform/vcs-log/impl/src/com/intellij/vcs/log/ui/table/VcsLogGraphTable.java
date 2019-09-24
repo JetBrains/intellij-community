@@ -76,7 +76,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   public static final int ROOT_INDICATOR_WHITE_WIDTH = 5;
   private static final int ROOT_INDICATOR_WIDTH = ROOT_INDICATOR_WHITE_WIDTH + 8;
   private static final int ROOT_NAME_MAX_WIDTH = 300;
-  private static final int MAX_DEFAULT_AUTHOR_COLUMN_WIDTH = 300;
+  private static final int MAX_DEFAULT_DYNAMIC_COLUMN_WIDTH = 300;
   private static final int MAX_ROWS_TO_CALC_WIDTH = 1000;
 
   public static final String LOADING_COMMITS_TEXT = "Loading commits...";
@@ -91,7 +91,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   @NotNull private final GraphCommitCellRenderer myGraphCommitCellRenderer;
   @NotNull private final GraphTableController myController;
   @NotNull private final StringCellRenderer myStringCellRenderer;
-  private boolean myAuthorColumnInitialized = false;
+  @NotNull private final Set<VcsLogColumn> myInitializedColumns = EnumSet.noneOf(VcsLogColumn.class);
 
   @Nullable private Selection mySelection = null;
 
@@ -199,7 +199,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     }
 
     setPaintBusy(false);
-    myAuthorColumnInitialized = myAuthorColumnInitialized && !filtersChanged;
+    if (filtersChanged) myInitializedColumns.clear();
     reLayout();
   }
 
@@ -262,7 +262,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   }
 
   public void forceReLayout(@NotNull VcsLogColumn column) {
-    if (column == VcsLogColumn.AUTHOR) myAuthorColumnInitialized = false;
+    myInitializedColumns.remove(column);
     reLayout();
   }
 
@@ -291,7 +291,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
       int width = CommonUiProperties.getColumnWidth(myProperties, logColumn);
       if (width <= 0 || width > getWidth()) {
-        if (logColumn != VcsLogColumn.AUTHOR || !myAuthorColumnInitialized) {
+        if (logColumn.getContentSample() != null || !myInitializedColumns.contains(logColumn)) {
           width = getColumnWidthFromData(column);
         }
         else {
@@ -311,26 +311,19 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     int index = column.getModelIndex();
     VcsLogColumn logColumn = VcsLogColumn.fromOrdinal(index);
 
-    if (logColumn == VcsLogColumn.AUTHOR) {
-      if (getModel().getRowCount() <= 0) {
-        return column.getPreferredWidth();
-      }
-      return estimateAuthorColumnWidth(logColumn);
-    }
     String contentSample = logColumn.getContentSample();
     if (contentSample != null) {
       return getFontMetrics(getTableFont().deriveFont(Font.BOLD)).stringWidth(contentSample) +
              VcsLogUiUtil.getHorizontalTextPadding(myStringCellRenderer);
     }
-    LOG.error("Cannot estimate the content width for " + logColumn);
-    return column.getPreferredWidth();
-  }
-
-  private int estimateAuthorColumnWidth(@NotNull VcsLogColumn logColumn) {
+    if (getModel().getRowCount() <= 0 || logColumn.getContentClass() != String.class) {
+      return column.getPreferredWidth();
+    }
+    
     Font tableFont = getTableFont();
-    // detect author with the longest name
+    // detect the longest value
     int maxRowsToCheck = Math.min(MAX_ROWS_TO_CALC_WIDTH, getRowCount());
-    int maxAuthorWidth = 0;
+    int maxValueWidth = 0;
     int unloaded = 0;
     for (int row = 0; row < maxRowsToCheck; row++) {
       String value = getModel().getValueAt(row, logColumn).toString();
@@ -346,12 +339,12 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
       else if (ITALIC.equals(style)) {
         font = tableFont.deriveFont(Font.ITALIC);
       }
-      maxAuthorWidth = Math.max(getFontMetrics(font).stringWidth(value + "*"), maxAuthorWidth);
+      maxValueWidth = Math.max(getFontMetrics(font).stringWidth(value + "*"), maxValueWidth);
     }
 
-    int width = Math.min(maxAuthorWidth + VcsLogUiUtil.getHorizontalTextPadding(myStringCellRenderer),
-                         JBUIScale.scale(MAX_DEFAULT_AUTHOR_COLUMN_WIDTH));
-    if (unloaded * 2 <= maxRowsToCheck) myAuthorColumnInitialized = true;
+    int width = Math.min(maxValueWidth + VcsLogUiUtil.getHorizontalTextPadding(myStringCellRenderer),
+                         JBUIScale.scale(MAX_DEFAULT_DYNAMIC_COLUMN_WIDTH));
+    if (unloaded * 2 <= maxRowsToCheck) myInitializedColumns.add(logColumn);
     return width;
   }
 
