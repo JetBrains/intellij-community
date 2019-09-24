@@ -539,7 +539,7 @@ public class EditorWindow {
         if (selectEditor) {
           setSelectedEditor(editor, focusEditor);
         }
-        myOwner.updateFileIcon(file);
+        myOwner.updateFileIconImmediately(file);
         myOwner.updateFileColor(file);
       }
       myOwner.setCurrentWindow(this, false);

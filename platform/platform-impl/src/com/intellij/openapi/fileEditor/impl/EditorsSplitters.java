@@ -355,7 +355,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     updateFileIconLater(file);
   }
 
-  private void updateFileIconImmediately(final VirtualFile file) {
+  void updateFileIconImmediately(final VirtualFile file) {
     final Collection<EditorWindow> windows = findWindows(file);
     for (EditorWindow window : windows) {
       window.updateFileIcon(file);
