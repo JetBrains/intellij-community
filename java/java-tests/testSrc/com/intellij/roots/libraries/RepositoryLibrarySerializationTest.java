@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.roots.libraries;
 
+import com.intellij.configurationStore.StoreReloadManager;
 import com.intellij.jarRepository.RepositoryLibraryType;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
@@ -52,6 +53,7 @@ public class RepositoryLibrarySerializationTest extends ModuleRootManagerTestCas
 
   @NotNull
   private RepositoryLibraryProperties loadLibrary(String name) throws JDOMException, IOException {
+    LibraryTablesRegistrar.getInstance().getLibraryTable(myProject);
     String libraryPath = "jps/model-serialization/testData/repositoryLibraries/.idea/libraries/" + name + ".xml";
     File librarySource = PathManagerEx.findFileUnderCommunityHome(libraryPath);
 
@@ -59,6 +61,7 @@ public class RepositoryLibrarySerializationTest extends ModuleRootManagerTestCas
       VirtualFile librariesVirtualFile = VfsUtil.createDirectoryIfMissing(myProject.getBaseDir(), ".idea/libraries");
       VfsUtil.copy(this, LocalFileSystem.getInstance().refreshAndFindFileByIoFile(librarySource), librariesVirtualFile);
     });
+    StoreReloadManager.getInstance().flushChangedProjectFileAlarm();
 
     LibraryTable projectLibraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject);
     LibraryEx library = (LibraryEx)projectLibraryTable.getLibraryByName(name);
