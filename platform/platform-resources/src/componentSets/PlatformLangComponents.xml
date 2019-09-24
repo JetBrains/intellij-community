@@ -2,13 +2,6 @@
              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
              xsi:schemaLocation="http://www.w3.org/2001/XInclude
    http://www.w3.org/2001/XInclude.xsd">
-  <project-components>
-    <component>
-      <implementation-class>com.intellij.profile.codeInspection.ProjectInspectionProfileManager</implementation-class>
-      <loadForDefaultProject/>
-    </component>
-  </project-components>
-
   <xi:include href="/componentSets/Platform.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/componentSets/UICore.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/componentSets/Editor.xml" xpointer="xpointer(/idea-plugin/*)"/>
