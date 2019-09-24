@@ -27,9 +27,11 @@ import com.intellij.util.SmartList
 import com.intellij.util.UriUtil
 import com.intellij.util.Url
 import com.intellij.util.containers.isNullOrEmpty
+import com.intellij.util.io.readChars
 import org.jetbrains.debugger.sourcemap.Base64VLQ.CharIterator
 import org.jetbrains.io.JsonReaderEx
 import java.io.IOException
+import java.nio.file.Path
 import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.properties.Delegates.notNull
@@ -54,14 +56,27 @@ val MAPPING_COMPARATOR_BY_GENERATED_POSITION: Comparator<MappingEntry> = Compara
 
 internal const val UNMAPPED = -1
 
+fun decodeSourceMapFromFile(file: Path,
+                            trimFileScheme: Boolean,
+                            baseUrl: Url?,
+                            baseUrlIsFile: Boolean): SourceMap? {
+  val sourceMapData = file.readChars()
+  val data = parseMapSafely(sourceMapData, baseUrl) ?: return null
+  return FileBackedSourceMap(file, data, SourceResolver(data.sources, trimFileScheme, baseUrl, baseUrlIsFile))
+}
+
 fun decodeSourceMapSafely(sourceMapData: CharSequence,
                           trimFileScheme: Boolean,
                           baseUrl: Url?,
                           baseUrlIsFile: Boolean): SourceMap? {
+  val data = parseMapSafely(sourceMapData, baseUrl) ?: return null
+  return OneLevelSourceMap(data, SourceResolver(data.sources, trimFileScheme, baseUrl, baseUrlIsFile))
+}
+
+private fun parseMapSafely(sourceMapData: CharSequence, baseUrl: Url?): SourceMapDataImpl? {
   try {
-    return decodeSourceMap(sourceMapData) { sourceUrls ->
-      SourceResolver(sourceUrls, trimFileScheme, baseUrl, baseUrlIsFile)
-    }
+    return parseMap(sourceMapData)
+
   }
   catch (e: JsonParseException) {
     logger<SourceMap>().warn("Cannot decode sourcemap $baseUrl", e)
@@ -76,14 +91,11 @@ fun decodeSourceMapSafely(sourceMapData: CharSequence,
 
 // https://docs.google.com/document/d/1U1RGAehQwRypUTovF1KRlpiOFze0b-_2gc6fAH0KY0k/edit?hl=en_US
 fun decodeSourceMap(`in`: CharSequence, sourceResolverFactory: (sourceUrls: List<String>) -> SourceResolver): SourceMap? {
-  if (`in`.isEmpty()) {
-    throw IOException("source map contents cannot be empty")
-  }
+  val data = parseMap(`in`) ?: return null
+  return OneLevelSourceMap(data, sourceResolverFactory(data.sources))
+}
 
-  val reader = JsonReaderEx(`in`)
-  reader.isLenient = true
-  val data = parseMap(reader) ?: return null
-
+internal fun calculateReverseMappings(data: SourceMapData): Array<MappingList?> {
   val reverseMappingsBySourceUrl = arrayOfNulls<MutableList<MappingEntry>?>(data.sources.size)
   for (entry in data.mappings) {
     val sourceIndex = entry.source
@@ -92,7 +104,7 @@ fun decodeSourceMap(`in`: CharSequence, sourceResolverFactory: (sourceUrls: List
       reverseMappings.add(entry)
     }
   }
-  val sourceToEntries = Array<MappingList?>(reverseMappingsBySourceUrl.size) {
+  return Array(reverseMappingsBySourceUrl.size) {
     val entries = reverseMappingsBySourceUrl[it]
     if (entries == null) {
       null
@@ -102,11 +114,19 @@ fun decodeSourceMap(`in`: CharSequence, sourceResolverFactory: (sourceUrls: List
       SourceMappingList(entries)
     }
   }
-
-  return OneLevelSourceMap(data, sourceToEntries, sourceResolverFactory(data.sources))
 }
 
-private fun parseMap(reader: JsonReaderEx): SourceMapData? {
+internal fun parseMap(contents: CharSequence): SourceMapDataImpl? {
+  if (contents.isEmpty()) {
+    throw IOException("source map contents cannot be empty")
+  }
+
+  val reader = JsonReaderEx(contents)
+  reader.isLenient = true
+  return parseMap(reader)
+}
+
+private fun parseMap(reader: JsonReaderEx): SourceMapDataImpl? {
   reader.beginObject()
   var sourceRoot: String? = null
   var sourcesReader: JsonReaderEx? = null
