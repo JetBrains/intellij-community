@@ -584,9 +584,11 @@ pctversion
 perf
 permalink
 petersburg
+pgrep
 pipelined
 pipenv
 pipfile
+pkill
 plaintext
 playlist
 playlists
