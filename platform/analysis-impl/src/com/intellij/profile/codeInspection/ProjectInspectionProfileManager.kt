@@ -26,7 +26,6 @@ import com.intellij.util.xmlb.annotations.OptionTag
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.concurrency.*
-import java.util.*
 import java.util.function.Function
 
 private const val VERSION = "1.0"
@@ -68,7 +67,7 @@ class ProjectInspectionProfileManager(val project: Project) : BaseInspectionProf
     override fun isSchemeFile(name: CharSequence) = !StringUtil.equals(name, "profiles_settings.xml")
 
     override fun isSchemeDefault(scheme: InspectionProfileImpl, digest: ByteArray): Boolean {
-      return scheme.name == PROJECT_DEFAULT_PROFILE_NAME && Arrays.equals(digest, defaultSchemeDigest)
+      return scheme.name == PROJECT_DEFAULT_PROFILE_NAME && digest.contentEquals(defaultSchemeDigest)
     }
 
     override fun onSchemeDeleted(scheme: InspectionProfileImpl) {
