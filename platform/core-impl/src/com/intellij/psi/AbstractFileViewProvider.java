@@ -80,7 +80,7 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
     }
   }
 
-  final boolean shouldCreatePsi() {
+  protected boolean shouldCreatePsi() {
     if (isIgnored()) return false;
 
     VirtualFile vFile = getVirtualFile();

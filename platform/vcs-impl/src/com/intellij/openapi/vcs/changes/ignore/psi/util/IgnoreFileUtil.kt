@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.changes.IgnoredFileContentProvider
 import com.intellij.openapi.vcs.changes.IgnoredFileDescriptor
 import com.intellij.openapi.vcs.changes.ignore.lang.IgnoreFileConstants
@@ -36,8 +37,8 @@ fun addNewElementsToIgnoreBlock(project: Project,
   }
 }
 
-fun addNewElements(project: Project, ignoreFile: VirtualFile, newEntries: List<IgnoredFileDescriptor>) {
-  changeIgnoreFile(project, ignoreFile) { provider ->
+fun addNewElements(project: Project, ignoreFile: VirtualFile, newEntries: List<IgnoredFileDescriptor>, vcs: AbstractVcs? = null) {
+  changeIgnoreFile(project, ignoreFile, vcs) { provider ->
     val document = FileDocumentManager.getInstance().getDocument(ignoreFile) ?: return@changeIgnoreFile
     if (document.textLength != 0 && document.charsSequence.last() != '\n') {
       document.insertString(document.textLength, IgnoreFileConstants.NEWLINE)
@@ -53,9 +54,10 @@ fun addNewElements(project: Project, ignoreFile: VirtualFile, newEntries: List<I
 
 private fun changeIgnoreFile(project: Project,
                              ignoreFile: VirtualFile,
+                             vcs: AbstractVcs? = null,
                              action: (IgnoredFileContentProvider) -> Unit) {
-  val vcs = VcsUtil.getVcsFor(project, ignoreFile) ?: return
-  val ignoredFileContentProvider = VcsImplUtil.findIgnoredFileContentProvider(vcs) ?: return
+  val determinedVcs = (vcs ?: VcsUtil.getVcsFor(project, ignoreFile)) ?: return
+  val ignoredFileContentProvider = VcsImplUtil.findIgnoredFileContentProvider(determinedVcs) ?: return
   invokeAndWaitIfNeeded {
     runUndoTransparentWriteAction {
       if (PsiManager.getInstance(project).findFile(ignoreFile)?.language !is IgnoreLanguage) return@runUndoTransparentWriteAction

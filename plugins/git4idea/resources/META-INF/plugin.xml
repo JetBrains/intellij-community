@@ -67,6 +67,7 @@
       <reference ref="CheckinFiles"/>
       <action id="Git.Add" class="com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionWithIgnoredFilesConfirmationAction"
               text="Add" icon="AllIcons.General.Add" use-shortcut-of="ChangesView.AddUnversioned"/>
+      <action id="Git.OpenExcludeFile" class="git4idea.ignore.actions.OpenGitExcludeAction"/>
       <separator/>
       <reference ref="Annotate"/>
       <reference ref="Show.Current.Revision"/>
@@ -269,6 +270,18 @@
     <lang.braceMatcher language="GitIgnore" implementationClass="com.intellij.openapi.vcs.changes.ignore.lang.IgnoreBraceMatcher"/>
     <lang.commenter language="GitIgnore" implementationClass="com.intellij.openapi.vcs.changes.ignore.lang.IgnoreCommenter"/>
      <!--END Git ignore lang-->
+
+    <!-- Git exclude lang -->
+    <fileType language="GitExclude" fileNames="exclude" fieldName="INSTANCE" name="GitExclude file" implementationClass="git4idea.ignore.lang.GitExcludeFileType"/>
+    <lang.fileViewProviderFactory language="GitExclude"
+                                  implementationClass="git4idea.ignore.lang.GitExcludeViewProviderFactory"/>
+    <lang.parserDefinition language="GitExclude"
+                           implementationClass="com.intellij.openapi.vcs.changes.ignore.lang.IgnoreParserDefinition"/>
+    <codeInsight.lineMarkerProvider language="GitExclude"
+                                    implementationClass="com.intellij.openapi.vcs.changes.ignore.codeInsight.IgnoreDirectoryMarkerProvider"/>
+    <lang.braceMatcher language="GitExclude" implementationClass="com.intellij.openapi.vcs.changes.ignore.lang.IgnoreBraceMatcher"/>
+    <lang.commenter language="GitExclude" implementationClass="com.intellij.openapi.vcs.changes.ignore.lang.IgnoreCommenter"/>
+     <!--END Git exclude lang-->
 
     <postStartupActivity implementation="git4idea.conflicts.GitConflictsToolWindowManager$Starter"/>
     <backgroundPostStartupActivity implementation="git4idea.config.GitSetupProjectConfig" />

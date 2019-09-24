@@ -60,15 +60,16 @@ class CreateNewIgnoreFileAction(private val ignoreFileName: String, private val 
                                0, 1, getQuestionIcon())
 }
 
-private fun writeIgnoreFileEntries(project: Project,
-                                   ignoreFile: VirtualFile,
-                                   ignored: List<IgnoredFileBean>) {
-  addNewElements(project, ignoreFile, ignored)
+fun writeIgnoreFileEntries(project: Project,
+                           ignoreFile: VirtualFile,
+                           ignored: List<IgnoredFileBean>,
+                           vcs: AbstractVcs? = null) {
+  addNewElements(project, ignoreFile, ignored, vcs)
   ChangeListManagerImpl.getInstanceImpl(project).scheduleUnversionedUpdate()
   OpenFileDescriptor(project, ignoreFile).navigate(true)
 }
 
-private fun getIgnoredFileBeans(e: AnActionEvent, vcs: AbstractVcs): List<IgnoredFileBean> {
+fun getIgnoredFileBeans(e: AnActionEvent, vcs: AbstractVcs): List<IgnoredFileBean> {
   val project = e.getRequiredData(CommonDataKeys.PROJECT)
   val selectedFiles = getSelectedFiles(e)
 
