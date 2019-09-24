@@ -44,6 +44,8 @@ open class BaseExtendableList<C, T>(private val extPoint: ExtensionPointName<T>)
 
   fun removeConfig(config: C) = resolvedInstances.remove(config)
 
+  fun unresolvedNames(): List<String> = unresolvedInstances.mapNotNull { it.name }.toList()
+
   override fun getState(): ListState = ListState().also { it ->
     it.configs.addAll(resolvedInstances.map { toBaseState(it) })
     it.configs.addAll(unresolvedInstances)
