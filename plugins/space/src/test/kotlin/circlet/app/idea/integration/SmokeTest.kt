@@ -9,6 +9,7 @@ import circlet.plugins.pipelines.ui.*
 import circlet.plugins.pipelines.viewmodel.*
 import com.intellij.openapi.components.*
 import com.intellij.testFramework.fixtures.*
+import com.intellij.testFramework.fixtures.impl.*
 import com.intellij.util.*
 import libraries.coroutines.extra.*
 import kotlin.test.*
@@ -28,6 +29,17 @@ class SmokeTest : BasePlatformTestCase() {
     override fun setUp() {
         testLifetimeImpl = Lifetime.Eternal.nested()
         super.setUp()
+        myFixture.tearDown()
+
+        val factory = IdeaTestFixtureFactory.getFixtureFactory()
+        val fixtureBuilder = factory.createLightFixtureBuilder(projectDescriptor)
+        val fixture = fixtureBuilder.fixture
+
+        val tempDirFixture = TempDirTestFixtureImpl()
+        myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixture, tempDirFixture)
+
+        myFixture.testDataPath = testDataPath
+        myFixture.setUp()
     }
 
     override fun tearDown() {
@@ -77,8 +89,6 @@ class SmokeTest : BasePlatformTestCase() {
         assertNull(script, "script should be null without dsl file")
         assertFalse(viewModel.modelBuildIsRunning.value, "model build should not be started until view is shown")
 
-        val projectFileFolderName = PathUtil.getFileName(project.basePath!!)
-        myFixture.copyFileToProject(DefaultDslFileName, "../$projectFileFolderName/$DefaultDslFileName")
 
         val newScript = viewModel.script.value
         assertNotSame(script, newScript, "new instance of script should be created")

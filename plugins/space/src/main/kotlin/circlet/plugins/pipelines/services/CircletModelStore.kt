@@ -9,11 +9,13 @@ import com.intellij.openapi.project.*
 import com.intellij.openapi.vfs.*
 import libraries.klogging.*
 
+@Service
 class CircletModelStore(val project: Project): LifetimedComponent by SimpleLifetimedComponent(), KLogging() {
     val viewModel = ScriptWindowViewModel(lifetime, project)
     init {
-        val listener = ServiceManager.getService(project, CircletAutomationListener::class.java)
+        val listener = CircletAutomationListener(project)
         listener.listen(viewModel)
+        lifetime.add { listener.disposeComponent() }
 
         fun refreshScript() {
             ApplicationManager.getApplication().runReadAction {
