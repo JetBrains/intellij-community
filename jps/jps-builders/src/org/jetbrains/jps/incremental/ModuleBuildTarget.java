@@ -202,7 +202,7 @@ public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRoot
       if (logBuilder != null) {
         logBuilder.append(path).append("\n");
       }
-      fingerprint += FileUtil.pathHashCode(path);
+      fingerprint += pathHashCode(path);
     }
     
     final LanguageLevel level = JpsJavaExtensionService.getInstance().getLanguageLevel(module);
@@ -260,8 +260,13 @@ public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRoot
       if (logBuilder != null) {
         logBuilder.append(path).append("\n");
       }
-      fingerprint = 31 * fingerprint + FileUtil.pathHashCode(path);
+      fingerprint = 31 * fingerprint + pathHashCode(path);
     }
     return fingerprint;
+  }
+
+  private static int pathHashCode(@NotNull String path) {
+    // On case insensitive OS hash calculated from path converted to lower case
+    return ProjectStamps.PORTABLE_CACHES ? path.hashCode() : FileUtil.pathHashCode(path);
   }
 }
