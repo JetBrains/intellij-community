@@ -43,6 +43,10 @@
     <applicationService serviceInterface="com.intellij.openapi.project.ProjectManager"
                         serviceImplementation="com.intellij.openapi.project.impl.ProjectManagerImpl"/>
 
+    <!-- FileTypeManagerImpl wants PropertiesComponent -->
+    <applicationService serviceInterface="com.intellij.ide.util.PropertiesComponent"
+                        serviceImplementation="com.intellij.ide.util.AppPropertiesComponentImpl" preload="true"/>
+
     <applicationService serviceInterface="com.intellij.openapi.fileTypes.FileTypeManager"
                         serviceImplementation="com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl" preload="await"/>
 
@@ -87,8 +91,6 @@
                         serviceImplementation="com.intellij.openapi.wm.impl.PlatformFrameTitleBuilder"/>
 
     <applicationService serviceImplementation="com.intellij.ide.GeneralSettings"/>
-    <applicationService serviceInterface="com.intellij.ide.util.PropertiesComponent"
-                        serviceImplementation="com.intellij.ide.util.AppPropertiesComponentImpl"/>
     <projectService serviceInterface="com.intellij.ide.util.PropertiesComponent"
                     serviceImplementation="com.intellij.ide.util.ProjectPropertiesComponentImpl"/>
 
