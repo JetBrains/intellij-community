@@ -135,7 +135,8 @@
     <extensionPoint name="referenceInjector" interface="com.intellij.psi.injection.ReferenceInjector"/>
 
     <extensionPoint name="annotator"
-                    beanClass="com.intellij.lang.LanguageExtensionPoint">
+                    beanClass="com.intellij.lang.LanguageExtensionPoint"
+                    dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.lang.annotation.Annotator"/>
     </extensionPoint>
 

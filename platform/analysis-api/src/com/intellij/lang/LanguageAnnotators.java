@@ -20,11 +20,14 @@
 package com.intellij.lang;
 
 import com.intellij.lang.annotation.Annotator;
+import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.util.KeyedLazyInstance;
 import org.jetbrains.annotations.NonNls;
 
 public class LanguageAnnotators extends LanguageExtension<Annotator> {
+  @NonNls public static final ExtensionPointName<KeyedLazyInstance<Annotator>> EP_NAME = ExtensionPointName.create("com.intellij.annotator");
+
   public static final LanguageAnnotators INSTANCE = new LanguageAnnotators();
-  @NonNls public static final String EP_NAME = "com.intellij.annotator";
 
   private LanguageAnnotators() {
     super(EP_NAME);

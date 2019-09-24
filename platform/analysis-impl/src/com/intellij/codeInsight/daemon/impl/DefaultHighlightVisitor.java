@@ -7,12 +7,10 @@ import com.intellij.codeInsight.highlighting.HighlightErrorFilter;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.Annotator;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NotNullLazyKey;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.FileViewProvider;
@@ -27,7 +25,6 @@ import java.util.List;
  * @author yole
  */
 final class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
-  private static final NotNullLazyKey<CachedAnnotators, Project> CACHED_ANNOTATORS_KEY = ServiceManager.createLazyKey(CachedAnnotators.class);
 
   private AnnotationHolderImpl myAnnotationHolder;
 
@@ -102,7 +99,7 @@ final class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
   }
 
   private void runAnnotators(PsiElement element) {
-    List<Annotator> annotators = CACHED_ANNOTATORS_KEY.getValue(myProject).get(element.getLanguage().getID());
+    List<Annotator> annotators = CachedAnnotators.CACHED_ANNOTATORS_KEY.getValue(myProject).get(element.getLanguage().getID());
     if (annotators.isEmpty()) {
       return;
     }

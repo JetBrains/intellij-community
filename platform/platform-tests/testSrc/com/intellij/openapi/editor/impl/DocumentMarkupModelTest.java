@@ -17,7 +17,6 @@ import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.psi.PsiElement;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
@@ -33,8 +32,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class DocumentMarkupModelTest extends BasePlatformTestCase {
   public void testInfoTestAttributes() {
     LanguageExtensionPoint<Annotator> extension = new LanguageExtensionPoint<>("TEXT", new TestAnnotator());
-    ExtensionPointName.<LanguageExtensionPoint<Annotator>>create(LanguageAnnotators.EP_NAME)
-      .getPoint(null).registerExtension(extension, myFixture.getTestRootDisposable());
+    LanguageAnnotators.EP_NAME.getPoint(null).registerExtension(extension, myFixture.getTestRootDisposable());
     myFixture.configureByText(PlainTextFileType.INSTANCE, "foo");
     EditorColorsScheme scheme = new EditorColorsSchemeImpl(new DefaultColorsScheme()){{initFonts();}};
     scheme.setAttributes(HighlighterColors.TEXT, new TextAttributes(Color.black, Color.white, null, null, Font.PLAIN));
