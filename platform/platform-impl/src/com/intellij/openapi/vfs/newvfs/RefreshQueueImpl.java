@@ -26,6 +26,7 @@ import org.jetbrains.ide.PooledThreadExecutor;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Executor;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -97,15 +98,20 @@ public class RefreshQueueImpl extends RefreshQueue implements Disposable {
   }
 
   private void scheduleAsynchronousPreprocessing(@NotNull RefreshSessionImpl session, @Nullable TransactionId transaction) {
-    myEventProcessingQueue.execute(() -> {
-      startRefreshActivity();
-      try (AccessToken ignored = HeavyProcessLatch.INSTANCE.processStarted("Processing VFS events. " + session)) {
-        processAndFireEvents(session, transaction);
-      }
-      finally {
-        finishRefreshActivity();
-      }
-    });
+    try {
+      myEventProcessingQueue.execute(() -> {
+        startRefreshActivity();
+        try (AccessToken ignored = HeavyProcessLatch.INSTANCE.processStarted("Processing VFS events. " + session)) {
+          processAndFireEvents(session, transaction);
+        }
+        finally {
+          finishRefreshActivity();
+        }
+      });
+    }
+    catch (RejectedExecutionException e) {
+      LOG.debug(e);
+    }
   }
 
   private synchronized void startRefreshActivity() {
