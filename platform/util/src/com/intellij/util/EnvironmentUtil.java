@@ -139,10 +139,12 @@ public final class EnvironmentUtil {
    *
    * @see #getEnvironmentMap()
    */
+  @NotNull
   public static String[] getEnvironment() {
     return flattenEnvironment(getEnvironmentMap());
   }
 
+  @NotNull
   public static String[] flattenEnvironment(@NotNull Map<String, String> environment) {
     String[] array = new String[environment.size()];
     int i = 0;
@@ -178,6 +180,7 @@ public final class EnvironmentUtil {
   private static final String DISABLE_OMZ_AUTO_UPDATE = "DISABLE_AUTO_UPDATE";
   private static final String INTELLIJ_ENVIRONMENT_READER = "INTELLIJ_ENVIRONMENT_READER";
 
+  @NotNull
   private static Map<String, String> getShellEnv() throws Exception {
     return new ShellEnvReader().readShellEnv();
   }
