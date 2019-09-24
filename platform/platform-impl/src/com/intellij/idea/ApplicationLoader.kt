@@ -524,7 +524,7 @@ open class IdeStarter : ApplicationStarter {
 
       app.messageBus.syncPublisher(AppLifecycleListener.TOPIC).appStarting(project)
 
-      if (project == null && !JetBrainsProtocolHandler.appStartedWithCommand()) {
+      if (project == null && RecentProjectsManager.getInstance().willReopenProjectOnStart() && !JetBrainsProtocolHandler.appStartedWithCommand()) {
         RecentProjectsManager.getInstance().reopenLastProjectsOnStart()
       }
 
