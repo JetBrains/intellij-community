@@ -20,7 +20,7 @@
       <library name="intellij-markdown" type="repository">
         <properties include-transitive-deps="false" maven-id="org.jetbrains:markdown:0.1.33" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/markdown/0.1.31/markdown-0.1.33.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/markdown/0.1.33/markdown-0.1.33.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
