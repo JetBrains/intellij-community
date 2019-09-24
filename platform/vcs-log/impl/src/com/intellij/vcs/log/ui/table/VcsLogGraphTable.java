@@ -42,7 +42,6 @@ import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.VcsLogColorManagerImpl;
-import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import com.intellij.vcs.log.ui.render.GraphCommitCell;
 import com.intellij.vcs.log.ui.render.GraphCommitCellRenderer;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
@@ -489,9 +488,6 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
       }
       return sb.toString();
     }
-    else if (VcsLogInternalDataKeys.LOG_UI_PROPERTIES.is(dataId)) {
-      return myProperties;
-    }
     else if (VcsLogDataKeys.VCS_LOG_PROVIDERS.is(dataId)) {
       Map<VirtualFile, VcsLogProvider> providers = myLogData.getLogProviders();
       if (providers.size() == 1) {
@@ -724,7 +720,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
       Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
       component.setBackground(isSelected
-                              ? table.hasFocus() ? UIUtil.getListSelectionBackground(true) : UIUtil.getListUnfocusedSelectionBackground()
+                              ? table.hasFocus() ? UIUtil.getListSelectionBackground(true) : UIUtil.getListSelectionBackground(false)
                               : UIUtil.getListBackground());
       return component;
     }
