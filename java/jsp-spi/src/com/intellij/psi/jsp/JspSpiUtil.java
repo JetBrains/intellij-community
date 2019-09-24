@@ -1,13 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.jsp;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEnumerator;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -40,9 +38,7 @@ public abstract class JspSpiUtil {
 
   @Nullable
   private static JspSpiUtil getJspSpiUtil() {
-    Ref<JspSpiUtil> result = Ref.create();
-    ProgressManager.getInstance().executeNonCancelableSection(() -> result.set(ServiceManager.getService(JspSpiUtil.class)));
-    return result.get();
+    return ApplicationManager.getApplication().getService(JspSpiUtil.class);
   }
 
   public static int escapeCharsInJspContext(JspFile file, int offset, String toEscape) throws IncorrectOperationException {
