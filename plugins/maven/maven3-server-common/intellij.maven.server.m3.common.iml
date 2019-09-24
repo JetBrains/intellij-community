@@ -64,7 +64,22 @@
     </orderEntry>
     <orderEntry type="module-library">
       <library name="org.apache.maven.archetype:archetype-common:2.2" type="repository">
-        <properties maven-id="org.apache.maven.archetype:archetype-common:2.2" />
+        <properties maven-id="org.apache.maven.archetype:archetype-common:2.2">
+          <exclude>
+            <dependency maven-id="net.sourceforge.jchardet:jchardet" />
+            <dependency maven-id="org.codehaus.plexus:plexus-component-annotations" />
+            <dependency maven-id="dom4j:dom4j" />
+            <dependency maven-id="jdom:jdom" />
+            <dependency maven-id="org.apache.maven:maven-model" />
+            <dependency maven-id="org.apache.maven:maven-project" />
+            <dependency maven-id="org.apache.maven.shared:maven-invoker" />
+            <dependency maven-id="org.codehaus.plexus:plexus-container-default" />
+            <dependency maven-id="org.codehaus.plexus:plexus-utils" />
+            <dependency maven-id="commons-io:commons-io" />
+            <dependency maven-id="org.codehaus.plexus:plexus-velocity" />
+            <dependency maven-id="org.apache.velocity:velocity" />
+          </exclude>
+        </properties>
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/archetype/archetype-common/2.2/archetype-common-2.2.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/archetype/archetype-catalog/2.2/archetype-catalog-2.2.jar!/" />
