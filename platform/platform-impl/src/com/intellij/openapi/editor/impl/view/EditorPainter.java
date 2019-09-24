@@ -77,10 +77,12 @@ public class EditorPainter implements TextDrawingCallback {
     int nominalLineHeight = myView.getNominalLineHeight();
     int topOverhang = myView.getTopOverhang();
     for (EditorImpl.CaretRectangle location : locations) {
-      int x = location.myPoint.x;
-      int y = location.myPoint.y - topOverhang;
-      int width = Math.max(location.myWidth, CARET_DIRECTION_MARK_SIZE);
-      editor.getContentComponent().repaintEditorComponentExact(x - width, y, width * 2, nominalLineHeight);
+      float x = (float)location.myPoint.getX();
+      int y = (int)location.myPoint.getY() - topOverhang;
+      float width = Math.max(location.myWidth, CARET_DIRECTION_MARK_SIZE);
+      int xStart = (int)Math.floor(x - width);
+      int xEnd = (int)Math.ceil(x + width);
+      editor.getContentComponent().repaintEditorComponentExact(xStart, y, xEnd - xStart, nominalLineHeight);
     }
   }
 
@@ -1175,8 +1177,8 @@ public class EditorPainter implements TextDrawingCallback {
       if (caretColor == null) caretColor = new JBColor(CARET_DARK, CARET_LIGHT);
       int minX = myView.getInsets().left;
       for (EditorImpl.CaretRectangle location : locations) {
-        float x = location.myPoint.x;
-        int y = location.myPoint.y - topOverhang + myYShift;
+        float x = (float)location.myPoint.getX();
+        int y = (int)location.myPoint.getY() - topOverhang + myYShift;
         Caret caret = location.myCaret;
         CaretVisualAttributes attr = caret == null ? CaretVisualAttributes.DEFAULT : caret.getVisualAttributes();
         g.setColor(attr.getColor() != null ? attr.getColor() : caretColor);
@@ -1198,7 +1200,7 @@ public class EditorPainter implements TextDrawingCallback {
           }
         }
         else {
-          int width = location.myWidth;
+          float width = location.myWidth;
           float startX = Math.max(minX, isRtl ? x - width : x);
           g.fill(new Rectangle2D.Float(startX, y, width, nominalLineHeight));
           if (myDocument.getTextLength() > 0 && caret != null) {

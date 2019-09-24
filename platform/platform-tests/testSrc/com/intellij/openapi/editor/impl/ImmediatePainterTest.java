@@ -215,7 +215,7 @@ public class ImmediatePainterTest extends AbstractEditorTest {
 
     KeyboardFocusManager.setCurrentKeyboardFocusManager(new MockFocusManager(editorComponent));
 
-    BufferedImage image = ImageUtil.createImage(size.width, size.height, BufferedImage.TYPE_INT_ARGB);
+    BufferedImage image = ImageUtil.createImage(size.width, size.height, BufferedImage.TYPE_INT_RGB);
     Graphics2D graphics = image.createGraphics();
 
     BufferedImage immediateImage;
