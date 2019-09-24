@@ -717,5 +717,12 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
       }
       return super.getToSelectOnRemoveOf(info);
     }
+
+    @Override
+    public void revalidateAndRepaint(boolean layoutNow) {
+      //noinspection ConstantConditions - called from super constructor
+      if (myWindow != null && myWindow.getOwner().isInsideChange()) return;
+      super.revalidateAndRepaint(layoutNow);
+    }
   }
 }

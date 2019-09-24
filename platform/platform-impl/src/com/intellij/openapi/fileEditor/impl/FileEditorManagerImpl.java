@@ -62,6 +62,7 @@ import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.docking.DockContainer;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.docking.impl.DockManagerImpl;
+import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
@@ -816,7 +817,11 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
       builders = null;
     }
 
-    ApplicationManager.getApplication().invokeAndWait(() -> openFileImpl4Edt(window, file, entry, options, compositeRef, newProviders, builders));
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      runBulkTabChange(window.getOwner(), splitters -> {
+        openFileImpl4Edt(window, file, entry, options, compositeRef, newProviders, builders);
+      });
+    });
 
     EditorWithProviderComposite composite = compositeRef.get();
     return Pair.create(composite == null ? EMPTY_EDITOR_ARRAY : composite.getEditors(),
@@ -1655,12 +1660,28 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     }
 
     for (EditorsSplitters each : target) {
-      each.myInsideChange++;
+      runBulkTabChange(each, change);
+    }
+  }
+
+  void runBulkTabChange(@NotNull EditorsSplitters splitters, @NotNull FileEditorManagerChange change) {
+    if (!ApplicationManager.getApplication().isDispatchThread()) {
+      change.run(splitters);
+    }
+    else {
+      splitters.myInsideChange++;
       try {
-        change.run(each);
+        change.run(splitters);
       }
       finally {
-        each.myInsideChange--;
+        splitters.myInsideChange--;
+
+        if (!splitters.isInsideChange()) {
+          splitters.validate();
+          for (EditorWindow window : splitters.getWindows()) {
+            ((JBTabsImpl)window.getTabbedPane().getTabs()).revalidateAndRepaint();
+          }
+        }
       }
     }
   }
@@ -1933,10 +1954,12 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
   @Override
   public void closeAllFiles() {
-    final VirtualFile[] openFiles = getSplitters().getOpenFiles();
-    for (VirtualFile openFile : openFiles) {
-      closeFile(openFile);
-    }
+    runBulkTabChange(getSplitters(), splitters -> {
+      final VirtualFile[] openFiles = splitters.getOpenFiles();
+      for (VirtualFile openFile : openFiles) {
+        closeFile(openFile);
+      }
+    });
   }
 
   @Override

@@ -104,12 +104,14 @@ public class EditorWindow {
   }
 
   public void closeAllExcept(final VirtualFile selectedFile) {
-    final VirtualFile[] files = getFiles();
-    for (final VirtualFile file : files) {
-      if (!Comparing.equal(file, selectedFile) && !isFilePinned(file)) {
-        closeFile(file);
+    getManager().runBulkTabChange(myOwner, splitters -> {
+      final VirtualFile[] files = getFiles();
+      for (final VirtualFile file : files) {
+        if (!Comparing.equal(file, selectedFile) && !isFilePinned(file)) {
+          closeFile(file);
+        }
       }
-    }
+    });
   }
 
   void dispose() {
@@ -157,7 +159,7 @@ public class EditorWindow {
 
   public void closeFile(@NotNull final VirtualFile file, final boolean disposeIfNeeded, final boolean transferFocus) {
     final FileEditorManagerImpl editorManager = getManager();
-    editorManager.runChange(splitters -> {
+    editorManager.runBulkTabChange(myOwner, splitters -> {
       final List<EditorWithProviderComposite> editors = splitters.findEditorComposites(file);
       if (editors.isEmpty()) return;
       try {
@@ -216,7 +218,7 @@ public class EditorWindow {
 
         splitters.afterFileClosed(file);
       }
-    }, myOwner);
+    });
   }
 
   void removeFromSplitter() {
@@ -531,7 +533,8 @@ public class EditorWindow {
 
         final VirtualFile file = editor.getFile();
         final Icon template = AllIcons.FileTypes.Text;
-        myTabbedPane.insertTab(file, EmptyIcon.create(template.getIconWidth(), template.getIconHeight()), new TComp(this, editor), null, indexToInsert, editor);
+        EmptyIcon emptyIcon = EmptyIcon.create(template.getIconWidth(), template.getIconHeight());
+        myTabbedPane.insertTab(file, emptyIcon, new TComp(this, editor), null, indexToInsert, editor);
         trimToSize(UISettings.getInstance().getEditorTabLimit(), file, false);
         if (selectEditor) {
           setSelectedEditor(editor, focusEditor);
@@ -541,7 +544,7 @@ public class EditorWindow {
       }
       myOwner.setCurrentWindow(this, false);
     }
-    myOwner.validate();
+    if (!myOwner.isInsideChange()) myOwner.validate();
   }
 
   protected void onBeforeSetEditor(VirtualFile file) {

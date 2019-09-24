@@ -1213,7 +1213,7 @@ public class JBTabsImpl extends JComponent
     revalidateAndRepaint(true);
   }
 
-  void revalidateAndRepaint(final boolean layoutNow) {
+  protected void revalidateAndRepaint(final boolean layoutNow) {
     if (myVisibleInfos.isEmpty()) {
       setOpaque(false);
       Component nonOpaque = UIUtil.findUltimateParent(this);
