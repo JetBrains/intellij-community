@@ -262,3 +262,20 @@ class ParenthesizedThis {
     <error descr="Variable 'x' might already have been assigned to">this.x</error> = 6;
   }
 }
+
+class NestedSwitch {
+  public static void main(String[] args) {
+    for(int i = 0; i < 8; i++) {
+      switch (i) {
+        case 0:
+          break;
+        default:
+          switch (i+1) {
+            default:
+              final int var;
+              <error descr="Variable 'var' might not have been initialized">var</error>++;
+          }
+      }
+    }
+  }
+}
