@@ -3,7 +3,8 @@ package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.ide.impl.ProjectUtil;
-import com.intellij.internal.statistic.DelayedIdeActivity;
+import com.intellij.internal.statistic.eventLog.FeatureUsageData;
+import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
@@ -23,7 +24,7 @@ final class RefreshProgress extends ProgressIndicatorBase {
   }
 
   private final String myMessage;
-  private DelayedIdeActivity myActivity;
+  private long myStartedTime;
 
   private RefreshProgress(@NotNull String message) {
     super(true);
@@ -35,7 +36,7 @@ final class RefreshProgress extends ProgressIndicatorBase {
     super.start();
     updateIndicators(true);
 
-    myActivity = new DelayedIdeActivity("vfs", "refresh").started();
+    myStartedTime = System.currentTimeMillis();
   }
 
   @Override
@@ -43,7 +44,16 @@ final class RefreshProgress extends ProgressIndicatorBase {
     super.stop();
     updateIndicators(false);
 
-    myActivity.finished();
+    long finishedTime = System.currentTimeMillis();
+    long totalTime = finishedTime - myStartedTime;
+    // do not report short refreshes to avoid polluting the event log and increasing its size
+    if (totalTime > 1000) {
+      FUCounterUsageLogger.getInstance().logEvent("vfs",
+                                                  "refreshed",
+                                                  new FeatureUsageData()
+                                                    .addData("start_time_ms", myStartedTime)
+                                                    .addData("finish_time_ms", finishedTime));
+    }
   }
 
   private void updateIndicators(boolean start) {
