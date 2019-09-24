@@ -1124,21 +1124,4 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     VfsUtil.saveText(vFile, "class Foo { void m() { int k = 0; } }")
     assertTrue(stamp == ((FileBasedIndexImpl)FileBasedIndex.instance).getIndexModificationStamp(StubUpdatingIndex.INDEX_ID, project))
   }
-
-  void "test StubIndex getContainingIds filter result by search scope"() {
-    def file = myFixture.addClass("class Foo {}").getContainingFile().getVirtualFile()
-
-    def iterator = StubIndexImpl.getInstance().
-      getContainingIds(JavaStubIndexKeys.CLASS_SHORT_NAMES,
-                       "Foo",
-                       getProject(),
-                       GlobalSearchScope.allScope(getProject()))
-    assertEquals(1, iterator.size())
-    def iterator1 = StubIndexImpl.getInstance().
-      getContainingIds(JavaStubIndexKeys.CLASS_SHORT_NAMES,
-                       "Foo",
-                       getProject(),
-                       GlobalSearchScope.allScope(getProject()).intersectWith(GlobalSearchScope.notScope(GlobalSearchScope.fileScope(getProject(), file))))
-    assertEquals(0, iterator1.size())
-  }
 }
