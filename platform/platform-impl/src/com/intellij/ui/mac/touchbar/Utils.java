@@ -5,6 +5,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.util.ExecUtil;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.impl.LaterInvocator;
@@ -49,29 +50,25 @@ public class Utils {
   }
 
   public static String getAppId() {
-    try {
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
-        return null;
-      }
-    } catch (Throwable e) {
-      LOG.debug(e); // no application
-      return null;
-    }
+    Application app = ApplicationManager.getApplication();
+    if (app == null || app.isUnitTestMode()) return null;
 
-    String appId = null;
-    try (NSAutoreleaseLock lock = new NSAutoreleaseLock()) {
+    String appId;
+    try (@SuppressWarnings("unused") NSAutoreleaseLock lock = new NSAutoreleaseLock()) {
       final ID bundle = Foundation.invoke("NSBundle", "mainBundle");
       final ID dict = Foundation.invoke(bundle, "infoDictionary");
       final ID nsAppID = Foundation.invoke(dict, "objectForKey:", Foundation.nsString("CFBundleIdentifier"));
       appId = Foundation.toStringViaUTF8(nsAppID);
     }
 
-    if (appId == null || appId.isEmpty())
+    if (appId == null || appId.isEmpty()) {
       LOG.error("can't obtain application id from NSBundle.mainBundle");
+    }
 
     return appId;
   }
 
-  static @Nullable
-  ModalityState getCurrentModalityState() { return ApplicationManager.getApplication() != null ? LaterInvocator.getCurrentModalityState() : null; }
+  static @Nullable ModalityState getCurrentModalityState() {
+    return ApplicationManager.getApplication() != null ? LaterInvocator.getCurrentModalityState() : null;
+  }
 }

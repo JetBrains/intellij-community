@@ -514,7 +514,6 @@ public final class StartupUtil {
     subActivity.end();
   }
 
-  @SuppressWarnings("SpellCheckingInspection")
   private static void setupSystemLibraries() {
     Activity subActivity = StartUpMeasurer.startActivity("system libs setup");
 

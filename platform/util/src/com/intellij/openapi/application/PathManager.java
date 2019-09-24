@@ -112,7 +112,7 @@ public class PathManager {
   }
 
   @Nullable
-  public static String getHomePathFor(@NotNull Class aClass) {
+  public static String getHomePathFor(@NotNull Class<?> aClass) {
     String rootPath = getResourceRoot(aClass, "/" + aClass.getName().replace('.', '/') + ".class");
     if (rootPath == null) return null;
 
@@ -354,10 +354,10 @@ public class PathManager {
   // misc stuff
 
   /**
-   * Attempts to detect classpath entry which contains given resource.
+   * Attempts to detect classpath entry containing given resource.
    */
   @Nullable
-  public static String getResourceRoot(@NotNull Class context, @NotNull String path) {
+  public static String getResourceRoot(@NotNull Class<?> context, @NotNull String path) {
     URL url = context.getResource(path);
     if (url == null) {
       url = ClassLoader.getSystemResource(path.substring(1));
@@ -366,7 +366,7 @@ public class PathManager {
   }
 
   /**
-   * Attempts to detect classpath entry which contains given resource.
+   * Attempts to detect classpath entry containing given resource.
    */
   @Nullable
   public static String getResourceRoot(@NotNull ClassLoader cl, @NotNull String resourcePath) {
@@ -514,7 +514,7 @@ public class PathManager {
   }
 
   @Nullable
-  public static String getJarPathForClass(@NotNull Class aClass) {
+  public static String getJarPathForClass(@NotNull Class<?> aClass) {
     String resourceRoot = getResourceRoot(aClass, "/" + aClass.getName().replace('.', '/') + ".class");
     return resourceRoot != null ? new File(resourceRoot).getAbsolutePath() : null;
   }
