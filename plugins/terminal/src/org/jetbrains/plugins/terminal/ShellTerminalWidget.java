@@ -3,7 +3,6 @@ package org.jetbrains.plugins.terminal;
 
 import com.google.common.base.Ascii;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -11,15 +10,15 @@ import com.intellij.terminal.JBTerminalPanel;
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase;
 import com.intellij.terminal.JBTerminalWidget;
 import com.intellij.terminal.TerminalShellCommandHandler;
-import com.jediterm.terminal.ProcessTtyConnector;
-import com.jediterm.terminal.Terminal;
-import com.jediterm.terminal.TtyConnector;
+import com.jediterm.terminal.*;
+import com.jediterm.terminal.model.CharBuffer;
 import com.jediterm.terminal.model.TerminalLine;
 import com.jediterm.terminal.model.TerminalTextBuffer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.terminal.arrangement.TerminalWorkingDirectoryManager;
 
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -55,41 +54,66 @@ public class ShellTerminalWidget extends JBTerminalWidget {
         }
         myPromptUpdateNeeded = false;
       }
-      if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+      if (e.getKeyCode() == KeyEvent.VK_ENTER && (e.getModifiers() & InputEvent.CTRL_MASK) != 0) {
         handleShellCommandBeforeExecution(getTypedShellCommand(), e);
         myPromptUpdateNeeded = true;
         myEscapePressed = false;
       }
     });
+
+    JBTerminalPanel terminalPanel = (JBTerminalPanel)getTerminalPanel();
+    terminalPanel.addPostProcessKeyEventHandler(e -> {
+      String command = getTypedShellCommand();
+      SubstringFinder.FindResult result =
+        TerminalShellCommandHandler.Companion.isAvailable(project, command) ? searchMatchedCommand(command, true) : null;
+      terminalPanel.setFindResult(result);
+    });
+  }
+
+  @Nullable
+  public SubstringFinder.FindResult searchMatchedCommand(@NotNull String pattern, boolean ignoreCase) {
+    if (pattern.length() == 0) {
+      return null;
+    }
+
+    final SubstringFinder finder = new SubstringFinder(pattern, ignoreCase);
+    StyledTextConsumer consumer = new StyledTextConsumerAdapter() {
+      @Override
+      public void consume(int x, int y, @NotNull TextStyle style, @NotNull CharBuffer characters, int startRow) {
+        for (int i = 0; i < characters.length(); i++) {
+          finder.nextChar(x, y - startRow, characters, i);
+        }
+      }
+    };
+
+    TerminalTextBuffer textBuffer = getTerminalTextBuffer();
+    int currentLine = StringUtil.countNewLines(StringUtil.trimTrailing(textBuffer.getScreenLines()));
+    textBuffer.processScreenLines(currentLine, 1, consumer);
+
+    return finder.getResult();
   }
 
   private void handleShellCommandBeforeExecution(@NotNull String shellCommand, @NotNull KeyEvent enterEvent) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("typed shell command to execute: " + shellCommand);
     }
-    if (executeShellCommandHandler(shellCommand)) {
-      enterEvent.consume(); // do not send <ENTER> to shell
-      TtyConnector connector = getTtyConnector();
-      byte[] array = new byte[shellCommand.length()];
-      Arrays.fill(array, Ascii.BS);
-      try {
-        connector.write(array);
-      }
-      catch (IOException e) {
-        LOG.info("Cannot clear shell command " + shellCommand, e);
-      }
-    }
-  }
 
-  private boolean executeShellCommandHandler(@NotNull String command) {
-    if (Experiments.getInstance().isFeatureEnabled("terminal.shell.command.handling")) {
-      for (TerminalShellCommandHandler handler : TerminalShellCommandHandler.getEP().getExtensionList()) {
-        if (handler.execute(myProject, () -> TerminalWorkingDirectoryManager.getWorkingDirectory(this, null), command)) {
-          return true;
-        }
-      }
+    if (!TerminalShellCommandHandler.Companion.isAvailable(myProject, shellCommand)) {
+      return;
     }
-    return false;
+
+    TerminalShellCommandHandler.Companion
+      .executeShellCommandHandler(myProject, shellCommand, () -> TerminalWorkingDirectoryManager.getWorkingDirectory(this, null));
+    enterEvent.consume(); // do not send <CTRL ENTER> to shell
+    TtyConnector connector = getTtyConnector();
+    byte[] array = new byte[shellCommand.length()];
+    Arrays.fill(array, Ascii.BS);
+    try {
+      connector.write(array);
+    }
+    catch (IOException e) {
+      LOG.info("Cannot clear shell command " + shellCommand, e);
+    }
   }
 
   public void setCommandHistoryFilePath(@Nullable String commandHistoryFilePath) {

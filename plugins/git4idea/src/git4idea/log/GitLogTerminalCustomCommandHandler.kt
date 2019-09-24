@@ -34,4 +34,8 @@ class GitLogTerminalCustomCommandHandler : TerminalShellCommandHandler {
 
     return true
   }
+
+  override fun isAvailable(project: Project, command: String): Boolean {
+    return command == "git log"
+  }
 }
