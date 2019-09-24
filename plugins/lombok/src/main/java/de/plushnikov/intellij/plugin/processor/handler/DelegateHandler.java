@@ -1,9 +1,7 @@
 package de.plushnikov.intellij.plugin.processor.handler;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -20,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 
 /**
@@ -95,16 +93,15 @@ public class DelegateHandler {
   }
 
   public <T extends PsiMember & PsiNamedElement> void generateElements(@NotNull T psiElement, @NotNull PsiType psiElementType, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
-    final Project project = psiElement.getProject();
     final PsiManager manager = psiElement.getContainingFile().getManager();
 
-    final Collection<Pair<PsiMethod, PsiSubstitutor>> includesMethods = new HashSet<>();
+    final Collection<Pair<PsiMethod, PsiSubstitutor>> includesMethods = new LinkedHashSet<>();
 
     final Collection<PsiType> types = collectDelegateTypes(psiAnnotation, psiElementType);
     addMethodsOfTypes(types, includesMethods);
 
-    final Collection<Pair<PsiMethod, PsiSubstitutor>> excludeMethods = new HashSet<>();
-    PsiClassType javaLangObjectType = PsiType.getJavaLangObject(manager, GlobalSearchScope.allScope(project));
+    final Collection<Pair<PsiMethod, PsiSubstitutor>> excludeMethods = new LinkedHashSet<>();
+    PsiClassType javaLangObjectType = PsiType.getJavaLangObject(manager, psiElement.getResolveScope());
     addMethodsOfType(javaLangObjectType, excludeMethods);
 
     final Collection<PsiType> excludes = collectExcludeTypes(psiAnnotation);
@@ -120,7 +117,6 @@ public class DelegateHandler {
       }
     }
   }
-
 
   private void addMethodsOfTypes(Collection<PsiType> types, Collection<Pair<PsiMethod, PsiSubstitutor>> includesMethods) {
     for (PsiType type : types) {
