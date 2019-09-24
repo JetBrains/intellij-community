@@ -21,7 +21,7 @@ public class AppEditorFontOptions implements PersistentStateComponent<AppEditorF
   private final FontPreferencesImpl myFontPreferences = new FontPreferencesImpl();
 
   public AppEditorFontOptions() {
-    if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment() || ApplicationManager.getApplication().isUnitTestMode()) {
       myFontPreferences.register(
         FontPreferences.DEFAULT_FONT_NAME,
         UISettings.restoreFontSize(FontPreferences.DEFAULT_FONT_SIZE, 1.0f));
