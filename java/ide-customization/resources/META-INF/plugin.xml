@@ -16,9 +16,10 @@
 
     <gotoRelatedProvider implementation="com.intellij.testIntegration.GotoTestRelatedProvider"/>
 
+    <!-- preload because in any case will be requested to reopen last projects -->
     <applicationService serviceInterface="com.intellij.ide.RecentProjectsManager"
                         serviceImplementation="com.intellij.ide.RecentProjectsManagerBase"
-                        overrides="true"/>
+                        overrides="true" preload="notHeadless"/>
 
     <daemon.highlightInfoFilter implementation="com.intellij.codeInsight.daemon.impl.HighlightInfoFilterImpl"/>
 

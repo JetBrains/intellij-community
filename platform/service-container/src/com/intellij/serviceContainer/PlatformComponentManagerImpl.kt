@@ -601,7 +601,12 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
     val syncPreloadedServices = mutableListOf<CompletableFuture<Void>>()
     for (plugin in plugins) {
       for (service in getContainerDescriptor(plugin).services) {
-        if (service.preload == PreloadMode.FALSE) {
+        val preloadPolicy = service.preload
+        if (preloadPolicy == PreloadMode.FALSE) {
+          continue
+        }
+
+        if (preloadPolicy == PreloadMode.NOT_HEADLESS && getApplication()!!.isHeadlessEnvironment) {
           continue
         }
 
@@ -618,10 +623,10 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
           }
         }, executor)
 
-        @Suppress("NON_EXHAUSTIVE_WHEN")
-        when (service.preload) {
-          PreloadMode.TRUE -> asyncPreloadedServices.add(future)
+        when (preloadPolicy) {
+          PreloadMode.TRUE, PreloadMode.NOT_HEADLESS -> asyncPreloadedServices.add(future)
           PreloadMode.AWAIT -> syncPreloadedServices.add(future)
+          else -> throw IllegalStateException("Unknown preload mode $preloadPolicy")
         }
       }
     }

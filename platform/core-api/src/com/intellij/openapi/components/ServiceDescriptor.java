@@ -14,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class ServiceDescriptor {
   public enum PreloadMode {
-    TRUE, FALSE, AWAIT
+    TRUE, FALSE, AWAIT, NOT_HEADLESS,
   }
 
   @Attribute

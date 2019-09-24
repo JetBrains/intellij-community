@@ -427,6 +427,9 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
       else if (preload.equals("await")) {
         descriptor.preload = ServiceDescriptor.PreloadMode.AWAIT;
       }
+      else if (preload.equals("notHeadless")) {
+        descriptor.preload = ServiceDescriptor.PreloadMode.NOT_HEADLESS;
+      }
       else {
         LOG.error("Unknown preload mode value: " + JDOMUtil.writeElement(element));
       }
