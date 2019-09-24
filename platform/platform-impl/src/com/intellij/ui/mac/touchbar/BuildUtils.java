@@ -502,7 +502,7 @@ class BuildUtils {
       // check whether update is too slow
       final long updateDurationNs = System.nanoTime() - myAct2StartUpdateNs.getOrDefault(action, 0l);
       final boolean isEDT = ApplicationManager.getApplication().isDispatchThread();
-      if (isEDT && !ALWAYS_UPDATE_SLOW_ACTIONS && myAllowSkipSlowUpdates && updateDurationNs > 30*1000000l) { // 50 ms threshold
+      if (isEDT && !ALWAYS_UPDATE_SLOW_ACTIONS && myAllowSkipSlowUpdates && updateDurationNs > 30*1000000l) { // 30 ms threshold
         // disable update for this action
         addSlowUpdateAction(action);
       }
