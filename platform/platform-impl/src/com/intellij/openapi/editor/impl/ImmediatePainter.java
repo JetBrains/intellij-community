@@ -26,6 +26,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ImageUtil;
+import com.intellij.util.ui.StartupUiUtil;
 import sun.awt.image.SunVolatileImage;
 
 import javax.swing.*;
@@ -203,7 +204,7 @@ class ImmediatePainter {
       painter.consume(imageGraphics);
     });
 
-    graphics.drawImage(myImage, bounds.x, bounds.y, null);
+    StartupUiUtil.drawImage(graphics, myImage, bounds.x, bounds.y, null);
   }
 
   private void createOrUpdateImageBuffer(final JComponent component, final Dimension size) {
