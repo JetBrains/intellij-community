@@ -4,7 +4,6 @@ package com.intellij.util
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.reference.SoftReference
-import com.intellij.util.io.inputStream
 import com.intellij.util.io.outputStream
 import com.intellij.util.text.CharSequenceReader
 import com.intellij.util.xmlb.Constants
@@ -52,7 +51,8 @@ fun loadElement(reader: Reader): Element = JDOMUtil.load(reader)
 fun loadElement(stream: InputStream): Element = JDOMUtil.load(stream)
 
 @Throws(IOException::class, JDOMException::class)
-fun loadElement(path: Path): Element = JDOMUtil.load(path.inputStream())
+@Deprecated("Use JDOMUtil.load directly", ReplaceWith("JDOMUtil.load(path)", "com.intellij.openapi.util.JDOMUtil"))
+fun loadElement(path: Path): Element = JDOMUtil.load(path)
 
 fun Element?.isEmpty() = this == null || JDOMUtil.isEmpty(this)
 

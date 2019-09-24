@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.indices;
 
 import com.intellij.openapi.Disposable;
@@ -9,6 +9,7 @@ import com.intellij.openapi.progress.BackgroundTaskQueue;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.JdomKt;
@@ -371,7 +372,7 @@ public class MavenIndicesManager implements Disposable {
       // Store artifact to set to remove duplicate created by old IDEA (https://youtrack.jetbrains.com/issue/IDEA-72105)
       Collection<MavenArchetype> result = new LinkedHashSet<>();
 
-      List<Element> children = JdomKt.loadElement(file).getChildren(ELEMENT_ARCHETYPE);
+      List<Element> children = JDOMUtil.load(file).getChildren(ELEMENT_ARCHETYPE);
       for (int i = children.size() - 1; i >= 0; i--) {
         Element each = children.get(i);
 

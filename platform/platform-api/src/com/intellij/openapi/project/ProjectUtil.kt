@@ -144,7 +144,7 @@ fun Project.getProjectCacheFileName(isForceNameUse: Boolean = false, hashSeparat
   val locationHash = Integer.toHexString((presentableUrl ?: name).hashCode())
 
   // trim to avoid "File name too long"
-  name = name.trimMiddle(Math.min(name.length, 255 - hashSeparator.length - locationHash.length), useEllipsisSymbol = false)
+  name = name.trimMiddle(name.length.coerceAtMost(255 - hashSeparator.length - locationHash.length), useEllipsisSymbol = false)
   return "$name$hashSeparator${locationHash}$extensionWithDot"
 }
 
@@ -192,8 +192,8 @@ inline fun runWhenProjectOpened(project: Project? = null, crossinline handler: (
 }
 
 inline fun processOpenedProjects(processor: (Project) -> Unit) {
-  for (project in ProjectManager.getInstance().openProjects) {
-    if (!project.isInitialized || project.isDisposed) {
+  for (project in (ProjectManager.getInstanceIfCreated()?.openProjects ?: return)) {
+    if (project.isDisposedOrDisposeInProgress || !project.isInitialized) {
       continue
     }
 
