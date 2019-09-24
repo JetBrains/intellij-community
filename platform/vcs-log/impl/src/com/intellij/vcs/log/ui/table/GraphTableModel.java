@@ -227,8 +227,7 @@ public class GraphTableModel extends AbstractTableModel {
 
   @NotNull
   public VcsCommitMetadata getCommitMetadata(int row) {
-    Iterable<Integer> iterable = createRowsIterable(row, UP_PRELOAD_COUNT, DOWN_PRELOAD_COUNT, getRowCount());
-    return myLogData.getMiniDetailsGetter().getCommitData(getIdAtRow(row), iterable);
+    return myLogData.getMiniDetailsGetter().getCommitData(getIdAtRow(row), getCommitsToPreload(row));
   }
 
   @NotNull
@@ -242,13 +241,14 @@ public class GraphTableModel extends AbstractTableModel {
   }
 
   @NotNull
-  private Iterable<Integer> createRowsIterable(final int row, final int above, final int below, final int maxRows) {
+  private Iterable<Integer> getCommitsToPreload(int row) {
+    int maxRows = getRowCount();
     return () -> new Iterator<Integer>() {
-      private int myRowIndex = Math.max(0, row - above);
+      private int myRowIndex = Math.max(0, row - UP_PRELOAD_COUNT);
 
       @Override
       public boolean hasNext() {
-        return myRowIndex < row + below && myRowIndex < maxRows;
+        return myRowIndex < row + DOWN_PRELOAD_COUNT && myRowIndex < maxRows;
       }
 
       @Override
