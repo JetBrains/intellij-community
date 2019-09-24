@@ -19,4 +19,5 @@
   <module value="com.intellij.modules.idea"/>
   <module value="com.intellij.modules.idea.community"/>
   <module value="com.intellij.modules.java-capable"/>
+  <module value="com.intellij.modules.android-capable"/>
 </idea-plugin>
