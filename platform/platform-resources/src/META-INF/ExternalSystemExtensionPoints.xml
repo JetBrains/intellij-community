@@ -2,6 +2,8 @@
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.externalSystemManager"
                     interface="com.intellij.openapi.externalSystem.ExternalSystemManager"/>
+    <extensionPoint qualifiedName="com.intellij.externalSystem.debuggerBackend"
+                    interface="com.intellij.openapi.externalSystem.debugger.DebuggerBackendExtension"/>
     <extensionPoint qualifiedName="com.intellij.externalSystemWorkspaceContributor"
                     interface="com.intellij.openapi.externalSystem.service.project.ExternalProjectsWorkspaceImpl$Contributor"/>
     <extensionPoint qualifiedName="com.intellij.externalProjectDataService"

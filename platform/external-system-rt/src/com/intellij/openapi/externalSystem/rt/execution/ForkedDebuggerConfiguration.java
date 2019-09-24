@@ -25,13 +25,13 @@ public class ForkedDebuggerConfiguration {
 
   @Nullable
   public static ForkedDebuggerConfiguration parse(@Nullable String jvmAgentSetup) {
-    if (jvmAgentSetup != null && jvmAgentSetup.startsWith(ForkedDebuggerHelper.DEBUG_SETUP_PREFIX)) {
+    if (jvmAgentSetup != null && jvmAgentSetup.startsWith(ForkedDebuggerHelper.JVM_DEBUG_SETUP_PREFIX)) {
       int forkSocketIndex = jvmAgentSetup.indexOf(ForkedDebuggerHelper.DEBUG_FORK_SOCKET_PARAM);
       if (forkSocketIndex > 0) {
         try {
           int forkSocketPort =
             Integer.parseInt(jvmAgentSetup.substring(forkSocketIndex + ForkedDebuggerHelper.DEBUG_FORK_SOCKET_PARAM.length()));
-          int debugPort = Integer.parseInt(jvmAgentSetup.substring(ForkedDebuggerHelper.DEBUG_SETUP_PREFIX.length(), forkSocketIndex - 1));
+          int debugPort = Integer.parseInt(jvmAgentSetup.substring(ForkedDebuggerHelper.JVM_DEBUG_SETUP_PREFIX.length(), forkSocketIndex - 1));
           return new ForkedDebuggerConfiguration(forkSocketPort, debugPort);
         }
         catch (NumberFormatException ignore) {
@@ -42,6 +42,6 @@ public class ForkedDebuggerConfiguration {
   }
 
   public String getJvmAgentSetup(boolean isJdk9orLater) {
-    return ForkedDebuggerHelper.DEBUG_SETUP_PREFIX + (isJdk9orLater ? "127.0.0.1:" : "") + myDebugPort;
+    return ForkedDebuggerHelper.JVM_DEBUG_SETUP_PREFIX + (isJdk9orLater ? "127.0.0.1:" : "") + myDebugPort;
   }
 }
