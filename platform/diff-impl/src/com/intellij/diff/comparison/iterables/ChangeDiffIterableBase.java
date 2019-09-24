@@ -42,71 +42,85 @@ abstract class ChangeDiffIterableBase implements DiffIterable {
   @NotNull
   @Override
   public Iterator<Range> changes() {
-    return new Iterator<Range>() {
-      @NotNull private final ChangeIterable myIterable = createChangeIterable();
-
-      @Override
-      public boolean hasNext() {
-        return myIterable.valid();
-      }
-
-      @Override
-      public Range next() {
-        Range range = new Range(myIterable.getStart1(), myIterable.getEnd1(), myIterable.getStart2(), myIterable.getEnd2());
-        myIterable.next();
-        return range;
-      }
-    };
+    return new ChangedIterator(createChangeIterable());
   }
 
   @NotNull
   @Override
   public Iterator<Range> unchanged() {
-    return new Iterator<Range>() {
-      @NotNull private final ChangeIterable myIterable = createChangeIterable();
+    return new UnchangedIterator(createChangeIterable(), myLength1, myLength2);
+  }
 
-      int lastIndex1 = 0;
-      int lastIndex2 = 0;
+  private static class ChangedIterator implements Iterator<Range> {
+    @NotNull private final ChangeIterable myIterable;
 
-      {
-        if (myIterable.valid()) {
-          if (myIterable.getStart1() == 0 && myIterable.getStart2() == 0) {
-            lastIndex1 = myIterable.getEnd1();
-            lastIndex2 = myIterable.getEnd2();
-            myIterable.next();
-          }
-        }
-      }
+    private ChangedIterator(@NotNull ChangeIterable iterable) {
+      myIterable = iterable;
+    }
 
-      @Override
-      public boolean hasNext() {
-        return myIterable.valid() || (lastIndex1 != myLength1 || lastIndex2 != myLength2);
-      }
+    @Override
+    public boolean hasNext() {
+      return myIterable.valid();
+    }
 
-      @Override
-      public Range next() {
-        if (myIterable.valid()) {
-          assert (myIterable.getStart1() - lastIndex1 != 0) || (myIterable.getStart2() - lastIndex2 != 0);
-          Range chunk = new Range(lastIndex1, myIterable.getStart1(), lastIndex2, myIterable.getStart2());
+    @Override
+    public Range next() {
+      Range range = new Range(myIterable.getStart1(), myIterable.getEnd1(), myIterable.getStart2(), myIterable.getEnd2());
+      myIterable.next();
+      return range;
+    }
+  }
 
+  private static class UnchangedIterator implements Iterator<Range> {
+    @NotNull private final ChangeIterable myIterable;
+    private final int myLength1;
+    private final int myLength2;
+
+    private int lastIndex1 = 0;
+    private int lastIndex2 = 0;
+
+    private UnchangedIterator(@NotNull ChangeIterable iterable, int length1, int length2) {
+      myIterable = iterable;
+      myLength1 = length1;
+      myLength2 = length2;
+
+      if (myIterable.valid()) {
+        if (myIterable.getStart1() == 0 && myIterable.getStart2() == 0) {
           lastIndex1 = myIterable.getEnd1();
           lastIndex2 = myIterable.getEnd2();
-
           myIterable.next();
-
-          return chunk;
-        }
-        else {
-          assert (myLength1 - lastIndex1 != 0) || (myLength2 - lastIndex2 != 0);
-          Range chunk = new Range(lastIndex1, myLength1, lastIndex2, myLength2);
-
-          lastIndex1 = myLength1;
-          lastIndex2 = myLength2;
-
-          return chunk;
         }
       }
-    };
+    }
+
+    @Override
+    public boolean hasNext() {
+      return myIterable.valid() || (lastIndex1 != myLength1 || lastIndex2 != myLength2);
+    }
+
+    @Override
+    public Range next() {
+      if (myIterable.valid()) {
+        assert (myIterable.getStart1() - lastIndex1 != 0) || (myIterable.getStart2() - lastIndex2 != 0);
+        Range chunk = new Range(lastIndex1, myIterable.getStart1(), lastIndex2, myIterable.getStart2());
+
+        lastIndex1 = myIterable.getEnd1();
+        lastIndex2 = myIterable.getEnd2();
+
+        myIterable.next();
+
+        return chunk;
+      }
+      else {
+        assert (myLength1 - lastIndex1 != 0) || (myLength2 - lastIndex2 != 0);
+        Range chunk = new Range(lastIndex1, myLength1, lastIndex2, myLength2);
+
+        lastIndex1 = myLength1;
+        lastIndex2 = myLength2;
+
+        return chunk;
+      }
+    }
   }
 
   @NotNull

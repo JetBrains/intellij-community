@@ -18,12 +18,13 @@ package com.intellij.diff.comparison.iterables;
 import com.intellij.diff.fragments.DiffFragment;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
+import java.util.Collection;
+import java.util.Iterator;
 
 class DiffFragmentsDiffIterable extends ChangeDiffIterableBase {
-  @NotNull private final List<? extends DiffFragment> myFragments;
+  @NotNull private final Collection<? extends DiffFragment> myFragments;
 
-  DiffFragmentsDiffIterable(@NotNull List<? extends DiffFragment> ranges, int length1, int length2) {
+  DiffFragmentsDiffIterable(@NotNull Collection<? extends DiffFragment> ranges, int length1, int length2) {
     super(length1, length2);
     myFragments = ranges;
   }
@@ -31,40 +32,47 @@ class DiffFragmentsDiffIterable extends ChangeDiffIterableBase {
   @NotNull
   @Override
   protected ChangeIterable createChangeIterable() {
-    return new FragmentsChangeIterable();
+    return new FragmentsChangeIterable(myFragments);
   }
 
-  private class FragmentsChangeIterable implements ChangeIterable {
-    private int myIndex = 0;
+  private static class FragmentsChangeIterable implements ChangeIterable {
+    private final Iterator<? extends DiffFragment> myIterator;
+    private DiffFragment myLast;
+
+    private FragmentsChangeIterable(@NotNull Collection<? extends DiffFragment> fragments) {
+      myIterator = fragments.iterator();
+
+      next();
+    }
 
     @Override
     public boolean valid() {
-      return myIndex != myFragments.size();
+      return myLast != null;
     }
 
     @Override
     public void next() {
-      myIndex++;
+      myLast = myIterator.hasNext() ? myIterator.next() : null;
     }
 
     @Override
     public int getStart1() {
-      return myFragments.get(myIndex).getStartOffset1();
+      return myLast.getStartOffset1();
     }
 
     @Override
     public int getStart2() {
-      return myFragments.get(myIndex).getStartOffset2();
+      return myLast.getStartOffset2();
     }
 
     @Override
     public int getEnd1() {
-      return myFragments.get(myIndex).getEndOffset1();
+      return myLast.getEndOffset1();
     }
 
     @Override
     public int getEnd2() {
-      return myFragments.get(myIndex).getEndOffset2();
+      return myLast.getEndOffset2();
     }
   }
 }
