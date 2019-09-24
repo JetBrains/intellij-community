@@ -2,6 +2,7 @@
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.util.BrowseFilesListener;
 import com.intellij.openapi.application.ApplicationManager;
@@ -125,39 +126,39 @@ public class NamePathComponent extends JPanel {
       throw new ConfigurationException(IdeBundle.message("prompt.new.project.file.name", info.getFullProductName(), context.getPresentationName()));
     }
 
-    String projectDirectory = getPath();
-    if (StringUtil.isEmptyOrSpaces(projectDirectory)) {
+    String projectDirectoryPath = getPath();
+    if (StringUtil.isEmptyOrSpaces(projectDirectoryPath)) {
       throw new ConfigurationException(IdeBundle.message("prompt.enter.project.file.location", context.getPresentationName()));
     }
-    if (myShouldBeAbsolute && !new File(projectDirectory).isAbsolute()) {
+    if (myShouldBeAbsolute && !new File(projectDirectoryPath).isAbsolute()) {
       throw new ConfigurationException(StringUtil.capitalize(IdeBundle.message("file.location.should.be.absolute", context.getPresentationName())));
     }
 
     boolean shouldPromptCreation = isPathChangedByUser();
     String message = IdeBundle.message("directory.project.file.directory", context.getPresentationName());
-    if (!ProjectWizardUtil.createDirectoryIfNotExists(message, projectDirectory, shouldPromptCreation)) {
+    if (!ProjectWizardUtil.createDirectoryIfNotExists(message, projectDirectoryPath, shouldPromptCreation)) {
       return false;
     }
 
-    File file = new File(projectDirectory);
-    if (file.exists() && !file.canWrite()) {
-      throw new ConfigurationException(IdeBundle.message("project.directory.is.not.writable", projectDirectory));
+    File projectDirectory = new File(projectDirectoryPath);
+    if (projectDirectory.exists() && !projectDirectory.canWrite()) {
+      throw new ConfigurationException(IdeBundle.message("project.directory.is.not.writable", projectDirectoryPath));
     }
     for (Project p : ProjectManager.getInstance().getOpenProjects()) {
-      if (ProjectUtil.isSameProject(projectDirectory, p)) {
-        throw new ConfigurationException(IdeBundle.message("project.directory.is.already.taken", projectDirectory, p.getName()));
+      if (ProjectUtil.isSameProject(projectDirectoryPath, p)) {
+        throw new ConfigurationException(IdeBundle.message("project.directory.is.already.taken", projectDirectoryPath, p.getName()));
       }
     }
-
-    boolean shouldContinue = true;
-    String[] children = file.list();
-    if (children == null) {
-      throw new ConfigurationException(IdeBundle.message("project.directory.is.not.directory", projectDirectory));
+    if (projectDirectory.exists() && !projectDirectory.isDirectory()) {
+      LOG.warn(String.format("Project '%s' directory should be a directory", projectDirectoryPath));
     }
+    boolean shouldContinue = true;
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      if (children.length > 0) {
-        message = IdeBundle.message("prompt.overwrite.project", context.getPresentationName());
-        int answer = Messages.showYesNoDialog(message, IdeBundle.message("title.folder.not.empty"), Messages.getQuestionIcon());
+      String fileName = defaultFormat ? name + ProjectFileType.DOT_DEFAULT_EXTENSION : Project.DIRECTORY_STORE_FOLDER;
+      File projectFile = new File(projectDirectory, fileName);
+      if (projectFile.exists()) {
+        message = IdeBundle.message("prompt.overwrite.project.file", projectFile.getAbsolutePath(), context.getPresentationName());
+        int answer = Messages.showYesNoDialog(message, IdeBundle.message("title.file.already.exists"), Messages.getQuestionIcon());
         shouldContinue = (answer == Messages.YES);
       }
     }
