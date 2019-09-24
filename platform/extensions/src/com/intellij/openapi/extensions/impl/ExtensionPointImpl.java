@@ -335,18 +335,10 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
   @NotNull
   private Iterator<T> createIterator() {
     int size;
-    List<ExtensionComponentAdapter> adapters;
-    synchronized (this) {
-      CHECK_CANCELED.run();
-
-      adapters = getSortedAdapters();
-      size = adapters.size();
-      if (size == 0) {
-        return Collections.emptyIterator();
-      }
-
-      // see method comment about listeners - to ensure that every client of this method doesn't introduce flaky tests/hard to reproduce bugs
-      LOG.assertTrue(myListeners.length == 0);
+    List<ExtensionComponentAdapter> adapters = getThreadSafeAdapterList(true);
+    size = adapters.size();
+    if (size == 0) {
+      return Collections.emptyIterator();
     }
 
     return new Iterator<T>() {

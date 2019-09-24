@@ -204,14 +204,16 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
   }
 
   private void loadSchemesFromThemes() {
-    if (!isUnitTestOrHeadlessMode()) {
-      for (UIManager.LookAndFeelInfo laf : LafManager.getInstance().getInstalledLookAndFeels()) {
-        if (laf instanceof UIThemeBasedLookAndFeelInfo) {
-          UITheme theme = ((UIThemeBasedLookAndFeelInfo)laf).getTheme();
-          String path = theme.getEditorScheme();
-          if (path != null) {
-            mySchemeManager.loadBundledScheme(path, theme);
-          }
+    if (isUnitTestOrHeadlessMode()) {
+      return;
+    }
+
+    for (UIManager.LookAndFeelInfo laf : LafManager.getInstance().getInstalledLookAndFeels()) {
+      if (laf instanceof UIThemeBasedLookAndFeelInfo) {
+        UITheme theme = ((UIThemeBasedLookAndFeelInfo)laf).getTheme();
+        String path = theme.getEditorScheme();
+        if (path != null) {
+          mySchemeManager.loadBundledScheme(path, theme);
         }
       }
     }
@@ -306,18 +308,18 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
   }
 
   private void loadAdditionalTextAttributes() {
-    for (AdditionalTextAttributesEP attributesEP : AdditionalTextAttributesEP.EP_NAME.getExtensions()) {
+    AdditionalTextAttributesEP.EP_NAME.forEachExtensionSafe(attributesEP -> {
       EditorColorsScheme editorColorsScheme = mySchemeManager.findSchemeByName(attributesEP.scheme);
       if (editorColorsScheme == null) {
         if (!isUnitTestOrHeadlessMode()) {
           LOG.warn("Cannot find scheme: " + attributesEP.scheme + " from plugin: " + attributesEP.getPluginDescriptor().getPluginId());
         }
-        continue;
+        return;
       }
       URL resource = attributesEP.getLoaderForClass().getResource(attributesEP.file);
       if (resource == null) {
         LOG.warn("resource not found: " + attributesEP.file);
-        continue;
+        return;
       }
       try {
         Element root = JDOMUtil.load(URLUtil.openStream(resource));
@@ -332,7 +334,7 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
       catch (Exception e) {
         LOG.error(e);
       }
-    }
+    });
   }
 
   @Override
