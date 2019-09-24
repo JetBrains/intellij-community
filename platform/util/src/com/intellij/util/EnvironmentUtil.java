@@ -20,10 +20,12 @@ import gnu.trove.THashMap;
 import org.jetbrains.annotations.*;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -45,7 +47,7 @@ public final class EnvironmentUtil {
   private static final String SHELL_LOGIN_ARGUMENT = "-l";
   public static final String SHELL_COMMAND_ARGUMENT = "-c";
 
-  private static final AtomicReference<Future<Map<String, String>>> ourEnvGetter = new AtomicReference<>();
+  private static final AtomicReference<CompletableFuture<Map<String, String>>> ourEnvGetter = new AtomicReference<>();
 
   private static final NotNullLazyValue<Map<String, String>> ourEnvironment = NotNullLazyValue.createValue(() -> {
     try {
@@ -73,8 +75,8 @@ public final class EnvironmentUtil {
   private EnvironmentUtil() { }
 
   @ApiStatus.Internal
-  public static synchronized Future<Map<String, String>> loadEnv() {
-    Future<Map<String, String>> getter = ourEnvGetter.get();
+  public static synchronized CompletableFuture<Map<String, String>> loadEnv() {
+    CompletableFuture<Map<String, String>> getter = ourEnvGetter.get();
     if (getter != null) {
       return getter;
     }
@@ -82,9 +84,14 @@ public final class EnvironmentUtil {
     if (SystemInfo.isMac &&
         "unlocked".equals(System.getProperty("__idea.mac.env.lock")) &&
         SystemProperties.getBooleanProperty("idea.fix.mac.env", true)) {
-      getter = AppExecutorUtil.getAppExecutorService().submit(() -> {
-        return unmodifiableMap(setCharsetVar(getShellEnv()));
-      });
+      getter = CompletableFuture.supplyAsync(() -> {
+        try {
+          return unmodifiableMap(setCharsetVar(getShellEnv()));
+        }
+        catch (IOException e) {
+          throw new CompletionException(e);
+        }
+      }, AppExecutorUtil.getAppExecutorService());
     }
     else {
       getter = CompletableFuture.completedFuture(getSystemEnv());
@@ -181,16 +188,16 @@ public final class EnvironmentUtil {
   private static final String INTELLIJ_ENVIRONMENT_READER = "INTELLIJ_ENVIRONMENT_READER";
 
   @NotNull
-  private static Map<String, String> getShellEnv() throws Exception {
+  private static Map<String, String> getShellEnv() throws IOException {
     return new ShellEnvReader().readShellEnv();
   }
 
   public static class ShellEnvReader {
-    public Map<String, String> readShellEnv() throws Exception {
+    public Map<String, String> readShellEnv() throws IOException {
       return readShellEnv(null);
     }
 
-    protected Map<String, String> readShellEnv(@Nullable Map<String, String> additionalEnvironment) throws Exception {
+    protected Map<String, String> readShellEnv(@Nullable Map<String, String> additionalEnvironment) throws IOException {
       File reader = PathManager.findBinFileWithException("printenv.py");
 
       File envFile = FileUtil.createTempFile("intellij-shell-env.", ".tmp", false);
@@ -198,10 +205,11 @@ public final class EnvironmentUtil {
         List<String> command = getShellProcessCommand();
 
         int idx = command.indexOf(SHELL_COMMAND_ARGUMENT);
-        if (idx>=0) {
+        if (idx >= 0) {
           // if there is already a command append command to the end
-          command.set(idx + 1, command.get(idx+1) + ";" + "'" + reader.getAbsolutePath() + "' '" + envFile.getAbsolutePath() + "'");
-        } else {
+          command.set(idx + 1, command.get(idx + 1) + ";" + "'" + reader.getAbsolutePath() + "' '" + envFile.getAbsolutePath() + "'");
+        }
+        else {
           command.add(SHELL_COMMAND_ARGUMENT);
           command.add("'" + reader.getAbsolutePath() + "' '" + envFile.getAbsolutePath() + "'");
         }
@@ -253,7 +261,7 @@ public final class EnvironmentUtil {
     protected static Pair<String, Map<String, String>> runProcessAndReadOutputAndEnvs(@NotNull List<String> command,
                                                                                       @Nullable File workingDir,
                                                                                       @Nullable Map<String, String> scriptEnvironment,
-                                                                                      @NotNull File envFile) throws Exception {
+                                                                                      @NotNull File envFile) throws IOException {
       ProcessBuilder builder = new ProcessBuilder(command).redirectErrorStream(true);
       if (scriptEnvironment != null) {
         // we might need default environment for the process to launch correctly
@@ -269,19 +277,19 @@ public final class EnvironmentUtil {
 
       String lines = FileUtil.loadFile(envFile);
       if (exitCode != 0 || lines.isEmpty()) {
-        throw new Exception("command " + command + "\n\texit code:" + exitCode + " text:" + lines.length() + " out:" + StringUtil.trimEnd(gobbler.getText(), '\n'));
+        throw new RuntimeException("command " + command + "\n\texit code:" + exitCode + " text:" + lines.length() + " out:" + StringUtil.trimEnd(gobbler.getText(), '\n'));
       }
       return Pair.create(gobbler.getText(), parseEnv(lines));
     }
 
     @NotNull
-    protected List<String> getShellProcessCommand() throws Exception {
+    protected List<String> getShellProcessCommand() {
       String shellScript = getShell();
       if (StringUtil.isEmptyOrSpaces(shellScript)) {
-        throw new Exception("empty $SHELL");
+        throw new RuntimeException("empty $SHELL");
       }
       if (!new File(shellScript).canExecute()) {
-        throw new Exception("$SHELL points to a missing or non-executable file: " + shellScript);
+        throw new RuntimeException("$SHELL points to a missing or non-executable file: " + shellScript);
       }
       return buildShellProcessCommand(shellScript, true, true, false);
     }
@@ -322,7 +330,7 @@ public final class EnvironmentUtil {
   }
 
   @NotNull
-  public static Map<String, String> parseEnv(String... lines) throws Exception {
+  public static Map<String, String> parseEnv(String... lines) {
     Set<String> toIgnore = new HashSet<>(Arrays.asList("_", "PWD", "SHLVL", DISABLE_OMZ_AUTO_UPDATE, INTELLIJ_ENVIRONMENT_READER));
     Map<String, String> env = System.getenv();
     Map<String, String> newEnv = new HashMap<>();
@@ -330,7 +338,7 @@ public final class EnvironmentUtil {
     for (String line : lines) {
       int pos = line.indexOf('=');
       if (pos <= 0) {
-        throw new Exception("malformed:" + line);
+        throw new RuntimeException("malformed:" + line);
       }
       String name = line.substring(0, pos);
       if (!toIgnore.contains(name)) {
@@ -346,10 +354,8 @@ public final class EnvironmentUtil {
   }
 
   @NotNull
-  private static Map<String, String> parseEnv(String text) throws Exception {
-    String[] lines = text.split("\0");
-
-    return parseEnv(lines);
+  private static Map<String, String> parseEnv(String text) {
+    return parseEnv(text.split("\0"));
   }
 
   private static int waitAndTerminateAfter(@NotNull Process process) {
