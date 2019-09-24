@@ -121,6 +121,27 @@ public class EditorActionTest extends AbstractEditorTest {
     assertFalse(((EditorEx)getEditor()).isStickySelection());
   }
 
+  public void testUnindentWithSelection() {
+    initText("      <caret>  line1\n        line2\n        line3");
+    executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN_WITH_SELECTION);
+    checkResultByText("      <selection>  line1\n      <caret></selection>  line2\n        line3");
+    unindent();
+    checkResultByText("    <selection>line1\n    <caret></selection>line2\n        line3");
+    assertFalse(((EditorEx)getEditor()).isStickySelection());
+  }
+
+  public void testUnindentWithStickySelection() {
+    // Same test as above, but using sticky selection
+    initText("      <caret>  line1\n        line2\n        line3");
+    executeAction(IdeActions.ACTION_EDITOR_TOGGLE_STICKY_SELECTION);
+    executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN);
+    checkResultByText("      <selection>  line1\n      <caret></selection>  line2\n        line3");
+    assertTrue(((EditorEx)getEditor()).isStickySelection());
+    unindent();
+    checkResultByText("    <selection>line1\n    <caret></selection>line2\n        line3");
+    assertTrue(((EditorEx)getEditor()).isStickySelection());
+  }
+
   public void testMoveRightAtFoldedLineEnd() {
     init("line1<caret>\nline2\nline3", TestFileType.TEXT);
     addCollapsedFoldRegion(5, 7, "...");
