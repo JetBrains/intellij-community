@@ -69,6 +69,7 @@ import org.junit.runners.Suite;
   RedundantInstanceofFixTest.class,
   ReplaceComputeWithComputeIfPresentFixTest.class,
   DeleteSwitchLabelFixTest.class,
+  DeleteRedundantUpdateFixTest.class
   })
 public class DataFlowInspectionTestSuite {
 }

@@ -109,7 +109,9 @@ public class DeleteSideEffectsAwareFix extends LocalQuickFixAndIntentionActionOn
       statement = Objects.requireNonNull(PsiTreeUtil.getNextSiblingOfType(lastAdded, PsiStatement.class));
     }
     PsiElement parent = statement.getParent();
-    if (parent instanceof PsiStatement && !(parent instanceof PsiIfStatement && ((PsiIfStatement)parent).getElseBranch() == statement)) {
+    if (parent instanceof PsiStatement &&
+        !(parent instanceof PsiIfStatement && ((PsiIfStatement)parent).getElseBranch() == statement) &&
+        !(parent instanceof PsiForStatement && ((PsiForStatement)parent).getUpdate() == statement)) {
       ct.replaceAndRestoreComments(statement, "{}");
     } else {
       ct.deleteAndRestoreComments(statement);
