@@ -32,9 +32,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 public class DocumentMarkupModelTest extends BasePlatformTestCase {
   public void testInfoTestAttributes() {
-    LanguageExtensionPoint<Annotator> extension = new LanguageExtensionPoint<>();
-    extension.language="TEXT";
-    extension.implementationClass = TestAnnotator.class.getName();
+    LanguageExtensionPoint<Annotator> extension = new LanguageExtensionPoint<>("TEXT", new TestAnnotator());
     ExtensionPointName.<LanguageExtensionPoint<Annotator>>create(LanguageAnnotators.EP_NAME)
       .getPoint(null).registerExtension(extension, myFixture.getTestRootDisposable());
     myFixture.configureByText(PlainTextFileType.INSTANCE, "foo");

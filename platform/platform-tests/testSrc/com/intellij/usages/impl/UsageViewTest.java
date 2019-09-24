@@ -19,6 +19,7 @@ import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.BinaryFileDecompiler;
 import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
+import com.intellij.openapi.fileTypes.FileTypeExtensionPoint;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -307,7 +308,8 @@ public class UsageViewTest extends BasePlatformTestCase {
     };
 
     ExtensionTestUtil.addExtension((ExtensionsAreaImpl)ApplicationManager.getApplication().getExtensionArea(),
-                                   BinaryFileTypeDecompilers.getInstance(), ArchiveFileType.INSTANCE.getName(), decompiler);
+                                   BinaryFileTypeDecompilers.getInstance(),
+                                   new FileTypeExtensionPoint<>(ArchiveFileType.INSTANCE.getName(), decompiler));
 
     PsiFile psiFile = myFixture.addFileToProject("X.jar", "xxx");
     assertEquals(ArchiveFileType.INSTANCE, psiFile.getFileType());

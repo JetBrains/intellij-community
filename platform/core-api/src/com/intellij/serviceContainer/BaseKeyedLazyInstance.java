@@ -7,12 +7,21 @@ import com.intellij.openapi.extensions.PluginAware;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 public abstract class BaseKeyedLazyInstance<T> implements PluginAware {
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
   private PluginDescriptor pluginDescriptor;
 
   private volatile T instance;
+
+  protected BaseKeyedLazyInstance() {
+  }
+
+  @TestOnly
+  protected BaseKeyedLazyInstance(@NotNull T instance) {
+    this.instance = instance;
+  }
 
   @Override
   public final void setPluginDescriptor(@NotNull PluginDescriptor value) {

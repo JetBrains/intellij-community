@@ -4,7 +4,9 @@ package com.intellij.lang;
 import com.intellij.openapi.extensions.CustomLoadingExtensionPointBean;
 import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.xmlb.annotations.Attribute;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 /**
  * Base class for {@link Language}-bound extension points.
@@ -23,6 +25,18 @@ public class LanguageExtensionPoint<T> extends CustomLoadingExtensionPointBean<T
 
   @Attribute("implementationClass")
   public String implementationClass;
+
+  @SuppressWarnings("unused")
+  public LanguageExtensionPoint() {
+  }
+
+  @TestOnly
+  public LanguageExtensionPoint(@NotNull String language, @NotNull T instance) {
+    super(instance);
+
+    this.language = language;
+    implementationClass = instance.getClass().getName();
+  }
 
   @Nullable
   @Override

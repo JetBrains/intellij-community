@@ -5,6 +5,7 @@ import com.intellij.openapi.components.ComponentManager;
 import com.intellij.serviceContainer.BaseKeyedLazyInstance;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 public abstract class CustomLoadingExtensionPointBean<T> extends BaseKeyedLazyInstance<T> {
   @Attribute
@@ -12,6 +13,15 @@ public abstract class CustomLoadingExtensionPointBean<T> extends BaseKeyedLazyIn
 
   @Attribute
   public String factoryArgument;
+
+
+  protected CustomLoadingExtensionPointBean() {
+  }
+
+  @TestOnly
+  protected CustomLoadingExtensionPointBean(@NotNull T instance) {
+    super(instance);
+  }
 
   @NotNull
   @Override
