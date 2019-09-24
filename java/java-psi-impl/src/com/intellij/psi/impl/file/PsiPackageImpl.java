@@ -12,9 +12,11 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.ui.Queryable;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaPsiFacadeImpl;
@@ -261,7 +263,13 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
     }
     return StreamEx.of(allClasses)
       .filter(aClass -> PsiSearchScopeUtil.isInScope(scope, aClass))
-      .sorted(PsiClassUtil.createScopeComparator(scope))
+      .sorted(PsiClassUtil
+                .createScopeComparator(scope)
+                .thenComparing(c -> c.getQualifiedName(), Comparator.nullsLast(Comparator.naturalOrder()))
+                .thenComparing(c -> {
+                  PsiFile file = c.getContainingFile();
+                  return file instanceof PsiJavaFile ? ((PsiJavaFile)file).getPackageName() : "";
+                }))
       .toArray(PsiClass.EMPTY_ARRAY);
   }
 
