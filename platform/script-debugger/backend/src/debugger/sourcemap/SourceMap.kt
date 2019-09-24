@@ -54,17 +54,16 @@ interface SourceMap {
   fun getSourceContent(sourceIndex: Int): String?
 }
 
+abstract class SourceMapBase(protected val sourceMapData: SourceMapData,
+                             override val sourceResolver: SourceResolver) : SourceMap {
 
-class OneLevelSourceMap(private val sourceMapData: SourceMapData,
-                        private val sourceIndexToMappings: Array<MappingList?>,
-                        override val sourceResolver: SourceResolver) : SourceMap {
   override val outFile: String?
     get() = sourceMapData.file
 
   override val hasNameMappings: Boolean
     get() = sourceMapData.hasNameMappings
 
-  override val generatedMappings: Mappings = GeneratedMappingList(sourceMapData.mappings)
+  protected abstract val sourceIndexToMappings: Array<MappingList?>
 
   override val sources: Array<Url>
     get() = sourceResolver.canonicalizedUrls
@@ -112,4 +111,12 @@ class OneLevelSourceMap(private val sourceMapData: SourceMapData,
     }
     return if (sourceIndex < 0 || sourceIndex >= sourcesContent!!.size) null else sourcesContent[sourceIndex]
   }
+}
+
+class OneLevelSourceMap(sourceMapData: SourceMapData,
+                        sourceResolver: SourceResolver) : SourceMapBase(sourceMapData, sourceResolver) {
+
+  override val sourceIndexToMappings: Array<MappingList?> = calculateReverseMappings(sourceMapData)
+
+  override val generatedMappings: Mappings = GeneratedMappingList(sourceMapData.mappings)
 }
