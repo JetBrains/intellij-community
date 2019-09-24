@@ -357,7 +357,7 @@ fun initApplication(rawArgs: List<String>, initUiTask: CompletionStage<*> = Comp
         }
 
         // pre-load cursors used by drag'n'drop AWT subsystem
-        invokeLaterWithAnyModality("DnD setup") {
+        runActivity("DnD setup") {
           DragSource.getDefaultDragSource()
         }
       }
