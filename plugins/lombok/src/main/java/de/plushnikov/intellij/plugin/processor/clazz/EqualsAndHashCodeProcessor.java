@@ -3,7 +3,6 @@ package de.plushnikov.intellij.plugin.processor.clazz;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTypesUtil;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigKey;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
@@ -172,7 +171,7 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
       .withMethodReturnType(PsiType.BOOLEAN)
       .withContainingClass(psiClass)
       .withNavigationElement(psiAnnotation)
-      .withFinalParameter("o", PsiType.getJavaLangObject(psiManager, GlobalSearchScope.allScope(psiClass.getProject())));
+      .withFinalParameter("o", PsiType.getJavaLangObject(psiManager, psiClass.getResolveScope()));
     methodBuilder.withBody(PsiMethodUtil.createCodeBlockFromText(blockText, methodBuilder));
     return methodBuilder;
   }
@@ -201,7 +200,7 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
       .withMethodReturnType(PsiType.BOOLEAN)
       .withContainingClass(psiClass)
       .withNavigationElement(psiAnnotation)
-      .withFinalParameter("other", PsiType.getJavaLangObject(psiManager, GlobalSearchScope.allScope(psiClass.getProject())));
+      .withFinalParameter("other", PsiType.getJavaLangObject(psiManager, psiClass.getResolveScope()));
     methodBuilder.withBody(PsiMethodUtil.createCodeBlockFromText(blockText, methodBuilder));
     return methodBuilder;
   }

@@ -8,7 +8,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.TypeConversionUtil;
 import de.plushnikov.intellij.plugin.problem.LombokProblem;
 import de.plushnikov.intellij.plugin.settings.ProjectSettings;
@@ -166,7 +165,7 @@ public class ValProcessor extends AbstractProcessor {
       }
 
       if (null == psiType) {
-        psiType = PsiType.getJavaLangObject(typeElement.getManager(), GlobalSearchScope.allScope(typeElement.getProject()));
+        psiType = PsiType.getJavaLangObject(typeElement.getManager(), typeElement.getResolveScope());
       }
     }
     return psiType;

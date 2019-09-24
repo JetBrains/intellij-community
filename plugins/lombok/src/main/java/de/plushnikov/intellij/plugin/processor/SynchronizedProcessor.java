@@ -9,7 +9,6 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiType;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import de.plushnikov.intellij.plugin.problem.LombokProblem;
 import de.plushnikov.intellij.plugin.problem.ProblemNewBuilder;
@@ -63,7 +62,7 @@ public class SynchronizedProcessor extends AbstractProcessor {
                 PsiQuickFixFactory.createModifierListFix(lockField, PsiModifier.FINAL, true, false));
             }
           } else {
-            final PsiClassType javaLangObjectType = PsiType.getJavaLangObject(containingClass.getManager(), GlobalSearchScope.allScope(containingClass.getProject()));
+            final PsiClassType javaLangObjectType = PsiType.getJavaLangObject(containingClass.getManager(), containingClass.getResolveScope());
 
             problemNewBuilder.addError(String.format("The field %s does not exist.", lockFieldName),
               PsiQuickFixFactory.createNewFieldFix(containingClass, lockFieldName, javaLangObjectType, "new Object()", PsiModifier.PRIVATE, PsiModifier.FINAL));
