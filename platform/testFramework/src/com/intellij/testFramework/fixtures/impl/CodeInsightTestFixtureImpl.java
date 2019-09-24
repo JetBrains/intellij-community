@@ -153,8 +153,11 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   private final TempDirTestFixture myTempDirFixture;
   private PsiManagerImpl myPsiManager;
   private VirtualFile myFile;
+
+  // Strong references to PSI files configured by the test (to avoid tree access assertions after PSI has been GC'ed)
   private PsiFile myPsiFile;
   private PsiFile[] myAllPsiFiles;
+
   private Editor myEditor;
   private EditorTestFixture myEditorTestFixture;
   private String myTestDataPath;
@@ -1570,14 +1573,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @Override
   public PsiFile getFile() {
-    return ReadAction.compute(() -> {
-      PsiFile psiFile = myPsiFile;
-      if (psiFile != null && !psiFile.isValid()) {
-        psiFile = PsiManager.getInstance(getProject()).findFile(myFile);
-        myPsiFile = psiFile;
-      }
-      return psiFile;
-    });
+    return myFile != null ? ReadAction.compute(() -> PsiManager.getInstance(getProject()).findFile(myFile)) : null;
   }
 
   @Override
