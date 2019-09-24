@@ -244,7 +244,6 @@ class AndroidStudioProperties extends BaseIdeaProperties {
   static PluginLayout layoutlibNativePlugin () {
     plugin("intellij.android.layoutlib-native") {
       withModule("android.sdktools.layoutlib-api")
-      bundlingRestrictions.supportedOs = [OsFamily.LINUX, OsFamily.MACOS]
     }
   }
 
@@ -441,6 +440,15 @@ class AndroidStudioProperties extends BaseIdeaProperties {
         }
         context.ant.copy(todir: "$simpleperfTarget/windows-x86_64") {
           fileset(dir: "$root/prebuilts/tools/windows-x86_64/simpleperf")
+        }
+
+        context.ant.copy(todir: "$targetDirectory/plugins/android/lib/layoutlib/data") {
+          fileset(dir: "$root/prebuilts/studio/layoutlib/data") {
+            include(name: "icu/*")
+            exclude(name: "icu/BUILD")
+            include(name: "win/**")
+            exclude(name: "win/BUILD")
+          }
         }
       }
     }
