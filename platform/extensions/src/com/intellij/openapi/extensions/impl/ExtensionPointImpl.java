@@ -437,7 +437,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
                            @Nullable Class<T> extensionClassForCheck,
                            @Nullable List<? extends ExtensionComponentAdapter> adapters) {
     try {
-      boolean isNotifyThatAdded = listeners != null && listeners.length != 0 && !adapter.isInstanceCreated();
+      boolean isNotifyThatAdded = listeners != null && listeners.length != 0 && !adapter.isInstanceCreated() && !myDynamic;
       // do not call CHECK_CANCELED here in loop because it is called by createInstance()
       T extension = adapter.createInstance(myComponentManager);
       if (duplicates != null && !duplicates.add(extension)) {
