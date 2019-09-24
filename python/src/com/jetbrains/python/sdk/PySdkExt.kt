@@ -28,6 +28,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.io.FileUtil
@@ -43,14 +44,20 @@ import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor
 import java.io.File
 import java.io.IOException
 import java.nio.file.Files
+import java.nio.file.Path
 import java.nio.file.Paths
 
 /**
  * @author vlan
  */
 
-fun findAllPythonSdks(): List<Sdk> {
+val BASE_DIR = Key.create<Path>("PYTHON_BASE_PATH")
+
+fun findAllPythonSdks(baseDir: Path?): List<Sdk> {
   val context: UserDataHolder = UserDataHolderBase()
+  if (baseDir != null) {
+    context.putUserData(BASE_DIR, baseDir)
+  }
   val existing = PythonSdkUtil.getAllSdks()
   return detectCondaEnvs(null, existing, context) + detectVirtualEnvs(null, existing, context) + findBaseSdks(existing, null, context)
 }

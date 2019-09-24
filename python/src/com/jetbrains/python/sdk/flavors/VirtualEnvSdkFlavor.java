@@ -8,6 +8,7 @@ import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SystemProperties;
 import com.jetbrains.python.sdk.PySdkExtKt;
@@ -38,7 +39,11 @@ public class VirtualEnvSdkFlavor extends CPythonSdkFlavor {
     return ReadAction.compute(() -> {
       final List<String> candidates = new ArrayList<>();
       if (module != null) {
-        final VirtualFile baseDir = PySdkExtKt.getBaseDir(module);
+        VirtualFile baseDir = PySdkExtKt.getBaseDir(module);
+        if (baseDir == null && context != null && context.getUserData(PySdkExtKt.getBASE_DIR()) != null) {
+          //noinspection ConstantConditions
+          baseDir = VfsUtil.findFile(context.getUserData(PySdkExtKt.getBASE_DIR()), false);
+        }
         if (baseDir != null) {
           candidates.addAll(findInBaseDirectory(baseDir));
         }

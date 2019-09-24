@@ -39,7 +39,7 @@ public class JavaCommandLineInspectionProjectConfigurator implements CommandLine
   }
 
   @Override
-  public void configureEnvironment(@NotNull CommandLineInspectionLogger logger) {
+  public void configureEnvironment(@NotNull Path projectPath, @NotNull CommandLineInspectionLogger logger) {
     JavaSdk javaSdk = JavaSdk.getInstance();
     List<Sdk> sdks = ProjectJdkTable.getInstance().getSdksOfType(javaSdk);
     if (!sdks.isEmpty()) {

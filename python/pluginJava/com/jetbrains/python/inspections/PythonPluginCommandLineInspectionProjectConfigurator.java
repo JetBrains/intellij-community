@@ -25,7 +25,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
-@SuppressWarnings("UseOfSystemOutOrSystemErr")
 public class PythonPluginCommandLineInspectionProjectConfigurator implements CommandLineInspectionProjectConfigurator {
   @Override
   public boolean isApplicable(@NotNull Path projectPath, @NotNull CommandLineInspectionLogger logger) {
@@ -48,7 +47,7 @@ public class PythonPluginCommandLineInspectionProjectConfigurator implements Com
   }
 
   @Override
-  public void configureEnvironment(@NotNull CommandLineInspectionLogger logger) {
+  public void configureEnvironment(@NotNull Path projectPath, @NotNull CommandLineInspectionLogger logger) {
     logger.logMessageLn(3, "Python environment configuration...");
     List<Sdk> sdks = PythonSdkUtil.getAllSdks();
     logger.logMessageLn(3, "Python interpreters detected:");
@@ -56,7 +55,7 @@ public class PythonPluginCommandLineInspectionProjectConfigurator implements Com
       logger.logMessageLn(3, sdk.getHomePath());
     }
     if (sdks.isEmpty()) {
-      final List<Sdk> detectedSdks = PySdkExtKt.findAllPythonSdks();
+      final List<Sdk> detectedSdks = PySdkExtKt.findAllPythonSdks(projectPath);
 
       if (detectedSdks.size() > 0) {
         for (Sdk sdk : detectedSdks) {
