@@ -3,7 +3,7 @@ class OperatorAssignment {
       int a = 10;
       double b = 0.5;
 
-        a = (int) (a * b);
+        a = (int) ((double) a * b);
 
       System.out.println(a);
     }
