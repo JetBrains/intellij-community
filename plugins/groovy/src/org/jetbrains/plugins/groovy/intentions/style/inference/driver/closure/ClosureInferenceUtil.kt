@@ -316,7 +316,7 @@ private fun extractBlock(block: GrClosableBlock, parameter: GrParameter): GrClos
   if (block.parameterList.getParameterNumber(parameter) == -1) {
     val outerBlock = block.parentOfType<GrClosableBlock>()
     if (outerBlock != null) {
-      return extractBlock(block, parameter)
+      return extractBlock(outerBlock, parameter)
     }
     else {
       return null

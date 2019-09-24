@@ -95,4 +95,19 @@ def foo(x) {}
     """.trimIndent()
     testTypeHints(text)
   }
+
+  fun testNestedClosureBlockWithUnresolvableVariables() {
+    val text = """
+import groovy.transform.stc.ClosureParams
+import groovy.transform.stc.SimpleType
+def foo(@ClosureParams(value=SimpleType, options=['java.lang.Integer'])Closure a) {}
+def bar(@ClosureParams(value=SimpleType, options=['java.lang.Integer'])Closure b) {}
+foo { <# [Integer  ] #>a ->
+  bar { <# [Integer  ] #>b ->
+    for (x in y){}
+  }
+}
+    """.trimIndent()
+    testTypeHints(text)
+  }
 }
