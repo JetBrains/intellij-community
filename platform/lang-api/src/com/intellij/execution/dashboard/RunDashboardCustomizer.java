@@ -16,12 +16,10 @@
 package com.intellij.execution.dashboard;
 
 import com.intellij.execution.RunnerAndConfigurationSettings;
-import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.ide.dnd.DnDEvent;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.ApiStatus;
@@ -39,10 +37,6 @@ public abstract class RunDashboardCustomizer {
   public static final Key<Map<Object, Object>> NODE_LINKS = new Key<>("RunDashboardNodeLink");
 
   public abstract boolean isApplicable(@NotNull RunnerAndConfigurationSettings settings, @Nullable RunContentDescriptor descriptor);
-
-  public boolean isEnabledByDefault(@NotNull Project project, @NotNull ConfigurationType type) {
-    return false;
-  }
 
   public boolean updatePresentation(@NotNull PresentationData presentation, @NotNull RunDashboardRunConfigurationNode node) {
     return false;

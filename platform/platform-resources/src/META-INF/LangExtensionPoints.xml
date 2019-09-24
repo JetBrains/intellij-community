@@ -503,6 +503,8 @@
 
     <extensionPoint name="runDashboardCustomizer"
                     interface="com.intellij.execution.dashboard.RunDashboardCustomizer"/>
+    <extensionPoint name="runDashboardDefaultTypesProvider"
+                    interface="com.intellij.execution.dashboard.RunDashboardDefaultTypesProvider"/>
     <extensionPoint name="runDashboardGroupingRule"
                     interface="com.intellij.execution.dashboard.RunDashboardGroupingRule"/>
     <extensionPoint name="serviceViewContributor"
