@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.components.service
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -35,7 +36,6 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.vcsUtil.VcsFileUtil
 import git4idea.DialogManager
 import git4idea.GitUtil
-import git4idea.actions.BasicAction
 import git4idea.actions.GitInit
 import git4idea.commands.Git
 import git4idea.commands.GitCommand
@@ -99,7 +99,7 @@ class GithubShareAction : DumbAwareAction("Share Project on GitHub", "Easily sha
 
     @JvmStatic
     fun shareProjectOnGithub(project: Project, file: VirtualFile?) {
-      BasicAction.saveAll()
+      FileDocumentManager.getInstance().saveAllDocuments();
 
       val gitRepository = GithubGitHelper.findGitRepository(project, file)
 

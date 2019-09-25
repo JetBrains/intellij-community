@@ -6,13 +6,13 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitUtil;
-import git4idea.actions.BasicAction;
 import git4idea.commands.*;
 import git4idea.config.GitVcsSettings;
 import git4idea.rebase.GitRebaseProblemDetector;
@@ -56,7 +56,7 @@ public class GithubRebaseAction extends AbstractGithubUrlGroupingAction {
                               @NotNull GitRemote remote,
                               @NotNull String remoteUrl,
                               @NotNull GithubAccount account) {
-    BasicAction.saveAll();
+    FileDocumentManager.getInstance().saveAllDocuments();
     GithubApiRequestExecutor executor = GithubApiRequestExecutorManager.getInstance().getExecutor(account, project);
     if (executor == null) return;
 
