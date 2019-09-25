@@ -161,18 +161,20 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
                                        @NotNull SamplingTask dumpTask,
                                        @Nullable File reportDir) {
     List<ThreadInfo[]> infos = dumpTask.getThreadInfos();
-    long time = dumpTask.getDumpInterval();
+    long dumpInterval = dumpTask.getDumpInterval();
+    long sampledTime = dumpTask.getSampledTime();
     if (infos.isEmpty()) {
       infos = StreamEx.of(myCurrentDumps).map(ThreadDump::getThreadInfos).toList();
-      time = PerformanceWatcher.getDumpInterval();
+      dumpInterval = PerformanceWatcher.getDumpInterval();
+      sampledTime = infos.size() * dumpInterval;
     }
 
     List<ThreadInfo> causeThreads = StreamEx.of(infos).map(IdeaFreezeReporter::getCauseThread).nonNull().toList();
     boolean allInEdt = causeThreads.stream().allMatch(ThreadDumper::isEDT);
 
-    CallTreeNode root = CallTreeNode.buildTree(causeThreads, time);
+    CallTreeNode root = CallTreeNode.buildTree(causeThreads, dumpInterval);
     int classLoadingRatio = countClassLoading(causeThreads) * 100 / causeThreads.size();
-    CallTreeNode commonStackNode = root.findDominantCommonStack(causeThreads.size() * time / 2);
+    CallTreeNode commonStackNode = root.findDominantCommonStack(causeThreads.size() * dumpInterval / 2);
     List<StackTraceElement> commonStack = commonStackNode != null ? commonStackNode.getStack() : null;
 
     boolean nonEdtCause = false;
@@ -198,7 +200,7 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
     if (!ContainerUtil.isEmpty(commonStack)) {
       String edtNote = allInEdt ? "in EDT " : "";
       String message = "Freeze " + edtNote + "for " + lengthInSeconds + " seconds\n" +
-                       "Sampled time: " + dumpTask.getSampledTime() + "ms, sampling rate: " + dumpTask.getDumpInterval() + "ms";
+                       "Sampled time: " + sampledTime + "ms, sampling rate: " + dumpInterval + "ms";
       long total = dumpTask.getTotalTime();
       long gcTime = dumpTask.getGcTime();
       if (total > 0) {
