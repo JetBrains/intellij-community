@@ -68,6 +68,15 @@ public class ImportActionTest extends ProjectWizardTestCase<AddModuleWizard> {
     assertEquals(path + "/inner/m2", contentRoots.get(1).getPath());
   }
 
+  public void testSingleModuleInProject() {
+    String path = getModuleMaximizationPath("single");
+    Project project = importProjectFrom(path, null, new ImportFromSourcesProvider()).getProject();
+    Module[] modules = ModuleManager.getInstance(project).getModules();
+    assertEquals(1, modules.length);
+    List<VirtualFile> contentRoots = getSingleContentRoots(modules);
+    assertEquals(path, contentRoots.get(0).getPath());
+  }
+
   private static String getModuleMaximizationPath(String projectName) {
     String basePath = "/ide/importAction/moduleMaximization";
     return PathManagerEx.getTestDataPath(basePath + "/" + projectName);
