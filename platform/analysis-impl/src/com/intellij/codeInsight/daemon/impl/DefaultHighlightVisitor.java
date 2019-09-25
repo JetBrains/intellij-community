@@ -4,9 +4,12 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.codeInsight.daemon.impl.analysis.ErrorQuickFixProvider;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.codeInsight.highlighting.HighlightErrorFilter;
+import com.intellij.lang.Language;
+import com.intellij.lang.LanguageAnnotators;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.Annotator;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
@@ -17,9 +20,17 @@ import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.ReflectionUtil;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.FactoryMap;
+import com.intellij.util.pico.CachingConstructorInjectionComponentAdapter;
 import org.jetbrains.annotations.NotNull;
+import org.picocontainer.PicoContainer;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author yole
@@ -27,6 +38,7 @@ import java.util.List;
 final class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
 
   private AnnotationHolderImpl myAnnotationHolder;
+  private final Map<String, List<Annotator>> myAnnotators = FactoryMap.create((key) -> createAnnotators(key));
 
   private final Project myProject;
   private final boolean myHighlightErrorElements;
@@ -68,6 +80,7 @@ final class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
     }
     finally {
       myAnnotationHolder.clear();
+      myAnnotators.clear();
       myAnnotationHolder = null;
       myHolder = null;
     }
@@ -99,7 +112,7 @@ final class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
   }
 
   private void runAnnotators(PsiElement element) {
-    List<Annotator> annotators = CachedAnnotators.CACHED_ANNOTATORS_KEY.getValue(myProject).get(element.getLanguage().getID());
+    List<Annotator> annotators = myAnnotators.get(element.getLanguage().getID());
     if (annotators.isEmpty()) {
       return;
     }
@@ -168,5 +181,33 @@ final class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
     builder.descriptionAndTooltip(errorDescription);
     builder.endOfLine();
     return builder.create();
+  }
+
+  @SuppressWarnings("unchecked")
+  @NotNull
+  private static <V> List<V> cloneTemplates(@NotNull Collection<? extends V> templates) {
+    List<V> result = new ArrayList<>(templates.size());
+    PicoContainer container = ApplicationManager.getApplication().getPicoContainer();
+    for (V template : templates) {
+      Class<? extends V> aClass = (Class<? extends V>)template.getClass();
+      V clone;
+      // todo in general CachingConstructorInjectionComponentAdapter should be not used at all, but for now disable it only for known cases
+      if (Annotator.class.isAssignableFrom(aClass)) {
+        clone = ReflectionUtil.newInstance(aClass);
+      }
+      else {
+        clone = (V)new CachingConstructorInjectionComponentAdapter(aClass.getName(), aClass, null, true).getComponentInstance(container);
+      }
+      result.add(clone);
+    }
+    return result;
+  }
+
+  private static List<Annotator> createAnnotators(@NotNull String languageId) {
+    Language language = Language.findLanguageByID(languageId);
+    if (language == null) {
+      return ContainerUtil.emptyList();
+    }
+    return cloneTemplates(LanguageAnnotators.INSTANCE.allForLanguageOrAny(language));
   }
 }
