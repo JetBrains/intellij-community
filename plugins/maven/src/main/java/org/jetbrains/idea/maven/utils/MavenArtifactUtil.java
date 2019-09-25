@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.utils;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -29,6 +30,7 @@ public class MavenArtifactUtil {
 
   @Nullable
   public static MavenPluginInfo readPluginInfo(File localRepository, MavenId mavenId) {
+    MavenLog.LOG.assertTrue(!ApplicationManager.getApplication().isDispatchThread());
     File file = getArtifactFile(localRepository, mavenId.getGroupId(), mavenId.getArtifactId(), mavenId.getVersion(), "jar");
 
     MavenPluginInfo result = ourPluginInfoCache.get(file);
