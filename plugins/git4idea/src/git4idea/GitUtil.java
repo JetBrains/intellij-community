@@ -366,10 +366,6 @@ public class GitUtil {
     return isGitRoot(folder.getPath());
   }
 
-  public static boolean isGitRoot(@NotNull VirtualFile file) {
-    return isGitRoot(file.getPath());
-  }
-
   /**
    * Return a git root for the file (the parent directory with ".git" subdirectory)
    *
@@ -759,11 +755,6 @@ public class GitUtil {
     return repository;
   }
 
-  @NotNull
-  public static String getPrintableRemotes(@NotNull Collection<GitRemote> remotes) {
-    return StringUtil.join(remotes, remote -> remote.getName() + ": [" + StringUtil.join(remote.getUrls(), ", ") + "]", "\n");
-  }
-
   /**
    * Show changes made in the specified revision.
    *
@@ -1087,18 +1078,6 @@ public class GitUtil {
       }
       throw e;
     }
-  }
-
-  @NotNull
-  public static Map<GitRepository, Hash> getCurrentRevisions(@NotNull Collection<? extends GitRepository> repositories) {
-    Map<GitRepository, Hash> result = new LinkedHashMap<>();
-    for (GitRepository repository : repositories) {
-      String currentRevision = repository.getCurrentRevision();
-      if (currentRevision != null) {
-        result.put(repository, HashImpl.build(currentRevision));
-      }
-    }
-    return result;
   }
 
   private static class GitRepositoryNotFoundException extends VcsException {
