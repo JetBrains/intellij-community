@@ -65,6 +65,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     @SuppressWarnings("SpellCheckingInspection")
     public boolean IS_ALL_SOFTWRAPS_SHOWN = false;
     public boolean IS_INDENT_GUIDES_SHOWN = true;
+    public boolean IS_STRING_CONTENT_INDENT_GUIDE_SHOWN = true;
     public boolean IS_FOCUS_MODE = false;
     public boolean IS_ANIMATED_SCROLLING = true;
     public boolean IS_CAMEL_WORDS = false;
@@ -573,6 +574,14 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
 
   public void setIndentGuidesShown(boolean val) {
     myOptions.IS_INDENT_GUIDES_SHOWN = val;
+  }
+
+  public boolean isStringContentIndentGuideShown() {
+    return myOptions.IS_STRING_CONTENT_INDENT_GUIDE_SHOWN;
+  }
+
+  public void setStringContentIndentGuideShown(boolean val) {
+    myOptions.IS_STRING_CONTENT_INDENT_GUIDE_SHOWN = val;
   }
 
   public boolean isFocusMode() {

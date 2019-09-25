@@ -58,6 +58,7 @@
     <option name="VISUAL_INDENT_GUIDE" value="808080" />
     <option name="WHITESPACES" value="ffffff" />
     <option name="WHITESPACES_MODIFIED_LINES_COLOR" value="666666" />
+    <option name="STRING_CONTENT_INDENT_GUIDE" value="54b33e"/>
     <option name="ScrollBar.background" value="000000"/>
     <option name="ScrollBar.trackColor" value="000000"/>
     <option name="ScrollBar.thumbColor" value="FFFFFFBE"/>
