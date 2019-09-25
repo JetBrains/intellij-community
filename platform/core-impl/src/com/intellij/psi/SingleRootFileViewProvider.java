@@ -58,6 +58,14 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
                                     final boolean eventSystemEnabled) {
     this(manager, virtualFile, eventSystemEnabled, calcBaseLanguage(virtualFile, manager.getProject(), virtualFile.getFileType()));
   }
+
+  public SingleRootFileViewProvider(@NotNull PsiManager manager,
+                                    @NotNull VirtualFile virtualFile,
+                                    final boolean eventSystemEnabled,
+                                    @NotNull final FileType fileType) {
+    this(manager, virtualFile, eventSystemEnabled, calcBaseLanguage(virtualFile, manager.getProject(), fileType));
+  }
+
   protected SingleRootFileViewProvider(@NotNull PsiManager manager,
                                        @NotNull VirtualFile virtualFile,
                                        final boolean eventSystemEnabled,
