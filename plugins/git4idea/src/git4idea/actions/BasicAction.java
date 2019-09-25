@@ -5,7 +5,6 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
@@ -37,7 +36,7 @@ public abstract class BasicAction extends DumbAwareAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent event) {
     Project project = event.getRequiredData(CommonDataKeys.PROJECT);
-    ApplicationManager.getApplication().runWriteAction(() -> FileDocumentManager.getInstance().saveAllDocuments());
+    FileDocumentManager.getInstance().saveAllDocuments();
     final VirtualFile[] vFiles = event.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
     assert vFiles != null : "The action is only available when files are selected";
 
@@ -186,9 +185,10 @@ public abstract class BasicAction extends DumbAwareAction {
   protected abstract boolean isEnabled(@NotNull Project project, @NotNull GitVcs vcs, @NotNull VirtualFile... vFiles);
 
   /**
-   * Save all files in the application (the operation creates write action)
+   * @deprecated Use {@link FileDocumentManager#saveAllDocuments()} directly.
    */
+  @Deprecated
   public static void saveAll() {
-    ApplicationManager.getApplication().runWriteAction(() -> FileDocumentManager.getInstance().saveAllDocuments());
+    FileDocumentManager.getInstance().saveAllDocuments();
   }
 }
