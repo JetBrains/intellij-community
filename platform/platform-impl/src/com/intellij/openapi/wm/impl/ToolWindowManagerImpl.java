@@ -1265,15 +1265,13 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
         setToolWindowTypeImpl(currentInfo.getId(), info.getType(), commandList);
       }
     }
-    // change auto-hide state
+    // change other properties
     for (final WindowInfoImpl currentInfo : currentInfos) {
       final WindowInfoImpl info = layout.getInfo(Objects.requireNonNull(currentInfo.getId()), false);
       if (info == null) {
         continue;
       }
-      if (currentInfo.isAutoHide() != info.isAutoHide()) {
-        setToolWindowAutoHideImpl(currentInfo.getId(), info.isAutoHide(), commandList);
-      }
+      copyWindowOptions(info, commandList);
     }
     // restore visibility
     for (final WindowInfoImpl currentInfo : currentInfos) {
@@ -1623,6 +1621,36 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     }
   }
 
+  private void copyWindowOptions(@NotNull WindowInfoImpl origin, @NotNull List<? super FinalizableCommand> commandsList) {
+    String id = Objects.requireNonNull(origin.getId());
+    final WindowInfoImpl info = getRegisteredInfoOrLogError(id);
+
+    boolean changed = false;
+    if (info.isAutoHide() != origin.isAutoHide()) {
+      info.setAutoHide(origin.isAutoHide());
+      changed = true;
+    }
+    if (info.getWeight() != origin.getWeight()) {
+      info.setWeight(origin.getWeight());
+      changed = true;
+    }
+    if (info.getSideWeight() != origin.getSideWeight()) {
+      info.setSideWeight(origin.getSideWeight());
+      changed = true;
+    }
+    if (info.getContentUiType() != origin.getContentUiType()) {
+      info.setContentUiType(origin.getContentUiType());
+      changed = true;
+    }
+    if (changed) {
+      appendApplyWindowInfoCmd(info, commandsList);
+      if (info.isVisible()) {
+        deactivateWindows(id, commandsList);
+        showAndActivate(id, false, commandsList, true);
+      }
+    }
+  }
+
   void setToolWindowType(@NotNull String id, @NotNull ToolWindowType type) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     List<FinalizableCommand> commandList = new ArrayList<>();
@@ -1811,7 +1839,11 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
       if (DesktopLayout.TAG.equals(e.getName())) {
         DesktopLayout layout = new DesktopLayout();
         layout.readExternal(e);
-        invokeLater(() -> setLayout(layout));
+        if (ApplicationManager.getApplication().isDispatchThread()) {
+          setLayout(layout);
+        } else {
+          invokeLater(() -> setLayout(layout));
+        }
       }
       else if (LAYOUT_TO_RESTORE.equals(e.getName())) {
         myLayoutToRestoreLater = new DesktopLayout();
