@@ -151,6 +151,12 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     }
   }
 
+  @Override
+  public boolean isSuspendedDumbMode() {
+    ProgressSuspender suspender = myCurrentSuspender;
+    return isDumb() && suspender != null && suspender.isSuspended();
+  }
+
   @NotNull
   private AccessToken heavyActivityStarted(@NotNull String activityName) {
     String reason = "Indexing paused due to " + activityName;

@@ -375,6 +375,13 @@ public abstract class DumbService {
   public abstract void suspendIndexingAndRun(@NotNull String activityName, @NotNull Runnable activity);
 
   /**
+   * Checks whether {@link #isDumb()} is true for the current project and if it's currently suspended by user or a {@link #suspendIndexingAndRun} call.
+   * This should be called inside read action. The momentary system state is returned: there are no guarantees that the result won't change
+   * in the next line of the calling code.
+   */
+  public abstract boolean isSuspendedDumbMode();
+
+  /**
    * @see #DUMB_MODE
    */
   public interface DumbModeListener {
