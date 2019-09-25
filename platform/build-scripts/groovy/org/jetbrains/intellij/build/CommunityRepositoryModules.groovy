@@ -345,7 +345,10 @@ class CommunityRepositoryModules {
       withModule("intellij.javaFX", mainJarName)
       withModule("intellij.javaFX.jps")
       withModule("intellij.javaFX.common")
-      withProjectLibrary("SceneBuilderKit") //todo[nik] move to module libraries
+      //todo[nik] move to module libraries
+      withModule("intellij.javaFX.sceneBuilder", "rt/sceneBuilderBridge.jar")
+      withProjectLibrary("SceneBuilderKit", "rt/java8")
+      withProjectLibrary("SceneBuilderKit11", "rt/java11")
     }
   }
 
