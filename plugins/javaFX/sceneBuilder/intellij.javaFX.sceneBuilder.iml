@@ -3,12 +3,11 @@
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
     <content url="">
-      <sourceFolder url="file://$MODULE_DIR$/../intellij.javaFX.scene.builder/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/../sceneBuilder/src" isTestSource="false" />
     </content>
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
     </content>
-    <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.java.psi" />
     <orderEntry type="module" module-name="intellij.java.indexing" />
