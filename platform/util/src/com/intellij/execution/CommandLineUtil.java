@@ -24,6 +24,8 @@ public class CommandLineUtil {
   private static final Pattern WIN_QUOTE_SPECIAL = Pattern.compile("[ \t\"*?\\[{}~()\']");  // + glob [*?] + Cygwin glob [*?\[{}~] + [()']
   private static final Pattern WIN_QUIET_COMMAND = Pattern.compile("((?:@\\s*)++)(.*)", Pattern.CASE_INSENSITIVE);
 
+  private static final String SHELL_WHITELIST_CHARACTERS = "-._/@=";
+
   private static final char Q = '\"';
   private static final String QQ = "\"\"";
 
@@ -498,6 +500,25 @@ public class CommandLineUtil {
    */
   @NotNull
   public static String posixQuote(@NotNull String stringToQuote) {
-    return isQuotedString(stringToQuote) ? stringToQuote : "'" + replace(stringToQuote, "'", "'\"'\"'") + "'";
+    return shouldWrapWithQuotes(stringToQuote) ? "'" + replace(stringToQuote, "'", "'\"'\"'") + "'" : stringToQuote;
+  }
+
+  /**
+   * @see CommandLineUtil#posixQuote(String)
+   */
+  public static void posixQuote(@NotNull StringBuilder commandOrArgument) {
+    String newValue = posixQuote(commandOrArgument.toString());
+    commandOrArgument.replace(0, commandOrArgument.length(), newValue);
+  }
+
+  private static boolean shouldWrapWithQuotes(@NotNull CharSequence argument) {
+    for (int i = 0; i < argument.length(); i++) {
+      char c = argument.charAt(i);
+      if (Character.isAlphabetic(c) || Character.isDigit(c) || SHELL_WHITELIST_CHARACTERS.indexOf(c) >= 0) {
+        continue;
+      }
+      return true;
+    }
+    return false;
   }
 }
