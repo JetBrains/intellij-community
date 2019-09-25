@@ -71,8 +71,10 @@ private fun writeIgnoreFileEntries(project: Project,
 private fun getIgnoredFileBeans(e: AnActionEvent, vcs: AbstractVcs): List<IgnoredFileBean> {
   val project = e.getRequiredData(CommonDataKeys.PROJECT)
   val unversionedFiles = e.getData(ChangesListView.EXACTLY_SELECTED_FILES_DATA_KEY)?.toList()
+  val result =
+    if (!unversionedFiles.isNullOrEmpty()) unversionedFiles else e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)?.toList() ?: emptyList()
 
-  return (unversionedFiles ?: e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)?.toList() ?: emptyList())
+  return result
     .filter { VcsUtil.getVcsFor(project, it) == vcs }
     .map { IgnoredBeanFactory.ignoreFile(it, project) }
 }

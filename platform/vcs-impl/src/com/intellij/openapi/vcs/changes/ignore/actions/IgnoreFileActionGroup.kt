@@ -32,7 +32,8 @@ open class IgnoreFileActionGroup(private val ignoreFileType: IgnoreFileType) :
 
   override fun update(e: AnActionEvent) {
     val exactlySelectedFiles = e.getData(ChangesListView.EXACTLY_SELECTED_FILES_DATA_KEY)?.toList()
-    val selectedFiles = exactlySelectedFiles ?: e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)?.toList()
+    val selectedFiles =
+      if (!exactlySelectedFiles.isNullOrEmpty()) exactlySelectedFiles else e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)?.toList()
     val project = e.getData(CommonDataKeys.PROJECT)
     val presentation = e.presentation
 
