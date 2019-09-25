@@ -11,8 +11,8 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 
 /**
- * This class should be extended by plugin vendor and provided by means of {@link com.intellij.ExtensionPoints#ERROR_HANDLER} if
- * reporting errors that happened in plugin code to vendor is desirable.
+ * This class should be extended by plugin vendor and provided by means of {@link com.intellij.ExtensionPoints#ERROR_HANDLER_EP}
+ * if reporting errors that happened in plugin code to vendor is desirable.
  */
 public abstract class ErrorReportSubmitter implements PluginAware {
   private PluginDescriptor myPlugin;
@@ -58,31 +58,30 @@ public abstract class ErrorReportSubmitter implements PluginAware {
                         @Nullable String additionalInfo,
                         @NotNull Component parentComponent,
                         @NotNull Consumer<SubmittedReportInfo> consumer) {
-    //noinspection deprecation
     return trySubmitAsync(events, additionalInfo, parentComponent, consumer);
   }
 
   //<editor-fold desc="Deprecated stuff.">
-  /** @deprecated implement {@link #submit(IdeaLoggingEvent[], String, Component, Consumer)} instead (to be removed in IDEA 2019) */
+  /** @deprecated do not override; implement {@link #submit(IdeaLoggingEvent[], String, Component, Consumer)} instead */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2019")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
   @SuppressWarnings("ALL")
   public boolean trySubmitAsync(IdeaLoggingEvent[] events, String info, Component parent, Consumer<SubmittedReportInfo> consumer) {
     submitAsync(events, info, parent, consumer);
     return true;
   }
 
-  /** @deprecated implement {@link #submit(IdeaLoggingEvent[], String, Component, Consumer)} instead (to be removed in IDEA 2019) */
+  /** @deprecated do not override; implement {@link #submit(IdeaLoggingEvent[], String, Component, Consumer)} instead */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2019")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
   @SuppressWarnings("ALL")
   public void submitAsync(IdeaLoggingEvent[] events, String info, Component parent, Consumer<SubmittedReportInfo> consumer) {
     consumer.consume(submit(events, parent));
   }
 
-  /** @deprecated implement {@link #submit(IdeaLoggingEvent[], String, Component, Consumer)} instead (to be removed in IDEA 2019) */
+  /** @deprecated do not override; implement {@link #submit(IdeaLoggingEvent[], String, Component, Consumer)} instead */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2019")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
   @SuppressWarnings("ALL")
   public SubmittedReportInfo submit(IdeaLoggingEvent[] events, Component parent) {
     throw new UnsupportedOperationException("Deprecated API called");

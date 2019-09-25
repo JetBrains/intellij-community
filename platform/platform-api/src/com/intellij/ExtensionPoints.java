@@ -7,15 +7,15 @@ import org.jetbrains.annotations.ApiStatus;
 
 public interface ExtensionPoints {
   /**
-   * This extension point allows a plugin vendor to provide the user ability to report fatal errors (aka exceptions) that happened in
+   * This extension point allows a plugin vendor to provide users with ability to report exceptions that happened in
    * their plugin code.
    * Extension declaration sample is as follows:
-   * <pre>
-   * &lt;extensions xmlns="com.intellij"&gt;
-   *   &lt;errorHandler implementation="my.plugin.package.MyErrorHandler"/&gt;
-   * &lt;/extensions&gt;
-   * </pre>
-   * my.plugin.package.MyErrorHandler class must implement {@link ErrorReportSubmitter} abstract class.
+   * <pre>{@code
+   *   <extensions xmlns="com.intellij">
+   *     <errorHandler implementation="my.plugin.package.MyErrorHandler"/>
+   *   </extensions>
+   * }</pre>
+   * The {@code my.plugin.package.MyErrorHandler} class must implement {@link ErrorReportSubmitter}.
    */
   @ApiStatus.Internal
   ExtensionPointName<ErrorReportSubmitter> ERROR_HANDLER_EP = ExtensionPointName.create("com.intellij.errorHandler");
