@@ -61,7 +61,8 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
   @NotNull
   @Override
   public final FrameDiffTool.ToolbarComponents init() {
-    if (LOG.isDebugEnabled() && (getComponent().getWidth() <= 0 || getComponent().getHeight() <= 0)) {
+    if (LOG.isDebugEnabled() && !ApplicationManager.getApplication().isHeadlessEnvironment() &&
+        (getComponent().getWidth() <= 0 || getComponent().getHeight() <= 0)) {
       LOG.warn("Diff shown for a hidden component, initial scroll position might be invalid", new Throwable());
     }
 
