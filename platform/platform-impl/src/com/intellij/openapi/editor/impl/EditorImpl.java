@@ -4201,6 +4201,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     private int myFontSize = -1;
     private int myConsoleFontSize = -1;
     private String myFaceName;
+    private Float myLineSpacing;
 
     private MyColorSchemeDelegate(@Nullable EditorColorsScheme globalScheme) {
       super(globalScheme == null ? EditorColorsManager.getInstance().getGlobalScheme() : globalScheme);
@@ -4390,6 +4391,17 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     @Override
     public int getConsoleFontSize() {
       return myConsoleFontSize == -1 ? super.getConsoleFontSize() : myConsoleFontSize;
+    }
+
+    @Override
+    public float getLineSpacing() {
+      return myLineSpacing == null ? super.getLineSpacing() : myLineSpacing;
+    }
+
+    @Override
+    public void setLineSpacing(float lineSpacing) {
+      myLineSpacing = EditorFontsConstants.checkAndFixEditorLineSpacing(lineSpacing);
+      reinitSettings();
     }
   }
 
