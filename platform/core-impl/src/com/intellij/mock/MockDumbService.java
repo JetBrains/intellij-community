@@ -100,6 +100,11 @@ public class MockDumbService extends DumbService {
   }
 
   @Override
+  public boolean isSuspendedDumbMode() {
+    return true;
+  }
+
+  @Override
   public void smartInvokeLater(@NotNull final Runnable runnable) {
     runnable.run();
   }
