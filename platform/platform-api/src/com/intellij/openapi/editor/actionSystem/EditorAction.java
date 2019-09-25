@@ -27,25 +27,19 @@ public abstract class EditorAction extends AnAction implements DumbAware, Update
   private EditorActionHandler myHandler;
   private boolean myHandlersLoaded;
 
-  public final EditorActionHandler getHandler() {
-    ensureHandlersLoaded();
-    return myHandler;
-  }
-
   protected EditorAction(EditorActionHandler defaultHandler) {
     myHandler = defaultHandler;
     setEnabledInModalContext(true);
   }
 
-  public final EditorActionHandler setupHandler(@NotNull EditorActionHandler newHandler) {
-    ensureHandlersLoaded();
-    EditorActionHandler tmp = myHandler;
+  public synchronized final EditorActionHandler setupHandler(@NotNull EditorActionHandler newHandler) {
+    EditorActionHandler tmp = getHandler();
     myHandler = newHandler;
     myHandler.setWorksInInjected(isInInjectedContext());
     return tmp;
   }
 
-  private void ensureHandlersLoaded() {
+  public synchronized EditorActionHandler getHandler() {
     if (!myHandlersLoaded) {
       myHandlersLoaded = true;
       final String id = ActionManager.getInstance().getId(this);
@@ -61,10 +55,11 @@ public abstract class EditorAction extends AnAction implements DumbAware, Update
         }
       }
     }
+    return myHandler;
   }
 
   @Override
-  public void setInjectedContext(boolean worksInInjected) {
+  public synchronized void setInjectedContext(boolean worksInInjected) {
     super.setInjectedContext(worksInInjected);
     // we assume that this method is called in constructor at the point
     // where the chain of handlers is not initialized yet
