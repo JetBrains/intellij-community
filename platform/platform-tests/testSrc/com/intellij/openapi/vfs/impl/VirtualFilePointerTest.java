@@ -832,25 +832,6 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void testPointerToRootFromUrlMustNotBeMangled() {
-    VirtualFile root = ManagingFS.getInstance().getLocalRoots()[0];
-    String rootPath = root.getPath();
-    String rootUrl = root.getUrl();
-
-    VirtualFilePointer rootPointer = myVirtualFilePointerManager.create(rootUrl, disposable, null);
-    assertThat(rootPointer.getUrl()).as("root pointer url before getting file").isEqualTo(rootUrl);
-    assertThat(rootPointer.getFile()).as("root pointer file").isEqualTo(root);
-    assertThat(rootPointer.getUrl()).as("root pointer url after getting file").isEqualTo(rootUrl);
-
-    assertThat(Arrays.asList(
-      createPointerByFile(new File(rootPath + "//"), null),
-      createPointerByFile(new File(rootPath + "/."), null),
-      createPointerByFile(new File(rootPath + "/.//"), null),
-      createPointerByFile(new File(rootPath + "/.//."), null)
-    )).containsOnly(rootPointer);
-  }
-
-  @Test
   public void testDifferentFileSystemsLocalFSAndJarFSWithSimilarUrlsMustReturnDifferentInstances() throws IOException {
     VirtualFile vDir = getVirtualTempRoot();
     WriteAction.runAndWait(() -> {
