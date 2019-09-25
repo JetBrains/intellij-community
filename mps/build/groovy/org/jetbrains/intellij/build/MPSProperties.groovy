@@ -42,6 +42,7 @@ class MPSProperties extends ProductProperties {
                 "intellij.vcs.github",
                 "intellij.java.coverage"
         ]
+        productLayout.prepareCustomPluginRepositoryForPublishedPlugins = false
         productLayout.compatiblePluginsToIgnore = ["intellij.java.plugin"]
         productLayout.allNonTrivialPlugins = CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS + [
                 JavaPluginLayout.javaPlugin(false)
