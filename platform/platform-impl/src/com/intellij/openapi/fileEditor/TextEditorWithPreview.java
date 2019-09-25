@@ -33,15 +33,21 @@ public class TextEditorWithPreview extends UserDataHolderBase implements FileEdi
   protected final FileEditor myPreview;
   @NotNull
   private final MyListenersMultimap myListenersGenerator = new MyListenersMultimap();
+  private final Layout myDefaultLayout;
   private Layout myLayout;
   private JComponent myComponent;
   private SplitEditorToolbar myToolbarWrapper;
   private final String myName;
 
-  public TextEditorWithPreview(@NotNull TextEditor editor, @NotNull FileEditor preview, @NotNull String editorName) {
+  public TextEditorWithPreview(TextEditor editor, @NotNull FileEditor preview, @NotNull String editorName, @NotNull Layout defaultLayout) {
     myEditor = editor;
     myPreview = preview;
     myName = editorName;
+    myDefaultLayout = defaultLayout;
+  }
+
+  public TextEditorWithPreview(@NotNull TextEditor editor, @NotNull FileEditor preview, @NotNull String editorName) {
+    this(editor, preview, editorName, Layout.SHOW_EDITOR_AND_PREVIEW);
   }
 
   public TextEditorWithPreview(@NotNull TextEditor editor, @NotNull FileEditor preview) {
@@ -99,7 +105,7 @@ public class TextEditorWithPreview extends UserDataHolderBase implements FileEdi
 
       if (myLayout == null) {
         String lastUsed = PropertiesComponent.getInstance().getValue(getLayoutPropertyName());
-        myLayout = Layout.fromName(lastUsed, Layout.SHOW_EDITOR_AND_PREVIEW);
+        myLayout = Layout.fromName(lastUsed, myDefaultLayout);
       }
       adjustEditorsVisibility();
 
