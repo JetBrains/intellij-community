@@ -101,7 +101,7 @@ public class MockDumbService extends DumbService {
 
   @Override
   public boolean isSuspendedDumbMode() {
-    return true;
+    return false;
   }
 
   @Override
