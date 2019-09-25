@@ -3,7 +3,6 @@ package com.intellij.internal.statistic.eventLog
 
 import com.intellij.execution.Executor
 import com.intellij.internal.statistic.eventLog.StatisticsEventEscaper.escapeFieldName
-import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext
 import com.intellij.internal.statistic.utils.PluginInfo
 import com.intellij.internal.statistic.utils.addPluginInfoTo
 import com.intellij.internal.statistic.utils.getPluginType
