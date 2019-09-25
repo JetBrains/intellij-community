@@ -4,18 +4,19 @@ package com.intellij.notification;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.BiConsumer;
 
 /**
- * @see Notification#addAction(AnAction)
- *
  * @author Alexander Lobas
+ * @see Notification#addAction(AnAction)
  */
 public abstract class NotificationAction extends DumbAwareAction {
-  public NotificationAction(@Nullable String text) {
+
+  public NotificationAction(@Nullable @Nls(capitalization = Nls.Capitalization.Title) String text) {
     super(text);
   }
 
@@ -27,7 +28,8 @@ public abstract class NotificationAction extends DumbAwareAction {
   public abstract void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification);
 
   @NotNull
-  public static NotificationAction create(@NotNull String text, @NotNull BiConsumer<? super AnActionEvent, ? super Notification> performAction) {
+  public static NotificationAction create(@NotNull @Nls(capitalization = Nls.Capitalization.Title) String text,
+                                          @NotNull BiConsumer<? super AnActionEvent, ? super Notification> performAction) {
     return new NotificationAction(text) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
@@ -37,7 +39,8 @@ public abstract class NotificationAction extends DumbAwareAction {
   }
 
   @NotNull
-  public static NotificationAction createSimple(@NotNull String text, @NotNull Runnable performAction) {
+  public static NotificationAction createSimple(@NotNull @Nls(capitalization = Nls.Capitalization.Title) String text,
+                                                @NotNull Runnable performAction) {
     return create(text, (event, notification) -> performAction.run());
   }
 }
