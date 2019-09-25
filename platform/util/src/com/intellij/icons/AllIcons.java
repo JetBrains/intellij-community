@@ -2760,6 +2760,7 @@ public class AllIcons {
     /** 16x16 */ public static final Icon Informix = load("/providers/informix.svg");
     /** 16x16 */ public static final Icon Mariadb = load("/providers/mariadb.svg");
     /** 16x16 */ public static final Icon Microsoft = load("/providers/microsoft.svg");
+    /** 16x16 */ public static final Icon MongoDB = load("/providers/mongoDB.svg");
     /** 16x16 */ public static final Icon Mysql = load("/providers/mysql.svg");
     /** 16x16 */ public static final Icon Oracle = load("/providers/oracle.svg");
     /** 16x16 */ public static final Icon Postgresql = load("/providers/postgresql.svg");
