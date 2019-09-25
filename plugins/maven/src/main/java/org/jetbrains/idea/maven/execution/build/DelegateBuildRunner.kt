@@ -34,7 +34,7 @@ class DelegateBuildRunner : DefaultJavaProgramRunner() {
 
   companion object {
 
-    private val ID = "MAVEN_DELEGATE_BUILD_RUNNER"
+    private const val ID = "MAVEN_DELEGATE_BUILD_RUNNER"
 
     @JvmStatic
     fun getDelegateRunner(): ProgramRunner<*>? = ProgramRunner.findRunnerById(ID)

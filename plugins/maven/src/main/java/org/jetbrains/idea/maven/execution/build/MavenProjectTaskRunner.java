@@ -43,9 +43,6 @@ import static org.jetbrains.idea.maven.utils.MavenUtil.isMavenModule;
  */
 public class MavenProjectTaskRunner extends ProjectTaskRunner {
 
-  private static final Pattern ERRORS_NUMBER_PATTERN = Pattern.compile("^\\[INFO] (\\d+) errors\\s*$");
-  private static final Pattern WARNING_PATTERN = Pattern.compile("^\\[WARNING]");
-
   @Override
   public void run(@NotNull Project project,
                   @NotNull ProjectTaskContext context,
@@ -228,6 +225,9 @@ public class MavenProjectTaskRunner extends ProjectTaskRunner {
       FileDocumentManager.getInstance().saveAllDocuments();
       for (MavenRunnerParameters command : commands) {
         MavenRunConfigurationType.runConfiguration(project, command, null, null, descriptor -> {
+          if(callback == null){
+            return;
+          }
           ProcessHandler handler = descriptor.getProcessHandler();
           if (handler != null) {
             handler.addProcessListener(new ProcessAdapter() {
