@@ -268,14 +268,7 @@ public final class XsltRunConfiguration extends LocatableConfigurationBase imple
     @Nullable
     private static FileType getFileType(String value) {
         if (value == null) return null;
-
-        final FileType[] fileTypes = FileTypeManager.getInstance().getRegisteredFileTypes();
-        for (FileType fileType : fileTypes) {
-            if (fileType.getName().equals(value)) {
-                return fileType;
-            }
-        }
-        return null;
+        return FileTypeManager.getInstance().findFileTypeByName(value);
     }
 
     @Override
