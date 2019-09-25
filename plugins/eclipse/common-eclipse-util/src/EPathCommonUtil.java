@@ -16,6 +16,7 @@
 package org.jetbrains.idea.eclipse;
 
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,6 +64,6 @@ public class EPathCommonUtil {
   }
 
   public static String pathToUrl(String path) {
-    return "file://" + path;
+    return "file://" + FileUtil.toSystemIndependentName(path);
   }
 }

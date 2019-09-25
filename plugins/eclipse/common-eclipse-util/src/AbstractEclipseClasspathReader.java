@@ -288,7 +288,7 @@ public abstract class AbstractEclipseClasspathReader<T> {
 
   @NotNull
   protected static String pathToUrl(@NotNull String path) {
-    return "file://" + path;
+    return "file://" + FileUtil.toSystemIndependentName(path);
   }
 
   protected static EPathVariable createEPathVariable(String pathAttr, int varStart) {
