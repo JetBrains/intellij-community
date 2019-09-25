@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.libraryJar;
 
-import com.intellij.internal.statistic.beans.UsageDescriptor;
+import com.intellij.internal.statistic.beans.MetricEvent;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector;
 import com.intellij.openapi.application.ApplicationManager;
@@ -14,10 +14,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.ProjectScope;
-import java.util.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashSet;
 import java.util.Set;
 import java.util.jar.Attributes;
 import java.util.regex.Matcher;
@@ -32,9 +32,20 @@ public class FUSLibraryJarUsagesCollector extends ProjectUsagesCollector {
 
   @NotNull
   @Override
-  public Set<UsageDescriptor> getUsages(@NotNull Project project) {
+  public String getGroupId() {
+    return "javaLibraryJars";
+  }
+
+  @Override
+  public int getVersion() {
+    return 2;
+  }
+
+  @NotNull
+  @Override
+  public Set<MetricEvent> getMetrics(@NotNull Project project) {
     LibraryJarDescriptor[] descriptors = LibraryJarStatisticsService.getInstance().getTechnologyDescriptors();
-    Set<UsageDescriptor> result = new HashSet<>(descriptors.length);
+    Set<MetricEvent> result = new HashSet<>(descriptors.length);
 
     ApplicationManager.getApplication().runReadAction(() -> {
       for (LibraryJarDescriptor descriptor : descriptors) {
@@ -48,7 +59,8 @@ public class FUSLibraryJarUsagesCollector extends ProjectUsagesCollector {
             String version = getVersionByJarManifest(jarFile);
             if (version == null) version = getVersionByJarFileName(jarFile.getName());
             if (StringUtil.isNotEmpty(version)) {
-              result.add(new UsageDescriptor(descriptor.myName, 1, new FeatureUsageData().addOS().addVersionByString(version)));
+              final FeatureUsageData data = new FeatureUsageData().addVersionByString(version).addData("library", descriptor.myName);
+              result.add(new MetricEvent("used.library", data));
             }
           }
         }
@@ -69,11 +81,5 @@ public class FUSLibraryJarUsagesCollector extends ProjectUsagesCollector {
     if (!fileNameMatcher.matches()) return null;
 
     return StringUtil.trimTrailing(fileNameMatcher.group(1), '.');
-  }
-
-  @NotNull
-  @Override
-  public String getGroupId() {
-    return "javaLibraryJars";
   }
 }
