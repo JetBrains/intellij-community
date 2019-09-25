@@ -67,6 +67,15 @@ public class SimplifiableBooleanExpressionFixTest extends IGQuickFixesTestCase {
                  "}");
   }
 
+  public void testIncomplete() {
+    assertQuickfixNotAvailable(InspectionGadgetsBundle.message("constant.conditional.expression.simplify.quickfix"),
+                               "class X {\n" +
+                               "  boolean fff(boolean a) { \n" +
+                               "    return a/**/ && || !a;\n\n" +
+                               "  }\n" +
+                               "}");
+  }
+
   public void testAndOrExpression3Parentheses() {
     doMemberTest(InspectionGadgetsBundle.message("constant.conditional.expression.simplify.quickfix"),
                  "boolean fff(boolean a, boolean b, boolean c) {" +
