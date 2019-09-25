@@ -54,7 +54,7 @@ class SceneBuilderUtil {
           throw new IllegalStateException(
             "Development mode is not supported for Scene Builder in JDK 11, please use full distribution or JDK 8");
         }
-        sceneBuilder = getJarPath("rt/java11/scenebuilderkit-11.0.1.jar", javaFxJar);
+        sceneBuilder = getJarPath("rt/java11/scenebuilderkit-11.0.2.jar", javaFxJar);
       }
       final Path sceneBuilderImpl = getJarPath(isDevMode ? "intellij.javaFX.sceneBuilder" : "rt/sceneBuilderBridge.jar", javaFxJar);
       return new URL[]{sceneBuilder.toUri().toURL(), sceneBuilderImpl.toUri().toURL()};
