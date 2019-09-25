@@ -67,51 +67,47 @@ final class ObjectNode {
     }
   }
 
-  void execute(@NotNull final ObjectTreeAction<Disposable> action, @NotNull List<? super Throwable> exceptions) {
-    ObjectTree.executeActionWithRecursiveGuard(this, myTree.getNodesInExecution(), new ObjectTreeAction<ObjectNode>() {
-      @Override
-      public void execute(@NotNull ObjectNode each) {
-        if (myTree.getDisposalInfo(myObject) != null) return; // already disposed. may happen when someone does `register(obj, ()->Disposer.dispose(t));` abomination
+  void execute(@NotNull List<? super Throwable> exceptions) {
+    ObjectTree.executeActionWithRecursiveGuard(this, myTree.getNodesInExecution(), each -> {
+      if (myTree.getDisposalInfo(myObject) != null) return; // already disposed. may happen when someone does `register(obj, ()->Disposer.dispose(t));` abomination
+      try {
+        if (myObject instanceof Disposable.Parent) {
+          ((Disposable.Parent)myObject).beforeTreeDispose();
+        }
+      }
+      catch (Throwable t) {
+        LOG.error(t);
+      }
+
+      ObjectNode[] childrenArray;
+      synchronized (myTree.treeLock) {
+        List<ObjectNode> children = myChildren;
+        childrenArray = children == null || children.isEmpty() ? EMPTY_ARRAY : children.toArray(EMPTY_ARRAY);
+        myChildren = null;
+      }
+
+      for (int i = childrenArray.length - 1; i >= 0; i--) {
         try {
-          action.beforeTreeExecution(myObject);
-        }
-        catch (Throwable t) {
-          LOG.error(t);
-        }
-
-        ObjectNode[] childrenArray;
-        synchronized (myTree.treeLock) {
-          List<ObjectNode> children = myChildren;
-          childrenArray = children == null || children.isEmpty() ? EMPTY_ARRAY : children.toArray(EMPTY_ARRAY);
-          myChildren = null;
-        }
-
-        for (int i = childrenArray.length - 1; i >= 0; i--) {
-          try {
-            ObjectNode childNode = childrenArray[i];
-            childNode.execute(action, exceptions);
-            synchronized (myTree.treeLock) {
-              childNode.myParent = null;
-            }
+          ObjectNode childNode = childrenArray[i];
+          childNode.execute(exceptions);
+          synchronized (myTree.treeLock) {
+            childNode.myParent = null;
           }
-          catch (Throwable e) {
-            exceptions.add(e);
-          }
-        }
-
-        try {
-          action.execute(myObject);
-          myTree.rememberDisposedTrace(myObject);
         }
         catch (Throwable e) {
           exceptions.add(e);
         }
-        removeFromObjectTree();
       }
 
-      @Override
-      public void beforeTreeExecution(@NotNull ObjectNode parent) {
+      try {
+        //noinspection SSBasedInspection
+        myObject.dispose();
+        myTree.rememberDisposedTrace(myObject);
       }
+      catch (Throwable e) {
+        exceptions.add(e);
+      }
+      removeFromObjectTree();
     });
   }
 
