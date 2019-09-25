@@ -8,7 +8,6 @@ import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction
 import com.intellij.openapi.vcs.changes.ignore.lang.IgnoreFileType
-import com.intellij.openapi.vcs.changes.ui.ChangesListView
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -19,7 +18,6 @@ import com.intellij.psi.search.ProjectScope
 import com.intellij.util.containers.isEmpty
 import com.intellij.vcsUtil.VcsImplUtil
 import com.intellij.vcsUtil.VcsUtil
-import kotlin.streams.toList
 
 open class IgnoreFileActionGroup(private val ignoreFileType: IgnoreFileType) :
   ActionGroup(
@@ -31,9 +29,7 @@ open class IgnoreFileActionGroup(private val ignoreFileType: IgnoreFileType) :
   var actions: Collection<AnAction> = emptyList()
 
   override fun update(e: AnActionEvent) {
-    val exactlySelectedFiles = e.getData(ChangesListView.EXACTLY_SELECTED_FILES_DATA_KEY)?.toList()
-    val selectedFiles =
-      if (!exactlySelectedFiles.isNullOrEmpty()) exactlySelectedFiles else e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)?.toList()
+    val selectedFiles = getSelectedFiles(e)
     val project = e.getData(CommonDataKeys.PROJECT)
     val presentation = e.presentation
 
