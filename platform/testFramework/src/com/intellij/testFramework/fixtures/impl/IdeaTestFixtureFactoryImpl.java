@@ -10,6 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
+import java.nio.file.Path;
 import java.util.Map;
 
 /**
@@ -42,7 +43,14 @@ public class IdeaTestFixtureFactoryImpl extends IdeaTestFixtureFactory {
   @NotNull
   @Override
   public TestFixtureBuilder<IdeaProjectTestFixture> createFixtureBuilder(@NotNull String name, boolean isDirectoryBasedProject) {
-    return new HeavyTestFixtureBuilderImpl(new HeavyIdeaTestFixtureImpl(name, isDirectoryBasedProject), myFixtureBuilderProviders);
+    return new HeavyTestFixtureBuilderImpl(new HeavyIdeaTestFixtureImpl(name, null, isDirectoryBasedProject), myFixtureBuilderProviders);
+  }
+
+  @Override
+  public TestFixtureBuilder<IdeaProjectTestFixture> createFixtureBuilder(@NotNull String name,
+                                                                         @Nullable Path projectPath,
+                                                                         boolean isDirectoryBasedProject) {
+    return new HeavyTestFixtureBuilderImpl(new HeavyIdeaTestFixtureImpl(name, projectPath, isDirectoryBasedProject), myFixtureBuilderProviders);
   }
 
   @NotNull

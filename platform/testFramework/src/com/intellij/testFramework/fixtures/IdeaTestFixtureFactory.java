@@ -7,6 +7,8 @@ import com.intellij.testFramework.fixtures.impl.IdeaTestFixtureFactoryImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.file.Path;
+
 /**
  * This is to be provided by the test framework and not by plugin authors.
  */
@@ -32,6 +34,8 @@ public abstract class IdeaTestFixtureFactory {
   }
 
   public abstract TestFixtureBuilder<IdeaProjectTestFixture> createFixtureBuilder(@NotNull String name, boolean isDirectoryBasedProject);
+
+  public abstract TestFixtureBuilder<IdeaProjectTestFixture> createFixtureBuilder(@NotNull String name, @Nullable Path projectPath, boolean isDirectoryBasedProject);
 
   @NotNull
   public abstract TestFixtureBuilder<IdeaProjectTestFixture> createLightFixtureBuilder();

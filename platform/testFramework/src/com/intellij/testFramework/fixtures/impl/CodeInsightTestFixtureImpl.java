@@ -167,6 +167,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   private boolean myCaresAboutInjection = true;
   private VirtualFilePointerTracker myVirtualFilePointerTracker;
   private ResourceBundle[] myMessageBundles = new ResourceBundle[0];
+  private boolean myReplaceEdtQueue = true;
 
   public CodeInsightTestFixtureImpl(@NotNull IdeaProjectTestFixture projectFixture, @NotNull TempDirTestFixture tempDirTestFixture) {
     myProjectFixture = projectFixture;
@@ -1167,11 +1168,17 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     return psiFile;
   }
 
+  public void disableEdtQueueReplacement() {
+    myReplaceEdtQueue = false;
+  }
+
   @Override
   public void setUp() throws Exception {
     super.setUp();
 
-    TestRunnerUtil.replaceIdeEventQueueSafely();
+    if (myReplaceEdtQueue) {
+      TestRunnerUtil.replaceIdeEventQueueSafely();
+    }
     EdtTestUtil.runInEdtAndWait(() -> {
       myProjectFixture.setUp();
       myTempDirFixture.setUp();
