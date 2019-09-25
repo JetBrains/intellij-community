@@ -142,6 +142,7 @@ public class HighlightInfo implements Segment {
     return description;
   }
 
+  @Nullable
   public String getInspectionGroupKey() {
     return inspectionGroupKey;
   }
@@ -282,7 +283,7 @@ public class HighlightInfo implements Segment {
                           boolean isFileLevelAnnotation,
                           int navigationShift,
                           ProblemGroup problemGroup,
-                          String inspectionGroupKey,
+                          @Nullable String inspectionGroupKey,
                           GutterMark gutterIconRenderer) {
     if (startOffset < 0 || startOffset > endOffset) {
       LOG.error("Incorrect highlightInfo bounds. description="+escapedDescription+"; startOffset="+startOffset+"; endOffset="+endOffset+";type="+type);
