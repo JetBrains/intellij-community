@@ -470,7 +470,7 @@ public class StartupManagerImpl extends StartupManagerEx implements Disposable {
     if (application == null) return;
 
     GuiUtils.invokeLaterIfNeeded(() -> {
-      if (myProject.isDisposed()) return;
+      if (myProject.isDisposedOrDisposeInProgress()) return;
 
       //noinspection SynchronizeOnThis
       synchronized (this) {
