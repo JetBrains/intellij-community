@@ -46,18 +46,8 @@ public abstract class ApplicationUsagesCollector extends FeatureUsagesCollector 
     return Collections.emptySet();
   }
 
-  /**
-   * @deprecated use {@link ApplicationUsagesCollector#getData()}
-   */
-  @Deprecated
-  @Nullable
-  public FUSUsageContext getContext() {
-    return null;
-  }
-
   @Nullable
   public FeatureUsageData getData() {
-    final FUSUsageContext context = getContext();
-    return context != null ? new FeatureUsageData().addFeatureContext(context) : null;
+    return null;
   }
 }

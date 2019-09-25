@@ -2,7 +2,6 @@
 package com.intellij.internal.statistic.beans;
 
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
-import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,15 +24,6 @@ public final class UsageDescriptor {
 
   public UsageDescriptor(@NotNull String key, int value) {
     this(key, value, new FeatureUsageData());
-  }
-
-  /**
-   * @deprecated Create named event data with {@link FeatureUsageData}
-   */
-  @Deprecated
-  public UsageDescriptor(@NotNull String key, int value, @Nullable FUSUsageContext context) {
-    this(key, value);
-    if (context != null) myData.addFeatureContext(context);
   }
 
   public UsageDescriptor(@NotNull String key, @Nullable FeatureUsageData data) {

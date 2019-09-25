@@ -48,13 +48,6 @@ class FeatureUsageData {
     )
   }
 
-  fun addFeatureContext(context: FUSUsageContext?): FeatureUsageData {
-    if (context != null) {
-      data.putAll(context.data)
-    }
-    return this
-  }
-
   /**
    * Project data is added automatically for project state collectors and project-wide counter events.
    *
@@ -322,10 +315,4 @@ class FeatureUsageData {
   override fun toString(): String {
     return data.toString()
   }
-}
-
-fun newData(project: Project?, context: FUSUsageContext?): Map<String, Any> {
-  if (project == null && context == null) return Collections.emptyMap()
-
-  return FeatureUsageData().addProject(project).addFeatureContext(context).build()
 }
