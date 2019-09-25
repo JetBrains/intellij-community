@@ -3,7 +3,7 @@
   <module value="com.intellij.modules.json"/>
 
   <actions>
-    <action id="JsonCopyPointer" class="com.intellij.json.editor.JsonCopyPointerAction" description="Copy JSON Pointer">
+    <action id="JsonCopyPointer" class="com.intellij.json.editor.JsonCopyPointerAction" description="Copy JSON Pointer" text="Copy JSON Pointer">
       <add-to-group group-id="CutCopyPasteGroup" anchor="after" relative-to-action="CopyReference"/>
       <add-to-group group-id="EditorTabPopupMenu" anchor="after" relative-to-action="CopyReference"/>
       <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="CopyReference"/>
