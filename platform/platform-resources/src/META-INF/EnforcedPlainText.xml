@@ -1,0 +1,8 @@
+<idea-plugin>
+  <extensions defaultExtensionNs="com.intellij">
+    <fileType name="Enforced Plain Text" implementationClass="com.intellij.openapi.file.exclude.EnforcedPlainTextFileType" fieldName="INSTANCE"/>
+    <applicationService serviceImplementation="com.intellij.openapi.file.exclude.EnforcedPlainTextFileTypeManager"/>
+    <projectService serviceImplementation="com.intellij.openapi.file.exclude.ProjectPlainTextFileTypeManager"/>
+    <fileTypeOverrider implementation="com.intellij.openapi.file.exclude.EnforcedPlainTextFileTypeOverrider"/>
+  </extensions>
+</idea-plugin>

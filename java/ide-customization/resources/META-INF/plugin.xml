@@ -7,6 +7,7 @@
   <resource-bundle>messages.ActionsBundle</resource-bundle>
 
   <xi:include href="/META-INF/IdeTipsAndTricks.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/META-INF/EnforcedPlainText.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
   <extensions defaultExtensionNs="com.intellij">
     <applicationInitializedListener implementation="com.intellij.internal.statistic.updater.StatisticsJobsScheduler"/>
@@ -48,10 +49,6 @@
 
     <!-- this depends on TemplateLanguageConfigurable which isn't registered in LangExtensions, so it should go here as well -->
     <errorQuickFixProvider implementation="com.intellij.psi.templateLanguages.TemplateLanguageErrorQuickFixProvider"/>
-
-    <fileType name="Enforced Plain Text" implementationClass="com.intellij.openapi.file.exclude.EnforcedPlainTextFileType" fieldName="INSTANCE"/>
-    <applicationService serviceImplementation="com.intellij.openapi.file.exclude.EnforcedPlainTextFileTypeManager"/>
-    <projectService serviceImplementation="com.intellij.openapi.file.exclude.ProjectPlainTextFileTypeManager"/>
 
     <moduleRendererFactory implementation="com.intellij.ide.util.DefaultModuleRendererFactory" order="last,before platform"/>
 
