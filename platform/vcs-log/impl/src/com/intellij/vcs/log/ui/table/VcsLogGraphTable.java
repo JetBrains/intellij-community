@@ -491,7 +491,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     else if (VcsLogDataKeys.VCS_LOG_PROVIDERS.is(dataId)) {
       Map<VirtualFile, VcsLogProvider> providers = myLogData.getLogProviders();
       if (providers.size() == 1) {
-        return Collections.singleton(providers.values().iterator().next());
+        return Collections.singleton(Objects.requireNonNull(getFirstItem(providers.values())));
       }
       int[] selectedRows = getSelectedRows();
       if (selectedRows.length > VcsLogUtil.MAX_SELECTED_COMMITS) {
