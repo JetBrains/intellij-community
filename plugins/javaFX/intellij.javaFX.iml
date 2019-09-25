@@ -29,5 +29,6 @@
     <orderEntry type="module" module-name="intellij.java.typeMigration" />
     <orderEntry type="library" name="NanoXML" level="project" />
     <orderEntry type="module" module-name="intellij.java.tests" scope="TEST" />
+    <orderEntry type="library" scope="PROVIDED" name="SceneBuilderKit11" level="project" />
   </component>
 </module>
