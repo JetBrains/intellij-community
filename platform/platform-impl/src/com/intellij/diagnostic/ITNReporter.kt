@@ -39,6 +39,12 @@ open class ITNReporter : ErrorReportSubmitter() {
     if (ErrorReportConfigurable.getCredentials().isFulfilled()) DiagnosticBundle.message("error.dialog.notice.named")
     else DiagnosticBundle.message("error.dialog.notice.anonymous")
 
+  override fun getReporterAccount(): String? = ErrorReportConfigurable.getCredentials()?.userName ?: ""
+
+  override fun changeReporterAccount(parentComponent: Component) {
+    askJBAccountCredentials(parentComponent, null)
+  }
+
   override fun submit(events: Array<IdeaLoggingEvent>,
                       additionalInfo: String?,
                       parentComponent: Component,

@@ -41,8 +41,24 @@ public abstract class ErrorReportSubmitter implements PluginAware {
   /**
    * @return a text of a privacy notice to be shown in the dialog (in HTML; links are allowed).
    */
-  public String getPrivacyNoticeText() {
+  public @Nullable String getPrivacyNoticeText() {
     return null;
+  }
+
+  /**
+   * If this reporter allows a user to identify themselves, the method should return either the name of an account that will be used
+   * for submitting reports or an empty string. Otherwise, it should return {@code null}.
+   */
+  public @Nullable String getReporterAccount() {
+    return null;
+  }
+
+  /**
+   * If {@link #getReporterAccount()} returns a non-null value, this method may be called when a user wants to change a reporter account.
+   * It is expected to be synchronous - i.e. do not return until a user finished entering their data.
+   */
+  public void changeReporterAccount(@NotNull Component parentComponent) {
+    throw new UnsupportedOperationException();
   }
 
   /**

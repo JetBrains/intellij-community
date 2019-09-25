@@ -3,7 +3,6 @@ package com.intellij.diagnostic;
 
 import com.intellij.CommonBundle;
 import com.intellij.ExtensionPoints;
-import com.intellij.credentialStore.Credentials;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
@@ -289,8 +288,11 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
     myCredentialsLabel = ComponentsKt.htmlComponent("height sample", null, null, null, false, e -> {
       if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-        JetBrainsAccountDialogKt.askJBAccountCredentials(getRootPane(), null);
-        updateControls();
+        ErrorReportSubmitter submitter = selectedCluster().submitter;
+        if (submitter != null) {
+          submitter.changeReporterAccount(getRootPane());
+          updateControls();
+        }
       }
     });
     if (myAssigneeVisible) {
@@ -570,12 +572,12 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     return -1;
   }
 
-  private void updateCredentialsPanel(ErrorReportSubmitter submitter) {
-    if (submitter instanceof ITNReporter) {
+  private void updateCredentialsPanel(@Nullable ErrorReportSubmitter submitter) {
+    String account = submitter != null ? submitter.getReporterAccount() : null;
+    if (account != null) {
       myCredentialsLabel.setVisible(true);
-      Credentials credentials = ErrorReportConfigurable.getCredentials();
-      if (credentials != null && credentials.getUserName() != null) {
-        myCredentialsLabel.setText(DiagnosticBundle.message("error.dialog.submit.named", credentials.getUserName()));
+      if (!account.isEmpty()) {
+        myCredentialsLabel.setText(DiagnosticBundle.message("error.dialog.submit.named", account));
       }
       else {
         myCredentialsLabel.setText(DiagnosticBundle.message("error.dialog.submit.anonymous"));
