@@ -246,7 +246,7 @@ public class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsM
         }
       }
       CommonCodeStyleSettings.IndentOptions indentOptions = mySettings.getIndentOptions(myFile.getFileType());
-      return String.valueOf(indentOptions.TAB_SIZE);
+      return String.valueOf(indentOptions.INDENT_SIZE);
     }
   }
 
