@@ -4,6 +4,7 @@ package com.intellij.dvcs.ui;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.repo.VcsRepositoryManager;
 import com.intellij.dvcs.repo.VcsRepositoryMappingListener;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -21,6 +22,7 @@ import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.event.MouseEvent;
 
 public abstract class DvcsStatusWidget<T extends Repository> extends EditorBasedWidget
@@ -33,6 +35,7 @@ public abstract class DvcsStatusWidget<T extends Repository> extends EditorBased
 
   @Nullable private String myText;
   @Nullable private String myTooltip;
+  @Nullable private Icon myIcon;
 
   protected DvcsStatusWidget(@NotNull Project project, @NotNull String prefix) {
     super(project);
@@ -44,6 +47,12 @@ public abstract class DvcsStatusWidget<T extends Repository> extends EditorBased
 
   @NotNull
   protected abstract String getFullBranchName(@NotNull T repository);
+
+  @Nullable
+  protected Icon getIcon(@NotNull T repository) {
+    if (repository.getState() != Repository.State.NORMAL) return AllIcons.General.Warning;
+    return null;
+  }
 
   protected abstract boolean isMultiRoot(@NotNull Project project);
 
@@ -112,6 +121,12 @@ public abstract class DvcsStatusWidget<T extends Repository> extends EditorBased
 
   @Nullable
   @Override
+  public Icon getIcon() {
+    return myIcon;
+  }
+
+  @Nullable
+  @Override
   public ListPopup getPopupStep() {
     Project project = getProject();
     if (project.isDisposed()) return null;
@@ -141,6 +156,7 @@ public abstract class DvcsStatusWidget<T extends Repository> extends EditorBased
   private void update() {
     myText = null;
     myTooltip = null;
+    myIcon = null;
 
     Project project = getProject();
     if (project.isDisposed()) return;
@@ -149,7 +165,8 @@ public abstract class DvcsStatusWidget<T extends Repository> extends EditorBased
 
     int maxLength = MAX_STRING.length() - 1; // -1, because there are arrows indicating that it is a popup
     myText = StringUtil.shortenTextWithEllipsis(getFullBranchName(repository), maxLength, 5);
-    myTooltip = getToolTip(project);
+    myTooltip = getToolTip(repository);
+    myIcon = getIcon(repository);
     if (myStatusBar != null) {
       myStatusBar.updateWidget(ID());
     }
@@ -158,12 +175,11 @@ public abstract class DvcsStatusWidget<T extends Repository> extends EditorBased
 
   @Nullable
   @CalledInAwt
-  private String getToolTip(@NotNull Project project) {
-    T currentRepository = guessCurrentRepository(project);
-    if (currentRepository == null) return null;
-    String branchName = myPrefix + " Branch: " + getFullBranchName(currentRepository);
-    if (isMultiRoot(project)) {
-      return branchName + "\n" + "Root: " + currentRepository.getRoot().getName();
+  private String getToolTip(@Nullable T repository) {
+    if (repository == null) return null;
+    String branchName = myPrefix + " Branch: " + getFullBranchName(repository);
+    if (isMultiRoot(repository.getProject())) {
+      return branchName + "\n" + "Root: " + repository.getRoot().getName();
     }
     return branchName;
   }
