@@ -51,7 +51,7 @@ public class ColoredProcessHandler extends KillableProcessHandler implements Ans
    */
   @Override
   public void coloredTextAvailable(@NotNull String text, @NotNull Key attributes) {
-    textAvailable(text, attributes);
+    super.notifyTextAvailable(text, attributes);
   }
 
   /**
@@ -76,14 +76,5 @@ public class ColoredProcessHandler extends KillableProcessHandler implements Ans
         listener.coloredTextAvailable(event.getText(), outputType);
       }
     });
-  }
-
-  /**
-   * @deprecated override {@link #coloredTextAvailable(String, Key)} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021")
-  protected void textAvailable(final String text, final Key attributes) {
-    super.notifyTextAvailable(text, attributes);
   }
 }
