@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.engine.DebugProcessImpl;
@@ -51,7 +51,7 @@ public class InstrumentationTracker {
     myRedefineBreakpoint =
       new InstrumentationMethodBreakpoint(debugProcess.getProject(), "sun.instrument.InstrumentationImpl", "redefineClasses") {
         @Override
-        public boolean processLocatableEvent(SuspendContextCommandImpl action, LocatableEvent event) {
+        public boolean processLocatableEvent(@NotNull SuspendContextCommandImpl action, LocatableEvent event) {
           try {
             Value value = ContainerUtil.getFirstItem(DebuggerUtilsEx.getArgumentValues(event.thread().frame(0)));
             if (value instanceof ArrayReference) {
@@ -70,7 +70,7 @@ public class InstrumentationTracker {
     myRetransformBreakpoint =
       new InstrumentationMethodBreakpoint(debugProcess.getProject(), "sun.instrument.InstrumentationImpl", "retransformClasses") {
         @Override
-        public boolean processLocatableEvent(SuspendContextCommandImpl action, LocatableEvent event) {
+        public boolean processLocatableEvent(@NotNull SuspendContextCommandImpl action, LocatableEvent event) {
           try {
             Value value = ContainerUtil.getFirstItem(DebuggerUtilsEx.getArgumentValues(event.thread().frame(0)));
             if (value instanceof ArrayReference) {
