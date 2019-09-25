@@ -21,7 +21,7 @@ import java.util.List;
  */
 public class BasicStepMethodFilter implements NamedMethodFilter {
   private static final Logger LOG = Logger.getInstance(BasicStepMethodFilter.class);
-  private static final String PROXY_CALL_SIGNATURE = "(Ljava/lang/Object;Ljava/lang/reflect/Method;[Ljava/lang/Object;)Ljava/lang/Object;";
+  private static final String PROXY_CALL_SIGNATURE_POSTFIX = "Ljava/lang/Object;Ljava/lang/reflect/Method;[Ljava/lang/Object;)Ljava/lang/Object;";
 
   @NotNull
   protected final JVMName myDeclaringClassName;
@@ -86,7 +86,7 @@ public class BasicStepMethodFilter implements NamedMethodFilter {
     Method method = location.method();
     String name = method.name();
     if (!myTargetMethodName.equals(name)) {
-      if (isLambdaCall(process, name, location) || isProxyCall(process, method, stackFrame)) {
+      if (isLambdaCall(process, name, location)) {
         return true;
       }
       if (!caller && myCheckCaller) {
@@ -138,9 +138,31 @@ public class BasicStepMethodFilter implements NamedMethodFilter {
     return false;
   }
 
+  public boolean proxyCheck(Location location, SuspendContextImpl context, RequestHint hint) {
+    DebugProcessImpl debugProcess = context.getDebugProcess();
+    if (isProxyCall(debugProcess, location.method(), context.getFrameProxy())) {
+      if (!DebugProcessImpl.isPositionFiltered(location)) {
+        return true;
+      }
+      try {
+        StepIntoMethodBreakpoint breakpoint =
+          new StepIntoMethodBreakpoint(myDeclaringClassName.getName(debugProcess),
+                                       myTargetMethodName,
+                                       myTargetMethodSignature != null ? myTargetMethodSignature.getName(debugProcess) : null,
+                                       debugProcess.getProject());
+        DebugProcessImpl.prepareAndSetSteppingBreakpoint(context, breakpoint, hint, false);
+      }
+      catch (EvaluateException e) {
+        LOG.error(e);
+      }
+    }
+    return false;
+  }
+
   private boolean isProxyCall(DebugProcessImpl process, Method method, @Nullable StackFrameProxyImpl stackFrame) {
     try {
-      if (stackFrame != null && PROXY_CALL_SIGNATURE.equals(method.signature())) {
+      String signature = method.signature();
+      if (stackFrame != null && signature != null && signature.endsWith(PROXY_CALL_SIGNATURE_POSTFIX)) {
         if ("invoke".equals(method.name())) {
           ReferenceType type = method.declaringType();
           if (!(type instanceof ClassType) ||
@@ -152,12 +174,13 @@ public class BasicStepMethodFilter implements NamedMethodFilter {
           return false;
         }
         List<Value> argumentValues = stackFrame.getArgumentValues();
-        if (argumentValues.size() == 3) {
-          Value proxyValue = argumentValues.get(0);
+        int size = argumentValues.size();
+        if (size >= 3) {
+          Value proxyValue = argumentValues.get(size - 3);
           if (proxyValue != null) {
             Type proxyType = proxyValue.type();
             if (proxyType instanceof ReferenceType && DebuggerUtilsEx.isAssignableFrom(myDeclaringClassName.getName(process), proxyType)) {
-              Value methodValue = argumentValues.get(1);
+              Value methodValue = argumentValues.get(size - 2);
               if (methodValue instanceof ObjectReference) {
                 // TODO: no signature check for now
                 ReferenceType methodType = ((ObjectReference)methodValue).referenceType();

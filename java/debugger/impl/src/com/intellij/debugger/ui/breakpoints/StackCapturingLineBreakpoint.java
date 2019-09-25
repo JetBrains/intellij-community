@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.DebuggerBundle;
@@ -19,7 +19,6 @@ import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
@@ -29,10 +28,8 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FixedHashMap;
 import com.sun.jdi.*;
 import com.sun.jdi.event.LocatableEvent;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.java.debugger.breakpoints.properties.JavaMethodBreakpointProperties;
 
 import java.util.Collections;
 import java.util.List;
@@ -42,11 +39,10 @@ import java.util.concurrent.CopyOnWriteArrayList;
 /**
  * @author egor
  */
-public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
+public class StackCapturingLineBreakpoint extends SyntheticMethodBreakpoint {
   private static final Logger LOG = Logger.getInstance(StackCapturingLineBreakpoint.class);
 
   private final CapturePoint myCapturePoint;
-  private final String mySignature;
 
   private final MyEvaluator myCaptureEvaluator;
   private final MyEvaluator myInsertEvaluator;
@@ -55,34 +51,16 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
   private static final Key<Map<Object, List<StackFrameItem>>> CAPTURED_STACKS = Key.create("CAPTURED_STACKS");
   private static final int MAX_STORED_STACKS = 1000;
 
-  private final JavaMethodBreakpointProperties myProperties = new JavaMethodBreakpointProperties();
-
   public StackCapturingLineBreakpoint(Project project, CapturePoint capturePoint) {
-    super(project, null);
+    super(capturePoint.myClassName, capturePoint.myMethodName, null, project);
     myCapturePoint = capturePoint;
-    mySignature = null;
-    myProperties.EMULATED = true;
-    myProperties.WATCH_EXIT = false;
-    myProperties.myClassPattern = myCapturePoint.myClassName;
-    myProperties.myMethodName = myCapturePoint.myMethodName;
-
     myCaptureEvaluator = new MyEvaluator(myCapturePoint.myCaptureKeyExpression);
     myInsertEvaluator = new MyEvaluator(myCapturePoint.myInsertKeyExpression);
-  }
-
-  @NotNull
-  @Override
-  protected JavaMethodBreakpointProperties getProperties() {
-    return myProperties;
+    setSuspendPolicy(DebuggerSettings.SUSPEND_THREAD);
   }
 
   @Override
-  public String getSuspendPolicy() {
-    return DebuggerSettings.SUSPEND_THREAD;
-  }
-
-  @Override
-  public boolean processLocatableEvent(SuspendContextCommandImpl action, LocatableEvent event) {
+  public boolean processLocatableEvent(@NotNull SuspendContextCommandImpl action, LocatableEvent event) {
     SuspendContextImpl suspendContext = action.getSuspendContext();
     if (suspendContext != null) {
       ThreadReferenceProxyImpl thread = suspendContext.getThread();
@@ -112,18 +90,6 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
     }
 
     return false;
-  }
-
-  @Override
-  protected void fireBreakpointChanged() {
-  }
-
-  @Override
-  public StreamEx matchingMethods(StreamEx<Method> methods, DebugProcessImpl debugProcess) {
-    String methodName = getMethodName();
-    return methods
-      .filter(m -> Comparing.equal(methodName, m.name()) && (mySignature == null || Comparing.equal(mySignature, m.signature())))
-      .limit(1);
   }
 
   public static void deleteAll(DebugProcessImpl debugProcess) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * Class Breakpoint
@@ -244,7 +244,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
   }
 
   @Override
-  public boolean processLocatableEvent(SuspendContextCommandImpl action, LocatableEvent event) throws EventProcessingException {
+  public boolean processLocatableEvent(@NotNull SuspendContextCommandImpl action, LocatableEvent event) throws EventProcessingException {
     SuspendContextImpl context = action.getSuspendContext();
     if (!isValid()) {
       context.getDebugProcess().getRequestsManager().deleteRequest(this);

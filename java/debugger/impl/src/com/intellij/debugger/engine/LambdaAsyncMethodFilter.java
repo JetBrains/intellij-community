@@ -58,7 +58,7 @@ public class LambdaAsyncMethodFilter extends BasicStepMethodFilter {
             Project project = context.getDebugProcess().getProject();
             long lambdaId = ((ObjectReference)lambdaReference).uniqueID();
             StepIntoBreakpoint breakpoint = new LambdaInstanceBreakpoint(project, lambdaId, pos, myMethodFilter);
-            ClassInstanceMethodFilter.setUpStepIntoBreakpoint(context, breakpoint, hint);
+            DebugProcessImpl.prepareAndSetSteppingBreakpoint(context, breakpoint, hint, true);
             return RequestHint.RESUME;
           }
         }

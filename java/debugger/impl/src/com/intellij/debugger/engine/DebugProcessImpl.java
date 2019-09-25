@@ -21,10 +21,7 @@ import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.settings.NodeRendererSettings;
-import com.intellij.debugger.ui.breakpoints.BreakpointManager;
-import com.intellij.debugger.ui.breakpoints.RunToCursorBreakpoint;
-import com.intellij.debugger.ui.breakpoints.StackCapturingLineBreakpoint;
-import com.intellij.debugger.ui.breakpoints.StepIntoBreakpoint;
+import com.intellij.debugger.ui.breakpoints.*;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.debugger.ui.tree.render.ArrayRenderer;
 import com.intellij.debugger.ui.tree.render.ClassRenderer;
@@ -61,7 +58,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.ui.classFilter.DebuggerClassFilterProvider;
 import com.intellij.util.Alarm;
-import com.intellij.util.Consumer;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
@@ -368,8 +364,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       deleteStepRequests(stepThreadReference);
       EventRequestManager requestManager = getVirtualMachineProxy().eventRequestManager();
       StepRequest stepRequest = requestManager.createStepRequest(stepThreadReference, size, depth);
-      if (!(hint != null && hint.isIgnoreFilters()) /*&& depth == StepRequest.STEP_INTO*/) {
-        checkPositionNotFiltered(stepThread, filters -> filters.forEach(f -> stepRequest.addClassExclusionFilter(f.getPattern())));
+      if (!(hint != null && hint.isIgnoreFilters()) && !isPositionFiltered(getLocation(stepThread))) {
+        getActiveFilters().forEach(f -> stepRequest.addClassExclusionFilter(f.getPattern()));
       }
 
       // suspend policy to match the suspend policy of the context:
@@ -387,7 +383,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       }
       try {
         stepRequest.enable();
-      } catch (IllegalThreadStateException e) { // thread is already dead
+      }
+      catch (IllegalThreadStateException e) { // thread is already dead
         requestManager.deleteEventRequest(stepRequest);
       }
     }
@@ -396,14 +393,16 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     }
   }
 
-  public void checkPositionNotFiltered(ThreadReferenceProxyImpl thread, Consumer<? super List<ClassFilter>> action) {
+  static boolean isPositionFiltered(Location location) {
     List<ClassFilter> activeFilters = getActiveFilters();
     if (!activeFilters.isEmpty()) {
-      String currentClassName = getCurrentClassName(thread);
-      if (currentClassName == null || !DebuggerUtilsEx.isFiltered(currentClassName, activeFilters)) {
-        action.consume(activeFilters);
+      ReferenceType referenceType = location != null ? location.declaringType() : null;
+      if (referenceType != null) {
+        String currentClassName = referenceType.name();
+        return currentClassName != null && DebuggerUtilsEx.isFiltered(currentClassName, activeFilters);
       }
     }
+    return false;
   }
 
   @NotNull
@@ -437,16 +436,12 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   @Nullable
-  static String getCurrentClassName(ThreadReferenceProxyImpl thread) {
+  private static Location getLocation(@Nullable ThreadReferenceProxyImpl thread) {
     try {
       if (thread != null && thread.frameCount() > 0) {
         StackFrameProxyImpl stackFrame = thread.frame(0);
         if (stackFrame != null) {
-          Location location = stackFrame.location();
-          ReferenceType referenceType = location == null ? null : location.declaringType();
-          if (referenceType != null) {
-            return referenceType.name();
-          }
+          return stackFrame.location();
         }
       }
     }
@@ -776,21 +771,51 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     myPositionManager.appendPositionManager(positionManager);
   }
 
-  private volatile RunToCursorBreakpoint myRunToCursorBreakpoint;
+  private volatile SteppingBreakpoint mySteppingBreakpoint;
 
+  public void setSteppingBreakpoint(@Nullable SteppingBreakpoint breakpoint) {
+    mySteppingBreakpoint = breakpoint;
+  }
+
+  /**
+   * @deprecated use {@link #setSteppingBreakpoint(SteppingBreakpoint)}
+   */
+  @Deprecated
   public void setRunToCursorBreakpoint(@Nullable RunToCursorBreakpoint breakpoint) {
-    myRunToCursorBreakpoint = breakpoint;
+    mySteppingBreakpoint = breakpoint;
   }
 
   public void cancelRunToCursorBreakpoint() {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    final RunToCursorBreakpoint runToCursorBreakpoint = myRunToCursorBreakpoint;
+    final SteppingBreakpoint runToCursorBreakpoint = mySteppingBreakpoint;
     if (runToCursorBreakpoint != null) {
-      setRunToCursorBreakpoint(null);
+      setSteppingBreakpoint(null);
       getRequestsManager().deleteRequest(runToCursorBreakpoint);
       if (runToCursorBreakpoint.isRestoreBreakpoints()) {
         DebuggerManagerEx.getInstanceEx(getProject()).getBreakpointManager().enableBreakpoints(this);
       }
+    }
+  }
+
+  static void prepareAndSetSteppingBreakpoint(SuspendContextImpl context,
+                                              @NotNull SteppingBreakpoint breakpoint,
+                                              RequestHint hint,
+                                              boolean resetThreadFilter) {
+    DebugProcessImpl debugProcess = context.getDebugProcess();
+    if (resetThreadFilter) {
+      BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(debugProcess.getProject()).getBreakpointManager();
+      breakpointManager.applyThreadFilter(debugProcess, null); // clear the filter on resume
+    }
+    breakpoint.setSuspendPolicy(
+      context.getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD ? DebuggerSettings.SUSPEND_THREAD : DebuggerSettings.SUSPEND_ALL);
+    breakpoint.createRequest(debugProcess);
+    breakpoint.setRequestHint(hint);
+    debugProcess.setSteppingBreakpoint(breakpoint);
+  }
+
+  public void resetIgnoreSteppingFilters(@Nullable Location location, @Nullable RequestHint hint) {
+    if (hint != null && hint.isResetIgnoreFilters() && location != null && !isPositionFiltered(location)) {
+      getSession().resetIgnoreStepFiltersFlag();
     }
   }
 
@@ -1579,10 +1604,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       hint.setIgnoreFilters(myForcedIgnoreFilters || mySession.shouldIgnoreSteppingFilters());
       applyThreadFilter(stepThread);
       if (myBreakpoint != null) {
-        myBreakpoint.setSuspendPolicy(suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD? DebuggerSettings.SUSPEND_THREAD : DebuggerSettings.SUSPEND_ALL);
-        myBreakpoint.createRequest(suspendContext.getDebugProcess());
-        myBreakpoint.setRequestHint(hint);
-        setRunToCursorBreakpoint(myBreakpoint);
+        prepareAndSetSteppingBreakpoint(suspendContext, myBreakpoint, hint, false);
       }
       doStep(suspendContext, stepThread, myStepSize, StepRequest.STEP_INTO, hint);
       super.contextAction();
@@ -1671,10 +1693,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       }
       applyThreadFilter(getContextThread());
       final SuspendContextImpl context = getSuspendContext();
-      myRunToCursorBreakpoint.setSuspendPolicy(context.getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD? DebuggerSettings.SUSPEND_THREAD : DebuggerSettings.SUSPEND_ALL);
+      prepareAndSetSteppingBreakpoint(context, myRunToCursorBreakpoint, null, false);
       final DebugProcessImpl debugProcess = context.getDebugProcess();
-      myRunToCursorBreakpoint.createRequest(debugProcess);
-      setRunToCursorBreakpoint(myRunToCursorBreakpoint);
 
       if (debugProcess.getRequestsManager().getWarning(myRunToCursorBreakpoint) == null) {
         super.contextAction();
