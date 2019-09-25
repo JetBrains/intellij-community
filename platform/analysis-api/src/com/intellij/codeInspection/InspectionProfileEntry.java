@@ -197,6 +197,9 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
     @Nullable
     String getDefaultShortName();
 
+    /**
+     * Unlocalized inspection group name
+     */
     @NonNls
     @Nullable
     String getGroupKey();
@@ -230,6 +233,9 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
     return "";
   }
 
+  /**
+   * @see InspectionEP#groupKey
+   */
   @NonNls
   @Nullable
   public String getGroupKey() {

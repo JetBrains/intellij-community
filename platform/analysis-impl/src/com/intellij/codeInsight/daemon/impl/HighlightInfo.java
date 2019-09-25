@@ -282,25 +282,6 @@ public class HighlightInfo implements Segment {
                           boolean isFileLevelAnnotation,
                           int navigationShift,
                           ProblemGroup problemGroup,
-                          GutterMark gutterIconRenderer) {
-    this(forcedTextAttributes, forcedTextAttributesKey,type, startOffset, endOffset,
-      escapedDescription, escapedToolTip, severity, afterEndOfLine, needsUpdateOnTyping,
-      isFileLevelAnnotation, navigationShift, problemGroup, null, gutterIconRenderer);
-  }
-
-  protected HighlightInfo(@Nullable TextAttributes forcedTextAttributes,
-                          @Nullable TextAttributesKey forcedTextAttributesKey,
-                          @NotNull HighlightInfoType type,
-                          int startOffset,
-                          int endOffset,
-                          @Nullable String escapedDescription,
-                          @Nullable String escapedToolTip,
-                          @NotNull HighlightSeverity severity,
-                          boolean afterEndOfLine,
-                          @Nullable Boolean needsUpdateOnTyping,
-                          boolean isFileLevelAnnotation,
-                          int navigationShift,
-                          ProblemGroup problemGroup,
                           String inspectionGroupKey,
                           GutterMark gutterIconRenderer) {
     if (startOffset < 0 || startOffset > endOffset) {
@@ -679,7 +660,7 @@ public class HighlightInfo implements Segment {
     HighlightInfo info = new HighlightInfo(
       forcedAttributes, forcedAttributesKey, convertType(annotation), annotation.getStartOffset(), annotation.getEndOffset(),
       annotation.getMessage(), annotation.getTooltip(), annotation.getSeverity(), annotation.isAfterEndOfLine(), annotation.needsUpdateOnTyping(),
-      annotation.isFileLevelAnnotation(), 0, annotation.getProblemGroup(), annotation.getGutterIconRenderer());
+      annotation.isFileLevelAnnotation(), 0, annotation.getProblemGroup(), null, annotation.getGutterIconRenderer());
 
     List<? extends Annotation.QuickFixInfo> fixes = batchMode ? annotation.getBatchFixes() : annotation.getQuickFixes();
     if (fixes != null) {

@@ -34,7 +34,7 @@ import java.util.*;
 
 public class UpdateHighlightersUtil {
 
-  public final static ExtensionPointName<HighlightInfoPostFilter> EP_NAME = ExtensionPointName.create("com.intellij.highlightInfoPostFilter");
+  private final static ExtensionPointName<HighlightInfoPostFilter> EP_NAME = ExtensionPointName.create("com.intellij.highlightInfoPostFilter");
 
   private static final Comparator<HighlightInfo> BY_START_OFFSET_NODUPS = (o1, o2) -> {
     int d = o1.getActualStartOffset() - o2.getActualStartOffset();
@@ -140,7 +140,8 @@ public class UpdateHighlightersUtil {
     setHighlightersInRange(project, document, range, colorsScheme, new ArrayList<>(highlights), (MarkupModelEx)markup, group);
   }
 
-  private static ArrayList<HighlightInfo> applyPostFilter(Project project, Collection<? extends HighlightInfo> highlightInfos) {
+  private static ArrayList<HighlightInfo> applyPostFilter(@NotNull Project project,
+                                                          @NotNull List<? extends HighlightInfo> highlightInfos) {
     ArrayList<HighlightInfo> result = new ArrayList<>();
     for (HighlightInfo info : highlightInfos) {
       if (accept(project, info))
