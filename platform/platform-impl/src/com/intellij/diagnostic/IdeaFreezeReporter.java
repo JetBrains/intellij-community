@@ -197,12 +197,12 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
 
     if (!ContainerUtil.isEmpty(commonStack)) {
       String edtNote = allInEdt ? "in EDT " : "";
-      long sampled = dumpTask.getSampledTime();
-      long gcTime = dumpTask.getGcTime();
       String message = "Freeze " + edtNote + "for " + lengthInSeconds + " seconds\n" +
-                       "Sampled time: " + sampled + "ms, sampling rate: " + dumpTask.getDumpInterval() + "ms";
-      if (sampled > 0) {
-        message += ", GC time: " + gcTime + "ms (" + gcTime * 100 / sampled + "%), Class loading: " + classLoadingRatio + "%";
+                       "Sampled time: " + dumpTask.getSampledTime() + "ms, sampling rate: " + dumpTask.getDumpInterval() + "ms";
+      long total = dumpTask.getTotalTime();
+      long gcTime = dumpTask.getGcTime();
+      if (total > 0) {
+        message += ", GC time: " + gcTime + "ms (" + gcTime * 100 / total + "%), Class loading: " + classLoadingRatio + "%";
       }
       if (DebugAttachDetector.isDebugEnabled()) {
         message += ", debug agent: on";
