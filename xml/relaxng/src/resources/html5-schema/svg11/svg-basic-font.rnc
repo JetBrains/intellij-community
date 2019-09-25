@@ -109,7 +109,6 @@ grammar {
         attribute d { PathData.datatype }?,
         attribute orientation { text }?,
         attribute arabic-form { text }?,
-        attribute lang { LanguageCodes.datatype }?,
         attribute horiz-adv-x { Number.datatype }?,
         attribute vert-origin-x { Number.datatype }?,
         attribute vert-origin-y { Number.datatype }?,

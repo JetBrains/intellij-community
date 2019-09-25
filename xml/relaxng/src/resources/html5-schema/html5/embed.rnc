@@ -174,9 +174,12 @@ namespace local = ""
 			                    | translate
 			                    | style
 			                    | tabindex
+			                    | autofocus
 			                    | contenteditable
 			                    | draggable
 			                    | hidden
+			                    | inputmode
+			                    | nonce
 			                    | onabort
 			                    | onautocomplete
 			                    | onautocompleteerror
@@ -355,7 +358,6 @@ namespace local = ""
 				)
 			|	object.attrs.type
 			)
-		&	object.attrs.typemustmatch?
 #		&	object.attrs.classid?
 #		&	object.attrs.codebase?
 #		&	object.attrs.codetype?
@@ -378,10 +380,6 @@ namespace local = ""
 			attribute type {
 				common.data.mimetype
 			}
-		object.attrs.typemustmatch =
-			attribute typemustmatch {
-				w:string "typemustmatch" | w:string ""
-			} & v5only
 		object.attrs.height =
 			attribute height {
 				common.data.integer.non-negative
