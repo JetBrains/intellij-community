@@ -2,6 +2,14 @@
 
   <module value="com.intellij.modules.json"/>
 
+  <actions>
+    <action id="JsonCopyPointer" class="com.intellij.json.editor.JsonCopyPointerAction" description="Copy JSON Pointer">
+      <add-to-group group-id="CutCopyPasteGroup" anchor="after" relative-to-action="CopyReference"/>
+      <add-to-group group-id="EditorTabPopupMenu" anchor="after" relative-to-action="CopyReference"/>
+      <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="CopyReference"/>
+    </action>
+  </actions>
+
   <extensions defaultExtensionNs="com.intellij">
     <fileType name="JSON" extensions="json" implementationClass="com.intellij.json.JsonFileType" fieldName="INSTANCE" language="JSON"/>
     <fileType name="JSON5" extensions="json5" implementationClass="com.intellij.json.json5.Json5FileType" fieldName="INSTANCE" language="JSON5"/>
