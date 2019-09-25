@@ -20,7 +20,7 @@ import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.util.QualifiedName
 import com.intellij.util.containers.isNullOrEmpty
-import com.intellij.webcore.packaging.RepoPackage
+import com.jetbrains.python.codeInsight.typing.PyStubPackagesAdvertiserCache.Companion.StubPackagesForSource
 import com.jetbrains.python.inspections.PyInspection
 import com.jetbrains.python.inspections.PyInspectionVisitor
 import com.jetbrains.python.inspections.PyPackageRequirementsInspection.PyInstallRequirementsFix
@@ -48,7 +48,7 @@ class PyStubPackagesAdvertiser : PyInspection() {
                                 "pyspark" to "pyspark") // top-level package to package on PyPI, sorted by the latter
 
     private val BALLOON_SHOWING = Key.create<Boolean>("showingStubPackagesAdvertiserBalloon")
-    private val BALLOON_NOTIFICATIONS = NotificationGroup("Python Stub Packages Advertiser", NotificationDisplayType.STICKY_BALLOON, false)
+    private val BALLOON_NOTIFICATIONS = NotificationGroup("Python Stub Packages Advertiser", NotificationDisplayType.STICKY_BALLOON, true)
 
     private val SESSION_KEY = Key.create<MutableSet<String>>("PyStubPackagesAdvertiser.Sources")
   }
@@ -56,7 +56,7 @@ class PyStubPackagesAdvertiser : PyInspection() {
   @Suppress("MemberVisibilityCanBePrivate")
   var ignoredPackages: MutableList<String> = mutableListOf()
 
-  override fun createOptionsPanel(): JComponent = ListEditForm("Ignored packages", ignoredPackages).contentPanel
+  override fun createOptionsPanel(): JComponent = ListEditForm("Ignored stub packages", ignoredPackages).contentPanel
 
   override fun buildVisitor(holder: ProblemsHolder,
                             isOnTheFly: Boolean,
@@ -91,9 +91,7 @@ class PyStubPackagesAdvertiser : PyInspection() {
       if (qName == null) return
 
       if (ref != null &&
-          ref.getReference(resolveContext).multiResolve(false).asSequence().mapNotNull { it.element }.any {
-            isInStubPackage(it)
-          }) {
+          ref.getReference(resolveContext).multiResolve(false).asSequence().mapNotNull { it.element }.any { isInStubPackage(it) }) {
         return
       }
 
@@ -101,43 +99,45 @@ class PyStubPackagesAdvertiser : PyInspection() {
     }
   }
 
-  private fun run(file: PyFile,
-                  sources: Set<String>,
-                  problemsHolder: ProblemsHolder) {
+  private fun run(file: PyFile, sources: Set<String>, problemsHolder: ProblemsHolder) {
     val module = ModuleUtilCore.findModuleForFile(file) ?: return
     val sdk = PythonSdkUtil.findPythonSdk(module) ?: return
 
-    val installedPackages = PyPackageManager.getInstance(sdk).packages ?: emptyList()
+    val packageManager = PyPackageManager.getInstance(sdk)
+    val installedPackages = packageManager.packages ?: emptyList()
     if (installedPackages.isEmpty()) return
 
-    val availablePackages = PyPackageManagers.getInstance().getManagementService(file.project, sdk).allPackagesCached
+    val packageManagementService = PyPackageManagers.getInstance().getManagementService(file.project, sdk)
+    val availablePackages = packageManagementService.allPackagesCached
     if (availablePackages.isEmpty()) return
 
+    val ignoredStubPackages = ignoredPackages.mapNotNull { packageManager.parseRequirement(it) }
     val cache = ServiceManager.getService(PyStubPackagesAdvertiserCache::class.java).forSdk(sdk)
 
-    processForcedPackages(file, sources, module, sdk, availablePackages, installedPackages, cache, problemsHolder)
-    processCheckedPackages(file, sources, module, sdk, availablePackages, installedPackages, cache)
+    val forcedToLoad = processForcedPackages(file, sources, module, sdk, packageManager, ignoredStubPackages, cache, problemsHolder)
+    val checkedToLoad = processCheckedPackages(file, sources, module, sdk, packageManager, ignoredStubPackages, cache)
+
+    loadStubPackagesForSources(
+      forcedToLoad + checkedToLoad,
+      FORCED + CHECKED,
+      installedPackages,
+      availablePackages,
+      packageManagementService,
+      sdk
+    )
   }
 
   private fun processForcedPackages(file: PyFile,
                                     sources: Set<String>,
                                     module: Module,
                                     sdk: Sdk,
-                                    availablePackages: List<RepoPackage>,
-                                    installedPackages: List<PyPackage>,
-                                    cache: Cache<String, Set<RepoPackage>>,
-                                    problemsHolder: ProblemsHolder) {
+                                    packageManager: PyPackageManager,
+                                    ignoredStubPackages: List<PyRequirement>,
+                                    cache: Cache<String, StubPackagesForSource>,
+                                    problemsHolder: ProblemsHolder): Set<String> {
     val (sourcesToLoad, cached) = splitIntoNotCachedAndCached(forcedSourcesToProcess(sources), cache)
 
-    val sourceToStubPkgsAvailableToInstall = sourceToStubPackagesAvailableToInstall(
-      sourceToInstalledRuntimeAndStubPackages(sourcesToLoad,
-                                              FORCED, installedPackages),
-      availablePackages
-    )
-
-    sourceToStubPkgsAvailableToInstall.forEach { source, stubPkgs -> cache.put(source, stubPkgs) }
-
-    val (reqs, args) = toRequirementsAndExtraArgs(sourceToStubPkgsAvailableToInstall, cached)
+    val (reqs, args) = toRequirementsAndExtraArgs(cached, ignoredStubPackages)
     if (reqs.isNotEmpty()) {
       val plural = reqs.size > 1
       val reqsToString = PyPackageUtil.requirementsToString(reqs)
@@ -145,32 +145,26 @@ class PyStubPackagesAdvertiser : PyInspection() {
       problemsHolder.registerProblem(file,
                                      "Stub package${if (plural) "s" else ""} $reqsToString ${if (plural) "are" else "is"} not installed. " +
                                      "${if (plural) "They" else "It"} contain${if (plural) "" else "s"} type hints needed for better code insight.",
-                                     createInstallStubPackagesQuickFix(reqs, args, module, sdk),
-                                     createIgnorePackagesQuickFix(reqs, ignoredPackages))
+                                     createInstallStubPackagesQuickFix(reqs, args, module, sdk, packageManager),
+                                     createIgnorePackagesQuickFix(reqs, packageManager))
     }
+
+    return sourcesToLoad
   }
 
   private fun processCheckedPackages(file: PyFile,
                                      sources: Set<String>,
                                      module: Module,
                                      sdk: Sdk,
-                                     availablePackages: List<RepoPackage>,
-                                     installedPackages: List<PyPackage>,
-                                     cache: Cache<String, Set<RepoPackage>>) {
+                                     packageManager: PyPackageManager,
+                                     ignoredStubPackages: List<PyRequirement>,
+                                     cache: Cache<String, StubPackagesForSource>): Set<String> {
     val project = file.project
-    if (project.getUserData(BALLOON_SHOWING) == true) return
+    if (project.getUserData(BALLOON_SHOWING) == true) return emptySet()
 
     val (sourcesToLoad, cached) = splitIntoNotCachedAndCached(checkedSourcesToProcess(sources), cache)
 
-    val sourceToStubPkgsAvailableToInstall = sourceToStubPackagesAvailableToInstall(
-      sourceToInstalledRuntimeAndStubPackages(sourcesToLoad,
-                                              CHECKED, installedPackages),
-      availablePackages
-    )
-
-    sourceToStubPkgsAvailableToInstall.forEach { source, stubPkgs -> cache.put(source, stubPkgs) }
-
-    val (reqs, args) = toRequirementsAndExtraArgs(sourceToStubPkgsAvailableToInstall, cached)
+    val (reqs, args) = toRequirementsAndExtraArgs(cached, ignoredStubPackages)
     if (reqs.isNotEmpty()) {
       val plural = reqs.size > 1
       val reqsToString = PyPackageUtil.requirementsToString(reqs)
@@ -180,7 +174,7 @@ class PyStubPackagesAdvertiser : PyInspection() {
       BALLOON_NOTIFICATIONS
         .createNotification(
           "Type hints are not installed",
-          "They are needed for better code insight.<br/>" +
+          "They could make code insight better.<br/>" +
           "<a href=\"#yes\">Install ${if (plural) "stub packages" else reqsToString}</a>&nbsp;&nbsp;&nbsp;&nbsp;" +
           "<a href=\"#no\">Ignore</a>&nbsp;&nbsp;&nbsp;&nbsp;" +
           "<a href=\"#settings\">Settings</a>",
@@ -200,9 +194,9 @@ class PyStubPackagesAdvertiser : PyInspection() {
 
             when (event.description) {
               "#yes" -> {
-                createInstallStubPackagesQuickFix(reqs, args, module, sdk).applyFix(project, problemDescriptor)
+                createInstallStubPackagesQuickFix(reqs, args, module, sdk, packageManager).applyFix(project, problemDescriptor)
               }
-              "#no" -> createIgnorePackagesQuickFix(reqs, ignoredPackages).applyFix(project, problemDescriptor)
+              "#no" -> createIgnorePackagesQuickFix(reqs, packageManager).applyFix(project, problemDescriptor)
               "#settings" -> {
                 val profile = ProjectInspectionProfileManager.getInstance(project).currentProfile
                 EditInspectionToolsSettingsAction.editToolSettings(project, profile, PyStubPackagesAdvertiser::class.simpleName)
@@ -216,6 +210,8 @@ class PyStubPackagesAdvertiser : PyInspection() {
         .whenExpired { project.putUserData(BALLOON_SHOWING, false) }
         .notify(project)
     }
+
+    return sourcesToLoad
   }
 
   private fun forcedSourcesToProcess(sources: Set<String>) = sources.filterTo(mutableSetOf()) { it in FORCED }
@@ -223,11 +219,11 @@ class PyStubPackagesAdvertiser : PyInspection() {
   private fun checkedSourcesToProcess(sources: Set<String>) = sources.filterTo(mutableSetOf()) { it in CHECKED }
 
   private fun splitIntoNotCachedAndCached(sources: Set<String>,
-                                          cache: Cache<String, Set<RepoPackage>>): Pair<Set<String>, Set<RepoPackage>> {
-    if (sources.isEmpty()) return emptySet<String>() to emptySet()
+                                          cache: Cache<String, StubPackagesForSource>): Pair<Set<String>, List<StubPackagesForSource>> {
+    if (sources.isEmpty()) return emptySet<String>() to emptyList()
 
     val notCached = mutableSetOf<String>()
-    val cached = mutableSetOf<RepoPackage>()
+    val cached = mutableListOf<StubPackagesForSource>()
 
     synchronized(cache) {
       // despite cache is thread-safe,
@@ -241,10 +237,10 @@ class PyStubPackagesAdvertiser : PyInspection() {
 
             // mark this source as evaluating
             // if source processing failed, this value would mean that such source was handled
-            cache.put(source, emptySet())
+            cache.put(source, StubPackagesForSource.EMPTY)
           }
           else {
-            cached.addAll(it)
+            cached.add(it)
           }
         }
       }
@@ -253,41 +249,29 @@ class PyStubPackagesAdvertiser : PyInspection() {
     return notCached to cached
   }
 
-  private fun sourceToInstalledRuntimeAndStubPackages(sourcesToLoad: Set<String>,
-                                                      sourceToPackage: Map<String, String>,
-                                                      installedPackages: List<PyPackage>): Map<String, List<Pair<PyPackage, PyPackage?>>> {
-    val result = mutableMapOf<String, List<Pair<PyPackage, PyPackage?>>>()
+  private fun toRequirementsAndExtraArgs(cached: List<StubPackagesForSource>,
+                                         ignoredStubPackages: List<PyRequirement>): Pair<List<PyRequirement>, List<String>> {
+    if (cached.isEmpty()) return emptyList<PyRequirement>() to emptyList()
 
-    for (source in sourcesToLoad) {
-      val pkgName = sourceToPackage[source] ?: continue
-      if (ignoredPackages.contains(pkgName)) continue
+    val requirements = cached.asSequence()
+      .flatMap { it.packages.entries.asSequence() }
+      .filterNot { isIgnoredStubPackage(it.key, it.value.first, ignoredStubPackages) }
+      .map {
+        pyRequirement(it.key, PyRequirementRelation.EQ, it.value.first)
+      }
+      .toList()
+    if (requirements.isEmpty()) return emptyList<PyRequirement>() to emptyList()
 
-      installedRuntimeAndStubPackages(pkgName, installedPackages)?.let { result.put(source, listOf(it)) }
-    }
-
-    return result
+    val args = sequenceOf("--no-deps") +
+               cached.asSequence().flatMap { pkgs -> pkgs.packages.values.asSequence().map { it.second }.flatten() }
+    return requirements to args.toList()
   }
 
-  private fun sourceToStubPackagesAvailableToInstall(sourceToInstalledRuntimeAndStubPkgs: Map<String, List<Pair<PyPackage, PyPackage?>>>,
-                                                     availablePackages: List<RepoPackage>): Map<String, Set<RepoPackage>> {
-    if (sourceToInstalledRuntimeAndStubPkgs.isEmpty()) return emptyMap()
-
-    val stubPkgsAvailableToInstall = mutableMapOf<String, RepoPackage>()
-    availablePackages.forEach { if (it.name.endsWith(STUBS_SUFFIX)) stubPkgsAvailableToInstall[it.name] = it }
-
-    val result = mutableMapOf<String, Set<RepoPackage>>()
-    sourceToInstalledRuntimeAndStubPkgs.forEach { source, runtimeAndStubPkgs ->
-      result[source] = runtimeAndStubPkgs
-        .asSequence()
-        .filter { it.second == null }
-        .mapNotNull { stubPkgsAvailableToInstall["${it.first.name}$STUBS_SUFFIX"] }
-        .toSet()
-    }
-
-    return result
-  }
-
-  private fun createInstallStubPackagesQuickFix(reqs: List<PyRequirement>, args: List<String>, module: Module, sdk: Sdk): LocalQuickFix {
+  private fun createInstallStubPackagesQuickFix(reqs: List<PyRequirement>,
+                                                args: List<String>,
+                                                module: Module,
+                                                sdk: Sdk,
+                                                packageManager: PyPackageManager): LocalQuickFix {
     val project = module.project
     val stubPkgNamesToInstall = reqs.mapTo(mutableSetOf()) { it.name }
 
@@ -299,8 +283,8 @@ class PyStubPackagesAdvertiser : PyInspection() {
       override fun finished(exceptions: MutableList<ExecutionException>?) {
         val status = ServiceManager.getService(project, PyStubPackagesInstallingStatus::class.java)
 
-        val stubPkgsToUninstall = PyStubPackagesCompatibilityInspection.findIncompatibleRuntimeToStubPackages(
-          sdk) { it.name in stubPkgNamesToInstall }
+        val stubPkgsToUninstall = PyStubPackagesCompatibilityInspection
+          .findIncompatibleRuntimeToStubPackages(sdk) { it.name in stubPkgNamesToInstall }
           .map { it.second }
 
         if (stubPkgsToUninstall.isNotEmpty()) {
@@ -311,13 +295,15 @@ class PyStubPackagesAdvertiser : PyInspection() {
 
             override fun finished(exceptions: MutableList<ExecutionException>?) {
               status.unmarkAsInstalling(stubPkgNamesToUninstall)
+              val reqsToIgnore = stubPkgsToUninstall.map { pyRequirement(it.name, PyRequirementRelation.EQ, it.version) }
+              addStubPackagesToIgnore(reqsToIgnore, stubPkgNamesToUninstall, project, packageManager)
             }
           }
 
           val plural = stubPkgNamesToUninstall.size > 1
           val content = "Suggested ${stubPkgNamesToUninstall.joinToString { "'$it'" }} " +
                         "${if (plural) "are" else "is"} incompatible with your current environment.<br/>" +
-                        "${if (plural) "These" else "This"} stub package${if (plural) "s" else ""} will be removed."
+                        "${if (plural) "These" else "This"} stub package${if (plural) "s" else ""} will be removed and ignored until new version is released."
 
           BALLOON_NOTIFICATIONS.createNotification(content, NotificationType.WARNING).notify(project)
           PyPackageManagerUI(project, sdk, uninstallationListener).uninstall(stubPkgsToUninstall)
@@ -333,54 +319,28 @@ class PyStubPackagesAdvertiser : PyInspection() {
     return PyInstallRequirementsFix(name, module, sdk, reqs, args, installationListener)
   }
 
-  private fun createIgnorePackagesQuickFix(reqs: List<PyRequirement>, ignoredPkgs: MutableList<String>): LocalQuickFix {
+  private fun createIgnorePackagesQuickFix(reqs: List<PyRequirement>, packageManager: PyPackageManager): LocalQuickFix {
     return object : LocalQuickFix {
       override fun getFamilyName() = "Ignore package" + if (reqs.size > 1) "s" else ""
 
       override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-        val pkgNames = reqs.asSequence().map { it.name.removeSuffix(STUBS_SUFFIX) }
-        if (ignoredPkgs.addAll(pkgNames)) ProjectInspectionProfileManager.getInstance(project).fireProfileChanged()
+        this@PyStubPackagesAdvertiser.addStubPackagesToIgnore(reqs, reqs.mapTo(mutableSetOf()) { it.name }, project, packageManager)
       }
     }
   }
 
-  private fun toRequirementsAndExtraArgs(loaded: Map<String, Set<RepoPackage>>,
-                                         cached: Set<RepoPackage>): Pair<List<PyRequirement>, List<String>> {
-    val reqs = mutableListOf<PyRequirement>()
-    val args = mutableListOf("--no-deps")
+  private fun addStubPackagesToIgnore(stubPackages: List<PyRequirement>,
+                                      stubPackagesNames: Set<String>,
+                                      project: Project,
+                                      packageManager: PyPackageManager) {
+    ignoredPackages.removeIf { packageManager.parseRequirement(it)?.name in stubPackagesNames }
+    ignoredPackages.addAll(stubPackages.map { it.presentableText })
 
-    (cached.asSequence().filterNot { ignoredPackages.contains(it.name.removeSuffix(
-      STUBS_SUFFIX)) } + loaded.values.asSequence().flatten())
-      .forEach {
-        val version = it.latestVersion
-        val url = it.repoUrl
-
-        reqs.add(if (version == null) pyRequirement(it.name) else pyRequirement(it.name, PyRequirementRelation.EQ, version))
-
-        if (url != null && !PyPIPackageUtil.isPyPIRepository(url)) {
-          with(args) {
-            add("--extra-index-url")
-            add(url)
-          }
-        }
-      }
-
-    return reqs to args
+    ProjectInspectionProfileManager.getInstance(project).fireProfileChanged()
   }
 
-  private fun installedRuntimeAndStubPackages(pkgName: String,
-                                              installedPackages: List<PyPackage>): Pair<PyPackage, PyPackage?>? {
-    var runtime: PyPackage? = null
-    var stub: PyPackage? = null
-    val stubPkgName = "$pkgName$STUBS_SUFFIX"
-
-    for (pkg in installedPackages) {
-      val name = pkg.name
-
-      if (name == pkgName) runtime = pkg
-      if (name == stubPkgName) stub = pkg
-    }
-
-    return if (runtime == null) null else runtime to stub
+  private fun isIgnoredStubPackage(name: String, version: String, ignoredStubPackages: List<PyRequirement>): Boolean {
+    val stubPackage = PyPackage(name, version, null, emptyList())
+    return ignoredStubPackages.any { stubPackage.matches(it) }
   }
 }
