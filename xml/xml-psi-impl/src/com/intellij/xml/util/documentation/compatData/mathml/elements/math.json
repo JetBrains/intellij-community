@@ -7,11 +7,10 @@
           "support": {
             "chrome": {
               "version_added": "24",
-              "version_removed": "26"
+              "version_removed": "25"
             },
             "chrome_android": {
-              "version_added": "25",
-              "version_removed": "26"
+              "version_added": false
             },
             "edge": {
               "version_added": false
@@ -111,11 +110,10 @@
             "support": {
               "chrome": {
                 "version_added": "24",
-                "version_removed": "26"
+                "version_removed": "25"
               },
               "chrome_android": {
-                "version_added": "25",
-                "version_removed": "26"
+                "version_added": false
               },
               "edge": {
                 "version_added": false
@@ -205,11 +203,10 @@
             "support": {
               "chrome": {
                 "version_added": "24",
-                "version_removed": "26"
+                "version_removed": "25"
               },
               "chrome_android": {
-                "version_added": "25",
-                "version_removed": "26"
+                "version_added": false
               },
               "edge": {
                 "version_added": false
@@ -252,11 +249,10 @@
             "support": {
               "chrome": {
                 "version_added": "24",
-                "version_removed": "26"
+                "version_removed": "25"
               },
               "chrome_android": {
-                "version_added": "25",
-                "version_removed": "26"
+                "version_added": false
               },
               "edge": {
                 "version_added": false
@@ -299,11 +295,10 @@
             "support": {
               "chrome": {
                 "version_added": "24",
-                "version_removed": "26"
+                "version_removed": "25"
               },
               "chrome_android": {
-                "version_added": "25",
-                "version_removed": "26"
+                "version_added": false
               },
               "edge": {
                 "version_added": false

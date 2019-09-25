@@ -34,7 +34,7 @@
               },
               "safari": {
                 "version_added": false,
-                "notes": "The input type is recognized, but there is no date-specific control."
+                "notes": "The input type is recognized, but there is no date-specific control. See <a href='https://webkit.org/b/200416'>bug 200416</a>."
               },
               "safari_ios": {
                 "version_added": true

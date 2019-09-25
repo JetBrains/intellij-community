@@ -73,10 +73,10 @@
                 "version_added": false
               },
               "safari": {
-                "version_added": null
+                "version_added": "9"
               },
               "safari_ios": {
-                "version_added": null
+                "version_added": "9"
               },
               "webview_android": {
                 "version_added": null

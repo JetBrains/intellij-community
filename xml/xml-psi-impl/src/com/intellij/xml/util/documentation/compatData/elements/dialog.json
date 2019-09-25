@@ -43,7 +43,7 @@
               "version_added": "24"
             },
             "opera_android": {
-              "version_added": false
+              "version_added": "24"
             },
             "safari": {
               "version_added": false
@@ -105,7 +105,7 @@
                 "version_added": "24"
               },
               "opera_android": {
-                "version_added": false
+                "version_added": "24"
               },
               "safari": {
                 "version_added": false

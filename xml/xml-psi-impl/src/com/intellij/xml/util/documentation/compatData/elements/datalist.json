@@ -27,7 +27,9 @@
               "version_added": "9.5"
             },
             "opera_android": {
-              "version_added": null
+              "version_added": true,
+              "partial_implementation": true,
+              "notes": "The dropdown menu containing available options does not appear in Opera for Android."
             },
             "safari": {
               "version_added": "12.1"
@@ -39,7 +41,7 @@
               "version_added": true
             },
             "webview_android": {
-              "version_added": false
+              "version_added": "4.4.3"
             }
           },
           "status": {

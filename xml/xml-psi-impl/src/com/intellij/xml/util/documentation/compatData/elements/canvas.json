@@ -37,7 +37,7 @@
               "version_added": "9"
             },
             "opera_android": {
-              "version_added": false
+              "version_added": "10.1"
             },
             "safari": {
               "version_added": "2",
@@ -94,7 +94,7 @@
                 "version_added": "9"
               },
               "opera_android": {
-                "version_added": false
+                "version_added": "10.1"
               },
               "safari": {
                 "version_added": "2",
@@ -199,7 +199,7 @@
                 "version_added": "9"
               },
               "opera_android": {
-                "version_added": false
+                "version_added": "10.1"
               },
               "safari": {
                 "version_added": "2",
