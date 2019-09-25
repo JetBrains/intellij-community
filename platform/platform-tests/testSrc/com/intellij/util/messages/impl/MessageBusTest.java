@@ -283,6 +283,20 @@ public class MessageBusTest extends LightPlatformTestCase {
     });
   }
 
+  public void testManyChildrenCreationDeletionPerformance() {
+    PlatformTestUtil.startPerformanceTest("Child bus creation/deletion", 1_000, () -> {
+      List<MessageBusImpl> children = new ArrayList<>();
+      int count = 10_000;
+      for (int i = 0; i < count; i++) {
+        children.add(new MessageBusImpl(this, myBus));
+      }
+      // reverse iteration to avoid O(n^2) while deleting from list's beginning
+      for (int i = count - 1; i >= 0; i--) {
+        Disposer.dispose(children.get(i));
+      }
+    }).assertTiming();
+  }
+
   public void testStress() throws Throwable {
     final int threadsNumber = 10;
     final AtomicReference<Throwable> exception = new AtomicReference<>();
