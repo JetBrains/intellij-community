@@ -510,7 +510,7 @@ public class GitUtil {
       consumer.consume(GitChangeUtils.parseChangeList(project, root, innerScanner, skipDiffsForMerge, h, false, false));
     }
     if (s.hasMoreData()) {
-      throw new IllegalStateException("More input is avaialble: " + s.line());
+      throw new IllegalStateException("More input is available: " + s.line());
     }
   }
 
@@ -591,14 +591,12 @@ public class GitUtil {
                 if (VcsFileUtil.isOctal(path.charAt(j))) {
                   n++;
                   for (int k = 0; k < 3 && j < l && VcsFileUtil.isOctal(path.charAt(j)); k++) {
-                    //noinspection AssignmentToForLoopParameter
                     j++;
                   }
                 }
                 if (j + 1 >= l || path.charAt(j) != '\\' || !VcsFileUtil.isOctal(path.charAt(j + 1))) {
                   break;
                 }
-                //noinspection AssignmentToForLoopParameter
                 j++;
               }
               // convert to byte array
