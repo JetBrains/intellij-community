@@ -222,10 +222,17 @@ void updateScrubberItems(id scrubObj, void* packedItems, int byteCount, int from
     NSScrubberContainer *container = scrubObj;
     nstrace(@"scrubber [%@]: called updateScrubberItems", container.identifier);
     void (^doUpdate)() = ^{
-      _fillCache(container.itemsCache, container.visibleItems, packedItems, byteCount, fromIndex);
-      if (packedItems != NULL)
-        free(packedItems);
-      _recalculatePositions(scrubObj);
+       @try {
+          _fillCache(container.itemsCache, container.visibleItems, packedItems, byteCount, fromIndex);
+          _recalculatePositions(scrubObj);
+       }
+       @catch (NSException *exception) {
+          nserror(@"%@", exception.reason);
+       }
+       @finally {
+          if (packedItems != NULL)
+            free(packedItems);
+       }
     };
     if ([NSThread isMainThread]) {
       doUpdate();
@@ -277,32 +284,36 @@ void showScrubberItems(id scrubObj, void* itemIndices, int count, bool show, boo
     int * indices = itemIndices;
 
     dispatch_async(dispatch_get_main_queue(), ^{
-        // 1. mark items
-        if (inverseOthers) {
-            for (int c = 0; c < container.itemsCache.count; ++c) {
-                ScrubberItem *itemData = [container.itemsCache objectAtIndex:c];
-                if (itemData == nil)
-                    continue;
-                itemData.visible = !show;
-            }
-        }
-
-        if (indices != NULL) {
-            for (int c = 0; c < count; ++c) {
-                ScrubberItem *itemData = [container.itemsCache objectAtIndex:indices[c]];
-                if (itemData == nil) {
-                    nserror(@"scrubber [%@]: called showScrubberItems %d, but item-data at this index is null", container.identifier, indices[c]);
-                    continue;
-                }
-                itemData.visible = show;
-            }
-        }
-
-        // 2. recalc positions
-        _recalculatePositions(scrubObj);
-
-        if (indices != NULL)
-            free(indices);
+        @try {
+           // 1. mark items
+           if (inverseOthers) {
+               for (int c = 0; c < container.itemsCache.count; ++c) {
+                   ScrubberItem *itemData = [container.itemsCache objectAtIndex:c];
+                   if (itemData == nil)
+                       continue;
+                   itemData.visible = !show;
+               }
+           }
+           if (indices != NULL) {
+               for (int c = 0; c < count; ++c) {
+                   ScrubberItem *itemData = [container.itemsCache objectAtIndex:indices[c]];
+                   if (itemData == nil) {
+                       nserror(@"scrubber [%@]: called showScrubberItems %d, but item-data at this index is null", container.identifier, indices[c]);
+                       continue;
+                   }
+                   itemData.visible = show;
+               }
+           }
+           // 2. recalc positions
+           _recalculatePositions(scrubObj);
+       }
+       @catch (NSException *exception) {
+           nserror(@"%@", exception.reason);
+       }
+       @finally {
+           if (indices != NULL)
+              free(indices);
+       }
     });
 }
 
