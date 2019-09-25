@@ -33,15 +33,15 @@ class AutomaticModuleUnloaderTest : JavaModuleTestCase() {
     val moduleFiles = createNewModuleFiles(listOf("d")) {}
     reloadProjectWithNewModules(moduleFiles)
 
-    JavaModuleTestCase.assertSameElements(moduleManager.unloadedModuleDescriptions.map { it.name }, "a", "d")
+    assertSameElements(moduleManager.unloadedModuleDescriptions.map { it.name }, "a", "d")
   }
 
   fun `test unload modules with dependencies between them`() = runBlocking {
     createModule("a")
     createModule("b")
     doTest("a", listOf("c", "d"), { modules ->
-      ModuleRootModificationUtil.updateModel(modules["c"]!!) {
-        it.addModuleOrderEntry(modules["d"]!!)
+      ModuleRootModificationUtil.updateModel(modules.getValue("c")) {
+        it.addModuleOrderEntry(modules.getValue("d"))
       }
     },"a", "c", "d")
   }
@@ -72,8 +72,8 @@ class AutomaticModuleUnloaderTest : JavaModuleTestCase() {
     }
 
     doTest("a", listOf("c", "d"), { modules ->
-      ModuleRootModificationUtil.updateModel(modules["d"]!!) {
-        it.addModuleOrderEntry(modules["c"]!!)
+      ModuleRootModificationUtil.updateModel(modules.getValue("d")) {
+        it.addModuleOrderEntry(modules.getValue("c"))
       }
     }, "a")
   }
@@ -101,7 +101,7 @@ class AutomaticModuleUnloaderTest : JavaModuleTestCase() {
       File(deletedIml.moduleFilePath).delete()
     }
 
-    JavaModuleTestCase.assertSameElements(moduleManager.unloadedModuleDescriptions.map { it.name }, "a", "d")
+    assertSameElements(moduleManager.unloadedModuleDescriptions.map { it.name }, "a", "d")
   }
 
 
@@ -115,7 +115,7 @@ class AutomaticModuleUnloaderTest : JavaModuleTestCase() {
     val moduleFiles = createNewModuleFiles(newModulesName, setup)
     reloadProjectWithNewModules(moduleFiles)
 
-    JavaModuleTestCase.assertSameElements(moduleManager.unloadedModuleDescriptions.map { it.name }, *expectedUnloadedModules)
+    assertSameElements(moduleManager.unloadedModuleDescriptions.map { it.name }, *expectedUnloadedModules)
 
   }
 
