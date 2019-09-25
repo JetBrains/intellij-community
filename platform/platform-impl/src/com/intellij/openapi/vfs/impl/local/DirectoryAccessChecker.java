@@ -15,10 +15,7 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -32,6 +29,7 @@ public class DirectoryAccessChecker {
 
   private static final Path HOME_DIR = Paths.get(System.getProperty("user.home"));
   private static final Path HOME_ROOT = HOME_DIR.getParent();
+  private static final boolean homeRootNotSystemRoot = HOME_ROOT.getParent() != null;
 
   private DirectoryAccessChecker() {}
 
@@ -75,6 +73,7 @@ public class DirectoryAccessChecker {
   private static class LinuxFilterChain implements FilterChain {
     private final List<FSFilter> checkers = new ArrayList<>();
     private Set<Path> notAccessiblePaths;
+    private boolean isUserHomeMounted;
 
     private LinuxFilterChain add(FSFilter checker) {
       checkers.add(checker);
@@ -84,7 +83,7 @@ public class DirectoryAccessChecker {
     @Override
     public FilterChain refresh() {
       notAccessiblePaths = getMountedDirectories().
-        stream().
+        stream().peek(p -> isUserHomeMounted = isUserHomeMounted || HOME_DIR.equals(p.path)).
         filter(p -> !p.isAccessible()).
         map(p -> p.getPath()).
         collect(Collectors.toSet());
@@ -109,8 +108,9 @@ public class DirectoryAccessChecker {
 
     @Override
     public boolean accept(Path path) {
+      Path parentPath = path.getParent();
       return path.startsWith(HOME_DIR) || // allow user home directory anyways
-             !(path.getParent().equals(HOME_ROOT) && !path.equals(HOME_DIR)) && // don't allow any other directory in the home root
+             !(homeRootNotSystemRoot && isUserHomeMounted && Objects.equals(parentPath, HOME_ROOT)) && // don't allow any other directory in the home root
              !notAccessiblePaths.contains(path); // Make sure all checkers allow access to the directory
     }
   }
