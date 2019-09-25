@@ -383,7 +383,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
       return myOriginals.size() + pluralizeProcess(myOriginals.size()) + " running...";
     }
     int others = myOriginals.size() - 1;
-    return latestText + " (" + others + " more " + pluralizeProcess(others) + ")";
+    return latestText + " (" + others + " more" + pluralizeProcess(others) + ")";
   }
 
   private static String pluralizeProcess(int count) {
