@@ -4,7 +4,7 @@ package com.intellij.internal.statistic.collectors.fus.ui
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.internal.statistic.CollectUsagesException
-import com.intellij.internal.statistic.beans.UsageDescriptor
+import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
 import com.intellij.internal.statistic.service.fus.collectors.UsageDescriptorKeyValidator.ensureProperKey
@@ -16,37 +16,37 @@ import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions
  */
 class FontSizeInfoUsageCollector : ApplicationUsagesCollector() {
   @Throws(CollectUsagesException::class)
-  override fun getUsages(): Set<UsageDescriptor> {
+  override fun getMetrics(): Set<MetricEvent> {
     val scheme = EditorColorsManager.getInstance().globalScheme
     val ui = UISettings.shadowInstance
     val usages = mutableSetOf(
-      UsageDescriptor("UI.font.size[${ui.fontSize}]"),
-      UsageDescriptor(ensureProperKey("UI.font.name[${ui.fontFace}]")),
-      UsageDescriptor("Presentation.mode.font.size[${ui.presentationModeFontSize}]")
+      MetricEvent("UI.font.size[${ui.fontSize}]"),
+      MetricEvent(ensureProperKey("UI.font.name[${ui.fontFace}]")),
+      MetricEvent("Presentation.mode.font.size[${ui.presentationModeFontSize}]")
     )
     if (!scheme.isUseAppFontPreferencesInEditor) {
       usages += setOf(
-        UsageDescriptor("Editor.font.size[${scheme.editorFontSize}]"),
-        UsageDescriptor(ensureProperKey("Editor.font.name[${scheme.editorFontName}]"))
+        MetricEvent("Editor.font.size[${scheme.editorFontSize}]"),
+        MetricEvent(ensureProperKey("Editor.font.name[${scheme.editorFontName}]"))
       )
     }
     else {
       val appPrefs = AppEditorFontOptions.getInstance().fontPreferences
       usages += setOf(
-        UsageDescriptor("IDE.editor.font.size[${appPrefs.getSize(appPrefs.fontFamily)}]"),
-        UsageDescriptor(ensureProperKey("IDE.editor.font.name[${appPrefs.fontFamily}]"))
+        MetricEvent("IDE.editor.font.size[${appPrefs.getSize(appPrefs.fontFamily)}]"),
+        MetricEvent(ensureProperKey("IDE.editor.font.name[${appPrefs.fontFamily}]"))
       )
     }
     if (!scheme.isUseEditorFontPreferencesInConsole) {
       usages += setOf(
-        UsageDescriptor("Console.font.size[${scheme.consoleFontSize}]"),
-        UsageDescriptor(ensureProperKey("Console.font.name[${scheme.consoleFontName}]"))
+        MetricEvent("Console.font.size[${scheme.consoleFontSize}]"),
+        MetricEvent(ensureProperKey("Console.font.name[${scheme.consoleFontName}]"))
       )
     }
     val quickDocFontSize = PropertiesComponent.getInstance().getValue("quick.doc.font.size")
     if (quickDocFontSize != null) {
       usages += setOf(
-        UsageDescriptor("QuickDoc.font.size[$quickDocFontSize]")
+        MetricEvent("QuickDoc.font.size[$quickDocFontSize]")
       )
     }
 
@@ -55,16 +55,12 @@ class FontSizeInfoUsageCollector : ApplicationUsagesCollector() {
     val usageData = FeatureUsageData()
     usageData.addData("value", lineSpacing)
 
-    usages.add(UsageDescriptor("editor.lineSpacing", usageData ))
+    usages.add(MetricEvent("editor.lineSpacing", usageData ))
 
     return usages
   }
 
   override fun getGroupId(): String {
     return "ui.fonts"
-  }
-
-  override fun getData(): FeatureUsageData? {
-    return FeatureUsageData().addOS()
   }
 }

@@ -1,13 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.collectors.fus.os;
 
-import com.intellij.internal.statistic.beans.UsageDescriptor;
-import com.intellij.internal.statistic.eventLog.FeatureUsageData;
+import com.intellij.internal.statistic.beans.MetricEvent;
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -20,11 +18,11 @@ import java.util.Set;
 public class LinuxWindowManagerUsageCollector extends ApplicationUsagesCollector {
   @NotNull
   @Override
-  public Set<UsageDescriptor> getUsages() {
+  public Set<MetricEvent> getMetrics() {
     if (SystemInfo.isLinux) {
       String wmName = System.getenv("XDG_CURRENT_DESKTOP");
 
-      return Collections.singleton(new UsageDescriptor(clearUserData(wmName)));
+      return Collections.singleton(new MetricEvent(clearUserData(wmName)));
     }
 
     return Collections.emptySet();
@@ -84,10 +82,4 @@ public class LinuxWindowManagerUsageCollector extends ApplicationUsagesCollector
   @NotNull
   @Override
   public String getGroupId() { return "os.linux.wm"; }
-
-  @Nullable
-  @Override
-  public FeatureUsageData getData() {
-    return new FeatureUsageData().addOS();
-  }
 }
