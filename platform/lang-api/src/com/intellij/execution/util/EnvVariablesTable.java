@@ -234,8 +234,13 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
           column = view.getSelectedColumn();
         }
         if (row >= 0 && column >= 0) {
+          JTextField textField = (JTextField)((DefaultCellEditor)view.getCellEditor()).getComponent();
+          int position = textField.getCaretPosition();
+          String text = textField.getText();
+          String before = text.substring(0, position);
+          String after = text.substring(position);
           view.stopEditing();
-          view.getModel().setValueAt(content, row, column);
+          view.getModel().setValueAt(before + content + after, row, column);
         }
         return;
       }
