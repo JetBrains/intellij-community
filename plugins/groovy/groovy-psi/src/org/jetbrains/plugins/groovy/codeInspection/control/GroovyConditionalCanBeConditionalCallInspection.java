@@ -58,14 +58,24 @@ public class GroovyConditionalCanBeConditionalCallInspection extends BaseInspect
     public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) throws IncorrectOperationException {
       final GrConditionalExpression expression = (GrConditionalExpression) descriptor.getPsiElement();
       final GrBinaryExpression binaryCondition = (GrBinaryExpression)PsiUtil.skipParentheses(expression.getCondition(), false);
-      final GrMethodCallExpression call;
-      if (GrInspectionUtil.isInequality(binaryCondition)) {
-        call = (GrMethodCallExpression) expression.getThenBranch();
-      } else {
-        call = (GrMethodCallExpression) expression.getElseBranch();
+      if (binaryCondition == null) {
+        return;
       }
+      final GrExpression branch;
+      if (GrInspectionUtil.isInequality(binaryCondition)) {
+        branch = expression.getThenBranch();
+      } else {
+        branch = expression.getElseBranch();
+      }
+      if (!(branch instanceof GrMethodCallExpression)) {
+        return;
+      }
+      final GrMethodCallExpression call = (GrMethodCallExpression)branch;
       final GrReferenceExpression methodExpression = (GrReferenceExpression) call.getInvokedExpression();
       final GrExpression qualifier = methodExpression.getQualifierExpression();
+      if (qualifier == null) {
+        return;
+      }
       final String methodName = methodExpression.getReferenceName();
       final GrArgumentList argumentList = call.getArgumentList();
       replaceExpression(expression, qualifier.getText() + "?." + methodName + argumentList.getText());
@@ -99,6 +109,9 @@ public class GroovyConditionalCanBeConditionalCallInspection extends BaseInspect
       final GrBinaryExpression binaryCondition = (GrBinaryExpression) condition;
       final GrExpression lhs = binaryCondition.getLeftOperand();
       final GrExpression rhs = binaryCondition.getRightOperand();
+      if (rhs == null) {
+        return;
+      }
       if (GrInspectionUtil.isInequality(binaryCondition) && GrInspectionUtil.isNull(elseBranch)) {
         if (GrInspectionUtil.isNull(lhs) && isCallTargeting(thenBranch, rhs) ||
             GrInspectionUtil.isNull(rhs) && isCallTargeting(thenBranch, lhs)) {
