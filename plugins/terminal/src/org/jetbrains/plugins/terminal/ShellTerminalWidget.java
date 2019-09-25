@@ -88,6 +88,9 @@ public class ShellTerminalWidget extends JBTerminalWidget {
 
     TerminalTextBuffer textBuffer = getTerminalTextBuffer();
     int currentLine = StringUtil.countNewLines(StringUtil.trimTrailing(textBuffer.getScreenLines()));
+    if (currentLine != getLineNumberAtCursor()) {
+      return null;
+    }
     textBuffer.processScreenLines(currentLine, 1, consumer);
 
     return finder.getResult();
@@ -137,13 +140,17 @@ public class ShellTerminalWidget extends JBTerminalWidget {
   @NotNull
   private String getLineAtCursor() {
     TerminalTextBuffer textBuffer = getTerminalPanel().getTerminalTextBuffer();
-    Terminal terminal = getTerminal();
-    int cursorY = Math.max(0, Math.min(terminal.getCursorY() - 1, textBuffer.getHeight() - 1));
-    TerminalLine line = textBuffer.getLine(cursorY);
+    TerminalLine line = textBuffer.getLine(getLineNumberAtCursor());
     if (line != null) {
       return line.getText();
     }
     return "";
+  }
+
+  private int getLineNumberAtCursor() {
+    TerminalTextBuffer textBuffer = getTerminalPanel().getTerminalTextBuffer();
+    Terminal terminal = getTerminal();
+    return Math.max(0, Math.min(terminal.getCursorY() - 1, textBuffer.getHeight() - 1));
   }
 
   public void executeCommand(@NotNull String shellCommand) throws IOException {
