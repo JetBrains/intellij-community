@@ -484,9 +484,11 @@ public class HighlightControlFlowUtil {
     Collection<ControlFlowUtil.VariableInfo> codeBlockProblems = getFinalVariableProblemsInBlock(finalVarProblems, codeBlock);
 
     boolean alreadyAssigned = false;
+    boolean inLoop = false;
     for (ControlFlowUtil.VariableInfo variableInfo : codeBlockProblems) {
       if (variableInfo.expression == expression) {
         alreadyAssigned = true;
+        inLoop = variableInfo instanceof InitializedInLoopProblemInfo;
         break;
       }
     }
@@ -539,22 +541,14 @@ public class HighlightControlFlowUtil {
     }
 
     if (alreadyAssigned) {
-      String description = JavaErrorMessages.message("variable.already.assigned", variable.getName());
+      String description =
+        JavaErrorMessages.message(inLoop ? "variable.assigned.in.loop" : "variable.already.assigned", variable.getName());
       final HighlightInfo highlightInfo =
         HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(description).create();
-      if (variable instanceof PsiField) {
-        QuickFixAction.registerQuickFixActions(
-          highlightInfo, null,
-          JvmElementActionFactories.createModifierActions((PsiField)variable, MemberRequestsKt.modifierRequest(JvmModifier.FINAL, false))
-        );
+      HighlightFixUtil.registerMakeNotFinalAction(variable, highlightInfo);
+      if (!inLoop) {
+        QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createDeferFinalAssignmentFix(variable, expression));
       }
-      else {
-        QuickFixAction.registerQuickFixAction(
-          highlightInfo,
-          QUICK_FIX_FACTORY.createModifierListFix(variable, PsiModifier.FINAL, false, false)
-        );
-      }
-      QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createDeferFinalAssignmentFix(variable, expression));
       return highlightInfo;
     }
 
@@ -569,6 +563,7 @@ public class HighlightControlFlowUtil {
       try {
         final ControlFlow controlFlow = getControlFlow(codeBlock);
         codeBlockProblems = ControlFlowUtil.getInitializedTwice(controlFlow);
+        codeBlockProblems = addReassignedInLoopProblems(codeBlockProblems, controlFlow);
       }
       catch (AnalysisCanceledException e) {
         codeBlockProblems = Collections.emptyList();
@@ -578,28 +573,31 @@ public class HighlightControlFlowUtil {
     return codeBlockProblems;
   }
 
-
-  @Nullable
-  static HighlightInfo checkFinalVariableInitializedInLoop(@NotNull PsiReferenceExpression expression, @NotNull PsiElement resolved) {
-    if (ControlFlowUtil.isVariableAssignedInLoop(expression, resolved)) {
-      String description = JavaErrorMessages.message("variable.assigned.in.loop", ((PsiVariable)resolved).getName());
-      final HighlightInfo highlightInfo =
-        HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(description).create();
-      if (resolved instanceof PsiField) {
-        QuickFixAction.registerQuickFixActions(
-          highlightInfo, null,
-          JvmElementActionFactories.createModifierActions((PsiField)resolved, MemberRequestsKt.modifierRequest(JvmModifier.FINAL, false))
-        );
+  private static Collection<ControlFlowUtil.VariableInfo> addReassignedInLoopProblems(
+    Collection<ControlFlowUtil.VariableInfo> codeBlockProblems, ControlFlow controlFlow) {
+    List<Instruction> instructions = controlFlow.getInstructions();
+    for (int index = 0; index < instructions.size(); index++) {
+      Instruction instruction = instructions.get(index);
+      if (instruction instanceof WriteVariableInstruction) {
+        PsiVariable variable = ((WriteVariableInstruction)instruction).variable;
+        if (variable instanceof PsiLocalVariable || variable instanceof PsiField) {
+          PsiElement anchor = controlFlow.getElement(index);
+          if (anchor instanceof PsiAssignmentExpression) {
+            PsiExpression ref = PsiUtil.skipParenthesizedExprDown(((PsiAssignmentExpression)anchor).getLExpression());
+            if (ref instanceof PsiReferenceExpression) {
+              ControlFlowUtil.VariableInfo varInfo = new InitializedInLoopProblemInfo(variable, ref);
+              if (!codeBlockProblems.contains(varInfo) && ControlFlowUtil.isInstructionReachable(controlFlow, index, index)) {
+                if (!(codeBlockProblems instanceof HashSet)) {
+                  codeBlockProblems = new HashSet<>(codeBlockProblems);
+                }
+                codeBlockProblems.add(varInfo);
+              }
+            }
+          }
+        }
       }
-      else {
-        QuickFixAction.registerQuickFixAction(
-          highlightInfo,
-          QUICK_FIX_FACTORY.createModifierListFix((PsiVariable)resolved, PsiModifier.FINAL, false, false)
-        );
-      }
-      return highlightInfo;
     }
-    return null;
+    return codeBlockProblems;
   }
 
 
@@ -623,18 +621,7 @@ public class HighlightControlFlowUtil {
       HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(reference.getTextRange()).descriptionAndTooltip(description).create();
     final PsiElement innerClass = getInnerClassVariableReferencedFrom(variable, expression);
     if (innerClass == null || variable instanceof PsiField) {
-      if (variable instanceof PsiField) {
-        QuickFixAction.registerQuickFixActions(
-          highlightInfo, null,
-          JvmElementActionFactories.createModifierActions((PsiField)variable, MemberRequestsKt.modifierRequest(JvmModifier.FINAL, false))
-        );
-      }
-      else {
-        QuickFixAction.registerQuickFixAction(
-          highlightInfo,
-          QUICK_FIX_FACTORY.createModifierListFix(variable, PsiModifier.FINAL, false, false)
-        );
-      }
+      HighlightFixUtil.registerMakeNotFinalAction(variable, highlightInfo);
     }
     else {
       QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createVariableAccessFromInnerClassFix(variable, innerClass));
@@ -825,5 +812,15 @@ public class HighlightControlFlowUtil {
       // incomplete code
     }
     return null;
+  }
+
+  /**
+   * A kind of final variable problem returned from {@link #getFinalVariableProblemsInBlock(Map, PsiElement)}
+   * which designates a final variable which is initialized in a loop.
+   */
+  private static class InitializedInLoopProblemInfo extends ControlFlowUtil.VariableInfo {
+    InitializedInLoopProblemInfo(@NotNull PsiVariable variable, @Nullable PsiElement expression) {
+      super(variable, expression);
+    }
   }
 }
