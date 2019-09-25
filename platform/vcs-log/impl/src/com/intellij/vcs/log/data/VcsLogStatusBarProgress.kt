@@ -93,7 +93,7 @@ class VcsLogStatusBarProgress(project: Project, logProviders: Map<VirtualFile, V
   }
 
   inner class MyTaskInfo : TaskInfo {
-    override fun getTitle(): String = "$vcsName log indexing..."
+    override fun getTitle(): String = "${vcsName.capitalize()} Log Indexing..."
 
     override fun getCancelText(): String = CommonBundle.getCancelButtonText()
 
