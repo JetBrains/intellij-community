@@ -96,6 +96,22 @@ public final class DesktopLayout {
     normalizeOrders();
   }
 
+  /**
+   * Copy information about non-registered tool windows from the supplied layout
+   * @param layout layout to copy from
+   */
+  void copyNotRegisteredFrom(DesktopLayout layout) {
+    Map<String, WindowInfoImpl> old = new THashMap<>(myIdToInfo);
+    for (WindowInfoImpl otherInfo : layout.myIdToInfo.values()) {
+      WindowInfoImpl oldInfo = old.get(otherInfo.getId());
+      if ((oldInfo == null || !oldInfo.isRegistered()) && !otherInfo.isRegistered()) {
+        myIdToInfo.put(otherInfo.getId(), otherInfo.copy());
+      }
+    }
+
+    normalizeOrders();
+  }
+
   private void normalizeOrders() {
     normalizeOrder(getAllInfos(ToolWindowAnchor.TOP));
     normalizeOrder(getAllInfos(ToolWindowAnchor.LEFT));

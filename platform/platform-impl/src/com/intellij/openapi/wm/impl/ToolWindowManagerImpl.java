@@ -1839,11 +1839,10 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
       if (DesktopLayout.TAG.equals(e.getName())) {
         DesktopLayout layout = new DesktopLayout();
         layout.readExternal(e);
-        if (ApplicationManager.getApplication().isDispatchThread()) {
+        ApplicationManager.getApplication().invokeAndWait(() -> {
+          myLayout.copyNotRegisteredFrom(layout);
           setLayout(layout);
-        } else {
-          invokeLater(() -> setLayout(layout));
-        }
+        });
       }
       else if (LAYOUT_TO_RESTORE.equals(e.getName())) {
         myLayoutToRestoreLater = new DesktopLayout();
