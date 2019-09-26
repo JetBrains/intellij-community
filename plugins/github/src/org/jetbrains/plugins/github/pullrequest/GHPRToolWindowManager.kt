@@ -75,6 +75,7 @@ internal class GHPRToolWindowManager(private val project: Project) {
     return ContentFactory.SERVICE.getInstance().createContent(component, GROUP_PREFIX, false).apply {
       isCloseable = true
       disposer = disposable
+      description = remoteUrl.url
       this.remoteUrl = remoteUrl
       putUserData(ChangesViewContentManager.ORDER_WEIGHT_KEY, ChangesViewContentManager.TabOrderWeight.LAST.weight)
     }
