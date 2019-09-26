@@ -57,9 +57,12 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
       detectSystemWideSdks(module, existingSdks, context).firstOrNull()
   }
 
-  override fun configureProject(project: Project, baseDir: VirtualFile, moduleRef: Ref<Module>) {
+  override fun configureProject(project: Project,
+                                baseDir: VirtualFile,
+                                moduleRef: Ref<Module>,
+                                newProject: Boolean) {
     val context = UserDataHolderBase()
-    if (project.pythonSdk != null || baseDir.children?.any { it.name != Project.DIRECTORY_STORE_FOLDER } == false) {
+    if (project.pythonSdk != null || newProject) {
       return
     }
     val module = ModuleManager.getInstance(project).modules.firstOrNull() ?: return

@@ -26,7 +26,7 @@ public class PythonSourceRootConfigurator implements DirectoryProjectConfigurato
   @NonNls private static final String SETUP_PY = "setup.py";
 
   @Override
-  public void configureProject(@NotNull Project project, @NotNull VirtualFile baseDir, @NotNull Ref<Module> moduleRef) {
+  public void configureProject(@NotNull Project project, @NotNull VirtualFile baseDir, @NotNull Ref<Module> moduleRef, boolean newProject) {
     VirtualFile setupPy = baseDir.findChild(SETUP_PY);
     if (setupPy != null) {
       final CharSequence content = LoadTextUtil.loadText(setupPy);

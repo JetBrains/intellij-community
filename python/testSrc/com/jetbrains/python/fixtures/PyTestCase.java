@@ -396,7 +396,7 @@ public abstract class PyTestCase extends UsefulTestCase {
     final VirtualFile newPath =
       myFixture.copyDirectoryToProject(path, String.format("%s%s%s", "temp_for_project_conf", File.pathSeparator, path));
     final Ref<Module> moduleRef = new Ref<>(myFixture.getModule());
-    configurator.configureProject(myFixture.getProject(), newPath, moduleRef);
+    configurator.configureProject(myFixture.getProject(), newPath, moduleRef, false);
   }
 
   public static String getHelpersPath() {

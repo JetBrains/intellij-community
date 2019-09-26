@@ -45,7 +45,7 @@ public class PyIntegratedToolsProjectConfigurator implements DirectoryProjectCon
   private static final Logger LOG = Logger.getInstance(PyIntegratedToolsProjectConfigurator.class);
 
   @Override
-  public void configureProject(@NotNull Project project, @NotNull VirtualFile baseDir, @NotNull Ref<Module> moduleRef) {
+  public void configureProject(@NotNull Project project, @NotNull VirtualFile baseDir, @NotNull Ref<Module> moduleRef, boolean newProject) {
     final Application application = ApplicationManager.getApplication();
     if (application.isUnitTestMode()) {
       return;
