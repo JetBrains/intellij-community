@@ -254,12 +254,10 @@ class SkeletonStatus(object):
     """
 
 
-def skeleton_status(base_dir, mod_qname, mod_path, state_json=None):
+def skeleton_status(base_dir, mod_qname, mod_path, sdk_skeleton_state=None):
     gen_version = version_to_tuple(version())
 
-    if state_json:
-        sdk_skeleton_state = state_json['sdk_skeletons'].get(mod_qname, {})
-
+    if sdk_skeleton_state:
         used_version = sdk_skeleton_state.get('gen_version')
         if used_version:
             used_version = version_to_tuple(used_version)
@@ -467,23 +465,23 @@ def generate_skeleton(name, mod_file_name, doing_builtins, mod_cache_dir, sdk_sk
 
 
 def process_one_with_results_reporting(name, mod_file_name, doing_builtins, sdk_skeletons_dir, state_json=None):
-    status = process_one(name, mod_file_name, doing_builtins, sdk_skeletons_dir, state_json)
+    sdk_skeleton_state = state_json['sdk_skeletons'].setdefault(name, {}) if state_json else None
+    status = process_one(name, mod_file_name, doing_builtins, sdk_skeletons_dir, sdk_skeleton_state)
     control_message('generation_result', {
         'module_name': name,
         'module_origin': get_module_origin(mod_file_name, name),
         'generation_status': status
     })
-    if state_json:
-        skeleton_state = state_json['sdk_skeletons'].setdefault(name, {})
+    if sdk_skeleton_state is not None:
         if status != GenerationStatus.UP_TO_DATE:
             # TODO use the actual generator version when a skeleton was copied from the cache
             # TODO don't update state_json inplace
-            skeleton_state.update(
+            sdk_skeleton_state.update(
                 gen_version=version(),
                 status=status,
             )
         if is_test_mode():
-            skeleton_state.pop('bin_mtime', None)
+            sdk_skeleton_state.pop('bin_mtime', None)
     return status
 
 
