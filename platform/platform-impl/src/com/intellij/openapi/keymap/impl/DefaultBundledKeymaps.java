@@ -19,6 +19,7 @@
  */
 package com.intellij.openapi.keymap.impl;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -42,16 +43,18 @@ public class DefaultBundledKeymaps implements BundledKeymapProvider {
     for (BundledKeymapBean bean : BundledKeymapBean.EP_NAME.getExtensionList()) {
       result.add(bean.file.replace("$OS$", os));
     }
-    if (SystemInfo.isWindows || SystemInfo.isMac) {
-      result.remove("Default for XWin.xml");
-      result.remove("Default for GNOME.xml");
-      result.remove("Default for KDE.xml");
-    }
-    if (!SystemInfo.isMac) {
-      result.remove("Mac OS X.xml");
-      result.remove("Mac OS X 10.5+.xml");
-      result.remove("Eclipse (Mac OS X).xml");
-      result.remove("Sublime Text (Mac OS X).xml");
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      if (SystemInfo.isWindows || SystemInfo.isMac) {
+        result.remove("Default for XWin.xml");
+        result.remove("Default for GNOME.xml");
+        result.remove("Default for KDE.xml");
+      }
+      if (!SystemInfo.isMac) {
+        result.remove("Mac OS X.xml");
+        result.remove("Mac OS X 10.5+.xml");
+        result.remove("Eclipse (Mac OS X).xml");
+        result.remove("Sublime Text (Mac OS X).xml");
+      }
     }
     return new ArrayList<>(result);
   }
