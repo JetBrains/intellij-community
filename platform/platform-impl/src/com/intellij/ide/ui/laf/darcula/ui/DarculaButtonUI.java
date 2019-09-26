@@ -160,17 +160,20 @@ public class DarculaButtonUI extends BasicButtonUI {
     g.setColor(getButtonTextColor(button));
 
     FontMetrics metrics = UIUtilities.getFontMetrics(c, g);
-    int mnemonicIndex = DarculaLaf.isAltPressed() ? button.getDisplayedMnemonicIndex() : -1;
     if (model.isEnabled()) {
 
       UIUtilities.drawStringUnderlineCharAt(
-        c, g, text, mnemonicIndex,
+        c, g, text, getMnemonicIndex(button),
         textRect.x + getTextShiftOffset(),
         textRect.y + metrics.getAscent() + getTextShiftOffset());
     }
     else {
       paintDisabledText(g, text, c, textRect, metrics);
     }
+  }
+
+  protected int getMnemonicIndex(AbstractButton b) {
+    return DarculaLaf.isAltPressed() ? b.getDisplayedMnemonicIndex() : -1;
   }
 
   protected Color getButtonTextColor(AbstractButton button) {

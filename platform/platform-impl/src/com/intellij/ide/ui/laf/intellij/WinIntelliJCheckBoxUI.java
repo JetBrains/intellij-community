@@ -89,4 +89,9 @@ public class WinIntelliJCheckBoxUI extends DarculaCheckBoxUI {
   protected int textIconGap() {
     return JBUIScale.scale(4);
   }
+
+  @Override
+  protected int getMnemonicIndex(AbstractButton b) {
+    return b.getDisplayedMnemonicIndex();
+  }
 }

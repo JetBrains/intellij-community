@@ -48,4 +48,9 @@ public class WinIntelliJRadioButtonUI extends DarculaRadioButtonUI {
   public Icon getDefaultIcon() {
     return DEFAULT_ICON;
   }
+
+  @Override
+  protected int getMnemonicIndex(AbstractButton b) {
+    return b.getDisplayedMnemonicIndex();
+  }
 }

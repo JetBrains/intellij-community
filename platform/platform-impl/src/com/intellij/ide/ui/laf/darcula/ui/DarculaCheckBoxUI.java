@@ -143,10 +143,13 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI {
       }
       else {
         g.setColor(b.isEnabled() ? b.getForeground() : getDisabledTextColor());
-        int mnemonicIndex = DarculaLaf.isAltPressed() ? b.getDisplayedMnemonicIndex() : -1;
-        UIUtilities.drawStringUnderlineCharAt(b, g, text, mnemonicIndex, textRect.x, textRect.y + fm.getAscent());
+        UIUtilities.drawStringUnderlineCharAt(b, g, text, getMnemonicIndex(b), textRect.x, textRect.y + fm.getAscent());
       }
     }
+  }
+
+  protected int getMnemonicIndex(AbstractButton b) {
+    return DarculaLaf.isAltPressed() ? b.getDisplayedMnemonicIndex() : -1;
   }
 
   @Override
