@@ -95,7 +95,7 @@ public abstract class VcsTaskHandler {
 
   public abstract TaskInfo startNewTask(@NotNull String taskName);
 
-  public abstract void switchToTask(TaskInfo taskInfo, @Nullable Runnable invokeAfter);
+  public abstract boolean switchToTask(TaskInfo taskInfo, @Nullable Runnable invokeAfter);
 
   public abstract void closeTask(@NotNull TaskInfo taskInfo, @NotNull TaskInfo original);
 

@@ -325,23 +325,28 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
     if (origin.equals(activeTask)) return activeTask;
 
     saveActiveTask();
-
-    WorkingContextManager contextManager = WorkingContextManager.getInstance(myProject);
-    if (clearContext) {
-      contextManager.clearContext();
-    }
-    contextManager.restoreContext(origin);
-
     final LocalTask task = doActivate(origin, true);
+    Runnable restore = () -> {
+      WorkingContextManager contextManager = WorkingContextManager.getInstance(myProject);
+      if (clearContext) {
+        contextManager.clearContext();
+      }
+      contextManager.restoreContext(origin);
+    };
 
-    restoreVcsContext(task, newTask);
+    boolean switched = false;
+    if (isVcsEnabled()) {
+      restoreVcsContext(task, newTask);
+      if (!newTask) {
+        switched = switchBranch(task, restore);
+      }
+    }
+    if (!switched)
+      restore.run();
     return task;
   }
 
   private void restoreVcsContext(LocalTask task, boolean newTask) {
-    if (!isVcsEnabled())
-      return;
-
     List<ChangeListInfo> changeLists = task.getChangeLists();
     ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
     if (changeLists.isEmpty()) {
@@ -358,9 +363,9 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
     }
 
     unshelveChanges(task);
+  }
 
-    if (newTask)
-      return;     // branch created already by VcsOpenTaskPanel
+  private boolean switchBranch(LocalTask task, Runnable invokeAfter) {
     List<BranchInfo> branches = task.getBranches(false);
     // we should have exactly one branch per repo
     MultiMap<String, BranchInfo> multiMap = new MultiMap<>();
@@ -383,10 +388,13 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
         }
       }
     }
-
     VcsTaskHandler.TaskInfo info = fromBranches(new ArrayList<>(multiMap.values()));
-
-    switchBranch(info);
+    VcsTaskHandler[] handlers = VcsTaskHandler.getAllHandlers(myProject);
+    boolean switched = false;
+    for (VcsTaskHandler handler : handlers) {
+      switched |= handler.switchToTask(info, invokeAfter);
+    }
+    return switched;
   }
 
   public void shelveChanges(LocalTask task, @NotNull String shelfName) {
@@ -425,13 +433,6 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
       }
     }
     return infos;
-  }
-
-  private void switchBranch(VcsTaskHandler.TaskInfo info) {
-    VcsTaskHandler[] handlers = VcsTaskHandler.getAllHandlers(myProject);
-    for (VcsTaskHandler handler : handlers) {
-      handler.switchToTask(info, null);
-    }
   }
 
   private static VcsTaskHandler.TaskInfo fromBranches(List<BranchInfo> branches) {
