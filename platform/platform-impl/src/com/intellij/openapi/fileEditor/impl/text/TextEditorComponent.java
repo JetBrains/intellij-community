@@ -13,18 +13,13 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
-import com.intellij.openapi.editor.highlighter.EditorHighlighter;
-import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.editor.impl.EditorImpl;
-import com.intellij.openapi.extensions.ExtensionPointListener;
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileTypes.*;
-import com.intellij.openapi.fileTypes.impl.AbstractFileType;
-import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.fileTypes.FileTypeEvent;
+import com.intellij.openapi.fileTypes.FileTypeListener;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
@@ -36,8 +31,6 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.util.FileContentUtilCore;
-import com.intellij.util.KeyedLazyInstance;
-import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -72,6 +65,8 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider, Dispos
    */
   private boolean myValid;
 
+  private final EditorHighlighterUpdater myEditorHighlighterUpdater;
+
   TextEditorComponent(@NotNull final Project project, @NotNull final VirtualFile file, @NotNull final TextEditorImpl textEditor) {
     super(new BorderLayout(), textEditor);
 
@@ -93,46 +88,10 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider, Dispos
     MyVirtualFileListener myVirtualFileListener = new MyVirtualFileListener();
     myFile.getFileSystem().addVirtualFileListener(myVirtualFileListener);
     Disposer.register(this, ()-> myFile.getFileSystem().removeVirtualFileListener(myVirtualFileListener));
-    MessageBusConnection myConnection = project.getMessageBus().connect(this);
-    myConnection.subscribe(FileTypeManager.TOPIC, new MyFileTypeListener());
-    myConnection.subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
-      @Override
-      public void enteredDumbMode() {
-        updateHighlighters();
-      }
 
-      @Override
-      public void exitDumbMode() {
-        updateHighlighters();
-      }
-    });
-  }
+    myEditorHighlighterUpdater = new EditorHighlighterUpdater(myProject, this, (EditorEx)myEditor, myFile);
 
-  private <T> void updateHighlightersOnExtensionsChange(@NotNull ExtensionPointName<KeyedLazyInstance<T>> epName) {
-    epName.addExtensionPointListener(new ExtensionPointListener<KeyedLazyInstance<T>>() {
-      @Override
-      public void extensionAdded(@NotNull KeyedLazyInstance<T> extension, @NotNull PluginDescriptor pluginDescriptor) {
-        checkUpdateHighlighters(extension.getKey(), false);
-      }
-
-      @Override
-      public void extensionRemoved(@NotNull KeyedLazyInstance<T> extension, @NotNull PluginDescriptor pluginDescriptor) {
-        checkUpdateHighlighters(extension.getKey(), true);
-      }
-    }, this);
-  }
-
-  private void checkUpdateHighlighters(String key, boolean updateSynchronously) {
-    FileType fileType = myFile.getFileType();
-    if (fileType.getName().equals(key) ||
-        (fileType instanceof LanguageFileType && ((LanguageFileType)fileType).getLanguage().getID().equals(key))) {
-      if (ApplicationManager.getApplication().isDispatchThread() && updateSynchronously) {
-        updateHighlightersSynchronously();
-      }
-      else {
-        updateHighlighters();
-      }
-    }
+    project.getMessageBus().connect(this).subscribe(FileTypeManager.TOPIC, new MyFileTypeListener());
   }
 
   private volatile boolean myDisposed;
@@ -163,9 +122,6 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider, Dispos
     if (isLoading()) {
       stopLoading();
     }
-
-    updateHighlightersOnExtensionsChange(LanguageSyntaxHighlighters.EP_NAME);
-    updateHighlightersOnExtensionsChange(SyntaxHighlighterLanguageFactory.EP_NAME);
 
     getContentPanel().setVisible(true);
   }
@@ -250,23 +206,6 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider, Dispos
   }
 
   /**
-   * Updates editors' highlighters. This should be done when the opened file
-   * changes its file type.
-   */
-  private void updateHighlighters(){
-    if (!myProject.isDisposed() && !myEditor.isDisposed()) {
-      AsyncHighlighterUpdater.updateHighlighters(myProject, myEditor, myFile);
-    }
-  }
-
-  private void updateHighlightersSynchronously() {
-    if (!myProject.isDisposed() && !myEditor.isDisposed()) {
-      final EditorHighlighter highlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(myProject, myFile);
-      ((EditorEx)myEditor).setHighlighter(highlighter);
-    }
-  }
-
-  /**
    * Updates frame's status bar: insert/overwrite mode, caret position
    */
   private void updateStatusBar(){
@@ -338,10 +277,6 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider, Dispos
     }
   }
 
-  /**
-   * Listen changes of file types. When type of the file changes we need
-   * to also change highlighter.
-   */
   private final class MyFileTypeListener implements FileTypeListener {
     @Override
     public void fileTypesChanged(@NotNull final FileTypeEvent event) {
@@ -349,14 +284,6 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider, Dispos
       // File can be invalid after file type changing. The editor should be removed
       // by the FileEditorManager if it's invalid.
       updateValidProperty();
-      FileType type = event.getRemovedFileType();
-      if (type != null && !(type instanceof AbstractFileType)) {
-        // Plugin is being unloaded, so we need to release plugin classes immediately
-        updateHighlightersSynchronously();
-      }
-      else {
-        updateHighlighters();
-      }
     }
   }
 
@@ -373,7 +300,7 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider, Dispos
         if (Comparing.equal(e.getFile(), myFile) &&
             (FileContentUtilCore.FORCE_RELOAD_REQUESTOR.equals(e.getRequestor()) ||
              !Comparing.equal(e.getOldValue(), e.getNewValue()))) {
-          updateHighlighters();
+          myEditorHighlighterUpdater.updateHighlighters();
         }
       }
     }
