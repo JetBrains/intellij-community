@@ -28,6 +28,7 @@ import java.awt.event.KeyEvent;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 class TouchBar implements NSTLibrary.ItemCreator {
@@ -54,7 +55,7 @@ class TouchBar implements NSTLibrary.ItemCreator {
   private BarContainer myBarContainer;
 
   private final Object myHideReleaseLock = new Object();
-  private Future myLastUpdateNativePeers;
+  private Future<?> myLastUpdateNativePeers;
 
   private boolean myAllowSkipSlowUpdates = false;
 
@@ -231,7 +232,7 @@ class TouchBar implements NSTLibrary.ItemCreator {
   void setOptionalContextVisible(@Nullable String contextName) {
     final @Nullable String ctx = contextName == null ? myDefaultOptionalContextName : contextName;
 
-    final boolean visibilityChanged[] = {false};
+    final boolean[] visibilityChanged = {false};
     myItems.forEachDeep(tbi -> {
       if (tbi.myOptionalContextName == null)
         return;
@@ -333,14 +334,16 @@ class TouchBar implements NSTLibrary.ItemCreator {
     final long elapsedFromStartShowNs = timeNs - myStartShowNs;
     myLastUpdateNs = timeNs;
 
-    if (ourUseCached && elapsedFromStartShowNs < 500 * 1000000L) {
+    int delayMillis = 500;
+    long delayNanos = TimeUnit.MILLISECONDS.toNanos(delayMillis);
+    if (ourUseCached && elapsedFromStartShowNs < delayNanos) {
       // When user types text and presses modifier keys it causes to show alternative touchbar layouts, some of them are visible less than second.
       // To avoid unnecessary slow-update invocations for such bars we always try to use cached presentations for the first 500 ms
       if (myStats != null)
         myStats.incrementCounter(StatsCounters.forceUseCached);
       // start manual timer to update action-buttons if necessary
-      final Timer t = new Timer(500, e -> {
-        if (System.nanoTime() - myLastUpdateNs > 500*1000000l) { // update action-buttons if last update was long time ago
+      final Timer t = new Timer(delayMillis, e -> {
+        if (System.nanoTime() - myLastUpdateNs > delayNanos) { // update action-buttons if last update was long time ago
           if (myStats != null)
             myStats.incrementCounter(StatsCounters.forceCachedDelayedUpdateCount);
           updateActionItems();

@@ -55,7 +55,7 @@ class TouchBarStats {
         if (val < 1000) // skip non-informative counters
           continue;
         name = name.replace("DurationNs", "DurationMs");
-        val = val/1000000l;
+        val /= 1000000L;
       }
       out.printf("%s=%d\n", name, val);
     }
@@ -146,7 +146,7 @@ class TouchBarStats {
         if (val < 1000) // skip non-informative counters
           return;
         name = name.replace("Ns", "Ms");
-        val = val/1000000l;
+        val /= 1000000L;
       }
       out.printf("\t%s=%d\n", name, val);
     }

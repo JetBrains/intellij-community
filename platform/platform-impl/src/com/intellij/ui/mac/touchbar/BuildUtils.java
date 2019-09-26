@@ -309,8 +309,8 @@ class BuildUtils {
     final ModalityState ms = app != null ? LaterInvocator.getCurrentModalityState() : null;
 
     final TBItemScrubber scrub = result.addScrubber();
-    final @NotNull ListPopupStep listPopupStep = listPopup.getListStep();
-    final @NotNull List stepValues = listPopupStep.getValues();
+    final @NotNull ListPopupStep<Object> listPopupStep = listPopup.getListStep();
+    final @NotNull List<Object> stepValues = listPopupStep.getValues();
     final List<Integer> disabledItems = new ArrayList<>();
     int currIndex = 0;
     final Map<Object, Integer> obj2index = new HashMap<>();
@@ -500,9 +500,9 @@ class BuildUtils {
     @Override
     public void endUpdate(@NotNull AnAction action) {
       // check whether update is too slow
-      final long updateDurationNs = System.nanoTime() - myAct2StartUpdateNs.getOrDefault(action, 0l);
+      final long updateDurationNs = System.nanoTime() - myAct2StartUpdateNs.getOrDefault(action, 0L);
       final boolean isEDT = ApplicationManager.getApplication().isDispatchThread();
-      if (isEDT && !ALWAYS_UPDATE_SLOW_ACTIONS && myAllowSkipSlowUpdates && updateDurationNs > 30*1000000l) { // 30 ms threshold
+      if (isEDT && !ALWAYS_UPDATE_SLOW_ACTIONS && myAllowSkipSlowUpdates && updateDurationNs > 30 * 1000000L) { // 30 ms threshold
         // disable update for this action
         addSlowUpdateAction(action);
       }
