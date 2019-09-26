@@ -1,8 +1,8 @@
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 class OutsideTestMethod {
 
   void m() {
-    <caret>assertNull("asdf");
+    <caret>assertTrue("asdf");
   }
 }
