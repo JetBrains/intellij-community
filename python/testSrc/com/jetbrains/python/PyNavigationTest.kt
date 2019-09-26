@@ -28,9 +28,11 @@ class PyNavigationTest : PyTestCase() {
 
   // PY-35129
   fun testGoToDeclarationForDirectory() {
-    configureByDir(getTestName(true))
-    val target = PyGotoDeclarationHandler().getGotoDeclarationTarget(elementAtCaret, myFixture.editor)
-    checkPyNotPyi(target)
+    runWithAdditionalFileInLibDir("collections/__init__.py", "") {
+      configureByDir(getTestName(true))
+      val target = PyGotoDeclarationHandler().getGotoDeclarationTarget(elementAtCaret, myFixture.editor)
+      checkPyNotPyi(target)
+    }
   }
 
   private fun configureByDir(dirName: String) {
