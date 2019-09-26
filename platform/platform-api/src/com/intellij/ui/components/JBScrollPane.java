@@ -200,9 +200,9 @@ public class JBScrollPane extends JScrollPane {
 
         boolean isWheelScrollEnabled = pane.isWheelScrollingEnabled();
         boolean isBarVisible = bar != null && bar.isVisible();
-        boolean hasAdjustedDelta = bar instanceof JBScrollBar && ((JBScrollBar)bar).getDeltaAdjusted(event) != 0.0;
+        boolean isAdjustedDeltaZero = bar instanceof JBScrollBar && ((JBScrollBar)bar).getDeltaAdjusted(event) == 0.0;
 
-        if (isWheelScrollEnabled && isBarVisible && hasAdjustedDelta) {
+        if (isWheelScrollEnabled && isBarVisible && !isAdjustedDeltaZero) {
           if (Registry.is("idea.inertial.smooth.scrolling.enabled")) {
             if (mySmoothScroll == null) {
               mySmoothScroll = MouseWheelSmoothScroll.create(() -> {
@@ -210,7 +210,7 @@ public class JBScrollPane extends JScrollPane {
               });
             }
             mySmoothScroll.processMouseWheelEvent(event, myDelegate::mouseWheelMoved);
-          } else if (!((JBScrollBar)bar).handleMouseWheelEvent(event)) {
+          } else if (!(bar instanceof JBScrollBar && ((JBScrollBar)bar).handleMouseWheelEvent(event))) {
             myDelegate.mouseWheelMoved(event);
           }
         }
