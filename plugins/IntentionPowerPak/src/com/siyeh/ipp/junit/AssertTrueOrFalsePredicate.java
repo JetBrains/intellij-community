@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2019 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,18 +27,15 @@ class AssertTrueOrFalsePredicate implements PsiElementPredicate {
     if (!(element instanceof PsiMethodCallExpression)) {
       return false;
     }
-    final PsiMethodCallExpression expression =
-      (PsiMethodCallExpression)element;
+    final PsiMethodCallExpression expression = (PsiMethodCallExpression)element;
     final PsiExpressionList argumentList = expression.getArgumentList();
     final int numExpressions = argumentList.getExpressionCount();
     if (numExpressions < 1 || numExpressions > 2) {
       return false;
     }
-    final PsiReferenceExpression methodExpression =
-      expression.getMethodExpression();
+    final PsiReferenceExpression methodExpression = expression.getMethodExpression();
     @NonNls final String methodName = methodExpression.getReferenceName();
-    if (!"assertTrue".equals(methodName) &&
-        !"assertFalse".equals(methodName)) {
+    if (!"assertTrue".equals(methodName) && !"assertFalse".equals(methodName)) {
       return false;
     }
     final PsiMethod method = expression.resolveMethod();
@@ -51,7 +48,8 @@ class AssertTrueOrFalsePredicate implements PsiElementPredicate {
     }
     final String qualifiedName = targetClass.getQualifiedName();
     if (!"junit.framework.Assert".equals(qualifiedName) &&
-        !"org.junit.Assert".equals(qualifiedName)) {
+        !"org.junit.Assert".equals(qualifiedName) &&
+        !"org.junit.jupiter.api.Assertions".equals(qualifiedName)) {
       return false;
     }
     return !ErrorUtil.containsError(element);

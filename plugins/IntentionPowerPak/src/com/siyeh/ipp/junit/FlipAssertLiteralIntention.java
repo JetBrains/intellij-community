@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2019 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,14 +56,20 @@ public class FlipAssertLiteralIntention extends MutablyNamedIntention {
     final PsiReferenceExpression methodExpression = call.getMethodExpression();
     @NonNls final String fromMethodName = methodExpression.getReferenceName();
     @NonNls final String toMethodName = getOppositeAssertMethodName(fromMethodName);
-    CommentTracker tracker = new CommentTracker();
+    final CommentTracker tracker = new CommentTracker();
     @NonNls final StringBuilder newCall = new StringBuilder();
     final PsiElement qualifier = methodExpression.getQualifier();
     if (qualifier == null) {
+      final PsiMethod method = call.resolveMethod();
+      assert method != null;
+      final PsiClass aClass = method.getContainingClass();
+      assert aClass != null;
+      final String qualifiedName = aClass.getQualifiedName();
+      assert qualifiedName != null;
       final PsiClass containingClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
       if (!InheritanceUtil.isInheritor(containingClass, "junit.framework.Assert") &&
-          !ImportUtils.addStaticImport("org.junit.Assert", toMethodName, element)) {
-        newCall.append("org.junit.Assert.");
+          !ImportUtils.addStaticImport(qualifiedName, toMethodName, element)) {
+        newCall.append(qualifiedName).append('.');
       }
     }
     else {
