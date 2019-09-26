@@ -107,19 +107,13 @@ class ClosureDriver private constructor(private val closureParameters: Map<GrPar
   }
 
   private fun collectClosureInvocationConstraints(): TypeUsageInformation {
-    val constraintCollector = mutableListOf<ConstraintFormula>()
-    val requiredTypesCollector = mutableMapOf<PsiTypeParameter, MutableList<BoundConstraint>>()
-    val dependentTypes = mutableSetOf<PsiTypeParameter>()
+    val builder = TypeUsageInformationBuilder(method)
     method.forEachParameterUsage { parameter, instructions ->
-      if (parameter !in closureParameters.keys) {
-        return@forEachParameterUsage
+      if (parameter in closureParameters.keys) {
+        analyzeClosureUsages(closureParameters.getValue(parameter), instructions, builder)
       }
-      analyzeClosureUsages(constraintCollector, closureParameters.getValue(parameter), instructions, dependentTypes, requiredTypesCollector)
     }
-    return TypeUsageInformation(
-      requiredTypesCollector.filter { it.key in closureParameters.flatMap { (_, parameterizedClosure) -> parameterizedClosure.typeParameters } },
-      constraintCollector,
-      dependentTypes)
+    return builder.build()
   }
 
   override fun collectInnerConstraints(): TypeUsageInformation {

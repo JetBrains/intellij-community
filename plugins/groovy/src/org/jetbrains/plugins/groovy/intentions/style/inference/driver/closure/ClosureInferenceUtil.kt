@@ -9,9 +9,9 @@ import com.intellij.psi.impl.source.resolve.graphInference.constraints.Constrain
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.plugins.groovy.intentions.closure.isClosureCall
 import org.jetbrains.plugins.groovy.intentions.closure.isClosureCallMethod
-import org.jetbrains.plugins.groovy.intentions.style.inference.driver.BoundConstraint
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.BoundConstraint.ContainMarker.LOWER
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.RecursiveMethodAnalyzer
+import org.jetbrains.plugins.groovy.intentions.style.inference.driver.TypeUsageInformationBuilder
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.closure.ClosureParametersStorageBuilder.Companion.isReferenceTo
 import org.jetbrains.plugins.groovy.intentions.style.inference.properResolve
 import org.jetbrains.plugins.groovy.intentions.style.inference.resolve
@@ -71,14 +71,11 @@ inline fun GrMethod.forEachParameterUsage(action: (GrParameter, List<ReadWriteVa
     }
 }
 
-fun analyzeClosureUsages(constraintCollector: MutableList<ConstraintFormula>,
-                         closureParameter: ParameterizedClosure,
+fun analyzeClosureUsages(closureParameter: ParameterizedClosure,
                          usages: List<ReadWriteVariableInstruction>,
-                         dependentTypes: MutableSet<PsiTypeParameter>,
-                         requiredTypesCollector: MutableMap<PsiTypeParameter, MutableList<BoundConstraint>>) {
+                         builder: TypeUsageInformationBuilder) {
   val parameter = closureParameter.parameter
   val parameterType = parameter.type
-  val outerMethod = parameter.parentOfType<GrMethod>()!!
   val delegatesToCombiner = closureParameter.delegatesToCombiner
   parameter.setType(PsiType.getTypeByName(GROOVY_LANG_CLOSURE, parameter.project, parameter.resolveScope))
   for (usage in usages) {
@@ -91,15 +88,13 @@ fun analyzeClosureUsages(constraintCollector: MutableList<ConstraintFormula>,
     val resolveResult = nearestCall.properResolve() as? GroovyMethodResult ?: return
     if (nearestCall.resolveMethod()?.containingClass?.qualifiedName == GROOVY_LANG_CLOSURE) {
       delegatesToCombiner.acceptResolveResult(resolveResult)
-      collectClosureMethodInvocationDependencies(closureParameter, dependentTypes, requiredTypesCollector, constraintCollector,
-                                                 resolveResult)
+      collectClosureMethodInvocationDependencies(closureParameter, builder, resolveResult)
     }
     else {
       val mapping = resolveResult.candidate?.argumentMapping ?: continue
       val requiredArgument = mapping.arguments.find { it.isReferenceTo(parameter) } ?: continue
       val innerParameter = mapping.targetParameter(requiredArgument) ?: continue
-      collectClosureParamsDependencies(innerParameter, resolveResult, closureParameter, constraintCollector, dependentTypes, outerMethod,
-                                       requiredTypesCollector)
+      collectClosureParamsDependencies(innerParameter, resolveResult, closureParameter, builder)
       processDelegatesToAnnotation(innerParameter, resolveResult, closureParameter.delegatesToCombiner)
     }
   }
@@ -108,9 +103,7 @@ fun analyzeClosureUsages(constraintCollector: MutableList<ConstraintFormula>,
 
 
 fun collectClosureMethodInvocationDependencies(parameterizedClosure: ParameterizedClosure,
-                                               dependentTypes: MutableSet<PsiTypeParameter>,
-                                               requiredTypesCollector: MutableMap<PsiTypeParameter, MutableList<BoundConstraint>>,
-                                               constraintCollector: MutableList<ConstraintFormula>,
+                                               builder: TypeUsageInformationBuilder,
                                                resolveResult: GroovyMethodResult) {
   if (resolveResult.candidate?.method.isClosureCallMethod()) {
     val arguments = resolveResult.candidate?.argumentMapping?.arguments ?: return
@@ -118,9 +111,8 @@ fun collectClosureMethodInvocationDependencies(parameterizedClosure: Parameteriz
     val method = parameterizedClosure.parameter.parentOfType<GrMethod>() ?: return
     for ((expectedType, argument) in expectedTypes) {
       val argumentType = argument.type ?: continue
-      constraintCollector.add(TypeConstraint(expectedType, argumentType, method))
-      RecursiveMethodAnalyzer.induceDeepConstraints(expectedType, argumentType, dependentTypes, requiredTypesCollector,
-                                                    method.typeParameters.toSet(), LOWER, method)
+      builder.addConstraint(TypeConstraint(expectedType, argumentType, method))
+      RecursiveMethodAnalyzer.induceDeepConstraints(expectedType, argumentType, builder, method, LOWER)
     }
   }
 }
@@ -139,20 +131,17 @@ fun extractSignature(innerParameter: PsiParameter, resolveResult: GroovyMethodRe
 fun collectClosureParamsDependencies(innerParameter: PsiParameter,
                                      resolveResult: GroovyMethodResult,
                                      closureParameter: ParameterizedClosure,
-                                     constraintCollector: MutableList<ConstraintFormula>,
-                                     dependentTypes: MutableSet<PsiTypeParameter>,
-                                     outerMethod: GrMethod,
-                                     requiredTypesCollector: MutableMap<PsiTypeParameter, MutableList<BoundConstraint>>) {
+                                     builder: TypeUsageInformationBuilder) {
   val signature = extractSignature(innerParameter, resolveResult) ?: return
   for ((inferredType, typeParameter) in signature.zip(closureParameter.typeParameters)) {
-    constraintCollector.add(TypeConstraint(typeParameter.type(), inferredType, outerMethod))
+    builder.addConstraint(TypeConstraint(typeParameter.type(), inferredType, innerParameter))
     val inferredTypeParameter = inferredType.typeParameter()
     if (inferredTypeParameter != null) {
-      dependentTypes.add(typeParameter)
-      dependentTypes.add(inferredTypeParameter)
+      builder.addDependentType(typeParameter)
+      builder.addDependentType(inferredTypeParameter)
     }
     else {
-      requiredTypesCollector.computeIfAbsent(typeParameter) { mutableListOf() }.add(BoundConstraint(inferredType, LOWER))
+      builder.generateRequiredTypes(typeParameter, inferredType, LOWER)
     }
   }
 }
