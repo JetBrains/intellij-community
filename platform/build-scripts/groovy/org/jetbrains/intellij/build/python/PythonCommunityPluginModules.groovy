@@ -11,6 +11,7 @@ class PythonCommunityPluginModules {
     "intellij.python.langInjection",
     "intellij.python.copyright",
     "intellij.python.terminal",
+    "intellij.python.reStructuredText",
   ]
   static List<String> COMMUNITY_MODULES = ["intellij.python.community",
                                            "intellij.python.community.plugin",
