@@ -44,33 +44,35 @@ public final class JreHiDpiUtil {
    * @see ScaleType
    */
   public static boolean isJreHiDPIEnabled() {
-    if (jreHiDPI.get() != null) return jreHiDPI.get();
-
-    synchronized (jreHiDPI) {
-      if (jreHiDPI.get() != null) return jreHiDPI.get();
-
-      jreHiDPI.set(false);
-      if (!SystemProperties.getBooleanProperty("hidpi", true)) {
-        return false;
-      }
-      jreHiDPI_earlierVersion = true;
-      if (SystemInfo.isJetBrainsJvm) {
-        try {
-          GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
-          if (ge instanceof SunGraphicsEnvironment) {
-            Method m = ReflectionUtil.getDeclaredMethod(SunGraphicsEnvironment.class, "isUIScaleEnabled");
-            jreHiDPI.set(m != null && (Boolean)m.invoke(ge));
-            jreHiDPI_earlierVersion = false;
+    Boolean value = jreHiDPI.get();
+    if (value == null) {
+      synchronized (jreHiDPI) {
+        value = jreHiDPI.get();
+        if (value == null) {
+          value = false;
+          if (SystemProperties.getBooleanProperty("hidpi", true)) {
+            jreHiDPI_earlierVersion = true;
+            if (SystemInfo.isJetBrainsJvm) {
+              try {
+                GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+                if (ge instanceof SunGraphicsEnvironment) {
+                  Method m = ReflectionUtil.getDeclaredMethod(SunGraphicsEnvironment.class, "isUIScaleEnabled");
+                  value = m != null && (Boolean)m.invoke(ge);
+                  jreHiDPI_earlierVersion = false;
+                }
+              }
+              catch (Throwable ignore) {
+              }
+            }
+            if (SystemInfo.isMac) {
+              value = true;
+            }
           }
-        }
-        catch (Throwable ignore) {
+          jreHiDPI.set(value);
         }
       }
-      if (SystemInfo.isMac) {
-        jreHiDPI.set(true);
-      }
-      return jreHiDPI.get();
     }
+    return value;
   }
 
   /**
@@ -87,10 +89,7 @@ public final class JreHiDpiUtil {
   @TestOnly
   @NotNull
   public static AtomicReference<Boolean> test_jreHiDPI() {
-    if (jreHiDPI.get() == null) {
-      // force init
-      isJreHiDPIEnabled();
-    }
+    isJreHiDPIEnabled(); // force init
     return jreHiDPI;
   }
 }
