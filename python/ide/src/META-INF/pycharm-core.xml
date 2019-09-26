@@ -1,6 +1,7 @@
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
   <!-- Components and extensions declared in this file work ONLY in PyCharm, not in Python plugin.
        Both Community and Professional editions. -->
+  <module value="com.intellij.modules.pycharm"/>
 
   <xi:include href="/META-INF/IdeTipsAndTricks.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/META-INF/PlatformLangXmlPlugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
