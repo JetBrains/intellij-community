@@ -18,6 +18,7 @@ import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.MavenPropertyResolver;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.model.MavenArtifact;
+import org.jetbrains.idea.maven.model.MavenPlugin;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectSettings;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
@@ -62,13 +63,23 @@ public class MavenJUnitPatcher extends JUnitPatcher {
 
     UnaryOperator<String> runtimeProperties = getDynamicConfigurationProperties(module, mavenProject, javaParameters);
 
-    Element config = mavenProject.getPluginConfiguration("org.apache.maven.plugins", "maven-surefire-plugin");
-    if (config != null) {
-        patchJavaParameters(module, javaParameters, mavenProject, "surefire", config, runtimeProperties);
-    }
-    config = mavenProject.getPluginConfiguration("org.apache.maven.plugins", "maven-failsafe-plugin");
-    if (config != null) {
-        patchJavaParameters(module, javaParameters, mavenProject, "failsafe", config, runtimeProperties);
+    configureFromPlugin(module, javaParameters, mavenProject, runtimeProperties, "maven-surefire-plugin", "surefire");
+    configureFromPlugin(module, javaParameters, mavenProject, runtimeProperties, "maven-failsafe-plugin", "failsafe");
+  }
+
+  protected void configureFromPlugin(@NotNull Module module,
+                                     JavaParameters javaParameters,
+                                     MavenProject mavenProject,
+                                     UnaryOperator<String> runtimeProperties,
+                                     String pluginArtifact,
+                                     String pluginName) {
+    MavenPlugin plugin = mavenProject.findPlugin("org.apache.maven.plugins", pluginArtifact);
+    if (plugin != null) {
+      Element config = mavenProject.getPluginGoalConfiguration(plugin, null);
+      if (config == null) {
+        config = new Element("configuration");
+      }
+      patchJavaParameters(module, javaParameters, mavenProject, pluginName, config, runtimeProperties);
     }
   }
 
@@ -194,13 +205,12 @@ public class MavenJUnitPatcher extends JUnitPatcher {
 
     if (testRunningSettings.isPassArgLine() && isEnabled(plugin, "argLine")) {
       Element argLine = config.getChild("argLine");
-      if (argLine != null) {
-        String value = resolvePluginProperties(plugin, argLine.getTextTrim(), domModel);
-        value = resolveVmProperties(javaParameters.getVMParametersList(), value);
-        if (StringUtil.isNotEmpty(value) && isResolved(plugin, value)) {
-          value = resolveRuntimeProperties(value, runtimeProperties);
-          javaParameters.getVMParametersList().addParametersString(value);
-        }
+      String propertyText = argLine != null ? argLine.getTextTrim() : "${argLine}";
+      String value = resolvePluginProperties(plugin, propertyText, domModel);
+      value = resolveVmProperties(javaParameters.getVMParametersList(), value);
+      if (StringUtil.isNotEmpty(value) && isResolved(plugin, value)) {
+        value = resolveRuntimeProperties(value, runtimeProperties);
+        javaParameters.getVMParametersList().addParametersString(value);
       }
     }
   }

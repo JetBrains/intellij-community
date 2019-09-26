@@ -250,6 +250,34 @@ public class MavenJUnitPatcherTest extends MavenImportingTestCase {
                  javaParameters.getVMParametersList().getList());
   }
 
+  public void testImplicitArgLine() {
+    VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>" +
+                                           "<artifactId>m1</artifactId>" +
+                                           "<version>1</version>" +
+                                           "<properties>\n" +
+                                           "  <argLine>-Dfoo=${version}</argLine>\n" +
+                                           "</properties>\n" +
+                                           "\n" +
+                                           "<build>\n" +
+                                           "  <plugins>\n" +
+                                           "    <plugin>\n" +
+                                           "      <groupId>org.apache.maven.plugins</groupId>\n" +
+                                           "      <artifactId>maven-surefire-plugin</artifactId>\n" +
+                                           "      <version>2.22.1</version>\n" +
+                                           "    </plugin>\n" +
+                                           "  </plugins>\n" +
+                                           "</build>\n");
+
+    importProjects(m1);
+    Module module = getModule("m1");
+
+    MavenJUnitPatcher mavenJUnitPatcher = new MavenJUnitPatcher();
+    JavaParameters javaParameters = new JavaParameters();
+    mavenJUnitPatcher.patchJavaParameters(module, javaParameters);
+    assertEquals(asList("-Dfoo=1"),
+                 javaParameters.getVMParametersList().getList());
+  }
+
   public void testVmPropertiesResolve() {
     VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>" +
                                            "<artifactId>m1</artifactId>" +
