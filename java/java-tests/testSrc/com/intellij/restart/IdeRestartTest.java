@@ -6,9 +6,11 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import org.junit.Ignore;
 
 import java.util.function.Consumer;
 
+@Ignore
 @SkipSlowTestLocally
 public class IdeRestartTest extends IsolatedIdeTestCase {
   public void testSimpleOpenAndRestart() {
