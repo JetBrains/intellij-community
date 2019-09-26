@@ -9,7 +9,6 @@ import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.VcsNotifier
-import com.intellij.openapi.vfs.VfsUtil
 import git4idea.DialogManager
 import git4idea.GitUtil
 import git4idea.commands.Git
@@ -54,6 +53,7 @@ internal abstract class GitAbortOperationAction(repositoryState: Repository.Stat
       DvcsUtil.workingTreeChangeStarted(project, "Abort").use {
         indicator.text2 = "git ${gitCommand.name()} --abort" + GitUtil.mention(repository)
 
+        val startHash = GitUtil.getHead(repository)
         val handler = GitLineHandler(project, repository.root, gitCommand);
         handler.addParameters("--abort");
         val result = Git.getInstance().runCommand(handler);
@@ -64,8 +64,7 @@ internal abstract class GitAbortOperationAction(repositoryState: Repository.Stat
         else {
           VcsNotifier.getInstance(project).notifySuccess("$operationNameCapitalised Abort Succeeded")
 
-          repository.update()
-          VfsUtil.markDirtyAndRefresh(false, true, false, repository.root)
+          GitUtil.updateAndRefreshChangedVfs(repository, startHash)
         }
       }
     }.execute()
