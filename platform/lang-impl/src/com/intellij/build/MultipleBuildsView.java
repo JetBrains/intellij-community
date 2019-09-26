@@ -125,7 +125,7 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
     return myContent;
   }
 
-  public Map<AbstractViewManager.BuildInfo, BuildView> getBuildsMap() {
+  public Map<BuildDescriptor, BuildView> getBuildsMap() {
     return Collections.unmodifiableMap(myViewMap);
   }
 
@@ -243,6 +243,10 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
               .ifPresent(myBuildsList::setSelectedIndex);
           }
         }
+        BuildView view = myViewMap.get(buildInfo);
+        if (view != null) {
+          view.onEvent(buildId, event);
+        }
         if (event instanceof FinishBuildEvent) {
           buildInfo.endTime = event.getEventTime();
           buildInfo.message = event.getMessage();
@@ -255,7 +259,6 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
           buildInfo.statusMessage = event.getMessage();
         }
 
-        myViewMap.get(buildInfo).onEvent(buildId, event);
       }
     });
 
