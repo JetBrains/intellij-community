@@ -22,6 +22,7 @@ import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsCommitStyleFactory;
@@ -54,6 +55,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.event.CellEditorListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.table.*;
@@ -319,7 +321,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     if (getModel().getRowCount() <= 0 || logColumn.getContentClass() != String.class) {
       return column.getPreferredWidth();
     }
-    
+
     Font tableFont = getTableFont();
     // detect the longest value
     int maxRowsToCheck = Math.min(MAX_ROWS_TO_CALC_WIDTH, getRowCount());
@@ -671,12 +673,16 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
   @Override
   protected void paintFooter(@NotNull Graphics g, int x, int y, int width, int height) {
-    int lastRow = getRowCount() - 1;
-    if (lastRow >= 0) {
-      g.setColor(getStyle(lastRow, getColumnViewIndex(VcsLogColumn.COMMIT), hasFocus(), false).getBackground());
+    paintTopBottomBorder(g, x, y, width, height, false);
+  }
+
+  private void paintTopBottomBorder(@NotNull Graphics g, int x, int y, int width, int height, boolean isTopBorder) {
+    int targetRow = isTopBorder ? 0 : getRowCount() - 1;
+    if (targetRow >= 0 && targetRow < getRowCount()) {
+      g.setColor(getStyle(targetRow, getColumnViewIndex(VcsLogColumn.COMMIT), hasFocus(), false).getBackground());
       g.fillRect(x, y, width, height);
       if (myColorManager.hasMultiplePaths()) {
-        g.setColor(getPathBackgroundColor((FilePath)getModel().getValueAt(lastRow, VcsLogColumn.ROOT), myColorManager));
+        g.setColor(getPathBackgroundColor((FilePath)getModel().getValueAt(targetRow, VcsLogColumn.ROOT), myColorManager));
 
         int rootWidth = getRootColumn().getWidth();
         if (!isShowRootNames()) rootWidth -= JBUIScale.scale(ROOT_INDICATOR_WHITE_WIDTH);
@@ -685,9 +691,14 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
       }
     }
     else {
-      g.setColor(getBaseStyle(lastRow, getColumnViewIndex(VcsLogColumn.COMMIT), hasFocus(), false).getBackground());
+      g.setColor(getBaseStyle(targetRow, getColumnViewIndex(VcsLogColumn.COMMIT), hasFocus(), false).getBackground());
       g.fillRect(x, y, width, height);
     }
+  }
+
+  @NotNull
+  public Border createTopBottomBorder(int top, int bottom) {
+    return new MyTopBottomBorder(top, bottom);
   }
 
   public boolean isResizingColumns() {
@@ -813,6 +824,30 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
       if (getVcsLogColumn(columnIndex) == VcsLogColumn.ROOT || getVcsLogColumn(newIndex) == VcsLogColumn.ROOT) return;
       super.moveColumn(columnIndex, newIndex);
       saveColumnOrderToSettings();
+    }
+  }
+
+  private class MyTopBottomBorder implements Border {
+    @NotNull private final JBInsets myInsets;
+
+    private MyTopBottomBorder(int top, int bottom) {
+      myInsets = JBUI.insets(top, 0, bottom, 0);
+    }
+
+    @Override
+    public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+      if (myInsets.top > 0) paintTopBottomBorder(g, x, y, width, myInsets.top, true);
+      if (myInsets.bottom > 0) paintTopBottomBorder(g, x, y + height - myInsets.bottom, width, myInsets.bottom, false);
+    }
+
+    @Override
+    public Insets getBorderInsets(Component c) {
+      return myInsets;
+    }
+
+    @Override
+    public boolean isBorderOpaque() {
+      return true;
     }
   }
 }
