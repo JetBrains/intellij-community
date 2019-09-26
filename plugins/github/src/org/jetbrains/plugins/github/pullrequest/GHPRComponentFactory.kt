@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.project.Project
@@ -14,6 +15,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.ui.*
 import com.intellij.util.ui.UIUtil
 import git4idea.GitCommit
+import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionDataContext
 import org.jetbrains.plugins.github.pullrequest.action.GithubPullRequestKeys
@@ -40,16 +42,18 @@ import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
 import javax.swing.event.ListSelectionEvent
 
+@Service
+internal class GHPRComponentFactory(private val project: Project) {
 
-internal class GHPRComponentFactory(private val project: Project,
-                                    private val copyPasteManager: CopyPasteManager,
-                                    private val avatarLoader: CachingGithubUserAvatarLoader,
-                                    private val imageResizer: GithubImageResizer,
-                                    private val actionManager: ActionManager,
-                                    private val autoPopupController: AutoPopupController,
-                                    private val pullRequestUiSettings: GithubPullRequestsProjectUISettings,
-                                    private val fileEditorManager: FileEditorManager) {
+  private val actionManager = ActionManager.getInstance()
+  private val copyPasteManager = CopyPasteManager.getInstance()
+  private val avatarLoader = CachingGithubUserAvatarLoader.getInstance()
+  private val imageResizer = GithubImageResizer.getInstance()
 
+  private val autoPopupController = AutoPopupController.getInstance(project)
+  private val projectUiSettings = GithubPullRequestsProjectUISettings.getInstance(project)
+
+  @CalledInAwt
   fun createComponent(dataContext: GHPullRequestsDataContext): JComponent {
     val avatarIconsProviderFactory = CachingGithubAvatarIconsProvider.Factory(avatarLoader, imageResizer, dataContext.requestExecutor)
     return GithubPullRequestsComponent(dataContext, avatarIconsProviderFactory)
@@ -109,7 +113,7 @@ internal class GHPRComponentFactory(private val project: Project,
       val file = GHPRVirtualFile(actionDataContext,
                                  pullRequest,
                                  dataContext.dataLoader.getDataProvider(pullRequest.number))
-      fileEditorManager.openFile(file, true)
+      FileEditorManager.getInstance(project).openFile(file, true)
     }
 
     private fun installPopup(list: GithubPullRequestsList) {
@@ -175,7 +179,7 @@ internal class GHPRComponentFactory(private val project: Project,
                                                                                      "Can't load details"))
 
 
-      val changesBrowser = GHPRChangesBrowser(changesModel, project, pullRequestUiSettings).apply {
+      val changesBrowser = GHPRChangesBrowser(changesModel, project, projectUiSettings).apply {
         diffAction.registerCustomShortcutSet(this@GithubPullRequestsComponent, this@GithubPullRequestsComponent)
       }
       Disposer.register(parentDisposable, changesBrowser)
