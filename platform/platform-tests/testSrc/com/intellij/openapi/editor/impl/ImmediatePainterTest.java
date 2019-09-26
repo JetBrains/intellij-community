@@ -1,6 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.ide.ui.AntialiasingType;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -33,6 +35,7 @@ public class ImmediatePainterTest extends AbstractEditorTest {
   private float myDefaultLineSpacing;
   private Color myDefaultCaretColor;
   private KeyboardFocusManager myDefaultFocusManager;
+  private AntialiasingType myDefaultAntiAliasing;
 
   @Override
   protected void setUp() throws Exception {
@@ -43,6 +46,7 @@ public class ImmediatePainterTest extends AbstractEditorTest {
     myDefaultLineSpacing = getDefaultColorScheme().getLineSpacing();
     myDefaultCaretColor = getDefaultColorScheme().getColor(EditorColors.CARET_COLOR);
     myDefaultFocusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
+    myDefaultAntiAliasing = UISettings.getInstance().getEditorAAType();
 
     FontLayoutService.setInstance(null);
 
@@ -51,6 +55,7 @@ public class ImmediatePainterTest extends AbstractEditorTest {
 
     setFont(Font.MONOSPACED, 14);
     setLineSpacing(1.3F);
+    UISettings.getInstance().setEditorAAType(AntialiasingType.GREYSCALE);
   }
 
   @Override
@@ -61,6 +66,7 @@ public class ImmediatePainterTest extends AbstractEditorTest {
       getDefaultColorScheme().setLineSpacing(myDefaultLineSpacing);
       getDefaultColorScheme().setColor(EditorColors.CARET_COLOR, myDefaultCaretColor);
       KeyboardFocusManager.setCurrentKeyboardFocusManager(myDefaultFocusManager);
+      UISettings.getInstance().setEditorAAType(myDefaultAntiAliasing);
     }
     catch (Throwable e) {
       addSuppressedException(e);
