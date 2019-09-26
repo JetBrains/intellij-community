@@ -394,10 +394,8 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   public void updateFilePresentation(@NotNull VirtualFile file) {
     if (!isFileOpen(file)) return;
 
-    updateFileColor(file);
-    updateFileIcon(file);
     updateFileName(file);
-    updateFileBackgroundColor(file);
+    queueUpdateFile(file);
   }
 
   /**
