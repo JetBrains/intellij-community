@@ -646,5 +646,5 @@ def process_all(roots, sdk_skeletons_dir, name_pattern=None, state_json=None):
     progress(fraction=1.0)
     if state_json:
         mkdir(sdk_skeletons_dir)
-        with fopen(os.path.join(sdk_skeletons_dir, 'state.json'), 'w') as f:
+        with fopen(os.path.join(sdk_skeletons_dir, STATE_FILE_NAME), 'w') as f:
             json.dump(state_json, f, sort_keys=True)
