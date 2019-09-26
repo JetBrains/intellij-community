@@ -67,8 +67,6 @@ public class JBScrollPane extends JScrollPane {
   private int myViewportBorderWidth = -1;
   private volatile boolean myBackgroundRequested; // avoid cyclic references
 
-  private MouseWheelSmoothScroll mySmoothScroll;
-
   public JBScrollPane(int viewportWidth) {
     init(false);
     myViewportBorderWidth = viewportWidth;
@@ -168,34 +166,7 @@ public class JBScrollPane extends JScrollPane {
         Object value = field.get(ui);
         if (value instanceof MouseWheelListener) {
           MouseWheelListener oldListener = (MouseWheelListener)value;
-          MouseWheelListener newListener = event -> {
-            if (isScrollEvent(event)) {
-              Object source = event.getSource();
-              if (source instanceof JScrollPane) {
-                JScrollPane pane = (JScrollPane)source;
-                if (pane.isWheelScrollingEnabled()) {
-                  JScrollBar bar = event.isShiftDown() ? pane.getHorizontalScrollBar() : pane.getVerticalScrollBar();
-                  if (bar != null && bar.isVisible()) {
-                    if (Registry.is("idea.inertial.smooth.scrolling.enabled")) {
-                      if (mySmoothScroll == null) {
-                        mySmoothScroll = MouseWheelSmoothScroll.create(() -> {
-                          return ScrollSettings.isEligibleFor(this);
-                        });
-                      }
-                      mySmoothScroll.processMouseWheelEvent(event, oldListener::mouseWheelMoved);
-                    } else if (!(bar instanceof JBScrollBar && ((JBScrollBar)bar).handleMouseWheelEvent(event))) {
-                      oldListener.mouseWheelMoved(event);
-                    }
-                  }
-                }
-                if (!event.isConsumed()) {
-                  // try to process a mouse wheel event by outer scroll pane
-                  MouseEventAdapter.redispatch(event, ComponentUtil
-                    .getParentOfType((Class<? extends JScrollPane>)JScrollPane.class, (Component)pane.getParent()));
-                }
-              }
-            }
-          };
+          MouseWheelListener newListener = new JBMouseWheelListener(this, oldListener);
           field.set(ui, newListener);
           // replace listener if field updated successfully
           removeMouseWheelListener(oldListener);
@@ -204,6 +175,51 @@ public class JBScrollPane extends JScrollPane {
       }
       catch (Exception exception) {
         LOG.warn(exception);
+      }
+    }
+  }
+
+  private static class JBMouseWheelListener implements MouseWheelListener {
+
+    private final Component myParent;
+    private final MouseWheelListener myDelegate;
+    private MouseWheelSmoothScroll mySmoothScroll;
+
+    private JBMouseWheelListener(Component parent, MouseWheelListener delegate) {
+      this.myParent = parent;
+      this.myDelegate = delegate;
+    }
+
+    @Override
+    public void mouseWheelMoved(MouseWheelEvent event) {
+      boolean isScrollEvent = isScrollEvent(event);
+      boolean isScrollPaneEvent = event.getSource() instanceof JScrollPane;
+      if (isScrollEvent && isScrollPaneEvent) {
+        JScrollPane pane = (JScrollPane)event.getSource();
+        JScrollBar bar = event.isShiftDown() ? pane.getHorizontalScrollBar() : pane.getVerticalScrollBar();
+
+        boolean isWheelScrollEnabled = pane.isWheelScrollingEnabled();
+        boolean isBarVisible = bar != null && bar.isVisible();
+        boolean hasAdjustedDelta = bar instanceof JBScrollBar && ((JBScrollBar)bar).getDeltaAdjusted(event) != 0.0;
+
+        if (isWheelScrollEnabled && isBarVisible && hasAdjustedDelta) {
+          if (Registry.is("idea.inertial.smooth.scrolling.enabled")) {
+            if (mySmoothScroll == null) {
+              mySmoothScroll = MouseWheelSmoothScroll.create(() -> {
+                return ScrollSettings.isEligibleFor(myParent);
+              });
+            }
+            mySmoothScroll.processMouseWheelEvent(event, myDelegate::mouseWheelMoved);
+          } else if (!((JBScrollBar)bar).handleMouseWheelEvent(event)) {
+            myDelegate.mouseWheelMoved(event);
+          }
+        }
+
+        if (!event.isConsumed()) {
+          // try to process a mouse wheel event by outer scroll pane
+          MouseEventAdapter.redispatch(event, ComponentUtil
+            .getParentOfType((Class<? extends JScrollPane>)JScrollPane.class, pane.getParent()));
+        }
       }
     }
   }
