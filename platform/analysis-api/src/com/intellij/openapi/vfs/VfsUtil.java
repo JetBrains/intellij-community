@@ -4,7 +4,7 @@ package com.intellij.openapi.vfs;
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.SystemInfo;
@@ -291,8 +291,8 @@ public class VfsUtil extends VfsUtilCore {
 
   public static String getUrlForLibraryRoot(@NotNull File libraryRoot) {
     String path = FileUtil.toSystemIndependentName(libraryRoot.getAbsolutePath());
-    if (FileTypeManager.getInstance().getFileTypeByFileName(libraryRoot.getName()) == ArchiveFileType.INSTANCE) {
-      return VirtualFileManager.constructUrl(JarFileSystem.getInstance().getProtocol(), path + JarFileSystem.JAR_SEPARATOR);
+    if (FileTypeRegistry.getInstance().getFileTypeByFileName(libraryRoot.getName()) == ArchiveFileType.INSTANCE) {
+      return VirtualFileManager.constructUrl(StandardFileSystems.JAR_PROTOCOL, path + URLUtil.JAR_SEPARATOR);
     }
     else {
       return VirtualFileManager.constructUrl(LocalFileSystem.getInstance().getProtocol(), path);
@@ -390,7 +390,7 @@ public class VfsUtil extends VfsUtilCore {
   }
 
   public static void processFileRecursivelyWithoutIgnored(@NotNull VirtualFile root, @NotNull Processor<? super VirtualFile> processor) {
-    FileTypeManager ftm = FileTypeManager.getInstance();
+    FileTypeRegistry ftm = FileTypeRegistry.getInstance();
     visitChildrenRecursively(root, new VirtualFileVisitor<Void>() {
       @NotNull
       @Override
