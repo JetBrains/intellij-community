@@ -45,7 +45,7 @@ public class InstallPluginInfo {
     closeStatusBarIndicator();
   }
 
-  public synchronized void finish(boolean success, boolean cancel, boolean restartRequired) {
+  public synchronized void finish(boolean success, boolean cancel, boolean showErrors, boolean restartRequired) {
     if (myPluginModel == null) {
       MyPluginModel.finishInstall(myDescriptor);
       closeStatusBarIndicator();
@@ -55,7 +55,7 @@ public class InstallPluginInfo {
       }
     }
     else if (!cancel) {
-      myPluginModel.finishInstall(myDescriptor, success, true, restartRequired);
+      myPluginModel.finishInstall(myDescriptor, success, showErrors, restartRequired);
     }
   }
 

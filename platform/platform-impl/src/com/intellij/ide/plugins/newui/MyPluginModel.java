@@ -341,6 +341,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       boolean cancel = false;
       boolean error = false;
+      boolean showErrors = true;
       boolean restartRequired = true;
 
       try {
@@ -352,6 +353,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
         }
 
         error = !operation.isSuccess();
+        showErrors = !operation.isShownErrors();
         restartRequired = operation.isRestartRequired();
       }
       catch (ProcessCanceledException e) {
@@ -364,8 +366,10 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
 
       boolean success = !error;
       boolean _cancel = cancel;
+      boolean _showErrors = showErrors;
       boolean finalRestartRequired = restartRequired;
-      ApplicationManager.getApplication().invokeLater(() -> info.finish(success, _cancel, finalRestartRequired), ModalityState.any());
+      ApplicationManager.getApplication()
+        .invokeLater(() -> info.finish(success, _cancel, _showErrors, finalRestartRequired), ModalityState.any());
     });
   }
 
@@ -491,7 +495,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
       needRestart = true;
     }
     if (!success && showErrors) {
-      Messages.showErrorDialog("Plugin " + descriptor.getName() + " download or installing failed",
+      Messages.showErrorDialog("Plugin \"" + descriptor.getName() + "\" download or installing failed",
                                IdeBundle.message("action.download.and.install.plugin"));
     }
   }

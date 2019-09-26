@@ -37,6 +37,7 @@ public class PluginInstallOperation {
   private boolean myAllowInstallWithoutRestart = false;
   private final List<PendingDynamicPluginInstall> myPendingDynamicPluginInstalls = new ArrayList<>();
   private boolean myRestartRequired = false;
+  private boolean myShownErrors;
 
   public PluginInstallOperation(@NotNull List<PluginNode> pluginsToInstall,
                                 List<? extends IdeaPluginDescriptor> allPlugins,
@@ -72,6 +73,10 @@ public class PluginInstallOperation {
 
   public Set<PluginNode> getInstalledDependentPlugins() {
     return myDependant;
+  }
+
+  public boolean isShownErrors() {
+    return myShownErrors;
   }
 
   private void updateUrls() {
@@ -228,6 +233,8 @@ public class PluginInstallOperation {
       }
     }
 
+    myShownErrors = false;
+
     PluginDownloader downloader = PluginDownloader.createDownloader(pluginNode, pluginNode.getRepositoryName(), null);
 
     if (downloader.prepareToInstall(myIndicator)) {
@@ -250,6 +257,7 @@ public class PluginInstallOperation {
       }
     }
     else {
+      myShownErrors = downloader.isShownErrors();
       return false;
     }
 
