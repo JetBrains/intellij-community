@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.python;
+package com.jetbrains.python.lexer;
 
 import com.jetbrains.python.fixtures.PyLexerTestCase;
-import com.jetbrains.python.lexer.PythonIndentingLexer;
 
 /**
  * @author yole

@@ -16,7 +16,6 @@
 package com.jetbrains.python.psi;
 
 import com.google.common.collect.Iterables;
-import com.intellij.application.options.CodeStyle;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.LineTokenizer;
@@ -26,6 +25,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.python.PythonCodeStyleService;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -128,7 +128,7 @@ public class PyIndentUtil {
   }
 
   public static boolean areTabsUsedForIndentation(@NotNull PsiFile file) {
-    return CodeStyle.getIndentOptions(file).USE_TAB_CHARACTER;
+    return PythonCodeStyleService.getInstance().isTabIndentation(file);
   }
 
   /**
@@ -137,7 +137,7 @@ public class PyIndentUtil {
    * @see #getIndentFromSettings(PsiFile)
    */
   public static int getIndentSizeFromSettings(@NotNull PsiFile file) {
-    return CodeStyle.getIndentSize(file);
+    return PythonCodeStyleService.getInstance().getIndentSize(file);
   }
 
   /**

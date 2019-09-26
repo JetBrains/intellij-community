@@ -1,7 +1,6 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight.imports;
 
-import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -21,11 +20,10 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.python.PythonCodeStyleService;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.documentation.docstrings.DocStringUtil;
 import com.jetbrains.python.documentation.doctest.PyDocstringFile;
-import com.jetbrains.python.formatter.PyBlock;
-import com.jetbrains.python.formatter.PyCodeStyleSettings;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.pyi.PyiFile;
@@ -57,10 +55,10 @@ public class AddImportHelper {
   };
 
   @NotNull
-  private static Comparator<PyImportStatementBase> getImportNamesComparator(@NotNull PyCodeStyleSettings settings) {
+  private static Comparator<PyImportStatementBase> getImportNamesComparator(PsiFile settingsAnchor) {
     return (import1, import2) -> {
       final Comparator<String> stringComparator =
-        settings.OPTIMIZE_IMPORTS_CASE_INSENSITIVE_ORDER ? String.CASE_INSENSITIVE_ORDER : Comparator.naturalOrder();
+        PythonCodeStyleService.getInstance().isOptimizeImportsCaseSensitiveOrder(settingsAnchor) ? String.CASE_INSENSITIVE_ORDER : Comparator.naturalOrder();
       return ContainerUtil.compareLexicographically(getSortNames(import1), getSortNames(import2), Comparator.nullsFirst(stringComparator));
     };
   }
@@ -100,12 +98,11 @@ public class AddImportHelper {
    */
   @NotNull
   public static Comparator<PyImportStatementBase> getSameGroupImportsComparator(@NotNull PsiFile settingsAnchor) {
-    final PyCodeStyleSettings settings = CodeStyle.getCustomSettings(settingsAnchor, PyCodeStyleSettings.class);
-    if (settings.OPTIMIZE_IMPORTS_SORT_BY_TYPE_FIRST) {
-      return IMPORT_TYPE_COMPARATOR.thenComparing(getImportNamesComparator(settings));
+    if (PythonCodeStyleService.getInstance().isOptimizeImportsSortedByTypeFirst(settingsAnchor)) {
+      return IMPORT_TYPE_COMPARATOR.thenComparing(getImportNamesComparator(settingsAnchor));
     }
     else {
-      return getImportNamesComparator(settings).thenComparing(IMPORT_TYPE_COMPARATOR);
+      return getImportNamesComparator(settingsAnchor).thenComparing(IMPORT_TYPE_COMPARATOR);
     }
   }
 
@@ -240,16 +237,16 @@ public class AddImportHelper {
     final ImportPriority priorityAbove = importAbove != null ? getImportPriority(importAbove) : null;
     final ImportPriority priorityBelow = importBelow != null ? getImportPriority(importBelow) : null;
     if (newImport != null && (priorityAbove == null || priorityAbove.compareTo(priority) < 0)) {
-      newImport.putCopyableUserData(PyBlock.IMPORT_GROUP_BEGIN, true);
+      newImport.putCopyableUserData(PythonCodeStyleService.IMPORT_GROUP_BEGIN, true);
     }
     if (priorityBelow != null) {
       // actually not necessary because existing import with higher priority (i.e. lower import group)
       // probably should have IMPORT_GROUP_BEGIN flag already, but we add it anyway just for safety
       if (priorityBelow.compareTo(priority) > 0) {
-        importBelow.putCopyableUserData(PyBlock.IMPORT_GROUP_BEGIN, true);
+        importBelow.putCopyableUserData(PythonCodeStyleService.IMPORT_GROUP_BEGIN, true);
       }
       else if (priorityBelow == priority) {
-        importBelow.putCopyableUserData(PyBlock.IMPORT_GROUP_BEGIN, null);
+        importBelow.putCopyableUserData(PythonCodeStyleService.IMPORT_GROUP_BEGIN, null);
       }
     }
     return seeker;
@@ -509,8 +506,7 @@ public class AddImportHelper {
                                                        @Nullable ImportPriority priority,
                                                        @Nullable PsiElement anchor) {
     final List<PyFromImportStatement> existingImports = ((PyFile)file).getFromImports();
-    final PyCodeStyleSettings pySettings = CodeStyle.getCustomSettings(file, PyCodeStyleSettings.class);
-    if (!pySettings.OPTIMIZE_IMPORTS_ALWAYS_SPLIT_FROM_IMPORTS) {
+    if (!PythonCodeStyleService.getInstance().isOptimizeImportsAlwaysSplitFromImports(file)) {
       for (PyFromImportStatement existingImport : existingImports) {
         if (existingImport.isStarImport()) {
           continue;

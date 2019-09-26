@@ -1,10 +1,10 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 @file:JvmName("PyResolveImportUtil")
+
 package com.jetbrains.python.psi.resolve
 
 import com.google.common.base.Preconditions
-import com.intellij.facet.FacetManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
@@ -12,15 +12,20 @@ import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.FileIndexFacade
+import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.psi.PsiManager
 import com.intellij.psi.util.QualifiedName
-import com.jetbrains.python.codeInsight.typing.*
+import com.intellij.util.Consumer
+import com.jetbrains.python.codeInsight.typing.PyTypeShed
+import com.jetbrains.python.codeInsight.typing.isInInlinePackage
+import com.jetbrains.python.codeInsight.typing.isInStubPackage
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil
 import com.jetbrains.python.facet.PythonPathContributingFacet
+import com.jetbrains.python.module.PyModuleService
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyUtil
@@ -28,8 +33,8 @@ import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.impl.PyImportResolver
 import com.jetbrains.python.pyi.PyiFile
 import com.jetbrains.python.pyi.PyiUtil
-import java.util.regex.Pattern
 import com.jetbrains.python.sdk.PythonSdkUtil
+import java.util.regex.Pattern
 
 /**
  * Python resolve utilities for qualified names.
@@ -54,7 +59,7 @@ fun resolveQualifiedName(name: QualifiedName, context: PyQualifiedNameResolveCon
   val relativeDirectory = context.containingDirectory
   val relativeResults = resolveWithRelativeLevel(name, context)
   val foundRelativeImport = relativeDirectory != null &&
-      relativeResults.any { isRelativeImportResult(name, relativeDirectory, it, context) }
+                            relativeResults.any { isRelativeImportResult(name, relativeDirectory, it, context) }
 
   val cache = findCache(context)
   val mayCache = cache != null && !foundRelativeImport
@@ -100,15 +105,15 @@ private fun resolveModuleFromRoots(name: QualifiedName, context: PyQualifiedName
 /**
  * Resolves a [name] to the first module member defined at the top-level.
  */
-fun resolveTopLevelMember(name: QualifiedName, context : PyQualifiedNameResolveContext): PsiElement? {
+fun resolveTopLevelMember(name: QualifiedName, context: PyQualifiedNameResolveContext): PsiElement? {
   checkAccess()
   val memberName = name.lastComponent ?: return null
   return resolveQualifiedName(name.removeLastComponent(), context)
-      .asSequence()
-      .filterIsInstance(PyFile::class.java)
-      .flatMap { it.multiResolveName(memberName).asSequence() }
-      .map { it.element }
-      .firstOrNull()
+    .asSequence()
+    .filterIsInstance(PyFile::class.java)
+    .flatMap { it.multiResolveName(memberName).asSequence() }
+    .map { it.element }
+    .firstOrNull()
 }
 
 /**
@@ -124,9 +129,9 @@ fun resolveModuleAt(name: QualifiedName, item: PsiFileSystemItem?, context: PyQu
     if (component == null) empty
     else seekers.flatMap {
       val children = ResolveImportUtil.resolveChildren(it, component, context.footholdFile,
-                                                                                        !context.withMembers,
-                                                                                        !context.withPlainDirectories, context.withoutStubs,
-                                                                                        context.withoutForeign)
+                                                       !context.withMembers,
+                                                       !context.withPlainDirectories, context.withoutStubs,
+                                                       context.withoutForeign)
       PyUtil.filterTopPriorityResults(children.toTypedArray())
     }
   }
@@ -138,7 +143,7 @@ fun resolveModuleAt(name: QualifiedName, item: PsiFileSystemItem?, context: PyQu
 fun fromFoothold(foothold: PsiElement): PyQualifiedNameResolveContext {
   val module = ModuleUtilCore.findModuleForPsiElement(foothold.containingFile ?: foothold)
   return PyQualifiedNameResolveContextImpl(foothold.manager, module, foothold,
-                                                                            PythonSdkUtil.findPythonSdk(module))
+                                           PythonSdkUtil.findPythonSdk(module))
 }
 
 /**
@@ -153,7 +158,7 @@ fun fromModule(module: Module): PyQualifiedNameResolveContext =
  */
 fun fromSdk(project: Project, sdk: Sdk): PyQualifiedNameResolveContext =
   PyQualifiedNameResolveContextImpl(PsiManager.getInstance(project), module = null, foothold = null,
-                                                                     sdk = sdk)
+                                    sdk = sdk)
 
 private fun cachePrefix(context: PyQualifiedNameResolveContext): QualifiedName {
   val results = mutableListOf<String>()
@@ -170,14 +175,14 @@ private fun cachePrefix(context: PyQualifiedNameResolveContext): QualifiedName {
 }
 
 private fun foreignResults(name: QualifiedName, context: PyQualifiedNameResolveContext) =
-    if (context.withoutForeign)
-      emptyList()
-    else
-      PyImportResolver.EP_NAME.extensionList
-          .asSequence()
-          .map { it.resolveImportReference(name, context, !context.withoutRoots) }
-          .filterNotNull()
-          .toList()
+  if (context.withoutForeign)
+    emptyList()
+  else
+    PyImportResolver.EP_NAME.extensionList
+      .asSequence()
+      .map { it.resolveImportReference(name, context, !context.withoutRoots) }
+      .filterNotNull()
+      .toList()
 
 private fun relativeResultsFromSkeletons(name: QualifiedName, context: PyQualifiedNameResolveContext): List<PsiElement> {
   val footholdFile = context.footholdFile
@@ -214,11 +219,11 @@ fun relativeResultsForStubsFromRoots(name: QualifiedName, context: PyQualifiedNa
   return resultsFromRoots(absoluteName, context.copyWithRelative(-1).copyWithRoots())
 }
 
-private fun resolveWithRelativeLevel(name: QualifiedName, context : PyQualifiedNameResolveContext): List<PsiElement> {
+private fun resolveWithRelativeLevel(name: QualifiedName, context: PyQualifiedNameResolveContext): List<PsiElement> {
   val footholdFile = context.footholdFile
   if (context.relativeLevel >= 0 && footholdFile != null && !PyUserSkeletonsUtil.isUnderUserSkeletonsDirectory(footholdFile)) {
     return resolveModuleAt(name, context.containingDirectory,
-                                                            context) + relativeResultsForStubsFromRoots(
+                           context) + relativeResultsForStubsFromRoots(
       name, context)
   }
   return emptyList()
@@ -294,12 +299,14 @@ private fun resultsFromRoots(name: QualifiedName, context: PyQualifiedNameResolv
 }
 
 private fun isAcceptRootAsTopLevelPackage(context: PyQualifiedNameResolveContext): Boolean {
-  context.module?.let {
-    FacetManager.getInstance(it).allFacets.forEach {
+  context.module?.let { it ->
+    val ref = Ref.create(false)
+    PyModuleService.getInstance().forAllFacets(it) {
       if (it is PythonPathContributingFacet && it.acceptRootAsTopLevelPackage()) {
-        return true
+        ref.set(true)
       }
     }
+    return ref.get()
   }
   return false
 }
@@ -388,14 +395,16 @@ private fun isNamespacePackage(element: PsiElement): Boolean {
   return false
 }
 
-private val pkgResourcesInitPatterns = listOf(Pattern.compile("^__import__\\(['\"]pkg_resources['\"]\\).declare_namespace\\(__name__\\)\\s*\$"),
-                                              Pattern.compile("^from pkg_resources import declare_namespace\\Rdeclare_namespace\\(__name__\\)\\s*\$"),
-                                              Pattern.compile("^import pkg_resources\\Rpkg_resources.declare_namespace\\(__name__\\)\\s*\$"))
+private val pkgResourcesInitPatterns = listOf(
+  Pattern.compile("^__import__\\(['\"]pkg_resources['\"]\\).declare_namespace\\(__name__\\)\\s*\$"),
+  Pattern.compile("^from pkg_resources import declare_namespace\\Rdeclare_namespace\\(__name__\\)\\s*\$"),
+  Pattern.compile("^import pkg_resources\\Rpkg_resources.declare_namespace\\(__name__\\)\\s*\$"))
 
 
-private val pkgutilsInitPatterns = listOf(Pattern.compile("^__path__[ ]?=[ ]?__import__\\(['\"]pkgutil['\"]\\).extend_path\\(__path__, __name__\\)\\s*\$"),
-                                          Pattern.compile("^from pkgutil import extend_path\\R__path__[ ]?=[ ]?extend_path\\(__path__,[ ]?__name__\\)\\s*\$"),
-                                          Pattern.compile("^import pkgutil\\R__path__[ ]?=[ ]?pkgutil\\.extend_path\\(__path__,[ ]?__name__\\)\\s*\$"))
+private val pkgutilsInitPatterns = listOf(
+  Pattern.compile("^__path__[ ]?=[ ]?__import__\\(['\"]pkgutil['\"]\\).extend_path\\(__path__, __name__\\)\\s*\$"),
+  Pattern.compile("^from pkgutil import extend_path\\R__path__[ ]?=[ ]?extend_path\\(__path__,[ ]?__name__\\)\\s*\$"),
+  Pattern.compile("^import pkgutil\\R__path__[ ]?=[ ]?pkgutil\\.extend_path\\(__path__,[ ]?__name__\\)\\s*\$"))
 
 private fun isNamespaceDeclaration(text: String, initTextPatterns: List<Pattern>): Boolean =
   initTextPatterns.asSequence().map { it.matcher(text) }.any { it.matches() }

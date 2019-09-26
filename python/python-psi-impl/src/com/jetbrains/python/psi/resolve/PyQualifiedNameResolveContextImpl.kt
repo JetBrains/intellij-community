@@ -24,7 +24,6 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PythonRuntimeService
-import com.jetbrains.python.psi.PyUtil
 
 data class PyQualifiedNameResolveContextImpl(private val psiManager: PsiManager, private val module: Module?,
                                              private val foothold: PsiElement?, private val sdk: Sdk?,
@@ -86,6 +85,7 @@ data class PyQualifiedNameResolveContextImpl(private val psiManager: PsiManager,
 
   override fun getVisitAllModules(): Boolean {
     val file = foothold
-    return file != null && (PythonRuntimeService.getInstance().isInPydevConsole(file) || PyUtil.isInScratchFile(file))
+    return file != null && (PythonRuntimeService.getInstance().isInPydevConsole(file) || PythonRuntimeService.getInstance().isInScratchFile(
+      file))
   }
 }

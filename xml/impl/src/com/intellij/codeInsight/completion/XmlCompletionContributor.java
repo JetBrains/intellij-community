@@ -243,7 +243,7 @@ public class XmlCompletionContributor extends CompletionContributor {
   public String advertise(@NotNull final CompletionParameters parameters) {
     if (isXmlNameCompletion(parameters) && parameters.getCompletionType() == CompletionType.BASIC) {
       if (FeatureUsageTracker.getInstance().isToBeAdvertisedInLookup(TAG_NAME_COMPLETION_FEATURE, parameters.getPosition().getProject())) {
-        final String shortcut = getActionShortcut(IdeActions.ACTION_CODE_COMPLETION);
+        final String shortcut = CompletionUtil.getActionShortcut(IdeActions.ACTION_CODE_COMPLETION);
         return XmlBundle.message("tag.name.completion.hint", shortcut);
       }
     }

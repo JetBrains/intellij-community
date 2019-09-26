@@ -2,7 +2,6 @@
 package com.jetbrains.python.documentation;
 
 import com.google.common.collect.Lists;
-import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.documentation.DocumentationMarkup;
@@ -506,7 +505,7 @@ public class PyDocumentationBuilder {
     final ChainIterable<String> result = new ChainIterable<>();
     // reconstruct back, dropping first empty fragment as needed
     boolean isFirstLine = true;
-    final int tabSize = CodeStyle.getIndentOptions(element.getContainingFile()).TAB_SIZE;
+    final int tabSize = PythonCodeStyleService.getInstance().getTabSize(element.getContainingFile());
     for (String line : updatedLines) {
       if (isFirstLine && ourSpacesPattern.matcher(line).matches()) continue; // ignore all initial whitespace
       if (isFirstLine) {

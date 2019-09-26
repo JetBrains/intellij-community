@@ -31,6 +31,11 @@ public class PythonRuntimeServiceImpl extends PythonRuntimeService {
     return PydevConsoleRunner.isInPydevConsole(file);
   }
 
+  @Override
+  public boolean isInScratchFile(@NotNull PsiElement element) {
+    return PythonUtil.isInScratchFile(element);
+  }
+
   @Nullable
   @Override
   public Sdk getConsoleSdk(@NotNull PsiElement foothold) {
@@ -65,7 +70,7 @@ public class PythonRuntimeServiceImpl extends PythonRuntimeService {
 
   @Override
   public PythonConsoleData getPythonConsoleData(@Nullable ASTNode node) {
-      return PydevConsoleRunner.getPythonConsoleData(node);
+    return PydevConsoleRunner.getPythonConsoleData(node);
   }
 
   @Override

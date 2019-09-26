@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.python;
+package com.jetbrains.python.parsing;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.python.PyNewStyleStringFormatParser;
 import com.jetbrains.python.PyNewStyleStringFormatParser.Field;
 import com.jetbrains.python.PyNewStyleStringFormatParser.ParseResult;
 import junit.framework.TestCase;

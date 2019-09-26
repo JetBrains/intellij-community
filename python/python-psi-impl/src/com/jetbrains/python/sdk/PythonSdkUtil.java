@@ -1,8 +1,5 @@
 package com.jetbrains.python.sdk;
 
-import com.intellij.facet.Facet;
-import com.intellij.facet.FacetConfiguration;
-import com.intellij.facet.FacetManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.module.Module;
@@ -24,7 +21,7 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonRuntimeService;
 import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
-import com.jetbrains.python.facet.PythonFacetSettings;
+import com.jetbrains.python.module.PyModuleService;
 import com.jetbrains.python.psi.search.PySearchUtilBase;
 import com.jetbrains.python.sdk.skeleton.PySkeletonHeader;
 import org.jetbrains.annotations.Contract;
@@ -138,14 +135,7 @@ public class PythonSdkUtil {
     if (module == null) return null;
     final Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
     if (sdk != null && isPythonSdk(sdk)) return sdk;
-    final Facet[] facets = FacetManager.getInstance(module).getAllFacets();
-    for (Facet facet : facets) {
-      final FacetConfiguration configuration = facet.getConfiguration();
-      if (configuration instanceof PythonFacetSettings) {
-        return ((PythonFacetSettings)configuration).getSdk();
-      }
-    }
-    return null;
+    return PyModuleService.getInstance().findPythonSdk(module);
   }
 
 

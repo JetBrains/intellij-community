@@ -24,10 +24,7 @@ import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.PyCustomType;
-import com.jetbrains.python.PyNames;
-import com.jetbrains.python.PyPsiPackageUtil;
+import com.jetbrains.python.*;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.codeInsight.PyCustomMember;
 import com.jetbrains.python.codeInsight.PySubstitutionChunkReference;
@@ -148,7 +145,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
           myIsEnabled = false;
         }
         else if (isPyCharm) {
-          myIsEnabled = PythonSdkUtil.findPythonSdk(anchor) != null || PyUtil.isInScratchFile(anchor);
+          myIsEnabled = PythonSdkUtil.findPythonSdk(anchor) != null || PythonUtil.isInScratchFile(anchor);
         }
         else {
           myIsEnabled = true;

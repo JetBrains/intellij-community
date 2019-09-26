@@ -33,7 +33,6 @@ public class StatisticsInfo {
    */
   public static final StatisticsInfo EMPTY = new StatisticsInfo("empty", "empty");
 
-  private static final StatisticsManager ourManager = StatisticsManager.getInstance();
   private final String myContext;
   private final String myValue;
   private final List<StatisticsInfo> myConjuncts;
@@ -74,18 +73,6 @@ public class StatisticsInfo {
 
   public List<StatisticsInfo> getConjuncts() {
     return myConjuncts;
-  }
-
-  public void incUseCount() {
-    ourManager.incUseCount(this);
-  }
-
-  public int getUseCount() {
-    return ourManager.getUseCount(this);
-  }
-
-  public int getLastUseRecency() {
-    return ourManager.getLastUseRecency(this);
   }
 
   public String toString() {

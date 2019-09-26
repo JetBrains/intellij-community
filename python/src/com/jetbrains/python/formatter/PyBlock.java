@@ -1,23 +1,8 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.formatter;
 
 import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
@@ -28,6 +13,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.PythonCodeStyleService;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
@@ -87,7 +73,6 @@ public class PyBlock implements ASTBlock {
                                                                          PyElementTypes.CALL_EXPRESSION,
                                                                          PyElementTypes.FROM_IMPORT_STATEMENT);
 
-  public static final Key<Boolean> IMPORT_GROUP_BEGIN = Key.create("com.jetbrains.python.formatter.importGroupBegin");
   private static final boolean ALIGN_CONDITIONS_WITHOUT_PARENTHESES = false;
 
   private final PyBlock myParent;
@@ -845,10 +830,10 @@ public class PyBlock implements ASTBlock {
 
       if (psi1 instanceof PyImportStatementBase) {
         if (psi2 instanceof PyImportStatementBase) {
-          final Boolean leftImportIsGroupStart = psi1.getCopyableUserData(IMPORT_GROUP_BEGIN);
-          final Boolean rightImportIsGroupStart = psi2.getCopyableUserData(IMPORT_GROUP_BEGIN);
+          final Boolean leftImportIsGroupStart = psi1.getCopyableUserData(PythonCodeStyleService.IMPORT_GROUP_BEGIN);
+          final Boolean rightImportIsGroupStart = psi2.getCopyableUserData(PythonCodeStyleService.IMPORT_GROUP_BEGIN);
           // Cleanup user data, it's no longer needed
-          psi1.putCopyableUserData(IMPORT_GROUP_BEGIN, null);
+          psi1.putCopyableUserData(PythonCodeStyleService.IMPORT_GROUP_BEGIN, null);
           // Don't remove IMPORT_GROUP_BEGIN from the element psi2 yet, because spacing is constructed pairwise:
           // it might be needed on the next iteration.
           //psi2.putCopyableUserData(IMPORT_GROUP_BEGIN, null);

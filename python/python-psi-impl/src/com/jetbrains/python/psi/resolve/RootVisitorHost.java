@@ -23,7 +23,7 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.PythonRuntimeService;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -42,7 +42,7 @@ public class RootVisitorHost {
       visitRoots(module, false, visitor);
     }
     else {
-      if (PyUtil.isInScratchFile(elt)) {
+      if (PythonRuntimeService.getInstance().isInScratchFile(elt)) {
         for (Module mod : ModuleManager.getInstance(elt.getProject()).getModules()) {
           visitRoots(mod, true, visitor);
         }
