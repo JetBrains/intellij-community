@@ -60,6 +60,7 @@ public class MouseWheelSmoothScroll {
       animator.start(value, value + delta, bar::setValue, (v) -> {
         return v - bar.getValue() != 0 || minimum != bar.getMinimum() || maximum != bar.getMaximum() || !bar.isShowing();
       });
+      e.consume();
     }
   }
 
