@@ -13,12 +13,15 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.JBCardLayout;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.ui.mac.TouchbarDataKeys;
 import com.intellij.util.ui.ImageUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -209,7 +212,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
       }
     });
 
-    return panel;
+    return wrapInScrollPane(panel);
   }
 
   public JPanel getContentComponent() {
@@ -323,13 +326,22 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     updateStep();
   }
 
+  @Contract("null -> null")
+  private static JBScrollPane wrapInScrollPane(Component component) {
+    if (component == null) return null;
+    JBScrollPane scrollPane = new JBScrollPane(component);
+    scrollPane.setBorder(JBUI.Borders.empty());
+    // Needed to show scroll bars in case of emergency
+    component.setPreferredSize(component.getMinimumSize());
+    return scrollPane;
+  }
 
   protected String addStepComponent(final Component component) {
     String id = myComponentToIdMap.get(component);
     if (id == null) {
       id = Integer.toString(myComponentToIdMap.size());
       myComponentToIdMap.put(component, id);
-      myContentPanel.add(component, id);
+      myContentPanel.add(wrapInScrollPane(component), id);
     }
     return id;
   }
