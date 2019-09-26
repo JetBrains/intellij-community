@@ -17,7 +17,6 @@ import org.jetbrains.plugins.github.pullrequest.data.GHPullRequestsDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPullRequestsDataContextRepository
 import org.jetbrains.plugins.github.util.GitRemoteUrlCoordinates
 import org.jetbrains.plugins.github.util.GithubNotifications
-import org.jetbrains.plugins.github.util.GithubUrlUtil
 
 class GithubViewPullRequestsAction : AbstractGithubUrlGroupingAction("View Pull Requests", null, AllIcons.Vcs.Vendors.Github) {
 
@@ -27,12 +26,6 @@ class GithubViewPullRequestsAction : AbstractGithubUrlGroupingAction("View Pull 
                                remote: GitRemote,
                                remoteUrl: String,
                                account: GithubAccount) {
-    val fullPath = GithubUrlUtil.getUserAndRepositoryFromRemoteUrl(remoteUrl)
-    if (fullPath == null) {
-      GithubNotifications.showError(project, "Invalid GitHub Repository URL", "$remoteUrl is not a GitHub repository.")
-      return
-    }
-
     val requestExecutor = service<GithubApiRequestExecutorManager>().getExecutor(account, project) ?: return
 
     val toolWindowManager = project.service<GHPRToolWindowManager>()
