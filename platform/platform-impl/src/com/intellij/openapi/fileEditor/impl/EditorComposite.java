@@ -20,6 +20,7 @@ import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
@@ -103,7 +104,8 @@ public abstract class EditorComposite implements Disposable {
     myFileEditorManager = fileEditorManager;
     myInitialFileTimeStamp     = myFile.getTimeStamp();
 
-    Disposer.register(fileEditorManager.getProject(), this);
+    Project project = fileEditorManager.getProject();
+    Disposer.register(project, this);
 
     if(editors.length > 1){
       myTabbedPaneWrapper = createTabbedPaneWrapper(editors);
@@ -123,7 +125,7 @@ public abstract class EditorComposite implements Disposable {
     myFocusWatcher = new FocusWatcher();
     myFocusWatcher.install(myComponent);
 
-    fileEditorManager.getProject().getMessageBus().connect(this).subscribe(
+    project.getMessageBus().connect(this).subscribe(
           FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
       @Override
       public void selectionChanged(@NotNull final FileEditorManagerEvent event) {
@@ -137,9 +139,13 @@ public abstract class EditorComposite implements Disposable {
             if (newEditor != null) {
               newEditor.selectNotify();
 
-              FUCounterUsageLogger.getInstance().logEvent("file.editor",
-                                                          "alternative.file.editor.selected",
-                                                          new FeatureUsageData().addData("fileEditor", newEditor.getClass().getName()));
+              FUCounterUsageLogger.getInstance().logEvent(
+                project,
+                "file.editor",
+                "alternative.file.editor.selected",
+                new FeatureUsageData()
+                  .addData("fileEditor", newEditor.getClass().getName())
+                  .addAnonymizedPath(newFile.getPath()));
             }
             ((FileEditorProviderManagerImpl)FileEditorProviderManager.getInstance()).providerSelected(EditorComposite.this);
             ((IdeDocumentHistoryImpl)IdeDocumentHistory.getInstance(myFileEditorManager.getProject())).onSelectionChanged();
