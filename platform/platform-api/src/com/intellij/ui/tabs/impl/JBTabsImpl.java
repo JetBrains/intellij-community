@@ -16,7 +16,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
-import com.intellij.ui.GuiUtils;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.scale.JBUIScale;
@@ -541,9 +540,6 @@ public class JBTabsImpl extends JComponent
     try {
       myRemoveNotifyInProgress = true;
       super.removeNotify();
-    }
-    catch (Exception e) {
-      GuiUtils.printDebugInfo(this);
     }
     finally {
       myRemoveNotifyInProgress = false;
