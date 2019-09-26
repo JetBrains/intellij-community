@@ -33,14 +33,14 @@ import javax.swing.event.ListDataListener
 import javax.swing.event.ListSelectionEvent
 
 
-internal class GithubPullRequestsComponentFactory(private val project: Project,
-                                                  private val copyPasteManager: CopyPasteManager,
-                                                  private val avatarLoader: CachingGithubUserAvatarLoader,
-                                                  private val imageResizer: GithubImageResizer,
-                                                  private val actionManager: ActionManager,
-                                                  private val autoPopupController: AutoPopupController,
-                                                  private val pullRequestUiSettings: GithubPullRequestsProjectUISettings,
-                                                  private val fileEditorManager: FileEditorManager) {
+internal class GHPRComponentFactory(private val project: Project,
+                                    private val copyPasteManager: CopyPasteManager,
+                                    private val avatarLoader: CachingGithubUserAvatarLoader,
+                                    private val imageResizer: GithubImageResizer,
+                                    private val actionManager: ActionManager,
+                                    private val autoPopupController: AutoPopupController,
+                                    private val pullRequestUiSettings: GithubPullRequestsProjectUISettings,
+                                    private val fileEditorManager: FileEditorManager) {
 
   fun createComponent(dataContext: GHPullRequestsDataContext): JComponent {
     val avatarIconsProviderFactory = CachingGithubAvatarIconsProvider.Factory(avatarLoader, imageResizer, dataContext.requestExecutor)

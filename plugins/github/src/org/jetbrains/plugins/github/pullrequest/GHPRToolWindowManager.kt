@@ -31,11 +31,11 @@ private val REMOTE_KEY = Key<GitRemote>("REMOTE")
 private val REMOTE_URL_KEY = Key<String>("REMOTE_URL")
 private val ACCOUNT_KEY = Key<GithubAccount>("ACCOUNT")
 
-internal class GithubPullRequestsToolWindowManager(private val project: Project,
-                                                   private val toolWindowManager: ToolWindowManager,
-                                                   private val gitRepositoryManager: GitRepositoryManager,
-                                                   private val accountManager: GithubAccountManager,
-                                                   private val componentFactory: GithubPullRequestsComponentFactory) {
+internal class GHPRToolWindowManager(private val project: Project,
+                                     private val toolWindowManager: ToolWindowManager,
+                                     private val gitRepositoryManager: GitRepositoryManager,
+                                     private val accountManager: GithubAccountManager,
+                                     private val componentFactory: GHPRComponentFactory) {
 
   fun createPullRequestsTab(ctx: GHPullRequestsDataContext) {
     var toolWindow = toolWindowManager.getToolWindow(TOOL_WINDOW_ID)

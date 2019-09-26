@@ -12,7 +12,7 @@ import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutorManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
-import org.jetbrains.plugins.github.pullrequest.GithubPullRequestsToolWindowManager
+import org.jetbrains.plugins.github.pullrequest.GHPRToolWindowManager
 import org.jetbrains.plugins.github.pullrequest.data.GHPullRequestsDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPullRequestsDataContextRepository
 import org.jetbrains.plugins.github.util.GitRemoteUrlCoordinates
@@ -35,7 +35,7 @@ class GithubViewPullRequestsAction : AbstractGithubUrlGroupingAction("View Pull 
 
     val requestExecutor = service<GithubApiRequestExecutorManager>().getExecutor(account, project) ?: return
 
-    val toolWindowManager = project.service<GithubPullRequestsToolWindowManager>()
+    val toolWindowManager = project.service<GHPRToolWindowManager>()
     val remoteCoordinates = GitRemoteUrlCoordinates(remoteUrl, remote, repository)
     if (toolWindowManager.showPullRequestsTabIfExists(remoteCoordinates, account)) return
 

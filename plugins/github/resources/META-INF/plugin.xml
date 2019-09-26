@@ -35,8 +35,8 @@
     <projectService serviceImplementation="org.jetbrains.plugins.github.util.GithubProjectSettings"/>
     <projectService serviceImplementation="org.jetbrains.plugins.github.util.GithubSharedProjectSettings"/>
     <projectService serviceImplementation="org.jetbrains.plugins.github.authentication.accounts.GithubProjectDefaultAccountHolder"/>
-    <projectService serviceImplementation="org.jetbrains.plugins.github.pullrequest.GithubPullRequestsToolWindowManager"/>
-    <projectService serviceImplementation="org.jetbrains.plugins.github.pullrequest.GithubPullRequestsComponentFactory"/>
+    <projectService serviceImplementation="org.jetbrains.plugins.github.pullrequest.GHPRToolWindowManager"/>
+    <projectService serviceImplementation="org.jetbrains.plugins.github.pullrequest.GHPRComponentFactory"/>
 
     <vcsAnnotationGutterActionProvider implementation="org.jetbrains.plugins.github.extensions.GithubAnnotationGutterActionProvider"/>
     <projectConfigurable parentId="project.propVCSSupport.Mappings" groupWeight="-500"
