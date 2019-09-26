@@ -32,7 +32,8 @@ public class FileStampStorage extends AbstractStateStorage<String, HashStampPerT
   private final File myFileStampRoot;
 
   public FileStampStorage(File dataStorageRoot, PathRelativizerService relativizer, BuildTargetsState targetsState) throws IOException {
-    super(new File(calcStorageRoot(dataStorageRoot), "data"), new PortablePathStringDescriptor(), new StateExternalizer());
+    super(new File(calcStorageRoot(dataStorageRoot), "data"), ProjectStamps.PORTABLE_CACHES ? new PortablePathStringDescriptor() : new PathStringDescriptor(),
+          new StateExternalizer());
     myTimestampStorage = new FileTimestampStorage(dataStorageRoot, targetsState);
     myFileStampRoot = calcStorageRoot(dataStorageRoot);
     myRelativizer = relativizer;

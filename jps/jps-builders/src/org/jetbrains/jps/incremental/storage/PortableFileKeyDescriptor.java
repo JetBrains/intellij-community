@@ -26,25 +26,19 @@ public class PortableFileKeyDescriptor implements KeyDescriptor<File> {
   @Override
   public int getHashCode(File value) {
     // On case insensitive OS hash calculated from path converted to lower case
-    if (ProjectStamps.PORTABLE_CACHES) {
-      if (value == null) return 0;
-      String path = value.getPath();
-      return StringUtil.isEmpty(path) ? 0 : FileUtil.toCanonicalPath(path).hashCode();
-    }
-    return FileUtil.fileHashCode(value);
+    if (value == null) return 0;
+    String path = value.getPath();
+    return StringUtil.isEmpty(path) ? 0 : FileUtil.toCanonicalPath(path).hashCode();
   }
 
   @Override
   public boolean isEqual(File val1, File val2) {
     // On case insensitive OS hash calculated from path converted to lower case
-    if (ProjectStamps.PORTABLE_CACHES) {
-      if (val1 == val2) return true;
-      if (val1 == null || val2 == null) return false;
+    if (val1 == val2) return true;
+    if (val1 == null || val2 == null) return false;
 
-      String path1 = FileUtil.toCanonicalPath(val1.getPath());
-      String path2 = FileUtil.toCanonicalPath(val2.getPath());
-      return path1.equals(path2);
-    }
-    return FileUtil.filesEqual(val1, val2);
+    String path1 = FileUtil.toCanonicalPath(val1.getPath());
+    String path2 = FileUtil.toCanonicalPath(val2.getPath());
+    return path1.equals(path2);
   }
 }
