@@ -10,6 +10,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationActivationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.LaterInvocator;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.wm.IdeFrame;
@@ -31,6 +32,7 @@ import java.awt.*;
  * @author Vladimir Kondratyev
  */
 final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivationListener {
+  private static final Logger LOG = Logger.getInstance(ActionPopupMenuImpl.class);
   private final Application myApp;
   private final MyMenu myMenu;
   private final ActionManagerImpl myManager;
@@ -111,8 +113,12 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
       int y2 = Math.max(0, Math.min(y, component.getHeight() - 1)); // fit y into [0, height-1]
 
       myContext = myDataContextProvider != null ? myDataContextProvider.get() : DataManager.getInstance().getDataContext(component, x2, y2);
+      long time = -System.currentTimeMillis();
       Utils.fillMenu(myGroup, this, true, myPresentationFactory, myContext, myPlace, false, LaterInvocator.isInModalContext(), false);
+      time += System.currentTimeMillis();
+      if (time > 1000) LOG.warn(time + "ms to fill popup menu " + myPlace);
       if (getComponentCount() == 0) {
+        LOG.warn("no components in popup menu " + myPlace);
         return;
       }
       if (myApp != null) {
