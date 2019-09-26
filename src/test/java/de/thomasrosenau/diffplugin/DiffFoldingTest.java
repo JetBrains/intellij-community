@@ -16,9 +16,9 @@
 
 package de.thomasrosenau.diffplugin;
 
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
-public class DiffFoldingTest extends LightCodeInsightFixtureTestCase {
+public class DiffFoldingTest extends LightJavaCodeInsightFixtureTestCase {
 
     public void testContext() {
         doTest();

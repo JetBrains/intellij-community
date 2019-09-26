@@ -19,10 +19,12 @@
   <name>Diff / Patch File Support</name>
   <vendor email="thomasr@fantasymail.de" url="https://github.com/ThomasR/">Thomas Rosenau</vendor>
 
+  <depends>com.intellij.modules.java</depends>
   <depends>com.intellij.modules.lang</depends>
 
   <extensions defaultExtensionNs="com.intellij">
-    <fileTypeFactory implementation="de.thomasrosenau.diffplugin.DiffFileTypeFactory" />
+    <fileType name="Diff/Patch" extensions="diff;patch"
+        implementationClass="de.thomasrosenau.diffplugin.DiffFileType" />
     <lang.parserDefinition language="Diff"
         implementationClass="de.thomasrosenau.diffplugin.parser.DiffParserDefinition" />
     <lang.syntaxHighlighterFactory language="Diff"

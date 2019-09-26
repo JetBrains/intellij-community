@@ -20,8 +20,8 @@ import org.jetbrains.grammarkit.tasks.GenerateParser
 plugins {
     id 'idea'
     id 'java'
-    id 'org.jetbrains.intellij' version '0.4.8'
-    id 'org.jetbrains.grammarkit' version '2019.1'
+    id 'org.jetbrains.intellij' version '0.4.10'
+    id 'org.jetbrains.grammarkit' version '2019.2.1'
     id 'com.github.ManifestClasspath' version '0.1.0-RELEASE' // required in Windows
 }
 
@@ -34,11 +34,12 @@ repositories {
 }
 
 // version of this plugin
-version '2.1.1-SNAPSHOT'
+version '2.1.2-SNAPSHOT'
 
 intellij {
+    plugins = ['java']
     // IDE version that will be used for compilation and for :runIde task
-    version = 'LATEST-EAP-SNAPSHOT'
+    version '192-EAP-SNAPSHOT'
 }
 
 def intellijPublishToken = project.properties['intellijPublishToken'] ?:
@@ -49,8 +50,8 @@ publishPlugin {
 }
 
 patchPluginXml {
-    sinceBuild = '182.3341.11'
-    untilBuild = '191.*'
+    sinceBuild '192.4205.41'
+    untilBuild '192.*'
 
     // language=HTML prefix=<body> suffix=</body>
     pluginDescription '''
@@ -74,6 +75,10 @@ patchPluginXml {
 
     // language=HTML prefix=<body> suffix=</body>
     changeNotes '''
+    <h5>2.1.2</h5>
+    <ul>
+      <li>Update compatibility for 2019.2 product line</li>
+    </ul>
     <h5>2.1.1</h5>
     <ul>
       <li>Fix Autoscroll from Source in Structure View</li>
@@ -103,7 +108,7 @@ patchPluginXml {
 }
 
 wrapper {
-    gradleVersion = '5.2'
+    gradleVersion = '5.5.1'
 }
 
 def genSrcPath = 'src/main/generated-java'
