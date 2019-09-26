@@ -56,9 +56,7 @@ class IconsClassGenerator(private val projectHome: File, val modules: List<JpsMo
       else -> {
         packageName = "icons"
 
-        // find first non-generated source root, there could be icons-only modules without src root
-        val firstRoot = module.getSourceRoots(JavaSourceRootType.SOURCE)
-                          .find { !it.properties.isForGeneratedSources } ?: return null
+        val firstRoot = module.getSourceRoots(JavaSourceRootType.SOURCE).first() ?: return null
 
         val firstRootDir = firstRoot.file.toPath().resolve("icons")
         var oldClassName: String?
@@ -80,7 +78,7 @@ class IconsClassGenerator(private val projectHome: File, val modules: List<JpsMo
         val generatedRoot = module.getSourceRoots(JavaSourceRootType.SOURCE).find { it.properties.isForGeneratedSources }
         val targetRoot = (generatedRoot ?: firstRoot).file.toPath().resolve("icons")
 
-        if (generatedRoot != null && oldClassName != null) {
+        if (generatedRoot != null && oldClassName != null && firstRoot != generatedRoot) {
           val oldFile = firstRootDir.resolve("$oldClassName.java")
           println("deleting $oldFile from source root which isn't marked as 'generated'")
           Files.delete(oldFile)
@@ -101,6 +99,8 @@ class IconsClassGenerator(private val projectHome: File, val modules: List<JpsMo
   }
 
   fun processModule(module: JpsModule) {
+    if (!module.name.contains("icons")) return
+
     val iconsClassInfo = getIconsClassInfo(module) ?: return
     val outFile = iconsClassInfo.outFile
     val oldText = try {

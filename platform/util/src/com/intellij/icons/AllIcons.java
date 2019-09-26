@@ -1906,13 +1906,13 @@ public class AllIcons {
     /** 16x16 */ public static final Icon WebService = load("/javaee/WebService.svg");
     /** 16x16 */ public static final Icon WebServiceClient = load("/javaee/WebServiceClient.svg");
 
-    /** @deprecated to be removed in IDEA 2020 - use JavaxIcons.Javaee.Application_xml */
+    /** @deprecated to be removed in IDEA 2020 - use JavaUltimateIcons.Javaee.Application_xml */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
     public static final Icon Application_xml = load("/javaee/application_xml.svg");
 
-    /** @deprecated to be removed in IDEA 2020 - use JavaxIcons.Javaee.BuildOnFrameDeactivation */
+    /** @deprecated to be removed in IDEA 2020 - use JavaUltimateIcons.Javaee.BuildOnFrameDeactivation */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
@@ -1930,31 +1930,31 @@ public class AllIcons {
     @ScheduledForRemoval(inVersion = "2020.1")
     public static final Icon DbSchemaImportBig = load("/javaee/dbSchemaImportBig.png");
 
-    /** @deprecated to be removed in IDEA 2020 - use JavaxIcons.Javaee.Ejb_jar_xml */
+    /** @deprecated to be removed in IDEA 2020 - use JavaUltimateIcons.Javaee.Ejb_jar_xml */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
     public static final Icon Ejb_jar_xml = load("/javaee/ejb-jar_xml.svg");
 
-    /** @deprecated to be removed in IDEA 2020 - use JavaxIcons.Javaee.EjbClass */
+    /** @deprecated to be removed in IDEA 2020 - use JavaUltimateIcons.Javaee.EjbClass */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
     public static final Icon EjbClass = load("/javaee/ejbClass.svg");
 
-    /** @deprecated to be removed in IDEA 2020 - use JavaxIcons.Javaee.EjbModule */
+    /** @deprecated to be removed in IDEA 2020 - use JavaUltimateIcons.Javaee.EjbModule */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
     public static final Icon EjbModule = load("/javaee/ejbModule.svg");
 
-    /** @deprecated to be removed in IDEA 2020 - use JavaxIcons.Javaee.EmbeddedAttributeOverlay */
+    /** @deprecated to be removed in IDEA 2020 - use JavaUltimateIcons.Javaee.EmbeddedAttributeOverlay */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
     public static final Icon EmbeddedAttributeOverlay = load("/javaee/embeddedAttributeOverlay.svg");
 
-    /** @deprecated to be removed in IDEA 2020 - use JavaxIcons.Javaee.EntityBean */
+    /** @deprecated to be removed in IDEA 2020 - use JavaUltimateIcons.Javaee.EntityBean */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
@@ -1966,31 +1966,31 @@ public class AllIcons {
     @ScheduledForRemoval(inVersion = "2020.1")
     public static final Icon EntityBeanBig = load("/javaee/entityBeanBig.png");
 
-    /** @deprecated to be removed in IDEA 2020 - use JavaxIcons.Javaee.InheritedAttributeOverlay */
+    /** @deprecated to be removed in IDEA 2020 - use JavaUltimateIcons.Javaee.InheritedAttributeOverlay */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
     public static final Icon InheritedAttributeOverlay = load("/javaee/inheritedAttributeOverlay.svg");
 
-    /** @deprecated to be removed in IDEA 2020 - use JavaxIcons.Javaee.InterceptorClass */
+    /** @deprecated to be removed in IDEA 2020 - use JavaUltimateIcons.Javaee.InterceptorClass */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
     public static final Icon InterceptorClass = load("/javaee/interceptorClass.svg");
 
-    /** @deprecated to be removed in IDEA 2020 - use JavaxIcons.Javaee.InterceptorMethod */
+    /** @deprecated to be removed in IDEA 2020 - use JavaUltimateIcons.Javaee.InterceptorMethod */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
     public static final Icon InterceptorMethod = load("/javaee/interceptorMethod.svg");
 
-    /** @deprecated to be removed in IDEA 2020 - use JavaxIcons.Javaee.JavaeeAppModule */
+    /** @deprecated to be removed in IDEA 2020 - use JavaUltimateIcons.Javaee.JavaeeAppModule */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
     public static final Icon JavaeeAppModule = load("/javaee/JavaeeAppModule.svg");
 
-    /** @deprecated to be removed in IDEA 2020 - use JavaxIcons.Javaee.JpaFacet */
+    /** @deprecated to be removed in IDEA 2020 - use JavaUltimateIcons.Javaee.JpaFacet */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
@@ -2008,79 +2008,79 @@ public class AllIcons {
     @ScheduledForRemoval(inVersion = "2020.1")
     /** 16x16 */ public static final Icon LocalHome = load("/javaee/home.svg");
 
-    /** @deprecated to be removed in IDEA 2020 - use JavaxIcons.Javaee.MessageBean */
+    /** @deprecated to be removed in IDEA 2020 - use JavaUltimateIcons.Javaee.MessageBean */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
     public static final Icon MessageBean = load("/javaee/messageBean.svg");
 
-    /** @deprecated to be removed in IDEA 2020 - use JavaxIcons.Javaee.PersistenceAttribute */
+    /** @deprecated to be removed in IDEA 2020 - use JavaUltimateIcons.Javaee.PersistenceAttribute */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
     public static final Icon PersistenceAttribute = load("/javaee/persistenceAttribute.svg");
 
-    /** @deprecated to be removed in IDEA 2020 - use JavaxIcons.Javaee.PersistenceEmbeddable */
+    /** @deprecated to be removed in IDEA 2020 - use JavaUltimateIcons.Javaee.PersistenceEmbeddable */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
     public static final Icon PersistenceEmbeddable = load("/javaee/persistenceEmbeddable.svg");
 
-    /** @deprecated to be removed in IDEA 2020 - use JavaxIcons.Javaee.PersistenceEntityListener */
+    /** @deprecated to be removed in IDEA 2020 - use JavaUltimateIcons.Javaee.PersistenceEntityListener */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
     public static final Icon PersistenceEntityListener = load("/javaee/persistenceEntityListener.svg");
 
-    /** @deprecated to be removed in IDEA 2020 - use JavaxIcons.Javaee.PersistenceId */
+    /** @deprecated to be removed in IDEA 2020 - use JavaUltimateIcons.Javaee.PersistenceId */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
     public static final Icon PersistenceId = load("/javaee/persistenceId.svg");
 
-    /** @deprecated to be removed in IDEA 2020 - use JavaxIcons.Javaee.PersistenceIdRelationship */
+    /** @deprecated to be removed in IDEA 2020 - use JavaUltimateIcons.Javaee.PersistenceIdRelationship */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
     public static final Icon PersistenceIdRelationship = load("/javaee/persistenceIdRelationship.svg");
 
-    /** @deprecated to be removed in IDEA 2020 - use JavaxIcons.Javaee.PersistenceMappedSuperclass */
+    /** @deprecated to be removed in IDEA 2020 - use JavaUltimateIcons.Javaee.PersistenceMappedSuperclass */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
     public static final Icon PersistenceMappedSuperclass = load("/javaee/persistenceMappedSuperclass.svg");
 
-    /** @deprecated to be removed in IDEA 2020 - use JavaxIcons.Javaee.PersistenceRelationship */
+    /** @deprecated to be removed in IDEA 2020 - use JavaUltimateIcons.Javaee.PersistenceRelationship */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
     public static final Icon PersistenceRelationship = load("/javaee/persistenceRelationship.svg");
 
-    /** @deprecated to be removed in IDEA 2020 - use JavaxIcons.Javaee.PersistenceUnit */
+    /** @deprecated to be removed in IDEA 2020 - use JavaUltimateIcons.Javaee.PersistenceUnit */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
     public static final Icon PersistenceUnit = load("/javaee/persistenceUnit.svg");
 
-    /** @deprecated to be removed in IDEA 2020 - use JavaxIcons.Javaee.Remote */
+    /** @deprecated to be removed in IDEA 2020 - use JavaUltimateIcons.Javaee.Remote */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
     public static final Icon Remote = load("/javaee/remote.svg");
 
-    /** @deprecated to be removed in IDEA 2020 - use JavaxIcons.Javaee.SessionBean */
+    /** @deprecated to be removed in IDEA 2020 - use JavaUltimateIcons.Javaee.SessionBean */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
     public static final Icon SessionBean = load("/javaee/sessionBean.svg");
 
-    /** @deprecated to be removed in IDEA 2020 - use JavaxIcons.Javaee.Web_xml */
+    /** @deprecated to be removed in IDEA 2020 - use JavaUltimateIcons.Javaee.Web_xml */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
     public static final Icon Web_xml = load("/javaee/web_xml.svg");
 
-    /** @deprecated to be removed in IDEA 2020 - use JavaxIcons.Javaee.WebModule */
+    /** @deprecated to be removed in IDEA 2020 - use JavaUltimateIcons.Javaee.WebModule */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
@@ -2337,19 +2337,19 @@ public class AllIcons {
     public final static class Jsf {
       /** 16x16 */ public static final Icon Renderer = load("/nodes/jsf/renderer.svg");
 
-      /** @deprecated to be removed in IDEA 2020 - use JavaxIcons.Jsf.Component */
+      /** @deprecated to be removed in IDEA 2020 - use JavaUltimateIcons.Jsf.Component */
       @SuppressWarnings("unused")
       @Deprecated
       @ScheduledForRemoval(inVersion = "2020.1")
       public static final Icon Component = load("/nodes/jsf/component.svg");
 
-      /** @deprecated to be removed in IDEA 2020 - use JavaxIcons.Jsf.Converter */
+      /** @deprecated to be removed in IDEA 2020 - use JavaUltimateIcons.Jsf.Converter */
       @SuppressWarnings("unused")
       @Deprecated
       @ScheduledForRemoval(inVersion = "2020.1")
       public static final Icon Converter = load("/nodes/jsf/converter.svg");
 
-      /** @deprecated to be removed in IDEA 2020 - use JavaxIcons.Jsf.General */
+      /** @deprecated to be removed in IDEA 2020 - use JavaUltimateIcons.Jsf.General */
       @SuppressWarnings("unused")
       @Deprecated
       @ScheduledForRemoval(inVersion = "2020.1")
@@ -2361,7 +2361,7 @@ public class AllIcons {
       @ScheduledForRemoval(inVersion = "2020.1")
       /** 16x16 */ public static final Icon GenericValue = load("/nodes/parameter.svg");
 
-      /** @deprecated to be removed in IDEA 2020 - use JavaxIcons.Jsf.ManagedBean */
+      /** @deprecated to be removed in IDEA 2020 - use JavaUltimateIcons.Jsf.ManagedBean */
       @SuppressWarnings("unused")
       @Deprecated
       @ScheduledForRemoval(inVersion = "2020.1")
@@ -2373,19 +2373,19 @@ public class AllIcons {
       @ScheduledForRemoval(inVersion = "2020.1")
       /** 16x16 */ public static final Icon NavigationCase = load("/nodes/upFolder.svg");
 
-      /** @deprecated to be removed in IDEA 2020 - use JavaxIcons.Jsf.NavigationRule */
+      /** @deprecated to be removed in IDEA 2020 - use JavaUltimateIcons.Jsf.NavigationRule */
       @SuppressWarnings("unused")
       @Deprecated
       @ScheduledForRemoval(inVersion = "2020.1")
       public static final Icon NavigationRule = load("/nodes/jsf/navigationRule.svg");
 
-      /** @deprecated to be removed in IDEA 2020 - use JavaxIcons.Jsf.RenderKit */
+      /** @deprecated to be removed in IDEA 2020 - use JavaUltimateIcons.Jsf.RenderKit */
       @SuppressWarnings("unused")
       @Deprecated
       @ScheduledForRemoval(inVersion = "2020.1")
       public static final Icon RenderKit = load("/nodes/jsf/renderKit.svg");
 
-      /** @deprecated to be removed in IDEA 2020 - use JavaxIcons.Jsf.Validator */
+      /** @deprecated to be removed in IDEA 2020 - use JavaUltimateIcons.Jsf.Validator */
       @SuppressWarnings("unused")
       @Deprecated
       @ScheduledForRemoval(inVersion = "2020.1")
@@ -2495,49 +2495,49 @@ public class AllIcons {
     @ScheduledForRemoval(inVersion = "2020.1")
     public static final Icon DataView = load("/nodes/dataView.svg");
 
-    /** @deprecated to be removed in IDEA 2020 - use JavaxIcons.Javaee.Ejb */
+    /** @deprecated to be removed in IDEA 2020 - use JavaUltimateIcons.Javaee.Ejb */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
     public static final Icon Ejb = load("/nodes/ejb.svg");
 
-    /** @deprecated to be removed in IDEA 2020 - use JavaxIcons.Javaee.EjbBusinessMethod */
+    /** @deprecated to be removed in IDEA 2020 - use JavaUltimateIcons.Javaee.EjbBusinessMethod */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
     public static final Icon EjbBusinessMethod = load("/nodes/ejbBusinessMethod.svg");
 
-    /** @deprecated to be removed in IDEA 2020 - use JavaxIcons.Javaee.EjbCmpField */
+    /** @deprecated to be removed in IDEA 2020 - use JavaUltimateIcons.Javaee.EjbCmpField */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
     public static final Icon EjbCmpField = load("/nodes/ejbCmpField.svg");
 
-    /** @deprecated to be removed in IDEA 2020 - use JavaxIcons.Javaee.EjbCmrField */
+    /** @deprecated to be removed in IDEA 2020 - use JavaUltimateIcons.Javaee.EjbCmrField */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
     public static final Icon EjbCmrField = load("/nodes/ejbCmrField.svg");
 
-    /** @deprecated to be removed in IDEA 2020 - use JavaxIcons.Javaee.EjbCreateMethod */
+    /** @deprecated to be removed in IDEA 2020 - use JavaUltimateIcons.Javaee.EjbCreateMethod */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
     public static final Icon EjbCreateMethod = load("/nodes/ejbCreateMethod.svg");
 
-    /** @deprecated to be removed in IDEA 2020 - use JavaxIcons.Javaee.EjbFinderMethod */
+    /** @deprecated to be removed in IDEA 2020 - use JavaUltimateIcons.Javaee.EjbFinderMethod */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
     public static final Icon EjbFinderMethod = load("/nodes/ejbFinderMethod.svg");
 
-    /** @deprecated to be removed in IDEA 2020 - use JavaxIcons.Javaee.EjbPrimaryKeyClass */
+    /** @deprecated to be removed in IDEA 2020 - use JavaUltimateIcons.Javaee.EjbPrimaryKeyClass */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
     public static final Icon EjbPrimaryKeyClass = load("/nodes/ejbPrimaryKeyClass.svg");
 
-    /** @deprecated to be removed in IDEA 2020 - use JavaxIcons.Javaee.EjbReference */
+    /** @deprecated to be removed in IDEA 2020 - use JavaUltimateIcons.Javaee.EjbReference */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
@@ -2986,7 +2986,7 @@ public class AllIcons {
     @ScheduledForRemoval(inVersion = "2020.1")
     /** 16x16 */ public static final Icon Cvs = load("/nodes/cvs_global.svg");
 
-    /** @deprecated to be removed in IDEA 2020 - use JavaxIcons.Javaee.Hibernate */
+    /** @deprecated to be removed in IDEA 2020 - use JavaUltimateIcons.Javaee.Hibernate */
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")

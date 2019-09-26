@@ -1,9 +1,9 @@
 deprecated: genericValue.png -> /nodes/parameter.svg; to be removed in IDEA 2020 - use AllIcons.Nodes.Parameter
 deprecated: navigationCase.png -> /nodes/upFolder.svg; to be removed in IDEA 2020 - use AllIcons.Nodes.UpFolder
-deprecated: component.svg; to be removed in IDEA 2020 - use JavaxIcons.Jsf.Component
-deprecated: converter.svg; to be removed in IDEA 2020 - use JavaxIcons.Jsf.Converter
-deprecated: general.svg; to be removed in IDEA 2020 - use JavaxIcons.Jsf.General
-deprecated: managedBean.svg; to be removed in IDEA 2020 - use JavaxIcons.Jsf.ManagedBean
-deprecated: navigationRule.svg; to be removed in IDEA 2020 - use JavaxIcons.Jsf.NavigationRule
-deprecated: renderKit.svg; to be removed in IDEA 2020 - use JavaxIcons.Jsf.RenderKit
-deprecated: validator.svg; to be removed in IDEA 2020 - use JavaxIcons.Jsf.Validator
+deprecated: component.svg; to be removed in IDEA 2020 - use JavaUltimateIcons.Jsf.Component
+deprecated: converter.svg; to be removed in IDEA 2020 - use JavaUltimateIcons.Jsf.Converter
+deprecated: general.svg; to be removed in IDEA 2020 - use JavaUltimateIcons.Jsf.General
+deprecated: managedBean.svg; to be removed in IDEA 2020 - use JavaUltimateIcons.Jsf.ManagedBean
+deprecated: navigationRule.svg; to be removed in IDEA 2020 - use JavaUltimateIcons.Jsf.NavigationRule
+deprecated: renderKit.svg; to be removed in IDEA 2020 - use JavaUltimateIcons.Jsf.RenderKit
+deprecated: validator.svg; to be removed in IDEA 2020 - use JavaUltimateIcons.Jsf.Validator
