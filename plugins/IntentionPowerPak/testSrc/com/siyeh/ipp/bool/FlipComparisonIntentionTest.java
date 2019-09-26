@@ -53,7 +53,7 @@ public class FlipComparisonIntentionTest extends IPPTestCase {
 
            "@Anno(\n" +
            "        //test comment\n" +
-           "        foo > param >");
+           "        foo > param >)");
   }
 
   public void testBrokenCode4() {
