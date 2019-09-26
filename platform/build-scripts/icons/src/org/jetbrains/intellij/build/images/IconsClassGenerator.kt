@@ -56,7 +56,9 @@ class IconsClassGenerator(private val projectHome: File, val modules: List<JpsMo
       else -> {
         packageName = "icons"
 
-        val firstRoot = module.getSourceRoots(JavaSourceRootType.SOURCE).firstOrNull() ?: return null
+        // find first non-generated source root, there could be icons-only modules without src root
+        val firstRoot = module.getSourceRoots(JavaSourceRootType.SOURCE)
+                          .find { !it.properties.isForGeneratedSources } ?: return null
 
         val firstRootDir = firstRoot.file.toPath().resolve("icons")
         var oldClassName: String?
