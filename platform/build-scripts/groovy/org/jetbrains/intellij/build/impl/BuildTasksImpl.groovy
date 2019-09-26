@@ -792,18 +792,26 @@ idea.fatal.error.notification=disabled
     if (includeBinAndRuntime) {
       def propertiesFile = patchIdeaPropertiesFile()
       OsSpecificDistributionBuilder builder;
+      String jbrOsName
       switch (currentOs) {
         case OsFamily.WINDOWS:
           builder = new WindowsDistributionBuilder(buildContext, buildContext.windowsDistributionCustomizer, propertiesFile, patchedApplicationInfo)
+          jbrOsName = "windows"
           break
         case OsFamily.LINUX:
           builder = new LinuxDistributionBuilder(buildContext, buildContext.linuxDistributionCustomizer, propertiesFile)
+          jbrOsName = "linux"
           break
         case OsFamily.MACOS:
           builder = new MacDistributionBuilder(buildContext, buildContext.macDistributionCustomizer, propertiesFile)
+          jbrOsName = "osx"
           break
       }
       builder.copyFilesForOsDistribution(targetDirectory)
+      def jbrTargetDir = buildContext.bundledJreManager.extractJre(jbrOsName)
+      buildContext.ant.move(todir: targetDirectory) {
+        fileset(dir: jbrTargetDir)
+      }
       def executableFilesPatterns = builder.generateExecutableFilesPatterns(true)
       buildContext.ant.chmod(perm: "755") {
         fileset(dir: targetDirectory) {
