@@ -56,7 +56,7 @@ class IconsClassGenerator(private val projectHome: File, val modules: List<JpsMo
       else -> {
         packageName = "icons"
 
-        val firstRoot = module.getSourceRoots(JavaSourceRootType.SOURCE).first() ?: return null
+        val firstRoot = module.getSourceRoots(JavaSourceRootType.SOURCE).firstOrNull() ?: return null
 
         val firstRootDir = firstRoot.file.toPath().resolve("icons")
         var oldClassName: String?
