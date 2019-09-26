@@ -653,6 +653,9 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
       if (dumbModeWarningListener != null) {
         dumbModeWarningListener.actionCanceledBecauseOfDumbMode();
+        if (e instanceof KeyEvent) { //IDEA-222847
+          IdeEventQueue.getInstance().onActionInvoked((KeyEvent)e);
+        }
       }
 
       IdeEventQueue.getInstance().flushDelayedKeyEvents();
