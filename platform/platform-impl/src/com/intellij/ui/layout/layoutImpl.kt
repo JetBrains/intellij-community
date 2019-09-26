@@ -25,7 +25,7 @@ interface LayoutBuilderImpl {
   val validateCallbacks: List<() -> ValidationInfo?>
 
   // Validators applied immediately on input
-  val componentValidateCallbacks: Map<JComponent, () -> String?>
+  val componentValidateCallbacks: Map<JComponent, () -> ValidationInfo?>
 
   val applyCallbacks: List<() -> Unit>
   val resetCallbacks: List<() -> Unit>

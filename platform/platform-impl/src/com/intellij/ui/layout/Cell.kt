@@ -25,7 +25,6 @@ import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
 import java.awt.event.MouseEvent
 import javax.swing.*
-import javax.swing.text.JTextComponent
 import kotlin.jvm.internal.CallableReference
 import kotlin.reflect.KMutableProperty0
 
@@ -80,13 +79,18 @@ inline fun <reified T : Any> KMutableProperty0<T?>.toNullableBinding(defaultValu
   return PropertyBinding({ get() ?: defaultValue }, { set(it) })
 }
 
+class ValidationInfoBuilder(val component: JComponent) {
+  fun error(message: String): ValidationInfo = ValidationInfo(message, component)
+  fun warning(message: String): ValidationInfo = ValidationInfo(message, component).asWarning()
+}
+
 interface CellBuilder<T : JComponent> {
   val component: T
 
   fun comment(text: String, maxLineLength: Int = 70): CellBuilder<T>
   fun focused(): CellBuilder<T>
-  fun withValidationOnApply(callback: (T) -> ValidationInfo?): CellBuilder<T>
-  fun withValidationOnInput(callback: (T) -> String?): CellBuilder<T>
+  fun withValidationOnApply(callback: ValidationInfoBuilder.(T) -> ValidationInfo?): CellBuilder<T>
+  fun withValidationOnInput(callback: ValidationInfoBuilder.(T) -> ValidationInfo?): CellBuilder<T>
   fun onApply(callback: () -> Unit): CellBuilder<T>
   fun onReset(callback: () -> Unit): CellBuilder<T>
   fun onIsModified(callback: () -> Boolean): CellBuilder<T>
@@ -111,17 +115,12 @@ interface CellBuilder<T : JComponent> {
   fun enableIf(predicate: ComponentPredicate): CellBuilder<T>
 
   fun withErrorOnApplyIf(message: String, callback: (T) -> Boolean): CellBuilder<T> {
-    withValidationOnApply { if (callback(it)) ValidationInfo(message, it) else null }
+    withValidationOnApply { if (callback(it)) error(message) else null }
     return this
   }
 
   @ApiStatus.Internal
   fun shouldSaveOnApply(): Boolean
-}
-
-fun <T : JTextComponent> CellBuilder<T>.validateTextOnInput(callback: (String) -> String?): CellBuilder<T> {
-  withValidationOnInput { callback(component.text) }
-  return this
 }
 
 internal interface CheckboxCellBuilder {
@@ -300,12 +299,12 @@ abstract class Cell : BaseBuilder {
       { binding.get().toString() },
       { value -> value.toIntOrNull()?.let { intValue -> binding.set(range?.let { intValue.coerceIn(it.first, it.last) } ?: intValue) } },
       columns
-    ).validateTextOnInput {
-      val value = it.toIntOrNull()
+    ).withValidationOnInput {
+      val value = it.text.toIntOrNull()
       if (value == null)
-        "Please enter a number"
+        error("Please enter a number")
       else if (range != null && value !in range)
-        "Please enter a number from ${range.first} to ${range.last}"
+        error("Please enter a number from ${range.first} to ${range.last}")
       else null
     }
   }

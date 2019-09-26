@@ -430,13 +430,13 @@ class CellBuilderImpl<T : JComponent> internal constructor(
     return this
   }
 
-  override fun withValidationOnApply(callback: (T) -> ValidationInfo?): CellBuilder<T> {
-    builder.validateCallbacks.add { callback(component) }
+  override fun withValidationOnApply(callback: ValidationInfoBuilder.(T) -> ValidationInfo?): CellBuilder<T> {
+    builder.validateCallbacks.add { callback(ValidationInfoBuilder(component), component) }
     return this
   }
 
-  override fun withValidationOnInput(callback: (T) -> String?): CellBuilder<T> {
-    builder.componentValidateCallbacks[component] = { callback(component) }
+  override fun withValidationOnInput(callback: ValidationInfoBuilder.(T) -> ValidationInfo?): CellBuilder<T> {
+    builder.componentValidateCallbacks[component] = { callback(ValidationInfoBuilder(component), component) }
     return this
   }
 
