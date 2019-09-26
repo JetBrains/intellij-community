@@ -8,7 +8,6 @@ import com.intellij.lang.Language;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
-import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -21,16 +20,13 @@ import java.util.Map;
  * @author Maxim.Mossienko
  */
 public class HtmlLineMarkerProvider implements LineMarkerProvider {
-
-  private final Map<Language, List<LineMarkerProvider>> embeddedLanguagesLineMarkerProviders = ContainerUtil.newConcurrentMap();
-
   @Override
   public LineMarkerInfo<?> getLineMarkerInfo(@NotNull final PsiElement element) {
     if (element instanceof PsiWhiteSpace) return null;
     final Language language = element.getLanguage();
 
     if (!(language instanceof XMLLanguage)) {
-      List<LineMarkerProvider> markerProviders = getAllLineMarkerProvidersForLanguage(language, embeddedLanguagesLineMarkerProviders);
+      List<LineMarkerProvider> markerProviders = LineMarkerProviders.getInstance().allForLanguage(language);
       for (LineMarkerProvider provider : markerProviders) {
         if (provider instanceof HtmlLineMarkerProvider) continue;
         LineMarkerInfo<?> info = provider.getLineMarkerInfo(element);
@@ -42,22 +38,8 @@ public class HtmlLineMarkerProvider implements LineMarkerProvider {
     return null;
   }
 
-  @NotNull
-  private static List<LineMarkerProvider> getAllLineMarkerProvidersForLanguage(
-    @NotNull Language language,
-    @NotNull Map<Language, List<LineMarkerProvider>> embeddedLanguagesLineMarkerProviders
-  ) {
-    List<LineMarkerProvider> markerProviders = embeddedLanguagesLineMarkerProviders.get(language);
-    if (markerProviders == null) {
-      markerProviders = LineMarkerProviders.getInstance().allForLanguage(language);
-      embeddedLanguagesLineMarkerProviders.put(language, markerProviders);
-    }
-    return markerProviders;
-  }
-
   @Override
   public void collectSlowLineMarkers(@NotNull final List<PsiElement> elements, @NotNull final Collection<LineMarkerInfo> result) {
-    Map<Language, List<LineMarkerProvider>> localEmbeddedLanguagesLineMarkerProviders = null;
     Map<LineMarkerProvider, List<PsiElement>> embeddedLineMarkersWorkItems = null;
 
     for(PsiElement element:elements) {
@@ -65,12 +47,7 @@ public class HtmlLineMarkerProvider implements LineMarkerProvider {
       final Language language = element.getLanguage();
 
       if (!(language instanceof XMLLanguage)) {
-        if(localEmbeddedLanguagesLineMarkerProviders == null) {
-          localEmbeddedLanguagesLineMarkerProviders = new THashMap<>();
-        }
-
-        List<LineMarkerProvider> lineMarkerProviders = getAllLineMarkerProvidersForLanguage(language,
-                                                                                            localEmbeddedLanguagesLineMarkerProviders);
+        List<LineMarkerProvider> lineMarkerProviders = LineMarkerProviders.getInstance().allForLanguage(language);
         for (LineMarkerProvider provider : lineMarkerProviders) {
           if (provider instanceof HtmlLineMarkerProvider) continue;
           if (embeddedLineMarkersWorkItems == null) embeddedLineMarkersWorkItems = new THashMap<>();
