@@ -37,17 +37,28 @@ class GeneratorResult(ProcessResult):
         return result
 
 
-class SkeletonGenerationTest(GeneratorTestCase):
-    PYTHON_STUBS_DIR = 'python_stubs'
+class FunctionalGeneratorTestCase(GeneratorTestCase):
     SDK_SKELETONS_DIR = 'sdk_skeletons'
+    PYTHON_STUBS_DIR = 'python_stubs'
+
+    default_generator_extra_args = []
+    default_generator_extra_syspath = []
+
+    @property
+    def temp_skeletons_dir(self):
+        return os.path.join(self.temp_dir, self.PYTHON_STUBS_DIR, self.SDK_SKELETONS_DIR)
+
+    @property
+    def temp_cache_dir(self):
+        return os.path.join(self.temp_dir, self.PYTHON_STUBS_DIR, CACHE_DIR_NAME)
 
     def setUp(self):
-        super(SkeletonGenerationTest, self).setUp()
+        super(FunctionalGeneratorTestCase, self).setUp()
         self.process_stdout = six.StringIO()
         self.process_stderr = six.StringIO()
 
     def tearDown(self):
-        super(SkeletonGenerationTest, self).tearDown()
+        super(FunctionalGeneratorTestCase, self).tearDown()
         self.process_stdout.close()
         self.process_stderr.close()
 
@@ -73,6 +84,8 @@ class SkeletonGenerationTest(GeneratorTestCase):
         else:
             output_dir = os.path.join(self.temp_dir, output_dir)
 
+        if not extra_syspath:
+            extra_syspath = self.default_generator_extra_syspath
         if not extra_syspath:
             extra_syspath = [self.test_data_dir]
 
@@ -100,6 +113,9 @@ class SkeletonGenerationTest(GeneratorTestCase):
             '-s', os.pathsep.join(extra_syspath),
         ]
 
+        if not extra_args:
+            extra_args = self.default_generator_extra_args
+
         if extra_args:
             args.extend(extra_args)
 
@@ -126,14 +142,43 @@ class SkeletonGenerationTest(GeneratorTestCase):
         self.process_stderr.write(stderr)
         return ProcessResult(process.returncode, stdout, stderr)
 
-    @property
-    def temp_skeletons_dir(self):
-        return os.path.join(self.temp_dir, self.PYTHON_STUBS_DIR, self.SDK_SKELETONS_DIR)
+    def check_generator_output(self, mod_name=None, mod_path=None, mod_root=None,
+                               custom_required_gen=False, standalone_mode=False,
+                               success=True, **kwargs):
+        if custom_required_gen:
+            kwargs.setdefault('required_gen_version_file_path', self.get_test_data_path('required_gen_version'))
+        if standalone_mode:
+            kwargs.setdefault('extra_env', {})[ENV_STANDALONE_MODE_FLAG] = 'True'
 
-    @property
-    def temp_cache_dir(self):
-        return os.path.join(self.temp_dir, self.PYTHON_STUBS_DIR, CACHE_DIR_NAME)
+        if mod_name and not mod_root:
+            mod_root = self.test_data_dir
 
+        roots = kwargs.pop('extra_syspath', [])
+        if mod_root:
+            roots.insert(0, mod_root)
+
+        with self.comparing_dirs(tmp_subdir=self.PYTHON_STUBS_DIR):
+            result = self.run_generator(mod_name, mod_path=mod_path, extra_syspath=roots, **kwargs)
+            self.assertEqual(success, result.exit_code == 0)
+
+    def assertDirLayoutEquals(self, dir_path, expected_layout):
+        def format_dir(dir_path, indent=''):
+            for child_name in sorted(os.listdir(dir_path)):
+                child_path = os.path.join(dir_path, child_name)
+                if os.path.isdir(child_path):
+                    yield indent + child_name + '/'
+                    for line in format_dir(child_path, indent + '    '):
+                        yield line
+                else:
+                    yield indent + child_name
+
+        formatted_dir_tree = '\n'.join(format_dir(dir_path))
+        expected = textwrap.dedent(expected_layout).strip()
+        actual = formatted_dir_tree.strip()
+        self.assertMultiLineEqual(expected, actual)
+
+
+class SkeletonGenerationTest(FunctionalGeneratorTestCase):
     def test_layout_for_builtin_module(self):
         self.run_generator(mod_qname='_ast')
         self.assertDirLayoutEquals(os.path.join(self.temp_dir, self.PYTHON_STUBS_DIR), """
@@ -321,9 +366,26 @@ class SkeletonGenerationTest(GeneratorTestCase):
     def test_non_string_dunder_module(self):
         self.check_generator_output('mod', 'mod.py')
 
+    def test_results_in_single_module_mode(self):
+        result = self.run_generator('mod', 'mod.py')
+        self.assertIn({
+            'type': 'generation_result',
+            'module_name': 'mod',
+            'module_origin': 'mod.py',
+            'generation_status': 'GENERATED'
+        }, result.control_messages)
+
+
+class MultiModuleGenerationTest(FunctionalGeneratorTestCase):
+    default_generator_extra_args = ['--name-pattern', 'mod?']
+    # This is a hack to keep the existing behavior where we keep discovering only binary files
+    # (which can't be distributed with tests in a platform-independent manner), but user their .py
+    # counterparts for actual importing and introspection
+    default_generator_extra_syspath = ['mocks', 'binaries']
+
     @test_data_dir('multiple_modules_mode')
     def test_progress_indication_in_multiple_modules_mode(self):
-        result = self.run_generator(extra_syspath=['mocks', 'binaries'], extra_args=['--name-pattern', 'mod?'])
+        result = self.run_generator()
         self.assertContainsInRelativeOrder([
             {'type': 'progress', 'text': 'mod1', 'minor': True, 'fraction': 0.0},
             {'type': 'progress', 'text': 'mod2', 'minor': True, 'fraction': 0.5},
@@ -332,7 +394,7 @@ class SkeletonGenerationTest(GeneratorTestCase):
 
     @test_data_dir('multiple_modules_mode')
     def test_intermediate_results_in_multiple_modules_mode(self):
-        result = self.run_generator(extra_syspath=['mocks', 'binaries'], extra_args=['--name-pattern', 'mod?'])
+        result = self.run_generator()
         self.assertContainsInRelativeOrder([
             {'type': 'generation_result',
              'module_name': 'mod1',
@@ -344,21 +406,14 @@ class SkeletonGenerationTest(GeneratorTestCase):
              'generation_status': 'GENERATED'}
         ], result.control_messages)
 
-    def test_results_in_single_module_mode(self):
-        result = self.run_generator('mod', 'mod.py')
-        self.assertIn({
-            'type': 'generation_result',
-            'module_name': 'mod',
-            'module_origin': 'mod.py',
-            'generation_status': 'GENERATED'
-        }, result.control_messages)
-
     @test_data_dir('multiple_modules_mode')
     def test_multiple_modules_generation_mode(self):
-        # This is a hack to keep the existing behavior where we keep discovering only binary files
-        # (which can't be distributed with tests in a platform-independent manner), but user their .py
-        # counterparts for actual importing and introspection
-        self.check_generator_output(extra_syspath=['mocks', 'binaries'], extra_args=['--name-pattern', 'mod?'])
+        self.check_generator_output()
+
+
+class StatePassingGenerationTest(FunctionalGeneratorTestCase):
+    default_generator_extra_args = ['--with-state-marker', '--name-pattern', 'mod?']
+    default_generator_extra_syspath = ['mocks', 'binaries']
 
     def test_passing_skeletons_state_update_due_to_required_gen_version(self):
         state = {
@@ -375,9 +430,7 @@ class SkeletonGenerationTest(GeneratorTestCase):
                 }
             }
         }
-        self.check_generator_output(extra_syspath=['mocks', 'binaries'],
-                                    extra_args=['--with-state-marker', '--name-pattern', 'mod?'],
-                                    input=json.dumps(state),
+        self.check_generator_output(input=json.dumps(state),
                                     custom_required_gen=True,
                                     gen_version='0.2')
 
@@ -394,9 +447,7 @@ class SkeletonGenerationTest(GeneratorTestCase):
                 }
             }
         }
-        self.check_generator_output(extra_syspath=['mocks', 'binaries'],
-                                    extra_args=['--with-state-marker', '--name-pattern', 'mod?'],
-                                    input=json.dumps(state),
+        self.check_generator_output(input=json.dumps(state),
                                     custom_required_gen=True,
                                     gen_version='0.2')
 
@@ -418,9 +469,7 @@ class SkeletonGenerationTest(GeneratorTestCase):
                 }
             }
         }
-        self.check_generator_output(extra_syspath=['mocks', 'binaries'],
-                                    extra_args=['--with-state-marker', '--name-pattern', 'mod?'],
-                                    input=json.dumps(state),
+        self.check_generator_output(input=json.dumps(state),
                                     custom_required_gen=True,
                                     gen_version='0.2')
 
@@ -442,9 +491,7 @@ class SkeletonGenerationTest(GeneratorTestCase):
                 }
             }
         }
-        self.check_generator_output(extra_syspath=['mocks', 'binaries'],
-                                    extra_args=['--with-state-marker', '--name-pattern', 'mod?'],
-                                    input=json.dumps(state),
+        self.check_generator_output(input=json.dumps(state),
                                     custom_required_gen=True,
                                     gen_version='0.1')
 
@@ -457,43 +504,6 @@ class SkeletonGenerationTest(GeneratorTestCase):
                 },
             }
         }
-        self.check_generator_output(extra_syspath=['mocks', 'binaries'],
-                                    extra_args=['--with-state-marker', '--name-pattern', 'mod?'],
-                                    input=json.dumps(state),
+        self.check_generator_output(input=json.dumps(state),
                                     custom_required_gen=True,
                                     gen_version='0.1')
-
-    def check_generator_output(self, mod_name=None, mod_path=None, mod_root=None,
-                               custom_required_gen=False, standalone_mode=False,
-                               success=True, **kwargs):
-        if custom_required_gen:
-            kwargs.setdefault('required_gen_version_file_path', self.get_test_data_path('required_gen_version'))
-        if standalone_mode:
-            kwargs.setdefault('extra_env', {})[ENV_STANDALONE_MODE_FLAG] = 'True'
-
-        if mod_name and not mod_root:
-            mod_root = self.test_data_dir
-
-        roots = kwargs.pop('extra_syspath', [])
-        if mod_root:
-            roots.insert(0, mod_root)
-
-        with self.comparing_dirs(tmp_subdir=self.PYTHON_STUBS_DIR):
-            result = self.run_generator(mod_name, mod_path=mod_path, extra_syspath=roots, **kwargs)
-            self.assertEqual(success, result.exit_code == 0)
-
-    def assertDirLayoutEquals(self, dir_path, expected_layout):
-        def format_dir(dir_path, indent=''):
-            for child_name in sorted(os.listdir(dir_path)):
-                child_path = os.path.join(dir_path, child_name)
-                if os.path.isdir(child_path):
-                    yield indent + child_name + '/'
-                    for line in format_dir(child_path, indent + '    '):
-                        yield line
-                else:
-                    yield indent + child_name
-
-        formatted_dir_tree = '\n'.join(format_dir(dir_path))
-        expected = textwrap.dedent(expected_layout).strip()
-        actual = formatted_dir_tree.strip()
-        self.assertMultiLineEqual(expected, actual)
