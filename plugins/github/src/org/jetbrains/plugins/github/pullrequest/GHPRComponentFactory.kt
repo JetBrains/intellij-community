@@ -10,13 +10,18 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.ide.CopyPasteManager
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.*
+import com.intellij.ui.components.JBPanelWithEmptyText
 import com.intellij.util.ui.UIUtil
 import git4idea.GitCommit
 import org.jetbrains.annotations.CalledInAwt
+import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
+import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionDataContext
 import org.jetbrains.plugins.github.pullrequest.action.GithubPullRequestKeys
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
@@ -24,6 +29,7 @@ import org.jetbrains.plugins.github.pullrequest.comment.GHPRDiffReviewThreadsPro
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPREditorReviewThreadComponentFactoryImpl
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
 import org.jetbrains.plugins.github.pullrequest.data.GHPullRequestsDataContext
+import org.jetbrains.plugins.github.pullrequest.data.GHPullRequestsDataContextRepository
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestDataProvider
 import org.jetbrains.plugins.github.pullrequest.search.GithubPullRequestSearchPanel
 import org.jetbrains.plugins.github.pullrequest.ui.*
@@ -33,7 +39,11 @@ import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRChangesModelImpl
 import org.jetbrains.plugins.github.pullrequest.ui.details.GithubPullRequestDetailsPanel
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
 import org.jetbrains.plugins.github.util.CachingGithubUserAvatarLoader
+import org.jetbrains.plugins.github.util.GitRemoteUrlCoordinates
 import org.jetbrains.plugins.github.util.GithubImageResizer
+import org.jetbrains.plugins.github.util.LazyCancellableBackgroundProcessValue
+import java.awt.BorderLayout
+import java.awt.event.ActionListener
 import java.awt.event.KeyEvent
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
@@ -47,6 +57,7 @@ import javax.swing.event.ListSelectionEvent
 @Service
 internal class GHPRComponentFactory(private val project: Project) {
 
+  private val progressManager = ProgressManager.getInstance()
   private val actionManager = ActionManager.getInstance()
   private val copyPasteManager = CopyPasteManager.getInstance()
   private val avatarLoader = CachingGithubUserAvatarLoader.getInstance()
@@ -54,11 +65,53 @@ internal class GHPRComponentFactory(private val project: Project) {
 
   private val autoPopupController = AutoPopupController.getInstance(project)
   private val projectUiSettings = GithubPullRequestsProjectUISettings.getInstance(project)
+  private val dataContextRepository = GHPullRequestsDataContextRepository.getInstance(project)
 
   @CalledInAwt
-  fun createComponent(dataContext: GHPullRequestsDataContext): JComponent {
-    val disposable = Disposer.newDisposable()
+  fun createComponent(remoteUrl: GitRemoteUrlCoordinates, account: GithubAccount, requestExecutor: GithubApiRequestExecutor,
+                      parentDisposable: Disposable): JComponent {
 
+    val contextValue = object : LazyCancellableBackgroundProcessValue<GHPullRequestsDataContext>(progressManager) {
+      override fun compute(indicator: ProgressIndicator) =
+        dataContextRepository.getContext(indicator, account, requestExecutor, remoteUrl).also {
+          Disposer.register(parentDisposable, it)
+        }
+    }
+    Disposer.register(parentDisposable, Disposable { contextValue.drop() })
+
+    val uiDisposable = Disposer.newDisposable()
+    Disposer.register(parentDisposable, uiDisposable)
+
+    val loadingModel = GHCompletableFutureLoadingModel<GHPullRequestsDataContext>()
+    val contentContainer = JBPanelWithEmptyText(null).apply {
+      background = UIUtil.getListBackground()
+    }
+    loadingModel.addStateChangeListener(object : GHLoadingModel.StateChangeListener {
+      override fun onLoadingCompleted() {
+        val dataContext = loadingModel.result
+        if (dataContext != null) {
+          val content = createContent(dataContext, uiDisposable)
+          with(contentContainer) {
+            layout = BorderLayout()
+            add(content, BorderLayout.CENTER)
+            validate()
+            repaint()
+          }
+        }
+      }
+    })
+    loadingModel.future = contextValue.value
+
+    return GHLoadingPanel(loadingModel, contentContainer, uiDisposable,
+                          GHLoadingPanel.EmptyTextBundle.Simple("", "Can't load data from GitHub")).apply {
+      resetHandler = ActionListener {
+        contextValue.drop()
+        loadingModel.future = contextValue.value
+      }
+    }
+  }
+
+  private fun createContent(dataContext: GHPullRequestsDataContext, disposable: Disposable): JComponent {
     val avatarIconsProviderFactory = CachingGithubAvatarIconsProvider.Factory(avatarLoader, imageResizer, dataContext.requestExecutor)
     val listSelectionHolder = GithubPullRequestsListSelectionHolderImpl()
     val actionDataContext = GHPRActionDataContext(dataContext, listSelectionHolder, avatarIconsProviderFactory)
@@ -101,7 +154,9 @@ internal class GHPRComponentFactory(private val project: Project) {
     Disposer.register(disposable, detailsPanel)
     val detailsLoadingPanel = GHLoadingPanel(detailsLoadingModel, detailsPanel, disposable,
                                              GHLoadingPanel.EmptyTextBundle.Simple("Select pull request to view details",
-                                                                                   "Can't load details"))
+                                                                                   "Can't load details")).apply {
+      resetHandler = ActionListener { dataProviderModel.value?.reloadDetails() }
+    }
 
     val changesLoadingModel = createChangesLoadingModel(dataProviderModel, disposable)
     val changesModel = createChangesModel(projectUiSettings, changesLoadingModel, disposable)
@@ -117,7 +172,9 @@ internal class GHPRComponentFactory(private val project: Project) {
     val changesLoadingPanel = GHLoadingPanel(changesLoadingModel, changesBrowser, disposable,
                                              GHLoadingPanel.EmptyTextBundle.Simple("Select pull request to view changes",
                                                                                    "Can't load changes",
-                                                                                   "Pull request does not contain any changes"))
+                                                                                   "Pull request does not contain any changes")).apply {
+      resetHandler = ActionListener { dataProviderModel.value?.reloadCommits() }
+    }
 
     Disposer.register(disposable, Disposable {
       Disposer.dispose(list)
@@ -127,13 +184,7 @@ internal class GHPRComponentFactory(private val project: Project) {
       Disposer.dispose(detailsPanel)
     })
 
-    return object : OnePixelSplitter("Github.PullRequests.Component", 0.33f), Disposable {
-      override fun dispose() {
-        super.dispose()
-        Disposer.dispose(disposable)
-        Disposer.dispose(dataContext)
-      }
-    }.apply {
+    return OnePixelSplitter("Github.PullRequests.Component", 0.33f).apply {
       background = UIUtil.getListBackground()
       isOpaque = true
       isFocusCycleRoot = true

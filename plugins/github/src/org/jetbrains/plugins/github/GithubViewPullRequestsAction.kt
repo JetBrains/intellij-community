@@ -4,19 +4,13 @@ package org.jetbrains.plugins.github
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
-import com.intellij.openapi.progress.PerformInBackgroundOption
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutorManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.pullrequest.GHPRToolWindowManager
-import org.jetbrains.plugins.github.pullrequest.data.GHPullRequestsDataContext
-import org.jetbrains.plugins.github.pullrequest.data.GHPullRequestsDataContextRepository
 import org.jetbrains.plugins.github.util.GitRemoteUrlCoordinates
-import org.jetbrains.plugins.github.util.GithubNotifications
 
 class GithubViewPullRequestsAction : AbstractGithubUrlGroupingAction("View Pull Requests", null, AllIcons.Vcs.Vendors.Github) {
 
@@ -26,27 +20,13 @@ class GithubViewPullRequestsAction : AbstractGithubUrlGroupingAction("View Pull 
                                remote: GitRemote,
                                remoteUrl: String,
                                account: GithubAccount) {
-    val requestExecutor = service<GithubApiRequestExecutorManager>().getExecutor(account, project) ?: return
-
-    val toolWindowManager = project.service<GHPRToolWindowManager>()
     val remoteCoordinates = GitRemoteUrlCoordinates(remoteUrl, remote, repository)
-    if (toolWindowManager.showPullRequestsTabIfExists(remoteCoordinates, account)) return
+    with(project.service<GHPRToolWindowManager>()) {
+      if (showPullRequestsTabIfExists(remoteCoordinates, account)) return
 
-    object : Task.Backgroundable(project, "Loading GitHub Repository Information", true, PerformInBackgroundOption.DEAF) {
-      lateinit var context: GHPullRequestsDataContext
-
-      override fun run(indicator: ProgressIndicator) {
-        context = project.service<GHPullRequestsDataContextRepository>().getContext(indicator, account, requestExecutor, remoteCoordinates)
-      }
-
-      override fun onSuccess() {
-        toolWindowManager.createPullRequestsTab(context)
-        toolWindowManager.showPullRequestsTabIfExists(remoteCoordinates, account)
-      }
-
-      override fun onThrowable(error: Throwable) {
-        GithubNotifications.showError(project, "Failed To Load Repository Information", error)
-      }
-    }.queue()
+      val requestExecutor = service<GithubApiRequestExecutorManager>().getExecutor(account, project) ?: return
+      createPullRequestsTab(remoteCoordinates, account, requestExecutor)
+      showPullRequestsTabIfExists(remoteCoordinates, account)
+    }
   }
 }

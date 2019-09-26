@@ -8,6 +8,7 @@ import com.intellij.ui.components.JBLoadingPanel
 import com.intellij.util.ui.ComponentWithEmptyText
 import com.intellij.vcs.log.ui.frame.ProgressStripe
 import java.awt.BorderLayout
+import java.awt.event.ActionListener
 import javax.swing.JComponent
 
 class GHLoadingPanel<T>(private val model: GHLoadingModel<*>,
@@ -21,6 +22,7 @@ class GHLoadingPanel<T>(private val model: GHLoadingModel<*>,
     ProgressStripe(content, parentDisposable, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS).apply {
       isOpaque = false
     }
+  var resetHandler: ActionListener? = null
 
   init {
     isOpaque = false
@@ -55,7 +57,11 @@ class GHLoadingPanel<T>(private val model: GHLoadingModel<*>,
       when {
         error != null -> content.emptyText.clear()
           .appendText(textBundle.errorPrefix, SimpleTextAttributes.ERROR_ATTRIBUTES)
-          .appendSecondaryText(error.message ?: "Unknown error", SimpleTextAttributes.ERROR_ATTRIBUTES, null)
+          .appendSecondaryText(error.message ?: "Unknown error", SimpleTextAttributes.ERROR_ATTRIBUTES, null).apply {
+            resetHandler?.let {
+              appendSecondaryText(" Retry", SimpleTextAttributes.LINK_ATTRIBUTES, it)
+            }
+          }
         model.result != null -> content.emptyText.text = textBundle.empty
         else -> content.emptyText.text = textBundle.default
       }

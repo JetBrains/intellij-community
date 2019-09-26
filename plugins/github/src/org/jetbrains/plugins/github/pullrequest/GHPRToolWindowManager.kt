@@ -5,6 +5,7 @@ import com.intellij.dvcs.repo.VcsRepositoryManager
 import com.intellij.dvcs.repo.VcsRepositoryMappingListener
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowAnchor
@@ -18,10 +19,10 @@ import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryChangeListener
 import git4idea.repo.GitRepositoryManager
 import icons.GithubIcons
+import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.authentication.accounts.AccountTokenChangedListener
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountManager
-import org.jetbrains.plugins.github.pullrequest.data.GHPullRequestsDataContext
 import org.jetbrains.plugins.github.util.GitRemoteUrlCoordinates
 
 const val TOOL_WINDOW_ID = "GitHub Pull Requests"
@@ -37,7 +38,9 @@ internal class GHPRToolWindowManager(private val project: Project,
                                      private val accountManager: GithubAccountManager,
                                      private val componentFactory: GHPRComponentFactory) {
 
-  fun createPullRequestsTab(ctx: GHPullRequestsDataContext) {
+  fun createPullRequestsTab(remoteUrl: GitRemoteUrlCoordinates,
+                            account: GithubAccount,
+                            requestExecutor: GithubApiRequestExecutor) {
     var toolWindow = toolWindowManager.getToolWindow(TOOL_WINDOW_ID)
     val contentManager: ContentManager
 
@@ -55,14 +58,14 @@ internal class GHPRToolWindowManager(private val project: Project,
         }
       })
 
-      val content = createContent(contentManager, ctx)
+      val content = createContent(contentManager, remoteUrl, account, requestExecutor)
       contentManager.addContent(content)
     }
     else {
       contentManager = toolWindow.contentManager
-      val existingContent = contentManager.findContent(ctx.gitRepositoryCoordinates, ctx.account)
+      val existingContent = contentManager.findContent(remoteUrl, account)
       if (existingContent == null) {
-        val content = createContent(contentManager, ctx)
+        val content = createContent(contentManager, remoteUrl, account, requestExecutor)
         contentManager.addContent(content)
       }
     }
@@ -76,20 +79,23 @@ internal class GHPRToolWindowManager(private val project: Project,
     return true
   }
 
-  private fun createContent(contentManager: ContentManager, ctx: GHPullRequestsDataContext): Content {
-    val component = componentFactory.createComponent(ctx)
-    val coordinates = ctx.gitRepositoryCoordinates
+  private fun createContent(contentManager: ContentManager,
+                            remoteUrl: GitRemoteUrlCoordinates,
+                            account: GithubAccount,
+                            requestExecutor: GithubApiRequestExecutor): Content {
+    val disposable = Disposer.newDisposable()
+    val component = componentFactory.createComponent(remoteUrl, account, requestExecutor, disposable)
 
     return contentManager.factory.createContent(component, null, false)
       .apply {
-        setPreferredFocusedComponent { component }
         isCloseable = true
-        displayName = coordinates.remote.name
+        displayName = remoteUrl.remote.name
+        disposer = disposable
 
-        putUserData(REPOSITORY_KEY, coordinates.repository)
-        putUserData(REMOTE_KEY, coordinates.remote)
-        putUserData(REMOTE_URL_KEY, coordinates.url)
-        putUserData(ACCOUNT_KEY, ctx.account)
+        putUserData(REPOSITORY_KEY, remoteUrl.repository)
+        putUserData(REMOTE_KEY, remoteUrl.remote)
+        putUserData(REMOTE_URL_KEY, remoteUrl.url)
+        putUserData(ACCOUNT_KEY, account)
       }
   }
 
