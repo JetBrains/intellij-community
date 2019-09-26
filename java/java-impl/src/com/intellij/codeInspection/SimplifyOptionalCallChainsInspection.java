@@ -44,10 +44,6 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
     CallMatcher.instanceCall(JAVA_UTIL_OPTIONAL, "get").parameterCount(0);
   private static final CallMatcher OPTIONAL_OR_ELSE_GET =
     CallMatcher.instanceCall(JAVA_UTIL_OPTIONAL, "orElseGet").parameterCount(1);
-  private static final CallMatcher OPTIONAL_OR_ELSE_OR_ELSE_GET = CallMatcher.anyOf(
-    OPTIONAL_OR_ELSE,
-    OPTIONAL_OR_ELSE_GET
-  );
   private static final CallMatcher OPTIONAL_MAP =
     CallMatcher.instanceCall(JAVA_UTIL_OPTIONAL, "map").parameterCount(1);
   private static final CallMatcher OPTIONAL_OF_NULLABLE =
