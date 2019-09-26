@@ -7,6 +7,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.rd.RdIdeaKt;
 import com.intellij.openapi.ui.*;
@@ -166,6 +167,7 @@ public class JBTabsImpl extends JComponent
   private boolean mySupportsCompression;
   private String myEmptyText;
   private boolean myMouseInsideTabsArea;
+  private boolean myRemoveNotifyInProgress;
 
   protected JBTabsBorder createTabBorder() {
     return new JBDefaultTabsBorder(this);
@@ -519,12 +521,32 @@ public class JBTabsImpl extends JComponent
   }
 
   @Override
+  public void remove(int index) {
+    if (myRemoveNotifyInProgress) {
+      Logger.getInstance(JBTabsImpl.class).warn(new IllegalStateException("removeNotify in progress"));
+    }
+    super.remove(index);
+  }
+
+  @Override
+  public void removeAll() {
+    if (myRemoveNotifyInProgress) {
+      Logger.getInstance(JBTabsImpl.class).warn(new IllegalStateException("removeNotify in progress"));
+    }
+    super.removeAll();
+  }
+
+  @Override
   public void removeNotify() {
     try {
+      myRemoveNotifyInProgress = true;
       super.removeNotify();
     }
     catch (Exception e) {
       GuiUtils.printDebugInfo(this);
+    }
+    finally {
+      myRemoveNotifyInProgress = false;
     }
 
     setFocused(false);
@@ -1830,6 +1852,9 @@ public class JBTabsImpl extends JComponent
 
   @NotNull
   private ActionCallback removeTab(TabInfo info, @Nullable TabInfo forcedSelectionTransfer, boolean transferFocus, boolean isDropTarget) {
+    if (myRemoveNotifyInProgress) {
+      Logger.getInstance(JBTabsImpl.class).warn(new IllegalStateException("removeNotify in progress"));
+    }
     if (myPopupInfo == info) myPopupInfo = null;
 
     if (!isDropTarget) {
