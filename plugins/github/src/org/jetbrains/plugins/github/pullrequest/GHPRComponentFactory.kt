@@ -12,14 +12,22 @@ import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.*
+import com.intellij.util.ui.UIUtil
+import git4idea.GitCommit
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionDataContext
 import org.jetbrains.plugins.github.pullrequest.action.GithubPullRequestKeys
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
+import org.jetbrains.plugins.github.pullrequest.comment.GHPRDiffReviewThreadsProviderImpl
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPREditorReviewThreadComponentFactoryImpl
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
 import org.jetbrains.plugins.github.pullrequest.data.GHPullRequestsDataContext
+import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestDataProvider
 import org.jetbrains.plugins.github.pullrequest.search.GithubPullRequestSearchPanel
 import org.jetbrains.plugins.github.pullrequest.ui.*
+import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRChangesBrowser
+import org.jetbrains.plugins.github.pullrequest.ui.details.GithubPullRequestDetailsPanel
+import org.jetbrains.plugins.github.ui.util.SingleValueModel
 import org.jetbrains.plugins.github.util.CachingGithubUserAvatarLoader
 import org.jetbrains.plugins.github.util.GithubImageResizer
 import java.awt.event.KeyEvent
@@ -48,7 +56,7 @@ internal class GHPRComponentFactory(private val project: Project,
   }
 
   private inner class GithubPullRequestsComponent(private val dataContext: GHPullRequestsDataContext,
-                                                  avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory)
+                                                  private val avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory)
     : OnePixelSplitter("Github.PullRequests.Component", 0.33f), Disposable, DataProvider {
 
     private val listSelectionHolder = GithubPullRequestsListSelectionHolderImpl()
@@ -57,6 +65,9 @@ internal class GHPRComponentFactory(private val project: Project,
     private val uiDisposable: Disposable
 
     init {
+      background = UIUtil.getListBackground()
+      isOpaque = true
+
       val list = GithubPullRequestsList(copyPasteManager, avatarIconsProviderFactory, dataContext.listModel)
       list.emptyText.clear()
       installPopup(list)
@@ -78,29 +89,8 @@ internal class GHPRComponentFactory(private val project: Project,
       val loaderPanel = GHPRListLoaderPanel(dataContext.listLoader, dataContext.dataLoader, list, search)
       firstComponent = loaderPanel
 
-      val diffCommentComponentFactory = GHPREditorReviewThreadComponentFactoryImpl(avatarIconsProviderFactory)
-      val changes = GithubPullRequestChangesComponent(project, pullRequestUiSettings, diffCommentComponentFactory).apply {
-        diffAction.registerCustomShortcutSet(this@GithubPullRequestsComponent, this@GithubPullRequestsComponent)
-      }
-      val details = GithubPullRequestDetailsComponent(project,
-                                                      dataContext.dataLoader,
-                                                      dataContext.securityService,
-                                                      dataContext.busyStateTracker,
-                                                      dataContext.metadataService,
-                                                      dataContext.stateService,
-                                                      avatarIconsProviderFactory)
-      val preview = GithubPullRequestPreviewComponent(changes, details)
-
-      listSelectionHolder.addSelectionChangeListener(preview) {
-        preview.dataProvider = listSelectionHolder.selectionNumber?.let(dataContext.dataLoader::getDataProvider)
-      }
-
-      dataContext.dataLoader.addInvalidationListener(preview) {
-        val selection = listSelectionHolder.selectionNumber
-        if (selection != null && selection == it) {
-          preview.dataProvider = dataContext.dataLoader.getDataProvider(selection)
-        }
-      }
+      val previewDisposable = Disposer.newDisposable()
+      val preview = createPreview(previewDisposable)
 
       secondComponent = preview
       isFocusCycleRoot = true
@@ -110,9 +100,7 @@ internal class GHPRComponentFactory(private val project: Project,
         Disposer.dispose(search)
         Disposer.dispose(loaderPanel)
 
-        Disposer.dispose(preview)
-        Disposer.dispose(changes)
-        Disposer.dispose(details)
+        Disposer.dispose(previewDisposable)
       }
     }
 
@@ -164,6 +152,153 @@ internal class GHPRComponentFactory(private val project: Project,
           if (e.type == ListDataEvent.INTERVAL_REMOVED) savedSelectionNumber = listSelectionHolder.selectionNumber
         }
       })
+    }
+
+    private fun createPreview(parentDisposable: Disposable): JComponent {
+      val dataProviderModel = createDataProviderModel(parentDisposable)
+
+      val detailsLoadingModel = createDetailsLoadingModel(dataProviderModel, parentDisposable)
+      val detailsModel = createValueModel(detailsLoadingModel)
+
+      val changesLoadingModel = createChangesLoadingModel(dataProviderModel, parentDisposable)
+      val changesModel = createValueModel(changesLoadingModel)
+
+      val detailsPanel = GithubPullRequestDetailsPanel(project, detailsModel,
+                                                       dataContext.securityService,
+                                                       dataContext.busyStateTracker,
+                                                       dataContext.metadataService,
+                                                       dataContext.stateService,
+                                                       avatarIconsProviderFactory)
+      Disposer.register(parentDisposable, detailsPanel)
+      val detailsLoadingPanel = GHLoadingPanel(detailsLoadingModel, detailsPanel, parentDisposable,
+                                               GHLoadingPanel.EmptyTextBundle.Simple("Select pull request to view details",
+                                                                                     "Can't load details"))
+
+
+      val changesBrowser = GHPRChangesBrowser(changesModel, project, pullRequestUiSettings).apply {
+        diffAction.registerCustomShortcutSet(this@GithubPullRequestsComponent, this@GithubPullRequestsComponent)
+      }
+      Disposer.register(parentDisposable, changesBrowser)
+
+      val diffCommentComponentFactory = GHPREditorReviewThreadComponentFactoryImpl(avatarIconsProviderFactory)
+      dataProviderModel.addValueChangedListener {
+        changesBrowser.diffReviewThreadsProvider = dataProviderModel.value?.let {
+          GHPRDiffReviewThreadsProviderImpl(it, diffCommentComponentFactory)
+        }
+      }
+
+      val changesLoadingPanel = GHLoadingPanel(changesLoadingModel, changesBrowser, parentDisposable,
+                                               GHLoadingPanel.EmptyTextBundle.Simple("Select pull request to view changes",
+                                                                                     "Can't load changes",
+                                                                                     "Pull request does not contain any changes"))
+
+      return OnePixelSplitter("Github.PullRequest.Preview.Component", 0.5f).apply {
+        firstComponent = detailsLoadingPanel
+        secondComponent = changesLoadingPanel
+      }
+    }
+
+    private fun createChangesLoadingModel(dataProviderModel: SingleValueModel<GithubPullRequestDataProvider?>,
+                                          parentDisposable: Disposable): GHCompletableFutureLoadingModel<List<GitCommit>> {
+      val model = GHCompletableFutureLoadingModel<List<GitCommit>>()
+
+      var listenerDisposable: Disposable? = null
+
+      dataProviderModel.addValueChangedListener {
+        val provider = dataProviderModel.value
+        model.future = provider?.logCommitsRequest
+
+        listenerDisposable = listenerDisposable?.let {
+          Disposer.dispose(it)
+          null
+        }
+
+        if (provider != null) {
+          val disposable = Disposer.newDisposable().apply {
+            Disposer.register(parentDisposable, this)
+          }
+          provider.addRequestsChangesListener(disposable, object : GithubPullRequestDataProvider.RequestsChangedListener {
+            override fun commitsRequestChanged() {
+              model.future = provider.logCommitsRequest
+            }
+          })
+
+          listenerDisposable = disposable
+        }
+      }
+
+      return model
+    }
+
+    private fun createDetailsLoadingModel(dataProviderModel: SingleValueModel<GithubPullRequestDataProvider?>,
+                                          parentDisposable: Disposable): GHCompletableFutureLoadingModel<GHPullRequest> {
+      val model = GHCompletableFutureLoadingModel<GHPullRequest>()
+
+      var listenerDisposable: Disposable? = null
+
+      dataProviderModel.addValueChangedListener {
+        val provider = dataProviderModel.value
+        model.future = provider?.detailsRequest
+
+        listenerDisposable = listenerDisposable?.let {
+          Disposer.dispose(it)
+          null
+        }
+
+        if (provider != null) {
+          val disposable = Disposer.newDisposable().apply {
+            Disposer.register(parentDisposable, this)
+          }
+          provider.addRequestsChangesListener(disposable, object : GithubPullRequestDataProvider.RequestsChangedListener {
+            override fun detailsRequestChanged() {
+              model.future = provider.detailsRequest
+            }
+          })
+
+          listenerDisposable = disposable
+        }
+      }
+
+      return model
+    }
+
+    private fun <T> createValueModel(loadingModel: GHLoadingModel<T>): SingleValueModel<T?> {
+      val model = SingleValueModel<T?>(null)
+      loadingModel.addStateChangeListener(object : GHLoadingModel.StateChangeListener {
+        override fun onLoadingCompleted() {
+          model.value = loadingModel.result
+        }
+
+        override fun onReset() {
+          model.value = loadingModel.result
+        }
+      })
+      return model
+    }
+
+    private fun createDataProviderModel(parentDisposable: Disposable): SingleValueModel<GithubPullRequestDataProvider?> {
+      val model: SingleValueModel<GithubPullRequestDataProvider?> = SingleValueModel(null)
+
+      fun setNewProvider(provider: GithubPullRequestDataProvider?) {
+        val oldValue = model.value
+        if (oldValue != null && provider != null && oldValue.number != provider.number) {
+          model.value = null
+        }
+        model.value = provider
+      }
+
+      listSelectionHolder.addSelectionChangeListener(parentDisposable) {
+        setNewProvider(listSelectionHolder.selectionNumber?.let(dataContext.dataLoader::getDataProvider))
+      }
+
+      dataContext.dataLoader.addInvalidationListener(parentDisposable) {
+        val selection = listSelectionHolder.selectionNumber
+        if (selection != null && selection == it) {
+          setNewProvider(dataContext.dataLoader.getDataProvider(selection))
+        }
+      }
+
+      return model
     }
 
     override fun getData(dataId: String): Any? {
