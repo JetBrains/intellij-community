@@ -110,7 +110,7 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
                                           false) // Disabled because JBR 8 cannot be notarized successfully
           }
           // With first aka main JRE
-          File jreArchive = jreManager.findJreArchive('osx')
+          File jreArchive = jreManager.findJreArchive(OsFamily.MACOS)
           if (jreArchive.file) {
             MacDmgBuilder.signAndBuildDmg(buildContext, customizer, buildContext.proprietaryBuildTools.macHostProperties, macZipPath,
                                           jreArchive.absolutePath, jreManager.isBundledJreModular(), "", notarize)

@@ -95,7 +95,7 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
       }
     }
 
-    def jreDirectoryPath = buildContext.bundledJreManager.extractJre("windows")
+    def jreDirectoryPath = buildContext.bundledJreManager.extractJre(OsFamily.WINDOWS)
     if (customizer.buildZipArchive) {
       buildWinZip([jreDirectoryPath], ".win", winDistPath, excludeList)
     }
