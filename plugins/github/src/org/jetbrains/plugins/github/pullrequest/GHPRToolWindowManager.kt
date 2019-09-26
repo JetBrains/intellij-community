@@ -3,176 +3,158 @@ package org.jetbrains.plugins.github.pullrequest
 
 import com.intellij.dvcs.repo.VcsRepositoryManager
 import com.intellij.dvcs.repo.VcsRepositoryMappingListener
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runInEdt
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.wm.ToolWindow
-import com.intellij.openapi.wm.ToolWindowAnchor
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.content.Content
-import com.intellij.ui.content.ContentManager
-import com.intellij.ui.content.ContentManagerAdapter
-import com.intellij.ui.content.ContentManagerEvent
-import git4idea.repo.GitRemote
+import com.intellij.ui.content.ContentFactory
+import com.intellij.vcsUtil.VcsImplUtil
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryChangeListener
 import git4idea.repo.GitRepositoryManager
-import icons.GithubIcons
+import org.jetbrains.annotations.CalledInAwt
+import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
-import org.jetbrains.plugins.github.authentication.accounts.AccountTokenChangedListener
+import org.jetbrains.plugins.github.authentication.accounts.AccountRemovedListener
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountManager
 import org.jetbrains.plugins.github.util.GitRemoteUrlCoordinates
 
-const val TOOL_WINDOW_ID = "GitHub Pull Requests"
+@Service
+internal class GHPRToolWindowManager(private val project: Project) {
+  private val changesViewContentManager = ChangesViewContentManager.getInstance(project)
 
-private val REPOSITORY_KEY = Key<GitRepository>("REPOSITORY")
-private val REMOTE_KEY = Key<GitRemote>("REMOTE")
-private val REMOTE_URL_KEY = Key<String>("REMOTE_URL")
-private val ACCOUNT_KEY = Key<GithubAccount>("ACCOUNT")
-
-internal class GHPRToolWindowManager(private val project: Project,
-                                     private val toolWindowManager: ToolWindowManager,
-                                     private val gitRepositoryManager: GitRepositoryManager,
-                                     private val accountManager: GithubAccountManager,
-                                     private val componentFactory: GHPRComponentFactory) {
-
+  @CalledInAwt
   fun createPullRequestsTab(remoteUrl: GitRemoteUrlCoordinates,
                             account: GithubAccount,
                             requestExecutor: GithubApiRequestExecutor) {
-    var toolWindow = toolWindowManager.getToolWindow(TOOL_WINDOW_ID)
-    val contentManager: ContentManager
+    if (!changesViewContentManager.isAvailable) return
+    changesViewContentManager.addContent(createContent(remoteUrl, account, requestExecutor))
+    updateTabNames()
+  }
 
-    if (toolWindow == null) {
-      toolWindow = toolWindowManager.registerToolWindow(TOOL_WINDOW_ID, true, ToolWindowAnchor.BOTTOM, project, true)
-        .apply {
-          icon = GithubIcons.PullRequestsToolWindow
-          helpId = "reference.GitHub.PullRequests"
-        }
-
-      contentManager = toolWindow.contentManager
-      contentManager.addContentManagerListener(object : ContentManagerAdapter() {
-        override fun contentRemoved(event: ContentManagerEvent) {
-          if (contentManager.contentCount == 0) unregisterToolWindow()
-        }
-      })
-
-      val content = createContent(contentManager, remoteUrl, account, requestExecutor)
-      contentManager.addContent(content)
-    }
+  private fun updateTabNames() {
+    val contents = changesViewContentManager.findContents { it.getUserData(PARAMETERS_KEY) != null }
+    if (contents.size == 1) contents.single().displayName = GROUP_PREFIX
     else {
-      contentManager = toolWindow.contentManager
-      val existingContent = contentManager.findContent(remoteUrl, account)
-      if (existingContent == null) {
-        val content = createContent(contentManager, remoteUrl, account, requestExecutor)
-        contentManager.addContent(content)
+      // prefix with root name if there are duplicate remote names
+      val prefixRoot = contents.map { it.getUserData(PARAMETERS_KEY)!!.remoteUrl.remote }.groupBy { it.name }.values.any { it.size > 1 }
+      for (content in contents) {
+        val remoteUrl = content.getUserData(PARAMETERS_KEY)!!.remoteUrl
+        if (prefixRoot) {
+          val shortRootName = VcsImplUtil.getShortVcsRootName(project, remoteUrl.repository.root)
+          content.displayName = "$GROUP_PREFIX: $shortRootName/${remoteUrl.remote.name}"
+        }
+        else {
+          content.displayName = "$GROUP_PREFIX: ${remoteUrl.remote.name}"
+        }
       }
     }
   }
 
-  fun showPullRequestsTabIfExists(remoteCoordinates: GitRemoteUrlCoordinates, account: GithubAccount): Boolean {
-    val toolWindow = toolWindowManager.getToolWindow(TOOL_WINDOW_ID) ?: return false
-    val content = toolWindow.contentManager.findContent(remoteCoordinates, account) ?: return false
-    toolWindow.contentManager.setSelectedContent(content, true)
-    toolWindow.show { }
+  @CalledInAwt
+  fun showPullRequestsTabIfExists(remoteUrl: GitRemoteUrlCoordinates, account: GithubAccount): Boolean {
+    if (!changesViewContentManager.isAvailable) return false
+
+    val content = changesViewContentManager.findContents {
+      it.getUserData(PARAMETERS_KEY) == Parameters(remoteUrl, account)
+    }.firstOrNull() ?: return false
+
+    ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID)?.show {
+      changesViewContentManager.setSelectedContent(content, true)
+    }
     return true
   }
 
-  private fun createContent(contentManager: ContentManager,
-                            remoteUrl: GitRemoteUrlCoordinates,
+  private fun createContent(remoteUrl: GitRemoteUrlCoordinates,
                             account: GithubAccount,
                             requestExecutor: GithubApiRequestExecutor): Content {
-    val disposable = Disposer.newDisposable()
-    val component = componentFactory.createComponent(remoteUrl, account, requestExecutor, disposable)
+    val disposable = Disposer.newDisposable().also {
+      Disposer.register(it, Disposable { updateTabNames() })
+    }
+    val component = project.service<GHPRComponentFactory>().createComponent(remoteUrl, account, requestExecutor, disposable)
 
-    return contentManager.factory.createContent(component, null, false)
-      .apply {
-        isCloseable = true
-        displayName = remoteUrl.remote.name
-        disposer = disposable
-
-        putUserData(REPOSITORY_KEY, remoteUrl.repository)
-        putUserData(REMOTE_KEY, remoteUrl.remote)
-        putUserData(REMOTE_URL_KEY, remoteUrl.url)
-        putUserData(ACCOUNT_KEY, account)
-      }
+    return ContentFactory.SERVICE.getInstance().createContent(component, GROUP_PREFIX, false).apply {
+      isCloseable = true
+      disposer = disposable
+      putUserData(PARAMETERS_KEY, Parameters(remoteUrl, account))
+      putUserData(ChangesViewContentManager.ORDER_WEIGHT_KEY, ChangesViewContentManager.TabOrderWeight.LAST.weight)
+    }
   }
-
-  private fun unregisterToolWindow() = toolWindowManager.unregisterToolWindow(TOOL_WINDOW_ID)
 
   init {
     val busConnection = project.messageBus.connect()
     busConnection.subscribe(VcsRepositoryManager.VCS_REPOSITORY_MAPPING_UPDATED, VcsRepositoryMappingListener {
       runInEdt {
-        val toolWindow = toolWindowManager.getToolWindow(TOOL_WINDOW_ID) ?: return@runInEdt
-        val repositories = gitRepositoryManager.repositories
-        if (repositories.isEmpty()) {
-          unregisterToolWindow()
-          return@runInEdt
-        }
-        removeContentsForRemovedRepositories(toolWindow, repositories)
+        val repositories = GitRepositoryManager.getInstance(project).repositories
+        removeContentsForRemovedRepositories(repositories)
       }
     })
 
     busConnection.subscribe(GitRepository.GIT_REPO_CHANGE, GitRepositoryChangeListener { repository ->
       runInEdt {
-        val toolWindow = toolWindowManager.getToolWindow(TOOL_WINDOW_ID) ?: return@runInEdt
-        removeContentsForRemovedRemotes(toolWindow, repository)
-        removeContentsForRemovedRemoteUrls(toolWindow, repository)
+        removeContentsForRemovedRemotes(repository)
+        removeContentsForRemovedRemoteUrls(repository)
       }
     })
 
-    busConnection.subscribe(GithubAccountManager.ACCOUNT_TOKEN_CHANGED_TOPIC, object : AccountTokenChangedListener {
-      override fun tokenChanged(account: GithubAccount) {
+    busConnection.subscribe(GithubAccountManager.ACCOUNT_REMOVED_TOPIC, object : AccountRemovedListener {
+      override fun accountRemoved(removedAccount: GithubAccount) {
         runInEdt {
-          val toolWindow = toolWindowManager.getToolWindow(TOOL_WINDOW_ID) ?: return@runInEdt
-          if (accountManager.getTokenForAccount(account) == null) removeContentsUsingRemovedAccount(toolWindow, account)
+          removeContentsUsingRemovedAccount(removedAccount)
         }
       }
     })
   }
 
-  private fun removeContentsForRemovedRepositories(toolWindow: ToolWindow, repositories: List<GitRepository>) {
-    findAndRemoveContents(toolWindow) {
-      !repositories.contains(it.getUserData(REPOSITORY_KEY))
+  private fun removeContentsForRemovedRepositories(repositories: List<GitRepository>) {
+    findAndRemoveContents {
+      !repositories.contains(it.remoteUrl.repository)
     }
   }
 
-  private fun removeContentsForRemovedRemotes(toolWindow: ToolWindow, repository: GitRepository) {
-    findAndRemoveContents(toolWindow) {
-      it.getUserData(REPOSITORY_KEY) == repository && !repository.remotes.contains(it.getUserData(REMOTE_KEY))
+  private fun removeContentsForRemovedRemotes(repository: GitRepository) {
+    findAndRemoveContents {
+      it.remoteUrl.repository == repository && !repository.remotes.contains(it.remoteUrl.remote)
     }
   }
 
-  private fun removeContentsForRemovedRemoteUrls(toolWindow: ToolWindow, repository: GitRepository) {
+  private fun removeContentsForRemovedRemoteUrls(repository: GitRepository) {
     val urls = repository.remotes.map { it.urls }.flatten().toSet()
-    findAndRemoveContents(toolWindow) {
-      it.getUserData(REPOSITORY_KEY) == repository && !urls.contains(it.getUserData(REMOTE_URL_KEY))
+    findAndRemoveContents {
+      it.remoteUrl.repository == repository && !urls.contains(it.remoteUrl.url)
     }
   }
 
-  private fun findAndRemoveContents(toolWindow: ToolWindow, predicate: (Content) -> Boolean) {
-    val contentManager = toolWindow.contentManager
-    for (content in contentManager.contents) {
-      if (predicate(content))
-        contentManager.removeContent(content, true)
+  private fun removeContentsUsingRemovedAccount(removedAccount: GithubAccount) {
+    findAndRemoveContents {
+      removedAccount == it.account
     }
   }
 
-  private fun removeContentsUsingRemovedAccount(toolWindow: ToolWindow, removedAccount: GithubAccount) {
-    val contentManager = toolWindow.contentManager
-    for (content in contentManager.contents) {
-      val account = content.getUserData(ACCOUNT_KEY)
-      if (account == removedAccount) contentManager.removeContent(content, true)
+  private fun findAndRemoveContents(predicate: (Parameters) -> Boolean) {
+    val contents = changesViewContentManager.findContents {
+      val parameters = it.getUserData(PARAMETERS_KEY)
+      parameters != null && predicate(parameters)
     }
+    for (content in contents) {
+      changesViewContentManager.removeContent(content)
+    }
+    updateTabNames()
   }
 
-  private fun ContentManager.findContent(remoteCoordinates: GitRemoteUrlCoordinates, account: GithubAccount) =
-    contents.find {
-      it.getUserData(REMOTE_URL_KEY) == remoteCoordinates.url &&
-      it.getUserData(REMOTE_KEY) == remoteCoordinates.remote &&
-      it.getUserData(REPOSITORY_KEY) == remoteCoordinates.repository &&
-      it.getUserData(ACCOUNT_KEY) == account
-    }
+  companion object {
+    @Nls
+    private const val GROUP_PREFIX = "Pull Requests"
+
+    private data class Parameters(val remoteUrl: GitRemoteUrlCoordinates, val account: GithubAccount) {}
+
+    private val PARAMETERS_KEY = Key<Parameters>("GHPR_PARAMETERS")
+  }
 }

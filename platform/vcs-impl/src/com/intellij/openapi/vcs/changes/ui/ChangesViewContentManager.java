@@ -23,7 +23,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.function.Predicate;
 
 public class ChangesViewContentManager implements ChangesViewContentI, Disposable {
   public static final String TOOLWINDOW_ID = ToolWindowId.VCS;
@@ -156,8 +158,13 @@ public class ChangesViewContentManager implements ChangesViewContentI, Disposabl
 
   @Override
   public void setSelectedContent(final Content content) {
+    setSelectedContent(content, false);
+  }
+
+  @Override
+  public void setSelectedContent(@NotNull Content content, boolean requestFocus) {
     if (myContentManager == null) return;
-    myContentManager.setSelectedContent(content);
+    myContentManager.setSelectedContent(content, requestFocus);
   }
 
   @Override
@@ -187,6 +194,13 @@ public class ChangesViewContentManager implements ChangesViewContentI, Disposabl
     if (toSelect != null) {
       myContentManager.setSelectedContent(toSelect, requestFocus);
     }
+  }
+
+  @NotNull
+  @Override
+  public List<Content> findContents(@NotNull Predicate<Content> predicate) {
+    List<Content> contents = myContentManager != null ? Arrays.asList(myContentManager.getContents()) : myAddedContents;
+    return ContainerUtil.filter(contents, content -> predicate.test(content));
   }
 
   private class MyVcsListener implements VcsListener {
@@ -236,7 +250,8 @@ public class ChangesViewContentManager implements ChangesViewContentI, Disposabl
     REPOSITORY(ChangesViewContentManager.REPOSITORY, 20),
     INCOMING(ChangesViewContentManager.INCOMING, 30),
     SHELF(ChangesViewContentManager.SHELF, 40),
-    OTHER(null, 100);
+    OTHER(null, 100),
+    LAST(null, Integer.MAX_VALUE);
 
     @Nullable private final String myName;
     private final int myWeight;
