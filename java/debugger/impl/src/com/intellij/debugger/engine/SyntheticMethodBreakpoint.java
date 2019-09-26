@@ -25,7 +25,7 @@ public class SyntheticMethodBreakpoint extends WildcardMethodBreakpoint {
   }
 
   @Override
-  public StreamEx matchingMethods(StreamEx<Method> methods, DebugProcessImpl debugProcess) {
+  public StreamEx<Method> matchingMethods(StreamEx<Method> methods, DebugProcessImpl debugProcess) {
     String methodName = getMethodName();
     return methods
       .filter(m -> Comparing.equal(methodName, m.name()) && (mySignature == null || Comparing.equal(mySignature, m.signature())))

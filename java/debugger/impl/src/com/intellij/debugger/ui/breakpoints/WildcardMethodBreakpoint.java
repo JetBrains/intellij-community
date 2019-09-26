@@ -230,7 +230,7 @@ public class WildcardMethodBreakpoint extends Breakpoint<JavaMethodBreakpointPro
   }
 
   @Override
-  public StreamEx matchingMethods(StreamEx<Method> methods, DebugProcessImpl debugProcess) {
+  public StreamEx<Method> matchingMethods(StreamEx<Method> methods, DebugProcessImpl debugProcess) {
     return methods.filter(this::matchesMethod);
   }
 
