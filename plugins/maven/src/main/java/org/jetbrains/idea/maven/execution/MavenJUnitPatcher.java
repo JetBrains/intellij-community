@@ -31,6 +31,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.function.UnaryOperator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -39,7 +40,7 @@ import java.util.regex.Pattern;
  */
 public class MavenJUnitPatcher extends JUnitPatcher {
   public static final Pattern PROPERTY_PATTERN = Pattern.compile("\\$\\{(.+?)}");
-  public static final Pattern ARG_LINE_PATTERN = Pattern.compile("\\$\\{(.+?)}|@(.+?)@|@\\{(.+?)}");
+  public static final Pattern ARG_LINE_PATTERN = Pattern.compile("@\\{(.+?)}");
   private static final Logger LOG = Logger.getInstance(MavenJUnitPatcher.class);
   private static final Set<String> EXCLUDE_SUBTAG_NAMES =
     ContainerUtil.immutableSet("classpathDependencyExclude", "classpathDependencyExcludes", "dependencyExclude");
@@ -59,21 +60,58 @@ public class MavenJUnitPatcher extends JUnitPatcher {
     MavenProject mavenProject = MavenProjectsManager.getInstance(module.getProject()).findProject(module);
     if (mavenProject == null) return;
 
+    UnaryOperator<String> runtimeProperties = getDynamicConfigurationProperties(module, mavenProject, javaParameters);
+
     Element config = mavenProject.getPluginConfiguration("org.apache.maven.plugins", "maven-surefire-plugin");
     if (config != null) {
-        patchJavaParameters(module, javaParameters, mavenProject, "surefire", config);
+        patchJavaParameters(module, javaParameters, mavenProject, "surefire", config, runtimeProperties);
     }
     config = mavenProject.getPluginConfiguration("org.apache.maven.plugins", "maven-failsafe-plugin");
     if (config != null) {
-        patchJavaParameters(module, javaParameters, mavenProject, "failsafe", config);
+        patchJavaParameters(module, javaParameters, mavenProject, "failsafe", config, runtimeProperties);
     }
+  }
+
+  private static UnaryOperator<String> getDynamicConfigurationProperties(Module module,
+                                                                         MavenProject mavenProject,
+                                                                         JavaParameters javaParameters) {
+    MavenDomProjectModel domModel = MavenDomUtil.getMavenDomProjectModel(module.getProject(), mavenProject.getFile());
+    if (domModel == null) {
+      return s -> s;
+    }
+    Properties staticProperties = MavenPropertyResolver.collectPropertiesFromDOM(mavenProject, domModel);
+    String jaCoCoConfigProperty = getJaCoCoArgLineProperty(mavenProject);
+    ParametersList vmParameters = javaParameters.getVMParametersList();
+    return name -> {
+      if (name.equals(jaCoCoConfigProperty)) {
+        return "";
+      }
+      String vmPropertyValue = vmParameters.getPropertyValue(name);
+      if (vmPropertyValue != null) {
+        return vmPropertyValue;
+      }
+      return staticProperties.getProperty(name);
+    };
+  }
+
+  private static String getJaCoCoArgLineProperty(MavenProject mavenProject) {
+    String jaCoCoConfigProperty = "argLine";
+    Element jaCoCoConfig = mavenProject.getPluginConfiguration("org.jacoco", "jacoco-maven-plugin");
+    if (jaCoCoConfig != null) {
+      Element propertyName = jaCoCoConfig.getChild("propertyName");
+      if (propertyName != null) {
+        jaCoCoConfigProperty = propertyName.getTextTrim();
+      }
+    }
+    return jaCoCoConfigProperty;
   }
 
   private static void patchJavaParameters(@NotNull Module module,
                                           @NotNull JavaParameters javaParameters,
                                           @NotNull MavenProject mavenProject,
                                           @NotNull String plugin,
-                                          @NotNull Element config) {
+                                          @NotNull Element config,
+                                          @NotNull UnaryOperator<String> runtimeProperties) {
     MavenDomProjectModel domModel = MavenDomUtil.getMavenDomProjectModel(module.getProject(), mavenProject.getFile());
 
     MavenTestRunningSettings testRunningSettings = MavenProjectSettings.getInstance(module.getProject()).getTestRunningSettings();
@@ -160,17 +198,22 @@ public class MavenJUnitPatcher extends JUnitPatcher {
         String value = resolvePluginProperties(plugin, argLine.getTextTrim(), domModel);
         value = resolveVmProperties(javaParameters.getVMParametersList(), value);
         if (StringUtil.isNotEmpty(value) && isResolved(plugin, value)) {
-          if (value.contains("@{argLine}")) {
-            String parametersString = javaParameters.getVMParametersList().getParametersString();
-            javaParameters.getVMParametersList().clearAll();
-            javaParameters.getVMParametersList().addParametersString(StringUtil.replace(value, "@{argLine}", parametersString));
-          }
-          else {
-            javaParameters.getVMParametersList().addParametersString(value);
-          }
+          value = resolveRuntimeProperties(value, runtimeProperties);
+          javaParameters.getVMParametersList().addParametersString(value);
         }
       }
     }
+  }
+
+  private static String resolveRuntimeProperties(String value, UnaryOperator<String> runtimeProperties) {
+    Matcher matcher = ARG_LINE_PATTERN.matcher(value);
+    StringBuffer sb = new StringBuffer();
+    while (matcher.find()) {
+      String replacement = runtimeProperties.apply(matcher.group(1));
+      matcher.appendReplacement(sb, replacement == null ? matcher.group() : replacement);
+    }
+    matcher.appendTail(sb);
+    return sb.toString();
   }
 
   @NotNull
@@ -197,7 +240,7 @@ public class MavenJUnitPatcher extends JUnitPatcher {
 
   private static String resolvePluginProperties(@NotNull String plugin, @NotNull String value, @Nullable MavenDomProjectModel domModel) {
     if (domModel != null) {
-      value = MavenPropertyResolver.resolve(ARG_LINE_PATTERN, value, domModel);
+      value = MavenPropertyResolver.resolve(value, domModel);
     }
     return value.replaceAll("\\$\\{" + plugin + "\\.(forkNumber|threadNumber)}", "1");
   }

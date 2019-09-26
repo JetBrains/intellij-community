@@ -18,8 +18,6 @@ package org.jetbrains.idea.maven.execution;
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.roots.OrderEnumerator;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -214,6 +212,41 @@ public class MavenJUnitPatcherTest extends MavenImportingTestCase {
     JavaParameters javaParameters = new JavaParameters();
     mavenJUnitPatcher.patchJavaParameters(module, javaParameters);
     assertEquals(asList("-Xmx2048M", "-XX:MaxPermSize=512M", "-Dargs=can have spaces"),
+                 javaParameters.getVMParametersList().getList());
+  }
+
+  public void testIgnoreJaCoCoOption() {
+    VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>" +
+                                           "<artifactId>m1</artifactId>" +
+                                           "<version>1</version>" +
+                                           "<build>\n" +
+                                           "  <plugins>\n" +
+                                           "    <plugin>\n" +
+                                           "      <artifactId>maven-surefire-plugin</artifactId>\n" +
+                                           "      <version>2.22.0</version>\n" +
+                                           "      <configuration>\n" +
+                                           "        <argLine>-Dmyprop=abc @{jacoco} @{unresolved}</argLine>\n" +
+                                           "      </configuration>\n" +
+                                           "    </plugin>\n" +
+                                           "    <plugin>\n" +
+                                           "      <groupId>org.jacoco</groupId>\n" +
+                                           "      <artifactId>jacoco-maven-plugin</artifactId>\n" +
+                                           "      <version>0.8.3</version>\n" +
+                                           "      <configuration>\n" +
+                                           "        <propertyName>jacoco</propertyName>\n" +
+                                           "      </configuration>\n" +
+                                           "    </plugin>\n" +
+                                           "  </plugins>\n" +
+                                           "</build>\n");
+
+    importProjects(m1);
+    Module module = getModule("m1");
+
+    MavenJUnitPatcher mavenJUnitPatcher = new MavenJUnitPatcher();
+    JavaParameters javaParameters = new JavaParameters();
+    javaParameters.getVMParametersList().addParametersString("-ea");
+    mavenJUnitPatcher.patchJavaParameters(module, javaParameters);
+    assertEquals(asList("-ea", "-Dmyprop=abc", "@{unresolved}"),
                  javaParameters.getVMParametersList().getList());
   }
 
