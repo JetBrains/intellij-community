@@ -3,7 +3,7 @@
   <id>org.jetbrains.plugins.python-copyright</id>
   <vendor>JetBrains</vendor>
 
-  <depends>com.intellij.modules.python</depends>
+  <depends>com.intellij.modules.pycharm</depends>
   <depends>com.intellij.copyright</depends>
 
   <xi:include href="/META-INF/python-copyright-plugin.xml" xpointer="xpointer(/idea-plugin/*)"/>

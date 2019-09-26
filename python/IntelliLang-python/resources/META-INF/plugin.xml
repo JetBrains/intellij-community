@@ -4,7 +4,7 @@
   <description>This plugin enables language injections</description>
   <vendor>JetBrains</vendor>
 
-  <depends>com.intellij.modules.python</depends>
+  <depends>com.intellij.modules.pycharm</depends>
   <depends>org.intellij.intelliLang</depends>
 
   <xi:include href="/META-INF/intellilang-python-support.xml" xpointer="xpointer(/idea-plugin/*)"/>

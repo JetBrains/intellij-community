@@ -26,19 +26,17 @@ class PythonCommunityPluginModules {
   public static String PYTHON_COMMUNITY_PLUGIN_MODULE = "intellij.python.community.plugin.resources"
 
   static PluginLayout pythonCommunityPluginLayout(@DelegatesTo(PluginLayout.PluginLayoutSpec) Closure body = {}) {
-    pythonPlugin(PYTHON_COMMUNITY_PLUGIN_MODULE, "python-ce", "intellij.python.community.plugin.dependencies",
-                 COMMUNITY_MODULES) {
+    pythonPlugin(PYTHON_COMMUNITY_PLUGIN_MODULE, "python-ce", COMMUNITY_MODULES) {
       withProjectLibrary("markdown4j")  // Required for ipnb
       PYCHARM_ONLY_PLUGIN_MODULES.each { module ->
         excludeFromModule(module, "META-INF/plugin.xml")
       }
-      excludeFromModule(PYTHON_COMMUNITY_PLUGIN_MODULE, "META-INF/python-plugin-dependencies.xml")
       body.delegate = delegate
       body()
     }
   }
 
-  static PluginLayout pythonPlugin(String mainModuleName, String name, String buildPatchesModule, List<String> modules,
+  static PluginLayout pythonPlugin(String mainModuleName, String name, List<String> modules,
                                    @DelegatesTo(PluginLayout.PluginLayoutSpec) Closure body = {}) {
     PluginLayout.plugin(mainModuleName) {
       directoryName = name
@@ -47,7 +45,6 @@ class PythonCommunityPluginModules {
         withModule(module, mainJarName, null)
       }
       withModule(mainModuleName, mainJarName)
-      withModule(buildPatchesModule, mainJarName, null)
       withResourceFromModule("intellij.python.helpers", "", "helpers")
       doNotCreateSeparateJarForLocalizableResources()
       withProjectLibrary("libthrift")  // Required for "Python Console" in intellij.python.community.impl module
