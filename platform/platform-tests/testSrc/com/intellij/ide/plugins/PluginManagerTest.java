@@ -151,11 +151,11 @@ public class PluginManagerTest {
   }
 
   private static void assertIncompatible(String ideVersion, String sinceBuild, String untilBuild) {
-    assertTrue(PluginManagerCore.isIncompatible(BuildNumber.fromString(ideVersion), sinceBuild, untilBuild, null, null));
+    assertNotNull(PluginManagerCore.isIncompatible(BuildNumber.fromString(ideVersion), sinceBuild, untilBuild));
   }
 
   private static void assertCompatible(String ideVersion, String sinceBuild, String untilBuild) {
-    assertFalse(PluginManagerCore.isIncompatible(BuildNumber.fromString(ideVersion), sinceBuild, untilBuild, null, null));
+    assertNull(PluginManagerCore.isIncompatible(BuildNumber.fromString(ideVersion), sinceBuild, untilBuild));
   }
 
   private static List<IdeaPluginDescriptorImpl> loadDescriptors(@NotNull String testDataName) throws IOException, JDOMException {

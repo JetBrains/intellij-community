@@ -192,5 +192,4 @@
 
 Plugin "Embedded Development Support" requires missing "com.intellij.modules.clion.cmake".
 <br><a href="disable">Disable "Embedded Development Support"</a>
-<a href="enable">Enable  all necessary plugins</a>
 <a href="edit">Open plugin manager</a>
