@@ -118,7 +118,7 @@ public class HardcodedContracts {
     .register(staticCall(JAVA_UTIL_ARRAYS, "binarySearch", "fill", "parallelPrefix", "parallelSort", "sort", "spliterator", "stream"),
               (call, cnt) -> cnt >= 3 ? ARRAY_RANGE_CONTRACTS : null)
     .register(staticCall("org.mockito.ArgumentMatchers", "argThat").parameterCount(1),
-              ContractProvider.of(new StandardMethodContract(new ValueConstraint[]{ANY_VALUE}, returnAny())))
+              ContractProvider.of(StandardMethodContract.fromText("_ -> _")))
     .register(anyOf(
       instanceCall("java.util.Queue", "peek", "poll").parameterCount(0),
       instanceCall("java.util.Deque", "peekFirst", "peekLast", "pollFirst", "pollLast").parameterCount(0)),
@@ -151,10 +151,10 @@ public class HardcodedContracts {
               ContractProvider.of(
                 singleConditionContract(ContractValue.argument(0), DfaRelationValue.RelationType.EQ, ContractValue.argument(1),
                                         returnTrue()),
-                new StandardMethodContract(new ValueConstraint[]{NULL_VALUE, NOT_NULL_VALUE}, returnFalse()),
-                new StandardMethodContract(new ValueConstraint[]{NOT_NULL_VALUE, NULL_VALUE}, returnFalse())
+                StandardMethodContract.fromText("null, !null -> false"),
+                StandardMethodContract.fromText("!null, null -> false")
               ))
-    .register(enumValues(), ContractProvider.of(new StandardMethodContract(new ValueConstraint[0], returnNew())));
+    .register(enumValues(), ContractProvider.of(StandardMethodContract.fromText("-> new")));
 
   public static List<MethodContract> getHardcodedContracts(@NotNull PsiMethod method, @Nullable PsiMethodCallExpression call) {
     PsiClass owner = method.getContainingClass();
