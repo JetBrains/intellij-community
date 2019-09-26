@@ -99,8 +99,6 @@ class IconsClassGenerator(private val projectHome: File, val modules: List<JpsMo
   }
 
   fun processModule(module: JpsModule) {
-    if (!module.name.contains("icons")) return
-
     val iconsClassInfo = getIconsClassInfo(module) ?: return
     val outFile = iconsClassInfo.outFile
     val oldText = try {
