@@ -3,7 +3,6 @@ package org.jetbrains.plugins.github.pullrequest.ui.changes
 
 import com.intellij.diff.chains.DiffRequestChain
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.project.DumbAware
@@ -19,32 +18,25 @@ import com.intellij.xml.util.XmlStringUtil
 import git4idea.GitCommit
 import org.jetbrains.plugins.github.pullrequest.comment.GHPRDiffReviewThreadsProvider
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
-import org.jetbrains.plugins.github.ui.util.SingleValueModel
 import javax.swing.border.Border
 import javax.swing.tree.DefaultTreeModel
 
-internal class GHPRChangesBrowser(private val model: SingleValueModel<List<GitCommit>?>,
-                                  project: Project,
-                                  private val projectUiSettings: GithubPullRequestsProjectUISettings)
+internal class GHPRChangesBrowser(private val model: GHPRChangesModel, project: Project)
   : ChangesBrowserBase(project, false, false),
-    ComponentWithEmptyText,
-    Disposable {
+    ComponentWithEmptyText {
 
   var diffReviewThreadsProvider: GHPRDiffReviewThreadsProvider? = null
 
   init {
-    projectUiSettings.addChangesListener(this) {
-      myViewer.rebuildTree()
-    }
     init()
-    model.addValueChangedListener {
+    model.addStateChangesListener {
       myViewer.rebuildTree()
     }
   }
 
   override fun updateDiffContext(chain: DiffRequestChain) {
     super.updateDiffContext(chain)
-    if (projectUiSettings.zipChanges) {
+    if (model.zipChanges) {
       chain.putUserData(GHPRDiffReviewThreadsProvider.KEY, diffReviewThreadsProvider)
     }
     else {
@@ -57,21 +49,17 @@ internal class GHPRChangesBrowser(private val model: SingleValueModel<List<GitCo
   override fun createViewerBorder(): Border = IdeBorderFactory.createBorder(SideBorder.TOP)
 
   override fun buildTreeModel(): DefaultTreeModel {
-    val commits = model.value.orEmpty()
     val builder = MyTreeModelBuilder(myProject, grouping)
-    if (projectUiSettings.zipChanges) {
-      val zipped = CommittedChangesTreeBrowser.zipChanges(commits.flatMap { it.changes })
+    if (model.zipChanges) {
+      val zipped = CommittedChangesTreeBrowser.zipChanges(model.commits.flatMap { it.changes })
       builder.setChanges(zipped, null)
     }
     else {
-      for (commit in commits) {
+      for (commit in model.commits) {
         builder.addCommit(commit)
       }
     }
     return builder.build()
-  }
-
-  override fun dispose() {
   }
 
   private class MyTreeModelBuilder(project: Project, grouping: ChangesGroupingPolicyFactory) : TreeModelBuilder(project, grouping) {

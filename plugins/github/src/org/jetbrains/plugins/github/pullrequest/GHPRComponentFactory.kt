@@ -28,6 +28,8 @@ import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestDataProvid
 import org.jetbrains.plugins.github.pullrequest.search.GithubPullRequestSearchPanel
 import org.jetbrains.plugins.github.pullrequest.ui.*
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRChangesBrowser
+import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRChangesModel
+import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRChangesModelImpl
 import org.jetbrains.plugins.github.pullrequest.ui.details.GithubPullRequestDetailsPanel
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
 import org.jetbrains.plugins.github.util.CachingGithubUserAvatarLoader
@@ -90,9 +92,6 @@ internal class GHPRComponentFactory(private val project: Project) {
     val detailsLoadingModel = createDetailsLoadingModel(dataProviderModel, disposable)
     val detailsModel = createValueModel(detailsLoadingModel)
 
-    val changesLoadingModel = createChangesLoadingModel(dataProviderModel, disposable)
-    val changesModel = createValueModel(changesLoadingModel)
-
     val detailsPanel = GithubPullRequestDetailsPanel(project, detailsModel,
                                                      dataContext.securityService,
                                                      dataContext.busyStateTracker,
@@ -104,9 +103,9 @@ internal class GHPRComponentFactory(private val project: Project) {
                                              GHLoadingPanel.EmptyTextBundle.Simple("Select pull request to view details",
                                                                                    "Can't load details"))
 
-
-    val changesBrowser = GHPRChangesBrowser(changesModel, project, projectUiSettings)
-    Disposer.register(disposable, changesBrowser)
+    val changesLoadingModel = createChangesLoadingModel(dataProviderModel, disposable)
+    val changesModel = createChangesModel(projectUiSettings, changesLoadingModel, disposable)
+    val changesBrowser = GHPRChangesBrowser(changesModel, project)
 
     val diffCommentComponentFactory = GHPREditorReviewThreadComponentFactoryImpl(avatarIconsProviderFactory)
     dataProviderModel.addValueChangedListener {
@@ -126,7 +125,6 @@ internal class GHPRComponentFactory(private val project: Project) {
       Disposer.dispose(loaderPanel)
 
       Disposer.dispose(detailsPanel)
-      Disposer.dispose(changesBrowser)
     })
 
     return object : OnePixelSplitter("Github.PullRequests.Component", 0.33f), Disposable {
@@ -207,6 +205,25 @@ internal class GHPRComponentFactory(private val project: Project) {
         if (e.type == ListDataEvent.INTERVAL_REMOVED) savedSelectionNumber = listSelectionHolder.selectionNumber
       }
     })
+  }
+
+  private fun createChangesModel(projectUiSettings: GithubPullRequestsProjectUISettings,
+                                 loadingModel: GHLoadingModel<List<GitCommit>>,
+                                 parentDisposable: Disposable): GHPRChangesModel {
+    val model = GHPRChangesModelImpl(projectUiSettings.zipChanges)
+    loadingModel.addStateChangeListener(object : GHLoadingModel.StateChangeListener {
+      override fun onLoadingCompleted() {
+        model.commits = loadingModel.result.orEmpty()
+      }
+
+      override fun onReset() {
+        model.commits = loadingModel.result.orEmpty()
+      }
+    })
+    projectUiSettings.addChangesListener(parentDisposable) {
+      model.zipChanges = projectUiSettings.zipChanges
+    }
+    return model
   }
 
   private fun createChangesLoadingModel(dataProviderModel: SingleValueModel<GithubPullRequestDataProvider?>,
