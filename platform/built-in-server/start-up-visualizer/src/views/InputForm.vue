@@ -5,7 +5,6 @@
       <el-input
         type="textarea"
         :rows="4"
-        autocomplete="off"
         placeholder="Enter the IntelliJ Platform start-up timeline..."
         @change="dataChanged"
         @input="inputChanged"

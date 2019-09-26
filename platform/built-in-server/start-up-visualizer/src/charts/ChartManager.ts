@@ -3,7 +3,10 @@ import * as am4charts from "@amcharts/amcharts4/charts"
 import * as am4core from "@amcharts/amcharts4/core"
 import {DataManager} from "@/state/DataManager"
 
+import am4themes_animated from "@amcharts/amcharts4/themes/animated"
+
 am4core.options.onlyShowOnViewport = true
+am4core.useTheme(am4themes_animated)
 
 export interface ChartManager {
   render(data: DataManager): void
@@ -11,11 +14,27 @@ export interface ChartManager {
   dispose(): void
 }
 
+export function addExportMenu(chart: am4charts.XYChart) {
+  const exportMenu = new am4core.ExportMenu()
+  const topItems = exportMenu.items[0].menu!!
+  for (let i = topItems.length - 1; i >= 0; i--) {
+    const chartElement = topItems[i]
+    if (chartElement.label == "Data") {
+      topItems.splice(i, 1)
+    } else if (chartElement.label == "Image") {
+      // remove PDF
+      const length = chartElement.menu!!.length
+      if (chartElement.menu!![length - 1].label == "PDF")
+        chartElement.menu!!.length = length - 1
+    }
+  }
+  chart.exporting.menu = exportMenu
+}
+
 export function configureCommonChartSettings(chart: am4charts.XYChart) {
   chart.mouseWheelBehavior = "zoomX"
   chart.scrollbarX = new am4core.Scrollbar()
-
-  configureCursor(chart)
+  addExportMenu(chart)
 }
 
 export function configureCursor(chart: am4charts.XYChart) {
@@ -28,21 +47,6 @@ export function configureCursor(chart: am4charts.XYChart) {
 
 export abstract class BaseChartManager<T extends am4charts.Chart> implements ChartManager {
   protected constructor(protected readonly chart: T) {
-    const exportMenu = new am4core.ExportMenu()
-    const topItems = exportMenu.items[0].menu!!
-    for (let i = topItems.length - 1; i >= 0; i--) {
-      const chartElement = topItems[i]
-      if (chartElement.label == "Data") {
-        topItems.splice(i, 1)
-      }
-      else if (chartElement.label == "Image") {
-        // remove PDF
-        const length = chartElement.menu!!.length
-        if (chartElement.menu!![length - 1].label == "PDF")
-        chartElement.menu!!.length = length - 1
-      }
-    }
-    chart.exporting.menu = exportMenu
   }
 
   abstract render(data: DataManager): void
@@ -60,6 +64,7 @@ export abstract class XYChartManager extends BaseChartManager<am4charts.XYChart>
     super(am4core.create(container, am4charts.XYChart))
 
     configureCommonChartSettings(this.chart)
+    configureCursor(this.chart)
   }
 
   abstract render(data: DataManager): void

@@ -7,7 +7,6 @@ import {InputData} from "@/state/data"
 import {BaseTimeLineChartManager, LABEL_DURATION_THRESHOLD} from "@/timeline/BaseTimeLineChartManager"
 
 export class TimelineChartManager extends BaseTimeLineChartManager {
-
   private readonly statsLabel: am4core.Label
 
   constructor(container: HTMLElement) {
