@@ -1,111 +1,142 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.roots
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.module.impl.ModuleManagerImpl
-import com.intellij.openapi.module.impl.ModulePath
-import com.intellij.openapi.module.impl.UnloadedModuleDescriptionImpl
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
-import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.io.FileUtil
-import com.intellij.testFramework.JavaModuleTestCase
-import kotlinx.coroutines.runBlocking
+import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.util.io.systemIndependentPath
+import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.testFramework.*
+import com.intellij.testFramework.UsefulTestCase.assertSameElements
+import com.intellij.util.io.systemIndependentPath
+import org.jdom.Element
+import org.jetbrains.jps.model.serialization.JDomSerializationUtil
+import org.junit.ClassRule
+import org.junit.Rule
+import org.junit.Test
 import java.io.File
-import java.util.*
 
 /**
  * @author nik
  */
-class AutomaticModuleUnloaderTest : JavaModuleTestCase() {
-  fun `test unload simple module`() = runBlocking {
-    createModule("a")
-    createModule("b")
+@RunsInEdt
+class AutomaticModuleUnloaderTest {
+  @Rule
+  @JvmField
+  val tempDir = TemporaryDirectory()
+
+  @JvmField
+  @Rule
+  val disposableRule = DisposableRule()
+
+  @Test
+  fun `unload simple module`() {
+    val project = createProject()
+    createModule(project, "a")
+    createModule(project, "b")
     val moduleManager = ModuleManager.getInstance(project)
     moduleManager.setUnloadedModules(listOf("a"))
-    createModule("c")
+    createModule(project, "c")
 
     val moduleFiles = createNewModuleFiles(listOf("d")) {}
-    reloadProjectWithNewModules(moduleFiles)
+    val newProject = reloadProjectWithNewModules(project, moduleFiles)
 
-    assertSameElements(moduleManager.unloadedModuleDescriptions.map { it.name }, "a", "d")
+    assertSameElements(ModuleManager.getInstance(newProject).unloadedModuleDescriptions.map { it.name }, "a", "d")
   }
 
-  fun `test unload modules with dependencies between them`() = runBlocking {
-    createModule("a")
-    createModule("b")
-    doTest("a", listOf("c", "d"), { modules ->
+  @Test
+  fun `unload modules with dependencies between them`() {
+    val project = createProject()
+    createModule(project, "a")
+    createModule(project, "b")
+    doTest(project, "a", listOf("c", "d"), { modules ->
       ModuleRootModificationUtil.updateModel(modules.getValue("c")) {
         it.addModuleOrderEntry(modules.getValue("d"))
       }
-    },"a", "c", "d")
+    }, "a", "c", "d")
   }
 
-  fun `test do not unload module if loaded module depends on it`() = runBlocking {
-    createModule("a")
-    val b = createModule("b")
+  @Test
+  fun `do not unload module if loaded module depends on it`() {
+    val project = createProject()
+    createModule(project, "a")
+    val b = createModule(project, "b")
     ModuleRootModificationUtil.updateModel(b) {
       it.addInvalidModuleEntry("d")
     }
-    doTest("a", listOf("d"), {}, "a")
+    doTest(project, "a", listOf("d"), {}, "a")
   }
 
-  fun `test unload module if only unloaded module depends on it`() = runBlocking {
-    val a = createModule("a")
-    createModule("b")
+  @Test
+  fun `unload module if only unloaded module depends on it`() {
+    val project = createProject()
+    val a = createModule(project, "a")
+    createModule(project, "b")
     ModuleRootModificationUtil.updateModel(a) {
       it.addInvalidModuleEntry("d")
     }
-    doTest("a", listOf("d"), {}, "a", "d")
+    doTest(project, "a", listOf("d"), {}, "a", "d")
   }
 
-  fun `test do not unload modules if loaded module depends on them transitively`() = runBlocking {
-    createModule("a")
-    val b = createModule("b")
+  @Test
+  fun `do not unload modules if loaded module depends on them transitively`() {
+    val project = createProject()
+    createModule(project, "a")
+    val b = createModule(project, "b")
     ModuleRootModificationUtil.updateModel(b) {
       it.addInvalidModuleEntry("d")
     }
 
-    doTest("a", listOf("c", "d"), { modules ->
+    doTest(project, "a", listOf("c", "d"), { modules ->
       ModuleRootModificationUtil.updateModel(modules.getValue("d")) {
         it.addModuleOrderEntry(modules.getValue("c"))
       }
     }, "a")
   }
 
-  fun `test unload module if loaded module transitively depends on it via previously unloaded module`() = runBlocking {
-    val a = createModule("a")
-    val b = createModule("b")
+  @Test
+  fun `unload module if loaded module transitively depends on it via previously unloaded module`() {
+    val project = createProject()
+    val a = createModule(project, "a")
+    val b = createModule(project, "b")
     ModuleRootModificationUtil.addDependency(a, b)
     ModuleRootModificationUtil.updateModel(b) {
       it.addInvalidModuleEntry("c")
     }
-    doTest("b", listOf("c"), {}, "b", "c")
+    doTest(project, "b", listOf("c"), {}, "b", "c")
   }
 
-  fun `test deleted iml file`() = runBlocking {
-    createModule("a")
-    createModule("b")
-    val deletedIml = createModule("deleted")
+  @Test
+  fun `deleted iml file`() {
+    val project = createProject()
+    createModule(project, "a")
+    createModule(project, "b")
+    val deletedIml = createModule(project, "deleted")
     val moduleManager = ModuleManager.getInstance(project)
     moduleManager.setUnloadedModules(listOf("a"))
-    createModule("c")
+    createModule(project, "c")
 
     val moduleFiles = createNewModuleFiles(listOf("d")) {}
-    reloadProjectWithNewModules(moduleFiles) {
-      File(deletedIml.moduleFilePath).delete()
+    val deletedImlFile = File(deletedIml.moduleFilePath)
+    val newProject = reloadProjectWithNewModules(project, moduleFiles) {
+      deletedImlFile.delete()
     }
 
-    assertSameElements(moduleManager.unloadedModuleDescriptions.map { it.name }, "a", "d")
+    assertSameElements(ModuleManager.getInstance(newProject).unloadedModuleDescriptions.map { it.name }, "a", "d")
   }
 
 
-  private suspend fun doTest(initiallyUnloaded: String,
+  private fun doTest(project: Project,
+                     initiallyUnloaded: String,
                      newModulesName: List<String>,
                      setup: (Map<String, Module>) -> Unit,
                      vararg expectedUnloadedModules: String) {
@@ -113,44 +144,69 @@ class AutomaticModuleUnloaderTest : JavaModuleTestCase() {
     moduleManager.setUnloadedModules(listOf(initiallyUnloaded))
 
     val moduleFiles = createNewModuleFiles(newModulesName, setup)
-    reloadProjectWithNewModules(moduleFiles)
+    val newProject = reloadProjectWithNewModules(project, moduleFiles)
 
-    assertSameElements(moduleManager.unloadedModuleDescriptions.map { it.name }, *expectedUnloadedModules)
-
+    assertSameElements(ModuleManager.getInstance(newProject).unloadedModuleDescriptions.map { it.name }, *expectedUnloadedModules)
   }
 
-  private suspend fun createNewModuleFiles(moduleNames: List<String>, setup: (Map<String, Module>) -> Unit): List<File> {
-    val newModulesProjectDir = FileUtil.createTempDirectory("newModules", "")
+  private fun createProject(): Project {
+    return ProjectManager.getInstance().createProject(null, tempDir.newPath("automaticReloaderTest").systemIndependentPath)!!
+  }
+
+  private fun createModule(project: Project, moduleName: String): Module {
+    return runWriteAction { ModuleManager.getInstance(project).newModule("${project.basePath}/$moduleName.iml", "JAVA") }
+  }
+
+  private fun createNewModuleFiles(moduleNames: List<String>, setup: (Map<String, Module>) -> Unit): List<File> {
+    val newModulesProjectDir = tempDir.newPath("newModules").toFile()
     val moduleFiles = moduleNames.map { File(newModulesProjectDir, "$it.iml") }
-    val projectManager = ProjectManagerEx.getInstanceEx() as ProjectManagerImpl
-    val project = projectManager.createProject("newModules", newModulesProjectDir.absolutePath)!!
+    val project = ProjectManager.getInstance().createProject("newModules", newModulesProjectDir.absolutePath)!!
     try {
-      val modules = runWriteAction {
+      runWriteAction {
         moduleFiles.map {
           ModuleManager.getInstance(project).newModule(it.absolutePath, StdModuleTypes.JAVA.id)
         }
       }
       setup(ModuleManager.getInstance(project).modules.associateBy { it.name })
-      modules.forEach {
-        it.stateStore.save()
-      }
     }
     finally {
-      projectManager.forceCloseProject(project, true)
-      runWriteAction { Disposer.dispose(project) }
+      saveAndCloseProject(project)
     }
     return moduleFiles
   }
 
-  private suspend fun reloadProjectWithNewModules(moduleFiles: List<File>, beforeReload: () -> Unit = {}) {
-    val moduleManager = ModuleManagerImpl.getInstanceImpl(myProject)
-    val modulePaths = LinkedHashSet<ModulePath>()
-    moduleManager.modules.forEach { it.stateStore.save() }
-    moduleManager.modules.mapTo(modulePaths) { ModulePath(it.moduleFilePath, null) }
-    moduleManager.unloadedModuleDescriptions.mapTo(modulePaths) { (it as UnloadedModuleDescriptionImpl).modulePath }
-    moduleFiles.mapTo(modulePaths) { ModulePath(FileUtil.toSystemIndependentName(it.absolutePath), null) }
+  private fun saveAndCloseProject(project: Project) {
+    PlatformTestUtil.saveProject(project, true)
+    ProjectManagerEx.getInstanceEx().forceCloseProject(project, true)
+    runWriteAction { Disposer.dispose(project) }
+  }
+
+  private fun reloadProjectWithNewModules(project: Project, moduleFiles: List<File>, beforeReload: () -> Unit = {}): Project {
+    saveAndCloseProject(project)
+    val modulesXmlFile = File(project.basePath, ".idea/modules.xml")
+    val rootElement = JDOMUtil.load(modulesXmlFile)
+    val moduleRootComponent = JDomSerializationUtil.findComponent(rootElement, ModuleManagerImpl.COMPONENT_NAME)
+    val modulesTag = moduleRootComponent!!.getChild("modules")!!
+    moduleFiles.forEach {
+      val filePath = it.systemIndependentPath
+      val fileUrl = VfsUtil.pathToUrl(filePath)
+      modulesTag.addContent(Element("module").setAttribute("fileurl", fileUrl).setAttribute("filepath", filePath))
+    }
+    JDOMUtil.write(rootElement, modulesXmlFile)
     beforeReload()
-    moduleManager.loadStateFromModulePaths(modulePaths)
+    val reloaded = ProjectManager.getInstance().loadAndOpenProject(project.basePath!!)!!
+    Disposer.register(disposableRule.disposable, Disposable { ProjectManagerEx.getInstanceEx().forceCloseProject(reloaded, true) })
+    return reloaded
+  }
+
+  companion object {
+    @ClassRule
+    @JvmField
+    val appRule = ApplicationRule()
+
+    @ClassRule
+    @JvmField
+    val edtRule = EdtRule()
   }
 
 }
