@@ -99,7 +99,7 @@
             internal="true"/>
     <group>
       <action id="Github.PullRequest.Zip.Commits.Toggle"
-              class="org.jetbrains.plugins.github.pullrequest.ui.GithubPullRequestChangesComponent$ToggleZipCommitsAction"/>
+              class="org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRChangesBrowser$ToggleZipCommitsAction"/>
 
       <add-to-group group-id="ChangesView.GroupBy" anchor="last"/>
     </group>
