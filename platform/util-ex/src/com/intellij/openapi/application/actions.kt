@@ -22,6 +22,10 @@ inline fun <T> runReadAction(crossinline runnable: () -> T): T {
   return ApplicationManager.getApplication().runReadAction(Computable { runnable() })
 }
 
+inline fun invokeLater(crossinline runnable: () -> Unit) {
+  ApplicationManager.getApplication().invokeLater(Runnable { runnable() })
+}
+
 /**
  * @suppress Internal use only
  */
