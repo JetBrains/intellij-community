@@ -28,7 +28,7 @@ public class JsonSchemaPerformanceTest extends JsonSchemaHeavyAbstractTest {
   }
 
   public void testSwaggerHighlighting() {
-    doPerformanceTest(9000, "swagger");
+    doPerformanceTest(10000, "swagger");
   }
 
   public void testTsLintSchema() {
