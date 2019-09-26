@@ -5,7 +5,10 @@ package com.intellij.psi.impl.cache.impl.id;
 import com.intellij.ide.highlighter.custom.CustomFileTypeLexer;
 import com.intellij.ide.highlighter.custom.SyntaxTable;
 import com.intellij.lang.Language;
-import com.intellij.lang.cacheBuilder.*;
+import com.intellij.lang.cacheBuilder.CacheBuilderRegistry;
+import com.intellij.lang.cacheBuilder.DefaultWordsScanner;
+import com.intellij.lang.cacheBuilder.SimpleWordsScanner;
+import com.intellij.lang.cacheBuilder.WordsScanner;
 import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.InternalFileType;
@@ -18,9 +21,6 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
-import java.util.Map;
-
 public class IdTableBuilding {
   private IdTableBuilding() {
   }
@@ -29,29 +29,13 @@ public class IdTableBuilding {
     void run(CharSequence chars, @Nullable char[] charsArray, int start, int end);
   }
 
-  private static final Map<FileType, IdIndexer> ourIdIndexers = new HashMap<>();
-
-  /**
-   * @deprecated use EP {@code com.intellij.idIndexer}
-   */
-  @Deprecated
-  public static void registerIdIndexer(@NotNull FileType fileType, FileTypeIdIndexer indexer) {
-    ourIdIndexers.put(fileType, indexer);
-  }
-
   public static boolean isIdIndexerRegistered(@NotNull FileType fileType) {
-    return ourIdIndexers.containsKey(fileType) || IdIndexers.INSTANCE.forFileType(fileType) != null || fileType instanceof InternalFileType;
+    return IdIndexers.INSTANCE.forFileType(fileType) != null || fileType instanceof InternalFileType;
   }
 
 
   @Nullable
   public static IdIndexer getFileTypeIndexer(FileType fileType) {
-    final IdIndexer idIndexer = ourIdIndexers.get(fileType);
-
-    if (idIndexer != null) {
-      return idIndexer;
-    }
-
     final IdIndexer extIndexer = IdIndexers.INSTANCE.forFileType(fileType);
     if (extIndexer != null) {
       return extIndexer;
