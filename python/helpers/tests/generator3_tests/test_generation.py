@@ -383,8 +383,8 @@ class MultiModuleGenerationTest(FunctionalGeneratorTestCase):
     # counterparts for actual importing and introspection
     default_generator_extra_syspath = ['mocks', 'binaries']
 
-    @test_data_dir('multiple_modules_mode')
-    def test_progress_indication_in_multiple_modules_mode(self):
+    @test_data_dir('simple')
+    def test_progress_indication(self):
         result = self.run_generator()
         self.assertContainsInRelativeOrder([
             {'type': 'progress', 'text': 'mod1', 'minor': True, 'fraction': 0.0},
@@ -392,8 +392,8 @@ class MultiModuleGenerationTest(FunctionalGeneratorTestCase):
             {'type': 'progress', 'fraction': 1.0},
         ], result.control_messages)
 
-    @test_data_dir('multiple_modules_mode')
-    def test_intermediate_results_in_multiple_modules_mode(self):
+    @test_data_dir('simple')
+    def test_intermediate_results_reporting(self):
         result = self.run_generator()
         self.assertContainsInRelativeOrder([
             {'type': 'generation_result',
@@ -406,8 +406,8 @@ class MultiModuleGenerationTest(FunctionalGeneratorTestCase):
              'generation_status': 'GENERATED'}
         ], result.control_messages)
 
-    @test_data_dir('multiple_modules_mode')
-    def test_multiple_modules_generation_mode(self):
+    @test_data_dir('simple')
+    def test_general_results_and_layout(self):
         self.check_generator_output()
 
 
@@ -415,7 +415,7 @@ class StatePassingGenerationTest(FunctionalGeneratorTestCase):
     default_generator_extra_args = ['--with-state-marker', '--name-pattern', 'mod?']
     default_generator_extra_syspath = ['mocks', 'binaries']
 
-    def test_passing_skeletons_state_update_due_to_required_gen_version(self):
+    def test_existing_updated_due_to_required_gen_version(self):
         state = {
             'sdk_skeletons': {
                 # shouldn't be updated
@@ -434,7 +434,7 @@ class StatePassingGenerationTest(FunctionalGeneratorTestCase):
                                     custom_required_gen=True,
                                     gen_version='0.2')
 
-    def test_passing_skeletons_state_update_failed_due_to_updated_version(self):
+    def test_failed_updated_due_to_updated_generator_version(self):
         state = {
             'sdk_skeletons': {
                 'mod1': {
@@ -451,7 +451,7 @@ class StatePassingGenerationTest(FunctionalGeneratorTestCase):
                                     custom_required_gen=True,
                                     gen_version='0.2')
 
-    def test_passing_skeletons_state_updated_due_to_modified_binary(self):
+    def test_existing_updated_due_to_modified_binary(self):
         mod1_mtime = os.stat(self.get_test_data_path('binaries/mod1.so')).st_mtime
         mod2_mtime = os.stat(self.get_test_data_path('binaries/mod2.so')).st_mtime
         state = {
@@ -473,7 +473,7 @@ class StatePassingGenerationTest(FunctionalGeneratorTestCase):
                                     custom_required_gen=True,
                                     gen_version='0.2')
 
-    def test_passing_skeletons_state_update_failed_due_to_modified_binary(self):
+    def test_failed_updated_due_to_modified_binary(self):
         mod1_mtime = os.stat(self.get_test_data_path('binaries/mod1.so')).st_mtime
         mod2_mtime = os.stat(self.get_test_data_path('binaries/mod2.so')).st_mtime
         state = {
@@ -495,7 +495,7 @@ class StatePassingGenerationTest(FunctionalGeneratorTestCase):
                                     custom_required_gen=True,
                                     gen_version='0.1')
 
-    def test_passing_skeletons_state_non_existing(self):
+    def test_non_existing_skeleton(self):
         state = {
             'sdk_skeletons': {
                 'mod1': {
