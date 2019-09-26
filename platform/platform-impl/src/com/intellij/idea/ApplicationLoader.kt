@@ -24,8 +24,6 @@ import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.runAndLogException
-import com.intellij.openapi.keymap.KeymapManager
-import com.intellij.openapi.keymap.impl.SystemShortcuts
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogEarthquakeShaker
@@ -561,9 +559,6 @@ open class IdeStarter : ApplicationStarter {
           if (TouchBarsManager.isTouchBarAvailable()) {
             CustomActionsSchema.addSettingsGroup(IdeActions.GROUP_TOUCHBAR, "Touch Bar")
           }
-
-          val keymap = KeymapManager.getInstance().activeKeymap
-          SystemShortcuts().checkConflictsAndNotify(keymap)
         }
       }
     }
@@ -585,6 +580,9 @@ open class IdeStarter : ApplicationStarter {
       })
       ScreenReader.setActive(generalSettings.isSupportScreenReaders)
     }
+
+    if (SystemInfo.isMac && SystemInfo.isJetBrainsJvm)
+      IdeEventQueue.getInstance().keyEventDispatcher.enableSystemShortcutsChecker()
   }
 }
 

@@ -112,10 +112,19 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
   private final Alarm mySecondKeystrokePopupTimeout = new Alarm();
 
+  private SystemShortcuts mySystemShortcuts = null;
+
   public IdeKeyEventDispatcher(IdeEventQueue queue){
     myQueue = queue;
     Application parent = ApplicationManager.getApplication();  // Application is null on early start when e.g. license dialog is shown
     if (parent != null) Disposer.register(parent, this);
+  }
+
+  public void enableSystemShortcutsChecker() {
+    // shortcuts reading can spent some milliseconds (2-4 ms on MacBookPro 2018)
+    // so do it only when UI initialized
+    if (mySystemShortcuts == null)
+      mySystemShortcuts = new SystemShortcuts();
   }
 
   public boolean isWaitingForSecondKeyStroke(){
@@ -752,6 +761,17 @@ public final class IdeKeyEventDispatcher implements Disposable {
       if (action != null && (!myContext.isModalContext() || action.isEnabledInModalContext())) {
         addAction(action, sc);
       }
+    }
+
+    if (mySystemShortcuts != null
+        && keymap != null
+        && actionIds != null && actionIds.length > 0
+        && sc instanceof KeyboardShortcut
+    ) {
+      // user pressed keystroke and keymap has some actions assigned to sc (actions going to be executed)
+      // check whether this shortcut conflicts with system-wide shortcuts and notify user if necessary
+      // see IDEA-173174 Warn user about IDE keymap conflicts with native OS keymap
+      mySystemShortcuts.onUserPressedShortcut(keymap, actionIds, (KeyboardShortcut)sc);
     }
   }
 
