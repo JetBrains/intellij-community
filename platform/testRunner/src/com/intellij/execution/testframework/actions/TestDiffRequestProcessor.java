@@ -28,8 +28,11 @@ import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.testframework.stacktrace.DiffHyperlink;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
+import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -83,7 +86,9 @@ public class TestDiffRequestProcessor extends DiffRequestProcessor {
 
   @Nullable
   private static VirtualFile findFile(@Nullable String path) {
-    return path != null ? VfsUtilCore.findRelativeFile(path, null) : null;
+    if (path == null) return null;
+    NewVirtualFileSystem fs = path.contains(URLUtil.JAR_SEPARATOR) ? JarFileSystem.getInstance() : LocalFileSystem.getInstance();
+    return fs.refreshAndFindFileByPath(path);
   }
 
   @NotNull
