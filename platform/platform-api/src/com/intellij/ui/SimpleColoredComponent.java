@@ -853,7 +853,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
         else if (attributes.isClickable()) {
           boolean selected = UIUtil.getTreeSelectionBackground(true) == getBackground();
           fgColor = ObjectUtils.notNull(attributes.getFgColor(), UIUtil.getLabelForeground());
-          drawClickableFrag(g, x1, x2, height, selected, attributes.isHovered());
+          drawClickableFrag(g, x1, x2, height, selected, attributes.isHovered(), attributes.isNoBorder());
         }
         else {
           continue;
@@ -879,7 +879,8 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     g.fillRect(x, y, width, height);
   }
 
-  private static void drawClickableFrag(Graphics2D g, float x1, float x2, int height, boolean selected, boolean hovered) {
+  private static void drawClickableFrag(Graphics2D g, float x1, float x2, int height, boolean selected, boolean hovered, boolean noBorder) {
+    if (noBorder) return;
     GraphicsConfig c = GraphicsUtil.setupRoundedBorderAntialiasing(g);
     RoundRectangle2D.Float shape = new RoundRectangle2D.Float(x1 + 1, 2, x2 - x1 - 2, height - 4, 6, 6);
     g.setColor(JBUI.CurrentTheme.ActionButton.hoverBackground());
