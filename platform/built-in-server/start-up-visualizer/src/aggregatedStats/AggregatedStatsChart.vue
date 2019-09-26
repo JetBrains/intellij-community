@@ -5,7 +5,6 @@
       <el-form-item  label="Server url">
         <el-input
             placeholder="Enter the aggregated stats server URL..."
-            label="qweqwe"
             v-model="serverUrl">
         </el-input>
       </el-form-item>
@@ -13,26 +12,26 @@
         <el-button @click="loadData" :loading="isFetching">Load</el-button>
       </el-form-item>
     </el-form>
-    <div class="activityChart" ref="chartContainer"></div>
+
+    <h2>Duration Events</h2>
+    <div class="activityChart" ref="durationEventChartContainer"></div>
+    <h2>Instant Events</h2>
+    <div class="activityChart" ref="instantEventChartContainer"></div>
   </div>
 </template>
 
 <script lang="ts">
   import {Component, Vue} from "vue-property-decorator"
   import {AggregatedStatsChartManager} from "./AggregatedStatsChartManager"
-  import {Notification} from "element-ui"
+  import {AggregatedDataManager} from "@/aggregatedStats/AggregatedDataManager"
 
   // @ts-ignore
   @Component
   export default class AggregatedStatsChart extends Vue {
-    protected chartManager: AggregatedStatsChartManager | null = null
+    private readonly chartManagers: Array<AggregatedStatsChartManager> = []
 
     serverUrl: string = "http://127.0.0.1:9044"
     isFetching: boolean = false
-
-    protected async createChartManager() {
-      return new AggregatedStatsChartManager(this.$refs.chartContainer as HTMLElement)
-    }
 
     loadData() {
       this.isFetching = true
@@ -76,7 +75,12 @@
 
           processed()
 
-          this.renderDataIfAvailable(data)
+          try {
+            this.renderDataIfAvailable(data)
+          }
+          catch (e) {
+            console.error(e)
+          }
         })
         .catch(e => {
           processed()
@@ -90,29 +94,28 @@
     }
 
     private renderDataIfAvailable(data: any): void {
-      let chartManager = this.chartManager
-      if (chartManager == null) {
-        this.createChartManager()
-          .then(chartManager => {
-            this.chartManager = chartManager
-            chartManager.render(data)
-          })
-          .catch(e => {
-            console.log(e)
-            Notification.error(e)
-          })
+      let chartManagers = this.chartManagers
+      if (chartManagers.length === 0) {
+        chartManagers.push(new AggregatedStatsChartManager(this.$refs.durationEventChartContainer as HTMLElement, false))
+        chartManagers.push(new AggregatedStatsChartManager(this.$refs.instantEventChartContainer as HTMLElement, true))
       }
-      else {
-        chartManager.render(data)
+
+      const dataManager = new AggregatedDataManager(data)
+      for (const chartManager of chartManagers) {
+        try {
+          chartManager.render(dataManager)
+        }
+        catch (e) {
+          console.error(e)
+        }
       }
     }
 
     beforeDestroy() {
-      const chartManager = this.chartManager
-      if (chartManager != null) {
-        this.chartManager = null
+      for (const chartManager of this.chartManagers) {
         chartManager.dispose()
       }
+      this.chartManagers.length = 0
     }
   }
 </script>

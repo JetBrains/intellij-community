@@ -2,11 +2,14 @@
 import * as am4charts from "@amcharts/amcharts4/charts"
 import * as am4core from "@amcharts/amcharts4/core"
 import {addExportMenu} from "@/charts/ChartManager"
+import {AggregatedDataManager} from "@/aggregatedStats/AggregatedDataManager"
+
+const hiddenMetricsByDefault = new Set(["moduleLoading"])
 
 export class AggregatedStatsChartManager {
   private readonly chart: am4charts.XYChart
 
-  constructor(container: HTMLElement) {
+  constructor(container: HTMLElement, private readonly isInstantEvents: boolean) {
     this.chart = am4core.create(container, am4charts.XYChart)
 
     const chart = this.chart
@@ -16,8 +19,14 @@ export class AggregatedStatsChartManager {
     // @ts-ignore
     const dateAxis = chart.xAxes.push(new am4charts.DateAxis())
     // @ts-ignore
+    // DurationAxis doesn't work due to some unclear bug
     const valueAxis = chart.yAxes.push(new am4charts.ValueAxis())
+    // const durationAxis = chart.yAxes.push(new am4charts.DurationAxis())
     valueAxis.logarithmic = true
+    //
+    // valueAxis.baseUnit = "millisecond"
+    valueAxis.durationFormatter.baseUnit = "millisecond"
+    valueAxis.durationFormatter.durationFormat = "S"
 
     const cursor = new am4charts.XYCursor()
     cursor.behavior = "zoomXY"
@@ -33,36 +42,57 @@ export class AggregatedStatsChartManager {
     // create a horizontal scrollbar with preview and place it underneath the date axis
     const scrollbarX = new am4charts.XYChartScrollbar()
     chart.scrollbarX = scrollbarX
-    // scrollbarX.series.push(series)
     scrollbarX.parent = chart.bottomAxesContainer
   }
 
-  render(data: Array<MachineMetrics>): void {
+  render(dataManager: AggregatedDataManager): void {
     const chart = this.chart
 
-    const metrics = data[0].metrics
+    const scrollbarX = chart.scrollbarX as am4charts.XYChartScrollbar
 
-    // do not sort, use as is
-    const metricNames = Object.keys(metrics[0])
-    // metricNames.sort()
+    const oldSeries = new Map<string, am4charts.LineSeries>()
 
-    chart.series.clear()
-    for (const metricName of metricNames) {
-      if (metricName == "splash" || metricName == "t") {
+    for (const series of chart.series) {
+      oldSeries.set(series.name, series as am4charts.LineSeries)
+    }
+
+    for (const metricName of dataManager.metricsNames) {
+      if (metricName === "t" || this.isInstantEvents !== (metricName === "splash")) {
         continue
       }
 
-      const series = chart.series.push(new am4charts.LineSeries())
-      series.name = metricName
+      let series = oldSeries.get(metricName)
+      if (series == null) {
+        series = new am4charts.LineSeries()
+        this.configureLineSeries(metricName, series)
+        chart.series.push(series)
+      }
+      else {
+        oldSeries.delete(metricName)
+      }
 
-      // timestamp
-      series.dataFields.dateX = "t"
-      // duration
-      series.dataFields.valueY = metricName
-      series.tooltipText = `${metricName}: {${metricName}}`
+      scrollbarX.series.push(series)
     }
 
-    this.chart.data = metrics
+    oldSeries.forEach(value => {
+      chart.series.removeIndex(chart.series.indexOf(value))
+      scrollbarX.series.removeIndex(scrollbarX.series.indexOf(value))
+      value.dispose()
+    })
+
+    chart.data = dataManager.metrics
+  }
+
+  private configureLineSeries(metricName: string, series: am4charts.LineSeries) {
+    series.name = metricName
+    // timestamp
+    series.dataFields.dateX = "t"
+    // duration
+    series.dataFields.valueY = metricName
+    series.tooltipText = `${metricName}: {${metricName}} ms`
+    if (hiddenMetricsByDefault.has(metricName)) {
+      series.hidden = true
+    }
   }
 
   dispose(): void {
