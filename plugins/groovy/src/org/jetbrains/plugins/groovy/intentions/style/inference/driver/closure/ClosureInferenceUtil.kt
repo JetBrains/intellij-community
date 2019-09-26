@@ -120,7 +120,7 @@ fun collectClosureMethodInvocationDependencies(parameterizedClosure: Parameteriz
       val argumentType = argument.type ?: continue
       constraintCollector.add(TypeConstraint(expectedType, argumentType, method))
       RecursiveMethodAnalyzer.induceDeepConstraints(expectedType, argumentType, dependentTypes, requiredTypesCollector,
-                                                    method.typeParameters.toSet(), LOWER)
+                                                    method.typeParameters.toSet(), LOWER, method)
     }
   }
 }

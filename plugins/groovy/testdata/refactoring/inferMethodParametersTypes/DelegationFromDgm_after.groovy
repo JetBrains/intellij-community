@@ -1,7 +1,7 @@
 import groovy.transform.stc.ClosureParams
 import groovy.transform.stc.FirstParam
 
-def <T> Object foo(@DelegatesTo.Target('a') T a, @DelegatesTo(target = 'a', strategy = 1) @ClosureParams(FirstParam) Closure<?> cl) {
+def <T, U> U foo(@DelegatesTo.Target('a') T a, @DelegatesTo(target = 'a', strategy = 1) @ClosureParams(FirstParam) Closure<U> cl) {
   a.with cl
 }
 

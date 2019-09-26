@@ -64,7 +64,7 @@ foo(['q'], ['q'])
 
   fun testClosure() {
     val text = """
-def<# [< [T extends  A] >] #> foo(<# [T  ] #>a, <# [[Closure < Object >]  ] #>c) {
+def<# [< [T extends  A] >] #> foo(<# [T  ] #>a, <# [[Closure < [?  ] >]  ] #>c) {
   c(a)
 }
 
@@ -80,7 +80,7 @@ foo(null as A) {
 
   fun testInsideClosure() {
     val text = """
-def foo(<# [Integer  ] #>arg, <# [[Closure < Byte >]  ] #>closure) {
+def foo(<# [Integer  ] #>arg, <# [[Closure < [?  ] >]  ] #>closure) {
   closure(arg)
 }
 

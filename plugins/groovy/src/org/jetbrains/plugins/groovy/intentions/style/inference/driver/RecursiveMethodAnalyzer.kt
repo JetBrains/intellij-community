@@ -291,7 +291,7 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
     for (outerCall in calls.mapNotNull { it.element.parent }) {
       val candidate = (outerCall.properResolve() as? GroovyMethodResult)?.candidate ?: continue
       val argumentMapping = candidate.argumentMapping ?: continue
-      argumentMapping.expectedTypes.forEach { (_, argument) ->
+      argumentMapping.arguments.forEach { argument ->
         val param = mapping[argumentMapping.targetParameter(argument)?.name] ?: return@forEach
         processOuterArgument(argument, param)
       }
@@ -303,7 +303,7 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
       val initializerType = parameter.initializerGroovy?.type ?: continue
       induceDeepConstraints(parameter.type,
                             initializerType, dependentTypes, requiredTypesCollector,
-                            method.typeParameters.toSet(), INHABIT)
+                            method.typeParameters.toSet(), INHABIT, parameter)
     }
   }
 
@@ -311,7 +311,7 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
     val argtype = argument.type ?: return
     val correctArgumentType = argtype.typeParameter()?.upperBound() ?: argtype
     induceDeepConstraints(parameter.type, correctArgumentType, dependentTypes, requiredTypesCollector, method.typeParameters.toSet(),
-                          INHABIT)
+                          INHABIT, parameter)
   }
 
   companion object {
@@ -334,7 +334,7 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
                               dependentTypes: MutableSet<PsiTypeParameter>,
                               requiredTypesCollector: MutableMap<PsiTypeParameter, MutableList<BoundConstraint>>,
                               variableParameters: Set<PsiTypeParameter>,
-                              targetMarker: ContainMarker) {
+                              targetMarker: ContainMarker, context: PsiElement) {
       val leftTypeParameter = leftType.typeParameter()
       val rightTypeParameter = rightType.typeParameter()
       if (leftTypeParameter != null && rightTypeParameter != null && rightTypeParameter in variableParameters) {
@@ -345,21 +345,22 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
         rightTypeParameter.extendsListTypes.firstOrNull()
       }
       else if (leftTypeParameter != null) {
-        val typeSet = expandWildcards(rightType, leftTypeParameter)
+        val typeSet = expandWildcards(rightType, context)
         typeSet.forEach { requiredTypesCollector.safePut(leftTypeParameter, BoundConstraint(it, targetMarker)) }
       }
       if (leftType is PsiArrayType && rightType is PsiArrayType) {
         induceDeepConstraints(leftType.componentType, rightType.componentType, dependentTypes, requiredTypesCollector, variableParameters,
-                              targetMarker)
+                              targetMarker, context)
       }
       val leftBound = leftTypeParameter?.upperBound() ?: leftType
       val rightBound = rightTypeParameter?.upperBound() ?: rightType
       val leftTypeArguments = (leftBound as? PsiClassType)?.parameters ?: return
       val rightTypeArguments = (rightBound as? PsiClassType)?.parameters ?: return
-      for ((leftTypeArgument, rightTypeArgument) in leftTypeArguments.zip(rightTypeArguments)) {
+      val rangedRightTypeArguments = rightTypeArguments.map { it ?: PsiWildcardType.createUnbounded(context.manager) }.toTypedArray()
+      for ((leftTypeArgument, rightTypeArgument) in leftTypeArguments.zip(rangedRightTypeArguments)) {
         leftTypeArgument ?: continue
-        rightTypeArgument ?: continue
-        induceDeepConstraints(leftTypeArgument, rightTypeArgument, dependentTypes, requiredTypesCollector, variableParameters, targetMarker)
+        induceDeepConstraints(leftTypeArgument, rightTypeArgument, dependentTypes, requiredTypesCollector, variableParameters, targetMarker,
+                              context)
       }
     }
 
