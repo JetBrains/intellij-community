@@ -55,9 +55,9 @@ public class IR {
 
     RemoteLocation importLocation(RemoteLocation otherLoc, RemoteEnvironment originalEnv);
 
-    void addValueResolutionListener(@NotNull RemoveValueResolutionListener listener);
+    void addValueResolutionListener(@NotNull RemoteValueResolutionListener listener);
 
-    void removeValueResolutionListener(@NotNull RemoveValueResolutionListener listener);
+    void removeValueResolutionListener(@NotNull RemoteValueResolutionListener listener);
   }
 
   public interface RemoteValue<T> {
@@ -250,7 +250,7 @@ public class IR {
     }
   }
 
-  public interface RemoveValueResolutionListener {
+  public interface RemoteValueResolutionListener {
     default void beforeResolution(@NotNull RemoteValue<?> value) {}
 
     default void afterResolution(@NotNull RemoteValue<?> value) {}
@@ -282,7 +282,7 @@ public class IR {
 
     public class LocalEnvironmentRequest implements RemoteEnvironmentRequest {
       @NotNull
-      private final Collection<RemoveValueResolutionListener> myListeners = new SmartList<>();
+      private final Collection<RemoteValueResolutionListener> myListeners = new SmartList<>();
       @NotNull
       private GeneralCommandLine.ParentEnvironmentType myParentEnvironmentType = GeneralCommandLine.ParentEnvironmentType.CONSOLE;
 
@@ -294,7 +294,7 @@ public class IR {
       @Override
       public RemoteValue<String> createUpload(@NotNull String localPath) {
         FixedValue<String> value = new FixedValue<>(localPath);
-        for (RemoveValueResolutionListener listener : myListeners) {
+        for (RemoteValueResolutionListener listener : myListeners) {
           listener.beforeResolution(value);
           listener.afterResolution(value);
         }
@@ -304,7 +304,7 @@ public class IR {
       @Override
       public RemoteValue<Integer> bindRemotePort(int remotePort) {
         FixedValue<Integer> value = new FixedValue<>(remotePort);
-        for (RemoveValueResolutionListener listener : myListeners) {
+        for (RemoteValueResolutionListener listener : myListeners) {
           listener.beforeResolution(value);
           listener.afterResolution(value);
         }
@@ -326,12 +326,12 @@ public class IR {
       }
 
       @Override
-      public void addValueResolutionListener(@NotNull RemoveValueResolutionListener listener) {
+      public void addValueResolutionListener(@NotNull RemoteValueResolutionListener listener) {
         myListeners.add(listener);
       }
 
       @Override
-      public void removeValueResolutionListener(@NotNull RemoveValueResolutionListener listener) {
+      public void removeValueResolutionListener(@NotNull RemoteValueResolutionListener listener) {
         myListeners.remove(listener);
       }
     }

@@ -314,7 +314,7 @@ public class JdkUtil {
                                                                            : Collections.emptyList();
       
       File argFile = FileUtil.createTempFile("idea_arg_file" + new Random().nextInt(Integer.MAX_VALUE), null);
-      request.addValueResolutionListener(new IR.RemoveValueResolutionListener() {
+      request.addValueResolutionListener(new IR.RemoteValueResolutionListener() {
         @Override
         public void beforeResolution(@NotNull IR.RemoteValue<?> value) {
           if (argFile.getAbsolutePath().equals(value.getLocalValue())) {
@@ -399,7 +399,7 @@ public class JdkUtil {
 
       File classpathFile = FileUtil.createTempFile("idea_classpath" + pseudoUniquePrefix, null);
       Collection<IR.RemoteValue<String>> classPathParameters = getClassPathValues(request, runtimeConfiguration, javaParameters);
-      request.addValueResolutionListener(new IR.RemoveValueResolutionListener() {
+      request.addValueResolutionListener(new IR.RemoteValueResolutionListener() {
         @Override
         public void beforeResolution(@NotNull IR.RemoteValue<?> value) {
           if (classpathFile.getAbsolutePath().equals(value.getLocalValue())) {
@@ -507,7 +507,7 @@ public class JdkUtil {
 
       File classpathJarFile = FileUtil.createTempFile(CommandLineWrapperUtil.CLASSPATH_JAR_FILE_NAME_PREFIX + Math.abs(new Random().nextInt()), ".jar", true);
       Collection<IR.RemoteValue<String>> classPathParameters = getClassPathValues(request, runtimeConfiguration, javaParameters);
-      request.addValueResolutionListener(new IR.RemoveValueResolutionListener() {
+      request.addValueResolutionListener(new IR.RemoteValueResolutionListener() {
         @Override
         public void beforeResolution(@NotNull IR.RemoteValue<?> value) {
           if (classpathJarFile.getAbsolutePath().equals(value.getLocalValue())) {
