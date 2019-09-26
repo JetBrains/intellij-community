@@ -7,27 +7,18 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
-import org.jetbrains.plugins.github.api.GithubApiRequestExecutorManager
-import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.pullrequest.GHPRToolWindowManager
 import org.jetbrains.plugins.github.util.GitRemoteUrlCoordinates
 
 class GithubViewPullRequestsAction :
-  AbstractAuthenticatingGithubUrlGroupingAction("View Pull Requests", null, AllIcons.Vcs.Vendors.Github) {
-
-  override fun actionPerformed(e: AnActionEvent,
-                               project: Project,
-                               repository: GitRepository,
-                               remote: GitRemote,
-                               remoteUrl: String,
-                               account: GithubAccount) {
+  AbstractGithubUrlGroupingAction("View Pull Requests", null, AllIcons.Vcs.Vendors.Github) {
+  override fun actionPerformed(e: AnActionEvent, project: Project, repository: GitRepository, remote: GitRemote, remoteUrl: String) {
     val remoteCoordinates = GitRemoteUrlCoordinates(remoteUrl, remote, repository)
     with(project.service<GHPRToolWindowManager>()) {
-      if (showPullRequestsTabIfExists(remoteCoordinates, account)) return
+      if (showPullRequestsTabIfExists(remoteCoordinates)) return
 
-      val requestExecutor = service<GithubApiRequestExecutorManager>().getExecutor(account, project) ?: return
-      createPullRequestsTab(remoteCoordinates, account, requestExecutor)
-      showPullRequestsTabIfExists(remoteCoordinates, account)
+      createPullRequestsTab(remoteCoordinates)
+      showPullRequestsTabIfExists(remoteCoordinates)
     }
   }
 }

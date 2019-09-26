@@ -8,6 +8,7 @@ import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vcs.changes.issueLinks.LinkMouseListenerBase
 import com.intellij.ui.*
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBList
@@ -68,6 +69,18 @@ object GithubUIUtil {
                          prettyDate.equals(CommonBundle.message("date.format.yesterday"), true)) ""
     else "on "
     return datePrefix + prettyDate
+  }
+
+  fun createNoteWithAction(action: () -> Unit): SimpleColoredComponent {
+    return SimpleColoredComponent().apply {
+      isFocusable = true
+      isOpaque = false
+
+      LinkMouseListenerBase.installSingleTagOn(this)
+      registerKeyboardAction({ action() },
+                             KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0),
+                             JComponent.WHEN_FOCUSED)
+    }
   }
 
   fun <T> showChooserPopup(popupTitle: String, parentComponent: JComponent,
