@@ -1,13 +1,12 @@
 package com.intellij.json.editor.smartEnter;
 
-import com.intellij.json.psi.JsonArray;
-import com.intellij.json.psi.JsonFile;
-import com.intellij.json.psi.JsonProperty;
-import com.intellij.json.psi.JsonValue;
+import com.intellij.json.JsonDialectUtil;
+import com.intellij.json.psi.*;
 import com.intellij.lang.SmartEnterProcessorWithFixers;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
@@ -95,9 +94,18 @@ public class JsonSmartEnterProcessor extends SmartEnterProcessorWithFixers {
         }
         else {
           final JsonValue propertyKey = ((JsonProperty)element).getNameElement();
-          final int keyEndOffset = propertyKey.getTextRange().getEndOffset();
+          TextRange keyRange = propertyKey.getTextRange();
+          final int keyStartOffset = keyRange.getStartOffset();
+          int keyEndOffset = keyRange.getEndOffset();
           //processor.myFirstErrorOffset = keyEndOffset;
           if (terminatedOnCurrentLine(editor, propertyKey) && !isFollowedByTerminal(propertyKey, COLON)) {
+            boolean shouldQuoteKey = propertyKey instanceof JsonReferenceExpression && JsonDialectUtil.isStandardJson(propertyKey);
+            if (shouldQuoteKey) {
+              editor.getDocument().insertString(keyStartOffset, "\"");
+              keyEndOffset++;
+              editor.getDocument().insertString(keyEndOffset, "\"");
+              keyEndOffset++;
+            }
             processor.myFirstErrorOffset = keyEndOffset + 2;
             editor.getDocument().insertString(keyEndOffset, ": ");
           }
