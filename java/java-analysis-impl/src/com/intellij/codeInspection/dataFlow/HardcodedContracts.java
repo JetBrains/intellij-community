@@ -107,7 +107,7 @@ public class HardcodedContracts {
     .register(instanceCall(JAVA_UTIL_MAP, "containsKey", "containsValue").parameterCount(1),
               ContractProvider.of(singleConditionContract(
                 ContractValue.qualifier().specialField(SpecialField.COLLECTION_SIZE), RelationType.EQ, ContractValue.zero(), returnFalse())))
-    .register(instanceCall(JAVA_UTIL_LIST, "get").parameterTypes("int"),
+    .register(instanceCall(JAVA_UTIL_LIST, "get", "remove").parameterTypes("int"),
               ContractProvider.of(specialFieldRangeContract(0, RelationType.LT, SpecialField.COLLECTION_SIZE)))
     .register(anyOf(
       instanceCall("java.util.SortedSet", "first", "last").parameterCount(0),
@@ -477,6 +477,10 @@ public class HardcodedContracts {
       if (parameters.length == 2 && parameters[1].getType().getCanonicalText().contains("Supplier")) {
         return false;
       }
+    }
+
+    if ("remove".equals(name)) {
+      return false;
     }
 
     if ("java.lang.System".equals(className)) {
