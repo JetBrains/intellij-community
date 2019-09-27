@@ -109,7 +109,10 @@ public class HardcodedContracts {
                 ContractValue.qualifier().specialField(SpecialField.COLLECTION_SIZE), RelationType.EQ, ContractValue.zero(), returnFalse())))
     .register(instanceCall(JAVA_UTIL_LIST, "get").parameterTypes("int"),
               ContractProvider.of(specialFieldRangeContract(0, RelationType.LT, SpecialField.COLLECTION_SIZE)))
-    .register(instanceCall("java.util.SortedSet", "first", "last").parameterCount(0),
+    .register(anyOf(
+      instanceCall("java.util.SortedSet", "first", "last").parameterCount(0),
+      instanceCall("java.util.Deque", "getFirst", "getLast").parameterCount(0),
+      instanceCall("java.util.Queue", "element").parameterCount(0)),
               ContractProvider.of(singleConditionContract(
                 ContractValue.qualifier().specialField(SpecialField.COLLECTION_SIZE), RelationType.EQ,
                 ContractValue.zero(), fail())))

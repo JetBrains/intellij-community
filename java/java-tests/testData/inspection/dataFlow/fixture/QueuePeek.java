@@ -26,4 +26,11 @@ class ThisAsVariable {
   void notCheck(Queue<String> queue) {
     System.out.println(queue.peek().<warning descr="Method invocation 'trim' may produce 'NullPointerException'">trim</warning>());
   }
+
+  void checkGetFirstPollFirst(Deque<String> queue) {
+    if ("bar".equals(queue.getFirst())) {
+      String first = queue.pollFirst();
+      System.out.println(first.toString());
+    }
+  }
 }
