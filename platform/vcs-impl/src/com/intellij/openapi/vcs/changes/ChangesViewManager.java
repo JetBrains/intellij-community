@@ -277,6 +277,7 @@ public class ChangesViewManager implements ChangesViewEx,
       super(false, true);
       myProject = project;
       myChangesViewManager = changesViewManager;
+      CommitWorkflowManager commitWorkflowManager = CommitWorkflowManager.getInstance(myProject);
 
       myVcsConfiguration = VcsConfiguration.getInstance(myProject);
       myTreeUpdateAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
@@ -296,13 +297,13 @@ public class ChangesViewManager implements ChangesViewEx,
       ChangesDnDSupport.install(myProject, myView);
 
       myChangesPanel.getToolbarActionGroup().addAll(createChangesToolbarActions(myView.getTreeExpander()));
-      myChangesPanel.setToolbarHorizontal(isToolbarHorizontalSetting.asBoolean());
+      myChangesPanel.setToolbarHorizontal(commitWorkflowManager.isNonModal() && isToolbarHorizontalSetting.asBoolean());
       registerShortcuts(this);
 
       isToolbarHorizontalSetting.addListener(new RegistryValueListener.Adapter() {
         @Override
         public void afterValueChanged(@NotNull RegistryValue value) {
-          boolean isToolbarHorizontal = value.asBoolean();
+          boolean isToolbarHorizontal = value.asBoolean() && commitWorkflowManager.isNonModal();
 
           myChangesPanel.setToolbarHorizontal(isToolbarHorizontal);
           if (myCommitPanel != null) myCommitPanel.setToolbarHorizontal(isToolbarHorizontal);
@@ -376,6 +377,7 @@ public class ChangesViewManager implements ChangesViewEx,
     public void updateCommitWorkflow(boolean isNonModal) {
       if (isNonModal) {
         if (myCommitPanel == null) {
+          myChangesPanel.setToolbarHorizontal(isToolbarHorizontalSetting.asBoolean());
           myCommitPanel = new ChangesViewCommitPanel(myView, this);
           myCommitPanel.setToolbarHorizontal(isToolbarHorizontalSetting.asBoolean());
           myCommitWorkflowHandler = new ChangesViewCommitWorkflowHandler(new ChangesViewCommitWorkflow(myProject), myCommitPanel);
@@ -385,13 +387,17 @@ public class ChangesViewManager implements ChangesViewEx,
           myDiffPreviewSplitter.setAllowExcludeFromCommit(isAllowExcludeFromCommit());
         }
       }
-      else if (myCommitPanel != null) {
-        myDiffPreviewSplitter.setAllowExcludeFromCommit(false);
-        myCommitPanelSplitter.setSecondComponent(null);
-        Disposer.dispose(myCommitPanel);
+      else {
+        myChangesPanel.setToolbarHorizontal(false);
+        if (myCommitPanel != null) {
 
-        myCommitPanel = null;
-        myCommitWorkflowHandler = null;
+          myDiffPreviewSplitter.setAllowExcludeFromCommit(false);
+          myCommitPanelSplitter.setSecondComponent(null);
+          Disposer.dispose(myCommitPanel);
+
+          myCommitPanel = null;
+          myCommitWorkflowHandler = null;
+        }
       }
     }
 
