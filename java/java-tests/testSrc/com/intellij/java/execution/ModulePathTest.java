@@ -49,22 +49,36 @@ public class ModulePathTest extends BaseConfigurationTestCase {
                modulePath.getPathList().contains(CompilerModuleExtension.getInstance(module).getCompilerOutputPath().getPath()));
   }
 
-  public void _testModuleInfoInProductionModularizedJunit() throws Exception {
+  public void testModuleInfoInProductionModularizedJUnit() throws Exception {
+    doTestModuleInfoInProductionModularizedJUnit(
+      new JpsMavenRepositoryLibraryDescriptor("org.junit.jupiter", "junit-jupiter-engine", "5.5.2"));
+  }
+
+  public void testModuleInfoInProductionModularizedJUnitNoEngineDependency() throws Exception {
+    doTestModuleInfoInProductionModularizedJUnit(
+      new JpsMavenRepositoryLibraryDescriptor("org.junit.jupiter", "junit-jupiter-api", "5.5.2"));
+  }
+
+  private void doTestModuleInfoInProductionModularizedJUnit(JpsMavenRepositoryLibraryDescriptor modularizedJupiterDescription)
+    throws Exception {
     Module module = createEmptyModule();
-    JpsMavenRepositoryLibraryDescriptor modularizedJupiterDescription =
-      new JpsMavenRepositoryLibraryDescriptor("org.junit.jupiter", "junit-jupiter-api", "5.5.2");
     JUnitConfiguration configuration = setupConfiguration(modularizedJupiterDescription, "prod1", module);
     JavaParameters params4Tests = configuration.getTestObject().createJavaParameters4Tests();
     assertEquals("-ea" +
                  " --patch-module m1=" + CompilerModuleExtension.getInstance(module).getCompilerOutputPathForTests().getPath() +
                  " --add-reads m1=ALL-UNNAMED" +
-                 " --add-modules m1 -Didea.test.cyclic.buffer.size=1048576", params4Tests.getVMParametersList().getParametersString());
+                 " --add-modules m1" +
+                 " --add-modules org.junit.platform.launcher" +
+                 " -Didea.test.cyclic.buffer.size=1048576", params4Tests.getVMParametersList().getParametersString());
 
-    //junit is on the classpath
+    //junit is on the module path
     PathsList classPath = params4Tests.getClassPath();
-    Arrays.stream(OrderEnumerator.orderEntries(module).getAllLibrariesAndSdkClassesRoots())
+    Arrays.stream(
+      OrderEnumerator.orderEntries(module).withoutModuleSourceEntries()
+        .withoutDepModules().withoutSdk()
+        .recursively().exportedOnly().classes().usingCache().getRoots())
       .map(f -> JarFileSystem.getInstance().getVirtualFileForJar(f).getPath())
-      .forEach(path -> assertTrue("path " + path + " is not located on the classpath: " + classPath.getPathsString(),
+      .forEach(path -> assertFalse("path " + path + " is located on the classpath: " + classPath.getPathsString(),
                                   classPath.getPathList().contains(path)));
 
     //production module output is on the module path

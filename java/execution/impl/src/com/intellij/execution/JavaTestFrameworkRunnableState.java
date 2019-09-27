@@ -67,7 +67,6 @@ import java.io.*;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.util.*;
-import java.util.function.Consumer;
 
 public abstract class JavaTestFrameworkRunnableState<T extends
   ModuleBasedConfiguration<JavaRunConfigurationModule, Element>
@@ -395,32 +394,9 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     PathsList modulePath = javaParameters.getModulePath();
     PathsList classPath = javaParameters.getClassPath();
 
-    List<String> pathStrings = classPath.getPathList();
-
-    Consumer<VirtualFile> putOnModulePath = virtualFile -> {
-      String path = virtualFile.getPath();
-      if (pathStrings.contains(path)) {
-        classPath.remove(path);
-        modulePath.add(path);
-      }
-    };
-
-    //put all transitive required modules on the module path
-    Set<PsiJavaModule> allRequires = JavaModuleGraphUtil.getAllDependencies(prodModule);
-    JarFileSystem jarFS = JarFileSystem.getInstance();
-    ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(module.getProject());
-    allRequires.stream()
-      .filter(javaModule -> !PsiJavaModule.JAVA_BASE.equals(javaModule.getName()))
-      .map(javaModule -> getClasspathEntry(javaModule, fileIndex, jarFS))
-      .filter(Objects::nonNull)
-      .forEach(putOnModulePath);
+    putDependenciesOnModulePath(modulePath, classPath, prodModule);
 
     ParametersList vmParametersList = javaParameters.getVMParametersList();
-    //put production output on the module path
-    VirtualFile out = compilerExt.getCompilerOutputPath();
-    if (out != null) {
-      putOnModulePath.accept(out);
-    }
     //ensure test output is merged to the production module
     VirtualFile testOutput = compilerExt.getCompilerOutputPathForTests();
     if (testOutput != null) {
@@ -436,6 +412,28 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     //ensure production module is explicitly added as test starter in `idea-rt` doesn't depend on it
     vmParametersList.add("--add-modules");
     vmParametersList.add(prodModule.getName());
+  }
+
+  protected static void putDependenciesOnModulePath(PathsList modulePath,
+                                                    PathsList classPath,
+                                                    PsiJavaModule prodModule) {
+    Set<PsiJavaModule> allRequires = JavaModuleGraphUtil.getAllDependencies(prodModule);
+    allRequires.add(prodModule);    //put production output on the module path as well
+    JarFileSystem jarFS = JarFileSystem.getInstance();
+    ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(prodModule.getProject());
+    allRequires.stream()
+      .filter(javaModule -> !PsiJavaModule.JAVA_BASE.equals(javaModule.getName()))
+      .map(javaModule -> getClasspathEntry(javaModule, fileIndex, jarFS))
+      .filter(Objects::nonNull)
+      .forEach(file -> putOnModulePath(modulePath, classPath, file));
+  }
+
+  private static void putOnModulePath(PathsList modulePath, PathsList classPath, VirtualFile virtualFile) {
+    String path = PathUtil.getLocalPath(virtualFile.getPath());
+    if (classPath.getPathList().contains(path)) {
+      classPath.remove(path);
+      modulePath.add(path);
+    }
   }
 
   private static VirtualFile getClasspathEntry(PsiJavaModule javaModule,

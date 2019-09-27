@@ -35,6 +35,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.java.stubs.index.JavaModuleNameIndex;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
@@ -306,10 +307,22 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
       PsiClass testAnnotation = DumbService.getInstance(project).computeWithAlternativeResolveEnabled(
         () -> psiFacade.findClass(JUnitUtil.TEST5_ANNOTATION, globalSearchScope));
       String jupiterVersion = ObjectUtils.notNull(getVersion(testAnnotation), "5.0.0");
-      if (!hasPackageWithDirectories(psiFacade, "org.junit.jupiter.engine", globalSearchScope) &&
-          hasPackageWithDirectories(psiFacade, JUnitUtil.TEST5_PACKAGE_FQN, globalSearchScope)) {
-        downloadDependenciesWhenRequired(project, pathsList,
-                                         new RepositoryLibraryProperties("org.junit.jupiter", "junit-jupiter-engine", jupiterVersion));
+      if (hasPackageWithDirectories(psiFacade, JUnitUtil.TEST5_PACKAGE_FQN, globalSearchScope)) {
+        String moduleNameToMove = "org.junit.jupiter.api";
+        if (!hasPackageWithDirectories(psiFacade, "org.junit.jupiter.engine", globalSearchScope)) {
+          downloadDependenciesWhenRequired(project, pathsList,
+                                           new RepositoryLibraryProperties("org.junit.jupiter", "junit-jupiter-engine", jupiterVersion));
+        }
+        else {
+          moduleNameToMove = "org.junit.jupiter.engine";
+        }
+
+        if (isModularized) {
+          //put engine and dependencies or api only (when engine is attached to the module path above) on the module path
+          for (PsiJavaModule module : JavaModuleNameIndex.getInstance().get(moduleNameToMove, project, globalSearchScope)) {
+            putDependenciesOnModulePath(pathsList, javaParameters.getClassPath(), module);
+          }
+        }
       }
 
       if (!hasPackageWithDirectories(psiFacade, "org.junit.vintage", globalSearchScope) &&
@@ -355,7 +368,10 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     }
     for (OrderRoot root : roots) {
       if (root.getType() == OrderRootType.CLASSES) {
-        classPath.add(root.getFile());
+        VirtualFile file = root.getFile();
+        if (!classPath.getPathList().contains(PathUtil.getLocalPath(file))) {
+          classPath.add(file);
+        }
       }
     }
   }
