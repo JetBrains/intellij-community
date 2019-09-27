@@ -44,6 +44,7 @@ public class JUnit4TestListener extends RunListener {
 
   private Description myCurrentTest;
   private final Map myWaitingQueue = new LinkedHashMap();
+  private static final JUnitNodeNamesManager NODE_NAMES_MANAGER = getNodeNamesManager();
 
 
   public JUnit4TestListener() {
@@ -61,16 +62,10 @@ public class JUnit4TestListener extends RunListener {
 
   public void testRunStarted(Description description) throws Exception {
     if (myRootName != null && !myRootName.startsWith("[")) {
-      int lastPointIdx = myRootName.lastIndexOf('.');
-      String name = myRootName;
-      String comment = null;
-      if (lastPointIdx >= 0) {
-        name = myRootName.substring(lastPointIdx + 1);
-        comment = myRootName.substring(0, lastPointIdx);
-      }
+      JUnitNodeNamesManager.TestNodePresentation rootNodePresentation = NODE_NAMES_MANAGER.getRootNodePresentation(myRootName);
 
-      myPrintStream.println("##teamcity[rootName name = \'" + escapeName(name) + 
-                            (comment != null ? ("\' comment = \'" + escapeName(comment)) : "") + "\'" +
+      myPrintStream.println("##teamcity[rootName name = \'" + escapeName(rootNodePresentation.getName()) +
+                            (rootNodePresentation.getComment() != null ? ("\' comment = \'" + escapeName(rootNodePresentation.getComment())) : "") + "\'" +
                             " location = \'java:suite://" + escapeName(myRootName) +
                             "\']");
       myRootName = getShortName(myRootName);
@@ -544,19 +539,14 @@ public class JUnit4TestListener extends RunListener {
   }
 
   private static String getShortName(String fqName, boolean splitBySlash) {
-    if (fqName == null) return null;
-    final int idx = fqName.indexOf("[");
-    if (idx == 0) {
-      //param name
-      return fqName;
-    }
-    String fqNameWithoutParams = idx > 0 && fqName.endsWith("]") ? fqName.substring(0, idx) : fqName;
-    int classEnd = splitBySlash ? fqNameWithoutParams.indexOf('/') : -1;
-    if (classEnd >= 0) {
-      return fqName.substring(classEnd + 1);
-    }
+    return NODE_NAMES_MANAGER.getNodeName(fqName, splitBySlash);
+  }
 
-    int dotInClassFQNIdx = fqNameWithoutParams.lastIndexOf('.');
-    return dotInClassFQNIdx > -1 ? fqName.substring(dotInClassFQNIdx + 1) : fqName;
+  private static JUnitNodeNamesManager getNodeNamesManager() {
+    String junitNodeNamesManagerClassName = System.getProperty(JUnitNodeNamesManager.JUNIT_NODE_NAMES_MANAGER_ARGUMENT);
+    if (JUnitNodeNamesManager.TEXT_NODE_NAMES_MANAGER_NAME.equals(junitNodeNamesManagerClassName)) {
+      return JUnitNodeNamesManager.SIMPLE_NODE_NAMES_MANAGER;
+    }
+    return JUnitNodeNamesManager.JAVA_NODE_NAMES_MANAGER;
   }
 }
