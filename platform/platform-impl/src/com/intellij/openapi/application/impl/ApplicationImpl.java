@@ -226,7 +226,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       @Override
       public void run() {
         if (isDisposedOrDisposeInProgress()) {
-          LOG.debug("Task to execute on pooled thread is skipped because app is being disposed: " + this.getClass().getName());
           return;
         }
 
@@ -254,6 +253,10 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     return ourThreadExecutorsService.submit(new Callable<T>() {
       @Override
       public T call() {
+        if (isDisposedOrDisposeInProgress()) {
+          return null;
+        }
+
         // This is very special magic only needed by threads that need read actions and can be executed
         // during "executeSuspendingWriteAction" (e.g. dumb mode, indexing). Threads created via "executeOnPooledThread"
         // in these circumstances may run read actions immediately, instead of waiting until the write action is resumed and finished.
