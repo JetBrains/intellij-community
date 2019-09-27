@@ -23,6 +23,7 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
 import com.intellij.util.xmlb.JDOMXIncluder;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -177,10 +178,13 @@ public class PluginManagerTest {
 
   /** @noinspection unused */
   private static String dumpDescriptors(@NotNull IdeaPluginDescriptorImpl[] descriptors) {
+    // place breakpoint in PluginManagerCore#loadDescriptors before sorting
     StringBuilder sb = new StringBuilder("<root>");
+    Function<String, String> escape = s ->
+      s.equals("com.intellij") || s.startsWith("com.intellij.modules.") ? s : "-" + s.replace(".", "-")+ "-";
     for (IdeaPluginDescriptorImpl d : descriptors) {
       sb.append("\n  <idea-plugin url=\"file://out/").append(d.getPath().getName()).append("/META-INF/plugin.xml\">");
-      sb.append("\n    <id>").append(d.getPluginId()).append("</id>");
+      sb.append("\n    <id>").append(escape.fun(d.getPluginId().getIdString())).append("</id>");
       sb.append("\n    <name>").append(StringUtil.escapeXmlEntities(d.getName())).append("</name>");
       for (String module : d.getModules()) {
         sb.append("\n    <module value=\"").append(module).append("\"/>");
@@ -189,17 +193,17 @@ public class PluginManagerTest {
       Map<PluginId, List<IdeaPluginDescriptorImpl>> optMap = d.getOptionalDescriptors();
       for (PluginId depId : d.getDependentPluginIds()) {
         if (ArrayUtil.indexOf(optIds, depId) == -1) {
-          sb.append("\n    <depends>").append(depId).append("</depends>");
+          sb.append("\n    <depends>").append(escape.fun(depId.getIdString())).append("</depends>");
         }
         else {
           List<IdeaPluginDescriptorImpl> opt = optMap != null ? optMap.get(depId) : null;
           if (opt == null || opt.isEmpty()) {
-            sb.append("\n    <depends optional=\"true\" config-file=\"???\">").append(depId).append("</depends>");
+            sb.append("\n    <depends optional=\"true\" config-file=\"???\">").append(escape.fun(depId.getIdString())).append("</depends>");
           }
           else {
             for (IdeaPluginDescriptorImpl dd : opt) {
               sb.append("\n    <depends optional=\"true\" config-file=\"")
-                .append(dd.getPath().getName()).append("\">").append(depId).append("</depends>");
+                .append(dd.getPath().getName()).append("\">").append(escape.fun(depId.getIdString())).append("</depends>");
             }
           }
         }
