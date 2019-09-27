@@ -2,14 +2,12 @@
 package com.intellij.vcs.commit
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.ActionGroup
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsConfiguration
+import com.intellij.openapi.vcs.VcsDataKeys.COMMIT_WORKFLOW_HANDLER
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.actions.DefaultCommitExecutorAction
@@ -51,6 +49,14 @@ class ChangesViewCommitWorkflowHandler(
     Disposer.register(inclusionModel, Disposable { ui.inclusionModel = null })
 
     vcsesChanged() // as currently vcses are set before handler subscribes to corresponding event
+  }
+
+  override fun createDataProvider(): DataProvider = object : DataProvider {
+    private val superProvider = super@ChangesViewCommitWorkflowHandler.createDataProvider()
+
+    override fun getData(dataId: String): Any? =
+      if (COMMIT_WORKFLOW_HANDLER.`is`(dataId)) this@ChangesViewCommitWorkflowHandler.takeIf { it.isActive }
+      else superProvider.getData(dataId)
   }
 
   private fun ensureCommitOptions(): CommitOptions {

@@ -180,9 +180,7 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView, private v
 
   private fun setupShortcuts(component: JComponent) {
     DefaultCommitAction().registerCustomShortcutSet(DEFAULT_COMMIT_ACTION_SHORTCUT, component, this)
-    DumbAwareAction.create {
-      if (commitButton.isEnabled) commitButton.showPopup()
-    }.registerCustomShortcutSet(getDefaultShowPopupShortcut(), component, this)
+    ShowCustomCommitActions().registerCustomShortcutSet(getDefaultShowPopupShortcut(), component, this)
   }
 
   override fun globalSchemeChange(scheme: EditorColorsScheme?) {
@@ -325,9 +323,17 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView, private v
 
   inner class DefaultCommitAction : DumbAwareAction() {
     override fun update(e: AnActionEvent) {
-      e.presentation.isEnabledAndVisible = defaultCommitAction.isEnabled
+      e.presentation.isEnabledAndVisible = isActive && defaultCommitAction.isEnabled
     }
 
     override fun actionPerformed(e: AnActionEvent) = fireDefaultExecutorCalled()
+  }
+
+  private inner class ShowCustomCommitActions : DumbAwareAction() {
+    override fun update(e: AnActionEvent) {
+      e.presentation.isEnabledAndVisible = isActive && commitButton.isEnabled
+    }
+
+    override fun actionPerformed(e: AnActionEvent) = commitButton.showPopup()
   }
 }

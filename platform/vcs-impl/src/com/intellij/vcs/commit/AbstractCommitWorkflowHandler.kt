@@ -69,7 +69,7 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
 
   fun getCommitActionName() = getDefaultCommitActionName(workflow.vcses)
 
-  protected fun createDataProvider() = DataProvider { dataId ->
+  protected open fun createDataProvider() = DataProvider { dataId ->
     when {
       COMMIT_WORKFLOW_HANDLER.`is`(dataId) -> this
       Refreshable.PANEL_KEY.`is`(dataId) -> commitPanel

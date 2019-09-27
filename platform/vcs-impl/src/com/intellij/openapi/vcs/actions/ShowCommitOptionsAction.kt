@@ -14,7 +14,7 @@ class ShowCommitOptionsAction : AnAction() {
   }
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabled = e.getProjectCommitWorkflowHandler() != null
+    e.presentation.isEnabled = e.getProjectCommitWorkflowHandler()?.isActive == true
   }
 
   override fun actionPerformed(e: AnActionEvent) {
