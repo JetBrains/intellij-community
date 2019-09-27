@@ -5,16 +5,20 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.ui.popup.JBPopupListener
+import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowContextMenuActionBase
+import com.intellij.openapi.wm.ToolWindowType
 import com.intellij.openapi.wm.impl.ToolWindowImpl
 import com.intellij.openapi.wm.impl.content.BaseLabel
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.content.Content
+import com.intellij.util.Alarm
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.SwingHelper
 import com.intellij.util.ui.UIUtil
@@ -41,10 +45,10 @@ open class ToolWindowTabRenameActionBase(val toolWindowId: String, val labelText
   override fun actionPerformed(e: AnActionEvent, toolWindow: ToolWindow, content: Content?) {
     val baseLabel = e.getData(PlatformDataKeys.CONTEXT_COMPONENT) as? BaseLabel
     val contextContent = baseLabel?.content ?: return
-    showContentRenamePopup(baseLabel, contextContent)
+    showContentRenamePopup(baseLabel, contextContent, toolWindow)
   }
 
-  private fun showContentRenamePopup(baseLabel: BaseLabel, content: Content) {
+  private fun showContentRenamePopup(baseLabel: BaseLabel, content: Content, toolWindow: ToolWindow) {
     val textField = JTextField(content.displayName)
     textField.selectAll()
 
@@ -95,6 +99,33 @@ open class ToolWindowTabRenameActionBase(val toolWindowId: String, val labelText
       }
     })
 
+    ensureToolWindowRemainsVisibleWhenBalloonIsShowing(toolWindow, balloon)
     balloon.show(RelativePoint(baseLabel, Point(baseLabel.width / 2, 0)), Balloon.Position.above)
+  }
+
+  private fun ensureToolWindowRemainsVisibleWhenBalloonIsShowing(toolWindow: ToolWindow, balloon: Balloon) {
+    val originalType = toolWindow.type
+    val originalAutoHide = toolWindow.isAutoHide
+    if (originalType == ToolWindowType.SLIDING || originalAutoHide) {
+      if (originalType == ToolWindowType.SLIDING) {
+        toolWindow.setType(ToolWindowType.DOCKED, null)
+      }
+      toolWindow.isAutoHide = false
+      balloon.addListener(object : JBPopupListener {
+        override fun onClosed(event: LightweightWindowEvent) {
+          if (originalType == ToolWindowType.SLIDING) {
+            Alarm(Alarm.ThreadToUse.SWING_THREAD).addRequest(Runnable {
+              IdeFocusManager.findInstance().doWhenFocusSettlesDown(Runnable {
+                toolWindow.setType(originalType, null)
+                toolWindow.isAutoHide = originalAutoHide
+              })
+            }, 50)
+          }
+          else {
+            toolWindow.isAutoHide = originalAutoHide
+          }
+        }
+      })
+    }
   }
 }
