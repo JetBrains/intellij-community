@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.content;
 
 import com.intellij.openapi.ui.popup.ListPopup;
@@ -108,7 +108,7 @@ class ComboContentLayout extends ContentLayout {
   public void showContentPopup(ListPopup listPopup) {
     final int width = myComboLabel.getSize().width;
     listPopup.setMinimumSize(new Dimension(width, 0));
-    listPopup.show(new RelativePoint(myComboLabel, new Point(-2, myComboLabel.getHeight())));
+    listPopup.show(new RelativePoint(myComboLabel, new Point(0, myComboLabel.getHeight())));
   }
 
   @Override
