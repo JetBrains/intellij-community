@@ -40,9 +40,10 @@ class ChangesViewContentManager(private val project: Project,
   }
 
   override fun setUp(toolWindow: ToolWindow) {
-    contentManager = toolWindow.contentManager
-    contentManager!!.addContentManagerListener(contentManagerListener)
-    Disposer.register(this, Disposable { contentManager!!.removeContentManagerListener(contentManagerListener) })
+    contentManager = toolWindow.contentManager.also {
+      it.addContentManagerListener(contentManagerListener)
+      Disposer.register(this, Disposable { it.removeContentManagerListener(contentManagerListener) })
+    }
 
     loadExtensionTabs()
 
