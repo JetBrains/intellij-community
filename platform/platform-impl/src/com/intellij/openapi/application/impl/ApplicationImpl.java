@@ -231,6 +231,10 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
         // see the comment in "executeOnPooledThread(Callable)"
         try (AccessToken ignored = myLock.applyReadPrivilege(suspensionId)) {
+          if (isDisposedOrDisposeInProgress()) {
+            return;
+          }
+
           action.run();
         }
         catch (ProcessCanceledException e) {
@@ -263,6 +267,10 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
         // For everyone else, "executeOnPooledThread" should be equivalent to "AppExecutorUtil" AKA "PooledThreadExecutor" pool
         try (AccessToken ignored = myLock.applyReadPrivilege(suspensionId)) {
+          if (isDisposedOrDisposeInProgress()) {
+            return null;
+          }
+
           return action.call();
         }
         catch (ProcessCanceledException e) {
