@@ -403,7 +403,7 @@ public abstract class VcsVFSListener implements Disposable {
 
   protected boolean isEventIgnored(@NotNull VFileEvent event) {
     FilePath filePath = VcsUtil.getFilePath(event.getPath());
-    return !isUnderMyVcs(filePath) && !myVcsIgnoreManager.isPotentiallyIgnoredFile(filePath);
+    return !isUnderMyVcs(filePath) || myChangeListManager.isIgnoredFile(filePath);
   }
 
   protected boolean isUnderMyVcs(@Nullable VirtualFile file) {
@@ -419,6 +419,7 @@ public abstract class VcsVFSListener implements Disposable {
     List<VirtualFile> addedFiles = myProcessor.acquireAddedFiles();
     LOG.debug("executeAdd. addedFiles: ", addedFiles);
     addedFiles.removeIf(myVcsFileListenerContextHelper::isAdditionIgnored);
+    addedFiles.removeIf(myVcsIgnoreManager::isPotentiallyIgnoredFile);
     Map<VirtualFile, VirtualFile> copyFromMap = myProcessor.acquireCopiedFiles();
     if (!addedFiles.isEmpty()) {
       executeAdd(addedFiles, copyFromMap);
