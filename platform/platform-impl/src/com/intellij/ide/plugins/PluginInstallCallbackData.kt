@@ -19,7 +19,7 @@ data class PendingDynamicPluginInstall(
 
 fun installPluginFromCallbackData(callbackData: PluginInstallCallbackData) {
   if (callbackData.restartNeeded) {
-    PluginManagerConfigurable.shutdownOrRestartApp()
+    PluginManagerConfigurable.shutdownOrRestartAppAfterInstall(callbackData.pluginDescriptor.name)
   }
   else {
     PluginInstaller.installAndLoadDynamicPlugin(callbackData.file, null, callbackData.pluginDescriptor as IdeaPluginDescriptorImpl)

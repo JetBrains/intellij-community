@@ -60,6 +60,7 @@ import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 /**
  * @author Alexander Lobas
@@ -709,6 +710,15 @@ public class PluginManagerConfigurable
                   result.descriptors.addAll(0, builtinList);
                 }
 
+                if (result.descriptors.isEmpty() && "/tag:Paid".equals(query)) {
+                  for (IdeaPluginDescriptor descriptor : getRepositoryPlugins()) {
+                    if (descriptor.getProductCode() != null) {
+                      result.descriptors.add(descriptor);
+                    }
+                  }
+                  result.sortByName();
+                }
+
                 ContainerUtil.removeDuplicates(result.descriptors);
 
                 if (!result.descriptors.isEmpty()) {
@@ -1280,10 +1290,16 @@ public class PluginManagerConfigurable
 
   @Messages.YesNoResult
   public static int showRestartDialog(@NotNull String title) {
+    return showRestartDialog(title, action -> IdeBundle
+      .message("ide.restart.required.message", action, ApplicationNamesInfo.getInstance().getFullProductName()));
+  }
+
+  @Messages.YesNoResult
+  public static int showRestartDialog(@NotNull String title, @NotNull Function<String, String> message) {
     String action =
       IdeBundle.message(ApplicationManager.getApplication().isRestartCapable() ? "ide.restart.action" : "ide.shutdown.action");
-    String message = IdeBundle.message("ide.restart.required.message", action, ApplicationNamesInfo.getInstance().getFullProductName());
-    return Messages.showYesNoDialog(message, title, action, IdeBundle.message("ide.notnow.action"), Messages.getQuestionIcon());
+    return Messages
+      .showYesNoDialog(message.apply(action), title, action, IdeBundle.message("ide.notnow.action"), Messages.getQuestionIcon());
   }
 
   public static void shutdownOrRestartApp() {
@@ -1292,6 +1308,16 @@ public class PluginManagerConfigurable
 
   public static void shutdownOrRestartApp(@NotNull String title) {
     if (showRestartDialog(title) == Messages.YES) {
+      ApplicationManagerEx.getApplicationEx().restart(true);
+    }
+  }
+
+  public static void shutdownOrRestartAppAfterInstall(@NotNull String plugin) {
+    String title = IdeBundle.message("update.notifications.title");
+    Function<String, String> message = action -> IdeBundle
+      .message("plugin.installed.ide.restart.required.message", plugin, action, ApplicationNamesInfo.getInstance().getFullProductName());
+
+    if (showRestartDialog(title, message) == Messages.YES) {
       ApplicationManagerEx.getApplicationEx().restart(true);
     }
   }
@@ -1604,8 +1630,7 @@ public class PluginManagerConfigurable
     if (myPluginModel.apply(myCardPanel)) return;
 
     if (myShutdownCallback == null && myPluginModel.createShutdownCallback) {
-      myShutdownCallback = () -> ApplicationManager.getApplication().invokeLater(
-        () -> shutdownOrRestartApp(IdeBundle.message("update.notifications.title")));
+      myShutdownCallback = () -> ApplicationManager.getApplication().invokeLater(() -> shutdownOrRestartApp());
     }
   }
 
