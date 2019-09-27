@@ -1,312 +1,260 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.vcs.changes.ui;
+package com.intellij.openapi.vcs.changes.ui
 
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsListener;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.ui.content.*;
-import com.intellij.util.Alarm;
-import com.intellij.util.NotNullFunction;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Comparing
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.vcs.ProjectLevelVcsManager
+import com.intellij.openapi.vcs.VcsListener
+import com.intellij.openapi.wm.ToolWindow
+import com.intellij.openapi.wm.ToolWindowId
+import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.ui.content.*
+import com.intellij.util.Alarm
+import com.intellij.util.ObjectUtils
+import com.intellij.util.containers.ContainerUtil
+import org.jetbrains.annotations.NonNls
+import java.util.*
+import java.util.function.Predicate
+import javax.swing.JPanel
 
-import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.function.Predicate;
+class ChangesViewContentManager(private val project: Project,
+                                private val vcsManager: ProjectLevelVcsManager) : ChangesViewContentI, Disposable {
 
-public class ChangesViewContentManager implements ChangesViewContentI, Disposable {
-  public static final String TOOLWINDOW_ID = ToolWindowId.VCS;
-  private static final Key<ChangesViewContentEP> myEPKey = Key.create("ChangesViewContentEP");
+  private val contentManagerListener: MyContentManagerListener
 
-  private final MyContentManagerListener myContentManagerListener;
-  @NotNull private final Project myProject;
-  private final ProjectLevelVcsManager myVcsManager;
+  private var contentManager: ContentManager? = null
+  private val vcsChangeAlarm = Alarm(Alarm.ThreadToUse.SWING_THREAD, this)
+  private val addedContents = ArrayList<Content>()
 
-  public static ChangesViewContentI getInstance(Project project) {
-    return project.getComponent(ChangesViewContentI.class);
+  val componentName: String
+    @NonNls
+    get() = "ChangesViewContentManager"
+
+  init {
+    contentManagerListener = MyContentManagerListener()
+    project.messageBus.connect(this).subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, MyVcsListener())
   }
 
-  private ContentManager myContentManager;
-  private final Alarm myVcsChangeAlarm;
-  private final List<Content> myAddedContents = new ArrayList<>();
+  override fun setUp(toolWindow: ToolWindow) {
+    contentManager = toolWindow.contentManager
+    contentManager!!.addContentManagerListener(contentManagerListener)
+    Disposer.register(this, Disposable { contentManager!!.removeContentManagerListener(contentManagerListener) })
 
-  public ChangesViewContentManager(@NotNull Project project, final ProjectLevelVcsManager vcsManager) {
-    myProject = project;
-    myVcsManager = vcsManager;
-    myVcsChangeAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, this);
-    myContentManagerListener = new MyContentManagerListener();
-    myProject.getMessageBus().connect(this).subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, new MyVcsListener());
-  }
+    loadExtensionTabs()
 
-  @Override
-  public void setUp(ToolWindow toolWindow) {
-    myContentManager = toolWindow.getContentManager();
-    myContentManager.addContentManagerListener(myContentManagerListener);
-    Disposer.register(this, () -> myContentManager.removeContentManagerListener(myContentManagerListener));
-
-    loadExtensionTabs();
-
-    for (Content content : myAddedContents) {
-      addIntoCorrectPlace(content);
+    for (content in addedContents) {
+      addIntoCorrectPlace(content)
     }
-    myAddedContents.clear();
+    addedContents.clear()
 
     // Ensure that first tab is selected after tabs reordering
-    Content firstContent = myContentManager.getContent(0);
-    if (firstContent != null) myContentManager.setSelectedContent(firstContent);
+    val firstContent = contentManager!!.getContent(0)
+    if (firstContent != null) contentManager!!.setSelectedContent(firstContent)
   }
 
-  private void loadExtensionTabs() {
-    for (ChangesViewContentEP ep : ChangesViewContentEP.EP_NAME.getExtensions(myProject)) {
-      final NotNullFunction<Project, Boolean> predicate = ep.newPredicateInstance(myProject);
-      boolean shouldShowTab = predicate == null || predicate.fun(myProject);
+  private fun loadExtensionTabs() {
+    for (ep in ChangesViewContentEP.EP_NAME.getExtensions(project)) {
+      val predicate = ep.newPredicateInstance(project)
+      val shouldShowTab = predicate == null || predicate.`fun`(project)
       if (shouldShowTab) {
-        myAddedContents.add(createExtensionTab(myProject, ep));
+        addedContents.add(createExtensionTab(project, ep))
       }
     }
   }
 
-  @NotNull
-  private static Content createExtensionTab(@NotNull Project project, @NotNull ChangesViewContentEP ep) {
-    final Content content = ContentFactory.SERVICE.getInstance().createContent(new ContentStub(ep), ep.getTabName(), false);
-    content.setCloseable(false);
-    content.putUserData(myEPKey, ep);
-
-    ChangesViewContentProvider.Preloader preloader = ep.newPreloaderInstance(project);
-    if (preloader != null) {
-      preloader.preloadTabContent(content);
-    }
-
-    return content;
-  }
-
-  private void updateExtensionTabs() {
-    if (myContentManager == null) return;
-    for (ChangesViewContentEP ep : ChangesViewContentEP.EP_NAME.getExtensions(myProject)) {
-      final NotNullFunction<Project, Boolean> predicate = ep.newPredicateInstance(myProject);
-      if (predicate == null) continue;
-      Content epContent = ContainerUtil.find(myContentManager.getContents(), content -> content.getUserData(myEPKey) == ep);
-      boolean shouldShowTab = predicate.fun(myProject);
+  private fun updateExtensionTabs() {
+    if (contentManager == null) return
+    for (ep in ChangesViewContentEP.EP_NAME.getExtensions(project)) {
+      val predicate = ep.newPredicateInstance(project) ?: continue
+      val epContent = ContainerUtil.find(contentManager!!.contents) { content -> content.getUserData(myEPKey) === ep }
+      val shouldShowTab = predicate.`fun`(project)
       if (shouldShowTab && epContent == null) {
-        Content tab = createExtensionTab(myProject, ep);
-        addIntoCorrectPlace(tab);
+        val tab = createExtensionTab(project, ep)
+        addIntoCorrectPlace(tab)
       }
       else if (!shouldShowTab && epContent != null) {
-        myContentManager.removeContent(epContent, true);
+        contentManager!!.removeContent(epContent, true)
       }
     }
   }
 
-  private void updateToolWindowAvailability() {
-    ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(TOOLWINDOW_ID);
-    if (toolWindow == null) return;
-    boolean available = isAvailable();
-    if (available && !toolWindow.isAvailable()) {
-      toolWindow.setShowStripeButton(true);
+  private fun createExtensionTab(project: Project, ep: ChangesViewContentEP): Content {
+    val content = ContentFactory.SERVICE.getInstance().createContent(ContentStub(ep), ep.getTabName(), false)
+    content.isCloseable = false
+    content.putUserData(myEPKey, ep)
+
+    val preloader = ep.newPreloaderInstance(project)
+    preloader?.preloadTabContent(content)
+
+    return content
+  }
+
+  private fun updateToolWindowAvailability() {
+    val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(TOOLWINDOW_ID) ?: return
+    val available = isAvailable
+    if (available && !toolWindow.isAvailable) {
+      toolWindow.isShowStripeButton = true
     }
-    toolWindow.setAvailable(available, null);
+    toolWindow.setAvailable(available, null)
   }
 
-  @Override
-  public boolean isAvailable() {
-    return myVcsManager.hasAnyMappings();
+  override fun isAvailable(): Boolean {
+    return vcsManager.hasAnyMappings()
   }
 
-  @Override
-  public void dispose() {
-    for (Content content : myAddedContents) {
-      Disposer.dispose(content);
+  override fun dispose() {
+    for (content in addedContents) {
+      Disposer.dispose(content)
     }
-    myAddedContents.clear();
+    addedContents.clear()
 
-    myVcsChangeAlarm.cancelAllRequests();
+    vcsChangeAlarm.cancelAllRequests()
   }
 
-  @NonNls @NotNull
-  public String getComponentName() {
-    return "ChangesViewContentManager";
-  }
-
-  @Override
-  public void addContent(Content content) {
-    if (myContentManager == null) {
-      myAddedContents.add(content);
+  override fun addContent(content: Content) {
+    if (contentManager == null) {
+      addedContents.add(content)
     }
     else {
-      addIntoCorrectPlace(content);
+      addIntoCorrectPlace(content)
     }
   }
 
-  @Override
-  public void removeContent(final Content content) {
-    if (myContentManager == null || myContentManager.isDisposed()) return;
-    myContentManager.removeContent(content, true);
+  override fun removeContent(content: Content) {
+    if (contentManager == null || contentManager!!.isDisposed) return
+    contentManager!!.removeContent(content, true)
   }
 
-  @Override
-  public void setSelectedContent(final Content content) {
-    setSelectedContent(content, false);
+  override fun setSelectedContent(content: Content) {
+    setSelectedContent(content, false)
   }
 
-  @Override
-  public void setSelectedContent(@NotNull Content content, boolean requestFocus) {
-    if (myContentManager == null) return;
-    myContentManager.setSelectedContent(content, requestFocus);
+  override fun setSelectedContent(content: Content, requestFocus: Boolean) {
+    if (contentManager == null) return
+    contentManager!!.setSelectedContent(content, requestFocus)
   }
 
-  public void adviseSelectionChanged(ContentManagerListener listener) {
-    if (myContentManager == null) return;
-
-    myContentManager.addContentManagerListener(listener);
-    Disposer.register(this, () -> myContentManager.removeContentManagerListener(myContentManagerListener));
+  fun adviseSelectionChanged(listener: ContentManagerListener) {
+    contentManager?.let {
+      it.addContentManagerListener(listener)
+      Disposer.register(this, Disposable { it.removeContentManagerListener(listener) })
+    }
   }
 
-  @Override
-  @Nullable
-  public <T> T getActiveComponent(final Class<T> aClass) {
-    if (myContentManager == null) return null;
-    Content selectedContent = myContentManager.getSelectedContent();
-    if (selectedContent == null) return null;
-    return ObjectUtils.tryCast(selectedContent.getComponent(), aClass);
+  override fun <T> getActiveComponent(aClass: Class<T>): T? {
+    if (contentManager == null) return null
+    val selectedContent = contentManager!!.selectedContent ?: return null
+    return ObjectUtils.tryCast(selectedContent.component, aClass)
   }
 
-  public boolean isContentSelected(@NotNull String contentName) {
-    if (myContentManager == null) return false;
-    Content selectedContent = myContentManager.getSelectedContent();
-    if (selectedContent == null) return false;
-    return Comparing.equal(contentName, selectedContent.getTabName());
+  fun isContentSelected(contentName: String): Boolean {
+    if (contentManager == null) return false
+    val selectedContent = contentManager!!.selectedContent ?: return false
+    return Comparing.equal(contentName, selectedContent.tabName)
   }
 
-  @Override
-  public void selectContent(@NotNull String tabName) {
-    selectContent(tabName, false);
+  override fun selectContent(tabName: String) {
+    selectContent(tabName, false)
   }
 
-  public void selectContent(@NotNull String tabName, boolean requestFocus) {
-    if (myContentManager == null) return;
-    Content toSelect = ContainerUtil.find(myContentManager.getContents(), content -> content.getTabName().equals(tabName));
+  fun selectContent(tabName: String, requestFocus: Boolean) {
+    if (contentManager == null) return
+    val toSelect = ContainerUtil.find(contentManager!!.contents) { content -> content.tabName == tabName }
     if (toSelect != null) {
-      myContentManager.setSelectedContent(toSelect, requestFocus);
+      contentManager!!.setSelectedContent(toSelect, requestFocus)
     }
   }
 
-  @NotNull
-  @Override
-  public List<Content> findContents(@NotNull Predicate<Content> predicate) {
-    List<Content> contents = myContentManager != null ? Arrays.asList(myContentManager.getContents()) : myAddedContents;
-    return ContainerUtil.filter(contents, content -> predicate.test(content));
+  override fun findContents(predicate: Predicate<Content>): List<Content> {
+    val contents = if (contentManager != null) listOf(*contentManager!!.contents) else addedContents
+    return ContainerUtil.filter(contents) { content -> predicate.test(content) }
   }
 
-  private class MyVcsListener implements VcsListener {
-    @Override
-    public void directoryMappingChanged() {
-      myVcsChangeAlarm.cancelAllRequests();
-      myVcsChangeAlarm.addRequest(() -> {
-        if (myProject.isDisposed()) return;
-        updateToolWindowAvailability();
-        updateExtensionTabs();
-      }, 100, ModalityState.NON_MODAL);
+  private inner class MyVcsListener : VcsListener {
+    override fun directoryMappingChanged() {
+      vcsChangeAlarm.cancelAllRequests()
+      vcsChangeAlarm.addRequest({
+                                  if (project.isDisposed) return@addRequest
+                                  updateToolWindowAvailability()
+                                  updateExtensionTabs()
+                                }, 100, ModalityState.NON_MODAL)
     }
   }
 
-  private static class ContentStub extends JPanel {
-    private final ChangesViewContentEP myEP;
+  private class ContentStub constructor(val ep: ChangesViewContentEP) : JPanel()
 
-    private ContentStub(final ChangesViewContentEP EP) {
-      myEP = EP;
-    }
-
-    public ChangesViewContentEP getEP() {
-      return myEP;
-    }
-  }
-
-  private class MyContentManagerListener extends ContentManagerAdapter {
-    @Override
-    public void selectionChanged(@NotNull final ContentManagerEvent event) {
-      Content content = event.getContent();
-      if (content.getComponent() instanceof ContentStub) {
-        ChangesViewContentEP ep = ((ContentStub)content.getComponent()).getEP();
-        ChangesViewContentProvider provider = ep.getInstance(myProject);
-        provider.initTabContent(content);
+  private inner class MyContentManagerListener : ContentManagerAdapter() {
+    override fun selectionChanged(event: ContentManagerEvent) {
+      val content = event.content
+      if (content.component is ContentStub) {
+        val ep = (content.component as ContentStub).ep
+        val provider = ep.getInstance(project)
+        provider.initTabContent(content)
       }
     }
   }
 
-  public static final Key<Integer> ORDER_WEIGHT_KEY = Key.create("ChangesView.ContentOrderWeight");
-  public static final String LOCAL_CHANGES = "Local Changes";
-  public static final String REPOSITORY = "Repository";
-  public static final String INCOMING = "Incoming";
-  public static final String SHELF = "Shelf";
-
-  public enum TabOrderWeight {
+  enum class TabOrderWeight(val tabName: String?, val weight: Int) {
     LOCAL_CHANGES(ChangesViewContentManager.LOCAL_CHANGES, 10),
     REPOSITORY(ChangesViewContentManager.REPOSITORY, 20),
     INCOMING(ChangesViewContentManager.INCOMING, 30),
     SHELF(ChangesViewContentManager.SHELF, 40),
     OTHER(null, 100),
-    LAST(null, Integer.MAX_VALUE);
-
-    @Nullable private final String myName;
-    private final int myWeight;
-
-    TabOrderWeight(@Nullable String name, int weight) {
-      myName = name;
-      myWeight = weight;
-    }
-
-    @Nullable
-    private String getName() {
-      return myName;
-    }
-
-    public int getWeight() {
-      return myWeight;
-    }
+    LAST(null, Integer.MAX_VALUE)
   }
 
-  private void addIntoCorrectPlace(final Content content) {
-    int weight = getContentWeight(content);
+  private fun addIntoCorrectPlace(content: Content) {
+    val weight = getContentWeight(content)
 
-    final Content[] contents = myContentManager.getContents();
+    val contents = contentManager!!.contents
 
-    int index = -1;
-    for (int i = 0; i < contents.length; i++) {
-      int oldWeight = getContentWeight(contents[i]);
+    var index = -1
+    for (i in contents.indices) {
+      val oldWeight = getContentWeight(contents[i])
       if (oldWeight > weight) {
-        index = i;
-        break;
+        index = i
+        break
       }
     }
 
-    if (index == -1) index = contents.length;
-    myContentManager.addContent(content, index);
+    if (index == -1) index = contents.size
+    contentManager!!.addContent(content, index)
   }
 
-  private static int getContentWeight(Content content) {
-    Integer userData = content.getUserData(ORDER_WEIGHT_KEY);
-    if (userData != null) return userData;
+  companion object {
+    @JvmField
+    val TOOLWINDOW_ID: String = ToolWindowId.VCS
+    private val myEPKey = Key.create<ChangesViewContentEP>("ChangesViewContentEP")
 
-    String tabName = content.getTabName();
-    for (TabOrderWeight value : TabOrderWeight.values()) {
-      if (value.getName() != null && value.getName().equals(tabName)) {
-        return value.getWeight();
-      }
+    @JvmStatic
+    fun getInstance(project: Project): ChangesViewContentI {
+      return project.getComponent(ChangesViewContentI::class.java)
     }
 
-    return TabOrderWeight.OTHER.getWeight();
+    @JvmField
+    val ORDER_WEIGHT_KEY = Key.create<Int>("ChangesView.ContentOrderWeight")
+
+    const val LOCAL_CHANGES = "Local Changes"
+    const val REPOSITORY = "Repository"
+    const val INCOMING = "Incoming"
+    const val SHELF = "Shelf"
+
+    private fun getContentWeight(content: Content): Int {
+      val userData = content.getUserData(ORDER_WEIGHT_KEY)
+      if (userData != null) return userData
+
+      val tabName = content.tabName
+      for (value in TabOrderWeight.values()) {
+        if (value.tabName != null && value.tabName == tabName) {
+          return value.weight
+        }
+      }
+
+      return TabOrderWeight.OTHER.weight
+    }
   }
 }
