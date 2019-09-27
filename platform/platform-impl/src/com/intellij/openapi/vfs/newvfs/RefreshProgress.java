@@ -48,11 +48,17 @@ final class RefreshProgress extends ProgressIndicatorBase {
     long totalTime = finishedTime - myStartedTime;
     // do not report short refreshes to avoid polluting the event log and increasing its size
     if (totalTime > 1000) {
-      FUCounterUsageLogger.getInstance().logEvent("vfs",
-                                                  "refreshed",
-                                                  new FeatureUsageData()
-                                                    .addData("start_time_ms", myStartedTime)
-                                                    .addData("finish_time_ms", finishedTime));
+      Application application = ApplicationManager.getApplication();
+      application.runReadAction(() -> {
+        // refresh might be finished during IDE shutdown, in this case, don't report events (requred subsystems are already disposed)
+        if (application.isDisposed()) return;
+        
+        FUCounterUsageLogger.getInstance().logEvent("vfs",
+                                                    "refreshed",
+                                                    new FeatureUsageData()
+                                                      .addData("start_time_ms", myStartedTime)
+                                                      .addData("finish_time_ms", finishedTime));
+      });
     }
   }
 
