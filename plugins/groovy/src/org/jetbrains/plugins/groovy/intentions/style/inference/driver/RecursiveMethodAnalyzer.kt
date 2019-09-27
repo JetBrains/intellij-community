@@ -314,7 +314,14 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod) : GroovyRecursiveEl
       val rightBound = rightTypeParameter?.upperBound() ?: rightType
       val leftTypeArguments = (leftBound as? PsiClassType)?.parameters ?: return
       val rightTypeArguments = (rightBound as? PsiClassType)?.parameters ?: return
-      val rangedRightTypeArguments = rightTypeArguments.map { it ?: PsiWildcardType.createUnbounded(method.manager) }.toTypedArray()
+      val rangedRightTypeArguments = rightTypeArguments.map {
+        val typeParameter = it.typeParameter()
+        when {
+          it == null -> PsiWildcardType.createUnbounded(method.manager)
+          typeParameter != null && typeParameter !in variableParameters -> typeParameter.upperBound()
+          else -> it
+        }
+      }.toTypedArray()
       for ((leftTypeArgument, rightTypeArgument) in leftTypeArguments.zip(rangedRightTypeArguments)) {
         leftTypeArgument ?: continue
         induceDeepConstraints(leftTypeArgument, rightTypeArgument, builder, method, targetMarker)

@@ -520,4 +520,8 @@ class AA { static void fo<caret>o(Integer a) {} }
   void testUnresolvedCode2() {
     doTest(true)
   }
+
+  void testCallWithInnerTypeParameter() {
+    doTest(true)
+  }
 }
