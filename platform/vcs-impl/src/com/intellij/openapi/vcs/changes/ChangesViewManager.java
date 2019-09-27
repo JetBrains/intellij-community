@@ -64,6 +64,7 @@ import static com.intellij.openapi.vcs.changes.ui.ChangesTree.DEFAULT_GROUPING_K
 import static com.intellij.openapi.vcs.changes.ui.ChangesTree.GROUP_BY_ACTION_GROUP;
 import static com.intellij.util.containers.ContainerUtil.set;
 import static com.intellij.util.ui.JBUI.Panels.simplePanel;
+import static com.intellij.vcs.commit.ToggleChangesViewCommitUiActionKt.isToggleCommitUi;
 import static java.util.Arrays.asList;
 
 @State(
@@ -340,6 +341,20 @@ public class ChangesViewManager implements ChangesViewEx,
         }
       }, this);
 
+      isToggleCommitUi().addListener(new RegistryValueListener.Adapter() {
+        @Override
+        public void afterValueChanged(@NotNull RegistryValue value) {
+          if (myCommitWorkflowHandler == null) return;
+
+          if (value.asBoolean()) {
+            myCommitWorkflowHandler.deactivate();
+          }
+          else {
+            myCommitWorkflowHandler.activate();
+          }
+        }
+      }, this);
+
       MessageBusConnection busConnection = myProject.getMessageBus().connect(this);
       busConnection.subscribe(RemoteRevisionsCache.REMOTE_VERSION_CHANGED, () -> scheduleRefresh());
       busConnection.subscribe(ProblemListener.TOPIC, new ProblemListener() {
@@ -381,6 +396,7 @@ public class ChangesViewManager implements ChangesViewEx,
           myCommitPanel = new ChangesViewCommitPanel(myView, this);
           myCommitPanel.setToolbarHorizontal(isToolbarHorizontalSetting.asBoolean());
           myCommitWorkflowHandler = new ChangesViewCommitWorkflowHandler(new ChangesViewCommitWorkflow(myProject), myCommitPanel);
+          if (isToggleCommitUi().asBoolean()) myCommitWorkflowHandler.deactivate();
           Disposer.register(this, myCommitPanel);
 
           myCommitPanelSplitter.setSecondComponent(myCommitPanel);

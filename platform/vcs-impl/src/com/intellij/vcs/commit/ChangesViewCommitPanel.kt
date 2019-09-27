@@ -205,13 +205,23 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView, private v
 
   override fun setCustomCommitActions(actions: List<AnAction>) = commitButton.setOptions(actions)
 
+  override val isActive: Boolean get() = isVisible
+
   override fun activate(): Boolean {
     val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID) ?: return false
     val contentManager = ChangesViewContentManager.getInstance(project)
 
+    changesView.isShowCheckboxes = true
+    isVisible = true
+
     contentManager.selectContent(ChangesViewContentManager.LOCAL_CHANGES)
     toolWindow.activate({ commitMessage.requestFocusInMessage() }, false)
     return true
+  }
+
+  override fun deactivate() {
+    changesView.isShowCheckboxes = false
+    isVisible = false
   }
 
   override fun select(item: Any) {

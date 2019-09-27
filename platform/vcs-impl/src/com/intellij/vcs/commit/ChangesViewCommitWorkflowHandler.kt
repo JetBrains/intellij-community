@@ -136,7 +136,9 @@ class ChangesViewCommitWorkflowHandler(
     }
   }
 
+  val isActive: Boolean get() = ui.isActive
   fun activate(): Boolean = ui.activate()
+  fun deactivate() = ui.deactivate()
 
   fun showCommitOptions(isFromToolbar: Boolean, dataContext: DataContext) =
     ui.showCommitOptions(ensureCommitOptions(), getCommitActionName(), isFromToolbar, dataContext)

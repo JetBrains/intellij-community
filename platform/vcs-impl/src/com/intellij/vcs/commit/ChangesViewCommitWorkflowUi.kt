@@ -7,6 +7,9 @@ import com.intellij.openapi.vcs.changes.InclusionModel
 import com.intellij.openapi.vcs.changes.LocalChangeList
 
 interface ChangesViewCommitWorkflowUi : CommitWorkflowUi {
+  val isActive: Boolean
+  fun deactivate()
+
   var isDefaultCommitActionEnabled: Boolean
   fun setCustomCommitActions(actions: List<AnAction>)
 
