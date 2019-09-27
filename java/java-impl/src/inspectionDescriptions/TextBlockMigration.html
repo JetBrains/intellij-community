@@ -1,26 +1,26 @@
 <html>
 <body>
-Reports cases when string or concatenation of strings can be replaced with a text block.
+Reports when a string or concatenation of strings can be replaced with a text block.
 <!-- tooltip end -->
 Example:
 <pre><code>
-  String html = "<html>\n" +
-                "    <body>\n" +
-                "        <p>Hello, world</p>\n" +
-                "    </body>\n" +
-                "</html>\n";
+  String html = "&lt;html&gt;\n" +
+                "    &lt;body&gt;\n" +
+                "        &lt;p>Hello, world&lt;/p&gt;\n" +
+                "    &lt;/body&gt;\n" +
+                "&lt;/html&gt;\n";
 </code></pre>
 <p>can be replaced with</p>
 <pre><code>
   String html = """
-                <html>
-                    <body>
-                        <p>Hello, world</p>
-                    </body>
-                </html>
+                &lt;html&gt;
+                    &lt;body&gt;
+                        &lt;p>Hello, world&lt;/p&gt;
+                    &lt;/body&gt;
+                &lt;/html&gt;
                 """;
 </code></pre>
-<p>This inspection works if the language level is 13 Preview.</p>
+<p>This inspection only reports if the configured language level is 13 Preview.</p>
 <p><small>New in 2019.3</small></p>
 </body>
 </html>
