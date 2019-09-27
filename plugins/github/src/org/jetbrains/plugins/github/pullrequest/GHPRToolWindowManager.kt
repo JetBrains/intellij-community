@@ -28,7 +28,6 @@ internal class GHPRToolWindowManager(private val project: Project) {
 
   @CalledInAwt
   fun createPullRequestsTab(remoteUrl: GitRemoteUrlCoordinates) {
-    if (!changesViewContentManager.isAvailable) return
     changesViewContentManager.addContent(createContent(remoteUrl))
     updateTabNames()
   }
@@ -54,8 +53,6 @@ internal class GHPRToolWindowManager(private val project: Project) {
 
   @CalledInAwt
   fun showPullRequestsTabIfExists(remoteUrl: GitRemoteUrlCoordinates): Boolean {
-    if (!changesViewContentManager.isAvailable) return false
-
     val content = changesViewContentManager.findContents {
       it.remoteUrl == remoteUrl
     }.firstOrNull() ?: return false

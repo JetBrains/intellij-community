@@ -9,9 +9,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsListener
-import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowId
-import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.content.*
 import com.intellij.util.Alarm
 import com.intellij.util.ObjectUtils
@@ -21,8 +19,7 @@ import java.util.*
 import java.util.function.Predicate
 import javax.swing.JPanel
 
-class ChangesViewContentManager(private val project: Project,
-                                private val vcsManager: ProjectLevelVcsManager) : ChangesViewContentI, Disposable {
+class ChangesViewContentManager(private val project: Project) : ChangesViewContentI, Disposable {
 
   private val contentManagerListener: MyContentManagerListener
 
@@ -39,8 +36,8 @@ class ChangesViewContentManager(private val project: Project,
     project.messageBus.connect(this).subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, MyVcsListener())
   }
 
-  override fun setUp(toolWindow: ToolWindow) {
-    contentManager = toolWindow.contentManager.also {
+  override fun setContentManager(manager: ContentManager) {
+    contentManager = manager.also {
       it.addContentManagerListener(contentManagerListener)
       Disposer.register(this, Disposable { it.removeContentManagerListener(contentManagerListener) })
     }
@@ -53,8 +50,8 @@ class ChangesViewContentManager(private val project: Project,
     addedContents.clear()
 
     // Ensure that first tab is selected after tabs reordering
-    val firstContent = contentManager!!.getContent(0)
-    if (firstContent != null) contentManager!!.setSelectedContent(firstContent)
+    val firstContent = manager.getContent(0)
+    if (firstContent != null) manager.setSelectedContent(firstContent)
   }
 
   private fun loadExtensionTabs() {
@@ -92,19 +89,6 @@ class ChangesViewContentManager(private val project: Project,
     preloader?.preloadTabContent(content)
 
     return content
-  }
-
-  private fun updateToolWindowAvailability() {
-    val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(TOOLWINDOW_ID) ?: return
-    val available = isAvailable
-    if (available && !toolWindow.isAvailable) {
-      toolWindow.isShowStripeButton = true
-    }
-    toolWindow.setAvailable(available, null)
-  }
-
-  override fun isAvailable(): Boolean {
-    return vcsManager.hasAnyMappings()
   }
 
   override fun dispose() {
@@ -180,7 +164,6 @@ class ChangesViewContentManager(private val project: Project,
       vcsChangeAlarm.cancelAllRequests()
       vcsChangeAlarm.addRequest({
                                   if (project.isDisposed) return@addRequest
-                                  updateToolWindowAvailability()
                                   updateExtensionTabs()
                                 }, 100, ModalityState.NON_MODAL)
     }

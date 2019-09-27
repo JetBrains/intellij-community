@@ -1,26 +1,18 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
-import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Predicate;
 
-/**
- * @author irengrig
- */
 public class DummyChangesViewContentManager implements ChangesViewContentI {
-  @Override
-  public void setUp(ToolWindow toolWindow) {
-
-  }
 
   @Override
-  public boolean isAvailable() {
-    return false;
+  public void setContentManager(@NotNull ContentManager contentManager) {
   }
 
   @Override
