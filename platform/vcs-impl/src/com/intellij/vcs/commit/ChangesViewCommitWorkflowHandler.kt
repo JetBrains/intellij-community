@@ -13,6 +13,7 @@ import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.actions.DefaultCommitExecutorAction
+import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.vcs.commit.AbstractCommitWorkflow.Companion.getCommitExecutors
 import gnu.trove.THashSet
 
@@ -155,6 +156,11 @@ class ChangesViewCommitWorkflowHandler(
 
     updateDefaultCommitActionEnabled()
     super.inclusionChanged()
+  }
+
+  override fun beforeCommitChecksEnded(isDefaultCommit: Boolean, result: CheckinHandler.ReturnResult) {
+    super.beforeCommitChecksEnded(isDefaultCommit, result)
+    if (isToggleCommitUi.asBoolean() && result == CheckinHandler.ReturnResult.COMMIT) ui.deactivate()
   }
 
   override fun updateWorkflow() {
