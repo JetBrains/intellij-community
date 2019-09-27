@@ -10,7 +10,9 @@ import com.intellij.openapi.wm.ToolWindow
 internal class ChangesViewToolWindowManagerImpl(private val project: Project) : ChangesViewToolWindowManager {
   override fun setToolWindow(toolWindow: ToolWindow) {
     init(toolWindow)
-    ChangesViewContentManager.getInstance(project).setContentManager(toolWindow.contentManager)
+    val changesViewContentManager = ChangesViewContentManager.getInstance(project)
+    ChangesViewExtensionsManager(project, changesViewContentManager, project)
+    changesViewContentManager.setContentManager(toolWindow.contentManager)
   }
 
   /**

@@ -2,47 +2,33 @@
 package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.vcs.ProjectLevelVcsManager
-import com.intellij.openapi.vcs.VcsListener
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.ui.content.*
-import com.intellij.util.Alarm
 import com.intellij.util.ObjectUtils
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.NonNls
 import java.util.*
 import java.util.function.Predicate
-import javax.swing.JPanel
 
-class ChangesViewContentManager(private val project: Project) : ChangesViewContentI, Disposable {
-
-  private val contentManagerListener: MyContentManagerListener
+class ChangesViewContentManager : ChangesViewContentI, Disposable {
 
   private var contentManager: ContentManager? = null
-  private val vcsChangeAlarm = Alarm(Alarm.ThreadToUse.SWING_THREAD, this)
   private val addedContents = ArrayList<Content>()
 
   val componentName: String
     @NonNls
     get() = "ChangesViewContentManager"
 
-  init {
-    contentManagerListener = MyContentManagerListener()
-    project.messageBus.connect(this).subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, MyVcsListener())
-  }
-
   override fun setContentManager(manager: ContentManager) {
     contentManager = manager.also {
-      it.addContentManagerListener(contentManagerListener)
-      Disposer.register(this, Disposable { it.removeContentManagerListener(contentManagerListener) })
+      val contentProvidersListener = ContentProvidersListener()
+      it.addContentManagerListener(contentProvidersListener)
+      Disposer.register(this, Disposable { it.removeContentManagerListener(contentProvidersListener) })
     }
-
-    loadExtensionTabs()
 
     for (content in addedContents) {
       addIntoCorrectPlace(content)
@@ -54,50 +40,11 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
     if (firstContent != null) manager.setSelectedContent(firstContent)
   }
 
-  private fun loadExtensionTabs() {
-    for (ep in ChangesViewContentEP.EP_NAME.getExtensions(project)) {
-      val predicate = ep.newPredicateInstance(project)
-      val shouldShowTab = predicate == null || predicate.`fun`(project)
-      if (shouldShowTab) {
-        addedContents.add(createExtensionTab(project, ep))
-      }
-    }
-  }
-
-  private fun updateExtensionTabs() {
-    if (contentManager == null) return
-    for (ep in ChangesViewContentEP.EP_NAME.getExtensions(project)) {
-      val predicate = ep.newPredicateInstance(project) ?: continue
-      val epContent = ContainerUtil.find(contentManager!!.contents) { content -> content.getUserData(myEPKey) === ep }
-      val shouldShowTab = predicate.`fun`(project)
-      if (shouldShowTab && epContent == null) {
-        val tab = createExtensionTab(project, ep)
-        addIntoCorrectPlace(tab)
-      }
-      else if (!shouldShowTab && epContent != null) {
-        contentManager!!.removeContent(epContent, true)
-      }
-    }
-  }
-
-  private fun createExtensionTab(project: Project, ep: ChangesViewContentEP): Content {
-    val content = ContentFactory.SERVICE.getInstance().createContent(ContentStub(ep), ep.getTabName(), false)
-    content.isCloseable = false
-    content.putUserData(myEPKey, ep)
-
-    val preloader = ep.newPreloaderInstance(project)
-    preloader?.preloadTabContent(content)
-
-    return content
-  }
-
   override fun dispose() {
     for (content in addedContents) {
       Disposer.dispose(content)
     }
     addedContents.clear()
-
-    vcsChangeAlarm.cancelAllRequests()
   }
 
   override fun addContent(content: Content) {
@@ -110,8 +57,14 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
   }
 
   override fun removeContent(content: Content) {
-    if (contentManager == null || contentManager!!.isDisposed) return
-    contentManager!!.removeContent(content, true)
+    val contentManager = contentManager
+    if (contentManager == null || contentManager.isDisposed) {
+      addedContents.remove(content)
+      Disposer.dispose(content)
+    }
+    else {
+      contentManager.removeContent(content, true)
+    }
   }
 
   override fun setSelectedContent(content: Content) {
@@ -159,26 +112,12 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
     return ContainerUtil.filter(contents) { content -> predicate.test(content) }
   }
 
-  private inner class MyVcsListener : VcsListener {
-    override fun directoryMappingChanged() {
-      vcsChangeAlarm.cancelAllRequests()
-      vcsChangeAlarm.addRequest({
-                                  if (project.isDisposed) return@addRequest
-                                  updateExtensionTabs()
-                                }, 100, ModalityState.NON_MODAL)
-    }
-  }
-
-  private class ContentStub constructor(val ep: ChangesViewContentEP) : JPanel()
-
-  private inner class MyContentManagerListener : ContentManagerAdapter() {
+  private inner class ContentProvidersListener : ContentManagerAdapter() {
     override fun selectionChanged(event: ContentManagerEvent) {
       val content = event.content
-      if (content.component is ContentStub) {
-        val ep = (content.component as ContentStub).ep
-        val provider = ep.getInstance(project)
-        provider.initTabContent(content)
-      }
+      val provider = content.getUserData(CONTENT_PROVIDER_SUPPLIER_KEY)?.invoke() ?: return
+      provider.initTabContent(content)
+      content.putUserData(CONTENT_PROVIDER_SUPPLIER_KEY, null)
     }
   }
 
@@ -212,7 +151,8 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
   companion object {
     @JvmField
     val TOOLWINDOW_ID: String = ToolWindowId.VCS
-    private val myEPKey = Key.create<ChangesViewContentEP>("ChangesViewContentEP")
+    @JvmField
+    val CONTENT_PROVIDER_SUPPLIER_KEY = Key.create<() -> ChangesViewContentProvider>("CONTENT_PROVIDER_SUPPLIER")
 
     @JvmStatic
     fun getInstance(project: Project): ChangesViewContentI {
