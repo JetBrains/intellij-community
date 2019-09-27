@@ -116,8 +116,8 @@ class JavaInlayParameterHintsProvider : InlayParameterHintsProvider {
   val isShowHintWhenExpressionTypeIsClear: Option = Option("java.clear.expression.type",
                                                            "Complex expressions: binary, functional, array access and other",
                                                            false).also {
-    it.extendedDescription = "array initializer, switch, conditional, reference, instance " +
-                             "of, assignment, call, qualified, type cast, class object access expressions"
+    it.extendedDescription = "Array initializer, switch, conditional, reference, instance " +
+                             "of, assignment, call, qualified, type cast, class object access expressions."
   }
 
   val isShowHintsForEnumConstants: Option = Option("java.enums",
