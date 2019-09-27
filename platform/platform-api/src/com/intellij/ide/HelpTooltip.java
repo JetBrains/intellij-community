@@ -6,6 +6,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
@@ -13,7 +14,10 @@ import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.panels.VerticalLayout;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.JBEmptyBorder;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.JBValue;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,16 +29,9 @@ import javax.swing.text.View;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.font.FontRenderContext;
-import java.awt.font.LineBreakMeasurer;
-import java.awt.font.TextAttribute;
-import java.awt.font.TextLayout;
-import java.text.AttributedCharacterIterator;
-import java.text.AttributedString;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Map;
 import java.util.function.BooleanSupplier;
 import java.util.regex.Pattern;
 
@@ -109,7 +106,6 @@ public class HelpTooltip {
   private static final JBValue DESCRIPTION_FONT_SIZE_DELTA = new JBValue.UIInteger("HelpTooltip.descriptionSizeDelta", 0);
   private static final JBValue CURSOR_OFFSET = new JBValue.UIInteger("HelpTooltip.mouseCursorOffset", 20);
 
-  private static final String DOTS = "...";
   private static final String PARAGRAPH_SPLITTER = "<p/?>";
   private static final Pattern HTML_TAG = Pattern.compile("<b>|<br>");
 
@@ -328,11 +324,13 @@ public class HelpTooltip {
     tipPanel.setBackground(BACKGROUND_COLOR);
 
     boolean hasTitle = StringUtil.isNotEmpty(title);
+    boolean hasDescription = StringUtil.isNotEmpty(description);
+
     if (hasTitle) {
-      tipPanel.add(hasHTMLTags(title) ? new Paragraph(title, false) : new Header(), VerticalLayout.TOP);
+      tipPanel.add(new Header(hasDescription), VerticalLayout.TOP);
     }
 
-    if (StringUtil.isNotEmpty(description)) {
+    if (hasDescription) {
       String[] pa = description.split(PARAGRAPH_SPLITTER);
       isMultiline = pa.length > 1;
       Arrays.stream(pa).filter(p -> !p.isEmpty()).forEach(p -> tipPanel.add(new Paragraph(p, hasTitle), VerticalLayout.TOP));
@@ -340,7 +338,7 @@ public class HelpTooltip {
 
     if (!hasTitle && StringUtil.isNotEmpty(shortcut)) {
       JLabel shortcutLabel = new JLabel(shortcut);
-      shortcutLabel.setFont(deriveDescriptionFont(shortcutLabel.getFont(), hasTitle));
+      shortcutLabel.setFont(deriveDescriptionFont(shortcutLabel.getFont(), false));
       shortcutLabel.setForeground(SHORTCUT_COLOR);
 
       tipPanel.add(shortcutLabel, VerticalLayout.TOP);
@@ -357,9 +355,9 @@ public class HelpTooltip {
     return tipPanel;
   }
 
-  private static boolean hasHTMLTags(@Nullable String string) {
-    return StringUtil.isNotEmpty(string) && HTML_TAG.matcher(string).find();
-  }
+  //private static boolean hasHTMLTags(@Nullable String string) {
+  //  return StringUtil.isNotEmpty(string) && HTML_TAG.matcher(string).find();
+  //}
 
   private void installMouseListeners(@NotNull JComponent owner) {
     owner.addMouseListener(myMouseListener);
@@ -485,129 +483,27 @@ public class HelpTooltip {
            deriveHeaderFont(font);
   }
 
-  private class Header extends JPanel {
-    private final AttributedString titleString;
-    private final AttributedString dotString;
-    private final AttributedString shortcutString;
-
-    private LineBreakMeasurer lineMeasurer;
-    private TextLayout dotLayout;
-    private TextLayout shortcutLayout;
-
-    private final int paragraphStart;
-    private final int paragraphEnd;
-
-    private Header() {
-      setOpaque(false);
-
-      Font font = deriveHeaderFont(getFont());
-      setFont(font);
-
-      Map<TextAttribute,?> tfa = font.getAttributes();
-      titleString = new AttributedString(title, tfa);
-      dotString = new AttributedString(DOTS, tfa);
-      boolean hasShortcut = StringUtil.isNotEmpty(shortcut);
-      shortcutString = hasShortcut ? new AttributedString(shortcut, font.getAttributes()) : null;
-
-      AttributedCharacterIterator paragraph = titleString.getIterator();
-      paragraphStart = paragraph.getBeginIndex();
-      paragraphEnd = paragraph.getEndIndex();
-
-      // Compute preferred size
-      FontMetrics tfm = getFontMetrics(font);
-      int titleWidth = UIUtilities.stringWidth(this, tfm, title);
-
-      FontMetrics fm = getFontMetrics(font);
-      titleWidth += hasShortcut ? HGAP.get() + UIUtilities.stringWidth(this, fm, shortcut) : 0;
-
-      boolean limitWidth = StringUtil.isNotEmpty(description) || link != null;
-      isMultiline = limitWidth && titleWidth > MAX_WIDTH.get();
-      setPreferredSize(isMultiline ? new Dimension(MAX_WIDTH.get(), tfm.getHeight() * 2) : new Dimension(titleWidth, fm.getHeight()));
+  private static class BoundWidthLabel extends JLabel {
+    private static Collection<View> getRows(@NotNull View root) {
+      Collection<View> rows = new ArrayList<>();
+      visit(root, rows);
+      return rows;
     }
 
-    @Override public void paintComponent(Graphics g) {
-      Graphics2D g2 = (Graphics2D)g.create();
-      try {
-        g2.setColor(FOREGROUND_COLOR);
-        GraphicsUtil.setupAntialiasing(g2);
-        if (lineMeasurer == null) {
-          FontRenderContext frc = g2.getFontRenderContext();
-          lineMeasurer = new LineBreakMeasurer(titleString.getIterator(), frc);
-
-          LineBreakMeasurer dotMeasurer = new LineBreakMeasurer(dotString.getIterator(), frc);
-          dotLayout = dotMeasurer.nextLayout(Float.POSITIVE_INFINITY);
-
-          if (shortcutString != null) {
-            LineBreakMeasurer shortcutMeasurer = new LineBreakMeasurer(shortcutString.getIterator(), frc);
-            shortcutLayout = shortcutMeasurer.nextLayout(Float.POSITIVE_INFINITY);
-          }
-        }
-
-        lineMeasurer.setPosition(paragraphStart);
-
-        float breakWidth = getWidth();
-        float drawPosY = 0;
-        int line = 0;
-
-        TextLayout layout = null;
-        while (lineMeasurer.getPosition() < paragraphEnd && line < 1) {
-          layout = lineMeasurer.nextLayout(breakWidth);
-
-          drawPosY += layout.getAscent();
-          layout.draw(g2, 0, drawPosY);
-
-          drawPosY += layout.getDescent() + layout.getLeading();
-          line++;
-        }
-
-        if (lineMeasurer.getPosition() < paragraphEnd) {
-          if (shortcutString != null) {
-            breakWidth -= dotLayout.getAdvance() + HGAP.get() + shortcutLayout.getAdvance();
-          }
-
-          layout = lineMeasurer.nextLayout(breakWidth);
-
-          drawPosY += layout.getAscent();
-          layout.draw(g2, 0, drawPosY);
-
-          if (shortcutString != null) {
-            dotLayout.draw(g2, layout.getAdvance(), drawPosY);
-
-            g2.setColor(SHORTCUT_COLOR);
-            shortcutLayout.draw(g2, layout.getAdvance() + dotLayout.getAdvance() + HGAP.get(), drawPosY);
-          }
-        }
-        else if (layout != null && shortcutString != null) {
-          g2.setColor(SHORTCUT_COLOR);
-          if (Float.compare(getWidth() - layout.getAdvance(), shortcutLayout.getAdvance() + HGAP.get()) >= 0) {
-            drawPosY = shortcutLayout.getAscent();
-            shortcutLayout.draw(g2, layout.getAdvance() + HGAP.get(), drawPosY);
-          } else {
-            drawPosY += shortcutLayout.getAscent();
-            shortcutLayout.draw(g2, 0, drawPosY);
-          }
-        }
+    private static void visit(@NotNull View v, Collection<? super View> result) {
+      String cname = v.getClass().getCanonicalName();
+      if (cname != null && cname.contains("ParagraphView.Row")) {
+        result.add(v);
       }
-      finally {
-        g2.dispose();
+
+      for(int i = 0; i < v.getViewCount(); i++) {
+        visit(v.getView(i), result);
       }
     }
-  }
 
-  private class Paragraph extends JLabel {
-    private Paragraph(String text, boolean hasTitle) {
-      setForeground(hasTitle ? INFO_COLOR : FOREGROUND_COLOR);
-      setFont(deriveDescriptionFont(getFont(), hasTitle));
-
-      View v = BasicHTML.createHTMLView(this, String.format("<html>%s</html>", text));
-      float width = v.getPreferredSpan(View.X_AXIS);
-      isMultiline = isMultiline || width > MAX_WIDTH.get();
-      setText(width > MAX_WIDTH.get() ?
-              String.format("<html><div width=%d>%s</div></html>", MAX_WIDTH.get(), text) :
-              String.format("<html>%s</html>", text));
-
+    void setSizeForWidth(float width) {
       if (width > MAX_WIDTH.get()) {
-        v = (View)getClientProperty(BasicHTML.propertyKey);
+        View v = (View)getClientProperty(BasicHTML.propertyKey);
         if (v != null) {
           width = 0.0f;
           for(View row : getRows(v)) {
@@ -621,22 +517,48 @@ public class HelpTooltip {
         }
       }
     }
+  }
 
-    private Collection<View> getRows(@NotNull View root) {
-      Collection<View> rows = new ArrayList<>();
-      visit(root, rows);
-      return rows;
+  private class Header extends BoundWidthLabel {
+    private Header(boolean obeyWidth) {
+      setFont(deriveHeaderFont(getFont()));
+      setForeground(FOREGROUND_COLOR);
+
+      if (obeyWidth) {
+        View v = BasicHTML.createHTMLView(this, String.format("<html>%s%s</html>", title, getShortcutAsHTML()));
+        float width = v.getPreferredSpan(View.X_AXIS);
+        isMultiline = isMultiline || width > MAX_WIDTH.get();
+        setText(width > MAX_WIDTH.get() ?
+                String.format("<html><div width=%d>%s%s</div></html>", MAX_WIDTH.get(), title, getShortcutAsHTML()) :
+                String.format("<html>%s%s</html>", title, getShortcutAsHTML()));
+
+        setSizeForWidth(width);
+      }
+      else {
+        setText(String.format("<html>%s%s</html>", title, getShortcutAsHTML()));
+      }
     }
 
-    private void visit(@NotNull View v, Collection<? super View> result) {
-      String cname = v.getClass().getCanonicalName();
-      if (cname != null && cname.contains("ParagraphView.Row")) {
-        result.add(v);
-      }
+    private String getShortcutAsHTML() {
+      return StringUtil.isNotEmpty(shortcut) ?
+             String.format(" <font color=\"%s\">%s</font>", ColorUtil.toHtmlColor(SHORTCUT_COLOR), shortcut) :
+             "";
+    }
+  }
 
-      for(int i = 0; i < v.getViewCount(); i++) {
-        visit(v.getView(i), result);
-      }
+  private class Paragraph extends BoundWidthLabel {
+    private Paragraph(String text, boolean hasTitle) {
+      setForeground(hasTitle ? INFO_COLOR : FOREGROUND_COLOR);
+      setFont(deriveDescriptionFont(getFont(), hasTitle));
+
+      View v = BasicHTML.createHTMLView(this, String.format("<html>%s</html>", text));
+      float width = v.getPreferredSpan(View.X_AXIS);
+      isMultiline = isMultiline || width > MAX_WIDTH.get();
+      setText(width > MAX_WIDTH.get() ?
+              String.format("<html><div width=%d>%s</div></html>", MAX_WIDTH.get(), text) :
+              String.format("<html>%s</html>", text));
+
+      setSizeForWidth(width);
     }
   }
 }

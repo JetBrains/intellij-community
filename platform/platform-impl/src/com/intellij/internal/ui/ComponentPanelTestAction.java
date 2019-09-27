@@ -2,6 +2,7 @@
 package com.intellij.internal.ui;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ModalityState;
@@ -235,7 +236,14 @@ public class ComponentPanelTestAction extends DumbAwareAction {
         withTooltip("Enable full border around the tabbed pane").createPanel(), gc);
 
       gc.gridy++;
-      topPanel.add(UI.PanelFactory.panel(new JButton("Abracadabra")).
+      JButton button = new JButton("Abracadabra");
+      new HelpTooltip().
+        setTitle("Highlight Non-Picked Commit and Automatically Create Some Very Long Action Name").
+        setShortcut("Ctrl+Alt+Shift+H").
+        setDescription("Highlight commits from selected branch that have not been applied to the current branch.").
+        installOn(button);
+
+      topPanel.add(UI.PanelFactory.panel(button).
         withComment("Abradabra comment").resizeX(false).createPanel(), gc);
 
       gc.gridy++;
