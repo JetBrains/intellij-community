@@ -2,6 +2,7 @@
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -10,13 +11,12 @@ import javax.swing.*;
 /**
  * This class purpose is to reserve action-id in a plugin.xml so the action appears in Keymap.
  * Then Keymap assignments can be used for non-registered actions created on runtime.
- *
+ * <p>
  * Another usage is to override (hide) already registered actions by means of plugin.xml, see {@link EmptyActionGroup} as well.
- *
- * @see EmptyActionGroup
  *
  * @author Gregory.Shrago
  * @author Konstantin Bulenkov
+ * @see EmptyActionGroup
  */
 public final class EmptyAction extends AnAction {
   private boolean myEnabled;
@@ -28,11 +28,14 @@ public final class EmptyAction extends AnAction {
     myEnabled = enabled;
   }
 
-  public EmptyAction(@Nullable String text, @Nullable String description, @Nullable Icon icon) {
+  public EmptyAction(@Nullable @Nls(capitalization = Nls.Capitalization.Title) String text,
+                     @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String description, @Nullable Icon icon) {
     super(text, description, icon);
   }
 
-  public static AnAction createEmptyAction(@Nullable String name, @Nullable Icon icon, boolean alwaysEnabled) {
+  public static AnAction createEmptyAction(@Nullable @Nls(capitalization = Nls.Capitalization.Title) String name,
+                                           @Nullable Icon icon,
+                                           boolean alwaysEnabled) {
     final EmptyAction emptyAction = new EmptyAction(name, null, icon);
     emptyAction.myEnabled = alwaysEnabled;
     return emptyAction;
@@ -122,7 +125,7 @@ public final class EmptyAction extends AnAction {
       copyFrom(action);
       setEnabledInModalContext(action.isEnabledInModalContext());
     }
-    
+
     @NotNull
     public ActionGroup getDelegate() {
       return myDelegate;
