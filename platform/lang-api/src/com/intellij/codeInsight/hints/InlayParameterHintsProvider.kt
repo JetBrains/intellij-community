@@ -111,6 +111,7 @@ sealed class HintInfo {
 data class Option(@NonNls val id: String,
                   val name: String,
                   val defaultValue: Boolean) {
+  var extendedDescription: String? = null
 
   fun isEnabled(): Boolean = get()
 

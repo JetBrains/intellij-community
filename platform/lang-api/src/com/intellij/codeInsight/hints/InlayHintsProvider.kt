@@ -117,12 +117,22 @@ interface ImmediateConfigurable {
   val cases : List<Case>
     get() = emptyList()
 
-  class Case(val name: String, private val loadFromSettings: () -> Boolean, private val onUserChanged: (Boolean) -> Unit) {
+  class Case(
+    val name: String,
+    private val loadFromSettings: () -> Boolean,
+    private val onUserChanged: (Boolean) -> Unit,
+    val extendedDescription: String? = null
+  ) {
     var value: Boolean
       get() = loadFromSettings()
       set(value) = onUserChanged(value)
 
-    constructor(name: String, property: KMutableProperty0<Boolean>) : this(name, { property.get() }, {property.set(it)})
+    constructor(name: String, property: KMutableProperty0<Boolean>, extendedDescription: String? = null) : this(
+      name,
+      { property.get() },
+      {property.set(it)},
+      extendedDescription
+    )
   }
 }
 
