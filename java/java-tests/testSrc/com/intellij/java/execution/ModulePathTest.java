@@ -18,6 +18,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.PathsList;
+import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor;
 
 import java.io.File;
@@ -85,6 +86,19 @@ public class ModulePathTest extends BaseConfigurationTestCase {
     PathsList modulePath = params4Tests.getModulePath();
     assertTrue("module path: " + modulePath.getPathsString(),
                modulePath.getPathList().contains(CompilerModuleExtension.getInstance(module).getCompilerOutputPath().getPath()));
+  }
+
+  public void testNonModularizedProject() throws Exception {
+    Module module = createEmptyModule();
+    JUnitConfiguration configuration = setupConfiguration(new JpsMavenRepositoryLibraryDescriptor("org.junit.jupiter", "junit-jupiter-api", "5.5.2"),
+                                                          "prod1", module);
+    ModuleRootModificationUtil.updateModel(module, model -> {
+      ContentEntry entry = model.getContentEntries()[0];
+      entry.removeSourceFolder(entry.getSourceFolders(JavaSourceRootType.SOURCE).get(0));
+    });
+    JavaParameters params4Tests = configuration.getTestObject().createJavaParameters4Tests();
+    assertEmpty(params4Tests.getModulePath().getPathList());
+    assertFalse(params4Tests.getVMParametersList().getParametersString().contains("--add-modules"));
   }
 
   private JUnitConfiguration setupConfiguration(JpsMavenRepositoryLibraryDescriptor libraryDescriptor, String sources, Module module) throws Exception {
