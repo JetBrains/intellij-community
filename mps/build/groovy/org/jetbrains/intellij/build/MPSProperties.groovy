@@ -36,11 +36,14 @@ class MPSProperties extends ProductProperties {
 
         productLayout.bundledPluginModules = [
                 "intellij.java.plugin",
+                "intellij.java.ide.customization",
                 "intellij.terminal",
+                "intellij.settingsRepository",
+                "intellij.tasks.core",
                 "intellij.vcs.git",
                 "intellij.vcs.svn",
                 "intellij.vcs.github",
-                "intellij.java.coverage"
+                "intellij.vcs.changeReminder"
         ]
         productLayout.prepareCustomPluginRepositoryForPublishedPlugins = false
         productLayout.compatiblePluginsToIgnore = ["intellij.java.plugin"]
