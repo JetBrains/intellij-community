@@ -273,15 +273,21 @@ public final class SystemShortcuts {
     notification.notify(null);
   }
 
+  private static Class ourShkClass;
+  private static Method ourMethodGetDescription;
+  private static Method ourMethodReadSystemHotkeys;
+
   private static @NotNull String getDescription(@NotNull AWTKeyStroke systemHotkey) {
-    Class shkClass = ReflectionUtil.forName("java.awt.desktop.SystemHotkey");
-    if (shkClass == null)
+    if (ourShkClass == null)
+      ourShkClass = ReflectionUtil.forName("java.awt.desktop.SystemHotkey");
+    if (ourShkClass == null)
       return ourUnknownSysAction;
 
-    final Method method = ReflectionUtil.getMethod(shkClass, "getDescription");
+    if (ourMethodGetDescription == null)
+      ourMethodGetDescription = ReflectionUtil.getMethod(ourShkClass, "getDescription");
     String result = null;
     try {
-      result = (String)method.invoke(systemHotkey);
+      result = (String)ourMethodGetDescription.invoke(systemHotkey);
     } catch (Throwable e) {
       Logger.getInstance(SystemShortcuts.class).error(e);
     }
@@ -299,15 +305,17 @@ public final class SystemShortcuts {
       if (!Registry.is("read.system.shortcuts"))
         return;
 
-      Class shkClass = ReflectionUtil.forName("java.awt.desktop.SystemHotkey");
-      if (shkClass == null)
+      if (ourShkClass == null)
+        ourShkClass = ReflectionUtil.forName("java.awt.desktop.SystemHotkey");
+      if (ourShkClass == null)
         return;
 
-      final Method method = ReflectionUtil.getMethod(shkClass, "readSystemHotkeys");
-      if (method == null)
+      if (ourMethodReadSystemHotkeys == null)
+        ourMethodReadSystemHotkeys = ReflectionUtil.getMethod(ourShkClass, "readSystemHotkeys");
+      if (ourMethodReadSystemHotkeys == null)
         return;
 
-      List<AWTKeyStroke> all = (List<AWTKeyStroke>)method.invoke(shkClass);
+      List<AWTKeyStroke> all = (List<AWTKeyStroke>)ourMethodReadSystemHotkeys.invoke(ourShkClass);
       if (all == null || all.isEmpty())
         return;
 
@@ -321,6 +329,12 @@ public final class SystemShortcuts {
           //System.out.println("Skip system shortcut [undefined key]: " + shk);
           continue;
         }
+        if ("Move focus to the next window in application".equals(getDescription(shk))) {
+          // Skip this shortcut because it handled in IDE-side
+          // see: JBR-1515 Regression test jb/sun/awt/macos/MoveFocusShortcutTest.java fails on macOS  (Now we prevent Mac OS from handling the shortcut. We can enumerate windows on IDE level.)
+          continue;
+        }
+
         KeyStroke sysKS;
         if (shk.getKeyChar() != KeyEvent.CHAR_UNDEFINED) {
           final int keyCode = KeyEvent.getExtendedKeyCodeForChar(shk.getKeyChar());

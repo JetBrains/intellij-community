@@ -165,6 +165,18 @@ public class JBLabel extends JLabel implements AnchorableComponent, JBComponent<
     }
   }
 
+  public void setIconWithAligment(Icon icon, int horizontalAligment, int verticalAligment) {
+    super.setIcon(icon);
+    if (myIconLabel != null) {
+      myIconLabel.setIcon(icon);
+      myIconLabel.setHorizontalAlignment(horizontalAligment);
+      myIconLabel.setVerticalAlignment(verticalAligment);
+      updateLayout();
+      updateTextAlignment();
+    }
+  }
+
+
   @Override
   public void setFocusable(boolean focusable) {
     super.setFocusable(focusable);
