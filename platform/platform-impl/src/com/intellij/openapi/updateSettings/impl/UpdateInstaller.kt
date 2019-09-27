@@ -140,6 +140,7 @@ object UpdateInstaller {
     var java = System.getProperty("java.home")
     if (FileUtil.isAncestor(PathManager.getHomePath(), java, true)) {
       val javaCopy = File(tempDir, "jre")
+      if (javaCopy.exists()) FileUtil.delete(javaCopy)
       FileUtil.copyDir(File(java), javaCopy)
       java = javaCopy.path
     }
