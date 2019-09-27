@@ -14,9 +14,18 @@
     </el-form>
 
     <h2>Duration Events</h2>
-    <div class="activityChart" ref="durationEventChartContainer"></div>
+    <div class="aggregatedChart" ref="durationEventChartContainer"></div>
     <h2>Instant Events</h2>
-    <div class="activityChart" ref="instantEventChartContainer"></div>
+    <div class="aggregatedChart" ref="instantEventChartContainer"></div>
+    <el-row>
+      <el-col>
+        <ul>
+          <li>
+            <small>Events <code>bootstrap</code> and <code>splash</code> are not available for reports <= v5 (May 2019, Idea 2019.2).</small>
+          </li>
+        </ul>
+      </el-col>
+    </el-row>
   </div>
 </template>
 

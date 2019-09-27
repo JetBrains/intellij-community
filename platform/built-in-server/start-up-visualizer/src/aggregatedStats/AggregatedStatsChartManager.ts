@@ -2,9 +2,7 @@
 import * as am4charts from "@amcharts/amcharts4/charts"
 import * as am4core from "@amcharts/amcharts4/core"
 import {addExportMenu} from "@/charts/ChartManager"
-import {AggregatedDataManager} from "@/aggregatedStats/AggregatedDataManager"
-
-const hiddenMetricsByDefault = new Set(["moduleLoading"])
+import {AggregatedDataManager, MetricDescriptor} from "@/aggregatedStats/AggregatedDataManager"
 
 export class AggregatedStatsChartManager {
   private readonly chart: am4charts.XYChart
@@ -56,19 +54,15 @@ export class AggregatedStatsChartManager {
       oldSeries.set(series.name, series as am4charts.LineSeries)
     }
 
-    for (const metricName of dataManager.metricsNames) {
-      if (metricName === "t" || this.isInstantEvents !== (metricName === "splash")) {
-        continue
-      }
-
-      let series = oldSeries.get(metricName)
+    for (const metric of (this.isInstantEvents ? dataManager.instantMetricsNames : dataManager.durationMetricsNames)) {
+      let series = oldSeries.get(metric.key)
       if (series == null) {
         series = new am4charts.LineSeries()
-        this.configureLineSeries(metricName, series)
+        this.configureLineSeries(metric, series)
         chart.series.push(series)
       }
       else {
-        oldSeries.delete(metricName)
+        oldSeries.delete(metric.key)
       }
 
       scrollbarX.series.push(series)
@@ -83,14 +77,14 @@ export class AggregatedStatsChartManager {
     chart.data = dataManager.metrics
   }
 
-  private configureLineSeries(metricName: string, series: am4charts.LineSeries) {
-    series.name = metricName
+  private configureLineSeries(metric: MetricDescriptor, series: am4charts.LineSeries) {
+    series.name = metric.name
     // timestamp
     series.dataFields.dateX = "t"
     // duration
-    series.dataFields.valueY = metricName
-    series.tooltipText = `${metricName}: {${metricName}} ms`
-    if (hiddenMetricsByDefault.has(metricName)) {
+    series.dataFields.valueY = metric.key
+    series.tooltipText = `${metric.name}: {${metric.name}} ms`
+    if (metric.hiddenByDefault) {
       series.hidden = true
     }
   }
