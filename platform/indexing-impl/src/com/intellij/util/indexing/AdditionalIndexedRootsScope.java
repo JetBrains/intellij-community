@@ -48,11 +48,6 @@ public class AdditionalIndexedRootsScope extends GlobalSearchScope {
   }
 
   @Override
-  public boolean isSearchOutsideRootModel() {
-    return true;
-  }
-
-  @Override
   public int compare(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
     return myBaseScope.compare(file1, file2);
   }

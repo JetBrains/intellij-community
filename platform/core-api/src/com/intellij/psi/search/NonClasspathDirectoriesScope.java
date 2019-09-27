@@ -37,11 +37,6 @@ public class NonClasspathDirectoriesScope extends GlobalSearchScope {
     myRoots = new HashSet<>(roots);
   }
 
-  @Override
-  public boolean isSearchOutsideRootModel() {
-    return true;
-  }
-
   @NotNull
   public static GlobalSearchScope compose(@NotNull List<VirtualFile> roots) {
     if (roots.isEmpty()) {

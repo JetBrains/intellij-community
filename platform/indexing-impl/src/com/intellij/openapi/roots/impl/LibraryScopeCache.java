@@ -207,11 +207,6 @@ public class LibraryScopeCache {
     }
 
     @Override
-    public boolean isSearchOutsideRootModel() {
-      return myOriginal.isSearchOutsideRootModel();
-    }
-
-    @Override
     public boolean isSearchInLibraries() {
       return true;
     }

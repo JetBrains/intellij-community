@@ -68,7 +68,7 @@ public class ProjectScopeImpl extends GlobalSearchScope {
   @NotNull
   @Override
   public GlobalSearchScope uniteWith(@NotNull GlobalSearchScope scope) {
-    if (scope == this || !scope.isSearchInLibraries() || !scope.isSearchOutsideRootModel()) return this;
+    if (scope == this || !scope.isSearchInLibraries()) return this;
     return super.uniteWith(scope);
   }
 

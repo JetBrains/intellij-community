@@ -27,9 +27,6 @@ import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 import java.util.Collection;
 
 class PluginRelatedLocatorsUtils {
-  private PluginRelatedLocatorsUtils() {
-  }
-
   @NotNull
   static GlobalSearchScope getCandidatesScope(@NotNull Project project) {
     GlobalSearchScope scope = GlobalSearchScopesCore.projectProductionScope(project)
@@ -37,6 +34,6 @@ class PluginRelatedLocatorsUtils {
 
     Collection<VirtualFile> candidates = DomService.getInstance()
       .getDomFileCandidates(IdeaPlugin.class, project, scope);
-    return GlobalSearchScope.filesWithLibrariesScope(project, candidates, true);
+    return GlobalSearchScope.filesWithLibrariesScope(project, candidates);
   }
 }
