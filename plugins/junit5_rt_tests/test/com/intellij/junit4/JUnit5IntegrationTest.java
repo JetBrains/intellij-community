@@ -61,8 +61,8 @@ public class JUnit5IntegrationTest extends AbstractTestFrameworkCompilingIntegra
      ModuleRootModificationUtil.updateModel(myModule, 
                                            model -> model.addContentEntry(getTestContentRoot()).addSourceFolder(getTestContentRoot() + "/test1", true));
     final ArtifactRepositoryManager repoManager = getRepoManager();
-    addLibs(myModule, new JpsMavenRepositoryLibraryDescriptor("org.junit.jupiter", "junit-jupiter-api", "5.3.0"), repoManager);
-    addLibs(myModule, new JpsMavenRepositoryLibraryDescriptor("junit", "junit", "4.12"), repoManager);
+    addMavenLibs(myModule, new JpsMavenRepositoryLibraryDescriptor("org.junit.jupiter", "junit-jupiter-api", "5.3.0"), repoManager);
+    addMavenLibs(myModule, new JpsMavenRepositoryLibraryDescriptor("junit", "junit", "4.12"), repoManager);
   }
 
   public void testRunPackage() throws Exception {

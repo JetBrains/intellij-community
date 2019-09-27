@@ -395,9 +395,14 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     PathsList modulePath = javaParameters.getModulePath();
     PathsList classPath = javaParameters.getClassPath();
 
+    List<String> pathStrings = classPath.getPathList();
+
     Consumer<VirtualFile> putOnModulePath = virtualFile -> {
-      classPath.remove(virtualFile.getPath());
-      modulePath.add(virtualFile.getPath());
+      String path = virtualFile.getPath();
+      if (pathStrings.contains(path)) {
+        classPath.remove(path);
+        modulePath.add(path);
+      }
     };
 
     //put all transitive required modules on the module path
@@ -405,6 +410,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     JarFileSystem jarFS = JarFileSystem.getInstance();
     ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(module.getProject());
     allRequires.stream()
+      .filter(javaModule -> !PsiJavaModule.JAVA_BASE.equals(javaModule.getName()))
       .map(javaModule -> getClasspathEntry(javaModule, fileIndex, jarFS))
       .filter(Objects::nonNull)
       .forEach(putOnModulePath);

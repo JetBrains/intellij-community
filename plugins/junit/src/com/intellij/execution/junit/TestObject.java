@@ -58,6 +58,7 @@ import com.intellij.util.text.VersionComparatorUtil;
 import com.siyeh.ig.junit.JUnitCommonClassNames;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties;
 
 import java.io.File;
@@ -262,6 +263,11 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     }
 
     return javaParameters;
+  }
+
+  @TestOnly
+  public JavaParameters createJavaParameters4Tests() throws ExecutionException {
+    return createJavaParameters();
   }
 
   public void appendJUnit5LauncherClasses(JavaParameters javaParameters, Project project, GlobalSearchScope globalSearchScope) throws CantRunException {
