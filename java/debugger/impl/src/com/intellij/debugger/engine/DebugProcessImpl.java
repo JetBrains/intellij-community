@@ -1938,7 +1938,11 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
     myConnection = environment.getRemoteConnection();
 
-    createVirtualMachine(environment);
+    // in client mode start target process before the debugger to reduce polling
+    boolean serverMode = myConnection.isServerMode();
+    if (serverMode) {
+      createVirtualMachine(environment);
+    }
 
     ExecutionResult executionResult;
     try {
@@ -1962,6 +1966,10 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     catch (ExecutionException e) {
       fail();
       throw e;
+    }
+
+    if (!serverMode) {
+      createVirtualMachine(environment);
     }
 
     return executionResult;
