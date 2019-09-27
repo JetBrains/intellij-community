@@ -644,7 +644,7 @@ def process_all(roots, sdk_skeletons_dir, name_pattern=None, state_json=None):
         progress(text=binary.qname, fraction=float(i) / len(binaries), minor=True)
         process_one_with_results_reporting(binary.qname, binary.path, False, sdk_skeletons_dir, state_json)
     progress(fraction=1.0)
-    if state_json:
+    if state_json is not None:
         mkdir(sdk_skeletons_dir)
         with fopen(os.path.join(sdk_skeletons_dir, STATE_FILE_NAME), 'w') as f:
             json.dump(state_json, f, sort_keys=True)

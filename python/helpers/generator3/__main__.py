@@ -42,6 +42,9 @@ def get_help_text():
         ' -S -- lists all python sources found in sys.path and in directories in directory_list\n'
         ' -z archive_name -- zip files to archive_name. Accepts files to be archived from stdin in format <filepath> <name in archive>\n'
         '--name-pattern pattern -- shell-like glob pattern restricting generation only to binaries with matching qualified names\n'
+        '--read-state-from-stdin -- read the current state of generated skeletons in JSON format from stdin, '
+        'this option implies "--write-json-file"\n'
+        '--write-json-file -- leave ".state.json" file in an SDK skeletons directory\n'
     )
 
 
@@ -64,7 +67,9 @@ def main():
     from getopt import getopt
 
     helptext = get_help_text()
-    opts, args = getopt(sys.argv[1:], "d:hbqxvc:ps:LiSzuV", longopts=['name-pattern=', 'with-state-marker'])
+    opts, args = getopt(sys.argv[1:], "d:hbqxvc:ps:LiSzuV", longopts=['name-pattern=',
+                                                                      'read-state-from-stdin',
+                                                                      'write-state-file'])
     opts = dict(opts)
 
     generator3.core.quiet = '-q' in opts
@@ -78,8 +83,10 @@ def main():
     if "-x" in opts:
         debug_mode = True
 
-    if '--with-state-marker' in opts:
+    if '--read-state-from-stdin' in opts:
         state_json = json.load(sys.stdin, encoding='utf-8')
+    elif '--write-state-file' in opts:
+        state_json = {'sdk_skeletons': {}}
     else:
         state_json = None
 
