@@ -204,7 +204,9 @@ class ForkedDebuggerThread extends Thread {
         .dataContext(null)
         .activeTarget()
         .build();
-      ProgramRunnerUtil.executeConfigurationAsync(environment, true, true, callback);
+      ApplicationManager.getApplication().invokeAndWait(() -> {
+        ProgramRunnerUtil.executeConfigurationAsync(environment, true, true, callback);
+      });
     }
     catch (ExecutionException e) {
       ExternalSystemTaskDebugRunner.LOG.error(e);
