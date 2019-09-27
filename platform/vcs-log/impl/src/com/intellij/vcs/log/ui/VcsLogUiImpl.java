@@ -24,6 +24,7 @@ import com.intellij.vcs.log.ui.filter.VcsLogFilterUiEx;
 import com.intellij.vcs.log.ui.frame.MainFrame;
 import com.intellij.vcs.log.ui.highlighters.VcsLogHighlighterFactory;
 import com.intellij.vcs.log.ui.table.GraphTableModel;
+import com.intellij.vcs.log.ui.table.VcsLogColumn;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
 import com.intellij.vcs.log.visible.VisiblePackRefresher;
@@ -235,28 +236,31 @@ public class VcsLogUiImpl extends AbstractVcsLogUi {
         onShowLongEdgesChanged();
       }
       else if (CommonUiProperties.SHOW_ROOT_NAMES.equals(property)) {
-        myMainFrame.getGraphTable().rootColumnUpdated();
+        getTable().rootColumnUpdated();
       }
       else if (MainVcsLogUiProperties.COMPACT_REFERENCES_VIEW.equals(property)) {
-        myMainFrame.getGraphTable().setCompactReferencesView(myUiProperties.get(MainVcsLogUiProperties.COMPACT_REFERENCES_VIEW));
+        getTable().setCompactReferencesView(myUiProperties.get(MainVcsLogUiProperties.COMPACT_REFERENCES_VIEW));
       }
       else if (MainVcsLogUiProperties.SHOW_TAG_NAMES.equals(property)) {
-        myMainFrame.getGraphTable().setShowTagNames(myUiProperties.get(MainVcsLogUiProperties.SHOW_TAG_NAMES));
+        getTable().setShowTagNames(myUiProperties.get(MainVcsLogUiProperties.SHOW_TAG_NAMES));
       }
       else if (MainVcsLogUiProperties.LABELS_LEFT_ALIGNED.equals(property)) {
-        myMainFrame.getGraphTable().setLabelsLeftAligned(myUiProperties.get(MainVcsLogUiProperties.LABELS_LEFT_ALIGNED));
+        getTable().setLabelsLeftAligned(myUiProperties.get(MainVcsLogUiProperties.LABELS_LEFT_ALIGNED));
       }
       else if (MainVcsLogUiProperties.BEK_SORT_TYPE.equals(property)) {
         myRefresher.onSortTypeChange(myUiProperties.get(MainVcsLogUiProperties.BEK_SORT_TYPE));
       }
       else if (CommonUiProperties.COLUMN_ORDER.equals(property)) {
-        myMainFrame.getGraphTable().onColumnOrderSettingChanged();
+        getTable().onColumnOrderSettingChanged();
       }
       else if (property instanceof VcsLogHighlighterProperty) {
-        myMainFrame.getGraphTable().repaint();
+        getTable().repaint();
       }
       else if (property instanceof CommonUiProperties.TableColumnProperty) {
-        myMainFrame.getGraphTable().forceReLayout(((CommonUiProperties.TableColumnProperty)property).getColumn());
+        getTable().forceReLayout(((CommonUiProperties.TableColumnProperty)property).getColumn());
+      }
+      else if (property.equals(CommonUiProperties.PREFER_COMMIT_DATE) && getTable().getTableColumn(VcsLogColumn.DATE) != null) {
+        getTable().repaint();
       }
     }
 

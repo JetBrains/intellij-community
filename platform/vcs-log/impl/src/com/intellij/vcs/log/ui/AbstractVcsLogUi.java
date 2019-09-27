@@ -23,13 +23,10 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.history.ReachableNodesUtilKt;
-import com.intellij.vcs.log.impl.CommonUiProperties;
-import com.intellij.vcs.log.impl.VcsLogApplicationSettings;
 import com.intellij.vcs.log.impl.VcsLogImpl;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.highlighters.VcsLogHighlighterFactory;
 import com.intellij.vcs.log.ui.table.GraphTableModel;
-import com.intellij.vcs.log.ui.table.VcsLogColumn;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.VisiblePack;
@@ -55,7 +52,6 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
 
   @NotNull protected final Collection<VcsLogListener> myLogListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   @NotNull protected final VisiblePackChangeListener myVisiblePackChangeListener;
-  @NotNull private final VcsLogUiProperties.PropertiesChangeListener myLogApplicationSettingsListener = this::onPropertyChange;
 
   @NotNull protected VisiblePack myVisiblePack;
 
@@ -80,14 +76,6 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
       }
     });
     myRefresher.addVisiblePackChangeListener(myVisiblePackChangeListener);
-    VcsLogApplicationSettings settings = ApplicationManager.getApplication().getService(VcsLogApplicationSettings.class);
-    settings.addChangeListener(myLogApplicationSettingsListener);
-  }
-
-  private <T> void onPropertyChange(@NotNull VcsLogUiProperties.VcsLogUiProperty<T> property) {
-    if (property.equals(CommonUiProperties.PREFER_COMMIT_DATE) && getTable().getTableColumn(VcsLogColumn.DATE) != null) {
-      getTable().repaint();
-    }
   }
 
   @NotNull
@@ -306,7 +294,5 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
     myRefresher.removeVisiblePackChangeListener(myVisiblePackChangeListener);
     getTable().removeAllHighlighters();
     myVisiblePack = VisiblePack.EMPTY;
-    VcsLogApplicationSettings settings = ApplicationManager.getApplication().getService(VcsLogApplicationSettings.class);
-    settings.removeChangeListener(myLogApplicationSettingsListener);
   }
 }

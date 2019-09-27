@@ -24,6 +24,7 @@ public class FileHistoryUiProperties implements VcsLogUiProperties, PersistentSt
   private final VcsLogApplicationSettings myLogSettings =
     ApplicationManager.getApplication().getService(VcsLogApplicationSettings.class);
   private State myState = new State();
+  private final PropertiesChangeListener myApplicationSettingsListener = this::onApplicationSettingChange;
 
   public static class State {
     public boolean SHOW_DETAILS = false;
@@ -69,6 +70,12 @@ public class FileHistoryUiProperties implements VcsLogUiProperties, PersistentSt
     throw new UnsupportedOperationException("Unknown property " + property);
   }
 
+  private <T> void onApplicationSettingChange(VcsLogUiProperty<T> property) {
+    if (PREFER_COMMIT_DATE.equals(property)) {
+      myListeners.forEach(l -> l.onPropertyChanged(property));
+    }
+  }
+
   @SuppressWarnings("unchecked")
   @Override
   public <T> void set(@NotNull VcsLogUiProperty<T> property, @NotNull T value) {
@@ -92,6 +99,8 @@ public class FileHistoryUiProperties implements VcsLogUiProperties, PersistentSt
     }
     else if (PREFER_COMMIT_DATE.equals(property)) {
       myLogSettings.set(property, value);
+      // listeners will be triggered via onApplicationSettingChange
+      return;
     }
     else {
       throw new UnsupportedOperationException("Unknown property " + property);
@@ -123,11 +132,17 @@ public class FileHistoryUiProperties implements VcsLogUiProperties, PersistentSt
 
   @Override
   public void addChangeListener(@NotNull PropertiesChangeListener listener) {
+    if (myListeners.isEmpty()) {
+      myLogSettings.addChangeListener(myApplicationSettingsListener);
+    }
     myListeners.add(listener);
   }
 
   @Override
   public void removeChangeListener(@NotNull PropertiesChangeListener listener) {
     myListeners.remove(listener);
+    if (myListeners.isEmpty()) {
+      myLogSettings.removeChangeListener(myApplicationSettingsListener);
+    }
   }
 }
