@@ -72,7 +72,7 @@ public class UnnecessaryStringEscapeInspection extends BaseInspection implements
       }
       final String text = literalExpression.getText();
       if (type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
-        StringBuilder newExpression = new StringBuilder();
+        final StringBuilder newExpression = new StringBuilder();
         if (((PsiLiteralExpressionImpl)literalExpression).getLiteralElementType() == JavaTokenType.TEXT_BLOCK_LITERAL) {
           int offset = 0;
           int start = findUnnecessarilyEscapedChars(text, 4);
@@ -108,7 +108,7 @@ public class UnnecessaryStringEscapeInspection extends BaseInspection implements
     int doubleQuotes = 0;
     final int max = text.length() - 3; // skip closing """
     for (int i = start; i < max; i++) {
-      char ch = text.charAt(i);
+      final char ch = text.charAt(i);
       if (ch == '\\') slash = !slash;
       else {
         if (slash) {
@@ -160,10 +160,13 @@ public class UnnecessaryStringEscapeInspection extends BaseInspection implements
         }
         else {
           final String text = expression.getText();
-          int index = text.indexOf("\\'");
-          while (index > 0) {
-            registerErrorAtOffset(expression, index, 2);
-            index = text.indexOf("\\'", index + 2);
+          boolean slash = false;
+          final int max = text.length() - 1; // skip closing "
+          for (int i = 1; i < max; i++) {
+            final char c = text.charAt(i);
+            if (c == '\\') slash = !slash;
+            else if (c == '\'' && slash) registerErrorAtOffset(expression, i - 1, 2);
+            else slash = false;
           }
         }
       }
