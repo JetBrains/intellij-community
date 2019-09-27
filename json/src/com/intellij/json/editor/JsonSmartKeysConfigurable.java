@@ -10,7 +10,7 @@ public class JsonSmartKeysConfigurable extends BeanConfigurable<JsonEditorOption
   public JsonSmartKeysConfigurable() {
     super(JsonEditorOptions.getInstance());
     JsonEditorOptions settings = getInstance();
-
+    if (settings == null) return;
     checkBox("Insert missing comma on Enter",
              () -> settings.COMMA_ON_ENTER,
              v -> settings.COMMA_ON_ENTER = v);
@@ -29,6 +29,12 @@ public class JsonSmartKeysConfigurable extends BeanConfigurable<JsonEditorOption
     checkBox("Automatically add whitespace when typing ':' after property names",
              () -> settings.AUTO_WHITESPACE_AFTER_COLON,
              v -> settings.AUTO_WHITESPACE_AFTER_COLON = v);
+    checkBox("Automatically move ':' after the property name if typed inside quotes",
+             () -> settings.COLON_MOVE_OUTSIDE_QUOTES,
+             v -> settings.COLON_MOVE_OUTSIDE_QUOTES = v);
+    checkBox("Automatically move comma after the property value or array element if inside quotes",
+             () -> settings.COMMA_MOVE_OUTSIDE_QUOTES,
+             v -> settings.COMMA_MOVE_OUTSIDE_QUOTES = v);
   }
 
   @Nls(capitalization = Nls.Capitalization.Title)

@@ -20,6 +20,8 @@ public class JsonEditorOptions implements PersistentStateComponent<JsonEditorOpt
   public boolean AUTO_QUOTE_PROP_NAME = true;
   public boolean AUTO_WHITESPACE_AFTER_COLON = true;
   public boolean ESCAPE_PASTED_TEXT = true;
+  public boolean COLON_MOVE_OUTSIDE_QUOTES = false;
+  public boolean COMMA_MOVE_OUTSIDE_QUOTES = false;
 
   @Nullable
   @Override
