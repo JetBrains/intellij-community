@@ -1087,6 +1087,13 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   @Override
   @NotNull
   public List<FileEditor> openEditor(@NotNull OpenFileDescriptor descriptor, final boolean focusEditor) {
+    return openEditorImpl(descriptor, focusEditor).first;
+  }
+
+  /**
+   * @return the list of opened editors, and the one of them that was selected (if any)
+   */
+  private Pair<List<FileEditor>, FileEditor> openEditorImpl(@NotNull OpenFileDescriptor descriptor, final boolean focusEditor) {
     assertDispatchThread();
     OpenFileDescriptor realDescriptor;
     if (descriptor.getFile() instanceof VirtualFileWindow) {
@@ -1100,6 +1107,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     }
 
     final List<FileEditor> result = new SmartList<>();
+    Ref<FileEditor> selectedEditor = new Ref<>();
     CommandProcessor.getInstance().executeCommand(myProject, () -> {
       VirtualFile file = realDescriptor.getFile();
       final FileEditor[] editors = openFile(file, focusEditor, !realDescriptor.isUseCurrentWindow());
@@ -1110,7 +1118,10 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
         if (editor instanceof NavigatableFileEditor &&
             getSelectedEditor(realDescriptor.getFile()) == editor) { // try to navigate opened editor
           navigated = navigateAndSelectEditor((NavigatableFileEditor)editor, realDescriptor);
-          if (navigated) break;
+          if (navigated) {
+            selectedEditor.set(editor);
+            break;
+          }
         }
       }
 
@@ -1118,6 +1129,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
         for (final FileEditor editor : editors) {
           if (editor instanceof NavigatableFileEditor && getSelectedEditor(realDescriptor.getFile()) != editor) { // try other editors
             if (navigateAndSelectEditor((NavigatableFileEditor)editor, realDescriptor)) {
+              selectedEditor.set(editor);
               break;
             }
           }
@@ -1125,7 +1137,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
       }
     }, "", null);
 
-    return result;
+    return Pair.create(result, selectedEditor.get());
   }
 
   private boolean navigateAndSelectEditor(@NotNull NavigatableFileEditor editor, @NotNull OpenFileDescriptor descriptor) {
@@ -1181,7 +1193,9 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
   @Nullable
   private TextEditor doOpenTextEditor(@NotNull OpenFileDescriptor descriptor, boolean focusEditor) {
-    final Collection<FileEditor> fileEditors = openEditor(descriptor, focusEditor);
+    Pair<List<FileEditor>, FileEditor> editorsWithSelected = openEditorImpl(descriptor, focusEditor);
+    final Collection<FileEditor> fileEditors = editorsWithSelected.first;
+    FileEditor selectedEditor = editorsWithSelected.second;
 
     if (fileEditors.isEmpty()) return null;
     else if (fileEditors.size() == 1) return ObjectUtils.tryCast((ContainerUtil.getFirstItem(fileEditors)), TextEditor.class);
@@ -1189,7 +1203,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     List<TextEditor> textEditors = ContainerUtil.mapNotNull(fileEditors, e -> ObjectUtils.tryCast(e, TextEditor.class));
     if (textEditors.isEmpty()) return null;
 
-    TextEditor target = textEditors.get(0);
+    TextEditor target = selectedEditor instanceof TextEditor ? (TextEditor)selectedEditor : textEditors.get(0);
     if (textEditors.size() > 1) {
       EditorWithProviderComposite composite = getEditorComposite(target);
       assert composite != null;
