@@ -23,7 +23,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
-import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.SearchScope;
@@ -46,10 +45,6 @@ public abstract class XmlElementImpl extends CompositePsiElement implements XmlE
   @Override
   public boolean processElements(PsiElementProcessor processor, PsiElement place){
     return XmlPsiUtil.processXmlElements(this, processor, false);
-  }
-
-  public boolean processChildren(PsiElementProcessor processor){
-    return XmlPsiUtil.processXmlElementChildren(this, processor, false);
   }
 
   public XmlElement findElementByTokenType(final IElementType type){

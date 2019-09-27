@@ -13,38 +13,38 @@ import static com.intellij.util.ObjectUtils.notNull;
 
 public class XmlAttributeStubImpl extends StubBase<XmlStubBasedAttribute> implements XmlAttributeStub<XmlStubBasedAttribute> {
 
-  @NotNull private final StringRef name;
-  @Nullable private final StringRef value;
+  @NotNull private final String name;
+  @Nullable private final String value;
 
   XmlAttributeStubImpl(@Nullable StubElement<?> parent,
                        @NotNull StubInputStream dataStream,
                        @NotNull IStubElementType<? extends XmlAttributeStubImpl, ? extends XmlStubBasedAttribute> elementType)
     throws IOException {
     super(parent, elementType);
-    name = notNull(dataStream.readName(), () -> StringRef.fromString(""));
-    value = dataStream.readName();
+    name = notNull(StringRef.toString(dataStream.readName()), "");
+    value = StringRef.toString(dataStream.readName());
   }
 
   XmlAttributeStubImpl(@NotNull XmlStubBasedAttribute psi,
                        @Nullable StubElement<?> parent,
                        @NotNull IStubElementType<? extends XmlAttributeStubImpl, ? extends XmlStubBasedAttribute> elementType) {
     super(parent, elementType);
-    name = StringRef.fromString(psi.getName());
-    value = StringRef.fromString(psi.getValue());
+    name = psi.getName();
+    value = psi.getValue();
   }
 
   void serialize(StubOutputStream stream) throws IOException {
-    stream.writeName(StringRef.toString(name));
-    stream.writeName(StringRef.toString(value));
+    stream.writeName(name);
+    stream.writeName(value);
   }
 
   @NotNull
   public String getName() {
-    return StringRef.toString(name);
+    return name;
   }
 
   @Nullable
   public String getValue() {
-    return StringRef.toString(value);
+    return value;
   }
 }

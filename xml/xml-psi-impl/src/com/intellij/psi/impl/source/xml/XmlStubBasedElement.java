@@ -5,10 +5,13 @@ import com.intellij.extapi.psi.StubBasedPsiElementBase;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiElementProcessor;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.util.XmlPsiUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -36,15 +39,65 @@ abstract class XmlStubBasedElement<T extends StubElement<?>> extends StubBasedPs
   }
 
   @Override
-  public boolean skipValidation() {
-    return XmlElementImpl.skipValidation(this);
+  public PsiElement getContext() {
+    final XmlElement data = getUserData(INCLUDING_ELEMENT);
+    if(data != null) return data;
+    return super.getContext();
   }
 
+  @Override
+  @NotNull
+  public PsiElement getNavigationElement() {
+    if (!isPhysical()) {
+      final XmlElement including = getUserData(INCLUDING_ELEMENT);
+      if (including != null) {
+        return including;
+      }
+      PsiElement astParent = super.getParent();
+      PsiElement parentNavigation = astParent.getNavigationElement();
+      if (parentNavigation.getTextOffset() == getTextOffset()) return parentNavigation;
+      return this;
+    }
+    return super.getNavigationElement();
+  }
+
+  @Override
+  public PsiElement getParent() {
+    final XmlElement data = getUserData(INCLUDING_ELEMENT);
+    if(data != null) return data;
+    return super.getParent();
+  }
   @Override
   @NotNull
   public Language getLanguage() {
     return getContainingFile().getLanguage();
   }
+
+  @Override
+  @NotNull
+  public SearchScope getUseScope() {
+    return GlobalSearchScope.allScope(getProject());
+  }
+
+  @Override
+  public boolean isEquivalentTo(final PsiElement another) {
+
+    if (super.isEquivalentTo(another)) return true;
+    PsiElement element1 = this;
+
+    // TODO: seem to be only necessary for tag dirs equivalents checking.
+    if (element1 instanceof XmlTag && another instanceof XmlTag) {
+      if (!element1.isPhysical() && !another.isPhysical()) return element1.getText().equals(another.getText());
+    }
+
+    return false;
+  }
+
+  @Override
+  public boolean skipValidation() {
+    return XmlElementImpl.skipValidation(this);
+  }
+
 
   @Override
   public void subtreeChanged() {

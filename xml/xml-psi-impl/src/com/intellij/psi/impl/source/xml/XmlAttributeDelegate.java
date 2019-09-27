@@ -18,10 +18,7 @@ import com.intellij.pom.xml.XmlAspect;
 import com.intellij.pom.xml.XmlChangeSet;
 import com.intellij.pom.xml.impl.XmlAspectChangeSetImpl;
 import com.intellij.pom.xml.impl.events.XmlAttributeSetImpl;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.PsiReferenceService;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.tree.IElementType;
@@ -43,31 +40,15 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 
 @ApiStatus.Experimental
-final class XmlAttributeDelegateImpl {
+public abstract class XmlAttributeDelegate {
+
   @NotNull
   private final XmlAttribute myAttribute;
-  @NotNull
-  private final Factory myFactory;
-  @NotNull
-  private final Appender myAppender;
 
   private volatile VolatileState myVolatileState;
 
-  interface Factory {
-    @Nullable
-    XmlAttribute create(@NotNull String valueText, String name);
-  }
-
-  interface Appender {
-    void appendChildToDisplayValue(@NotNull StringBuilder buffer, @NotNull ASTNode child);
-  }
-
-  XmlAttributeDelegateImpl(@NotNull XmlAttribute attribute,
-                           @NotNull Factory factory,
-                           @NotNull Appender appender) {
+  XmlAttributeDelegate(@NotNull XmlAttribute attribute) {
     myAttribute = attribute;
-    myFactory = factory;
-    myAppender = appender;
   }
 
   @Nullable
@@ -108,7 +89,7 @@ final class XmlAttributeDelegateImpl {
   void setValue(@NotNull String valueText) throws IncorrectOperationException {
     final ASTNode value = XmlChildRole.ATTRIBUTE_VALUE_FINDER.findChild(myAttribute.getNode());
     final PomModel model = PomManager.getModel(myAttribute.getProject());
-    final XmlAttribute attribute = myFactory.create(valueText, StringUtil.defaultIfEmpty(myAttribute.getName(), "a"));
+    final XmlAttribute attribute = createAttribute(StringUtil.defaultIfEmpty(myAttribute.getName(), "a"), valueText);
     final ASTNode newValue = XmlChildRole.ATTRIBUTE_VALUE_FINDER.findChild(attribute.getNode());
     final XmlAspect aspect = model.getModelAspect(XmlAspect.class);
     model.runTransaction(new PomTransactionBase(myAttribute, aspect) {
@@ -135,6 +116,10 @@ final class XmlAttributeDelegateImpl {
     });
   }
 
+  protected XmlAttribute createAttribute(@NotNull String qname, @NotNull String value) {
+    return XmlElementFactory.getInstance(myAttribute.getProject()).createAttribute(qname, value, myAttribute);
+  }
+
   @NotNull
   String getNamespace() {
     final String name = myAttribute.getName();
@@ -150,10 +135,10 @@ final class XmlAttributeDelegateImpl {
     @NotNull final int[] myGapPhysicalStarts;
     @NotNull final TextRange myValueTextRange; // text inside quotes, if there are any
 
-    public VolatileState(@NotNull final String displayText,
-                         @NotNull int[] gapDisplayStarts,
-                         @NotNull int[] gapPhysicalStarts,
-                         @NotNull TextRange valueTextRange) {
+    VolatileState(@NotNull final String displayText,
+                  @NotNull int[] gapDisplayStarts,
+                  @NotNull int[] gapPhysicalStarts,
+                  @NotNull TextRange valueTextRange) {
       myDisplayText = displayText;
       myGapDisplayStarts = gapDisplayStarts;
       myGapPhysicalStarts = gapPhysicalStarts;
@@ -162,17 +147,21 @@ final class XmlAttributeDelegateImpl {
   }
 
   @Nullable
-  XmlAttributeDelegateImpl.VolatileState getFreshState() {
+  XmlAttributeDelegate.VolatileState getFreshState() {
     ApplicationManager.getApplication().assertReadAccessAllowed();
-    XmlAttributeDelegateImpl.VolatileState state = myVolatileState;
+    XmlAttributeDelegate.VolatileState state = myVolatileState;
     if (state == null) {
       state = recalculate();
     }
     return state;
   }
 
+  protected void appendChildToDisplayValue(@NotNull StringBuilder buffer, @NotNull ASTNode child) {
+    buffer.append(child.getChars());
+  }
+
   @Nullable
-  private XmlAttributeDelegateImpl.VolatileState recalculate() {
+  private XmlAttributeDelegate.VolatileState recalculate() {
     XmlAttributeValue value = myAttribute.getValueElement();
     if (value == null) return null;
     PsiElement firstChild = value.getFirstChild();
@@ -201,7 +190,7 @@ final class XmlAttributeDelegateImpl {
         buffer.append(getEntityValue((XmlEntityRef)child));
       }
       else {
-        myAppender.appendChildToDisplayValue(buffer, child);
+        appendChildToDisplayValue(buffer, child);
       }
 
       int end = buffer.length();
@@ -220,8 +209,8 @@ final class XmlAttributeDelegateImpl {
       gapDisplayStarts[i] = gapsStarts.get(i);
       gapPhysicalStarts[i] = gapDisplayStarts[i] + currentGapsSum;
     }
-    final XmlAttributeDelegateImpl.VolatileState
-      volatileState = new XmlAttributeDelegateImpl.VolatileState(buffer.toString(), gapDisplayStarts, gapPhysicalStarts, valueTextRange);
+    final XmlAttributeDelegate.VolatileState
+      volatileState = new XmlAttributeDelegate.VolatileState(buffer.toString(), gapDisplayStarts, gapPhysicalStarts, valueTextRange);
     myVolatileState = volatileState;
     return volatileState;
   }
@@ -274,7 +263,7 @@ final class XmlAttributeDelegateImpl {
   }
 
   int physicalToDisplay(int physicalIndex) {
-    final XmlAttributeDelegateImpl.VolatileState state = getFreshState();
+    final XmlAttributeDelegate.VolatileState state = getFreshState();
     if (state == null) return -1;
     if (physicalIndex < 0 || physicalIndex > state.myValueTextRange.getLength()) return -1;
     if (state.myGapPhysicalStarts.length == 0) return physicalIndex;
@@ -303,7 +292,7 @@ final class XmlAttributeDelegateImpl {
     final String oldName = name == null ? "" : name.getText();
     final String oldValue = ObjectUtils.notNull(myAttribute.getValue(), "");
     final PomModel model = PomManager.getModel(myAttribute.getProject());
-    final XmlAttribute newAttribute = myFactory.create(oldValue, nameText);
+    final XmlAttribute newAttribute = createAttribute(nameText, oldValue);
     final ASTNode newName = XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild(newAttribute.getNode());
     final XmlAspect aspect = model.getModelAspect(XmlAspect.class);
     final Ref<XmlAttribute> replaced = Ref.create(myAttribute);
@@ -330,7 +319,7 @@ final class XmlAttributeDelegateImpl {
   }
 
   int displayToPhysical(int displayIndex) {
-    final XmlAttributeDelegateImpl.VolatileState state = getFreshState();
+    final XmlAttributeDelegate.VolatileState state = getFreshState();
     if (state == null) return -1;
     final String displayValue = state.myDisplayText;
     if (displayIndex < 0 || displayIndex > displayValue.length()) return -1;

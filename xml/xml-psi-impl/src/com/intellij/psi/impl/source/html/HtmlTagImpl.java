@@ -17,12 +17,14 @@ package com.intellij.psi.impl.source.html;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.html.HtmlTag;
+import com.intellij.psi.impl.source.xml.XmlTagDelegate;
 import com.intellij.psi.impl.source.xml.XmlTagImpl;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -81,12 +83,6 @@ public class HtmlTagImpl extends XmlTagImpl implements HtmlTag {
   }
 
   @Override
-  protected void cacheOneAttributeValue(String name, String value, final Map<String, String> attributesValueMap) {
-    name = StringUtil.toLowerCase(name);
-    super.cacheOneAttributeValue(name, value, attributesValueMap);
-  }
-
-  @Override
   public String getAttributeValue(String name, String namespace) {
     name = StringUtil.toLowerCase(name);
     return super.getAttributeValue(name, namespace);
@@ -109,8 +105,9 @@ public class HtmlTagImpl extends XmlTagImpl implements HtmlTag {
     return xmlNamespace;
   }
 
+  @Nullable
   @Override
-  protected String getRealNs(final String value) {
+  public String getRealNs(@Nullable final String value) {
     if (XmlUtil.XHTML_URI.equals(value)) return XmlUtil.HTML_URI;
     return value;
   }
@@ -129,5 +126,19 @@ public class HtmlTagImpl extends XmlTagImpl implements HtmlTag {
   @Override
   public XmlTag getParentTag() {
     return PsiTreeUtil.getParentOfType(this, XmlTag.class);
+  }
+
+  @NotNull
+  @Override
+  protected XmlTagDelegate createDelegate() {
+    return new HtmlTagImplDelegate();
+  }
+
+  private class HtmlTagImplDelegate extends XmlTagImplDelegate {
+    @Override
+    protected void cacheOneAttributeValue(String name, String value, final Map<String, String> attributesValueMap) {
+      name = StringUtil.toLowerCase(name);
+      super.cacheOneAttributeValue(name, value, attributesValueMap);
+    }
   }
 }

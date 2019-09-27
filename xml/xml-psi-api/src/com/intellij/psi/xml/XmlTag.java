@@ -110,4 +110,9 @@ public interface XmlTag extends XmlElement, PsiNamedElement, PsiMetaOwner, XmlTa
 
   @Nullable @NonNls
   String getSubTagText(@NonNls String qname);
+
+  @Nullable
+  default String getRealNs(@Nullable String value) {
+    return value;
+  }
 }

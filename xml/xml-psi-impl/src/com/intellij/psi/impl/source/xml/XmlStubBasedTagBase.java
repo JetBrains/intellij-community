@@ -2,13 +2,13 @@
 package com.intellij.psi.impl.source.xml;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.impl.source.xml.stub.XmlTagStub;
 import com.intellij.psi.meta.PsiMetaData;
-import com.intellij.psi.tree.ChildRoleBase;
-import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.stubs.IStubElementType;
+import com.intellij.psi.stubs.PsiFileStub;
 import com.intellij.psi.util.CachedValueProvider.Result;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
@@ -20,6 +20,7 @@ import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.util.XmlUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,16 +28,10 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Map;
 
-/**
- * @author Mike
- */
-
-public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenceHost {
-
-  private static final Logger LOG = Logger.getInstance(XmlTagImpl.class);
-
-  @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
-  private final int myHC = ourHC++;
+@ApiStatus.Experimental
+public class XmlStubBasedTagBase<StubT extends XmlTagStub<?>>
+  extends XmlStubBasedElement<StubT>
+  implements XmlTag, HintedReferenceHost, StubBasedPsiElement<StubT> {
 
   //cannot be final because of clone implementation
   @Nullable
@@ -44,12 +39,12 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
   private volatile XmlTagValue myValue;
   private volatile XmlAttribute[] myAttributes;
 
-  public XmlTagImpl() {
-    this(XmlElementType.XML_TAG);
+  XmlStubBasedTagBase(@NotNull StubT stub, @NotNull IStubElementType nodeType) {
+    super(stub, nodeType);
   }
 
-  protected XmlTagImpl(IElementType type) {
-    super(type);
+  XmlStubBasedTagBase(@NotNull ASTNode node) {
+    super(node);
   }
 
   @NotNull
@@ -62,22 +57,25 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
     return impl;
   }
 
-  @NotNull
   protected XmlTagDelegate createDelegate() {
-    return new XmlTagImplDelegate();
+    return new XmlStubBasedTagDelegate();
   }
 
   @Override
-  public final int hashCode() {
-    return myHC;
-  }
-
-  @Override
-  public void clearCaches() {
+  public void subtreeChanged() {
+    super.subtreeChanged();
     myImpl = null;
-    myAttributes = null;
-    myValue = null;
-    super.clearCaches();
+  }
+
+  @Override
+  public PsiElement getContext() {
+    XmlTagStub<?> stub = getGreenStub();
+    if (stub != null) {
+      if (!(stub instanceof PsiFileStub)) {
+        return stub.getParentStub().getPsi();
+      }
+    }
+    return super.getParent();
   }
 
   /**
@@ -108,7 +106,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
 
   @Override
   public boolean isEmpty() {
-    return XmlChildRole.CLOSING_TAG_START_FINDER.findChild(this) == null;
+    return XmlChildRole.CLOSING_TAG_START_FINDER.findChild(this.getNode()) == null;
   }
 
   @Override
@@ -133,21 +131,6 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
   @Override
   public XmlElementDescriptor getDescriptor() {
     return getImpl().getDescriptor();
-  }
-
-  @Override
-  public int getChildRole(@NotNull ASTNode child) {
-    LOG.assertTrue(child.getTreeParent() == this);
-    IElementType i = child.getElementType();
-    if (i == XmlTokenType.XML_NAME || i == XmlTokenType.XML_TAG_NAME) {
-      return XmlChildRole.XML_TAG_NAME;
-    }
-    else if (i instanceof IXmlAttributeElementType) {
-      return XmlChildRole.XML_ATTRIBUTE;
-    }
-    else {
-      return ChildRoleBase.NONE;
-    }
   }
 
   @Override
@@ -198,13 +181,13 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
 
   @Override
   @NotNull
-  public XmlTag[] findSubTags(String name) {
+  public XmlTag[] findSubTags(@NotNull String name) {
     return findSubTags(name, null);
   }
 
   @Override
   @NotNull
-  public XmlTag[] findSubTags(final String name, @Nullable final String namespace) {
+  public XmlTag[] findSubTags(@NotNull final String name, @Nullable final String namespace) {
     return getImpl().findSubTags(name, namespace);
   }
 
@@ -329,26 +312,27 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
   }
 
   @Override
-  public TreeElement addInternal(TreeElement first, ASTNode last, ASTNode anchor, Boolean beforeB) {
+  public ASTNode addInternal(ASTNode first, ASTNode last, ASTNode anchor, Boolean beforeB) {
+    if (!(first instanceof TreeElement)) return null;
     TreeElement firstAppended = null;
     boolean before = beforeB == null || beforeB.booleanValue();
     try {
       TreeElement next;
       do {
-        next = first.getTreeNext();
+        next = ((TreeElement)first).getTreeNext();
 
         if (firstAppended == null) {
-          firstAppended = getImpl().addInternal(first, anchor, before);
+          firstAppended = getImpl().addInternal((TreeElement)first, anchor, before);
           anchor = firstAppended;
         }
         else {
-          anchor = getImpl().addInternal(first, anchor, false);
+          anchor = getImpl().addInternal((TreeElement)first, anchor, false);
         }
       }
       while (first != last && (first = next) != null);
     }
     finally {
-      clearCaches();
+      subtreeChanged();
     }
     return firstAppended;
   }
@@ -360,7 +344,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
 
   @Override
   public XmlTag getParentTag() {
-    final PsiElement parent = getParent();
+    final PsiElement parent = getParentByStub();
     if (parent instanceof XmlTag) return (XmlTag)parent;
     return null;
   }
@@ -384,25 +368,25 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
     return PlatformIcons.XML_TAG_ICON;
   }
 
-  protected class XmlTagImplDelegate extends XmlTagDelegate {
+  protected class XmlStubBasedTagDelegate extends XmlTagDelegate {
 
-    public XmlTagImplDelegate() {
-      super(XmlTagImpl.this);
+    public XmlStubBasedTagDelegate() {
+      super(XmlStubBasedTagBase.this);
     }
 
     @Override
     protected boolean isCaseSensitive() {
-      return XmlTagImpl.this.isCaseSensitive();
+      return XmlStubBasedTagBase.this.isCaseSensitive();
     }
 
     @Override
     protected void deleteChildInternalSuper(@NotNull ASTNode child) {
-      XmlTagImpl.super.deleteChildInternal(child);
+      XmlStubBasedTagBase.super.deleteChildInternal(child);
     }
 
     @Override
     protected TreeElement addInternalSuper(TreeElement first, ASTNode last, @Nullable ASTNode anchor, @Nullable Boolean before) {
-      return XmlTagImpl.super.addInternal(first, last, anchor, before);
+      return (TreeElement)XmlStubBasedTagBase.super.addInternal(first, last, anchor, before);
     }
   }
 }
