@@ -803,6 +803,22 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
     }, progress);
   }
 
+  public void testWithTimeout() {
+    assertEquals("a", ProgressIndicatorUtils.withTimeout(1000, () -> "a"));
+
+    assertNull(ProgressIndicatorUtils.withTimeout(1, () -> {
+      TimeoutUtil.sleep(10);
+      ProgressManager.checkCanceled();
+      return "a";
+    }));
+
+    assertThrows(ProcessCanceledException.class, () -> {
+      ProgressIndicatorUtils.withTimeout(1, () -> {
+        throw new ProcessCanceledException();
+      });
+    });
+  }
+
   private static class MyAbstractProgressIndicator extends AbstractProgressIndicatorBase {
     @VisibleForTesting
     @Override

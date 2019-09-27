@@ -258,7 +258,10 @@ public class ProgressIndicatorUtils {
       return ProgressManager.getInstance().runProcess(computable, progress);
     }
     catch (ProcessCanceledException e) {
-      return null;
+      if (progress.isCanceled()) {
+        return null;
+      }
+      throw e; // canceled not by timeout
     }
     finally {
       cancelProgress.cancel(false);
