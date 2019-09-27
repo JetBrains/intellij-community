@@ -517,4 +517,7 @@ class AA { static void fo<caret>o(Integer a) {} }
     doTest(true)
   }
 
+  void testUnresolvedCode2() {
+    doTest(true)
+  }
 }

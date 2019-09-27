@@ -98,7 +98,8 @@ fun PsiType.forceWildcardsAsTypeArguments(): PsiType {
       val resolvedClass = classType.resolve()
       if (resolvedClass != null) {
         return factory.createType(resolvedClass, *mappedParameters.toTypedArray())
-      } else {
+      }
+      else {
         return PsiWildcardType.createUnbounded(manager)
       }
     }
@@ -243,7 +244,7 @@ fun PsiSubstitutor.removeForeignTypeParameters(method: GrMethod): PsiSubstitutor
     }
 
     override fun visitIntersectionType(intersectionType: PsiIntersectionType?): PsiType? {
-      return compress(intersectionType?.conjuncts?.filterNotNull()?.map { it.accept(this) })
+      return compress(intersectionType?.conjuncts?.filterNotNull()?.mapNotNull { it.accept(this) })
     }
 
     override fun visitWildcardType(wildcardType: PsiWildcardType?): PsiType? {
