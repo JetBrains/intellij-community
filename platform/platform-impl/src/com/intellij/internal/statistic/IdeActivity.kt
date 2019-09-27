@@ -30,7 +30,7 @@ class IdeActivity @JvmOverloads constructor(private val projectOrNullForApplicat
   }
 
   fun startedWithData(consumer: Consumer<FeatureUsageData>): IdeActivity {
-    LOG.assertTrue(state == State.NOT_STARTED, state.name)
+    if (!LOG.assertTrue(state == State.NOT_STARTED, state.name)) return this
     state = State.STARTED
 
     val data = createDataWithActivityId().addProject(projectOrNullForApplication)
@@ -41,21 +41,24 @@ class IdeActivity @JvmOverloads constructor(private val projectOrNullForApplicat
   }
 
   fun stageStarted(stageName: String): IdeActivity {
-    LOG.assertTrue(state == State.STARTED, state.name)
+    if (!LOG.assertTrue(state == State.STARTED, state.name)) return this
+
     FUCounterUsageLogger.getInstance().logEvent(group, appendActivityName(stageName), createDataWithActivityId())
     return this
   }
 
   fun stageStarted(stageClass: Class<*>): IdeActivity {
-    LOG.assertTrue(state == State.STARTED, state.name)
+    if (!LOG.assertTrue(state == State.STARTED, state.name)) return this
+
     val data = createDataWithActivityId().addData("stage_class", stageClass.name)
     FUCounterUsageLogger.getInstance().logEvent(group, appendActivityName("stage"), data)
     return this
   }
 
   fun finished(): IdeActivity {
-    LOG.assertTrue(state == State.STARTED, state.name)
+    if (!LOG.assertTrue(state == State.STARTED, state.name)) return this
     state = State.FINISHED
+
     FUCounterUsageLogger.getInstance().logEvent(group, appendActivityName("finished"), createDataWithActivityId())
     return this
   }
