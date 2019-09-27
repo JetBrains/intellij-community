@@ -325,7 +325,6 @@ public class DfaValueFactory {
         }
       }
       for (PsiMethod constructor : aClass.getConstructors()) {
-        if (!constructor.getLanguage().isKindOf(JavaLanguage.INSTANCE)) return true;
         if (inByteCode && JavaMethodContractUtil.isPure(constructor) &&
             !JavaMethodContractUtil.hasExplicitContractAnnotation(constructor)) {
           // While pure constructor may call pure overridable method, our current implementation
@@ -334,6 +333,7 @@ public class DfaValueFactory {
           // no overridable methods are called there.
           continue;
         }
+        if (!constructor.getLanguage().isKindOf(JavaLanguage.INSTANCE)) return true;
 
         PsiCodeBlock body = constructor.getBody();
         if (body == null) continue;
