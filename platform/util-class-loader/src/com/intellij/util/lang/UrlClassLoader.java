@@ -319,6 +319,7 @@ public class UrlClassLoader extends ClassLoader {
       return defineClass(name, res);
     }
     catch (IOException e) {
+      LoggerRt.getInstance(UrlClassLoader.class).error(e);
       return null;
     }
   }
