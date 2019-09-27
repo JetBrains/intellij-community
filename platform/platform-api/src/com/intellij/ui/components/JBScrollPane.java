@@ -489,7 +489,7 @@ public class JBScrollPane extends JScrollPane {
       int vsbPolicy = pane.getVerticalScrollBarPolicy();
       if (!isEmpty && vsbPolicy != VERTICAL_SCROLLBAR_NEVER) {
         vsbNeeded = vsbPolicy == VERTICAL_SCROLLBAR_ALWAYS
-                    || !viewTracksViewportHeight && (viewPreferredSize.height > viewportExtentSize.height || viewLocation.y != 0);
+                    || !viewTracksViewportHeight && isScrollBarNeeded(viewLocation.y, viewPreferredSize.height, viewportExtentSize.height);
       }
       Rectangle vsbBounds = new Rectangle(0, bounds.y - insets.top, 0, 0);
       if (vsb != null) {
@@ -509,7 +509,7 @@ public class JBScrollPane extends JScrollPane {
       int hsbPolicy = pane.getHorizontalScrollBarPolicy();
       if (!isEmpty && hsbPolicy != HORIZONTAL_SCROLLBAR_NEVER) {
         hsbNeeded = hsbPolicy == HORIZONTAL_SCROLLBAR_ALWAYS
-                    || !viewTracksViewportWidth && (viewPreferredSize.width > viewportExtentSize.width || viewLocation.x != 0);
+                    || !viewTracksViewportWidth && isScrollBarNeeded(viewLocation.x, viewPreferredSize.width, viewportExtentSize.width);
       }
       Rectangle hsbBounds = new Rectangle(bounds.x - insets.left, 0, 0, 0);
       if (hsb != null) {
@@ -526,7 +526,7 @@ public class JBScrollPane extends JScrollPane {
             else if (viewport != null) {
               viewportExtentSize = viewport.toViewCoordinates(bounds.getSize());
             }
-            vsbNeeded = viewPreferredSize.height > viewportExtentSize.height || viewLocation.y != 0;
+            vsbNeeded = isScrollBarNeeded(viewLocation.y, viewPreferredSize.height, viewportExtentSize.height);
             if (vsbNeeded) adjustForVSB(bounds, insets, vsbBounds, vsbOpaque, vsbOnLeft);
           }
         }
@@ -543,7 +543,8 @@ public class JBScrollPane extends JScrollPane {
 
           boolean vsbNeededOld = vsbNeeded;
           if (vsb != null && vsbPolicy == VERTICAL_SCROLLBAR_AS_NEEDED) {
-            boolean vsbNeededNew = !viewTracksViewportHeight && viewPreferredSize.height > viewportExtentSize.height || viewLocation.y != 0;
+            boolean vsbNeededNew = !viewTracksViewportHeight &&
+                                   isScrollBarNeeded(viewLocation.y, viewPreferredSize.height, viewportExtentSize.height);
             if (vsbNeeded != vsbNeededNew) {
               vsbNeeded = vsbNeededNew;
               if (vsbNeeded) {
@@ -557,7 +558,8 @@ public class JBScrollPane extends JScrollPane {
           }
           boolean hsbNeededOld = hsbNeeded;
           if (hsb != null && hsbPolicy == HORIZONTAL_SCROLLBAR_AS_NEEDED) {
-            boolean hsbNeededNew = !viewTracksViewportWidth && viewPreferredSize.width > viewportExtentSize.width || viewLocation.x != 0;
+            boolean hsbNeededNew = !viewTracksViewportWidth &&
+                                   isScrollBarNeeded(viewLocation.x, viewPreferredSize.width, viewportExtentSize.width);
             if (hsbNeeded != hsbNeededNew) {
               hsbNeeded = hsbNeededNew;
               if (hsbNeeded) {
@@ -568,7 +570,7 @@ public class JBScrollPane extends JScrollPane {
               }
               if (hsbOpaque && vsb != null && !vsbNeeded && vsbPolicy != VERTICAL_SCROLLBAR_NEVER) {
                 viewportExtentSize = viewport.toViewCoordinates(bounds.getSize());
-                vsbNeeded = viewPreferredSize.height > viewportExtentSize.height || viewLocation.y != 0;
+                vsbNeeded = isScrollBarNeeded(viewLocation.y, viewPreferredSize.height, viewportExtentSize.height);
                 if (vsbNeeded) adjustForVSB(bounds, insets, vsbBounds, vsbOpaque, vsbOnLeft);
               }
             }
@@ -801,6 +803,16 @@ public class JBScrollPane extends JScrollPane {
 
     private static int min(int one, int two) {
       return Math.max(0, Math.min(one, two));
+    }
+
+    /**
+     * @param location      a horizontal (or vertical) position of a component
+     * @param preferredSize a preferred width (or height) of a component
+     * @param extentSize    an extent size of a viewport
+     * @return {@code true} if a preferred size exceeds an extent size or if a component is not aligned
+     */
+    private static boolean isScrollBarNeeded(int location, int preferredSize, int extentSize) {
+      return preferredSize > extentSize || location != 0;
     }
   }
 
