@@ -33,6 +33,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.table.TableCellEditor;
+import javax.swing.text.BadLocationException;
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
@@ -235,12 +236,12 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
         }
         if (row >= 0 && column >= 0) {
           JTextField textField = (JTextField)((DefaultCellEditor)view.getCellEditor()).getComponent();
-          int position = textField.getCaretPosition();
-          String text = textField.getText();
-          String before = text.substring(0, position);
-          String after = text.substring(position);
-          view.stopEditing();
-          view.getModel().setValueAt(before + content + after, row, column);
+          try {
+            textField.getDocument().insertString(textField.getCaretPosition(), content, null);
+          }
+          catch (BadLocationException e) {
+            //just ignore, paste failed
+          }
         }
         return;
       }
