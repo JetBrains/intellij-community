@@ -3,11 +3,12 @@ import * as am4charts from "@amcharts/amcharts4/charts"
 import * as am4core from "@amcharts/amcharts4/core"
 import {addExportMenu} from "@/charts/ChartManager"
 import {AggregatedDataManager, MetricDescriptor} from "@/aggregatedStats/AggregatedDataManager"
+import {ChartSettings} from "@/aggregatedStats/ChartSettings"
 
 export class AggregatedStatsChartManager {
   private readonly chart: am4charts.XYChart
 
-  constructor(container: HTMLElement, private readonly isInstantEvents: boolean) {
+  constructor(container: HTMLElement, private readonly chartSettings: ChartSettings, private readonly isInstantEvents: boolean) {
     this.chart = am4core.create(container, am4charts.XYChart)
 
     const chart = this.chart
@@ -38,16 +39,41 @@ export class AggregatedStatsChartManager {
     chart.scrollbarY.toBack()
 
     // create a horizontal scrollbar with preview and place it underneath the date axis
+    if (this.chartSettings.isShowScrollbarXPreview) {
+      this.configureScrollbarXWithPreview()
+    }
+    else {
+      chart.scrollbarX = new am4core.Scrollbar()
+    }
+  }
+
+  private configureScrollbarXWithPreview(): am4charts.XYChartScrollbar {
     const scrollbarX = new am4charts.XYChartScrollbar()
+    const chart = this.chart
     chart.scrollbarX = scrollbarX
     scrollbarX.parent = chart.bottomAxesContainer
+    return scrollbarX
+  }
+
+  scrollbarXPreviewOptionChanged() {
+    // no need to dispose old scrollbar explicit - will be disposed automatically on set
+    const chart = this.chart
+    console.log("scrollbarXPreviewOptionChanged: " + this.chartSettings.isShowScrollbarXPreview)
+    if (this.chartSettings.isShowScrollbarXPreview) {
+      const scrollbarX = this.configureScrollbarXWithPreview()
+      chart.series.each(it => {
+        scrollbarX.series.push(it)
+      })
+    }
+    else {
+      chart.scrollbarX = new am4core.Scrollbar()
+    }
   }
 
   render(dataManager: AggregatedDataManager): void {
     const chart = this.chart
 
     const scrollbarX = chart.scrollbarX as am4charts.XYChartScrollbar
-
     const oldSeries = new Map<string, am4charts.LineSeries>()
 
     for (const series of chart.series) {
@@ -65,12 +91,16 @@ export class AggregatedStatsChartManager {
         oldSeries.delete(metric.key)
       }
 
-      scrollbarX.series.push(series)
+      if (this.chartSettings.isShowScrollbarXPreview) {
+        scrollbarX.series.push(series)
+      }
     }
 
     oldSeries.forEach(value => {
       chart.series.removeIndex(chart.series.indexOf(value))
-      scrollbarX.series.removeIndex(scrollbarX.series.indexOf(value))
+      if (this.chartSettings.isShowScrollbarXPreview) {
+        scrollbarX.series.removeIndex(scrollbarX.series.indexOf(value))
+      }
       value.dispose()
     })
 

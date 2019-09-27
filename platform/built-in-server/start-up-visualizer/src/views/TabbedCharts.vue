@@ -44,7 +44,6 @@
     }
 
     navigate(): void {
-      alert("boo")
       this.$router.push({
         query: {
           ...this.$route.query,
