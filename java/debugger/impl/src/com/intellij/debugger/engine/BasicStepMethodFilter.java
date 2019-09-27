@@ -7,6 +7,7 @@ import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.Range;
@@ -163,29 +164,41 @@ public class BasicStepMethodFilter implements NamedMethodFilter {
     try {
       String signature = method.signature();
       if (stackFrame != null && signature != null && signature.endsWith(PROXY_CALL_SIGNATURE_POSTFIX)) {
-        if ("invoke".equals(method.name())) {
+        String methodName = method.name();
+        boolean match = false;
+        // standard
+        if ("invoke".equals(methodName)) {
           ReferenceType type = method.declaringType();
-          if (!(type instanceof ClassType) ||
-              ((ClassType)type).interfaces().stream().map(InterfaceType::name).noneMatch("java.lang.reflect.InvocationHandler"::equals)) {
-            return false;
+          if ((type instanceof ClassType) &&
+              ((ClassType)type).interfaces().stream().map(InterfaceType::name).anyMatch("java.lang.reflect.InvocationHandler"::equals)) {
+            match = true;
           }
         }
-        else if (!DebuggerUtilsEx.isLambdaName(method.name())) {
-          return false;
+        if (DebuggerUtilsEx.isLambdaName(methodName)) {
+          match = true;
         }
-        List<Value> argumentValues = stackFrame.getArgumentValues();
-        int size = argumentValues.size();
-        if (size >= 3) {
-          Value proxyValue = argumentValues.get(size - 3);
-          if (proxyValue != null) {
-            Type proxyType = proxyValue.type();
-            if (proxyType instanceof ReferenceType && DebuggerUtilsEx.isAssignableFrom(myDeclaringClassName.getName(process), proxyType)) {
-              Value methodValue = argumentValues.get(size - 2);
-              if (methodValue instanceof ObjectReference) {
-                // TODO: no signature check for now
-                ReferenceType methodType = ((ObjectReference)methodValue).referenceType();
-                return myTargetMethodName.equals(
-                  ((StringReference)((ObjectReference)methodValue).getValue(methodType.fieldByName("name"))).value());
+        else {
+          ObjectReference thisObject = stackFrame.thisObject();
+          if (thisObject != null && StringUtil.containsIgnoreCase(thisObject.referenceType().name(), "CGLIB")) {
+            match = true;
+          }
+        }
+        if (match) {
+          List<Value> argumentValues = stackFrame.getArgumentValues();
+          int size = argumentValues.size();
+          if (size >= 3) {
+            Value proxyValue = argumentValues.get(size - 3);
+            if (proxyValue != null) {
+              Type proxyType = proxyValue.type();
+              if (proxyType instanceof ReferenceType &&
+                  DebuggerUtilsEx.isAssignableFrom(myDeclaringClassName.getName(process), proxyType)) {
+                Value methodValue = argumentValues.get(size - 2);
+                if (methodValue instanceof ObjectReference) {
+                  // TODO: no signature check for now
+                  ReferenceType methodType = ((ObjectReference)methodValue).referenceType();
+                  return myTargetMethodName.equals(
+                    ((StringReference)((ObjectReference)methodValue).getValue(methodType.fieldByName("name"))).value());
+                }
               }
             }
           }
