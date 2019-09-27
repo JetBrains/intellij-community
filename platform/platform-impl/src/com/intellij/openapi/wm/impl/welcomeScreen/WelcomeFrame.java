@@ -2,6 +2,7 @@
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.ide.GeneralSettings;
+import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.idea.SplashManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
@@ -98,20 +99,19 @@ public final class WelcomeFrame extends JFrame implements IdeFrame, AccessibleCo
     DimensionService.getInstance().setLocation(DIMENSION_KEY, middle, null);
   }
 
-  static void setupCloseAction(final JFrame frame) {
+  static void setupCloseAction(@NotNull JFrame frame) {
     frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
-    frame.addWindowListener(
-      new WindowAdapter() {
-        @Override
-        public void windowClosing(final WindowEvent e) {
-          if (ProjectManager.getInstance().getOpenProjects().length == 0) {
-            ApplicationManager.getApplication().exit();
-          }
-          else {
-            frame.dispose();
-          }
+    frame.addWindowListener(new WindowAdapter() {
+      @Override
+      public void windowClosing(WindowEvent e) {
+        if (ProjectUtil.getOpenProjects().length == 0) {
+          ApplicationManager.getApplication().exit();
         }
-      });
+        else {
+          frame.dispose();
+        }
+      }
+    });
   }
 
   private static WelcomeScreen createScreen(JRootPane rootPane) {
