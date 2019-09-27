@@ -20,11 +20,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.history.HistoryAsTreeProvider;
-import com.intellij.openapi.vcs.history.VcsCachingHistory;
-import com.intellij.openapi.vcs.history.VcsFileRevision;
+import com.intellij.openapi.vcs.diff.DiffProvider;
+import com.intellij.openapi.vcs.history.*;
 import com.intellij.openapi.vcs.impl.VcsBackgroundableActions;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
@@ -49,6 +49,7 @@ import java.awt.*;
 import java.util.Date;
 import java.util.List;
 
+import static com.intellij.util.ObjectUtils.assertNotNull;
 import static com.intellij.util.ObjectUtils.notNull;
 
 public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
@@ -112,7 +113,14 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
 
   @Override
   public void update(@NotNull VcsContext e, @NotNull Presentation presentation) {
-    AbstractShowDiffAction.updateDiffAction(presentation, e);
+    final FilePath filePath = e.getSelectedFilePath();
+    if (filePath != null && filePath.isDirectory()) {
+      presentation.setVisible(isVisibleForDirectory(e));
+      presentation.setEnabled(isEnabledForDirectory(e));
+    }
+    else {
+      AbstractShowDiffAction.updateDiffAction(presentation, e);
+    }
   }
 
 
@@ -129,17 +137,30 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
                          final HistoryAsTreeProvider treeHistoryProvider = session.getHistoryAsTreeProvider();
                          if (treeHistoryProvider != null) {
                            showTreePopup(treeHistoryProvider.createTreeOn(revisions), project,
-                                         revision -> showSelectedRevision(vcs, revision, file, project));
+                                         selected -> showSelectedRevision(selected.getRevisionNumber(), vcs, file, project));
                          }
                          else {
-                           showListPopup(revisions, project, revision -> showSelectedRevision(vcs, revision, file, project), true);
+                           showListPopup(revisions, project,
+                                         selected -> showSelectedRevision(selected.getRevisionNumber(), vcs, file, project),
+                                         true);
                          }
                        });
   }
 
-  protected void showSelectedRevision(@NotNull AbstractVcs vcs, @NotNull VcsFileRevision revision,
+  protected void showSelectedRevision(@NotNull VcsRevisionNumber selected, @NotNull AbstractVcs vcs,
                                       @NotNull VirtualFile file, @NotNull Project project) {
-    DiffActionExecutor.showDiff(vcs.getDiffProvider(), revision.getRevisionNumber(), file, project);
+    if (file.isDirectory()) {
+      final DiffProvider diffProvider = assertNotNull(vcs.getDiffProvider());
+      VcsDiffUtil.showChangesWithWorkingDirLater(
+        project,
+        file,
+        selected,
+        diffProvider
+      );
+    }
+    else {
+      DiffActionExecutor.showDiff(vcs.getDiffProvider(), selected, file, project);
+    }
   }
 
   private static void showTreePopup(final List<TreeItem<VcsFileRevision>> roots, final Project project,
@@ -335,5 +356,23 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
     public VcsFileRevision getRevision() {
       return myRevision.getData();
     }
+  }
+
+  //////////////////////////////////////////////////
+  // Implementation for directories
+
+  private static boolean isVisibleForDirectory(@NotNull VcsContext vcsContext) {
+    return vcsContext.getProject() != null;
+  }
+
+  private static boolean isEnabledForDirectory(@NotNull VcsContext vcsContext) {
+    Project project = vcsContext.getProject();
+    if (project == null) return false;
+    VirtualFile file = vcsContext.getSelectedFile();
+    if (file == null || !file.isDirectory()) return false;
+    FilePath filePath = assertNotNull(vcsContext.getSelectedFilePath());
+    final AbstractVcs vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(filePath);
+    DiffProvider diffProvider = vcs != null ? vcs.getDiffProvider() : null;
+    return diffProvider != null && diffProvider.hasChangesSupport();
   }
 }

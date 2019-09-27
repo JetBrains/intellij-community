@@ -67,8 +67,7 @@
       <separator/>
 
       <reference ref="Compare.SameVersion"/>
-      <action id="hg4idea.CompareWith" class="org.zmlx.hg4idea.action.HgCompareWithSelectedRevisionAction"
-              text="_Compare with..."/>
+      <reference ref="Compare.Selected"/>
       <action id="hg4idea.CompareWithBranch" class="org.zmlx.hg4idea.action.HgCompareWithBranchAction"
               text="Compare with Branch/Bookmark..."/>
       <reference ref="Vcs.ShowTabbedFileHistory"/>

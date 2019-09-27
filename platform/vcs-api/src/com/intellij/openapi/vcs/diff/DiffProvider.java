@@ -16,6 +16,7 @@
 package com.intellij.openapi.vcs.diff;
 
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsProviderMarker;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
@@ -56,4 +57,16 @@ public interface DiffProvider extends VcsProviderMarker {
   default void preloadBaseRevisions(@NotNull VirtualFile root, @NotNull Collection<Change> changes) {
   }
 
+  default boolean hasChangesSupport() {
+    return false;
+  }
+
+  // Gets changes between source and target revisions.
+  // If source revision is null, then compares target revision with working directory.
+  @Nullable
+  default Collection<Change> getChanges(@NotNull VirtualFile fileOrDir,
+                                        @NotNull VcsRevisionNumber targetRevNum,
+                                        @Nullable VcsRevisionNumber sourceRevNum) throws VcsException {
+    return null;
+  }
 }
