@@ -98,7 +98,6 @@ public class HelpTooltip {
   private static final Color BORDER_COLOR = JBColor.namedColor("ToolTip.borderColor", new JBColor(0xadadad, 0x636569));
 
   private static final JBValue VGAP = new JBValue.UIInteger("HelpTooltip.verticalGap", 4);
-  private static final JBValue HGAP = new JBValue.UIInteger("HelpTooltip.horizontalGap", 8);
   private static final JBValue MAX_WIDTH = new JBValue.UIInteger("HelpTooltip.maxWidth", 250);
   private static final JBValue X_OFFSET = new JBValue.UIInteger("HelpTooltip.xOffset", 0);
   private static final JBValue Y_OFFSET = new JBValue.UIInteger("HelpTooltip.yOffset", 0);
