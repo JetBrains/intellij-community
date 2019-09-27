@@ -4,9 +4,7 @@ package com.intellij.openapi.fileEditor;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsState;
 import com.intellij.mock.Mock;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.FoldRegion;
-import com.intellij.openapi.editor.FoldingModel;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite;
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
@@ -14,6 +12,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.Navigatable;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.FileEditorManagerTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -216,6 +215,19 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
     }
   }
 
+  public void testOpenSpecificTextEditor() {
+    FileEditorProvider.EP_FILE_EDITOR_PROVIDER.getPoint(null)
+      .registerExtension(new MyTextEditorProvider("one", 1), myFixture.getTestRootDisposable());
+    FileEditorProvider.EP_FILE_EDITOR_PROVIDER.getPoint(null)
+      .registerExtension(new MyTextEditorProvider("two", 2), myFixture.getTestRootDisposable());
+    Project project = getProject();
+    VirtualFile file = getFile("/src/Test.java");
+    myManager.openTextEditor(new OpenFileDescriptor(project, file, 1), true);
+    assertEquals("one", myManager.getSelectedEditor(file).getName());
+    myManager.openTextEditor(new OpenFileDescriptor(project, file, 2), true);
+    assertEquals("two", myManager.getSelectedEditor(file).getName());
+  }
+
   private static final String STRING = "<component name=\"FileEditorManager\">\n" +
                                        "    <leaf>\n" +
                                        "      <file pinned=\"false\" current=\"false\" current-in-tab=\"false\">\n" +
@@ -316,6 +328,87 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
     public String getEditorTypeId() {
       return "dumbAware";
     }
+  }
+
+  private static class MyTextEditorProvider implements FileEditorProvider, DumbAware {
+    private final String myId;
+    private final int myTargetOffset;
+
+    private MyTextEditorProvider(String id, int targetOffset) {
+      myId = id;
+      myTargetOffset = targetOffset;
+    }
+
+    @Override
+    public boolean accept(@NotNull Project project, @NotNull VirtualFile file) {
+      return true;
+    }
+
+    @NotNull
+    @Override
+    public FileEditor createEditor(@NotNull Project project, @NotNull VirtualFile file) {
+      return new MyTextEditor(FileDocumentManager.getInstance().getDocument(file), myId, myTargetOffset);
+    }
+
+    @NotNull
+    @Override
+    public String getEditorTypeId() {
+      return myId;
+    }
+
+    @NotNull
+    @Override
+    public FileEditorPolicy getPolicy() {
+      return FileEditorPolicy.HIDE_DEFAULT_EDITOR;
+    }
+  }
+
+  private static class MyTextEditor extends Mock.MyFileEditor implements TextEditor {
+    private final Editor myEditor;
+    private final String myName;
+    private final int myTargetOffset;
+
+    private MyTextEditor(Document document, String name, int targetOffset) {
+      myEditor = EditorFactory.getInstance().createEditor(document);
+      myName = name;
+      myTargetOffset = targetOffset;
+    }
+
+    @Override
+    public void dispose() {
+      try {
+        EditorFactory.getInstance().releaseEditor(myEditor);
+      }
+      finally {
+        super.dispose();
+      }
+    }
+
+    @NotNull
+    @Override
+    public JComponent getComponent() {
+      return new JLabel();
+    }
+
+    @NotNull
+    @Override
+    public String getName() {
+      return myName;
+    }
+
+    @NotNull
+    @Override
+    public Editor getEditor() {
+      return myEditor;
+    }
+
+    @Override
+    public boolean canNavigateTo(@NotNull Navigatable navigatable) {
+      return navigatable instanceof OpenFileDescriptor && ((OpenFileDescriptor)navigatable).getOffset() == myTargetOffset;
+    }
+
+    @Override
+    public void navigateTo(@NotNull Navigatable navigatable) {}
   }
 }
 
