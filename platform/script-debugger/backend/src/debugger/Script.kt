@@ -31,6 +31,8 @@ interface Script : UserDataHolderEx {
     NORMAL
   }
 
+  val vm: Vm
+
   val type: Type
 
   var sourceMap: SourceMap?
