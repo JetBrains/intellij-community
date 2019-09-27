@@ -36,6 +36,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
 import java.util.function.BooleanSupplier;
+import java.util.regex.Pattern;
 
 /**
  * Standard implementation of help context tooltip.
@@ -110,6 +111,7 @@ public class HelpTooltip {
 
   private static final String DOTS = "...";
   private static final String PARAGRAPH_SPLITTER = "<p/?>";
+  private static final Pattern HTML_TAG = Pattern.compile("<b>|<br>");
 
   private static final String TOOLTIP_PROPERTY = "JComponent.helpTooltip";
 
@@ -327,7 +329,7 @@ public class HelpTooltip {
 
     boolean hasTitle = StringUtil.isNotEmpty(title);
     if (hasTitle) {
-      tipPanel.add(new Header(), VerticalLayout.TOP);
+      tipPanel.add(hasHTMLTags(title) ? new Paragraph(title, false) : new Header(), VerticalLayout.TOP);
     }
 
     if (StringUtil.isNotEmpty(description)) {
@@ -353,6 +355,10 @@ public class HelpTooltip {
     tipPanel.setBorder(textBorder(isMultiline));
 
     return tipPanel;
+  }
+
+  private static boolean hasHTMLTags(@Nullable String string) {
+    return StringUtil.isNotEmpty(string) && HTML_TAG.matcher(string).find();
   }
 
   private void installMouseListeners(@NotNull JComponent owner) {
@@ -500,7 +506,8 @@ public class HelpTooltip {
       Map<TextAttribute,?> tfa = font.getAttributes();
       titleString = new AttributedString(title, tfa);
       dotString = new AttributedString(DOTS, tfa);
-      shortcutString = StringUtil.isNotEmpty(shortcut) ? new AttributedString(shortcut, font.getAttributes()) : null;
+      boolean hasShortcut = StringUtil.isNotEmpty(shortcut);
+      shortcutString = hasShortcut ? new AttributedString(shortcut, font.getAttributes()) : null;
 
       AttributedCharacterIterator paragraph = titleString.getIterator();
       paragraphStart = paragraph.getBeginIndex();
@@ -511,7 +518,7 @@ public class HelpTooltip {
       int titleWidth = UIUtilities.stringWidth(this, tfm, title);
 
       FontMetrics fm = getFontMetrics(font);
-      titleWidth += StringUtil.isNotEmpty(shortcut) ? HGAP.get() + UIUtilities.stringWidth(this, fm, shortcut) : 0;
+      titleWidth += hasShortcut ? HGAP.get() + UIUtilities.stringWidth(this, fm, shortcut) : 0;
 
       boolean limitWidth = StringUtil.isNotEmpty(description) || link != null;
       isMultiline = limitWidth && titleWidth > MAX_WIDTH.get();
