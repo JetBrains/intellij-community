@@ -7,8 +7,9 @@ import org.jetbrains.intellij.build.impl.LayoutBuilder
 /**
  * Builds artifacts which are used in Kotlin Compiler and UpSource
  *
- * @author nik
+ * @deprecated all modules included into these artifacts are published as proper Maven artifacts to IntelliJ Artifacts Repository (http://www.jetbrains.org/intellij/sdk/docs/reference_guide/intellij_artifacts.html).
  */
+@Deprecated
 class IntelliJCoreArtifactsBuilder {
   private static final List<String> ANALYSIS_API_MODULES = [
     "intellij.platform.analysis",
