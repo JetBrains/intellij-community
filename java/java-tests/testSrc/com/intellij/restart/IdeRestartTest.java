@@ -13,25 +13,25 @@ import java.util.function.Consumer;
 @Ignore
 @SkipSlowTestLocally
 public class IdeRestartTest extends IsolatedIdeTestCase {
-  public void testSimpleOpenAndRestart() {
-    doTestWithRestart(MyAction1.class, MyAction2.class);
-  }
-
-  public static class MyAction1 implements Consumer<JavaCodeInsightTestFixture> {
-    @Override
-    public void accept(JavaCodeInsightTestFixture fixture) {
-      assertNull(fixture.getJavaFacade().findClass("A"));
-      fixture.addClass("class A { void m" + System.identityHashCode(ApplicationManager.getApplication()) + "() {}  } ");
-      assertNotNull(fixture.findClass("A"));
-    }
-  }
-
-  public static class MyAction2 implements Consumer<JavaCodeInsightTestFixture> {
-    @Override
-    public void accept(JavaCodeInsightTestFixture fixture) {
-      PsiClass cls = fixture.findClass("A");
-      assertNotNull(cls);
-      assertEmpty(cls.findMethodsByName("m" + System.identityHashCode(ApplicationManager.getApplication())));
-    }
-  }
+  //public void testSimpleOpenAndRestart() {
+  //  doTestWithRestart(MyAction1.class, MyAction2.class);
+  //}
+  //
+  //public static class MyAction1 implements Consumer<JavaCodeInsightTestFixture> {
+  //  @Override
+  //  public void accept(JavaCodeInsightTestFixture fixture) {
+  //    assertNull(fixture.getJavaFacade().findClass("A"));
+  //    fixture.addClass("class A { void m" + System.identityHashCode(ApplicationManager.getApplication()) + "() {}  } ");
+  //    assertNotNull(fixture.findClass("A"));
+  //  }
+  //}
+  //
+  //public static class MyAction2 implements Consumer<JavaCodeInsightTestFixture> {
+  //  @Override
+  //  public void accept(JavaCodeInsightTestFixture fixture) {
+  //    PsiClass cls = fixture.findClass("A");
+  //    assertNotNull(cls);
+  //    assertEmpty(cls.findMethodsByName("m" + System.identityHashCode(ApplicationManager.getApplication())));
+  //  }
+  //}
 }
