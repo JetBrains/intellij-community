@@ -2,7 +2,6 @@
 package com.intellij.codeInspection;
 
 import com.intellij.application.options.CodeStyle;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -23,7 +22,6 @@ public class TextBlockBackwardMigrationInspection extends AbstractBaseJavaLocalI
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!HighlightUtil.Feature.TEXT_BLOCKS.isAvailable(holder.getFile())) return PsiElementVisitor.EMPTY_VISITOR;
     return new JavaElementVisitor() {
       @Override
       public void visitLiteralExpression(PsiLiteralExpression expression) {
