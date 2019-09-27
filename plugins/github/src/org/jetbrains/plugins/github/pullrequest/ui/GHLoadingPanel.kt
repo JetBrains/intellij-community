@@ -9,7 +9,9 @@ import com.intellij.util.ui.ComponentWithEmptyText
 import com.intellij.vcs.log.ui.frame.ProgressStripe
 import java.awt.BorderLayout
 import java.awt.event.ActionListener
+import java.awt.event.KeyEvent
 import javax.swing.JComponent
+import javax.swing.KeyStroke
 
 class GHLoadingPanel<T>(private val model: GHLoadingModel<*>,
                         private val content: T,
@@ -49,21 +51,27 @@ class GHLoadingPanel<T>(private val model: GHLoadingModel<*>,
       }
     }
     else {
-      isFocusable = false
       stopLoading()
       updateLoadingPanel.stopLoading()
 
-      val error = model.error
-      when {
-        error != null -> content.emptyText.clear()
-          .appendText(textBundle.errorPrefix, SimpleTextAttributes.ERROR_ATTRIBUTES)
-          .appendSecondaryText(error.message ?: "Unknown error", SimpleTextAttributes.ERROR_ATTRIBUTES, null).apply {
-            resetHandler?.let {
-              appendSecondaryText(" Retry", SimpleTextAttributes.LINK_ATTRIBUTES, it)
-            }
+      if (model.result != null) {
+        isFocusable = false
+        resetKeyboardActions()
+        content.emptyText.text = textBundle.empty
+      }
+      else {
+        val error = model.error
+        if (error != null) {
+          content.emptyText.clear()
+            .appendText(textBundle.errorPrefix, SimpleTextAttributes.ERROR_ATTRIBUTES)
+            .appendSecondaryText(error.message ?: "Unknown error", SimpleTextAttributes.ERROR_ATTRIBUTES, null)
+
+          resetHandler?.let {
+            content.emptyText.appendSecondaryText(" Retry", SimpleTextAttributes.LINK_ATTRIBUTES, it)
+            registerKeyboardAction(it, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), JComponent.WHEN_FOCUSED)
           }
-        model.result != null -> content.emptyText.text = textBundle.empty
-        else -> content.emptyText.text = textBundle.default
+        }
+        else content.emptyText.text = textBundle.default
       }
     }
   }
