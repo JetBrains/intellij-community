@@ -25,6 +25,13 @@ plugins {
     id 'com.github.ManifestClasspath' version '0.1.0-RELEASE' // required in Windows
 }
 
+grammarKit {
+    // temporary workaround for
+    // https://github.com/JetBrains/Grammar-Kit/issues/215
+    // Can be removed when new grammarkit version is released
+    grammarKitRelease = '07f30a1e7666f36ae780f614b6bbc89690ba36c3'
+}
+
 group 'de.thomasrosenau'
 
 sourceCompatibility = 1.8
@@ -34,12 +41,12 @@ repositories {
 }
 
 // version of this plugin
-version '2.1.2-SNAPSHOT'
+version '2.1.3-SNAPSHOT'
 
 intellij {
     plugins = ['java']
     // IDE version that will be used for compilation and for :runIde task
-    version '192-EAP-SNAPSHOT'
+    version 'LATEST-EAP-SNAPSHOT'
 }
 
 def intellijPublishToken = project.properties['intellijPublishToken'] ?:
@@ -50,8 +57,8 @@ publishPlugin {
 }
 
 patchPluginXml {
-    sinceBuild '192.4205.41'
-    untilBuild '192.*'
+    sinceBuild '193'
+    untilBuild '193.*'
 
     // language=HTML prefix=<body> suffix=</body>
     pluginDescription '''
@@ -75,6 +82,10 @@ patchPluginXml {
 
     // language=HTML prefix=<body> suffix=</body>
     changeNotes '''
+    <h5>2.1.3</h5>
+    <ul>
+      <li>Update compatibility for 2019.3 product line</li>
+    </ul>
     <h5>2.1.2</h5>
     <ul>
       <li>Update compatibility for 2019.2 product line</li>
