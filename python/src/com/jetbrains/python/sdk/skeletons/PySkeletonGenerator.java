@@ -30,6 +30,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 /**
@@ -51,7 +53,7 @@ import java.util.*;
  * <p>
  * To fully support this mode with real-time progress indication all inheritors must support
  * reading process' stdout/stderr interactively line by line by implementing
- * {@link #runProcessWithLineOutputListener(String, List, Map, int, LineWiseProcessOutputListener)}.
+ * {@link #runProcessWithLineOutputListener(String, List, Map, String, int, LineWiseProcessOutputListener)}.
  * The provided {@link LineWiseProcessOutputListener} will handle all the service lines written to stdout.
  * <p>
  * Example of generator invocation in the main mode:
@@ -85,6 +87,7 @@ import java.util.*;
 public class PySkeletonGenerator {
   protected static final Logger LOG = Logger.getInstance(PySkeletonGenerator.class);
   protected static final String GENERATOR3 = "generator3/__main__.py";
+  protected static final String STATE_MARKER_FILE = ".state.json";
 
   // Some flavors need current folder to be passed as param. Here are they.
   private static final Map<Class<? extends PythonSdkFlavor>, String> ENV_PATH_PARAM =
@@ -119,13 +122,14 @@ public class PySkeletonGenerator {
    */
   public final class Builder {
     private Map<String, String> myExtraEnv;
-    private List<String> myExtraSysPath;
-    private List<String> myAssemblyRefs;
-    private List<String> myExtraArgs;
+    private List<String> myExtraSysPath = new ArrayList<>();
+    private List<String> myAssemblyRefs = new ArrayList<>();
+    private List<String> myExtraArgs = new ArrayList<>();
     private String myTargetModuleName;
     private String myTargetModulePath;
     private boolean myPrebuilt = false;
     private int myTimeout;
+    private String myStdin;
 
     @NotNull
     public Builder extraEnvironment(@NotNull Map<String, String> environment) {
@@ -147,7 +151,7 @@ public class PySkeletonGenerator {
 
     @NotNull
     public Builder extraArgs(@NotNull List<String> args) {
-      myExtraArgs = args;
+      myExtraArgs.addAll(args);
       return this;
     }
 
@@ -185,6 +189,17 @@ public class PySkeletonGenerator {
     public Builder timeout(int timeout) {
       myTimeout = timeout;
       return this;
+    }
+
+    @NotNull
+    public Builder stdin(@NotNull String content) {
+      myStdin = content;
+      return this;
+    }
+
+    @Nullable
+    public String getStdin() {
+      return myStdin;
     }
 
     @NotNull
@@ -325,8 +340,8 @@ public class PySkeletonGenerator {
     runProcessWithLineOutputListener(builder.getWorkingDir(),
                                      builder.getCommandLine(),
                                      builder.getEnvironment(),
-                                     builder.getTimeout(Time.MINUTE * 20),
-                                     listener);
+                                     builder.myStdin,
+                                     builder.getTimeout(Time.MINUTE * 20), listener);
     return results;
   }
 
@@ -334,6 +349,7 @@ public class PySkeletonGenerator {
   protected ProcessOutput runProcess(@NotNull Builder builder) throws InvalidSdkException, ExecutionException {
     return getProcessOutput(builder.getWorkingDir(),
                             ArrayUtil.toStringArray(builder.getCommandLine()),
+                            builder.getStdin(),
                             builder.getEnvironment(),
                             builder.getTimeout(Time.MINUTE * 10));
   }
@@ -348,6 +364,7 @@ public class PySkeletonGenerator {
   protected void runProcessWithLineOutputListener(@NotNull String homePath,
                                                   @NotNull List<String> cmd,
                                                   @NotNull Map<String, String> env,
+                                                  @Nullable String stdin,
                                                   int timeout,
                                                   @NotNull LineWiseProcessOutputListener listener)
     throws ExecutionException, InvalidSdkException {
@@ -355,6 +372,14 @@ public class PySkeletonGenerator {
       .withWorkDirectory(homePath)
       .withEnvironment(env);
     final CapturingProcessHandler handler = new CapturingProcessHandler(commandLine);
+    if (stdin != null) {
+      try {
+        handler.getProcessInput().write(stdin.getBytes(StandardCharsets.UTF_8));
+      }
+      catch (IOException e) {
+        LOG.warn(e);
+      }
+    }
     handler.addProcessListener(new LineWiseProcessOutputListener.Adapter(listener));
     handler.runProcess(timeout);
   }
@@ -366,9 +391,13 @@ public class PySkeletonGenerator {
   public void prepare() {
   }
 
-  protected ProcessOutput getProcessOutput(String homePath, @NotNull String[] commandLine, Map<String, String> extraEnv,
+  protected ProcessOutput getProcessOutput(String homePath,
+                                           @NotNull String[] commandLine,
+                                           @Nullable String stdin,
+                                           Map<String, String> extraEnv,
                                            int timeout) throws InvalidSdkException {
-    return PySdkUtil.getProcessOutput(homePath, commandLine, extraEnv, timeout);
+    final byte[] bytes = stdin != null ? stdin.getBytes(StandardCharsets.UTF_8) : null;
+    return PySdkUtil.getProcessOutput(homePath, commandLine, extraEnv, timeout, bytes, true);
   }
 
   public boolean deleteOrLog(@NotNull File item) {

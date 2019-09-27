@@ -412,7 +412,7 @@ class MultiModuleGenerationTest(FunctionalGeneratorTestCase):
 
 
 class StatePassingGenerationTest(FunctionalGeneratorTestCase):
-    default_generator_extra_args = ['--with-state-marker', '--name-pattern', 'mod?']
+    default_generator_extra_args = ['--read-state-from-stdin', '--name-pattern', 'mod?']
     default_generator_extra_syspath = ['mocks', 'binaries']
 
     def test_existing_updated_due_to_required_gen_version(self):
@@ -507,3 +507,6 @@ class StatePassingGenerationTest(FunctionalGeneratorTestCase):
         self.check_generator_output(input=json.dumps(state),
                                     custom_required_gen=True,
                                     gen_version='0.1')
+
+    def test_only_leaving_state_file_no_read(self):
+        self.check_generator_output(extra_args=['--write-state-file', '--name-pattern', 'mod?'])
