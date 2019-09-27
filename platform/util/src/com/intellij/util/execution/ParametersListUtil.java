@@ -105,7 +105,17 @@ public class ParametersListUtil {
 
   @NotNull
   public static List<String> parse(@NotNull String parameterString, boolean keepQuotes, boolean supportSingleQuotes) {
-    parameterString = parameterString.trim();
+    return parse(parameterString, keepQuotes, supportSingleQuotes, false);
+  }
+
+  @NotNull
+  public static List<String> parse(@NotNull String parameterString,
+                                   boolean keepQuotes,
+                                   boolean supportSingleQuotes,
+                                   boolean keepEmptyParameters) {
+    if (!keepEmptyParameters) {
+      parameterString = parameterString.trim();
+    }
 
     final ArrayList<String> params = new ArrayList<>();
     if (parameterString.isEmpty()) {
@@ -137,7 +147,7 @@ public class ParametersListUtil {
       }
       else if (Character.isWhitespace(ch)) {
         if (!inQuotes) {
-          if (token.length() > 0 || nonEmpty) {
+          if (keepEmptyParameters || token.length() > 0 || nonEmpty) {
             params.add(token.toString());
             token.setLength(0);
             nonEmpty = false;
@@ -158,7 +168,7 @@ public class ParametersListUtil {
       token.append(ch);
     }
 
-    if (token.length() > 0 || nonEmpty) {
+    if (keepEmptyParameters || token.length() > 0 || nonEmpty) {
       params.add(token.toString());
     }
 

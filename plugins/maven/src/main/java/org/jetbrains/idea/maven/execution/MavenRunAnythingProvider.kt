@@ -53,7 +53,7 @@ class MavenRunAnythingProvider : RunAnythingCommandLineProvider() {
     val explicitProfiles = projectsManager.explicitProfiles
     val enabledProfiles = explicitProfiles.enabledProfiles
     val disabledProfiles = explicitProfiles.disabledProfiles
-    val goals = commandLine.commands
+    val goals = commandLine.parameters
     val params = MavenRunnerParameters(true, workingDirPath, pomFileName, goals, enabledProfiles, disabledProfiles)
     val mavenRunner = MavenRunner.getInstance(project)
     mavenRunner.run(params, mavenRunner.settings, null)

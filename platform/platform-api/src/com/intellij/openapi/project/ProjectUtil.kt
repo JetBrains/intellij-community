@@ -128,10 +128,13 @@ fun Project.guessProjectDir() : VirtualFile? {
 /**
  * Tries to guess the main module directory
  *
- * Please use this method only in case of emergency.
- * Probably you should check all content roots of this module.
+ * Please use this method only in case if no any additional information about module location
+ *  eg. some contained files or etc.
  */
-fun Module.guessModuleDir() = rootManager.contentRoots.firstOrNull { it.isDirectory }
+fun Module.guessModuleDir(): VirtualFile? {
+  val contentRoots = rootManager.contentRoots.filter { it.isDirectory }
+  return contentRoots.find { it.name == name } ?: contentRoots.firstOrNull()
+}
 
 @JvmOverloads
 fun Project.getProjectCacheFileName(isForceNameUse: Boolean = false, hashSeparator: String = ".", extensionWithDot: String = ""): String {
