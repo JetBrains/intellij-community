@@ -1,6 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.application;
 
+import com.intellij.debugger.impl.GenericDebuggerRunner;
+import com.intellij.debugger.impl.RemoteConnectionBuilder;
+import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.execution.*;
 import com.intellij.execution.configuration.RemoteTargetAwareRunProfile;
 import com.intellij.execution.configurations.*;
@@ -18,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.BaseOutputReader;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
@@ -25,7 +29,8 @@ import java.io.File;
  * @author nik
  */
 public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigurationBase & CommonJavaRunConfigurationParameters>
-  extends JavaCommandLineState {
+  extends JavaCommandLineState implements RemoteConnectionCreator {
+  public static final int PORT = 12345;
   @NotNull protected final T myConfiguration;
 
   public BaseJavaApplicationCommandLineState(ExecutionEnvironment environment, @NotNull final T configuration) {
@@ -41,12 +46,33 @@ public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigura
     }
   }
 
+  @Nullable
+  @Override
+  public RemoteConnection createRemoteConnection(ExecutionEnvironment environment) {
+    try {
+      return new RemoteConnectionBuilder(false, DebuggerSettings.SOCKET_TRANSPORT, String.valueOf(PORT)).create(getJavaParameters());
+    }
+    catch (ExecutionException e) {
+      e.printStackTrace();
+    }
+    return null;
+  }
+
+  @Override
+  public boolean isPollConnection() {
+    return true;
+  }
+
   @NotNull
   @Override
   protected OSProcessHandler startProcess() throws ExecutionException {
     //todo[remoteServers]: pull up and support all implementations of JavaCommandLineState
     IR.RemoteRunner runner = getRemoteRunner(myConfiguration.getProject(), getEnvironment(), myConfiguration);
     IR.RemoteEnvironmentRequest request = runner.createRequest();
+    IR.RemoteValue<Integer> port = null;
+    if (!(runner instanceof IR.LocalRunner)) {
+      port = request.bindRemotePort(PORT);
+    }
     IR.NewCommandLine newCommandLine = createNewCommandLine(request, runner.getTargetConfiguration());
 
     File inputFile = InputRedirectAware.getInputFile(myConfiguration);
@@ -64,6 +90,9 @@ public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigura
     OSProcessHandler handler = new KillableColoredProcessHandler.Silent(process, commandRepresentation, newCommandLine.getCharset());
     ProcessTerminatedListener.attach(handler);
     JavaRunConfigurationExtensionManager.getInstance().attachExtensionsToProcess(getConfiguration(), handler, getRunnerSettings());
+    if (port != null) {
+      handler.putUserData(GenericDebuggerRunner.REMOTE_PORT_KEY, port.getLocalValue());
+    }
     return handler;
   }
 

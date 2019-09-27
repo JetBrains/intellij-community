@@ -294,7 +294,7 @@ public class JdkUtil {
       PathsList classPath = javaParameters.getClassPath();
       if (!classPath.isEmpty() && !explicitClassPath(vmParameters)) {
         List<IR.RemoteValue<String>> pathValues = getClassPathValues(request, runtimeConfiguration, javaParameters);
-        classPathParameter = new IR.CompositeValue<>(pathValues, values -> StringUtil.join(values, File.pathSeparator));
+        classPathParameter = new IR.CompositeValue<>(pathValues, values -> StringUtil.join(values, ":"));
       }
       else {
         classPathParameter = null;
@@ -304,7 +304,7 @@ public class JdkUtil {
       PathsList modulePath = javaParameters.getModulePath();
       if (!modulePath.isEmpty() && !explicitModulePath(vmParameters)) {
         List<IR.RemoteValue<String>> pathValues = getClassPathValues(request, runtimeConfiguration, javaParameters);
-        modulePathParameter = new IR.CompositeValue<>(pathValues, values -> StringUtil.join(values, File.pathSeparator));
+        modulePathParameter = new IR.CompositeValue<>(pathValues, values -> StringUtil.join(values, ":"));
       }
       else {
         modulePathParameter = null;
@@ -568,7 +568,7 @@ public class JdkUtil {
     if (!classPath.isEmpty() && !explicitClassPath(vmParameters)) {
       commandLine.addParameter("-classpath");
       List<IR.RemoteValue<String>> pathValues = getClassPathValues(request, runtimeConfiguration, javaParameters);
-      commandLine.addParameter(new IR.CompositeValue<>(pathValues, values -> StringUtil.join(values, File.pathSeparator)));
+      commandLine.addParameter(new IR.CompositeValue<>(pathValues, values -> StringUtil.join(values, ":")));
     }
 
     PathsList modulePath = javaParameters.getModulePath();
