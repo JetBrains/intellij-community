@@ -332,7 +332,7 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode implements Use
     return FileNameComparator.INSTANCE.compare(name1, name2);
   }
 
-  protected static int compareFilePaths(@NotNull FilePath path1, @NotNull FilePath path2) {
+  public static int compareFilePaths(@NotNull FilePath path1, @NotNull FilePath path2) {
     return ChangesComparator.getFilePathComparator(true).compare(path1, path2);
   }
 

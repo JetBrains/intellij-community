@@ -5,7 +5,6 @@ import com.intellij.diff.DiffContentFactory;
 import com.intellij.diff.DiffDialogHints;
 import com.intellij.diff.DiffManager;
 import com.intellij.diff.chains.DiffRequestChain;
-import com.intellij.diff.chains.DiffRequestProducer;
 import com.intellij.diff.chains.DiffRequestProducerException;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.requests.DiffRequest;
@@ -34,11 +33,11 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.CommitContext;
-import com.intellij.openapi.vcs.changes.FilePathsHelper;
 import com.intellij.openapi.vcs.changes.patch.AppliedTextPatch;
 import com.intellij.openapi.vcs.changes.patch.ApplyPatchForBaseRevisionTexts;
 import com.intellij.openapi.vcs.changes.patch.tool.PatchDiffRequest;
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain;
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
@@ -128,7 +127,7 @@ public class DiffShelvedChangesActionProvider implements AnActionExtensionProvid
     DiffManager.getInstance().showDiff(project, chain, DiffDialogHints.FRAME);
   }
 
-  private static class ChangeDiffRequestComparator implements Comparator<DiffRequestProducer> {
+  private static class ChangeDiffRequestComparator implements Comparator<ShelveDiffRequestProducer> {
     private final static ChangeDiffRequestComparator ourInstance = new ChangeDiffRequestComparator();
 
     public static ChangeDiffRequestComparator getInstance() {
@@ -136,8 +135,8 @@ public class DiffShelvedChangesActionProvider implements AnActionExtensionProvid
     }
 
     @Override
-    public int compare(DiffRequestProducer o1, DiffRequestProducer o2) {
-      return FilePathsHelper.convertPath(o1.getName()).compareTo(FilePathsHelper.convertPath(o2.getName()));
+    public int compare(ShelveDiffRequestProducer o1, ShelveDiffRequestProducer o2) {
+      return ChangesBrowserNode.compareFilePaths(o1.getFilePath(), o2.getFilePath());
     }
   }
 
