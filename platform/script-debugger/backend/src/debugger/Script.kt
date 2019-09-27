@@ -47,6 +47,4 @@ interface Script : UserDataHolderEx {
   val column: Int
 
   val endLine: Int
-
-  val isWorker: Boolean
 }
