@@ -23,7 +23,7 @@ import java.util.*;
 public abstract class ListTableWithButtons<T> extends Observable {
   private final List<T> myElements = new ArrayList<>();
   private JPanel myPanel;
-  private final TableView<T> myTableView;
+  @NotNull private final TableView<T> myTableView;
   private final CommonActionsPanel myActionsPanel;
   private boolean myIsEnabled = true;
   private final ToolbarDecorator myDecorator;

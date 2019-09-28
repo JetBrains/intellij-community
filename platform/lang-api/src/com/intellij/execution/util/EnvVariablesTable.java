@@ -142,6 +142,11 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
     protected String getDescription(EnvironmentVariable environmentVariable) {
       return environmentVariable.getDescription();
     }
+    @NotNull
+    @Override
+    public TableCellEditor getEditor(EnvironmentVariable variable) {
+      return new DefaultCellEditor(new JTextField());
+    }
   }
 
   protected class ValueColumnInfo extends ElementsColumnInfoBase<EnvironmentVariable> {
@@ -175,7 +180,6 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
     @Override
     public TableCellEditor getEditor(EnvironmentVariable variable) {
       StringWithNewLinesCellEditor editor = new StringWithNewLinesCellEditor();
-      editor.setClickCountToStart(1);
       return editor;
     }
   }
@@ -196,6 +200,20 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
 
     @Override
     public void performCopy(@NotNull DataContext dataContext) {
+      TableView<EnvironmentVariable> view = getTableView();
+      if (view.isEditing()) {
+        int row = view.getEditingRow();
+        int column = view.getEditingColumn();
+        if (row < 0 || column < 0) {
+          row = view.getSelectedRow();
+          column = view.getSelectedColumn();
+        }
+        if (row >= 0 && column >= 0) {
+          JTextField textField = (JTextField)((DefaultCellEditor)view.getCellEditor()).getComponent();
+          CopyPasteManager.getInstance().setContents(new StringSelection(textField.getSelectedText()));
+        }
+        return;
+      }
       stopEditing();
       StringBuilder sb = new StringBuilder();
       List<EnvironmentVariable> variables = getSelection();
@@ -246,7 +264,6 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
         return;
       }
       stopEditing();
-      removeSelected();
       List<EnvironmentVariable> parsed = new ArrayList<>();
       for (Map.Entry<String, String> entry : map.entrySet()) {
         parsed.add(new EnvironmentVariable(entry.getKey(), entry.getValue(), false));
