@@ -21,26 +21,25 @@ import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.MergeConflictType;
 import com.intellij.diff.util.ThreeSide;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ex.EditorEx;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-
 public class SimpleThreesideDiffChange extends ThreesideDiffChangeBase {
-  @NotNull private final List<? extends EditorEx> myEditors;
+  @NotNull private final SimpleThreesideDiffViewer myViewer;
   @Nullable private final MergeInnerDifferences myInnerFragments;
 
   private final int[] myLineStarts = new int[3];
   private final int[] myLineEnds = new int[3];
+
+  private boolean myIsValid = true;
 
   public SimpleThreesideDiffChange(@NotNull MergeLineFragment fragment,
                                    @NotNull MergeConflictType conflictType,
                                    @Nullable MergeInnerDifferences innerFragments,
                                    @NotNull SimpleThreesideDiffViewer viewer) {
     super(conflictType);
-    myEditors = viewer.getEditors();
+    myViewer = viewer;
     myInnerFragments = innerFragments;
 
     for (ThreeSide side : ThreeSide.values()) {
@@ -88,13 +87,21 @@ public class SimpleThreesideDiffChange extends ThreesideDiffChangeBase {
   @NotNull
   @Override
   protected Editor getEditor(@NotNull ThreeSide side) {
-    return side.select(myEditors);
+    return myViewer.getEditor(side);
   }
 
   @Nullable
   @Override
   protected MergeInnerDifferences getInnerFragments() {
     return myInnerFragments;
+  }
+
+  public boolean isValid() {
+    return myIsValid;
+  }
+
+  public void markInvalid() {
+    myIsValid = false;
   }
 
   //
