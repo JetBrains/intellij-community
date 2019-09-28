@@ -8,13 +8,11 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.util.ProgressWindow;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.components.panels.Wrapper;
@@ -310,16 +308,6 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
   public void dispose() {
     myDetailsSplitter.dispose();
     myChangesBrowserSplitter.dispose();
-  }
-
-  public void toggleTextFilterFocus() {
-    Project project = myLogData.getProject();
-    if (IdeFocusManager.getInstance(project).getFocusedDescendantFor(getToolbar()) != null) {
-      IdeFocusManager.getInstance(project).requestFocus(getGraphTable(), true);
-    }
-    else {
-      IdeFocusManager.getInstance(project).requestFocus(myFilterUi.getTextFilterComponent(), true);
-    }
   }
 
   private class MyCommitSelectionListenerForDiff extends CommitSelectionListener<VcsFullCommitDetails> {

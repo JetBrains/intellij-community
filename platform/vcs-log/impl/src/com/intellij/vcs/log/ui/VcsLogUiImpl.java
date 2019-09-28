@@ -84,7 +84,7 @@ public class VcsLogUiImpl extends AbstractVcsLogUi {
   }
 
   @NotNull
-  public MainFrame getMainFrame() {
+  protected MainFrame getMainFrame() {
     return myMainFrame;
   }
 
@@ -102,7 +102,7 @@ public class VcsLogUiImpl extends AbstractVcsLogUi {
         updater.run();
         getTable().handleAnswer(answer);
       });
-    }, title, false, null, getMainFrame().getMainComponent());
+    }, title, false, null, myMainFrame.getMainComponent());
   }
 
   public void expandAll() {
@@ -190,6 +190,11 @@ public class VcsLogUiImpl extends AbstractVcsLogUi {
   @Override
   public VcsLogFilterUiEx getFilterUi() {
     return myMainFrame.getFilterUi();
+  }
+
+  @NotNull
+  public JComponent getToolbar() {
+    return myMainFrame.getToolbar();
   }
 
   @Override
