@@ -2,8 +2,8 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.BlockUtils;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
@@ -31,14 +31,15 @@ public class EnhancedSwitchBackwardMigrationInspection extends AbstractBaseJavaL
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!HighlightUtil.Feature.ENHANCED_SWITCH.isAvailable(holder.getFile())) return PsiElementVisitor.EMPTY_VISITOR;
     return new JavaElementVisitor() {
       @Override
       public void visitSwitchExpression(PsiSwitchExpression expression) {
         if (!isNonemptyRuleFormatSwitch(expression)) return;
         if (findReplacer(expression) == null) return;
         String message = InspectionsBundle.message("inspection.switch.expression.backward.expression.migration.inspection.name");
-        holder.registerProblem(expression.getFirstChild(), message, new ReplaceWithOldStyleSwitchFix());
+        PsiElement problemElement =
+          (InspectionProjectProfileManager.isInformationLevel(getShortName(), expression)) ? expression : expression.getFirstChild();
+        holder.registerProblem(problemElement, message, new ReplaceWithOldStyleSwitchFix());
       }
 
       @Override
@@ -103,7 +104,8 @@ public class EnhancedSwitchBackwardMigrationInspection extends AbstractBaseJavaL
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiSwitchBlock switchBlock = tryCast(descriptor.getStartElement().getParent(), PsiSwitchBlock.class);
+      PsiElement element = descriptor.getPsiElement();
+      PsiSwitchBlock switchBlock = tryCast(element instanceof PsiSwitchBlock ? element : element.getParent(), PsiSwitchBlock.class);
       if (switchBlock == null) return;
       Replacer replacer = findReplacer(switchBlock);
       if (replacer == null) return;
