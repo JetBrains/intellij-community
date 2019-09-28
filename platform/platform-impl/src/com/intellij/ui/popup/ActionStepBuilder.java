@@ -73,7 +73,7 @@ class ActionStepBuilder {
     appendActionsFromGroup(actionGroup);
 
     if (myListModel.isEmpty()) {
-      myListModel.add(new PopupFactoryImpl.ActionItem(Utils.EMPTY_MENU_FILLER, Utils.NOTHING_HERE, null, false, null, null, false, null));
+      myListModel.add(new PopupFactoryImpl.ActionItem(Utils.EMPTY_MENU_FILLER, null, null, false, null, null, false, null, false));
     }
   }
 
@@ -130,21 +130,18 @@ class ActionStepBuilder {
     Presentation presentation = myPresentationFactory.getPresentation(action);
     boolean enabled = presentation.isEnabled();
     if ((myShowDisabled || enabled) && presentation.isVisible()) {
-      String text = presentation.getText();
+      String prefix = null;
       if (myShowNumbers) {
         if (myCurrentNumber < 9) {
-          text = "&" + (myCurrentNumber + 1) + ". " + text;
+          prefix = "&" + (myCurrentNumber + 1) + ". ";
         }
         else if (myCurrentNumber == 9) {
-          text = "&" + 0 + ". " + text;
+          prefix = "&" + 0 + ". ";
         }
         else if (myUseAlphaAsNumbers) {
-          text = "&" + (char)('A' + myCurrentNumber - 10) + ". " + text;
+          prefix = "&" + (char)('A' + myCurrentNumber - 10) + ". ";
         }
         myCurrentNumber++;
-      }
-      else if (myHonorActionMnemonics) {
-        text = restoreTextWithMnemonic(text, action.getTemplatePresentation().getMnemonic());
       }
 
       boolean hideIcon = Boolean.TRUE.equals(presentation.getClientProperty(MenuItemPresentationFactory.HIDE_ICON));
@@ -175,10 +172,10 @@ class ActionStepBuilder {
 
       if (icon == null) icon = selectedIcon != null ? selectedIcon : myEmptyIcon;
       boolean prependSeparator = (!myListModel.isEmpty() || mySeparatorText != null) && myPrependWithSeparator;
-      assert text != null : action + " has no presentation";
       myListModel.add(
-        new PopupFactoryImpl.ActionItem(action, text, (String)presentation.getClientProperty(JComponent.TOOL_TIP_TEXT_KEY),
-                                        enabled, icon, selectedIcon, prependSeparator, mySeparatorText));
+        new PopupFactoryImpl.ActionItem(action, prefix, (String)presentation.getClientProperty(JComponent.TOOL_TIP_TEXT_KEY),
+                                        enabled, icon, selectedIcon, prependSeparator, mySeparatorText,
+                                        myHonorActionMnemonics && prefix == null));
       myPrependWithSeparator = false;
       mySeparatorText = null;
     }
