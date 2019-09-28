@@ -17,13 +17,17 @@ package com.intellij.diff.tools.simple;
 
 import com.intellij.diff.fragments.MergeLineFragment;
 import com.intellij.diff.tools.util.text.MergeInnerDifferences;
-import com.intellij.diff.util.DiffUtil;
-import com.intellij.diff.util.MergeConflictType;
-import com.intellij.diff.util.ThreeSide;
+import com.intellij.diff.util.*;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.markup.GutterIconRenderer;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 
 public class SimpleThreesideDiffChange extends ThreesideDiffChangeBase {
   @NotNull private final SimpleThreesideDiffViewer myViewer;
@@ -51,18 +55,23 @@ public class SimpleThreesideDiffChange extends ThreesideDiffChangeBase {
   }
 
   @CalledInAwt
-  public void destroy() {
-    destroyHighlighters();
-    destroyInnerHighlighters();
-  }
-
-  @CalledInAwt
   public void reinstallHighlighters() {
     destroyHighlighters();
     installHighlighters();
 
     destroyInnerHighlighters();
     installInnerHighlighters();
+
+    destroyOperations();
+    installOperations();
+  }
+
+  @Override
+  protected void installOperations() {
+    myOperations.add(createAcceptOperation(ThreeSide.LEFT, ThreeSide.BASE));
+    myOperations.add(createAcceptOperation(ThreeSide.RIGHT, ThreeSide.BASE));
+    myOperations.add(createAcceptOperation(ThreeSide.BASE, ThreeSide.LEFT));
+    myOperations.add(createAcceptOperation(ThreeSide.BASE, ThreeSide.RIGHT));
   }
 
   //
@@ -118,5 +127,48 @@ public class SimpleThreesideDiffChange extends ThreesideDiffChangeBase {
     myLineEnds[sideIndex] = newRange.endLine;
 
     return newRange.damaged;
+  }
+
+  //
+  // Modification
+  //
+
+  @NotNull
+  private DiffGutterOperation createAcceptOperation(@NotNull ThreeSide sourceSide, @NotNull ThreeSide modifiedSide) {
+    EditorEx editor = myViewer.getEditor(sourceSide);
+    int offset = DiffGutterOperation.lineToOffset(editor, getStartLine(sourceSide));
+
+    return new DiffGutterOperation.Simple(editor, offset, () -> {
+      boolean isOtherEditable = myViewer.isEditable(modifiedSide);
+      if (!isOtherEditable) return null;
+
+      boolean isChanged = sourceSide != ThreeSide.BASE && isChange(sourceSide) ||
+                          modifiedSide != ThreeSide.BASE && isChange(modifiedSide);
+      if (!isChanged) return null;
+
+      String text = "Accept";
+      Side arrowDirection = Side.fromLeft(sourceSide == ThreeSide.LEFT ||
+                                          modifiedSide == ThreeSide.RIGHT);
+      Icon icon = DiffUtil.getArrowIcon(arrowDirection);
+
+      return createIconRenderer(sourceSide, modifiedSide, text, icon,
+                                () -> myViewer.replaceChange(this, sourceSide, modifiedSide));
+    });
+  }
+
+  private GutterIconRenderer createIconRenderer(@NotNull final ThreeSide sourceSide,
+                                                @NotNull final ThreeSide modifiedSide,
+                                                @NotNull final String tooltipText,
+                                                @NotNull final Icon icon,
+                                                @NotNull final Runnable perform) {
+    return new DiffGutterRenderer(icon, tooltipText) {
+      @Override
+      protected void handleMouseClick() {
+        if (!isValid()) return;
+        final Project project = myViewer.getProject();
+        final Document document = myViewer.getEditor(modifiedSide).getDocument();
+        DiffUtil.executeWriteCommand(document, project, "Replace change", perform);
+      }
+    };
   }
 }

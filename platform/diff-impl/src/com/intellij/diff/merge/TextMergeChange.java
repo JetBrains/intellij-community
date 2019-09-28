@@ -33,17 +33,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
 
 public class TextMergeChange extends ThreesideDiffChangeBase {
   private static final String CTRL_CLICK_TO_RESOLVE = "Ctrl+click to resolve conflict";
 
   @NotNull private final TextMergeViewer myMergeViewer;
   @NotNull private final TextMergeViewer.MyThreesideViewer myViewer;
-
-  @NotNull private final List<DiffGutterOperation> myOperations = new ArrayList<>();
 
   private final int myIndex;
   @NotNull private final MergeLineFragment myFragment;
@@ -66,13 +62,6 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
     myFragment = fragment;
 
     reinstallHighlighters();
-  }
-
-  @CalledInAwt
-  public void destroy() {
-    destroyHighlighters();
-    destroyOperations();
-    destroyInnerHighlighters();
   }
 
   @CalledInAwt
@@ -194,27 +183,14 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
   // Gutter actions
   //
 
+  @Override
   @CalledInAwt
-  private void installOperations() {
+  protected void installOperations() {
     ContainerUtil.addIfNotNull(myOperations, createResolveOperation());
     ContainerUtil.addIfNotNull(myOperations, createAcceptOperation(Side.LEFT, OperationType.APPLY));
     ContainerUtil.addIfNotNull(myOperations, createAcceptOperation(Side.LEFT, OperationType.IGNORE));
     ContainerUtil.addIfNotNull(myOperations, createAcceptOperation(Side.RIGHT, OperationType.APPLY));
     ContainerUtil.addIfNotNull(myOperations, createAcceptOperation(Side.RIGHT, OperationType.IGNORE));
-  }
-
-  @CalledInAwt
-  private void destroyOperations() {
-    for (DiffGutterOperation operation : myOperations) {
-      operation.dispose();
-    }
-    myOperations.clear();
-  }
-
-  public void updateGutterActions(boolean force) {
-    for (DiffGutterOperation operation : myOperations) {
-      operation.update(force);
-    }
   }
 
   @Nullable
