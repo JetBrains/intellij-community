@@ -51,13 +51,12 @@ class GitCompareBranchesUi(private val project: Project, private val repositorie
     }
   }
 
-  private fun createLogUiAndTab(logManager: VcsLogManager, logUiFactory: MyLogUiFactory, currentRef: String): VcsLogUiImpl {
+  private fun createLogUiAndTab(logManager: VcsLogManager, logUiFactory: MyLogUiFactory, currentRef: String) {
     val logUi = logManager.createLogUi(logUiFactory, true)
     val panel = VcsLogPanel(logManager, logUi)
     val contentManager = ProjectLevelVcsManagerEx.getInstanceEx(project).contentManager!!
     ContentUtilEx.addTabbedContent(contentManager, panel, "Compare", "$branchName and $currentRef", true, panel.getUi())
     ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS).activate(null)
-    return logUi
   }
 
   private class MyLogUiFactory(val logManager: VcsLogManager,

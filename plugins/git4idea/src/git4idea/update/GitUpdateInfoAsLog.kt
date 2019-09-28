@@ -157,7 +157,7 @@ class GitUpdateInfoAsLog(private val project: Project,
     })
   }
 
-  private fun createLogUi(logManager: VcsLogManager, logUiFactory: MyLogUiFactory, select: Boolean): VcsLogUiImpl {
+  private fun createLogUi(logManager: VcsLogManager, logUiFactory: MyLogUiFactory, select: Boolean) {
     val logUi = logManager.createLogUi(logUiFactory, true)
     val panel = VcsLogPanel(logManager, logUi)
     val contentManager = ProjectLevelVcsManagerEx.getInstanceEx(project).contentManager!!
@@ -167,7 +167,6 @@ class GitUpdateInfoAsLog(private val project: Project,
     if (select) {
       ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS).activate(null)
     }
-    return logUi
   }
 
   private val updateTabPrefix = "git-update-project-info-"
