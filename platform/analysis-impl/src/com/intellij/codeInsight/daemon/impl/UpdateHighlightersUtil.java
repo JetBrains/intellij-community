@@ -199,7 +199,7 @@ public class UpdateHighlightersUtil {
 
     final Map<TextRange, RangeMarker> ranges2markersCache = new THashMap<>(10);
     final boolean[] changed = {false};
-    SweepProcessor.Generator<HighlightInfo> generator = proc -> ContainerUtil.process(infos, proc);
+    SweepProcessor.Generator<HighlightInfo> generator = proc -> ContainerUtil.process(filteredInfos, proc);
     SweepProcessor.sweep(generator, (offset, info, atStart, overlappingIntervals) -> {
       if (!atStart) return true;
       if (!info.isFromInjection() && info.getEndOffset() < document.getTextLength() && (info.getEndOffset() <= startOffset || info.getStartOffset()>=endOffset)) return true; // injections are oblivious to restricting range
