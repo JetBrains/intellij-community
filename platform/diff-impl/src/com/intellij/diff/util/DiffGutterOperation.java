@@ -80,7 +80,7 @@ public abstract class DiffGutterOperation {
 
       myCtrlPressed = myModifierProvider.isCtrlPressed();
       myShiftPressed = myModifierProvider.isShiftPressed();
-      myAltPressed = myModifierProvider.isShiftPressed();
+      myAltPressed = myModifierProvider.isAltPressed();
 
       super.update(force);
     }
