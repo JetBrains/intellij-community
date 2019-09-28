@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.TaskInfo
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.WindowManager
@@ -57,16 +58,19 @@ class VcsLogStatusBarProgress(project: Project, logProviders: Map<VirtualFile, V
 
   inner class MyProgressListener : VcsLogProgress.ProgressListener {
     override fun progressStarted(keys: MutableCollection<out VcsLogProgress.ProgressKey>) {
+      if (Disposer.isDisposed(this@VcsLogStatusBarProgress)) return
       if (keys.contains(VcsLogPersistentIndex.INDEXING)) {
         start()
       }
     }
 
     override fun progressStopped() {
+      if (Disposer.isDisposed(this@VcsLogStatusBarProgress)) return
       stop()
     }
 
     override fun progressChanged(keys: MutableCollection<out VcsLogProgress.ProgressKey>) {
+      if (Disposer.isDisposed(this@VcsLogStatusBarProgress)) return
       if (keys.contains(VcsLogPersistentIndex.INDEXING)) {
         start()
       }
