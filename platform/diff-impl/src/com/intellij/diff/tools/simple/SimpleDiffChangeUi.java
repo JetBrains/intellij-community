@@ -178,7 +178,7 @@ public class SimpleDiffChangeUi {
     @Nullable
     @Override
     public GutterIconRenderer createRenderer() {
-      boolean isOtherEditable = DiffUtil.isEditable(myViewer.getEditor(mySide.other()));
+      boolean isOtherEditable = myViewer.isEditable(mySide.other());
       boolean isAppendable = myChange.getDiffType() == TextDiffType.MODIFIED;
 
       if (isOtherEditable) {
@@ -193,7 +193,6 @@ public class SimpleDiffChangeUi {
     }
   }
 
-  @Nullable
   private GutterIconRenderer createApplyRenderer(@NotNull final Side side) {
     String text;
     Icon icon = DiffUtil.getArrowIcon(side);
@@ -213,17 +212,14 @@ public class SimpleDiffChangeUi {
     return createIconRenderer(side, tooltipText, icon, () -> myViewer.replaceChange(myChange, side));
   }
 
-  @Nullable
   private GutterIconRenderer createAppendRenderer(@NotNull final Side side) {
     return createIconRenderer(side, "Append", DiffUtil.getArrowDownIcon(side), () -> myViewer.appendChange(myChange, side));
   }
 
-  @Nullable
   private GutterIconRenderer createIconRenderer(@NotNull final Side sourceSide,
                                                 @NotNull final String tooltipText,
                                                 @NotNull final Icon icon,
                                                 @NotNull final Runnable perform) {
-    if (!DiffUtil.isEditable(myViewer.getEditor(sourceSide.other()))) return null;
     return new DiffGutterRenderer(icon, tooltipText) {
       @Override
       protected void handleMouseClick() {
