@@ -355,7 +355,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   }
 
   @NotNull
-  public ModifierProvider getModifierProvider() {
+  public KeyboardModifierListener getModifierProvider() {
     return myModifierProvider;
   }
 

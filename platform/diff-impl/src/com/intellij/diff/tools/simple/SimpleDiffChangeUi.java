@@ -8,8 +8,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
-import com.intellij.openapi.editor.markup.HighlighterLayer;
-import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -28,7 +26,7 @@ public class SimpleDiffChangeUi {
   @NotNull protected final SimpleDiffChange myChange;
 
   @NotNull protected final List<RangeHighlighter> myHighlighters = new ArrayList<>();
-  @NotNull protected final List<GutterOperation> myOperations = new ArrayList<>();
+  @NotNull protected final List<DiffGutterOperation> myOperations = new ArrayList<>();
 
   public SimpleDiffChangeUi(@NotNull SimpleDiffViewer viewer, @NotNull SimpleDiffChange change) {
     myViewer = viewer;
@@ -59,7 +57,7 @@ public class SimpleDiffChangeUi {
     }
     myHighlighters.clear();
 
-    for (GutterOperation operation : myOperations) {
+    for (DiffGutterOperation operation : myOperations) {
       operation.dispose();
     }
     myOperations.clear();
@@ -68,8 +66,8 @@ public class SimpleDiffChangeUi {
   protected void doInstallActionHighlighters() {
     if (myChange.isSkipped()) return;
 
-    myOperations.add(new AcceptGutterOperation(Side.LEFT));
-    myOperations.add(new AcceptGutterOperation(Side.RIGHT));
+    myOperations.add(createAcceptOperation(Side.LEFT));
+    myOperations.add(createAcceptOperation(Side.RIGHT));
   }
 
   private void createHighlighter(@NotNull Side side) {
@@ -119,13 +117,13 @@ public class SimpleDiffChangeUi {
   }
 
   public void updateGutterActions(boolean force) {
-    for (GutterOperation operation : myOperations) {
+    for (DiffGutterOperation operation : myOperations) {
       operation.update(force);
     }
   }
 
   public void invalidate() {
-    for (GutterOperation operation : myOperations) {
+    for (DiffGutterOperation operation : myOperations) {
       operation.dispose();
     }
     myOperations.clear();
@@ -135,62 +133,31 @@ public class SimpleDiffChangeUi {
   // Helpers
   //
 
-  protected abstract class GutterOperation {
-    @NotNull protected final Side mySide;
-    @NotNull private final RangeHighlighter myHighlighter;
+  @NotNull
+  protected DiffGutterOperation createOperation(@NotNull Side side,
+                                                @NotNull DiffGutterOperation.ModifiersRendererBuilder builder) {
+    int offset = side.getStartOffset(myChange.getFragment());
+    EditorEx editor = myViewer.getEditor(side);
 
-    protected boolean myCtrlPressed;
-
-    public GutterOperation(@NotNull Side side) {
-      mySide = side;
-
-      int offset = side.getStartOffset(myChange.getFragment());
-      EditorEx editor = myViewer.getEditor(side);
-      myHighlighter = editor.getMarkupModel().addRangeHighlighter(offset, offset,
-                                                                  HighlighterLayer.ADDITIONAL_SYNTAX,
-                                                                  null,
-                                                                  HighlighterTargetArea.LINES_IN_RANGE);
-
-      update(true);
-    }
-
-    public void dispose() {
-      myHighlighter.dispose();
-    }
-
-    public void update(boolean force) {
-      boolean isCtrlPressed = myViewer.getModifierProvider().isCtrlPressed();
-      if (force || myCtrlPressed != isCtrlPressed) {
-        myCtrlPressed = isCtrlPressed;
-        if (myHighlighter.isValid()) myHighlighter.setGutterIconRenderer(createRenderer());
-      }
-    }
-
-    @Nullable
-    public abstract GutterIconRenderer createRenderer();
+    return new DiffGutterOperation.WithModifiers(editor, offset, myViewer.getModifierProvider(), builder);
   }
 
-  private class AcceptGutterOperation extends GutterOperation {
-    AcceptGutterOperation(@NotNull Side side) {
-      super(side);
-    }
-
-    @Nullable
-    @Override
-    public GutterIconRenderer createRenderer() {
-      boolean isOtherEditable = myViewer.isEditable(mySide.other());
+  @NotNull
+  private DiffGutterOperation createAcceptOperation(@NotNull Side side) {
+    return createOperation(side, (ctrlPressed, shiftPressed, altPressed) -> {
+      boolean isOtherEditable = myViewer.isEditable(side.other());
       boolean isAppendable = myChange.getDiffType() == TextDiffType.MODIFIED;
 
       if (isOtherEditable) {
-        if (myCtrlPressed && isAppendable) {
-          return createAppendRenderer(mySide);
+        if (ctrlPressed && isAppendable) {
+          return createAppendRenderer(side);
         }
         else {
-          return createApplyRenderer(mySide);
+          return createApplyRenderer(side);
         }
       }
       return null;
-    }
+    });
   }
 
   private GutterIconRenderer createApplyRenderer(@NotNull final Side side) {
