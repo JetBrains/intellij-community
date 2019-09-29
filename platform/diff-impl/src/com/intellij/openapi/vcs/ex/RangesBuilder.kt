@@ -67,9 +67,9 @@ fun compareLines(text1: CharSequence,
   val range = expand(text1, text2, 0, 0, text1.length, text2.length)
   if (range.isEmpty) return fair(DiffIterableUtil.create(emptyList(), lineOffsets1.lineCount, lineOffsets2.lineCount));
 
-  val start = lineOffsets1.getLineNumber(range.start1)
-  val end1 = lineOffsets1.getLineNumber(range.end1)
-  val tail = max(lineOffsets1.lineCount - end1 - 1, 0)
+  val contextLines = 5
+  val start = max(lineOffsets1.getLineNumber(range.start1) - contextLines, 0)
+  val tail = max(lineOffsets1.lineCount - lineOffsets1.getLineNumber(range.end1) - 1 - contextLines, 0)
   val lineRange = Range(start, lineOffsets1.lineCount - tail, start, lineOffsets2.lineCount - tail)
 
   val iterable = compareLines(lineRange, text1, text2, lineOffsets1, lineOffsets2)

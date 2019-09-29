@@ -64,6 +64,16 @@ class LineStatusTrackerModifyDocumentTest : BaseLineStatusTrackerTestCase() {
     }
   }
 
+  fun testInitialHeuristic() {
+    test("1234567__1234567__1234567__1234567",
+         "1234567__XXXXXX__1234567__XXXXXX__1234567__XXXXXX__1234567") {
+      assertRanges(Range(2, 2, 2, 4),
+                   Range(4, 4, 6, 8),
+                   Range(6, 6, 10, 12))
+      compareRanges()
+    }
+  }
+
   fun testSimpleInsert() {
     test("1234_2345_3456") {
       "12".insertAfter("a")
