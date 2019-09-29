@@ -19,7 +19,9 @@
  */
 package com.intellij.openapi.keymap.impl;
 
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -40,22 +42,35 @@ public class DefaultBundledKeymaps implements BundledKeymapProvider {
     String os = SystemInfo.isMac ? "macos" :
                 SystemInfo.isWindows ? "windows" :
                 SystemInfo.isLinux ? "linux" : "other";
+    PluginId coreId = PluginId.getId(PluginManagerCore.CORE_PLUGIN_ID);
+    boolean headless = ApplicationManager.getApplication().isHeadlessEnvironment();
     for (BundledKeymapBean bean : BundledKeymapBean.EP_NAME.getExtensionList()) {
-      result.add(bean.file.replace("$OS$", os));
-    }
-    if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      if (SystemInfo.isWindows || SystemInfo.isMac) {
-        result.remove("Default for XWin.xml");
-        result.remove("Default for GNOME.xml");
-        result.remove("Default for KDE.xml");
+      if (bean.file.contains("$OS$")) {
+        // add all OS-specific
+        result.add(bean.file.replace("$OS$", os));
       }
-      if (!SystemInfo.isMac) {
-        result.remove("Mac OS X.xml");
-        result.remove("Mac OS X 10.5+.xml");
-        result.remove("Eclipse (Mac OS X).xml");
-        result.remove("Sublime Text (Mac OS X).xml");
+      else if (headless || !coreId.equals(bean.getPluginId()) || isCoreKeymapAccepted(bean.file)) {
+        // filter out bundled keymaps for other systems, but allow them via plugins
+        result.add(bean.file);
       }
     }
     return new ArrayList<>(result);
+  }
+
+  private static boolean isCoreKeymapAccepted(String file) {
+    if (SystemInfo.isWindows || SystemInfo.isMac) {
+      if ("Default for XWin.xml".equals(file) ||
+          "Default for GNOME.xml".equals(file) ||
+          "Default for KDE.xml".equals(file)) return false;
+    }
+    if (!SystemInfo.isMac) {
+      if ("Mac OS X.xml".equals(file) ||
+          "Mac OS X 10.5+.xml".equals(file) ||
+          "Eclipse (Mac OS X).xml".equals(file) ||
+          "Sublime Text (Mac OS X).xml".equals(file)) {
+        return false;
+      }
+    }
+    return true;
   }
 }
