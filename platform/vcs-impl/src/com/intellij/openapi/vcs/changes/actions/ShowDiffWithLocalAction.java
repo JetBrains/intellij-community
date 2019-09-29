@@ -1,14 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.actions;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.ListSelection;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.AnActionExtensionProvider;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsDataKeys;
@@ -27,19 +23,16 @@ import java.util.List;
 
 import static com.intellij.openapi.vcs.changes.actions.diff.ShowDiffAction.showDiffForChange;
 
-// via openapi.vcs.history.actions.ShowDiffBeforeWithLocalAction.ExtensionProvider
-public class ShowDiffWithLocalAction extends AnAction implements DumbAware, AnActionExtensionProvider {
+public class ShowDiffWithLocalAction implements AnActionExtensionProvider {
   private final boolean myUseBeforeVersion;
 
   @SuppressWarnings("unused")
   public ShowDiffWithLocalAction() {
     this(false);
-    getTemplatePresentation().setIcon(AllIcons.Actions.Diff);
   }
 
   public ShowDiffWithLocalAction(boolean useBeforeVersion) {
     myUseBeforeVersion = useBeforeVersion;
-    ActionUtil.copyFrom(this, useBeforeVersion ? "Vcs.ShowDiffWithLocal.Before" : "Vcs.ShowDiffWithLocal");
   }
 
   @Override
@@ -95,7 +88,6 @@ public class ShowDiffWithLocalAction extends AnAction implements DumbAware, AnAc
     return filePath.getVirtualFile();
   }
 
-  @SuppressWarnings("ComponentNotRegistered") // via openapi.vcs.history.actions.ShowDiffBeforeWithLocalAction.ExtensionProvider
   public static class ShowDiffBeforeWithLocalAction extends ShowDiffWithLocalAction {
     public ShowDiffBeforeWithLocalAction() {
       super(true);
