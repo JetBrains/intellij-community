@@ -736,6 +736,8 @@ class DistributionJARsBuilder {
         buildContext.notifyArtifactBuilt(destFile)
       }
 
+      KeymapPluginsBuilder.buildKeymapPlugins(buildContext, "$nonBundledPluginsArtifacts/keymaps")
+
       if (productLayout.prepareCustomPluginRepositoryForPublishedPlugins) {
         new PluginRepositoryXmlGenerator(buildContext).generate(pluginsToIncludeInCustomRepository, nonBundledPluginsArtifacts)
         buildContext.notifyArtifactBuilt("$nonBundledPluginsArtifacts/plugins.xml")
