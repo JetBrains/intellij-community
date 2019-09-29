@@ -17,7 +17,9 @@ import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.CurrentContentRevision;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesBrowserUseCase;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -71,26 +73,26 @@ public class ShowDiffWithLocalAction extends AnAction implements DumbAware, AnAc
   private Change getChangeWithLocal(@NotNull Change c) {
     ContentRevision revision = myUseBeforeVersion ? c.getBeforeRevision() : c.getAfterRevision();
     ContentRevision otherRevision = myUseBeforeVersion ? c.getAfterRevision() : c.getBeforeRevision();
-    if (!isValidRevision(revision)) return null;
 
-    FilePath filePath = revision.getFile();
-    if (filePath.getVirtualFile() == null && otherRevision != null) {
-      FilePath otherFile = otherRevision.getFile();
-      if (otherFile.getVirtualFile() != null) {
-        filePath = otherFile;
-      }
-    }
+    VirtualFile file = getLocalVirtualFileFor(revision);
+    if (file == null) file = getLocalVirtualFileFor(otherRevision); // handle renames gracefully
 
-    ContentRevision contentRevision = CurrentContentRevision.create(filePath);
-    return new Change(revision, contentRevision);
+    ContentRevision localRevision = file != null ? CurrentContentRevision.create(VcsUtil.getFilePath(file)) : null;
+    if (revision == null && localRevision == null) return null;
+
+    return new Change(revision, localRevision);
   }
 
   private boolean canShowDiff(@NotNull List<? extends Change> changes) {
     return ContainerUtil.exists(changes, c -> getChangeWithLocal(c) != null);
   }
 
-  private static boolean isValidRevision(@Nullable ContentRevision revision) {
-    return revision != null && !revision.getFile().isNonLocal() && !revision.getFile().isDirectory();
+  @Nullable
+  private static VirtualFile getLocalVirtualFileFor(@Nullable ContentRevision revision) {
+    if (revision == null) return null;
+    FilePath filePath = revision.getFile();
+    if (filePath.isNonLocal() || filePath.isDirectory()) return null;
+    return filePath.getVirtualFile();
   }
 
   @SuppressWarnings("ComponentNotRegistered") // via openapi.vcs.history.actions.ShowDiffBeforeWithLocalAction.ExtensionProvider
