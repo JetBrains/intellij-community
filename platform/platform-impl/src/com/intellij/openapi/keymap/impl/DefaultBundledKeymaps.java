@@ -23,8 +23,10 @@ import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -49,7 +51,9 @@ public class DefaultBundledKeymaps implements BundledKeymapProvider {
         // add all OS-specific
         result.add(bean.file.replace("$OS$", os));
       }
-      else if (headless || !coreId.equals(bean.getPluginId()) || isCoreKeymapAccepted(bean.file)) {
+      else if (headless ||
+               !coreId.equals(bean.getPluginId()) ||
+               !isBundledKeymapHidden(FileUtil.getNameWithoutExtension(bean.file))) {
         // filter out bundled keymaps for other systems, but allow them via plugins
         result.add(bean.file);
       }
@@ -57,20 +61,20 @@ public class DefaultBundledKeymaps implements BundledKeymapProvider {
     return new ArrayList<>(result);
   }
 
-  private static boolean isCoreKeymapAccepted(String file) {
+  public static boolean isBundledKeymapHidden(@Nullable String keymapName) {
     if (SystemInfo.isWindows || SystemInfo.isMac) {
-      if ("Default for XWin.xml".equals(file) ||
-          "Default for GNOME.xml".equals(file) ||
-          "Default for KDE.xml".equals(file)) return false;
+      if ("Default for XWin".equals(keymapName) ||
+          "Default for GNOME".equals(keymapName) ||
+          "Default for KDE".equals(keymapName)) return true;
     }
     if (!SystemInfo.isMac) {
-      if ("Mac OS X.xml".equals(file) ||
-          "Mac OS X 10.5+.xml".equals(file) ||
-          "Eclipse (Mac OS X).xml".equals(file) ||
-          "Sublime Text (Mac OS X).xml".equals(file)) {
-        return false;
+      if ("Mac OS X".equals(keymapName) ||
+          "Mac OS X 10.5+".equals(keymapName) ||
+          "Eclipse (Mac OS X)".equals(keymapName) ||
+          "Sublime Text (Mac OS X)".equals(keymapName)) {
+        return true;
       }
     }
-    return true;
+    return false;
   }
 }

@@ -31,6 +31,7 @@ import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
+import com.intellij.openapi.keymap.impl.DefaultBundledKeymaps;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.ProjectType;
@@ -354,7 +355,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     }
     Keymap keymap = keymapManager.getKeymap(keymapName);
     if (keymap == null) {
-      reportActionError(pluginId, "keymap \"" + keymapName + "\" not found");
+      reportKeymapNotFoundWarning(pluginId, keymapName);
       return;
     }
     processRemoveAndReplace(element, actionId, keymap, shortcut);
@@ -368,11 +369,11 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     }
   }
 
-  private static void reportActionError(PluginId pluginId, @NotNull String message) {
+  private static void reportActionError(@Nullable PluginId pluginId, @NotNull String message) {
     reportActionError(pluginId, message, null);
   }
 
-  private static void reportActionError(PluginId pluginId, @NotNull String message, @Nullable Throwable cause) {
+  private static void reportActionError(@Nullable PluginId pluginId, @NotNull String message, @Nullable Throwable cause) {
     if (pluginId != null) {
       LOG.error(new PluginException(message, cause, pluginId));
     }
@@ -384,13 +385,10 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     }
   }
 
-  private static void reportActionWarning(PluginId pluginId, @NotNull String message) {
-    if (pluginId == null) {
-      LOG.warn(message);
-    }
-    else {
-      LOG.warn(new PluginException(message, null, pluginId).getMessage());
-    }
+  private static void reportKeymapNotFoundWarning(@Nullable PluginId pluginId, @NotNull String keymapName) {
+    if (DefaultBundledKeymaps.isBundledKeymapHidden(keymapName)) return;
+    String message = "keymap \"" + keymapName + "\" not found";
+    LOG.warn(pluginId == null ? message : new PluginException(message, null, pluginId).getMessage());
   }
 
   private static String getPluginInfo(@Nullable PluginId id) {
@@ -959,7 +957,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     }
     Keymap keymap = keymapManager.getKeymap(keymapName);
     if (keymap == null) {
-      reportActionWarning(pluginId, "keymap \"" + keymapName + "\" not found");
+      reportKeymapNotFoundWarning(pluginId, keymapName);
       return;
     }
     final KeyboardShortcut shortcut = new KeyboardShortcut(firstKeyStroke, secondKeyStroke);
