@@ -35,6 +35,7 @@ public class DirDiffFrame extends FrameWrapper {
     myPanel = new DirDiffPanel(model, new DirDiffWindow.Frame(this));
     Disposer.register(this, myPanel);
     setComponent(myPanel.getPanel());
+    setPreferredFocusedComponent(myPanel.getTable());
     if (project != null) {
       setProject(project);
     }
