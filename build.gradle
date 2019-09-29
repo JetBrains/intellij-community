@@ -32,41 +32,27 @@ grammarKit {
     grammarKitRelease = '07f30a1e7666f36ae780f614b6bbc89690ba36c3'
 }
 
-group 'de.thomasrosenau'
+wrapper {
+    gradleVersion = '5.6.2'
+}
+
+
+group = 'de.thomasrosenau'
 
 sourceCompatibility = 1.8
 
-repositories {
-    mavenCentral()
-}
-
 // version of this plugin
-version '2.1.3-SNAPSHOT'
+version = '2.1.3-SNAPSHOT'
 
-intellij {
-    // IDE version that will be used for compilation and for :runIde task
-    version '193-EAP-SNAPSHOT'
-}
-
-test {
-    intellij {
-        plugins = ['java']
-    }
-}
-
-def intellijPublishToken = project.properties['intellijPublishToken'] ?:
-        'see http://www.jetbrains.org/intellij/sdk/docs/tutorials/build_system/deployment.html'
-publishPlugin {
-    token intellijPublishToken
-    channels 'beta'
-}
+// IDE version that will be used for compilation and for :runIde task
+intellij.version = '193-EAP-SNAPSHOT'
 
 patchPluginXml {
-    sinceBuild '193'
-    untilBuild '193.*'
+    sinceBuild = '193'
+    untilBuild = '193.*'
 
     // language=HTML prefix=<body> suffix=</body>
-    pluginDescription '''
+    pluginDescription = '''
     <h1>Syntax highlighting for .diff files and .patch files</h1>
     <p>Supports the common formats: normal, contextual, unified, git patch.</p>
     <p>Does not support the formats: side-by-side, diff3, ed, if-else, RCS.</p>
@@ -86,7 +72,7 @@ patchPluginXml {
     '''
 
     // language=HTML prefix=<body> suffix=</body>
-    changeNotes '''
+    changeNotes = '''
     <h5>2.1.3</h5>
     <ul>
       <li>Update compatibility for 2019.3 product line</li>
@@ -123,16 +109,12 @@ patchPluginXml {
     '''
 }
 
-wrapper {
-    gradleVersion = '5.6.2'
-}
+def namespacePath = 'de/thomasrosenau/diffplugin'
 
 def genSrcPath = 'src/main/generated-java'
 File genSrc = file genSrcPath
 sourceSets.main.java.srcDir genSrc
 idea.module.generatedSourceDirs += genSrc
-
-def namespacePath = 'de/thomasrosenau/diffplugin'
 
 task generateDiffLexer(type: GenerateLexer) {
     source "src/main/java/${namespacePath}/lexer/Diff.flex"
@@ -147,4 +129,23 @@ task generateDiffParser(type: GenerateParser) {
     pathToParser 'DiffParser.java'
     pathToPsiRoot "${namespacePath}/psi"
     purgeOldFiles true
+}
+
+clean {
+    delete genSrcPath
+}
+
+def intellijPublishToken = project.properties['intellijPublishToken'] ?:
+        'see http://www.jetbrains.org/intellij/sdk/docs/tutorials/build_system/deployment.html'
+publishPlugin {
+    token = intellijPublishToken
+    channels = 'beta'
+}
+
+test {
+    intellij.plugins = ['java']
+}
+
+repositories {
+    mavenCentral()
 }
