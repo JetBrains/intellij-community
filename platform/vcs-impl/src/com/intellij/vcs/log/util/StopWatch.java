@@ -48,12 +48,16 @@ public class StopWatch {
   }
 
   public void report() {
+    report(LOG);
+  }
+
+  public void report(@NotNull Logger logger) {
     String message = myOperation + " took " + formatTime(System.currentTimeMillis() - myStartTime);
     if (myDurationPerRoot.size() > 1) {
       message += "\n" + StringUtil.join(myDurationPerRoot.entrySet(),
                                         entry -> "    " + entry.getKey().getName() + ": " + formatTime(entry.getValue()), "\n");
     }
-    LOG.debug(message);
+    logger.debug(message);
   }
 
   /**
