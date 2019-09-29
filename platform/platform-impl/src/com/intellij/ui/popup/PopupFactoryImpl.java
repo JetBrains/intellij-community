@@ -52,8 +52,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 
-import static com.intellij.openapi.actionSystem.Presentation.restoreTextWithMnemonic;
-
 public class PopupFactoryImpl extends JBPopupFactory {
 
   /**
@@ -681,7 +679,6 @@ public class PopupFactoryImpl extends JBPopupFactory {
 
   public static class ActionItem implements ShortcutProvider {
     private final AnAction myAction;
-    @Nullable private final String myPrefix;
     private String myText;
     private final boolean myIsEnabled;
     private final Icon myIcon;
@@ -689,30 +686,26 @@ public class PopupFactoryImpl extends JBPopupFactory {
     private final boolean myPrependWithSeparator;
     private final String mySeparatorText;
     private final String myDescription;
-    private final boolean myHonorActionMnemonics;
 
     ActionItem(@NotNull AnAction action,
-               @Nullable String prefix,
+               @NotNull String text,
                @Nullable String description,
                boolean enabled,
                @Nullable Icon icon,
                @Nullable Icon selectedIcon,
                final boolean prependWithSeparator,
-               String separatorText,
-               boolean honorActionMnemonics) {
+               String separatorText) {
       myAction = action;
-      myPrefix = prefix;
-      myHonorActionMnemonics = honorActionMnemonics;
+      myText = text;
       myIsEnabled = enabled;
       myIcon = icon;
       mySelectedIcon = selectedIcon;
       myPrependWithSeparator = prependWithSeparator;
       mySeparatorText = separatorText;
       myDescription = description;
-      myText = createText();
       myAction.getTemplatePresentation().addPropertyChangeListener(evt -> {
         if (evt.getPropertyName() == Presentation.PROP_TEXT) {
-          myText = createText();
+          myText = myAction.getTemplatePresentation().getText();
         }
       });
     }
@@ -755,19 +748,6 @@ public class PopupFactoryImpl extends JBPopupFactory {
     @Override
     public String toString() {
       return myText;
-    }
-
-    @NotNull
-    private String createText() {
-      String text = myAction.getTemplatePresentation().getText();
-      assert text != null : myAction + " has no presentation";
-      if (myHonorActionMnemonics) {
-        text = restoreTextWithMnemonic(text, myAction.getTemplatePresentation().getMnemonic());
-      }
-      if (myPrefix != null) {
-        text = myPrefix + text;
-      }
-      return text;
     }
   }
 }
