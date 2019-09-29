@@ -19,7 +19,6 @@
   <name>Diff / Patch File Support</name>
   <vendor email="thomasr@fantasymail.de" url="https://github.com/ThomasR/">Thomas Rosenau</vendor>
 
-  <depends>com.intellij.modules.java</depends>
   <depends>com.intellij.modules.lang</depends>
 
   <extensions defaultExtensionNs="com.intellij">

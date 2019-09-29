@@ -21,8 +21,8 @@ import javax.swing.*;
 import com.intellij.openapi.util.IconLoader;
 
 public class DiffIcons {
-    public static final Icon FILE = IconLoader.getIcon("META-INF/pluginIcon.svg");
-    public static final Icon MULTI_DIFF_PART = IconLoader.getIcon("multiPartIcon.svg");
-    public static final Icon HUNK = IconLoader.getIcon("hunkIcon.svg");
-    public static final Icon BINARY_PATCH = IconLoader.getIcon("binaryPatchIcon.svg");
+    public static final Icon FILE = IconLoader.getIcon("/META-INF/pluginIcon.svg");
+    public static final Icon MULTI_DIFF_PART = IconLoader.getIcon("/multiPartIcon.svg");
+    public static final Icon HUNK = IconLoader.getIcon("/hunkIcon.svg");
+    public static final Icon BINARY_PATCH = IconLoader.getIcon("/binaryPatchIcon.svg");
 }
