@@ -60,6 +60,12 @@
   <action id="EditorJoinLines">
     <keyboard-shortcut first-keystroke="meta j"/>
   </action>
+  <action id="EditorSortLinesAlphabetically">
+    <keyboard-shortcut first-keystroke="f5"/>
+  </action>
+  <action id="EditorSortLinesAlphabeticallyCaseSensitive">
+    <keyboard-shortcut first-keystroke="shift f5"/>
+  </action>
   <action id="InsertLiveTemplate"/>
   <action id="EditorStartNewLine">
     <keyboard-shortcut first-keystroke="meta ENTER"/>

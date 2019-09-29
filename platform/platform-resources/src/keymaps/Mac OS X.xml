@@ -278,6 +278,9 @@
   <action id="EditorJoinLines">
     <keyboard-shortcut first-keystroke="control shift J"/>
   </action>
+  <action id="EditorSortLinesGroup">
+    <keyboard-shortcut first-keystroke="control shift S"/>
+  </action>
   <action id="FindNext">
     <keyboard-shortcut first-keystroke="F3"/>
     <keyboard-shortcut first-keystroke="control L"/>

@@ -17,6 +17,7 @@ import java.util.*;
  */
 public class ActionsWithoutUpdateMethodTest extends LightPlatformTestCase {
   private static final List<String> PLATFORM_WIDE_ACTIONS = Arrays.asList(
+    "EditorSortLinesGroup", // all children will become invisible which automatically disables the group, no update needed
     "TestGestureAction",
     "Synchronize",
     "SaveAll",

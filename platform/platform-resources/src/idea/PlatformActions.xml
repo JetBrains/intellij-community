@@ -397,6 +397,16 @@
       <action id="EditorScrollToCenter" class="com.intellij.openapi.editor.actions.ScrollToCenterAction"/>
       <action id="EditorToggleCase" class="com.intellij.openapi.editor.actions.ToggleCaseAction"/>
       <action id="EditorJoinLines" class="com.intellij.openapi.editor.actions.JoinLinesAction"/>
+      <group id="EditorSortLinesGroup" popup="true">
+        <action id="EditorSortLinesAlphabetically" class="com.intellij.openapi.editor.actions.SortLinesAction$Alphabetically"/>
+        <action id="EditorSortLinesAlphabeticallyDescending" class="com.intellij.openapi.editor.actions.SortLinesAction$AlphabeticallyDescending"/>
+        <action id="EditorSortLinesAlphabeticallyCaseSensitive" class="com.intellij.openapi.editor.actions.SortLinesAction$AlphabeticallyCaseSensitive"/>
+        <action id="EditorSortLinesAlphabeticallyCaseSensitiveDescending" class="com.intellij.openapi.editor.actions.SortLinesAction$AlphabeticallyCaseSensitiveDescending"/>
+        <action id="EditorSortLinesByLength" class="com.intellij.openapi.editor.actions.SortLinesAction$ByLength"/>
+        <action id="EditorSortLinesByLengthDescending" class="com.intellij.openapi.editor.actions.SortLinesAction$ByLengthDescending"/>
+        <action id="EditorSortLinesNaturally" class="com.intellij.openapi.editor.actions.SortLinesAction$Naturally"/>
+        <action id="EditorSortLinesNaturallyDescending" class="com.intellij.openapi.editor.actions.SortLinesAction$NaturallyDescending"/>
+      </group>
       <action id="FillParagraph" class="com.intellij.codeInsight.editorActions.fillParagraph.FillParagraphAction"/>
       <action id="EditorSelectLine" class="com.intellij.openapi.editor.actions.SelectLineAction"/>
       <action id="EditorSplitLine" class="com.intellij.openapi.editor.actions.SplitLineAction"/>
@@ -604,6 +614,7 @@
         <separator/>
         <group id="EditSmartGroup">
           <reference ref="EditorJoinLines"/>
+          <reference ref="EditorSortLinesGroup"/>
           <reference ref="FillParagraph"/>
           <reference ref="EditorDuplicate"/>
           <reference ref="EditorIndentSelection"/>

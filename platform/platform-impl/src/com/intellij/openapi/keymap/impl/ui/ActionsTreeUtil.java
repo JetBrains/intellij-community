@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.keymap.impl.ui;
 
+import com.google.common.base.Strings;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.actionMacro.ActionMacro;
@@ -320,15 +321,26 @@ public class ActionsTreeUtil {
   private static Group createEditorActionsGroup(Condition<? super AnAction> filtered) {
     ActionManager actionManager = ActionManager.getInstance();
     DefaultActionGroup editorGroup = (DefaultActionGroup)actionManager.getActionOrStub(IdeActions.GROUP_EDITOR);
-    ArrayList<String> ids = new ArrayList<>();
+    List<AnAction> actions = new ArrayList<>();
 
-    addEditorActions(filtered, editorGroup, ids);
+    addEditorActions(filtered, editorGroup, actions);
 
-    Collections.sort(ids);
-    Group group = new Group(KeyMapBundle.message("editor.actions.group.title"), IdeActions.GROUP_EDITOR, AllIcons.Nodes.KeymapEditor
-    );
-    for (String id : ids) {
-      group.addActionId(id);
+    Collections.sort(actions, Comparator.comparing(action -> getName(action)));
+    Group group = new Group(KeyMapBundle.message("editor.actions.group.title"), IdeActions.GROUP_EDITOR, AllIcons.Nodes.KeymapEditor);
+
+    for (AnAction action : actions) {
+      if (action instanceof ActionGroup) {
+        Group subGroup = createGroup((ActionGroup)action, false, filtered);
+        if (subGroup.getSize() > 0) {
+          group.addGroup(subGroup);
+        }
+      }
+      else {
+        String actionId = action instanceof ActionStub ? ((ActionStub)action).getId() : actionManager.getId(action);
+        if (actionId != null) {
+          group.addActionId(actionId);
+        }
+      }
     }
 
     return group;
@@ -348,19 +360,20 @@ public class ActionsTreeUtil {
 
   private static void addEditorActions(final Condition<? super AnAction> filtered,
                                        final DefaultActionGroup editorGroup,
-                                       final ArrayList<? super String> ids) {
-    AnAction[] editorActions = editorGroup.getChildActionsOrStubs();
-    final ActionManager actionManager = ActionManager.getInstance();
+                                       final List<AnAction> out) {
+    AnAction[] editorActions = getActions(editorGroup);
+
     for (AnAction editorAction : editorActions) {
       if (editorAction instanceof DefaultActionGroup) {
-        addEditorActions(filtered, (DefaultActionGroup) editorAction, ids);
-      }
-      else {
-        String actionId = editorAction instanceof ActionStub ? ((ActionStub)editorAction).getId() : actionManager.getId(editorAction);
-        if (actionId == null) continue;
-        if (filtered == null || filtered.value(editorAction)) {
-          ids.add(actionId);
+        if (Strings.isNullOrEmpty(editorAction.getTemplateText())) {
+          addEditorActions(filtered, (DefaultActionGroup)editorAction, out);
         }
+        else {
+          out.add(editorAction);
+        }
+      }
+      else if (filtered == null || filtered.value(editorAction)) {
+       out.add(editorAction);
       }
     }
   }
