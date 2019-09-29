@@ -24,10 +24,50 @@ println("Bundled: ${bundled.abs()}")
 println("Syncing")
 sync(repo, bundled)
 
-val whiteList = setOf("typing", "six", "__builtin__", "builtins", "exceptions", "types", "datetime", "functools", "shutil", "re", "time",
-                      "argparse", "uuid", "threading", "signal", "collections", "subprocess", "math", "queue", "socket", "sqlite3", "attr",
-                      "pathlib", "io", "_io", "itertools", "ssl", "multiprocessing", "asyncio", "mock", "unittest", "_importlib_modulespec",
-                      "typing_extensions", "ctypes", "abc", "urllib", "concurrent", "sys", "crypt", "logging", "email")
+val whiteList = setOf(
+  "__builtin__",
+  "_importlib_modulespec",
+  "_io",
+  "abc",
+  "argparse",
+  "asyncio",
+  "attr",
+  "builtins",
+  "collections",
+  "concurrent",
+  "crypt",
+  "ctypes",
+  "datetime",
+  "email",
+  "exceptions",
+  "functools",
+  "io",
+  "itertools",
+  "logging",
+  "math",
+  "mock",
+  "multiprocessing",
+  "pathlib",
+  "queue",
+  "re",
+  "shutil",
+  "signal",
+  "six",
+  "socket",
+  "sqlite3",
+  "ssl",
+  "subprocess",
+  "sys",
+  "threading",
+  "time",
+  "types",
+  "typing",
+  "typing_extensions",
+  "unittest",
+  "urllib",
+  "uuid",
+  "werkzeug"
+)
 
 println("Cleaning")
 cleanTopLevelPackages(bundled, whiteList)
