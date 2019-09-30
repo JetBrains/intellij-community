@@ -16,6 +16,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
@@ -93,6 +94,8 @@ public class AllVcses implements AllVcsesI, Disposable {
 
   @Override
   public AbstractVcs getByName(final String name) {
+    if (StringUtil.isEmpty(name)) return null;
+
     synchronized (myLock) {
       final AbstractVcs vcs = myVcses.get(name);
       if (vcs != null) {
