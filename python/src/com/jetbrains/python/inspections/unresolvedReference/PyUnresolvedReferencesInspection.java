@@ -145,7 +145,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
           myIsEnabled = false;
         }
         else if (isPyCharm) {
-          myIsEnabled = PythonSdkUtil.findPythonSdk(anchor) != null || PythonUtil.isInScratchFile(anchor);
+          myIsEnabled = PythonSdkUtil.findPythonSdk(anchor) != null || PythonRuntimeService.getInstance().isInScratchFile(anchor);
         }
         else {
           myIsEnabled = true;
