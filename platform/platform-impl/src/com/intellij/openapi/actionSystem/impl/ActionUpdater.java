@@ -244,8 +244,9 @@ class ActionUpdater {
     if (group instanceof ActionGroupStub) {
       throw new IllegalStateException("Trying to expand non-unstubbed group");
     }
-    if (myAllowPartialExpand)
+    if (myAllowPartialExpand) {
       ProgressManager.checkCanceled();
+    }
     if (myVisitor != null && !myVisitor.enterNode(group))
       return Collections.emptyList();
 
