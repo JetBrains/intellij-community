@@ -64,7 +64,9 @@ public final class TransientCodeStyleSettings extends CodeStyleSettings {
       IndentOptions indentOptions = provider.getIndentOptions(this, myPsiFile);
       if (indentOptions != null) {
         IndentOptions targetOptions = getIndentOptions(myPsiFile.getFileType());
-        targetOptions.copyFrom(indentOptions);
+        if (targetOptions != indentOptions) {
+          targetOptions.copyFrom(indentOptions);
+        }
       }
     }
   }
