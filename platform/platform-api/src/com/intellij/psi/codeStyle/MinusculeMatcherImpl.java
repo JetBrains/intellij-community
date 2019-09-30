@@ -5,6 +5,8 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.FList;
 import com.intellij.util.io.IOUtil;
+import com.intellij.util.text.CharArrayCharSequence;
+import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.NameUtilCore;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -19,6 +21,9 @@ import org.jetbrains.annotations.Nullable;
  * @author peter
  */
 class MinusculeMatcherImpl extends MinusculeMatcher {
+  /** Camel-hump matching is >O(n), so for larger prefixes we fall back to simpler matching to avoid pauses */
+  private static final int MAX_CAMEL_HUMP_MATCHING_LENGTH = 100;
+
   private final char[] myPattern;
   private final String myHardSeparators;
   private final NameUtil.MatchingCaseSensitivity myOptions;
@@ -203,6 +208,10 @@ class MinusculeMatcherImpl extends MinusculeMatcher {
       return null;
     }
 
+    if (myPattern.length > MAX_CAMEL_HUMP_MATCHING_LENGTH) {
+      return matchBySubstring(name);
+    }
+
     int length = name.length();
     int patternIndex = 0;
     boolean isAscii = true;
@@ -221,6 +230,24 @@ class MinusculeMatcherImpl extends MinusculeMatcher {
     }
 
     return matchWildcards(name, 0, 0, isAscii);
+  }
+
+  @Nullable
+  private FList<TextRange> matchBySubstring(@NotNull String name) {
+    boolean infix = isPatternChar(0, '*');
+    if (name.length() < myPattern.length - (infix ? 1 : 0)) {
+      return null;
+    }
+    if (infix) {
+      if (StringUtil.indexOfIgnoreCase(name, new CharArrayCharSequence(myPattern, 1, myPattern.length), 0) >= 0) {
+        return FList.<TextRange>emptyList().prepend(new TextRange(1, myPattern.length));
+      }
+      return null;
+    }
+    if (CharArrayUtil.regionMatches(myPattern, 0, myPattern.length, name)) {
+      return FList.<TextRange>emptyList().prepend(new TextRange(0, myPattern.length));
+    }
+    return null;
   }
 
   /**
