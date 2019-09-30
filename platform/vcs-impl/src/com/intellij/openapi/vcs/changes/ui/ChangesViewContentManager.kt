@@ -10,7 +10,6 @@ import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.ui.content.*
 import com.intellij.util.ObjectUtils
 import com.intellij.util.containers.ContainerUtil
-import org.jetbrains.annotations.NonNls
 import java.util.*
 import java.util.function.Predicate
 
@@ -18,10 +17,6 @@ class ChangesViewContentManager : ChangesViewContentI, Disposable {
 
   private var contentManager: ContentManager? = null
   private val addedContents = ArrayList<Content>()
-
-  val componentName: String
-    @NonNls
-    get() = "ChangesViewContentManager"
 
   override fun setContentManager(manager: ContentManager) {
     contentManager = manager.also {
@@ -155,7 +150,7 @@ class ChangesViewContentManager : ChangesViewContentI, Disposable {
 
     @JvmStatic
     fun getInstance(project: Project): ChangesViewContentI {
-      return project.getComponent(ChangesViewContentI::class.java)
+      return project.getService(ChangesViewContentI::class.java)
     }
 
     @JvmField
