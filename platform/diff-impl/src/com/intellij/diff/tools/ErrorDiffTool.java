@@ -127,7 +127,9 @@ public class ErrorDiffTool implements FrameDiffTool {
         }
       }
 
-      return new ToolbarComponents();
+      ToolbarComponents components = new ToolbarComponents();
+      components.needTopToolbarBorder = true;
+      return components;
     }
 
     @Override

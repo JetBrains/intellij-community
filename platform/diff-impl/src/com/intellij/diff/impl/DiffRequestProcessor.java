@@ -49,6 +49,7 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.HintHint;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.JBSplitter;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.components.JBPanelWithEmptyText;
@@ -316,6 +317,7 @@ public abstract class DiffRequestProcessor implements Disposable {
       myState.destroy();
       myToolbarStatusPanel.setContent(null);
       myContentPanel.setContent(null);
+      myToolbarWrapper.setBorder(null);
 
       myToolbarGroup.removeAll();
       myPopupActionGroup.removeAll();
@@ -1208,6 +1210,9 @@ public abstract class DiffRequestProcessor implements Disposable {
       buildActionPopup(toolbarComponents.popupActions);
 
       myToolbarStatusPanel.setContent(toolbarComponents.statusPanel);
+      if (toolbarComponents.needTopToolbarBorder) {
+        myToolbarWrapper.setBorder(JBUI.Borders.customLine(JBColor.border(), 0, 0, 1, 0));
+      }
     }
 
     @Override
@@ -1264,6 +1269,9 @@ public abstract class DiffRequestProcessor implements Disposable {
       buildActionPopup(mergeActions(toolbarComponents1.popupActions, toolbarComponents2.popupActions));
 
       myToolbarStatusPanel.setContent(toolbarComponents1.statusPanel); // TODO: combine both panels ?
+      if (toolbarComponents1.needTopToolbarBorder) {
+        myToolbarWrapper.setBorder(JBUI.Borders.customLine(JBColor.border(), 0, 0, 1, 0));
+      }
     }
 
     @Nullable
