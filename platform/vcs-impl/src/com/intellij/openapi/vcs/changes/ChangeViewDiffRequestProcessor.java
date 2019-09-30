@@ -42,8 +42,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestProcessor.Simple implements DiffPreviewUpdateProcessor {
+
+  private static final int MANY_CHANGES_THRESHOLD = 10000;
 
   @Nullable private Wrapper myCurrentChange;
 
@@ -56,10 +60,10 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
   //
 
   @NotNull
-  protected abstract List<Wrapper> getSelectedChanges();
+  protected abstract Stream<Wrapper> getSelectedChanges();
 
   @NotNull
-  protected abstract List<Wrapper> getAllChanges();
+  protected abstract Stream<Wrapper> getAllChanges();
 
   protected abstract void selectChange(@NotNull Wrapper change);
 
@@ -146,7 +150,7 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
   public void refresh(boolean fromModelRefresh) {
     if (isDisposed()) return;
 
-    List<Wrapper> selectedChanges = getSelectedChanges();
+    List<Wrapper> selectedChanges = getSelectedChanges().collect(Collectors.toList());
 
     Wrapper selectedChange = myCurrentChange != null ? ContainerUtil.find(selectedChanges, myCurrentChange) : null;
     if (fromModelRefresh &&
@@ -155,7 +159,7 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
         getContext().isWindowFocused() &&
         getContext().isFocusedInWindow()) {
       // Do not automatically switch focused viewer
-      if (selectedChanges.size() == 1 && getAllChanges().contains(myCurrentChange)) {
+      if (selectedChanges.size() == 1 && getAllChanges().anyMatch(it -> myCurrentChange.equals(it))) {
         selectChange(myCurrentChange); // Restore selection if necessary
       }
       return;
@@ -190,26 +194,26 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
   }
 
   @Override
-  protected boolean hasNextChange() {
-    PrevNextDifferenceIterable strategy = getSelectionStrategy();
+  protected boolean hasNextChange(boolean fromUpdate) {
+    PrevNextDifferenceIterable strategy = getSelectionStrategy(fromUpdate);
     return strategy != null && strategy.canGoNext();
   }
 
   @Override
-  protected boolean hasPrevChange() {
-    PrevNextDifferenceIterable strategy = getSelectionStrategy();
+  protected boolean hasPrevChange(boolean fromUpdate) {
+    PrevNextDifferenceIterable strategy = getSelectionStrategy(fromUpdate);
     return strategy != null && strategy.canGoPrev();
   }
 
   @Override
   protected void goToNextChange(boolean fromDifferences) {
-    ObjectUtils.notNull(getSelectionStrategy()).goNext();
+    ObjectUtils.notNull(getSelectionStrategy(false)).goNext();
     updateRequest(false, fromDifferences ? ScrollToPolicy.FIRST_CHANGE : null);
   }
 
   @Override
   protected void goToPrevChange(boolean fromDifferences) {
-    ObjectUtils.notNull(getSelectionStrategy()).goPrev();
+    ObjectUtils.notNull(getSelectionStrategy(false)).goPrev();
     updateRequest(false, fromDifferences ? ScrollToPolicy.LAST_CHANGE : null);
   }
 
@@ -219,12 +223,15 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
   }
 
   @Nullable
-  private PrevNextDifferenceIterable getSelectionStrategy() {
+  private PrevNextDifferenceIterable getSelectionStrategy(boolean fromUpdate) {
     if (myCurrentChange == null) return null;
-    List<Wrapper> selectedChanges = getSelectedChanges();
+    List<Wrapper> selectedChanges = toListIfNotMany(getSelectedChanges(), fromUpdate);
+    if (selectedChanges == null) return DumbPrevNextDifferenceIterable.INSTANCE;
     if (selectedChanges.isEmpty()) return null;
     if (selectedChanges.size() == 1) {
-      return new ChangesNavigatable(getAllChanges(), selectedChanges.get(0), true);
+      List<Wrapper> allChanges = toListIfNotMany(getAllChanges(), fromUpdate);
+      if (allChanges == null) return DumbPrevNextDifferenceIterable.INSTANCE;
+      return new ChangesNavigatable(allChanges, selectedChanges.get(0), true);
     }
     return new ChangesNavigatable(selectedChanges, selectedChanges.get(0), false);
   }
@@ -281,6 +288,39 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
     private void select(@NotNull Wrapper change) {
       myCurrentChange = change;
       if (myUpdateSelection) selectChange(change);
+    }
+  }
+
+  @Nullable
+  private static <T> List<T> toListIfNotMany(@NotNull Stream<T> stream, boolean fromUpdate) {
+    if (!fromUpdate) return stream.collect(Collectors.toList());
+
+    List<T> result = stream.limit(MANY_CHANGES_THRESHOLD + 1).collect(Collectors.toList());
+    if (result.size() > MANY_CHANGES_THRESHOLD) return null;
+    return result;
+  }
+
+  private static class DumbPrevNextDifferenceIterable implements PrevNextDifferenceIterable {
+    public static final DumbPrevNextDifferenceIterable INSTANCE = new DumbPrevNextDifferenceIterable();
+
+    @Override
+    public boolean canGoPrev() {
+      return true;
+    }
+
+    @Override
+    public boolean canGoNext() {
+      return true;
+    }
+
+    @Override
+    public void goPrev() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void goNext() {
+      throw new UnsupportedOperationException();
     }
   }
 

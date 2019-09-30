@@ -10,16 +10,16 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor;
 import com.intellij.openapi.vcs.changes.ui.ChangesTree;
+import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SideBorder;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
-import java.util.List;
+import java.util.stream.Stream;
 
 class VcsLogChangeProcessor extends ChangeViewDiffRequestProcessor {
   @NotNull private final VcsLogChangesBrowser myBrowser;
@@ -42,16 +42,22 @@ class VcsLogChangeProcessor extends ChangeViewDiffRequestProcessor {
 
   @NotNull
   @Override
-  protected List<Wrapper> getSelectedChanges() {
+  protected Stream<Wrapper> getSelectedChanges() {
     boolean hasSelection = myBrowser.getViewer().getSelectionModel().getSelectionCount() != 0;
-    List<Change> changes = hasSelection ? myBrowser.getSelectedChanges() : myBrowser.getAllChanges();
-    return ContainerUtil.map(changes, MyChangeWrapper::new);
+    return wrap(hasSelection ? VcsTreeModelData.selected(myBrowser.getViewer())
+                             : VcsTreeModelData.all(myBrowser.getViewer()));
   }
 
   @NotNull
   @Override
-  protected List<Wrapper> getAllChanges() {
-    return ContainerUtil.map(myBrowser.getAllChanges(), MyChangeWrapper::new);
+  protected Stream<Wrapper> getAllChanges() {
+    return wrap(VcsTreeModelData.all(myBrowser.getViewer()));
+  }
+
+
+  @NotNull
+  private Stream<Wrapper> wrap(@NotNull VcsTreeModelData modelData) {
+    return modelData.userObjectsStream(Change.class).map(MyChangeWrapper::new);
   }
 
   @Override

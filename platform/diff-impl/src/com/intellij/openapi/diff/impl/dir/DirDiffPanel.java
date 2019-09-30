@@ -609,12 +609,12 @@ public class DirDiffPanel implements Disposable, DataProvider {
     //
 
     @Override
-    protected boolean hasNextChange() {
+    protected boolean hasNextChange(boolean fromUpdate) {
       return getNextRow() != -1;
     }
 
     @Override
-    protected boolean hasPrevChange() {
+    protected boolean hasPrevChange(boolean fromUpdate) {
       return getPrevRow() != -1;
     }
 

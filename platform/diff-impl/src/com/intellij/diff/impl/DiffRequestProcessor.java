@@ -661,12 +661,12 @@ public abstract class DiffRequestProcessor implements Disposable {
   @NotNull private IterationState myIterationState = IterationState.NONE;
 
   @CalledInAwt
-  protected boolean hasNextChange() {
+  protected boolean hasNextChange(boolean fromUpdate) {
     return false;
   }
 
   @CalledInAwt
-  protected boolean hasPrevChange() {
+  protected boolean hasPrevChange(boolean fromUpdate) {
     return false;
   }
 
@@ -697,7 +697,7 @@ public abstract class DiffRequestProcessor implements Disposable {
         return;
       }
 
-      if (getSettings().isGoToNextFileOnNextDifference() && isNavigationEnabled() && hasNextChange()) {
+      if (getSettings().isGoToNextFileOnNextDifference() && isNavigationEnabled() && hasNextChange(true)) {
         e.getPresentation().setEnabled(true);
         return;
       }
@@ -714,7 +714,7 @@ public abstract class DiffRequestProcessor implements Disposable {
         return;
       }
 
-      if (!isNavigationEnabled() || !hasNextChange() || !getSettings().isGoToNextFileOnNextDifference()) return;
+      if (!isNavigationEnabled() || !hasNextChange(false) || !getSettings().isGoToNextFileOnNextDifference()) return;
 
       if (myIterationState != IterationState.NEXT) {
         notifyMessage(e, true);
@@ -740,7 +740,7 @@ public abstract class DiffRequestProcessor implements Disposable {
         return;
       }
 
-      if (getSettings().isGoToNextFileOnNextDifference() && isNavigationEnabled() && hasPrevChange()) {
+      if (getSettings().isGoToNextFileOnNextDifference() && isNavigationEnabled() && hasPrevChange(true)) {
         e.getPresentation().setEnabled(true);
         return;
       }
@@ -757,7 +757,7 @@ public abstract class DiffRequestProcessor implements Disposable {
         return;
       }
 
-      if (!isNavigationEnabled() || !hasPrevChange() || !getSettings().isGoToNextFileOnNextDifference()) return;
+      if (!isNavigationEnabled() || !hasPrevChange(false) || !getSettings().isGoToNextFileOnNextDifference()) return;
 
       if (myIterationState != IterationState.PREV) {
         notifyMessage(e, false);
@@ -840,12 +840,12 @@ public abstract class DiffRequestProcessor implements Disposable {
       }
 
       e.getPresentation().setVisible(true);
-      e.getPresentation().setEnabled(hasNextChange());
+      e.getPresentation().setEnabled(hasNextChange(true));
     }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      if (!isNavigationEnabled() || !hasNextChange()) return;
+      if (!isNavigationEnabled() || !hasNextChange(false)) return;
 
       goToNextChange(false);
     }
@@ -871,12 +871,12 @@ public abstract class DiffRequestProcessor implements Disposable {
       }
 
       e.getPresentation().setVisible(true);
-      e.getPresentation().setEnabled(hasPrevChange());
+      e.getPresentation().setEnabled(hasPrevChange(true));
     }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      if (!isNavigationEnabled() || !hasPrevChange()) return;
+      if (!isNavigationEnabled() || !hasPrevChange(false)) return;
 
       goToPrevChange(false);
     }

@@ -80,12 +80,12 @@ public class CacheDiffRequestChainProcessor extends CacheDiffRequestProcessor.Si
   }
 
   @Override
-  protected boolean hasNextChange() {
+  protected boolean hasNextChange(boolean fromUpdate) {
     return myIndex < myRequestChain.getRequests().size() - 1;
   }
 
   @Override
-  protected boolean hasPrevChange() {
+  protected boolean hasPrevChange(boolean fromUpdate) {
     return myIndex > 0;
   }
 
