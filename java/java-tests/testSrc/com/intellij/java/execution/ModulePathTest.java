@@ -4,6 +4,7 @@ package com.intellij.java.execution;
 import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.junit.JUnitConfiguration;
+import com.intellij.execution.junit.TestObject;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -15,8 +16,10 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
+import com.intellij.rt.junit.JUnitStarter;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor;
@@ -37,12 +40,7 @@ public class ModulePathTest extends BaseConfigurationTestCase {
                  " --add-reads m1=ALL-UNNAMED" +
                  " --add-modules m1 -Didea.test.cyclic.buffer.size=1048576", params4Tests.getVMParametersList().getParametersString());
 
-    //junit is on the classpath
-    PathsList classPath = params4Tests.getClassPath();
-    Arrays.stream(OrderEnumerator.orderEntries(module).getAllLibrariesAndSdkClassesRoots())
-      .map(f -> JarFileSystem.getInstance().getVirtualFileForJar(f).getPath())
-      .forEach(path -> assertTrue("path " + path + " is not located on the classpath: " + classPath.getPathsString(),
-                                  classPath.getPathList().contains(path)));
+    checkLibrariesOnPathList(module, params4Tests.getClassPath());
 
     //production module output is on the module path
     PathsList modulePath = params4Tests.getModulePath();
@@ -71,15 +69,7 @@ public class ModulePathTest extends BaseConfigurationTestCase {
                  " --add-modules m1" +
                  " -Didea.test.cyclic.buffer.size=1048576", params4Tests.getVMParametersList().getParametersString());
 
-    //junit is on the class path
-    PathsList classPath = params4Tests.getClassPath();
-    Arrays.stream(
-      OrderEnumerator.orderEntries(module).withoutModuleSourceEntries()
-        .withoutDepModules()
-        .recursively().exportedOnly().classes().usingCache().getRoots())
-      .map(f -> JarFileSystem.getInstance().getVirtualFileForJar(f).getPath())
-      .forEach(path -> assertTrue("path " + path + " is located on the classpath: " + classPath.getPathsString(),
-                                  classPath.getPathList().contains(path)));
+    checkLibrariesOnPathList(module, params4Tests.getClassPath());
 
     //production module output is on the module path
     PathsList modulePath = params4Tests.getModulePath();
@@ -89,6 +79,17 @@ public class ModulePathTest extends BaseConfigurationTestCase {
     //test output on the classpath
     assertFalse("module path: " + modulePath.getPathsString(),
                modulePath.getPathList().contains(CompilerModuleExtension.getInstance(module).getCompilerOutputPathForTests().getPath()));
+  }
+
+  private static void checkLibrariesOnPathList(Module module, PathsList classPath) {
+    Arrays.stream(
+      OrderEnumerator.orderEntries(module).withoutModuleSourceEntries()
+        .withoutDepModules()
+        .withoutSdk()
+        .recursively().exportedOnly().classes().usingCache().getRoots())
+      .map(f -> JarFileSystem.getInstance().getVirtualFileForJar(f).getPath())
+      .forEach(path -> assertTrue("path " + path + " is located on the classpath: " + classPath.getPathsString(),
+                                  classPath.getPathList().contains(path)));
   }
 
   public void testNonModularizedProject() throws Exception {
@@ -102,6 +103,60 @@ public class ModulePathTest extends BaseConfigurationTestCase {
     JavaParameters params4Tests = configuration.getTestObject().createJavaParameters4Tests();
     assertEmpty(params4Tests.getModulePath().getPathList());
     assertFalse(params4Tests.getVMParametersList().getParametersString().contains("--add-modules"));
+  }
+
+  public void testModuleInfoInTestNonModularizedJunit() throws Exception {
+    Module module = createEmptyModule();
+    JpsMavenRepositoryLibraryDescriptor nonModularizedJupiterDescription =
+      new JpsMavenRepositoryLibraryDescriptor("org.junit.jupiter", "junit-jupiter-api", "5.3.0");
+    JUnitConfiguration configuration = setupConfiguration(nonModularizedJupiterDescription, "test1", module);
+    JavaParameters params4Tests = configuration.getTestObject().createJavaParameters4Tests();
+    assertEquals("-ea" +
+                 " --add-modules m1" +
+                 " -Didea.test.cyclic.buffer.size=1048576", params4Tests.getVMParametersList().getParametersString());
+
+    PathsList modulePath = params4Tests.getModulePath();
+
+    checkLibrariesOnPathList(module, params4Tests.getModulePath());
+
+    //production module output is on the module path
+    assertTrue("module path: " + modulePath.getPathsString(),
+               modulePath.getPathList().contains(CompilerModuleExtension.getInstance(module).getCompilerOutputPath().getPath()));
+    //test module output is on the module path
+    modulePath = params4Tests.getModulePath();
+    assertTrue("module path: " + modulePath.getPathsString(),
+               modulePath.getPathList().contains(CompilerModuleExtension.getInstance(module).getCompilerOutputPathForTests().getPath()));
+
+    //launcher should be put on the classpath
+    assertTrue(params4Tests.getClassPath().getPathList().stream().anyMatch(filePath -> filePath.contains("launcher")));
+  }
+
+  public void testModuleInfoInTestModularizedJunit() throws Exception {
+    Module module = createEmptyModule();
+    JpsMavenRepositoryLibraryDescriptor nonModularizedJupiterDescription =
+      new JpsMavenRepositoryLibraryDescriptor("org.junit.jupiter", "junit-jupiter-api", "5.5.2");
+    JUnitConfiguration configuration = setupConfiguration(nonModularizedJupiterDescription, "test1", module);
+    JavaParameters params4Tests = configuration.getTestObject().createJavaParameters4Tests();
+    assertEquals("-ea" +
+                 " --add-modules m1" +
+                 " --add-modules org.junit.platform.launcher" +
+                 " -Didea.test.cyclic.buffer.size=1048576", params4Tests.getVMParametersList().getParametersString());
+
+    checkLibrariesOnPathList(module, params4Tests.getModulePath());
+
+    //ensure downloaded junit launcher dependencies are in module path as well
+    assertSize(2, params4Tests.getClassPath().getPathList());
+    assertContainsElements(params4Tests.getClassPath().getPathList(), PathUtil.getJarPathForClass(JUnitStarter.class));
+    assertContainsElements(params4Tests.getClassPath().getPathList(), TestObject.getJUnit5RtFile().getPath());
+
+    //production module output is on the module path
+    PathsList modulePath = params4Tests.getModulePath();
+    assertTrue("module path: " + modulePath.getPathsString(),
+               modulePath.getPathList().contains(CompilerModuleExtension.getInstance(module).getCompilerOutputPath().getPath()));
+    //test module output is on the module path
+    modulePath = params4Tests.getModulePath();
+    assertTrue("module path: " + modulePath.getPathsString(),
+               modulePath.getPathList().contains(CompilerModuleExtension.getInstance(module).getCompilerOutputPathForTests().getPath()));
   }
 
   private JUnitConfiguration setupConfiguration(JpsMavenRepositoryLibraryDescriptor libraryDescriptor, String sources, Module module) throws Exception {
