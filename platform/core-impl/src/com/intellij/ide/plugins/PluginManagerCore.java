@@ -1357,8 +1357,10 @@ public class PluginManagerCore {
     Set<PluginId> enabledIds = new LinkedHashSet<>();
 
     JBTreeTraverser<PluginId> requiredDepsTraverser = new PluginTraverser(idMap, false, false);
+    JBTreeTraverser<PluginId> allDepsTraverser = new PluginTraverser(idMap, true, false);
+
     disableIncompatiblePlugins(requiredDepsTraverser, idMap, brokenIds, errors);
-    checkPluginCycles(requiredDepsTraverser, idMap, errors);
+    checkPluginCycles(allDepsTraverser, idMap, errors);
 
     // topological sort based on required dependencies only
     JBIterable<PluginId> sortedRequired = requiredDepsTraverser
@@ -1383,7 +1385,6 @@ public class PluginManagerCore {
       }
     }
 
-    JBTreeTraverser<PluginId> allDepsTraverser = new PluginTraverser(idMap, true, false);
     // topological sort based on all (required and optional) dependencies
     JBIterable<PluginId> sortedAll = allDepsTraverser
       .withRoots(sortedRequired)
@@ -1638,9 +1639,9 @@ public class PluginManagerCore {
         IdeaPluginDescriptorImpl descriptor = idMap.get(o);
         if (descriptor == null) return JBIterable.empty();
         PluginId implicitDep = getImplicitDependency(descriptor, idMap);
-        JBIterable<PluginId> allDeps = JBIterable.of(descriptor.getDependentPluginIds()).append(implicitDep);
+        JBIterable<PluginId> allDeps = JBIterable.of(descriptor.getDependentPluginIds()).append(implicitDep)
+          .filter(id -> idMap.get(id) != descriptor);
         JBIterable<PluginId> selectedDeps = withOptionalDeps ? allDeps : allDeps
-          .filter(id -> idMap.get(id) != descriptor)
           .filter(id -> ArrayUtil.indexOf(descriptor.getOptionalDependentPluginIds(), id) == -1);
         return !convertModulesToPlugins ? selectedDeps : selectedDeps.map(
           id -> {

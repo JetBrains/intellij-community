@@ -548,16 +548,14 @@
   <idea-plugin url="file://out/intellij.python.pytestBdd/META-INF/plugin.xml">
     <id>-org-jetbrains-plugins-pytest-bdd-</id>
     <name>Python pytest-bdd support</name>
-    <depends>com.intellij.modules.ultimate</depends>
-    <depends>com.intellij.modules.python</depends>
+    <depends>com.intellij.modules.pycharm.professional</depends>
     <depends>-org-jetbrains-plugins-python-gherkin-</depends>
     <depends>-gherkin-</depends>
   </idea-plugin>
   <idea-plugin url="file://out/intellij.python.gherkin/META-INF/plugin.xml">
     <id>-org-jetbrains-plugins-python-gherkin-</id>
     <name>Python BDD support for engines, based on Gherkin (cucumber, lettuce, behave)</name>
-    <depends>com.intellij.modules.ultimate</depends>
-    <depends>com.intellij.modules.python</depends>
+    <depends>com.intellij.modules.pycharm.professional</depends>
     <depends>-gherkin-</depends>
   </idea-plugin>
   <idea-plugin url="file://out/intellij.gherkin/META-INF/plugin.xml">
@@ -568,8 +566,7 @@
   <idea-plugin url="file://out/intellij.python.wsl/META-INF/plugin.xml">
     <id>-org-jetbrains-plugins-python-wsl-</id>
     <name>Python WSL Support</name>
-    <depends>com.intellij.modules.ultimate</depends>
-    <depends>com.intellij.modules.python</depends>
+    <depends>com.intellij.modules.pycharm.professional</depends>
     <depends>-org-jetbrains-plugins-wsl-</depends>
     <depends>-org-jetbrains-plugins-remote-run-</depends>
     <depends>-org-jetbrains-plugins-python-remote-interpreter-</depends>
@@ -583,12 +580,24 @@
     <depends>-Coverage-</depends>
     <depends>-org-jetbrains-plugins-yaml-</depends>
     <depends optional="true" config-file="intellij.python.duplicatesDetection">com.intellij.modules.duplicatesDetector</depends>
+    <depends optional="true" config-file="???">-com-intellij-diagram-</depends>
+    <depends optional="true" config-file="???">-JavaScriptDebugger-</depends>
+    <depends optional="true" config-file="???">-org-jetbrains-plugins-rest-</depends>
+    <depends optional="true" config-file="???">-org-jetbrains-plugins-localization-</depends>
+    <depends optional="true" config-file="???">com.intellij.modules.database</depends>
+    <depends optional="true" config-file="intellij.python.remoteInterpreter">-org-jetbrains-plugins-remote-run-</depends>
+    <depends optional="true" config-file="???">-com-intellij-copyright-</depends>
+    <depends optional="true" config-file="intellij.python.plugin">-gherkin-</depends>
+    <depends optional="true" config-file="intellij.python.wsl">-org-jetbrains-plugins-wsl-</depends>
+    <depends optional="true" config-file="???">-org-intellij-intelliLang-</depends>
+    <depends optional="true" config-file="intellij.python.docker">-Docker-</depends>
+    <depends optional="true" config-file="intellij.python.jupyter">-org-intellij-plugins-markdown-</depends>
+    <depends optional="true" config-file="???">-org-jetbrains-plugins-terminal-</depends>
   </idea-plugin>
   <idea-plugin url="file://out/intellij.python.docker/META-INF/plugin.xml">
     <id>-org-jetbrains-plugins-python-docker-</id>
     <name>Python Docker</name>
-    <depends>com.intellij.modules.ultimate</depends>
-    <depends>com.intellij.modules.python</depends>
+    <depends>com.intellij.modules.pycharm.professional</depends>
     <depends optional="true" config-file="intellij.python.docker">-Docker-</depends>
   </idea-plugin>
   <idea-plugin url="file://out/intellij.clouds.docker.impl/META-INF/plugin.xml">
@@ -703,7 +712,7 @@
     <name>Java EE: Bean Validation</name>
     <depends>-com-intellij-javaee-</depends>
   </idea-plugin>
-  <idea-plugin url="file://out/intellij.ruby.plugin.bundle/META-INF/plugin.xml">
+  <idea-plugin url="file://out/intellij.ruby.plugin/META-INF/plugin.xml">
     <id>-org-jetbrains-plugins-ruby-</id>
     <name>Ruby</name>
     <module value="com.intellij.modules.ruby"/>
@@ -711,8 +720,8 @@
     <depends>com.intellij.modules.ultimate</depends>
     <depends>com.intellij.modules.ruby-capable</depends>
     <depends optional="true" config-file="intellij.ruby.duplicatesDetection">com.intellij.modules.duplicatesDetector</depends>
-    <depends optional="true" config-file="intellij.ruby.plugin">com.intellij.modules.idea</depends>
-    <depends optional="true" config-file="intellij.ruby.coverage">-Coverage-</depends>
+    <depends optional="true" config-file="intellij.ruby.plugin">com.intellij.modules.java</depends>
+    <depends optional="true" config-file="intellij.ruby.coverage">com.intellij.modules.coverage</depends>
     <depends optional="true" config-file="intellij.ruby.dbConfig">com.intellij.modules.database</depends>
     <depends optional="true" config-file="intellij.ruby.javascriptDebugger">-JavaScriptDebugger-</depends>
     <depends optional="true" config-file="intellij.ruby.uml">-com-intellij-diagram-</depends>
@@ -723,7 +732,7 @@
     <depends optional="true" config-file="intellij.ruby.slim">-org-jetbrains-plugins-slim-</depends>
     <depends optional="true" config-file="intellij.ruby.puppet">-com-intellij-lang-puppet-</depends>
     <depends optional="true" config-file="intellij.ruby.remoteInterpreter">-org-jetbrains-plugins-remote-run-</depends>
-    <depends optional="true" config-file="intellij.ruby.plugin.cucumber">-gherkin-</depends>
+    <depends optional="true" config-file="intellij.ruby.cucumber">-gherkin-</depends>
     <depends optional="true" config-file="intellij.ruby.docker">-Docker-</depends>
     <depends optional="true" config-file="intellij.ruby.wsl">-org-jetbrains-plugins-wsl-</depends>
     <depends optional="true" config-file="???">-com-jetbrains-performancePlugin-</depends>
@@ -984,10 +993,9 @@
   <idea-plugin url="file://out/intellij.python.remoteInterpreter/META-INF/plugin.xml">
     <id>-org-jetbrains-plugins-python-remote-interpreter-</id>
     <name>Python SSH Interpreter</name>
-    <depends>com.intellij.modules.ultimate</depends>
+    <depends>com.intellij.modules.pycharm.professional</depends>
     <depends>-com-jetbrains-plugins-webDeployment-</depends>
     <depends>-org-jetbrains-plugins-remote-run-</depends>
-    <depends optional="true" config-file="intellij.python.remoteInterpreter">com.intellij.modules.python</depends>
   </idea-plugin>
   <idea-plugin url="file://out/intellij.vaadin/META-INF/plugin.xml">
     <id>-com-intellij-vaadin-</id>
@@ -1353,7 +1361,7 @@
     <id>-org-jetbrains-plugins-notebooks-jupyter-</id>
     <name>Jupyter Notebook</name>
     <depends>com.intellij.modules.platform</depends>
-    <depends>com.intellij.modules.python</depends>
+    <depends>com.intellij.modules.pycharm</depends>
     <depends>com.intellij.modules.xdebugger</depends>
     <depends>-org-intellij-intelliLang-</depends>
   </idea-plugin>
@@ -1379,5 +1387,10 @@
     <depends>com.intellij.modules.ultimate</depends>
     <depends>com.intellij.modules.microservices</depends>
     <depends>-org-jetbrains-plugins-yaml-</depends>
+  </idea-plugin>
+  <idea-plugin url="file://out/intellij.python.concurrencyVisualizer/META-INF/plugin.xml">
+    <id>-org-jetbrains-python-concurrency-visualiser-</id>
+    <name>Concurrency Visualiser</name>
+    <depends>com.intellij.modules.pycharm.professional</depends>
   </idea-plugin>
 </root>

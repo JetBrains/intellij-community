@@ -1,10 +1,10 @@
 + com.intellij
 + -com-intellij-copyright-
-+ -com-intellij-java-
 + -com-jetbrains-plugins-webDeployment-
 + -com-intellij-plugins-watcher-
 + -com-intellij-css-
 + -XPathView-
++ -com-intellij-java-
 + -org-intellij-intelliLang-
 + -com-intellij-properties-
 + -com-intellij-diagram-
@@ -55,6 +55,10 @@
 + -OpenShift-
 + -Osmorc-
 + -PerforceDirectPlugin-
++ -org-jetbrains-plugins-remote-run-
++ -gherkin-
++ -org-jetbrains-plugins-wsl-
++ -org-intellij-plugins-markdown-
 + -Pythonid-
 + -Refactor-X-
 + -Resin-
@@ -73,7 +77,6 @@
 + -com-intellij-aspectj-
 + -com-intellij-beanValidation-
 + -com-intellij-idea-clion-
-+ -org-intellij-plugins-markdown-
 + -com-intellij-cidr-markdown-
 + -com-intellij-clion-compdb-
   -com-intellij-clion-embedded-
@@ -137,7 +140,6 @@
 + -com-jetbrains-plugins-yeoman-
 + -com-jetbrains-restWebServices-
 + -com-jetbrains-sh-
-+ -gherkin-
 + -cucumber-java-
 + -cucumber-groovy-
 + -hg4idea-
@@ -158,17 +160,15 @@
 + -org-jetbrains-plugins-haml-
 + -org-jetbrains-plugins-javaFX-
 + -org-jetbrains-plugins-less-
-+ -org-jetbrains-plugins-remote-run-
 + -org-jetbrains-plugins-node-remote-interpreter-
-+ -org-jetbrains-plugins-notebooks-jupyter-
+  -org-jetbrains-plugins-notebooks-jupyter-
 + -org-jetbrains-plugins-phpstorm-remote-interpreter-
 + -org-jetbrains-plugins-phpstorm-docker-
-+ -org-jetbrains-plugins-python-gherkin-
-+ -org-jetbrains-plugins-pytest-bdd-
-+ -org-jetbrains-plugins-python-docker-
-+ -org-jetbrains-plugins-python-remote-interpreter-
-+ -org-jetbrains-plugins-wsl-
-+ -org-jetbrains-plugins-python-wsl-
+  -org-jetbrains-plugins-python-gherkin-
+  -org-jetbrains-plugins-pytest-bdd-
+  -org-jetbrains-plugins-python-docker-
+  -org-jetbrains-plugins-python-remote-interpreter-
+  -org-jetbrains-plugins-python-wsl-
 + -org-jetbrains-plugins-sass-
 + -org-jetbrains-plugins-slim-
 + -org-jetbrains-plugins-ruby-
@@ -176,8 +176,18 @@
 + -org-jetbrains-plugins-stylus-
 + -org-jetbrains-plugins-textmate-
 + -org-jetbrains-plugins-vue-
+  -org-jetbrains-python-concurrency-visualiser-
 + -org-jetbrains-settingsRepository-
 
 Plugin "Embedded Development Support" requires missing "com.intellij.modules.clion.cmake".
-<br><a href="disable">Disable "Embedded Development Support"</a>
+Plugin "Jupyter Notebook" requires missing "com.intellij.modules.pycharm".
+Plugin "Python BDD support for engines, based on Gherkin (cucumber, lettuce, behave)" requires missing "com.intellij.modules.pycharm.professional".
+Plugin "Python pytest-bdd support" requires missing "com.intellij.modules.pycharm.professional".
+Plugin "Python pytest-bdd support" requires disabled "Python BDD support for engines, based on Gherkin (cucumber, lettuce, behave)".
+Plugin "Python Docker" requires missing "com.intellij.modules.pycharm.professional".
+Plugin "Python SSH Interpreter" requires missing "com.intellij.modules.pycharm.professional".
+Plugin "Python WSL Support" requires missing "com.intellij.modules.pycharm.professional".
+Plugin "Python WSL Support" requires disabled "Python SSH Interpreter".
+Plugin "Concurrency Visualiser" requires missing "com.intellij.modules.pycharm.professional".
+<br><a href="disable">Disable not loaded plugins</a>
 <a href="edit">Open plugin manager</a>

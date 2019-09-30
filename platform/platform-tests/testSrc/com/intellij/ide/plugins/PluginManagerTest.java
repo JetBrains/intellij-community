@@ -166,7 +166,7 @@ public class PluginManagerTest {
     Element root = JDOMUtil.load(file, context.getXmlFactory());
     for (Element element : root.getChildren("idea-plugin")) {
       String url = element.getAttributeValue("url");
-      IdeaPluginDescriptorImpl d = new IdeaPluginDescriptorImpl(new File(url), false);
+      IdeaPluginDescriptorImpl d = new IdeaPluginDescriptorImpl(new File(url), true);
       d.readExternal(element, new URL(url), JDOMXIncluder.DEFAULT_PATH_RESOLVER,
                      context.getXmlFactory().stringInterner(), false);
       result.add(d);

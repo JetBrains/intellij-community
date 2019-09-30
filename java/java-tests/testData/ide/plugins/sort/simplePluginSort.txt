@@ -13,6 +13,9 @@
   missing2
   missing3
   missing4
+  optional_cycle2
+  optional_cycle1
+  optional_cycle0
 + plugin3
 + plugin0
 + plugin1
@@ -27,6 +30,7 @@ Plugin "incompatible2" is incompatible (target build range is 0.0 to 1.111111).
 Plugin "missing4" defines no module dependencies (supported only in IntelliJ IDEA).
 Plugins "cycle0", "cycle1", "cycle2", "cycle3" form dependency cycle.
 Plugins "cycle4", "cycle5" form dependency cycle.
+Plugins "optional_cycle0", "optional_cycle1", "optional_cycle2" form dependency cycle.
 Plugin "missing1" requires missing "com.intellij.modules.missing".
 Plugin "missing2" requires missing "com.intellij.missing".
 Plugin "missing3" requires disabled "missing2".

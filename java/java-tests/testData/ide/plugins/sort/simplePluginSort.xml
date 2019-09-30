@@ -107,4 +107,18 @@
     <id>plugin3</id>
     <depends>com.intellij.modules.core</depends>
   </idea-plugin>
-</root>
+  <idea-plugin url="file://optional_cycle0.xml">
+    <id>optional_cycle0</id>
+    <depends optional="true" config-file="?">optional_cycle1</depends>
+    <depends>com.intellij.modules.core</depends>
+  </idea-plugin>
+  <idea-plugin url="file://optional_cycle1.xml">
+    <id>optional_cycle1</id>
+    <depends optional="true" config-file="?">optional_cycle2</depends>
+    <depends>com.intellij.modules.core</depends>
+  </idea-plugin>
+  <idea-plugin url="file://optional_cycle2.xml">
+    <id>optional_cycle2</id>
+    <depends optional="true" config-file="?">optional_cycle0</depends>
+    <depends>com.intellij.modules.core</depends>
+  </idea-plugin></root>
