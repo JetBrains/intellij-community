@@ -2,6 +2,7 @@
 package com.intellij.openapi.vfs.impl.local;
 
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -35,11 +36,14 @@ public class DirectoryAccessChecker {
 
   private static class InstanceHolder {
     private final static FilterChain chainInstance =
-      SystemInfo.isLinux ? new LinuxFilterChain().add(new NFS()).add(new CIFS()).refresh() : ACCEPTING_FILTER;
+      Registry.is("directory.access.checker.enabled") && SystemInfo.isLinux ?
+        new LinuxFilterChain().add(new NFS()).add(new CIFS()).refresh() : ACCEPTING_FILTER;
   }
 
   public static void refresh() {
-    InstanceHolder.chainInstance.refresh();
+    if (Registry.is("directory.access.checker.enabled")) {
+      InstanceHolder.chainInstance.refresh();
+    }
   }
 
   @NotNull
