@@ -15,9 +15,9 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.ui.ContextHelpLabel;
 import com.intellij.ui.FontComboBox;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.components.JBCheckBox;
@@ -495,6 +495,7 @@ public class AppearanceConfigurable implements SearchableConfigurable {
     private JComboBox myAntialiasingInEditor;
     private JButton myBackgroundImageButton;
     private JBCheckBox myUseContrastScrollBarsCheckBox;
+    private ContextHelpLabel mySmoothScrollingContextHelpLabel;
 
     MyComponent() {
       myOverrideLAFFonts.addActionListener(__ -> updateCombo());
@@ -519,6 +520,8 @@ public class AppearanceConfigurable implements SearchableConfigurable {
     private void createUIComponents() {
       myFontSizeCombo = new ComboBox();
       myPresentationModeFontSize = new ComboBox();
+      mySmoothScrollingContextHelpLabel =
+        ContextHelpLabel.create("When using the mouse wheel/touchpad, the entire interface will scroll smoothly instead of line by line");
     }
   }
 
