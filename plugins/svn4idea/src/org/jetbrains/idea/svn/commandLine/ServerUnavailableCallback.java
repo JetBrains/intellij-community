@@ -23,7 +23,7 @@ public class ServerUnavailableCallback extends AuthCallbackCase {
     // E73xxxx: various socket errors on Windows (e.g. E731001 - host not found; E730061 - connection refused)
     // E12010x: The server unexpectedly closed the connection/improper response
     // E67xxxx: socket errors on Unix (e.g. E670003 - DNS failure)
-    // E0000xx: socket errors on Mac (e.g. E000061 - connection refused; E000113 - no route to host)
+    // E0000xx: socket errors on Mac (e.g. E000061 - connection refused)
     // E0001xx: socket errors on Linux (e.g. E000111 - connection refused; E000113 - no route to host)
     "svn: E\\d{6}: (Unable to connect to a repository at URL .+)\nsvn: E(?:73\\d{4}|67\\d{4}|000[01]\\d{2}|12010\\d): (.+)" +
     ")"

@@ -9,7 +9,6 @@ import static org.junit.Assert.assertTrue;
 
 public class UsernamePasswordCallbackTest extends SvnTestCase {
   static final String[] AUTH_ERRORS = {
-    // Should not handle these errors
     // SVN 1.6 "Auth failed"
     "svn: OPTIONS of 'https://localhost:1443/svn/foobar': authorization failed: Could not authenticate to server: rejected Basic challenge (https://localhost:1443)",
     // SVN 1.7 "Auth failed"
