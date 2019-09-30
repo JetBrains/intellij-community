@@ -30,7 +30,6 @@ public class MavenArtifactUtil {
 
   @Nullable
   public static MavenPluginInfo readPluginInfo(File localRepository, MavenId mavenId) {
-    MavenLog.LOG.assertTrue(!ApplicationManager.getApplication().isDispatchThread());
     File file = getArtifactFile(localRepository, mavenId.getGroupId(), mavenId.getArtifactId(), mavenId.getVersion(), "jar");
 
     MavenPluginInfo result = ourPluginInfoCache.get(file);
