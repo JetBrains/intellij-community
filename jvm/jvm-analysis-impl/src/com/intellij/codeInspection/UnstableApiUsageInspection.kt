@@ -51,15 +51,23 @@ class UnstableApiUsageInspection : LocalInspectionTool() {
   @JvmField
   var myIgnoreInsideImports: Boolean = true
 
-  override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
-    ApiUsageUastVisitor.createPsiElementVisitor(
-      UnstableApiUsageProcessor(
-        holder,
-        myIgnoreInsideImports,
-        unstableApiAnnotations.toList(),
-        knownAnnotationMessageProviders
+  override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
+    val annotations = unstableApiAnnotations.toList()
+    val psiFacade = JavaPsiFacade.getInstance(holder.project)
+    val resolveScope = holder.file.resolveScope
+    return if (annotations.any { psiFacade.findClass(it, resolveScope) != null }) {
+      ApiUsageUastVisitor.createPsiElementVisitor(
+        UnstableApiUsageProcessor(
+          holder,
+          myIgnoreInsideImports,
+          annotations,
+          knownAnnotationMessageProviders
+        )
       )
-    )
+    } else {
+      PsiElementVisitor.EMPTY_VISITOR
+    }
+  }
 
   override fun createOptionsPanel(): JPanel {
     val checkboxPanel = SingleCheckboxOptionsPanel(
