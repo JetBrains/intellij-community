@@ -25,10 +25,7 @@ import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.CancellablePromise;
 import org.jetbrains.concurrency.Promises;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
@@ -52,7 +49,7 @@ public class NonBlockingReadActionImpl<T>
   private final Callable<T> myComputation;
 
   private static final Set<CancellablePromise<?>> ourTasks = ContainerUtil.newConcurrentSet();
-  private static final Map<List<Object>, CancellablePromise<?>> ourTasksByEquality = ContainerUtil.newConcurrentMap();
+  private static final Map<List<Object>, NonBlockingReadActionImpl<?>.Submission> ourTasksByEquality = new HashMap<>();
   private static final AtomicInteger ourUnboundedSubmissionCount = new AtomicInteger();
 
   NonBlockingReadActionImpl(@NotNull Callable<T> computation) {
@@ -127,28 +124,22 @@ public class NonBlockingReadActionImpl<T>
   public CancellablePromise<T> submit(@NotNull Executor backgroundThreadExecutor) {
     AsyncPromise<T> promise = new AsyncPromise<>();
     trackSubmission(backgroundThreadExecutor, promise);
-    new Submission(promise, backgroundThreadExecutor).transferToBgThread();
+    Submission submission = new Submission(promise, backgroundThreadExecutor);
+    if (myCoalesceEquality == null) {
+      submission.transferToBgThread();
+    } else {
+      submission.submitOrScheduleCoalesced(myCoalesceEquality);
+    }
     return promise;
   }
 
   private void trackSubmission(@NotNull Executor backgroundThreadExecutor, AsyncPromise<T> promise) {
-    if (myCoalesceEquality != null) {
-      setupCoalescing(promise, myCoalesceEquality);
-    }
     if (backgroundThreadExecutor == AppExecutorUtil.getAppExecutorService()) {
       preventTooManySubmissions(promise);
     }
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       rememberSubmissionInTests(promise);
     }
-  }
-
-  private static void setupCoalescing(AsyncPromise<?> promise, List<Object> coalesceEquality) {
-    CancellablePromise<?> previous = ourTasksByEquality.put(coalesceEquality, promise);
-    if (previous != null) {
-      previous.cancel();
-    }
-    promise.onProcessed(__ -> ourTasksByEquality.remove(coalesceEquality, promise));
   }
 
   private static void preventTooManySubmissions(AsyncPromise<?> promise) {
@@ -170,6 +161,11 @@ public class NonBlockingReadActionImpl<T>
     private volatile ProgressIndicator currentIndicator;
     private final ModalityState creationModality = ModalityState.defaultModalityState();
     @Nullable private final BooleanSupplier myExpireCondition;
+    @Nullable private NonBlockingReadActionImpl<?>.Submission myReplacement;
+
+    // a sum composed of: 1 for non-done promise, 1 for each currently running thread
+    // so 0 means that the process is marked completed or canceled, and it has no running not-yet-finished threads
+    private int myUseCount;
 
     Submission(AsyncPromise<? super T> promise, @NotNull Executor backgroundThreadExecutor) {
       this.promise = promise;
@@ -180,6 +176,10 @@ public class NonBlockingReadActionImpl<T>
           indicator.cancel();
         }
       });
+      if (myCoalesceEquality != null) {
+        acquire();
+        promise.onProcessed(__ -> release());
+      }
       final Expiration expiration = composeExpiration();
       if (expiration != null) {
         final Expiration.Handle expirationHandle = expiration.invokeOnExpiration(promise::cancel);
@@ -188,11 +188,56 @@ public class NonBlockingReadActionImpl<T>
       myExpireCondition = composeCancellationCondition();
     }
 
+    void acquire() {
+      assert myCoalesceEquality != null;
+      synchronized (ourTasksByEquality) {
+        myUseCount++;
+      }
+    }
+
+    void release() {
+      assert myCoalesceEquality != null;
+      synchronized (ourTasksByEquality) {
+        if (--myUseCount == 0 && ourTasksByEquality.get(myCoalesceEquality) == this) {
+          scheduleReplacementIfAny();
+        }
+      }
+    }
+
+    void scheduleReplacementIfAny() {
+      if (myReplacement == null) {
+        ourTasksByEquality.remove(myCoalesceEquality, this);
+      } else {
+        ourTasksByEquality.put(myCoalesceEquality, myReplacement);
+        myReplacement.transferToBgThread();
+      }
+    }
+
+    void submitOrScheduleCoalesced(@NotNull List<Object> coalesceEquality) {
+      synchronized (ourTasksByEquality) {
+        NonBlockingReadActionImpl<?>.Submission current = ourTasksByEquality.get(coalesceEquality);
+        if (current == null) {
+          ourTasksByEquality.put(coalesceEquality, this);
+          transferToBgThread();
+        } else {
+          if (current.myReplacement != null) {
+            current.myReplacement.promise.cancel();
+            assert current == ourTasksByEquality.get(coalesceEquality);
+          }
+          current.myReplacement = this;
+          current.promise.cancel();
+        }
+      }
+    }
+
     void transferToBgThread() {
       transferToBgThread(ReschedulingAttempt.NULL);
     }
 
     void transferToBgThread(@NotNull ReschedulingAttempt previousAttempt) {
+      if (myCoalesceEquality != null) {
+        acquire();
+      }
       backendExecutor.execute(() -> {
         final ProgressIndicator indicator = myProgressIndicator != null ? new SensitiveProgressWrapper(myProgressIndicator) {
           @NotNull
@@ -213,6 +258,9 @@ public class NonBlockingReadActionImpl<T>
         }
         finally {
           currentIndicator = null;
+          if (myCoalesceEquality != null) {
+            release();
+          }
         }
       });
     }
