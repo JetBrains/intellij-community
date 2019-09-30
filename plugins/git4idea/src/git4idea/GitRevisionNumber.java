@@ -172,26 +172,6 @@ public class GitRevisionNumber implements ShortVcsRevisionNumber {
   }
 
   /**
-   * @return a revision string that refers to the parent revision relatively
-   *         to the current one. The git operator "~" is used. Note that in case of merges,
-   *         the first revision of several will referred.
-   */
-  public String getParentRevisionStr() {
-    String rev = myRevisionHash;
-    int bracketIdx = rev.indexOf("[");
-    if (bracketIdx > 0) {
-      rev = myRevisionHash.substring(bracketIdx + 1, myRevisionHash.indexOf("]"));
-    }
-
-    int tildeIndex = rev.indexOf("~");
-    if (tildeIndex > 0) {
-      int n = Integer.parseInt(rev.substring(tildeIndex)) + 1;
-      return rev.substring(0, tildeIndex) + "~" + n;
-    }
-    return rev + "~1";
-  }
-
-  /**
    * Resolve revision number for the specified revision
    *
    * @param project a project
