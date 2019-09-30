@@ -646,5 +646,7 @@ def process_all(roots, sdk_skeletons_dir, name_pattern=None, state_json=None):
     progress(fraction=1.0)
     if state_json is not None:
         mkdir(sdk_skeletons_dir)
-        with fopen(os.path.join(sdk_skeletons_dir, STATE_FILE_NAME), 'w') as f:
+        state_json_path = os.path.join(sdk_skeletons_dir, STATE_FILE_NAME)
+        info('Writing skeletons state to {!r}'.format(state_json_path))
+        with fopen(state_json_path, 'w') as f:
             json.dump(state_json, f, sort_keys=True)
