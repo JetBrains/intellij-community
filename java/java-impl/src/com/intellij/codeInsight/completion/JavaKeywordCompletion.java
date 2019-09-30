@@ -611,7 +611,8 @@ public class JavaKeywordCompletion {
     if (prev == null) return false;
 
     PsiElement expr = PsiTreeUtil.getParentOfType(prev, PsiExpression.class);
-    if (expr != null && expr.getTextRange().getEndOffset() == prev.getTextRange().getEndOffset()) {
+    if (expr != null && expr.getTextRange().getEndOffset() == prev.getTextRange().getEndOffset() &&
+        PsiTreeUtil.getParentOfType(expr, PsiAnnotation.class) == null) {
       return true;
     }
 
