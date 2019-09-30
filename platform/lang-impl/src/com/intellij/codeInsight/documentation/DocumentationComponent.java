@@ -915,7 +915,9 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       Dimension preferredSize = myEditorPane.getPreferredSize();
 
       int height = preferredSize.height + (needsToolbar() ? myControlPanel.getPreferredSize().height : 0);
-      height = Math.min(MAX_DEFAULT.height, Math.max(MIN_DEFAULT.height, height));
+      JScrollBar scrollBar = myScrollPane.getHorizontalScrollBar();
+      int reservedForScrollBar = width < preferredSize.width && scrollBar.isOpaque() ? scrollBar.getPreferredSize().height : 0;
+      height = Math.min(MAX_DEFAULT.height, Math.max(MIN_DEFAULT.height, height)) + reservedForScrollBar;
 
       hintSize = new Dimension(width, height);
     }
