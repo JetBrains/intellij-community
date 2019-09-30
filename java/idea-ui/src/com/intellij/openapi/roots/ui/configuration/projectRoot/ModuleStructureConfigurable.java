@@ -38,10 +38,7 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ModuleProj
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureDaemonAnalyzer;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
 import com.intellij.openapi.ui.*;
-import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.NullableComputable;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -763,40 +760,38 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     @Override
     @Nullable
     public Object getData(@NotNull @NonNls String dataId) {
-      if (LangDataKeys.MODULE_CONTEXT_ARRAY.is(dataId)) {
-        final TreePath[] paths = myTree.getSelectionPaths();
-        if (paths != null) {
-          Set<Module> modules = new LinkedHashSet<>();
-          for (TreePath path : paths) {
-            MyNode node = (MyNode)path.getLastPathComponent();
-            final NamedConfigurable configurable = node.getConfigurable();
-            LOG.assertTrue(configurable != null, "already disposed");
-            final Object o = configurable.getEditableObject();
-            if (o instanceof Module) {
-              modules.add((Module)o);
-            }
-            else if (node instanceof ModuleGroupNode && ((ModuleGroupNode)node).getModuleGroup() != null) {
-              TreeUtil.treeNodeTraverser(node).forEach(descendant -> {
-                if (descendant instanceof MyNode) {
-                  Object object = ((MyNode)descendant).getConfigurable().getEditableObject();
-                  if (object instanceof Module) {
-                    modules.add((Module)object);
-                  }
-                }
-              });
-            }
+      return ValueKey.match(dataId)
+        .ifEq(LangDataKeys.MODULE_CONTEXT_ARRAY).thenGet(this::getModuleContexts)
+        .ifEq(LangDataKeys.MODULE_CONTEXT).thenGet(() -> getSelectedModule())
+        .ifEq(LangDataKeys.MODIFIABLE_MODULE_MODEL).thenGet(() -> myContext.myModulesConfigurator.getModuleModel())
+        .orNull();
+    }
+
+    private Module[] getModuleContexts() {
+      final TreePath[] paths = myTree.getSelectionPaths();
+      Set<Module> modules = new LinkedHashSet<>();
+      if (paths != null) {
+        for (TreePath path : paths) {
+          MyNode node = (MyNode)path.getLastPathComponent();
+          final NamedConfigurable<?> configurable = node.getConfigurable();
+          LOG.assertTrue(configurable != null, "already disposed");
+          final Object o = configurable.getEditableObject();
+          if (o instanceof Module) {
+            modules.add((Module)o);
           }
-          return !modules.isEmpty() ? modules.toArray(Module.EMPTY_ARRAY) : null;
+          else if (node instanceof ModuleGroupNode && ((ModuleGroupNode)node).getModuleGroup() != null) {
+            TreeUtil.treeNodeTraverser(node).forEach(descendant -> {
+              if (descendant instanceof MyNode) {
+                Object object = ((MyNode)descendant).getConfigurable().getEditableObject();
+                if (object instanceof Module) {
+                  modules.add((Module)object);
+                }
+              }
+            });
+          }
         }
       }
-      if (LangDataKeys.MODULE_CONTEXT.is(dataId)) {
-        return getSelectedModule();
-      }
-      if (LangDataKeys.MODIFIABLE_MODULE_MODEL.is(dataId)) {
-        return myContext.myModulesConfigurator.getModuleModel();
-      }
-
-      return null;
+      return !modules.isEmpty() ? modules.toArray(Module.EMPTY_ARRAY) : null;
     }
   }
 
