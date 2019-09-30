@@ -129,7 +129,6 @@ public class ScrollingModelImpl implements ScrollingModelEx {
       LOG.trace(new Throwable());
     }
     assertIsDispatchThread();
-    myEditor.validateSize();
     AsyncEditorLoader.performWhenLoaded(myEditor, () -> scrollTo(myEditor.getCaretModel().getVisualPosition(), scrollType));
   }
 
@@ -307,7 +306,6 @@ public class ScrollingModelImpl implements ScrollingModelEx {
   private void _scrollVertically(int scrollOffset) {
     assertIsDispatchThread();
 
-    myEditor.validateSize();
     JScrollBar scrollbar = myEditor.getScrollPane().getVerticalScrollBar();
 
     scrollbar.setValue(scrollOffset);
@@ -321,7 +319,6 @@ public class ScrollingModelImpl implements ScrollingModelEx {
   private void _scrollHorizontally(int scrollOffset) {
     assertIsDispatchThread();
 
-    myEditor.validateSize();
     JScrollBar scrollbar = myEditor.getScrollPane().getHorizontalScrollBar();
     scrollbar.setValue(scrollOffset);
   }
