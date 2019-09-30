@@ -514,10 +514,11 @@ public class CommandLineUtil {
   private static boolean shouldWrapWithQuotes(@NotNull CharSequence argument) {
     for (int i = 0; i < argument.length(); i++) {
       char c = argument.charAt(i);
-      if (Character.isAlphabetic(c) || Character.isDigit(c) || SHELL_WHITELIST_CHARACTERS.indexOf(c) >= 0) {
-        continue;
+      if (!Character.isAlphabetic(c) &&
+          !Character.isDigit(c) &&
+          !contains(SHELL_WHITELIST_CHARACTERS, 0, SHELL_WHITELIST_CHARACTERS.length(), c)) {
+        return true;
       }
-      return true;
     }
     return false;
   }
