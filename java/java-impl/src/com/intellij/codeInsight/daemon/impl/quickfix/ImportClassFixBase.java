@@ -294,7 +294,8 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
 
   @Override
   public boolean fixSilently(@NotNull Editor editor) {
-    return doFix(editor, false, false) == Result.CLASS_AUTO_IMPORTED;
+    return mayAutoImportNow(editor, myElement.getContainingFile()) &&
+           doFix(editor, false, false) == Result.CLASS_AUTO_IMPORTED;
   }
 
   @NotNull
@@ -330,15 +331,9 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
 
     boolean canImportHere = true;
 
-    boolean isInModelessContext =  Registry.is("ide.perProjectModality") ?
-                                  !LaterInvocator.isInModalContextForProject(editor.getProject()) :
-                                  !LaterInvocator.isInModalContext();
-
     if (classes.length == 1 &&
         (canImportHere = canImportHere(allowCaretNearRef, editor, psiFile, classes[0].getName())) &&
-        isAddUnambiguousImportsOnTheFlyEnabled(psiFile) &&
-        (ApplicationManager.getApplication().isUnitTestMode() || DaemonListeners.canChangeFileSilently(psiFile)) &&
-        isInModelessContext &&
+        mayAutoImportNow(editor, psiFile) &&
         !autoImportWillInsertUnexpectedCharacters(classes[0])
       ) {
       CommandProcessor.getInstance().runUndoTransparentAction(() -> action.execute());
@@ -354,6 +349,18 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
       return Result.POPUP_SHOWN;
     }
     return Result.POPUP_NOT_SHOWN;
+  }
+
+  private static boolean mayAutoImportNow(@NotNull Editor editor, @NotNull PsiFile psiFile) {
+    return isAddUnambiguousImportsOnTheFlyEnabled(psiFile) &&
+           (ApplicationManager.getApplication().isUnitTestMode() || DaemonListeners.canChangeFileSilently(psiFile)) &&
+           isInModelessContext(editor);
+  }
+
+  private static boolean isInModelessContext(@NotNull Editor editor) {
+    return Registry.is("ide.perProjectModality") ?
+           !LaterInvocator.isInModalContextForProject(editor.getProject()) :
+           !LaterInvocator.isInModalContext();
   }
 
   public static boolean isAddUnambiguousImportsOnTheFlyEnabled(@NotNull PsiFile psiFile) {
