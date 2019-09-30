@@ -43,7 +43,7 @@ private val LOG: Logger = logger(::LOG)
 open class UpdateIdeFromSourcesAction
  @JvmOverloads constructor(private val forceShowSettings: Boolean = false)
   : AnAction(if (forceShowSettings) "Update IDE from Sources Settings..." else "Update IDE from Sources...",
-             "Builds an installation of IntelliJ IDEA from the currently opened sources replace the current installation by its.", null) {
+             "Builds an installation of IntelliJ IDEA from the currently opened sources and replace the current installation by it.", null) {
 
 
   override fun actionPerformed(e: AnActionEvent) {
@@ -218,11 +218,35 @@ open class UpdateIdeFromSourcesAction
 
   private fun generateUpdateCommand(deployDir: String, workIdeHome: String): Array<String> {
     if (SystemInfo.isWindows) {
-      val command = arrayOf(
-        "RMDIR /Q /S \"${File(workIdeHome).absolutePath}\"",
-        "XCOPY \"${File(deployDir).absolutePath}\" \"${File(workIdeHome).absolutePath}\\\" /Q /E /Y"
-      )
-      return arrayOf("cmd", "/C", command.joinToString(" && "))
+      val restartLogFile = File(PathManager.getLogPath(), "update-from-sources.log")
+      val updateScript = FileUtil.createTempFile("update", ".cmd", false)
+      val workHomePath = File(workIdeHome).absolutePath
+      /* deletion of the IDE files may fail to delete some executable files because they are still used by the IDE process,
+         so the script wait for some time and try to delete again;
+         'ping' command is used instead of 'timeout' because the latter doesn't work from batch files;
+         removal of the script file is performed in separate process to avoid errors while executing the script */
+      FileUtil.writeToFile(updateScript, """
+        @echo off
+        SET count=30
+        SET time_to_wait=500
+        :DELETE_DIR
+        RMDIR /Q /S "$workHomePath"
+        IF EXIST "$workHomePath" (
+          IF %count% GEQ 0 (
+            ECHO "$workHomePath" still exists, wait %time_to_wait%ms and try delete again
+            PING 127.0.0.1 -n 2 -w %time_to_wait% >NUL
+            SET /A count=%count%-1
+            SET /A time_to_wait=%time_to_wait%+1000
+            ECHO %count% attempts remain
+            GOTO DELETE_DIR
+          ) 
+        )
+        
+        XCOPY "${File(deployDir).absolutePath}" "$workHomePath"\ /Q /E /Y
+        START /b "" cmd /c DEL /Q /F "${updateScript.absolutePath}" & EXIT /b
+      """.trimIndent())
+      // 'Runner' class specified as a parameter which is actually not used by the script; this is needed to use a copy of restarter (see com.intellij.util.Restarter.runRestarter)
+      return arrayOf("cmd", "/c", updateScript.absolutePath, "com.intellij.updater.Runner", ">${restartLogFile.absolutePath}", "2>&1")
     }
     val command = arrayOf(
       "rm -rf \"$workIdeHome\"/*",
