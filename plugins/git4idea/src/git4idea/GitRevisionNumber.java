@@ -19,9 +19,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Date;
 import java.util.StringTokenizer;
 
-/**
- * Git revision number
- */
 public class GitRevisionNumber implements ShortVcsRevisionNumber {
   /**
    * the hash from 40 zeros representing not yet created commit
@@ -34,17 +31,12 @@ public class GitRevisionNumber implements ShortVcsRevisionNumber {
    * the revision number (40 character hashcode, tag, or reference). In some cases incomplete hashcode could be used.
    */
   @NotNull private final String myRevisionHash;
-  /**
-   * the date when revision created
-   */
   @NotNull private final Date myTimestamp;
 
   private static final Logger LOG = Logger.getInstance(GitRevisionNumber.class);
 
   /**
    * A constructor from version. The current date is used.
-   *
-   * @param version the version number.
    */
   public GitRevisionNumber(@NonNls @NotNull String version) {
     // TODO review usages
@@ -52,12 +44,6 @@ public class GitRevisionNumber implements ShortVcsRevisionNumber {
     myTimestamp = new Date();
   }
 
-  /**
-   * A constructor from version and time
-   *
-   * @param version   the version number
-   * @param timeStamp the time when the version has been created
-   */
   public GitRevisionNumber(@NotNull String version, @NotNull Date timeStamp) {
     myTimestamp = timeStamp;
     myRevisionHash = version;
@@ -74,44 +60,32 @@ public class GitRevisionNumber implements ShortVcsRevisionNumber {
     return asString().substring(0, 7);
   }
 
-  /**
-   * @return revision time
-   */
   @NotNull
   public Date getTimestamp() {
     return myTimestamp;
   }
 
-  /**
-   * @return revision number
-   */
   @NotNull
   public String getRev() {
     return myRevisionHash;
   }
 
-  /**
-   * @return the short revision number. The revision number likely unambiguously identify local revision, however in rare cases there could be conflicts.
-   */
   @NotNull
   public String getShortRev() {
     return DvcsUtil.getShortHash(myRevisionHash);
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Override
   public int compareTo(VcsRevisionNumber crev) {
     if (this == crev) return 0;
 
     if (crev instanceof GitRevisionNumber) {
       GitRevisionNumber other = (GitRevisionNumber)crev;
-      if ((other.myRevisionHash != null) && myRevisionHash.equals(other.myRevisionHash)) {
+      if (myRevisionHash.equals(other.myRevisionHash)) {
         return 0;
       }
 
-      if ((other.myRevisionHash.indexOf("[") > 0) && (other.myTimestamp != null)) {
+      if (other.myRevisionHash.indexOf("[") > 0) {
         return myTimestamp.compareTo(other.myTimestamp);
       }
 
@@ -171,15 +145,6 @@ public class GitRevisionNumber implements ShortVcsRevisionNumber {
     return myRevisionHash.hashCode();
   }
 
-  /**
-   * Resolve revision number for the specified revision
-   *
-   * @param project a project
-   * @param vcsRoot a vcs root
-   * @param rev     a revision expression
-   * @return a resolved revision number with correct time
-   * @throws VcsException if there is a problem with running git
-   */
   @NotNull
   public static GitRevisionNumber resolve(Project project, VirtualFile vcsRoot, @NonNls String rev) throws VcsException {
     GitLineHandler h = new GitLineHandler(project, vcsRoot, GitCommand.REV_LIST);
