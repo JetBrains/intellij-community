@@ -74,25 +74,12 @@ public class PyAddImportQuickFixTest extends PyQuickFixTestCase {
 
   // PY-21563
   public void testCombineFromImportsForReferencesInTypeComment() {
-    doMultiFileAutoImportTest("Import 'typing.Set'");
+    doMultiFileAutoImportTest("Import this name");
   }
 
   // PY-25234
   public void testBinarySkeletonStdlibModule() {
-    runWithAdditionalFileInLibDir(
-      "re.py",
-      "",
-      (__) ->
-        runWithAdditionalFileInSkeletonDir(
-          "sys.py",
-          "# encoding: utf-8\n" +
-          "# module sys\n" +
-          "# from (built-in)\n" +
-          "# by generator 1.138\n" +
-          "path = 10",
-          (___) -> doMultiFileAutoImportTest("Import 'sys'")
-        )
-    );
+    doMultiFileAutoImportTest("Import 'sys'");
   }
 
   // PY-25234
@@ -155,20 +142,12 @@ public class PyAddImportQuickFixTest extends PyQuickFixTestCase {
 
   // PY-20976
   public void testOrderingLocalBeforeStdlib() {
-    runWithAdditionalFileInLibDir(
-      "sys.py",
-      "path = 10",
-      (__) -> doTestProposedImportsOrdering("path", "pkg.path", "sys.path", "os.path")
-    );
+    doTestProposedImportsOrdering("path", "pkg.path", "sys.path", "os.path");
   }
 
   // PY-20976
   public void testOrderingUnderscoreInPath() {
-    runWithAdditionalFileInLibDir(
-      "sys.py",
-      "path = 10",
-      (__) -> doTestProposedImportsOrdering("path", "first.second.path", "sys.path", "os.path", "_private.path")
-    );
+    doTestProposedImportsOrdering("path", "first.second.path", "sys.path", "os.path", "_private.path");
   }
 
   // PY-20976

@@ -40,7 +40,10 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.RefactoringActionHandler;
-import com.intellij.testFramework.*;
+import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.TestDataPath;
+import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.*;
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
 import com.intellij.usageView.UsageInfo;
@@ -59,7 +62,6 @@ import com.jetbrains.python.formatter.PyCodeStyleSettings;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyFileImpl;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
-import com.jetbrains.python.psi.search.PySearchUtilBase;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.sdk.PythonSdkUtil;
@@ -70,7 +72,6 @@ import org.junit.Assert;
 import javax.swing.*;
 import java.io.File;
 import java.util.*;
-import java.util.function.Consumer;
 
 /**
  * @author yole
@@ -168,33 +169,6 @@ public abstract class PyTestCase extends UsefulTestCase {
   @NotNull
   protected TempDirTestFixture createTempDirFixture() {
     return new LightTempDirTestFixtureImpl(true); // "tmp://" dir by default
-  }
-
-  protected void runWithAdditionalFileInLibDir(@NotNull String relativePath,
-                                               @NotNull String text,
-                                               @NotNull Consumer<VirtualFile> consumer) {
-    final Sdk sdk = PythonSdkUtil.findPythonSdk(myFixture.getModule());
-    runWithAdditionalFileIn(relativePath, text, PySearchUtilBase.findLibDir(sdk), consumer);
-  }
-
-  protected void runWithAdditionalFileInSkeletonDir(@NotNull String relativePath,
-                                                    @NotNull String text,
-                                                    @NotNull Consumer<VirtualFile> consumer) {
-    final Sdk sdk = PythonSdkUtil.findPythonSdk(myFixture.getModule());
-    runWithAdditionalFileIn(relativePath, text, PythonSdkUtil.findSkeletonsDir(sdk), consumer);
-  }
-
-  private void runWithAdditionalFileIn(@NotNull String relativePath,
-                                       @NotNull String text,
-                                       @NotNull VirtualFile dir,
-                                       @NotNull Consumer<VirtualFile> consumer) {
-    final VirtualFile file = VfsTestUtil.createFile(dir, relativePath, text);
-    try {
-      consumer.accept(file);
-    }
-    finally {
-      VfsTestUtil.deleteFile(file);
-    }
   }
 
   protected void runWithAdditionalClassEntryInSdkRoots(@NotNull VirtualFile directory, @NotNull Runnable runnable) {
