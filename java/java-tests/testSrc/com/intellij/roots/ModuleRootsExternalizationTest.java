@@ -5,7 +5,6 @@ import com.intellij.application.options.ReplacePathToMacroMap;
 import com.intellij.configurationStore.StoreUtil;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.ExpandMacroToPathMap;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
@@ -122,7 +121,6 @@ public class ModuleRootsExternalizationTest extends JavaModuleTestCase {
       JavaModuleExternalPaths extension = model.getModuleExtension(JavaModuleExternalPaths.class);
       extension.setExternalAnnotationUrls(new String[]{annotationsUrl});
       extension.setJavadocUrls(new String[]{javadocUrl});
-      WriteAction.run(() -> extension.commit());
     });
 
     StoreUtil.saveDocumentsAndProjectSettings(myProject);
