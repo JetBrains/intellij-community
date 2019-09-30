@@ -164,7 +164,7 @@ private fun startApp(app: ApplicationImpl,
       NonUrgentExecutor.getInstance().execute {
         runActivity("mac touchbar") {
           Foundation.init()
-          TouchBarsManager.isTouchBarAvailable()
+          TouchBarsManager.initialize()
         }
       }
     }

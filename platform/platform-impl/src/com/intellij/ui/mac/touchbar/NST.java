@@ -35,7 +35,7 @@ public class NST {
   private static final String MIN_OS_VERSION = "10.12.2";
   static boolean isSupportedOS() { return SystemInfo.isMac && SystemInfo.isOsVersionAtLeast(MIN_OS_VERSION); }
 
-  static {
+  static void initialize() {
     try {
       if (!isSupportedOS()) {
         LOG.info("OS doesn't support touchbar, skip nst loading");
