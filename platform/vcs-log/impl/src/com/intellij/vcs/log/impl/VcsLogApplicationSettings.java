@@ -35,13 +35,13 @@ public class VcsLogApplicationSettings implements PersistentStateComponent<VcsLo
   @Override
   public <T> T get(@NotNull VcsLogUiProperty<T> property) {
     return property.match()
-      .when(COMPACT_REFERENCES_VIEW).then(myState.COMPACT_REFERENCES_VIEW)
-      .when(SHOW_TAG_NAMES).then(myState.SHOW_TAG_NAMES)
-      .when(LABELS_LEFT_ALIGNED).then(myState.LABELS_LEFT_ALIGNED)
-      .when(SHOW_CHANGES_FROM_PARENTS).then(myState.SHOW_CHANGES_FROM_PARENTS)
-      .when(SHOW_DIFF_PREVIEW).then(myState.SHOW_DIFF_PREVIEW)
-      .when(PREFER_COMMIT_DATE).then(myState.PREFER_COMMIT_DATE)
-      .when(COLUMN_ORDER).thenGet(() -> {
+      .ifEq(COMPACT_REFERENCES_VIEW).then(myState.COMPACT_REFERENCES_VIEW)
+      .ifEq(SHOW_TAG_NAMES).then(myState.SHOW_TAG_NAMES)
+      .ifEq(LABELS_LEFT_ALIGNED).then(myState.LABELS_LEFT_ALIGNED)
+      .ifEq(SHOW_CHANGES_FROM_PARENTS).then(myState.SHOW_CHANGES_FROM_PARENTS)
+      .ifEq(SHOW_DIFF_PREVIEW).then(myState.SHOW_DIFF_PREVIEW)
+      .ifEq(PREFER_COMMIT_DATE).then(myState.PREFER_COMMIT_DATE)
+      .ifEq(COLUMN_ORDER).thenGet(() -> {
         List<Integer> order = myState.COLUMN_ORDER;
         if (order == null || order.isEmpty()) {
           order = ContainerUtil.map(Arrays.asList(VcsLogColumn.ROOT, VcsLogColumn.COMMIT, VcsLogColumn.AUTHOR, VcsLogColumn.DATE),

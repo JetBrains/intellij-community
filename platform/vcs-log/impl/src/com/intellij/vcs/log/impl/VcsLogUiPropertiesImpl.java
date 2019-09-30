@@ -66,13 +66,13 @@ public abstract class VcsLogUiPropertiesImpl<S extends VcsLogUiPropertiesImpl.St
     }
     TextFilterSettings filterSettings = getTextFilterSettings();
     return property.match()
-      .when(CommonUiProperties.SHOW_DETAILS).then(state.SHOW_DETAILS_IN_CHANGES)
-      .when(SHOW_LONG_EDGES).then(state.LONG_EDGES_VISIBLE)
-      .when(CommonUiProperties.SHOW_ROOT_NAMES).then(state.SHOW_ROOT_NAMES)
-      .when(SHOW_ONLY_AFFECTED_CHANGES).then(state.SHOW_ONLY_AFFECTED_CHANGES)
-      .when(BEK_SORT_TYPE).thenGet(() -> PermanentGraph.SortType.values()[state.BEK_SORT_TYPE])
-      .when(TEXT_FILTER_MATCH_CASE).then(filterSettings.MATCH_CASE)
-      .when(TEXT_FILTER_REGEX).then(filterSettings.REGEX)
+      .ifEq(CommonUiProperties.SHOW_DETAILS).then(state.SHOW_DETAILS_IN_CHANGES)
+      .ifEq(SHOW_LONG_EDGES).then(state.LONG_EDGES_VISIBLE)
+      .ifEq(CommonUiProperties.SHOW_ROOT_NAMES).then(state.SHOW_ROOT_NAMES)
+      .ifEq(SHOW_ONLY_AFFECTED_CHANGES).then(state.SHOW_ONLY_AFFECTED_CHANGES)
+      .ifEq(BEK_SORT_TYPE).thenGet(() -> PermanentGraph.SortType.values()[state.BEK_SORT_TYPE])
+      .ifEq(TEXT_FILTER_MATCH_CASE).then(filterSettings.MATCH_CASE)
+      .ifEq(TEXT_FILTER_REGEX).then(filterSettings.REGEX)
       .get();
   }
 

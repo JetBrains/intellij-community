@@ -460,8 +460,8 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   @Override
   public Object getData(@NotNull @NonNls String dataId) {
     return ValueKey.match(dataId)
-      .when(PlatformDataKeys.COPY_PROVIDER).then(this)
-      .when(VcsDataKeys.VCS).thenGet(() -> {
+      .ifEq(PlatformDataKeys.COPY_PROVIDER).then(this)
+      .ifEq(VcsDataKeys.VCS).thenGet(() -> {
         int[] selectedRows = getSelectedRows();
         if (selectedRows.length == 0 || selectedRows.length > VcsLogUtil.MAX_SELECTED_COMMITS) return null;
         Set<VirtualFile> roots = ContainerUtil.map2Set(Ints.asList(selectedRows), row -> getModel().getRoot(row));
@@ -470,17 +470,17 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
         }
         return null;
       })
-      .when(VcsLogDataKeys.VCS_LOG_BRANCHES).thenGet(() -> {
+      .ifEq(VcsLogDataKeys.VCS_LOG_BRANCHES).thenGet(() -> {
         int[] selectedRows = getSelectedRows();
         if (selectedRows.length != 1) return null;
         return getModel().getBranchesAtRow(selectedRows[0]);
       })
-      .when(VcsLogDataKeys.VCS_LOG_REFS).thenGet(() -> {
+      .ifEq(VcsLogDataKeys.VCS_LOG_REFS).thenGet(() -> {
         int[] selectedRows = getSelectedRows();
         if (selectedRows.length != 1) return null;
         return getModel().getRefsAtRow(selectedRows[0]);
       })
-      .when(VcsDataKeys.PRESET_COMMIT_MESSAGE).thenGet(() -> {
+      .ifEq(VcsDataKeys.PRESET_COMMIT_MESSAGE).thenGet(() -> {
         int[] selectedRows = getSelectedRows();
         if (selectedRows.length == 0) return null;
 

@@ -45,12 +45,12 @@ public class FileHistoryUiProperties implements VcsLogUiProperties, PersistentSt
       return (T)savedWidth;
     }
     return property.match()
-      .when(SHOW_DETAILS).then(myState.SHOW_DETAILS)
-      .when(SHOW_ALL_BRANCHES).then(myState.SHOW_OTHER_BRANCHES)
-      .when(SHOW_DIFF_PREVIEW).then(myState.SHOW_DIFF_PREVIEW)
-      .when(SHOW_ROOT_NAMES).then(myState.SHOW_ROOT_NAMES)
-      .when(PREFER_COMMIT_DATE).thenGet(() -> myLogSettings.get(property))
-      .when(COLUMN_ORDER).thenGet(() -> {
+      .ifEq(SHOW_DETAILS).then(myState.SHOW_DETAILS)
+      .ifEq(SHOW_ALL_BRANCHES).then(myState.SHOW_OTHER_BRANCHES)
+      .ifEq(SHOW_DIFF_PREVIEW).then(myState.SHOW_DIFF_PREVIEW)
+      .ifEq(SHOW_ROOT_NAMES).then(myState.SHOW_ROOT_NAMES)
+      .ifEq(PREFER_COMMIT_DATE).thenGet(() -> myLogSettings.get(PREFER_COMMIT_DATE))
+      .ifEq(COLUMN_ORDER).thenGet(() -> {
         List<Integer> order = myState.COLUMN_ORDER;
         if (order == null || order.isEmpty()) {
           order = ContainerUtil.map(Arrays.asList(VcsLogColumn.ROOT, VcsLogColumn.AUTHOR, VcsLogColumn.DATE, VcsLogColumn.COMMIT),

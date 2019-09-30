@@ -7,7 +7,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.NoSuchElementException;
 import java.util.function.Supplier;
 
-final class ValueMatcherImpl<T, T1> implements ValueKey.BeforeWhen<T>, ValueKey.BeforeThen<T, T1> {
+final class ValueMatcherImpl<T, T1> implements ValueKey.BeforeIf<T>, ValueKey.BeforeThen<T, T1> {
   private enum State {
     NOT_MATCHED, IGNORING, SKIPPING, MATCHING, MATCHED, FINISHED
   }
@@ -22,7 +22,7 @@ final class ValueMatcherImpl<T, T1> implements ValueKey.BeforeWhen<T>, ValueKey.
 
   @NotNull
   @Override
-  public <TT> ValueKey.BeforeThen<T, TT> when(ValueKey<TT> key) {
+  public <TT> ValueKey.BeforeThen<T, TT> ifEq(@NotNull ValueKey<TT> key) {
     switch (myState) {
       case FINISHED:
         throw new IllegalStateException("Matching is already finished");
@@ -76,13 +76,13 @@ final class ValueMatcherImpl<T, T1> implements ValueKey.BeforeWhen<T>, ValueKey.
 
   @NotNull
   @Override
-  public ValueKey.BeforeThen<T, T1> or(ValueKey<T1> key) {
+  public ValueKey.BeforeThen<T, T1> or(@NotNull ValueKey<T1> key) {
     switch (myState) {
       case FINISHED:
         throw new IllegalStateException("Matching is already finished");
       case MATCHED:
       case NOT_MATCHED:
-        throw new IllegalStateException("'when'/'get'/'orNull' call is expected");
+        throw new IllegalStateException("'ifEq'/'get'/'orNull' call is expected");
       case SKIPPING:
       case MATCHING:
         if (key.getName().equals(myKey)) {
@@ -100,13 +100,13 @@ final class ValueMatcherImpl<T, T1> implements ValueKey.BeforeWhen<T>, ValueKey.
 
   @NotNull
   @Override
-  public ValueKey.BeforeWhen<T> then(T1 value) {
+  public ValueKey.BeforeIf<T> then(T1 value) {
     switch (myState) {
       case FINISHED:
         throw new IllegalStateException("Matching is already finished");
       case MATCHED:
       case NOT_MATCHED:
-        throw new IllegalStateException("'when'/'get'/'orNull' call is expected");
+        throw new IllegalStateException("'ifEq'/'get'/'orNull' call is expected");
       case SKIPPING:
         myState = State.MATCHED;
         break;
@@ -123,13 +123,13 @@ final class ValueMatcherImpl<T, T1> implements ValueKey.BeforeWhen<T>, ValueKey.
 
   @NotNull
   @Override
-  public ValueKey.BeforeWhen<T> thenGet(@NotNull Supplier<? extends T1> fn) {
+  public ValueKey.BeforeIf<T> thenGet(@NotNull Supplier<? extends T1> fn) {
     switch (myState) {
       case FINISHED:
         throw new IllegalStateException("Matching is already finished");
       case MATCHED:
       case NOT_MATCHED:
-        throw new IllegalStateException("'when'/'get'/'orNull' call is expected");
+        throw new IllegalStateException("'ifEq'/'get'/'orNull' call is expected");
       case SKIPPING:
         myState = State.MATCHED;
         break;
