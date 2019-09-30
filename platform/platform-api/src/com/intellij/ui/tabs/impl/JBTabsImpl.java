@@ -973,6 +973,10 @@ public class JBTabsImpl extends JComponent
     mySelectedInfo = info;
     final TabInfo newInfo = getSelectedInfo();
 
+    if (myRequestFocusOnLastFocusedComponent && newInfo != null) {
+      newInfo.setLastFocusOwner(null);
+    }
+
     TabLabel label = myInfo2Label.get(info);
     if(label != null) {
       setComponentZOrder(label, 0);
