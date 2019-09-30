@@ -9,15 +9,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Used as a plug for all SDKs which type cannot be determined (for example, plugin that registered a custom type has been deinstalled)
  * @author Eugene Zhuravlev
  */
 public class UnknownSdkType extends SdkType{
-  private static final Map<String, UnknownSdkType> ourTypeNameToInstanceMap = new HashMap<>();
+  private static final Map<String, UnknownSdkType> ourTypeNameToInstanceMap = new ConcurrentHashMap<>();
 
   /**
    * @param typeName the name of the SDK type that this SDK serves as a plug for
