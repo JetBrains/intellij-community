@@ -13,6 +13,7 @@ import java.util.Date;
 public class GithubPullRequestComment {
   private String url;
   @Mandatory private Long id;
+  @Mandatory private String nodeId;
   @Mandatory private Long pullRequestReviewId;
 
   private String diffHunk;
@@ -40,6 +41,11 @@ public class GithubPullRequestComment {
 
   public long getId() {
     return id;
+  }
+
+  @NotNull
+  public String getNodeId() {
+    return nodeId;
   }
 
   @Nullable

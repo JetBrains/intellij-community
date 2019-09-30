@@ -1,5 +1,6 @@
 fragment pullRequestReviewComment on PullRequestReviewComment {
     ...comment
+    databaseId
     url
     path
     commit {

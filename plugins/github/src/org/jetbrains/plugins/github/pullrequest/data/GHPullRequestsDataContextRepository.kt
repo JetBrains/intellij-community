@@ -19,6 +19,7 @@ import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountInformationProvider
 import org.jetbrains.plugins.github.pullrequest.data.GHPullRequestsDataContext.Companion.PULL_REQUEST_EDITED_TOPIC
 import org.jetbrains.plugins.github.pullrequest.data.GHPullRequestsDataContext.Companion.PullRequestEditedListener
+import org.jetbrains.plugins.github.pullrequest.data.service.GHPRReviewServiceImpl
 import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsMetadataServiceImpl
 import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsSecurityServiceImpl
 import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsStateServiceImpl
@@ -60,11 +61,14 @@ internal class GHPullRequestsDataContextRepository(private val project: Project)
 
     val messageBus = messageBusFactory.createMessageBus(this)
 
+    val reviewService = GHPRReviewServiceImpl(progressManager, messageBus, requestExecutor, repositoryCoordinates)
+
     val listModel = CollectionListModel<GHPullRequestShort>()
     val searchHolder = GithubPullRequestSearchQueryHolderImpl()
     val listLoader = GHPRListLoaderImpl(progressManager, requestExecutor, account.server, repoDetails.fullPath, listModel, searchHolder)
     val dataLoader = GithubPullRequestsDataLoaderImpl {
-      GithubPullRequestDataProviderImpl(project, progressManager, git, requestExecutor, gitRemoteCoordinates, repositoryCoordinates, it)
+      GithubPullRequestDataProviderImpl(project, progressManager, git, requestExecutor, gitRemoteCoordinates, repositoryCoordinates,
+                                        GHPRReviewServiceAdapter.create(reviewService, it), it)
     }
     messageBus.connect().subscribe(PULL_REQUEST_EDITED_TOPIC, object : PullRequestEditedListener {
       override fun onPullRequestEdited(number: Long) {
@@ -74,7 +78,14 @@ internal class GHPullRequestsDataContextRepository(private val project: Project)
           dataProvider?.detailsRequest?.let { listLoader.reloadData(it) }
         }
       }
+
+      override fun onPullRequestCommentsEdited(number: Long) {
+        runInEdt {
+          dataLoader.findDataProvider(number)?.reloadComments()
+        }
+      }
     })
+
     val securityService = GithubPullRequestsSecurityServiceImpl(sharedProjectSettings, accountDetails, repoDetails)
     val busyStateTracker = GithubPullRequestsBusyStateTrackerImpl()
     val metadataService = GithubPullRequestsMetadataServiceImpl(progressManager, messageBus, requestExecutor, account.server,

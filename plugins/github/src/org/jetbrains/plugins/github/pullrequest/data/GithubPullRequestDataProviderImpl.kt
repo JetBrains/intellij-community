@@ -37,6 +37,7 @@ internal class GithubPullRequestDataProviderImpl(private val project: Project,
                                                  private val requestExecutor: GithubApiRequestExecutor,
                                                  private val gitRemote: GitRemoteUrlCoordinates,
                                                  private val repository: GHRepositoryCoordinates,
+                                                 override val reviewService: GHPRReviewServiceAdapter,
                                                  override val number: Long) : GithubPullRequestDataProvider {
 
   private val requestsChangesEventDispatcher = EventDispatcher.create(GithubPullRequestDataProvider.RequestsChangedListener::class.java)

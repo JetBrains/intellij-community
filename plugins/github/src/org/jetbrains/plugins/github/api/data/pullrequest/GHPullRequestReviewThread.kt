@@ -21,4 +21,5 @@ class GHPullRequestReviewThread(id: String,
   val diffHunk = root.diffHunk
 
   val reviewId = root.reviewId
+  val firstCommentDatabaseId = root.databaseId
 }

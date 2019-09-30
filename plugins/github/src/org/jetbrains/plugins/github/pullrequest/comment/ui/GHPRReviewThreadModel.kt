@@ -10,6 +10,8 @@ interface GHPRReviewThreadModel : ListModel<GHPRReviewCommentModel> {
   val createdAt: Date
   val filePath: String
   val diffHunk: String
+  val firstCommentDatabaseId: Long
 
   fun update(thread: GHPullRequestReviewThread)
+  fun addComment(comment: GHPRReviewCommentModel)
 }

@@ -3,6 +3,7 @@ package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
+import com.intellij.openapi.project.Project
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
 import com.intellij.ui.components.panels.HorizontalBox
@@ -26,8 +27,10 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewStat
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineEvent
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineItem
 import org.jetbrains.plugins.github.pullrequest.avatars.GHAvatarIconsProvider
+import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRCommentsUIUtil
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRReviewThreadCommentsPanel
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRReviewThreadModel
+import org.jetbrains.plugins.github.pullrequest.data.GHPRReviewServiceAdapter
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import org.jetbrains.plugins.github.util.GithubUIUtil
 import java.util.*
@@ -35,7 +38,9 @@ import javax.swing.*
 import kotlin.math.ceil
 import kotlin.math.floor
 
-class GHPRTimelineItemComponentFactory(private val avatarIconsProvider: GHAvatarIconsProvider,
+class GHPRTimelineItemComponentFactory(private val project: Project,
+                                       private val reviewService: GHPRReviewServiceAdapter,
+                                       private val avatarIconsProvider: GHAvatarIconsProvider,
                                        private val reviewsThreadsProvider: GHPRReviewsThreadsProvider,
                                        private val reviewDiffComponentFactory: GHPRReviewThreadDiffComponentFactory,
                                        private val eventComponentFactory: GHPRTimelineEventComponentFactory<GHPRTimelineEvent>) {
@@ -97,6 +102,7 @@ class GHPRTimelineItemComponentFactory(private val avatarIconsProvider: GHAvatar
   private fun createReviewThread(thread: GHPRReviewThreadModel) =
     JBUI.Panels.simplePanel(GHPRReviewThreadCommentsPanel(thread, avatarIconsProvider))
       .addToTop(reviewDiffComponentFactory.createComponent(thread.filePath, thread.diffHunk))
+      .addToBottom(GHPRCommentsUIUtil.createCommentField(project, reviewService, thread, "Reply"))
       .andTransparent()
 
   private fun userAvatar(user: GHActor?): JLabel {

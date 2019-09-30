@@ -41,7 +41,8 @@ internal class GHPullRequestsDataContext(val gitRepositoryCoordinates: GitRemote
     val PULL_REQUEST_EDITED_TOPIC = Topic(PullRequestEditedListener::class.java)
 
     interface PullRequestEditedListener {
-      fun onPullRequestEdited(number: Long)
+      fun onPullRequestEdited(number: Long) {}
+      fun onPullRequestCommentsEdited(number: Long) {}
     }
   }
 }

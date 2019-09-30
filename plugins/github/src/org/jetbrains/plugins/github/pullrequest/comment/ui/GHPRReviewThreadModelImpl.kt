@@ -12,6 +12,7 @@ class GHPRReviewThreadModelImpl(thread: GHPullRequestReviewThread)
   override val createdAt = thread.createdAt
   override val filePath = thread.path
   override val diffHunk = thread.diffHunk
+  override val firstCommentDatabaseId = thread.firstCommentDatabaseId
 
   override fun update(thread: GHPullRequestReviewThread) {
     var removed = 0
@@ -37,6 +38,10 @@ class GHPRReviewThreadModelImpl(thread: GHPullRequestReviewThread)
     if (size == thread.comments.size) return
     val newComments = thread.comments.subList(size, thread.comments.size)
     add(newComments.map { GHPRReviewCommentModel.convert(it) })
+  }
+
+  override fun addComment(comment: GHPRReviewCommentModel) {
+    add(comment)
   }
 
   override fun equals(other: Any?): Boolean {

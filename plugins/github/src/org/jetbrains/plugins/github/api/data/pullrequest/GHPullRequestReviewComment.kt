@@ -9,6 +9,7 @@ import org.jetbrains.plugins.github.api.data.GHNode
 import java.util.*
 
 class GHPullRequestReviewComment(id: String,
+                                 val databaseId: Long,
                                  val url: String,
                                  author: GHActor?,
                                  bodyHTML: String,

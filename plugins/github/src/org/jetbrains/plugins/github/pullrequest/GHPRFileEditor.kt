@@ -23,6 +23,7 @@ import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.plugins.github.pullrequest.avatars.GHAvatarIconsProvider
+import org.jetbrains.plugins.github.pullrequest.data.GHPRReviewServiceAdapter
 import org.jetbrains.plugins.github.pullrequest.data.GHPRTimelineLoader
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestDataProvider
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.*
@@ -82,7 +83,8 @@ internal class GHPRFileEditor(progressManager: ProgressManager,
     val avatarIconsProvider = context.avatarIconsProviderFactory.create(GithubUIUtil.avatarSize, mainPanel)
 
     val header = GHPRHeaderPanel(detailsModel, avatarIconsProvider)
-    val timeline = GHPRTimelineComponent(timelineModel, createItemComponentFactory(timelineModel, avatarIconsProvider))
+    val timeline = GHPRTimelineComponent(timelineModel,
+                                         createItemComponentFactory(dataProvider.reviewService, timelineModel, avatarIconsProvider))
     val loadingIcon = AsyncProcessIcon("Loading").apply {
       isVisible = false
     }
@@ -134,12 +136,14 @@ internal class GHPRFileEditor(progressManager: ProgressManager,
     mainPanel.setContent(loaderPanel)
   }
 
-  private fun createItemComponentFactory(timelineModel: GHPRTimelineMergingModel, avatarIconsProvider: GHAvatarIconsProvider)
+  private fun createItemComponentFactory(reviewService: GHPRReviewServiceAdapter,
+                                         timelineModel: GHPRTimelineMergingModel,
+                                         avatarIconsProvider: GHAvatarIconsProvider)
     : GHPRTimelineItemComponentFactory {
 
     val diffFactory = GHPRReviewThreadDiffComponentFactory(fileTypeRegistry, project, editorFactory)
     val eventsFactory = GHPRTimelineEventComponentFactoryImpl(avatarIconsProvider)
-    return GHPRTimelineItemComponentFactory(avatarIconsProvider, timelineModel, diffFactory, eventsFactory)
+    return GHPRTimelineItemComponentFactory(project, reviewService, avatarIconsProvider, timelineModel, diffFactory, eventsFactory)
   }
 
   override fun getName() = file.name

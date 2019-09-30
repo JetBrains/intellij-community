@@ -22,6 +22,8 @@ interface GithubPullRequestDataProvider {
   val reviewThreadsRequest: CompletableFuture<List<GHPullRequestReviewThread>>
   val filesReviewThreadsRequest: CompletableFuture<Map<Change, List<GHPRDiffReviewThreadMapping>>>
 
+  val reviewService: GHPRReviewServiceAdapter
+
   fun addRequestsChangesListener(listener: RequestsChangedListener)
   fun addRequestsChangesListener(disposable: Disposable, listener: RequestsChangedListener)
   fun removeRequestsChangesListener(listener: RequestsChangedListener)

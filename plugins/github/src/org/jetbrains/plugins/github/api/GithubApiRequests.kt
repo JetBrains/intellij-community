@@ -404,6 +404,13 @@ object GithubApiRequests {
         @JvmStatic
         fun get(url: String) = Get.jsonPage<GithubPullRequestCommentWithHtml>(url, GithubApiContentHelper.V3_HTML_JSON_MIME_TYPE)
           .withOperationName("get comments for pull request")
+
+        @JvmStatic
+        fun createReply(repository: GHRepositoryCoordinates, pullRequest: Long, commentId: Long, body: String) =
+          Post.json<GithubPullRequestCommentWithHtml>(
+            getUrl(repository, PullRequests.urlSuffix, "/$pullRequest", "/comments/$commentId/replies"),
+            mapOf("body" to body),
+            GithubApiContentHelper.V3_HTML_JSON_MIME_TYPE).withOperationName("reply to pull request review comment")
       }
     }
   }
