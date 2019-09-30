@@ -2,11 +2,15 @@
 package com.intellij.internal.statistic.collectors.fus.fileTypes;
 
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
+import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
+import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomWhiteListRule;
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.internal.statistic.utils.StatisticsUtilKt;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.serviceContainer.BaseKeyedLazyInstance;
 import com.intellij.util.KeyedLazyInstance;
@@ -65,6 +69,28 @@ public class FileTypeUsageCounterCollector {
     @Override
     public String getKey() {
       return schema;
+    }
+  }
+
+  public static final class FileTypeSchemaValidator extends CustomWhiteListRule {
+
+    @Override
+    public boolean acceptRuleId(@Nullable String ruleId) {
+      return "file_type_schema".equals(ruleId);
+    }
+
+    @NotNull
+    @Override
+    protected ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
+      if (isThirdPartyValue(data)) return ValidationResultType.ACCEPTED;
+
+      for (FileTypeUsageSchemaDescriptorEP<FileTypeUsageSchemaDescriptor> ext : EP.getExtensionList()) {
+        if (StringUtil.equals(ext.schema, data)) {
+          return StatisticsUtilKt.getPluginType(ext.getInstance().getClass()).isSafeToReport() ?
+                 ValidationResultType.ACCEPTED : ValidationResultType.THIRD_PARTY;
+        }
+      }
+      return ValidationResultType.REJECTED;
     }
   }
 }
