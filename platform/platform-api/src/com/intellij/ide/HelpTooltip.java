@@ -33,7 +33,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.function.BooleanSupplier;
-import java.util.regex.Pattern;
 
 /**
  * Standard implementation of help context tooltip.
@@ -93,7 +92,7 @@ import java.util.regex.Pattern;
 public class HelpTooltip {
   private static final Color BACKGROUND_COLOR = JBColor.namedColor("ToolTip.background", new JBColor(0xf7f7f7, 0x474a4c));
   private static final Color FOREGROUND_COLOR = JBColor.namedColor("ToolTip.foreground", new JBColor(0x1a1a1a, 0xbfbfbf));
-  private static final Color SHORTCUT_COLOR = JBColor.namedColor("ToolTip.shortcutForeground", new JBColor(0x787878, 0x878787));
+  private static final Color SHORTCUT_COLOR = JBColor.namedColor("ToolTip.shortcutForeground", new JBColor(0x787878, 0x999999));
   private static final Color INFO_COLOR = JBColor.namedColor("ToolTip.infoForeground", UIUtil.getContextHelpForeground());
   private static final Color BORDER_COLOR = JBColor.namedColor("ToolTip.borderColor", new JBColor(0xadadad, 0x636569));
 
@@ -106,14 +105,12 @@ public class HelpTooltip {
   private static final JBValue CURSOR_OFFSET = new JBValue.UIInteger("HelpTooltip.mouseCursorOffset", 20);
 
   private static final String PARAGRAPH_SPLITTER = "<p/?>";
-  private static final Pattern HTML_TAG = Pattern.compile("<b>|<br>");
-
   private static final String TOOLTIP_PROPERTY = "JComponent.helpTooltip";
 
   private String title;
   private String shortcut;
   private String description;
-  private LinkLabel link;
+  private LinkLabel<?> link;
   private boolean neverHide;
   private Alignment alignment = Alignment.CURSOR;
 
@@ -353,10 +350,6 @@ public class HelpTooltip {
 
     return tipPanel;
   }
-
-  //private static boolean hasHTMLTags(@Nullable String string) {
-  //  return StringUtil.isNotEmpty(string) && HTML_TAG.matcher(string).find();
-  //}
 
   private void installMouseListeners(@NotNull JComponent owner) {
     owner.addMouseListener(myMouseListener);
