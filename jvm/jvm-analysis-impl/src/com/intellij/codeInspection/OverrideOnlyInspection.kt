@@ -6,10 +6,15 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightMessageUtil
 import com.intellij.codeInspection.apiUsage.ApiUsageProcessor
 import com.intellij.codeInspection.apiUsage.ApiUsageUastVisitor
 import com.intellij.openapi.roots.ProjectFileIndex
-import com.intellij.psi.*
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiModifierListOwner
+import com.intellij.psi.util.ClassUtil
 import com.intellij.psi.util.PsiUtilCore
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
 
 /**
  * UAST-based inspection checking that no API method, which is marked with [ApiStatus.OverrideOnly] annotation,
@@ -21,8 +26,12 @@ class OverrideOnlyInspection : LocalInspectionTool() {
     val ANNOTATION_NAME = ApiStatus.OverrideOnly::class.java.canonicalName!!
   }
 
-  override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
-    ApiUsageUastVisitor.createPsiElementVisitor(OverrideOnlyProcessor(holder))
+  override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
+    if (ClassUtil.findPsiClass(holder.file.manager, ANNOTATION_NAME) != null) {
+      ApiUsageUastVisitor.createPsiElementVisitor(OverrideOnlyProcessor(holder))
+    } else {
+      PsiElementVisitor.EMPTY_VISITOR
+    }
 
   private class OverrideOnlyProcessor(private val problemsHolder: ProblemsHolder) : ApiUsageProcessor {
 
