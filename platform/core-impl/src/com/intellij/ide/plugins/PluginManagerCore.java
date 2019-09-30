@@ -630,8 +630,9 @@ public class PluginManagerCore {
       List<PluginId> list = it.backtrace().skip(1).toList();
       int idx = list.indexOf(id);
       if (idx == -1) continue;
-      cycles.add(list);
-      ignored.addAll(list);
+      List<PluginId> cycle = list.subList(0, idx + 1);
+      cycles.add(cycle);
+      ignored.addAll(cycle);
     }
     if (cycles.isEmpty()) return;
     for (PluginId id : JBIterable.from(cycles).flatMap(o -> o)) {
