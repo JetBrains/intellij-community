@@ -31,7 +31,7 @@ class ChangesViewContentManager : ChangesViewContentI, Disposable {
     }
 
     for (content in addedContents) {
-      addIntoCorrectPlace(content)
+      addIntoCorrectPlace(manager, content)
     }
     addedContents.clear()
 
@@ -48,11 +48,12 @@ class ChangesViewContentManager : ChangesViewContentI, Disposable {
   }
 
   override fun addContent(content: Content) {
+    val contentManager = contentManager
     if (contentManager == null) {
       addedContents.add(content)
     }
     else {
-      addIntoCorrectPlace(content)
+      addIntoCorrectPlace(contentManager, content)
     }
   }
 
@@ -72,8 +73,8 @@ class ChangesViewContentManager : ChangesViewContentI, Disposable {
   }
 
   override fun setSelectedContent(content: Content, requestFocus: Boolean) {
-    if (contentManager == null) return
-    contentManager!!.setSelectedContent(content, requestFocus)
+    val contentManager = contentManager ?: return
+    contentManager.setSelectedContent(content, requestFocus)
   }
 
   fun adviseSelectionChanged(listener: ContentManagerListener) {
@@ -84,14 +85,12 @@ class ChangesViewContentManager : ChangesViewContentI, Disposable {
   }
 
   override fun <T> getActiveComponent(aClass: Class<T>): T? {
-    if (contentManager == null) return null
-    val selectedContent = contentManager!!.selectedContent ?: return null
+    val selectedContent = contentManager?.selectedContent ?: return null
     return ObjectUtils.tryCast(selectedContent.component, aClass)
   }
 
   fun isContentSelected(contentName: String): Boolean {
-    if (contentManager == null) return false
-    val selectedContent = contentManager!!.selectedContent ?: return false
+    val selectedContent = contentManager?.selectedContent ?: return false
     return Comparing.equal(contentName, selectedContent.tabName)
   }
 
@@ -100,15 +99,15 @@ class ChangesViewContentManager : ChangesViewContentI, Disposable {
   }
 
   fun selectContent(tabName: String, requestFocus: Boolean) {
-    if (contentManager == null) return
-    val toSelect = ContainerUtil.find(contentManager!!.contents) { content -> content.tabName == tabName }
+    val contentManager = contentManager ?: return
+    val toSelect = ContainerUtil.find(contentManager.contents) { content -> content.tabName == tabName }
     if (toSelect != null) {
-      contentManager!!.setSelectedContent(toSelect, requestFocus)
+      contentManager.setSelectedContent(toSelect, requestFocus)
     }
   }
 
   override fun findContents(predicate: Predicate<Content>): List<Content> {
-    val contents = if (contentManager != null) listOf(*contentManager!!.contents) else addedContents
+    val contents = contentManager?.contents?.let { listOf(*it) } ?: addedContents
     return ContainerUtil.filter(contents) { content -> predicate.test(content) }
   }
 
@@ -130,10 +129,10 @@ class ChangesViewContentManager : ChangesViewContentI, Disposable {
     LAST(null, Integer.MAX_VALUE)
   }
 
-  private fun addIntoCorrectPlace(content: Content) {
+  private fun addIntoCorrectPlace(contentManager: ContentManager, content: Content) {
     val weight = getContentWeight(content)
 
-    val contents = contentManager!!.contents
+    val contents = contentManager.contents
 
     var index = -1
     for (i in contents.indices) {
@@ -145,7 +144,7 @@ class ChangesViewContentManager : ChangesViewContentI, Disposable {
     }
 
     if (index == -1) index = contents.size
-    contentManager!!.addContent(content, index)
+    contentManager.addContent(content, index)
   }
 
   companion object {
