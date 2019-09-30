@@ -82,7 +82,7 @@ public interface RegExpTT {
     IElementType PLUS = new RegExpElementType("PLUS");
     IElementType COLON = new RegExpElementType("COLON");
 
-    /** "\\" ("b" | "B" | "A" | "z" | "Z" | "G") */
+    /** "\\" ("b" | "B" | "A" | "z" | "Z" | "G" | "K") */
     IElementType BOUNDARY = new RegExpElementType("BOUNDARY");
     /** "^" */
     IElementType CARET = new RegExpElementType("CARET");

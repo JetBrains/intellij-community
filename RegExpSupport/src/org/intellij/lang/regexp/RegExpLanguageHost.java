@@ -53,6 +53,7 @@ public interface RegExpLanguageHost {
   default boolean supportsBoundary(RegExpBoundary boundary) {
     switch (boundary.getType()) {
       case UNICODE_EXTENDED_GRAPHEME:
+      case RESET_MATCH:
         return false;
       case LINE_START:
       case LINE_END:
