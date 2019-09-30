@@ -261,8 +261,13 @@ public class DirectoryAccessChecker {
         ProcessBuilder pb = new ProcessBuilder(options.args);
         Process p = pb.start();
         boolean inTime = p.waitFor(EXEC_DELAY, TimeUnit.MILLISECONDS);
-        int exitValue = p.exitValue();
-        return (inTime && (exitValue == 0 || exitValue == 127));
+        if (inTime) {
+          int exitValue = p.exitValue();
+          return exitValue == 0 || exitValue == 127;
+        }
+        else {
+          return false;
+        }
       }
     }
 
