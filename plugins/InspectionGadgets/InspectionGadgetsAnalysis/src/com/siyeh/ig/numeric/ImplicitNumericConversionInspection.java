@@ -22,13 +22,15 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
-import com.siyeh.ig.psiutils.*;
+import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.ig.psiutils.CommentTracker;
+import com.siyeh.ig.psiutils.ExpectedTypeUtils;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -154,13 +156,14 @@ public class ImplicitNumericConversionInspection extends BaseInspection {
       final boolean cast = !promotedType.equals(lhsType);
       if (cast) {
         builder.append('(').append(lhsType.getCanonicalText()).append(")(");
-        if (!ignoreWideningConversions && (!ignoreCharConversions || !PsiType.CHAR.equals(lhsType))) {
+        if (!ignoreWideningConversions && (!ignoreCharConversions || !isCharConversion(lhsType, promotedType))) {
           builder.append("(").append(promotedType.getCanonicalText()).append(')');
         }
       }
       builder.append(lhsText);
       builder.append(sign.getText().charAt(0));
-      if (!ignoreWideningConversions && !promotedType.equals(rhsType) && (!ignoreCharConversions || !PsiType.CHAR.equals(rhsType))) {
+      if (!ignoreWideningConversions && !promotedType.equals(rhsType) &&
+          !(ignoreCharConversions && isCharConversion(rhsType, promotedType))) {
         builder.append('(').append(promotedType.getCanonicalText()).append(')');
       }
       builder.append(commentTracker.text(rhs));
@@ -243,6 +246,11 @@ public class ImplicitNumericConversionInspection extends BaseInspection {
       final PsiExpression operand = prefixExpression.getOperand();
       return operand instanceof PsiLiteralExpression;
     }
+  }
+
+  private static boolean isCharConversion(PsiType expressionType, PsiType convertedType) {
+    return PsiType.CHAR.equals(expressionType) && !PsiType.FLOAT.equals(convertedType) && !PsiType.DOUBLE.equals(convertedType) ||
+           PsiType.CHAR.equals(convertedType) && !PsiType.FLOAT.equals(expressionType) && !PsiType.DOUBLE.equals(expressionType);
   }
 
   private class ImplicitNumericConversionVisitor extends BaseInspectionVisitor {
@@ -340,9 +348,6 @@ public class ImplicitNumericConversionInspection extends BaseInspection {
       if (!ClassUtils.isPrimitiveNumericType(expressionType)) {
         return;
       }
-      if (PsiType.CHAR.equals(expressionType) && (ignoreCharConversions || isArgumentOfStringIndexOf(parent))) {
-        return;
-      }
       final PsiType expectedType = ExpectedTypeUtils.findExpectedType(expression, true);
       if (!ClassUtils.isPrimitiveNumericType(expectedType)) {
         return;
@@ -362,38 +367,12 @@ public class ImplicitNumericConversionInspection extends BaseInspection {
           return false;
         }
       }
-      if (ignoreCharConversions && (PsiType.CHAR.equals(convertedType) || PsiType.CHAR.equals(expressionType))) return false;
+      if (ignoreCharConversions && isCharConversion(expressionType, convertedType)) return false;
       registerError(expression instanceof PsiAssignmentExpression
                     ? ((PsiAssignmentExpression)expression).getLExpression()
                     : expression,
                     expression, expressionType, convertedType);
       return true;
-    }
-
-    private boolean isArgumentOfStringIndexOf(PsiElement parent) {
-      if (!(parent instanceof PsiExpressionList)) {
-        return false;
-      }
-      final PsiElement grandParent = parent.getParent();
-      if (!(grandParent instanceof PsiMethodCallExpression)) {
-        return false;
-      }
-      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)grandParent;
-      final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
-      final String methodName = methodExpression.getReferenceName();
-      if (!HardcodedMethodConstants.INDEX_OF.equals(methodName) && !HardcodedMethodConstants.LAST_INDEX_OF.equals(methodName)) {
-        return false;
-      }
-      final PsiMethod method = methodCallExpression.resolveMethod();
-      if (method == null) {
-        return false;
-      }
-      final PsiClass aClass = method.getContainingClass();
-      if (aClass == null) {
-        return false;
-      }
-      final String className = aClass.getQualifiedName();
-      return CommonClassNames.JAVA_LANG_STRING.equals(className);
     }
   }
 }

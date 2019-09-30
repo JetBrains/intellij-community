@@ -8,4 +8,9 @@ class IgnoreCharConversion {
     byte b = 1;
       a = (char) (a + (int) b);
   }
+
+  void ridiculous() {
+    char x = 2;
+    x *= 3.1;
+  }
 }

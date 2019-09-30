@@ -17,11 +17,15 @@ public class ImplicitNumericConversionFixTest extends IGQuickFixesTestCase {
   public void testParentheses() { doTest("Convert to '100L'"); }
   public void testArrayAccess() { doTest(); }
   public void testPrecedence() { doTest(); }
+  public void testCharConversion() { doTest(); }
+  public void testCharConversion2() { doTest(); }
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myFixture.enableInspections(new ImplicitNumericConversionInspection());
+    final ImplicitNumericConversionInspection inspection = new ImplicitNumericConversionInspection();
+    inspection.ignoreCharConversions = true;
+    myFixture.enableInspections(inspection);
     myDefaultHint = InspectionGadgetsBundle.message("implicit.numeric.conversion.make.explicit.quickfix");
   }
 
