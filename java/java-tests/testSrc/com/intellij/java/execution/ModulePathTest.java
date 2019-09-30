@@ -69,23 +69,26 @@ public class ModulePathTest extends BaseConfigurationTestCase {
                  " --patch-module m1=" + CompilerModuleExtension.getInstance(module).getCompilerOutputPathForTests().getPath() +
                  " --add-reads m1=ALL-UNNAMED" +
                  " --add-modules m1" +
-                 " --add-modules org.junit.platform.launcher" +
                  " -Didea.test.cyclic.buffer.size=1048576", params4Tests.getVMParametersList().getParametersString());
 
-    //junit is on the module path
+    //junit is on the class path
     PathsList classPath = params4Tests.getClassPath();
     Arrays.stream(
       OrderEnumerator.orderEntries(module).withoutModuleSourceEntries()
-        .withoutDepModules().withoutSdk()
+        .withoutDepModules()
         .recursively().exportedOnly().classes().usingCache().getRoots())
       .map(f -> JarFileSystem.getInstance().getVirtualFileForJar(f).getPath())
-      .forEach(path -> assertFalse("path " + path + " is located on the classpath: " + classPath.getPathsString(),
+      .forEach(path -> assertTrue("path " + path + " is located on the classpath: " + classPath.getPathsString(),
                                   classPath.getPathList().contains(path)));
 
     //production module output is on the module path
     PathsList modulePath = params4Tests.getModulePath();
     assertTrue("module path: " + modulePath.getPathsString(),
                modulePath.getPathList().contains(CompilerModuleExtension.getInstance(module).getCompilerOutputPath().getPath()));
+
+    //test output on the classpath
+    assertFalse("module path: " + modulePath.getPathsString(),
+               modulePath.getPathList().contains(CompilerModuleExtension.getInstance(module).getCompilerOutputPathForTests().getPath()));
   }
 
   public void testNonModularizedProject() throws Exception {

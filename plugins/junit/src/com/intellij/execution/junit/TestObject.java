@@ -214,8 +214,9 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     String preferredRunner = getRunner();
     if (JUnitStarter.JUNIT5_PARAMETER.equals(preferredRunner)) {
       final Project project = getConfiguration().getProject();
-      GlobalSearchScope globalSearchScope = getScopeForJUnit(getConfiguration().getConfigurationModule().getModule(), project);
-      appendJUnit5LauncherClasses(javaParameters, project, globalSearchScope);
+      Module module = getConfiguration().getConfigurationModule().getModule();
+      GlobalSearchScope globalSearchScope = getScopeForJUnit(module, project);
+      appendJUnit5LauncherClasses(javaParameters, project, globalSearchScope, module != null && findJavaModule(module,true) != null);
     }
   }
 
@@ -271,7 +272,10 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     return createJavaParameters();
   }
 
-  public void appendJUnit5LauncherClasses(JavaParameters javaParameters, Project project, GlobalSearchScope globalSearchScope) throws CantRunException {
+  public void appendJUnit5LauncherClasses(JavaParameters javaParameters,
+                                          Project project,
+                                          GlobalSearchScope globalSearchScope,
+                                          boolean ensureOnModulePath) throws CantRunException {
 
     JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
     PsiClass classFromCommon = DumbService.getInstance(project).computeWithAlternativeResolveEnabled(
@@ -283,7 +287,8 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
       return;
     }
 
-    boolean isModularized = JavaSdkUtil.isJdkAtLeast(javaParameters.getJdk(), JavaSdkVersion.JDK_1_9) &&
+    boolean isModularized = ensureOnModulePath &&
+                            JavaSdkUtil.isJdkAtLeast(javaParameters.getJdk(), JavaSdkVersion.JDK_1_9) &&
                             FilenameIndex.getFilesByName(project, PsiJavaModule.MODULE_INFO_FILE, globalSearchScope).length > 0 &&
                             VersionComparatorUtil.compare(launcherVersion, "1.5.0") >= 0;
 

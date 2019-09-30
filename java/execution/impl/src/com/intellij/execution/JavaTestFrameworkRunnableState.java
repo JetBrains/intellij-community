@@ -361,9 +361,13 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     configureRTClasspath(javaParameters);
   }
 
+  protected static PsiJavaModule findJavaModule(Module module, boolean inTests) {
+    return DumbService.getInstance(module.getProject())
+      .computeWithAlternativeResolveEnabled(() -> JavaModuleGraphUtil.findDescriptorByModule(module, inTests));
+  }
+
   private static void configureModulePath(JavaParameters javaParameters, @NotNull Module module) {
-    DumbService dumb = DumbService.getInstance(module.getProject());
-    PsiJavaModule testModule = dumb.computeWithAlternativeResolveEnabled(() -> JavaModuleGraphUtil.findDescriptorByModule(module, true));
+    PsiJavaModule testModule = findJavaModule(module, true);
     if (testModule != null) {
       //adding the test module explicitly as it is unreachable from `idea.rt`
       ParametersList vmParametersList = javaParameters.getVMParametersList();
@@ -376,7 +380,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
       classPath.clear();
     }
     else {
-      PsiJavaModule prodModule = dumb.computeWithAlternativeResolveEnabled(() -> JavaModuleGraphUtil.findDescriptorByModule(module, false));
+      PsiJavaModule prodModule = findJavaModule(module, false);
       if (prodModule != null) {
         splitDepsBetweenModuleAndClasspath(javaParameters, module, prodModule);
       }
