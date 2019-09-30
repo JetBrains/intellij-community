@@ -417,6 +417,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     descriptor.serviceInterface = element.getAttributeValue("serviceInterface");
     descriptor.serviceImplementation = StringUtil.nullize(element.getAttributeValue("serviceImplementation"));
     descriptor.testServiceImplementation = StringUtil.nullize(element.getAttributeValue("testServiceImplementation"));
+    descriptor.headlessImplementation = StringUtil.nullize(element.getAttributeValue("headlessImplementation"));
     descriptor.configurationSchemaKey = element.getAttributeValue("configurationSchemaKey");
 
     String preload = element.getAttributeValue("preload");

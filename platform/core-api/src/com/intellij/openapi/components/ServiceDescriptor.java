@@ -28,6 +28,9 @@ public final class ServiceDescriptor {
   public String testServiceImplementation;
 
   @Attribute
+  public String headlessImplementation;
+
+  @Attribute
   public boolean overrides;
 
   /**
@@ -53,7 +56,15 @@ public final class ServiceDescriptor {
 
   @Nullable
   public String getImplementation() {
-    return testServiceImplementation != null && ApplicationManager.getApplication().isUnitTestMode() ? testServiceImplementation : serviceImplementation;
+    if (testServiceImplementation != null && ApplicationManager.getApplication().isUnitTestMode()) {
+      return testServiceImplementation;
+    }
+    else if (headlessImplementation != null && ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      return headlessImplementation;
+    }
+    else {
+      return serviceImplementation;
+    }
   }
 
   @Override
