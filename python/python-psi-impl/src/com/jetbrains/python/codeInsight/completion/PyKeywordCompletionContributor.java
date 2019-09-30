@@ -706,7 +706,10 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
                     psiElement()
                       .inside(false, psiElement(PyAugAssignmentStatement.class), psiElement(PyTargetExpression.class))
                       .afterLeaf(psiElement().withElementType(PyTokenTypes.AUG_ASSIGN_OPERATIONS)),
-                    psiElement().inside(true, psiElement(PyParenthesizedExpression.class))).andNot(IN_STRING_LITERAL),
+                    psiElement()
+                      .inside(true, psiElement(PyParenthesizedExpression.class)))
+                      .andNot(IN_STRING_LITERAL)
+                      .andNot(IN_COMMENT),
            new PyKeywordCompletionProvider(PyNames.YIELD));
   }
 
@@ -745,9 +748,11 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
   private void addForToComprehensions() {
     extend(CompletionType.BASIC,
            psiElement()
-             .withLanguage(PythonLanguage.getInstance())
-             .inside(psiElement(PySequenceExpression.class))
-             .andNot(psiElement().afterLeaf(or(psiElement(PyTokenTypes.LBRACE), psiElement(PyTokenTypes.LBRACKET), psiElement(PyTokenTypes.LPAR)))),
+              .withLanguage(PythonLanguage.getInstance())
+              .inside(psiElement(PySequenceExpression.class))
+              .andNot(psiElement()
+              .afterLeaf(or(psiElement(PyTokenTypes.LBRACE), psiElement(PyTokenTypes.LBRACKET), psiElement(PyTokenTypes.LPAR))))
+              .andNot(IN_COMMENT),
            new PyKeywordCompletionProvider(PyNames.FOR));
   }
 
