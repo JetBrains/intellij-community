@@ -15,6 +15,7 @@ import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.ListSelection;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -95,6 +96,8 @@ public class ShelvedChangesViewManager implements Disposable {
   private final MergingUpdateQueue myUpdateQueue;
   private final List<Runnable> myPostUpdateEdtActivity = new ArrayList<>();
 
+  public static final DataKey<ChangesTree> SHELVED_CHANGES_TREE =
+    DataKey.create("ShelveChangesManager.ShelvedChangesTree");
   public static final DataKey<List<ShelvedChangeList>> SHELVED_CHANGELIST_KEY =
     DataKey.create("ShelveChangesManager.ShelvedChangeListData");
   public static final DataKey<List<ShelvedChangeList>> SHELVED_RECYCLED_CHANGELIST_KEY =
@@ -344,14 +347,17 @@ public class ShelvedChangesViewManager implements Disposable {
     @Nullable
     @Override
     public Object getData(@NotNull @NonNls String dataId) {
-      if (SHELVED_CHANGELIST_KEY.is(dataId)) {
-        return new ArrayList<>((Collection<? extends ShelvedChangeList>)getSelectedLists(l -> !l.isRecycled() && !l.isDeleted()));
+      if (SHELVED_CHANGES_TREE.is(dataId)) {
+        return this;
+      }
+      else if (SHELVED_CHANGELIST_KEY.is(dataId)) {
+        return new ArrayList<>(getSelectedLists(this, l -> !l.isRecycled() && !l.isDeleted()));
       }
       else if (SHELVED_RECYCLED_CHANGELIST_KEY.is(dataId)) {
-        return new ArrayList<>((Collection<? extends ShelvedChangeList>)getSelectedLists(l -> l.isRecycled() && !l.isDeleted()));
+        return new ArrayList<>(getSelectedLists(this, l -> l.isRecycled() && !l.isDeleted()));
       }
       else if (SHELVED_DELETED_CHANGELIST_KEY.is(dataId)) {
-        return new ArrayList<>((Collection<? extends ShelvedChangeList>)getSelectedLists(l -> l.isDeleted()));
+        return new ArrayList<>(getSelectedLists(this, l -> l.isDeleted()));
       }
       else if (SHELVED_CHANGE_KEY.is(dataId)) {
         return StreamEx.of(VcsTreeModelData.selected(this).userObjectsStream(ShelvedWrapper.class)).map(s -> s.getShelvedChange())
@@ -394,17 +400,42 @@ public class ShelvedChangesViewManager implements Disposable {
       }
       return super.getData(dataId);
     }
+  }
 
-    @NotNull
-    private Set<ShelvedChangeList> getSelectedLists(@NotNull Predicate<? super ShelvedChangeList> condition) {
-      TreePath[] selectionPaths = getSelectionPaths();
-      if (selectionPaths == null) return Collections.emptySet();
-      return StreamEx.of(selectionPaths)
-        .map(path -> TreeUtil.findObjectInPath(path, ShelvedChangeList.class))
-        .filter(Objects::nonNull)
-        .filter(condition)
-        .collect(Collectors.toSet());
+  @NotNull
+  private static Set<ShelvedChangeList> getSelectedLists(@NotNull ChangesTree tree,
+                                                         @NotNull Predicate<? super ShelvedChangeList> condition) {
+    TreePath[] selectionPaths = tree.getSelectionPaths();
+    if (selectionPaths == null) return Collections.emptySet();
+    return StreamEx.of(selectionPaths)
+      .map(path -> TreeUtil.findObjectInPath(path, ShelvedChangeList.class))
+      .filter(Objects::nonNull)
+      .filter(condition)
+      .collect(Collectors.toSet());
+  }
+
+  @NotNull
+  static ListSelection<ShelvedWrapper> getSelectedChangesOrAll(@NotNull DataContext dataContext) {
+    ChangesTree tree = dataContext.getData(SHELVED_CHANGES_TREE);
+    if (tree == null) return ListSelection.createAt(Collections.emptyList(), 0);
+
+    ListSelection<ShelvedWrapper> wrappers = ListSelection.createAt(VcsTreeModelData.selected(tree).userObjects(ShelvedWrapper.class), 0);
+
+    if (wrappers.getList().size() < 2) {
+      // return all changes for selected changelist
+      ShelvedChangeList changeList = getFirstItem(getSelectedLists(tree, it -> true));
+      if (changeList != null) {
+        ChangesBrowserNode<?> changeListNode = (ChangesBrowserNode<?>)TreeUtil.findNodeWithObject(tree.getRoot(), changeList);
+        if (changeListNode != null) {
+          List<ShelvedWrapper> allWrappers = changeListNode.getAllObjectsUnder(ShelvedWrapper.class);
+          if (allWrappers.size() > 1) {
+            ShelvedWrapper toSelect = getFirstItem(wrappers.getList());
+            return ListSelection.create(allWrappers, toSelect);
+          }
+        }
+      }
     }
+    return wrappers;
   }
 
   @NotNull
