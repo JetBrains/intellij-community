@@ -500,7 +500,7 @@ public final class StartupUtil {
     ShutDownTracker.getInstance().registerShutdownTask(() -> {
       log.info("------------------------------------------------------ IDE SHUTDOWN ------------------------------------------------------");
     });
-    if (Boolean.getBoolean("intellij.log.stdout")) {
+    if (SystemProperties.getBooleanProperty("intellij.log.stdout", false)) {
       System.setOut(new PrintStreamLogger("STDOUT"));
       System.setErr(new PrintStreamLogger("STDERR"));
     }

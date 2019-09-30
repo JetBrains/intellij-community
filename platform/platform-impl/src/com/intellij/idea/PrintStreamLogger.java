@@ -3,13 +3,12 @@ package com.intellij.idea;
 
 import com.intellij.openapi.diagnostic.Logger;
 
-import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.nio.charset.Charset;
 
-public class PrintStreamLogger extends PrintStream {
-  public PrintStreamLogger(String name) {
+class PrintStreamLogger extends PrintStream {
+  PrintStreamLogger(String name) {
     super(new OutputStreamLogger(name), true);
   }
 }
@@ -26,7 +25,7 @@ class OutputStreamLogger extends OutputStream {
   }
 
   @Override
-  public synchronized void write(int b) throws IOException {
+  public synchronized void write(int b) {
     if (b == '\r') {
       writeBuffer();
       mySlashRWritten = true;
