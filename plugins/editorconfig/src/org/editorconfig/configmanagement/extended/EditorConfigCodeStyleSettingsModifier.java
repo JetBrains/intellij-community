@@ -3,6 +3,7 @@ package org.editorconfig.configmanagement.extended;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.application.options.codeStyle.properties.AbstractCodeStylePropertyMapper;
+import com.intellij.application.options.codeStyle.properties.CodeStyleFieldAccessor;
 import com.intellij.application.options.codeStyle.properties.CodeStylePropertyAccessor;
 import com.intellij.application.options.codeStyle.properties.GeneralCodeStylePropertyMapper;
 import com.intellij.lang.Language;
@@ -164,6 +165,12 @@ public class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsM
           }
         }
         isModified |= accessor.setFromString(val);
+        if (accessor instanceof CodeStyleFieldAccessor) {
+          Object dataObject = ((CodeStyleFieldAccessor<?,?>)accessor).getDataObject();
+          if (dataObject instanceof CommonCodeStyleSettings.IndentOptions) {
+            ((CommonCodeStyleSettings.IndentOptions)dataObject).setOverrideLanguageOptions(true);
+          }
+        }
         processed.add(intellijName);
       }
     }
