@@ -38,7 +38,7 @@ public class WSLDistributionWithRoot extends WSLDistribution {
       }
       return Collections.unmodifiableMap(result);
     });
-  @Nullable private final String myWslRootInHost;
+  @Nullable protected final String myWslRootInHost;
 
   public WSLDistributionWithRoot(@NotNull WSLDistribution wslDistribution) {
     super(wslDistribution);
