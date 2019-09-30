@@ -44,6 +44,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.jar.JarFile;
 
+import static org.junit.Assert.assertArrayEquals;
+
 public class PersistentFsTest extends HeavyPlatformTestCase {
   private PersistentFS myFs;
   private LocalFileSystem myLocalFs;
@@ -75,6 +77,41 @@ public class PersistentFsTest extends HeavyPlatformTestCase {
 
     delete(vFile);
     assertNull(myFs.findFileById(id));
+  }
+
+  public void testFileContentHash() throws Exception {
+    File dir = createTempDirectory();
+    File file = new File(dir, "test.txt");
+    assertTrue(file.createNewFile());
+    FileUtil.writeToFile(file, "one");
+
+    VirtualFile vFile = myLocalFs.refreshAndFindFileByIoFile(file);
+    assertNotNull(vFile);
+
+    PersistentFSImpl fs = (PersistentFSImpl)PersistentFS.getInstance();
+
+    // content is not yet loaded
+    byte[] hash = fs.getContentHashIfStored(vFile);
+    assertNull(hash);
+
+    vFile.contentsToByteArray();
+    hash = fs.getContentHashIfStored(vFile);
+    assertNotNull(hash);
+
+    // different contents should have different hashes
+    setFileText(vFile, "two");
+    byte[] newHash = fs.getContentHashIfStored(vFile);
+    assertNotNull(newHash);
+    assertFalse(Arrays.equals(hash, newHash));
+
+    // equal contents should have the equal hashes
+    setFileText(vFile, "one");
+    assertArrayEquals(hash, fs.getContentHashIfStored(vFile));
+
+    // deleted files preserve content, and thus hash
+    delete(vFile);
+    assertNotNull(fs.contentsToByteArray(vFile));
+    assertArrayEquals(hash, fs.getContentHashIfStored(vFile));
   }
 
   public void testFindRootShouldNotBeFooledByRelativePath() throws Exception {

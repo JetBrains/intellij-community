@@ -10,6 +10,8 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.Arrays;
 
@@ -32,7 +34,9 @@ public class ContentHashesUtil {
     return DigestUtil.sha1();
   }
 
-  private static final int SIGNATURE_LENGTH = 20;
+  public static final int SIGNATURE_LENGTH = 20;
+
+  public static final Charset HASHER_CHARSET = StandardCharsets.UTF_8;
 
   public static class HashEnumerator extends PersistentBTreeEnumerator<byte[]> {
     public HashEnumerator(@NotNull File contentsHashesFile) throws IOException {

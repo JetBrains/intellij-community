@@ -615,6 +615,11 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     }
   }
 
+  @Nullable
+  public byte[] getContentHashIfStored(@NotNull VirtualFile file) {
+    return FSRecords.getContentHash(getFileId(file));
+  }
+
   // returns last recorded length or -1 if must reload from delegate
   private static long getLengthIfUpToDate(@NotNull VirtualFile file) {
     int fileId = getFileId(file);
