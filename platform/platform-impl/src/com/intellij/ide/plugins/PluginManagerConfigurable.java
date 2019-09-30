@@ -1674,14 +1674,18 @@ public class PluginManagerConfigurable
     }
 
     return () -> {
-      if (myTabHeaderComponent.getSelectionTab() != INSTALLED_TAB) {
-        myTabHeaderComponent.setSelectionWithEvents(INSTALLED_TAB);
+      boolean marketplace = option != null && option.startsWith("/tag:");
+      int tabIndex = marketplace ? MARKETPLACE_TAB : INSTALLED_TAB;
+
+      if (myTabHeaderComponent.getSelectionTab() != tabIndex) {
+        myTabHeaderComponent.setSelectionWithEvents(tabIndex);
       }
 
-      myInstalledTab.clearSearchPanel(option);
+      PluginsTab tab = marketplace ? myMarketplaceTab : myInstalledTab;
+      tab.clearSearchPanel(option);
 
       if (!StringUtil.isEmpty(option)) {
-        myInstalledTab.showSearchPanel(option);
+        tab.showSearchPanel(option);
       }
     };
   }
