@@ -62,8 +62,8 @@ import java.util.function.Predicate;
 
 public class ModuleStructureConfigurable extends BaseStructureConfigurable implements Place.Navigator {
   private static final Comparator<MyNode> NODE_COMPARATOR = (o1, o2) -> {
-    final NamedConfigurable configurable1 = o1.getConfigurable();
-    final NamedConfigurable configurable2 = o2.getConfigurable();
+    final NamedConfigurable<?> configurable1 = o1.getConfigurable();
+    final NamedConfigurable<?> configurable2 = o2.getConfigurable();
     if (configurable1.getClass() == configurable2.getClass()) {
       return StringUtil.naturalCompare(o1.getDisplayName(), o2.getDisplayName());
     }
@@ -266,10 +266,11 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
 
   @NotNull
   private static MyNode createModuleGroupNode(ModuleGroup moduleGroup) {
-    final NamedConfigurable moduleGroupConfigurable = new TextConfigurable<>(moduleGroup, moduleGroup.toString(),
-                                                                             ProjectBundle.message("module.group.banner.text", moduleGroup.toString()),
-                                                                             ProjectBundle.message("project.roots.module.groups.text"),
-                                                                             PlatformIcons.CLOSED_MODULE_GROUP_ICON);
+    final NamedConfigurable<?> moduleGroupConfigurable = new TextConfigurable<>(moduleGroup, moduleGroup.toString(),
+                                                                                ProjectBundle.message("module.group.banner.text",
+                                                                                                      moduleGroup.toString()),
+                                                                                ProjectBundle.message("project.roots.module.groups.text"),
+                                                                                PlatformIcons.CLOSED_MODULE_GROUP_ICON);
     return new ModuleGroupNodeImpl(moduleGroupConfigurable, moduleGroup);
   }
 
@@ -601,7 +602,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     return myContext;
   }
 
-  private static boolean canBeCopiedByExtension(final NamedConfigurable configurable) {
+  private static boolean canBeCopiedByExtension(final NamedConfigurable<?> configurable) {
     for (final ModuleStructureExtension extension : ModuleStructureExtension.EP_NAME.getExtensions()) {
       if (extension.canBeCopied(configurable)) {
         return true;
@@ -610,7 +611,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     return false;
   }
 
-  private void copyByExtension(final NamedConfigurable configurable) {
+  private void copyByExtension(final NamedConfigurable<?> configurable) {
     for (final ModuleStructureExtension extension : ModuleStructureExtension.EP_NAME.getExtensions()) {
       extension.copy(configurable, TREE_UPDATER);
     }
@@ -718,7 +719,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
 
     @Override
     public boolean remove(@NotNull Collection<? extends Facet> facets) {
-      for (Facet facet : facets) {
+      for (Facet<?> facet : facets) {
         List<Facet> removed = myContext.myModulesConfigurator.getFacetsConfigurator().removeFacet(facet);
         FacetStructureConfigurable.getInstance(myProject).removeFacetNodes(removed);
       }
@@ -904,7 +905,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
 
     @Override
     public void actionPerformed(@NotNull final AnActionEvent e) {
-      final NamedConfigurable namedConfigurable = getSelectedConfigurable();
+      final NamedConfigurable<?> namedConfigurable = getSelectedConfigurable();
       if (namedConfigurable instanceof ModuleConfigurable) {
         try {
           final ModuleEditor moduleEditor = ((ModuleConfigurable)namedConfigurable).getModuleEditor();
@@ -1014,7 +1015,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
         e.getPresentation().setEnabled(false);
       }
       else {
-        final NamedConfigurable selectedConfigurable = getSelectedConfigurable();
+        final NamedConfigurable<?> selectedConfigurable = getSelectedConfigurable();
         e.getPresentation().setEnabled(selectedConfigurable instanceof ModuleConfigurable || canBeCopiedByExtension(selectedConfigurable));
       }
     }
