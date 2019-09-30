@@ -80,4 +80,6 @@ class SmartTypeCompletionDfaTest extends LightFixtureCompletionTestCase {
 
   void testInstanceofedInsideAnonymous() { doTest() }
 
+  void testCastToTypeWithWildcard() { doTest() }
+
 }
