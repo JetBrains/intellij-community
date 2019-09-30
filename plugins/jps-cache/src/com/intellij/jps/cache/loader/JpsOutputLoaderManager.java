@@ -8,6 +8,10 @@ import com.intellij.jps.cache.client.JpsServerClient;
 import com.intellij.jps.cache.git.GitRepositoryUtil;
 import com.intellij.jps.cache.hashing.PersistentCachingModuleHashingService;
 import com.intellij.jps.cache.loader.JpsOutputLoader.LoaderStatus;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -23,6 +27,7 @@ import java.util.concurrent.ExecutorService;
 public class JpsOutputLoaderManager implements ProjectComponent {
   private static final Logger LOG = Logger.getInstance("com.intellij.jps.cache.loader.JpsOutputLoaderManager");
   private static final String LATEST_COMMIT_ID = "JpsOutputLoaderManager.latestCommitId";
+  private static final String GROUP_DISPLAY_ID = "Jps Cache Loader";
   private PersistentCachingModuleHashingService myModuleHashingService;
   private final ExecutorService ourThreadPool;
   private List<JpsOutputLoader> myJpsOutputLoadersLoaders;
@@ -80,7 +85,7 @@ public class JpsOutputLoaderManager implements ProjectComponent {
   private void load(Set<String> allCacheKeys) {
     String previousCommitId = PropertiesComponent.getInstance().getValue(LATEST_COMMIT_ID);
     Iterator<String> commitsIterator = GitRepositoryUtil.getCommitsIterator(myProject);
-    String commitId= "";
+    String commitId = "";
     while (commitsIterator.hasNext() && !allCacheKeys.contains(commitId)) {
       commitId = commitsIterator.next();
     }
@@ -109,7 +114,7 @@ public class JpsOutputLoaderManager implements ProjectComponent {
 
     // Computation with loaders results. If at least one of them failed rollback all job
     initialFuture.thenAccept(loaderStatus -> {
-      LOG.debug("Loaders finished with " + loaderStatus + " status");
+      LOG.debug("Loading finished with " + loaderStatus + " status");
       CompletableFuture.allOf(getLoaders(myProject).stream().map(loader -> {
         if (loaderStatus == LoaderStatus.FAILED) {
           return CompletableFuture.runAsync(() -> loader.rollback(), ourThreadPool);
@@ -119,7 +124,18 @@ public class JpsOutputLoaderManager implements ProjectComponent {
         .thenRun(() -> {
           if (loaderStatus == LoaderStatus.COMPLETE) {
             PropertiesComponent.getInstance().setValue(LATEST_COMMIT_ID, commitId);
-            LOG.debug("Loaders finished");
+            ApplicationManager.getApplication().invokeLater(() -> {
+              Notification notification = new Notification(GROUP_DISPLAY_ID, GROUP_DISPLAY_ID, "Jps cache loaded successfully for commit " + commitId,
+                                                           NotificationType.INFORMATION);
+              Notifications.Bus.notify(notification);
+            });
+            LOG.debug("Loading finished");
+          } else {
+            ApplicationManager.getApplication().invokeLater(() -> {
+              Notification notification = new Notification(GROUP_DISPLAY_ID, GROUP_DISPLAY_ID, "Couldn't load jps cache for commit " + commitId,
+                                                           NotificationType.WARNING);
+              Notifications.Bus.notify(notification);
+            });
           }
         });
     });
