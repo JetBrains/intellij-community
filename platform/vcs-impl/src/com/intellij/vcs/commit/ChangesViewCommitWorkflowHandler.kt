@@ -12,8 +12,10 @@ import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.actions.DefaultCommitExecutorAction
 import com.intellij.openapi.vcs.checkin.CheckinHandler
+import com.intellij.util.EventDispatcher
 import com.intellij.vcs.commit.AbstractCommitWorkflow.Companion.getCommitExecutors
 import gnu.trove.THashSet
+import java.util.*
 
 private fun Collection<Change>.toPartialAwareSet() = THashSet(this, ChangeListChange.HASHING_STRATEGY)
 
@@ -26,6 +28,8 @@ class ChangesViewCommitWorkflowHandler(
   override val amendCommitHandler: AmendCommitHandler = AmendCommitHandlerImpl(this)
 
   private fun getCommitState() = CommitState(getIncludedChanges(), getCommitMessage())
+
+  private val activityEventDispatcher = EventDispatcher.create(ActivityListener::class.java)
 
   private val changeListManager = ChangeListManager.getInstance(project)
   private var knownActiveChanges: Collection<Change> = emptyList()
@@ -144,8 +148,15 @@ class ChangesViewCommitWorkflowHandler(
   }
 
   val isActive: Boolean get() = ui.isActive
-  fun activate(): Boolean = ui.activate()
-  fun deactivate() = ui.deactivate()
+  fun activate(): Boolean = fireActivityStateChanged { ui.activate() }
+  fun deactivate() = fireActivityStateChanged { ui.deactivate() }
+
+  fun addActivityListener(listener: ActivityListener, parent: Disposable) = activityEventDispatcher.addListener(listener, parent)
+
+  private fun <T> fireActivityStateChanged(block: () -> T): T {
+    val oldValue = isActive
+    return block().also { if (oldValue != isActive) activityEventDispatcher.multicaster.activityStateChanged() }
+  }
 
   fun showCommitOptions(isFromToolbar: Boolean, dataContext: DataContext) =
     ui.showCommitOptions(ensureCommitOptions(), getCommitActionName(), isFromToolbar, dataContext)
@@ -181,6 +192,10 @@ class ChangesViewCommitWorkflowHandler(
   }
 
   override fun saveCommitMessage(success: Boolean) = VcsConfiguration.getInstance(project).saveCommitMessage(getCommitMessage())
+
+  interface ActivityListener : EventListener {
+    fun activityStateChanged()
+  }
 
   private inner class CommitListener : CommitResultHandler {
     override fun onSuccess(commitMessage: String) = resetState()

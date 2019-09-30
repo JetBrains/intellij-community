@@ -433,6 +433,10 @@ public class ChangesViewManager implements ChangesViewEx,
 
           myCommitPanelSplitter.setSecondComponent(myCommitPanel);
           myDiffPreviewSplitter.setAllowExcludeFromCommit(isAllowExcludeFromCommit());
+          myCommitWorkflowHandler.addActivityListener(
+            () -> myDiffPreviewSplitter.setAllowExcludeFromCommit(isAllowExcludeFromCommit()),
+            myCommitWorkflowHandler
+          );
         }
       }
       else {
@@ -450,7 +454,7 @@ public class ChangesViewManager implements ChangesViewEx,
     }
 
     public boolean isAllowExcludeFromCommit() {
-      return myCommitWorkflowHandler != null;
+      return myCommitWorkflowHandler != null && myCommitWorkflowHandler.isActive();
     }
 
     private void setDiffPreviewVisible(boolean isDiffPreviewVisible) {
