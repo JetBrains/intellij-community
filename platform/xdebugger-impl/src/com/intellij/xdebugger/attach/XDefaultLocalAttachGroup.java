@@ -24,7 +24,11 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class XDefaultLocalAttachGroup implements XAttachProcessPresentationGroup {
+/**
+ * @deprecated use {@link XAttachPresentationGroup} instead
+ */
+@Deprecated
+public class XDefaultLocalAttachGroup implements XLocalAttachGroup {
   public static final XDefaultLocalAttachGroup INSTANCE = new XDefaultLocalAttachGroup();
 
   @Override
@@ -41,18 +45,30 @@ public class XDefaultLocalAttachGroup implements XAttachProcessPresentationGroup
   @NotNull
   @Override
   public Icon getItemIcon(@NotNull Project project, @NotNull ProcessInfo info, @NotNull UserDataHolder dataHolder) {
-    return AllIcons.RunConfigurations.Application;
+    return getProcessIcon(project, info, dataHolder);
   }
 
   @NotNull
   @Override
   public String getItemDisplayText(@NotNull Project project, @NotNull ProcessInfo info, @NotNull UserDataHolder dataHolder) {
-    return info.getExecutableDisplayName();
+    return getProcessDisplayText(project, info, dataHolder);
   }
 
   @Nullable
   @Override
   public String getItemDescription(@NotNull Project project, @NotNull ProcessInfo info, @NotNull UserDataHolder dataHolder) {
     return null;
+  }
+
+  @Override
+  @NotNull
+  public Icon getProcessIcon(@NotNull Project project, @NotNull ProcessInfo info, @NotNull UserDataHolder dataHolder) {
+    return AllIcons.RunConfigurations.Application;
+  }
+
+  @Override
+  @NotNull
+  public String getProcessDisplayText(@NotNull Project project, @NotNull ProcessInfo info, @NotNull UserDataHolder dataHolder) {
+    return info.getExecutableDisplayName();
   }
 }
