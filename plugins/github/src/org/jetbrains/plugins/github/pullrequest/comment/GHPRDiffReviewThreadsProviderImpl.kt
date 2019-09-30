@@ -24,11 +24,11 @@ class GHPRDiffReviewThreadsProviderImpl(private val dataProvider: GithubPullRequ
   override fun install(viewer: DiffViewerBase, change: Change) {
     val commentsHandler = when (viewer) {
       is SimpleOnesideDiffViewer ->
-        GHPRSimpleOnesideDiffViewerReviewThreadsHandler(viewer, componentFactory)
+        GHPRSimpleOnesideDiffViewerReviewThreadsHandler(viewer, dataProvider.reviewService, componentFactory)
       is UnifiedDiffViewer ->
-        GHPRUnifiedDiffViewerReviewThreadsHandler(viewer, componentFactory)
+        GHPRUnifiedDiffViewerReviewThreadsHandler(viewer, dataProvider.reviewService, componentFactory)
       is TwosideTextDiffViewer ->
-        GHPRTwosideDiffViewerReviewThreadsHandler(viewer, componentFactory)
+        GHPRTwosideDiffViewerReviewThreadsHandler(viewer, dataProvider.reviewService, componentFactory)
       else -> return
     }
     Disposer.register(viewer, commentsHandler)

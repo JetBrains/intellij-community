@@ -7,11 +7,13 @@ import org.jetbrains.plugins.github.pullrequest.comment.ui.EditorComponentInlays
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPREditorReviewThreadComponentFactory
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPREditorReviewThreadsController
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPREditorReviewThreadsModel
+import org.jetbrains.plugins.github.pullrequest.data.GHPRReviewServiceAdapter
 import org.jetbrains.plugins.github.pullrequest.data.model.GHPRDiffReviewThreadMapping
 
-class GHPRSimpleOnesideDiffViewerReviewThreadsHandler(viewer: SimpleOnesideDiffViewer,
+class GHPRSimpleOnesideDiffViewerReviewThreadsHandler(private val viewer: SimpleOnesideDiffViewer,
+                                                      reviewService: GHPRReviewServiceAdapter,
                                                       componentFactory: GHPREditorReviewThreadComponentFactory)
-  : GHPRDiffViewerBaseReviewThreadsHandler<SimpleOnesideDiffViewer>(viewer, componentFactory) {
+  : GHPRDiffViewerBaseReviewThreadsHandler<SimpleOnesideDiffViewer>() {
 
   private val editorThreads = GHPREditorReviewThreadsModel()
 
@@ -19,7 +21,7 @@ class GHPRSimpleOnesideDiffViewerReviewThreadsHandler(viewer: SimpleOnesideDiffV
 
   init {
     val inlaysManager = EditorComponentInlaysManager(viewer.editor as EditorImpl)
-    GHPREditorReviewThreadsController(editorThreads, componentFactory, inlaysManager)
+    GHPREditorReviewThreadsController(editorThreads, reviewService, componentFactory, inlaysManager)
   }
 
   override fun updateThreads(mappings: List<GHPRDiffReviewThreadMapping>) {

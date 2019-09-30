@@ -8,11 +8,13 @@ import org.jetbrains.plugins.github.pullrequest.comment.ui.EditorComponentInlays
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPREditorReviewThreadComponentFactory
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPREditorReviewThreadsController
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPREditorReviewThreadsModel
+import org.jetbrains.plugins.github.pullrequest.data.GHPRReviewServiceAdapter
 import org.jetbrains.plugins.github.pullrequest.data.model.GHPRDiffReviewThreadMapping
 
 class GHPRTwosideDiffViewerReviewThreadsHandler(viewer: TwosideTextDiffViewer,
+                                                reviewService: GHPRReviewServiceAdapter,
                                                 componentFactory: GHPREditorReviewThreadComponentFactory)
-  : GHPRDiffViewerBaseReviewThreadsHandler<TwosideTextDiffViewer>(viewer, componentFactory) {
+  : GHPRDiffViewerBaseReviewThreadsHandler<TwosideTextDiffViewer>() {
 
   private val editorsThreads: Map<Side, GHPREditorReviewThreadsModel>
 
@@ -20,11 +22,11 @@ class GHPRTwosideDiffViewerReviewThreadsHandler(viewer: TwosideTextDiffViewer,
 
   init {
     val editorThreadsLeft = GHPREditorReviewThreadsModel()
-    GHPREditorReviewThreadsController(editorThreadsLeft, componentFactory,
+    GHPREditorReviewThreadsController(editorThreadsLeft, reviewService, componentFactory,
                                       EditorComponentInlaysManager(viewer.editor1 as EditorImpl))
 
     val editorThreadsRight = GHPREditorReviewThreadsModel()
-    GHPREditorReviewThreadsController(editorThreadsRight, componentFactory,
+    GHPREditorReviewThreadsController(editorThreadsRight, reviewService, componentFactory,
                                       EditorComponentInlaysManager(viewer.editor2 as EditorImpl))
 
     editorsThreads = mapOf(Side.LEFT to editorThreadsLeft, Side.RIGHT to editorThreadsRight)

@@ -1,13 +1,16 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.comment.ui
 
+import com.intellij.openapi.project.Project
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
+import org.jetbrains.plugins.github.pullrequest.data.GHPRReviewServiceAdapter
 import org.jetbrains.plugins.github.util.GithubUIUtil
 import java.awt.Graphics
 import java.awt.Graphics2D
@@ -16,18 +19,25 @@ import java.awt.geom.RoundRectangle2D
 import javax.swing.JComponent
 
 class GHPREditorReviewThreadComponentFactoryImpl
-internal constructor(private val avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory)
+internal constructor(private val project: Project,
+                     private val avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory,
+                     private val currentUser: GHUser)
   : GHPREditorReviewThreadComponentFactory {
 
-  override fun createComponent(thread: GHPRReviewThreadModel): JComponent {
+  override fun createComponent(reviewService: GHPRReviewServiceAdapter, thread: GHPRReviewThreadModel): JComponent {
     val wrapper = RoundedPanel().apply {
       border = IdeBorderFactory.createRoundedBorder(10, 1)
     }
     val avatarIconsProvider = avatarIconsProviderFactory.create(GithubUIUtil.avatarSize, wrapper)
 
-    val panel = GHPRReviewThreadCommentsPanel(thread, avatarIconsProvider).apply {
-      border = JBUI.Borders.empty(0, UIUtil.DEFAULT_HGAP)
+    val replyField = GHPRCommentsUIUtil.createCommentField(project, reviewService, thread, avatarIconsProvider, currentUser,
+                                                           "Reply").apply {
+      border = JBUI.Borders.emptyBottom(10)
     }
+    val panel = JBUI.Panels.simplePanel(GHPRReviewThreadCommentsPanel(thread, avatarIconsProvider))
+      .addToBottom(replyField)
+      .withBorder(JBUI.Borders.empty(0, UIUtil.DEFAULT_HGAP))
+      .andTransparent()
     wrapper.setContent(panel)
     return wrapper
   }

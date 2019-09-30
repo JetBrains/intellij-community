@@ -162,7 +162,8 @@ internal class GHPRComponentFactory(private val project: Project) {
     val changesModel = createChangesModel(projectUiSettings, changesLoadingModel, disposable)
     val changesBrowser = GHPRChangesBrowser(changesModel, project)
 
-    val diffCommentComponentFactory = GHPREditorReviewThreadComponentFactoryImpl(avatarIconsProviderFactory)
+    val diffCommentComponentFactory = GHPREditorReviewThreadComponentFactoryImpl(project, avatarIconsProviderFactory,
+                                                                                 dataContext.securityService.currentUser)
     dataProviderModel.addValueChangedListener {
       changesBrowser.diffReviewThreadsProvider = dataProviderModel.value?.let {
         GHPRDiffReviewThreadsProviderImpl(it, diffCommentComponentFactory)

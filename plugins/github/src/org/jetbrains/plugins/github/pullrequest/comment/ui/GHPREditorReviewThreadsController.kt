@@ -3,8 +3,10 @@ package org.jetbrains.plugins.github.pullrequest.comment.ui
 
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.util.Disposer
+import org.jetbrains.plugins.github.pullrequest.data.GHPRReviewServiceAdapter
 
 class GHPREditorReviewThreadsController(threadMap: GHPREditorReviewThreadsModel,
+                                        private val reviewService: GHPRReviewServiceAdapter,
                                         private val componentFactory: GHPREditorReviewThreadComponentFactory,
                                         componentInlaysManager: EditorComponentInlaysManager) {
   private val inlayByThread = mutableMapOf<GHPRReviewThreadModel, Inlay<*>>()
@@ -12,7 +14,7 @@ class GHPREditorReviewThreadsController(threadMap: GHPREditorReviewThreadsModel,
   init {
     for ((line, threads) in threadMap.threadsByLine) {
       for (thread in threads) {
-        val inlay = componentInlaysManager.insertAfter(line, componentFactory.createComponent(thread)) ?: break
+        val inlay = componentInlaysManager.insertAfter(line, componentFactory.createComponent(reviewService, thread)) ?: break
         inlayByThread[thread] = inlay
       }
     }
@@ -20,7 +22,7 @@ class GHPREditorReviewThreadsController(threadMap: GHPREditorReviewThreadsModel,
     threadMap.addChangesListener(object : GHPREditorReviewThreadsModel.ChangesListener {
       override fun threadsAdded(line: Int, threads: List<GHPRReviewThreadModel>) {
         for (thread in threads) {
-          val inlay = componentInlaysManager.insertAfter(line, componentFactory.createComponent(thread)) ?: break
+          val inlay = componentInlaysManager.insertAfter(line, componentFactory.createComponent(reviewService, thread)) ?: break
           inlayByThread[thread] = inlay
         }
       }

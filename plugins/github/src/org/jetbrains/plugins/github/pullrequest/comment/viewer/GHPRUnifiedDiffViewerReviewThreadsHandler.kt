@@ -8,11 +8,13 @@ import org.jetbrains.plugins.github.pullrequest.comment.ui.EditorComponentInlays
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPREditorReviewThreadComponentFactory
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPREditorReviewThreadsController
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPREditorReviewThreadsModel
+import org.jetbrains.plugins.github.pullrequest.data.GHPRReviewServiceAdapter
 import org.jetbrains.plugins.github.pullrequest.data.model.GHPRDiffReviewThreadMapping
 
-class GHPRUnifiedDiffViewerReviewThreadsHandler(viewer: UnifiedDiffViewer,
+class GHPRUnifiedDiffViewerReviewThreadsHandler(private val viewer: UnifiedDiffViewer,
+                                                reviewService: GHPRReviewServiceAdapter,
                                                 componentFactory: GHPREditorReviewThreadComponentFactory)
-  : GHPRDiffViewerBaseReviewThreadsHandler<UnifiedDiffViewer>(viewer, componentFactory) {
+  : GHPRDiffViewerBaseReviewThreadsHandler<UnifiedDiffViewer>() {
 
   private val editorThreads = GHPREditorReviewThreadsModel()
 
@@ -21,7 +23,7 @@ class GHPRUnifiedDiffViewerReviewThreadsHandler(viewer: UnifiedDiffViewer,
 
   init {
     val inlaysManager = EditorComponentInlaysManager(viewer.editor as EditorImpl)
-    GHPREditorReviewThreadsController(editorThreads, componentFactory, inlaysManager)
+    GHPREditorReviewThreadsController(editorThreads, reviewService, componentFactory, inlaysManager)
 
     viewer.addListener(object : DiffViewerListener() {
       override fun onAfterRediff() {

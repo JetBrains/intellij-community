@@ -3,12 +3,10 @@ package org.jetbrains.plugins.github.pullrequest.comment.viewer
 
 import com.intellij.diff.tools.util.base.DiffViewerBase
 import org.jetbrains.annotations.CalledInAwt
-import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPREditorReviewThreadComponentFactory
 import org.jetbrains.plugins.github.pullrequest.data.model.GHPRDiffReviewThreadMapping
 import kotlin.properties.Delegates.observable
 
-abstract class GHPRDiffViewerBaseReviewThreadsHandler<T : DiffViewerBase>(protected val viewer: T,
-                                                                          protected val componentFactory: GHPREditorReviewThreadComponentFactory)
+abstract class GHPRDiffViewerBaseReviewThreadsHandler<T : DiffViewerBase>
   : GHPRDiffViewerReviewThreadsHandler {
 
   protected abstract val viewerReady: Boolean
