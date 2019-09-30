@@ -25,7 +25,7 @@ import org.jetbrains.plugins.github.util.GitRemoteUrlCoordinates
 import javax.swing.JPanel
 
 @Service
-internal class GHPRToolWindowManager(private val project: Project) {
+internal class GHPRToolWindowTabsManager(private val project: Project) {
   private val changesViewContentManager = ChangesViewContentManager.getInstance(project)
 
   @CalledInAwt
