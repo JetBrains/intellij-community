@@ -153,7 +153,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
     final PsiImportList importList = file.getImportList();
     if (importList == null) return null;
     final PsiImportStatementBase[] imports = importList.getAllImportStatements();
-    if( imports.length == 0 ) return null;
+    if (imports.length == 0) return null;
 
     Set<PsiImportStatementBase> allImports = new THashSet<>(Arrays.asList(imports));
     final Collection<PsiImportStatementBase> redundant;
@@ -173,7 +173,8 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
       final List<PsiFile> roots = file.getViewProvider().getAllFiles();
       for (PsiElement root : roots) {
         root.accept(new JavaRecursiveElementWalkingVisitor() {
-          @Override public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+          @Override
+          public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
             if (!reference.isQualified()) {
               final JavaResolveResult resolveResult = reference.advancedResolve(false);
               if (!inTheSamePackage(file, resolveResult.getElement())) {
@@ -277,7 +278,10 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
     };
   }
 
-  private static void addNamesFromStatistics(@NotNull Set<? super String> names, @NotNull VariableKind variableKind, @Nullable String propertyName, @Nullable PsiType type) {
+  private static void addNamesFromStatistics(@NotNull Set<? super String> names,
+                                             @NotNull VariableKind variableKind,
+                                             @Nullable String propertyName,
+                                             @Nullable PsiType type) {
     String[] allNames = JavaStatisticsManager.getAllVariableNamesUsed(variableKind, propertyName, type);
 
     int maxFrequency = 0;
@@ -289,8 +293,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
     int frequencyLimit = Math.max(5, maxFrequency / 2);
 
     for (String name : allNames) {
-      if( names.contains( name ) )
-      {
+      if (names.contains(name)) {
         continue;
       }
       int count = JavaStatisticsManager.getVariableNameUseCount(name, variableKind, propertyName, type);
@@ -315,7 +318,10 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
   }
 
   @NotNull
-  private String[] suggestVariableNameByType(@NotNull PsiType type, @NotNull final VariableKind variableKind, final boolean correctKeywords, boolean skipIndices) {
+  private String[] suggestVariableNameByType(@NotNull PsiType type,
+                                             @NotNull final VariableKind variableKind,
+                                             final boolean correctKeywords,
+                                             boolean skipIndices) {
     Collection<String> byTypeNames = doSuggestNamesByType(type, variableKind, skipIndices);
     return ArrayUtilRt.toStringArray(getSuggestionsByNames(byTypeNames, variableKind, correctKeywords));
   }
@@ -700,7 +706,8 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
     PsiMethod method = expr.resolveMethod();
     if (method == null) return false;
 
-    return isJavaUtilMethod(method) || !MethodDeepestSuperSearcher.processDeepestSuperMethods(method, method1 -> !isJavaUtilMethod(method1));
+    return isJavaUtilMethod(method) ||
+           !MethodDeepestSuperSearcher.processDeepestSuperMethods(method, method1 -> !isJavaUtilMethod(method1));
   }
 
   private static boolean isJavaUtilMethod(@NotNull PsiMethod method) {
@@ -741,7 +748,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
     List<String> result = new ArrayList<>();
     StringBuffer currentWord = new StringBuffer();
 
-    boolean prevIsUpperCase  = false;
+    boolean prevIsUpperCase = false;
 
     for (int i = 0; i < stringValue.length(); i++) {
       final char c = stringValue.charAt(i);
@@ -751,13 +758,16 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
           currentWord = new StringBuffer();
         }
         currentWord.append(c);
-      } else if (Character.isLowerCase(c)) {
+      }
+      else if (Character.isLowerCase(c)) {
         currentWord.append(Character.toUpperCase(c));
-      } else if (Character.isJavaIdentifierPart(c) && c != '_') {
+      }
+      else if (Character.isJavaIdentifierPart(c) && c != '_') {
         if (Character.isJavaIdentifierStart(c) || currentWord.length() > 0 || !result.isEmpty()) {
           currentWord.append(c);
         }
-      } else {
+      }
+      else {
         if (currentWord.length() > 0) {
           result.add(currentWord.toString());
           currentWord = new StringBuffer();
@@ -834,7 +844,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
         }
       }
     }
-     //skip places where name for this local variable is calculated, otherwise grab the name
+    //skip places where name for this local variable is calculated, otherwise grab the name
     else if (expr.getParent() instanceof PsiLocalVariable && variableKind != VariableKind.LOCAL_VARIABLE) {
       PsiVariable variable = (PsiVariable)expr.getParent();
       String variableName = variable.getName();
@@ -855,13 +865,12 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
       for (int i = 0; i < name.length(); i++) {
         char c = name.charAt(i);
         if (c != '_') {
-          if( Character.isLowerCase( c ) )
-          {
-            return variableNameToPropertyNameInner( name, variableKind );
+          if (Character.isLowerCase(c)) {
+            return variableNameToPropertyNameInner(name, variableKind);
           }
 
           buffer.append(Character.toLowerCase(c));
-        continue;
+          continue;
         }
         //noinspection AssignmentToForLoopParameter
         i++;
@@ -975,7 +984,10 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
   @NotNull
   @Override
   public String suggestUniqueVariableName(@NotNull String baseName, PsiElement place, boolean lookForward) {
-    return suggestUniqueVariableName(baseName, place, lookForward, false, v -> place instanceof PsiParameter && !PsiTreeUtil.isAncestor(((PsiParameter)place).getDeclarationScope(), v, false));
+    return suggestUniqueVariableName(baseName, place, lookForward, false, v -> place instanceof PsiParameter &&
+                                                                               !PsiTreeUtil
+                                                                                 .isAncestor(((PsiParameter)place).getDeclarationScope(), v,
+                                                                                             false));
   }
 
   @NotNull
@@ -1060,7 +1072,8 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
           @Override
           public void visitClass(final PsiClass aClass) {}
 
-          @Override public void visitVariable(PsiVariable variable) {
+          @Override
+          public void visitVariable(PsiVariable variable) {
             if (name.equals(variable.getName()) && !canBeReused.test(variable)) {
               throw new CancelException();
             }
@@ -1083,7 +1096,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
                                                   @NotNull final VariableKind variableKind,
                                                   @Nullable final String propertyName,
                                                   @Nullable final PsiType type) {
-    if( names.length <= 1 ) {
+    if (names.length <= 1) {
       return;
     }
 
@@ -1220,13 +1233,5 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
   @NotNull
   private JavaCodeStyleSettings getJavaSettings() {
     return CodeStyle.getSettings(myProject).getCustomSettings(JavaCodeStyleSettings.class);
-  }
-
-  private static boolean isStringPsiLiteral(@NotNull PsiElement element) {
-    if (element instanceof PsiLiteralExpression) {
-      final String text = element.getText();
-      return StringUtil.isQuotedString(text);
-    }
-    return false;
   }
 }
