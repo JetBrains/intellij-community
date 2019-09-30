@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.smartPointers;
 
 import com.google.common.base.MoreObjects;
@@ -33,6 +19,8 @@ import com.intellij.util.containers.WeakInterner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
+
 /**
  * @author peter
  */
@@ -44,7 +32,7 @@ public abstract class Identikit {
   @Nullable
   public abstract PsiElement findPsiElement(@NotNull PsiFile file, int startOffset, int endOffset);
 
-  @NotNull
+  @Nullable
   public abstract Language getFileLanguage();
 
   public abstract boolean isForPsiFile();
@@ -69,25 +57,27 @@ public abstract class Identikit {
   }
 
   @NotNull
-  static ByType fromTypes(@NotNull Class elementClass, @Nullable IElementType elementType, @NotNull Language fileLanguage) {
+  static ByType fromTypes(@NotNull Class<? extends PsiElement> elementClass, @Nullable IElementType elementType, @NotNull Language fileLanguage) {
     return ourPlainInterner.intern(new ByType(elementClass, elementType, fileLanguage));
   }
 
   public static class ByType extends Identikit {
-    private final Class myElementClass;
-    private final IElementType myElementType;
-    private final Language myFileLanguage;
+    private final String myElementClassName;
+    private final short myElementTypeId;
+    private final String myFileLanguageId;
 
-    private ByType(@NotNull Class elementClass, @Nullable IElementType elementType, @NotNull Language fileLanguage) {
-      myElementClass = elementClass;
-      myElementType = elementType;
-      myFileLanguage = fileLanguage;
+    private ByType(@NotNull Class<? extends PsiElement> elementClass, @Nullable IElementType elementType, @NotNull Language fileLanguage) {
+      myElementClassName = elementClass.getName();
+      myElementTypeId = elementType != null ? elementType.getIndex() : -1;
+      myFileLanguageId = fileLanguage.getID();
     }
 
     @Nullable
     @Override
     public PsiElement findPsiElement(@NotNull PsiFile file, int startOffset, int endOffset) {
-      Language actualLanguage = myFileLanguage != Language.ANY ? myFileLanguage : file.getViewProvider().getBaseLanguage();
+      Language fileLanguage = Language.findLanguageByID(myFileLanguageId);
+      if (fileLanguage == null) return null;   // plugin has been unloaded
+      Language actualLanguage = fileLanguage != Language.ANY ? fileLanguage : file.getViewProvider().getBaseLanguage();
       PsiFile actualLanguagePsi = file.getViewProvider().getPsi(actualLanguage);
       if (actualLanguagePsi == null) {
         return null; // the file has changed its language or dialect, so we can't restore
@@ -143,41 +133,43 @@ public abstract class Identikit {
     @Override
     public boolean equals(Object o) {
       if (this == o) return true;
-      if (!(o instanceof ByType)) return false;
-
-      ByType info = (ByType)o;
-      return myElementType == info.myElementType && myElementClass == info.myElementClass && myFileLanguage == info.myFileLanguage;
+      if (o == null || getClass() != o.getClass()) return false;
+      ByType type = (ByType)o;
+      return myElementTypeId == type.myElementTypeId &&
+             Objects.equals(myElementClassName, type.myElementClassName) &&
+             Objects.equals(myFileLanguageId, type.myFileLanguageId);
     }
 
     @Override
     public int hashCode() {
-      return (myElementType == null ? 0 : myElementType.hashCode() * 31 * 31) +
-             31 * myElementClass.getName().hashCode() +
-             myFileLanguage.hashCode();
+      return Objects.hash(myElementClassName, myElementTypeId, myFileLanguageId);
     }
 
     @Override
     public String toString() {
       return MoreObjects.toStringHelper(this)
-        .add("class", myElementClass)
-        .add("elementType", myElementType)
-        .add("fileLanguage", myFileLanguage)
+        .add("class", myElementClassName)
+        .add("elementType", myElementTypeId)
+        .add("fileLanguage", myFileLanguageId)
         .toString();
     }
 
     @Override
-    @NotNull
+    @Nullable
     public Language getFileLanguage() {
-      return myFileLanguage;
+      return Language.findLanguageByID(myFileLanguageId);
     }
 
     @Override
     public boolean isForPsiFile() {
-      return myElementType instanceof IFileElementType;
+      if (myElementTypeId < 0) return false;
+      IElementType elementType = IElementType.find(myElementTypeId);
+      return elementType instanceof IFileElementType;
     }
 
     private boolean isAcceptable(@NotNull PsiElement element) {
-      return myElementClass == element.getClass() && myElementType == PsiUtilCore.getElementType(element);
+      return myElementClassName.equals(element.getClass().getName()) &&
+             myElementTypeId == PsiUtilCore.getElementType(element).getIndex();
     }
   }
 
@@ -219,7 +211,7 @@ public abstract class Identikit {
       return element != null && myElementInfo.isAcceptable(element) ? element : null;
     }
 
-    @NotNull
+    @Nullable
     @Override
     public Language getFileLanguage() {
       return myAnchorInfo.getFileLanguage();
