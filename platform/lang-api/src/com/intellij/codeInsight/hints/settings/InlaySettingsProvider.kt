@@ -6,6 +6,10 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 
 
+/**
+ * Provides settings models to fill Preferences | Editor | Inlay Hints.
+ * You don't need to use it if you are using InlayHintsProvider or InlayParameterHintsProvider
+ */
 interface InlaySettingsProvider {
   /**
    * Returns list of hint provider models to be shown in Preferences | Editor | Inlay Hints
