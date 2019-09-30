@@ -142,13 +142,13 @@ public class DirectoryAccessChecker {
    ***********************************************************************************/
   private static class NFS implements FSFilter {
     private static final String RPCINFO = "rpcinfo"; // command
-    private static final Pattern NFS_ENTRY = Pattern.compile("(.+?):(.+?) (.+?) nfs(\\d)");
+    private static final Pattern NFS_ENTRY = Pattern.compile("(.+?):(.+?) (.+?) nfs(\\d).*");
     private static final Pattern RPC_ENTRY = Pattern.compile("\\s+(\\d+)\\s+(\\d)\\s+(tcp|udp)\\s+(\\d+)\\s+nfs");
 
     @Override
     public boolean parse(@NotNull String line, @NotNull Collection<FSInfo> accumulator) {
       Matcher m = NFS_ENTRY.matcher(line);
-      return m.find() && accumulator.add(new NFSInfo(Paths.get(m.group(3)), m.group(1), Integer.parseInt(m.group(4))));
+      return m.matches() && accumulator.add(new NFSInfo(Paths.get(m.group(3)), m.group(1), Integer.parseInt(m.group(4))));
     }
 
     private static class NFSInfo extends FSInfo {
