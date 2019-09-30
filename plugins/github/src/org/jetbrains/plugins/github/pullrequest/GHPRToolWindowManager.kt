@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentFactory
@@ -21,6 +22,7 @@ import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
 import org.jetbrains.plugins.github.util.GitRemoteUrlCoordinates
+import javax.swing.JPanel
 
 @Service
 internal class GHPRToolWindowManager(private val project: Project) {
@@ -67,14 +69,21 @@ internal class GHPRToolWindowManager(private val project: Project) {
     val disposable = Disposer.newDisposable().also {
       Disposer.register(it, Disposable { updateTabNames() })
     }
-    val component = GHPRAccountsComponent(GithubAuthenticationManager.getInstance(), project, remoteUrl, disposable)
 
-    return ContentFactory.SERVICE.getInstance().createContent(component, GROUP_PREFIX, false).apply {
+    return ContentFactory.SERVICE.getInstance().createContent(JPanel(null), GROUP_PREFIX, false).apply {
       isCloseable = true
       disposer = disposable
       description = remoteUrl.url
       this.remoteUrl = remoteUrl
       putUserData(ChangesViewContentManager.ORDER_WEIGHT_KEY, ChangesViewContentManager.TabOrderWeight.LAST.weight)
+      putUserData(ChangesViewContentManager.CONTENT_PROVIDER_SUPPLIER_KEY) {
+        object : ChangesViewContentProvider {
+          override fun initContent() =
+            GHPRAccountsComponent(GithubAuthenticationManager.getInstance(), project, remoteUrl, disposable)
+
+          override fun disposeContent() = Disposer.dispose(disposable)
+        }
+      }
     }
   }
 
