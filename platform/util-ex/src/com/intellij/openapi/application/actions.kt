@@ -68,6 +68,10 @@ inline fun runInEdt(modalityState: ModalityState? = null, crossinline runnable: 
     runnable()
   }
   else {
-    app.invokeLater({ runnable() }, modalityState ?: ModalityState.defaultModalityState())
+    invokeLater(modalityState, runnable)
   }
+}
+
+inline fun invokeLater(modalityState: ModalityState? = null, crossinline runnable: () -> Unit) {
+  ApplicationManager.getApplication().invokeLater({ runnable() }, modalityState ?: ModalityState.defaultModalityState())
 }
