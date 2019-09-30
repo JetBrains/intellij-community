@@ -16,7 +16,6 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.diff.chains.DiffRequestProducer;
-import com.intellij.diff.chains.DiffRequestProducerException;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.FileContent;
 import com.intellij.diff.impl.CacheDiffRequestProcessor;
@@ -44,8 +43,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestProcessor<DiffRequestProducer>
-  implements DiffPreviewUpdateProcessor {
+public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestProcessor.Simple implements DiffPreviewUpdateProcessor {
 
   @Nullable private Wrapper myCurrentChange;
 
@@ -69,23 +67,9 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
   // Update
   //
 
-
-  @NotNull
-  @Override
-  protected String getRequestName(@NotNull DiffRequestProducer producer) {
-    return producer.getName();
-  }
-
   @Override
   protected DiffRequestProducer getCurrentRequestProvider() {
     return myCurrentChange != null ? myCurrentChange.createProducer(getProject()) : null;
-  }
-
-  @NotNull
-  @Override
-  protected DiffRequest loadRequest(@NotNull DiffRequestProducer producer, @NotNull ProgressIndicator indicator)
-    throws ProcessCanceledException, DiffRequestProducerException {
-    return producer.process(getContext(), indicator);
   }
 
   @Nullable
