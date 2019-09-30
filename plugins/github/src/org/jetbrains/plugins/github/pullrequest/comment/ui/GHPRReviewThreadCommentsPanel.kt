@@ -53,7 +53,6 @@ class GHPRReviewThreadCommentsPanel(private val commentsModel: ListModel<GHPRRev
         for (i in e.index0..e.index1) {
           add(GHPRReviewCommentComponent(avatarIconsProvider, commentsModel.getElementAt(i)), i + 1)
         }
-        updateFolding()
         validate()
         repaint()
       }
