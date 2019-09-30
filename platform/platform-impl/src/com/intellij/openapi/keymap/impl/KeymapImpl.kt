@@ -724,11 +724,12 @@ private fun notifyAboutMissingParentKeymap(childName: String, parentName: String
     @Suppress("SpellCheckingInspection")
     val nameToPluginId = mapOf(
       "Eclipse" to "com.intellij.plugins.eclipsekeymap",
-      "VSCode" to "com.intellij.plugins.vscodekeymap",
+      "NetBeans 6.5" to "com.intellij.plugins.netbeanskeymap",
+      "ReSharper" to "com.intellij.keymaps.ReSharperKeymap",
+      "Sublime Text" to "com.intellij.plugins.sublimetextkeymap",
       "Visual Studio OSX" to "com.intellij.plugins.visualstudiokeymap",
       "Visual Studio" to "com.intellij.plugins.visualstudiokeymap",
-      "Sublime Text" to "com.intellij.plugins.sublimetextkeymap",
-      "NetBeans 6.5" to "com.intellij.plugins.netbeanskeymap"
+      "VSCode" to "com.intellij.plugins.vscodekeymap"
     )
     val action: AnAction? = when (val pluginId = nameToPluginId.get(parentName)) {
       null -> {
