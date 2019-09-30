@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryPoolMXBean;
 import java.lang.management.ThreadInfo;
+import java.nio.file.Files;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
@@ -39,12 +40,15 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 public final class PerformanceWatcher implements Disposable {
   private static final Logger LOG = Logger.getInstance(PerformanceWatcher.class);
   private static final int TOLERABLE_LATENCY = 100;
   private static final String THREAD_DUMPS_PREFIX = "threadDumps-";
+  static final String DUMP_PREFIX = "threadDump-";
+  private static final String DURATION_FILE_NAME = ".duration";
   private ScheduledFuture<?> myThread;
   private volatile SamplingTask myDumpTask;
   private final File myLogDir = new File(PathManager.getLogPath());
@@ -133,6 +137,25 @@ public final class PerformanceWatcher implements Disposable {
         }
       }
     }, null, null);
+  }
+
+  public void processUnfinishedFreeze(BiConsumer<File, Integer> consumer) {
+    File[] files = myLogDir.listFiles();
+    if (files != null) {
+      Arrays.stream(files)
+        .filter(file -> file.getName().startsWith(THREAD_DUMPS_PREFIX))
+        .filter(file -> Files.exists(file.toPath().resolve(DURATION_FILE_NAME)))
+        .findFirst().ifPresent(f -> {
+        File marker = new File(f, DURATION_FILE_NAME);
+        try {
+          String s = FileUtil.loadFile(marker);
+          cleanup(f);
+          consumer.accept(f, Integer.parseInt(s));
+        }
+        catch (Exception ignored) {
+        }
+      });
+    }
   }
 
   private static void cleanOldFiles(File dir, final int level) {
@@ -264,6 +287,7 @@ public final class PerformanceWatcher implements Disposable {
       File dir = new File(myLogDir, getFreezeFolderName(myFreezeStart));
       File reportDir = null;
       if (dir.exists()) {
+        cleanup(dir);
         reportDir = new File(myLogDir, dir.getName() + getFreezePlaceSuffix() + "-" + unresponsiveDuration + "sec");
         if (!dir.renameTo(reportDir)) {
           reportDir = null;
@@ -274,6 +298,10 @@ public final class PerformanceWatcher implements Disposable {
 
       myStacktraceCommonPart = null;
     }
+  }
+
+  private static void cleanup(File dir) {
+    FileUtil.delete(new File(dir, DURATION_FILE_NAME));
   }
 
   public void edtEventStarted(long start) {
@@ -326,7 +354,7 @@ public final class PerformanceWatcher implements Disposable {
 
     long now = System.currentTimeMillis();
     String suffix = millis ? "-" + now : "";
-    File file = new File(myLogDir, pathPrefix + "threadDump-" + formatTime(now) + suffix + ".txt");
+    File file = new File(myLogDir, pathPrefix + DUMP_PREFIX + formatTime(now) + suffix + ".txt");
 
     File dir = file.getParentFile();
     if (!(dir.isDirectory() || dir.mkdirs())) {
@@ -339,6 +367,9 @@ public final class PerformanceWatcher implements Disposable {
     try {
       FileUtil.writeToFile(file, threadDump.getRawDump());
       if (notify) {
+        if (myFreezeStart != 0) {
+          FileUtil.writeToFile(new File(dir, DURATION_FILE_NAME), String.valueOf((now - myFreezeStart) / 1000));
+        }
         StackTraceElement[] edtStack = threadDump.getEDTStackTrace();
         if (edtStack != null) {
           if (myStacktraceCommonPart == null) {
