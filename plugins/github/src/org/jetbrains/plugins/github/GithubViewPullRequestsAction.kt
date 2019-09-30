@@ -14,11 +14,6 @@ class GithubViewPullRequestsAction :
   AbstractGithubUrlGroupingAction("View Pull Requests", null, AllIcons.Vcs.Vendors.Github) {
   override fun actionPerformed(e: AnActionEvent, project: Project, repository: GitRepository, remote: GitRemote, remoteUrl: String) {
     val remoteCoordinates = GitRemoteUrlCoordinates(remoteUrl, remote, repository)
-    with(project.service<GHPRToolWindowTabsManager>()) {
-      if (showPullRequestsTabIfExists(remoteCoordinates)) return
-
-      createPullRequestsTab(remoteCoordinates)
-      showPullRequestsTabIfExists(remoteCoordinates)
-    }
+    project.service<GHPRToolWindowTabsManager>().showTab(remoteCoordinates)
   }
 }

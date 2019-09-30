@@ -31,15 +31,10 @@ internal class GHPRToolWindowTabsManager(private val project: Project) {
   }
 
   @CalledInAwt
-  fun createPullRequestsTab(remoteUrl: GitRemoteUrlCoordinates) {
-    remoteUrls = remoteUrls + remoteUrl
-  }
-
-  @CalledInAwt
-  fun showPullRequestsTabIfExists(remoteUrl: GitRemoteUrlCoordinates): Boolean {
-    if (!remoteUrls.contains(remoteUrl)) return false
+  fun showTab(remoteUrl: GitRemoteUrlCoordinates) {
+    if (!remoteUrls.contains(remoteUrl))
+      remoteUrls = remoteUrls + remoteUrl
     contentManager.focusTab(remoteUrl)
-    return true
   }
 
   init {
