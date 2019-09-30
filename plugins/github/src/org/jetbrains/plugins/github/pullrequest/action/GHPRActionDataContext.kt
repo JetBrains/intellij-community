@@ -4,6 +4,7 @@ package org.jetbrains.plugins.github.pullrequest.action
 import com.intellij.openapi.Disposable
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
+import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.data.GHPullRequestsDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestDataProvider
@@ -17,6 +18,7 @@ class GHPRActionDataContext internal constructor(private val dataContext: GHPull
   val gitRepositoryCoordinates: GitRemoteUrlCoordinates = dataContext.gitRepositoryCoordinates
   val repositoryCoordinates: GHRepositoryCoordinates = dataContext.repositoryCoordinates
   val requestExecutor: GithubApiRequestExecutor = dataContext.requestExecutor
+  val currentUser: GHUser = dataContext.securityService.currentUser
 
   fun resetAllData() {
     dataContext.metadataService.resetData()

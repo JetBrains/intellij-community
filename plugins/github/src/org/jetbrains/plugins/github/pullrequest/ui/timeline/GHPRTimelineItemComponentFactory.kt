@@ -17,10 +17,7 @@ import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
 import org.intellij.lang.annotations.Language
-import org.jetbrains.plugins.github.api.data.GHActor
-import org.jetbrains.plugins.github.api.data.GHCommit
-import org.jetbrains.plugins.github.api.data.GHGitActor
-import org.jetbrains.plugins.github.api.data.GHIssueComment
+import org.jetbrains.plugins.github.api.data.*
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestCommit
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReview
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewState.*
@@ -43,7 +40,8 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
                                        private val avatarIconsProvider: GHAvatarIconsProvider,
                                        private val reviewsThreadsProvider: GHPRReviewsThreadsProvider,
                                        private val reviewDiffComponentFactory: GHPRReviewThreadDiffComponentFactory,
-                                       private val eventComponentFactory: GHPRTimelineEventComponentFactory<GHPRTimelineEvent>) {
+                                       private val eventComponentFactory: GHPRTimelineEventComponentFactory<GHPRTimelineEvent>,
+                                       private val currentUser: GHUser) {
 
   fun createComponent(item: GHPRTimelineItem): Item {
     try {
@@ -102,7 +100,9 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
   private fun createReviewThread(thread: GHPRReviewThreadModel) =
     JBUI.Panels.simplePanel(GHPRReviewThreadCommentsPanel(thread, avatarIconsProvider))
       .addToTop(reviewDiffComponentFactory.createComponent(thread.filePath, thread.diffHunk))
-      .addToBottom(GHPRCommentsUIUtil.createCommentField(project, reviewService, thread, "Reply"))
+      .addToBottom(GHPRCommentsUIUtil.createCommentField(project, reviewService, thread,
+                                                         avatarIconsProvider, currentUser,
+                                                         "Reply"))
       .andTransparent()
 
   private fun userAvatar(user: GHActor?): JLabel {

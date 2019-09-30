@@ -143,7 +143,8 @@ internal class GHPRFileEditor(progressManager: ProgressManager,
 
     val diffFactory = GHPRReviewThreadDiffComponentFactory(fileTypeRegistry, project, editorFactory)
     val eventsFactory = GHPRTimelineEventComponentFactoryImpl(avatarIconsProvider)
-    return GHPRTimelineItemComponentFactory(project, reviewService, avatarIconsProvider, timelineModel, diffFactory, eventsFactory)
+    return GHPRTimelineItemComponentFactory(project, reviewService, avatarIconsProvider, timelineModel, diffFactory, eventsFactory,
+                                            file.context.currentUser)
   }
 
   override fun getName() = file.name

@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.comment.ui
 
+import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonShortcuts
 import com.intellij.openapi.application.runWriteAction
@@ -14,11 +15,16 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.ui.EditorTextField
 import com.intellij.ui.ListFocusTraversalPolicy
+import com.intellij.ui.components.labels.LinkLabel
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UI
 import com.intellij.util.ui.UIUtil
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.annotations.Nls
+import org.jetbrains.plugins.github.api.data.GHUser
+import org.jetbrains.plugins.github.pullrequest.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.data.GHPRReviewServiceAdapter
 import org.jetbrains.plugins.github.util.handleOnEdt
 import org.jetbrains.plugins.github.util.successOnEdt
@@ -29,6 +35,7 @@ import javax.swing.JPanel
 object GHPRCommentsUIUtil {
 
   fun createCommentField(project: Project, reviewService: GHPRReviewServiceAdapter, thread: GHPRReviewThreadModel,
+                         avatarIconsProvider: GHAvatarIconsProvider, author: GHUser,
                          @Nls(capitalization = Nls.Capitalization.Title) actionName: String = "Comment"): JComponent {
 
     val submitShortcut = CommonShortcuts.CTRL_ENTER
@@ -59,6 +66,15 @@ object GHPRCommentsUIUtil {
       putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
     }
 
+    val authorLabel = LinkLabel.create("") {
+      BrowserUtil.browse(author.url)
+    }.apply {
+      icon = avatarIconsProvider.getIcon(author.avatarUrl)
+      isFocusable = true
+      border = JBUI.Borders.empty(2, 0)
+      putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
+    }
+
     return JPanel().apply {
       isFocusCycleRoot = true
       isFocusTraversalPolicyProvider = true
@@ -66,7 +82,10 @@ object GHPRCommentsUIUtil {
       isOpaque = false
       layout = MigLayout(LC().gridGap("0", "0")
                            .insets("0", "0", "0", "0")
-                           .fillX())
+                           .fillX()).apply {
+        columnConstraints = "[]${UI.scale(8)}[]${UI.scale(4)}[]"
+      }
+      add(authorLabel, CC().alignY("top"))
       add(textField, CC().growX().pushX())
       add(button, CC().alignY("bottom"))
     }

@@ -14,6 +14,7 @@ import org.jetbrains.annotations.CalledInBackground
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequests
+import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountInformationProvider
@@ -86,7 +87,9 @@ internal class GHPullRequestsDataContextRepository(private val project: Project)
       }
     })
 
-    val securityService = GithubPullRequestsSecurityServiceImpl(sharedProjectSettings, accountDetails, repoDetails)
+    val currentUser = GHUser(accountDetails.nodeId, accountDetails.login, accountDetails.htmlUrl, accountDetails.avatarUrl!!,
+                             accountDetails.name)
+    val securityService = GithubPullRequestsSecurityServiceImpl(sharedProjectSettings, currentUser, repoDetails)
     val busyStateTracker = GithubPullRequestsBusyStateTrackerImpl()
     val metadataService = GithubPullRequestsMetadataServiceImpl(progressManager, messageBus, requestExecutor, account.server,
                                                                 repoDetails.fullPath)
