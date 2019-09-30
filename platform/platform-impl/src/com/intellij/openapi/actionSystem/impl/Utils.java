@@ -81,6 +81,8 @@ public class Utils{
       .expandActionGroupWithTimeout(group, group instanceof CompactActionGroup);
   }
 
+  private static final boolean DO_FULL_EXPAND = Boolean.getBoolean("actionSystem.use.full.group.expand"); // for tests and debug
+
   static void fillMenu(@NotNull ActionGroup group,
                        JComponent component,
                        boolean enableMnemonics,
@@ -93,7 +95,9 @@ public class Utils{
     final boolean checked = group instanceof CheckedActionGroup;
 
     ActionUpdater updater = new ActionUpdater(isInModalContext, presentationFactory, context, place, true, false, false);
-    List<AnAction> list = updater.expandActionGroupFull(group, group instanceof CompactActionGroup);
+    List<AnAction> list = DO_FULL_EXPAND ?
+                          updater.expandActionGroupFull(group, group instanceof CompactActionGroup) :
+                          updater.expandActionGroupWithTimeout(group, group instanceof CompactActionGroup);
 
     final boolean fixMacScreenMenu = SystemInfo.isMacSystemMenu && isWindowMenu && Registry.is("actionSystem.mac.screenMenuNotUpdatedFix");
     final ArrayList<Component> children = new ArrayList<>();
