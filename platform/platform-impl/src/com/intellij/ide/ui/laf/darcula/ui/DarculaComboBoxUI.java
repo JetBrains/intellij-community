@@ -735,7 +735,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
         // The whole method is copied from the parent class except for the following line
         // that adjusts the minimum row height of a list cell.
         // See WideSelectionListUI.updateLayoutState
-        height += Math.max(c.getPreferredSize().height, UIManager.getInt("List.rowHeight"));
+        height += UIUtil.updateListRowHeight(c.getPreferredSize()).height;
       }
 
       if (height == 0) {
