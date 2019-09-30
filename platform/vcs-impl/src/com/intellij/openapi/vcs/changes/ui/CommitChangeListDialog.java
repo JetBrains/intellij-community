@@ -796,6 +796,12 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
       getBrowser().selectEntries(singletonList(change.getUserObject()));
     }
 
+    @Override
+    protected boolean hasSelection() {
+      CommitDialogChangesBrowser browser = getBrowser();
+      return !browser.getSelectedChanges().isEmpty() || !browser.getSelectedUnversionedFiles().isEmpty();
+    }
+
     @NotNull
     private List<Wrapper> wrap(@NotNull Collection<? extends Change> changes, @NotNull Collection<? extends VirtualFile> unversioned) {
       return concat(map(changes, ChangeWrapper::new),

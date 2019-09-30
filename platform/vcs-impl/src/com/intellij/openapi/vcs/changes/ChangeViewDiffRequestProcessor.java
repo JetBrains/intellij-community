@@ -33,6 +33,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer;
 import com.intellij.openapi.vcs.changes.actions.diff.UnversionedDiffRequestProducer;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -95,6 +96,10 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
     return isRequestValid(request) ? request : null;
   }
 
+  protected boolean hasSelection() {
+    return true;
+  }
+
   private static boolean isRequestValid(@Nullable DiffRequest request) {
     if (request instanceof ErrorDiffRequest) return false;
     if (request instanceof ContentDiffRequest) {
@@ -108,6 +113,18 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
   }
 
   public void updatePreview(boolean state, boolean fromModelRefresh) {
+    if (Registry.is("show.log.as.editor.tab") && !fromModelRefresh && hasSelection()) {
+
+      Wrapper selectedChange = ContainerUtil.getFirstItem(getSelectedChanges());
+      if (selectedChange != null) {
+        Object userObject = selectedChange.getUserObject();
+        if (userObject instanceof Change) {
+          EditorDiffsManager.getInstance(getProject()).showDiffInEditor((Change) userObject);
+        }
+      }
+      return;
+    }
+
     if (state) {
       refresh(fromModelRefresh);
     }

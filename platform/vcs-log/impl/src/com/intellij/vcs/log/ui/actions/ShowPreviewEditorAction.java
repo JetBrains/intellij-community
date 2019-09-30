@@ -52,6 +52,7 @@ public class ShowPreviewEditorAction extends DumbAwareAction {
     @NotNull private final DiffPreviewProvider myProvider;
 
     private MyDiffVirtualFile(@NotNull DiffPreviewProvider provider) {
+      super("Diff");
       myProvider = provider;
     }
 

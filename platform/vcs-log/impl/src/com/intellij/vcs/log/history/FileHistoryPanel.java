@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ValueKey;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
@@ -172,6 +173,10 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
   }
 
   void showDiffPreview(boolean state) {
+    if (Registry.is("show.log.as.editor.tab")) {
+      return;
+    }
+
     if (myDiffPreview != null) {
       myDiffPreview.updatePreview(state);
       myDiffPreviewSplitter.setSecondComponent(state ? myDiffPreview.getComponent() : null);

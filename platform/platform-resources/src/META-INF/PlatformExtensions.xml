@@ -204,6 +204,13 @@
 
     <fileEditorProvider implementation="com.intellij.diff.editor.DiffEditorProvider"/>
 
+    <fileEditorProvider implementation="com.intellij.diff.editor.GraphViewEditorProvider"/>
+
+    <fileType name="GraphView" implementationClass="com.intellij.diff.editor.GraphViewFileType" fieldName="INSTANCE" extensions="GraphView" />
+    <fileIconProvider implementation="com.intellij.diff.editor.GraphViewFileIconProvider"/>
+
+    <fileIconProvider implementation="com.intellij.diff.editor.DiffFileIconProvider"/>
+
     <applicationService serviceInterface="com.intellij.ui.SystemNotifications"
                         serviceImplementation="com.intellij.ui.SystemNotificationsImpl"/>
     <applicationService serviceInterface="com.intellij.openapi.keymap.KeymapGroupFactory"

@@ -6,6 +6,6 @@ import com.intellij.diff.impl.CacheDiffRequestChainProcessor
 import com.intellij.diff.impl.DiffRequestProcessor
 import com.intellij.openapi.project.Project
 
-class ChainDiffVirtualFile(private val chain: DiffRequestChain) : DiffVirtualFile() {
+class ChainDiffVirtualFile(private val chain: DiffRequestChain, name : String) : DiffVirtualFile(name) {
   override fun createProcessor(project: Project): DiffRequestProcessor = CacheDiffRequestChainProcessor(project, chain)
 }

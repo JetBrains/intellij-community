@@ -65,6 +65,11 @@ class VcsLogChangeProcessor extends ChangeViewDiffRequestProcessor {
     }
   }
 
+  @Override
+  protected boolean hasSelection() {
+    return myBrowser.getViewer().getSelectionModel().getSelectionCount() != 0;
+  }
+
   private void updatePreviewLater() {
     ApplicationManager.getApplication().invokeLater(() -> updatePreview(getComponent().isShowing()));
   }

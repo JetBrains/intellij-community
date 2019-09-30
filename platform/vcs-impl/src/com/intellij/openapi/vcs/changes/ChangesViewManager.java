@@ -2,6 +2,8 @@
 
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.diff.util.DiffPlaces;
+import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.TreeExpander;
@@ -34,6 +36,9 @@ import com.intellij.ui.GuiUtils;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentManagerAdapter;
+import com.intellij.ui.content.ContentManagerEvent;
+import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
@@ -370,6 +375,20 @@ public class ChangesViewManager implements ChangesViewEx,
       });
       ChangeListManager.getInstance(myProject).addChangeListListener(new MyChangeListListener(), this);
 
+      if (Registry.is("show.diff.as.editor.tab")) {
+        ChangesViewContentI changesViewContentManager = ChangesViewContentManager.getInstance(project);
+        if (changesViewContentManager instanceof ChangesViewContentManager) {
+          ((ChangesViewContentManager) changesViewContentManager).adviseSelectionChanged(new ContentManagerAdapter(){
+            @Override
+            public void selectionChanged(@NotNull ContentManagerEvent event) {
+              if (event.getContent().getDisplayName().equals("Commit") && event.getOperation() == ContentManagerEvent.ContentOperation.add) {
+                updatePreview(false);
+              }
+            }
+          });
+        }
+      }
+
       scheduleRefresh();
       updatePreview(false);
     }
@@ -562,7 +581,6 @@ public class ChangesViewManager implements ChangesViewEx,
       myDiffPreviewSplitter.updatePreview(fromModelRefresh);
     }
 
-
     public void setGrouping(@NotNull String groupingKey) {
       myView.getGroupingSupport().setGroupingKeysOrSkip(set(groupingKey));
     }
@@ -661,6 +679,8 @@ public class ChangesViewManager implements ChangesViewEx,
       @Override
       public void setSelected(@NotNull AnActionEvent e, boolean state) {
         setDiffPreviewVisible(state);
+
+        updatePreview(false);
         myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN = state;
       }
 

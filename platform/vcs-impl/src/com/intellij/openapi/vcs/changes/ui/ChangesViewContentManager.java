@@ -167,6 +167,13 @@ public class ChangesViewContentManager implements ChangesViewContentI, Disposabl
     myContentManager.setSelectedContent(content, requestFocus);
   }
 
+  public void adviseSelectionChanged(ContentManagerListener listener) {
+    if (myContentManager == null) return;
+
+    myContentManager.addContentManagerListener(listener);
+    Disposer.register(this, () -> myContentManager.removeContentManagerListener(myContentManagerListener));
+  }
+
   @Override
   @Nullable
   public <T> T getActiveComponent(final Class<T> aClass) {

@@ -19,7 +19,7 @@ import com.intellij.diff.impl.DiffRequestProcessor
 import com.intellij.openapi.project.Project
 import com.intellij.testFramework.LightVirtualFile
 
-abstract class DiffVirtualFile : LightVirtualFile("Diff", DiffFileType.INSTANCE, "") {
+abstract class DiffVirtualFile(name : String) : LightVirtualFile(name, DiffFileType.INSTANCE, "") {
   abstract fun createProcessor(project: Project): DiffRequestProcessor
 
   override fun isWritable(): Boolean = false

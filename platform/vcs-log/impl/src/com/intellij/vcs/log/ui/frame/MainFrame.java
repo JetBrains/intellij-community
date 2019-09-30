@@ -6,13 +6,18 @@ import com.intellij.diff.impl.DiffRequestProcessor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.impl.EditorWindow;
+import com.intellij.openapi.fileEditor.impl.EditorWindowHolder;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.components.panels.Wrapper;
@@ -142,7 +147,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     showDetails(myUiProperties.get(CommonUiProperties.SHOW_DETAILS));
 
     myChangesBrowserSplitter = new OnePixelSplitter(false, CHANGES_SPLITTER_PROPORTION, 0.7f);
-    myChangesBrowserSplitter.setFirstComponent(toolbarsAndTable);
+    installGraphView(toolbarsAndTable);
     myChangesBrowserSplitter.setSecondComponent(myDetailsSplitter);
 
     myPreviewDiffSplitter = new OnePixelSplitter(false, DIFF_SPLITTER_PROPORTION, 0.7f);
@@ -157,6 +162,26 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     myGraphTable.resetDefaultFocusTraversalKeys();
     setFocusCycleRoot(true);
     setFocusTraversalPolicy(new MyFocusPolicy());
+  }
+
+  private void installGraphView(JComponent toolbarsAndTable) {
+    if (Registry.is("show.log.as.editor.tab")) {
+      VirtualFile graphFile = myLogData.getOrCreateGraphViewVirtualFile(toolbarsAndTable);
+      FileEditor[] editors = FileEditorManager.getInstance(myLogData.getProject()).openFile(graphFile, true);
+      assert editors.length == 1 : "opened multiple log editors for " + graphFile;
+      FileEditor editor = editors[0];
+      final JComponent component = editor.getComponent();
+      final EditorWindowHolder holder =
+        ComponentUtil.getParentOfType((Class<? extends EditorWindowHolder>)EditorWindowHolder.class, (Component)component);
+      if (holder == null) {
+        return;
+      }
+      EditorWindow editorWindow = holder.getEditorWindow();
+      editorWindow.setFilePinned(graphFile, true);
+
+    } else {
+      myChangesBrowserSplitter.setFirstComponent(toolbarsAndTable);
+    }
   }
 
   public void setExplanationHtml(@Nullable String text) {
@@ -342,6 +367,9 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
     @Override
     protected void onSelection(@NotNull int[] selection) {
+      if (Registry.is("show.log.as.editor.tab"))
+        ChangesViewContentManager.getInstance(myLogData.getProject()).selectContent("Repository");
+
       myChangesBrowser.resetSelectedDetails();
     }
 

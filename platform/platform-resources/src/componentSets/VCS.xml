@@ -105,5 +105,8 @@
         implementationClass="com.intellij.openapi.vcs.changes.ignore.codeInspection.IgnoreFileDuplicateEntryInspection"
         key="ignore.codeInspection.duplicateEntry"
         level="WARNING"/>
+
+    <projectService serviceImplementation="com.intellij.openapi.vcs.changes.EditorDiffsManager" />
+
   </extensions>
 </idea-plugin>

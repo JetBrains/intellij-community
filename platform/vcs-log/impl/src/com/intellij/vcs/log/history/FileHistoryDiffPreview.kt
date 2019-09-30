@@ -21,7 +21,11 @@ internal class FileHistoryDiffPreview(project: Project, private val changeGetter
     Disposer.register(disposable, this)
   }
 
-  override fun getSelectedChanges(): List<Wrapper> = allChanges
+    override fun hasSelection(): Boolean {
+        return true
+    }
+
+    override fun getSelectedChanges(): List<Wrapper> = allChanges
 
   override fun getAllChanges(): List<Wrapper> {
     val change = changeGetter() ?: return emptyList()
