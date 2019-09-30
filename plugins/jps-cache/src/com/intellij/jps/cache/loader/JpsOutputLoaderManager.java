@@ -16,17 +16,13 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 
 public class JpsOutputLoaderManager implements ProjectComponent {
   private static final Logger LOG = Logger.getInstance("com.intellij.jps.cache.loader.JpsOutputLoaderManager");
   private static final String LATEST_COMMIT_ID = "JpsOutputLoaderManager.latestCommitId";
-  private static final int COMMITS_COUNT = 20;
   private PersistentCachingModuleHashingService myModuleHashingService;
   private final ExecutorService ourThreadPool;
   private List<JpsOutputLoader> myJpsOutputLoadersLoaders;
@@ -83,16 +79,16 @@ public class JpsOutputLoaderManager implements ProjectComponent {
 
   private void load(Set<String> allCacheKeys) {
     String previousCommitId = PropertiesComponent.getInstance().getValue(LATEST_COMMIT_ID);
-    Optional<String> stringOptional = GitRepositoryUtil.getLatestCommitHashes(myProject, COMMITS_COUNT).stream()
-      .filter(allCacheKeys::contains)
-      .findFirst();
+    Iterator<String> commitsIterator = GitRepositoryUtil.getCommitsIterator(myProject);
+    String commitId= "";
+    while (commitsIterator.hasNext() && !allCacheKeys.contains(commitId)) {
+      commitId = commitsIterator.next();
+    }
 
-    if (!stringOptional.isPresent()) {
+    if (!allCacheKeys.contains(commitId)) {
       LOG.warn("Not found any caches for the latest commits in the brunch");
       return;
     }
-
-    String commitId = stringOptional.get();
     if (previousCommitId != null && commitId.equals(previousCommitId)) {
       LOG.debug("The system contains up to date caches");
       return;
