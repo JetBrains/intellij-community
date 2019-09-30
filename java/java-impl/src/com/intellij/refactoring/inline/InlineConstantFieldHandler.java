@@ -135,7 +135,12 @@ public class InlineConstantFieldHandler extends JavaInlineActionHandler {
   @Nullable
   public static PsiExpression getInitializer(PsiField field) {
     if (field.hasInitializer()) {
-      return field.getInitializer();
+      PsiExpression initializer = field.getInitializer();
+      if (initializer instanceof PsiCompiledElement) {
+        // Could be a literal initializer: we still can inline it, though passing compiled element downstream may cause exceptions
+        initializer = JavaPsiFacade.getElementFactory(field.getProject()).createExpressionFromText(initializer.getText(), field);
+      }
+      return initializer;
     }
 
     if (field.hasModifierProperty(PsiModifier.FINAL)) {
