@@ -1154,18 +1154,13 @@ public class PluginManagerCore {
 
   private static void mergeOptionalConfigs(@NotNull List<IdeaPluginDescriptorImpl> result,
                                            @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idMap) {
+    Condition<PluginId> enabledCondition = depId -> {
+      IdeaPluginDescriptorImpl dep = idMap.get(depId);
+      return dep != null && dep.isEnabled();
+    };
     for (IdeaPluginDescriptorImpl descriptor : result) {
-      Map<PluginId, List<IdeaPluginDescriptorImpl>> optionalDescriptors = descriptor.getOptionalDescriptors();
-      if (optionalDescriptors != null && !optionalDescriptors.isEmpty()) {
-        descriptor.setOptionalDescriptors(null);
-
-        for (Map.Entry<PluginId, List<IdeaPluginDescriptorImpl>> entry : optionalDescriptors.entrySet()) {
-          IdeaPluginDescriptorImpl dep = idMap.get(entry.getKey());
-          if (dep == null || !dep.isEnabled()) continue;
-          for (IdeaPluginDescriptorImpl optionalDescriptor : entry.getValue()) {
-            descriptor.mergeOptionalConfig(optionalDescriptor);
-          }
-        }
+      for (IdeaPluginDescriptorImpl d : optionalDescriptorRecursively(descriptor, enabledCondition)) {
+        descriptor.mergeOptionalConfig(d);
       }
     }
   }
@@ -1630,6 +1625,26 @@ public class PluginManagerCore {
     return new PluginTraverser(buildPluginIdMap(plugins, new ArrayList<>()), false, true).unique();
   }
 
+  @NotNull
+  private static JBIterable<IdeaPluginDescriptorImpl> optionalDescriptorRecursively(
+    @NotNull IdeaPluginDescriptorImpl descriptor,
+    @NotNull Condition<? super PluginId> condition) {
+    Map<PluginId, List<IdeaPluginDescriptorImpl>> optMap = descriptor.getOptionalDescriptors();
+    if (optMap == null || optMap.isEmpty()) return JBIterable.empty();
+
+    return JBTreeTraverser.<IdeaPluginDescriptorImpl>from(d -> {
+      Map<PluginId, List<IdeaPluginDescriptorImpl>> map = d.getOptionalDescriptors();
+      if (map == null || map.isEmpty()) return JBIterable.empty();
+
+      return JBIterable.from(map.entrySet())
+        .filter(o -> condition.value(o.getKey()))
+        .flatten(o -> o.getValue());
+    })
+      .withRoot(descriptor)
+      .traverse()
+      .skip(1);
+  }
+
   private static class PluginTraverser extends JBTreeTraverser<PluginId> {
     final Map<PluginId, IdeaPluginDescriptorImpl> idMap;
 
@@ -1642,8 +1657,14 @@ public class PluginManagerCore {
         PluginId implicitDep = getImplicitDependency(descriptor, idMap);
         JBIterable<PluginId> allDeps = JBIterable.of(descriptor.getDependentPluginIds()).append(implicitDep)
           .filter(id -> idMap.get(id) != descriptor);
-        JBIterable<PluginId> selectedDeps = withOptionalDeps ? allDeps : allDeps
-          .filter(id -> ArrayUtil.indexOf(descriptor.getOptionalDependentPluginIds(), id) == -1);
+        JBIterable<PluginId> selectedDeps =
+          withOptionalDeps
+          ? allDeps
+            .append(optionalDescriptorRecursively(descriptor, Conditions.alwaysTrue())
+              .flatten(d -> JBIterable.of(d.getOptionalDependentPluginIds())))
+            .unique()
+          : allDeps
+            .filter(id -> ArrayUtil.indexOf(descriptor.getOptionalDependentPluginIds(), id) == -1);
         return !convertModulesToPlugins ? selectedDeps : selectedDeps.map(
           id -> {
             if (!isModuleDependency(id)) return id;
