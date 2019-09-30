@@ -50,6 +50,15 @@
     <fileEditorProvider implementation="org.jetbrains.plugins.github.pullrequest.GHPREditorProvider"/>
   </extensions>
 
+  <projectListeners>
+    <listener class="org.jetbrains.plugins.github.pullrequest.GHPRToolWindowTabsManager$RemoteUrlsListener"
+              topic="com.intellij.dvcs.repo.VcsRepositoryMappingListener"
+              activeInHeadlessMode="false" activeInTestMode="false"/>
+    <listener class="org.jetbrains.plugins.github.pullrequest.GHPRToolWindowTabsManager$RemoteUrlsListener"
+              topic="git4idea.repo.GitRepositoryChangeListener"
+              activeInHeadlessMode="false" activeInTestMode="false"/>
+  </projectListeners>
+
   <extensions defaultExtensionNs="Git4Idea">
     <GitHttpAuthDataProvider implementation="org.jetbrains.plugins.github.extensions.GithubHttpAuthDataProvider"/>
     <gitRepositoryHostingService implementation="org.jetbrains.plugins.github.extensions.GithubRepositoryHostingService"/>

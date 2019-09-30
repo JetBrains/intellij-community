@@ -22,8 +22,8 @@ class GHPRToolWindowsTabsContentManager(private val project: Project,
                                         private val viewContentManager: ChangesViewContentI) {
 
   @CalledInAwt
-  internal fun addTab(remoteUrl: GitRemoteUrlCoordinates) {
-    viewContentManager.addContent(createContent(remoteUrl))
+  internal fun addTab(remoteUrl: GitRemoteUrlCoordinates, onDispose: Disposable) {
+    viewContentManager.addContent(createContent(remoteUrl, onDispose))
     updateTabNames()
   }
 
@@ -41,9 +41,10 @@ class GHPRToolWindowsTabsContentManager(private val project: Project,
     }
   }
 
-  private fun createContent(remoteUrl: GitRemoteUrlCoordinates): Content {
+  private fun createContent(remoteUrl: GitRemoteUrlCoordinates, onDispose: Disposable): Content {
     val disposable = Disposer.newDisposable().also {
       Disposer.register(it, Disposable { updateTabNames() })
+      Disposer.register(it, onDispose)
     }
 
     return ContentFactory.SERVICE.getInstance().createContent(JPanel(null), GROUP_PREFIX, false).apply {
