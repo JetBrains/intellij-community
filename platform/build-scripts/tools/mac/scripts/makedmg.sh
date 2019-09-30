@@ -34,7 +34,9 @@ mkdir ${EXPLODED}/.background
 mv ${BG_PIC} ${EXPLODED}/.background
 ln -s /Applications ${EXPLODED}/"Applications"
 # allocate space for .DS_Store
-dd if=/dev/zero of=${EXPLODED}/DSStorePlaceHolder bs=1024 count=512
+# it's ok to have relatively big (10 MB) empty file, those space would be compressed in resulted dmg
+# otherwise 'no space left on device' errors may occure on attempt to generate relatively small .DS_Store (12 KB)
+dd if=/dev/zero of=${EXPLODED}/DSStorePlaceHolder bs=1024 count=10240
 stat ${EXPLODED}/DSStorePlaceHolder
 
 log "Creating unpacked r/w disk image ${VOLNAME}..."
