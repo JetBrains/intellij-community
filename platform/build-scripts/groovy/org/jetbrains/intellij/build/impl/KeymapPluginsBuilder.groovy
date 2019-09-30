@@ -25,26 +25,19 @@ class KeymapPluginsBuilder {
      ["Sublime Text", "Sublime Text (Mac OS X)"],
      ["Visual Studio"],
      ["Xcode"]].forEach {
-      builder.keymapPlugin(targetDir, it[0], it.size() > 1 ? it[1] : null)
+      builder.keymapPlugin(targetDir, it)
     }
   }
 
-  void keymapPlugin(String targetDir, String keymap, String macKeymap = null) {
+  void keymapPlugin(String targetDir, List<String> keymaps) {
     def keymapPath = "$buildContext.paths.communityHome/platform/platform-resources/src/keymaps"
-    def shortName = keymap.replaceAll("[.0-9 ]|Default for ", "")
+    def longName = keymaps[0].replaceAll("Default for ", "")
+    def shortName = keymaps[0].replaceAll("[.0-9 ]|Default for ", "")
     def tempDir = new File(buildContext.paths.temp, "keymap-plugins/${shortName.toLowerCase()}")
     new File(tempDir, "META-INF").mkdirs()
-    if (macKeymap == null) {
-      new File(tempDir, "META-INF/plugin.xml").text = keymapPluginXml(
-        buildContext.buildNumber, shortName.toLowerCase(), keymap, "${keymap}.xml")
-      buildContext.ant.copy(file: "$keymapPath/${keymap}.xml", todir: "$tempDir/keymaps")
-    }
-    else {
-      new File(tempDir, "META-INF/plugin.xml").text = keymapPluginXml(
-        buildContext.buildNumber, shortName.toLowerCase(), keymap, "\$OS\$/${keymap}.xml")
-      buildContext.ant.copy(file: "$keymapPath/${keymap}.xml", todir: "$tempDir/keymaps/windows")
-      buildContext.ant.copy(file: "$keymapPath/${keymap}.xml", todir: "$tempDir/keymaps/linux")
-      buildContext.ant.copy(file: "$keymapPath/${macKeymap}.xml", tofile: "$tempDir/keymaps/macos/${keymap}.xml")
+    new File(tempDir, "META-INF/plugin.xml").text = keymapPluginXml(buildContext.buildNumber, shortName.toLowerCase(), longName, keymaps)
+    keymaps.forEach {
+      buildContext.ant.copy(file: "$keymapPath/${it}.xml", todir: "$tempDir/keymaps")
     }
     new File(tempDir, "META-INF/pluginIcon.svg").text =
       "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"40\" height=\"40\" viewBox=\"0 0 40 40\">\n" +
@@ -72,7 +65,7 @@ class KeymapPluginsBuilder {
     buildContext.notifyArtifactBuilt("$targetDir/${shortName}Keymap.zip")
   }
 
-  static String keymapPluginXml(String version, String id, String name, String keymap) {
+  static String keymapPluginXml(String version, String id, String name, List<String> keymaps) {
     return """<idea-plugin>
   <name>$name Keymap</name>
   <id>com.intellij.plugins.${id}keymap</id>
@@ -86,7 +79,12 @@ class KeymapPluginsBuilder {
   </description>
   <depends>com.intellij.modules.lang</depends>
   <extensions defaultExtensionNs="com.intellij">
-    <bundledKeymap file="$keymap"/>
+${
+      keymaps.collect {
+        "    <bundledKeymap file=\"${it}.xml\"/>"
+      }
+        .join("\n")
+    }
   </extensions>
 </idea-plugin>"""
   }
