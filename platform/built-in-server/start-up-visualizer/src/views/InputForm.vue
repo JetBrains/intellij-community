@@ -33,6 +33,7 @@
   import {Component, Vue} from "vue-property-decorator"
   import {getModule} from "vuex-module-decorators"
   import {AppStateModule} from "@/state/state"
+  import {loadJson} from "@/httpUtil"
 
   @Component
   export default class InputForm extends Vue {
@@ -87,49 +88,14 @@
     private doGetFromRunningInstance(port: number, processed: () => void) {
       // localhost blocked by Firefox, but 127.0.0.1 not.
       // Google Chrome correctly resolves localhost, but Firefox doesn't.
-      const host = `127.0.0.1:${port}`
-
-      const showError = (reason: string) => {
-        this.$notify.error({
-          title: "Error",
-          message: `Cannot load data from "${host}": ${reason}`,
-        })
-      }
-
-      let isCancelledByTimeout = false
-      const controller = new AbortController()
-      const signal = controller.signal
-      const timeoutId = setTimeout(() => {
-        isCancelledByTimeout = true
-        controller.abort()
-        showError("8 seconds timeout")
-      }, 8000)
-
-      fetch(`http://${host}/api/startUpMeasurement`, {credentials: "omit", signal})
-        .then(it => it.json())
+      loadJson(new URL(`http://127.0.0.1:${port}/api/startUpMeasurement`), processed, this.$notify)
         .then(data => {
-          clearTimeout(timeoutId)
-
           if (data == null) {
-            const message = "IntelliJ Platform IDE didn't report startup measurement result"
-            console.error(message)
-            alert(message)
             return
           }
 
-          processed()
-
           this.dataModule.updateData(data)
           this.inputData = JSON.stringify(data, null, 2)
-        })
-        .catch(e => {
-          processed()
-
-          clearTimeout(timeoutId)
-          if (!isCancelledByTimeout) {
-            showError(e.toString())
-          }
-          console.warn(`Cannot load data from "${host}"`, e)
         })
     }
   }

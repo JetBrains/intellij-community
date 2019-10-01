@@ -14,7 +14,6 @@ const stateStorageManager = new StateStorageManager()
 @Module({name: mainModuleName})
 export class AppStateModule extends VuexModule implements AppState {
   data: DataManager | null = null
-  aggregatedData: any | null = null
   recentlyUsedIdePort: number = defaultIdePort
 
   chartSettings = new ChartSettings()
@@ -32,11 +31,6 @@ export class AppStateModule extends VuexModule implements AppState {
   @Mutation
   updateChartSettings(chartSettings: ChartSettings) {
     this.chartSettings = chartSettings
-  }
-
-  @Mutation
-  updateAggregatedData(data: any) {
-    this.aggregatedData = data
   }
 }
 

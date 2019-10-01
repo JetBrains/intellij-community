@@ -7,7 +7,7 @@
           <el-form-item label="Server url">
             <el-input
                 placeholder="Enter the aggregated stats server URL..."
-                v-model="serverUrl">
+                v-model="chartSettings.serverUrl">
             </el-input>
           </el-form-item>
           <el-form-item>
@@ -19,12 +19,35 @@
         <div style="float: right">
           <el-checkbox
               size="small"
-              v-model="chartSettings.isShowScrollbarXPreview"
+              v-model="chartSettings.showScrollbarXPreview"
               @change="isShowScrollbarXPreviewChanged"
           >Show horizontal scrollbar preview</el-checkbox>
         </div>
       </el-col>
     </el-row>
+
+    <el-form :inline="true" size="small">
+      <el-form-item label="Product">
+        <el-select v-model="chartSettings.selectedProduct" filterable>
+          <el-option
+                v-for="productId in products"
+                :key="productId"
+                :label="productId"
+                :value="productId">
+              </el-option>
+        </el-select>
+      </el-form-item>
+      <el-form-item label="Machine">
+        <el-select v-model="chartSettings.selectedMachine" filterable>
+          <el-option
+                v-for="machineId in machines"
+                :key="machineId"
+                :label="machineId"
+                :value="machineId">
+              </el-option>
+        </el-select>
+      </el-form-item>
+    </el-form>
 
     <h2>Duration Events</h2>
     <div class="aggregatedChart" ref="durationEventChartContainer"></div>
@@ -42,121 +65,4 @@
   </div>
 </template>
 
-<script lang="ts">
-  import {Component, Vue} from "vue-property-decorator"
-  import {AggregatedStatsChartManager} from "./AggregatedStatsChartManager"
-  import {AggregatedDataManager} from "@/aggregatedStats/AggregatedDataManager"
-  import {AppStateModule} from "@/state/state"
-  import {getModule} from "vuex-module-decorators"
-
-  // @ts-ignore
-  @Component
-  export default class AggregatedStatsChart extends Vue {
-    private readonly dataModule = getModule(AppStateModule, this.$store)
-    private readonly chartManagers: Array<AggregatedStatsChartManager> = []
-
-    serverUrl: string = "http://127.0.0.1:9044"
-    isFetching: boolean = false
-
-    chartSettings = this.dataModule.chartSettings
-
-    loadData() {
-      this.isFetching = true
-      this.doLoadData(() => {
-        this.isFetching = false
-      })
-    }
-
-    isShowScrollbarXPreviewChanged(_value: boolean) {
-      this.chartManagers.forEach(it => it.scrollbarXPreviewOptionChanged())
-      this.dataModule.updateChartSettings(this.chartSettings)
-    }
-
-    private doLoadData(processed: () => void) {
-      // localhost blocked by Firefox, but 127.0.0.1 not.
-      // Google Chrome correctly resolves localhost, but Firefox doesn't.
-      const host = this.serverUrl
-
-      const showError = (reason: string) => {
-        this.$notify.error({
-          title: "Error",
-          message: `Cannot load data from "${host}": ${reason}`,
-        })
-      }
-
-      let isCancelledByTimeout = false
-      const controller = new AbortController()
-      const signal = controller.signal
-      const timeoutId = setTimeout(() => {
-        isCancelledByTimeout = true
-        controller.abort()
-        showError("8 seconds timeout")
-      }, 8000)
-
-      fetch(`${host}/stats`, {credentials: "omit", signal})
-        .then(it => it.json())
-        .then(data => {
-          clearTimeout(timeoutId)
-
-          if (data == null) {
-            const message = "IntelliJ Platform IDE didn't report stats"
-            console.error(message)
-            alert(message)
-            return
-          }
-
-          processed()
-
-          try {
-            this.renderData(data)
-          }
-          catch (e) {
-            console.error(e)
-          }
-        })
-        .catch(e => {
-          processed()
-
-          clearTimeout(timeoutId)
-          if (!isCancelledByTimeout) {
-            showError(e.toString())
-          }
-          console.warn(`Cannot load data from "${host}"`, e)
-        })
-    }
-
-    mounted() {
-      const aggregatedData = this.dataModule.aggregatedData
-      if (aggregatedData != null) {
-        this.renderData(aggregatedData)
-      }
-    }
-
-    private renderData(data: any): void {
-      let chartManagers = this.chartManagers
-      if (chartManagers.length === 0) {
-        chartManagers.push(new AggregatedStatsChartManager(this.$refs.durationEventChartContainer as HTMLElement, this.chartSettings, false))
-        chartManagers.push(new AggregatedStatsChartManager(this.$refs.instantEventChartContainer as HTMLElement, this.chartSettings, true))
-      }
-
-      this.dataModule.updateAggregatedData(data)
-
-      const dataManager = new AggregatedDataManager(data)
-      for (const chartManager of chartManagers) {
-        try {
-          chartManager.render(dataManager)
-        }
-        catch (e) {
-          console.error(e)
-        }
-      }
-    }
-
-    beforeDestroy() {
-      for (const chartManager of this.chartManagers) {
-        chartManager.dispose()
-      }
-      this.chartManagers.length = 0
-    }
-  }
-</script>
+<script lang="ts" src="./AggregatedStatsChart.ts"></script>
