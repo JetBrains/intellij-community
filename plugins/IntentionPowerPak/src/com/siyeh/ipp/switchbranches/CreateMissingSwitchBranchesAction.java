@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ipp.switchbranches;
 
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.DfaFactType;
@@ -34,6 +35,10 @@ public class CreateMissingSwitchBranchesAction extends PsiElementBaseIntentionAc
   public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
     PsiSwitchBlock block = PsiTreeUtil.getParentOfType(element, PsiSwitchBlock.class, false, PsiCodeBlock.class, PsiStatement.class);
     if (block == null) return;
+    if (block instanceof PsiSwitchExpression && !HighlightUtil.Feature.SWITCH_EXPRESSION.isAvailable(block)) {
+      // Do not suggest if switch expression is not supported as we may generate unparseable code with 'yield' statement
+      return;
+    }
     List<Value> allValues = myAllValues;
     List<Value> missingValues = getMissingValues(block, allValues);
     if (missingValues.isEmpty()) return;
