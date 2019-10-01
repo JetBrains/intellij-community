@@ -20,6 +20,7 @@ import org.codehaus.groovy.tools.javac.JavaCompilerFactory;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
+import java.nio.charset.Charset;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.*;
@@ -188,7 +189,7 @@ public class DependentGroovycRunner {
 
     try {
       stream = new FileInputStream(argsFile);
-      reader = new BufferedReader(new InputStreamReader(stream));
+      reader = new BufferedReader(new InputStreamReader(stream, Charset.forName("UTF-8")));
 
       reader.readLine(); // skip classpath
 
