@@ -1165,8 +1165,17 @@ public class PluginManagerCore {
       return dep != null && dep.isEnabled();
     };
     for (IdeaPluginDescriptorImpl descriptor : result) {
-      for (IdeaPluginDescriptorImpl d : optionalDescriptorRecursively(descriptor, enabledCondition)) {
-        descriptor.mergeOptionalConfig(d);
+      for (IdeaPluginDescriptorImpl dep : optionalDescriptorRecursively(descriptor, enabledCondition)) {
+        boolean requiredDepMissing = false;
+        for (PluginId depId : dep.getDependentPluginIds()) {
+          if (!enabledCondition.value(depId) &&
+              ArrayUtil.indexOf(dep.getOptionalDependentPluginIds(), depId) == -1) {
+            requiredDepMissing = true;
+            break;
+          }
+        }
+        if (requiredDepMissing) continue;
+        descriptor.mergeOptionalConfig(dep);
       }
     }
   }
@@ -1666,15 +1675,15 @@ public class PluginManagerCore {
           withOptionalDeps
           ? allDeps
             .append(optionalDescriptorRecursively(descriptor, Conditions.alwaysTrue())
-              .flatten(d -> JBIterable.of(d.getOptionalDependentPluginIds())))
-            .unique()
+                      .flatten(d -> JBIterable.of(d.getDependentPluginIds())))
           : allDeps
             .filter(id -> ArrayUtil.indexOf(descriptor.getOptionalDependentPluginIds(), id) == -1);
-        return selectedDeps.filterMap(id -> {
+        JBIterable<PluginId> convertedDeps = selectedDeps.filterMap(id -> {
           IdeaPluginDescriptorImpl plugin = idMap.get(id);
           if (plugin == descriptor) return null;
           return plugin != null && convertModulesToPlugins && isModuleDependency(id) ? plugin.getPluginId() : id;
         });
+        return convertedDeps.unique();
       });
       this.idMap = idMap;
     }
