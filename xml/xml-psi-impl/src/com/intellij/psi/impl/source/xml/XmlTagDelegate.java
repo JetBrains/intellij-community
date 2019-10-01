@@ -61,7 +61,7 @@ public abstract class XmlTagDelegate {
   private static final Comparator<TextRange> RANGE_COMPARATOR = Comparator.comparingInt(TextRange::getStartOffset);
 
   @NotNull
-  private final XmlTag myTag;
+  protected final XmlTag myTag;
 
   private volatile String myName;
   private volatile String myLocalName;
@@ -580,7 +580,7 @@ public abstract class XmlTagDelegate {
   }
 
   @Contract("null->null")
-  String getAttributeValue(String qname) {
+  protected String getAttributeValue(String qname) {
     Map<String, String> map = myAttributeValueMap;
     if (map == null) {
       map = new THashMap<>();
@@ -593,7 +593,7 @@ public abstract class XmlTagDelegate {
   }
 
   @Nullable
-  String getAttributeValue(@Nullable String _name, @Nullable String namespace) {
+  protected String getAttributeValue(@Nullable String _name, @Nullable String namespace) {
     if (namespace == null) {
       return myTag.getAttributeValue(_name);
     }
@@ -649,7 +649,7 @@ public abstract class XmlTagDelegate {
   }
 
   @NotNull
-  XmlTag[] findSubTags(@NotNull final String name, @Nullable final String namespace) {
+  protected XmlTag[] findSubTags(@NotNull final String name, @Nullable final String namespace) {
     final XmlTag[] subTags = myTag.getSubTags();
     final List<XmlTag> result = new ArrayList<>();
     for (final XmlTag subTag : subTags) {
@@ -704,7 +704,7 @@ public abstract class XmlTagDelegate {
   }
 
   @NotNull
-  String getNamespaceByPrefix(String prefix) {
+  protected String getNamespaceByPrefix(String prefix) {
     BidirectionalMap<String, String> map = getNamespaceMap(myTag);
     if (map != null) {
       final String ns = map.get(prefix);
@@ -742,7 +742,7 @@ public abstract class XmlTagDelegate {
   }
 
   @Nullable
-  String getPrefixByNamespace(@Nullable String namespace) {
+  protected String getPrefixByNamespace(@Nullable String namespace) {
     BidirectionalMap<String, String> map = getNamespaceMap(myTag);
     if (map != null) {
       List<String> keysByValue = map.getKeysByValue(namespace);

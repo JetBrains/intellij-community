@@ -345,6 +345,14 @@ public class XmlStubBasedTagBase<StubT extends XmlTagStub<?>>
     getImpl().deleteChildInternal(child);
   }
 
+  protected void deleteChildInternalSuper(@NotNull final ASTNode child) {
+    super.deleteChildInternal(child);
+  }
+
+  protected TreeElement addInternalSuper(TreeElement first, ASTNode last, @Nullable ASTNode anchor, @Nullable Boolean before) {
+    return (TreeElement)super.addInternal(first, last, anchor, before);
+  }
+
   @Override
   public XmlTag getParentTag() {
     final PsiElement parent = getParentByStub();
@@ -379,12 +387,12 @@ public class XmlStubBasedTagBase<StubT extends XmlTagStub<?>>
 
     @Override
     protected void deleteChildInternalSuper(@NotNull ASTNode child) {
-      XmlStubBasedTagBase.super.deleteChildInternal(child);
+      XmlStubBasedTagBase.this.deleteChildInternalSuper(child);
     }
 
     @Override
     protected TreeElement addInternalSuper(TreeElement first, ASTNode last, @Nullable ASTNode anchor, @Nullable Boolean before) {
-      return (TreeElement)XmlStubBasedTagBase.super.addInternal(first, last, anchor, before);
+      return XmlStubBasedTagBase.this.addInternalSuper(first, last, anchor, before);
     }
   }
 }

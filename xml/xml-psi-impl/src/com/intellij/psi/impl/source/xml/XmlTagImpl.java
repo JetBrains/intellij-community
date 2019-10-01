@@ -354,6 +354,14 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
     getImpl().deleteChildInternal(child);
   }
 
+  protected void deleteChildInternalSuper(@NotNull final ASTNode child) {
+    super.deleteChildInternal(child);
+  }
+
+  protected TreeElement addInternalSuper(TreeElement first, ASTNode last, @Nullable ASTNode anchor, @Nullable Boolean before) {
+    return super.addInternal(first, last, anchor, before);
+  }
+
   @Override
   public XmlTag getParentTag() {
     final PsiElement parent = getParent();
@@ -388,12 +396,12 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
 
     @Override
     protected void deleteChildInternalSuper(@NotNull ASTNode child) {
-      XmlTagImpl.super.deleteChildInternal(child);
+      XmlTagImpl.this.deleteChildInternalSuper(child);
     }
 
     @Override
     protected TreeElement addInternalSuper(TreeElement first, ASTNode last, @Nullable ASTNode anchor, @Nullable Boolean before) {
-      return XmlTagImpl.super.addInternal(first, last, anchor, before);
+      return XmlTagImpl.this.addInternalSuper(first, last, anchor, before);
     }
   }
 }
