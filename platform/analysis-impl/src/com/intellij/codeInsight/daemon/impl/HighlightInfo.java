@@ -74,7 +74,7 @@ public class HighlightInfo implements Segment {
   private final HighlightSeverity severity;
   private final GutterMark gutterIconRenderer;
   private final ProblemGroup myProblemGroup;
-  private final String inspectionGroupKey;
+  private final String inspectionToolId;
 
   private int group;
   private int fixStartOffset;
@@ -143,8 +143,8 @@ public class HighlightInfo implements Segment {
   }
 
   @Nullable
-  public String getInspectionGroupKey() {
-    return inspectionGroupKey;
+  public String getInspectionToolId() {
+    return inspectionToolId;
   }
 
   private boolean isFlagSet(@FlagConstant byte mask) {
@@ -283,7 +283,7 @@ public class HighlightInfo implements Segment {
                           boolean isFileLevelAnnotation,
                           int navigationShift,
                           ProblemGroup problemGroup,
-                          @Nullable String inspectionGroupKey,
+                          @Nullable String inspectionToolId,
                           GutterMark gutterIconRenderer) {
     if (startOffset < 0 || startOffset > endOffset) {
       LOG.error("Incorrect highlightInfo bounds. description="+escapedDescription+"; startOffset="+startOffset+"; endOffset="+endOffset+";type="+type);
@@ -305,7 +305,7 @@ public class HighlightInfo implements Segment {
     this.navigationShift = navigationShift;
     myProblemGroup = problemGroup;
     this.gutterIconRenderer = gutterIconRenderer;
-    this.inspectionGroupKey = inspectionGroupKey;
+    this.inspectionToolId = inspectionToolId;
   }
 
   private static boolean calcNeedUpdateOnTyping(@Nullable Boolean needsUpdateOnTyping, HighlightInfoType type) {
@@ -391,7 +391,7 @@ public class HighlightInfo implements Segment {
 
     @NotNull Builder gutterIconRenderer(@NotNull GutterIconRenderer gutterIconRenderer);
     @NotNull Builder problemGroup(@NotNull ProblemGroup problemGroup);
-    @NotNull Builder inspectionGroupKey(@Nullable String groupKey);
+    @NotNull Builder inspectionToolId(@NotNull String inspectionTool);
 
     // only one allowed
     @NotNull Builder description(@NotNull String description);
@@ -448,7 +448,7 @@ public class HighlightInfo implements Segment {
 
     private GutterIconRenderer gutterIconRenderer;
     private ProblemGroup problemGroup;
-    private String inspectionGroupKey;
+    private String inspectionToolId;
     private PsiElement psiElement;
 
     private B(@NotNull HighlightInfoType type) {
@@ -473,9 +473,9 @@ public class HighlightInfo implements Segment {
 
     @NotNull
     @Override
-    public Builder inspectionGroupKey(@Nullable String groupKey) {
-      assert this.inspectionGroupKey == null : "inspectionGroupKey already set";
-      this.inspectionGroupKey = groupKey;
+    public Builder inspectionToolId(@NotNull String inspectionToolId) {
+      assert this.inspectionToolId == null : "inspectionToolId already set";
+      this.inspectionToolId = inspectionToolId;
       return this;
     }
 
@@ -634,7 +634,7 @@ public class HighlightInfo implements Segment {
 
       return new HighlightInfo(forcedTextAttributes, forcedTextAttributesKey, type, startOffset, endOffset, escapedDescription,
                                escapedToolTip, severity, isAfterEndOfLine, myNeedsUpdateOnTyping, isFileLevelAnnotation, navigationShift,
-                               problemGroup, inspectionGroupKey, gutterIconRenderer);
+                               problemGroup, inspectionToolId, gutterIconRenderer);
     }
   }
 
