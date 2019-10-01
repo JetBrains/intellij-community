@@ -19,8 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.libraries.LibraryType;
 import com.intellij.openapi.roots.libraries.NewLibraryConfiguration;
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind;
-import com.intellij.openapi.roots.libraries.ui.LibraryEditorComponent;
-import com.intellij.openapi.roots.libraries.ui.LibraryPropertiesEditor;
+import com.intellij.openapi.roots.libraries.ui.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -83,5 +82,11 @@ public class RepositoryLibraryType extends LibraryType<RepositoryLibraryProperti
   public String getDescription(@NotNull RepositoryLibraryProperties properties) {
     RepositoryLibraryDescription description = RepositoryLibraryDescription.findDescription(properties);
     return "Maven: " + description.getDisplayName(properties.getVersion());
+  }
+
+  @Nullable
+  @Override
+  public LibraryRootsComponentDescriptor createLibraryRootsComponentDescriptor() {
+    return new RepositoryLibraryRootsComponentDescriptor();
   }
 }

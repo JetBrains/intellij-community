@@ -63,10 +63,15 @@ public class DefaultLibraryRootsComponentDescriptor extends LibraryRootsComponen
     results.addAll(LibrarySourceRootDetectorUtil.JAVA_SOURCE_ROOT_DETECTOR.getExtensionList());
     results.add(DescendentBasedRootFilter.createFileTypeBasedFilter(OrderRootType.SOURCES, true, StdFileTypes.JAVA, "source archive directory"));
     results.add(new JavadocRootDetector());
-    results.add(new DescendentBasedRootFilter(AnnotationOrderRootType.getInstance(), false, "external annotations",
-                                              file -> ExternalAnnotationsManager.ANNOTATIONS_XML.equals(file.getName())));
+    results.add(createAnnotationsRootDetector());
     results.add(new NativeLibraryRootFilter());
     return results;
+  }
+
+  @NotNull
+  public static DescendentBasedRootFilter createAnnotationsRootDetector() {
+    return new DescendentBasedRootFilter(AnnotationOrderRootType.getInstance(), false, "external annotations",
+                                              file -> ExternalAnnotationsManager.ANNOTATIONS_XML.equals(file.getName()));
   }
 
   private static boolean isNativeLibrary(VirtualFile file) {
