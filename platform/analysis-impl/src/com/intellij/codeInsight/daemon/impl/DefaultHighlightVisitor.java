@@ -9,7 +9,6 @@ import com.intellij.lang.LanguageAnnotators;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.Annotator;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
@@ -23,9 +22,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
-import com.intellij.util.pico.CachingConstructorInjectionComponentAdapter;
 import org.jetbrains.annotations.NotNull;
-import org.picocontainer.PicoContainer;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -183,22 +180,11 @@ final class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
     return builder.create();
   }
 
-  @SuppressWarnings("unchecked")
   @NotNull
-  private static <V> List<V> cloneTemplates(@NotNull Collection<? extends V> templates) {
-    List<V> result = new ArrayList<>(templates.size());
-    PicoContainer container = ApplicationManager.getApplication().getPicoContainer();
-    for (V template : templates) {
-      Class<? extends V> aClass = (Class<? extends V>)template.getClass();
-      V clone;
-      // todo in general CachingConstructorInjectionComponentAdapter should be not used at all, but for now disable it only for known cases
-      if (Annotator.class.isAssignableFrom(aClass)) {
-        clone = ReflectionUtil.newInstance(aClass);
-      }
-      else {
-        clone = (V)new CachingConstructorInjectionComponentAdapter(aClass.getName(), aClass, null, true).getComponentInstance(container);
-      }
-      result.add(clone);
+  private static List<Annotator> cloneTemplates(@NotNull Collection<? extends Annotator> templates) {
+    List<Annotator> result = new ArrayList<>(templates.size());
+    for (Annotator template : templates) {
+      result.add(ReflectionUtil.newInstance(template.getClass()));
     }
     return result;
   }
