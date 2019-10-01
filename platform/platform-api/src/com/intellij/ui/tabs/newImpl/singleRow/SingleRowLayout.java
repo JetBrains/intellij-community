@@ -133,9 +133,9 @@ public class SingleRowLayout extends TabLayout {
     myTabs.resetLayout(layoutLabels || myTabs.isHideTabs());
 
     if (layoutLabels && !myTabs.isHideTabs()) {
-      data.position = getStrategy().getStartPosition(data) - getScrollOffset();
-
       recomputeToLayout(data);
+
+      data.position = getStrategy().getStartPosition(data) - getScrollOffset();
 
       layoutLabelsAndGhosts(data);
 
