@@ -16,16 +16,19 @@
 package com.intellij.xml.util;
 
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.xml.XmlEntityCache;
 import com.intellij.psi.impl.source.xml.XmlEntityRefImpl;
 import com.intellij.psi.search.PsiElementProcessor;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.xml.*;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -70,6 +73,22 @@ public class XmlPsiUtil {
     }
 
     return true;
+  }
+
+  public static XmlElement findElement(final XmlElement parent, final IElementType.Predicate predicate){
+    final Ref<XmlElement> result = new Ref<>();
+    parent.processElements(new PsiElementProcessor(){
+      @Override
+      public boolean execute(@NotNull PsiElement element){
+        if(element instanceof XmlElement && predicate.matches(element.getNode().getElementType())){
+          result.set((XmlElement)element);
+          return false;
+        }
+        return true;
+      }
+    }, parent);
+
+    return result.get();
   }
 
   private static class XmlElementProcessor {

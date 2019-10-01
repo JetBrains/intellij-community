@@ -48,21 +48,7 @@ public abstract class XmlElementImpl extends CompositePsiElement implements XmlE
   }
 
   public XmlElement findElementByTokenType(final IElementType type){
-    final XmlElement[] result = new XmlElement[1];
-    result[0] = null;
-
-    processElements(new PsiElementProcessor(){
-      @Override
-      public boolean execute(@NotNull PsiElement element){
-        if(element instanceof XmlElement && element.getNode().getElementType() == type){
-          result[0] = (XmlElement)element;
-          return false;
-        }
-        return true;
-      }
-    }, this);
-
-    return result[0];
+    return XmlPsiUtil.findElement(this, elementType -> elementType == type);
   }
 
   @Override

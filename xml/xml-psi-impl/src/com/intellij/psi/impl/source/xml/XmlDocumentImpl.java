@@ -52,6 +52,7 @@ import com.intellij.xml.XmlExtension;
 import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.index.XmlNamespaceIndex;
 import com.intellij.xml.util.XmlNSDescriptorSequence;
+import com.intellij.xml.util.XmlPsiUtil;
 import com.intellij.xml.util.XmlUtil;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NonNls;
@@ -108,7 +109,7 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
     if (i == XmlElementType.XML_PROLOG) {
       return XmlChildRole.XML_PROLOG;
     }
-    else if (i == XmlElementType.XML_TAG) {
+    else if (i instanceof IXmlTagElementType) {
       return XmlChildRole.XML_TAG;
     }
     else {
@@ -136,7 +137,7 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
     XmlTag rootTag = myRootTag;
 
     if (rootTag == null) {
-      rootTag = (XmlTag)findElementByTokenType(XmlElementType.XML_TAG);
+      rootTag = (XmlTag)XmlPsiUtil.findElement(this, IXmlTagElementType.class::isInstance);
 
       if (!MY_ROOT_TAG_UPDATER.compareAndSet(this, null, rootTag)) {
         rootTag = MY_ROOT_TAG_UPDATER.get(this);
