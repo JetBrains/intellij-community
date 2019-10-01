@@ -9,14 +9,13 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.FunctionalExpressionSearch;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public final class MethodHierarchyTreeStructure extends HierarchyTreeStructure {
   private final SmartPsiElementPointer<PsiMethod> myMethod;
@@ -35,109 +34,59 @@ public final class MethodHierarchyTreeStructure extends HierarchyTreeStructure {
   }
 
   private HierarchyNodeDescriptor buildHierarchyElement(final Project project, final PsiMethod method) {
-    final PsiClass suitableBaseClass = findSuitableBaseClass(method);
-
-    final ArrayList<PsiClass> superClasses = createSuperClasses(suitableBaseClass);
-
-    if (!suitableBaseClass.equals(method.getContainingClass())) {
-      superClasses.add(0, suitableBaseClass);
-    }
-
-    // remove from the top of the branch the classes that contain no 'method'
-    for(int i = superClasses.size() - 1; i >= 0; i--){
-      final PsiClass psiClass = superClasses.get(i);
-
-      if (MethodHierarchyUtil.findBaseMethodInClass(method, psiClass, false) == null) {
-        superClasses.remove(i);
-      }
-      else {
-        break;
-      }
-    }
+    List<PsiClass> superClasses = buildSuperChain(method);
+    PsiClass containingClass = method.getContainingClass();
+    assert containingClass != null;
 
     HierarchyNodeDescriptor descriptor = null;
-    for(int i = superClasses.size() - 1; i >= 0; i--){
-      final PsiClass superClass = superClasses.get(i);
+    for (final PsiClass superClass : superClasses) {
       final HierarchyNodeDescriptor newDescriptor = new MethodHierarchyNodeDescriptor(project, descriptor, superClass, false, this);
-      if (descriptor != null){
-        descriptor.setCachedChildren(new HierarchyNodeDescriptor[] {newDescriptor});
+      if (descriptor != null) {
+        descriptor.setCachedChildren(new HierarchyNodeDescriptor[]{newDescriptor});
       }
       descriptor = newDescriptor;
     }
-    final HierarchyNodeDescriptor newDescriptor = new MethodHierarchyNodeDescriptor(project, descriptor, method.getContainingClass(), true, this);
+    final HierarchyNodeDescriptor newDescriptor = new MethodHierarchyNodeDescriptor(project, descriptor, containingClass, true, this);
     if (descriptor != null) {
       descriptor.setCachedChildren(new HierarchyNodeDescriptor[] {newDescriptor});
     }
     return newDescriptor;
   }
 
-  private static ArrayList<PsiClass> createSuperClasses(PsiClass aClass) {
-    if (!aClass.isValid()) {
-      return new ArrayList<>();
+  private static List<PsiClass> buildSuperChain(PsiMethod method) {
+    List<PsiClass> superClasses = new ArrayList<>();
+    while (true) {
+      PsiMethod superMethod = ArrayUtil.getFirstElement(method.findSuperMethods());
+      if (superMethod == null || superClasses.contains(superMethod.getContainingClass())) break;
+      superClasses.addAll(findInheritanceChain(method.getContainingClass(), superMethod.getContainingClass()));
+      method = superMethod;
     }
-
-    final ArrayList<PsiClass> superClasses = new ArrayList<>();
-    while (!isJavaLangObject(aClass)) {
-      final PsiClass aClass1 = aClass;
-      final PsiClass[] superTypes = aClass1.getSupers();
-      PsiClass superType = null;
-      // find class first
-      for (final PsiClass type : superTypes) {
-        if (!type.isInterface() && !isJavaLangObject(type)) {
-          superType = type;
-          break;
-        }
-      }
-      // if we haven't found a class, try to find an interface
-      if (superType == null) {
-        for (final PsiClass type : superTypes) {
-          if (!isJavaLangObject(type)) {
-            superType = type;
-            break;
-          }
-        }
-      }
-      if (superType == null) break;
-      if (superClasses.contains(superType)) break;
-      superClasses.add(superType);
-      aClass = superType;
-    }
-
     return superClasses;
   }
 
-  private static boolean isJavaLangObject(final PsiClass aClass) {
-    return CommonClassNames.JAVA_LANG_OBJECT.equals(aClass.getQualifiedName());
-  }
-
-  private static PsiClass findSuitableBaseClass(final PsiMethod method) {
-    final PsiClass containingClass = method.getContainingClass();
-
-    if (containingClass instanceof PsiAnonymousClass) {
-      return containingClass;
-    }
-
-    final PsiClass superClass = containingClass.getSuperClass();
-    if (superClass == null) {
-      return containingClass;
-    }
-
-    if (MethodHierarchyUtil.findBaseMethodInClass(method, superClass, true) == null) {
-      for (final PsiClass anInterface : containingClass.getInterfaces()) {
-        if (MethodHierarchyUtil.findBaseMethodInClass(method, anInterface, true) != null) {
-          return anInterface;
+  private static List<PsiClass> findInheritanceChain(PsiClass subClass, PsiClass superClass) {
+    Map<PsiClass, PsiClass> inheritanceMap = new HashMap<>();
+    Queue<PsiClass> workQueue = new ArrayDeque<>();
+    workQueue.add(subClass);
+    while (!workQueue.isEmpty()) {
+      PsiClass cls = workQueue.poll();
+      for (PsiClass sup : StreamEx.of(cls.getInterfaces()).prepend(cls.getSuperClass()).nonNull()) {
+        if (!inheritanceMap.containsKey(sup)) {
+          inheritanceMap.put(sup, cls);
+          workQueue.offer(sup);
+          if (sup == superClass) {
+            return StreamEx.iterate(superClass, c -> c != subClass, inheritanceMap::get).toList();
+          }
         }
       }
     }
-
-    return containingClass;
+    return Collections.emptyList();
   }
 
   @Nullable
   public final PsiMethod getBaseMethod() {
     return myMethod.getElement();
   }
-
 
   @NotNull
   @Override
