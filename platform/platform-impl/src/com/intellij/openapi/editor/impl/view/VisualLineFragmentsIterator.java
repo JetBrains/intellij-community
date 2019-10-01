@@ -18,6 +18,7 @@ import java.awt.*;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.function.Consumer;
 
 /**
  * Iterator over visual line's fragments. Fragment's text has the same font and directionality. Collapsed fold regions are also represented
@@ -451,22 +452,26 @@ class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsIterato
     }
 
     // offsets are visual (relative to fragment's start)
-    void draw(Graphics2D g, float x, float y, int startRelativeOffset, int endRelativeOffset) {
+    Consumer<Graphics2D> draw(float x, float y, int startRelativeOffset, int endRelativeOffset) {
       if (myDelegate != null) {
-        myDelegate.draw(g, x, y, startRelativeOffset, endRelativeOffset);
+        return myDelegate.draw(x, y, startRelativeOffset, endRelativeOffset);
       }
       else if (myFoldRegion != null) {
-        int relativeOffset = 0;
-        for (LineLayout.VisualFragment fragment : myView.getFoldRegionLayout(myFoldRegion).getFragmentsInVisualOrder(x)) {
-          int relativeOffsetEnd = relativeOffset + fragment.getLength();
-          if (relativeOffset < endRelativeOffset && relativeOffsetEnd > startRelativeOffset) {
-            fragment.draw(g, fragment.getStartX(), y,
-                          Math.max(0, startRelativeOffset - relativeOffset),
-                          Math.min(relativeOffsetEnd, endRelativeOffset) - relativeOffset);
+        LineLayout foldRegionLayout = myView.getFoldRegionLayout(myFoldRegion);
+        return g -> {
+          int relativeOffset = 0;
+          for (LineLayout.VisualFragment fragment : foldRegionLayout.getFragmentsInVisualOrder(x)) {
+            int relativeOffsetEnd = relativeOffset + fragment.getLength();
+            if (relativeOffset < endRelativeOffset && relativeOffsetEnd > startRelativeOffset) {
+              fragment.draw(fragment.getStartX(), y,
+                            Math.max(0, startRelativeOffset - relativeOffset),
+                            Math.min(relativeOffsetEnd, endRelativeOffset) - relativeOffset).accept(g);
+            }
+            relativeOffset = relativeOffsetEnd;
           }
-          relativeOffset = relativeOffsetEnd;
-        }
+        };
       }
+      return g -> {};
     }
   }
 

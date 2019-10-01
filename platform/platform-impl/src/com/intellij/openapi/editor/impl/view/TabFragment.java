@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
+import java.util.function.Consumer;
 
 /**
  * A single Tab character
@@ -39,7 +40,8 @@ class TabFragment implements LineFragment {
   }
 
   @Override
-  public void draw(Graphics2D g, float x, float y, int startColumn, int endColumn) {
+  public Consumer<Graphics2D> draw(float x, float y, int startColumn, int endColumn) {
+    return g -> {};
   }
 
   @NotNull
