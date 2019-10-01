@@ -154,7 +154,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     for (PendingDynamicPluginInstall pendingPluginInstall : myDynamicPluginsToInstall.values()) {
       if (!uninstallsRequiringRestart.contains(pendingPluginInstall.getPluginDescriptor().getPluginId())) {
         PluginInstaller.installAndLoadDynamicPlugin(pendingPluginInstall.getFile(), parent,
-                                                    (IdeaPluginDescriptorImpl)pendingPluginInstall.getPluginDescriptor());
+                                                    pendingPluginInstall.getPluginDescriptor());
       }
       else {
         try {
@@ -170,8 +170,8 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
   }
 
   private boolean applyEnableDisablePlugins(Map<PluginId, Boolean> enabledMap) {
-    List<IdeaPluginDescriptor> pluginDescriptorsToDisable = new ArrayList<>();
-    List<IdeaPluginDescriptor> pluginDescriptorsToEnable = new ArrayList<>();
+    List<IdeaPluginDescriptorImpl> pluginDescriptorsToDisable = new ArrayList<>();
+    List<IdeaPluginDescriptorImpl> pluginDescriptorsToEnable = new ArrayList<>();
 
     int rowCount = getRowCount();
     for (int i = 0; i < rowCount; i++) {
@@ -205,8 +205,8 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
       PluginManagerMain.LOG.error(e);
     }
 
-    if (ContainerUtil.all(pluginDescriptorsToDisable, (plugin) -> DynamicPlugins.isUnloadSafe(plugin)) &&
-        ContainerUtil.all(pluginDescriptorsToEnable, (plugin) -> DynamicPlugins.isUnloadSafe(plugin))) {
+    if (ContainerUtil.all(pluginDescriptorsToDisable, (plugin) -> DynamicPlugins.allowLoadUnloadWithoutRestart(plugin)) &&
+        ContainerUtil.all(pluginDescriptorsToEnable, (plugin) -> DynamicPlugins.allowLoadUnloadWithoutRestart(plugin))) {
       boolean needRestart = false;
       for (IdeaPluginDescriptor descriptor : pluginDescriptorsToDisable) {
         if (!DynamicPlugins.unloadPlugin((IdeaPluginDescriptorImpl)descriptor)) {
@@ -310,7 +310,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     boolean allowUninstallWithoutRestart = true;
     if (updateDescriptor != null) {
       IdeaPluginDescriptorImpl installedPluginDescriptor = PluginManagerCore.loadDescriptor(descriptor.getPath(), PluginManagerCore.PLUGIN_XML, true);
-      if (installedPluginDescriptor == null || !DynamicPlugins.isUnloadSafe(installedPluginDescriptor)) {
+      if (installedPluginDescriptor == null || !DynamicPlugins.allowLoadUnloadWithoutRestart(installedPluginDescriptor)) {
         allowUninstallWithoutRestart = false;
       }
       else {
@@ -343,13 +343,19 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
       boolean error = false;
       boolean showErrors = true;
       boolean restartRequired = true;
+      List<PendingDynamicPluginInstall> pluginsToInstallSynchronously = new ArrayList<>();
 
       try {
         PluginInstallOperation operation = new PluginInstallOperation(pluginsToInstall, allPlugins, this, info.indicator);
         operation.setAllowInstallWithoutRestart(allowInstallWithoutRestart);
         operation.run();
         for (PendingDynamicPluginInstall install : operation.getPendingDynamicPluginInstalls()) {
-          myDynamicPluginsToInstall.put(install.getPluginDescriptor().getPluginId(), install);
+          if (DynamicPlugins.allowLoadUnloadSynchronously(install.getPluginDescriptor())) {
+            pluginsToInstallSynchronously.add(install);
+          }
+          else {
+            myDynamicPluginsToInstall.put(install.getPluginDescriptor().getPluginId(), install);
+          }
         }
 
         error = !operation.isSuccess();
@@ -369,7 +375,12 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
       boolean _showErrors = showErrors;
       boolean finalRestartRequired = restartRequired;
       ApplicationManager.getApplication()
-        .invokeLater(() -> info.finish(success, _cancel, _showErrors, finalRestartRequired), ModalityState.any());
+        .invokeLater(() -> {
+          for (PendingDynamicPluginInstall install : pluginsToInstallSynchronously) {
+            PluginInstaller.installAndLoadDynamicPlugin(install.getFile(), myInstalledPanel, install.getPluginDescriptor());
+          }
+          info.finish(success, _cancel, _showErrors, finalRestartRequired);
+        }, ModalityState.any());
     });
   }
 
@@ -467,13 +478,6 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
       if (success) {
         appendOrUpdateDescriptor(descriptor, restartRequired);
         appendDependsAfterInstall();
-        if (!restartRequired) {
-          try {
-            apply(null);
-          } catch (ConfigurationException e) {
-            PluginManagerMain.LOG.error(e);
-          }
-        }
       }
     }
     else if (success) {

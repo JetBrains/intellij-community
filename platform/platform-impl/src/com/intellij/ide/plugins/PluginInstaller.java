@@ -70,7 +70,7 @@ public class PluginInstaller {
           PluginManagerMain.LOG.error("Plugin is bundled: " + pluginDescriptor.getPluginId());
         }
         else {
-          boolean needRestart = !DynamicPlugins.isUnloadSafe(pluginDescriptor);
+          boolean needRestart = !DynamicPlugins.allowLoadUnloadWithoutRestart((IdeaPluginDescriptorImpl)pluginDescriptor);
           if (needRestart) {
             uninstallAfterRestart(pluginDescriptor);
           }
@@ -219,7 +219,7 @@ public class PluginInstaller {
         oldFile = installedPlugin.getPath();
       }
 
-      boolean installWithoutRestart = oldFile == null && DynamicPlugins.isUnloadSafe(pluginDescriptor);
+      boolean installWithoutRestart = oldFile == null && DynamicPlugins.allowLoadUnloadWithoutRestart(pluginDescriptor);
       if (!installWithoutRestart) {
         installAfterRestart(file, false, oldFile, pluginDescriptor);
       }

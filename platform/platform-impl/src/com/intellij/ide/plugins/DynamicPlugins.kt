@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins
 
+import com.intellij.ide.ui.UIThemeProvider
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl
@@ -34,10 +35,10 @@ object DynamicPlugins {
   private val LOG = Logger.getInstance(DynamicPlugins::class.java)
 
   @JvmStatic
-  fun isUnloadSafe(pluginDescriptor: IdeaPluginDescriptor): Boolean {
-    if (!ApplicationManager.getApplication().isInternal) return false
-
-    if (pluginDescriptor !is IdeaPluginDescriptorImpl) return false
+  fun allowLoadUnloadWithoutRestart(pluginDescriptor: IdeaPluginDescriptorImpl): Boolean {
+    if (!ApplicationManager.getApplication().isInternal) {
+      return allowLoadUnloadSynchronously(pluginDescriptor)
+    }
 
     val anyProject = ProjectManager.getInstance().openProjects.firstOrNull() ?:
                      ProjectManager.getInstance().defaultProject
@@ -54,10 +55,27 @@ object DynamicPlugins {
       }
     }
 
+    return hasNoComponents(pluginDescriptor) &&
+           (ActionManager.getInstance() as ActionManagerImpl).canUnloadActions(pluginDescriptor)
+  }
+
+  /**
+   * Checks if the plugin can be loaded/unloaded immediately when the corresponding action is invoked in the
+   * plugins settings, without pressing the Apply button.
+   */
+  @JvmStatic
+  fun allowLoadUnloadSynchronously(pluginDescriptor: IdeaPluginDescriptorImpl): Boolean {
+    val extensions = pluginDescriptor.extensions
+    if (extensions != null && !extensions.all { it.key == UIThemeProvider.EP_NAME.name }) {
+      return false
+    }
+    return hasNoComponents(pluginDescriptor) && pluginDescriptor.actionDescriptionElements.isNullOrEmpty()
+  }
+
+  private fun hasNoComponents(pluginDescriptor: IdeaPluginDescriptorImpl): Boolean {
     return isUnloadSafe(pluginDescriptor.appContainerDescriptor) &&
            isUnloadSafe(pluginDescriptor.projectContainerDescriptor) &&
-           isUnloadSafe(pluginDescriptor.moduleContainerDescriptor) &&
-           (ActionManager.getInstance() as ActionManagerImpl).canUnloadActions(pluginDescriptor)
+           isUnloadSafe(pluginDescriptor.moduleContainerDescriptor)
   }
 
   private fun isUnloadSafe(containerDescriptor: ContainerDescriptor): Boolean {
