@@ -1,4 +1,4 @@
-// "Add on demand static import for 'java.util.Arrays'" "true"
+// "Add on-demand static import for 'java.util.Arrays'" "true"
 import java.util.Arrays;
 
 public class MyFile {

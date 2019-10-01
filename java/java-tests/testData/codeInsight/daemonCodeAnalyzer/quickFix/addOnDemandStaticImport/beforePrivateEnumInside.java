@@ -1,4 +1,4 @@
-// "Add on demand static import for 'test.Outer.State'" "false"
+// "Add on-demand static import for 'test.Outer.State'" "false"
 package test;
 
 public class Outer {
