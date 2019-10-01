@@ -102,7 +102,7 @@ public class PyInterpreterInspection extends PyInspection {
   }
 
   private static boolean isFileIgnored(@NotNull PyFile pyFile) {
-    return PyInspectionExtension.EP_NAME.getExtensionList().stream().anyMatch(ep -> ep.ignoreMissingInterpreter(pyFile));
+    return PyInspectionExtension.EP_NAME.getExtensionList().stream().anyMatch(ep -> ep.ignoreInterpreterWarnings(pyFile));
   }
 
   public static final class ConfigureInterpreterFix implements LocalQuickFix {

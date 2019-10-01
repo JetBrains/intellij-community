@@ -108,9 +108,9 @@ public abstract class PyInspectionExtension {
    * Checks whether Python interpreter is required for the python file.
    *
    * @param file file being analyzed
-   * @return true if missing Python interpreter should be ignored
+   * @return true if warnings produced by {@link PyInterpreterInspection} should be ignored
    */
-  public boolean ignoreMissingInterpreter(@NotNull PyFile file) {
+  public boolean ignoreInterpreterWarnings(@NotNull PyFile file) {
     return false;
   }
 }
