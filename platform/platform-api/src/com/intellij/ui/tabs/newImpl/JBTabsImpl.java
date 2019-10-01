@@ -289,12 +289,11 @@ public class JBTabsImpl extends JComponent
           myMouseInsideTabsArea = inside;
           afterScroll.cancelAllRequests();
           if (!inside) {
-            afterScroll.addRequest(new Runnable() {
-              @Override
-              public void run() {
-                if (!myMouseInsideTabsArea) {
-                  doLayoutTwice();
-                }
+            afterScroll.addRequest(() -> {
+              // here is no any "isEDT"-checks <== this task should be called in EDT <==
+              // <== Alarm instance executes tasks in EDT <== used constructor of Alarm uses EDT for tasks by default
+              if (!myMouseInsideTabsArea) {
+                relayout(false, false);
               }
             }, 500);
           }
@@ -891,16 +890,6 @@ public class JBTabsImpl extends JComponent
     return info;
   }
 
-  // Looks hacky but makes selected tab scrolled to visible area precisely
-  private void doLayoutTwice() {
-    ApplicationManager.getApplication().invokeLater(() -> {
-      doLayout();
-      ApplicationManager.getApplication().invokeLater(() -> {
-        doLayout();
-      });
-    });
-  }
-
   protected TabLabel createTabLabel(TabInfo info) {
     return new TabLabel(this, info);
   }
@@ -1175,7 +1164,6 @@ public class JBTabsImpl extends JComponent
     }
     else if (TabInfo.ICON.equals(evt.getPropertyName())) {
       updateIcon(tabInfo);
-      doLayoutTwice();
     }
     else if (TabInfo.TAB_COLOR.equals(evt.getPropertyName())) {
       updateColor(tabInfo);
