@@ -294,7 +294,7 @@ public class ChangesViewManager implements ChangesViewEx,
       myView.getGroupingSupport().setGroupingKeysOrSkip(myChangesViewManager.myState.groupingKeys);
       myView.addTreeSelectionListener(e -> {
         boolean fromModelRefresh = myModelUpdateInProgress;
-        invokeLater(() -> updatePreview(fromModelRefresh));
+        triggerUpdatePreview(fromModelRefresh);
       });
       myView.addGroupingChangeListener(e -> {
         myChangesViewManager.myState.groupingKeys = myView.getGroupingSupport().getGroupingKeys();
@@ -394,6 +394,13 @@ public class ChangesViewManager implements ChangesViewEx,
 
       scheduleRefresh();
       updatePreview(false);
+    }
+
+    private void triggerUpdatePreview(boolean fromModelRefresh) {
+      if (Registry.is("show.diff.as.editor.tab"))
+        updatePreview(fromModelRefresh);
+      else
+        invokeLater(() -> updatePreview(fromModelRefresh));
     }
 
     @Override
