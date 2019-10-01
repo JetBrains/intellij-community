@@ -1,5 +1,6 @@
 package com.intellij.jps.cache.loader;
 
+import com.intellij.CommonBundle;
 import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.jps.cache.JpsCachesUtils;
@@ -8,26 +9,36 @@ import com.intellij.jps.cache.client.JpsServerClient;
 import com.intellij.jps.cache.git.GitRepositoryUtil;
 import com.intellij.jps.cache.hashing.PersistentCachingModuleHashingService;
 import com.intellij.jps.cache.loader.JpsOutputLoader.LoaderStatus;
+import com.intellij.jps.cache.ui.SegmentedProgressIndicatorManager;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.PerformInBackgroundOption;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 
 public class JpsOutputLoaderManager implements ProjectComponent {
   private static final Logger LOG = Logger.getInstance("com.intellij.jps.cache.loader.JpsOutputLoaderManager");
   private static final String LATEST_COMMIT_ID = "JpsOutputLoaderManager.latestCommitId";
   private static final String GROUP_DISPLAY_ID = "Jps Cache Loader";
+  private static final double TOTAL_SEGMENT_SIZE = 0.9;
   private PersistentCachingModuleHashingService myModuleHashingService;
   private final ExecutorService ourThreadPool;
   private List<JpsOutputLoader> myJpsOutputLoadersLoaders;
@@ -83,27 +94,41 @@ public class JpsOutputLoaderManager implements ProjectComponent {
   }
 
   private void load(Set<String> allCacheKeys) {
-    String previousCommitId = PropertiesComponent.getInstance().getValue(LATEST_COMMIT_ID);
-    Iterator<String> commitsIterator = GitRepositoryUtil.getCommitsIterator(myProject);
-    String commitId = "";
-    while (commitsIterator.hasNext() && !allCacheKeys.contains(commitId)) {
-      commitId = commitsIterator.next();
-    }
+    ProgressManager.getInstance().runProcess(() -> {
+      ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+      indicator.setText("Calculating nearest commit with portable cache");
 
-    if (!allCacheKeys.contains(commitId)) {
-      LOG.warn("Not found any caches for the latest commits in the brunch");
-      return;
-    }
-    if (previousCommitId != null && commitId.equals(previousCommitId)) {
-      LOG.debug("The system contains up to date caches");
-      return;
-    }
-    startLoadingForCommit(commitId);
+      String previousCommitId = PropertiesComponent.getInstance().getValue(LATEST_COMMIT_ID);
+      Iterator<String> commitsIterator = GitRepositoryUtil.getCommitsIterator(myProject);
+      String commitId = "";
+      while (commitsIterator.hasNext() && !allCacheKeys.contains(commitId)) {
+        commitId = commitsIterator.next();
+      }
+
+      if (!allCacheKeys.contains(commitId)) {
+        LOG.warn("Not found any caches for the latest commits in the brunch");
+        return;
+      }
+      if (previousCommitId != null && commitId.equals(previousCommitId)) {
+        LOG.debug("The system contains up to date caches");
+        return;
+      }
+      startLoadingForCommit(commitId);
+    }, createProcessIndicator(myProject, "Download JPS Caches"));
   }
 
   private void startLoadingForCommit(String commitId) {
+    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+    indicator.setText("Fetching cache for commit: " + commitId);
+    indicator.setFraction(0.05);
+    List<JpsOutputLoader> loaders = getLoaders(myProject);
     List<CompletableFuture<LoaderStatus>> completableFutures =
-      ContainerUtil.map(getLoaders(myProject), loader -> CompletableFuture.supplyAsync(() -> loader.load(commitId), ourThreadPool));
+      ContainerUtil.map(loaders, loader -> {
+        return CompletableFuture.supplyAsync(() -> {
+          SegmentedProgressIndicatorManager indicatorManager = new SegmentedProgressIndicatorManager(indicator, TOTAL_SEGMENT_SIZE / loaders.size());
+          return loader.load(commitId, indicatorManager);
+        }, ourThreadPool);
+      });
 
     CompletableFuture<LoaderStatus> initialFuture = completableFutures.get(0);
     if (completableFutures.size() > 1) {
@@ -112,33 +137,44 @@ public class JpsOutputLoaderManager implements ProjectComponent {
       }
     }
 
-    // Computation with loaders results. If at least one of them failed rollback all job
-    initialFuture.thenAccept(loaderStatus -> {
-      LOG.debug("Loading finished with " + loaderStatus + " status");
-      CompletableFuture.allOf(getLoaders(myProject).stream().map(loader -> {
-        if (loaderStatus == LoaderStatus.FAILED) {
-          return CompletableFuture.runAsync(() -> loader.rollback(), ourThreadPool);
-        }
-        return CompletableFuture.runAsync(() -> loader.apply(), ourThreadPool);
-      }).toArray(CompletableFuture[]::new))
-        .thenRun(() -> {
-          if (loaderStatus == LoaderStatus.COMPLETE) {
-            PropertiesComponent.getInstance().setValue(LATEST_COMMIT_ID, commitId);
-            ApplicationManager.getApplication().invokeLater(() -> {
-              Notification notification = new Notification(GROUP_DISPLAY_ID, GROUP_DISPLAY_ID, "Jps cache loaded successfully for commit " + commitId,
-                                                           NotificationType.INFORMATION);
-              Notifications.Bus.notify(notification);
-            });
-            LOG.debug("Loading finished");
-          } else {
-            ApplicationManager.getApplication().invokeLater(() -> {
-              Notification notification = new Notification(GROUP_DISPLAY_ID, GROUP_DISPLAY_ID, "Couldn't load jps cache for commit " + commitId,
-                                                           NotificationType.WARNING);
-              Notifications.Bus.notify(notification);
-            });
+    try {
+      // Computation with loaders results. If at least one of them failed rollback all job
+      initialFuture.thenAccept(loaderStatus -> {
+        LOG.debug("Loading finished with " + loaderStatus + " status");
+        CompletableFuture.allOf(getLoaders(myProject).stream().map(loader -> {
+          indicator.setFraction(0.97);
+          if (loaderStatus == LoaderStatus.FAILED) {
+            indicator.setText("Fetching cache failed, rolling back");
+            return CompletableFuture.runAsync(() -> loader.rollback(), ourThreadPool);
           }
-        });
-    });
+          indicator.setText("Fetching cache complete successfully, applying changes ");
+          return CompletableFuture.runAsync(() -> loader.apply(), ourThreadPool);
+        }).toArray(CompletableFuture[]::new))
+          .thenRun(() -> {
+            if (loaderStatus == LoaderStatus.COMPLETE) {
+              PropertiesComponent.getInstance().setValue(LATEST_COMMIT_ID, commitId);
+              ApplicationManager.getApplication().invokeLater(() -> {
+                Notification notification = new Notification(GROUP_DISPLAY_ID, GROUP_DISPLAY_ID, "Jps cache loaded successfully for commit " + commitId,
+                                                             NotificationType.INFORMATION);
+                Notifications.Bus.notify(notification);
+              });
+              LOG.debug("Loading finished");
+            } else {
+              ApplicationManager.getApplication().invokeLater(() -> {
+                Notification notification = new Notification(GROUP_DISPLAY_ID, GROUP_DISPLAY_ID, "Couldn't load jps cache for commit " + commitId,
+                                                             NotificationType.WARNING);
+                Notifications.Bus.notify(notification);
+              });
+            }
+          });
+      }).get();
+    }
+    catch (InterruptedException e) {
+      e.printStackTrace();
+    }
+    catch (ExecutionException e) {
+      e.printStackTrace();
+    }
   }
 
   private List<JpsOutputLoader> getLoaders(@NotNull Project project) {
@@ -155,5 +191,14 @@ public class JpsOutputLoaderManager implements ProjectComponent {
 
   private static int getThreadPoolSize() {
     return (Runtime.getRuntime().availableProcessors() / 2) > 3 ? 3 : 1;
+  }
+
+  private static ProgressIndicator createProcessIndicator(@NotNull Project project, @NotNull String title) {
+    BackgroundableProcessIndicator processIndicator = new BackgroundableProcessIndicator(project, title,
+                                                                                         PerformInBackgroundOption.ALWAYS_BACKGROUND,
+                                                                                         CommonBundle.getCancelButtonText(),
+                                                                                         CommonBundle.getCancelButtonText(), true);
+    processIndicator.setIndeterminate(false);
+    return processIndicator;
   }
 }

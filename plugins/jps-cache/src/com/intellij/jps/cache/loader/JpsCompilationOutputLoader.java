@@ -2,6 +2,7 @@ package com.intellij.jps.cache.loader;
 
 import com.intellij.jps.cache.client.JpsServerClient;
 import com.intellij.jps.cache.hashing.PersistentCachingModuleHashingService;
+import com.intellij.jps.cache.ui.SegmentedProgressIndicatorManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.CompilerModuleExtension;
@@ -35,7 +36,7 @@ class JpsCompilationOutputLoader implements JpsOutputLoader {
   }
 
   @Override
-  public LoaderStatus load(@NotNull String commitId) {
+  public LoaderStatus load(@NotNull String commitId, @NotNull SegmentedProgressIndicatorManager progressIndicatorManager) {
     myTmpFolderToModuleName = null;
     CompilerProjectExtension projectExtension = CompilerProjectExtension.getInstance(myProject);
     if (projectExtension == null || projectExtension.getCompilerOutputUrl() == null) {
@@ -45,22 +46,30 @@ class JpsCompilationOutputLoader implements JpsOutputLoader {
     File compilerOutputDir = new File(VfsUtilCore.urlToPath(projectExtension.getCompilerOutputUrl()));
 
     File productionDir = new File(compilerOutputDir, CompilerModuleExtension.PRODUCTION);
+    progressIndicatorManager.getProgressIndicator().setText("Calculating affected production modules");
     Map<String, String> affectedProductionModules = getAffectedModules(productionDir, myHashingService::getAffectedProduction,
                                                                        myHashingService::computeProductionHashesForProject);
-    FileUtil.createDirectory(productionDir);
-    Pair<Boolean, Map<File, String>> downloadResultsPair = myClient.downloadCompiledModules(myProject, CompilerModuleExtension.PRODUCTION,
-                                                                                            affectedProductionModules, productionDir);
-    myTmpFolderToModuleName = downloadResultsPair.second;
-    if (!downloadResultsPair.first) return LoaderStatus.FAILED;
+    if (affectedProductionModules.size() > 0) {
+      FileUtil.createDirectory(productionDir);
+      Pair<Boolean, Map<File, String>> downloadResultsPair = myClient.downloadCompiledModules(myProject, progressIndicatorManager,
+                                                                                              CompilerModuleExtension.PRODUCTION,
+                                                                                              affectedProductionModules, productionDir);
+      myTmpFolderToModuleName = downloadResultsPair.second;
+      if (!downloadResultsPair.first) return LoaderStatus.FAILED;
+    }
 
     File testDir = new File(compilerOutputDir, CompilerModuleExtension.TEST);
+    progressIndicatorManager.getProgressIndicator().setText("Calculating affected test modules");
     Map<String, String> affectedTestModules = getAffectedModules(testDir, myHashingService::getAffectedTests,
                                                                  myHashingService::computeTestHashesForProject);
-    FileUtil.createDirectory(testDir);
-    downloadResultsPair = myClient.downloadCompiledModules(myProject, CompilerModuleExtension.TEST, affectedTestModules, testDir);
-    myTmpFolderToModuleName.putAll(downloadResultsPair.second);
-    if (!downloadResultsPair.first) return LoaderStatus.FAILED;
-
+    if (affectedTestModules.size() > 0) {
+      FileUtil.createDirectory(testDir);
+      Pair<Boolean, Map<File, String>> downloadResultsPair = myClient.downloadCompiledModules(myProject, progressIndicatorManager,
+                                                                                              CompilerModuleExtension.TEST,
+                                                                                              affectedTestModules, testDir);
+      myTmpFolderToModuleName.putAll(downloadResultsPair.second);
+      if (!downloadResultsPair.first) return LoaderStatus.FAILED;
+    }
     return LoaderStatus.COMPLETE;
   }
 
@@ -115,7 +124,7 @@ class JpsCompilationOutputLoader implements JpsOutputLoader {
       modulesWithRemovedOutDir.forEach(moduleName -> {
         affectedModulesMap.put(moduleName, allModulesMap.get(moduleName));
       });
-      LOG.warn("Compilation output affected for the " + affectedModulesMap.size() + " modules. Computation took " + (System.currentTimeMillis() - start) + "ms");
+      LOG.debug("Compilation output affected for the " + affectedModulesMap.size() + " modules. Computation took " + (System.currentTimeMillis() - start) + "ms");
       return affectedModulesMap;
     }
     LOG.warn("Compilation output doesn't exist, force to download " + allModulesMap.size() +" modules. Computation took " +  (System.currentTimeMillis() - start) + "ms");

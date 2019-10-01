@@ -2,6 +2,7 @@ package com.intellij.jps.cache.loader;
 
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.jps.cache.client.JpsServerClient;
+import com.intellij.jps.cache.ui.SegmentedProgressIndicatorManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -27,12 +28,12 @@ class JpsCacheLoader implements JpsOutputLoader {
   }
 
   @Override
-  public LoaderStatus load(@NotNull String commitId) {
+  public LoaderStatus load(@NotNull String commitId, @NotNull SegmentedProgressIndicatorManager indicatorManager) {
     LOG.debug("Loading JPS caches for commit: " + commitId);
     myTmpCacheFolder = null;
 
     File targetDir = myBuildManager.getBuildSystemDirectory().toFile();
-    Pair<Boolean, File> downloadResultPair = myClient.downloadCacheById(myProject, commitId, targetDir);
+    Pair<Boolean, File> downloadResultPair = myClient.downloadCacheById(myProject, indicatorManager, commitId, targetDir);
     myTmpCacheFolder = downloadResultPair.second;
     if (!downloadResultPair.first) return LoaderStatus.FAILED;
     return LoaderStatus.COMPLETE;

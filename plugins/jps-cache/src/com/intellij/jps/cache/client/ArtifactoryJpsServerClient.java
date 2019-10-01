@@ -3,16 +3,12 @@ package com.intellij.jps.cache.client;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.intellij.CommonBundle;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.util.ExecUtil;
+import com.intellij.jps.cache.ui.SegmentedProgressIndicatorManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.PerformInBackgroundOption;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
@@ -20,7 +16,6 @@ import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.download.DownloadableFileDescription;
 import com.intellij.util.download.DownloadableFileService;
-import com.intellij.util.download.FileDownloader;
 import com.intellij.util.io.HttpRequests;
 import com.intellij.util.io.ZipUtil;
 import org.jetbrains.annotations.NotNull;
@@ -77,44 +72,43 @@ public class ArtifactoryJpsServerClient implements JpsServerClient {
   }
 
   @Override
-  public Pair<Boolean, File> downloadCacheById(@NotNull Project project, @NotNull String cacheId, @NotNull File targetDir) {
+  public Pair<Boolean, File> downloadCacheById(@NotNull Project project, @NotNull SegmentedProgressIndicatorManager indicatorManager,
+                                               @NotNull String cacheId, @NotNull File targetDir) {
     String downloadUrl = ARTIFACTORY_URL + REPOSITORY_NAME + "/caches/" + cacheId;
     String fileName = "portable-build-cache.zip";
     File tmpFolder = new File(targetDir, "tmp");
     DownloadableFileService service = DownloadableFileService.getInstance();
     DownloadableFileDescription description = service.createFileDescription(downloadUrl, fileName);
-    FileDownloader downloader = service.createDownloader(Collections.singletonList(description), fileName);
-
+    JpsOutputsDownloader outputsDownloader = new JpsOutputsDownloader(Collections.singletonList(description), indicatorManager);
 
     LOG.debug("Downloading JPS caches from: " + downloadUrl);
-    return ProgressManager.getInstance().runProcess(() -> {
-      File zipFile = null;
-      try {
-        List<Pair<File, DownloadableFileDescription>> pairs = downloader.download(targetDir);
-        Pair<File, DownloadableFileDescription> first = ContainerUtil.getFirstItem(pairs);
-        zipFile = first != null ? first.first : null;
-        if (zipFile == null) {
-          LOG.warn("Failed to download JPS caches");
-          return new Pair<>(false, tmpFolder);
-        }
-        ZipUtil.extract(zipFile, tmpFolder, null);
-        FileUtil.delete(zipFile);
-        return new Pair<>(true, tmpFolder);
-      }
-      catch (IOException e) {
-        LOG.warn("Failed to download JPS caches from URL: " + downloadUrl, e);
-        if (zipFile != null && zipFile.exists()) {
-          LOG.warn("Removing downloaded file: " + zipFile.getAbsolutePath());
-          FileUtil.delete(zipFile);
-        }
+    File zipFile = null;
+    try {
+      List<Pair<File, DownloadableFileDescription>> pairs = outputsDownloader.download(targetDir);
+      Pair<File, DownloadableFileDescription> first = ContainerUtil.getFirstItem(pairs);
+      zipFile = first != null ? first.first : null;
+      if (zipFile == null) {
+        LOG.warn("Failed to download JPS caches");
         return new Pair<>(false, tmpFolder);
       }
-    }, createProcessIndicator(project, "Download JPS Caches"));
+      ZipUtil.extract(zipFile, tmpFolder, null);
+      FileUtil.delete(zipFile);
+      return new Pair<>(true, tmpFolder);
+    }
+    catch (IOException e) {
+      LOG.warn("Failed to download JPS caches from URL: " + downloadUrl, e);
+      if (zipFile != null && zipFile.exists()) {
+        LOG.warn("Removing downloaded file: " + zipFile.getAbsolutePath());
+        FileUtil.delete(zipFile);
+      }
+      return new Pair<>(false, tmpFolder);
+    }
   }
 
   @Override
-  public Pair<Boolean, Map<File, String>> downloadCompiledModules(@NotNull Project project, @NotNull String prefix,
-                                                                  @NotNull Map<String, String> affectedModules, @NotNull File targetDir) {
+  public Pair<Boolean, Map<File, String>> downloadCompiledModules(@NotNull Project project, @NotNull SegmentedProgressIndicatorManager indicatorManager,
+                                                                  @NotNull String prefix, @NotNull Map<String, String> affectedModules,
+                                                                  @NotNull File targetDir) {
     Map<String, String> urlToModuleNameMap = affectedModules.entrySet().stream().collect(Collectors.toMap(
                             entry -> ARTIFACTORY_URL + REPOSITORY_NAME + "/binaries/" + entry.getKey() + "/" + prefix + "/" + entry.getValue(),
                             entry -> entry.getKey()));
@@ -123,33 +117,31 @@ public class ArtifactoryJpsServerClient implements JpsServerClient {
     List<DownloadableFileDescription> descriptions = ContainerUtil.map(urlToModuleNameMap.entrySet(),
                                                                        entry -> service.createFileDescription(entry.getKey(),
                                                                        entry.getValue() + ".zip"));
-    FileDownloader downloader = service.createDownloader(descriptions, "Compilation outputs");
+    JpsOutputsDownloader outputsDownloader = new JpsOutputsDownloader(descriptions, indicatorManager);
 
-    return ProgressManager.getInstance().runProcess(() -> {
-      File zipFile = null;
-      try {
-        Map<File, String> result = new HashMap<>();
-        for (Pair<File, DownloadableFileDescription> pair : downloader.download(targetDir)) {
-          zipFile = pair.first;
-          String downloadUrl = pair.second.getDownloadUrl();
-          String moduleName = urlToModuleNameMap.get(downloadUrl);
-          LOG.debug("Downloaded JPS compiled module from: " + downloadUrl);
-          File tmpFolder = new File(targetDir, moduleName + "_tmp");
-          ZipUtil.extract(zipFile, tmpFolder, null);
-          FileUtil.delete(zipFile);
-          result.put(tmpFolder, moduleName);
-        }
-        return new Pair<>(true, result);
+    File zipFile = null;
+    try {
+      Map<File, String> result = new HashMap<>();
+      for (Pair<File, DownloadableFileDescription> pair : outputsDownloader.download(targetDir)) {
+        zipFile = pair.first;
+        String downloadUrl = pair.second.getDownloadUrl();
+        String moduleName = urlToModuleNameMap.get(downloadUrl);
+        LOG.debug("Downloaded JPS compiled module from: " + downloadUrl);
+        File tmpFolder = new File(targetDir, moduleName + "_tmp");
+        ZipUtil.extract(zipFile, tmpFolder, null);
+        FileUtil.delete(zipFile);
+        result.put(tmpFolder, moduleName);
       }
-      catch (IOException e) {
-        LOG.warn("Failed to download JPS compilation outputs", e);
-        if (zipFile != null && zipFile.exists()) {
-          LOG.warn("Removing downloaded file: " + zipFile.getAbsolutePath());
-          FileUtil.delete(zipFile);
-        }
-        return new Pair<>(false, Collections.emptyMap());
+      return new Pair<>(true, result);
+    }
+    catch (IOException e) {
+      LOG.warn("Failed to download JPS compilation outputs", e);
+      if (zipFile != null && zipFile.exists()) {
+        LOG.warn("Removing downloaded file: " + zipFile.getAbsolutePath());
+        FileUtil.delete(zipFile);
       }
-    }, createProcessIndicator(project, "Download Compilation Outputs"));
+      return new Pair<>(false, Collections.emptyMap());
+    }
   }
 
   @Override
@@ -220,14 +212,5 @@ public class ArtifactoryJpsServerClient implements JpsServerClient {
     else {
       return StreamUtil.readText(errorStream, StandardCharsets.UTF_8);
     }
-  }
-
-  private static ProgressIndicator createProcessIndicator(@NotNull Project project, @NotNull String title) {
-    BackgroundableProcessIndicator processIndicator = new BackgroundableProcessIndicator(project, title,
-                                                                                         PerformInBackgroundOption.ALWAYS_BACKGROUND,
-                                                                                         CommonBundle.getCancelButtonText(),
-                                                                                         CommonBundle.getCancelButtonText(), true);
-    processIndicator.setIndeterminate(false);
-    return processIndicator;
   }
 }
