@@ -167,7 +167,9 @@ class SingularMapHandler extends AbstractSingularHandler {
   }
 
   public String renderSuperBuilderConstruction(@NotNull PsiVariable psiVariable, @NotNull String fieldName) {
-    return renderBuildCode(psiVariable, fieldName, "b");
+    final String basicCode = renderBuildCode(psiVariable, fieldName, "b");
+    final String assignment = "this." + psiVariable.getName() + "=" + fieldName + ";\n";
+    return basicCode + assignment;
   }
 
   @Override
