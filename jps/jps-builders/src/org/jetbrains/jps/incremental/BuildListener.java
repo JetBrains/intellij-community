@@ -8,12 +8,13 @@ import org.jetbrains.jps.incremental.messages.FileGeneratedEvent;
 import java.util.EventListener;
 
 /**
- * @author Eugene Zhuravlev
+ * Implement this listener and {@link CompileContext#addBuildListener register} the implementation to receive events about files created,
+ * modified or deleted by the build process.
  */
-public interface BuildListener extends EventListener{
+public interface BuildListener extends EventListener {
   /**
-   * Note: when parallel build is on, might be called from several simultaneously running threads
-   * @param event
+   * This method is called when a builder creates new files or modifies existing files. <br>
+   * Note: when parallel build is on, might be called from several simultaneously running threads.
    */
   default void filesGenerated(@NotNull FileGeneratedEvent event) {
   }

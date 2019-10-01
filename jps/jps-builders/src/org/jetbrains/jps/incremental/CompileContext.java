@@ -48,6 +48,10 @@ public interface CompileContext extends UserDataHolder, MessageHandler {
   @Nullable
   String getBuilderParameter(String paramName);
 
+  /**
+   * Registers a listener which will receive events about files which are created, modified or deleted by the build process. In order to
+   * ensure that no events are lost this method may be called in {@link Builder#buildStarted}'s implementation.
+   */
   void addBuildListener(BuildListener listener);
 
   void removeBuildListener(BuildListener listener);
