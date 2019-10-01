@@ -161,8 +161,9 @@ public class HtmlParsing {
 
         String tagName = StringUtil.toLowerCase(originalTagName);
         while (childTerminatesParentInStack(tagName)) {
+          IElementType tagElementType = getHtmlTagElementType();
           PsiBuilder.Marker top = closeTag();
-          top.doneBefore(XmlElementType.HTML_TAG, tag);
+          top.doneBefore(tagElementType, tag);
         }
 
         myTagMarkersStack.push(tag);
@@ -327,7 +328,7 @@ public class HtmlParsing {
   }
 
   private void doneTag(PsiBuilder.Marker tag) {
-    tag.done(XmlElementType.HTML_TAG);
+    tag.done(getHtmlTagElementType());
     final String tagName = myTagNamesStack.peek();
     closeTag();
 
@@ -335,9 +336,14 @@ public class HtmlParsing {
     boolean isInlineTagContainer = HtmlUtil.isInlineTagContainerL(parentTagName);
     boolean isOptionalTagEnd = HtmlUtil.isOptionalEndForHtmlTagL(parentTagName);
     if (isInlineTagContainer && HtmlUtil.isHtmlBlockTagL(tagName) && isOptionalTagEnd && !HtmlUtil.isPossiblyInlineTag(tagName)) {
+      IElementType tagElementType = getHtmlTagElementType();
       PsiBuilder.Marker top = closeTag();
-      top.doneBefore(XmlElementType.HTML_TAG, tag);
+      top.doneBefore(tagElementType, tag);
     }
+  }
+
+  protected IElementType getHtmlTagElementType() {
+    return XmlElementType.HTML_TAG;
   }
 
   private void parseHeader(String tagName) {
