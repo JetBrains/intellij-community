@@ -2,12 +2,17 @@
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.fileTypes.ex.FakeFileType;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.search.FileTypeIndex;
 import com.intellij.psi.search.FileTypeIndexImpl;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Collection;
 
 /**
  * @author Dmitry Avdeev
@@ -15,14 +20,28 @@ import org.jetbrains.annotations.NotNull;
 public class FileTypeIndexTest extends BasePlatformTestCase {
 
   public void testAddFileType() {
-    addAndRemoveFileType();
+    FileTypeIndexImpl index = FileBasedIndexExtension.EXTENSION_POINT_NAME.findExtension(FileTypeIndexImpl.class);
+    myFixture.configureByText("foo.test", "abc");
+    FileTypeIndex.getFiles(PlainTextFileType.INSTANCE, GlobalSearchScope.allScope(getProject()));
+
+    FileType foo = registerFakeFileType();
+    int version = index.getVersion();
+    try {
+      assertNotSame(version, index.getVersion());
+      Collection<VirtualFile> files = FileTypeIndex.getFiles(foo, GlobalSearchScope.allScope(getProject()));
+      assertEquals(1, files.size());
+    }
+    finally {
+      FileTypeManagerEx.getInstanceEx().unregisterFileType(foo);
+    }
   }
 
-  static void addAndRemoveFileType() {
+  @NotNull
+   static FileType registerFakeFileType() {
     FileType foo = new FakeFileType() {
       @Override
       public boolean isMyFileType(@NotNull VirtualFile file) {
-        return true;
+        return file.getName().equals("foo.test");
       }
 
       @NotNull
@@ -37,15 +56,8 @@ public class FileTypeIndexTest extends BasePlatformTestCase {
         return "";
       }
     };
-    FileTypeIndexImpl index = new FileTypeIndexImpl();
-    int version = index.getVersion();
 
-    try {
-      FileTypeManagerEx.getInstanceEx().registerFileType(foo);
-      assertNotSame(version, index.getVersion());
-    }
-    finally {
-      FileTypeManagerEx.getInstanceEx().unregisterFileType(foo);
-    }
+    FileTypeManagerEx.getInstanceEx().registerFileType(foo);
+    return foo;
   }
 }

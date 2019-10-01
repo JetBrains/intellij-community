@@ -1,5 +1,8 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing;
 
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.psi.stubs.StubUpdatingIndex;
 import com.intellij.testFramework.LightVirtualFile;
@@ -14,7 +17,8 @@ public class FileBasedIndexTest extends LightJavaCodeInsightFixtureTestCase {
   public void testSurviveOnFileTypeChange() {
     myFixture.configureByText("Foo.java", "class Foo { String bar; }");
     myFixture.testHighlighting();
-    FileTypeIndexTest.addAndRemoveFileType();
+    FileType foo = FileTypeIndexTest.registerFakeFileType();
+    FileTypeManagerEx.getInstanceEx().unregisterFileType(foo);
     myFixture.configureByText("Bar.java", "class Bar { String bar; }");
     myFixture.testHighlighting();
   }
