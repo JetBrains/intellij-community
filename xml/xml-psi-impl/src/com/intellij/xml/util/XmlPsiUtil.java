@@ -29,6 +29,7 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.xml.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -75,9 +76,10 @@ public class XmlPsiUtil {
     return true;
   }
 
-  public static XmlElement findElement(final XmlElement parent, final IElementType.Predicate predicate){
+  @Nullable
+  public static XmlElement findElement(@NotNull final XmlElement parent, @NotNull final IElementType.Predicate predicate){
     final Ref<XmlElement> result = new Ref<>();
-    parent.processElements(new PsiElementProcessor(){
+    parent.processElements(new PsiElementProcessor<PsiElement>(){
       @Override
       public boolean execute(@NotNull PsiElement element){
         if(element instanceof XmlElement && predicate.matches(element.getNode().getElementType())){
