@@ -5,7 +5,6 @@ import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -16,11 +15,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.utils.MavenLog;
 
 import java.text.MessageFormat;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
 
 @State(name = "MavenRunner", storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)})
 public final class MavenRunner implements PersistentStateComponent<MavenRunnerSettings> {
@@ -97,7 +94,6 @@ public final class MavenRunner implements PersistentStateComponent<MavenRunnerSe
                           @Nullable Consumer<? super ProcessHandler> onAttach,
                           boolean isDelegateBuild) {
     if (commands.isEmpty()) return true;
-    LOG.assertTrue(!ApplicationManager.getApplication().isReadAccessAllowed());
 
     int count = 0;
     for (MavenRunnerParameters command : commands) {
@@ -107,31 +103,26 @@ public final class MavenRunner implements PersistentStateComponent<MavenRunnerSe
                                                command.getWorkingDirPath()));
         indicator.setText2(command.getGoals().toString());
       }
-      AtomicReference<ProcessHandler> buildHandler = new AtomicReference<>();
-      AtomicReference<ProcessEvent> terminatedEvent = new AtomicReference<>();
       ProgramRunner.Callback callback = descriptor -> {
-        buildHandler.set(descriptor.getProcessHandler());
         ProcessHandler handler = descriptor.getProcessHandler();
-        if (handler == null) return;
-        handler.addProcessListener(new ProcessAdapter() {
-          @Override
-          public void processTerminated(@NotNull ProcessEvent event) {
-            terminatedEvent.set(event);
-          }
-        });
-        if (onAttach != null) {
-          onAttach.consume(descriptor.getProcessHandler());
+        if (handler != null) {
+          handler.addProcessListener(new ProcessAdapter() {
+            @Override
+            public void startNotified(@NotNull ProcessEvent event) {
+              if (onAttach != null) {
+                onAttach.consume(handler);
+              }
+            }
+
+            @Override
+            public void processTerminated(@NotNull ProcessEvent event) {
+              updateTargetFolders();
+            }
+          });
         }
       };
-
-      buildHandler.get().waitFor();
-      if (terminatedEvent.get().getExitCode() != 0) {
-        MavenLog.LOG.error(terminatedEvent.get().getText());
-        updateTargetFolders();
-        return false;
-      }
+      MavenRunConfigurationType.runConfiguration(myProject, command, null, null, callback, isDelegateBuild);
     }
-    updateTargetFolders();
     return true;
   }
 
