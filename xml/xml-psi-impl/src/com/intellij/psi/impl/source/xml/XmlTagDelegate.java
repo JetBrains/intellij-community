@@ -67,7 +67,7 @@ public abstract class XmlTagDelegate {
   private volatile String myLocalName;
   private volatile TextRange[] myTextElements;
   private volatile Map<String, String> myAttributeValueMap;
-  private volatile boolean myHasNamespaceDeclarations;
+  private volatile Boolean myHasNamespaceDeclarations;
 
   public XmlTagDelegate(@NotNull XmlTag tag) {
     myTag = tag;
@@ -567,14 +567,10 @@ public abstract class XmlTagDelegate {
     final List<XmlAttribute> result = new ArrayList<>(10);
     processChildren(element -> {
       if (element instanceof XmlAttribute) {
-        XmlAttribute attribute = (XmlAttribute)element;
-        result.add(attribute);
-        if (!myHasNamespaceDeclarations && attribute.isNamespaceDeclaration()) myHasNamespaceDeclarations = true;
+        result.add((XmlAttribute)element);
       }
-      else if (element instanceof XmlToken && ((XmlToken)element).getTokenType() == XmlTokenType.XML_TAG_END) {
-        return false;
-      }
-      return true;
+      return !(element instanceof XmlToken)
+             || ((XmlToken)element).getTokenType() != XmlTokenType.XML_TAG_END;
     });
     return result.toArray(XmlAttribute.EMPTY_ARRAY);
   }
@@ -868,8 +864,26 @@ public abstract class XmlTagDelegate {
   }
 
   boolean hasNamespaceDeclarations() {
-    myTag.getAttributes();
-    return myHasNamespaceDeclarations;
+    Boolean result = myHasNamespaceDeclarations;
+    if (result == null) {
+      myHasNamespaceDeclarations = result = calculateHasNamespaceDeclarations();
+    }
+    return result;
+  }
+
+  @NotNull
+  private Boolean calculateHasNamespaceDeclarations() {
+    final Ref<Boolean> result = new Ref<>(Boolean.FALSE);
+    processChildren(element -> {
+      if (element instanceof XmlAttribute
+          && ((XmlAttribute)element).isNamespaceDeclaration()) {
+          result.set(Boolean.TRUE);
+          return false;
+      }
+      return !(element instanceof XmlToken)
+             || ((XmlToken)element).getTokenType() != XmlTokenType.XML_TAG_END;
+    });
+    return result.get();
   }
 
   @NotNull
