@@ -1018,7 +1018,7 @@ public final class UIUtil extends StartupUiUtil {
 
   @NotNull
   public static Color getToolTipForeground() {
-    return JBColor.namedColor("ToolTip.foreground", new JBColor(Gray.x00, Gray.xBB));
+    return JBColor.namedColor("ToolTip.foreground", new JBColor(Gray.x00, Gray.xBF));
   }
 
   public static Color getComboBoxDisabledForeground() {

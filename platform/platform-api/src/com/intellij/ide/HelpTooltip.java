@@ -91,7 +91,6 @@ import java.util.function.BooleanSupplier;
 
 public class HelpTooltip {
   private static final Color BACKGROUND_COLOR = JBColor.namedColor("ToolTip.background", new JBColor(0xf7f7f7, 0x474a4c));
-  private static final Color FOREGROUND_COLOR = JBColor.namedColor("ToolTip.foreground", new JBColor(0x1a1a1a, 0xbfbfbf));
   private static final Color SHORTCUT_COLOR = JBColor.namedColor("ToolTip.shortcutForeground", new JBColor(0x787878, 0x999999));
   private static final Color INFO_COLOR = JBColor.namedColor("ToolTip.infoForeground", UIUtil.getContextHelpForeground());
   private static final Color BORDER_COLOR = JBColor.namedColor("ToolTip.borderColor", new JBColor(0xadadad, 0x636569));
@@ -514,7 +513,7 @@ public class HelpTooltip {
   private class Header extends BoundWidthLabel {
     private Header(boolean obeyWidth) {
       setFont(deriveHeaderFont(getFont()));
-      setForeground(FOREGROUND_COLOR);
+      setForeground(UIUtil.getToolTipForeground());
 
       if (obeyWidth) {
         View v = BasicHTML.createHTMLView(this, String.format("<html>%s%s</html>", title, getShortcutAsHTML()));
@@ -540,7 +539,7 @@ public class HelpTooltip {
 
   private class Paragraph extends BoundWidthLabel {
     private Paragraph(String text, boolean hasTitle) {
-      setForeground(hasTitle ? INFO_COLOR : FOREGROUND_COLOR);
+      setForeground(hasTitle ? INFO_COLOR : UIUtil.getToolTipForeground());
       setFont(deriveDescriptionFont(getFont(), hasTitle));
 
       View v = BasicHTML.createHTMLView(this, String.format("<html>%s</html>", text));
