@@ -18,14 +18,14 @@ package org.jetbrains.groovy.compiler.rt;
 import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
-import java.util.*;
+import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Queue;
 
 /**
  * @noinspection UseOfSystemOutOrSystemErr,CallToPrintStackTrace
@@ -105,7 +105,7 @@ public class GroovycRunner {
     final List<URL> urls = new ArrayList<URL>();
     try {
       //noinspection IOResourceOpenedButNotSafelyClosed
-      BufferedReader reader = new BufferedReader(new FileReader(argsPath));
+      BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(argsPath), Charset.forName("UTF-8")));
       String classpath = reader.readLine();
       for (String s : classpath.split(File.pathSeparator)) {
         urls.add(new File(s).toURI().toURL());
