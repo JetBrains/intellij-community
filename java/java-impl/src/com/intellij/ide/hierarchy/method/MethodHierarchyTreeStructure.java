@@ -19,7 +19,7 @@ import java.util.Collections;
 import java.util.List;
 
 public final class MethodHierarchyTreeStructure extends HierarchyTreeStructure {
-  private final SmartPsiElementPointer myMethod;
+  private final SmartPsiElementPointer<PsiMethod> myMethod;
   private final String myScopeType;
 
   /**
@@ -135,8 +135,7 @@ public final class MethodHierarchyTreeStructure extends HierarchyTreeStructure {
 
   @Nullable
   public final PsiMethod getBaseMethod() {
-    final PsiElement element = myMethod.getElement();
-    return element instanceof PsiMethod ? (PsiMethod)element : null;
+    return myMethod.getElement();
   }
 
 
@@ -149,8 +148,10 @@ public final class MethodHierarchyTreeStructure extends HierarchyTreeStructure {
     final Collection<PsiClass> subclasses = getSubclasses(psiClass);
 
     final List<HierarchyNodeDescriptor> descriptors = new ArrayList<>(subclasses.size());
+    HierarchyBrowserManager.State state = HierarchyBrowserManager.getInstance(myProject).getState();
+    boolean hideNotImplemented = state != null && state.HIDE_CLASSES_WHERE_METHOD_NOT_IMPLEMENTED;
     for (final PsiClass aClass : subclasses) {
-      if (HierarchyBrowserManager.getInstance(myProject).getState().HIDE_CLASSES_WHERE_METHOD_NOT_IMPLEMENTED) {
+      if (hideNotImplemented) {
         if (shouldHideClass(aClass)) {
           continue;
         }
@@ -197,7 +198,7 @@ public final class MethodHierarchyTreeStructure extends HierarchyTreeStructure {
     return false;
   }
 
-  private boolean isAbstract(final PsiModifierListOwner owner) {
+  private static boolean isAbstract(final PsiModifierListOwner owner) {
     return owner.hasModifierProperty(PsiModifier.ABSTRACT);
   }
 
