@@ -71,7 +71,7 @@ public class XmlStubBasedTagBase<StubT extends XmlTagStub<?>>
 
   @Override
   public PsiElement getContext() {
-    XmlTagStub<?> stub = getGreenStub();
+    XmlTagStub<?> stub = getStub();
     if (stub != null) {
       if (!(stub instanceof PsiFileStub)) {
         return stub.getParentStub().getPsi();
