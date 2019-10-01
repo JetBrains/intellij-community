@@ -1,17 +1,18 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.documentation;
 
-import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleServiceManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.OptionTag;
-import com.intellij.util.xmlb.annotations.Transient;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.defaultProjectAwareService.PyDefaultProjectAwareService;
+import com.jetbrains.python.defaultProjectAwareService.PyDefaultProjectAwareServiceClasses;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
+import com.jetbrains.python.defaultProjectAwareService.PyDefaultProjectAwareServiceModuleConfigurator;
+import com.jetbrains.python.defaultProjectAwareService.PyDefaultProjectAwareModuleConfiguratorImpl;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
@@ -23,34 +24,48 @@ import java.util.List;
 /**
  * @author yole
  */
-@State(name = "PyDocumentationSettings")
-public class PyDocumentationSettings implements PersistentStateComponent<PyDocumentationSettings> {
-  public static final DocStringFormat DEFAULT_DOCSTRING_FORMAT = DocStringFormat.REST;
+public abstract class PyDocumentationSettings
+  extends PyDefaultProjectAwareService<PyDocumentationSettings.ServiceState,
+          PyDocumentationSettings,
+          PyDocumentationSettings.AppService,
+          PyDocumentationSettings.ModuleService> {
 
-  public static PyDocumentationSettings getInstance(@NotNull Module module) {
-    return ModuleServiceManager.getService(module, PyDocumentationSettings.class);
+  private static final PyDefaultProjectAwareServiceClasses<ServiceState, PyDocumentationSettings, AppService, ModuleService>
+    SERVICE_CLASSES = new PyDefaultProjectAwareServiceClasses<>(AppService.class, ModuleService.class);
+
+  final static DocStringFormat DEFAULT_DOC_STRING_FORMAT = DocStringFormat.PLAIN;
+  private static final PyDocumentationSettingsDetector DETECTOR = new PyDocumentationSettingsDetector();
+
+  protected PyDocumentationSettings() {
+    super(new ServiceState());
   }
 
-  @NotNull private DocStringFormat myDocStringFormat = DEFAULT_DOCSTRING_FORMAT;
-  private boolean myAnalyzeDoctest = true;
-  private boolean myRenderExternalDocumentation;
+  public static PyDocumentationSettings getInstance(@Nullable Module module) {
+    return SERVICE_CLASSES.getService(module);
+  }
 
-  public boolean isNumpyFormat(PsiFile file) {
+  @NotNull
+  public static PyDefaultProjectAwareServiceModuleConfigurator getConfigurator() {
+    return new PyDefaultProjectAwareModuleConfiguratorImpl<>(SERVICE_CLASSES, DETECTOR);
+  }
+
+
+  public final boolean isNumpyFormat(PsiFile file) {
     return isFormat(file, DocStringFormat.NUMPY);
   }
 
-  public boolean isPlain(PsiFile file) {
+  public final boolean isPlain(PsiFile file) {
     return isFormat(file, DocStringFormat.PLAIN);
   }
 
   private boolean isFormat(@Nullable PsiFile file, @NotNull DocStringFormat format) {
-    return file instanceof PyFile ? getFormatForFile(file) == format : myDocStringFormat == format;
+    return file instanceof PyFile ? getFormatForFile(file) == format : getState().getFormat() == format;
   }
 
   @NotNull
-  public DocStringFormat getFormatForFile(@NotNull PsiFile file) {
+  public final DocStringFormat getFormatForFile(@NotNull PsiFile file) {
     final DocStringFormat fileFormat = getFormatFromDocformatAttribute(file);
-    return fileFormat != null && fileFormat != DocStringFormat.PLAIN ? fileFormat : myDocStringFormat;
+    return fileFormat != null && fileFormat != DocStringFormat.PLAIN ? fileFormat : getState().myDocStringFormat;
   }
 
   @Nullable
@@ -73,52 +88,76 @@ public class PyDocumentationSettings implements PersistentStateComponent<PyDocum
     return null;
   }
 
-  @Transient
   @NotNull
-  public DocStringFormat getFormat() {
-    return myDocStringFormat;
+  public final DocStringFormat getFormat() {
+    return getState().getFormat();
   }
 
-  public void setFormat(@NotNull DocStringFormat format) {
-    myDocStringFormat = format;
+  public final void setFormat(@NotNull DocStringFormat format) {
+    getState().myDocStringFormat = format;
   }
 
-  // Legacy name of the field to preserve settings format
-  @SuppressWarnings("unused")
-  @OptionTag("myDocStringFormat")
-  @NotNull
-  public String getFormatName() {
-    return myDocStringFormat.getName();
+
+  public final boolean isAnalyzeDoctest() {
+    return getState().myAnalyzeDoctest;
   }
 
-  @SuppressWarnings("unused")
-  public void setFormatName(@NotNull String name) {
-    myDocStringFormat = DocStringFormat.fromNameOrPlain(name);
+  public final void setAnalyzeDoctest(boolean analyze) {
+    getState().myAnalyzeDoctest = analyze;
   }
 
-  public boolean isAnalyzeDoctest() {
-    return myAnalyzeDoctest;
+  public final boolean isRenderExternalDocumentation() {
+    return getState().myRenderExternalDocumentation;
   }
 
-  public void setAnalyzeDoctest(boolean analyze) {
-    myAnalyzeDoctest = analyze;
+  public final void setRenderExternalDocumentation(boolean renderExternalDocumentation) {
+    getState().myRenderExternalDocumentation = renderExternalDocumentation;
   }
 
-  public boolean isRenderExternalDocumentation() {
-    return myRenderExternalDocumentation;
+
+  public static final class ServiceState {
+    @NotNull
+    private DocStringFormat myDocStringFormat;
+    public boolean myAnalyzeDoctest = true;
+    public boolean myRenderExternalDocumentation;
+
+    ServiceState(@NotNull DocStringFormat docStringFormat) {
+      myDocStringFormat = docStringFormat;
+    }
+
+    ServiceState() {
+      this(DEFAULT_DOC_STRING_FORMAT);
+    }
+
+    @NotNull
+    public DocStringFormat getFormat() {
+      return myDocStringFormat;
+    }
+
+    public void setFormat(@NotNull DocStringFormat format) {
+      myDocStringFormat = format;
+    }
+
+    // Legacy name of the field to preserve settings format
+    @SuppressWarnings("unused")
+    @OptionTag("myDocStringFormat")
+    @NotNull
+    public String getFormatName() {
+      return myDocStringFormat.getName();
+    }
+
+    @SuppressWarnings("unused")
+    public void setFormatName(@NotNull String name) {
+      myDocStringFormat = DocStringFormat.fromNameOrPlain(name);
+    }
   }
 
-  public void setRenderExternalDocumentation(boolean renderExternalDocumentation) {
-    myRenderExternalDocumentation = renderExternalDocumentation;
+  @State(name = "AppPyDocumentationSettings", storages = @Storage("PyDocumentationSettings.xml"))
+  public static final class AppService extends PyDocumentationSettings {
   }
 
-  @Override
-  public PyDocumentationSettings getState() {
-    return this;
-  }
 
-  @Override
-  public void loadState(@NotNull PyDocumentationSettings state) {
-    XmlSerializerUtil.copyBean(state, this);
+  @State(name = "PyDocumentationSettings")
+  public static final class ModuleService extends PyDocumentationSettings {
   }
 }

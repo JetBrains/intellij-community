@@ -138,7 +138,8 @@
 
     <targetElementEvaluator language="Python" implementationClass="com.jetbrains.python.codeInsight.PyTargetElementEvaluator"/>
 
-    <moduleService serviceImplementation="com.jetbrains.python.ReSTService"/>
+    <moduleService serviceImplementation="com.jetbrains.python.ReSTService$ModuleService"/>
+    <applicationService serviceImplementation="com.jetbrains.python.ReSTService$AppService"/>
 
     <!-- Run/Debug -->
     <applicationService serviceInterface="com.jetbrains.python.run.PyRunConfigurationFactory"
@@ -531,7 +532,7 @@
                              displayName="Python External Documentation"/>
     <projectConfigurable groupId="tools" instance="com.jetbrains.python.configuration.PyIntegratedToolsModulesConfigurable"
                          id="com.jetbrains.python.configuration.PyIntegratedToolsModulesConfigurable" displayName="Python Integrated Tools"
-                         nonDefaultProject="true"/>
+                         />
     <search.optionContributor implementation="com.jetbrains.python.PySearchableOptionContributor"/>
     <psi.referenceContributor implementation="com.jetbrains.python.codeInsight.PythonFormattedStringReferenceContributor"
                               language="Python"/>
@@ -569,7 +570,7 @@
 
     <backgroundPostStartupActivity implementation="com.jetbrains.python.sdk.PythonSdkUpdater"/>
     <backgroundPostStartupActivity implementation="com.jetbrains.python.packaging.PyPackagesUpdater"/>
-    <directoryProjectConfigurator implementation="com.jetbrains.python.testing.PyIntegratedToolsProjectConfigurator" id="integratedTools" order="after sdk"/>
+    <directoryProjectConfigurator implementation="com.jetbrains.python.configuration.PyDefaultProjectAwareServiceConfigurator" id="integratedTools" order="after sdk"/>
 
 
     <macro implementation="com.jetbrains.python.sdk.InterpreterDirectoryMacro"/>
@@ -578,14 +579,16 @@
     <codeInsight.lineMarkerProvider language="Python" implementationClass="com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsLineMarkerProvider"/>
 
     <!-- TestRunnerService -->
-    <moduleService serviceImplementation="com.jetbrains.python.testing.TestRunnerService"/>
+    <moduleService serviceImplementation="com.jetbrains.python.testing.TestRunnerService$ModuleService"/>
+    <applicationService serviceImplementation="com.jetbrains.python.testing.TestRunnerService$AppService"/>
 
     <!-- PyFunctionTypeAnnotation -->
     <lang.parserDefinition language="PyFunctionTypeComment"
                            implementationClass="com.jetbrains.python.codeInsight.functionTypeComments.PyFunctionTypeAnnotationParserDefinition"/>
 
     <!-- Packaging -->
-    <moduleService serviceImplementation="com.jetbrains.python.packaging.PyPackageRequirementsSettings"/>
+    <moduleService serviceImplementation="com.jetbrains.python.packaging.PyPackageRequirementsSettings$ModuleService"/>
+    <applicationService serviceImplementation="com.jetbrains.python.packaging.PyPackageRequirementsSettings$AppService"/>
 
     <!-- typing -->
     <multiHostInjector implementation="com.jetbrains.python.codeInsight.typing.PyTypingAnnotationInjector"/>

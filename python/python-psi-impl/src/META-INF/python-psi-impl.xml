@@ -48,7 +48,8 @@
 
     <applicationService serviceImplementation="com.jetbrains.python.documentation.PythonDocumentationMap"/>
 
-    <moduleService serviceImplementation="com.jetbrains.python.documentation.PyDocumentationSettings"/>
+    <moduleService serviceImplementation="com.jetbrains.python.documentation.PyDocumentationSettings$ModuleService"/>
+    <applicationService serviceImplementation="com.jetbrains.python.documentation.PyDocumentationSettings$AppService"/>
     <psi.referenceContributor implementation="com.jetbrains.python.documentation.docstrings.DocStringReferenceContributor"
                               language="Python"/>
 
