@@ -1655,8 +1655,7 @@ public class PluginManagerCore {
         IdeaPluginDescriptorImpl descriptor = idMap.get(o);
         if (descriptor == null) return JBIterable.empty();
         PluginId implicitDep = getImplicitDependency(descriptor, idMap);
-        JBIterable<PluginId> allDeps = JBIterable.of(descriptor.getDependentPluginIds()).append(implicitDep)
-          .filter(id -> idMap.get(id) != descriptor);
+        JBIterable<PluginId> allDeps = JBIterable.of(descriptor.getDependentPluginIds()).append(implicitDep);
         JBIterable<PluginId> selectedDeps =
           withOptionalDeps
           ? allDeps
@@ -1665,12 +1664,11 @@ public class PluginManagerCore {
             .unique()
           : allDeps
             .filter(id -> ArrayUtil.indexOf(descriptor.getOptionalDependentPluginIds(), id) == -1);
-        return !convertModulesToPlugins ? selectedDeps : selectedDeps.map(
-          id -> {
-            if (!isModuleDependency(id)) return id;
-            IdeaPluginDescriptorImpl plugin = idMap.get(id);
-            return plugin == null ? id : plugin.getPluginId();
-          });
+        return selectedDeps.filterMap(id -> {
+          IdeaPluginDescriptorImpl plugin = idMap.get(id);
+          if (plugin == descriptor) return null;
+          return convertModulesToPlugins && isModuleDependency(id) ? plugin.getPluginId() : id;
+        });
       });
       this.idMap = idMap;
     }
