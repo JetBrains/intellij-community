@@ -113,7 +113,7 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
   }
 
   public void updatePreview(boolean state, boolean fromModelRefresh) {
-    if (Registry.is("show.log.as.editor.tab") && !fromModelRefresh && hasSelection()) {
+    if (Registry.is("show.diff.as.editor.tab") && !fromModelRefresh && hasSelection()) {
 
       Wrapper selectedChange = ContainerUtil.getFirstItem(getSelectedChanges());
       if (selectedChange != null) {

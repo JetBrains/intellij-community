@@ -309,24 +309,6 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
     return myMiniDetailsGetter;
   }
 
-  private VirtualFile myGraphViewFile;
-
-  @Nullable
-  public VirtualFile tryGetGraphViewFile() {
-    return myGraphViewFile;
-  }
-
-  @NotNull
-  public VirtualFile getOrCreateGraphViewVirtualFile(JComponent logViewComponent) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-
-    if (myGraphViewFile == null) {
-      myGraphViewFile = new GraphViewVirtualFile(logViewComponent);
-    }
-
-    return myGraphViewFile;
-  }
-
   @Override
   public void dispose() {
     SingleTaskController.SingleTask initialization;

@@ -57,31 +57,8 @@ public class VcsLogPanel extends JBPanel implements DataProvider {
     if (VcsLogInternalDataKeys.LOG_MANAGER.is(dataId)) {
       return myManager;
     }
-    else if (VCS_LOG.is(dataId)) {
-      return myUi.getVcsLog();
-    }
-    else if (VCS_LOG_UI.is(dataId)) {
-      return myUi;
-    }
     else if (VCS_LOG_DATA_PROVIDER.is(dataId) || VcsLogInternalDataKeys.LOG_DATA.is(dataId)) {
       return myManager.getDataManager();
-    }
-    else if (VcsDataKeys.VCS_REVISION_NUMBER.is(dataId)) {
-      List<CommitId> hashes = myUi.getVcsLog().getSelectedCommits();
-      if (hashes.isEmpty()) return null;
-      return VcsLogUtil.convertToRevisionNumber(ObjectUtils.notNull(ContainerUtil.getFirstItem(hashes)).getHash());
-    }
-    else if (VcsDataKeys.VCS_REVISION_NUMBERS.is(dataId)) {
-      List<CommitId> hashes = myUi.getVcsLog().getSelectedCommits();
-      if (hashes.size() > VcsLogUtil.MAX_SELECTED_COMMITS) return null;
-      return ContainerUtil.map(hashes,
-                               commitId -> VcsLogUtil.convertToRevisionNumber(commitId.getHash())).toArray(new VcsRevisionNumber[0]);
-    }
-    else if (PlatformDataKeys.HELP_ID.is(dataId)) {
-      return myUi.getHelpId();
-    }
-    else if (History.KEY.is(dataId)) {
-      return myUi.getNavigationHistory();
     }
     return null;
   }

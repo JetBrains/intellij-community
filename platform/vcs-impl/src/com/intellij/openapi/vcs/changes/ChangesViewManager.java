@@ -301,6 +301,9 @@ public class ChangesViewManager implements ChangesViewEx,
         scheduleRefresh();
       });
       ChangesDnDSupport.install(myProject, myView);
+      if (Registry.is("show.diff.as.editor.tab")) {
+        myView.setExpandableItemsEnabled(false);
+      }
 
       myChangesPanel.getToolbarActionGroup().addAll(createChangesToolbarActions(myView.getTreeExpander()));
       myChangesPanel.setToolbarHorizontal(commitWorkflowManager.isNonModal() && isToolbarHorizontalSetting.asBoolean());

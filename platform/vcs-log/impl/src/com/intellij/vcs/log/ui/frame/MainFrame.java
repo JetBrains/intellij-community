@@ -2,10 +2,13 @@
 package com.intellij.vcs.log.ui.frame;
 
 import com.google.common.primitives.Ints;
+import com.intellij.diff.editor.GraphViewVirtualFile;
 import com.intellij.diff.impl.DiffRequestProcessor;
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
@@ -17,10 +20,13 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.components.panels.Wrapper;
+import com.intellij.ui.navigation.History;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
@@ -61,6 +67,7 @@ import java.util.List;
 import static com.intellij.openapi.vfs.VfsUtilCore.toVirtualFileArray;
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
+import static com.intellij.vcs.log.VcsLogDataKeys.*;
 
 public class MainFrame extends JPanel implements DataProvider, Disposable {
   private static final String DIFF_SPLITTER_PROPORTION = "vcs.log.diff.splitter.proportion";
@@ -68,6 +75,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
   private static final String CHANGES_SPLITTER_PROPORTION = "vcs.log.changes.splitter.proportion";
 
   @NotNull private final VcsLogData myLogData;
+  private AbstractVcsLogUi myLogUi;
   @NotNull private final MainVcsLogUiProperties myUiProperties;
 
   @NotNull private final JComponent myToolbar;
@@ -90,6 +98,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
                    @NotNull MainVcsLogUiProperties uiProperties,
                    @NotNull VcsLogFilterUiEx filterUi) {
     myLogData = logData;
+    myLogUi = logUi;
     myUiProperties = uiProperties;
 
     myFilterUi = filterUi;
@@ -166,7 +175,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
   private void installGraphView(JComponent toolbarsAndTable) {
     if (Registry.is("show.log.as.editor.tab")) {
-      VirtualFile graphFile = myLogData.getOrCreateGraphViewVirtualFile(toolbarsAndTable);
+      VirtualFile graphFile = getOrCreateGraphViewVirtualFile(toolbarsAndTable);
       FileEditor[] editors = FileEditorManager.getInstance(myLogData.getProject()).openFile(graphFile, true);
       assert editors.length == 1 : "opened multiple log editors for " + graphFile;
       FileEditor editor = editors[0];
@@ -179,9 +188,29 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
       EditorWindow editorWindow = holder.getEditorWindow();
       editorWindow.setFilePinned(graphFile, true);
 
+      DataManager.registerDataProvider(toolbarsAndTable, this);
+
     } else {
       myChangesBrowserSplitter.setFirstComponent(toolbarsAndTable);
     }
+  }
+
+  private VirtualFile myGraphViewFile;
+
+  public VirtualFile tryGetGraphViewFile() {
+    return myGraphViewFile;
+  }
+
+  @NotNull
+  public VirtualFile getOrCreateGraphViewVirtualFile(JComponent logViewComponent) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+
+    if (myGraphViewFile == null) {
+      myGraphViewFile = new GraphViewVirtualFile(logViewComponent);
+      Disposer.register(this, () -> myGraphViewFile = null);
+    }
+
+    return myGraphViewFile;
   }
 
   public void setExplanationHtml(@Nullable String text) {
@@ -301,6 +330,31 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
         }
       };
     }
+
+    else if (VCS_LOG.is(dataId)) {
+      return myLogUi.getVcsLog();
+    }
+    else if (VCS_LOG_UI.is(dataId)) {
+      return myLogUi;
+    }
+    else if (VcsDataKeys.VCS_REVISION_NUMBER.is(dataId)) {
+      List<CommitId> hashes = myLogUi.getVcsLog().getSelectedCommits();
+      if (hashes.isEmpty()) return null;
+      return VcsLogUtil.convertToRevisionNumber(notNull(getFirstItem(hashes)).getHash());
+    }
+    else if (VcsDataKeys.VCS_REVISION_NUMBERS.is(dataId)) {
+      List<CommitId> hashes = myLogUi.getVcsLog().getSelectedCommits();
+      if (hashes.size() > VcsLogUtil.MAX_SELECTED_COMMITS) return null;
+      return ContainerUtil.map(hashes,
+                               commitId -> VcsLogUtil.convertToRevisionNumber(commitId.getHash())).toArray(new VcsRevisionNumber[0]);
+    }
+    else if (PlatformDataKeys.HELP_ID.is(dataId)) {
+      return myLogUi.getHelpId();
+    }
+    else if (History.KEY.is(dataId)) {
+      return myLogUi.getNavigationHistory();
+    }
+
     return null;
   }
 
