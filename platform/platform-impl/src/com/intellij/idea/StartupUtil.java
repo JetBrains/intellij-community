@@ -6,6 +6,7 @@ import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.diagnostic.Activity;
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.diagnostic.StartUpMeasurer;
+import com.intellij.ide.AssertiveRepaintManager;
 import com.intellij.ide.CliResult;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.IdeRepaintManager;
@@ -658,6 +659,9 @@ public final class StartupUtil {
     // frame buffer content without the usual repainting, even when the EDT is blocked.
     if (Patches.REPAINT_MANAGER_LEAK) {
       RepaintManager.setCurrentManager(new IdeRepaintManager());
+    }
+    else if ("true".equals(System.getProperty("idea.check.swing.threading"))) {
+      RepaintManager.setCurrentManager(new AssertiveRepaintManager());
     }
 
     if (SystemInfo.isXWindow) {
