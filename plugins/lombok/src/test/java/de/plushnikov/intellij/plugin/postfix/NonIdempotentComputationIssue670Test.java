@@ -14,7 +14,7 @@ public class NonIdempotentComputationIssue670Test extends AbstractLombokLightCod
   public void testIssue670() {
     Registry.get("platform.random.idempotence.check.rate").setValue(1, getTestRootDisposable());
 
-    myFixture.configureByFile((getBasePath() + "/postfix/issue670/" + getTestName(true)) + ".java");
+    myFixture.configureByFile((getBasePath() + "/postfix/issue670/" + getTestName(false)) + ".java");
 
     final PsiMethod[] firstCallGetMethods = myFixture.findClass("Issue670").getMethods();
     assertNotEmpty(Arrays.asList(firstCallGetMethods));
