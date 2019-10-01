@@ -18,7 +18,6 @@ import com.intellij.psi.templateLanguages.TemplateLanguage;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -75,6 +74,29 @@ public final class LanguageUtil {
   public static Language[] getLanguageDialects(@NotNull final Language base) {
     final List<Language> list = ContainerUtil.findAll(Language.getRegisteredLanguages(), language -> language.getBaseLanguage() == base);
     return list.toArray(new Language[0]);
+  }
+
+  @NotNull
+  public static Set<Language> getAllDerivedLanguages(@NotNull Language base) {
+    Set<Language> result = new HashSet<>();
+    Set<Language> toProcess = new HashSet<>();
+    Set<Language> nextToProcess = new HashSet<>();
+
+    result.add(base);
+    toProcess.add(base);
+    while (!toProcess.isEmpty()) {
+      for (Language language : Language.getRegisteredLanguages()) {
+        if (toProcess.contains(language.getBaseLanguage())) {
+          result.add(language);
+          nextToProcess.add(language);
+        }
+      }
+      toProcess.clear();
+      toProcess.addAll(nextToProcess);
+      nextToProcess.clear();
+    }
+
+    return result;
   }
 
   public static boolean isInTemplateLanguageFile(@Nullable final PsiElement element) {

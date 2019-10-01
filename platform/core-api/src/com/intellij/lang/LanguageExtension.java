@@ -56,18 +56,25 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
 
   @TestOnly
   public void clearCache(@NotNull Language language) {
-    language.putUserData(myCacheKey, null);
-    language.putUserData(myAllCacheKey, null);
+    Set<Language> languages = LanguageUtil.getAllDerivedLanguages(language);
+    for (Language derivedLanguage : languages) {
+      derivedLanguage.putUserData(myCacheKey, null);
+      derivedLanguage.putUserData(myAllCacheKey, null);
+    }
     clearCache();
   }
 
   @Override
   public void invalidateCacheForExtension(String key) {
     super.invalidateCacheForExtension(key);
+
     final Language language = Language.findLanguageByID(key);
     if (language != null) {
-      language.putUserData(myCacheKey, null);
-      language.putUserData(myAllCacheKey, null);
+      Set<Language> languages = LanguageUtil.getAllDerivedLanguages(language);
+      for (Language derivedLanguage : languages) {
+        derivedLanguage.putUserData(myCacheKey, null);
+        derivedLanguage.putUserData(myAllCacheKey, null);
+      }
     }
   }
 
