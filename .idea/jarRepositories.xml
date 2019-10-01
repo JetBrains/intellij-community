@@ -61,5 +61,11 @@
       <option name="name" value="e585af2a-f558-424b-a8e6-3a1365d5b046" />
       <option name="url" value="https://cache-redirector.jetbrains.com/jetbrains.bintray.com/markdown" />
     </remote-repository>
+    <!-- TODO: remove prebuilts once Compose jars are uploaded to gmaven -->
+    <remote-repository>
+      <option name="id" value="prebuilts" />
+      <option name="name" value="Prebuilts" />
+      <option name="url" value="file://$PROJECT_DIR$/../../prebuilts/tools/common/m2/repository" />
+    </remote-repository>
   </component>
 </project>
