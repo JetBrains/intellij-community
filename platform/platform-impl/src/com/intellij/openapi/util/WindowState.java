@@ -7,7 +7,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import sun.awt.AWTAccessor;
 
-import java.awt.*;
+import java.awt.Frame;
+import java.awt.Rectangle;
+import java.awt.Window;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
 import java.awt.event.WindowAdapter;
@@ -18,32 +20,26 @@ import java.awt.peer.FramePeer;
 /**
  * @author Sergey Malenkov
  */
-final class ComponentState extends WindowAdapter implements ComponentListener {
+final class WindowState extends WindowAdapter implements ComponentListener {
   private volatile Rectangle myBounds;
   private volatile int myExtendedState;
   private volatile boolean myFullScreen;
 
-  private ComponentState(@NotNull Component component) {
-    update(component);
-    install(component);
+  private WindowState(@NotNull Window window) {
+    update(window);
+    install(window);
   }
 
-  private void install(@NotNull Component component) {
-    component.addComponentListener(this);
-    if (component instanceof Window) {
-      Window window = (Window)component;
-      window.addWindowListener(this);
-      window.addWindowStateListener(this);
-    }
+  private void install(@NotNull Window window) {
+    window.addComponentListener(this);
+    window.addWindowListener(this);
+    window.addWindowStateListener(this);
   }
 
-  void uninstall(@NotNull Component component) {
-    component.removeComponentListener(this);
-    if (component instanceof Window) {
-      Window window = (Window)component;
-      window.removeWindowListener(this);
-      window.removeWindowStateListener(this);
-    }
+  void uninstall(@NotNull Window window) {
+    window.removeComponentListener(this);
+    window.removeWindowListener(this);
+    window.removeWindowStateListener(this);
   }
 
 
@@ -63,7 +59,7 @@ final class ComponentState extends WindowAdapter implements ComponentListener {
   @Override
   public void windowClosed(WindowEvent event) {
     Object source = event == null ? null : event.getSource();
-    if (source instanceof Component) uninstall((Component)source);
+    if (source instanceof Window) uninstall((Window)source);
   }
 
   @Override
@@ -96,43 +92,43 @@ final class ComponentState extends WindowAdapter implements ComponentListener {
 
   private void update(@Nullable ComponentEvent event) {
     Object source = event == null ? null : event.getSource();
-    if (source instanceof Component) update((Component)source);
+    if (source instanceof Window) update((Window)source);
   }
 
-  private void update(@NotNull Component component) {
-    if (component.isVisible()) {
-      myFullScreen = isFullScreen(component);
-      myExtendedState = getExtendedState(component);
+  private void update(@NotNull Window window) {
+    if (window.isVisible()) {
+      myFullScreen = isFullScreen(window);
+      myExtendedState = getExtendedState(window);
       if (!myFullScreen && myExtendedState == Frame.NORMAL) {
-        myBounds = component.getBounds();
+        myBounds = window.getBounds();
       }
     }
   }
 
 
   @Nullable
-  public static ComponentState findState(@NotNull Component component) {
-    for (ComponentListener listener : component.getComponentListeners()) {
-      if (listener instanceof ComponentState) {
-        return (ComponentState)listener;
+  public static WindowState findState(@NotNull Window window) {
+    for (ComponentListener listener : window.getComponentListeners()) {
+      if (listener instanceof WindowState) {
+        return (WindowState)listener;
       }
     }
     return null;
   }
 
   @NotNull
-  public static ComponentState getState(@NotNull Component component) {
-    ComponentState state = findState(component);
-    return state != null ? state : new ComponentState(component);
+  public static WindowState getState(@NotNull Window window) {
+    WindowState state = findState(window);
+    return state != null ? state : new WindowState(window);
   }
 
-  static boolean isFullScreen(@NotNull Component component) {
-    return component instanceof IdeFrame && FrameInfoHelper.isFullScreenSupportedInCurrentOs() && ((IdeFrame)component).isInFullScreen();
+  static boolean isFullScreen(@NotNull Window window) {
+    return window instanceof IdeFrame && FrameInfoHelper.isFullScreenSupportedInCurrentOs() && ((IdeFrame)window).isInFullScreen();
   }
 
-  static int getExtendedState(@NotNull Component component) {
-    if (component instanceof Frame) {
-      Frame frame = (Frame)component;
+  static int getExtendedState(@NotNull Window window) {
+    if (window instanceof Frame) {
+      Frame frame = (Frame)window;
       int state = frame.getExtendedState();
       if (SystemInfo.isMacOSLion) {
         // workaround: frame.state is not updated by jdk so get it directly from peer
