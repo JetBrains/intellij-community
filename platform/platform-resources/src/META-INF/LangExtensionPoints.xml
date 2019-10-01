@@ -204,7 +204,8 @@
     <extensionPoint name="customFoldingProvider"
                     interface="com.intellij.lang.folding.CustomFoldingProvider"/>
     <extensionPoint name="lang.psiStructureViewFactory"
-                    beanClass="com.intellij.lang.LanguageExtensionPoint">
+                    beanClass="com.intellij.lang.LanguageExtensionPoint"
+                    dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.lang.PsiStructureViewFactory"/>
     </extensionPoint>
 
