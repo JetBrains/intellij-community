@@ -27,6 +27,11 @@ public interface EditorColors {
   ColorKey SCROLLBAR_THUMB_COLOR = ColorKey.createColorKey(SystemInfo.isMac ? "ScrollBar.Mac.thumbColor" :  "ScrollBar.thumbColor");
   ColorKey SCROLLBAR_THUMB_WHILE_SCROLLING_COLOR = ColorKey.createColorKey(SystemInfo.isMac ? "ScrollBar.Mac.hoverThumbColor" :  "ScrollBar.hoverThumbColor");
 
+  TextAttributesKey TAB_SELECTED = TextAttributesKey.createTextAttributesKey("TAB_SELECTED");
+  TextAttributesKey TAB_SELECTED_INACTIVE = TextAttributesKey.createTextAttributesKey("TAB_SELECTED_INACTIVE");
+  ColorKey TAB_UNDERLINE = ColorKey.createColorKey("TAB_UNDERLINE");
+  ColorKey TAB_UNDERLINE_INACTIVE = ColorKey.createColorKey("TAB_UNDERLINE_INACTIVE");
+
   TextAttributesKey REFERENCE_HYPERLINK_COLOR = TextAttributesKey.createTextAttributesKey("CTRL_CLICKABLE", new TextAttributes(JBColor.blue, null, JBColor.blue, EffectType.LINE_UNDERSCORE,
                                                                                                                                Font.PLAIN));
 
