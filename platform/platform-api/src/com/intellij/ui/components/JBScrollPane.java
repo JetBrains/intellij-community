@@ -166,7 +166,7 @@ public class JBScrollPane extends JScrollPane {
         Object value = field.get(ui);
         if (value instanceof MouseWheelListener) {
           MouseWheelListener oldListener = (MouseWheelListener)value;
-          MouseWheelListener newListener = new JBMouseWheelListener(this, oldListener);
+          MouseWheelListener newListener = new JBMouseWheelListener(oldListener);
           field.set(ui, newListener);
           // replace listener if field updated successfully
           removeMouseWheelListener(oldListener);
@@ -181,12 +181,10 @@ public class JBScrollPane extends JScrollPane {
 
   private static class JBMouseWheelListener implements MouseWheelListener {
 
-    private final Component myParent;
     private final MouseWheelListener myDelegate;
     private MouseWheelSmoothScroll mySmoothScroll;
 
-    private JBMouseWheelListener(Component parent, MouseWheelListener delegate) {
-      this.myParent = parent;
+    private JBMouseWheelListener(MouseWheelListener delegate) {
       this.myDelegate = delegate;
     }
 
@@ -206,7 +204,7 @@ public class JBScrollPane extends JScrollPane {
           if (Registry.is("idea.inertial.smooth.scrolling.enabled")) {
             if (mySmoothScroll == null) {
               mySmoothScroll = MouseWheelSmoothScroll.create(() -> {
-                return ScrollSettings.isEligibleFor(myParent);
+                return ScrollSettings.isEligibleFor(pane);
               });
             }
             mySmoothScroll.processMouseWheelEvent(event, myDelegate::mouseWheelMoved);
