@@ -444,7 +444,14 @@ public class PluginManagerCore {
   @Nullable
   private static PluginId getImplicitDependency(@NotNull IdeaPluginDescriptor descriptor,
                                                 @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idMap) {
-    if (!idMap.containsKey(PluginId.getId(ALL_MODULES_MARKER)) || descriptor.getPluginId().getIdString().equals(CORE_PLUGIN_ID)) {
+    String id = descriptor.getPluginId().getIdString();
+    // Skip our plugins as expected to be up-to-date whether bundled or not.
+    if (id.equals(CORE_PLUGIN_ID) ||
+        id.startsWith("com.intellij.") || id.startsWith("com.jetbrains.") ||
+        id.startsWith("org.intellij.") || id.startsWith("org.jetbrains.")) {
+      return null;
+    }
+    if (!idMap.containsKey(PluginId.getId(ALL_MODULES_MARKER))) {
       return null;
     }
     PluginId javaId = PluginId.getId("com.intellij.modules.java");
@@ -463,9 +470,8 @@ public class PluginManagerCore {
   }
 
   private static boolean hasModuleDependencies(@NotNull IdeaPluginDescriptor descriptor) {
-    PluginId[] dependentPluginIds = descriptor.getDependentPluginIds();
-    for (PluginId dependentPluginId : dependentPluginIds) {
-      if (isModuleDependency(dependentPluginId)) {
+    for (PluginId depId : descriptor.getDependentPluginIds()) {
+      if (isModuleDependency(depId)) {
         return true;
       }
     }
