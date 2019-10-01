@@ -69,7 +69,14 @@ object DynamicPlugins {
     val application = ApplicationManager.getApplication() as ApplicationImpl
 
     application.messageBus.syncPublisher(DynamicPluginListener.TOPIC).beforePluginUnload(pluginDescriptor)
-    IconLoader.clearCache()
+
+    // The descriptor passed to `unloadPlugin` is the full descriptor loaded from disk, it does not have a classloader.
+    // We need to find the real plugin loaded into the current instance and unload its classloader.
+    val loadedPluginDescriptor = PluginManagerCore.getPlugin(pluginDescriptor.pluginId) as? IdeaPluginDescriptorImpl ?: return false
+
+    if (!pluginDescriptor.useIdeaClassLoader) {
+      IconLoader.detachClassLoader(loadedPluginDescriptor.pluginClassLoader)
+    }
 
     application.runWriteAction {
       (ActionManager.getInstance() as ActionManagerImpl).unloadActions(pluginDescriptor)
@@ -119,9 +126,6 @@ object DynamicPlugins {
       }
     }
 
-    // The descriptor passed to `unloadPlugin` is the full descriptor loaded from disk, it does not have a classloader.
-    // We need to find the real plugin loaded into the current instance and unload its classloader.
-    val loadedPluginDescriptor = PluginManagerCore.getPlugin(pluginDescriptor.pluginId) as? IdeaPluginDescriptorImpl ?: return false
     return loadedPluginDescriptor.unloadClassLoader()
   }
 
