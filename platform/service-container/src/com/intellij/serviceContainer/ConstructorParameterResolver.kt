@@ -21,7 +21,9 @@ private val badAppLevelClasses = setOf(
   "de.plushnikov.intellij.plugin.processor.clazz.constructor.AllArgsConstructorProcessor",
   "de.plushnikov.intellij.plugin.processor.field.FieldNameConstantsFieldProcessor",
   "de.plushnikov.intellij.plugin.processor.clazz.constructor.RequiredArgsConstructorProcessor",
-  "com.intellij.execution.executors.DefaultDebugExecutor"
+  "com.intellij.execution.executors.DefaultDebugExecutor",
+  "org.apache.http.client.HttpClient",
+  "org.apache.http.impl.client.CloseableHttpClient"
 )
 
 internal class ConstructorParameterResolver {
