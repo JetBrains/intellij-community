@@ -1666,7 +1666,7 @@ public class PluginManagerCore {
             .filter(id -> ArrayUtil.indexOf(descriptor.getOptionalDependentPluginIds(), id) == -1);
         return selectedDeps.filterMap(id -> {
           IdeaPluginDescriptorImpl plugin = idMap.get(id);
-          if (plugin == descriptor) return null;
+          if (plugin == null || plugin == descriptor) return null;
           return convertModulesToPlugins && isModuleDependency(id) ? plugin.getPluginId() : id;
         });
       });
