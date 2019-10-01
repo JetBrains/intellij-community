@@ -129,7 +129,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     return myEditor.offsetToVisualLine(offset);
   }
 
-  public void repaintVerticalScrollBar() {
+  private void repaintVerticalScrollBar() {
     myEditor.getVerticalScrollBar().repaint();
   }
 
