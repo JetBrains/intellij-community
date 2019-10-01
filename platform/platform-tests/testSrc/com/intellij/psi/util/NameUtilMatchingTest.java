@@ -78,6 +78,10 @@ public class NameUtilMatchingTest extends TestCase {
     assertMatches("na ut", "name_util_test");
     assertMatches("na te", "name_util_test");
     assertDoesntMatch("na ti", "name_util_test");
+
+    assertDoesntMatch("alias imple", "alias simple");
+    assertDoesntMatch("alias mple", "alias simple");
+    assertDoesntMatch("alias nother", "alias another");
   }
   
   public void testXMLCompletion() {
