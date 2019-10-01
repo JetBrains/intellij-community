@@ -122,6 +122,8 @@ public class JBTabsImpl extends JComponent
   private List<TabInfo> myAllTabs;
   private IdeFocusManager myFocusManager;
   private static final boolean myAdjustBorders = true;
+  private Set<JBTabsImpl> myNestedTabs = new HashSet<>();
+  private JBTabsImpl myParentTabs = null;
 
   boolean myAddNavigationGroup = true;
 
@@ -438,6 +440,16 @@ public class JBTabsImpl extends JComponent
     return myDisposed;
   }
 
+  public void addNestedTabs(JBTabsImpl tabs) {
+    myNestedTabs.add(tabs);
+    tabs.myParentTabs = this;
+  }
+
+  public void removeNestedTabs(JBTabsImpl tabs) {
+    myNestedTabs.remove(tabs);
+    tabs.myParentTabs = null;
+  }
+
   public static Image getComponentImage(TabInfo info) {
     JComponent cmp = info.getComponent();
 
@@ -470,6 +482,7 @@ public class JBTabsImpl extends JComponent
     myInfo2Toolbar.clear();
     myTabListeners.clear();
     myLastLayoutPass = null;
+    if (myParentTabs != null) myParentTabs.removeNestedTabs(this);
   }
 
   void resetTabsCache() {
@@ -2205,22 +2218,17 @@ public class JBTabsImpl extends JComponent
       if (tabs == null || tabs != myTabs) {
         return null;
       }
-      if (isNavigatable(tabs)) {
+      if (tabs.isNavigatable()) {
         return tabs;
       }
       Component c = tabs.getParent();
       while (c != null) {
-        if (c instanceof JBTabsImpl && isNavigatable((JBTabsImpl)c)) {
+        if (c instanceof JBTabsImpl && ((JBTabsImpl)c).isNavigatable()) {
           return (JBTabsImpl)c;
         }
         c = c.getParent();
       }
       return null;
-    }
-
-    private static boolean isNavigatable(JBTabsImpl tabs) {
-      final int selectedIndex = tabs.getVisibleInfos().indexOf(tabs.getSelectedInfo());
-      return tabs.isNavigationVisible() && selectedIndex >= 0 && tabs.myNavigationActionsEnabled;
     }
 
     public void reconnect(String actionId) {
@@ -2235,10 +2243,23 @@ public class JBTabsImpl extends JComponent
       tabs = findNavigatableTabs(tabs);
       if (tabs == null) return;
 
-      final int index = tabs.getVisibleInfos().indexOf(tabs.getSelectedInfo());
-      if (index == -1) return;
+      List<TabInfo> infos;
+      int index;
+      while (true) {
+        infos = tabs.getVisibleInfos();
+        index = infos.indexOf(tabs.getSelectedInfo());
+        if (index == -1) return;
+        if (borderIndex(infos, index) && tabs.navigatableParent() != null) {
+          tabs = tabs.navigatableParent();
+        } else {
+          break;
+        }
+      }
+
       _actionPerformed(e, tabs, index);
     }
+
+    protected abstract boolean borderIndex(List<TabInfo> infos, int index);
 
     protected abstract void _actionPerformed(final AnActionEvent e, final JBTabsImpl tabs, final int selectedIndex);
   }
@@ -2255,12 +2276,65 @@ public class JBTabsImpl extends JComponent
     }
 
     @Override
+    protected boolean borderIndex(List<TabInfo> infos, int index) {
+      return index == infos.size() - 1;
+    }
+
+    @Override
     protected void _actionPerformed(final AnActionEvent e, final JBTabsImpl tabs, final int selectedIndex) {
       TabInfo tabInfo = tabs.findEnabledForward(selectedIndex, true);
       if (tabInfo != null) {
+        JComponent lastFocus = tabInfo.getLastFocusOwner();
         tabs.select(tabInfo, true);
+        tabs.myNestedTabs.stream()
+          .filter((nestedTabs) -> (lastFocus == null) || SwingUtilities.isDescendingFrom(lastFocus, nestedTabs))
+          .forEach((nestedTabs) -> {
+            nestedTabs.selectFirstVisible();
+          });
       }
     }
+  }
+
+  protected boolean isNavigatable() {
+    final int selectedIndex = getVisibleInfos().indexOf(getSelectedInfo());
+    return isNavigationVisible() && selectedIndex >= 0 && myNavigationActionsEnabled;
+  }
+
+  private JBTabsImpl navigatableParent() {
+    Component c = getParent();
+    while (c != null) {
+      if (c instanceof JBTabsImpl && ((JBTabsImpl)c).isNavigatable()) {
+        return (JBTabsImpl)c;
+      }
+      c = c.getParent();
+    }
+
+    return null;
+  }
+
+  private void selectFirstVisible() {
+    if (!isNavigatable()) return;
+    TabInfo select = getVisibleInfos().get(0);
+    JComponent lastFocus = select.getLastFocusOwner();
+    select(select, true);
+    myNestedTabs.stream()
+      .filter((nestedTabs) -> (lastFocus == null) || SwingUtilities.isDescendingFrom(lastFocus, nestedTabs))
+      .forEach((nestedTabs) -> {
+      nestedTabs.selectFirstVisible();
+    });
+  }
+
+  private void selectLastVisible() {
+    if (!isNavigatable()) return;
+    int last = getVisibleInfos().size() - 1;
+    TabInfo select = getVisibleInfos().get(last);
+    JComponent lastFocus = select.getLastFocusOwner();
+    select(select, true);
+    myNestedTabs.stream()
+      .filter((nestedTabs) -> (lastFocus == null) || SwingUtilities.isDescendingFrom(lastFocus, nestedTabs))
+      .forEach((nestedTabs) -> {
+        nestedTabs.selectLastVisible();
+      });
   }
 
   private static class SelectPreviousAction extends BaseNavigationAction {
@@ -2274,10 +2348,21 @@ public class JBTabsImpl extends JComponent
     }
 
     @Override
+    protected boolean borderIndex(List<TabInfo> infos, int index) {
+      return index == 0;
+    }
+
+    @Override
     protected void _actionPerformed(final AnActionEvent e, final JBTabsImpl tabs, final int selectedIndex) {
       TabInfo tabInfo = tabs.findEnabledBackward(selectedIndex, true);
       if (tabInfo != null) {
+        JComponent lastFocus = tabInfo.getLastFocusOwner();
         tabs.select(tabInfo, true);
+        tabs.myNestedTabs.stream()
+          .filter((nestedTabs) -> (lastFocus == null) || SwingUtilities.isDescendingFrom(lastFocus, nestedTabs))
+          .forEach((nestedTabs) -> {
+            nestedTabs.selectLastVisible();
+          });
       }
     }
   }
