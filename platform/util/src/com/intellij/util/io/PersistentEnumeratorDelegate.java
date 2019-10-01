@@ -24,7 +24,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 
-public class PersistentEnumeratorDelegate<Data> implements Closeable, Forceable {
+public class PersistentEnumeratorDelegate<Data> implements DataEnumerator<Data>, Closeable, Forceable {
   @NotNull protected final PersistentEnumeratorBase<Data> myEnumerator;
 
   public PersistentEnumeratorDelegate(@NotNull final File file, @NotNull KeyDescriptor<Data> dataDescriptor, final int initialSize) throws IOException {
