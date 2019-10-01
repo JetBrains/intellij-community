@@ -13,6 +13,7 @@ import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.DiffUsageTriggerCollector;
@@ -520,7 +521,9 @@ public class TextDiffViewerUtil {
       myEditorPopupActions = editorPopupActions;
     }
 
-    public void install(@NotNull List<? extends EditorEx> editors) {
+    public void install(@NotNull List<? extends EditorEx> editors, @NotNull JComponent component) {
+      ActionUtil.recursiveRegisterShortcutSet(new DefaultActionGroup(myEditorPopupActions), component, null);
+
       EditorPopupHandler handler = new ContextMenuPopupHandler.Simple(
         myEditorPopupActions.isEmpty() ? null : new DefaultActionGroup(myEditorPopupActions)
       );
