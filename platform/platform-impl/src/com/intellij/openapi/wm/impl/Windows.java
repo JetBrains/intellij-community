@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -105,7 +106,9 @@ public class Windows {
 
                 // A toolwindow lost focus
                 ToolWindow activeToolWindow = ToolWindowManager.getActiveToolWindow();
+                boolean focusGoesToPopup = JBPopupFactory.getInstance().getParentBalloonFor(focusEvent.getOppositeComponent()) != null;
                 if (!focusEvent.isTemporary() &&
+                    !focusGoesToPopup &&
                     activeToolWindow != null &&
                     (activeToolWindow.isAutoHide() || activeToolWindow.getType() == ToolWindowType.SLIDING)) {
                   pinnedWindowFocusLostHandler.accept(id);
