@@ -1,9 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.psi.impl.source.xml.stub;
+package com.intellij.psi.impl.source.html;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
-import com.intellij.psi.impl.source.xml.XmlStubBasedTag;
+import com.intellij.psi.impl.source.xml.stub.XmlStubBasedElementType;
+import com.intellij.psi.impl.source.xml.stub.XmlTagStubImpl;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
@@ -13,11 +14,11 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
-public class XmlStubBasedTagElementType
-  extends XmlStubBasedElementType<XmlTagStubImpl, XmlStubBasedTag> implements ICompositeElementType, IXmlTagElementType {
+public class HtmlStubBasedTagElementType
+  extends XmlStubBasedElementType<XmlTagStubImpl, HtmlStubBasedTagImpl> implements ICompositeElementType, IXmlTagElementType {
 
-  public XmlStubBasedTagElementType(@NotNull String debugName,
-                                    @NotNull Language language) {
+  public HtmlStubBasedTagElementType(@NotNull String debugName,
+                                     @NotNull Language language) {
     super(debugName, language);
   }
 
@@ -34,19 +35,19 @@ public class XmlStubBasedTagElementType
 
   @Override
   @NotNull
-  public XmlStubBasedTag createPsi(@NotNull XmlTagStubImpl stub) {
-    return new XmlStubBasedTag(stub, this);
+  public HtmlStubBasedTagImpl createPsi(@NotNull XmlTagStubImpl stub) {
+    return new HtmlStubBasedTagImpl(stub, this);
   }
 
   @Override
   @NotNull
-  public XmlStubBasedTag createPsi(@NotNull ASTNode node) {
-    return new XmlStubBasedTag(node);
+  public HtmlStubBasedTagImpl createPsi(@NotNull ASTNode node) {
+    return new HtmlStubBasedTagImpl(node);
   }
 
   @NotNull
   @Override
-  public XmlTagStubImpl createStub(@NotNull XmlStubBasedTag psi, StubElement parentStub) {
+  public XmlTagStubImpl createStub(@NotNull HtmlStubBasedTagImpl psi, StubElement parentStub) {
     return new XmlTagStubImpl(psi, parentStub, this);
   }
 

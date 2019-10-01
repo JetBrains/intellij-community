@@ -10,14 +10,12 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.impl.source.xml.XmlTagImpl;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
-import java.util.HashSet;
 import com.intellij.xml.index.SchemaTypeInfo;
 import com.intellij.xml.index.SchemaTypeInheritanceIndex;
 import com.intellij.xml.index.XmlNamespaceIndex;
@@ -30,8 +28,8 @@ import java.util.function.BiFunction;
 public class SchemaDefinitionsSearch implements QueryExecutor<PsiElement, PsiElement> {
   @Override
   public boolean execute(@NotNull final PsiElement queryParameters, @NotNull final Processor<? super PsiElement> consumer) {
-    if (queryParameters instanceof XmlTagImpl) {
-      final XmlTagImpl xml = (XmlTagImpl) queryParameters;
+    if (queryParameters instanceof XmlTag) {
+      final XmlTag xml = (XmlTag)queryParameters;
       if (ReadAction.compute(() -> isTypeElement(xml))) {
         final Collection<SchemaTypeInfo> infos = ReadAction.compute(() -> gatherInheritors(xml));
 
@@ -70,9 +68,9 @@ public class SchemaDefinitionsSearch implements QueryExecutor<PsiElement, PsiEle
                   final PsiElementProcessor processor = new PsiElementProcessor() {
                     @Override
                     public boolean execute(@NotNull PsiElement element) {
-                      if (element instanceof XmlTagImpl) {
-                        if (isCertainTypeElement((XmlTagImpl)element, info.getTagName(), prefixByURI) ||
-                            isElementWithEmbeddedType((XmlTagImpl)element, info.getTagName(), prefixByURI)) {
+                      if (element instanceof XmlTag) {
+                        if (isCertainTypeElement((XmlTag)element, info.getTagName(), prefixByURI) ||
+                            isElementWithEmbeddedType((XmlTag)element, info.getTagName(), prefixByURI)) {
                           consumer.process(element);
                           return false;
                         }
@@ -91,21 +89,21 @@ public class SchemaDefinitionsSearch implements QueryExecutor<PsiElement, PsiEle
     return true;
   }
 
-  public static boolean isElementWithSomeEmbeddedType(XmlTagImpl xml) {
+  public static boolean isElementWithSomeEmbeddedType(XmlTag xml) {
     final String localName = xml.getLocalName();
     if (! (XmlUtil.XML_SCHEMA_URI.equals(xml.getNamespace()) && "element".equals(localName))) {
       return false;
     }
     final XmlTag[] tags = xml.getSubTags();
     for (XmlTag tag : tags) {
-      if (isTypeElement((XmlTagImpl)tag)) {
+      if (isTypeElement(tag)) {
         return true;
       }
     }
     return false;
   }
 
-  public static boolean isElementWithEmbeddedType(XmlTagImpl xml, final String typeName, final String typeNsPrefix) {
+  public static boolean isElementWithEmbeddedType(XmlTag xml, final String typeName, final String typeNsPrefix) {
     final String localName = xml.getLocalName();
     if (! (XmlUtil.XML_SCHEMA_URI.equals(xml.getNamespace()) && "element".equals(localName))) {
       return false;
@@ -119,14 +117,14 @@ public class SchemaDefinitionsSearch implements QueryExecutor<PsiElement, PsiEle
     }
     final XmlTag[] tags = xml.getSubTags();
     for (XmlTag tag : tags) {
-      if (isTypeElement((XmlTagImpl)tag)) {
+      if (isTypeElement(tag)) {
         return true;
       }
     }
     return false;
   }
 
-  private boolean isCertainTypeElement(XmlTagImpl xml, final String typeName, final String nsPrefix) {
+  private boolean isCertainTypeElement(XmlTag xml, final String typeName, final String nsPrefix) {
     if (! isTypeElement(xml)) return false;
     final XmlAttribute name = getNameAttr(xml);
     if (name == null) return false;
@@ -136,12 +134,12 @@ public class SchemaDefinitionsSearch implements QueryExecutor<PsiElement, PsiEle
     return typeName.equals(localName) && nsPrefix.equals(XmlUtil.findPrefixByQualifiedName(value));
   }
 
-  public static boolean isTypeElement(XmlTagImpl xml) {
+  public static boolean isTypeElement(XmlTag xml) {
     final String localName = xml.getLocalName();
     return XmlUtil.XML_SCHEMA_URI.equals(xml.getNamespace()) && ("complexType".equals(localName) || "simpleType".equals(localName));
   }
 
-  private Collection<SchemaTypeInfo> gatherInheritors(XmlTagImpl xml) {
+  private Collection<SchemaTypeInfo> gatherInheritors(XmlTag xml) {
     XmlAttribute name = getNameAttr(xml);
     if (name == null || StringUtil.isEmptyOrSpaces(name.getValue())) return null;
     String localName = name.getValue();
@@ -184,7 +182,7 @@ public class SchemaDefinitionsSearch implements QueryExecutor<PsiElement, PsiEle
     return result;
   }
 
-  public static XmlAttribute getNameAttr(XmlTagImpl xml) {
+  public static XmlAttribute getNameAttr(XmlTag xml) {
     XmlAttribute name = xml.getAttribute("name", XmlUtil.XML_SCHEMA_URI);
     name = name == null ? xml.getAttribute("name") : name;
     return name;

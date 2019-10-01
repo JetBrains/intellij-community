@@ -15,7 +15,7 @@ public class XmlTagStubImpl extends StubBase<XmlStubBasedTag> implements XmlTagS
 
   @NotNull private final String name;
 
-  XmlTagStubImpl(@Nullable StubElement<?> parent,
+  public XmlTagStubImpl(@Nullable StubElement<?> parent,
                  @NotNull StubInputStream dataStream,
                  @NotNull IStubElementType<? extends XmlTagStubImpl, ? extends XmlStubBasedTag> elementType)
     throws IOException {
@@ -23,14 +23,14 @@ public class XmlTagStubImpl extends StubBase<XmlStubBasedTag> implements XmlTagS
     name = notNull(StringRef.toString(dataStream.readName()), "");
   }
 
-  XmlTagStubImpl(@NotNull XmlStubBasedTag psi,
+  public XmlTagStubImpl(@NotNull XmlStubBasedTag psi,
                  @Nullable StubElement<?> parent,
                  @NotNull IStubElementType<? extends XmlTagStubImpl, ? extends XmlStubBasedTag> elementType) {
     super(parent, elementType);
     name = psi.getName();
   }
 
-  void serialize(StubOutputStream stream) throws IOException {
+  public void serialize(StubOutputStream stream) throws IOException {
     stream.writeName(name);
   }
 

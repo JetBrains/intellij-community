@@ -73,8 +73,6 @@ public abstract class XmlTagDelegate {
     myTag = tag;
   }
 
-  protected abstract boolean isCaseSensitive();
-
   protected abstract void deleteChildInternalSuper(@NotNull final ASTNode child);
 
   protected abstract TreeElement addInternalSuper(TreeElement first, ASTNode last, @Nullable ASTNode anchor, @Nullable Boolean before);
@@ -690,7 +688,7 @@ public abstract class XmlTagDelegate {
     if (qname == null) return null;
     final XmlAttribute[] attributes = myTag.getAttributes();
 
-    final boolean caseSensitive = isCaseSensitive();
+    final boolean caseSensitive = myTag.isCaseSensitive();
 
     for (final XmlAttribute attribute : attributes) {
       final ASTNode child = XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild(attribute.getNode());
@@ -1075,8 +1073,8 @@ public abstract class XmlTagDelegate {
               // insert child just after anchor
               // insert into the position specified by index
               if (subTagNum >= 0) {
-                final ASTNode subTag = (ASTNode)subTags[subTagNum];
-                if (subTag.getTreeParent() != myTag) {
+                final ASTNode subTag = subTags[subTagNum].getNode();
+                if (subTag.getTreeParent() != myTag.getNode()) {
                   // in entity
                   final XmlEntityRef entityRef = PsiTreeUtil.getParentOfType(subTags[subTagNum], XmlEntityRef.class);
                   throw new IncorrectOperationException(

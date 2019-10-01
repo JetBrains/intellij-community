@@ -16,7 +16,7 @@ public class XmlAttributeStubImpl extends StubBase<XmlStubBasedAttribute> implem
   @NotNull private final String name;
   @Nullable private final String value;
 
-  XmlAttributeStubImpl(@Nullable StubElement<?> parent,
+  public XmlAttributeStubImpl(@Nullable StubElement<?> parent,
                        @NotNull StubInputStream dataStream,
                        @NotNull IStubElementType<? extends XmlAttributeStubImpl, ? extends XmlStubBasedAttribute> elementType)
     throws IOException {
@@ -25,7 +25,7 @@ public class XmlAttributeStubImpl extends StubBase<XmlStubBasedAttribute> implem
     value = StringRef.toString(dataStream.readName());
   }
 
-  XmlAttributeStubImpl(@NotNull XmlStubBasedAttribute psi,
+  public XmlAttributeStubImpl(@NotNull XmlStubBasedAttribute psi,
                        @Nullable StubElement<?> parent,
                        @NotNull IStubElementType<? extends XmlAttributeStubImpl, ? extends XmlStubBasedAttribute> elementType) {
     super(parent, elementType);

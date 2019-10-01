@@ -82,7 +82,7 @@ public class XmlTagValueImpl implements XmlTagValue{
   @NotNull
   public TextRange getTextRange() {
     if(myElements.length == 0){
-      final ASTNode child = XmlChildRole.START_TAG_END_FINDER.findChild( (ASTNode)myTag);
+      final ASTNode child = XmlChildRole.START_TAG_END_FINDER.findChild(myTag.getNode());
       if(child != null)
         return new TextRange(child.getStartOffset() + 1, child.getStartOffset() + 1);
       return new TextRange(myTag.getTextRange().getEndOffset(), myTag.getTextRange().getEndOffset());

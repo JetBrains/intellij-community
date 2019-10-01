@@ -65,6 +65,8 @@ public class XmlStubBasedTagBase<StubT extends XmlTagStub<?>>
   public void subtreeChanged() {
     super.subtreeChanged();
     myImpl = null;
+    myValue = null;
+    myAttributes = null;
   }
 
   @Override
@@ -207,6 +209,7 @@ public class XmlStubBasedTagBase<StubT extends XmlTagStub<?>>
     return getImpl().getAttribute(qname);
   }
 
+  @Override
   public boolean isCaseSensitive() {
     return true;
   }
@@ -372,11 +375,6 @@ public class XmlStubBasedTagBase<StubT extends XmlTagStub<?>>
 
     public XmlStubBasedTagDelegate() {
       super(XmlStubBasedTagBase.this);
-    }
-
-    @Override
-    protected boolean isCaseSensitive() {
-      return XmlStubBasedTagBase.this.isCaseSensitive();
     }
 
     @Override

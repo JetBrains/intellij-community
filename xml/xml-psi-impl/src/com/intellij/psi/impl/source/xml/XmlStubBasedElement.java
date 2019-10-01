@@ -10,11 +10,15 @@ import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.util.XmlPsiUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Simplified stub-based version of {@link XmlElementImpl}
@@ -41,7 +45,7 @@ abstract class XmlStubBasedElement<T extends StubElement<?>> extends StubBasedPs
   @Override
   public PsiElement getContext() {
     final XmlElement data = getUserData(INCLUDING_ELEMENT);
-    if(data != null) return data;
+    if (data != null) return data;
     return super.getContext();
   }
 
@@ -64,9 +68,10 @@ abstract class XmlStubBasedElement<T extends StubElement<?>> extends StubBasedPs
   @Override
   public PsiElement getParent() {
     final XmlElement data = getUserData(INCLUDING_ELEMENT);
-    if(data != null) return data;
+    if (data != null) return data;
     return super.getParent();
   }
+
   @Override
   @NotNull
   public Language getLanguage() {
@@ -103,6 +108,20 @@ abstract class XmlStubBasedElement<T extends StubElement<?>> extends StubBasedPs
   public void subtreeChanged() {
     super.subtreeChanged();
     putUserData(DO_NOT_VALIDATE, null);
+  }
+
+  @Override
+  @NotNull
+  public PsiElement[] getChildren() {
+    PsiElement psiChild = getFirstChild();
+    if (psiChild == null) return PsiElement.EMPTY_ARRAY;
+
+    List<PsiElement> result = new ArrayList<>();
+    while (psiChild != null) {
+      result.add(psiChild);
+      psiChild = psiChild.getNextSibling();
+    }
+    return PsiUtilCore.toPsiElementArray(result);
   }
 
   @Override

@@ -224,10 +224,6 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
     return getImpl().getAttribute(qname);
   }
 
-  public boolean isCaseSensitive() {
-    return true;
-  }
-
   @Override
   @NotNull
   public String getNamespace() {
@@ -388,11 +384,6 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
 
     public XmlTagImplDelegate() {
       super(XmlTagImpl.this);
-    }
-
-    @Override
-    protected boolean isCaseSensitive() {
-      return XmlTagImpl.this.isCaseSensitive();
     }
 
     @Override
