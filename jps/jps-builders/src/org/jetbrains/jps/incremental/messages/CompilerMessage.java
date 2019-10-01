@@ -109,7 +109,7 @@ public class CompilerMessage extends BuildMessage {
   }
 
   /**
-   * Return a message describing an error in JPS builders code. Such messages will be reported as regular compilation errors and also will be logger
+   * Return a message describing an error in JPS builders code. Such messages will be reported as regular compilation errors and also will be logged
    * as fatal errors of the IDE.
    */
   public static CompilerMessage createInternalBuilderError(@NotNull String compilerName, @NotNull Throwable t) {
