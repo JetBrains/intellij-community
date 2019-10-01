@@ -1501,8 +1501,15 @@ class XInternalError {}
 
   void testImplementViaOverrideCompletion() {
     configure()
-    myFixture.assertPreferredCompletionItems 0, 'Override', 'public void run'
-    lookup.currentItem = lookup.items[1]
+    myFixture.assertPreferredCompletionItems 0, 'Override/Implement methods...', 'Override', 'public void run'
+    lookup.currentItem = lookup.items[2]
+    myFixture.type('\n')
+    checkResult()
+  }
+
+  void testSuggestToOverrideMethodsWhenTypingOverrideAnnotation() {
+    configure()
+    myFixture.assertPreferredCompletionItems 0, 'Override/Implement methods...', 'Override'
     myFixture.type('\n')
     checkResult()
   }

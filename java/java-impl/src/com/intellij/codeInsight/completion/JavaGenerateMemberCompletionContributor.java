@@ -58,12 +58,26 @@ public class JavaGenerateMemberCompletionContributor {
       .withParents(PsiJavaCodeReferenceElement.class, PsiAnnotation.class, PsiModifierList.class, PsiClass.class).accepts(position)) {
       PsiAnnotation annotation = ObjectUtils.assertNotNull(PsiTreeUtil.getParentOfType(position, PsiAnnotation.class));
       int annoStart = annotation.getTextRange().getStartOffset();
+
+      result.addElement(itemWithOverrideImplementDialog(annoStart));
+
       suggestGeneratedMethods(
         result.withPrefixMatcher(new NoMiddleMatchesAfterSpace(annotation.getText().substring(0, parameters.getOffset() - annoStart))),
         position,
         (PsiModifierList)annotation.getParent());
     }
 
+  }
+
+  @NotNull
+  private static LookupElementBuilder itemWithOverrideImplementDialog(int annoStart) {
+    return LookupElementBuilder.create("Override/Implement methods...").withInsertHandler((context, item) -> {
+      context.getDocument().deleteString(annoStart, context.getTailOffset());
+      context.setAddCompletionChar(false);
+      context.setLaterRunnable(() -> {
+        new OverrideMethodsHandler().invoke(context.getProject(), context.getEditor(), context.getFile());
+      });
+    });
   }
 
   private static void suggestGeneratedMethods(CompletionResultSet result, PsiElement position, @Nullable PsiModifierList modifierList) {
