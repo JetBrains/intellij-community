@@ -1,10 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.components;
 
 /**
  * No need to use this interface unless you need to listen to {@link #projectOpened} or {@link #projectClosed}.
  * Consider using {@link com.intellij.openapi.project.ProjectManager#TOPIC} or
- * if you need to run some activity on project open, use {@link com.intellij.openapi.startup.StartupActivity} (marked with
+ * if you need to run some activity on project open only, use {@link com.intellij.openapi.startup.StartupActivity} (marked with
  * {@link com.intellij.openapi.project.DumbAware} if possible to improve performance).
  *
  * <p>
