@@ -106,6 +106,20 @@ public class SpellCheckerManager implements Disposable {
         }
       }
     }
+
+    for (RuntimeDictionaryProvider provider : RuntimeDictionaryProvider.EP_NAME.getExtensionList()) {
+      for (Dictionary dictionary : provider.getDictionaries()) {
+        boolean dictionaryShouldBeLoad = settings == null || !settings.getRuntimeDisabledDictionariesNames().contains(dictionary.getName());
+        boolean dictionaryIsLoad = spellChecker.isDictionaryLoad(dictionary.getName());
+        if (dictionaryIsLoad && !dictionaryShouldBeLoad) {
+          spellChecker.removeDictionary(dictionary.getName());
+        }
+        else if (!dictionaryIsLoad && dictionaryShouldBeLoad) {
+          loadRuntimeDictionary(dictionary);
+        }
+      }
+    }
+
     if (settings != null && settings.getCustomDictionariesPaths() != null) {
       final Set<String> disabledDictionaries = settings.getDisabledDictionariesPaths();
       for (String dictionary : settings.getCustomDictionariesPaths()) {
@@ -151,7 +165,16 @@ public class SpellCheckerManager implements Disposable {
 
   private void fillEngineDictionary() {
     spellChecker.reset();
-    // Load bundled dictionaries from corresponding jars
+
+    loadBundledDictionaries();
+    loadRuntimeDictionaries();
+    loadCustomDictionaries();
+
+    // Load custom dictionaries
+    initUserDictionaries();
+  }
+
+  private void loadBundledDictionaries() {
     for (BundledDictionaryProvider provider : BundledDictionaryProvider.EP_NAME.getExtensionList()) {
       for (String dictionary : provider.getBundledDictionaries()) {
         if (settings == null || !settings.getBundledDisabledDictionariesPaths().contains(dictionary)) {
@@ -159,6 +182,19 @@ public class SpellCheckerManager implements Disposable {
         }
       }
     }
+  }
+
+  private void loadRuntimeDictionaries() {
+    for (RuntimeDictionaryProvider provider : RuntimeDictionaryProvider.EP_NAME.getExtensionList()) {
+      for (Dictionary dictionary : provider.getDictionaries()) {
+        if (settings == null || !settings.getRuntimeDisabledDictionariesNames().contains(dictionary.getName())) {
+          loadRuntimeDictionary(dictionary);
+        }
+      }
+    }
+  }
+
+  private void loadCustomDictionaries() {
     if (settings != null && settings.getCustomDictionariesPaths() != null) {
       final Set<String> disabledDictionaries = settings.getDisabledDictionariesPaths();
       for (String dictionary : settings.getCustomDictionariesPaths()) {
@@ -167,7 +203,6 @@ public class SpellCheckerManager implements Disposable {
         }
       }
     }
-    initUserDictionaries();
   }
 
   private void initUserDictionaries() {
@@ -209,6 +244,10 @@ public class SpellCheckerManager implements Disposable {
     else {
       LOG.warn("Couldn't load dictionary '" + dictionary + "' with loader '" + loaderClass + "'");
     }
+  }
+
+  private void loadRuntimeDictionary(@NotNull Dictionary dictionary) {
+    spellChecker.addDictionary(dictionary);
   }
 
   public boolean hasProblem(@NotNull String word) {
@@ -289,6 +328,15 @@ public class SpellCheckerManager implements Disposable {
     final ArrayList<String> dictionaries = new ArrayList<>();
     for (BundledDictionaryProvider provider : BundledDictionaryProvider.EP_NAME.getExtensionList()) {
       ContainerUtil.addAll(dictionaries, provider.getBundledDictionaries());
+    }
+    return dictionaries;
+  }
+
+  @NotNull
+  public static List<Dictionary> getRuntimeDictionaries() {
+    final ArrayList<Dictionary> dictionaries = new ArrayList<>();
+    for (RuntimeDictionaryProvider provider : RuntimeDictionaryProvider.EP_NAME.getExtensionList()) {
+      ContainerUtil.addAll(dictionaries, provider.getDictionaries());
     }
     return dictionaries;
   }
