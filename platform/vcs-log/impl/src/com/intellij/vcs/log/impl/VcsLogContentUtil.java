@@ -186,6 +186,8 @@ public class VcsLogContentUtil {
     ContentManager cm = window.getContentManager();
     Content[] contents = cm.getContents();
     for (Content content : contents) {
+      // here tab name is used instead of log ui id to select the correct tab
+      // it's done this way since main log ui may not be created when this method is called
       if (VcsLogContentProvider.TAB_NAME.equals(content.getDisplayName())) {
         cm.setSelectedContent(content);
         return true;
