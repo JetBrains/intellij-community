@@ -23,6 +23,7 @@ import com.intellij.ui.UserActivityProviderComponent;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.ScreenReader;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -169,7 +170,11 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
         public void mousePressed(final MouseEvent e) {
           if (SwingUtilities.isLeftMouseButton(e)) {
             e.consume();
-            doClick();
+            if (e.isShiftDown()) {
+              doShiftClick();
+            } else {
+              doClick();
+            }
           }
         }
       });
@@ -393,6 +398,11 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       repaint();
       setSize(getPreferredSize());
       repaint();
+    }
+
+    @ApiStatus.Experimental
+    protected void doShiftClick() {
+      doClick();
     }
   }
 
