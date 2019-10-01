@@ -520,8 +520,10 @@
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.ReplaceUnderscoresWithSpacesMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.ReplaceSpacesWithUnderscoresMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.LineNumberMacro"/>
-    <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.FileNameMacro"/>
-    <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.FileNameWithoutExtensionMacro"/>
+    <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.FilePathMacroBase$FileNameMacro"/>
+    <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.FilePathMacroBase$FileNameWithoutExtensionMacro"/>
+    <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.FilePathMacroBase$FilePathMacro"/>
+    <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.FilePathMacroBase$FileRelativePathMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.ConvertToCamelCaseMacro$ReplaceUnderscoresToCamelCaseMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.ConvertToCamelCaseMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.CapitalizeAndUnderscoreMacro"/>

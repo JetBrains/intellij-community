@@ -15,13 +15,14 @@ import com.intellij.codeInsight.template.*
 import com.intellij.codeInsight.template.impl.*
 import com.intellij.codeInsight.template.macro.CompleteMacro
 import com.intellij.codeInsight.template.macro.ConcatMacro
-import com.intellij.codeInsight.template.macro.FileNameMacro
+import com.intellij.codeInsight.template.macro.FilePathMacroBase
 import com.intellij.codeInsight.template.macro.SplitWordsMacro
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
@@ -656,7 +657,7 @@ class Foo {
     final TemplateManager manager = TemplateManager.getInstance(getProject())
     final Template template = manager.createTemplate("xxx", "user", '$VAR1$ $VAR2$ $VAR1$')
     template.addVariable("VAR1", "", "", true)
-    template.addVariable("VAR2", new MacroCallNode(new FileNameMacro()), new ConstantNode("default"), true)
+    template.addVariable("VAR2", new MacroCallNode(new FilePathMacroBase.FileNameMacro()), new ConstantNode("default"), true)
     ((TemplateImpl)template).templateContext.setEnabled(contextType(JavaCodeContextType.class), true)
     CodeInsightTestUtil.addTemplate(template, myFixture.testRootDisposable)
 
@@ -719,6 +720,18 @@ class Foo {
   }
 }
 """
+  }
+
+  void "test file path macros"() {
+    def file = myFixture.addFileToProject('foo/bar.txt', '').virtualFile
+    myFixture.configureFromExistingVirtualFile(file)
+
+    Template template = templateManager.createTemplate("xxx", "user", '$VAR1$ $VAR2$')
+    template.addVariable("VAR1", "filePath()", "", false)
+    template.addVariable("VAR2", "fileRelativePath()", "", false)
+    templateManager.startTemplate(editor, template)
+
+    myFixture.checkResult(FileUtil.toSystemDependentName("${file.path} foo/bar.txt"))
   }
 
   private static class MyMirrorMacro extends Macro {
