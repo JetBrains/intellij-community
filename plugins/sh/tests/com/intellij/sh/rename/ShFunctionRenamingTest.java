@@ -2,11 +2,11 @@
 package com.intellij.sh.rename;
 
 import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ShFunctionRenamingTest extends LightPlatformCodeInsightFixtureTestCase {
+public class ShFunctionRenamingTest extends BasePlatformTestCase {
   @NotNull
   @Override
   protected String getTestDataPath() {

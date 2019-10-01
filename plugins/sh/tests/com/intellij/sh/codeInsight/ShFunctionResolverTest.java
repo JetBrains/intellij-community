@@ -6,20 +6,22 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.sh.psi.ShFunctionName;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.function.Supplier;
 
-public class ShFunctionResolverTest extends LightCodeInsightFixtureTestCase {
+public class ShFunctionResolverTest extends BasePlatformTestCase {
   private final Supplier<PsiElement> getLastFunction = () -> {
     Collection<ShFunctionName> functionNames = PsiTreeUtil.findChildrenOfType(myFixture.getFile(), ShFunctionName.class);
     return ContainerUtil.getLastItem(new ArrayList<>(functionNames));
   };
   private final Supplier<PsiElement> getFirstFunction = () -> PsiTreeUtil.findChildOfType(myFixture.getFile(), ShFunctionName.class);
 
+  @NotNull
   @Override
   protected String getTestDataPath() {
     return PluginPathManager.getPluginHomePath("sh") + "/testData/resolve/";
