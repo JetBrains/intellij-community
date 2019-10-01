@@ -593,6 +593,9 @@ class CommunityLibraryLicenses {
     new LibraryLicense(name: "XZ for Java", libraryName: "xz", version: "1.5", license: "Public Domain",
                        url: "http://tukaani.org/xz/java.html"),
 
+    new LibraryLicense(name: "qdox-java-parser", libraryName: "qdox-java-parser", version: "2.0", license: "Apache 2.0",
+                       url: "https://github.com/paul-hammant/qdox", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0"),
+
 
     jetbrainsLibrary("completion-ranking-java"),
     jetbrainsLibrary("completion-ranking-kotlin"),

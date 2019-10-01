@@ -219,8 +219,12 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
   }
 
   protected JpsLibrary addLibrary(final String jarPath) {
-    JpsLibrary library = myProject.addLibrary("l", JpsJavaLibraryType.INSTANCE);
-    library.addRoot(new File(getAbsolutePath(jarPath)), JpsOrderRootType.COMPILED);
+    return addLibrary("l", new File(getAbsolutePath(jarPath)));
+  }
+
+  protected JpsLibrary addLibrary(final String libraryName, final File jarFile) {
+    JpsLibrary library = myProject.addLibrary(libraryName, JpsJavaLibraryType.INSTANCE);
+    library.addRoot(jarFile, JpsOrderRootType.COMPILED);
     return library;
   }
 

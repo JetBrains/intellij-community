@@ -75,7 +75,7 @@ class CommunityStandaloneJpsBuilder {
         [
           "JDOM", "jna", "OroMatcher", "Trove4j", "ASM", "NanoXML", "protobuf", "cli-parser", "Log4J", "jgoodies-forms", "Eclipse",
           "netty-codec-http", "lz4-java", "commons-codec", "commons-logging", "http-client", "Slf4j", "Guava", "plexus-utils",
-          "jetbrains-annotations-java5", "maven-model"
+          "jetbrains-annotations-java5", "maven-model", "qdox-java-parser"
         ].each {
           projectLibrary(it)
         }
