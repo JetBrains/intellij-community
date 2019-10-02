@@ -184,8 +184,8 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
       editorWindow.setFilePinned(graphFile, true);
 
       DataManager.registerDataProvider(toolbarsAndTable, this);
-
-    } else {
+    }
+    else {
       myChangesBrowserSplitter.setFirstComponent(toolbarsAndTable);
     }
   }
@@ -391,8 +391,9 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
     @Override
     protected void onSelection(@NotNull int[] selection) {
-      if (Registry.is("show.log.as.editor.tab"))
+      if (Registry.is("show.log.as.editor.tab")) {
         ChangesViewContentManager.getInstance(myLogData.getProject()).selectContent("Repository");
+      }
 
       myChangesBrowser.resetSelectedDetails();
     }

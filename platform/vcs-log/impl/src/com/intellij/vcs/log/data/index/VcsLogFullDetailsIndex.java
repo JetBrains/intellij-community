@@ -121,7 +121,8 @@ public class VcsLogFullDetailsIndex<T, D> implements Disposable {
   @Nullable
   protected Collection<Integer> getKeysForCommit(int commit) throws IOException {
     ForwardIndex forwardIndex = myMapReduceIndex.getForwardIndex();
-    KeyCollectionForwardIndexAccessor<Integer, T> forwardIndexAccessor = ((KeyCollectionForwardIndexAccessor<Integer, T>)myMapReduceIndex.getForwardIndexAccessor());
+    KeyCollectionForwardIndexAccessor<Integer, T> forwardIndexAccessor =
+      ((KeyCollectionForwardIndexAccessor<Integer, T>)myMapReduceIndex.getForwardIndexAccessor());
     if (forwardIndex == null || forwardIndexAccessor == null) return null;
     return forwardIndexAccessor.deserializeData(forwardIndex.get(commit));
   }

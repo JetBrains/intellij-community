@@ -72,11 +72,12 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
     if (Registry.is("show.log.as.editor.tab")) {
       ChangesViewContentI changesViewManager = ChangesViewContentManager.getInstance(project);
       if (changesViewManager instanceof ChangesViewContentManager) {
-        ((ChangesViewContentManager) changesViewManager).adviseSelectionChanged(new ContentManagerAdapter(){
+        ((ChangesViewContentManager)changesViewManager).adviseSelectionChanged(new ContentManagerAdapter() {
           @Override
           public void selectionChanged(@NotNull ContentManagerEvent event) {
             if (myUi != null) {
-              if (event.getContent().getDisplayName().equals(TAB_NAME) && event.getOperation() == ContentManagerEvent.ContentOperation.add) {
+              if (event.getContent().getDisplayName().equals(TAB_NAME) &&
+                  event.getOperation() == ContentManagerEvent.ContentOperation.add) {
                 VirtualFile graphFile = myUi.getMainFrame().tryGetGraphViewFile();
                 if (graphFile != null) {
                   FileEditorManager.getInstance(project).openFile(graphFile, true);
