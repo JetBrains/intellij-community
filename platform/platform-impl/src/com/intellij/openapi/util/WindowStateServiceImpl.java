@@ -18,12 +18,13 @@ import java.awt.*;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 
 /**
  * @author Sergey.Malenkov
  */
-abstract class WindowStateServiceImpl extends WindowStateService implements PersistentStateComponent<Element> {
+abstract class WindowStateServiceImpl extends WindowStateService implements ModificationTracker, PersistentStateComponent<Element> {
   @NonNls private static final String KEY = "key";
   @NonNls private static final String STATE = "state";
   @NonNls private static final String MAXIMIZED = "maximized";
@@ -32,6 +33,7 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
   @NonNls private static final String SCREEN = "screen";
 
   private static final Logger LOG = Logger.getInstance(WindowStateService.class);
+  private final AtomicLong myModificationCount = new AtomicLong();
   private final Map<String, Runnable> myRunnableMap = new TreeMap<>();
   private final Map<String, CachedState> myStateMap = new TreeMap<>();
 
@@ -40,11 +42,15 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
   }
 
   @Override
-  public final Element getState() {
+  public long getModificationCount() {
     synchronized (myRunnableMap) {
       myRunnableMap.values().forEach(Runnable::run);
-      myRunnableMap.clear();
     }
+    return myModificationCount.get();
+  }
+
+  @Override
+  public final Element getState() {
     Element element = new Element(STATE);
     synchronized (myStateMap) {
       for (Map.Entry<String, CachedState> entry : myStateMap.entrySet()) {
@@ -110,14 +116,22 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
   public boolean loadStateFor(Object object, @NotNull String key, @NotNull Window window) {
     synchronized (myRunnableMap) {
       WindowState state = WindowState.getState(window);
-      Runnable runnable = myRunnableMap.put(key, () -> {
-        state.uninstall(window);
-        Rectangle bounds = state.getBounds();
-        putFor(object, key,
-               apply(Rectangle::getLocation, bounds), bounds != null,
-               apply(Rectangle::getSize, bounds), bounds != null,
-               Frame.MAXIMIZED_BOTH == state.getExtendedState(), true,
-               state.isFullScreen(), true);
+      Runnable runnable = myRunnableMap.put(key, new Runnable() {
+        private long myModificationCount = state.getModificationCount();
+
+        @Override
+        public void run() {
+          long newModificationCount = state.getModificationCount();
+          if (myModificationCount != newModificationCount) {
+            myModificationCount = newModificationCount;
+            Rectangle bounds = state.getBounds();
+            putFor(object, key,
+                   apply(Rectangle::getLocation, bounds), bounds != null,
+                   apply(Rectangle::getSize, bounds), bounds != null,
+                   Frame.MAXIMIZED_BOTH == state.getExtendedState(), true,
+                   state.isFullScreen(), true);
+          }
+        }
       });
       if (runnable != null) {
         runnable.run();
@@ -211,6 +225,7 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
       CachedState state = put(key, location, locationSet, size, sizeSet, maximized, maximizedSet, fullScreen, fullScreenSet);
       if (state != null) state.updateScreenRectangle(configuration); // update a screen to adjust stored state
     }
+    myModificationCount.getAndIncrement();
   }
 
   @Nullable

@@ -16,30 +16,22 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.peer.ComponentPeer;
 import java.awt.peer.FramePeer;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * @author Sergey Malenkov
  */
-final class WindowState extends WindowAdapter implements ComponentListener {
+final class WindowState extends WindowAdapter implements ComponentListener, ModificationTracker {
+  private final AtomicLong myModificationCount = new AtomicLong();
   private volatile Rectangle myBounds;
   private volatile int myExtendedState;
   private volatile boolean myFullScreen;
 
   private WindowState(@NotNull Window window) {
     update(window);
-    install(window);
-  }
-
-  private void install(@NotNull Window window) {
     window.addComponentListener(this);
     window.addWindowListener(this);
     window.addWindowStateListener(this);
-  }
-
-  void uninstall(@NotNull Window window) {
-    window.removeComponentListener(this);
-    window.removeWindowListener(this);
-    window.removeWindowStateListener(this);
   }
 
 
@@ -57,9 +49,8 @@ final class WindowState extends WindowAdapter implements ComponentListener {
 
 
   @Override
-  public void windowClosed(WindowEvent event) {
-    Object source = event == null ? null : event.getSource();
-    if (source instanceof Window) uninstall((Window)source);
+  public long getModificationCount() {
+    return myModificationCount.get();
   }
 
   @Override
@@ -97,36 +88,42 @@ final class WindowState extends WindowAdapter implements ComponentListener {
 
   private void update(@NotNull Window window) {
     if (window.isVisible()) {
-      myFullScreen = isFullScreen(window);
-      myExtendedState = getExtendedState(window);
-      if (!myFullScreen && myExtendedState == Frame.NORMAL) {
-        myBounds = window.getBounds();
+      boolean currentFullScreen = isFullScreen(window);
+      if (myFullScreen != currentFullScreen) {
+        myFullScreen = currentFullScreen;
+        myModificationCount.getAndIncrement();
+      }
+      int currentExtendedState = getExtendedState(window);
+      if (myExtendedState != currentExtendedState) {
+        myExtendedState = currentExtendedState;
+        myModificationCount.getAndIncrement();
+      }
+      if (!currentFullScreen && currentExtendedState == Frame.NORMAL) {
+        Rectangle currentBounds = window.getBounds();
+        if (!currentBounds.equals(myBounds)) {
+          myBounds = currentBounds;
+          myModificationCount.getAndIncrement();
+        }
       }
     }
   }
 
 
-  @Nullable
-  public static WindowState findState(@NotNull Window window) {
+  @NotNull
+  public static WindowState getState(@NotNull Window window) {
     for (ComponentListener listener : window.getComponentListeners()) {
       if (listener instanceof WindowState) {
         return (WindowState)listener;
       }
     }
-    return null;
+    return new WindowState(window);
   }
 
-  @NotNull
-  public static WindowState getState(@NotNull Window window) {
-    WindowState state = findState(window);
-    return state != null ? state : new WindowState(window);
-  }
-
-  static boolean isFullScreen(@NotNull Window window) {
+  private static boolean isFullScreen(@NotNull Window window) {
     return window instanceof IdeFrame && FrameInfoHelper.isFullScreenSupportedInCurrentOs() && ((IdeFrame)window).isInFullScreen();
   }
 
-  static int getExtendedState(@NotNull Window window) {
+  private static int getExtendedState(@NotNull Window window) {
     if (window instanceof Frame) {
       Frame frame = (Frame)window;
       int state = frame.getExtendedState();
