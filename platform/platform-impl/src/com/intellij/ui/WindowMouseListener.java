@@ -102,7 +102,6 @@ abstract class WindowMouseListener extends MouseAdapter implements MouseInputLis
       Component view = getView(content);
       if (view != null) {
         setCursorType(isDisabled(view) ? CUSTOM_CURSOR : getCursorType(view, event.getLocationOnScreen()));
-        //noinspection MagicConstant
         setCursor(content, getPredefinedCursor(myCursorType == CUSTOM_CURSOR ? DEFAULT_CURSOR : myCursorType));
         if (start && myCursorType != CUSTOM_CURSOR) {
           myLocation = event.getLocationOnScreen();

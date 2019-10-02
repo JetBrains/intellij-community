@@ -439,8 +439,8 @@ public class ExpectedHighlightingData {
   private String getActualLineMarkerFileText(@NotNull Collection<? extends LineMarkerInfo> markerInfos) {
     StringBuilder result = new StringBuilder();
     int index = 0;
-    ArrayList<LineMarkerInfo> lineMarkerInfos = new ArrayList<>(markerInfos);
-    Collections.sort(lineMarkerInfos, comparingInt(o -> o.startOffset));
+    List<LineMarkerInfo> lineMarkerInfos = new ArrayList<>(markerInfos);
+    lineMarkerInfos.sort(comparingInt(o -> o.startOffset));
     String documentText = myDocument.getText();
     for (LineMarkerInfo expectedLineMarker : lineMarkerInfos) {
       result.append(documentText, index, expectedLineMarker.startOffset)
@@ -471,11 +471,11 @@ public class ExpectedHighlightingData {
     return false;
   }
 
-  public void checkResult(Collection<HighlightInfo> infos, String text) {
+  public void checkResult(Collection<? extends HighlightInfo> infos, String text) {
     checkResult(infos, text, null);
   }
 
-  public void checkResult(Collection<HighlightInfo> infos, String text, @Nullable String filePath) {
+  public void checkResult(Collection<? extends HighlightInfo> infos, String text, @Nullable String filePath) {
     StringBuilder failMessage = new StringBuilder();
 
     Set<HighlightInfo> expectedFound = new THashSet<>(new TObjectHashingStrategy<HighlightInfo>() {
@@ -558,7 +558,7 @@ public class ExpectedHighlightingData {
     return ContainerUtil.reverse(infos instanceof List ? (List<T>)infos : new ArrayList<>(infos));
   }
 
-  private void compareTexts(Collection<HighlightInfo> infos, String text, String failMessage, @Nullable String filePath) {
+  private void compareTexts(Collection<? extends HighlightInfo> infos, String text, String failMessage, @Nullable String filePath) {
     String actual = composeText(myHighlightingTypes, infos, text, myMessageBundles);
     if (filePath != null && !myText.equals(actual)) {
       // uncomment to overwrite, don't forget to revert on commit!
@@ -579,11 +579,11 @@ public class ExpectedHighlightingData {
 
   @NotNull
   public static String composeText(@NotNull Map<String, ExpectedHighlightingSet> types,
-                                   @NotNull Collection<HighlightInfo> infos,
+                                   @NotNull Collection<? extends HighlightInfo> infos,
                                    @NotNull String text,
                                    @NotNull ResourceBundle... messageBundles) {
     // filter highlighting data and map each highlighting to a tag name
-    List<Pair<String, HighlightInfo>> list = infos.stream()
+    List<Pair<String, ? extends HighlightInfo>> list = infos.stream()
       .map(info -> pair(findTag(types, info), info))
       .filter(p -> p.first != null)
       .collect(Collectors.toList());
@@ -591,7 +591,7 @@ public class ExpectedHighlightingData {
       types.values().stream().flatMap(set -> set.infos.stream()).anyMatch(i -> i.forcedTextAttributesKey != null);
 
     // sort filtered highlighting data by end offset in descending order
-    Collections.sort(list, (o1, o2) -> {
+    list.sort((o1, o2) -> {
       HighlightInfo i1 = o1.second;
       HighlightInfo i2 = o2.second;
 
@@ -639,13 +639,13 @@ public class ExpectedHighlightingData {
   }
 
   private static int[] composeText(StringBuilder sb,
-                                   List<? extends Pair<String, HighlightInfo>> list, int index,
+                                   List<? extends Pair<String, ? extends HighlightInfo>> list, int index,
                                    String text, int endPos, int startPos,
                                    boolean showAttributesKeys,
                                    ResourceBundle... messageBundles) {
     int i = index;
     while (i < list.size()) {
-      Pair<String, HighlightInfo> pair = list.get(i);
+      Pair<String, ? extends HighlightInfo> pair = list.get(i);
       HighlightInfo info = pair.second;
       if (info.endOffset <= startPos) {
         break;
