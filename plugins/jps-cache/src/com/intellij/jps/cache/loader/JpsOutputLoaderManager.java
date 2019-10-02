@@ -22,6 +22,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -124,6 +125,7 @@ public class JpsOutputLoaderManager implements ProjectComponent {
   }
 
   private void startLoadingForCommit(String commitId) {
+    long startTime = System.currentTimeMillis();
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     indicator.setText("Fetching cache for commit: " + commitId);
     indicator.setFraction(0.05);
@@ -159,19 +161,12 @@ public class JpsOutputLoaderManager implements ProjectComponent {
           .thenRun(() -> {
             if (loaderStatus == LoaderStatus.COMPLETE) {
               PropertiesComponent.getInstance().setValue(LATEST_COMMIT_ID, commitId);
+              long endTime = (System.currentTimeMillis() - startTime) / 1000;
               ApplicationManager.getApplication().invokeLater(() -> {
-                Notification notification = new Notification(GROUP_DISPLAY_ID, GROUP_DISPLAY_ID, "Jps cache loaded successfully for commit " + commitId,
-                                                             NotificationType.INFORMATION);
-                Notifications.Bus.notify(notification);
+                WindowManager.getInstance().getStatusBar(myProject).setInfo("Update compilation caches completed successfully in " + endTime + " s");
               });
               LOG.debug("Loading finished");
-            } else {
-              ApplicationManager.getApplication().invokeLater(() -> {
-                Notification notification = new Notification(GROUP_DISPLAY_ID, GROUP_DISPLAY_ID, "Couldn't load jps cache for commit " + commitId,
-                                                             NotificationType.WARNING);
-                Notifications.Bus.notify(notification);
-              });
-            }
+            } else onFail();
           });
       }).handle((result, ex) -> {
         if (ex != null) {
@@ -181,6 +176,7 @@ public class JpsOutputLoaderManager implements ProjectComponent {
           }
           else {
             LOG.warn("Couldn't fetch jps compilation caches", ex);
+            onFail();
           }
           loaders.forEach(loader -> loader.rollback());
           indicator.setText("Rolling back downloaded caches");
@@ -190,6 +186,7 @@ public class JpsOutputLoaderManager implements ProjectComponent {
     }
     catch (InterruptedException | ExecutionException e) {
       LOG.warn("Couldn't fetch jps compilation caches", e);
+      onFail();
     }
     hasRunningTask.set(false);
   }
@@ -226,5 +223,11 @@ public class JpsOutputLoaderManager implements ProjectComponent {
                                                                                          CommonBundle.getCancelButtonText(), true);
     processIndicator.setIndeterminate(false);
     return processIndicator;
+  }
+
+  private void onFail() {
+    ApplicationManager.getApplication().invokeLater(() -> {
+      WindowManager.getInstance().getStatusBar(myProject).setInfo("Update compilation caches failed");
+    });
   }
 }
