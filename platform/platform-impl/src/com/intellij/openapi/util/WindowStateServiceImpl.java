@@ -115,7 +115,7 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Modi
   @Override
   public boolean loadStateFor(Object object, @NotNull String key, @NotNull Window window) {
     synchronized (myRunnableMap) {
-      WindowState state = WindowState.getState(window);
+      WindowState state = WindowStateAdapter.getState(window);
       Runnable runnable = myRunnableMap.put(key, new Runnable() {
         private long myModificationCount = state.getModificationCount();
 
@@ -124,10 +124,11 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Modi
           long newModificationCount = state.getModificationCount();
           if (myModificationCount != newModificationCount) {
             myModificationCount = newModificationCount;
-            Rectangle bounds = state.getBounds();
+            Point location = state.getLocation();
+            Dimension size = state.getSize();
             putFor(object, key,
-                   apply(Rectangle::getLocation, bounds), bounds != null,
-                   apply(Rectangle::getSize, bounds), bounds != null,
+                   location, location != null,
+                   size, size != null,
                    Frame.MAXIMIZED_BOTH == state.getExtendedState(), true,
                    state.isFullScreen(), true);
           }
@@ -137,26 +138,9 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Modi
         runnable.run();
       }
     }
-    CachedState state = getFor(object, key, CachedState.class);
+    WindowState state = getFor(object, key, WindowState.class);
     if (state == null) return false;
-    Frame frame = window instanceof Frame ? (Frame)window : null;
-    if (frame != null && Frame.NORMAL != frame.getExtendedState()) {
-      frame.setExtendedState(Frame.NORMAL);
-    }
-    Rectangle bounds = window.getBounds();
-    if (state.myLocation != null) {
-      bounds.setLocation(state.myLocation);
-    }
-    if (state.mySize != null) {
-      bounds.setSize(state.mySize);
-    }
-    if (bounds.isEmpty()) {
-      bounds.setSize(window.getPreferredSize());
-    }
-    window.setBounds(bounds);
-    if (frame != null && state.myMaximized) {
-      frame.setExtendedState(Frame.MAXIMIZED_BOTH);
-    }
+    state.applyTo(window);
     return true;
   }
 
@@ -322,13 +306,13 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Modi
       if (type == Point.class) return (T)location;
       if (type == Dimension.class) return (T)size;
       if (type == Rectangle.class) return location == null || size == null ? null : (T)new Rectangle(location, size);
-      if (type != CachedState.class) throw new IllegalArgumentException();
+      if (type != WindowState.class) throw new IllegalArgumentException();
       // copy a current state
-      CachedState state = new CachedState();
-      state.myLocation = location;
-      state.mySize = size;
-      state.myMaximized = myMaximized;
-      state.myFullScreen = myFullScreen;
+      WindowState state = new WindowState();
+      state.setLocation(location);
+      state.setSize(size);
+      state.setExtendedState(myMaximized ? Frame.MAXIMIZED_BOTH : Frame.NORMAL);
+      state.setFullScreen(myFullScreen);
       return (T)state;
     }
 

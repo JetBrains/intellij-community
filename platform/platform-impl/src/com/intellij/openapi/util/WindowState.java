@@ -7,123 +7,102 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import sun.awt.AWTAccessor;
 
+import java.awt.Dimension;
 import java.awt.Frame;
+import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Window;
-import java.awt.event.ComponentEvent;
-import java.awt.event.ComponentListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.awt.peer.ComponentPeer;
 import java.awt.peer.FramePeer;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Function;
 
-/**
- * @author Sergey Malenkov
- */
-final class WindowState extends WindowAdapter implements ComponentListener, ModificationTracker {
+public final class WindowState implements ModificationTracker {
   private final AtomicLong myModificationCount = new AtomicLong();
-  private volatile Rectangle myBounds;
+  private volatile Point myLocation;
+  private volatile Dimension mySize;
   private volatile int myExtendedState;
   private volatile boolean myFullScreen;
-
-  private WindowState(@NotNull Window window) {
-    update(window);
-    window.addComponentListener(this);
-    window.addWindowListener(this);
-    window.addWindowStateListener(this);
-  }
-
-
-  public Rectangle getBounds() {
-    return myBounds;
-  }
-
-  public int getExtendedState() {
-    return myExtendedState;
-  }
-
-  public boolean isFullScreen() {
-    return myFullScreen;
-  }
-
 
   @Override
   public long getModificationCount() {
     return myModificationCount.get();
   }
 
-  @Override
-  public void windowOpened(WindowEvent event) {
-    update(event);
+
+  @Nullable
+  public Point getLocation() {
+    return apply(Point::new, myLocation);
   }
 
-  @Override
-  public void windowStateChanged(WindowEvent event) {
-    update(event);
+  void setLocation(@Nullable Point location) {
+    if (Objects.equals(myLocation, location)) return;
+    myLocation = apply(Point::new, location);
+    myModificationCount.getAndIncrement();
   }
 
-  @Override
-  public void componentMoved(ComponentEvent event) {
-    update(event);
+
+  @Nullable
+  public Dimension getSize() {
+    return apply(Dimension::new, mySize);
   }
 
-  @Override
-  public void componentResized(ComponentEvent event) {
-    update(event);
+  void setSize(@Nullable Dimension size) {
+    if (Objects.equals(mySize, size)) return;
+    mySize = apply(Dimension::new, size);
+    myModificationCount.getAndIncrement();
   }
 
-  @Override
-  public void componentShown(ComponentEvent event) {
+
+  public int getExtendedState() {
+    return myExtendedState;
   }
 
-  @Override
-  public void componentHidden(ComponentEvent event) {
+  void setExtendedState(int extendedState) {
+    if (myExtendedState == extendedState) return;
+    myExtendedState = extendedState;
+    myModificationCount.getAndIncrement();
   }
 
-  private void update(@Nullable ComponentEvent event) {
-    Object source = event == null ? null : event.getSource();
-    if (source instanceof Window) update((Window)source);
+
+  public boolean isFullScreen() {
+    return myFullScreen;
   }
 
-  private void update(@NotNull Window window) {
-    if (window.isVisible()) {
-      boolean currentFullScreen = isFullScreen(window);
-      if (myFullScreen != currentFullScreen) {
-        myFullScreen = currentFullScreen;
-        myModificationCount.getAndIncrement();
-      }
-      int currentExtendedState = getExtendedState(window);
-      if (myExtendedState != currentExtendedState) {
-        myExtendedState = currentExtendedState;
-        myModificationCount.getAndIncrement();
-      }
-      if (!currentFullScreen && currentExtendedState == Frame.NORMAL) {
-        Rectangle currentBounds = window.getBounds();
-        if (!currentBounds.equals(myBounds)) {
-          myBounds = currentBounds;
-          myModificationCount.getAndIncrement();
-        }
-      }
+  void setFullScreen(boolean fullScreen) {
+    if (myFullScreen == fullScreen) return;
+    myFullScreen = fullScreen;
+    myModificationCount.getAndIncrement();
+  }
+
+
+  public void applyTo(@NotNull Window window) {
+    Point location = getLocation();
+    Dimension size = getSize();
+    int extendedState = getExtendedState();
+
+    Frame frame = window instanceof Frame ? (Frame)window : null;
+    if (frame != null && Frame.NORMAL != frame.getExtendedState()) {
+      frame.setExtendedState(Frame.NORMAL);
+    }
+
+    Rectangle bounds = window.getBounds();
+    if (location != null) bounds.setLocation(location);
+    if (size != null) bounds.setSize(size);
+    if (bounds.isEmpty()) bounds.setSize(window.getPreferredSize());
+    window.setBounds(bounds);
+
+    if (frame != null && Frame.NORMAL != extendedState) {
+      frame.setExtendedState(extendedState);
     }
   }
 
-
-  @NotNull
-  public static WindowState getState(@NotNull Window window) {
-    for (ComponentListener listener : window.getComponentListeners()) {
-      if (listener instanceof WindowState) {
-        return (WindowState)listener;
-      }
-    }
-    return new WindowState(window);
-  }
-
-  private static boolean isFullScreen(@NotNull Window window) {
+  static boolean isFullScreen(@NotNull Window window) {
     return window instanceof IdeFrame && FrameInfoHelper.isFullScreenSupportedInCurrentOs() && ((IdeFrame)window).isInFullScreen();
   }
 
-  private static int getExtendedState(@NotNull Window window) {
+  static int getExtendedState(@NotNull Window window) {
     if (window instanceof Frame) {
       Frame frame = (Frame)window;
       int state = frame.getExtendedState();
@@ -135,5 +114,10 @@ final class WindowState extends WindowAdapter implements ComponentListener, Modi
       return state;
     }
     return Frame.NORMAL;
+  }
+
+  @Nullable
+  private static <T, R> R apply(@NotNull Function<T, R> function, @Nullable T value) {
+    return value == null ? null : function.apply(value);
   }
 }
