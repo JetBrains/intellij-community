@@ -15,7 +15,6 @@
  */
 package com.android.studio.updater;
 
-import com.android.testutils.BazelRunfilesManifestProcessor;
 import com.android.testutils.JarTestSuiteRunner;
 import com.android.testutils.TestUtils;
 import com.intellij.openapi.util.io.FileUtil;
@@ -38,7 +37,6 @@ public class UpdaterTestSuite {
 
   @BeforeClass
   public static void setUp() throws IOException {
-    BazelRunfilesManifestProcessor.setUpRunfiles();
     tempFolder = FileUtil.createTempDirectory("UpdaterTestSuite", "d");
     // UpdaterTestCase.setUp() calls PathManagerEx.findFileUnderCommunityHome which uses PathManager which reads idea.home.path
     System.setProperty("idea.home.path", tempFolder.getAbsolutePath());
