@@ -33,6 +33,7 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class JpsOutputLoaderManager implements ProjectComponent {
   private static final Logger LOG = Logger.getInstance("com.intellij.jps.cache.loader.JpsOutputLoaderManager");
@@ -40,6 +41,7 @@ public class JpsOutputLoaderManager implements ProjectComponent {
   private static final String GROUP_DISPLAY_ID = "Jps Cache Loader";
   private static final double TOTAL_SEGMENT_SIZE = 0.9;
   private PersistentCachingModuleHashingService myModuleHashingService;
+  private final AtomicBoolean hasRunningTask;
   private final ExecutorService ourThreadPool;
   private List<JpsOutputLoader> myJpsOutputLoadersLoaders;
   private final JpsServerClient myServerClient;
@@ -54,6 +56,7 @@ public class JpsOutputLoaderManager implements ProjectComponent {
 
   public JpsOutputLoaderManager(@NotNull Project project) {
     myProject = project;
+    hasRunningTask = new AtomicBoolean();
     myServerClient = ArtifactoryJpsServerClient.INSTANCE;
     ourThreadPool = AppExecutorUtil.createBoundedApplicationPoolExecutor("JpsCacheLoader Pool", ProcessIOExecutorService.INSTANCE,
                                                                          getThreadPoolSize());
@@ -69,10 +72,12 @@ public class JpsOutputLoaderManager implements ProjectComponent {
   }
 
   public void load() {
+    if (!canRunNewLoading()) return;
     ourThreadPool.execute(() -> load(myServerClient.getAllCacheKeys()));
   }
 
   public void load(@NotNull String currentCommitId) {
+    if (!canRunNewLoading()) return;
     ourThreadPool.execute(() -> {
       String previousCommitId = PropertiesComponent.getInstance().getValue(LATEST_COMMIT_ID);
       if (previousCommitId != null && currentCommitId.equals(previousCommitId)) {
@@ -175,6 +180,16 @@ public class JpsOutputLoaderManager implements ProjectComponent {
     catch (ExecutionException e) {
       e.printStackTrace();
     }
+    hasRunningTask.set(false);
+  }
+
+  private synchronized boolean canRunNewLoading() {
+    if (hasRunningTask.get()) {
+      LOG.info("Jps cache loading already in progress, can't start the new one");
+      return false;
+    }
+    hasRunningTask.set(true);
+    return true;
   }
 
   private List<JpsOutputLoader> getLoaders(@NotNull Project project) {
