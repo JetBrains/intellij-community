@@ -3,6 +3,8 @@ package com.intellij.openapi.vfs.impl.local;
 
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.execution.process.ProcessIOExecutorService;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
@@ -44,7 +46,19 @@ public class DirectoryAccessChecker {
   }
 
   public static void refresh() {
-    if (IS_ENABLED && System.currentTimeMillis() > instanceEOL) {
+    if (IS_ENABLED) {
+      Application app = ApplicationManager.getApplication();
+      if (app.isDispatchThread()) {
+        app.executeOnPooledThread(() -> doRefresh());
+      }
+      else {
+        doRefresh();
+      }
+    }
+  }
+
+  private static void doRefresh() {
+    if (System.currentTimeMillis() > instanceEOL) {
       instance = getChain();
       instanceEOL = System.currentTimeMillis() + REFRESH_RATE_MS;
     }
