@@ -131,7 +131,7 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
 
   @Override
   public String toString() {
-    return "VisiblePackRefresher \'" + myLogId + "\' state = " + myState;
+    return "VisiblePackRefresher '" + myLogId + "' state = " + myState;
   }
 
   @Override
