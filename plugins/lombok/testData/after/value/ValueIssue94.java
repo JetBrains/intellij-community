@@ -9,20 +9,17 @@ public final class Val {
   }
 
   @java.lang.SuppressWarnings("all")
-  @javax.annotation.Generated("lombok")
   public String getNonFinal() {
     return this.nonFinal;
   }
 
   @java.lang.SuppressWarnings("all")
-  @javax.annotation.Generated("lombok")
   public String getOtherFinal() {
     return this.otherFinal;
   }
 
   @java.lang.Override
   @java.lang.SuppressWarnings("all")
-  @javax.annotation.Generated("lombok")
   public boolean equals(final java.lang.Object o) {
     if (o == this) return true;
     if (!(o instanceof Val)) return false;
@@ -38,7 +35,6 @@ public final class Val {
 
   @java.lang.Override
   @java.lang.SuppressWarnings("all")
-  @javax.annotation.Generated("lombok")
   public int hashCode() {
     final int PRIME = 59;
     int result = 1;
@@ -51,14 +47,12 @@ public final class Val {
 
   @java.lang.Override
   @java.lang.SuppressWarnings("all")
-  @javax.annotation.Generated("lombok")
   public java.lang.String toString() {
     return "Val(nonFinal=" + this.getNonFinal() + ", otherFinal=" + this.getOtherFinal() + ")";
   }
 
   @java.beans.ConstructorProperties({"otherFinal"})
   @java.lang.SuppressWarnings("all")
-  @javax.annotation.Generated("lombok")
   public Val(final String otherFinal) {
     this.otherFinal = otherFinal;
   }

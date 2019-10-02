@@ -11,26 +11,22 @@ public class RequiredArgsConstructorWithGeneric136<T> {
         }
 
         @java.lang.SuppressWarnings("all")
-        @javax.annotation.Generated("lombok")
         public T getObject() {
             return this.object;
         }
 
         @java.lang.SuppressWarnings("all")
-        @javax.annotation.Generated("lombok")
         public int getI() {
             return this.i;
         }
 
         @java.lang.SuppressWarnings("all")
-        @javax.annotation.Generated("lombok")
         private Foo(final T object, final int i) {
             this.object = object;
             this.i = i;
         }
 
         @java.lang.SuppressWarnings("all")
-        @javax.annotation.Generated("lombok")
         public static <T> Foo<T> of2(final T object, final int i) {
             return new Foo<T>(object, i);
         }

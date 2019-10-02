@@ -6,7 +6,6 @@ class GetterLazyEahcToString {
 
 	@java.lang.Override
 	@java.lang.SuppressWarnings("all")
-	@javax.annotation.Generated("lombok")
 	public boolean equals(final java.lang.Object o) {
 		if (o == this) return true;
 		if (!(o instanceof GetterLazyEahcToString)) return false;
@@ -22,14 +21,12 @@ class GetterLazyEahcToString {
 	}
 
 	@java.lang.SuppressWarnings("all")
-	@javax.annotation.Generated("lombok")
 	protected boolean canEqual(final java.lang.Object other) {
 		return other instanceof GetterLazyEahcToString;
 	}
 
 	@java.lang.Override
 	@java.lang.SuppressWarnings("all")
-	@javax.annotation.Generated("lombok")
 	public int hashCode() {
 		final int PRIME = 59;
 		int result = 1;
@@ -42,13 +39,11 @@ class GetterLazyEahcToString {
 
 	@java.lang.Override
 	@java.lang.SuppressWarnings("all")
-	@javax.annotation.Generated("lombok")
 	public java.lang.String toString() {
 		return "GetterLazyEahcToString(value=" + this.getValue() + ", value2=" + this.value2 + ")";
 	}
 
 	@java.lang.SuppressWarnings("all")
-	@javax.annotation.Generated("lombok")
 	public String getValue() {
 		java.lang.Object value = this.value.get();
 		if (value == null) {
@@ -65,7 +60,6 @@ class GetterLazyEahcToString {
 	}
 
 	@java.lang.SuppressWarnings("all")
-	@javax.annotation.Generated("lombok")
 	public String getValue2() {
 		return this.value2;
 	}

@@ -6,7 +6,6 @@ class RequiredArgsConstructor1 {
 
 	@java.beans.ConstructorProperties({"x"})
 	@java.lang.SuppressWarnings("all")
-	@javax.annotation.Generated("lombok")
 	public RequiredArgsConstructor1(final int x) {
 		this.x = x;
 	}
@@ -18,7 +17,6 @@ class RequiredArgsConstructorAccess {
 
 	@java.beans.ConstructorProperties({"x"})
 	@java.lang.SuppressWarnings("all")
-	@javax.annotation.Generated("lombok")
 	protected RequiredArgsConstructorAccess(final int x) {
 		this.x = x;
 	}
@@ -29,13 +27,11 @@ class RequiredArgsConstructorStaticName {
 	String name;
 
 	@java.lang.SuppressWarnings("all")
-	@javax.annotation.Generated("lombok")
 	private RequiredArgsConstructorStaticName(final int x) {
 		this.x = x;
 	}
 
 	@java.lang.SuppressWarnings("all")
-	@javax.annotation.Generated("lombok")
 	public static RequiredArgsConstructorStaticName staticname(final int x) {
 		return new RequiredArgsConstructorStaticName(x);
 	}
@@ -48,7 +44,6 @@ class RequiredArgsConstructorWithAnnotations {
 	@java.beans.ConstructorProperties({"x"})
 	@Deprecated
 	@java.lang.SuppressWarnings("all")
-	@javax.annotation.Generated("lombok")
 	public RequiredArgsConstructorWithAnnotations(final int x) {
 		this.x = x;
 	}
@@ -60,7 +55,6 @@ class AllArgsConstructor1 {
 
 	@java.beans.ConstructorProperties({"x", "name"})
 	@java.lang.SuppressWarnings("all")
-	@javax.annotation.Generated("lombok")
 	public AllArgsConstructor1(final int x, final String name) {
 		this.x = x;
 		this.name = name;
@@ -72,7 +66,6 @@ class NoArgsConstructor1 {
 	String name;
 
 	@java.lang.SuppressWarnings("all")
-	@javax.annotation.Generated("lombok")
 	public NoArgsConstructor1() {
 	}
 }
@@ -82,13 +75,11 @@ class RequiredArgsConstructorStaticNameGenerics<T extends Number> {
 	String name;
 
 	@java.lang.SuppressWarnings("all")
-	@javax.annotation.Generated("lombok")
 	private RequiredArgsConstructorStaticNameGenerics(final T x) {
 		this.x = x;
 	}
 
 	@java.lang.SuppressWarnings("all")
-	@javax.annotation.Generated("lombok")
 	public static <T extends Number> RequiredArgsConstructorStaticNameGenerics<T> of(final T x) {
 		return new RequiredArgsConstructorStaticNameGenerics<T>(x);
 	}
@@ -99,13 +90,11 @@ class RequiredArgsConstructorStaticNameGenerics2<T extends Number> {
 	String name;
 
 	@java.lang.SuppressWarnings("all")
-	@javax.annotation.Generated("lombok")
 	private RequiredArgsConstructorStaticNameGenerics2(final Class<T> x) {
 		this.x = x;
 	}
 
 	@java.lang.SuppressWarnings("all")
-	@javax.annotation.Generated("lombok")
 	public static <T extends Number> RequiredArgsConstructorStaticNameGenerics2<T> of(final Class<T> x) {
 		return new RequiredArgsConstructorStaticNameGenerics2<T>(x);
 	}

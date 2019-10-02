@@ -6,13 +6,11 @@ class RequiredArgsConstructorStaticNameAccessPrivate {
   String name;
 
   @java.lang.SuppressWarnings("all")
-  @javax.annotation.Generated("lombok")
   private RequiredArgsConstructorStaticNameAccessPrivate(final int x) {
     this.x = x;
   }
 
   @java.lang.SuppressWarnings("all")
-  @javax.annotation.Generated("lombok")
   private static RequiredArgsConstructorStaticNameAccessPrivate of(final int x) {
     return new RequiredArgsConstructorStaticNameAccessPrivate(x);
   }
@@ -24,13 +22,11 @@ class RequiredArgsConstructorStaticNameAccessProtected {
   String name;
 
   @java.lang.SuppressWarnings("all")
-  @javax.annotation.Generated("lombok")
   private RequiredArgsConstructorStaticNameAccessProtected(final int x) {
     this.x = x;
   }
 
   @java.lang.SuppressWarnings("all")
-  @javax.annotation.Generated("lombok")
   protected static RequiredArgsConstructorStaticNameAccessProtected of(final int x) {
     return new RequiredArgsConstructorStaticNameAccessProtected(x);
   }
@@ -42,13 +38,11 @@ class RequiredArgsConstructorStaticNameAccessPackage {
   String name;
 
   @java.lang.SuppressWarnings("all")
-  @javax.annotation.Generated("lombok")
   private RequiredArgsConstructorStaticNameAccessPackage(final int x) {
     this.x = x;
   }
 
   @java.lang.SuppressWarnings("all")
-  @javax.annotation.Generated("lombok")
   static RequiredArgsConstructorStaticNameAccessPackage of(final int x) {
     return new RequiredArgsConstructorStaticNameAccessPackage(x);
   }
@@ -60,13 +54,11 @@ class RequiredArgsConstructorStaticNameAccessModule {
   String name;
 
   @java.lang.SuppressWarnings("all")
-  @javax.annotation.Generated("lombok")
   private RequiredArgsConstructorStaticNameAccessModule(final int x) {
     this.x = x;
   }
 
   @java.lang.SuppressWarnings("all")
-  @javax.annotation.Generated("lombok")
   static RequiredArgsConstructorStaticNameAccessModule of(final int x) {
     return new RequiredArgsConstructorStaticNameAccessModule(x);
   }
@@ -78,13 +70,11 @@ class RequiredArgsConstructorStaticNameAccessPublic {
   String name;
 
   @java.lang.SuppressWarnings("all")
-  @javax.annotation.Generated("lombok")
   private RequiredArgsConstructorStaticNameAccessPublic(final int x) {
     this.x = x;
   }
 
   @java.lang.SuppressWarnings("all")
-  @javax.annotation.Generated("lombok")
   public static RequiredArgsConstructorStaticNameAccessPublic of(final int x) {
     return new RequiredArgsConstructorStaticNameAccessPublic(x);
   }

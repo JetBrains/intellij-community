@@ -10,33 +10,28 @@ public final class ValueWithGeneric176<T> {
     }
 
     @java.lang.SuppressWarnings("all")
-    @javax.annotation.Generated("lombok")
     private ValueWithGeneric176(final T name, final int count) {
         this.name = name;
         this.count = count;
     }
 
     @java.lang.SuppressWarnings("all")
-    @javax.annotation.Generated("lombok")
     public static <T> ValueWithGeneric176<T> of(final T name, final int count) {
         return new ValueWithGeneric176<T>(name, count);
     }
 
     @java.lang.SuppressWarnings("all")
-    @javax.annotation.Generated("lombok")
     public T getName() {
         return this.name;
     }
 
     @java.lang.SuppressWarnings("all")
-    @javax.annotation.Generated("lombok")
     public int getCount() {
         return this.count;
     }
 
     @java.lang.Override
     @java.lang.SuppressWarnings("all")
-    @javax.annotation.Generated("lombok")
     public boolean equals(final java.lang.Object o) {
         if (o == this) return true;
         if (!(o instanceof ValueWithGeneric176)) return false;
@@ -50,7 +45,6 @@ public final class ValueWithGeneric176<T> {
 
     @java.lang.Override
     @java.lang.SuppressWarnings("all")
-    @javax.annotation.Generated("lombok")
     public int hashCode() {
         final int PRIME = 59;
         int result = 1;
@@ -62,7 +56,6 @@ public final class ValueWithGeneric176<T> {
 
     @java.lang.Override
     @java.lang.SuppressWarnings("all")
-    @javax.annotation.Generated("lombok")
     public java.lang.String toString() {
         return "ValueWithGeneric176(name=" + this.getName() + ", count=" + this.getCount() + ")";
     }

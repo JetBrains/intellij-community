@@ -14,7 +14,6 @@ public class NoArgsConstructorForced {
   // this.c = '\000';
   // this.f = 0.0F;
   @java.lang.SuppressWarnings("all")
-  @javax.annotation.Generated("lombok")
   public NoArgsConstructorForced() {
     this.x = 0;
     this.y = 0;

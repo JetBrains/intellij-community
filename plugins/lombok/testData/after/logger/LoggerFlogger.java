@@ -2,6 +2,5 @@
 
 class LoggerFlogger {
   @java.lang.SuppressWarnings("all")
-  @javax.annotation.Generated("lombok")
   private static final com.google.common.flogger.FluentLogger log = com.google.common.flogger.FluentLogger.forEnclosingClass();
 }

@@ -5,13 +5,11 @@ public enum ConstructorEnum {
 	private final int x;
 
 	@java.lang.SuppressWarnings("all")
-	@javax.annotation.Generated("lombok")
 	private ConstructorEnum(final int x) {
 		this.x = x;
 	}
 
 	@java.lang.SuppressWarnings("all")
-	@javax.annotation.Generated("lombok")
 	public int getX() {
 		return this.x;
 	}

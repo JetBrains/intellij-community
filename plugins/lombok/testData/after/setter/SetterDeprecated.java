@@ -10,7 +10,6 @@ class SetterDeprecated {
 
 	@java.lang.Deprecated
 	@java.lang.SuppressWarnings("all")
-	@javax.annotation.Generated("lombok")
 	public void setAnnotation(final int annotation) {
 		this.annotation = annotation;
 	}
@@ -20,7 +19,6 @@ class SetterDeprecated {
 	 */
 	@java.lang.Deprecated
 	@java.lang.SuppressWarnings("all")
-	@javax.annotation.Generated("lombok")
 	public void setJavadoc(final int javadoc) {
 		this.javadoc = javadoc;
 	}

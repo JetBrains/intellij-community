@@ -22,33 +22,28 @@ public class DataWithGeneric176<T> {
     }
 
     @java.lang.SuppressWarnings("all")
-    @javax.annotation.Generated("lombok")
     private DataWithGeneric176(final T command, final Runnable callback) {
         this.command = command;
         this.callback = callback;
     }
 
     @java.lang.SuppressWarnings("all")
-    @javax.annotation.Generated("lombok")
     public static <T> DataWithGeneric176<T> of(final T command, final Runnable callback) {
         return new DataWithGeneric176<T>(command, callback);
     }
 
     @java.lang.SuppressWarnings("all")
-    @javax.annotation.Generated("lombok")
     public T getCommand() {
         return this.command;
     }
 
     @java.lang.SuppressWarnings("all")
-    @javax.annotation.Generated("lombok")
     public Runnable getCallback() {
         return this.callback;
     }
 
     @java.lang.Override
     @java.lang.SuppressWarnings("all")
-    @javax.annotation.Generated("lombok")
     public boolean equals(final java.lang.Object o) {
         if (o == this) return true;
         if (!(o instanceof DataWithGeneric176)) return false;
@@ -64,14 +59,12 @@ public class DataWithGeneric176<T> {
     }
 
     @java.lang.SuppressWarnings("all")
-    @javax.annotation.Generated("lombok")
     protected boolean canEqual(final java.lang.Object other) {
         return other instanceof DataWithGeneric176;
     }
 
     @java.lang.Override
     @java.lang.SuppressWarnings("all")
-    @javax.annotation.Generated("lombok")
     public int hashCode() {
         final int PRIME = 59;
         int result = 1;
@@ -84,7 +77,6 @@ public class DataWithGeneric176<T> {
 
     @java.lang.Override
     @java.lang.SuppressWarnings("all")
-    @javax.annotation.Generated("lombok")
     public java.lang.String toString() {
         return "DataWithGeneric176(command=" + this.getCommand() + ", callback=" + this.getCallback() + ")";
     }

@@ -9,20 +9,17 @@ public final class ValueAndWither {
 
   @java.beans.ConstructorProperties({"myField"})
   @java.lang.SuppressWarnings("all")
-  @javax.annotation.Generated("lombok")
   public ValueAndWither(final String myField) {
     this.myField = myField;
   }
 
   @java.lang.SuppressWarnings("all")
-  @javax.annotation.Generated("lombok")
   public String getMyField() {
     return this.myField;
   }
 
   @java.lang.Override
   @java.lang.SuppressWarnings("all")
-  @javax.annotation.Generated("lombok")
   public boolean equals(final java.lang.Object o) {
     if (o == this) return true;
     if (!(o instanceof ValueAndWither)) return false;
@@ -35,7 +32,6 @@ public final class ValueAndWither {
 
   @java.lang.Override
   @java.lang.SuppressWarnings("all")
-  @javax.annotation.Generated("lombok")
   public int hashCode() {
     final int PRIME = 59;
     int result = 1;
@@ -46,13 +42,11 @@ public final class ValueAndWither {
 
   @java.lang.Override
   @java.lang.SuppressWarnings("all")
-  @javax.annotation.Generated("lombok")
   public java.lang.String toString() {
     return "ValueAndWither(myField=" + this.getMyField() + ")";
   }
 
   @java.lang.SuppressWarnings("all")
-  @javax.annotation.Generated("lombok")
   public ValueAndWither withMyField(final String myField) {
     return this.myField == myField ? this : new ValueAndWither(myField);
   }

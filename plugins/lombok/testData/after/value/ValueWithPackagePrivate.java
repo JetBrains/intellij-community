@@ -17,7 +17,6 @@ public final class ValueWithPackagePrivate {
 
   @java.beans.ConstructorProperties({"privateInt", "protectedInt", "publicInt", "anInt", "annotatedInt", "nonFinalInt", "shouldBePublicInt"})
   @java.lang.SuppressWarnings("all")
-  @javax.annotation.Generated("lombok")
   public ValueWithPackagePrivate(final int privateInt, final int protectedInt, final int publicInt, final int anInt, final int annotatedInt, final int nonFinalInt, final int shouldBePublicInt) {
     this.privateInt = privateInt;
     this.protectedInt = protectedInt;
@@ -29,50 +28,42 @@ public final class ValueWithPackagePrivate {
   }
 
   @java.lang.SuppressWarnings("all")
-  @javax.annotation.Generated("lombok")
   public int getPrivateInt() {
     return this.privateInt;
   }
 
   @java.lang.SuppressWarnings("all")
-  @javax.annotation.Generated("lombok")
   public int getProtectedInt() {
     return this.protectedInt;
   }
 
   @java.lang.SuppressWarnings("all")
-  @javax.annotation.Generated("lombok")
   public int getPublicInt() {
     return this.publicInt;
   }
 
   @java.lang.SuppressWarnings("all")
-  @javax.annotation.Generated("lombok")
   public int getAnInt() {
     return this.anInt;
   }
 
   @java.lang.SuppressWarnings("all")
-  @javax.annotation.Generated("lombok")
   public int getAnnotatedInt() {
     return this.annotatedInt;
   }
 
   @java.lang.SuppressWarnings("all")
-  @javax.annotation.Generated("lombok")
   public int getNonFinalInt() {
     return this.nonFinalInt;
   }
 
   @java.lang.SuppressWarnings("all")
-  @javax.annotation.Generated("lombok")
   public int getShouldBePublicInt() {
     return this.shouldBePublicInt;
   }
 
   @java.lang.Override
   @java.lang.SuppressWarnings("all")
-  @javax.annotation.Generated("lombok")
   public boolean equals(final java.lang.Object o) {
     if (o == this) return true;
     if (!(o instanceof ValueWithPackagePrivate)) return false;
@@ -89,7 +80,6 @@ public final class ValueWithPackagePrivate {
 
   @java.lang.Override
   @java.lang.SuppressWarnings("all")
-  @javax.annotation.Generated("lombok")
   public int hashCode() {
     final int PRIME = 59;
     int result = 1;
@@ -105,7 +95,6 @@ public final class ValueWithPackagePrivate {
 
   @java.lang.Override
   @java.lang.SuppressWarnings("all")
-  @javax.annotation.Generated("lombok")
   public java.lang.String toString() {
     return "ValueWithPackagePrivate(privateInt=" + this.getPrivateInt() + ", protectedInt=" + this.getProtectedInt() + ", publicInt=" + this.getPublicInt() + ", anInt=" + this.getAnInt() + ", annotatedInt=" + this.getAnnotatedInt() + ", nonFinalInt=" + this.getNonFinalInt() + ", shouldBePublicInt=" + this.getShouldBePublicInt() + ")";
   }

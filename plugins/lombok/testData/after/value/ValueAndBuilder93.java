@@ -9,7 +9,6 @@ public final class Zoo {
   }
 
   @java.lang.SuppressWarnings("all")
-  @javax.annotation.Generated("lombok")
   Zoo(final String meerkat, final String warthog) {
     this.meerkat = meerkat;
     this.warthog = warthog;
@@ -17,69 +16,57 @@ public final class Zoo {
 
 
   @java.lang.SuppressWarnings("all")
-  @javax.annotation.Generated("lombok")
   public static class ZooBuilder {
     @java.lang.SuppressWarnings("all")
-    @javax.annotation.Generated("lombok")
     private String meerkat;
     @java.lang.SuppressWarnings("all")
-    @javax.annotation.Generated("lombok")
     private String warthog;
 
     @java.lang.SuppressWarnings("all")
-    @javax.annotation.Generated("lombok")
     ZooBuilder() {
     }
 
     @java.lang.SuppressWarnings("all")
-    @javax.annotation.Generated("lombok")
     public ZooBuilder meerkat(final String meerkat) {
       this.meerkat = meerkat;
       return this;
     }
 
     @java.lang.SuppressWarnings("all")
-    @javax.annotation.Generated("lombok")
     public ZooBuilder warthog(final String warthog) {
       this.warthog = warthog;
       return this;
     }
 
     @java.lang.SuppressWarnings("all")
-    @javax.annotation.Generated("lombok")
     public Zoo build() {
       return new Zoo(meerkat, warthog);
     }
 
     @java.lang.Override
     @java.lang.SuppressWarnings("all")
-    @javax.annotation.Generated("lombok")
     public java.lang.String toString() {
       return "Zoo.ZooBuilder(meerkat=" + this.meerkat + ", warthog=" + this.warthog + ")";
     }
   }
 
   @java.lang.SuppressWarnings("all")
-  @javax.annotation.Generated("lombok")
   public static ZooBuilder builder() {
     return new ZooBuilder();
   }
 
   @java.lang.SuppressWarnings("all")
-  @javax.annotation.Generated("lombok")
   public String getMeerkat() {
     return this.meerkat;
   }
 
   @java.lang.SuppressWarnings("all")
-  @javax.annotation.Generated("lombok")
   public String getWarthog() {
     return this.warthog;
   }
 
   @java.lang.Override
   @java.lang.SuppressWarnings("all")
-  @javax.annotation.Generated("lombok")
   public boolean equals(final java.lang.Object o) {
     if (o == this) return true;
     if (!(o instanceof Zoo)) return false;
@@ -95,7 +82,6 @@ public final class Zoo {
 
   @java.lang.Override
   @java.lang.SuppressWarnings("all")
-  @javax.annotation.Generated("lombok")
   public int hashCode() {
     final int PRIME = 59;
     int result = 1;
@@ -108,7 +94,6 @@ public final class Zoo {
 
   @java.lang.Override
   @java.lang.SuppressWarnings("all")
-  @javax.annotation.Generated("lombok")
   public java.lang.String toString() {
     return "Zoo(meerkat=" + this.getMeerkat() + ", warthog=" + this.getWarthog() + ")";
   }

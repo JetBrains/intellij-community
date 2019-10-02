@@ -9,14 +9,12 @@ class AllArgsConstructorStaticNameAccessPrivate {
   String name;
 
   @java.lang.SuppressWarnings("all")
-  @javax.annotation.Generated("lombok")
   private AllArgsConstructorStaticNameAccessPrivate(final int x, final String name) {
     this.x = x;
     this.name = name;
   }
 
   @java.lang.SuppressWarnings("all")
-  @javax.annotation.Generated("lombok")
   private static AllArgsConstructorStaticNameAccessPrivate of(final int x, final String name) {
     return new AllArgsConstructorStaticNameAccessPrivate(x, name);
   }
@@ -28,14 +26,12 @@ class AllArgsConstructorStaticNameAccessProtected {
   String name;
 
   @java.lang.SuppressWarnings("all")
-  @javax.annotation.Generated("lombok")
   private AllArgsConstructorStaticNameAccessProtected(final int x, final String name) {
     this.x = x;
     this.name = name;
   }
 
   @java.lang.SuppressWarnings("all")
-  @javax.annotation.Generated("lombok")
   protected static AllArgsConstructorStaticNameAccessProtected of(final int x, final String name) {
     return new AllArgsConstructorStaticNameAccessProtected(x, name);
   }
@@ -47,14 +43,12 @@ class AllArgsConstructorStaticNameAccessPackage {
   String name;
 
   @java.lang.SuppressWarnings("all")
-  @javax.annotation.Generated("lombok")
   private AllArgsConstructorStaticNameAccessPackage(final int x, final String name) {
     this.x = x;
     this.name = name;
   }
 
   @java.lang.SuppressWarnings("all")
-  @javax.annotation.Generated("lombok")
   static AllArgsConstructorStaticNameAccessPackage of(final int x, final String name) {
     return new AllArgsConstructorStaticNameAccessPackage(x, name);
   }
@@ -66,14 +60,12 @@ class AllArgsConstructorStaticNameAccessModule {
   String name;
 
   @java.lang.SuppressWarnings("all")
-  @javax.annotation.Generated("lombok")
   private AllArgsConstructorStaticNameAccessModule(final int x, final String name) {
     this.x = x;
     this.name = name;
   }
 
   @java.lang.SuppressWarnings("all")
-  @javax.annotation.Generated("lombok")
   static AllArgsConstructorStaticNameAccessModule of(final int x, final String name) {
     return new AllArgsConstructorStaticNameAccessModule(x, name);
   }
@@ -85,14 +77,12 @@ class AllArgsConstructorStaticNameAccessPublic {
   String name;
 
   @java.lang.SuppressWarnings("all")
-  @javax.annotation.Generated("lombok")
   private AllArgsConstructorStaticNameAccessPublic(final int x, final String name) {
     this.x = x;
     this.name = name;
   }
 
   @java.lang.SuppressWarnings("all")
-  @javax.annotation.Generated("lombok")
   public static AllArgsConstructorStaticNameAccessPublic of(final int x, final String name) {
     return new AllArgsConstructorStaticNameAccessPublic(x, name);
   }

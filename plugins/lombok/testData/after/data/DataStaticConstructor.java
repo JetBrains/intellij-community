@@ -4,26 +4,22 @@ class Entity {
   private final String field;
 
   @java.lang.SuppressWarnings("all")
-  @javax.annotation.Generated("lombok")
   private Entity(final String field) {
     this.field = field;
   }
 
   @java.lang.SuppressWarnings("all")
-  @javax.annotation.Generated("lombok")
   public static Entity of(final String field) {
     return new Entity(field);
   }
 
   @java.lang.SuppressWarnings("all")
-  @javax.annotation.Generated("lombok")
   public String getField() {
     return this.field;
   }
 
   @java.lang.Override
   @java.lang.SuppressWarnings("all")
-  @javax.annotation.Generated("lombok")
   public boolean equals(final java.lang.Object o) {
     if (o == this) return true;
     if (!(o instanceof Entity)) return false;
@@ -36,14 +32,12 @@ class Entity {
   }
 
   @java.lang.SuppressWarnings("all")
-  @javax.annotation.Generated("lombok")
   protected boolean canEqual(final java.lang.Object other) {
     return other instanceof Entity;
   }
 
   @java.lang.Override
   @java.lang.SuppressWarnings("all")
-  @javax.annotation.Generated("lombok")
   public int hashCode() {
     final int PRIME = 59;
     int result = 1;
@@ -54,7 +48,6 @@ class Entity {
 
   @java.lang.Override
   @java.lang.SuppressWarnings("all")
-  @javax.annotation.Generated("lombok")
   public java.lang.String toString() {
     return "Entity(field=" + this.getField() + ")";
   }

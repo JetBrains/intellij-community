@@ -10,7 +10,6 @@ class GetterLazyBoolean {
 
 	@java.lang.Override
 	@java.lang.SuppressWarnings("all")
-	@javax.annotation.Generated("lombok")
 	public boolean equals(final java.lang.Object o) {
 		if (o == this) return true;
 		if (!(o instanceof GetterLazyBoolean)) return false;
@@ -21,14 +20,12 @@ class GetterLazyBoolean {
 	}
 
 	@java.lang.SuppressWarnings("all")
-	@javax.annotation.Generated("lombok")
 	protected boolean canEqual(final java.lang.Object other) {
 		return other instanceof GetterLazyBoolean;
 	}
 
 	@java.lang.Override
 	@java.lang.SuppressWarnings("all")
-	@javax.annotation.Generated("lombok")
 	public int hashCode() {
 		final int PRIME = 59;
 		int result = 1;
@@ -38,13 +35,11 @@ class GetterLazyBoolean {
 
 	@java.lang.Override
 	@java.lang.SuppressWarnings("all")
-	@javax.annotation.Generated("lombok")
 	public java.lang.String toString() {
 		return "GetterLazyBoolean(booleanValue=" + this.isBooleanValue() + ")";
 	}
 
 	@java.lang.SuppressWarnings("all")
-	@javax.annotation.Generated("lombok")
 	public boolean isBooleanValue() {
 		java.lang.Object value = this.booleanValue.get();
 		if (value == null) {
@@ -61,7 +56,6 @@ class GetterLazyBoolean {
 	}
 
 	@java.lang.SuppressWarnings("all")
-	@javax.annotation.Generated("lombok")
 	public boolean isOtherBooleanValue() {
 		java.lang.Object value = this.otherBooleanValue.get();
 		if (value == null) {

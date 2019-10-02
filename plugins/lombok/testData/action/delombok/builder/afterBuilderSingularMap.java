@@ -63,7 +63,7 @@ public class BuilderSingularMap {
         default:
           myMap = new java.util.LinkedHashMap<String, String>(this.myMap$key.size() < 1073741824 ? 1 + this.myMap$key.size() + (this.myMap$key.size() - 3) / 3 : Integer.MAX_VALUE);
           for (int $i = 0; $i < this.myMap$key.size(); $i++)
-            myMap.put(this.myMap$key.get($i), this.myMap$value.get($i));
+            myMap.put(this.myMap$key.get($i), (String)this.myMap$value.get($i));
           myMap = java.util.Collections.unmodifiableMap(myMap);
       }
 

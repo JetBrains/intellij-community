@@ -13,13 +13,11 @@ public class RequiredArgsConstructorWithGeneric157 {
         }
 
         @java.lang.SuppressWarnings("all")
-        @javax.annotation.Generated("lombok")
         private Foo(final Map<T, E> bar) {
             this.bar = bar;
         }
 
         @java.lang.SuppressWarnings("all")
-        @javax.annotation.Generated("lombok")
         public static <T, E extends Exception> Foo<T, E> of(final Map<T, E> bar) {
             return new Foo<T, E>(bar);
         }

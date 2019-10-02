@@ -9,7 +9,6 @@ public class ToStringSimpleClassName {
 
     @java.lang.Override
     @java.lang.SuppressWarnings("all")
-    @javax.annotation.Generated("lombok")
     public java.lang.String toString() {
       return "ToStringSimpleClassName.InnerStaticClass(someProperty=" + this.someProperty + ")";
     }
@@ -20,7 +19,6 @@ public class ToStringSimpleClassName {
 
     @java.lang.Override
     @java.lang.SuppressWarnings("all")
-    @javax.annotation.Generated("lombok")
     public java.lang.String toString() {
       return "ToStringSimpleClassName.InnerClass(someProperty=" + this.someProperty + ")";
     }
@@ -28,7 +26,6 @@ public class ToStringSimpleClassName {
 
   @java.lang.Override
   @java.lang.SuppressWarnings("all")
-  @javax.annotation.Generated("lombok")
   public java.lang.String toString() {
     return "ToStringSimpleClassName(x=" + this.x + ", name=" + this.name + ")";
   }

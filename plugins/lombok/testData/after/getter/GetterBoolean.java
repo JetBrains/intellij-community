@@ -6,19 +6,16 @@ class Getter {
 	boolean hasBaz;
 
 	@java.lang.SuppressWarnings("all")
-	@javax.annotation.Generated("lombok")
 	public boolean isFoo() {
 		return this.foo;
 	}
 
 	@java.lang.SuppressWarnings("all")
-	@javax.annotation.Generated("lombok")
 	public boolean isBar() {
 		return this.isBar;
 	}
 
 	@java.lang.SuppressWarnings("all")
-	@javax.annotation.Generated("lombok")
 	public boolean isHasBaz() {
 		return this.hasBaz;
 	}
@@ -32,7 +29,6 @@ class MoreGetter {
 	}
 
 	@java.lang.SuppressWarnings("all")
-	@javax.annotation.Generated("lombok")
 	public boolean isFoo() {
 		return this.foo;
 	}

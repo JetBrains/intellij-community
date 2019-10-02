@@ -11,7 +11,6 @@ class BuilderWithToBuilderOnClass<T> {
 	}
 
 	@java.lang.SuppressWarnings("all")
-	@javax.annotation.Generated("lombok")
 	BuilderWithToBuilderOnClass(final String one, final String two, final T foo, final int bar) {
 		this.one = one;
 		this.two = two;
@@ -21,76 +20,62 @@ class BuilderWithToBuilderOnClass<T> {
 
 
 	@java.lang.SuppressWarnings("all")
-	@javax.annotation.Generated("lombok")
 	public static class BuilderWithToBuilderOnClassBuilder<T> {
 		@java.lang.SuppressWarnings("all")
-		@javax.annotation.Generated("lombok")
 		private String one;
 		@java.lang.SuppressWarnings("all")
-		@javax.annotation.Generated("lombok")
 		private String two;
 		@java.lang.SuppressWarnings("all")
-		@javax.annotation.Generated("lombok")
 		private T foo;
 		@java.lang.SuppressWarnings("all")
-		@javax.annotation.Generated("lombok")
 		private int bar;
 
 		@java.lang.SuppressWarnings("all")
-		@javax.annotation.Generated("lombok")
 		BuilderWithToBuilderOnClassBuilder() {
 		}
 
 		@java.lang.SuppressWarnings("all")
-		@javax.annotation.Generated("lombok")
 		public BuilderWithToBuilderOnClassBuilder<T> one(final String one) {
 			this.one = one;
 			return this;
 		}
 
 		@java.lang.SuppressWarnings("all")
-		@javax.annotation.Generated("lombok")
 		public BuilderWithToBuilderOnClassBuilder<T> two(final String two) {
 			this.two = two;
 			return this;
 		}
 
 		@java.lang.SuppressWarnings("all")
-		@javax.annotation.Generated("lombok")
 		public BuilderWithToBuilderOnClassBuilder<T> foo(final T foo) {
 			this.foo = foo;
 			return this;
 		}
 
 		@java.lang.SuppressWarnings("all")
-		@javax.annotation.Generated("lombok")
 		public BuilderWithToBuilderOnClassBuilder<T> bar(final int bar) {
 			this.bar = bar;
 			return this;
 		}
 
 		@java.lang.SuppressWarnings("all")
-		@javax.annotation.Generated("lombok")
 		public BuilderWithToBuilderOnClass<T> build() {
 			return new BuilderWithToBuilderOnClass<T>(one, two, foo, bar);
 		}
 
 		@java.lang.Override
 		@java.lang.SuppressWarnings("all")
-		@javax.annotation.Generated("lombok")
 		public java.lang.String toString() {
 			return "BuilderWithToBuilderOnClass.BuilderWithToBuilderOnClassBuilder(one=" + this.one + ", two=" + this.two + ", foo=" + this.foo + ", bar=" + this.bar + ")";
 		}
 	}
 
 	@java.lang.SuppressWarnings("all")
-	@javax.annotation.Generated("lombok")
 	public static <T> BuilderWithToBuilderOnClassBuilder<T> builder() {
 		return new BuilderWithToBuilderOnClassBuilder<T>();
 	}
 
 	@java.lang.SuppressWarnings("all")
-	@javax.annotation.Generated("lombok")
 	public BuilderWithToBuilderOnClassBuilder<T> toBuilder() {
 		return new BuilderWithToBuilderOnClassBuilder<T>().one(this.one).two(this.two).foo(BuilderWithToBuilderOnClass.rrr(this)).bar(this.bar);
 	}

@@ -10,26 +10,22 @@ public final class Foo {
 
   @java.beans.ConstructorProperties({"one"})
   @java.lang.SuppressWarnings("all")
-  @javax.annotation.Generated("lombok")
   public Foo(final String one) {
     this.one = one;
   }
 
   @java.lang.SuppressWarnings("all")
-  @javax.annotation.Generated("lombok")
   public String getOne() {
     return this.one;
   }
 
   @java.lang.SuppressWarnings("all")
-  @javax.annotation.Generated("lombok")
   public String getTwo() {
     return this.two;
   }
 
   @java.lang.Override
   @java.lang.SuppressWarnings("all")
-  @javax.annotation.Generated("lombok")
   public boolean equals(final java.lang.Object o) {
     if (o == this) return true;
     if (!(o instanceof Foo)) return false;
@@ -45,7 +41,6 @@ public final class Foo {
 
   @java.lang.Override
   @java.lang.SuppressWarnings("all")
-  @javax.annotation.Generated("lombok")
   public int hashCode() {
     final int PRIME = 59;
     int result = 1;
@@ -58,7 +53,6 @@ public final class Foo {
 
   @java.lang.Override
   @java.lang.SuppressWarnings("all")
-  @javax.annotation.Generated("lombok")
   public java.lang.String toString() {
     return "Foo(one=" + this.getOne() + ", two=" + this.getTwo() + ")";
   }

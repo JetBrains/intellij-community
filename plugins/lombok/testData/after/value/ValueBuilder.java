@@ -11,7 +11,6 @@ public final class ValueBuilder {
   }
 
   @java.lang.SuppressWarnings("all")
-  @javax.annotation.Generated("lombok")
   ValueBuilder(final String o1, final int o2, final double o3) {
     this.o1 = o1;
     this.o2 = o2;
@@ -20,85 +19,70 @@ public final class ValueBuilder {
 
 
   @java.lang.SuppressWarnings("all")
-  @javax.annotation.Generated("lombok")
   public static class ValueBuilderBuilder {
     @java.lang.SuppressWarnings("all")
-    @javax.annotation.Generated("lombok")
     private String o1;
     @java.lang.SuppressWarnings("all")
-    @javax.annotation.Generated("lombok")
     private int o2;
     @java.lang.SuppressWarnings("all")
-    @javax.annotation.Generated("lombok")
     private double o3;
 
     @java.lang.SuppressWarnings("all")
-    @javax.annotation.Generated("lombok")
     ValueBuilderBuilder() {
     }
 
     @java.lang.SuppressWarnings("all")
-    @javax.annotation.Generated("lombok")
     public ValueBuilderBuilder o1(final String o1) {
       this.o1 = o1;
       return this;
     }
 
     @java.lang.SuppressWarnings("all")
-    @javax.annotation.Generated("lombok")
     public ValueBuilderBuilder o2(final int o2) {
       this.o2 = o2;
       return this;
     }
 
     @java.lang.SuppressWarnings("all")
-    @javax.annotation.Generated("lombok")
     public ValueBuilderBuilder o3(final double o3) {
       this.o3 = o3;
       return this;
     }
 
     @java.lang.SuppressWarnings("all")
-    @javax.annotation.Generated("lombok")
     public ValueBuilder build() {
       return new ValueBuilder(o1, o2, o3);
     }
 
     @java.lang.Override
     @java.lang.SuppressWarnings("all")
-    @javax.annotation.Generated("lombok")
     public java.lang.String toString() {
       return "ValueBuilder.ValueBuilderBuilder(o1=" + this.o1 + ", o2=" + this.o2 + ", o3=" + this.o3 + ")";
     }
   }
 
   @java.lang.SuppressWarnings("all")
-  @javax.annotation.Generated("lombok")
   public static ValueBuilderBuilder builder() {
     return new ValueBuilderBuilder();
   }
 
   @java.lang.SuppressWarnings("all")
-  @javax.annotation.Generated("lombok")
   public String getO1() {
     return this.o1;
   }
 
   @java.lang.SuppressWarnings("all")
-  @javax.annotation.Generated("lombok")
   public int getO2() {
     return this.o2;
   }
 
   @java.lang.SuppressWarnings("all")
-  @javax.annotation.Generated("lombok")
   public double getO3() {
     return this.o3;
   }
 
   @java.lang.Override
   @java.lang.SuppressWarnings("all")
-  @javax.annotation.Generated("lombok")
   public boolean equals(final java.lang.Object o) {
     if (o == this) return true;
     if (!(o instanceof ValueBuilder)) return false;
@@ -113,7 +97,6 @@ public final class ValueBuilder {
 
   @java.lang.Override
   @java.lang.SuppressWarnings("all")
-  @javax.annotation.Generated("lombok")
   public int hashCode() {
     final int PRIME = 59;
     int result = 1;
@@ -127,7 +110,6 @@ public final class ValueBuilder {
 
   @java.lang.Override
   @java.lang.SuppressWarnings("all")
-  @javax.annotation.Generated("lombok")
   public java.lang.String toString() {
     return "ValueBuilder(o1=" + this.getO1() + ", o2=" + this.getO2() + ", o3=" + this.getO3() + ")";
   }

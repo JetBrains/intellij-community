@@ -7,26 +7,22 @@ class DataWithGetter {
 
 	@java.beans.ConstructorProperties({"z"})
 	@java.lang.SuppressWarnings("all")
-	@javax.annotation.Generated("lombok")
 	public DataWithGetter(final String z) {
 		this.z = z;
 	}
 
 	@java.lang.SuppressWarnings("all")
-	@javax.annotation.Generated("lombok")
 	public void setX(final int x) {
 		this.x = x;
 	}
 
 	@java.lang.SuppressWarnings("all")
-	@javax.annotation.Generated("lombok")
 	public void setY(final int y) {
 		this.y = y;
 	}
 
 	@java.lang.Override
 	@java.lang.SuppressWarnings("all")
-	@javax.annotation.Generated("lombok")
 	public boolean equals(final java.lang.Object o) {
 		if (o == this) return true;
 		if (!(o instanceof DataWithGetter)) return false;
@@ -41,14 +37,12 @@ class DataWithGetter {
 	}
 
 	@java.lang.SuppressWarnings("all")
-	@javax.annotation.Generated("lombok")
 	protected boolean canEqual(final java.lang.Object other) {
 		return other instanceof DataWithGetter;
 	}
 
 	@java.lang.Override
 	@java.lang.SuppressWarnings("all")
-	@javax.annotation.Generated("lombok")
 	public int hashCode() {
 		final int PRIME = 59;
 		int result = 1;
@@ -61,25 +55,21 @@ class DataWithGetter {
 
 	@java.lang.Override
 	@java.lang.SuppressWarnings("all")
-	@javax.annotation.Generated("lombok")
 	public java.lang.String toString() {
 		return "DataWithGetter(x=" + this.getX() + ", y=" + this.getY() + ", z=" + this.getZ() + ")";
 	}
 
 	@java.lang.SuppressWarnings("all")
-	@javax.annotation.Generated("lombok")
 	public int getX() {
 		return this.x;
 	}
 
 	@java.lang.SuppressWarnings("all")
-	@javax.annotation.Generated("lombok")
 	public int getY() {
 		return this.y;
 	}
 
 	@java.lang.SuppressWarnings("all")
-	@javax.annotation.Generated("lombok")
 	public String getZ() {
 		return this.z;
 	}

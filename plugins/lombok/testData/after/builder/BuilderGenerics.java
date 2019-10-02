@@ -1,10 +1,8 @@
-import lombok.Singular;
 
 public class ObjectApiResponse<K> {
   private K response;
 
   @java.lang.SuppressWarnings("all")
-  @javax.annotation.Generated("lombok")
   ObjectApiResponse(K response) {
     this.response = response;
   }
@@ -15,21 +13,18 @@ public class ObjectApiResponse<K> {
 
   public static class ObjectApiResponseBuilder<T> {
     @java.lang.SuppressWarnings("all")
-    @javax.annotation.Generated("lombok")
     private T response;
 
     ObjectApiResponseBuilder() {
     }
 
     @java.lang.SuppressWarnings("all")
-    @javax.annotation.Generated("lombok")
     public ObjectApiResponseBuilder<T> response(T response) {
       this.response=response;
       return this;
     }
 
     @java.lang.SuppressWarnings("all")
-    @javax.annotation.Generated("lombok")
     public ObjectApiResponse<T> build() {
       return new ObjectApiResponse<T>(response);
     }

@@ -8,7 +8,6 @@ class GetterLazy {
 	private final java.util.concurrent.atomic.AtomicReference<java.lang.Object> fieldName = new java.util.concurrent.atomic.AtomicReference<java.lang.Object>();
 
 	@java.lang.SuppressWarnings("all")
-	@javax.annotation.Generated("lombok")
 	public ValueType getFieldName() {
 		java.lang.Object value = this.fieldName.get();
 		if (value == null) {

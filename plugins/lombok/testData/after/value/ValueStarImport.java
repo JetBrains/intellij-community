@@ -4,13 +4,11 @@ import lombok.experimental.*;
 
 final class ValueStarImport {
 	@java.lang.SuppressWarnings("all")
-	@javax.annotation.Generated("lombok")
 	public ValueStarImport() {
 	}
 
 	@java.lang.Override
 	@java.lang.SuppressWarnings("all")
-	@javax.annotation.Generated("lombok")
 	public boolean equals(final java.lang.Object o) {
 		if (o == this) return true;
 		if (!(o instanceof ValueExperimentalStarImport)) return false;
@@ -19,7 +17,6 @@ final class ValueStarImport {
 
 	@java.lang.Override
 	@java.lang.SuppressWarnings("all")
-	@javax.annotation.Generated("lombok")
 	public int hashCode() {
 		int result = 1;
 		return result;
@@ -27,7 +24,6 @@ final class ValueStarImport {
 
 	@java.lang.Override
 	@java.lang.SuppressWarnings("all")
-	@javax.annotation.Generated("lombok")
 	public java.lang.String toString() {
 		return "ValueExperimentalStarImport()";
 	}
