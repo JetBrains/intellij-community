@@ -595,22 +595,29 @@ public class JdkUtil {
     }
 
     if (vmParameter.startsWith("-agentpath:")) {
-      String value = StringUtil.trimStart(vmParameter, "-agentpath:");
-      int equalsSign = value.indexOf('=');
-      String path = equalsSign > -1 ? value.substring(0, equalsSign) : value;
-      String suffix = equalsSign > -1 ? value.substring(equalsSign) : "";
-      commandLine.addParameter(new IR.MapValue<>(request.createUpload(path), v -> "-agentpath:" + v + suffix));
+      appendVmAgentParameter(commandLine, request, vmParameter, "-agentpath:");
     }
     else if (vmParameter.startsWith("-javaagent:")) {
-      String value = StringUtil.trimStart(vmParameter, "-javaagent:");
-      int equalsSign = value.indexOf('=');
-      String path = equalsSign > -1 ? value.substring(0, equalsSign) : value;
-      String suffix = equalsSign > -1 ? value.substring(equalsSign) : "";
-      commandLine.addParameter(new IR.MapValue<>(request.createUpload(path), v -> "-javaagent:" + v + suffix));
+      appendVmAgentParameter(commandLine, request, vmParameter, "-javaagent:");
     }
     else {
       commandLine.addParameter(vmParameter);
     }
+  }
+
+  private static void appendVmAgentParameter(@NotNull IR.NewCommandLine commandLine,
+                                             @NotNull IR.RemoteEnvironmentRequest request,
+                                             @NotNull String vmParameter, 
+                                             @NotNull String prefix) {
+    String value = StringUtil.trimStart(vmParameter, prefix);
+    int equalsSign = value.indexOf('=');
+    String path = equalsSign > -1 ? value.substring(0, equalsSign) : value;
+    if (!path.endsWith(".jar")) {
+      // ignore non-cross-platform agents
+      return;
+    }
+    String suffix = equalsSign > -1 ? value.substring(equalsSign) : "";
+    commandLine.addParameter(new IR.MapValue<>(request.createUpload(path), v -> prefix + v + suffix));
   }
 
   @NotNull
