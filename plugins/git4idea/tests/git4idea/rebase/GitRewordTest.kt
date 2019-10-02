@@ -82,7 +82,7 @@ class GitRewordTest : GitSingleRepoTest() {
       "New commit",
       "Correct message"
     )
-    assertErrorNotification("Can't Undo Reword", "Repository has already been changed")
+    assertErrorNotification("Can't Undo Commit Message Edit", "Repository has already been changed")
   }
 
   fun `test undo is not possible if commit was pushed`() {
@@ -104,7 +104,7 @@ class GitRewordTest : GitSingleRepoTest() {
       "Correct message",
       "First commit"
     )
-    assertErrorNotification("Can't Undo Reword", "Commit has already been pushed to origin/master")
+    assertErrorNotification("Can't Undo Commit Message Edit", "Commit has already been pushed to origin/master")
   }
 
   // IDEA-175002

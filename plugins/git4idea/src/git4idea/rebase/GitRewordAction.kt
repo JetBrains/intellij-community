@@ -68,7 +68,7 @@ class GitRewordAction : GitCommitEditingAction() {
            ?: throw ProcessCanceledException()
   }
 
-  override fun getFailureTitle(): String = "Couldn't Reword Commit"
+  override fun getFailureTitle(): String = "Couldn't Edit Commit Message"
 
   private fun getCommitDataFromCache(data: VcsLogData, commit: VcsShortCommitDetails): VcsCommitMetadata? {
     val commitIndex = data.getCommitIndex(commit.id, commit.root)
@@ -118,7 +118,7 @@ class GitRewordAction : GitCommitEditingAction() {
 
       init()
       isModal = false
-      title = "Reword Commit"
+      title = "Edit Commit Message"
     }
 
     override fun createCenterPanel() =
@@ -147,13 +147,13 @@ class GitRewordAction : GitCommitEditingAction() {
     override fun doValidate(): ValidationInfo? {
       if (repository.info.currentRevision != originalHEAD ||
           Disposer.isDisposed(data)) {
-        return ValidationInfo("Can't reword commit: repository state was changed")
+        return ValidationInfo("Can't edit commit message: repository state was changed")
       }
 
       val branches = findContainingBranches(data, commit.root, commit.id)
       val protectedBranch = findProtectedRemoteBranch(repository, branches)
       if (protectedBranch != null) {
-        return ValidationInfo("Can't reword commit: " + commitPushedToProtectedBranchError(protectedBranch))
+        return ValidationInfo("Can't edit commit message: " + commitPushedToProtectedBranchError(protectedBranch))
       }
 
       return null
