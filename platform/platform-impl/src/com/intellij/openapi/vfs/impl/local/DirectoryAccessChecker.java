@@ -2,6 +2,7 @@
 package com.intellij.openapi.vfs.impl.local;
 
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
+import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
@@ -17,8 +18,12 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.PosixFileAttributes;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static com.intellij.openapi.util.Pair.pair;
 
@@ -155,7 +160,7 @@ public class DirectoryAccessChecker {
           }
         }
 
-        return exec("ls", "-d", fsPath.toString());
+        return probe(fsPath);
       }
       catch (IOException e) {
         LOG.warn(e);
@@ -196,7 +201,7 @@ public class DirectoryAccessChecker {
           }
         }
 
-        return exec("ls", "-d", fsPath.toString());
+        return probe(fsPath);
       }
       catch (IOException e) {
         LOG.warn(e);
@@ -275,6 +280,20 @@ public class DirectoryAccessChecker {
     else {
       p.destroyForcibly();
       if (LOG.isTraceEnabled()) LOG.trace(Arrays.toString(command) + ": timeout");
+      return false;
+    }
+  }
+
+  private static boolean probe(Path directory) {
+    if (LOG.isTraceEnabled()) LOG.trace("probing: " + directory);
+    Future<?> future = ProcessIOExecutorService.INSTANCE.submit(() -> Files.readAttributes(directory, PosixFileAttributes.class));
+    try {
+      future.get(TIMEOUT_MS, TimeUnit.MILLISECONDS);
+      return true;
+    }
+    catch (InterruptedException | ExecutionException | TimeoutException e) {
+      if (LOG.isTraceEnabled()) LOG.trace(e);
+      future.cancel(true);
       return false;
     }
   }
