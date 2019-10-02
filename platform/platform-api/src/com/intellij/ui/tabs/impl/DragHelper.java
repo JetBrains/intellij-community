@@ -53,7 +53,7 @@ final class DragHelper extends MouseDragHelper {
     int dX = dragToScreenPoint.x - startScreenPoint.x;
     int dY = dragToScreenPoint.y - startScreenPoint.y;
 
-    return myTabs.getEffectiveLayout().isDragOut(label, dX, dY);
+    return myTabs.isDragOut(label, dX, dY);
   }
 
   @Override

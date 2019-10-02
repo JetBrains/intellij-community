@@ -1,9 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ui.tabs.impl.singleRow;
+package com.intellij.ui.tabs.layout.singleRowLayout;
 
 import com.intellij.ui.tabs.TabInfo;
-import com.intellij.ui.tabs.impl.JBTabsImpl;
-import com.intellij.ui.tabs.impl.LayoutPassInfo;
+import com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutCallback;
+import com.intellij.ui.tabs.layout.LayoutPassInfoBase;
 
 import javax.swing.*;
 import java.awt.*;
@@ -11,7 +11,7 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 
-public class SingleRowPassInfo extends LayoutPassInfo {
+public class SingleRowPassInfo extends LayoutPassInfoBase {
   final Dimension layoutSize;
   final int contentCount;
   int position;
@@ -31,16 +31,20 @@ public class SingleRowPassInfo extends LayoutPassInfo {
   public Rectangle tabRectangle;
   final int scrollOffset;
 
+  int headerToFitWidth = 0;
 
-  public SingleRowPassInfo(SingleRowLayout layout, List<TabInfo> visibleInfos) {
-    super(visibleInfos);
-    JBTabsImpl tabs = layout.myTabs;
-    layoutSize = tabs.getSize();
-    contentCount = tabs.getTabCount();
+  List<LineCoordinates> myExtraBorderLines;
+
+  public SingleRowPassInfo(List<TabInfo> visibleInfos,
+                           SingleRowLayout tabsLayout,
+                           TabsLayoutCallback tabsLayoutCallback) {
+    super(visibleInfos, tabsLayout, tabsLayoutCallback);
+    layoutSize = tabsLayoutCallback.getComponent().getSize();
+    contentCount = tabsLayoutCallback.getAllTabsCount();
     toLayout = new ArrayList<>();
     toDrop = new ArrayList<>();
-    moreRectAxisSize = layout.getStrategy().getMoreRectAxisSize();
-    scrollOffset = layout.getScrollOffset();
+    moreRectAxisSize = tabsLayout.getStrategy().getMoreRectAxisSize();
+    scrollOffset = tabsLayout.getScrollOffset();
   }
 
   @Deprecated
@@ -64,5 +68,10 @@ public class SingleRowPassInfo extends LayoutPassInfo {
   @Override
   public Rectangle getHeaderRectangle() {
     return (Rectangle)tabRectangle.clone();
+  }
+
+  @Override
+  public List<LineCoordinates> getExtraBorderLines() {
+    return myExtraBorderLines;
   }
 }

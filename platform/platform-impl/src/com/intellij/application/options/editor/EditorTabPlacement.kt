@@ -9,17 +9,22 @@ import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.layout.*
+import javax.swing.ComboBoxModel
 import javax.swing.DefaultComboBoxModel
 import javax.swing.SwingConstants.*
 
-private val tabPlacements = arrayOf(TOP, LEFT, BOTTOM, RIGHT, TABS_NONE)
+internal val TAB_PLACEMENTS = arrayOf(TOP, LEFT, BOTTOM, RIGHT, TABS_NONE)
 
 internal val TAB_PLACEMENT = ApplicationBundle.message("combobox.editor.tab.placement")
 
-internal val tabPlacementsOptionDescriptors = tabPlacements.map<Int, BooleanOptionDescription> { i -> asOptionDescriptor(i) }
+internal val tabPlacementsOptionDescriptors = TAB_PLACEMENTS.map<Int, BooleanOptionDescription> { i -> asOptionDescriptor(i) }
 
 internal fun Cell.tabPlacementComboBox(): CellBuilder<ComboBox<Int>> {
-  return comboBox(DefaultComboBoxModel<Int>(tabPlacements),
+  return tabPlacementComboBox(DefaultComboBoxModel<Int>(TAB_PLACEMENTS))
+}
+
+internal fun Cell.tabPlacementComboBox(model: ComboBoxModel<Int>): CellBuilder<ComboBox<Int>> {
+  return comboBox(model,
                   ui::editorTabPlacement,
                   renderer = SimpleListCellRenderer.create<Int> { label, value, _ ->
                     label.text = value.asTabPlacement()

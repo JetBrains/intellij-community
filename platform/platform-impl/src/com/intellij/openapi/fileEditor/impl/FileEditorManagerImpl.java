@@ -62,6 +62,8 @@ import com.intellij.ui.docking.DockContainer;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.docking.impl.DockManagerImpl;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
+import com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutInfo;
+import com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutSettingsManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
@@ -1885,12 +1887,17 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
         each.setTabsPlacement(uiSettings.getEditorTabPlacement());
         each.trimToSize();
 
-        // Tab layout policy
-        if (uiSettings.getScrollTabLayoutInEditor()) {
-          each.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
-        }
-        else {
-          each.setTabLayoutPolicy(JTabbedPane.WRAP_TAB_LAYOUT);
+        if (JBTabsImpl.NEW_TABS) {
+          TabsLayoutInfo tabsLayoutInfo = TabsLayoutSettingsManager.getInstance().getSelectedTabsLayoutInfo();
+          each.updateTabsLayout(tabsLayoutInfo);
+        } else {
+          // Tab layout policy
+          if (uiSettings.getScrollTabLayoutInEditor()) {
+            each.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
+          }
+          else {
+            each.setTabLayoutPolicy(JTabbedPane.WRAP_TAB_LAYOUT);
+          }
         }
       }
 

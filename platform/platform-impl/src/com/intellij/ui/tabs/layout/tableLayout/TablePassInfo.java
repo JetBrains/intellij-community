@@ -1,9 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ui.tabs.impl.table;
+package com.intellij.ui.tabs.layout.tableLayout;
 
 import com.intellij.ui.tabs.TabInfo;
-import com.intellij.ui.tabs.impl.JBTabsImpl;
-import com.intellij.ui.tabs.impl.LayoutPassInfo;
+import com.intellij.ui.tabs.impl.tabsLayout.TabsLayout;
+import com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutCallback;
+import com.intellij.ui.tabs.layout.LayoutPassInfoBase;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -11,7 +12,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class TablePassInfo extends LayoutPassInfo {
+public class TablePassInfo extends LayoutPassInfoBase {
   final List<TableRow> table = new ArrayList<>();
   public Rectangle toFitRec;
   final Map<TabInfo, TableRow> myInfo2Row = new HashMap<>();
@@ -20,11 +21,15 @@ public class TablePassInfo extends LayoutPassInfo {
   int requiredRows;
   int rowToFitMaxX;
 
-  final JBTabsImpl myTabs;
+  final TabsLayoutCallback myCallback;
 
-  TablePassInfo(final JBTabsImpl tabs, List<TabInfo> visibleInfos) {
-    super(visibleInfos);
-    myTabs = tabs;
+  List<LineCoordinates> myExtraBorderLines = new ArrayList<>();
+
+  public TablePassInfo(List<TabInfo> visibleInfos,
+                       TabsLayout tabsLayout,
+                       TabsLayoutCallback tabsLayoutCallback) {
+    super(visibleInfos, tabsLayout, tabsLayoutCallback);
+    myCallback = tabsLayoutCallback;
   }
 
   public boolean isInSelectionRow(final TabInfo tabInfo) {
@@ -54,5 +59,10 @@ public class TablePassInfo extends LayoutPassInfo {
   @Override
   public Rectangle getHeaderRectangle() {
     return (Rectangle)toFitRec.clone();
+  }
+
+  @Override
+  public List<LineCoordinates> getExtraBorderLines() {
+    return myExtraBorderLines;
   }
 }

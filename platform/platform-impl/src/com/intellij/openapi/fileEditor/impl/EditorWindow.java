@@ -32,6 +32,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.OnePixelSplitter;
+import com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutInfo;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.Stack;
@@ -332,6 +333,10 @@ public class EditorWindow {
 
   void setTabsPlacement(final int tabPlacement) {
     myTabbedPane.setTabPlacement(tabPlacement);
+  }
+
+  void updateTabsLayout(TabsLayoutInfo newTabsLayoutInfo) {
+    myTabbedPane.updateTabsLayout(newTabsLayoutInfo);
   }
 
   public void setAsCurrentWindow(final boolean requestFocus) {

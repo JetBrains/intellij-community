@@ -158,6 +158,12 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       state.navigateToPreview = value
     }
 
+  var selectedTabsLayoutInfoId: String?
+    get() = state.selectedTabsLayoutInfoId
+    set(value) {
+      state.selectedTabsLayoutInfoId = value
+    }
+
   val scrollTabLayoutInEditor: Boolean
     get() = state.scrollTabLayoutInEditor
 

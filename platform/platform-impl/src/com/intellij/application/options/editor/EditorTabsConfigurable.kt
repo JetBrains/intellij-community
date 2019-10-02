@@ -8,10 +8,12 @@ import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.layout.*
-import javax.swing.JCheckBox
-import javax.swing.JComboBox
-import javax.swing.JComponent
-import javax.swing.SwingConstants
+import com.intellij.ui.tabs.impl.JBTabsImpl
+import com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutInfo
+import com.intellij.ui.tabs.layout.TabsLayoutSettingsUi
+import javax.swing.*
+import javax.swing.event.ListDataEvent
+import javax.swing.event.ListDataListener
 import kotlin.math.max
 
 class EditorTabsConfigurable : BoundSearchableConfigurable(
@@ -25,18 +27,45 @@ class EditorTabsConfigurable : BoundSearchableConfigurable(
   override fun createPanel(): DialogPanel {
     return panel {
       titledRow(message("group.tab.appearance")) {
-        row {
-          cell {
-            label(TAB_PLACEMENT + ":")
-            myEditorTabPlacement = tabPlacementComboBox().component
-          }
-        }
-        row {
-          myScrollTabLayoutInEditorCheckBox =
-            checkBox(scrollTabLayoutInEditor).enableIf(myEditorTabPlacement.selectedValueIs(SwingConstants.TOP)).component
+
+        if (JBTabsImpl.NEW_TABS) {
+          val tabPlacementComboBoxModel: DefaultComboBoxModel<Int> = DefaultComboBoxModel(TAB_PLACEMENTS)
+          val myTabsLayoutComboBox: JComboBox<TabsLayoutInfo> = TabsLayoutSettingsUi.tabsLayoutComboBox(tabPlacementComboBoxModel)
+
           row {
-            checkBox(hideTabsIfNeeded).enableIf(myEditorTabPlacement.selectedValueMatches { it != TABS_NONE }
-                                                  and myScrollTabLayoutInEditorCheckBox.selected)
+            cell {
+              label(message("combobox.editor.tab.tabslayout") + ":")
+              val builder = myTabsLayoutComboBox()
+              TabsLayoutSettingsUi.prepare(builder, myTabsLayoutComboBox)
+            }
+          }
+          row {
+            cell {
+              label(TAB_PLACEMENT + ":")
+              myEditorTabPlacement = tabPlacementComboBox(tabPlacementComboBoxModel).component
+            }
+          }
+
+          updateTabPlacementComboBoxVisibility(tabPlacementComboBoxModel)
+          tabPlacementComboBoxModel.addListDataListener(MyAnyChangeOfListListener {
+            updateTabPlacementComboBoxVisibility(tabPlacementComboBoxModel)
+          })
+        }
+        else {
+
+          row {
+            cell {
+              label(TAB_PLACEMENT + ":")
+              myEditorTabPlacement = tabPlacementComboBox().component
+            }
+          }
+          row {
+            myScrollTabLayoutInEditorCheckBox =
+              checkBox(scrollTabLayoutInEditor).enableIf(myEditorTabPlacement.selectedValueIs(SwingConstants.TOP)).component
+            row {
+              checkBox(hideTabsIfNeeded).enableIf(myEditorTabPlacement.selectedValueMatches { it != TABS_NONE }
+                                                    and myScrollTabLayoutInEditorCheckBox.selected)
+            }
           }
         }
         row { checkBox(useSmallFont).enableIfTabsVisible() }
@@ -83,6 +112,10 @@ class EditorTabsConfigurable : BoundSearchableConfigurable(
     }
   }
 
+  private fun updateTabPlacementComboBoxVisibility(tabPlacementComboBoxModel: DefaultComboBoxModel<Int>) {
+    myEditorTabPlacement.isEnabled = tabPlacementComboBoxModel.size > 1
+  }
+
   private fun <T : JComponent> CellBuilder<T>.enableIfTabsVisible() {
     enableIf(myEditorTabPlacement.selectedValueMatches { it != TABS_NONE })
   }
@@ -94,5 +127,11 @@ class EditorTabsConfigurable : BoundSearchableConfigurable(
     if (uiSettingsChanged) {
       UISettings.instance.fireUISettingsChanged()
     }
+  }
+
+  private class MyAnyChangeOfListListener(val action: () -> Unit) : ListDataListener {
+    override fun contentsChanged(e: ListDataEvent?) { action() }
+    override fun intervalRemoved(e: ListDataEvent?) { action() }
+    override fun intervalAdded(e: ListDataEvent?) { action() }
   }
 }

@@ -14,7 +14,6 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.tabs.JBTabsEx;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.UiDecorator;
-import com.intellij.ui.tabs.impl.singleRow.ScrollableSingleRowLayout;
 import com.intellij.ui.tabs.impl.themes.TabTheme;
 import com.intellij.util.ui.Centerizer;
 import com.intellij.util.ui.JBUI;
@@ -29,6 +28,9 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.*;
+
+import static java.awt.BorderLayout.EAST;
+import static java.awt.BorderLayout.WEST;
 
 public class TabLabel extends JPanel implements Accessible {
   private static final Logger LOG = Logger.getInstance(TabLabel.class);
@@ -611,24 +613,22 @@ public class TabLabel extends JPanel implements Accessible {
     }
 
     private boolean doCustomLayout(Container parent) {
-      if (!(myTabs != null &&
-            myTabs.getEffectiveLayout() instanceof ScrollableSingleRowLayout &&
-            parent.getWidth() < parent.getPreferredSize().width)) {
-        return false;
+      if (myTabs != null && myTabs.ignoreTabLabelLimitedWidthWhenPaint() &&
+          parent.getWidth() < parent.getPreferredSize().width) {
+        int spaceTop = parent.getInsets().top;
+        int spaceLeft = parent.getInsets().left;
+        int spaceBottom = parent.getHeight() - parent.getInsets().bottom;
+        int spaceHeight = spaceBottom - spaceTop;
+
+        int xOffset = spaceLeft;
+
+        xOffset = layoutComponent(xOffset, getLayoutComponent(WEST), spaceTop, spaceHeight);
+        xOffset = layoutComponent(xOffset, getLayoutComponent(CENTER), spaceTop, spaceHeight);
+        layoutComponent(xOffset, getLayoutComponent(EAST), spaceTop, spaceHeight);
+
+        return true;
       }
-
-      int spaceTop = parent.getInsets().top;
-      int spaceLeft = parent.getInsets().left;
-      int spaceBottom = parent.getHeight() - parent.getInsets().bottom;
-      int spaceHeight = spaceBottom - spaceTop;
-
-      int xOffset = spaceLeft;
-
-      xOffset = layoutComponent(xOffset, getLayoutComponent(WEST), spaceTop, spaceHeight);
-      xOffset = layoutComponent(xOffset, getLayoutComponent(CENTER), spaceTop, spaceHeight);
-      layoutComponent(xOffset, getLayoutComponent(EAST), spaceTop, spaceHeight);
-
-      return true;
+      return false;
     }
 
     private int layoutComponent(int xOffset, Component component, int spaceTop, int spaceHeight) {
