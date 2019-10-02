@@ -17,7 +17,6 @@ import com.intellij.execution.remote.target.IRExecutionTarget;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.BaseOutputReader;
 import org.jetbrains.annotations.NotNull;
@@ -32,6 +31,7 @@ public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigura
   extends JavaCommandLineState implements RemoteConnectionCreator {
   public static final int PORT = 12345;
   @NotNull protected final T myConfiguration;
+  @Nullable private IR.RemoteRunner myRemoteRunner;
 
   public BaseJavaApplicationCommandLineState(ExecutionEnvironment environment, @NotNull final T configuration) {
     super(environment);
@@ -49,11 +49,16 @@ public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigura
   @Nullable
   @Override
   public RemoteConnection createRemoteConnection(ExecutionEnvironment environment) {
+    //todo[remoteServers]: pull up and support all implementations of JavaCommandLineState
     try {
-      return new RemoteConnectionBuilder(false, DebuggerSettings.SOCKET_TRANSPORT, String.valueOf(PORT)).create(getJavaParameters());
+      IR.RemoteRunner runner = getRemoteRunner(environment);
+      if (!(runner instanceof IR.LocalRunner)) {
+        return new RemoteConnectionBuilder(false, DebuggerSettings.SOCKET_TRANSPORT, String.valueOf(PORT)).suspend(true)
+          .create(getJavaParameters());
+      }
     }
     catch (ExecutionException e) {
-      e.printStackTrace();
+      return null;
     }
     return null;
   }
@@ -67,7 +72,7 @@ public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigura
   @Override
   protected OSProcessHandler startProcess() throws ExecutionException {
     //todo[remoteServers]: pull up and support all implementations of JavaCommandLineState
-    IR.RemoteRunner runner = getRemoteRunner(myConfiguration.getProject(), getEnvironment(), myConfiguration);
+    IR.RemoteRunner runner = getRemoteRunner(getEnvironment());
     IR.RemoteEnvironmentRequest request = runner.createRequest();
     IR.RemoteValue<Integer> port = null;
     if (!(runner instanceof IR.LocalRunner)) {
@@ -97,24 +102,26 @@ public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigura
   }
 
   @NotNull
-  private static IR.RemoteRunner getRemoteRunner(@NotNull Project project,
-                                                 @NotNull ExecutionEnvironment environment,
-                                                 @NotNull RunProfile runConfiguration) throws ExecutionException {
+  private IR.RemoteRunner getRemoteRunner(@NotNull ExecutionEnvironment environment)
+    throws ExecutionException {
+    if (myRemoteRunner != null) {
+      return myRemoteRunner;
+    }
     ExecutionTarget target = environment.getExecutionTarget();
     if (target instanceof IRExecutionTarget) {
-      return ((IRExecutionTarget)target).createRemoteRunner();
+      return myRemoteRunner = ((IRExecutionTarget)target).createRemoteRunner();
     }
-    if (runConfiguration instanceof RemoteTargetAwareRunProfile) {
-      String targetName = ((RemoteTargetAwareRunProfile)runConfiguration).getDefaultTargetName();
+    if (myConfiguration instanceof RemoteTargetAwareRunProfile) {
+      String targetName = ((RemoteTargetAwareRunProfile)myConfiguration).getDefaultTargetName();
       if (targetName != null) {
         RemoteTargetConfiguration config = RemoteTargetsManager.getInstance().getTargets().findByName(targetName);
         if (config == null) {
           throw new ExecutionException("Cannot find target " + targetName);
         }
-        return config.createRunner(project);
+        return myRemoteRunner = config.createRunner(environment.getProject());
       }
     }
-    return new IR.LocalRunner();
+    return myRemoteRunner = new IR.LocalRunner();
   }
 
   @Override
