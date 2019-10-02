@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.editor.impl;
 
@@ -35,8 +35,7 @@ public class SettingsImpl implements EditorSettings {
   private static final Logger LOG = Logger.getInstance(SettingsImpl.class);
 
   @Nullable private final EditorEx myEditor;
-  @Nullable private Language myLanguage;
-  @Nullable private Supplier<Language> myLanguageSupplier;
+  @Nullable private Supplier<? extends Language> myLanguageSupplier;
   private Boolean myIsCamelWords;
 
   // This group of settings does not have UI
@@ -752,9 +751,6 @@ public class SettingsImpl implements EditorSettings {
 
   @Nullable
   public Language getLanguage() {
-    if (myLanguage != null) {
-      return myLanguage;
-    }
     if (myLanguageSupplier != null) {
       return myLanguageSupplier.get();
     }
@@ -762,12 +758,7 @@ public class SettingsImpl implements EditorSettings {
   }
 
   @Override
-  public void setLanguage(@Nullable Language language) {
-    myLanguage = language;
-  }
-
-  @Override
-  public void setLanguageSupplier(@Nullable Supplier<Language> languageSupplier) {
+  public void setLanguageSupplier(@Nullable Supplier<? extends Language> languageSupplier) {
     myLanguageSupplier = languageSupplier;
   }
 }

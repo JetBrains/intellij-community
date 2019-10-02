@@ -203,7 +203,7 @@ public class DiffUtil {
 
     Language language = content != null ? content.getUserData(DiffUserDataKeys.LANGUAGE) : null;
     if (language != null) {
-      editor.getSettings().setLanguage(language);
+      editor.getSettings().setLanguageSupplier(() -> language);
     }
     else if (editor.getProject() != null) {
       editor.getSettings().setLanguageSupplier(() -> TextEditorImpl.getDocumentLanguage(editor));
