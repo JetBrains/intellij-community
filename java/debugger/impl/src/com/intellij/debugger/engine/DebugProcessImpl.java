@@ -1969,9 +1969,6 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     }
 
     if (!serverMode) {
-      Integer port = executionResult.getProcessHandler().getUserData(GenericDebuggerRunner.REMOTE_PORT_KEY);
-      myConnection.setHostName("0.0.0.0");
-      myConnection.setAddress(String.valueOf(port));
       createVirtualMachine(environment);
     }
 
