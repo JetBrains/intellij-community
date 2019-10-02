@@ -31,6 +31,12 @@ inline fun Logger.debug(e: Exception? = null, lazyMessage: () -> String) {
   }
 }
 
+inline fun Logger.trace(lazyMessage: () -> String) {
+  if (isTraceEnabled) {
+    trace(lazyMessage())
+  }
+}
+
 inline fun Logger.debugOrInfoIfTestMode(e: Exception? = null, lazyMessage: () -> String) {
   if (ApplicationManager.getApplication()?.isUnitTestMode == true) {
     info(lazyMessage())
