@@ -1266,7 +1266,7 @@ public class Mappings {
 
         TIntHashSet propagated = null;
 
-        if (!m.isPrivate() && m.name != myInitName) {
+        if (!m.isPrivate()) {
           if (oldItRef == null) {
             oldItRef = new Ref<>(getClassReprByName(null, it.name)); // lazy init
           }
@@ -1274,7 +1274,10 @@ public class Mappings {
 
           if (oldIt == null || !myPresent.hasOverriddenMethods(oldIt, MethodRepr.equalByJavaRules(m), null)) {
             if (m.myArgumentTypes.length > 0) {
-              propagated = myFuture.propagateMethodAccess(m, it.name);
+              if (m.name != myInitName) {
+                // do not propagate constructors access, since constructors are always concrete and not accessible via references to subclasses
+                propagated = myFuture.propagateMethodAccess(m, it.name);
+              }
               debug("Conservative case on overriding methods, affecting method usages");
               myFuture.affectMethodUsages(m, propagated, m.createMetaUsage(myContext, it.name), state.myAffectedUsages, state.myDependants);
             }
