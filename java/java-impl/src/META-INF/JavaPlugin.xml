@@ -1758,6 +1758,10 @@
       <category>Java/Refactorings</category>
     </intentionAction>
     <intentionAction>
+      <className>com.intellij.codeInsight.intention.impl.ExtractMethodIntentionAction</className>
+      <category>Java/Refactorings</category>
+    </intentionAction>
+    <intentionAction>
       <className>com.intellij.codeInsight.daemon.impl.quickfix.DefineParamsDefaultValueAction</className>
       <category>Java/Declaration</category>
     </intentionAction>
