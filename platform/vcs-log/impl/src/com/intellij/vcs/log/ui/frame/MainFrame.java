@@ -336,7 +336,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     if (selectedRows.length == 0 || selectedRows.length > VcsLogUtil.MAX_SELECTED_COMMITS) {
       return VcsLogUtil.getAllVisibleRoots(roots, myFilterUi.getFilters());
     }
-    return ContainerUtil.map2Set(Ints.asList(selectedRows), row -> myGraphTable.getModel().getRoot(row));
+    return ContainerUtil.map2Set(Ints.asList(selectedRows), row -> myGraphTable.getModel().getRootAtRow(row));
   }
 
   @NotNull

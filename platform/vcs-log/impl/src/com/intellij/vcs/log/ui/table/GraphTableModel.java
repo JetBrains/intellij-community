@@ -220,7 +220,7 @@ public class GraphTableModel extends AbstractTableModel {
   }
 
   @NotNull
-  public VirtualFile getRoot(int row) {
+  public VirtualFile getRootAtRow(int row) {
     return myDataPack.getRoot(row);
   }
 
