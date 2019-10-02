@@ -2,7 +2,6 @@
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.lang.Language;
-import com.intellij.lang.LanguageUtil;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.structuralsearch.PatternContext;
@@ -16,7 +15,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 /**
  * @author Pavel.Dolgov
@@ -79,9 +81,9 @@ public class FileTypeSelector extends ComboBox<FileTypeInfo> {
 
       infos.add(new FileTypeInfo(fileType, language, null, false));
 
-      final Language[] languageDialects = LanguageUtil.getLanguageDialects(language);
-      Arrays.sort(languageDialects, Comparator.comparing(Language::getDisplayName));
-      for (Language dialect : languageDialects) {
+      List<Language> dialects = new ArrayList<>(language.getDialects());
+      Collections.sort(dialects, Comparator.comparing(Language::getDisplayName));
+      for (Language dialect : dialects) {
         if (profile.isMyLanguage(dialect)) {
           infos.add(new FileTypeInfo(fileType, dialect, null, true));
         }
