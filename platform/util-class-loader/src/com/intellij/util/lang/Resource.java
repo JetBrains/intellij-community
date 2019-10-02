@@ -7,8 +7,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
-import java.security.CodeSigner;
-import java.security.CodeSource;
 import java.security.ProtectionDomain;
 
 abstract class Resource {
@@ -31,7 +29,7 @@ abstract class Resource {
 
   @Nullable
   public ProtectionDomain getProtectionDomain() {
-    return new ProtectionDomain(new CodeSource(getURL(), (CodeSigner[])null), null);
+    return null;
   }
 
   @Override
