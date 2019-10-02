@@ -100,6 +100,7 @@ class GitRewordOperation(private val repository: GitRepository,
     handler.addParameters("-F")
     handler.addAbsoluteFile(messageFile)
     handler.addParameters("--only") // without any files: to amend only the message
+    handler.addParameters("--no-verify") // to prevent unnecessary hooks execution
 
     val result = Git.getInstance().runCommand(handler)
     repository.update()
