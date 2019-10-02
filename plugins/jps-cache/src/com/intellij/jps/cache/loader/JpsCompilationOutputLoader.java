@@ -6,9 +6,7 @@ import com.intellij.jps.cache.ui.SegmentedProgressIndicatorManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.CompilerProjectExtension;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import org.jetbrains.annotations.NotNull;
@@ -23,13 +21,12 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-class JpsCompilationOutputLoader implements JpsOutputLoader {
+abstract class JpsCompilationOutputLoader implements JpsOutputLoader {
   private static final Logger LOG = Logger.getInstance("com.intellij.jps.loader.JpsCompilationOutputLoader");
-  private final PersistentCachingModuleHashingService myHashingService;
-  private static final int myStepsCount = 2;
-  private final JpsServerClient myClient;
-  private final Project myProject;
-  private Map<File, String> myTmpFolderToModuleName;
+  protected final PersistentCachingModuleHashingService myHashingService;
+  protected final JpsServerClient myClient;
+  protected final Project myProject;
+  protected Map<File, String> myTmpFolderToModuleName;
 
   JpsCompilationOutputLoader(JpsServerClient client, Project project, PersistentCachingModuleHashingService hashingService) {
     myClient = client;
@@ -47,44 +44,10 @@ class JpsCompilationOutputLoader implements JpsOutputLoader {
       return LoaderStatus.FAILED;
     }
     File compilerOutputDir = new File(VfsUtilCore.urlToPath(projectExtension.getCompilerOutputUrl()));
-
-    File productionDir = new File(compilerOutputDir, CompilerModuleExtension.PRODUCTION);
-    progressIndicatorManager.setText(this, "Calculating affected production modules");
-    Map<String, String> affectedProductionModules = getAffectedModules(productionDir, myHashingService::getAffectedProduction,
-                                                                       myHashingService::computeProductionHashesForProject);
-    progressIndicatorManager.finished(this);
-    indicator.checkCanceled();
-    if (affectedProductionModules.size() > 0) {
-      FileUtil.createDirectory(productionDir);
-      Pair<Boolean, Map<File, String>> downloadResultsPair = myClient.downloadCompiledModules(myProject, progressIndicatorManager,
-                                                                                              CompilerModuleExtension.PRODUCTION,
-                                                                                              affectedProductionModules, productionDir);
-      myTmpFolderToModuleName = downloadResultsPair.second;
-      if (!downloadResultsPair.first) return LoaderStatus.FAILED;
-    } else {
-      // Move progress up to the half of segment size
-      displaySkippedStepOnProgressBar(progressIndicatorManager);
-    }
-
-    File testDir = new File(compilerOutputDir, CompilerModuleExtension.TEST);
-    progressIndicatorManager.setText(this, "Calculating affected test modules");
-    Map<String, String> affectedTestModules = getAffectedModules(testDir, myHashingService::getAffectedTests,
-                                                                 myHashingService::computeTestHashesForProject);
-    progressIndicatorManager.finished(this);
-    indicator.checkCanceled();
-    if (affectedTestModules.size() > 0) {
-      FileUtil.createDirectory(testDir);
-      Pair<Boolean, Map<File, String>> downloadResultsPair = myClient.downloadCompiledModules(myProject, progressIndicatorManager,
-                                                                                              CompilerModuleExtension.TEST,
-                                                                                              affectedTestModules, testDir);
-      myTmpFolderToModuleName.putAll(downloadResultsPair.second);
-      if (!downloadResultsPair.first) return LoaderStatus.FAILED;
-    } else {
-      // Move progress up to the half of segment size
-      displaySkippedStepOnProgressBar(progressIndicatorManager);
-    }
-    return LoaderStatus.COMPLETE;
+    return load(compilerOutputDir, progressIndicatorManager);
   }
+
+  abstract LoaderStatus load(@NotNull File compilerOutputDir, @NotNull SegmentedProgressIndicatorManager progressIndicatorManager);
 
   @Override
   public void rollback() {
@@ -113,7 +76,7 @@ class JpsCompilationOutputLoader implements JpsOutputLoader {
     });
   }
 
-  private static Map<String, String> getAffectedModules(@NotNull File outDir, @NotNull Supplier<Map<String, String>> affectedModules,
+  protected static Map<String, String> getAffectedModules(@NotNull File outDir, @NotNull Supplier<Map<String, String>> affectedModules,
                                                         @NotNull Supplier<Map<String, String>> allModules) {
     long start = System.currentTimeMillis();
     Map<String, String> allModulesMap = allModules.get();
@@ -144,8 +107,8 @@ class JpsCompilationOutputLoader implements JpsOutputLoader {
     return allModulesMap;
   }
 
-  private static void displaySkippedStepOnProgressBar(@NotNull SegmentedProgressIndicatorManager progressIndicatorManager) {
+  protected static void displaySkippedStepOnProgressBar(@NotNull SegmentedProgressIndicatorManager progressIndicatorManager) {
     progressIndicatorManager.setTasksCount(1);
-    progressIndicatorManager.updateFraction(1.0 / myStepsCount);
+    progressIndicatorManager.updateFraction(1.0);
   }
 }

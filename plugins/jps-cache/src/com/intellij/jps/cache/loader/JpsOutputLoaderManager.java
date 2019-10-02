@@ -10,9 +10,6 @@ import com.intellij.jps.cache.git.GitRepositoryUtil;
 import com.intellij.jps.cache.hashing.PersistentCachingModuleHashingService;
 import com.intellij.jps.cache.loader.JpsOutputLoader.LoaderStatus;
 import com.intellij.jps.cache.ui.SegmentedProgressIndicatorManager;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -40,7 +37,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class JpsOutputLoaderManager implements ProjectComponent {
   private static final Logger LOG = Logger.getInstance("com.intellij.jps.cache.loader.JpsOutputLoaderManager");
   private static final String LATEST_COMMIT_ID = "JpsOutputLoaderManager.latestCommitId";
-  private static final String GROUP_DISPLAY_ID = "Jps Cache Loader";
   private static final double TOTAL_SEGMENT_SIZE = 0.9;
   private PersistentCachingModuleHashingService myModuleHashingService;
   private final AtomicBoolean hasRunningTask;
@@ -203,7 +199,8 @@ public class JpsOutputLoaderManager implements ProjectComponent {
   private List<JpsOutputLoader> getLoaders(@NotNull Project project) {
     if (myJpsOutputLoadersLoaders != null) return myJpsOutputLoadersLoaders;
     myJpsOutputLoadersLoaders = Arrays.asList(new JpsCacheLoader(myServerClient, project),
-                                              new JpsCompilationOutputLoader(myServerClient, project, myModuleHashingService));
+                                              new JpsProductionOutputLoader(myServerClient, project, myModuleHashingService),
+                                              new JpsTestOutputLoader(myServerClient, project, myModuleHashingService));
     return myJpsOutputLoadersLoaders;
   }
 
