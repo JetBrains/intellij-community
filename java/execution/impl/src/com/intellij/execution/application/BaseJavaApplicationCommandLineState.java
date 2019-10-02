@@ -79,16 +79,9 @@ public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigura
     if (myRemoteConnection != null) {
       int remotePort = StringUtil.parseInt(myRemoteConnection.getApplicationPort(), -1);
       if (remotePort > 0) {
-        IR.RemoteValue<Integer> port = request.bindRemotePort(remotePort);
-        request.addValueResolutionListener(new IR.RemoteValueResolutionListener() {
-          @Override
-          public void afterResolution(@NotNull IR.RemoteValue<?> value) {
-            if (value == port) {
-              //todo[remoteServers]: get host name from target
-              myRemoteConnection.setDebuggerHostName("0.0.0.0");
-              myRemoteConnection.setDebuggerPort(String.valueOf(value.getLocalValue()));
-            }
-          }
+        request.bindRemotePort(remotePort).promise().onSuccess(it -> {
+          myRemoteConnection.setDebuggerHostName("0.0.0.0");
+          myRemoteConnection.setDebuggerPort(String.valueOf(it.getLocalValue()));
         });
       }
     }

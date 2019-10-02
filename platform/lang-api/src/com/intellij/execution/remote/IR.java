@@ -7,10 +7,11 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 
 import java.io.File;
 import java.nio.charset.Charset;
@@ -54,10 +55,6 @@ public class IR {
     RemoteLocation createRemoteLocation(@Nullable String remotePath/*, @Nullable Object __options*/);
 
     RemoteLocation importLocation(RemoteLocation otherLoc, RemoteEnvironment originalEnv);
-
-    void addValueResolutionListener(@NotNull RemoteValueResolutionListener listener);
-
-    void removeValueResolutionListener(@NotNull RemoteValueResolutionListener listener);
   }
 
   public interface RemoteValue<T> {
@@ -72,6 +69,11 @@ public class IR {
       public Object getRemoteValue() {
         return null;
       }
+
+      @Override
+      public Promise<RemoteValue> promise() {
+        return Promises.resolvedPromise(this);
+      }
     };
 
     static <V> RemoteValue<V> EMPTY_VALUE() {
@@ -79,13 +81,11 @@ public class IR {
       return EMPTY_VALUE;
     }
 
-    //todo[remoteServers]: rename? it's easy to accidentally use toString() instead of toString(env)
-    //@Nullable
-    //String toString(@NotNull RemoteEnvironment environment);
-
     T getLocalValue();
 
     T getRemoteValue();
+    
+    Promise<RemoteValue<T>> promise();
   }
 
   public interface RemoteLocation {
@@ -112,6 +112,11 @@ public class IR {
     public T getLocalValue() {
       return myValue;
     }
+
+    @Override
+    public Promise<RemoteValue<T>> promise() {
+      return Promises.resolvedPromise(this);
+    }
   }
 
   public static class CompositeValue<S, T> implements RemoteValue<T> {
@@ -132,6 +137,11 @@ public class IR {
     public T getRemoteValue() {
       return myMapper.apply(ContainerUtil.map(myValues, RemoteValue::getRemoteValue));
     }
+
+    @Override
+    public Promise<RemoteValue<T>> promise() {
+      return Promises.collectResults(ContainerUtil.map(myValues, RemoteValue::promise)).then(__ -> this);
+    }
   }
 
   public static class MapValue<S, T> implements RemoteValue<T> {
@@ -151,6 +161,11 @@ public class IR {
     @Override
     public T getRemoteValue() {
       return myMapper.apply(myOriginalValue.getRemoteValue());
+    }
+
+    @Override
+    public Promise<RemoteValue<T>> promise() {
+      return myOriginalValue.promise().then(__ -> this);
     }
   }
 
@@ -282,8 +297,6 @@ public class IR {
 
     public class LocalEnvironmentRequest implements RemoteEnvironmentRequest {
       @NotNull
-      private final Collection<RemoteValueResolutionListener> myListeners = new SmartList<>();
-      @NotNull
       private GeneralCommandLine.ParentEnvironmentType myParentEnvironmentType = GeneralCommandLine.ParentEnvironmentType.CONSOLE;
 
       @Override
@@ -293,22 +306,12 @@ public class IR {
 
       @Override
       public RemoteValue<String> createUpload(@NotNull String localPath) {
-        FixedValue<String> value = new FixedValue<>(localPath);
-        for (RemoteValueResolutionListener listener : myListeners) {
-          listener.beforeResolution(value);
-          listener.afterResolution(value);
-        }
-        return value;
+        return new FixedValue<>(localPath);
       }
 
       @Override
       public RemoteValue<Integer> bindRemotePort(int remotePort) {
-        FixedValue<Integer> value = new FixedValue<>(remotePort);
-        for (RemoteValueResolutionListener listener : myListeners) {
-          listener.beforeResolution(value);
-          listener.afterResolution(value);
-        }
-        return value;
+        return new FixedValue<>(remotePort);
       }
 
       @Override
@@ -323,16 +326,6 @@ public class IR {
 
       public void setParentEnvironmentType(@NotNull GeneralCommandLine.ParentEnvironmentType parentEnvironmentType) {
         myParentEnvironmentType = parentEnvironmentType;
-      }
-
-      @Override
-      public void addValueResolutionListener(@NotNull RemoteValueResolutionListener listener) {
-        myListeners.add(listener);
-      }
-
-      @Override
-      public void removeValueResolutionListener(@NotNull RemoteValueResolutionListener listener) {
-        myListeners.remove(listener);
       }
     }
   }
