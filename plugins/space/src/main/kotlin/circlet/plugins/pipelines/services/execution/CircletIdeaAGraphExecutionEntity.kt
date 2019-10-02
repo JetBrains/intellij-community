@@ -2,6 +2,7 @@ package circlet.plugins.pipelines.services.execution
 
 import circlet.pipelines.common.api.*
 import circlet.pipelines.config.api.*
+import circlet.pipelines.engine.api.*
 import circlet.pipelines.engine.api.storage.*
 
 class CircletIdeaAGraphExecutionEntity(
@@ -14,6 +15,7 @@ class CircletIdeaAGraphExecutionEntity(
     override var executionMeta: ProjectAction,
     override val branch: String,
     override val commit: String,
+    override val repoId: String,
     val jobsList: MutableList<AJobExecutionEntity<*>>
 ) : AGraphExecutionEntity {
 
@@ -30,4 +32,6 @@ class CircletIdeaAGraphExecutionEntity(
     }
 
     override val problems = emptySet<Int>()
+
+    override val changes: Set<CommitHash> = emptySet()
 }
