@@ -55,7 +55,6 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -350,13 +349,12 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         sourceFile = candidate;
         if (targetPath == sourcePath) {
           Path testDataPathObj = Paths.get(testDataPath), targetPathObj = Paths.get(targetPath);
-          if (targetPathObj.startsWith(testDataPathObj)) {
+          if (targetPathObj.startsWith(testDataPathObj) && !targetPathObj.equals(testDataPathObj)) {
             targetPath = testDataPathObj.relativize(targetPathObj).toString();
           }
           else {
-            targetPath = targetPathObj.getFileName().toString();
+            throw new IllegalArgumentException("Cannot guess target path for '" + sourcePath + "'; please specify explicitly");
           }
-          Logger.getInstance(getClass()).warn("Absolute target path '" + sourcePath + "' trimmed to '" + targetPath + "'");
         }
       }
     }
