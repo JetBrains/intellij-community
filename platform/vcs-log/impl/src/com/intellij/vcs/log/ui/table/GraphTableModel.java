@@ -49,16 +49,14 @@ public class GraphTableModel extends AbstractTableModel {
   @NotNull private final Consumer<? super Runnable> myRequestMore;
   @NotNull private final VcsLogUiProperties myProperties;
 
-  @NotNull protected VisiblePack myDataPack;
+  @NotNull protected VisiblePack myDataPack = VisiblePack.EMPTY;
 
   private boolean myMoreRequested;
 
-  public GraphTableModel(@NotNull VisiblePack dataPack,
-                         @NotNull VcsLogData logData,
+  public GraphTableModel(@NotNull VcsLogData logData,
                          @NotNull Consumer<? super Runnable> requestMore,
                          @NotNull VcsLogUiProperties properties) {
     myLogData = logData;
-    myDataPack = dataPack;
     myRequestMore = requestMore;
     myProperties = properties;
   }

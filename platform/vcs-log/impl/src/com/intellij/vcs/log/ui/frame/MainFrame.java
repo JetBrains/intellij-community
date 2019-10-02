@@ -428,7 +428,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     @NotNull private final Runnable myRefresh;
 
     MyVcsLogGraphTable(@NotNull AbstractVcsLogUi ui, @NotNull VcsLogData logData) {
-      super(ui, logData, VisiblePack.EMPTY, ui::requestMore);
+      super(ui, logData, ui::requestMore);
       myRefresh = () -> ui.getRefresher().onRefresh();
     }
 

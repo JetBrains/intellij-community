@@ -105,9 +105,8 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
   public VcsLogGraphTable(@NotNull AbstractVcsLogUi ui,
                           @NotNull VcsLogData logData,
-                          @NotNull VisiblePack initialDataPack,
                           @NotNull Consumer<Runnable> requestMore) {
-    super(new GraphTableModel(initialDataPack, logData, requestMore, ui.getProperties()));
+    super(new GraphTableModel(logData, requestMore, ui.getProperties()));
     myLogData = logData;
     myId = ui.getId();
     myProperties = ui.getProperties();

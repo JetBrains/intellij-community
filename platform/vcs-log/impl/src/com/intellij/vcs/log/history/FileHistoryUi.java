@@ -75,7 +75,7 @@ public class FileHistoryUi extends AbstractVcsLogUi {
     myDiffHandler = notNull(logData.getLogProvider(root).getDiffHandler());
 
     myFilterUi = new FileHistoryFilterUi(path, revision, root, uiProperties);
-    myFileHistoryPanel = new FileHistoryPanel(this, logData, myVisiblePack, path);
+    myFileHistoryPanel = new FileHistoryPanel(this, logData, path);
 
     myHighlighterIds = myRevision == null
                        ? ContainerUtil.newHashSet(MyCommitsHighlighter.Factory.ID,
