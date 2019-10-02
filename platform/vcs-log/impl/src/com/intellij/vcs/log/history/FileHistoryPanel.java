@@ -208,25 +208,25 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
         if (change != null) {
           return new Change[]{change};
         }
-        List<VcsFullCommitDetails> details = myUi.getVcsLog().getSelectedDetails();
+        List<VcsFullCommitDetails> details = myGraphTable.getModel().getFullDetails(myGraphTable.getSelectedRows());
         if (details.isEmpty() || details.size() > VcsLogUtil.MAX_SELECTED_COMMITS) return null;
         if (VcsLogUtil.getMaxSize(details) > VcsLogUtil.getShownChangesLimit()) return null;
         return VcsLogUtil.collectChanges(details, detail -> myUi.collectRelevantChanges(detail)).toArray(new Change[0]);
       })
       .ifEq(VcsLogInternalDataKeys.LOG_UI_PROPERTIES).thenGet(myUi::getProperties)
       .ifEq(VcsDataKeys.VCS_FILE_REVISION).thenGet(() -> {
-        List<VcsCommitMetadata> details = myUi.getVcsLog().getSelectedShortDetails();
+        List<VcsCommitMetadata> details = getSelectedMetadata();
         if (details.isEmpty()) return null;
         return myUi.createRevision(getFirstItem(details));
       })
       .ifEq(VcsDataKeys.VCS_FILE_REVISIONS).thenGet(() -> {
-        List<VcsCommitMetadata> details = myUi.getVcsLog().getSelectedShortDetails();
+        List<VcsCommitMetadata> details = getSelectedMetadata();
         if (details.isEmpty() || details.size() > VcsLogUtil.MAX_SELECTED_COMMITS) return null;
         return ContainerUtil.mapNotNull(details, myUi::createRevision).toArray(new VcsFileRevision[0]);
       })
       .ifEq(VcsDataKeys.FILE_PATH).then(myFilePath)
       .ifEq(VcsDataKeys.VCS_VIRTUAL_FILE).thenGet(() -> {
-        List<VcsCommitMetadata> details = myUi.getVcsLog().getSelectedShortDetails();
+        List<VcsCommitMetadata> details = getSelectedMetadata();
         if (details.isEmpty()) return null;
         VcsCommitMetadata detail = notNull(getFirstItem(details));
         return FileHistoryUtil.createVcsVirtualFile(myUi.createRevision(detail));
@@ -253,6 +253,11 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
         };
       })
       .orNull();
+  }
+
+  @NotNull
+  private List<VcsCommitMetadata> getSelectedMetadata() {
+    return myGraphTable.getModel().getCommitMetadata(myGraphTable.getSelectedRows());
   }
 
   @Override

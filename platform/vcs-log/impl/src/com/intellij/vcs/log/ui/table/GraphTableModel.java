@@ -26,9 +26,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.table.AbstractTableModel;
+import java.util.AbstractList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.function.Function;
 
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 
@@ -239,6 +241,21 @@ public class GraphTableModel extends AbstractTableModel {
   }
 
   @NotNull
+  public List<VcsFullCommitDetails> getFullDetails(int[] rows) {
+    return getDataForRows(rows, this::getFullDetails);
+  }
+
+  @NotNull
+  public List<VcsCommitMetadata> getCommitMetadata(int[] rows) {
+    return getDataForRows(rows, this::getCommitMetadata);
+  }
+
+  @NotNull
+  public List<CommitId> getCommitIds(int[] rows) {
+    return getDataForRows(rows, this::getCommitIdAtRow);
+  }
+
+  @NotNull
   public List<VcsRef> getRefsAtRow(int row) {
     return ((RefsModel)myDataPack.getRefs()).refsToCommit(getIdAtRow(row));
   }
@@ -276,5 +293,21 @@ public class GraphTableModel extends AbstractTableModel {
   @NotNull
   public List<Integer> convertToCommitIds(@NotNull List<Integer> rows) {
     return ContainerUtil.map(rows, (NotNullFunction<Integer, Integer>)this::getIdAtRow);
+  }
+
+  @NotNull
+  private static <T> List<T> getDataForRows(int[] rows, @NotNull Function<? super Integer, ? extends T> dataGetter) {
+    return new AbstractList<T>() {
+      @NotNull
+      @Override
+      public T get(int index) {
+        return dataGetter.apply(rows[index]);
+      }
+
+      @Override
+      public int size() {
+        return rows.length;
+      }
+    };
   }
 }
