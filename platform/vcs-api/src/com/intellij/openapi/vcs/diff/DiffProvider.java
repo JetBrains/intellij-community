@@ -57,16 +57,13 @@ public interface DiffProvider extends VcsProviderMarker {
   default void preloadBaseRevisions(@NotNull VirtualFile root, @NotNull Collection<Change> changes) {
   }
 
-  default boolean hasChangesSupport() {
+  default boolean hasDiffWithWorkingDirSupport() {
     return false;
   }
 
-  // Gets changes between source and target revisions.
-  // If source revision is null, then compares target revision with working directory.
   @Nullable
-  default Collection<Change> getChanges(@NotNull VirtualFile fileOrDir,
-                                        @NotNull VcsRevisionNumber targetRevNum,
-                                        @Nullable VcsRevisionNumber sourceRevNum) throws VcsException {
+  default Collection<Change> getDiffWithWorkingDir(@NotNull VirtualFile fileOrDir,
+                                                   @NotNull VcsRevisionNumber revNum) throws VcsException {
     return null;
   }
 }

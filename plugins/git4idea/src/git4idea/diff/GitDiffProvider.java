@@ -210,18 +210,14 @@ public final class GitDiffProvider implements DiffProvider, DiffMixin {
     new GitRevisionContentPreLoader(myProject).preload(root, revisions);
   }
 
-  public boolean hasChangesSupport() {
+  public boolean hasDiffWithWorkingDirSupport() {
     return true;
   }
 
   @NotNull
   @Override
-  public Collection<Change> getChanges(@NotNull VirtualFile fileOrDir,
-                                       @NotNull VcsRevisionNumber targetRevNum,
-                                       @Nullable VcsRevisionNumber sourceRevNum) throws VcsException {
-    if (sourceRevNum != null) {
-      throw new VcsException("Not implemented yet!");
-    }
+  public Collection<Change> getDiffWithWorkingDir(@NotNull VirtualFile fileOrDir,
+                                                  @NotNull VcsRevisionNumber revNum) throws VcsException {
 
     final GitRepository repo = GitUtil.getRepositoryManager(myProject).getRepositoryForFile(fileOrDir);
     if (repo == null) {
@@ -229,10 +225,10 @@ public final class GitDiffProvider implements DiffProvider, DiffMixin {
     }
     FilePath filePath = VcsUtil.getFilePath(fileOrDir);
 
-    final Collection<Change> changes = GitChangeUtils.getDiffWithWorkingDir(myProject, repo.getRoot(), targetRevNum.asString(),
+    final Collection<Change> changes = GitChangeUtils.getDiffWithWorkingDir(myProject, repo.getRoot(), revNum.asString(),
                                                                             Collections.singletonList(filePath), false);
     return changes.isEmpty() && !filePath.isDirectory()
-           ? createChangesWithCurrentContentForFile(filePath, GitContentRevision.createRevision(filePath, targetRevNum, myProject))
+           ? createChangesWithCurrentContentForFile(filePath, GitContentRevision.createRevision(filePath, revNum, myProject))
            : changes;
   }
 }

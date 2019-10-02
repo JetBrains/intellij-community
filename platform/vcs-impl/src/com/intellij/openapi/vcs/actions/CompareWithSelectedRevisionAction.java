@@ -373,6 +373,6 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
     FilePath filePath = assertNotNull(vcsContext.getSelectedFilePath());
     final AbstractVcs vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(filePath);
     DiffProvider diffProvider = vcs != null ? vcs.getDiffProvider() : null;
-    return diffProvider != null && diffProvider.hasChangesSupport();
+    return diffProvider != null && diffProvider.hasDiffWithWorkingDirSupport();
   }
 }

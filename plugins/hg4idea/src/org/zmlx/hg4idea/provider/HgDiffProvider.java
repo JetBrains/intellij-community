@@ -116,30 +116,26 @@ public class HgDiffProvider implements DiffProvider {
   }
 
   @Override
-  public boolean hasChangesSupport() {
+  public boolean hasDiffWithWorkingDirSupport() {
     return true;
   }
 
   @NotNull
   @Override
-  public Collection<Change> getChanges(@NotNull VirtualFile fileOrDir,
-                                       @NotNull VcsRevisionNumber targetRevNum,
-                                       @Nullable VcsRevisionNumber sourceRevNum) throws VcsException {
-    if (sourceRevNum != null) {
-      throw new VcsException("Not implemented yet!");
-    }
+  public Collection<Change> getDiffWithWorkingDir(@NotNull VirtualFile fileOrDir,
+                                                  @NotNull VcsRevisionNumber revNum) throws VcsException {
 
     final HgRepository repo = HgUtil.getRepositoryManager(project).getRepositoryForFile(fileOrDir);
     if (repo == null) {
       throw new VcsException("Couldn't find Git Repository for " + fileOrDir.getName());
     }
-    assert targetRevNum instanceof HgRevisionNumber : "Expected " + HgRevisionNumber.class.getSimpleName()
-                                                        + ", got " + targetRevNum.getClass().getSimpleName();
+    assert revNum instanceof HgRevisionNumber : "Expected " + HgRevisionNumber.class.getSimpleName()
+                                                + ", got " + revNum.getClass().getSimpleName();
     FilePath filePath = VcsUtil.getFilePath(fileOrDir);
-    final List<Change> changes = HgUtil.getDiff(project, repo.getRoot(), filePath, (HgRevisionNumber)targetRevNum, null);
+    final List<Change> changes = HgUtil.getDiff(project, repo.getRoot(), filePath, (HgRevisionNumber)revNum, null);
     if (changes.isEmpty() && !filePath.isDirectory()) {
       final HgFile hgFile = new HgFile(repo.getRoot(), filePath);
-      return createChangesWithCurrentContentForFile(filePath, HgContentRevision.create(project, hgFile, (HgRevisionNumber)targetRevNum));
+      return createChangesWithCurrentContentForFile(filePath, HgContentRevision.create(project, hgFile, (HgRevisionNumber)revNum));
     }
     return changes;
   }

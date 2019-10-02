@@ -111,7 +111,7 @@ public class VcsDiffUtil {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {
-          changes = provider.getChanges(file, targetRevNumber, null);
+          changes = provider.getDiffWithWorkingDir(file, targetRevNumber);
           currentRevNumber = provider.getCurrentRevision(file);
         }
         catch (VcsException e) {
