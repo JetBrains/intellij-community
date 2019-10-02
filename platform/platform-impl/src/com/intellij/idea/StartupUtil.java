@@ -493,6 +493,7 @@ public final class StartupUtil {
     }
   }
 
+  @SuppressWarnings("UseOfSystemOutOrSystemErr")
   @NotNull
   private static Logger setupLogger() {
     Logger.setFactory(new LoggerFactory());
@@ -502,8 +503,8 @@ public final class StartupUtil {
       log.info("------------------------------------------------------ IDE SHUTDOWN ------------------------------------------------------");
     });
     if (SystemProperties.getBooleanProperty("intellij.log.stdout", false)) {
-      System.setOut(new PrintStreamLogger("STDOUT"));
-      System.setErr(new PrintStreamLogger("STDERR"));
+      System.setOut(new PrintStreamLogger("STDOUT", System.out));
+      System.setErr(new PrintStreamLogger("STDERR", System.err));
     }
     return log;
   }
