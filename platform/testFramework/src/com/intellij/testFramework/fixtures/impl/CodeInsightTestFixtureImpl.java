@@ -129,6 +129,8 @@ import org.jetbrains.annotations.TestOnly;
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -347,7 +349,13 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       if (candidate.isAbsolute()) {
         sourceFile = candidate;
         if (targetPath == sourcePath) {
-          targetPath = PathUtil.getFileName(sourcePath);
+          Path testDataPathObj = Paths.get(testDataPath), targetPathObj = Paths.get(targetPath);
+          if (targetPathObj.startsWith(testDataPathObj)) {
+            targetPath = testDataPathObj.relativize(targetPathObj).toString();
+          }
+          else {
+            targetPath = targetPathObj.getFileName().toString();
+          }
           Logger.getInstance(getClass()).warn("Absolute target path '" + sourcePath + "' trimmed to '" + targetPath + "'");
         }
       }
