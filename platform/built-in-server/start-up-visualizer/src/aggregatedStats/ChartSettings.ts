@@ -3,7 +3,7 @@ export class ChartSettings {
   serverUrl: string = "http://127.0.0.1:9044"
 
   selectedProduct: string = ""
-  selectedMachine: string = ""
+  selectedMachine?: number
 
   showScrollbarXPreview: boolean = false
 }

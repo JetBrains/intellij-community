@@ -40,10 +40,10 @@
       <el-form-item label="Machine">
         <el-select v-model="chartSettings.selectedMachine" filterable>
           <el-option
-                v-for="machineId in machines"
-                :key="machineId"
-                :label="machineId"
-                :value="machineId">
+                v-for="machine in machines"
+                :key="machine.id"
+                :label="machine.name"
+                :value="machine.id">
               </el-option>
         </el-select>
       </el-form-item>
@@ -51,10 +51,10 @@
 
     <div class="aggregatedChart" ref="clusteredChartContainer"></div>
 
-    <h2>Duration Events</h2>
+    <h3>Duration Events</h3>
     <div class="aggregatedChart" ref="durationEventChartContainer"></div>
 
-    <h2>Instant Events</h2>
+    <h3>Instant Events</h3>
     <div class="aggregatedChart" ref="instantEventChartContainer"></div>
 
     <el-row>

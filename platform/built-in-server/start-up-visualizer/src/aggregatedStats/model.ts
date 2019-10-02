@@ -3,10 +3,15 @@ export type Metrics = { [key: string]: number; }
 
 export interface InfoResponse {
   readonly productNames: Array<string>
-  readonly productToMachineNames: { [key: string]: Array<string>; }
+  readonly productToMachine: { [key: string]: Array<Machine>; }
 
   readonly durationMetricsNames: Array<string>
   readonly instantMetricsNames: Array<string>
+}
+
+export interface Machine {
+  readonly id: number
+  readonly name: string
 }
 
 export interface GroupedMetricResponse {

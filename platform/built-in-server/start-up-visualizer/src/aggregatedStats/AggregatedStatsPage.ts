@@ -5,7 +5,7 @@ import {AggregatedDataManager} from "@/aggregatedStats/AggregatedDataManager"
 import {AppStateModule} from "@/state/state"
 import {getModule} from "vuex-module-decorators"
 import {loadJson} from "@/httpUtil"
-import {GroupedMetricResponse, InfoResponse, Metrics} from "@/aggregatedStats/model"
+import {GroupedMetricResponse, InfoResponse, Machine, Metrics} from "@/aggregatedStats/model"
 import {ClusteredChartManager} from "@/aggregatedStats/ClusteredChartManager"
 
 @Component
@@ -19,7 +19,7 @@ export default class AggregatedStatsPage extends Vue {
   chartSettings = this.dataModule.chartSettings
 
   products: Array<string> = []
-  machines: Array<string> = []
+  machines: Array<Machine> = []
 
   private lastInfoResponse: InfoResponse | null = null
 
@@ -70,7 +70,7 @@ export default class AggregatedStatsPage extends Vue {
     }
 
     if (product != null && product.length > 0) {
-      this.machines = infoResponse.productToMachineNames[product] || []
+      this.machines = infoResponse.productToMachine[product] || []
     }
     else {
       this.machines = []
@@ -79,17 +79,17 @@ export default class AggregatedStatsPage extends Vue {
     let selectedMachine = this.chartSettings.selectedMachine
     const machines = this.machines
     if (machines.length === 0) {
-      this.chartSettings.selectedMachine = ""
+      this.chartSettings.selectedMachine = undefined
     }
-    else if (selectedMachine == null || selectedMachine.length === 0 || !machines.includes(selectedMachine)) {
-      this.chartSettings.selectedMachine = machines[0]
+    else if (selectedMachine == null || !machines.find(it => it.id === selectedMachine)) {
+      this.chartSettings.selectedMachine = machines[0].id
     }
   }
 
   @Watch("chartSettings.selectedMachine")
-  selectedMachineChanged(machine: string | null, _oldV: string): void {
+  selectedMachineChanged(machine: number | null | undefined, _oldV: string): void {
     console.log("machine changed", machine, _oldV)
-    if (machine == null || machine.length === 0) {
+    if (machine == null) {
       return
     }
 
@@ -102,10 +102,10 @@ export default class AggregatedStatsPage extends Vue {
     this.loadLineChartData(product, machine)
   }
 
-  loadClusteredChartData(product: string, machine: string): void {
+  loadClusteredChartData(product: string, machineId: number): void {
     const url = new URL(`${this.chartSettings.serverUrl}/groupedMetrics`)
     url.searchParams.set("product", product)
-    url.searchParams.set("machine", machine)
+    url.searchParams.set("machine", machineId.toString())
     loadJson(url, null, this.$notify)
       .then(data => {
         if (data != null) {
@@ -118,10 +118,10 @@ export default class AggregatedStatsPage extends Vue {
   }
 
   // noinspection DuplicatedCode
-  loadLineChartData(product: string, machine: string): void {
+  loadLineChartData(product: string, machineId: number): void {
     const url = new URL(`${this.chartSettings.serverUrl}/metrics`)
     url.searchParams.set("product", product)
-    url.searchParams.set("machine", machine)
+    url.searchParams.set("machine", machineId.toString())
     const infoResponse = this.lastInfoResponse!!
     loadJson(url, null, this.$notify)
       .then(data => {
