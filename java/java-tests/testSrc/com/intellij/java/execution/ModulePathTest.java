@@ -148,9 +148,10 @@ public class ModulePathTest extends BaseConfigurationTestCase {
     checkLibrariesOnPathList(module, params4Tests.getModulePath());
 
     //ensure downloaded junit launcher dependencies are in module path as well
-    assertSize(2, params4Tests.getClassPath().getPathList());
-    assertContainsElements(params4Tests.getClassPath().getPathList(), PathUtil.getJarPathForClass(JUnitStarter.class));
-    assertContainsElements(params4Tests.getClassPath().getPathList(), TestObject.getJUnit5RtFile().getPath());
+    PathsList classPath = params4Tests.getClassPath();
+    assertSize(3, classPath.getPathList());
+    assertContainsElements(classPath.getPathList(), PathUtil.getJarPathForClass(JUnitStarter.class));
+    assertContainsElements(classPath.getPathList(), TestObject.getJUnit5RtFile().getPath());
 
     //production module output is on the module path
     PathsList modulePath = params4Tests.getModulePath();
