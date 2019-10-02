@@ -128,22 +128,25 @@ class ChangesViewCommitWorkflowHandler(
   }
 
   private fun setInclusion(items: Collection<Any>, force: Boolean) {
-    val activeChanges = changeListManager.defaultChangeList.changes
-
-    if (force || inclusionModel.isInclusionEmpty()) {
+    if (force) {
       inclusionModel.clearInclusion()
       ui.includeIntoCommit(items)
 
-      // update known active changes on "Commit File"
-      if (force) knownActiveChanges = activeChanges
+      knownActiveChanges = emptyList()
     }
     else {
-      // skip if we have inclusion from other change lists
-      if ((inclusionModel.getInclusion() - activeChanges.toPartialAwareSet()).filterIsInstance<Change>().isNotEmpty()) return
+      val activeChanges = changeListManager.defaultChangeList.changes
+
+      // clear inclusion from not active change lists
+      val inclusionFromNotActiveLists = (inclusionModel.getInclusion() - activeChanges.toPartialAwareSet()).filterIsInstance<Change>()
+      inclusionModel.removeInclusion(inclusionFromNotActiveLists)
 
       // we have inclusion in active change list and/or unversioned files => include new active changes if any
       val newChanges = activeChanges - knownActiveChanges
       ui.includeIntoCommit(newChanges)
+
+      // include all active changes if nothing is included
+      if (inclusionModel.isInclusionEmpty()) ui.includeIntoCommit(activeChanges)
     }
   }
 
@@ -166,10 +169,8 @@ class ChangesViewCommitWorkflowHandler(
     val activeChanges = changeListManager.defaultChangeList.changes
     val includedActiveChanges = activeChanges.filter { it in inclusion }
 
-    // if something new is included => consider it as "user defined state for all active changes"
-    if (!knownActiveChanges.containsAll(includedActiveChanges)) {
-      knownActiveChanges = activeChanges
-    }
+    // ensure all included active changes are known => if user explicitly checks and unchecks some change, we know it is unchecked
+    knownActiveChanges = knownActiveChanges.union(includedActiveChanges)
 
     updateDefaultCommitActionEnabled()
     super.inclusionChanged()
