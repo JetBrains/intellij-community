@@ -4,6 +4,7 @@ package com.intellij.execution.junit;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.ParametersList;
+import com.intellij.execution.configurations.ParamsGroup;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.junit.testDiscovery.TestBySource;
 import com.intellij.execution.junit.testDiscovery.TestsByChanges;
@@ -204,7 +205,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
   }
 
   @Override
-  protected void configureRTClasspath(JavaParameters javaParameters) throws CantRunException {
+  protected void configureRTClasspath(JavaParameters javaParameters, Module module) throws CantRunException {
     final String path = System.getProperty(DEBUG_RT_PATH);
     javaParameters.getClassPath().addFirst(path != null ? path : PathUtil.getJarPathForClass(JUnitStarter.class));
 
@@ -214,7 +215,6 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     String preferredRunner = getRunner();
     if (JUnitStarter.JUNIT5_PARAMETER.equals(preferredRunner)) {
       final Project project = getConfiguration().getProject();
-      Module module = getConfiguration().getConfigurationModule().getModule();
       GlobalSearchScope globalSearchScope = getScopeForJUnit(module, project);
       appendJUnit5LauncherClasses(javaParameters, project, globalSearchScope, module != null && findJavaModule(module,true) != null);
     }
@@ -293,7 +293,9 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
                             VersionComparatorUtil.compare(launcherVersion, "1.5.0") >= 0;
 
     if (isModularized) { //for modularized junit ensure launcher is included in the module graph
-      ParametersList vmParametersList = javaParameters.getVMParametersList();
+      ParamsGroup group = getJigsawOptions(javaParameters);
+      LOG.assertTrue(group != null);
+      ParametersList vmParametersList = group.getParametersList();
       String launcherModuleName = "org.junit.platform.launcher";
       if (!vmParametersList.hasParameter(launcherModuleName)) {
         vmParametersList.add("--add-modules");

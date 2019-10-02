@@ -88,7 +88,7 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState<TestNGCo
   }
 
   @Override
-  protected void configureRTClasspath(JavaParameters javaParameters) {
+  protected void configureRTClasspath(JavaParameters javaParameters, Module module) {
     javaParameters.getClassPath().addFirst(PathUtil.getJarPathForClass(RemoteTestNGStarter.class));
     javaParameters.getClassPath().addTail(PathUtil.getJarPathForClass(JCommander.class));
   }

@@ -10,6 +10,7 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -21,10 +22,14 @@ public class TestNGForkTest {
       final File tempFile = FileUtil.createTempFile(tempDirectory, "workingDir", null);
       final String workingDirFromFile = "MODULE_1";
       final String classpathFromFile = "CLASSPATH";
+      final String modulePathFromFile = "MODULE_PATH";
+      List<String> moduleExpectedOptions = Arrays.asList("-p", modulePathFromFile);
       FileUtil.writeToFile(tempFile, "p\n" +
                                      workingDirFromFile + "\n" +
                                      "mod1\n" +
                                      classpathFromFile + "\n" +
+                                     modulePathFromFile + "\n" +
+                                     "0\n" +
                                      "1\n" +
                                      "p.T1\n");
       final File commandLineFile = FileUtil.createTempFile(tempDirectory, "commandline", null);
@@ -34,12 +39,13 @@ public class TestNGForkTest {
       new TestNGForkedSplitter(tempFile.getCanonicalPath(), Collections.singletonList(tempFile.getCanonicalPath())) {
         private boolean myStarted = false;
         @Override
-        protected int startChildFork(List args, File workingDir, String classpath, String repeatCount) throws IOException {
+        protected int startChildFork(List args, File workingDir, String classpath, List moduleOptions, String repeatCount) throws IOException {
           Assert.assertEquals(dynamicClasspath, myDynamicClasspath);
           Assert.assertArrayEquals(vmParams, myVMParameters.toArray());
           Assert.assertEquals(workingDirFromFile, workingDir.getName());
           Assert.assertEquals(classpathFromFile, classpath);
-          Assert.assertTrue(args.size() == 1);
+          Assert.assertEquals(moduleExpectedOptions, moduleOptions);
+          Assert.assertEquals(1, args.size());
           final String generatedSuite = FileUtil.loadFile(new File((String)args.get(0)));
           Assert.assertEquals("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
                               "<!DOCTYPE suite SYSTEM \"http://testng.org/testng-1.0.dtd\">\n" +

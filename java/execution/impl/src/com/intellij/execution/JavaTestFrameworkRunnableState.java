@@ -76,6 +76,11 @@ public abstract class JavaTestFrameworkRunnableState<T extends
   private static final Logger LOG = Logger.getInstance(JavaTestFrameworkRunnableState.class);
 
   private static final ExtensionPointName<JUnitPatcher> JUNIT_PATCHER_EP = new ExtensionPointName<>("com.intellij.junitPatcher");
+  private static final String JIGSAW_OPTIONS = "Jigsaw Options";
+
+  public static ParamsGroup getJigsawOptions(JavaParameters parameters) {
+    return parameters.getVMParametersList().getParamsGroup(JIGSAW_OPTIONS);
+  }
 
   protected ServerSocket myServerSocket;
   protected File myTempFile;
@@ -205,7 +210,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     return result;
   }
 
-  protected abstract void configureRTClasspath(JavaParameters javaParameters) throws CantRunException;
+  protected abstract void configureRTClasspath(JavaParameters javaParameters, Module module) throws CantRunException;
 
   @Override
   protected JavaParameters createJavaParameters() throws ExecutionException {
@@ -358,7 +363,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     else {
       JavaParametersUtil.configureProject(getConfiguration().getProject(), javaParameters, pathType, jreHome);
     }
-    configureRTClasspath(javaParameters);
+    configureRTClasspath(javaParameters, module);
   }
 
   protected static PsiJavaModule findJavaModule(Module module, boolean inTests) {
@@ -370,7 +375,11 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     PsiJavaModule testModule = findJavaModule(module, true);
     if (testModule != null) {
       //adding the test module explicitly as it is unreachable from `idea.rt`
-      ParametersList vmParametersList = javaParameters.getVMParametersList();
+      ParametersList vmParametersList = javaParameters
+        .getVMParametersList()
+        .addParamsGroup(JIGSAW_OPTIONS)
+        .getParametersList();
+
       vmParametersList.add("--add-modules");
       vmParametersList.add(testModule.getName());
       //setup module path
@@ -400,7 +409,9 @@ public abstract class JavaTestFrameworkRunnableState<T extends
 
     putDependenciesOnModulePath(modulePath, classPath, prodModule);
 
-    ParametersList vmParametersList = javaParameters.getVMParametersList();
+    ParametersList vmParametersList = javaParameters.getVMParametersList()
+      .addParamsGroup(JIGSAW_OPTIONS)
+      .getParametersList();
     //ensure test output is merged to the production module
     VirtualFile testOutput = compilerExt.getCompilerOutputPathForTests();
     if (testOutput != null) {
@@ -538,12 +549,28 @@ public abstract class JavaTestFrameworkRunnableState<T extends
 
           if (classpath == null) {
             final JavaParameters parameters = new JavaParameters();
-            parameters.getClassPath().add(JavaSdkUtil.getIdeaRtJarPath());
-             try {
-               configureRTClasspath(parameters);
-               JavaParametersUtil.configureModule(module, parameters, JavaParameters.JDK_AND_CLASSES_AND_TESTS,
-                                                 getConfiguration().isAlternativeJrePathEnabled() ? getConfiguration().getAlternativeJrePath() : null);
+            try {
+              JavaParametersUtil.configureModule(module, parameters, JavaParameters.JDK_AND_CLASSES_AND_TESTS,
+                                                 getConfiguration().isAlternativeJrePathEnabled() ? getConfiguration()
+                                                   .getAlternativeJrePath() : null);
+              if (JavaSdkUtil.isJdkAtLeast(parameters.getJdk(), JavaSdkVersion.JDK_1_9)) {
+                configureModulePath(parameters, module);
+              }
+              configureRTClasspath(parameters, module);
+              parameters.getClassPath().add(JavaSdkUtil.getIdeaRtJarPath());
               wWriter.println(parameters.getClassPath().getPathsString());
+              wWriter.println(parameters.getModulePath().getPathsString());
+              ParamsGroup paramsGroup = getJigsawOptions(parameters);
+              if (paramsGroup == null) {
+                wWriter.println(0);
+              }
+              else {
+                List<String> parametersList = paramsGroup.getParametersList().getList();
+                wWriter.println(parametersList.size());
+                for (String option : parametersList) {
+                  wWriter.println(option);
+                }
+              }
             }
             catch (CantRunException e) {
               wWriter.println(javaParameters.getClassPath().getPathsString());

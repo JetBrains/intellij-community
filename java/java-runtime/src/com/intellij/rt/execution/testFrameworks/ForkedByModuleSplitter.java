@@ -63,7 +63,7 @@ public abstract class ForkedByModuleSplitter {
   }
 
   //read output from wrappers
-  protected int startChildFork(final List args, File workingDir, String classpath, String repeatCount) throws IOException, InterruptedException {
+  protected int startChildFork(final List args, File workingDir, String classpath, List moduleOptions, String repeatCount) throws IOException, InterruptedException {
     List vmParameters = new ArrayList(myVMParameters);
 
     myForkedDebuggerHelper.setupDebugger(vmParameters);
@@ -87,6 +87,10 @@ public abstract class ForkedByModuleSplitter {
     }
     else {
       builder.add(classpath);
+    }
+
+    if (moduleOptions != null) {
+      builder.add(moduleOptions);
     }
 
     builder.add(getStarterName());
@@ -136,6 +140,16 @@ public abstract class ForkedByModuleSplitter {
       while ((workingDir = perDirReader.readLine()) != null) {
         final String moduleName = perDirReader.readLine();
         final String classpath = perDirReader.readLine();
+        List moduleOptions = new ArrayList();
+        String modulePath = perDirReader.readLine();
+        if (modulePath != null && modulePath.length() > 0) {
+          moduleOptions.add("-p");
+          moduleOptions.add(modulePath);
+        }
+        final int optionsSize = Integer.parseInt(perDirReader.readLine());
+        for (int i = 0; i < optionsSize; i++) {
+          moduleOptions.add(perDirReader.readLine());
+        }
         try {
 
           List classNames = new ArrayList();
@@ -151,7 +165,7 @@ public abstract class ForkedByModuleSplitter {
           }
 
           String filters = perDirReader.readLine();
-          final int childResult = startPerModuleFork(moduleName, classNames, packageName, workingDir, classpath, repeatCount, result, filters != null ? filters : "");
+          final int childResult = startPerModuleFork(moduleName, classNames, packageName, workingDir, classpath, moduleOptions, repeatCount, result, filters != null ? filters : "");
           result = Math.min(childResult, result);
         }
         catch (Exception e) {
@@ -172,8 +186,9 @@ public abstract class ForkedByModuleSplitter {
                                             String packageName,
                                             String workingDir,
                                             String classpath,
-                                            String repeatCount, 
-                                            int result, 
+                                            List moduleOptions,
+                                            String repeatCount,
+                                            int result,
                                             String filters) throws Exception;
 
   protected abstract String getStarterName();

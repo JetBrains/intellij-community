@@ -2,7 +2,9 @@
 package com.intellij.java.execution;
 
 import com.intellij.codeInsight.TestFrameworks;
+import com.intellij.execution.JavaTestFrameworkRunnableState;
 import com.intellij.execution.configurations.JavaParameters;
+import com.intellij.execution.configurations.ParamsGroup;
 import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.junit.TestObject;
 import com.intellij.openapi.application.ex.PathManagerEx;
@@ -35,17 +37,18 @@ public class ModulePathTest extends BaseConfigurationTestCase {
       new JpsMavenRepositoryLibraryDescriptor("org.junit.jupiter", "junit-jupiter-api", "5.3.0");
     JUnitConfiguration configuration = setupConfiguration(nonModularizedJupiterDescription, "prod1", module);
     JavaParameters params4Tests = configuration.getTestObject().createJavaParameters4Tests();
-    assertEquals("-ea" +
-                 " --patch-module m1=" + CompilerModuleExtension.getInstance(module).getCompilerOutputPathForTests().getPath() +
+    ParamsGroup moduleOptions = JavaTestFrameworkRunnableState.getJigsawOptions(params4Tests);
+    assertNotNull(moduleOptions);
+    assertEquals("--patch-module m1=" + CompilerModuleExtension.getInstance(module).getCompilerOutputPathForTests().getPath() +
                  " --add-reads m1=ALL-UNNAMED" +
-                 " --add-modules m1 -Didea.test.cyclic.buffer.size=1048576", params4Tests.getVMParametersList().getParametersString());
+                 " --add-modules m1", moduleOptions.getParametersList().getParametersString());
 
     checkLibrariesOnPathList(module, params4Tests.getClassPath());
 
     //production module output is on the module path
     PathsList modulePath = params4Tests.getModulePath();
     assertTrue("module path: " + modulePath.getPathsString(),
-               modulePath.getPathList().contains(CompilerModuleExtension.getInstance(module).getCompilerOutputPath().getPath()));
+               modulePath.getPathList().contains(getCompilerOutputPath(module)));
   }
 
   public void testModuleInfoInProductionModularizedJUnit() throws Exception {
@@ -63,22 +66,22 @@ public class ModulePathTest extends BaseConfigurationTestCase {
     Module module = createEmptyModule();
     JUnitConfiguration configuration = setupConfiguration(modularizedJupiterDescription, "prod1", module);
     JavaParameters params4Tests = configuration.getTestObject().createJavaParameters4Tests();
-    assertEquals("-ea" +
-                 " --patch-module m1=" + CompilerModuleExtension.getInstance(module).getCompilerOutputPathForTests().getPath() +
+    ParamsGroup moduleOptions = JavaTestFrameworkRunnableState.getJigsawOptions(params4Tests);
+    assertNotNull(moduleOptions);
+    assertEquals("--patch-module m1=" + CompilerModuleExtension.getInstance(module).getCompilerOutputPathForTests().getPath() +
                  " --add-reads m1=ALL-UNNAMED" +
-                 " --add-modules m1" +
-                 " -Didea.test.cyclic.buffer.size=1048576", params4Tests.getVMParametersList().getParametersString());
+                 " --add-modules m1", moduleOptions.getParametersList().getParametersString());
 
     checkLibrariesOnPathList(module, params4Tests.getClassPath());
 
     //production module output is on the module path
     PathsList modulePath = params4Tests.getModulePath();
     assertTrue("module path: " + modulePath.getPathsString(),
-               modulePath.getPathList().contains(CompilerModuleExtension.getInstance(module).getCompilerOutputPath().getPath()));
+               modulePath.getPathList().contains(getCompilerOutputPath(module)));
 
     //test output on the classpath
     assertFalse("module path: " + modulePath.getPathsString(),
-               modulePath.getPathList().contains(CompilerModuleExtension.getInstance(module).getCompilerOutputPathForTests().getPath()));
+               modulePath.getPathList().contains(getCompilerOutputPath(module, true)));
   }
 
   private static void checkLibrariesOnPathList(Module module, PathsList classPath) {
@@ -87,7 +90,7 @@ public class ModulePathTest extends BaseConfigurationTestCase {
         .withoutDepModules()
         .withoutSdk()
         .recursively().exportedOnly().classes().usingCache().getRoots())
-      .map(f -> JarFileSystem.getInstance().getVirtualFileForJar(f).getPath())
+      .map(f -> PathUtil.getLocalPath(JarFileSystem.getInstance().getVirtualFileForJar(f)))
       .forEach(path -> assertTrue("path " + path + " is located on the classpath: " + classPath.getPathsString(),
                                   classPath.getPathList().contains(path)));
   }
@@ -111,9 +114,9 @@ public class ModulePathTest extends BaseConfigurationTestCase {
       new JpsMavenRepositoryLibraryDescriptor("org.junit.jupiter", "junit-jupiter-api", "5.3.0");
     JUnitConfiguration configuration = setupConfiguration(nonModularizedJupiterDescription, "test1", module);
     JavaParameters params4Tests = configuration.getTestObject().createJavaParameters4Tests();
-    assertEquals("-ea" +
-                 " --add-modules m1" +
-                 " -Didea.test.cyclic.buffer.size=1048576", params4Tests.getVMParametersList().getParametersString());
+    ParamsGroup moduleOptions = JavaTestFrameworkRunnableState.getJigsawOptions(params4Tests);
+    assertNotNull(moduleOptions);
+    assertEquals("--add-modules m1", moduleOptions.getParametersList().getParametersString());
 
     PathsList modulePath = params4Tests.getModulePath();
 
@@ -121,11 +124,11 @@ public class ModulePathTest extends BaseConfigurationTestCase {
 
     //production module output is on the module path
     assertTrue("module path: " + modulePath.getPathsString(),
-               modulePath.getPathList().contains(CompilerModuleExtension.getInstance(module).getCompilerOutputPath().getPath()));
+               modulePath.getPathList().contains(getCompilerOutputPath(module)));
     //test module output is on the module path
     modulePath = params4Tests.getModulePath();
     assertTrue("module path: " + modulePath.getPathsString(),
-               modulePath.getPathList().contains(CompilerModuleExtension.getInstance(module).getCompilerOutputPathForTests().getPath()));
+               modulePath.getPathList().contains(getCompilerOutputPath(module, true)));
 
     //launcher should be put on the classpath
     assertTrue(params4Tests.getClassPath().getPathList().stream().anyMatch(filePath -> filePath.contains("launcher")));
@@ -137,10 +140,10 @@ public class ModulePathTest extends BaseConfigurationTestCase {
       new JpsMavenRepositoryLibraryDescriptor("org.junit.jupiter", "junit-jupiter-api", "5.5.2");
     JUnitConfiguration configuration = setupConfiguration(nonModularizedJupiterDescription, "test1", module);
     JavaParameters params4Tests = configuration.getTestObject().createJavaParameters4Tests();
-    assertEquals("-ea" +
-                 " --add-modules m1" +
-                 " --add-modules org.junit.platform.launcher" +
-                 " -Didea.test.cyclic.buffer.size=1048576", params4Tests.getVMParametersList().getParametersString());
+    ParamsGroup moduleOptions = JavaTestFrameworkRunnableState.getJigsawOptions(params4Tests);
+    assertNotNull(moduleOptions);
+    assertEquals("--add-modules m1" +
+                 " --add-modules org.junit.platform.launcher", moduleOptions.getParametersList().getParametersString());
 
     checkLibrariesOnPathList(module, params4Tests.getModulePath());
 
@@ -152,11 +155,11 @@ public class ModulePathTest extends BaseConfigurationTestCase {
     //production module output is on the module path
     PathsList modulePath = params4Tests.getModulePath();
     assertTrue("module path: " + modulePath.getPathsString(),
-               modulePath.getPathList().contains(CompilerModuleExtension.getInstance(module).getCompilerOutputPath().getPath()));
+               modulePath.getPathList().contains(getCompilerOutputPath(module)));
     //test module output is on the module path
     modulePath = params4Tests.getModulePath();
     assertTrue("module path: " + modulePath.getPathsString(),
-               modulePath.getPathList().contains(CompilerModuleExtension.getInstance(module).getCompilerOutputPathForTests().getPath()));
+               modulePath.getPathList().contains(getCompilerOutputPath(module, true)));
   }
 
   private JUnitConfiguration setupConfiguration(JpsMavenRepositoryLibraryDescriptor libraryDescriptor, String sources, Module module) throws Exception {
@@ -186,5 +189,15 @@ public class ModulePathTest extends BaseConfigurationTestCase {
     String filePath = PathManagerEx.getTestDataPath() + File.separator + "junit" + File.separator + "modulePath" +
                       File.separator + path;
     return LocalFileSystem.getInstance().findFileByPath(filePath.replace(File.separatorChar, '/'));
+  }
+
+  private static String getCompilerOutputPath(Module module) {
+    return getCompilerOutputPath(module, false);
+  }
+
+  private static String getCompilerOutputPath(Module module, boolean forTests) {
+    CompilerModuleExtension moduleExtension = CompilerModuleExtension.getInstance(module);
+    return PathUtil.getLocalPath(forTests ? moduleExtension.getCompilerOutputPathForTests()
+                                          : moduleExtension.getCompilerOutputPath());
   }
 }
