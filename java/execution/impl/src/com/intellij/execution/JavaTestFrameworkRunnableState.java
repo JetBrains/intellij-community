@@ -229,8 +229,8 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     finally {
       getConfiguration().setProgramParameters(parameters);
     }
-    javaParameters.getClassPath().addFirst(JavaSdkUtil.getIdeaRtJarPath());
     configureClasspath(javaParameters);
+    javaParameters.getClassPath().addFirst(JavaSdkUtil.getIdeaRtJarPath());
 
     for (JUnitPatcher patcher : JUNIT_PATCHER_EP.getExtensionList()) {
       patcher.patchJavaParameters(project, module, javaParameters);
