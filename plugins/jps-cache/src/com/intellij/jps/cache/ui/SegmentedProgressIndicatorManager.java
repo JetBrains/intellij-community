@@ -7,15 +7,18 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class SegmentedProgressIndicatorManager {
-  private final LinkedHashMap<SubTaskProgressIndicator, String> myText2Stack = new LinkedHashMap<>();
+  private static final LinkedHashMap<SubTaskProgressIndicator, String> myText2Stack = new LinkedHashMap<>();
+  private static final LinkedHashMap<Object, String> myTextStack = new LinkedHashMap<>();
+  private static final Object myLock = new Object();
   private final ProgressIndicator myProgressIndicator;
-  private final Object myLock = new Object();
   private final double mySegmentSize;
   private int myTasksCount;
 
   public SegmentedProgressIndicatorManager(ProgressIndicator progressIndicator, double segmentSize) {
     myProgressIndicator = progressIndicator;
     mySegmentSize = segmentSize;
+    myText2Stack.clear();
+    myTextStack.clear();
   }
 
   public SubTaskProgressIndicator createSubTaskIndicator() {
@@ -27,6 +30,25 @@ public class SegmentedProgressIndicatorManager {
     double fractionValue = value / myTasksCount * mySegmentSize;
     synchronized (myProgressIndicator) {
       myProgressIndicator.setFraction(myProgressIndicator.getFraction() + fractionValue);
+    }
+  }
+
+  public void setText(@NotNull Object obj, @Nullable String text) {
+    if (text != null) {
+      synchronized (myLock) {
+        myTextStack.put(obj, text);
+      }
+      myProgressIndicator.setText(text);
+    }
+    else {
+      String prev;
+      synchronized (myLock) {
+        myTextStack.remove(obj);
+        prev = myTextStack.getLastValue();
+      }
+      if (prev != null) {
+        myProgressIndicator.setText(prev);
+      }
     }
   }
 
@@ -47,6 +69,10 @@ public class SegmentedProgressIndicatorManager {
         myProgressIndicator.setText2(prev);
       }
     }
+  }
+
+  public void finished(Object obj) {
+    setText(obj, null);
   }
 
   public void setTasksCount(int tasksCount) {
@@ -72,12 +98,6 @@ public class SegmentedProgressIndicatorManager {
       double diffFraction = newValue - myFraction;
       myProgressManager.updateFraction(diffFraction);
       myFraction = newValue;
-    }
-
-    @Override
-    public void setIndeterminate(boolean indeterminate) {
-      if (myProgressManager.myTasksCount > 1) return;
-      super.setIndeterminate(indeterminate);
     }
 
     @Override

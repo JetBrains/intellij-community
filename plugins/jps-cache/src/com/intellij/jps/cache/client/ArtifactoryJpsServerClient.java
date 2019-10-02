@@ -89,6 +89,7 @@ public class ArtifactoryJpsServerClient implements JpsServerClient {
       ProgressIndicator indicator = indicatorManager.getProgressIndicator();
       List<Pair<File, DownloadableFileDescription>> pairs = outputsDownloader.download(targetDir);
       indicator.checkCanceled();
+      indicatorManager.setText(this, "Extracting downloaded results...");
       Pair<File, DownloadableFileDescription> first = ContainerUtil.getFirstItem(pairs);
       zipFile = first != null ? first.first : null;
       if (zipFile == null) {
@@ -97,6 +98,7 @@ public class ArtifactoryJpsServerClient implements JpsServerClient {
       }
       ZipUtil.extract(zipFile, tmpFolder, null);
       FileUtil.delete(zipFile);
+      indicatorManager.finished(this);
       return new Pair<>(true, tmpFolder);
     }
     catch (ProcessCanceledException | IOException e) {
@@ -130,6 +132,7 @@ public class ArtifactoryJpsServerClient implements JpsServerClient {
       ProgressIndicator indicator = indicatorManager.getProgressIndicator();
       List<Pair<File, DownloadableFileDescription>> download = outputsDownloader.download(targetDir);
       downloadedFiles = ContainerUtil.map(download, pair -> pair.first);
+      indicatorManager.setText(this, "Extracting downloaded results...");
       for (Pair<File, DownloadableFileDescription> pair : download) {
         indicator.checkCanceled();
         File zipFile = pair.first;
@@ -141,6 +144,7 @@ public class ArtifactoryJpsServerClient implements JpsServerClient {
         FileUtil.delete(zipFile);
         result.put(tmpFolder, moduleName);
       }
+      indicatorManager.finished(this);
       return new Pair<>(true, result);
     }
     catch (ProcessCanceledException | IOException e) {

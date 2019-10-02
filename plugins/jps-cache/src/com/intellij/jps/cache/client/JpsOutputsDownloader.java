@@ -40,7 +40,7 @@ class JpsOutputsDownloader {
     List<Pair<File, DownloadableFileDescription>> existingFiles = Collections.synchronizedList(new ArrayList<>());
 
     try {
-      myProgressIndicatorManager.getProgressIndicator().setText(IdeBundle.message("progress.downloading.0.files.text", myFilesDescriptions.size()));
+      myProgressIndicatorManager.setText(this, IdeBundle.message("progress.downloading.0.files.text", myFilesDescriptions.size()));
       int maxParallelDownloads = Runtime.getRuntime().availableProcessors();
       LOG.debug("Downloading " + myFilesDescriptions.size() + " files using " + maxParallelDownloads + " threads");
       long start = System.currentTimeMillis();
@@ -97,6 +97,7 @@ class JpsOutputsDownloader {
       List<Pair<File, DownloadableFileDescription>> localFiles = new ArrayList<>();
       localFiles.addAll(moveToDir(downloadedFiles, targetDir));
       localFiles.addAll(existingFiles);
+      myProgressIndicatorManager.finished(this);
       return localFiles;
     }
     catch (ProcessCanceledException | IOException e) {

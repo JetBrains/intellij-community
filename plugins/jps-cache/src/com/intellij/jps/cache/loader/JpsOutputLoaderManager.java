@@ -220,7 +220,7 @@ public class JpsOutputLoaderManager implements ProjectComponent {
   }
 
   private static ProgressIndicator createProcessIndicator(@NotNull Project project) {
-    BackgroundableProcessIndicator processIndicator = new BackgroundableProcessIndicator(project, "Download JPS Caches",
+    BackgroundableProcessIndicator processIndicator = new BackgroundableProcessIndicator(project, "Updating Compilation Caches",
                                                                                          PerformInBackgroundOption.ALWAYS_BACKGROUND,
                                                                                          CommonBundle.getCancelButtonText(),
                                                                                          CommonBundle.getCancelButtonText(), true);

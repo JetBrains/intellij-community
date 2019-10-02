@@ -26,6 +26,7 @@ import java.util.stream.Collectors;
 class JpsCompilationOutputLoader implements JpsOutputLoader {
   private static final Logger LOG = Logger.getInstance("com.intellij.jps.loader.JpsCompilationOutputLoader");
   private final PersistentCachingModuleHashingService myHashingService;
+  private static final int myStepsCount = 2;
   private final JpsServerClient myClient;
   private final Project myProject;
   private Map<File, String> myTmpFolderToModuleName;
@@ -48,9 +49,10 @@ class JpsCompilationOutputLoader implements JpsOutputLoader {
     File compilerOutputDir = new File(VfsUtilCore.urlToPath(projectExtension.getCompilerOutputUrl()));
 
     File productionDir = new File(compilerOutputDir, CompilerModuleExtension.PRODUCTION);
-    progressIndicatorManager.getProgressIndicator().setText("Calculating affected production modules");
+    progressIndicatorManager.setText(this, "Calculating affected production modules");
     Map<String, String> affectedProductionModules = getAffectedModules(productionDir, myHashingService::getAffectedProduction,
                                                                        myHashingService::computeProductionHashesForProject);
+    progressIndicatorManager.finished(this);
     indicator.checkCanceled();
     if (affectedProductionModules.size() > 0) {
       FileUtil.createDirectory(productionDir);
@@ -59,12 +61,16 @@ class JpsCompilationOutputLoader implements JpsOutputLoader {
                                                                                               affectedProductionModules, productionDir);
       myTmpFolderToModuleName = downloadResultsPair.second;
       if (!downloadResultsPair.first) return LoaderStatus.FAILED;
+    } else {
+      // Move progress up to the half of segment size
+      displaySkippedStepOnProgressBar(progressIndicatorManager);
     }
 
     File testDir = new File(compilerOutputDir, CompilerModuleExtension.TEST);
-    progressIndicatorManager.getProgressIndicator().setText("Calculating affected test modules");
+    progressIndicatorManager.setText(this, "Calculating affected test modules");
     Map<String, String> affectedTestModules = getAffectedModules(testDir, myHashingService::getAffectedTests,
                                                                  myHashingService::computeTestHashesForProject);
+    progressIndicatorManager.finished(this);
     indicator.checkCanceled();
     if (affectedTestModules.size() > 0) {
       FileUtil.createDirectory(testDir);
@@ -73,6 +79,9 @@ class JpsCompilationOutputLoader implements JpsOutputLoader {
                                                                                               affectedTestModules, testDir);
       myTmpFolderToModuleName.putAll(downloadResultsPair.second);
       if (!downloadResultsPair.first) return LoaderStatus.FAILED;
+    } else {
+      // Move progress up to the half of segment size
+      displaySkippedStepOnProgressBar(progressIndicatorManager);
     }
     return LoaderStatus.COMPLETE;
   }
@@ -133,5 +142,10 @@ class JpsCompilationOutputLoader implements JpsOutputLoader {
     }
     LOG.warn("Compilation output doesn't exist, force to download " + allModulesMap.size() +" modules. Computation took " +  (System.currentTimeMillis() - start) + "ms");
     return allModulesMap;
+  }
+
+  private static void displaySkippedStepOnProgressBar(@NotNull SegmentedProgressIndicatorManager progressIndicatorManager) {
+    progressIndicatorManager.setTasksCount(1);
+    progressIndicatorManager.updateFraction(1.0 / myStepsCount);
   }
 }
