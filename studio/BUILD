@@ -22,7 +22,6 @@ java_test(
     jvm_flags = ["-Dtest.suite.jar=AndroidStudioBundleTest.jar"],
     tags = [
         "no_windows",
-        "perfgate_multi_run",
     ],
     test_class = "com.android.testutils.JarTestSuite",
     deps = [
