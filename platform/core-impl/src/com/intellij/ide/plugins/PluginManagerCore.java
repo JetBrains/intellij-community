@@ -67,6 +67,8 @@ public class PluginManagerCore {
   public static final String PLUGIN_XML_PATH = META_INF + PLUGIN_XML;
   private static final String ALL_MODULES_MARKER = "com.intellij.modules.all";
 
+  public static final String VENDOR_JETBRAINS = "JetBrains";
+
   @SuppressWarnings("StaticNonFinalField")
   public static String BUILD_NUMBER;
 
@@ -446,9 +448,7 @@ public class PluginManagerCore {
                                                 @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idMap) {
     String id = descriptor.getPluginId().getIdString();
     // Skip our plugins as expected to be up-to-date whether bundled or not.
-    if (id.equals(CORE_PLUGIN_ID) ||
-        id.startsWith("com.intellij.") || id.startsWith("com.jetbrains.") ||
-        id.startsWith("org.intellij.") || id.startsWith("org.jetbrains.")) {
+    if (id.equals(CORE_PLUGIN_ID) || VENDOR_JETBRAINS.equals(descriptor.getVendor())) {
       return null;
     }
     if (!idMap.containsKey(PluginId.getId(ALL_MODULES_MARKER))) {
