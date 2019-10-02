@@ -49,7 +49,6 @@ import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
  * @author Konstantin Bulenkov
  */
 public abstract class PluginManagerMain {
-  public static final String JETBRAINS_VENDOR = "JetBrains";
 
   public static final Logger LOG = Logger.getInstance(PluginManagerMain.class);
 
@@ -64,7 +63,7 @@ public abstract class PluginManagerMain {
   public static boolean isDevelopedByJetBrains(@Nullable String vendorString) {
     if (vendorString == null) return false;
     for (String vendor : StringUtil.split(vendorString, ",")) {
-      if (vendor.trim().equals(JETBRAINS_VENDOR)) {
+      if (PluginManagerCore.VENDOR_JETBRAINS.equals(vendor.trim())) {
         return true;
       }
     }

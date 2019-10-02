@@ -405,9 +405,9 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
     if (!DomUtil.hasXml(vendor)) {
       holder.createProblem(DomUtil.getFileElement(ideaPlugin),
                            DevKitBundle.message("inspections.plugin.xml.plugin.should.have.jetbrains.vendor"),
-                           new AddMissingMainTag("Specify JetBrains as vendor", vendor, PluginManagerMain.JETBRAINS_VENDOR));
+                           new AddMissingMainTag("Specify JetBrains as vendor", vendor, PluginManagerCore.VENDOR_JETBRAINS));
     }
-    else if (!PluginManagerMain.JETBRAINS_VENDOR.equals(vendor.getValue())) {
+    else if (!PluginManagerCore.VENDOR_JETBRAINS.equals(vendor.getValue())) {
       holder.createProblem(vendor, DevKitBundle.message("inspections.plugin.xml.plugin.should.have.jetbrains.vendor"));
     }
     else {
