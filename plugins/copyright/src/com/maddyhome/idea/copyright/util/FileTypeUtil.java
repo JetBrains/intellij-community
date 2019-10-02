@@ -231,12 +231,6 @@ public class FileTypeUtil {
     return commenter != null && commenter.getBlockCommentPrefix() != null;
   }
 
-  public static boolean hasLineComment(FileType fileType) {
-    Commenter commenter = getCommenter(fileType);
-
-    return commenter != null && commenter.getLineCommentPrefix() != null;
-  }
-
   public boolean allowSeparators(FileType fileType) {
     FileType type = getFileTypeByType(fileType);
 
