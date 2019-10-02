@@ -108,7 +108,7 @@ public class BuilderTest extends AbstractLombokParsingTestCase {
     doTest(true);
   }
 
-  public void testBuilder$BuilderGenerics() {
+  public void testBuilder$ObjectApiResponse() {
     doTest(true);
   }
 
