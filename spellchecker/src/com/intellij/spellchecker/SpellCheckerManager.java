@@ -31,7 +31,6 @@ import com.intellij.spellchecker.util.SpellCheckerBundle;
 import com.intellij.spellchecker.util.Strings;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -151,18 +150,6 @@ public class SpellCheckerManager implements Disposable {
   @NotNull
   public Set<String> getUserDictionaryWords(){
     return ContainerUtil.union(myProjectDictionary.getEditableWords(), myAppDictionary.getEditableWords());
-  }
-
-
-  /**
-   * @deprecated will be removed in 2018.X, use
-   * {@link SpellCheckerManager#acceptWordAsCorrect(String, Project)} or
-   * {@link ProjectDictionaryState#getProjectDictionary() and {@link CachedDictionaryState#getDictionary()}} instead
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2018.3")
-  @Deprecated
-  public EditableDictionary getUserDictionary() {
-    return new AggregatedDictionary(myProjectDictionary, myAppDictionary);
   }
 
   private void fillEngineDictionary() {

@@ -15,7 +15,6 @@
  */
 package com.intellij.spellchecker.dictionary;
 
-import com.intellij.util.Consumer;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -46,11 +45,6 @@ public class UserDictionary implements EditableDictionary {
     boolean contains = words.contains(word);
     if(contains) return true;
     return null;
-  }
-
-  @Override
-  public int size() {
-    return words.size();
   }
 
   @NotNull
@@ -103,11 +97,6 @@ public class UserDictionary implements EditableDictionary {
   }
 
   @Override
-  public boolean isEmpty() {
-    return words.isEmpty();
-  }
-
-  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -116,13 +105,6 @@ public class UserDictionary implements EditableDictionary {
 
     return name.equals(that.name);
 
-  }
-
-  @Override
-  public void traverse(@NotNull final Consumer<String> consumer) {
-    for (String word : words) {
-      consumer.consume(word);
-    }
   }
 
   @Override

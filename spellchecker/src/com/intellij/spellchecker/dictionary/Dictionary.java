@@ -16,14 +16,14 @@
 package com.intellij.spellchecker.dictionary;
 
 import com.intellij.util.Consumer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
 public interface Dictionary {
-
-  default void getSuggestions(@NotNull String word, @NotNull Consumer<String> consumer) {}
+  default void consumeSuggestions(@NotNull String word, @NotNull Consumer<String> consumer) {}
 
   @NotNull
   String getName();
@@ -31,12 +31,25 @@ public interface Dictionary {
   @Nullable
   Boolean contains(@NotNull String word);
 
-  boolean isEmpty();
-
-  void traverse(@NotNull Consumer<String> action);
-
   @NotNull
   Set<String> getWords();
 
-  int size();
+  /** @deprecated not used */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
+  default boolean isEmpty() {
+    return true;
+  }
+
+  /** @deprecated not used */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
+  default void traverse(@SuppressWarnings("unused") @NotNull Consumer<String> action) {}
+
+  /** @deprecated not used */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
+  default int size() {
+    return 0;
+  }
 }

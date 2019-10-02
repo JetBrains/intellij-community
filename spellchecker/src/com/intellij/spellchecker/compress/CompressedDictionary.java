@@ -109,7 +109,7 @@ public final class CompressedDictionary implements Dictionary {
 
 
   @Override
-  public void getSuggestions(@NotNull String word, @NotNull Consumer<String> consumer) {
+  public void consumeSuggestions(@NotNull String word, @NotNull Consumer<String> consumer) {
       getWords(word.charAt(0), 0, Integer.MAX_VALUE, consumer);
   }
 
@@ -132,16 +132,6 @@ public final class CompressedDictionary implements Dictionary {
   }
 
   @Override
-  public boolean isEmpty() {
-    return wordsCount <= 0;
-  }
-
-  @Override
-  public void traverse(@NotNull Consumer<String> action) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
   @NotNull
   public Set<String> getWords() {
     Set<String> words = new THashSet<>();
@@ -151,12 +141,6 @@ public final class CompressedDictionary implements Dictionary {
     }
     return words;
   }
-
-  @Override
-  public int size() {
-    return wordsCount;
-  }
-
 
   @Override
   public String toString() {

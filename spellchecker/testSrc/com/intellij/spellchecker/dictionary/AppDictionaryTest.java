@@ -37,10 +37,6 @@ public class AppDictionaryTest extends SpellcheckerInspectionTestCase {
     doContainTest("eeeee", null);
   }
 
-  public void testSize() {
-    assertEquals(2, APP_DICTIONARY.size());
-  }
-
   public void testWords() {
     final Set<String> expected = new HashSet<>();
     expected.addAll(asList(AAAA, BBBB));
@@ -76,15 +72,6 @@ public class AppDictionaryTest extends SpellcheckerInspectionTestCase {
     assert APP_WORDS.stream().allMatch(w -> appDictionary.contains(w) == null);
   }
 
-  public void testEmpty() {
-    final EditableDictionary appDictionary = createAppDictionary(asList());
-    assertFalse(appDictionary.isEmpty()); // current behavior
-  }
-
-  public void testNotEmpty() {
-    assertFalse(APP_DICTIONARY.isEmpty());
-  }
-
   public void testAdd() {
     final EditableDictionary appDictionary = createAppDictionary(APP_WORDS);
     appDictionary.addToDictionary("EEEE");
@@ -109,22 +96,15 @@ public class AppDictionaryTest extends SpellcheckerInspectionTestCase {
     assert APP_WORDS.stream().allMatch(projectWord -> appDictionary.contains(projectWord) == null);
   }
 
-  public void testTraverse() {
-    final Set<String> traversedWords = new HashSet<>();
-    APP_DICTIONARY.traverse(traversedWords::add);
-
-    assertEquals(traversedWords, APP_DICTIONARY.getWords());
-  }
-
   public void testGetSuggestions(){
     final List<String> suggestions = new ArrayList<>();
-    APP_DICTIONARY.getSuggestions("AAAB", suggestions::add);
+    APP_DICTIONARY.consumeSuggestions("AAAB", suggestions::add);
     assert suggestions.isEmpty(); // TODO: change current behavior
   }
 
   public void testNoSuggestions(){
     final List<String> suggestions = new ArrayList<>();
-    APP_DICTIONARY.getSuggestions("EEEE", suggestions::add);
+    APP_DICTIONARY.consumeSuggestions("EEEE", suggestions::add);
     assert suggestions.isEmpty();
   }
 }
