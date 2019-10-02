@@ -1217,7 +1217,7 @@ public class PluginManagerCore {
     boolean shouldLoadPlugins = shouldLoadPlugins();
 
     Set<IdeaPluginDescriptorImpl> allDescriptors = new LinkedHashSet<>(idMap.values());
-    IdeaPluginDescriptorImpl coreDescriptor = idMap.get(PluginId.getId(CORE_PLUGIN_ID));
+    IdeaPluginDescriptorImpl coreDescriptor = notNull(idMap.get(PluginId.getId(CORE_PLUGIN_ID)));
     boolean checkModuleDependencies = !coreDescriptor.getModules().isEmpty() &&
                                       !coreDescriptor.getModules().contains(ALL_MODULES_MARKER);
 
@@ -1443,7 +1443,8 @@ public class PluginManagerCore {
       }
     }
     if (idMultiMap.get(PluginId.getId(CORE_PLUGIN_ID)).isEmpty()) {
-      getLogger().error(CORE_PLUGIN_ID + " not found; platform prefix is " + System.getProperty(PlatformUtils.PLATFORM_PREFIX_KEY));
+      String message = SPECIAL_IDEA_PLUGIN + " (platform prefix: " + System.getProperty(PlatformUtils.PLATFORM_PREFIX_KEY) + ")";
+      throw new EssentialPluginMissingException(Collections.singletonList(message));
     }
     Map<PluginId, IdeaPluginDescriptorImpl> idMap = new LinkedHashMap<>();
     for (PluginId id : idMultiMap.keySet()) {
