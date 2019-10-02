@@ -562,7 +562,7 @@ public class GitRebaseProcess {
         return null;
       }
       Project project = myRepository.getProject();
-      String title = String.format("<html>Ingoing change <b>%s</b> from branch <b>%s</b></html>",
+      String title = String.format("<html>Rebasing %s from <b>%s</b></html>",
                                    myIngoingCommit.toShortString(),
                                    myRebasingBranch);
       return () -> createLabelWithShowLink(title, () -> {
@@ -576,7 +576,7 @@ public class GitRebaseProcess {
                                                                                 false);
           return new ChangeListViewerDialog.ChangelistData(changeList, file);
         });
-        dlg.setTitle("Ingoing Change " + myIngoingCommit.toShortString());
+        dlg.setTitle("Rebasing " + myIngoingCommit.toShortString());
         dlg.setModal(true);
         dlg.show();
       });
@@ -628,9 +628,10 @@ public class GitRebaseProcess {
 
     @NotNull
     private String getRightTitle(boolean withBold) {
-      String branchPartWithBold = myBaseBranch != null ? String.format("from <b>%s</b>, and", myBaseBranch) : "";
-      String branchPart = myBaseBranch != null ? String.format("from %s, and", myBaseBranch) : "";
-      return String.format("Changes %s applied during rebase", withBold ? branchPartWithBold : branchPart);
+      String branchPartPrefix = "and commits from";
+      String branchPartWithBold = myBaseBranch != null ? String.format("%s <b>%s</b>", branchPartPrefix, myBaseBranch) : "";
+      String branchPart = myBaseBranch != null ? String.format("%s %s", branchPartPrefix, myBaseBranch) : "";
+      return String.format("Already rebased commits %s", withBold ? branchPartWithBold : branchPart);
     }
 
     private static JPanel createLabelWithShowLink(@NotNull String text, @NotNull Runnable onClick) {
