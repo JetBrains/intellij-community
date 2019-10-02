@@ -24,15 +24,14 @@ class LibraryLicensesTester(private val project: JpsProject, private val license
     val librariesWithLicenses = licenses.flatMapTo(THashSet()) { it.libraryNames }
 
     for ((jpsLibrary, jpsModule) in libraries) {
-      for (libName in LibraryLicensesListGenerator.getLibraryNames(jpsLibrary)) {
-        if (libName !in librariesWithLicenses) {
-          collector.addError(AssertionFailedError("""
-                  |License isn't specified for '$libName' library (used in module '${jpsModule.name}' in ${jpsModule.contentRootsList.urls})
+      val libraryName = LibraryLicensesListGenerator.getLibraryName(jpsLibrary)
+      if (libraryName !in librariesWithLicenses) {
+        collector.addError(AssertionFailedError("""
+                  |License isn't specified for '$libraryName' library (used in module '${jpsModule.name}' in ${jpsModule.contentRootsList.urls})
                   |If a library is packaged into IDEA installation information about its license must be added into one of *LibraryLicenses.groovy files
                   |If a library is used in tests only change its scope to 'Test'
                   |If a library is used for compilation only change its scope to 'Provided'
         """.trimMargin()))
-        }
       }
     }
   }

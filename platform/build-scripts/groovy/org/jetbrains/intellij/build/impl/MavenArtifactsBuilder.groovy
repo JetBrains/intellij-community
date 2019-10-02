@@ -245,10 +245,7 @@ class MavenArtifactsBuilder {
           dependencies << createArtifactDependencyByLibrary(typed.properties.data, scope)
         }
         else if (!isOptionalDependency(library)) {
-          List<String> names = LibraryLicensesListGenerator.getLibraryNames(library)
-          for (n in names) {
-            buildContext.messages.warning(" module '$module.name' depends on non-maven library $n")
-          }
+          buildContext.messages.warning(" module '$module.name' depends on non-maven library ${LibraryLicensesListGenerator.getLibraryName(library)}")
           mavenizable = false
         }
       }

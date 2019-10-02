@@ -16,7 +16,6 @@
 package org.jetbrains.intellij.build.impl
 
 import com.google.gson.GsonBuilder
-import com.intellij.util.containers.ContainerUtil
 import groovy.text.SimpleTemplateEngine
 import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.BuildMessages
@@ -60,9 +59,8 @@ class LibraryLicensesListGenerator {
     Map<String, String> usedLibraries = [:]
     usedModules.each { JpsModule module ->
       JpsJavaExtensionService.dependencies(module).includedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME).getLibraries().each { item ->
-        getLibraryNames(item).forEach { String name ->
-          usedLibraries[name] = module.name
-        }
+        def libraryName = getLibraryName(item)
+        usedLibraries[libraryName] = module.name
       }
     }
 
@@ -82,12 +80,13 @@ class LibraryLicensesListGenerator {
     return licenses
   }
 
-  static List<String> getLibraryNames(JpsLibrary lib) {
+  static String getLibraryName(JpsLibrary lib) {
     def name = lib.name
     if (name.startsWith("#")) {
-      return ContainerUtil.map(lib.getFiles(JpsOrderRootType.COMPILED), {f->f.getName()})
+      //unnamed module libraries in IntelliJ project may have only one root
+      return lib.getFiles(JpsOrderRootType.COMPILED).first().name
     }
-    return Collections.singletonList(name)
+    return name
   }
 
   void generateHtml(String filePath) {
