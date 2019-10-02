@@ -4,6 +4,7 @@ import com.intellij.jps.cache.client.JpsServerClient;
 import com.intellij.jps.cache.hashing.PersistentCachingModuleHashingService;
 import com.intellij.jps.cache.ui.SegmentedProgressIndicatorManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.CompilerProjectExtension;
@@ -38,6 +39,7 @@ class JpsCompilationOutputLoader implements JpsOutputLoader {
   @Override
   public LoaderStatus load(@NotNull String commitId, @NotNull SegmentedProgressIndicatorManager progressIndicatorManager) {
     myTmpFolderToModuleName = null;
+    ProgressIndicator indicator = progressIndicatorManager.getProgressIndicator();
     CompilerProjectExtension projectExtension = CompilerProjectExtension.getInstance(myProject);
     if (projectExtension == null || projectExtension.getCompilerOutputUrl() == null) {
       LOG.warn("Compiler output setting not specified for the project ");
@@ -49,6 +51,7 @@ class JpsCompilationOutputLoader implements JpsOutputLoader {
     progressIndicatorManager.getProgressIndicator().setText("Calculating affected production modules");
     Map<String, String> affectedProductionModules = getAffectedModules(productionDir, myHashingService::getAffectedProduction,
                                                                        myHashingService::computeProductionHashesForProject);
+    indicator.checkCanceled();
     if (affectedProductionModules.size() > 0) {
       FileUtil.createDirectory(productionDir);
       Pair<Boolean, Map<File, String>> downloadResultsPair = myClient.downloadCompiledModules(myProject, progressIndicatorManager,
@@ -62,6 +65,7 @@ class JpsCompilationOutputLoader implements JpsOutputLoader {
     progressIndicatorManager.getProgressIndicator().setText("Calculating affected test modules");
     Map<String, String> affectedTestModules = getAffectedModules(testDir, myHashingService::getAffectedTests,
                                                                  myHashingService::computeTestHashesForProject);
+    indicator.checkCanceled();
     if (affectedTestModules.size() > 0) {
       FileUtil.createDirectory(testDir);
       Pair<Boolean, Map<File, String>> downloadResultsPair = myClient.downloadCompiledModules(myProject, progressIndicatorManager,

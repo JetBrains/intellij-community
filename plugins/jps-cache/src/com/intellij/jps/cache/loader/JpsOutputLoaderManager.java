@@ -17,6 +17,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
@@ -119,7 +120,7 @@ public class JpsOutputLoaderManager implements ProjectComponent {
         return;
       }
       startLoadingForCommit(commitId);
-    }, createProcessIndicator(myProject, "Download JPS Caches"));
+    }, createProcessIndicator(myProject));
   }
 
   private void startLoadingForCommit(String commitId) {
@@ -172,20 +173,30 @@ public class JpsOutputLoaderManager implements ProjectComponent {
               });
             }
           });
+      }).handle((result, ex) -> {
+        if (ex != null) {
+          Throwable cause = ex.getCause();
+          if (cause instanceof ProcessCanceledException) {
+            LOG.info("Jps caches download canceled");
+          }
+          else {
+            LOG.warn("Couldn't fetch jps compilation caches", ex);
+          }
+          loaders.forEach(loader -> loader.rollback());
+          indicator.setText("Rolling back downloaded caches");
+        }
+        return result;
       }).get();
     }
-    catch (InterruptedException e) {
-      e.printStackTrace();
-    }
-    catch (ExecutionException e) {
-      e.printStackTrace();
+    catch (InterruptedException | ExecutionException e) {
+      LOG.warn("Couldn't fetch jps compilation caches", e);
     }
     hasRunningTask.set(false);
   }
 
   private synchronized boolean canRunNewLoading() {
     if (hasRunningTask.get()) {
-      LOG.info("Jps cache loading already in progress, can't start the new one");
+      LOG.debug("Jps cache loading already in progress, can't start the new one");
       return false;
     }
     hasRunningTask.set(true);
@@ -208,8 +219,8 @@ public class JpsOutputLoaderManager implements ProjectComponent {
     return (Runtime.getRuntime().availableProcessors() / 2) > 3 ? 3 : 1;
   }
 
-  private static ProgressIndicator createProcessIndicator(@NotNull Project project, @NotNull String title) {
-    BackgroundableProcessIndicator processIndicator = new BackgroundableProcessIndicator(project, title,
+  private static ProgressIndicator createProcessIndicator(@NotNull Project project) {
+    BackgroundableProcessIndicator processIndicator = new BackgroundableProcessIndicator(project, "Download JPS Caches",
                                                                                          PerformInBackgroundOption.ALWAYS_BACKGROUND,
                                                                                          CommonBundle.getCancelButtonText(),
                                                                                          CommonBundle.getCancelButtonText(), true);
