@@ -14,6 +14,13 @@ public final class ApiStatus {
    *
    * <p>It's safe to use an element marked with this annotation if the usage is located in the same sources codebase as the declaration. However,
    * if the declaration belongs to an external library such usages may lead to problems when the library will be updated to another version.</p>
+   *
+   * <p>If a package is marked with this annotation, all its containing classes are considered experimental.
+   * Subpackages of this package are not affected and should be marked independently.</p>
+   *
+   * <p>If a type is marked with this annotation, all its members are considered experimental, but its inheritors are not.</p>
+   *
+   * <p>If a method is marked with this annotation, overriding methods are not considered experimental.</p>
    */
   @Documented
   @Retention(RetentionPolicy.CLASS)
@@ -26,6 +33,13 @@ public final class ApiStatus {
    * Indicates that the annotated element (class, method, field, etc) must not be considered as a public API. It's made visible to allow
    * usages in other packages of the declaring module, but it must not be used outside of that module. Such elements
    * may be renamed, changed or removed in future versions.
+   *
+   * <p>If a package is marked with this annotation, all its containing classes are considered internal.
+   * Subpackages of this package are not affected and should be marked independently.</p>
+   *
+   * <p>If a type is marked with this annotation, all its members are considered internal, but its inheritors are not.</p>
+   *
+   * <p>If a method is marked with this annotation, overriding methods are not considered internal.</p>
    */
   @Documented
   @Retention(RetentionPolicy.CLASS)
