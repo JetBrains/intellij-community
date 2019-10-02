@@ -1178,6 +1178,9 @@ public class PluginManagerCore {
         descriptor.mergeOptionalConfig(dep);
       }
     }
+    for (IdeaPluginDescriptorImpl descriptor : result) {
+      descriptor.setOptionalDescriptors(null);
+    }
   }
 
   @ApiStatus.Internal
