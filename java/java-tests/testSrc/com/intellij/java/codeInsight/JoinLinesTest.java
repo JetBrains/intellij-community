@@ -16,13 +16,11 @@
 package com.intellij.java.codeInsight;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.application.options.CodeStyle;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
@@ -64,6 +62,7 @@ public class JoinLinesTest extends LightJavaCodeInsightTestCase {
   public void testIfChainNoBraces() { doTest(); }
   public void testIfChainElse() { doTest(); }
   public void testIfChainSelection() { doTest(); }
+  public void testAtEOF() { doTest(); }
 
   public void testSCR3493() {
     CommonCodeStyleSettings settings = getJavaSettings();
