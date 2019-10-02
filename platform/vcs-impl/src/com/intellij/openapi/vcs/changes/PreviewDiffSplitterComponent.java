@@ -3,7 +3,6 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.diff.impl.DiffRequestProcessor;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.OnePixelSplitter;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,7 +25,7 @@ public class PreviewDiffSplitterComponent extends OnePixelSplitter {
   }
 
   public void updatePreview(boolean fromModelRefresh) {
-    if (Registry.is("show.diff.as.editor.tab") && myProcessor instanceof ChangeViewDiffRequestProcessor && myDetailsOn) {
+    if (Registry.is("show.log.as.editor.tab") && myProcessor instanceof ChangeViewDiffRequestProcessor && myDetailsOn) {
       ((ChangeViewDiffRequestProcessor) myProcessor).updatePreview(false, fromModelRefresh);
       return;
     }
