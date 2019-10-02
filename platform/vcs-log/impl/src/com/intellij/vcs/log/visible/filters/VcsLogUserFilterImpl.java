@@ -127,14 +127,11 @@ public class VcsLogUserFilterImpl implements VcsLogUserFilter {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     VcsLogUserFilterImpl filter = (VcsLogUserFilterImpl)o;
-    return myUsers.equals(filter.myUsers) &&
-           myData.equals(filter.myData) &&
-           myAllUsersByNames.equals(filter.myAllUsersByNames) &&
-           myAllUsersByEmails.equals(filter.myAllUsersByEmails);
+    return myUsers.equals(filter.myUsers);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(myUsers, myData, myAllUsersByNames, myAllUsersByEmails);
+    return Objects.hash(myUsers);
   }
 }
