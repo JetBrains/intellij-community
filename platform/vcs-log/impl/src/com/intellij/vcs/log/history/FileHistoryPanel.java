@@ -18,7 +18,6 @@ import com.intellij.ui.components.JBPanel;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.VcsCommitMetadata;
-import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.impl.CommonUiProperties;
 import com.intellij.vcs.log.impl.VcsLogContentUtil;
@@ -51,7 +50,7 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
   @NotNull private final VcsLogGraphTable myGraphTable;
   @NotNull private final VcsLogCommitDetailsListPanel myDetailsPanel;
   @NotNull private final JBSplitter myDetailsSplitter;
-  @Nullable private final FileHistoryDiffPreview myDiffPreview;
+  @NotNull private final FileHistoryDiffPreview myDiffPreview;
   @NotNull private final OnePixelSplitter myDiffPreviewSplitter;
 
   @NotNull private final VcsLogData myLogData;
@@ -165,17 +164,11 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
 
   public void updateDataPack(@NotNull VisiblePack visiblePack, boolean permanentGraphChanged) {
     myGraphTable.updateDataPack(visiblePack, permanentGraphChanged);
-    if (myDiffPreview != null) {
-      myDiffPreview.updatePreview(myProperties.get(CommonUiProperties.SHOW_DIFF_PREVIEW));
-    }
+    myDiffPreview.updatePreview(myProperties.get(CommonUiProperties.SHOW_DIFF_PREVIEW));
   }
 
   public void showDetails(boolean show) {
     myDetailsSplitter.setSecondComponent(show ? myDetailsPanel : null);
-  }
-
-  public boolean hasDiffPreview() {
-    return myDiffPreview != null;
   }
 
   void showDiffPreview(boolean state) {
@@ -183,27 +176,22 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
       return;
     }
 
-    if (myDiffPreview != null) {
-      myDiffPreview.updatePreview(state);
-      myDiffPreviewSplitter.setSecondComponent(state ? myDiffPreview.getComponent() : null);
-    }
+    myDiffPreview.updatePreview(state);
+    myDiffPreviewSplitter.setSecondComponent(state ? myDiffPreview.getComponent() : null);
   }
 
-  @Nullable
+  @NotNull
   private FileHistoryDiffPreview createDiffPreview(boolean isInEditor) {
-    if (!myFilePath.isDirectory()) {
-      FileHistoryDiffPreview diffPreview = new FileHistoryDiffPreview(myLogData.getProject(), () -> myUi.getSelectedChange(),
-                                                                      isInEditor, this);
-      ListSelectionListener selectionListener = e -> {
-        int[] selection = myGraphTable.getSelectedRows();
-        ApplicationManager.getApplication().invokeLater(() -> diffPreview.updatePreview(diffPreview.getComponent().isShowing()),
-                                                        o -> !Arrays.equals(selection, myGraphTable.getSelectedRows()));
-      };
-      myGraphTable.getSelectionModel().addListSelectionListener(selectionListener);
-      Disposer.register(diffPreview, () -> myGraphTable.getSelectionModel().removeListSelectionListener(selectionListener));
-      return diffPreview;
-    }
-    return null;
+    FileHistoryDiffPreview diffPreview = new FileHistoryDiffPreview(myLogData.getProject(), () -> myUi.getSelectedChange(),
+                                                                    isInEditor, this);
+    ListSelectionListener selectionListener = e -> {
+      int[] selection = myGraphTable.getSelectedRows();
+      ApplicationManager.getApplication().invokeLater(() -> diffPreview.updatePreview(diffPreview.getComponent().isShowing()),
+                                                      o -> !Arrays.equals(selection, myGraphTable.getSelectedRows()));
+    };
+    myGraphTable.getSelectionModel().addListSelectionListener(selectionListener);
+    Disposer.register(diffPreview, () -> myGraphTable.getSelectionModel().removeListSelectionListener(selectionListener));
+    return diffPreview;
   }
 
   @Nullable
@@ -215,10 +203,7 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
         if (change != null) {
           return new Change[]{change};
         }
-        List<VcsFullCommitDetails> details = myGraphTable.getModel().getFullDetails(myGraphTable.getSelectedRows());
-        if (details.isEmpty() || details.size() > VcsLogUtil.MAX_SELECTED_COMMITS) return null;
-        if (VcsLogUtil.getMaxSize(details) > VcsLogUtil.getShownChangesLimit()) return null;
-        return VcsLogUtil.collectChanges(details, detail -> myUi.collectRelevantChanges(detail)).toArray(new Change[0]);
+        return null;
       })
       .ifEq(VcsLogInternalDataKeys.LOG_UI_PROPERTIES).then(myProperties)
       .ifEq(VcsDataKeys.VCS_FILE_REVISION).thenGet(() -> {
@@ -242,7 +227,6 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
       .ifEq(VcsDataKeys.VCS_NON_LOCAL_HISTORY_SESSION).then(false)
       .ifEq(VcsLogInternalDataKeys.LOG_DIFF_HANDLER).thenGet(() -> myLogData.getLogProvider(myRoot).getDiffHandler())
       .ifEq(ShowPreviewEditorAction.DATA_KEY).thenGet(() -> {
-        if (myFilePath.isDirectory()) return null;
         return new ShowPreviewEditorAction.DiffPreviewProvider() {
           @NotNull
           @Override

@@ -45,17 +45,13 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
                       sortType: PermanentGraph.SortType,
                       filters: VcsLogFilterCollection,
                       commitCount: CommitCountStage): Pair<VisiblePack, CommitCountStage> {
-    val filePath = getFilePath(filters)
-    if (filePath == null || filePath.isDirectory) {
-      return vcsLogFilterer.filter(dataPack, oldVisiblePack, sortType, filters, commitCount)
-    }
+    val filePath = getFilePath(filters) ?: return vcsLogFilterer.filter(dataPack, oldVisiblePack, sortType, filters, commitCount)
+    LOG.assertTrue(!filePath.isDirectory)
     val root = VcsLogUtil.getActualRoot(project, filePath)!!
     return MyWorker(root, filePath, getHash(filters)).filter(dataPack, oldVisiblePack, sortType, filters, commitCount)
   }
 
-  override fun canFilterEmptyPack(filters: VcsLogFilterCollection): Boolean {
-    return getFilePath(filters)?.run { !isDirectory } ?: false
-  }
+  override fun canFilterEmptyPack(filters: VcsLogFilterCollection): Boolean = true
 
   private inner class MyWorker constructor(private val root: VirtualFile,
                                            private val filePath: FilePath,

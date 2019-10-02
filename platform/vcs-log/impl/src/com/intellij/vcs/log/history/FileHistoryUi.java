@@ -67,6 +67,8 @@ public class FileHistoryUi extends AbstractVcsLogUi {
                        @NotNull VirtualFile root) {
     super(getFileHistoryLogId(path, revision), logData, new FileHistoryColorManager(root, path), refresher);
 
+    assert !path.isDirectory();
+
     myPath = path;
     myRoot = root;
     myRevision = revision;
@@ -109,10 +111,6 @@ public class FileHistoryUi extends AbstractVcsLogUi {
     }
   }
 
-  public boolean hasDiffPreview() {
-    return myFileHistoryPanel.hasDiffPreview();
-  }
-
   @Nullable
   public VcsFileRevision createRevision(@Nullable VcsCommitMetadata commit) {
     if (commit == null) return null;
@@ -124,33 +122,17 @@ public class FileHistoryUi extends AbstractVcsLogUi {
 
   @Nullable
   public FilePath getPathInCommit(@NotNull Hash hash) {
-    if (myPath.isDirectory()) return myPath;
     int commitIndex = myLogData.getStorage().getCommitIndex(hash, myRoot);
     return FileHistoryPaths.filePath(myVisiblePack, commitIndex);
   }
 
   private boolean isFileDeletedInCommit(@NotNull Hash hash) {
-    if (myPath.isDirectory()) return false;
-
     int commitIndex = myLogData.getStorage().getCommitIndex(hash, myRoot);
     return FileHistoryPaths.isDeletedInCommit(myVisiblePack, commitIndex);
   }
 
-  @NotNull
-  List<Change> collectRelevantChanges(@NotNull VcsFullCommitDetails details) {
-    FilePath filePath = getPathInCommit(details.getId());
-    if (filePath == null) return ContainerUtil.emptyList();
-    return FileHistoryUtil.collectRelevantChanges(details,
-                                                  change -> filePath.isDirectory()
-                                                            ? FileHistoryUtil.affectsDirectory(change, filePath)
-                                                            : FileHistoryUtil
-                                                              .affectsFile(change, filePath, isFileDeletedInCommit(details.getId())));
-  }
-
   @Nullable
   public Change getSelectedChange() {
-    if (myPath.isDirectory()) return null;
-
     int[] rows = getTable().getSelectedRows();
     if (rows.length == 0) return null;
     int row = rows[0];
