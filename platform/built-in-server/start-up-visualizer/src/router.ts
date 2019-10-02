@@ -30,7 +30,7 @@ const routes: Array<RouteConfig> = [
   {
     path: `/aggregatedStats`,
     name: "Aggregated Stats",
-    component: () => import("@/aggregatedStats/AggregatedStatsChart.vue"),
+    component: () => import("@/aggregatedStats/AggregatedStatsPage.vue"),
   },
   {
     path: "/",

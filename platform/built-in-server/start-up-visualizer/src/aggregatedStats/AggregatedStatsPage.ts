@@ -1,17 +1,18 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 import {Component, Vue, Watch} from "vue-property-decorator"
-import {AggregatedStatsChartManager} from "./AggregatedStatsChartManager"
+import {LineChartManager} from "./LineChartManager"
 import {AggregatedDataManager} from "@/aggregatedStats/AggregatedDataManager"
 import {AppStateModule} from "@/state/state"
 import {getModule} from "vuex-module-decorators"
-import {InfoResponse} from "@/aggregatedStats/ChartSettings"
 import {loadJson} from "@/httpUtil"
-import {Metrics} from "@/aggregatedStats/model"
+import {GroupedMetricResponse, InfoResponse, Metrics} from "@/aggregatedStats/model"
+import {ClusteredChartManager} from "@/aggregatedStats/ClusteredChartManager"
 
 @Component
-export default class AggregatedStatsChart extends Vue {
+export default class AggregatedStatsPage extends Vue {
   private readonly dataModule = getModule(AppStateModule, this.$store)
-  private readonly chartManagers: Array<AggregatedStatsChartManager> = []
+  private readonly lineChartManagers: Array<LineChartManager> = []
+  private readonly clusteredChartManagers: Array<ClusteredChartManager> = []
 
   isFetching: boolean = false
 
@@ -30,7 +31,7 @@ export default class AggregatedStatsChart extends Vue {
   }
 
   isShowScrollbarXPreviewChanged(_value: boolean) {
-    this.chartManagers.forEach(it => it.scrollbarXPreviewOptionChanged())
+    this.lineChartManagers.forEach(it => it.scrollbarXPreviewOptionChanged())
     this.dataModule.updateChartSettings(this.chartSettings)
   }
 
@@ -97,29 +98,69 @@ export default class AggregatedStatsChart extends Vue {
       return
     }
 
+    this.loadClusteredChartData(product, machine)
+    this.loadLineChartData(product, machine)
+  }
+
+  loadClusteredChartData(product: string, machine: string): void {
+    const url = new URL(`${this.chartSettings.serverUrl}/groupedMetrics`)
+    url.searchParams.set("product", product)
+    url.searchParams.set("machine", machine)
+    loadJson(url, null, this.$notify)
+      .then(data => {
+        if (data != null) {
+          this.renderClusteredCharts(data)
+        }
+      })
+      .catch(e => {
+        console.error(e)
+      })
+  }
+
+  // noinspection DuplicatedCode
+  loadLineChartData(product: string, machine: string): void {
     const url = new URL(`${this.chartSettings.serverUrl}/metrics`)
     url.searchParams.set("product", product)
     url.searchParams.set("machine", machine)
     const infoResponse = this.lastInfoResponse!!
-    loadJson(url, () => {}, this.$notify)
+    loadJson(url, null, this.$notify)
       .then(data => {
         if (data != null) {
-          this.renderData(data, infoResponse)
+          this.renderLineCharts(data, infoResponse)
         }
+      })
+      .catch(e => {
+        console.error(e)
       })
   }
 
-  private renderData(data: Array<Metrics>, infoResponse: InfoResponse): void {
-    let chartManagers = this.chartManagers
+  private renderLineCharts(data: Array<Metrics>, infoResponse: InfoResponse): void {
+    let chartManagers = this.lineChartManagers
     if (chartManagers.length === 0) {
-      chartManagers.push(new AggregatedStatsChartManager(this.$refs.durationEventChartContainer as HTMLElement, this.chartSettings, false))
-      chartManagers.push(new AggregatedStatsChartManager(this.$refs.instantEventChartContainer as HTMLElement, this.chartSettings, true))
+      chartManagers.push(new LineChartManager(this.$refs.durationEventChartContainer as HTMLElement, this.chartSettings, false))
+      chartManagers.push(new LineChartManager(this.$refs.instantEventChartContainer as HTMLElement, this.chartSettings, true))
     }
 
     const dataManager = new AggregatedDataManager(data, infoResponse)
     for (const chartManager of chartManagers) {
       try {
         chartManager.render(dataManager)
+      }
+      catch (e) {
+        console.error(e)
+      }
+    }
+  }
+
+  private renderClusteredCharts(data: GroupedMetricResponse): void {
+    let chartManagers = this.clusteredChartManagers
+    if (chartManagers.length === 0) {
+      chartManagers.push(new ClusteredChartManager(this.$refs.clusteredChartContainer as HTMLElement))
+    }
+
+    for (const chartManager of chartManagers) {
+      try {
+        chartManager.render(data)
       }
       catch (e) {
         console.error(e)
@@ -135,10 +176,15 @@ export default class AggregatedStatsChart extends Vue {
   }
 
   beforeDestroy() {
-    for (const chartManager of this.chartManagers) {
+    for (const chartManager of this.clusteredChartManagers) {
       chartManager.dispose()
     }
-    this.chartManagers.length = 0
+    this.clusteredChartManagers.length = 0
+
+    for (const chartManager of this.lineChartManagers) {
+      chartManager.dispose()
+    }
+    this.lineChartManagers.length = 0
   }
 }
 

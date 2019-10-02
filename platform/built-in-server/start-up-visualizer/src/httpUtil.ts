@@ -1,5 +1,5 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-export function loadJson(url: URL, processed: () => void, notificationManager: any): Promise<any> {
+export function loadJson(url: URL, processed: (() => void) | null, notificationManager: any): Promise<any> {
   function showError(reason: string) {
     notificationManager.error({
       title: "Error",
@@ -21,7 +21,9 @@ export function loadJson(url: URL, processed: () => void, notificationManager: a
     .then(data => {
       clearTimeout(timeoutId)
 
-      processed()
+      if (processed != null) {
+        processed()
+      }
 
       if (data == null) {
         showError("Server returns empty result")
@@ -33,7 +35,9 @@ export function loadJson(url: URL, processed: () => void, notificationManager: a
     .catch(e => {
       clearTimeout(timeoutId)
 
-      processed()
+      if (processed != null) {
+        processed()
+      }
 
       if (!isCancelledByTimeout) {
         showError(e.toString())

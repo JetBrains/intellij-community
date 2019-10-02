@@ -7,11 +7,3 @@ export class ChartSettings {
 
   showScrollbarXPreview: boolean = false
 }
-
-export interface InfoResponse {
-  readonly productNames: Array<string>
-  readonly productToMachineNames: { [key: string]: Array<string>; }
-
-  readonly durationMetricsNames: Array<string>
-  readonly instantMetricsNames: Array<string>
-}

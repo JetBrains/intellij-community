@@ -6,7 +6,7 @@ import {ChartSettings} from "@/aggregatedStats/ChartSettings"
 import {addExportMenu} from "@/charts/ChartManager"
 
 interface ChartConfigurator {
-   configureXAxis(chart: am4charts.XYChart): void
+  configureXAxis(chart: am4charts.XYChart): void
 
   configureSeries(series: am4charts.LineSeries): void
 }
@@ -34,7 +34,7 @@ class SortedByCategory implements ChartConfigurator {
   }
 }
 
-export class AggregatedStatsChartManager {
+export class LineChartManager {
   private readonly chart: am4charts.XYChart
 
   constructor(container: HTMLElement, private readonly chartSettings: ChartSettings, private readonly isInstantEvents: boolean, private readonly configurator: ChartConfigurator = new SortedByCategory()) {
@@ -87,7 +87,6 @@ export class AggregatedStatsChartManager {
   scrollbarXPreviewOptionChanged() {
     // no need to dispose old scrollbar explicit - will be disposed automatically on set
     const chart = this.chart
-    console.log("scrollbarXPreviewOptionChanged: " + this.chartSettings.showScrollbarXPreview)
     if (this.chartSettings.showScrollbarXPreview) {
       const scrollbarX = this.configureScrollbarXWithPreview()
       chart.series.each(it => {
@@ -134,10 +133,6 @@ export class AggregatedStatsChartManager {
     })
 
     chart.data = dataManager.metrics
-    if (this.isInstantEvents) {
-      (window as any).chart = chart
-    }
-    console.log(dataManager.metrics)
   }
 
   private configureLineSeries(metric: MetricDescriptor, series: am4charts.LineSeries) {

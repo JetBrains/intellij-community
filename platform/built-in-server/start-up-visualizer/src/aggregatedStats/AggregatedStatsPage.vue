@@ -49,10 +49,14 @@
       </el-form-item>
     </el-form>
 
+    <div class="aggregatedChart" ref="clusteredChartContainer"></div>
+
     <h2>Duration Events</h2>
     <div class="aggregatedChart" ref="durationEventChartContainer"></div>
+
     <h2>Instant Events</h2>
     <div class="aggregatedChart" ref="instantEventChartContainer"></div>
+
     <el-row>
       <el-col>
         <ul>
@@ -65,4 +69,4 @@
   </div>
 </template>
 
-<script lang="ts" src="./AggregatedStatsChart.ts"></script>
+<script lang="ts" src="./AggregatedStatsPage.ts"></script>
