@@ -290,11 +290,12 @@ public class JdkUtil {
                                        boolean dynamicParameters,
                                        Charset cs) throws CantRunException {
     try {
+      String pathSeparator = String.valueOf(request.getRemotePlatform().getPlatform().pathSeparator);
       IR.RemoteValue<String> classPathParameter;
       PathsList classPath = javaParameters.getClassPath();
       if (!classPath.isEmpty() && !explicitClassPath(vmParameters)) {
         List<IR.RemoteValue<String>> pathValues = getClassPathValues(request, runtimeConfiguration, javaParameters);
-        classPathParameter = new IR.CompositeValue<>(pathValues, values -> StringUtil.join(values, ":"));
+        classPathParameter = new IR.CompositeValue<>(pathValues, values -> StringUtil.join(values, pathSeparator));
       }
       else {
         classPathParameter = null;
@@ -304,7 +305,7 @@ public class JdkUtil {
       PathsList modulePath = javaParameters.getModulePath();
       if (!modulePath.isEmpty() && !explicitModulePath(vmParameters)) {
         List<IR.RemoteValue<String>> pathValues = getClassPathValues(request, runtimeConfiguration, javaParameters);
-        modulePathParameter = new IR.CompositeValue<>(pathValues, values -> StringUtil.join(values, ":"));
+        modulePathParameter = new IR.CompositeValue<>(pathValues, values -> StringUtil.join(values, pathSeparator));
       }
       else {
         modulePathParameter = null;
@@ -439,7 +440,8 @@ public class JdkUtil {
         }
       }
       commandLine.addParameter("-classpath");
-      commandLine.addParameter(new IR.CompositeValue<>(classpath, values -> StringUtil.join(values, File.pathSeparator)));
+      String pathSeparator = String.valueOf(request.getRemotePlatform().getPlatform().pathSeparator);
+      commandLine.addParameter(new IR.CompositeValue<>(classpath, values -> StringUtil.join(values, pathSeparator)));
 
       commandLine.addParameter(commandLineWrapper.getName());
       commandLine.addParameter(request.createUpload(classpathFile.getAbsolutePath()));
@@ -532,7 +534,8 @@ public class JdkUtil {
       String jarFilePath = classpathJarFile.getAbsolutePath();
       commandLine.addParameter("-classpath");
       if (dynamicVMOptions || dynamicParameters) {
-        commandLine.addParameter(request.createUpload(PathUtil.getJarPathForClass(commandLineWrapper) + File.pathSeparator + jarFilePath));
+        char pathSeparator = request.getRemotePlatform().getPlatform().pathSeparator;
+        commandLine.addParameter(request.createUpload(PathUtil.getJarPathForClass(commandLineWrapper) + pathSeparator + jarFilePath));
         commandLine.addParameter(request.createUpload(commandLineWrapper.getName()));
       }
       commandLine.addParameter(request.createUpload(jarFilePath));
@@ -568,7 +571,8 @@ public class JdkUtil {
     if (!classPath.isEmpty() && !explicitClassPath(vmParameters)) {
       commandLine.addParameter("-classpath");
       List<IR.RemoteValue<String>> pathValues = getClassPathValues(request, runtimeConfiguration, javaParameters);
-      commandLine.addParameter(new IR.CompositeValue<>(pathValues, values -> StringUtil.join(values, ":")));
+      String pathSeparator = String.valueOf(request.getRemotePlatform().getPlatform().pathSeparator);
+      commandLine.addParameter(new IR.CompositeValue<>(pathValues, values -> StringUtil.join(values, pathSeparator)));
     }
 
     PathsList modulePath = javaParameters.getModulePath();
