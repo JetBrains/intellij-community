@@ -974,12 +974,17 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
   }
 
   @NotNull
-  public String suggestBranchName(@NotNull Task task) {
+  public String suggestBranchName(@NotNull Task task, String separator) {
     String name = constructDefaultBranchName(task);
-    if (task.isIssue()) return name.replace(' ', '-');
+    if (task.isIssue()) return name.replace(" ", separator);
     List<String> words = StringUtil.getWordsIn(name);
     String[] strings = ArrayUtilRt.toStringArray(words);
-    return StringUtil.join(strings, 0, Math.min(2, strings.length), "-");
+    return StringUtil.join(strings, 0, Math.min(2, strings.length), separator);
+  }
+
+    @NotNull
+  public String suggestBranchName(@NotNull Task task) {
+    return suggestBranchName(task, "-");
   }
 
   @NotNull

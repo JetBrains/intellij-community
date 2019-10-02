@@ -17,6 +17,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.tasks.CommitPlaceholderProvider;
 import com.intellij.tasks.TaskManager;
@@ -26,6 +27,7 @@ import com.intellij.tasks.impl.TaskManagerImpl;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.ExtendableEditorSupport;
 import com.intellij.ui.components.JBCheckBox;
+import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
 import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.Nls;
@@ -71,6 +73,7 @@ public class TaskConfigurable extends BindableConfigurable implements Searchable
   @BindControl("branchNameFormat")
   private EditorTextField myBranchNameFormat;
   private JCheckBox myLowerCase;
+  private JBTextField myReplaceSpaces;
 
   private final Project myProject;
   private Configurable[] myConfigurables;
@@ -114,6 +117,7 @@ public class TaskConfigurable extends BindableConfigurable implements Searchable
     myAlwaysDisplayTaskCombo.setSelected(TaskSettings.getInstance().ALWAYS_DISPLAY_COMBO);
     myConnectionTimeout.setText(Integer.toString(TaskSettings.getInstance().CONNECTION_TIMEOUT));
     myLowerCase.setSelected(TaskSettings.getInstance().LOWER_CASE_BRANCH);
+    myReplaceSpaces.setText(TaskSettings.getInstance().REPLACE_SPACES);
   }
 
   @Override
@@ -135,6 +139,7 @@ public class TaskConfigurable extends BindableConfigurable implements Searchable
     Integer connectionTimeout = Integer.valueOf(myConnectionTimeout.getText());
     TaskSettings.getInstance().CONNECTION_TIMEOUT = connectionTimeout;
     TaskSettings.getInstance().LOWER_CASE_BRANCH = myLowerCase.isSelected();
+    TaskSettings.getInstance().REPLACE_SPACES = myReplaceSpaces.getText();
 
     if (connectionTimeout != oldConnectionTimeout) {
       for (TaskRepository repository : manager.getAllRepositories()) {
@@ -150,7 +155,8 @@ public class TaskConfigurable extends BindableConfigurable implements Searchable
     return super.isModified() ||
            TaskSettings.getInstance().ALWAYS_DISPLAY_COMBO != myAlwaysDisplayTaskCombo.isSelected() ||
            TaskSettings.getInstance().CONNECTION_TIMEOUT != Integer.valueOf(myConnectionTimeout.getText()) ||
-           TaskSettings.getInstance().LOWER_CASE_BRANCH != myLowerCase.isSelected();
+           TaskSettings.getInstance().LOWER_CASE_BRANCH != myLowerCase.isSelected() ||
+           !Comparing.equal(TaskSettings.getInstance().REPLACE_SPACES, myLowerCase.getText());
   }
 
   @Override
