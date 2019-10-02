@@ -691,7 +691,7 @@ public class GitRebaseProcess {
       @Override
       protected JPanel createSouthAdditionalPanel() {
         JCheckBox checkbox = new JBCheckBox("Filter by conflicted file", true);
-        checkbox.addChangeListener((e) -> {
+        checkbox.addActionListener((e) -> {
           if (checkbox.isSelected()) {
             filterCommitsByConflictingFile();
           }
