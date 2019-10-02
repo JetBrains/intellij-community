@@ -169,9 +169,10 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
       }
     }
     else {
-      ComponentModuleRegistrationChecker componentModuleRegistrationChecker = new ComponentModuleRegistrationChecker(myPluginModuleSetByModuleName,
-                                                                                                                     myRegistrationCheckIgnoreClassList,
-                                                                                                                     holder);
+      ComponentModuleRegistrationChecker componentModuleRegistrationChecker =
+        new ComponentModuleRegistrationChecker(myPluginModuleSetByModuleName,
+                                               myRegistrationCheckIgnoreClassList,
+                                               holder);
       if (element instanceof Extension) {
         annotateExtension((Extension)element, holder, componentModuleRegistrationChecker);
       }
@@ -210,14 +211,14 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
       }
       else //noinspection deprecation
         if (element instanceof Helpset) {
-        highlightRedundant(element, DevKitBundle.message("inspections.plugin.xml.deprecated.helpset"), holder);
-      }
-      else if (element instanceof Listeners) {
-        annotateListeners((Listeners)element, holder);
-      }
-      else if (element instanceof Listeners.Listener) {
-        annotateListener((Listeners.Listener)element, holder);
-      }
+          highlightRedundant(element, DevKitBundle.message("inspections.plugin.xml.deprecated.helpset"), holder);
+        }
+        else if (element instanceof Listeners) {
+          annotateListeners((Listeners)element, holder);
+        }
+        else if (element instanceof Listeners.Listener) {
+          annotateListener((Listeners.Listener)element, holder);
+        }
     }
 
     if (element instanceof GenericDomValue) {
@@ -299,10 +300,10 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
 
   @Nullable
   private static IdeaPlugin findMainDescriptor(@NotNull Module module) {
-      final XmlFile mainPluginXml = PluginModuleType.getPluginXml(module);
-      if (mainPluginXml == null) return null;
+    final XmlFile mainPluginXml = PluginModuleType.getPluginXml(module);
+    if (mainPluginXml == null) return null;
 
-      return DescriptorUtil.getIdeaPlugin(mainPluginXml);
+    return DescriptorUtil.getIdeaPlugin(mainPluginXml);
   }
 
   private static void annotateDependency(Dependency dependency, DomElementAnnotationHolder holder) {
@@ -350,7 +351,11 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
     if (!hasRealPluginId(ideaPlugin)) return;
 
     MultiMap<String, Dependency> dependencies = MultiMap.create();
-    ideaPlugin.getDependencies().forEach(dependency -> dependencies.putValue(dependency.getStringValue(), dependency));
+    ideaPlugin.getDependencies().forEach(dependency -> {
+      if (DomUtil.hasXml(dependency.getConfigFile())) {
+        dependencies.putValue(dependency.getConfigFile().getStringValue(), dependency);
+      }
+    });
     for (Map.Entry<String, Collection<Dependency>> entry : dependencies.entrySet()) {
       if (entry.getValue().size() > 1) {
         for (Dependency dependency : entry.getValue()) {
@@ -956,7 +961,7 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
 
   private static void highlightExperimental(DomElement element, DomElementAnnotationHolder holder) {
     holder.createProblem(element, ProblemHighlightType.WARNING,
-                         "Usage of API marked with @" + ApiStatus.Experimental.class.getCanonicalName() + ". "+
+                         "Usage of API marked with @" + ApiStatus.Experimental.class.getCanonicalName() + ". " +
                          "Such API may be changed or removed in future IDE versions causing compatibility problems.",
                          null)
       .highlightWholeElement();
