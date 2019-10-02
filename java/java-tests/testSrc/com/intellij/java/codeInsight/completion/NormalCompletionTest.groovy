@@ -995,7 +995,12 @@ public class ListUtils {
 
   void testMethodParameterAnnotationClass() throws Throwable { doTest() }
 
-  void testInnerAnnotation() { doTest('\n') }
+  void testInnerAnnotation() {
+    configure()
+    assert myFixture.lookupElementStrings == ['Dependency']
+    type '\t'
+    checkResult()
+  }
 
   void testPrimitiveCastOverwrite() throws Throwable { doTest() }
 
