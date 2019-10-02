@@ -150,6 +150,7 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
                 Arrays.stream(library.getFiles(OrderRootType.CLASSES)).map(file -> file.getUrl()).collect(Collectors.toSet());
               HashSet<String> declaredUrls = new HashSet<>(Arrays.asList(library.getUrls(OrderRootType.CLASSES)));
               declaredUrls.removeAll(detectedUrls);
+              declaredUrls.removeIf(library::isJarDirectory);
               if (!declaredUrls.isEmpty()) {
                 System.err.println(InspectionsBundle.message("offline.inspections.library.urls.were.not.resolved",
                                                              StringUtil.join(declaredUrls, ", "),
