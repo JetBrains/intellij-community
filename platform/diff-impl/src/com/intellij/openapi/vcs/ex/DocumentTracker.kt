@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.ex
 
+import com.intellij.diff.comparison.iterables.DiffIterable
 import com.intellij.diff.comparison.iterables.DiffIterableUtil
 import com.intellij.diff.comparison.iterables.FairDiffIterable
 import com.intellij.diff.comparison.trimStart
@@ -18,10 +19,11 @@ import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.ex.DocumentTracker.Block
 import com.intellij.openapi.vcs.ex.DocumentTracker.Handler
+import com.intellij.util.containers.PeekableIteratorWrapper
 import org.jetbrains.annotations.CalledInAwt
-import java.util.*
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
+import kotlin.math.max
 
 class DocumentTracker : Disposable {
   private val handler: Handler
@@ -159,13 +161,9 @@ class DocumentTracker : Disposable {
 
     val newText = side[document1, document2]
 
-    var shift = 0
     val iterable = compareLines(oldText, newText.immutableCharSequence, oldText.lineOffsets, newText.lineOffsets)
-    for (range in iterable.changes()) {
-      val beforeLength = range.end1 - range.start1
-      val afterLength = range.end2 - range.start2
-      tracker.rangeChanged(side, range.start1 + shift, beforeLength, afterLength)
-      shift += afterLength - beforeLength
+    if (iterable.changes().hasNext()) {
+      tracker.rangesChanged(side, iterable)
     }
   }
 
@@ -543,6 +541,15 @@ private class LineTracker(private val handler: Handler,
     handler.afterRangeChange()
   }
 
+  fun rangesChanged(side: Side, iterable: DiffIterable) {
+    val newBlocks = BulkRangeChangeHandler(handler, blocks, side).run(iterable)
+
+    blocks = newBlocks
+    isDirty = true
+
+    handler.afterBulkRangeChange()
+  }
+
   fun partiallyApplyBlocks(side: Side, condition: (Block) -> Boolean): List<Block> {
     val newBlocks = mutableListOf<Block>()
     val appliedBlocks = mutableListOf<Block>()
@@ -682,14 +689,146 @@ private class RangeChangeHandler {
     return Block(range, true, isTooBig)
   }
 
-  private fun createRange(side: Side, start: Int, end: Int, otherStart: Int, otherEnd: Int): Range {
-    return Range(side[start, otherStart], side[end, otherEnd],
-                 side[otherStart, start], side[otherEnd, end])
-  }
-
   data class Result(val beforeBlocks: List<Block>, val newBlocks: List<Block>,
                     val affectedBlocks: List<Block>, val afterBlocks: List<Block>,
                     val newAffectedBlock: Block, val newAfterBlocks: List<Block>)
+}
+
+/**
+ * We use line numbers in 3 documents:
+ * A: Line number in unchanged document
+ * B: Line number in changed document <before> the change
+ * C: Line number in changed document <after> the change
+ *
+ * Algorithm is similar to building ranges for a merge conflict,
+ * see [com.intellij.diff.comparison.ComparisonMergeUtil.FairMergeBuilder].
+ * ie: B is the "Base" and A/C are "Left"/"Right". Old blocks hold the differences "A -> B",
+ * changes from iterable hold the differences "B -> C". We want to construct new blocks with differences "A -> C.
+ *
+ * We iterate all differences in 'B' order, collecting interleaving groups of differences. Each group becomes a single newBlock.
+ * [blockShift]/[changeShift] indicate how 'B' line is mapped to the 'A'/'C' lines at the start of current group.
+ * [dirtyBlockShift]/[dirtyChangeShift] accumulate differences from the current group.
+ *
+ * block(otherSide -> side): A -> B
+ * newBlock(otherSide -> side): A -> C
+ * iterable: B -> C
+ * dirtyStart, dirtyEnd: B
+ * blockShift: delta B -> A
+ * changeShift: delta B -> C
+ */
+private class BulkRangeChangeHandler(private val handler: Handler,
+                                     private val blocks: List<Block>,
+                                     private val side: Side) {
+  private val newBlocks: MutableList<Block> = mutableListOf()
+
+  private var dirtyStart = -1
+  private var dirtyEnd = -1
+  private val dirtyBlocks: MutableList<Block> = mutableListOf()
+  private var dirtyBlocksModified = false
+
+  private var blockShift: Int = 0
+  private var changeShift: Int = 0
+  private var dirtyBlockShift: Int = 0
+  private var dirtyChangeShift: Int = 0
+
+  fun run(iterable: DiffIterable): List<Block> {
+    val it1 = PeekableIteratorWrapper(blocks.iterator())
+    val it2 = PeekableIteratorWrapper(iterable.changes())
+
+    while (it1.hasNext() || it2.hasNext()) {
+      if (!it2.hasNext()) {
+        handleBlock(it1.next())
+        continue
+      }
+      if (!it1.hasNext()) {
+        handleChange(it2.next())
+        continue
+      }
+
+      val block = it1.peek()
+      val range1 = block.range
+      val range2 = it2.peek()
+
+      if (range1.start(side) <= range2.start1) {
+        handleBlock(it1.next())
+      }
+      else {
+        handleChange(it2.next())
+      }
+    }
+    flush(Int.MAX_VALUE)
+
+    return newBlocks
+  }
+
+  private fun handleBlock(block: Block) {
+    val range = block.range
+    flush(range.start(side))
+
+    dirtyBlockShift += getRangeDelta(range, side)
+
+    markDirtyRange(range.start(side), range.end(side))
+
+    dirtyBlocks.add(block)
+  }
+
+  private fun handleChange(range: Range) {
+    flush(range.start1)
+
+    dirtyChangeShift += getRangeDelta(range, Side.LEFT)
+
+    markDirtyRange(range.start1, range.end1)
+
+    dirtyBlocksModified = true
+  }
+
+  private fun markDirtyRange(start: Int, end: Int) {
+    if (dirtyEnd == -1) {
+      dirtyStart = start
+      dirtyEnd = end
+    }
+    else {
+      dirtyEnd = max(dirtyEnd, end)
+    }
+  }
+
+  private fun flush(nextLine: Int) {
+    if (dirtyEnd != -1 && dirtyEnd < nextLine) {
+      if (dirtyBlocksModified) {
+        val isTooBig = dirtyBlocks.any { it.isTooBig }
+        val isDirty = true
+        val range = createRange(side,
+                                dirtyStart + changeShift, dirtyEnd + changeShift + dirtyChangeShift,
+                                dirtyStart + blockShift, dirtyEnd + blockShift + dirtyBlockShift)
+        val newBlock = Block(range, isDirty, isTooBig)
+        handler.onRangesChanged(dirtyBlocks, newBlock)
+        newBlocks.add(newBlock)
+      }
+      else {
+        assert(dirtyBlocks.size == 1)
+        if (changeShift != 0) {
+          for (oldBlock in dirtyBlocks) {
+            val newBlock = oldBlock.shift(side, changeShift)
+            handler.onRangeShifted(oldBlock, newBlock)
+            newBlocks.add(newBlock)
+          }
+        }
+        else {
+          newBlocks.addAll(dirtyBlocks)
+        }
+      }
+
+      dirtyStart = -1
+      dirtyEnd = -1
+      dirtyBlocks.clear()
+      dirtyBlocksModified = false
+
+      blockShift += dirtyBlockShift
+      changeShift += dirtyChangeShift
+      dirtyBlockShift = 0
+      dirtyChangeShift = 0
+    }
+  }
 }
 
 private class BlocksRefresher(val handler: Handler,
@@ -818,9 +957,17 @@ private fun getRangeDelta(range: Range, side: Side): Int {
 private fun Block.shift(side: Side, delta: Int) = Block(
   shiftRange(this.range, side, delta), this.isDirty, this.isTooBig)
 
-private fun shiftRange(range: Range, side: Side, shift: Int) = shiftRange(range, side[shift, 0], side[0, shift])
+private fun shiftRange(range: Range, side: Side, shift: Int) = when {
+  side.isLeft -> shiftRange(range, shift, 0)
+  else -> shiftRange(range, 0, shift)
+}
 
 private fun shiftRange(range: Range, shift1: Int, shift2: Int) = Range(range.start1 + shift1,
                                                                        range.end1 + shift1,
                                                                        range.start2 + shift2,
                                                                        range.end2 + shift2)
+
+private fun createRange(side: Side, start: Int, end: Int, otherStart: Int, otherEnd: Int): Range = when {
+  side.isLeft -> Range(start, end, otherStart, otherEnd)
+  else -> Range(otherStart, otherEnd, start, end)
+}
