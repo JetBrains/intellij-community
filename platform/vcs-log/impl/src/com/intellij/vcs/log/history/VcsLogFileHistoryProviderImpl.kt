@@ -120,7 +120,7 @@ class VcsLogFileHistoryProviderImpl : VcsLogFileHistoryProvider {
       if (!VcsLogProperties.SUPPORTS_LOG_DIRECTORY_HISTORY.getOrDefault(dataManager.getLogProvider(root))) return null
 
       val correctedPath = getCorrectedPath(project, path, root, false)
-      if (!correctedPath.isDirectory) return null;
+      if (!correctedPath.isDirectory) return null
 
       if (path.virtualFile == root) {
         forRootFilter.add(root)
