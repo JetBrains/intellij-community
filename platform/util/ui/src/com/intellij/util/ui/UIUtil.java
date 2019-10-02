@@ -3815,4 +3815,35 @@ public final class UIUtil extends StartupUiUtil {
     }
     editor.scrollToReference(reference);
   }
+
+  public static void runWhenFocused(@NotNull Component component, @NotNull Runnable runnable) {
+    assert component.isShowing();
+    if (component.isFocusOwner()) {
+      runnable.run();
+    }
+    else {
+      Disposable disposable = Disposer.newDisposable();
+      FocusListener focusListener = new FocusAdapter() {
+        @Override
+        public void focusGained(FocusEvent e) {
+          Disposer.dispose(disposable);
+          runnable.run();
+        }
+      };
+      HierarchyListener hierarchyListener = new HierarchyListener() {
+        @Override
+        public void hierarchyChanged(HierarchyEvent e) {
+          if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0 && !component.isShowing()) {
+            Disposer.dispose(disposable);
+          }
+        }
+      };
+      component.addFocusListener(focusListener);
+      component.addHierarchyListener(hierarchyListener);
+      Disposer.register(disposable, () -> {
+        component.removeFocusListener(focusListener);
+        component.removeHierarchyListener(hierarchyListener);
+      });
+    }
+  }
 }
