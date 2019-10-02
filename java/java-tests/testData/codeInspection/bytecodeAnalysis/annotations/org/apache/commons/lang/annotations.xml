@@ -4,6 +4,63 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='org.apache.commons.lang.ArrayUtils EMPTY_BOOLEAN_ARRAY'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.lang.ArrayUtils EMPTY_BOOLEAN_OBJECT_ARRAY'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.lang.ArrayUtils EMPTY_BYTE_ARRAY'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.lang.ArrayUtils EMPTY_BYTE_OBJECT_ARRAY'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.lang.ArrayUtils EMPTY_CHARACTER_OBJECT_ARRAY'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.lang.ArrayUtils EMPTY_CHAR_ARRAY'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.lang.ArrayUtils EMPTY_CLASS_ARRAY'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.lang.ArrayUtils EMPTY_DOUBLE_ARRAY'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.lang.ArrayUtils EMPTY_DOUBLE_OBJECT_ARRAY'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.lang.ArrayUtils EMPTY_FLOAT_ARRAY'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.lang.ArrayUtils EMPTY_FLOAT_OBJECT_ARRAY'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.lang.ArrayUtils EMPTY_INTEGER_OBJECT_ARRAY'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.lang.ArrayUtils EMPTY_INT_ARRAY'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.lang.ArrayUtils EMPTY_LONG_ARRAY'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.lang.ArrayUtils EMPTY_LONG_OBJECT_ARRAY'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.lang.ArrayUtils EMPTY_OBJECT_ARRAY'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.lang.ArrayUtils EMPTY_SHORT_ARRAY'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.lang.ArrayUtils EMPTY_SHORT_OBJECT_ARRAY'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.lang.ArrayUtils EMPTY_STRING_ARRAY'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
     <item name='org.apache.commons.lang.ArrayUtils boolean contains(boolean[], boolean)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -1685,7 +1742,25 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='org.apache.commons.lang.CharSet ASCII_ALPHA'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.lang.CharSet ASCII_ALPHA_LOWER'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.lang.CharSet ASCII_ALPHA_UPPER'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.lang.CharSet ASCII_NUMERIC'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.lang.CharSet COMMON'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
     <item name='org.apache.commons.lang.CharSet CharSet(java.lang.String[]) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.lang.CharSet EMPTY'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.lang.CharSet boolean contains(char)'>
@@ -2101,6 +2176,21 @@
     <item name='org.apache.commons.lang.ClassUtils java.util.List getAllSuperclasses(java.lang.Class) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
+    <item name='org.apache.commons.lang.Entities HTML32'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.lang.Entities HTML40'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.lang.Entities HTML40_ARRAY'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.lang.Entities ISO8859_1_ARRAY'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.lang.Entities XML'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
     <item name='org.apache.commons.lang.Entities java.lang.String escape(java.lang.String) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -2506,6 +2596,9 @@
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
+    </item>
+    <item name='org.apache.commons.lang.ObjectUtils NULL'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.lang.ObjectUtils ObjectUtils()'>
         <annotation name='org.jetbrains.annotations.Contract'>

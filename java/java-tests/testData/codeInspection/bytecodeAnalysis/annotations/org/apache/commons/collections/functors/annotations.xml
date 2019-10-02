@@ -119,6 +119,9 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='org.apache.commons.collections.functors.CloneTransformer INSTANCE'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
     <item name='org.apache.commons.collections.functors.CloneTransformer java.lang.Object transform(java.lang.Object)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val val="&quot;null-&gt;null&quot;"/>
@@ -163,6 +166,9 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='org.apache.commons.collections.functors.ConstantFactory NULL_INSTANCE'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
     <item name='org.apache.commons.collections.functors.ConstantFactory java.lang.Object create()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -186,6 +192,9 @@
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
+    </item>
+    <item name='org.apache.commons.collections.functors.ConstantTransformer NULL_INSTANCE'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.functors.ConstantTransformer java.lang.Object getConstant()'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -233,6 +242,9 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='org.apache.commons.collections.functors.ExceptionClosure INSTANCE'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
     <item name='org.apache.commons.collections.functors.ExceptionClosure org.apache.commons.collections.Closure getInstance()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -252,6 +264,9 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='org.apache.commons.collections.functors.ExceptionFactory INSTANCE'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
     <item name='org.apache.commons.collections.functors.ExceptionFactory java.lang.Object create()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="value" val="&quot;-&gt;fail&quot;"/>
@@ -267,6 +282,9 @@
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
+    </item>
+    <item name='org.apache.commons.collections.functors.ExceptionPredicate INSTANCE'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.functors.ExceptionPredicate boolean evaluate(java.lang.Object)'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -286,6 +304,9 @@
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
+    </item>
+    <item name='org.apache.commons.collections.functors.ExceptionTransformer INSTANCE'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.functors.ExceptionTransformer java.lang.Object transform(java.lang.Object)'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -328,6 +349,9 @@
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
+    </item>
+    <item name='org.apache.commons.collections.functors.FalsePredicate INSTANCE'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.functors.FalsePredicate boolean evaluate(java.lang.Object)'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -553,6 +577,9 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='org.apache.commons.collections.functors.InstantiateTransformer NO_ARG_INSTANCE'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
     <item name='org.apache.commons.collections.functors.InstantiateTransformer java.lang.Object transform(java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -613,6 +640,9 @@
     <item name='org.apache.commons.collections.functors.MapTransformer org.apache.commons.collections.Transformer getInstance(java.util.Map) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
+    <item name='org.apache.commons.collections.functors.NOPClosure INSTANCE'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
     <item name='org.apache.commons.collections.functors.NOPClosure NOPClosure()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -630,6 +660,9 @@
     </item>
     <item name='org.apache.commons.collections.functors.NOPClosure void execute(java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='org.apache.commons.collections.functors.NOPTransformer INSTANCE'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.functors.NOPTransformer NOPTransformer()'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -662,6 +695,9 @@
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
+    </item>
+    <item name='org.apache.commons.collections.functors.NotNullPredicate INSTANCE'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.functors.NotNullPredicate NotNullPredicate()'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -789,6 +825,9 @@
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='org.apache.commons.collections.functors.NullPredicate INSTANCE'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
     <item name='org.apache.commons.collections.functors.NullPredicate NullPredicate()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -895,6 +934,9 @@
     </item>
     <item name='org.apache.commons.collections.functors.PrototypeFactory.PrototypeSerializationFactory java.lang.Object create()'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='org.apache.commons.collections.functors.StringValueTransformer INSTANCE'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.functors.StringValueTransformer StringValueTransformer()'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -1063,6 +1105,9 @@
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
+    </item>
+    <item name='org.apache.commons.collections.functors.TruePredicate INSTANCE'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.functors.TruePredicate TruePredicate()'>
         <annotation name='org.jetbrains.annotations.Contract'>

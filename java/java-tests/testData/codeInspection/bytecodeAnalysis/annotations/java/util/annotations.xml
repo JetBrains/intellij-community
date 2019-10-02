@@ -1447,6 +1447,15 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='java.util.Collections EMPTY_LIST'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.Collections EMPTY_MAP'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.Collections EMPTY_SET'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
     <item name='java.util.Collections T get(java.util.ListIterator&lt;? extends T&gt;, int) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -2247,6 +2256,9 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='java.util.Collections.EmptyEnumeration EMPTY_ENUMERATION'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
     <item name='java.util.Collections.EmptyEnumeration EmptyEnumeration()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -2261,6 +2273,9 @@
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
+    </item>
+    <item name='java.util.Collections.EmptyIterator EMPTY_ITERATOR'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.Collections.EmptyIterator EmptyIterator()'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -2356,6 +2371,9 @@
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
+    </item>
+    <item name='java.util.Collections.EmptyListIterator EMPTY_ITERATOR'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.Collections.EmptyListIterator EmptyListIterator()'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -2522,6 +2540,9 @@
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
+    </item>
+    <item name='java.util.Collections.ReverseComparator REVERSE_ORDER'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.Collections.ReverseComparator ReverseComparator()'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -3237,6 +3258,9 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.GregorianCalendar void setGregorianChange(java.util.Date) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.HashMap EMPTY_TABLE'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.HashMap HashMap(java.util.Map&lt;? extends K,? extends V&gt;) 0'>

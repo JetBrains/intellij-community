@@ -121,6 +121,15 @@ public class ProjectBytecodeAnalysis {
         ParameterAnnotations parameterAnnotations = loadParameterAnnotations(primaryKey);
         return toPsi(parameterAnnotations);
       }
+      else if (listOwner instanceof PsiField && listOwner.hasModifierProperty(PsiModifier.STATIC)) {
+        Solver outSolver = new Solver(new ELattice<>(Value.Bot, Value.Top), Value.Top);
+        collectEquations(Collections.singletonList(primaryKey), outSolver);
+        Map<EKey, Value> solutions = outSolver.solve();
+        Value value = solutions.get(primaryKey);
+        if (value == Value.NotNull) {
+          return new PsiAnnotation[]{getNotNullAnnotation()};
+        }
+      }
       return PsiAnnotation.EMPTY_ARRAY;
     }
     catch (EquationsLimitException e) {
@@ -213,22 +222,24 @@ public class ProjectBytecodeAnalysis {
   @Nullable
   public EKey getKey(@NotNull PsiModifierListOwner owner, MessageDigest md) {
     LOG.assertTrue(owner instanceof PsiCompiledElement, owner);
+    EKey key = null;
     if (owner instanceof PsiMethod) {
-      EKey key = BytecodeAnalysisConverter.psiKey((PsiMethod)owner, Out);
-      return key == null ? null : myEquationProvider.adaptKey(key, md);
+      key = BytecodeAnalysisConverter.psiKey((PsiMethod)owner, Out);
     }
-    if (owner instanceof PsiParameter) {
+    else if (owner instanceof PsiField) {
+      key = BytecodeAnalysisConverter.psiKey((PsiField)owner, Out);
+    }
+    else if (owner instanceof PsiParameter) {
       PsiElement parent = owner.getParent();
       if (parent instanceof PsiParameterList) {
         PsiElement gParent = parent.getParent();
         if (gParent instanceof PsiMethod) {
           int index = ((PsiParameterList)parent).getParameterIndex((PsiParameter)owner);
-          EKey key = BytecodeAnalysisConverter.psiKey((PsiMethod)gParent, new In(index, false));
-          return key == null ? null : myEquationProvider.adaptKey(key, md);
+          key = BytecodeAnalysisConverter.psiKey((PsiMethod)gParent, new In(index, false));
         }
       }
     }
-    return null;
+    return key == null ? null : myEquationProvider.adaptKey(key, md);
   }
 
   /**
@@ -326,7 +337,8 @@ public class ProjectBytecodeAnalysis {
       for (Equations equations : myEquationProvider.getEquations(curKey.member)) {
         stable &= equations.stable;
         Effects effects = (Effects)equations.find(curKey.getDirection())
-          .orElseGet(() -> new Effects(DataValue.UnknownDataValue1, Effects.TOP_EFFECTS));
+          .orElseGet(() -> new Effects(DataValue.UnknownDataValue1,
+                                       curKey.getDirection() == Volatile ? Collections.emptySet() : Effects.TOP_EFFECTS));
         combined = combined == null ? effects : combined.combine(effects);
       }
       if (combined != null) {

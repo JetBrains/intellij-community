@@ -43,14 +43,22 @@ public class BytecodeAnalysisConverter {
    * Returns null if conversion is impossible (something is not resolvable).
    */
   @Nullable
-  public static EKey psiKey(@NotNull PsiMethod psiMethod, @NotNull Direction direction) {
+  public static EKey psiKey(@NotNull PsiMember psiMethod, @NotNull Direction direction) {
     PsiClass psiClass = psiMethod.getContainingClass();
     if (psiClass != null) {
       String className = descriptor(psiClass, 0, false);
-      String methodSig = methodSignature(psiMethod, psiClass);
-      if (className != null && methodSig != null) {
-        String methodName = psiMethod.getReturnType() == null ? "<init>" : psiMethod.getName();
-        return new EKey(new Member(className, methodName, methodSig), direction, true, false);
+      String name = psiMethod.getName();
+      String sig;
+      if (psiMethod instanceof PsiMethod) {
+        sig = methodSignature((PsiMethod)psiMethod, psiClass);
+        if (((PsiMethod)psiMethod).isConstructor()) {
+          name = "<init>";
+        }
+      } else if (psiMethod instanceof PsiField) {
+        sig = descriptor(((PsiField)psiMethod).getType());
+      } else return null;
+      if (className != null && sig != null && name != null) {
+        return new EKey(new Member(className, name, sig), direction, true, false);
       }
     }
     return null;

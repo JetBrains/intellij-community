@@ -4,6 +4,8 @@ package com.intellij.codeInspection.bytecodeAnalysis;
 import com.intellij.codeInspection.bytecodeAnalysis.asm.ASMUtils;
 import com.intellij.codeInspection.bytecodeAnalysis.asm.ControlFlowGraph;
 import com.intellij.util.SingletonSet;
+import one.util.streamex.EntryStream;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.org.objectweb.asm.Handle;
@@ -143,11 +145,11 @@ final class CombinedAnalysis {
   private boolean exception;
   private final MethodNode methodNode;
 
-  CombinedAnalysis(Member method, ControlFlowGraph controlFlow) {
+  CombinedAnalysis(Member method, ControlFlowGraph controlFlow, Set<Member> staticFields) {
     this.method = method;
     this.controlFlow = controlFlow;
     methodNode = controlFlow.methodNode;
-    interpreter = new CombinedInterpreter(methodNode.instructions, Type.getArgumentTypes(methodNode.desc).length);
+    interpreter = new CombinedInterpreter(methodNode.instructions, Type.getArgumentTypes(methodNode.desc).length, staticFields);
   }
 
   final void analyze() throws AnalyzerException {
@@ -312,7 +314,20 @@ final class CombinedAnalysis {
 
   @Nullable
   final Equation outContractEquation(boolean stable) {
-    final EKey key = new EKey(method, Out, stable);
+    return outEquation(exception, method, returnValue, stable);
+  }
+
+  final List<Equation> staticFieldEquations() {
+    return EntryStream.of(interpreter.staticFields)
+      .removeValues(v -> v == BasicValue.UNINITIALIZED_VALUE)
+      .mapKeyValue((field, value) -> outEquation(exception, field, value, true))
+      .nonNull()
+      .toList();
+  }
+
+  @Nullable
+  private static Equation outEquation(boolean exception, Member member, BasicValue returnValue, boolean stable) {
+    final EKey key = new EKey(member, Out, stable);
     final Result result;
     if (exception) {
       result = Value.Bot;
@@ -405,15 +420,20 @@ final class CombinedInterpreter extends BasicInterpreter {
 
   final List<TrackableCallValue> calls = new ArrayList<>();
 
+  final Map<Member, BasicValue> staticFields;
+
   private final InsnList insns;
 
-  CombinedInterpreter(InsnList insns, int arity) {
+  CombinedInterpreter(InsnList insns,
+                      int arity,
+                      Set<Member> staticFields) {
     super(Opcodes.API_VERSION);
     dereferencedParams = new boolean[arity];
     notNullableParams = new boolean[arity];
     parameterFlow = new Set[arity];
     this.insns = insns;
     dereferencedValues = new boolean[insns.size()];
+    this.staticFields = StreamEx.of(staticFields).cross(BasicValue.UNINITIALIZED_VALUE).toMap();
   }
 
   private int insnIndex(AbstractInsnNode insn) {
@@ -473,6 +493,13 @@ final class CombinedInterpreter extends BasicInterpreter {
           dereferencedValues[((Trackable)value).getOriginInsnIndex()] = true;
         }
         return track(origin, super.unaryOperation(insn, value));
+      case PUTSTATIC:
+        if (!staticFields.isEmpty()) {
+          FieldInsnNode node = (FieldInsnNode)insn;
+          Member field = new Member(node.owner, node.name, node.desc);
+          staticFields.computeIfPresent(field, (f, v) -> value);
+        }
+        break;
       case CHECKCAST:
         if (value instanceof NthParamValue) {
           return new NthParamValue(Type.getObjectType(((TypeInsnNode)insn).desc), ((NthParamValue)value).n);

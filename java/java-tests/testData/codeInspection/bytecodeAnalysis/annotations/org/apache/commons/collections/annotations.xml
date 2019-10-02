@@ -134,6 +134,9 @@
     <item name='org.apache.commons.collections.BagUtils org.apache.commons.collections.SortedBag unmodifiableSortedBag(org.apache.commons.collections.SortedBag) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='org.apache.commons.collections.BeanMap NULL_ARGUMENTS'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
     <item name='org.apache.commons.collections.BeanMap boolean containsValue(java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
