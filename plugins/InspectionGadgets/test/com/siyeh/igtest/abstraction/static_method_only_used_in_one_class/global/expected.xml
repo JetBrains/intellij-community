@@ -2,7 +2,15 @@
 <problems>
   <problem>
     <file>One.java</file>
-    <line>5</line>
+    <line>7</line>
     <description>Static method &lt;code&gt;epibrate()&lt;/code&gt; is only used from class 'Two' #loc</description>
+  </problem>
+
+  <problem>
+    <file>One.java</file>
+    <line>5</line>
+    <description>Static field &lt;code&gt;SAUCE&lt;/code&gt; is only used from class 'Two' #loc</description>
+    <offset>29</offset>
+    <length>5</length>
   </problem>
 </problems>
