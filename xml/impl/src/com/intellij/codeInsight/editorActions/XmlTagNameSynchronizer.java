@@ -139,7 +139,8 @@ public final class XmlTagNameSynchronizer implements CommandListener, EditorFact
       if (!WebEditorOptions.getInstance().isSyncTagEditing()) return;
 
       final Document document = event.getDocument();
-      if (myApplying || UndoManager.getInstance(Objects.requireNonNull(myEditor.getProject())).isUndoInProgress() ||
+      Project project = Objects.requireNonNull(myEditor.getProject());
+      if (myApplying || project.isDefault() || UndoManager.getInstance(project).isUndoInProgress() ||
           !PomModelImpl.isAllowPsiModification() || document.isInBulkUpdate()) {
         return;
       }
