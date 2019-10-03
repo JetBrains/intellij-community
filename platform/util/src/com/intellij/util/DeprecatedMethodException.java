@@ -2,16 +2,23 @@
 package com.intellij.util;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Set;
+
 public class DeprecatedMethodException extends RuntimeException {
+  private static final Set<String> BEAT_DEAD_HORSE = ContainerUtil.newConcurrentSet();
   private static final Logger LOG = Logger.getInstance(DeprecatedMethodException.class);
   private DeprecatedMethodException(@NotNull String message) {
     super(message);
   }
 
   public static void report(@NotNull String message) {
-    LOG.warn(new DeprecatedMethodException("This method in " + ReflectionUtil.findCallerClass(2) +
-                                           " is deprecated and going to be removed soon. "+message));
+    String text = "This method in " + ReflectionUtil.findCallerClass(2) +
+                      " is deprecated and going to be removed soon. " + message;
+    if (BEAT_DEAD_HORSE.add(text)) {
+      LOG.warn(new DeprecatedMethodException(text));
+    }
   }
 }
