@@ -6,7 +6,6 @@ import com.intellij.codeInsight.generation.GenerateConstructorHandler;
 import com.intellij.codeInsight.generation.GenerationInfo;
 import com.intellij.codeInsight.generation.PsiFieldMember;
 import com.intellij.codeInsight.generation.PsiGenerationInfo;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
@@ -27,7 +26,7 @@ public class LombokGenerateConstructorHandler extends GenerateConstructorHandler
   protected ClassMember[] getAllOriginalMembers(PsiClass aClass) {
     PsiField[] fields = aClass.getFields();
     ArrayList<ClassMember> array = new ArrayList<>();
-    ImplicitUsageProvider[] implicitUsageProviders = Extensions.getExtensions(ImplicitUsageProvider.EP_NAME);
+    List<ImplicitUsageProvider> implicitUsageProviders = ImplicitUsageProvider.EP_NAME.getExtensionList();
     fieldLoop:
     for (PsiField field : fields) {
       if (field.hasModifierProperty(PsiModifier.STATIC)) {

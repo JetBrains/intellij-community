@@ -7,12 +7,12 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
 /**
  * @author Florian Böhm
  */
-public class UtilityClassModifierTest extends LightCodeInsightFixtureTestCase {
+public class UtilityClassModifierTest extends LightJavaCodeInsightFixtureTestCase {
 
   @Override
   protected String getTestDataPath() {
