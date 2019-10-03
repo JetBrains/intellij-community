@@ -87,12 +87,23 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView, private v
   private val inclusionEventDispatcher = EventDispatcher.create(InclusionListener::class.java)
 
   private val centerPanel = simplePanel()
-  private val buttonPanel = simplePanel()
+  private val buttonPanel = simplePanel().apply { background = BACKGROUND_COLOR }
   private val actions = ActionManager.getInstance().getAction("ChangesView.CommitToolbar") as ActionGroup
   private val toolbar = ActionManager.getInstance().createActionToolbar("ChangesView.CommitToolbar", actions, false).apply {
     setTargetComponent(this@ChangesViewCommitPanel)
     component.isOpaque = false
   }
+  private val commitActionToolbar =
+    ActionManager.getInstance().createActionToolbar(
+      ActionPlaces.UNKNOWN,
+      DefaultActionGroup(ActionManager.getInstance().getAction("Vcs.ToggleAmendCommitMode")),
+      true
+    ).apply {
+      setTargetComponent(this@ChangesViewCommitPanel)
+      setReservePlaceAutoPopupIcon(false)
+      component.isOpaque = false
+    }
+
   private val commitMessage = CommitMessage(project, false, false, true).apply {
     editorField.addSettingsProvider { it.setBorder(emptyLeft(3)) }
     editorField.setPlaceholder("Commit Message")
@@ -145,13 +156,15 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView, private v
   }
 
   private fun buildLayout() {
-    buttonPanel.addToCenter(
-      createHorizontalPanel().apply {
-        add(commitButton)
-        add(CurrentBranchComponent(project, changesView, this@ChangesViewCommitPanel))
-        add(commitLegend.component)
-      }.withBackground(BACKGROUND_COLOR)
-    ).withBackground(BACKGROUND_COLOR)
+    buttonPanel
+      .addToLeft(commitActionToolbar.component)
+      .addToCenter(
+        createHorizontalPanel().apply {
+          add(commitButton)
+          add(CurrentBranchComponent(project, changesView, this@ChangesViewCommitPanel))
+          add(commitLegend.component)
+        }.withBackground(BACKGROUND_COLOR)
+      )
     centerPanel.addToCenter(commitMessage).addToBottom(buttonPanel)
 
     addToCenter(centerPanel)
