@@ -30,7 +30,6 @@ import com.intellij.util.indexing.impl.forward.IntForwardIndex;
 import com.intellij.util.indexing.impl.forward.IntForwardIndexAccessor;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataOutputStream;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -241,7 +240,7 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
   }
 
   @NotNull
-  protected Computable<Boolean> createIndexUpdateComputation(@NotNull UpdateData<Key, Value> updateData) {
+  protected Computable<Boolean> createIndexUpdateComputation(@NotNull AbstractUpdateData<Key, Value> updateData) {
     return () -> {
       try {
         updateWithMap(updateData);
@@ -346,7 +345,7 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
     }
   };
 
-  public void updateWithMap(@NotNull UpdateData<Key, Value> updateData) throws StorageException {
+  public void updateWithMap(@NotNull AbstractUpdateData<Key, Value> updateData) throws StorageException {
     getWriteLock().lock();
     try {
       IndexId oldIndexId = DebugAssertions.DEBUG_INDEX_ID.get();
