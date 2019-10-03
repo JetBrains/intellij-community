@@ -2,20 +2,15 @@
 package com.intellij.openapi.externalSystem.autoimport
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Experimental
 interface ExternalSystemProjectTracker : Disposable {
 
   /**
-   * Disables project tracking
-   * It allows to track project changes manually
-   */
-  var isDisabled: Boolean
-
-  /**
-   * Starts tracking of project settings that will defined by [projectAware]
-   * It allows to add some external project updaters on single ide project
-   *  e.g. incremental auto update, multiple build systems in single project and etc
+   * Starts tracking of project settings that will be defined by [projectAware]
    */
   fun register(projectAware: ExternalSystemProjectAware)
 
@@ -25,9 +20,8 @@ interface ExternalSystemProjectTracker : Disposable {
   fun remove(id: ExternalSystemProjectId)
 
   /**
-   * Marks dirty of project settings that will defined by [ExternalSystemProjectAware] with [id]
+   * Marks project settings dirty
    * It allows to schedule unconditional project refresh
-   *  e.g. broken project model
    */
   fun markDirty(id: ExternalSystemProjectId)
 
@@ -36,15 +30,10 @@ interface ExternalSystemProjectTracker : Disposable {
    */
   fun scheduleProjectRefresh()
 
-  /**
-   * Schedules update of project notification visibility state
-   */
-  fun scheduleProjectNotificationUpdate()
-
   companion object {
     @JvmStatic
     fun getInstance(project: Project): ExternalSystemProjectTracker {
-      return project.getComponent(ExternalSystemProjectTracker::class.java)
+      return ServiceManager.getService(project, ExternalSystemProjectTracker::class.java)
     }
   }
 }

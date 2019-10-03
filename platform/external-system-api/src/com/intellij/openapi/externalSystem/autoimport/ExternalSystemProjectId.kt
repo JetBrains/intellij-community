@@ -2,8 +2,10 @@
 package com.intellij.openapi.externalSystem.autoimport
 
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
-import java.io.File
+import com.intellij.util.PathUtil
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Experimental
 data class ExternalSystemProjectId(val systemId: ProjectSystemId, val externalProjectPath: String) {
-  val readableName = "${systemId.readableName} (${File(externalProjectPath).name})"
+  val readableName = "${systemId.readableName} (${PathUtil.getFileName(externalProjectPath)})"
 }

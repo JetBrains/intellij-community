@@ -2,28 +2,16 @@
 package com.intellij.openapi.externalSystem.autoimport
 
 import com.intellij.openapi.Disposable
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Experimental
 interface ExternalSystemProjectAware {
 
-  /**
-   * Identifier of the controlled project
-   */
   val projectId: ExternalSystemProjectId
 
-  /**
-   * Project settings files
-   * It allows to trace project changes, whenever possible ignores empty changes:
-   *  e.g. comments, spaces and etc
-   */
   val settingsFiles: Set<String>
 
-  /**
-   * Subscribes on update events
-   */
   fun subscribe(listener: ExternalSystemProjectRefreshListener, parentDisposable: Disposable)
 
-  /**
-   * Refreshes external project model
-   */
   fun refreshProject()
 }
