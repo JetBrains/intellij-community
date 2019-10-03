@@ -49,6 +49,10 @@ data class InferenceUnitGraph(val units: List<InferenceUnitNode>) {
     }.forEach { parameter ->
       units.find { it.type == parameter }?.run { visitTypes(this, visited, order) }
     }
+    val parent = unit.parent
+    if (parent != null) {
+      visitTypes(parent, visited, order)
+    }
     order.add(unit)
   }
 }
