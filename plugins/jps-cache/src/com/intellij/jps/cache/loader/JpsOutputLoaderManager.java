@@ -10,19 +10,19 @@ import com.intellij.jps.cache.git.GitRepositoryUtil;
 import com.intellij.jps.cache.hashing.PersistentCachingModuleHashingService;
 import com.intellij.jps.cache.loader.JpsOutputLoader.LoaderStatus;
 import com.intellij.jps.cache.ui.SegmentedProgressIndicatorManager;
+import com.intellij.notification.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.PerformInBackgroundOption;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.Arrays;
@@ -37,6 +37,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class JpsOutputLoaderManager implements ProjectComponent {
   private static final Logger LOG = Logger.getInstance("com.intellij.jps.cache.loader.JpsOutputLoaderManager");
   private static final String LATEST_COMMIT_ID = "JpsOutputLoaderManager.latestCommitId";
+  private static final String PROGRESS_TITLE = "Updating Compilation Caches";
+  private static final NotificationGroup NOTIFICATION_GROUP = new NotificationGroup("Compile Output Loader",
+                                                                                    NotificationDisplayType.STICKY_BALLOON, true);
   private static final double TOTAL_SEGMENT_SIZE = 0.9;
   private PersistentCachingModuleHashingService myModuleHashingService;
   private final AtomicBoolean hasRunningTask;
@@ -70,54 +73,74 @@ public class JpsOutputLoaderManager implements ProjectComponent {
   }
 
   public void load() {
+    Task.Backgroundable task = new Task.Backgroundable(myProject, PROGRESS_TITLE) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        Pair<String, Integer> commitInfo = getNearestCommit();
+        if (commitInfo == null) return;
+        startLoadingForCommit(commitInfo.first);
+      }
+    };
+    BackgroundableProcessIndicator processIndicator = new BackgroundableProcessIndicator(task);
+    processIndicator.setIndeterminate(false);
     if (!canRunNewLoading()) return;
-    ourThreadPool.execute(() -> load(myServerClient.getAllCacheKeys()));
+    ProgressManager.getInstance().runProcessWithProgressAsynchronously(task, processIndicator);
   }
 
-  public void load(@NotNull String currentCommitId) {
-    if (!canRunNewLoading()) return;
+  public void notifyAboutNearestCache() {
     ourThreadPool.execute(() -> {
-      String previousCommitId = PropertiesComponent.getInstance().getValue(LATEST_COMMIT_ID);
-      if (previousCommitId != null && currentCommitId.equals(previousCommitId)) {
-        LOG.debug("Caches already for commit: " + currentCommitId);
-        return;
-      }
-      Set<String> allCacheKeys = myServerClient.getAllCacheKeys();
-      if (allCacheKeys.contains(currentCommitId)) {
-        startLoadingForCommit(currentCommitId);
-      }
-      else {
-        load(allCacheKeys);
-      }
+      Pair<String, Integer> commitInfo = getNearestCommit();
+      if (commitInfo == null) return;
+
+      String commitToLoad = commitInfo.first;
+      String notificationContent = commitInfo.second == 0 ? "Compile server contains caches for the current commit. Do you want to update your data?"
+                                                      : "Compile server contains caches for the " + commitInfo.second + "th commit behind of yours. Do you want to update your data?";
+      ApplicationManager.getApplication().invokeLater(() -> {
+        Notification notification = NOTIFICATION_GROUP.createNotification("Compile Output Loader", notificationContent, NotificationType.INFORMATION, null);
+        notification.addAction(NotificationAction.createSimple("Update Compile Caches", () -> {
+          notification.expire();
+          Task.Backgroundable task = new Task.Backgroundable(myProject, PROGRESS_TITLE) {
+            @Override
+            public void run(@NotNull ProgressIndicator indicator) {
+              startLoadingForCommit(commitToLoad);
+            }
+          };
+          BackgroundableProcessIndicator processIndicator = new BackgroundableProcessIndicator(task);
+          processIndicator.setIndeterminate(false);
+          if (!canRunNewLoading()) return;
+          ProgressManager.getInstance().runProcessWithProgressAsynchronously(task, processIndicator);
+        }));
+        Notifications.Bus.notify(notification);
+      });
     });
+  }
+
+  @Nullable
+  private Pair<String, Integer> getNearestCommit() {
+    Set<String> allCacheKeys = myServerClient.getAllCacheKeys();
+
+    String previousCommitId = PropertiesComponent.getInstance().getValue(LATEST_COMMIT_ID);
+    Iterator<String> commitsIterator = GitRepositoryUtil.getCommitsIterator(myProject);
+    String commitId = "";
+    int commitsBehind = 0;
+    while (commitsIterator.hasNext() && !allCacheKeys.contains(commitId)) {
+      commitId = commitsIterator.next();
+      commitsBehind++;
+    }
+
+    if (!allCacheKeys.contains(commitId)) {
+      LOG.warn("Not found any caches for the latest commits in the brunch");
+      return null;
+    }
+    if (previousCommitId != null && commitId.equals(previousCommitId)) {
+      LOG.debug("The system contains up to date caches");
+      return null;
+    }
+    return Pair.create(commitId, commitsBehind);
   }
 
   public void close() {
     myModuleHashingService.close();
-  }
-
-  private void load(Set<String> allCacheKeys) {
-    ProgressManager.getInstance().runProcess(() -> {
-      ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-      indicator.setText("Calculating nearest commit with portable cache");
-
-      String previousCommitId = PropertiesComponent.getInstance().getValue(LATEST_COMMIT_ID);
-      Iterator<String> commitsIterator = GitRepositoryUtil.getCommitsIterator(myProject);
-      String commitId = "";
-      while (commitsIterator.hasNext() && !allCacheKeys.contains(commitId)) {
-        commitId = commitsIterator.next();
-      }
-
-      if (!allCacheKeys.contains(commitId)) {
-        LOG.warn("Not found any caches for the latest commits in the brunch");
-        return;
-      }
-      if (previousCommitId != null && commitId.equals(previousCommitId)) {
-        LOG.debug("The system contains up to date caches");
-        return;
-      }
-      startLoadingForCommit(commitId);
-    }, createProcessIndicator(myProject));
   }
 
   private void startLoadingForCommit(String commitId) {
@@ -211,15 +234,6 @@ public class JpsOutputLoaderManager implements ProjectComponent {
 
   private static int getThreadPoolSize() {
     return (Runtime.getRuntime().availableProcessors() / 2) > 3 ? 3 : 1;
-  }
-
-  private static ProgressIndicator createProcessIndicator(@NotNull Project project) {
-    BackgroundableProcessIndicator processIndicator = new BackgroundableProcessIndicator(project, "Updating Compilation Caches",
-                                                                                         PerformInBackgroundOption.ALWAYS_BACKGROUND,
-                                                                                         CommonBundle.getCancelButtonText(),
-                                                                                         CommonBundle.getCancelButtonText(), true);
-    processIndicator.setIndeterminate(false);
-    return processIndicator;
   }
 
   private void onFail() {

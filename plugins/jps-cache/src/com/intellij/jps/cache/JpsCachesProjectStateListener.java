@@ -30,6 +30,6 @@ public class JpsCachesProjectStateListener implements StartupActivity, ProjectMa
     LOG.debug("Catch repository git event");
     String currentRevision = repository.getInfo().getCurrentRevision();
     if (currentRevision == null) return;
-    JpsOutputLoaderManager.getInstance(repository.getProject()).load(currentRevision);
+    JpsOutputLoaderManager.getInstance(repository.getProject()).notifyAboutNearestCache();
   }
 }
