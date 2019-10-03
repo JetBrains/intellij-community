@@ -608,6 +608,11 @@ bool LoadJVMLibrary()
     dllName = clientDllName;
   }
 
+  // Sometimes the parent process may call SetDllDirectory to change its own context, and this will be inherited by the
+  // launcher. In that case, we won't be able to load the libraries from the current directory that is set below. So, to
+  // fix such cases, we have to reset the DllDirectory to restore the default DLL loading order.
+  SetDllDirectoryW(nullptr);
+
   // Call SetCurrentDirectory to allow jvm.dll to load the corresponding runtime libraries.
   SetCurrentDirectoryA(binDir.c_str());
   hJVM = LoadLibraryA(dllName.c_str());
