@@ -36,49 +36,28 @@ public abstract class WindowStateService {
 
 
   /**
-   * Loads a state of the specified window by the specified key.
+   * Returns a window state by the specified key.
+   * Also it adds a listener to save a modified state automatically.
    *
    * @param key    an unique string key
-   * @param window a window which state should be changed
-   * @return {@code true} if a state is loaded successfully, {@code false} otherwise
+   * @param window a window state which should be watched for
+   * @return a corresponding window state
    */
-  public final boolean loadState(@NotNull String key, @NotNull Window window) {
-    return loadStateFor(project, key, window);
+  public final WindowState getState(@NotNull String key, @NotNull Window window) {
+    return getStateFor(project, key, window);
   }
 
   /**
-   * Loads a state of the specified window by the given screen and the specified key.
-   * A screen can be specified by {@link Project}, {@link Window}, or {@link GraphicsDevice}.
+   * Returns a window state by the given project and the specified key.
+   * Also it adds a listener to save a modified state automatically.
    *
-   * @param object an object that specifies a screen to which a window state belongs
-   * @param key    an unique string key
-   * @param window a window which state should be changed
-   * @return {@code true} if a state is loaded successfully, {@code false} otherwise
+   * @param project an project that specifies a main screen
+   * @param key     an unique string key
+   * @param window  a window state which should be watched for
+   * @return a corresponding window state
    */
-  public abstract boolean loadStateFor(Object object, @NotNull String key, @NotNull Window window);
+  public abstract WindowState getStateFor(@Nullable Project project, @NotNull String key, @NotNull Window window);
 
-  /**
-   * Stores the specified location that corresponds to the specified key.
-   * If it is {@code null} the stored location will be removed.
-   *
-   * @param key    an unique string key
-   * @param window a window which state should be saved
-   */
-  public final void saveState(@NotNull String key, @NotNull Window window) {
-    saveStateFor(project, key, window);
-  }
-
-  /**
-   * Stores the specified location that corresponds to the given screen and the specified key.
-   * If it is {@code null} the stored location will be removed.
-   * A screen can be specified by {@link Project}, {@link Window}, or {@link GraphicsDevice}.
-   * Do not use a screen which is calculated from the specified window.
-   *
-   * @param object an object that specifies a screen to which a window state belongs
-   * @param key    an unique string key
-   * @param window a window which state should be saved
-   */
-  public abstract void saveStateFor(Object object, @NotNull String key, @NotNull Window window);
 
   /**
    * Returns a location that corresponds to the specified key or {@code null}

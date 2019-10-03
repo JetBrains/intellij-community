@@ -7,7 +7,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.ui.FrameState;
 import com.intellij.ui.ScreenUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -110,7 +109,7 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Modi
   }
 
   @Override
-  public boolean loadStateFor(Object object, @NotNull String key, @NotNull Window window) {
+  public WindowState getStateFor(@Nullable Project project, @NotNull String key, @NotNull Window window) {
     synchronized (myRunnableMap) {
       WindowStateBean state = WindowStateAdapter.getState(window);
       Runnable runnable = myRunnableMap.put(key, new Runnable() {
@@ -123,7 +122,7 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Modi
             myModificationCount = newModificationCount;
             Point location = state.getLocation();
             Dimension size = state.getSize();
-            putFor(object, key,
+            putFor(project, key,
                    location, location != null,
                    size, size != null,
                    Frame.MAXIMIZED_BOTH == state.getExtendedState(), true,
@@ -135,16 +134,7 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Modi
         runnable.run();
       }
     }
-    WindowState state = getFor(object, key, WindowState.class);
-    if (state == null) return false;
-    state.applyTo(window);
-    return true;
-  }
-
-  @Override
-  public void saveStateFor(Object object, @NotNull String key, @NotNull Window window) {
-    FrameState state = FrameState.getFrameState(window);
-    putFor(object, key, state.getLocation(), true, state.getSize(), true, state.isMaximized(), true, state.isFullScreen(), true);
+    return getFor(project, key, WindowState.class);
   }
 
   @Override

@@ -16,6 +16,7 @@ import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.BooleanGetter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.WindowState;
 import com.intellij.openapi.util.WindowStateService;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.*;
@@ -66,7 +67,6 @@ public class FrameWrapper implements Disposable, DataProvider {
   private boolean myDisposed;
 
   protected StatusBar myStatusBar;
-  private boolean myShown;
   private final boolean myIsDialog;
 
   public FrameWrapper(Project project) {
@@ -174,15 +174,15 @@ public class FrameWrapper implements Disposable, DataProvider {
       AppUIUtil.updateWindowIcon(myFrame);
     }
 
+    WindowState state = myDimensionKey == null ? null : getWindowStateService(myProject).getState(myDimensionKey, frame);
     if (restoreBounds) {
-      loadFrameState();
+      loadFrameState(state);
     }
 
     IdeMenuBar.bindAppMenuOfParent(frame, WindowManager.getInstance().getIdeFrame(myProject));
 
     myFocusWatcher = new FocusWatcher();
     myFocusWatcher.install(myComponent);
-    myShown = true;
     frame.setVisible(true);
   }
 
@@ -204,10 +204,6 @@ public class FrameWrapper implements Disposable, DataProvider {
 
     Window frame = myFrame;
     StatusBar statusBar = myStatusBar;
-
-    if (myShown && myDimensionKey != null) {
-      WindowStateService.getInstance().saveStateFor(myProject, myDimensionKey, frame);
-    }
 
     myFrame = null;
     myPreferredFocus = null;
@@ -326,9 +322,12 @@ public class FrameWrapper implements Disposable, DataProvider {
     myOnCloseHandler = onCloseHandler;
   }
 
-  protected void loadFrameState() {
+  protected void loadFrameState(@Nullable WindowState state) {
     final Window frame = getFrame();
-    if (myDimensionKey != null && !WindowStateService.getInstance().loadStateFor(myProject, myDimensionKey, frame)) {
+    if (state != null) {
+      state.applyTo(frame);
+    }
+    else {
       final IdeFrame ideFrame = WindowManagerEx.getInstanceEx().getIdeFrame(myProject);
       if (ideFrame != null) {
         frame.setBounds(ideFrame.suggestChildFrameBounds());
@@ -565,5 +564,10 @@ public class FrameWrapper implements Disposable, DataProvider {
         close();
       }
     }
+  }
+
+  @NotNull
+  private static WindowStateService getWindowStateService(@Nullable Project project) {
+    return project == null ? WindowStateService.getInstance() : WindowStateService.getInstance(project);
   }
 }
