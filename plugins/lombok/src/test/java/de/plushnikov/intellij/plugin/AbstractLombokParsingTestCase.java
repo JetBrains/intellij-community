@@ -113,7 +113,8 @@ public abstract class AbstractLombokParsingTestCase extends AbstractLombokLightC
     LOG.debug("IntelliJ fields for class " + beforeClass.getName() + ": " + Arrays.toString(beforeClassFields));
     LOG.debug("Theirs fields for class " + afterClass.getName() + ": " + Arrays.toString(afterClassFields));
 
-    assertEquals("Field counts are different for Class " + beforeClass.getName(), afterClassFields.length, beforeClassFields.length);
+    assertEquals("Field are different for Class: " + beforeClass.getName(),
+      Arrays.toString(toList(afterClassFields)), Arrays.toString(toList(beforeClassFields)));
 
     for (PsiField afterField : afterClassFields) {
       boolean compared = false;
@@ -255,8 +256,9 @@ public abstract class AbstractLombokParsingTestCase extends AbstractLombokLightC
     return result;
   }
 
-  private String[] toList(PsiMethod[] beforeMethods) {
-    return Arrays.stream(beforeMethods).map(PsiMethod::getName).sorted(String.CASE_INSENSITIVE_ORDER).toArray(String[]::new);
+  private String[] toList(PsiNamedElement[] beforeMethods) {
+    return Arrays.stream(beforeMethods).map(PsiNamedElement::getName)
+      .filter(java.util.Objects::isNull).sorted(String.CASE_INSENSITIVE_ORDER).toArray(String[]::new);
   }
 
   private void compareThrows(PsiReferenceList beforeThrows, PsiReferenceList afterThrows, PsiMethod psiMethod) {

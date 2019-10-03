@@ -1,31 +1,18 @@
 package de.plushnikov.intellij.plugin;
 
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.projectRoots.JavaSdk;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ContentEntry;
-import com.intellij.openapi.roots.LanguageLevelModuleExtension;
-import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
-import com.intellij.util.PathUtil;
 import junit.framework.ComparisonFailure;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
-import java.util.regex.Pattern;
 
 public abstract class AbstractLombokLightCodeInsightTestCase extends LightJavaCodeInsightFixtureTestCase {
-  private static final String LOMBOK_SRC_PATH = "./generated/src/lombok";
 
   @Override
   protected String getTestDataPath() {
@@ -40,37 +27,18 @@ public abstract class AbstractLombokLightCodeInsightTestCase extends LightJavaCo
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return new DefaultLightProjectDescriptor() {
-      @Override
-      public Sdk getSdk() {
-        return JavaSdk.getInstance().createJdk("java 1.8", "lib/mockJDK-1.8", false);
-      }
-
-      @Override
-      public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
-        model.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(LanguageLevel.JDK_1_8);
-      }
-    };
+    return LombokTestUtil.getProjectDescriptor();
   }
 
   @Override
   public void setUp() throws Exception {
-    VfsRootAccess.allowRootAccess(new File(getTestDataPath(), getBasePath()).getCanonicalPath(),
-      new File(LOMBOK_SRC_PATH).getCanonicalPath());
-
     super.setUp();
-    loadLombokFilesFrom(LOMBOK_SRC_PATH);
+
+    loadLombokLibrary();
   }
 
-  protected void loadLombokFilesFrom(final String srcPath) {
-    List<File> filesByMask = FileUtil.findFilesByMask(Pattern.compile(".*\\.java"), new File(srcPath));
-    filesByMask.stream().map(File::getPath).filter(this::acceptLombokFile).map(PathUtil::toSystemIndependentName).forEach(
-      filePath -> myFixture.copyFileToProject(filePath, filePath.substring(srcPath.lastIndexOf("/") + 1))
-    );
-  }
-
-  protected boolean acceptLombokFile(String javaFilePath) {
-    return true;
+  protected void loadLombokLibrary() {
+    LombokTestUtil.loadLombokLibrary(myFixture.getProjectDisposable(), getModule());
   }
 
   protected PsiFile loadToPsiFile(String fileName) {
