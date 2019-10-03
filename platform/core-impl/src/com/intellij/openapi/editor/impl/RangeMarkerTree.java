@@ -171,51 +171,7 @@ class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> imple
       checkMax(false);
 
       if (!affected.isEmpty()) {
-        // reverse direction to visit leaves first - it's cheaper to compute maxEndOf for them first
-        for (int i = affected.size() - 1; i >= 0; i--) {
-          IntervalNode<T> node = affected.get(i);
-          // assumption: interval.getEndOffset() will never be accessed during remove()
-          int startOffset = node.intervalStart();
-          int endOffset = node.intervalEnd();
-          removeNode(node);
-          checkMax(false);
-          node.clearDelta();   // we can do it because all the deltas up from the root to this node were cleared in the collectAffectedMarkersAndShiftSubtrees
-          node.setParent(null);
-          node.setLeft(null);
-          node.setRight(null);
-          node.setValid(true);
-          assert node.intervalStart() == startOffset;
-          assert node.intervalEnd() == endOffset;
-        }
-        checkMax(true);
-        for (IntervalNode<T> node : affected) {
-          List<Getter<T>> keys = node.intervals;
-          if (keys.isEmpty()) continue; // collected away
-
-          RangeMarkerImpl marker = null;
-          for (int i = keys.size() - 1; i >= 0; i--) {
-            Getter<T> key = keys.get(i);
-            marker = (RangeMarkerImpl)key.get();
-            if (marker != null) {
-              if (!marker.isValid()) {
-                // marker can become invalid on its own, e.g. FoldRegion
-                node.removeIntervalInternal(i);
-                marker = null;
-                continue;
-              }
-              break;
-            }
-          }
-          if (marker == null) continue; // node remains removed from the tree
-          marker.documentChanged(e);
-          if (marker.isValid()) {
-            findOrInsertWithIntervals(node);
-          }
-          else {
-            node.setValid(false);
-            ((RMNode<?>)node).onRemoved();
-          }
-        }
+        updateAffectedNodes(e, affected);
       }
       checkMax(true);
 
@@ -224,6 +180,54 @@ class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> imple
     }
     finally {
       l.writeLock().unlock();
+    }
+  }
+
+  private void updateAffectedNodes(@NotNull DocumentEvent e, List<IntervalNode<T>> affected) {
+    // reverse direction to visit leaves first - it's cheaper to compute maxEndOf for them first
+    for (int i = affected.size() - 1; i >= 0; i--) {
+      IntervalNode<T> node = affected.get(i);
+      // assumption: interval.getEndOffset() will never be accessed during remove()
+      int startOffset = node.intervalStart();
+      int endOffset = node.intervalEnd();
+      removeNode(node);
+      checkMax(false);
+      node.clearDelta();   // we can do it because all the deltas up from the root to this node were cleared in the collectAffectedMarkersAndShiftSubtrees
+      node.setParent(null);
+      node.setLeft(null);
+      node.setRight(null);
+      node.setValid(true);
+      assert node.intervalStart() == startOffset;
+      assert node.intervalEnd() == endOffset;
+    }
+    checkMax(true);
+    for (IntervalNode<T> node : affected) {
+      List<Getter<T>> keys = node.intervals;
+      if (keys.isEmpty()) continue; // collected away
+
+      RangeMarkerImpl marker = null;
+      for (int i = keys.size() - 1; i >= 0; i--) {
+        Getter<T> key = keys.get(i);
+        marker = (RangeMarkerImpl)key.get();
+        if (marker != null) {
+          if (!marker.isValid()) {
+            // marker can become invalid on its own, e.g. FoldRegion
+            node.removeIntervalInternal(i);
+            marker = null;
+            continue;
+          }
+          break;
+        }
+      }
+      if (marker == null) continue; // node remains removed from the tree
+      marker.documentChanged(e);
+      if (marker.isValid()) {
+        findOrInsertWithIntervals(node);
+      }
+      else {
+        node.setValid(false);
+        ((RMNode<?>)node).onRemoved();
+      }
     }
   }
 
