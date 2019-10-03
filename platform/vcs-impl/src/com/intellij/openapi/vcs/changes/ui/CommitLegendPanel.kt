@@ -25,6 +25,7 @@ open class CommitLegendPanel(private val myInfoCalculator: InfoCalculator) {
   open fun update() {
     myRootPanel.clear()
     appendLegend()
+    myRootPanel.isVisible = !isPanelEmpty
   }
 
   private fun appendLegend() = with(myInfoCalculator) {

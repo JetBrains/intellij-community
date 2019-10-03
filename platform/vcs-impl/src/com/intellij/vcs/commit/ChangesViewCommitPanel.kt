@@ -51,6 +51,7 @@ import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import javax.swing.*
 import javax.swing.KeyStroke.getKeyStroke
+import javax.swing.border.Border
 import kotlin.properties.Delegates.observable
 
 private val DEFAULT_COMMIT_ACTION_SHORTCUT = CustomShortcutSet(getKeyStroke(KeyEvent.VK_ENTER, InputEvent.CTRL_DOWN_MASK))
@@ -87,7 +88,8 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView, private v
   private val inclusionEventDispatcher = EventDispatcher.create(InclusionListener::class.java)
 
   private val centerPanel = simplePanel()
-  private val buttonPanel = simplePanel().apply { background = BACKGROUND_COLOR }
+  private val toolbarPanel = simplePanel().apply { isOpaque = false }
+  private var verticalToolbarBorder: Border? = null
   private val actions = ActionManager.getInstance().getAction("ChangesView.CommitToolbar") as ActionGroup
   private val toolbar = ActionManager.getInstance().createActionToolbar("ChangesView.CommitToolbar", actions, false).apply {
     setTargetComponent(this@ChangesViewCommitPanel)
@@ -156,15 +158,21 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView, private v
   }
 
   private fun buildLayout() {
-    buttonPanel
-      .addToLeft(commitActionToolbar.component)
-      .addToCenter(
+    val buttonPanel = simplePanel().apply {
+      background = BACKGROUND_COLOR
+
+      addToLeft(commitActionToolbar.component)
+      addToCenter(
         createHorizontalPanel().apply {
+          background = BACKGROUND_COLOR
+
           add(commitButton)
           add(CurrentBranchComponent(project, changesView, this@ChangesViewCommitPanel))
           add(commitLegend.component)
-        }.withBackground(BACKGROUND_COLOR)
+          add(toolbarPanel)
+        }
       )
+    }
     centerPanel.addToCenter(commitMessage).addToBottom(buttonPanel)
 
     addToCenter(centerPanel)
@@ -177,13 +185,16 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView, private v
     if (isHorizontal) {
       toolbar.setOrientation(SwingConstants.HORIZONTAL)
       toolbar.setReservePlaceAutoPopupIcon(false)
+      verticalToolbarBorder = toolbar.component.border
+      toolbar.component.border = empty()
 
       centerPanel.border = null
-      buttonPanel.addToRight(toolbar.component)
+      toolbarPanel.addToCenter(toolbar.component)
     }
     else {
       toolbar.setOrientation(SwingConstants.VERTICAL)
       toolbar.setReservePlaceAutoPopupIcon(true)
+      verticalToolbarBorder?.let { toolbar.component.border = it }
 
       centerPanel.border = createBorder(JBColor.border(), SideBorder.LEFT)
       addToLeft(toolbar.component)
