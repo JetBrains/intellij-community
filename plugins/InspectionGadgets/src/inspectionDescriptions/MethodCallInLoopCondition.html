@@ -8,7 +8,8 @@ loop statement. In highly resource constrained environments, such calls may
 have adverse performance implications.
   <!-- tooltip end -->
 <p>
-Use the checkbox below to ignore method calls to common java iteration methods like <b>Iterator.hasNext()</b>.
+Use the checkbox below to ignore calls to common Java iteration methods like <b>Iterator.hasNext()</b>
+  and known methods with side-effects like <b>Atomic*.compareAndSet</b>.
 <p>
 
 </body>

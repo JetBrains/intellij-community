@@ -5,6 +5,9 @@ import java.util.ListIterator;
 import java.util.Enumeration;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Queue;
+import java.lang.ref.ReferenceQueue;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class MethodCallInLoopCondition {
     public void foo() {
@@ -44,9 +47,27 @@ public class MethodCallInLoopCondition {
         }
     }
 
-    void d (ResultSet rs) throws SQLException {
+    void d(ResultSet rs) throws SQLException {
         while (rs.next()) {
             rs.getInt(1);
         }
+    }
+
+    void e(Queue<?> q) {
+        while (q.poll() != null) {
+        }
+    }
+
+    void f(ReferenceQueue q) {
+        while (q.poll() != null) {
+        }
+    }
+
+    void g(AtomicReference<String> a) {
+        String prev, next;
+        do {
+            prev = get();
+            next = prev + "+";
+        } while (!compareAndSet(prev, next));
     }
 }
