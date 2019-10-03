@@ -104,6 +104,7 @@ iml_module(
         "//tools/idea/platform/testFramework:intellij.platform.testFramework[module, test]",
         "//tools/idea/.idea/libraries:hamcrest[test]",
         "//tools/idea/platform/external-system-impl:intellij.platform.externalSystem.tests[module, test]",
+        "//prebuilts/tools/common/m2/repository/io/takari/maven-wrapper/0.5.5:jar[test]",
     ],
 )
 
