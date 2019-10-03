@@ -28,6 +28,7 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
   private static final String DUMP_PREFIX = "dump";
   public static final String MESSAGE_FILE_NAME = ".message";
   public static final String THROWABLE_FILE_NAME = ".throwable";
+  public static final String APPINFO_FILE_NAME = ".appinfo";
 
   @SuppressWarnings("FieldMayBeFinal") private static boolean DEBUG = false;
 
@@ -48,7 +49,7 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
           File[] files = dir.listFiles();
           if (files != null) {
             List<Attachment> attachments = new ArrayList<>();
-            String message = null, throwable = null;
+            String message = null, throwable = null, appinfo = null;
             List<String> dumps = new ArrayList<>();
             for (File file : files) {
               String text = FileUtil.loadFile(file);
@@ -58,6 +59,9 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
               }
               else if (THROWABLE_FILE_NAME.equals(name)) {
                 throwable = text;
+              }
+              else if (APPINFO_FILE_NAME.equals(name)) {
+                appinfo = text;
               }
               else if (name.startsWith(REPORT_PREFIX)) {
                 attachments.add(createReportAttachment(duration, text));
@@ -72,7 +76,12 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
             cleanup(dir);
 
             if (message != null && throwable != null && !attachments.isEmpty()) {
-              report(LogMessage.createEvent(new Freeze(throwable), message, attachments.toArray(Attachment.EMPTY_ARRAY)));
+              IdeaLoggingEvent event = LogMessage.createEvent(new Freeze(throwable), message, attachments.toArray(Attachment.EMPTY_ARRAY));
+              Object data = event.getData();
+              if (data instanceof AbstractMessage) {
+                ((AbstractMessage)data).setAppInfo(appinfo);
+              }
+              report(event);
             }
           }
         }
@@ -102,6 +111,7 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
   private static void cleanup(File dir) {
     FileUtil.delete(new File(dir, MESSAGE_FILE_NAME));
     FileUtil.delete(new File(dir, THROWABLE_FILE_NAME));
+    FileUtil.delete(new File(dir, APPINFO_FILE_NAME));
   }
 
   @Override
@@ -136,6 +146,13 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
         try {
           FileUtil.writeToFile(new File(dir, MESSAGE_FILE_NAME), event.getMessage());
           FileUtil.writeToFile(new File(dir, THROWABLE_FILE_NAME), event.getThrowableText());
+          File appInfoFile = new File(dir, APPINFO_FILE_NAME);
+          if (!appInfoFile.exists()) {
+            String appInfo = ITNProxy.getAppInfoString();
+            if (appInfo != null) {
+              FileUtil.writeToFile(appInfoFile, appInfo);
+            }
+          }
         }
         catch (IOException ignored) {
         }

@@ -23,6 +23,7 @@ public abstract class AbstractMessage {
   private Integer myAssigneeId;
   private boolean myAssigneeVisible;
   private Long myDevelopersTimestamp;
+  private String myAppInfo;
 
   public abstract @NotNull Throwable getThrowable();
   public abstract @NotNull String getThrowableText();
@@ -120,5 +121,13 @@ public abstract class AbstractMessage {
   @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
   public List<Attachment> getAttachments() {
     return getIncludedAttachments();
+  }
+
+  protected String getAppInfo() {
+    return myAppInfo;
+  }
+
+  protected void setAppInfo(String appInfo) {
+    myAppInfo = appInfo;
   }
 }
