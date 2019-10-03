@@ -13,13 +13,13 @@ lombok-intellij-plugin [![Donate](https://www.paypal.com/en_US/i/btn/btn_donateC
 
 Provides support for lombok annotations to write great Java code with IntelliJ IDEA.
 
-**Last version (0.25) released on 01.05.2019**
+**Last version (0.27) released on 03.10.2019**
 
-Thirty version of plugin released. Contains a lot of bugfixes and some new features!
+32nd version of plugin released. Contains a lot of bugfixes and long awaiting feature @SuperBuilder!
 
 Install it automatically from IntelliJ Idea plugin repository.
 
-Tested and supports IntelliJ versions: 2016.2, 2016.3, 2017.X, 2018.X, 2019.1
+Tested and supports IntelliJ versions: 2016.2, 2016.3, 2017.X, 2018.X, 2019.1 and 2019.2
 
 Last support for IntelliJ 15.0.6 and 2016.1 by plugin version 0.19!
 
@@ -56,8 +56,6 @@ Features / Supports
 
 Many features of the plugin (including warnings) could be disabled through per-project settings.
 
-__Note:__ To make use of plugin features like `@UtilityClass` and for _better_ `val` and `Value` support while using IntelliJ 14.1 - 2016.1, you need to enable "Runtime patching" in Plugin settings. This is __not__ needed with 2016.2 and higher.
-
 Installation
 ------------
 ### Plugin Installation
@@ -87,7 +85,7 @@ In your `build.gradle`:
 ```groovy
 // 'compile' can be changed to 'compileOnly' for Gradle 2.12+
 // or 'provided' if using 'propdeps' plugin from SpringSource
-compile "org.projectlombok:lombok:1.18.8"
+compile "org.projectlombok:lombok:1.18.10"
 ```
 
 ##### Maven
@@ -97,7 +95,7 @@ In your `pom.xml`:
 	<dependency>
 		<groupId>org.projectlombok</groupId>
 		<artifactId>lombok</artifactId>
-		<version>1.18.8</version>
+		<version>1.18.10</version>
 		<scope>provided</scope>
 	</dependency>
 </dependencies>
@@ -106,7 +104,7 @@ In your `pom.xml`:
 ##### Ivy
 In your `ivy.xml`:
 ```xml
-<dependency org="org.projectlombok" name="lombok" rev="1.18.8" conf="build" />
+<dependency org="org.projectlombok" name="lombok" rev="1.18.10" conf="build" />
 ```
 
 IntelliJ and Eclipse compiler
