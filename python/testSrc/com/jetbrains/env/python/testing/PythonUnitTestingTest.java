@@ -831,7 +831,7 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
         private static final String SOME_RANDOM_DIR = "//some/random/ddir";
 
         @Override
-        public void runTestOn(@NotNull final String sdkHome, @Nullable Sdk existingSdk) throws InvalidSdkException, IOException {
+        public void runTestOn(@NotNull final String sdkHome, @Nullable Sdk existingSdk) throws InvalidSdkException {
           // Set default working directory to some random location before actual exection
           final PyUnitTestConfiguration templateConfiguration = getTemplateConfiguration(PyUnitTestFactory.INSTANCE);
           templateConfiguration.setWorkingDirectory(SOME_RANDOM_DIR);

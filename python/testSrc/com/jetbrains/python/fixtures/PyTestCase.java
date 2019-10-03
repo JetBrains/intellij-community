@@ -403,31 +403,7 @@ public abstract class PyTestCase extends UsefulTestCase {
     return new File(PythonHelpersLocator.getPythonCommunityPath(), "helpers").getPath();
   }
 
-  /**
-   * Creates run configuration from right click menu
-   *
-   * @param fixture       test fixture
-   * @param expectedClass expected class of run configuration
-   * @param <C>           expected class of run configuration
-   * @return configuration (if created) or null (otherwise)
-   */
-  @Nullable
-  public static <C extends RunConfiguration> C createRunConfigurationFromContext(
-    @NotNull final CodeInsightTestFixture fixture,
-    @NotNull final Class<C> expectedClass) {
-    final DataContext context = DataManager.getInstance().getDataContext(fixture.getEditor().getComponent());
-    for (final RunConfigurationProducer<?> producer : RunConfigurationProducer.EP_NAME.getExtensionList()) {
-      final ConfigurationFromContext fromContext = producer.createConfigurationFromContext(ConfigurationContext.getFromContext(context));
-      if (fromContext == null) {
-        continue;
-      }
-      final C result = PyUtil.as(fromContext.getConfiguration(), expectedClass);
-      if (result != null) {
-        return result;
-      }
-    }
-    return null;
-  }
+
 
   /**
    * Compares sets with string sorting them and displaying one-per-line to make comparision easier
