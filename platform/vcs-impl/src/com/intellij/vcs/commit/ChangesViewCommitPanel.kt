@@ -14,6 +14,9 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.registry.RegistryValue
+import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.changes.*
@@ -52,6 +55,8 @@ import kotlin.properties.Delegates.observable
 
 private val DEFAULT_COMMIT_ACTION_SHORTCUT = CustomShortcutSet(getKeyStroke(KeyEvent.VK_ENTER, InputEvent.CTRL_DOWN_MASK))
 private val BACKGROUND_COLOR = JBColor { getTreeBackground() }
+
+private val isCompactCommitLegend = Registry.get("vcs.non.modal.commit.legend.compact")
 
 private fun createHorizontalPanel(): JBPanel<*> = JBPanel<JBPanel<*>>(HorizontalLayout(scale(16), SwingConstants.CENTER))
 
@@ -117,6 +122,13 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView, private v
 
   init {
     Disposer.register(this, commitMessage)
+
+    commitLegend.isCompact = isCompactCommitLegend.asBoolean()
+    isCompactCommitLegend.addListener(object : RegistryValueListener.Adapter() {
+      override fun afterValueChanged(value: RegistryValue) {
+        commitLegend.isCompact = value.asBoolean()
+      }
+    }, this)
 
     buildLayout()
 
