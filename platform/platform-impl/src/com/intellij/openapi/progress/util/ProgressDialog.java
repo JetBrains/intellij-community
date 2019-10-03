@@ -12,6 +12,7 @@ import com.intellij.openapi.ui.impl.DialogWrapperPeerImpl;
 import com.intellij.openapi.ui.impl.GlassPaneDialogWrapperPeer;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.PopupBorder;
 import com.intellij.ui.TitlePanel;
@@ -100,6 +101,7 @@ class ProgressDialog implements Disposable {
   @NotNull
   private static String fitTextToLabel(@Nullable String fullText, @NotNull JLabel label) {
     if (fullText == null || fullText.isEmpty()) return " ";
+    fullText = StringUtil.last(fullText, 500, true).toString(); // avoid super long strings
     while (label.getFontMetrics(label.getFont()).stringWidth(fullText) > label.getWidth()) {
       int sep = fullText.indexOf(File.separatorChar, 4);
       if (sep < 0) return fullText;
