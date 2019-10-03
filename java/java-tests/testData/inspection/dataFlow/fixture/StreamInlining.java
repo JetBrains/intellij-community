@@ -61,7 +61,7 @@ public class StreamInlining {
   void testIsInstanceIncomplete(List<?> objects) {
     IntStream is = objects.stream()
       .filter(String.class::isInstance)
-      .mapToInt(x -> (<warning descr="Casting 'x' to 'Integer' may produce 'ClassCastException'">Integer</warning>)x);
+      .mapToInt(x -> (<warning descr="Casting 'x' to 'Integer' will produce 'ClassCastException' for any non-null value">Integer</warning>)x);
 
     objects.stream()
       .filter(String.class::isInstance)
