@@ -1155,13 +1155,13 @@ public class PluginManagerCore {
 
     boolean parallel = SystemProperties.getBooleanProperty("parallel.pluginDescriptors.loading", true);
     try (LoadDescriptorsContext context = new LoadDescriptorsContext(parallel)) {
+      loadDescriptorsFromClassPath(urlsFromClassPath, result, context, platformPluginURL);
       loadDescriptorsFromDir(new File(PathManager.getPluginsPath()), result, false, context);
       if (!isUnitTestMode) {
         loadDescriptorsFromDir(new File(PathManager.getPreInstalledPluginsPath()), result, true, context);
       }
 
       loadDescriptorsFromProperty(result, context);
-      loadDescriptorsFromClassPath(urlsFromClassPath, result, context, platformPluginURL);
 
       if (isUnitTestMode && result.size() <= 1) {
         // We're running in unit test mode but the classpath doesn't contain any plugins; try to load bundled plugins anyway
