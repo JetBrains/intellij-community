@@ -9,6 +9,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrSuperReferenceResolver.resolveSuperExpression
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrThisReferenceResolver.resolveThisExpression
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
+import org.jetbrains.plugins.groovy.lang.psi.util.getRValue
 import org.jetbrains.plugins.groovy.lang.psi.util.isPropertyName
 import org.jetbrains.plugins.groovy.lang.resolve.GrReferenceResolveRunner
 import org.jetbrains.plugins.groovy.lang.resolve.GrResolverProcessor
@@ -55,10 +56,11 @@ class GrRValueExpressionReference(ref: GrReferenceExpressionImpl) : GrReferenceE
   }
 }
 
-class GrLValueExpressionReference(ref: GrReferenceExpressionImpl, private val argument: Argument) : GrReferenceExpressionReference(ref) {
+class GrLValueExpressionReference(ref: GrReferenceExpressionImpl) : GrReferenceExpressionReference(ref) {
 
   override fun buildProcessor(name: String, place: PsiElement, kinds: Set<GroovyResolveKind>): GrResolverProcessor<*> {
-    return lValueProcessor(name, place, kinds, argument)
+    val rValue = requireNotNull(element.getRValue())
+    return lValueProcessor(name, place, kinds, rValue)
   }
 }
 

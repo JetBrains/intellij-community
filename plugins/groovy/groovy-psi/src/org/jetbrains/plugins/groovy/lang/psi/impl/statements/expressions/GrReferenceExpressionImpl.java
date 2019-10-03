@@ -47,7 +47,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.DependentResolver;
 import org.jetbrains.plugins.groovy.lang.resolve.GroovyResolver;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.api.Argument;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyProperty;
 import org.jetbrains.plugins.groovy.lang.resolve.references.GrExplicitMethodCallReference;
 import org.jetbrains.plugins.groovy.lang.resolve.references.GrStaticExpressionReference;
@@ -62,7 +61,7 @@ import static com.intellij.psi.util.PsiUtilCore.ensureValid;
 import static java.util.Collections.emptyList;
 import static kotlin.LazyKt.lazy;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets.REFERENCE_DOTS;
-import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyLValueUtil.getRValue;
+import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyLValueUtil.isLValue;
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyLValueUtil.isRValue;
 import static org.jetbrains.plugins.groovy.lang.resolve.impl.IncompleteKt.resolveIncomplete;
 import static org.jetbrains.plugins.groovy.lang.typing.DefaultMethodCallTypeCalculatorKt.getTypeFromCandidate;
@@ -79,19 +78,9 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
   }
 
   private final GroovyReference myStaticReference = new GrStaticExpressionReference(this);
-
-  private final Lazy<GroovyReference> myCallReference = lazy(
-    () -> getParent() instanceof GrMethodCall && !isImplicitCallReceiver() ? new GrExplicitMethodCallReference(this) : null
-  );
-
-  private final Lazy<GroovyReference> myRValueReference = lazy(
-    () -> isRValue(this) ? new GrRValueExpressionReference(this) : null
-  );
-
-  private final Lazy<GroovyReference> myLValueReference = lazy(() -> {
-    Argument rValue = getRValue(this);
-    return rValue == null ? null : new GrLValueExpressionReference(this, rValue);
-  });
+  private final Lazy<GroovyReference> myCallReference = lazy(() -> new GrExplicitMethodCallReference(this));
+  private final Lazy<GroovyReference> myRValueReference = lazy(() -> new GrRValueExpressionReference(this));
+  private final Lazy<GroovyReference> myLValueReference = lazy(() -> new GrLValueExpressionReference(this));
 
   @Override
   public void accept(@NotNull GroovyElementVisitor visitor) {
@@ -422,19 +411,19 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
 
   @Nullable
   private GroovyReference getCallReference() {
-    return myCallReference.getValue();
+    return getParent() instanceof GrMethodCall && !isImplicitCallReceiver() ? myCallReference.getValue() : null;
   }
 
   @Nullable
   @Override
   public GroovyReference getRValueReference() {
-    return myRValueReference.getValue();
+    return isRValue(this) ? myRValueReference.getValue() : null;
   }
 
   @Nullable
   @Override
   public GroovyReference getLValueReference() {
-    return myLValueReference.getValue();
+    return isLValue(this) ? myLValueReference.getValue() : null;
   }
 
   @Override
@@ -540,8 +529,8 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     @NotNull
     @Override
     public Collection<GroovyResolveResult> doResolve(@NotNull GrReferenceExpressionImpl ref, boolean incomplete) {
-      final GroovyReference rValueRef = ref.myRValueReference.getValue();
-      final GroovyReference lValueRef = ref.myLValueReference.getValue();
+      final GroovyReference rValueRef = ref.getRValueReference();
+      final GroovyReference lValueRef = ref.getLValueReference();
       if (rValueRef != null && lValueRef != null) {
         // merge results from both references
         final Map<PsiElement, GroovyResolveResult> results = new THashMap<>();
@@ -615,7 +604,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
       return callReference.resolve(false);
     }
 
-    final GroovyReference ref = (rValue ? myRValueReference : myLValueReference).getValue();
+    final GroovyReference ref = rValue ? getRValueReference() : getLValueReference();
     return ref == null ? emptyList() : ref.resolve(false);
   }
 
