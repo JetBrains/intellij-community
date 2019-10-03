@@ -92,7 +92,7 @@ public interface XmlElementType extends XmlTokenType {
       assert file != null : chameleon;
 
       final PsiBuilder builder = PsiBuilderFactory.getInstance().createBuilder(file.getProject(), chameleon);
-      HTMLParser.parseWithoutBuildingTree(HTML_FILE, builder);
+      new HTMLParser().parseWithoutBuildingTree(HTML_FILE, builder);
       return builder.getLightTree();
     }
   }

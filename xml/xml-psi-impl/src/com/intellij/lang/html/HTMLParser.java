@@ -21,8 +21,8 @@ public class HTMLParser implements PsiParser {
     return builder.getTreeBuilt();
   }
 
-  public static void parseWithoutBuildingTree(@NotNull IElementType root, @NotNull PsiBuilder builder) {
-    parseWithoutBuildingTree(root, builder, new HtmlParsing(builder));
+  public void parseWithoutBuildingTree(@NotNull IElementType root, @NotNull PsiBuilder builder) {
+    parseWithoutBuildingTree(root, builder, createHtmlParsing(builder));
   }
 
   private static void parseWithoutBuildingTree(@NotNull IElementType root, @NotNull PsiBuilder builder,
