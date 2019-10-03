@@ -140,6 +140,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   private int myTextAnnotationExtraSize;
   final TIntArrayList myTextAnnotationGutterSizes = new TIntArrayList();
   final ArrayList<TextAnnotationGutterProvider> myTextAnnotationGutters = new ArrayList<>();
+  private boolean myGapAfterAnnotations;
   private final Map<TextAnnotationGutterProvider, EditorGutterAction> myProviderToListener = new HashMap<>();
   private String myLastGutterToolTip;
   @NotNull private TIntFunction myLineNumberConvertor = value -> value;
@@ -758,6 +759,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   private void calcAnnotationsSize() {
     myTextAnnotationGuttersSize = 0;
+    myGapAfterAnnotations = false;
     final int lineCount = Math.max(myEditor.getDocument().getLineCount(), 1);
     final int guttersCount = myTextAnnotationGutters.size();
     for (int j = 0; j < guttersCount; j++) {
@@ -772,7 +774,13 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
           gutterSize = Math.max(gutterSize, fontMetrics.stringWidth(lineText));
         }
       }
-      if (gutterSize > 0 && gutterProvider.useMargin()) gutterSize += getGapBetweenAnnotations();
+      if (gutterSize > 0) {
+        boolean margin = gutterProvider.useMargin();
+        myGapAfterAnnotations = margin;
+        if (margin) {
+          gutterSize += getGapBetweenAnnotations();
+        }
+      }
       myTextAnnotationGutterSizes.set(j, gutterSize);
       myTextAnnotationGuttersSize += gutterSize;
     }
@@ -1449,7 +1457,10 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   @Override
   public int getLineMarkerAreaOffset() {
-    return getAnnotationsAreaOffset() + getAreaWidthWithGap(getAnnotationsAreaWidthEx());
+    return getAnnotationsAreaOffset() +
+           (myGapAfterAnnotations || myTextAnnotationExtraSize > 0
+            ? getAreaWidthWithGap(getAnnotationsAreaWidthEx())
+            : getAnnotationsAreaWidthEx());
   }
 
   @Override
