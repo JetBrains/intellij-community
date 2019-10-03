@@ -16,7 +16,9 @@
 package com.intellij.ide;
 
 import com.intellij.application.options.*;
-import com.intellij.application.options.codeStyle.properties.*;
+import com.intellij.application.options.codeStyle.properties.CodeStyleFieldAccessor;
+import com.intellij.application.options.codeStyle.properties.CodeStylePropertiesUtil;
+import com.intellij.application.options.codeStyle.properties.CodeStylePropertyAccessor;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationBundle;
@@ -173,6 +175,7 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
                                    "ALIGN_MULTILINE_PARENTHESIZED_EXPRESSION",
                                    "ALIGN_MULTILINE_ARRAY_INITIALIZER_EXPRESSION",
                                    "ALIGN_GROUP_FIELD_DECLARATIONS",
+                                   "ALIGN_MULTILINE_TEXT_BLOCKS",
                                    "BRACE_STYLE",
                                    "CLASS_BRACE_STYLE",
                                    "METHOD_BRACE_STYLE",
@@ -203,6 +206,11 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
                                 "ALIGN_MULTILINE_ANNOTATION_PARAMETERS",
                                 ApplicationBundle.message("wrapping.align.when.multiline"),
                                 ApplicationBundle.message("wrapping.annotation.parameters"));
+
+      consumer.showCustomOption(JavaCodeStyleSettings.class,
+                                "ALIGN_MULTILINE_TEXT_BLOCKS",
+                                ApplicationBundle.message("wrapping.align.when.multiline"),
+                                ApplicationBundle.message("wrapping.text.blocks") );
 
       String groupName = ApplicationBundle.message("wrapping.fields.annotation");
       consumer.showCustomOption(JavaCodeStyleSettings.class, "DO_NOT_WRAP_AFTER_SINGLE_ANNOTATION", "Do not wrap after single annotation", groupName);

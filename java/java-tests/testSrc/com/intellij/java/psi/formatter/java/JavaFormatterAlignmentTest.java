@@ -929,6 +929,28 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
     );
   }
 
+  public void test_alignMultilineTextBlock() {
+    getJavaSettings().ALIGN_MULTILINE_TEXT_BLOCKS = true;
+    doTextTest(
+      "public class Test {\n" +
+      "    void foo() {\n" +
+      "        String block = \"\"\"\n" +
+      "  text\n" +
+      "  block\n" +
+      " \"\"\";\n" +
+      "    }\n" +
+      "}",
+      "public class Test {\n" +
+      "    void foo() {\n" +
+      "        String block = \"\"\"\n" +
+      "                        text\n" +
+      "                        block\n" +
+      "                       \"\"\";\n" +
+      "    }\n" +
+      "}"
+    );
+  }
+
   @SuppressWarnings("unused")
   public void _testIdea199677() {
     getSettings().ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS = true;

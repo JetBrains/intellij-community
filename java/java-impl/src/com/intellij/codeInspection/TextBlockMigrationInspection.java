@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
-import com.google.common.base.Strings;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
@@ -64,22 +63,19 @@ public class TextBlockMigrationInspection extends AbstractBaseJavaLocalInspectio
       if (expression == null) return;
       Document document = PsiDocumentManager.getInstance(project).getDocument(expression.getContainingFile());
       if (document == null) return;
-      int expressionOffset = expression.getTextOffset();
-      int offset = expressionOffset - document.getLineStartOffset(document.getLineNumber(expressionOffset));
       PsiLiteralExpressionImpl literalExpression = tryCast(expression, PsiLiteralExpressionImpl.class);
       if (literalExpression != null && literalExpression.getLiteralElementType() == JavaTokenType.STRING_LITERAL) {
-        replaceWithTextBlock(new PsiLiteralExpressionImpl[]{literalExpression}, offset, literalExpression);
+        replaceWithTextBlock(new PsiLiteralExpressionImpl[]{literalExpression}, literalExpression);
         return;
       }
       PsiPolyadicExpression polyadicExpression = tryCast(expression, PsiPolyadicExpression.class);
       if (polyadicExpression == null || !isConcatenation(polyadicExpression)) return;
-      replaceWithTextBlock(polyadicExpression.getOperands(), offset, polyadicExpression);
+      replaceWithTextBlock(polyadicExpression.getOperands(), polyadicExpression);
     }
 
-    private static void replaceWithTextBlock(@NotNull PsiExpression[] operands, int offset, @NotNull PsiExpression toReplace) {
+    private static void replaceWithTextBlock(@NotNull PsiExpression[] operands, @NotNull PsiExpression toReplace) {
       StringBuilder textBlock = new StringBuilder();
-      String indent = Strings.repeat(" ", offset);
-      textBlock.append("\"\"\"\n").append(indent);
+      textBlock.append("\"\"\"\n");
       boolean escapeStartQuote = false;
       for (int i = 0; i < operands.length; i++) {
         PsiExpression operand = operands[i];
@@ -88,7 +84,7 @@ public class TextBlockMigrationInspection extends AbstractBaseJavaLocalInspectio
         boolean isLastLine = i == operands.length - 1;
         text = PsiLiteralUtil.escapeTextBlockCharacters(text, escapeStartQuote, isLastLine, isLastLine);
         escapeStartQuote = text.endsWith("\"");
-        textBlock.append(text.replaceAll("\n", '\n' + indent));
+        textBlock.append(text);
       }
       textBlock.append("\"\"\"");
       PsiReplacementUtil.replaceExpression(toReplace, textBlock.toString(), new CommentTracker());

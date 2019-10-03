@@ -1,4 +1,4 @@
 class C {
-  String empty = """
-      <caret>""";
+    String empty = """
+        <caret>""";
 }

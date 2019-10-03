@@ -19,6 +19,7 @@
       "align_multiline_parenthesized_expression": false,
       "align_multiline_resources": true,
       "align_multiline_ternary_operation": false,
+      "align_multiline_text_blocks": false,
       "align_multiline_throws_list": false,
       "align_subsequent_simple_methods": false,
       "align_throws_keyword": false,
