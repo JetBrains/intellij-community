@@ -113,4 +113,9 @@ public abstract class PyInspectionExtension {
   public boolean ignoreInterpreterWarnings(@NotNull PyFile file) {
     return false;
   }
+
+  /**
+   * @return Do not report "unused import"
+   */
+ public boolean unusedImportShouldBeSkipped(@NotNull PyImportedNameDefiner importNameDefiner) {return false;}
 }

@@ -644,7 +644,6 @@
     <extensionPoint qualifiedName="Pythonid.pythonCommandLineEnvironmentProvider" interface="com.jetbrains.python.run.PythonCommandLineEnvironmentProvider"/>
     <extensionPoint qualifiedName="Pythonid.importResolver" interface="com.jetbrains.python.psi.impl.PyImportResolver"/>
     <extensionPoint qualifiedName="Pythonid.magicLiteral" interface="com.jetbrains.python.magicLiteral.PyMagicLiteralExtensionPoint"/>
-    <extensionPoint qualifiedName="Pythonid.unresolvedReferenceSkipper" interface="com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferenceSkipperExtPoint"/>
     <extensionPoint qualifiedName="Pythonid.resolveResultRater" interface="com.jetbrains.python.psi.impl.PyResolveResultRater"/>
     <extensionPoint qualifiedName="Pythonid.typeProvider" interface="com.jetbrains.python.psi.impl.PyTypeProvider"/>
     <extensionPoint qualifiedName="Pythonid.pySuperMethodsSearch" interface="com.intellij.util.QueryExecutor"/>
