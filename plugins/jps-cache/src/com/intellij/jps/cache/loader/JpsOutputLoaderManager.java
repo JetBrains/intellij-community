@@ -1,6 +1,5 @@
 package com.intellij.jps.cache.loader;
 
-import com.intellij.CommonBundle;
 import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.jps.cache.JpsCachesUtils;
@@ -72,11 +71,11 @@ public class JpsOutputLoaderManager implements ProjectComponent {
     }
   }
 
-  public void load() {
+  public void load(boolean isForceUpdate) {
     Task.Backgroundable task = new Task.Backgroundable(myProject, PROGRESS_TITLE) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        Pair<String, Integer> commitInfo = getNearestCommit();
+        Pair<String, Integer> commitInfo = getNearestCommit(isForceUpdate);
         if (commitInfo == null) return;
         startLoadingForCommit(commitInfo.first);
       }
@@ -89,7 +88,7 @@ public class JpsOutputLoaderManager implements ProjectComponent {
 
   public void notifyAboutNearestCache() {
     ourThreadPool.execute(() -> {
-      Pair<String, Integer> commitInfo = getNearestCommit();
+      Pair<String, Integer> commitInfo = getNearestCommit(false);
       if (commitInfo == null) return;
 
       String commitToLoad = commitInfo.first;
@@ -116,7 +115,7 @@ public class JpsOutputLoaderManager implements ProjectComponent {
   }
 
   @Nullable
-  private Pair<String, Integer> getNearestCommit() {
+  private Pair<String, Integer> getNearestCommit(boolean isForceUpdate) {
     Set<String> allCacheKeys = myServerClient.getAllCacheKeys();
 
     String previousCommitId = PropertiesComponent.getInstance().getValue(LATEST_COMMIT_ID);
@@ -132,7 +131,7 @@ public class JpsOutputLoaderManager implements ProjectComponent {
       LOG.warn("Not found any caches for the latest commits in the brunch");
       return null;
     }
-    if (previousCommitId != null && commitId.equals(previousCommitId)) {
+    if (previousCommitId != null && commitId.equals(previousCommitId) && !isForceUpdate) {
       LOG.debug("The system contains up to date caches");
       return null;
     }

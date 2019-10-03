@@ -12,12 +12,14 @@
   </extensions>
 
   <actions>
-    <action id="com.intellij.jps.cache.JpsDownloadCachesAction" class="com.intellij.jps.cache.JpsDownloadCachesAction" text="Download JPS Caches">
-      <add-to-group anchor="first" group-id="BuildMenu"/>
-    </action>
-    <action id="com.intellij.jps.cache.JpsBinaryDataUploadAction" class="com.intellij.jps.cache.JpsBinaryDataUploadAction" text="Upload JPS Binary Data">
-      <add-to-group anchor="after" relative-to-action="com.intellij.jps.cache.JpsDownloadCachesAction" group-id="BuildMenu"/>
-    </action>
+    <group id="JpsCacheLoaderActions" text="Jps Cache Loader" popup="true">
+      <separator/>
+      <action id="JpsForceUpdateCachesAction" class="com.intellij.jps.cache.action.JpsForceUpdateCachesAction" text="Force Update JPS Caches" internal="true"/>
+      <action id="JpsUpdateCachesAction" class="com.intellij.jps.cache.action.JpsUpdateCachesAction" text="Update JPS Caches"/>
+      <action id="JpsBinaryDataUploadAction" class="com.intellij.jps.cache.action.JpsBinaryDataUploadAction" text="Upload JPS Binary Data" internal="true"/>
+      <add-to-group group-id="BuildMenu" anchor="last"/>
+      <separator/>
+    </group>
   </actions>
 
   <project-components>

@@ -1,5 +1,6 @@
-package com.intellij.jps.cache;
+package com.intellij.jps.cache.action;
 
+import com.intellij.jps.cache.JpsCachesUtils;
 import com.intellij.jps.cache.client.ArtifactoryJpsServerClient;
 import com.intellij.jps.cache.hashing.ModuleHashingService;
 import com.intellij.openapi.actionSystem.AnActionEvent;
