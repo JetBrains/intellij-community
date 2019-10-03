@@ -12,5 +12,6 @@ public class Two {
     Three.putYourFeetUp();
     System.out.println(One.SAUCE);
     System.out.println(Three.MEAT);
+    One.build();
   }
 }

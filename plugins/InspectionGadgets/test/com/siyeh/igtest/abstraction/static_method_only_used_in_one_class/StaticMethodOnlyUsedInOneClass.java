@@ -78,3 +78,16 @@ class User {
         PrivateConstructor.build123();
     }
 }
+class Foo {
+    void doSomething() {
+        Bar bar = Bar.create();
+        System.out.println(bar);
+    }
+}
+class Bar {
+    static Bar create() {
+        return new Bar();
+    }
+
+    public void noUtilityClass() {}
+}

@@ -13,4 +13,8 @@ public class One {
   public static void monger() {}
 
   public void thisIsNotAUtilityClass() {}
+
+  public static One build() {
+    return new One();
+  }
 }

@@ -27,10 +27,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.BaseSharedLocalInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RefactoringInspectionGadgetsFix;
-import com.siyeh.ig.psiutils.ClassUtils;
-import com.siyeh.ig.psiutils.DeclarationSearchUtils;
-import com.siyeh.ig.psiutils.TestUtils;
-import com.siyeh.ig.psiutils.UtilityClassUtil;
+import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.UElement;
@@ -124,7 +121,7 @@ public class StaticMethodOnlyUsedInOneClassInspection extends BaseGlobalInspecti
     }
     if (element instanceof RefMethod) {
       final PsiMethod method = ObjectUtils.tryCast(element.getPsiElement(), PsiMethod.class);
-      if (method == null) {
+      if (method == null || MethodUtils.isFactoryMethod(method)) {
         return null;
       }
       if (ignoreOnConflicts) {
@@ -400,6 +397,9 @@ public class StaticMethodOnlyUsedInOneClassInspection extends BaseGlobalInspecti
         if (!method.hasModifierProperty(PsiModifier.STATIC) ||
             method.hasModifierProperty(PsiModifier.PRIVATE) ||
             method.getNameIdentifier() == null) {
+          return;
+        }
+        if (MethodUtils.isFactoryMethod(method)) {
           return;
         }
         if (DeclarationSearchUtils.isTooExpensiveToSearch(method, true)) return;
