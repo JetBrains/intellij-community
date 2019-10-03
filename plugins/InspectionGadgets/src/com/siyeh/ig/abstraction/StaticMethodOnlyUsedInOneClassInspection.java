@@ -77,7 +77,7 @@ public class StaticMethodOnlyUsedInOneClassInspection extends BaseGlobalInspecti
                                                 @NotNull AnalysisScope scope,
                                                 @NotNull InspectionManager manager,
                                                 @NotNull GlobalInspectionContext globalContext) {
-    if (!(refEntity instanceof RefJavaElement)) {
+    if (!(refEntity instanceof RefMethod) && !(refEntity instanceof RefField)) {
       return null;
     }
     final RefJavaElement element = (RefJavaElement)refEntity;
@@ -86,7 +86,7 @@ public class StaticMethodOnlyUsedInOneClassInspection extends BaseGlobalInspecti
     }
     RefClass usageClass = null;
     for (RefElement reference : element.getInReferences()) {
-      final RefClass ownerClass = RefJavaUtil.getInstance().getOwnerClass(reference);
+      final RefClass ownerClass = getOwnerClass(reference);
       if (usageClass == null) {
         usageClass = ownerClass;
       }
@@ -150,6 +150,14 @@ public class StaticMethodOnlyUsedInOneClassInspection extends BaseGlobalInspecti
       element.putUserData(MARKER, smartPointerManager.createSmartPsiElementPointer(psiClass));
       return new ProblemDescriptor[]{createProblemDescriptor(manager, field.getNameIdentifier(), psiClass)};
     }
+  }
+
+  @Nullable
+  private static RefClass getOwnerClass(RefEntity element) {
+    while (!(element instanceof RefClass) && element instanceof RefJavaElement) {
+      element = element.getOwner();
+    }
+    return (element instanceof RefClass) ? (RefClass)element : null;
   }
 
   @NotNull

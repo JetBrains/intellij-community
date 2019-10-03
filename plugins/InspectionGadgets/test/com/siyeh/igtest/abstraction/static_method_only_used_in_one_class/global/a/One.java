@@ -10,5 +10,7 @@ public class One {
 
   public static void denature() {}
 
+  public static void monger() {}
+
   public void thisIsNotAUtilityClass() {}
 }
