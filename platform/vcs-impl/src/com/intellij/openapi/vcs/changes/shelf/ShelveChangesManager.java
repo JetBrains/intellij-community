@@ -526,11 +526,10 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
   private void baseRevisionsOfDvcsIntoContext(List<? extends Change> textChanges, CommitContext commitContext) {
     ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
     if (dvcsUsedInProject() && VcsConfiguration.getInstance(myProject).INCLUDE_TEXT_INTO_SHELF) {
-      final Set<Change> big = SelectFilesToAddTextsToPatchPanel.getBig(textChanges);
       Map<FilePath, ContentRevision> toKeep = new HashMap<>();
       for (Change change : textChanges) {
         if (change.getBeforeRevision() == null || change.getAfterRevision() == null) continue;
-        if (big.contains(change)) continue;
+        if (isBig(change)) continue;
         FilePath filePath = change.getBeforeRevision().getFile();
         AbstractVcs vcs = vcsManager.getVcsFor(filePath);
         if (vcs != null && VcsType.distributed.equals(vcs.getType())) {
@@ -540,6 +539,31 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
       commitContext.putUserData(BaseRevisionTextPatchEP.ourPutBaseRevisionTextKey, true);
       commitContext.putUserData(BaseRevisionTextPatchEP.ourBaseRevisions, toKeep);
     }
+  }
+
+  private static boolean isBig(@NotNull Change change) {
+    VirtualFile vf = change.getVirtualFile();
+    if (vf != null) {
+      return isBig(vf.getLength());
+    }
+
+    ContentRevision beforeRevision = change.getBeforeRevision();
+    if (beforeRevision != null) {
+      try {
+        String content = beforeRevision.getContent();
+        if (content != null && isBig(content.length())) {
+          return true;
+        }
+      }
+      catch (VcsException e) {
+        LOG.info(e);
+      }
+    }
+    return false;
+  }
+
+  private static boolean isBig(long contentLength) {
+    return contentLength > VcsConfiguration.ourMaximumFileForBaseRevisionSize;
   }
 
   private boolean dvcsUsedInProject() {
