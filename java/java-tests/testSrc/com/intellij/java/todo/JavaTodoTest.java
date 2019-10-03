@@ -5,6 +5,31 @@ import com.intellij.editor.TodoItemsTestCase;
 import com.intellij.ide.highlighter.JavaFileType;
 
 public class JavaTodoTest extends TodoItemsTestCase {
+  public void testNoContinuationWithoutProperIndent() {
+    testTodos("class C {} // [TODO todo]\n" +
+              "//   unrelated comment line");
+  }
+
+  public void testNewLineBetweenCommentLines() {
+    testTodos("class C {\n" +
+              "    // [TODO first line]<caret>\n" +
+              "    //  [second line]\n" +
+              "}");
+    type('\n');
+    checkTodos("class C {\n" +
+               "    // [TODO first line]\n" +
+               "    \n" +
+               "    //  second line\n" +
+               "}");
+  }
+
+  public void testNoContinuationOnJaggedLineComments() {
+    testTodos("class C {\n" +
+              "  int a; // [TODO something]\n" +
+              "  int ab; // unrelated\n" +
+              "}");
+  }
+
   public void testUnicodeCaseInsensitivePattern() {
     doWithPattern("\u00f6.*", () -> testTodos("// [\u00d6 something]"));
   }
