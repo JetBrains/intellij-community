@@ -398,7 +398,7 @@ class DistributionJARsBuilder {
   /**
    * Post processing after {@link #buildOrderFiles}
    */
-  private void processOrderFiles(layoutBuilder) {
+  private void processOrderFiles(LayoutBuilder layoutBuilder) {
     if (!buildContext.options.buildStepsToSkip.contains(BuildOptions.GENERATE_JAR_ORDER_STEP)) {
       buildContext.messages.info("Start processing order files")
       def libModulesToJar = getModuleToJarMap(platform)
@@ -503,7 +503,7 @@ class DistributionJARsBuilder {
     return libraryJarPathToJarName
   }
   
-  private void addJarOrderFile(layoutBuilder,
+  private void addJarOrderFile(LayoutBuilder layoutBuilder,
                                Map<String, String> pathToModuleName,
                                Map<String, String> pathToToJarName,
                                Map<String, String> libModulesToJar) {
