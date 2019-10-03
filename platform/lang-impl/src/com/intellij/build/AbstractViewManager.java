@@ -9,6 +9,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Toggleable;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.AtomicClearableLazyValue;
@@ -51,9 +52,9 @@ public abstract class AbstractViewManager implements ViewManager, BuildProgressL
   // todo [Vlad] remove the map when BuildProgressListener.onEvent(BuildEvent) method will be removed
   private final Map<Object, Object> idsMap = ContainerUtil.newConcurrentMap();
 
-  public AbstractViewManager(Project project, BuildContentManager buildContentManager) {
+  public AbstractViewManager(Project project) {
     myProject = project;
-    myBuildContentManager = buildContentManager;
+    myBuildContentManager = ServiceManager.getService(project, BuildContentManager.class);
     myBuildsViewValue = new AtomicClearableLazyValue<MultipleBuildsView>() {
       @NotNull
       @Override

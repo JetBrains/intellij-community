@@ -10,9 +10,9 @@ import javax.swing.*;
 /**
  * @author Vladislav.Soroka
  */
-public class DebugTasksViewManager extends TasksViewManager   {
-  public DebugTasksViewManager(Project project, BuildContentManager buildContentManager) {
-    super(project, buildContentManager);
+public class DebugTasksViewManager extends TasksViewManager {
+  public DebugTasksViewManager(Project project) {
+    super(project);
   }
 
   @NotNull

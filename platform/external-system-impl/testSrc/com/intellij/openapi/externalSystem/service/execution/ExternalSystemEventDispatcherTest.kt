@@ -8,8 +8,8 @@ import com.intellij.build.output.BuildOutputParser
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
-import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.LightPlatformTestCase
+import com.intellij.testFramework.PlatformTestUtil.maskExtensions
 import com.intellij.util.concurrency.Semaphore
 import org.assertj.core.api.Assertions.assertThat
 
@@ -40,7 +40,7 @@ class ExternalSystemEventDispatcherTest : LightPlatformTestCase() {
 
   private fun doInvokeOnCompletionTest(parsers: List<BuildOutputParser>) {
     val eventMessages = mutableListOf<String>()
-    ExtensionTestUtil.maskExtensions(ExternalSystemOutputParserProvider.EP_NAME, listOf(TestParserProvider(parsers)), testRootDisposable)
+    maskExtensions(ExternalSystemOutputParserProvider.EP_NAME, listOf(TestParserProvider(parsers)), testRootDisposable)
     val semaphore = Semaphore(1)
     val dispatcher = ExternalSystemEventDispatcher(taskId, BuildProgressListener { _, event -> eventMessages += event.message })
     dispatcher.use {

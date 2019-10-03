@@ -25,8 +25,8 @@ import javax.swing.*;
  * @author Vladislav.Soroka
  */
 public class RunTasksViewManager extends TasksViewManager {
-  public RunTasksViewManager(Project project, BuildContentManager buildContentManager) {
-    super(project, buildContentManager);
+  public RunTasksViewManager(Project project) {
+    super(project);
   }
 
   @NotNull

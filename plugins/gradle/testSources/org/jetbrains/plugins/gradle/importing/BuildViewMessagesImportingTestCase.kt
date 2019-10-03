@@ -2,9 +2,12 @@
 package org.jetbrains.plugins.gradle.importing
 
 import com.intellij.build.*
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.components.ComponentManager
+import com.intellij.openapi.components.impl.PlatformComponentManagerImpl
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.testFramework.replaceService
 import com.intellij.util.concurrency.Semaphore
 import junit.framework.TestCase
 import org.assertj.core.api.Assertions
@@ -125,5 +128,25 @@ abstract class BuildViewMessagesImportingTestCase : GradleImportingTestCase() {
 
   override fun handleImportFailure(errorMessage: String, errorDetails: String?) {
     // do not fail tests with failed builds
+  }
+}
+
+private fun <T : Any> ComponentManager.replaceService(serviceInterface: Class<T>, instance: T, parentDisposable: Disposable?) {
+  val container = (this as PlatformComponentManagerImpl).picoContainer
+  val key = serviceInterface.name
+  val old = container.getComponentInstance(key)
+  container.unregisterComponent(key)
+  container.registerComponentInstance(key, instance)
+  if (parentDisposable != null) {
+    Disposer.register(parentDisposable, Disposable {
+      synchronized(this) {
+        val initializedInstance = container.getComponentInstance(key)
+        if (initializedInstance === instance && instance is Disposable && !Disposer.isDisposed(instance)) {
+          Disposer.dispose(instance)
+        }
+        container.unregisterComponent(key)
+        container.registerComponentInstance(key, old)
+      }
+    })
   }
 }

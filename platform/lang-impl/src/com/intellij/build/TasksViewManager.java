@@ -26,8 +26,8 @@ import java.util.Map;
  * @author Vladislav.Soroka
  */
 public abstract class TasksViewManager extends AbstractViewManager {
-  public TasksViewManager(Project project, BuildContentManager buildContentManager) {
-    super(project, buildContentManager);
+  public TasksViewManager(Project project) {
+    super(project);
   }
 
 

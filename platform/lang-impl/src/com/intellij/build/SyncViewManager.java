@@ -22,8 +22,8 @@ import org.jetbrains.annotations.NotNull;
  * @author Vladislav.Soroka
  */
 public class SyncViewManager extends AbstractViewManager {
-  public SyncViewManager(Project project, BuildContentManager buildContentManager) {
-    super(project, buildContentManager);
+  public SyncViewManager(Project project) {
+    super(project);
   }
 
   @NotNull

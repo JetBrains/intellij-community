@@ -22,8 +22,8 @@ import org.jetbrains.annotations.NotNull;
  * @author Vladislav.Soroka
  */
 public class BuildViewManager extends AbstractViewManager {
-  public BuildViewManager(Project project, BuildContentManager buildContentManager) {
-    super(project, buildContentManager);
+  public BuildViewManager(Project project) {
+    super(project);
   }
 
   @NotNull

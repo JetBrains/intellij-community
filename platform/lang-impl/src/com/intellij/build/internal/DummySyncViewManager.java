@@ -15,7 +15,6 @@
  */
 package com.intellij.build.internal;
 
-import com.intellij.build.BuildContentManager;
 import com.intellij.build.SyncViewManager;
 import com.intellij.build.events.BuildEvent;
 import com.intellij.build.events.FinishBuildEvent;
@@ -26,13 +25,13 @@ import org.jetbrains.annotations.NotNull;
  * @author Vladislav.Soroka
  */
 public class DummySyncViewManager extends SyncViewManager {
-  public DummySyncViewManager(Project project, BuildContentManager buildContentManager) {
-    super(project, buildContentManager);
+  public DummySyncViewManager(Project project) {
+    super(project);
   }
 
   @Override
   public void onEvent(@NotNull Object buildId, @NotNull BuildEvent event) {
-    if(event instanceof FinishBuildEvent) {
+    if (event instanceof FinishBuildEvent) {
       //noinspection UseOfSystemOutOrSystemErr
       System.out.println(event.getMessage());
     }

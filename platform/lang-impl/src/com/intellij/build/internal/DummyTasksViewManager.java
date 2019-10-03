@@ -15,7 +15,6 @@
  */
 package com.intellij.build.internal;
 
-import com.intellij.build.BuildContentManager;
 import com.intellij.build.TasksViewManager;
 import com.intellij.build.events.BuildEvent;
 import com.intellij.build.events.FinishBuildEvent;
@@ -26,8 +25,8 @@ import org.jetbrains.annotations.NotNull;
  * @author Vladislav.Soroka
  */
 public class DummyTasksViewManager extends TasksViewManager {
-  public DummyTasksViewManager(Project project, BuildContentManager buildContentManager) {
-    super(project, buildContentManager);
+  public DummyTasksViewManager(Project project) {
+    super(project);
   }
 
   @NotNull

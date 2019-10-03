@@ -3,7 +3,6 @@
 // found in the LICENSE file.
 package com.intellij.build.internal;
 
-import com.intellij.build.BuildContentManager;
 import com.intellij.build.BuildViewManager;
 import com.intellij.build.events.BuildEvent;
 import com.intellij.build.events.FinishBuildEvent;
@@ -14,13 +13,13 @@ import org.jetbrains.annotations.NotNull;
  * @author Vladislav.Soroka
  */
 public class DummyBuildViewManager extends BuildViewManager {
-  public DummyBuildViewManager(Project project, BuildContentManager buildContentManager) {
-    super(project, buildContentManager);
+  public DummyBuildViewManager(Project project) {
+    super(project);
   }
 
   @Override
   public void onEvent(@NotNull Object buildId, @NotNull BuildEvent event) {
-    if(event instanceof FinishBuildEvent) {
+    if (event instanceof FinishBuildEvent) {
       //noinspection UseOfSystemOutOrSystemErr
       System.out.println(event.getMessage());
     }
