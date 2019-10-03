@@ -163,7 +163,8 @@ private fun getExpectedTypeAndPosition(expression: GrExpression): ExpectedType? 
     val call = parent.parent as? GrCallExpression ?: return null
     val result = call.advancedResolve() as? GroovyMethodResult ?: return null
     val mapping = result.candidate?.argumentMapping ?: return null
-    return ExpectedType(result.substitutor.substitute(mapping.expectedType(ExpressionArgument(expression))), METHOD_PARAMETER)
+    val type = result.substitutor.substitute(mapping.expectedType(ExpressionArgument(expression))) ?: return null
+    return ExpectedType(type, METHOD_PARAMETER)
   }
 
   return null
