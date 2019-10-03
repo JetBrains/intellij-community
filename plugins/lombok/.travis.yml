@@ -43,6 +43,6 @@ deploy:
   file: "build/distributions/lombok-plugin-*.zip"
   on:
     tags: true
-    condition: (( $TRAVIS_TAG =~ ^releasebuild_[0-9]+.*$ ) AND ( $UPLOAD_BUILD=true ))
+    condition: (( $TRAVIS_TAG =~ ^releasebuild_[0-9]+.*$ ) && ( $UPLOAD_BUILD=true ))
 after_deploy:
   - ./gradlew publishPlugin
