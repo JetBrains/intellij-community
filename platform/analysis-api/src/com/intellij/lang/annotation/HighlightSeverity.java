@@ -68,7 +68,7 @@ public class HighlightSeverity implements Comparable<HighlightSeverity> {
   }
 
   public HighlightSeverity(@NotNull Element element) {
-    this(readField(element, "myName"), Integer.valueOf(readField(element, "myVal")));
+    this(readField(element, "myName"), Integer.parseInt(readField(element, "myVal")));
   }
 
   private static String readField(Element element, String name) {

@@ -17,7 +17,10 @@ package com.intellij.lang.annotation;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.LocalQuickFixAsIntentionAdapter;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -50,11 +53,11 @@ public final class Annotation implements Segment {
   private TextAttributesKey myEnforcedAttributesKey;
   private TextAttributes myEnforcedAttributes;
 
-  private List<QuickFixInfo> myQuickFixes = null;
-  private Boolean myNeedsUpdateOnTyping = null;
+  private List<QuickFixInfo> myQuickFixes;
+  private Boolean myNeedsUpdateOnTyping;
   private String myTooltip;
-  private boolean myAfterEndOfLine = false;
-  private boolean myIsFileLevelAnnotation = false;
+  private boolean myAfterEndOfLine;
+  private boolean myIsFileLevelAnnotation;
   private GutterIconRenderer myGutterIconRenderer;
   @Nullable
   private ProblemGroup myProblemGroup;
@@ -67,7 +70,7 @@ public final class Annotation implements Segment {
     public final TextRange textRange;
     public final HighlightDisplayKey key;
 
-    public QuickFixInfo(@NotNull IntentionAction fix, @NotNull TextRange range, @Nullable final HighlightDisplayKey key) {
+    QuickFixInfo(@NotNull IntentionAction fix, @NotNull TextRange range, @Nullable final HighlightDisplayKey key) {
       this.key = key;
       quickFix = fix;
       textRange = range;
@@ -136,25 +139,27 @@ public final class Annotation implements Segment {
     if (range == null) {
       range = new TextRange(myStartOffset, myEndOffset);
     }
-    if (myQuickFixes == null) {
-      myQuickFixes = new ArrayList<>();
+    List<QuickFixInfo> fixes = myQuickFixes;
+    if (fixes == null) {
+      myQuickFixes = fixes = new ArrayList<>();
     }
-    myQuickFixes.add(new QuickFixInfo(fix, range, key));
+    fixes.add(new QuickFixInfo(fix, range, key));
   }
 
   /**
    * Registers a quickfix which would be available during batch mode only,
    * in particular during com.intellij.codeInspection.DefaultHighlightVisitorBasedInspection run
    */
-  public <T extends IntentionAction & LocalQuickFix> void registerBatchFix(@NotNull T fix, @Nullable TextRange range, @Nullable final HighlightDisplayKey key) {
+  public <T extends IntentionAction & LocalQuickFix> void registerBatchFix(@NotNull T fix, @Nullable TextRange range, @Nullable HighlightDisplayKey key) {
     if (range == null) {
       range = new TextRange(myStartOffset, myEndOffset);
     }
 
-    if (myBatchFixes == null) {
-      myBatchFixes = new ArrayList<>();
+    List<QuickFixInfo> fixes = myBatchFixes;
+    if (fixes == null) {
+      myBatchFixes = fixes = new ArrayList<>();
     }
-    myBatchFixes.add(new QuickFixInfo(fix, range, key));
+    fixes.add(new QuickFixInfo(fix, range, key));
   }
 
   /**
@@ -174,7 +179,7 @@ public final class Annotation implements Segment {
    * @see #needsUpdateOnTyping()
    */
   public void setNeedsUpdateOnTyping(boolean b) {
-    myNeedsUpdateOnTyping = Boolean.valueOf(b);
+    myNeedsUpdateOnTyping = b;
   }
 
   /**
