@@ -56,10 +56,13 @@ class JpsOutputsDownloader {
           File downloaded;
           try {
             downloaded = downloadFile(description, existing, indicator);
-          }
-          catch (IOException e) {
-            throw new IOException(IdeBundle.message("error.file.download.failed", description.getDownloadUrl(),
-                                                    e.getMessage()), e);
+          } catch (IOException e) {
+            if (e  instanceof HttpRequests.HttpStatusException && ((HttpRequests.HttpStatusException)e).getStatusCode() == 404) {
+              LOG.info("File not found to download " + description.getDownloadUrl());
+              indicator.finished();
+              return null;
+            }
+            throw new IOException(IdeBundle.message("error.file.download.failed", description.getDownloadUrl(), e.getMessage()), e);
           }
           if (FileUtil.filesEqual(downloaded, existing)) {
             existingFiles.add(Pair.create(existing, description));

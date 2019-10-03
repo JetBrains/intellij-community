@@ -82,13 +82,8 @@ class JpsCacheLoader implements JpsOutputLoader {
 
       // Remove old cache dir
       FileUtil.delete(currentDirForBuildCache);
-      try {
-        FileUtil.rename(myTmpCacheFolder, currentDirForBuildCache);
-        LOG.debug("JPS cache downloads finished");
-      }
-      catch (IOException e) {
-        LOG.warn("Couldn't replace JPS cache", e);
-      }
+      myTmpCacheFolder.renameTo(currentDirForBuildCache);
+      LOG.debug("JPS cache downloads finished");
     }
   }
 }
