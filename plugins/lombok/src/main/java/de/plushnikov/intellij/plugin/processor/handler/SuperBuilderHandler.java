@@ -157,6 +157,17 @@ public class SuperBuilderHandler extends BuilderHandler {
     return PsiAnnotationUtil.getBooleanAnnotationValue(psiAnnotation, TO_BUILDER_ANNOTATION_KEY, false);
   }
 
+  private String selectNonClashingNameFor(String classGenericName, Collection<String> typeParamStrings) {
+    String result = classGenericName;
+    if (typeParamStrings.contains(classGenericName)) {
+      int counter = 2;
+      do {
+        result = classGenericName + counter++;
+      } while (typeParamStrings.contains(result));
+    }
+    return result;
+  }
+
   @NotNull
   public PsiClass createBuilderBaseClass(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
     String builderClassName = getBuilderClassName(psiClass);
@@ -170,11 +181,13 @@ public class SuperBuilderHandler extends BuilderHandler {
       .withModifier(PsiModifier.STATIC)
       .withModifier(PsiModifier.ABSTRACT);
 
-    final LightTypeParameterBuilder c = new LightTypeParameterBuilder("C", baseClassBuilder, 0);
+    final List<String> typeParamNames = Stream.of(psiClass.getTypeParameters()).map(PsiTypeParameter::getName).collect(Collectors.toList());
+
+    final LightTypeParameterBuilder c = new LightTypeParameterBuilder(selectNonClashingNameFor("C", typeParamNames), baseClassBuilder, 0);
     c.getExtendsList().addReference(PsiClassUtil.getTypeWithGenerics(psiClass));
     baseClassBuilder.withParameterType(c);
 
-    final LightTypeParameterBuilder b = new LightTypeParameterBuilder("B", baseClassBuilder, 1);
+    final LightTypeParameterBuilder b = new LightTypeParameterBuilder(selectNonClashingNameFor("B", typeParamNames), baseClassBuilder, 1);
     baseClassBuilder.withParameterType(b);
     b.getExtendsList().addReference(PsiClassUtil.getTypeWithGenerics(baseClassBuilder));
 
@@ -237,6 +250,7 @@ public class SuperBuilderHandler extends BuilderHandler {
       bTypeClass = typeParameters[typeParameters.length - 1];
       cTypeClass = typeParameters[typeParameters.length - 2];
     } else {
+      //Fallback only
       bTypeClass = new LightTypeParameterBuilder("B", psiBuilderClass, 1);
       cTypeClass = new LightTypeParameterBuilder("C", psiBuilderClass, 0);
     }
