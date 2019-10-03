@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.importing;
 
 import com.intellij.openapi.components.ServiceManager;
@@ -23,6 +9,7 @@ import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMo
 import com.intellij.openapi.externalSystem.service.project.ExternalProjectRefreshCallback;
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,7 +28,6 @@ public class ImportSpecBuilder {
   private boolean isReportRefreshError = true;
   @Nullable private String myVmOptions;
   @Nullable private String myArguments;
-  private boolean myUseDefaultCallback;
   private boolean myCreateDirectoriesForEmptyContentRoots;
 
   public ImportSpecBuilder(@NotNull Project project, @NotNull ProjectSystemId id) {
@@ -104,8 +90,13 @@ public class ImportSpecBuilder {
     return this;
   }
 
+  /**
+   * @deprecated no need to call the method, default callback is used by default
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
   public ImportSpecBuilder useDefaultCallback() {
-    myUseDefaultCallback = true;
+    callback(null);
     return this;
   }
 
@@ -115,26 +106,26 @@ public class ImportSpecBuilder {
     mySpec.setProgressExecutionMode(myProgressExecutionMode);
     mySpec.setForceWhenUptodate(myForceWhenUptodate);
     mySpec.setCreateDirectoriesForEmptyContentRoots(myCreateDirectoriesForEmptyContentRoots);
-    if (myUseDefaultCallback) {
-      mySpec.setCallback(new ExternalProjectRefreshCallback() {
-        @Override
-        public void onSuccess(@Nullable final DataNode<ProjectData> externalProject) {
-          if (externalProject == null) {
-            return;
-          }
-          final boolean synchronous = mySpec.getProgressExecutionMode() == ProgressExecutionMode.MODAL_SYNC;
-          ServiceManager.getService(ProjectDataManager.class).importData(externalProject, mySpec.getProject(), synchronous);
-        }
-      });
-    }
-    else {
-      mySpec.setCallback(myCallback);
-    }
+    mySpec.setCallback(myCallback == null ? getDefaultCallback(mySpec) : myCallback);
     mySpec.setPreviewMode(isPreviewMode);
     mySpec.setReportRefreshError(isReportRefreshError);
     mySpec.setArguments(myArguments);
     mySpec.setVmOptions(myVmOptions);
     return mySpec;
+  }
+
+  @NotNull
+  private static ExternalProjectRefreshCallback getDefaultCallback(ImportSpecImpl mySpec) {
+    return new ExternalProjectRefreshCallback() {
+      @Override
+      public void onSuccess(@Nullable final DataNode<ProjectData> externalProject) {
+        if (externalProject == null) {
+          return;
+        }
+        final boolean synchronous = mySpec.getProgressExecutionMode() == ProgressExecutionMode.MODAL_SYNC;
+        ServiceManager.getService(ProjectDataManager.class).importData(externalProject, mySpec.getProject(), synchronous);
+      }
+    };
   }
 
   private void apply(ImportSpec spec) {
