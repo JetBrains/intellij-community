@@ -173,7 +173,7 @@ class CommunityLibraryLicenses {
                        license: "CDDL 1.1 / GPL 2.0 + Classpath", licenseUrl: "https://oss.oracle.com/licenses/CDDL+GPL-1.1"),
     new LibraryLicense(name: "coverage.py", attachedTo: "intellij.python.helpers", version: "3.7.1", license: "Apache 2.0",
                        url: "http://coverage.readthedocs.org/"),
-    new LibraryLicense(name: "Cucumber-Core", libraryName: "cucumber-core", version: "1.2.4", license: "MIT License",
+    new LibraryLicense(name: "Cucumber-Core", libraryName: "cucumber-core-1.2", version: "1.2.4", license: "MIT License",
                        url: "https://github.com/cucumber/cucumber-jvm/", licenseUrl: "http://www.opensource.org/licenses/mit-license.html"),
     new LibraryLicense(name: "Cucumber-Core", libraryName: "cucumber-core", version: "3.0.2", license: "MIT License",
                        url: "https://github.com/cucumber/cucumber-jvm/", licenseUrl: "http://www.opensource.org/licenses/mit-license.html"),
