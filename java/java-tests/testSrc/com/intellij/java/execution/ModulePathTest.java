@@ -20,7 +20,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.rt.junit.JUnitStarter;
 import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
@@ -165,10 +164,11 @@ public class ModulePathTest extends BaseConfigurationTestCase {
 
   private JUnitConfiguration setupConfiguration(JpsMavenRepositoryLibraryDescriptor libraryDescriptor, String sources, Module module) throws Exception {
     VirtualFile contentRoot = getContentRoot(sources);
-    ContentEntry contentEntry = PsiTestUtil.addContentRoot(module, contentRoot);
-    contentEntry.addSourceFolder(contentRoot.getUrl() + "/src",false);
-    contentEntry.addSourceFolder(contentRoot.getUrl() + "/test",true);
     ModuleRootModificationUtil.updateModel(module, model -> {
+      ContentEntry contentEntry = model.addContentEntry(contentRoot);
+      contentEntry.addSourceFolder(contentRoot.getUrl() + "/src", false);
+      contentEntry.addSourceFolder(contentRoot.getUrl() + "/test", true);
+
       CompilerModuleExtension moduleExtension = model.getModuleExtension(CompilerModuleExtension.class);
       moduleExtension.inheritCompilerOutputPath(false);
       moduleExtension.setCompilerOutputPath(contentRoot.findFileByRelativePath("out/production"));
