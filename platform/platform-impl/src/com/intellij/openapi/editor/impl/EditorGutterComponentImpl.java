@@ -487,7 +487,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       EditorFontType style = gutterProvider.getStyle(line, myEditor);
       Font font = getFontForText(s, style);
       g.setFont(font);
-      g.drawString(s, getGapBetweenAnnotations() / 2 + x, y + myEditor.getAscent());
+      g.drawString(s, (gutterProvider.useMargin() ? getGapBetweenAnnotations() / 2 : 0) + x, y + myEditor.getAscent());
     }
   }
 
@@ -772,7 +772,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
           gutterSize = Math.max(gutterSize, fontMetrics.stringWidth(lineText));
         }
       }
-      if (gutterSize > 0 && j < guttersCount - 1) gutterSize += getGapBetweenAnnotations();
+      if (gutterSize > 0 && gutterProvider.useMargin()) gutterSize += getGapBetweenAnnotations();
       myTextAnnotationGutterSizes.set(j, gutterSize);
       myTextAnnotationGuttersSize += gutterSize;
     }
