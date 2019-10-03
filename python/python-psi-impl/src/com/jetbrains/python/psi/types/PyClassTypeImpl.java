@@ -537,7 +537,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
       .into(result);
 
     processMetaClassMembers(
-      typeType -> ContainerUtil.addAll(result, typeType.getCompletionVariants(prefix, location, context)),
+      typeType -> ContainerUtil.addAll(result, typeType.toInstance().getCompletionVariants(prefix, location, context)),
       typeInstanceAttribute -> {
         result.add(LookupElementBuilder.create(typeInstanceAttribute));
         return true;
@@ -648,8 +648,10 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
 
   private void processMembers(@NotNull PsiScopeProcessor scopeProcessor, @NotNull Runnable afterClassLevelBeforeInstanceLevel) {
     myClass.processClassLevelDeclarations(scopeProcessor);
-    afterClassLevelBeforeInstanceLevel.run();
-    myClass.processInstanceLevelDeclarations(scopeProcessor, null);
+    if (!isDefinition()) {
+      afterClassLevelBeforeInstanceLevel.run();
+      myClass.processInstanceLevelDeclarations(scopeProcessor, null);
+    }
   }
 
   private void processOwnSlots(@NotNull Processor<String> processor, @NotNull TypeEvalContext context) {

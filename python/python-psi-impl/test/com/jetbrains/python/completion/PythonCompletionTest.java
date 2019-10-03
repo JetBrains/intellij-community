@@ -1615,6 +1615,24 @@ public class PythonCompletionTest extends PyTestCase {
     );
   }
 
+  // PY-11977
+  public void testClassStaticMembers() {
+    final String text = "class MyClass(object):\n" +
+                        "  def __init__(self):\n" +
+                        "    self.foo = 42\n" +
+                        "\n" +
+                        "  def baz(self):\n" +
+                        "    pass\n" +
+                        "\n\n" +
+                        "MyClass.bar = 42\n" +
+                        "MyClass.<caret>";
+    myFixture.configureByText(PythonFileType.INSTANCE, text);
+    myFixture.completeBasic();
+    List<String> suggested = myFixture.getLookupElementStrings();
+    assertContainsElements(suggested, "bar", "baz");
+    assertDoesntContain(suggested, "foo");
+  }
+
   // PY-36008
   public void testTypedDictHasDictMethods() {
     final List<String> suggested = doTestByText("from typing import TypedDict\n" +
