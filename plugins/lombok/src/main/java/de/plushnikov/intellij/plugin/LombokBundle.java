@@ -27,5 +27,4 @@ public class LombokBundle {
   public static String message(@PropertyKey(resourceBundle = BUNDLE_NAME) String key, Object... params) {
     return CommonBundle.message(BUNDLE, key, params);
   }
-
 }
