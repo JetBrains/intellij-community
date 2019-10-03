@@ -573,39 +573,12 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
   @Nullable
   @Override
   public QualifiedName getAssignedQName() {
-    final PyTargetExpressionStub stub = getStub();
-    if (stub != null) {
-      if (stub.getInitializerType() == PyTargetExpressionStub.InitializerType.ReferenceExpression) {
-        return stub.getInitializer();
-      }
-      return null;
-    }
-    final PyExpression value = findAssignedValue();
-    return value instanceof PyReferenceExpression ? PyPsiUtils.asQualifiedName(value) : null;
+    return Ref.deref(getAssignedReferenceQualifiedName(this));
   }
 
   @Override
   public QualifiedName getCalleeName() {
-    final PyTargetExpressionStub stub = getStub();
-    if (stub != null) {
-      final PyTargetExpressionStub.InitializerType initializerType = stub.getInitializerType();
-      if (initializerType == PyTargetExpressionStub.InitializerType.CallExpression) {
-        return stub.getInitializer();
-      }
-      else if (initializerType == PyTargetExpressionStub.InitializerType.Custom) {
-        final CustomTargetExpressionStub customStub = stub.getCustomStub(CustomTargetExpressionStub.class);
-        if (customStub != null) {
-          return customStub.getCalleeName();
-        }
-      }
-      return null;
-    }
-    final PyExpression value = findAssignedValue();
-    if (value instanceof PyCallExpression) {
-      final PyExpression callee = ((PyCallExpression)value).getCallee();
-      return PyPsiUtils.asQualifiedName(callee);
-    }
-    return null;
+    return Ref.deref(getAssignedCallCalleeQualifiedName(this));
   }
 
   @NotNull
@@ -791,5 +764,39 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
       return stub.hasAssignedValue();
     }
     return findAssignedValue() != null;
+  }
+
+  @Nullable
+  public static Ref<QualifiedName> getAssignedReferenceQualifiedName(@NotNull PyTargetExpression psi) {
+    final PyTargetExpressionStub stub = psi.getStub();
+    if (stub != null) {
+      if (stub.getInitializerType() == PyTargetExpressionStub.InitializerType.ReferenceExpression) {
+        return Ref.create(stub.getInitializer());
+      }
+      return null;
+    }
+    final PyExpression value = psi.findAssignedValue();
+    return value instanceof PyReferenceExpression ? Ref.create(((PyReferenceExpression)value).asQualifiedName()) : null;
+  }
+
+  @Nullable
+  public static Ref<QualifiedName> getAssignedCallCalleeQualifiedName(@NotNull PyTargetExpression psi) {
+    final PyTargetExpressionStub stub = psi.getStub();
+    if (stub != null) {
+      final PyTargetExpressionStub.InitializerType initializerType = stub.getInitializerType();
+      if (initializerType == PyTargetExpressionStub.InitializerType.CallExpression) {
+        return Ref.create(stub.getInitializer());
+      }
+      else if (initializerType == PyTargetExpressionStub.InitializerType.Custom) {
+        final CustomTargetExpressionStub customStub = stub.getCustomStub(CustomTargetExpressionStub.class);
+        if (customStub != null) {
+          final QualifiedName calleeName = customStub.getCalleeName();
+          return calleeName != null ? Ref.create(calleeName) : null;
+        }
+      }
+      return null;
+    }
+    final PyExpression value = psi.findAssignedValue();
+    return value instanceof PyCallExpression ? Ref.create(PyPsiUtils.asQualifiedName(((PyCallExpression)value).getCallee())) : null;
   }
 }

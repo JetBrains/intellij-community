@@ -2,6 +2,7 @@
 package com.jetbrains.python.psi.impl.stubs;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.stubs.IndexSink;
@@ -66,15 +67,16 @@ public class PyTargetExpressionElementType extends PyStubElementType<PyTargetExp
 
     PyTargetExpressionStub.InitializerType initializerType = PyTargetExpressionStub.InitializerType.Other;
     QualifiedName initializer = null;
-    if (assignedValue instanceof PyReferenceExpression) {
+    final Ref<QualifiedName> assignedReference = PyTargetExpressionImpl.getAssignedReferenceQualifiedName(psi);
+    if (assignedReference != null) {
       initializerType = PyTargetExpressionStub.InitializerType.ReferenceExpression;
-      initializer = ((PyReferenceExpression) assignedValue).asQualifiedName();
+      initializer = assignedReference.get();
     }
-    else if (assignedValue instanceof PyCallExpression) {
-      initializerType = PyTargetExpressionStub.InitializerType.CallExpression;
-      final PyExpression callee = ((PyCallExpression)assignedValue).getCallee();
-      if (callee instanceof PyReferenceExpression) {
-        initializer = ((PyReferenceExpression) callee).asQualifiedName();
+    else {
+      final Ref<QualifiedName> assignedCallCalleeReference = PyTargetExpressionImpl.getAssignedCallCalleeQualifiedName(psi);
+      if (assignedCallCalleeReference != null) {
+        initializerType = PyTargetExpressionStub.InitializerType.CallExpression;
+        initializer = assignedCallCalleeReference.get();
       }
     }
     return new PyTargetExpressionStubImpl(name, docString, initializerType, initializer, psi.isQualified(), typeComment, annotation,
