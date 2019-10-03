@@ -44,7 +44,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
-import static com.intellij.util.TestTimeOut.*;
+
+import static com.intellij.util.TestTimeOut.setTimeout;
 
 public class JobUtilTest extends LightPlatformTestCase {
   private static final AtomicInteger COUNT = new AtomicInteger();
@@ -536,6 +537,37 @@ public class JobUtilTest extends LightPlatformTestCase {
       assertTrue(elapsed.toString(), elapsed.get() < COARSENESS);
 
       if (!stealHappened.get()) break; // tested that we wanted
+    }
+  }
+
+  public void testInvokeConcurrentlyMustExecuteMultipleTasksConcurrentlyEvenIfOneOfThemIsWildlySlow() {
+    int N = 8;
+    Integer[] times = new Integer[N];
+    for (int i=0; i<N; i++) {
+      Arrays.fill(times, 0);
+      times[i] = 1_000_000;
+
+      AtomicInteger executed = new AtomicInteger();
+      DaemonProgressIndicator progress = new DaemonProgressIndicator();
+      String enough = "enough is enough";
+      try {
+        JobLauncher.getInstance().invokeConcurrentlyUnderProgress(Arrays.asList(times.clone()), progress, time -> {
+          while ((time -= 100) >= 0) {
+            ProgressManager.checkCanceled();
+            TimeoutUtil.sleep(100);
+          }
+
+          if (executed.incrementAndGet() == times.length - 1) {
+            // executed all but the slowest one
+            throw new RuntimeException(enough);
+          }
+          return true;
+        });
+        fail();
+      }
+      catch (RuntimeException e) {
+        assertEquals(enough, e.getMessage());
+      }
     }
   }
 }
