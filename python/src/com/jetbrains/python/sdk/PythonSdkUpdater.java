@@ -184,9 +184,6 @@ public class PythonSdkUpdater implements StartupActivity.Background {
                 LOG.info("Performing background scan of packages for SDK " + sdkPresentableName);
                 try {
                   PyPackageManager.getInstance(sdkInsideTask).refreshAndGetPackages(true);
-                  if (project1 != null) {
-                    application.invokeLater(() -> DaemonCodeAnalyzer.getInstance(project1).restart(), project1.getDisposed());
-                  }
                 }
                 catch (ExecutionException e) {
                   if (LOG.isDebugEnabled()) {
@@ -196,6 +193,9 @@ public class PythonSdkUpdater implements StartupActivity.Background {
                   else {
                     LOG.warn(e.getMessage());
                   }
+                }
+                if (project1 != null) {
+                  application.invokeLater(() -> DaemonCodeAnalyzer.getInstance(project1).restart(), project1.getDisposed());
                 }
               }
               catch (InvalidSdkException e) {

@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.packaging;
 
+import com.google.common.collect.Sets;
 import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
@@ -519,7 +520,7 @@ public class PyPackageUtil {
       @Nullable
       @Override
       public ChangeApplier prepareChange(@NotNull List<? extends VFileEvent> events) {
-        final VirtualFile[] roots = sdk.getRootProvider().getFiles(OrderRootType.CLASSES);
+        final Set<VirtualFile> roots = Sets.newHashSet(sdk.getRootProvider().getFiles(OrderRootType.CLASSES));
         allEvents:
         for (VFileEvent event : events) {
           if (event instanceof VFileContentChangeEvent) continue;
@@ -533,13 +534,9 @@ public class PyPackageUtil {
             if (file != null) parent = file.getParent();
           }
 
-          if (parent != null) {
-            for (VirtualFile root : roots) {
-              if (root != null && root.equals(parent)) {
-                app.executeOnPooledThread(runnable);
-                break allEvents;
-              }
-            }
+          if (parent != null && roots.contains(parent)) {
+            app.executeOnPooledThread(runnable);
+            break allEvents;
           }
         }
         // No continuation in write action is needed
