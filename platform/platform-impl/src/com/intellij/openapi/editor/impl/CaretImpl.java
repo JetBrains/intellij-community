@@ -1496,16 +1496,20 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     if (!ApplicationManager.getApplication().isDispatchThread()) return;
     int modelCounter = myCaretModel.myDocumentUpdateCounter;
     if (myDocumentUpdateCounter != modelCounter) {
-      LogicalPosition lp = myEditor.offsetToLogicalPosition(getOffset());
-      myLogicalCaret = new LogicalPosition(lp.line, lp.column + myLogicalColumnAdjustment, myLeansTowardsLargerOffsets);
-      VisualPosition visualPosition = myEditor.logicalToVisualPosition(myLogicalCaret);
-      myVisibleCaret = new VisualPosition(visualPosition.line, visualPosition.column + myVisualColumnAdjustment, visualPosition.leansRight);
-      updateVisualLineInfo();
-      setLastColumnNumber(myLogicalCaret.column);
-      myDesiredSelectionStartColumn = myDesiredSelectionEndColumn = -1;
-      myDesiredX = -1;
+      updateCachedState();
       myDocumentUpdateCounter = modelCounter;
     }
+  }
+
+  private void updateCachedState() {
+    LogicalPosition lp = myEditor.offsetToLogicalPosition(getOffset());
+    myLogicalCaret = new LogicalPosition(lp.line, lp.column + myLogicalColumnAdjustment, myLeansTowardsLargerOffsets);
+    VisualPosition visualPosition = myEditor.logicalToVisualPosition(myLogicalCaret);
+    myVisibleCaret = new VisualPosition(visualPosition.line, visualPosition.column + myVisualColumnAdjustment, visualPosition.leansRight);
+    updateVisualLineInfo();
+    setLastColumnNumber(myLogicalCaret.column);
+    myDesiredSelectionStartColumn = myDesiredSelectionEndColumn = -1;
+    myDesiredX = -1;
   }
 
   public boolean isInVirtualSpace() {
