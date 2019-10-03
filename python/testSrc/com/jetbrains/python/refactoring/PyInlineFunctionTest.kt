@@ -108,6 +108,10 @@ class PyInlineFunctionTest : PyTestCase() {
       doTestError("Cannot inline async functions")
     }
   }
+  fun testInvocationOnDeclaration() {
+    myFixture.configureByFile("${getTestName(true)}.py")
+    assertNull("Calling inline function on declaration should not return a reference, but did.", PyInlineFunctionHandler.findReference(myFixture.editor))
+  }
   fun testConstructor() = doTestError("Cannot inline constructor calls")
   fun testBuiltin() = doTestError("Cannot inline builtin functions")
   fun testSpecialMethod() = doTestError("Cannot inline special methods")

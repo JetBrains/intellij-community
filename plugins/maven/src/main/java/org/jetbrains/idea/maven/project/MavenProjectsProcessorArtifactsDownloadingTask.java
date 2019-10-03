@@ -1,15 +1,13 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.project;
 
-import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
-import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
-import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.util.Collection;
 
@@ -44,8 +42,8 @@ public class MavenProjectsProcessorArtifactsDownloadingTask implements MavenProj
       myCallbackResult.setResult(result);
     }
 
-    // todo: hack to update all file pointers.
-    MavenUtil.invokeLater(project, () -> WriteAction.run(
-      () -> ProjectRootManagerEx.getInstanceEx(project).makeRootsChange(EmptyRunnable.getInstance(), false, true)));
+    ApplicationManager.getApplication().invokeLater(() -> {
+      VirtualFileManager.getInstance().asyncRefresh(null);
+    });
   }
 }

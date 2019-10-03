@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.externalSystem.test.ExternalSystemTestCase;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -61,7 +62,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   @Override
   protected void tearDown() throws Exception {
     new RunAll(
-      () -> JavaAwareProjectJdkTableImpl.removeInternalJdkInTests(),
+      () -> WriteAction.runAndWait(() -> JavaAwareProjectJdkTableImpl.removeInternalJdkInTests()),
       () -> Messages.setTestDialog(TestDialog.DEFAULT),
       () -> removeFromLocalRepository("test"),
       () -> ExternalSystemTestCase.deleteBuildSystemDirectory(),

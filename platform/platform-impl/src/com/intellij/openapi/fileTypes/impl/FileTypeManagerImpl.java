@@ -522,7 +522,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
               "; beforeType: " + before.getName() + "; afterByFileType: " + (after == null ? null : after.getName()));
         }
 
-        if (after == null) {
+        if (after == null || mightBeReplacedByDetectedFileType(after)) {
           try {
             after = detectFromContentAndCache(file);
           }
@@ -672,12 +672,22 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   @NotNull
   public FileType getFileTypeByFile(@NotNull VirtualFile file) {
     FileType fileType = getByFile(file);
-
-    if (fileType == null) {
-      fileType = file instanceof StubVirtualFile ? UnknownFileType.INSTANCE : getOrDetectFromContent(file);
+    if (!(file instanceof StubVirtualFile)) {
+      if (fileType == null) {
+        return getOrDetectFromContent(file);
+      }
+      if (mightBeReplacedByDetectedFileType(fileType)) {
+        FileType detectedFromContent = getOrDetectFromContent(file);
+        if (detectedFromContent != UnknownFileType.INSTANCE && detectedFromContent != PlainTextFileType.INSTANCE) {
+          return detectedFromContent;
+        }
+      }
     }
+    return ObjectUtils.notNull(fileType, UnknownFileType.INSTANCE);
+  }
 
-    return fileType;
+  private static boolean mightBeReplacedByDetectedFileType(FileType fileType) {
+    return fileType instanceof PlainTextLikeFileType && fileType.isReadOnly();
   }
 
   @Nullable // null means all conventional detect methods returned UnknownFileType.INSTANCE, have to detect from content
@@ -1042,7 +1052,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
   @Override
   public boolean isFileOfType(@NotNull VirtualFile file, @NotNull FileType type) {
-    if (type.equals(PlainTextFileType.INSTANCE) || type.equals(UnknownFileType.INSTANCE)) {
+    if (mightBeReplacedByDetectedFileType(type) || type.equals(UnknownFileType.INSTANCE)) {
       // a file has unknown file type if none of file type detectors matched it
       // for plain text file type, we run file type detection based on content
 

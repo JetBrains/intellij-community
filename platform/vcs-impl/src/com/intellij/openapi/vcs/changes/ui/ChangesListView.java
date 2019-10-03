@@ -40,6 +40,7 @@ import static com.intellij.openapi.vcs.changes.ChangesUtil.getFiles;
 import static com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.*;
 import static com.intellij.util.containers.UtilKt.getIfSingle;
 import static com.intellij.util.containers.UtilKt.stream;
+import static com.intellij.vcs.commit.ChangesViewCommitPanelKt.subtreeRootObject;
 import static java.util.stream.Collectors.toList;
 
 // TODO: Check if we could extend DnDAwareTree here instead of directly implementing DnDAware
@@ -77,6 +78,15 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
   @Override
   public int getToggleClickCount() {
     return 2;
+  }
+
+  @Override
+  protected boolean isInclusionVisible(@NotNull ChangesBrowserNode<?> node) {
+    Object subtreeRootObject = subtreeRootObject(node);
+
+    if (subtreeRootObject instanceof LocalChangeList) return !((LocalChangeList)subtreeRootObject).getChanges().isEmpty();
+    if (subtreeRootObject == UNVERSIONED_FILES_TAG) return true;
+    return false;
   }
 
   @Override
@@ -412,6 +422,9 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
 
   @Nullable
   public DefaultMutableTreeNode findNodeInTree(Object userObject) {
+    if (userObject instanceof LocalChangeList) {
+      return TreeUtil.nodeChildren(getRoot()).filter(DefaultMutableTreeNode.class).find(node -> userObject.equals(node.getUserObject()));
+    }
     if (userObject instanceof ChangeListChange) {
       return TreeUtil.findNode(getRoot(), node -> ChangeListChange.HASHING_STRATEGY.equals(node.getUserObject(), userObject));
     }

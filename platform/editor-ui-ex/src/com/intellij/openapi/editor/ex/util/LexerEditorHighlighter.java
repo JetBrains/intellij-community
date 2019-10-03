@@ -61,7 +61,14 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
 
   @NotNull
   protected SegmentArrayWithData createSegments() {
-    return new SegmentArrayWithData(myLexer instanceof DataStorageFactory ? ((DataStorageFactory)myLexer).createDataStorage() : new ShortBasedStorage());
+    return new SegmentArrayWithData(createStorage());
+  }
+
+  @NotNull
+  protected final DataStorage createStorage() {
+    return myLexer instanceof DataStorageFactory
+           ? ((DataStorageFactory)myLexer).createDataStorage()
+           : (myLexer instanceof RestartableLexer ? new IntBasedStorage() : new ShortBasedStorage());
   }
 
   public boolean isPlain() {

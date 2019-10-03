@@ -534,7 +534,7 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
         final File patchFile = getPatchFileInConfigDir(schemeNameDir);
         String patchPath = patchFile.getPath();
         try {
-          List<? extends FilePatch> filePatches = loadPatchesWithoutContent(myProject, patchPath, new CommitContext());
+          List<? extends FilePatch> filePatches = loadPatchesWithoutContent(myProject, file.getPath(), new CommitContext());
           if (!filePatches.isEmpty()) {
             FileUtil.copy(new File(file.getPath()), patchFile);
             final ShelvedChangeList list =

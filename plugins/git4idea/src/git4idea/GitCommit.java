@@ -16,17 +16,22 @@
 package git4idea;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsShortCommitDetails;
 import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcs.log.impl.VcsChangesLazilyParsedDetails;
 import com.intellij.vcs.log.impl.VcsFileStatusInfo;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Represents a Git commit with its meta information (hash, author, message, etc.), its parents and the {@link Change changes}.
@@ -41,6 +46,35 @@ public final class GitCommit extends VcsChangesLazilyParsedDetails {
                    @NotNull List<List<VcsFileStatusInfo>> reportedChanges) {
     super(project, hash, parents, commitTime, root, subject, author, message, committer, authorTime, reportedChanges,
           new GitChangesParser());
+  }
+
+  @ApiStatus.Internal
+  @NotNull
+  public Set<FilePath> getAffectedPaths() {
+    Changes changesObject = getChangesObject();
+    if (changesObject instanceof UnparsedChanges) {
+      Set<FilePath> result = new HashSet<>();
+
+      for (VcsFileStatusInfo statusInfo : ((UnparsedChanges)changesObject).getMergedStatuses()) {
+        result.add(GitContentRevision.createPath(getRoot(), statusInfo.getFirstPath()));
+
+        String secondPath = statusInfo.getSecondPath();
+        if (secondPath != null) {
+          result.add(GitContentRevision.createPath(getRoot(), secondPath));
+        }
+      }
+
+      return result;
+    }
+
+    Set<FilePath> result = new HashSet<>();
+    for (Change change : getChanges()) {
+      FilePath beforePath = ChangesUtil.getBeforePath(change);
+      if (beforePath != null) result.add(beforePath);
+      FilePath afterPath = ChangesUtil.getAfterPath(change);
+      if (afterPath != null) result.add(afterPath);
+    }
+    return result;
   }
 
   private static class GitChangesParser implements ChangesParser {

@@ -23,7 +23,6 @@ import org.gradle.tooling.internal.adapter.TargetTypeProvider;
 import org.gradle.tooling.model.BuildIdentifier;
 import org.gradle.tooling.model.BuildModel;
 import org.gradle.tooling.model.DomainObjectSet;
-import org.gradle.tooling.model.Model;
 import org.gradle.tooling.model.ProjectModel;
 import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.tooling.model.gradle.BasicGradleProject;
@@ -225,7 +224,6 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
         final Set<String> obtainedModels = new HashSet<String>();
         long startTime = System.currentTimeMillis();
         BuildModelConsumer modelConsumer = new BuildModelConsumer() {
-          // Android Studio: added by Change Id2c07320
           @Override
           public void consumeProjectModel(@NotNull ProjectModel projectModel, @NotNull Object object, @NotNull Class clazz) {
             allModels.addModel(object, clazz, projectModel);

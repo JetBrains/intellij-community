@@ -5,7 +5,9 @@ import com.intellij.credentialStore.keePass.InMemoryCredentialStore
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.testFramework.UsefulTestCase
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.AssumptionViolatedException
 import org.junit.Test
+import java.io.Closeable
 import java.util.*
 
 private val TEST_SERVICE_NAME = generateServiceName("Test", "test")
@@ -23,7 +25,22 @@ internal class CredentialStoreTest {
       return
     }
 
-    doTest(SecretCredentialStore("com.intellij.test"))
+    val store = SecretCredentialStore.create("com.intellij.test")
+    if (store == null) throw AssumptionViolatedException("No secret service")
+    doTest(store)
+  }
+
+  @Test
+  fun linuxKWallet() {
+    if (!SystemInfo.isLinux || UsefulTestCase.IS_UNDER_TEAMCITY) {
+      return
+    }
+    val kWallet = KWalletCredentialStore.create()
+    if (kWallet == null) {
+      throw AssumptionViolatedException("No KWallet")
+    }
+
+    doTest(kWallet)
   }
 
   @Test
@@ -49,7 +66,8 @@ internal class CredentialStoreTest {
   @Test
   fun `linux - testEmptyAccountName`() {
     if (isLinuxSupported()) {
-      testEmptyAccountName(SecretCredentialStore("com.intellij.test"))
+      val store = SecretCredentialStore.create("com.intellij.test")
+      if (store != null) testEmptyAccountName(store)
     }
   }
 
@@ -83,7 +101,8 @@ internal class CredentialStoreTest {
   @Test
   fun `linux - memoryOnlyPassword`() {
     if (isLinuxSupported()) {
-      memoryOnlyPassword(SecretCredentialStore("com.intellij.test"))
+      val store = SecretCredentialStore.create("com.intellij.test")
+      if (store != null) memoryOnlyPassword(store)
     }
   }
 
@@ -116,6 +135,7 @@ internal class CredentialStoreTest {
     val unicodeAttributes = CredentialAttributes(TEST_SERVICE_NAME, unicodePassword)
     store.setPassword(unicodeAttributes, pass)
     assertThat(store.getPassword(unicodeAttributes)).isEqualTo(pass)
+    if (store is Closeable) store.close()
   }
 
   private fun testEmptyAccountName(store: CredentialStore) {

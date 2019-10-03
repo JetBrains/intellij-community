@@ -362,10 +362,14 @@ class _PyDevFrontEnd:
 
         self.ipython.user_global_ns.clear()
         self.ipython.user_global_ns.update(globals)
-        self.ipython.user_ns = locals
+
+        # If `globals` and `locals` passed to the method are the same objects, we have to ensure that they are also
+        # the same in the IPython evaluation context to avoid troubles with some corner-cases such as generator expressions.
+        # See: `pydevd_console_integration.console_exec()`.
+        self.ipython.user_ns = self.ipython.user_global_ns if globals is locals else locals
 
         if hasattr(self.ipython, 'history_manager') and hasattr(self.ipython.history_manager, 'save_thread'):
-            self.ipython.history_manager.save_thread.pydev_do_not_trace = True #don't trace ipython history saving thread
+            self.ipython.history_manager.save_thread.pydev_do_not_trace = True  # don't trace ipython history saving thread
 
     def complete(self, string):
         try:

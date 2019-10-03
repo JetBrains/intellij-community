@@ -12,6 +12,9 @@ interface ChangesViewCommitWorkflowUi : CommitWorkflowUi {
 
   var inclusionModel: InclusionModel?
 
+  fun select(item: Any)
+  fun selectFirst(items: Collection<Any>)
+
   fun showCommitOptions(options: CommitOptions, isFromToolbar: Boolean, dataContext: DataContext)
 
   fun setCompletionContext(changeLists: List<LocalChangeList>)

@@ -148,7 +148,6 @@ public final class TouchBarsManager {
 
       @Override
       public void processTerminated(@NotNull String executorId, @NotNull ExecutionEnvironment env, @NotNull ProcessHandler handler, int exitCode) {
-        // TODO: probably, need to remove debugger-panel from stack completely
         final String twid = env.getExecutor().getToolWindowId();
         ourStack.pop(topContainer -> {
           if (topContainer.getType() != BarType.DEBUGGER) {
@@ -160,7 +159,7 @@ public final class TouchBarsManager {
           }
 
           // System.out.println("processTerminated, dbgSessionsCount=" + pd.getDbgSessions());
-          return !_hasAnyActiveSession(project, handler) || projectData.getDbgSessions() <= 0;
+          return !_hasAnyActiveSession(project, handler);
         });
         ApplicationManager.getApplication().invokeLater(TouchBarsManager::_updateCurrentTouchbar);
       }
@@ -302,13 +301,6 @@ public final class TouchBarsManager {
         public void focusGained(@NotNull Editor editor) {
           // System.out.println("reset optional-context of default because editor window gained focus: " + editor);
           projectData.get(BarType.DEFAULT).setOptionalContextVisible(null);
-
-          final boolean hasDebugSession = projectData.getDbgSessions() > 0;
-          if (!hasDebugSession) {
-            // System.out.println("elevate default because editor window gained focus: " + editor);
-            // StackTouchBars.changeReason = "elevate default because editor gained focus";
-            ourStack.elevateContainer(projectData.get(BarType.DEFAULT));
-          }
         }
       });
     }

@@ -15,6 +15,7 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TIntIntHashMap;
 import gnu.trove.TIntIntProcedure;
@@ -248,7 +249,7 @@ public class ModifierKeyDoubleClickHandler implements Disposable, BaseComponent 
           if (focusedWindow != null && IdeKeyEventDispatcher.isModalContext(focusedWindow)) return false;
         }
 
-        DataContext context = DataManager.getInstance().getDataContext(IdeFocusManager.findInstance().getFocusOwner());
+        DataContext context = calculateContext();
         AnActionEvent anActionEvent = AnActionEvent.createFromAnAction(action, event, ActionPlaces.KEYBOARD_SHORTCUT, context);
         action.update(anActionEvent);
         if (!anActionEvent.getPresentation().isEnabled()) return false;
@@ -262,6 +263,16 @@ public class ModifierKeyDoubleClickHandler implements Disposable, BaseComponent 
       finally {
         myIsRunningAction = false;
       }
+    }
+
+    @NotNull
+    private DataContext calculateContext() {
+      IdeFocusManager focusManager = IdeFocusManager.findInstance();
+      Component focusedComponent = focusManager.getFocusOwner();
+      IdeFrame frame = focusManager.getLastFocusedFrame();
+      return frame == focusedComponent || focusedComponent == focusManager.getLastFocusedFor(frame)
+             ? DataManager.getInstance().getDataContext(focusedComponent)
+             : DataManager.getInstance().getDataContext();
     }
 
     private boolean shouldSkipIfActionHasShortcut() {

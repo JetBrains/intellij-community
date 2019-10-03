@@ -260,7 +260,7 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
     if (type == null) {
       return false;
     }
-    if (superType.equals(type)) {
+    if (superType.equals(type) || CommonClassNames.JAVA_LANG_OBJECT.equals(superType.name())) {
       return true;
     }
     return supertypes(type).anyMatch(t -> instanceOf(t, superType));

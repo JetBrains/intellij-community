@@ -17,10 +17,7 @@ import com.intellij.uiDesigner.compiler.NestedFormLoader;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.lw.CompiledClassPropertiesProvider;
 import com.intellij.uiDesigner.lw.LwRootContainer;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.NotNullProducer;
-import com.intellij.util.PathUtil;
+import com.intellij.util.*;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.UIUtilities;
 import com.sun.tools.javac.Main;
@@ -84,6 +81,7 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
     appendPath(cp, BaseState.class);
     appendPath(cp, KDeclarationContainer.class);
     appendPath(cp, NotNullProducer.class);
+    appendPath(cp, NotNullFunction.class);  // intellij.platform.util.rt
     appendPath(cp, SimpleTextAttributes.class);
     myClassFinder = new MyClassFinder(new URL[]{url}, cp.toArray(new URL[0]));
   }

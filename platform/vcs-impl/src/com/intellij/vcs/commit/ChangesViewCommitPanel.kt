@@ -41,6 +41,7 @@ import com.intellij.util.ui.JBUI.scale
 import com.intellij.util.ui.UIUtil.addBorder
 import com.intellij.util.ui.UIUtil.getTreeBackground
 import com.intellij.util.ui.components.BorderLayoutPanel
+import com.intellij.util.ui.tree.TreeUtil.*
 import java.awt.Point
 import java.awt.event.ActionEvent
 import java.awt.event.InputEvent
@@ -69,6 +70,8 @@ private fun JBPopup.showAbove(component: JComponent) {
   })
   show(northWest)
 }
+
+internal fun ChangesBrowserNode<*>.subtreeRootObject(): Any? = (path.getOrNull(1) as? ChangesBrowserNode<*>)?.userObject
 
 class ChangesViewCommitPanel(private val changesView: ChangesListView, private val rootComponent: JComponent) :
   BorderLayoutPanel(), ChangesViewCommitWorkflowUi, ComponentContainer, DataProvider {
@@ -179,6 +182,18 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView, private v
     contentManager.selectContent(ChangesViewContentManager.LOCAL_CHANGES)
     toolWindow.activate({ commitMessage.requestFocusInMessage() }, false)
     return true
+  }
+
+  override fun select(item: Any) {
+    val pathToSelect = changesView.findNodePathInTree(item)
+    pathToSelect?.let { selectPath(changesView, it, false) }
+  }
+
+  override fun selectFirst(items: Collection<Any>) {
+    if (items.isEmpty()) return
+
+    val pathToSelect = treePathTraverser(changesView).preOrderDfsTraversal().find { getLastUserObject(it) in items }
+    pathToSelect?.let { selectPath(changesView, it, false) }
   }
 
   override fun showCommitOptions(options: CommitOptions, isFromToolbar: Boolean, dataContext: DataContext) {

@@ -753,7 +753,7 @@ public class MavenUtil {
       if (isEmptyOrSpaces(text)) {
         return null;
       }
-      return expandProperties(text);
+      return expandProperties(text.trim());
     }
     catch (Exception e) {
       return null;

@@ -5,8 +5,6 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiNameIdentifierOwner
 import com.intellij.psi.PsiReference
-import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.inline.InlineOptionsDialog
 import com.jetbrains.python.PyBundle
@@ -20,20 +18,20 @@ import com.jetbrains.python.pyi.PyiUtil
 class PyInlineFunctionDialog(project: Project,
                              private val myEditor: Editor,
                              private val myFunction: PyFunction,
-                             private val myReference: PsiReference?) : InlineOptionsDialog(project, true, myFunction) {
+                             private val myInvocationReference: PsiReference?) : InlineOptionsDialog(project, true, myFunction) {
   private val isMethod = myFunction.asMethod() != null
   private val myFunctionName = myFunction.name
   private val myNumberOfOccurrences: Int = getNumberOfOccurrences(myFunction)
 
   init {
-    myInvokedOnReference = PsiTreeUtil.getParentOfType(myReference?.element, PyImportStatementBase::class.java) == null
+    myInvokedOnReference = myInvocationReference != null
     title = if (isMethod) "Inline method $myFunctionName" else "Inline function $myFunctionName"
     init()
   }
 
   override fun doAction() {
     val originalFunction = PyiUtil.getOriginalElement(myFunction) as PyFunction?
-    invokeRefactoring(PyInlineFunctionProcessor(myProject, myEditor, originalFunction ?: myFunction, myReference, isInlineThisOnly, !isKeepTheDeclaration))
+    invokeRefactoring(PyInlineFunctionProcessor(myProject, myEditor, originalFunction ?: myFunction, myInvocationReference, isInlineThisOnly, !isKeepTheDeclaration))
   }
 
   override fun getNameLabelText(): String {

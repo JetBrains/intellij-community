@@ -31,7 +31,6 @@ public interface ProjectImportModelProvider extends Serializable {
   interface BuildModelConsumer {
     void consume(@NotNull BuildModel buildModel, @NotNull Object object, @NotNull Class clazz);
 
-    // Android Studio: added by Change Id2c07320
     void consumeProjectModel(@NotNull ProjectModel projectModel, @NotNull Object object, @NotNull Class clazz);
   }
 

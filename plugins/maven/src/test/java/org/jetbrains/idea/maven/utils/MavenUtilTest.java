@@ -38,6 +38,16 @@ public class MavenUtilTest extends MavenTestCase {
     assertEquals("mytestpath", MavenUtil.getRepositoryFromSettings(new File(file.getPath())));
   }
 
+  public void testFindLocalRepoWithNonTrimmed() throws IOException {
+    VirtualFile file = createProjectSubFile("testsettings.xml", "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+                                                                "<settings>" +
+                                                                "  <localRepository>\n\t" +
+                                                                "     \tmytestpath\n" +
+                                                                "   \t</localRepository>" +
+                                                                "</settings>");
+    assertEquals("mytestpath", MavenUtil.getRepositoryFromSettings(new File(file.getPath())));
+  }
+
   public void testSystemProperties() throws IOException {
 
     try {
@@ -50,7 +60,5 @@ public class MavenUtilTest extends MavenTestCase {
     } finally {
       MavenServerUtil.removeProperty("testSystemPropertiesRepoPath");
     }
-
-
   }
 }

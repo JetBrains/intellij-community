@@ -405,6 +405,25 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
     myDebugProcess.changeVariable((PyDebugValue)var, value);
   }
 
+  /**
+   * Waits until the given string appears in the output the given number of times.
+   * @param string The string to match output with.
+   * @param times The number of times we expect to see the string.
+   * @throws InterruptedException
+   */
+  public void waitForOutput(String string, int times) throws InterruptedException {
+    long started = System.currentTimeMillis();
+    int matches;
+
+    while ((matches = StringUtils.countMatches(output(), string)) != times) {
+      if (System.currentTimeMillis() - started > myTimeout) {
+        Assert.fail("The substring '" + string + "' appeared in the output " + matches + " times, must be " + times + " times.\n" +
+                    output());
+      }
+      Thread.sleep(2000);
+    }
+  }
+
   public void waitForOutput(String... string) throws InterruptedException {
     long started = System.currentTimeMillis();
 

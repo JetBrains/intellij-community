@@ -207,7 +207,7 @@ public class MavenServerManager extends MavenRemoteObjectWrapper<MavenServer> im
             if (!manager.isMavenizedProject()) {
               return;
             }
-            manager.getSyncConsole().terminated(event.getExitCode());
+            manager.terminateImport(event.getExitCode());
           });
         }
       }

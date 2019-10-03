@@ -44,7 +44,6 @@ import com.intellij.util.io.PathKt;
 import com.intellij.util.ui.update.Update;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -116,7 +115,6 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   private MavenSyncConsole mySyncConsole;
   private final MavenMergingUpdateQueue mySaveQueue;
   private static final int SAVE_DELAY = 1000;
-  private volatile AsyncPromise<List<Module>> myRunningImportPromise;
 
   public static MavenProjectsManager getInstance(@NotNull Project project) {
     return project.getComponent(MavenProjectsManager.class);
@@ -151,11 +149,6 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
 
   @Override
   public void dispose() {
-  }
-
-  @ApiStatus.Experimental
-  AsyncPromise<List<Module>> getRunningImportPromise() {
-    return myRunningImportPromise;
   }
 
   public ModificationTracker getModificationTracker() {
@@ -877,15 +870,14 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     return scheduleImportAndResolve(false);
   }
 
+  public void terminateImport(int exitCode) {
+    getSyncConsole().terminated(exitCode);
+  }
+
   public Promise<List<Module>> scheduleImportAndResolve(boolean fromAutoImport) {
-    Promise<List<Module>> toCheck = myRunningImportPromise;
-    if(toCheck != null){
-      return toCheck;
-    }
     getSyncConsole().startImport(myProgressListener, fromAutoImport);
     MavenSyncConsole console = getSyncConsole();
     AsyncPromise<List<Module>> promise = scheduleResolve();
-    myRunningImportPromise = promise;
     promise.onProcessed(m -> {
       completeMavenSyncOnImportCompletion(console);
     });
@@ -915,7 +907,6 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
                                   myPostProcessor.waitForCompletion();
                                 }
                                 console.finishImport();
-                                myRunningImportPromise = null;
                               });
   }
 
@@ -1174,6 +1165,12 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     unscheduleAllTasks(getProjects());
   }
 
+  @TestOnly
+  public void waitForImportFinishCompletion() {
+    completeMavenSyncOnImportCompletion(mySyncConsole);
+  }
+
+
   public void waitForReadingCompletion() {
     waitForTasksCompletion(null);
   }
@@ -1316,11 +1313,6 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   @TestOnly
   public void fireActivatedInTests() {
     fireActivated();
-  }
-
-  @TestOnly
-  public void replaceProgressListener(BuildProgressListener newProgressListener){
-    myProgressListener = newProgressListener;
   }
 
   private void fireActivated() {

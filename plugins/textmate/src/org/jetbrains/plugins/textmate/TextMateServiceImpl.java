@@ -82,10 +82,10 @@ public class TextMateServiceImpl extends TextMateService {
 
   @Override
   public void registerEnabledBundles() {
-    doRegisterEnabledBundles();
+    doRegisterEnabledBundles(true);
   }
 
-  private void doRegisterEnabledBundles() {
+  private void doRegisterEnabledBundles(boolean fireEvents) {
     TextMateSettings settings = TextMateSettings.getInstance();
     if (settings == null) {
       return;
@@ -107,7 +107,7 @@ public class TextMateServiceImpl extends TextMateService {
     if (!myExtensionsMapping.equals(newExtensionsMapping)) {
       myExtensionsMapping.clear();
       myExtensionsMapping.putAll(newExtensionsMapping);
-      if (!newExtensionsMapping.isEmpty()) {
+      if (fireEvents && !newExtensionsMapping.isEmpty()) {
         fireFileTypesChangedEvent();
       }
     }
@@ -326,7 +326,7 @@ public class TextMateServiceImpl extends TextMateService {
 
   private void ensureInitialized() {
     if (myInitialized.compareAndSet(false, true)) {
-      doRegisterEnabledBundles();
+      doRegisterEnabledBundles(false);
     }
   }
 

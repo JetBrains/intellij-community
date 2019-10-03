@@ -11,8 +11,10 @@ import com.intellij.notification.SingletonNotificationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.concurrency.QueueProcessor
 import com.intellij.util.containers.ContainerUtil
+import java.io.Closeable
 import java.util.concurrent.TimeUnit
 
 internal val NOTIFICATION_MANAGER by lazy {
@@ -21,7 +23,7 @@ internal val NOTIFICATION_MANAGER by lazy {
 }
 
 // used only for native keychains, not for KeePass, so, postponedCredentials and other is not overhead if KeePass is used
-private class NativeCredentialStoreWrapper(private val store: CredentialStore) : CredentialStore {
+private class NativeCredentialStoreWrapper(private val store: CredentialStore) : CredentialStore, Closeable {
   private val fallbackStore = lazy { InMemoryCredentialStore() }
 
   private val queueProcessor = QueueProcessor<() -> Unit> { it() }
@@ -39,15 +41,15 @@ private class NativeCredentialStoreWrapper(private val store: CredentialStore) :
       return it
     }
 
-    if (deniedItems.getIfPresent(attributes) != null) {
+    if (attributes.cacheDeniedItems && deniedItems.getIfPresent(attributes) != null) {
       LOG.warn("User denied access to $attributes")
-      return null
+      return ACCESS_TO_KEY_CHAIN_DENIED
     }
 
     var store = if (fallbackStore.isInitialized()) fallbackStore.value else store
     try {
       val value = store.get(attributes)
-      if (value === ACCESS_TO_KEY_CHAIN_DENIED) {
+      if (attributes.cacheDeniedItems && value === ACCESS_TO_KEY_CHAIN_DENIED) {
         deniedItems.put(attributes, true)
       }
       return value
@@ -101,6 +103,13 @@ private class NativeCredentialStoreWrapper(private val store: CredentialStore) :
       }
     }
   }
+
+  override fun close() {
+    if (store is Closeable) {
+      queueProcessor.waitFor()
+      store.close()
+    }
+  }
 }
 
 private fun notifyUnsatisfiedLinkError(e: UnsatisfiedLinkError) {
@@ -119,9 +128,27 @@ private class MacOsCredentialStoreFactory : CredentialStoreFactory {
   }
 }
 
-private class LinuxSecretCredentialStoreFactory : CredentialStoreFactory {
+private class LinuxCredentialStoreFactory : CredentialStoreFactory {
   override fun create(): CredentialStore? = when {
-    SystemInfo.isLinux && JnaLoader.isLoaded() -> NativeCredentialStoreWrapper(SecretCredentialStore("com.intellij.credentialStore.Credential"))
+    SystemInfo.isLinux -> {
+      val preferWallet = Registry.`is`("credentialStore.linux.prefer.kwallet", false)
+      var res: CredentialStore? = if (preferWallet)
+        KWalletCredentialStore.create()
+      else
+        null
+      if (res == null && JnaLoader.isLoaded()) {
+        try {
+          res = SecretCredentialStore.create("com.intellij.credentialStore.Credential")
+        }
+        catch (e: UnsatisfiedLinkError) {
+          res = if (!preferWallet) KWalletCredentialStore.create() else null
+          if (res == null) notifyUnsatisfiedLinkError(e)
+        }
+      }
+      if (res == null && !preferWallet) res = KWalletCredentialStore.create()
+      res?.let { NativeCredentialStoreWrapper(it) }
+    }
     else -> null
   }
 }
+
