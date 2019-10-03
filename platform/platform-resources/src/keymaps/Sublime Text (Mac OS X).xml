@@ -97,6 +97,9 @@
   </action>
   <action id="EditorContextInfo"/>
   <action id="Resume"/>
+  <action id="EditorSortLines">
+    <keyboard-shortcut first-keystroke="control F5"/>
+  </action>
   <action id="CompileDirty"/>
   <action id="EditorSplitLine">
     <keyboard-shortcut first-keystroke="shift ENTER"/>

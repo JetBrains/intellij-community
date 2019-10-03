@@ -389,6 +389,8 @@
       <action id="EditorKillRingSave" class="com.intellij.openapi.editor.actions.KillRingSaveAction"/>
       <action id="EditorDuplicate" class="com.intellij.openapi.editor.actions.DuplicateAction"/>
       <action id="EditorDuplicateLines" class="com.intellij.openapi.editor.actions.DuplicateLinesAction"/>
+      <action id="EditorSortLines" class="com.intellij.openapi.editor.actions.SortLinesAction"/>
+      <action id="EditorReverseLines" class="com.intellij.openapi.editor.actions.ReverseLinesAction"/>
       <action id="EditorToggleInsertState" class="com.intellij.openapi.editor.actions.ToggleInsertStateAction"/>
       <action id="EditorToggleColumnMode" class="com.intellij.openapi.editor.actions.ToggleColumnModeAction"/>
       <action id="EditorIncreaseFontSize" class="com.intellij.openapi.editor.actions.ChangeEditorFontSizeAction$IncreaseEditorFontSize"/>
@@ -606,6 +608,8 @@
           <reference ref="EditorJoinLines"/>
           <reference ref="FillParagraph"/>
           <reference ref="EditorDuplicate"/>
+          <reference ref="EditorSortLines"/>
+          <reference ref="EditorReverseLines"/>
           <reference ref="EditorIndentSelection"/>
           <reference ref="EditorUnindentSelection"/>
           <reference ref="EditorToggleCase"/>

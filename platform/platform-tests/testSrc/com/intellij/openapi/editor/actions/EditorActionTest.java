@@ -266,4 +266,28 @@ public class EditorActionTest extends AbstractEditorTest {
     executeAction(IdeActions.ACTION_EDITOR_DELETE_TO_WORD_START);
     checkResultByText("class Foo { String s = \"\\\"<caret>\"; }");
   }
+
+  public void testSortLinesNoSelection() {
+    initText("foo\nba<caret>r\nbaz");
+    executeAction(IdeActions.ACTION_EDITOR_SORT_LINES);
+    checkResultByText("ba<caret>r\nbaz\nfoo");
+  }
+
+  public void testSortLinesWithSelection() {
+    initText("<selection>foo\nbar\n<caret></selection>baz");
+    executeAction(IdeActions.ACTION_EDITOR_SORT_LINES);
+    checkResultByText("<selection>bar\nfoo\n<caret></selection>baz");
+  }
+
+  public void testReverseLinesNoSelection() {
+    initText("foo\nbar\nba<caret>z");
+    executeAction(IdeActions.ACTION_EDITOR_REVERSE_LINES);
+    checkResultByText("ba<caret>z\nbar\nfoo");
+  }
+
+  public void testReverseLinesWithSelection() {
+    initText("<selection>foo\nbar\n<caret></selection>baz");
+    executeAction(IdeActions.ACTION_EDITOR_REVERSE_LINES);
+    checkResultByText("<selection>bar\nfoo\n<caret></selection>baz");
+  }
 }
