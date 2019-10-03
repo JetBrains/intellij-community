@@ -5,15 +5,12 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.impl.FrameInfoHelper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import sun.awt.AWTAccessor;
 
 import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Window;
-import java.awt.peer.ComponentPeer;
-import java.awt.peer.FramePeer;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
@@ -108,7 +105,8 @@ final class WindowStateBean implements ModificationTracker, WindowState {
       boolean windowFullScreen = isFullScreen(window);
       setFullScreen(windowFullScreen);
 
-      int windowExtendedState = getExtendedState(window);
+      Frame frame = window instanceof Frame ? (Frame)window : null;
+      int windowExtendedState = frame == null ? Frame.NORMAL : frame.getExtendedState();
       setExtendedState(windowExtendedState);
 
       if (!windowFullScreen && windowExtendedState == Frame.NORMAL) {
@@ -121,20 +119,6 @@ final class WindowStateBean implements ModificationTracker, WindowState {
 
   private static boolean isFullScreen(@NotNull Window window) {
     return window instanceof IdeFrame && FrameInfoHelper.isFullScreenSupportedInCurrentOs() && ((IdeFrame)window).isInFullScreen();
-  }
-
-  private static int getExtendedState(@NotNull Window window) {
-    if (window instanceof Frame) {
-      Frame frame = (Frame)window;
-      int state = frame.getExtendedState();
-      if (SystemInfo.isMacOSLion) {
-        // workaround: frame.state is not updated by jdk so get it directly from peer
-        ComponentPeer peer = AWTAccessor.getComponentAccessor().getPeer(frame);
-        if (peer instanceof FramePeer) return ((FramePeer)peer).getState();
-      }
-      return state;
-    }
-    return Frame.NORMAL;
   }
 
   @Nullable
