@@ -15,7 +15,7 @@ class LibraryLicense {
   public static final String JETBRAINS_OWN = "JetBrains"
 
   /**
-   * Presentable full name of the library
+   * Presentable full name of the library. If {@code null} {@link #libraryName} will be used instead.
    */
   final String name
 
@@ -61,11 +61,15 @@ class LibraryLicense {
   final String licenseUrl
 
   static jetbrainsLibrary(String libraryName) {
-    new LibraryLicense(name: libraryName, license: JETBRAINS_OWN)
+    new LibraryLicense(libraryName: libraryName, license: JETBRAINS_OWN)
   }
 
   List<String> getLibraryNames() {
-    return ContainerUtil.createMaybeSingletonList(libraryName ?: name) + (additionalLibraryNames ?: [] as List<String>)
+    return ContainerUtil.createMaybeSingletonList(libraryName) + (additionalLibraryNames ?: [] as List<String>)
+  }
+
+  String getPresentableName() {
+    name ?: libraryName
   }
 
   String getLibraryLicenseUrl() {

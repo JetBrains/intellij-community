@@ -110,15 +110,15 @@ class LibraryLicensesListGenerator {
       LibraryLicense lib = it.key
       String moduleName = it.value
 
-      String libKey = (lib.name + "_" + lib.version ?: "").replace(" ", "_")
+      String libKey = (lib.presentableName + "_" + lib.version ?: "").replace(" ", "_")
       // id here is needed because of a bug IDEA-188262
-      String name = lib.url != null ? "<a id=\"${libKey}_lib_url\" class=\"name\" href=\"$lib.url\">$lib.name</a>" :
-                    "<span class=\"name\">$lib.name</span>"
+      String name = lib.url != null ? "<a id=\"${libKey}_lib_url\" class=\"name\" href=\"$lib.url\">$lib.presentableName</a>" :
+                    "<span class=\"name\">$lib.presentableName</span>"
       String license = lib.libraryLicenseUrl != null ?
                        "<a id=\"${libKey}_license_url\" class=\"licence\" href=\"$lib.libraryLicenseUrl\">$lib.license</a>" :
                        "<span class=\"licence\">$lib.license</span>"
 
-      messages.debug(" $lib.name (in module $moduleName)")
+      messages.debug(" $lib.presentableName (in module $moduleName)")
       lines << engine.createTemplate(line).make(["name": name, "libVersion": lib.version ?: "", "license": license]).toString()
     }
 
@@ -184,10 +184,10 @@ class LibraryLicensesListGenerator {
   void generateJson(String filePath) {
     List<LibraryLicenseData> entries = []
 
-    licensesInModules.keySet().sort( {it.name} ).each {
+    licensesInModules.keySet().sort( {it.presentableName} ).each {
       entries.add(
         new LibraryLicenseData(
-          name: it.name,
+          name: it.presentableName,
           url: it.url,
           version: it.version,
           license: it.license,
