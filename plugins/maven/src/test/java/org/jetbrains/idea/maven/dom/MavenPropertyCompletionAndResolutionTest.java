@@ -4,18 +4,23 @@ package org.jetbrains.idea.maven.dom;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.xml.XmlTag;
-import org.jetbrains.idea.maven.dom.model.MavenDomProfiles;
-import org.jetbrains.idea.maven.dom.model.MavenDomProfilesModel;
-import org.jetbrains.idea.maven.dom.model.MavenDomSettingsModel;
+import com.intellij.testFramework.TemporaryDirectory;
+import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
+import org.jetbrains.idea.maven.dom.converters.MavenDependencyCompletionUtil;
+import org.jetbrains.idea.maven.dom.model.*;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
+import org.jetbrains.idea.maven.utils.Path;
 import org.jetbrains.idea.maven.vfs.MavenPropertiesVirtualFileSystem;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
@@ -701,6 +706,53 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
                                          "</properties>");
 
     assertResolved(myProjectPom, findTag(parent, "project.properties.foo"));
+  }
+
+
+  public void testImportDependencyChainedProperty() throws IOException {
+    MavenCustomRepositoryHelper helper = new MavenCustomRepositoryHelper(myDir, "local1");
+    setRepositoryPath(helper.getTestDataPath("local1"));
+    VfsUtil.markDirtyAndRefresh(false, true, true, LocalFileSystem.getInstance().findFileByIoFile(getRepositoryFile()));
+
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+                     "<modules>" +
+                     "   <module>m1</module>" +
+                     "</modules>" +
+                     "<dependencyManagement>" +
+                     "    <dependencies>" +
+                     "        <dependency>" +
+                     "            <groupId>org.deptest</groupId>" +
+                     "            <artifactId>bom-depparent</artifactId>" +
+                     "            <version>1.0</version>" +
+                     "            <type>pom</type>" +
+                     "            <scope>import</scope>" +
+                     "        </dependency>" +
+                     "    </dependencies>" +
+                     "</dependencyManagement>");
+
+    createModulePom("m1", "<parent>" +
+                          "    <groupId>test</groupId>" +
+                          "    <artifactId>project</artifactId>" +
+                          "    " +
+                          "    <version>1</version>" +
+                          "  </parent>" +
+                          "<artifactId>m1</artifactId>" +
+                          "<dependencies>" +
+                          "  <dependency>" +
+                          "    <groupId>org.example</groupId>" +
+                          "    <artifactId>something</artifactId>" +
+                          "  </dependency>" +
+                          "</dependencies>");
+    importProject();
+
+
+    MavenDomProjectModel model = MavenDomUtil.getMavenDomModel(myProject, myProjectPom, MavenDomProjectModel.class);
+
+    MavenDomDependency dependency = MavenDependencyCompletionUtil.findManagedDependency(model, myProject, "org.example", "something");
+    assertNotNull(dependency);
+    assertEquals("42", dependency.getVersion().getStringValue());
   }
 
   public void testSystemProperties() throws Exception {
