@@ -4,19 +4,15 @@ package com.intellij.openapi.util;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.Frame;
 import java.awt.Window;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
-/**
- * @author Sergey Malenkov
- */
 final class WindowStateAdapter extends WindowAdapter implements ComponentListener {
   @NotNull
-  static WindowState getState(@NotNull Window window) {
+  static WindowStateBean getState(@NotNull Window window) {
     return getAdapter(window).myWindowState;
   }
 
@@ -31,10 +27,10 @@ final class WindowStateAdapter extends WindowAdapter implements ComponentListene
   }
 
 
-  private final WindowState myWindowState = new WindowState();
+  private final WindowStateBean myWindowState = new WindowStateBean();
 
   private WindowStateAdapter(@NotNull Window window) {
-    update(window);
+    myWindowState.applyFrom(window);
     window.addComponentListener(this);
     window.addWindowListener(this);
     window.addWindowStateListener(this);
@@ -70,21 +66,6 @@ final class WindowStateAdapter extends WindowAdapter implements ComponentListene
 
   private void update(@Nullable ComponentEvent event) {
     Object source = event == null ? null : event.getSource();
-    if (source instanceof Window) update((Window)source);
-  }
-
-  private void update(@NotNull Window window) {
-    if (window.isVisible()) {
-      boolean currentFullScreen = WindowState.isFullScreen(window);
-      myWindowState.setFullScreen(currentFullScreen);
-
-      int currentExtendedState = WindowState.getExtendedState(window);
-      myWindowState.setExtendedState(currentExtendedState);
-
-      if (!currentFullScreen && currentExtendedState == Frame.NORMAL) {
-        myWindowState.setLocation(window.getLocation());
-        myWindowState.setSize(window.getSize());
-      }
-    }
+    if (source instanceof Window) myWindowState.applyFrom((Window)source);
   }
 }

@@ -21,9 +21,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 
-/**
- * @author Sergey.Malenkov
- */
 abstract class WindowStateServiceImpl extends WindowStateService implements ModificationTracker, PersistentStateComponent<Element> {
   @NonNls private static final String KEY = "key";
   @NonNls private static final String STATE = "state";
@@ -115,7 +112,7 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Modi
   @Override
   public boolean loadStateFor(Object object, @NotNull String key, @NotNull Window window) {
     synchronized (myRunnableMap) {
-      WindowState state = WindowStateAdapter.getState(window);
+      WindowStateBean state = WindowStateAdapter.getState(window);
       Runnable runnable = myRunnableMap.put(key, new Runnable() {
         private long myModificationCount = state.getModificationCount();
 
@@ -308,7 +305,7 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Modi
       if (type == Rectangle.class) return location == null || size == null ? null : (T)new Rectangle(location, size);
       if (type != WindowState.class) throw new IllegalArgumentException();
       // copy a current state
-      WindowState state = new WindowState();
+      WindowStateBean state = new WindowStateBean();
       state.setLocation(location);
       state.setSize(size);
       state.setExtendedState(myMaximized ? Frame.MAXIMIZED_BOTH : Frame.NORMAL);

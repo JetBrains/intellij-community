@@ -18,7 +18,7 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 
-public final class WindowState implements ModificationTracker {
+final class WindowStateBean implements ModificationTracker, WindowState {
   private final AtomicLong myModificationCount = new AtomicLong();
   private volatile Point myLocation;
   private volatile Dimension mySize;
@@ -31,6 +31,7 @@ public final class WindowState implements ModificationTracker {
   }
 
 
+  @Override
   @Nullable
   public Point getLocation() {
     return apply(Point::new, myLocation);
@@ -43,6 +44,7 @@ public final class WindowState implements ModificationTracker {
   }
 
 
+  @Override
   @Nullable
   public Dimension getSize() {
     return apply(Dimension::new, mySize);
@@ -55,6 +57,7 @@ public final class WindowState implements ModificationTracker {
   }
 
 
+  @Override
   public int getExtendedState() {
     return myExtendedState;
   }
@@ -66,6 +69,7 @@ public final class WindowState implements ModificationTracker {
   }
 
 
+  @Override
   public boolean isFullScreen() {
     return myFullScreen;
   }
@@ -77,6 +81,7 @@ public final class WindowState implements ModificationTracker {
   }
 
 
+  @Override
   public void applyTo(@NotNull Window window) {
     Point location = getLocation();
     Dimension size = getSize();
@@ -98,11 +103,27 @@ public final class WindowState implements ModificationTracker {
     }
   }
 
-  static boolean isFullScreen(@NotNull Window window) {
+  void applyFrom(@NotNull Window window) {
+    if (window.isVisible()) {
+      boolean windowFullScreen = isFullScreen(window);
+      setFullScreen(windowFullScreen);
+
+      int windowExtendedState = getExtendedState(window);
+      setExtendedState(windowExtendedState);
+
+      if (!windowFullScreen && windowExtendedState == Frame.NORMAL) {
+        setLocation(window.getLocation());
+        setSize(window.getSize());
+      }
+    }
+  }
+
+
+  private static boolean isFullScreen(@NotNull Window window) {
     return window instanceof IdeFrame && FrameInfoHelper.isFullScreenSupportedInCurrentOs() && ((IdeFrame)window).isInFullScreen();
   }
 
-  static int getExtendedState(@NotNull Window window) {
+  private static int getExtendedState(@NotNull Window window) {
     if (window instanceof Frame) {
       Frame frame = (Frame)window;
       int state = frame.getExtendedState();
