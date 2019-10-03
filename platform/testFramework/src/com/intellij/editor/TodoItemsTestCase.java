@@ -4,16 +4,23 @@ package com.intellij.editor;
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
+import com.intellij.ide.todo.TodoConfiguration;
+import com.intellij.ide.todo.TodoIndexPatternProvider;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.impl.DocumentImpl;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.cache.TodoCacheManager;
+import com.intellij.psi.search.PsiTodoSearchHelper;
+import com.intellij.psi.search.TodoAttributes;
+import com.intellij.psi.search.TodoPattern;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
@@ -27,6 +34,19 @@ import java.util.stream.Collectors;
 
 public abstract class TodoItemsTestCase extends LightPlatformCodeInsightTestCase {
   protected abstract String getFileExtension();
+
+  protected void doWithPattern(@NotNull String pattern, @NotNull Runnable runnable) {
+    TodoConfiguration todoConfiguration = TodoConfiguration.getInstance();
+    TodoPattern[] originalPatterns = todoConfiguration.getTodoPatterns();
+    try {
+      TodoPattern todoPattern = new TodoPattern(pattern, new TodoAttributes(new TextAttributes()), false);
+      todoConfiguration.setTodoPatterns(new TodoPattern[]{todoPattern});
+      runnable.run();
+    }
+    finally {
+      todoConfiguration.setTodoPatterns(originalPatterns);
+    }
+  }
 
   @NotNull
   protected List<HighlightInfo> doHighlighting() {
@@ -56,6 +76,13 @@ public abstract class TodoItemsTestCase extends LightPlatformCodeInsightTestCase
     List<HighlightInfo> highlightInfos = doHighlighting();
     List<TextRange> actualTodoRanges = getActualTodoRanges(highlightInfos);
     assertTodoRanges(expectedTodoRanges, actualTodoRanges);
+    assertSameTodoCountInIndexAndHighlighting();
+  }
+
+  private void assertSameTodoCountInIndexAndHighlighting() {
+    int todosInIndex = TodoCacheManager.SERVICE.getInstance(getProject()).getTodoCount(getVFile(), TodoIndexPatternProvider.getInstance());
+    int todosInHighlighting = PsiTodoSearchHelper.SERVICE.getInstance(getProject()).findTodoItems(getFile()).length;
+    assertEquals("Mismatch between todos in index and highlighting", todosInIndex, todosInHighlighting);
   }
 
   protected void checkTodos(String text) {

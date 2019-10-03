@@ -3,25 +3,14 @@ package com.intellij.java.todo;
 
 import com.intellij.editor.TodoItemsTestCase;
 import com.intellij.ide.highlighter.JavaFileType;
-import com.intellij.ide.todo.TodoConfiguration;
-import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.psi.search.TodoAttributes;
-import com.intellij.psi.search.TodoPattern;
-import com.intellij.util.ArrayUtil;
 
 public class JavaTodoTest extends TodoItemsTestCase {
   public void testUnicodeCaseInsensitivePattern() {
-    TodoConfiguration todoConfiguration = TodoConfiguration.getInstance();
-    TodoPattern[] originalPatterns = todoConfiguration.getTodoPatterns();
-    try {
-      TodoPattern pattern = new TodoPattern("\u00f6.*", new TodoAttributes(new TextAttributes()), false);
-      todoConfiguration.setTodoPatterns(ArrayUtil.append(originalPatterns, pattern));
+    doWithPattern("\u00f6.*", () -> testTodos("// [\u00d6 something]"));
+  }
 
-      testTodos("// [\u00d6 something]");
-    }
-    finally {
-      todoConfiguration.setTodoPatterns(originalPatterns);
-    }
+  public void testPatternIncludingCommentPrefix() {
+    doWithPattern("//foo.*", () -> testTodos("//[foo]"));
   }
 
   @Override
