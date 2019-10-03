@@ -580,7 +580,8 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
       }
       return null;
     }
-    return PyPsiUtils.asQualifiedName(findAssignedValue());
+    final PyExpression value = findAssignedValue();
+    return value instanceof PyReferenceExpression ? PyPsiUtils.asQualifiedName(value) : null;
   }
 
   @Override
