@@ -382,7 +382,6 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
               processHandler.notifyTextAvailable(farewell + "\n", ProcessOutputTypes.SYSTEM);
               foldGreetingOrFarewell(consoleView, farewell, false);
               processHandler.notifyProcessTerminated(0);
-              eventDispatcher.close();
             }
           };
           task.execute(ArrayUtil.prepend(taskListener, ExternalSystemTaskNotificationListener.EP_NAME.getExtensions()));
