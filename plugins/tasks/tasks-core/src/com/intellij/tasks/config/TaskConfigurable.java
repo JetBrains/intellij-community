@@ -156,7 +156,7 @@ public class TaskConfigurable extends BindableConfigurable implements Searchable
            TaskSettings.getInstance().ALWAYS_DISPLAY_COMBO != myAlwaysDisplayTaskCombo.isSelected() ||
            TaskSettings.getInstance().CONNECTION_TIMEOUT != Integer.valueOf(myConnectionTimeout.getText()) ||
            TaskSettings.getInstance().LOWER_CASE_BRANCH != myLowerCase.isSelected() ||
-           !Comparing.equal(TaskSettings.getInstance().REPLACE_SPACES, myLowerCase.getText());
+           !Comparing.equal(TaskSettings.getInstance().REPLACE_SPACES, myReplaceSpaces.getText());
   }
 
   @Override
