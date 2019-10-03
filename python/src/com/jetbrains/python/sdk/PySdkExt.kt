@@ -173,8 +173,11 @@ var Project.pythonSdk: Sdk?
     }
   }
   set(value) {
-    ApplicationManager.getApplication().runWriteAction {
-      ProjectRootManager.getInstance(this).projectSdk = value
+    val application = ApplicationManager.getApplication()
+    application.invokeAndWait {
+      application.runWriteAction {
+        ProjectRootManager.getInstance(this).projectSdk = value
+      }
     }
   }
 
