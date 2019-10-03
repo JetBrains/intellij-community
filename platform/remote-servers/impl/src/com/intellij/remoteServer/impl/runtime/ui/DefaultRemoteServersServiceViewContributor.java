@@ -26,12 +26,12 @@ public class DefaultRemoteServersServiceViewContributor extends RemoteServersSer
     new SimpleServiceViewDescriptor("Clouds", AllIcons.General.Balloon) {
       @Override
       public ActionGroup getToolbarActions() {
-        return RemoteServersServiceViewContributor.getToolbarActions(ServersToolWindowContent.ActionGroups.SHARED_ACTION_GROUPS);
+        return RemoteServersServiceViewContributor.getToolbarActions(RemoteServersServiceViewContributor.ActionGroups.SHARED_ACTION_GROUPS);
       }
 
       @Override
       public ActionGroup getPopupActions() {
-        return RemoteServersServiceViewContributor.getPopupActions(ServersToolWindowContent.ActionGroups.SHARED_ACTION_GROUPS);
+        return RemoteServersServiceViewContributor.getPopupActions(RemoteServersServiceViewContributor.ActionGroups.SHARED_ACTION_GROUPS);
       }
     };
 
@@ -43,7 +43,7 @@ public class DefaultRemoteServersServiceViewContributor extends RemoteServersSer
 
   @Override
   public boolean accept(@NotNull RemoteServer server) {
-    return RemoteServersViewContribution.getRemoteServerToolWindowId(server) == null;
+    return getRemoteServerToolWindowId(server) == null;
   }
 
   @Override
@@ -68,8 +68,8 @@ public class DefaultRemoteServersServiceViewContributor extends RemoteServersSer
 
   @NotNull
   @Override
-  public ServersToolWindowContent.ActionGroups getActionGroups() {
-    return ServersToolWindowContent.ActionGroups.SHARED_ACTION_GROUPS;
+  public ActionGroups getActionGroups() {
+    return RemoteServersServiceViewContributor.ActionGroups.SHARED_ACTION_GROUPS;
   }
 
   @Override
@@ -77,5 +77,10 @@ public class DefaultRemoteServersServiceViewContributor extends RemoteServersSer
                                                   ServersTreeStructure.RemoteServerNode serverNode,
                                                   Deployment deployment) {
     return new DeploymentNodeImpl(serverNode.getProject(), connection, serverNode, deployment, this);
+  }
+
+  private static String getRemoteServerToolWindowId(RemoteServer<?> server) {
+    String serverToolWindowId = server.getConfiguration().getCustomToolWindowId();
+    return serverToolWindowId != null ? serverToolWindowId : server.getType().getCustomToolWindowId();
   }
 }

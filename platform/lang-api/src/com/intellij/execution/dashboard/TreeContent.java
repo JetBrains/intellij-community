@@ -16,11 +16,14 @@
 package com.intellij.execution.dashboard;
 
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @author konstantin.aleev
+ * @deprecated as {@link AbstractTreeBuilder} was deprecated.
  */
+@Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
 public interface TreeContent {
   @NotNull
   AbstractTreeBuilder getBuilder();
