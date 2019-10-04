@@ -37,7 +37,11 @@ fun addNewElementsToIgnoreBlock(project: Project,
   }
 }
 
-fun addNewElements(project: Project, ignoreFile: VirtualFile, newEntries: List<IgnoredFileDescriptor>, vcs: AbstractVcs? = null) {
+fun addNewElements(project: Project,
+                   ignoreFile: VirtualFile,
+                   newEntries: List<IgnoredFileDescriptor>,
+                   vcs: AbstractVcs? = null,
+                   ignoreEntryRoot: VirtualFile? = null) {
   changeIgnoreFile(project, ignoreFile, vcs) { provider ->
     val document = FileDocumentManager.getInstance().getDocument(ignoreFile) ?: return@changeIgnoreFile
     if (document.textLength != 0 && document.charsSequence.last() != '\n') {
@@ -47,7 +51,7 @@ fun addNewElements(project: Project, ignoreFile: VirtualFile, newEntries: List<I
     val text = newEntries.joinToString(
       separator = IgnoreFileConstants.NEWLINE,
       postfix = IgnoreFileConstants.NEWLINE
-    ) { it.toText(provider, ignoreFile) }
+    ) { it.toText(provider, ignoreFile, ignoreEntryRoot) }
     document.insertString(textEndOffset, text)
   }
 }
@@ -144,11 +148,13 @@ private fun createIgnoreGroup(text: CharSequence, ignoredGroupDescription: Strin
   }
 }
 
-private fun IgnoredFileDescriptor.toText(ignoredFileContentProvider: IgnoredFileContentProvider, ignoreFile: VirtualFile): String {
+private fun IgnoredFileDescriptor.toText(ignoredFileContentProvider: IgnoredFileContentProvider,
+                                         ignoreFile: VirtualFile,
+                                         ignoreEntryRoot: VirtualFile? = null): String {
   val ignorePath = path
   val ignoreMask = mask
   return if (ignorePath != null) {
-    val ignoreFileContainingDir = ignoreFile.parent ?: throw IllegalStateException(
+    val ignoreFileContainingDir = ignoreEntryRoot ?: ignoreFile.parent ?: throw IllegalStateException(
       "Cannot determine ignore file path for $ignoreFile")
     ignoredFileContentProvider.buildIgnoreEntryContent(ignoreFileContainingDir, this)
   }

@@ -62,8 +62,8 @@ class AddToGitExcludeAction : DefaultGitExcludeAction(
 
     for ((repository, filesToAdd) in GitUtil.sortFilesByRepositoryIgnoringMissing(project, selectedFiles)) {
       val gitExclude = repository.repositoryFiles.excludeFile.let { VfsUtil.findFileByIoFile(it, true) } ?: continue
-      val ignores = filesToAdd.map { file -> IgnoredBeanFactory.withMask(file.name) }
-      writeIgnoreFileEntries(project, gitExclude, ignores, gitVcs)
+      val ignores = filesToAdd.map { file -> IgnoredBeanFactory.ignoreFile(file, project) }
+      writeIgnoreFileEntries(project, gitExclude, ignores, gitVcs, repository.root)
     }
   }
 

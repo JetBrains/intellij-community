@@ -63,8 +63,9 @@ class CreateNewIgnoreFileAction(private val ignoreFileName: String, private val 
 fun writeIgnoreFileEntries(project: Project,
                            ignoreFile: VirtualFile,
                            ignored: List<IgnoredFileBean>,
-                           vcs: AbstractVcs? = null) {
-  addNewElements(project, ignoreFile, ignored, vcs)
+                           vcs: AbstractVcs? = null,
+                           ignoreEntryRoot: VirtualFile? = null) {
+  addNewElements(project, ignoreFile, ignored, vcs, ignoreEntryRoot)
   ChangeListManagerImpl.getInstanceImpl(project).scheduleUnversionedUpdate()
   OpenFileDescriptor(project, ignoreFile).navigate(true)
 }
