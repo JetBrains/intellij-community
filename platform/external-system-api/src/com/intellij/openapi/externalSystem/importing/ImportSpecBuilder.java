@@ -106,11 +106,11 @@ public class ImportSpecBuilder {
     mySpec.setProgressExecutionMode(myProgressExecutionMode);
     mySpec.setForceWhenUptodate(myForceWhenUptodate);
     mySpec.setCreateDirectoriesForEmptyContentRoots(myCreateDirectoriesForEmptyContentRoots);
-    mySpec.setCallback(myCallback == null ? new DefaultProjectRefreshCallback(mySpec) : myCallback);
     mySpec.setPreviewMode(isPreviewMode);
     mySpec.setReportRefreshError(isReportRefreshError);
     mySpec.setArguments(myArguments);
     mySpec.setVmOptions(myVmOptions);
+    mySpec.setCallback(myCallback == null ? new DefaultProjectRefreshCallback(mySpec) : myCallback);
     return mySpec;
   }
 
@@ -128,17 +128,21 @@ public class ImportSpecBuilder {
 
   @ApiStatus.Internal
   public final static class DefaultProjectRefreshCallback implements ExternalProjectRefreshCallback {
-    private final ImportSpecImpl myMySpec;
+    private final Project myProject;
+    private final ProgressExecutionMode myExecutionMode;
 
-    public DefaultProjectRefreshCallback(ImportSpecImpl mySpec) {myMySpec = mySpec;}
+    public DefaultProjectRefreshCallback(ImportSpec spec) {
+      myProject = spec.getProject();
+      myExecutionMode = spec.getProgressExecutionMode();
+    }
 
     @Override
     public void onSuccess(@Nullable final DataNode<ProjectData> externalProject) {
       if (externalProject == null) {
         return;
       }
-      final boolean synchronous = myMySpec.getProgressExecutionMode() == ProgressExecutionMode.MODAL_SYNC;
-      ServiceManager.getService(ProjectDataManager.class).importData(externalProject, myMySpec.getProject(), synchronous);
+      final boolean synchronous = myExecutionMode == ProgressExecutionMode.MODAL_SYNC;
+      ServiceManager.getService(ProjectDataManager.class).importData(externalProject, myProject, synchronous);
     }
   }
 }
