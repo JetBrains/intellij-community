@@ -627,8 +627,8 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
         continue;
       }
 
-      removeAdapter(adapter, i);
       clearCache();
+      removeAdapter(adapter, i);
       if (stopAfterFirstMatch) {
         return true;
       }
