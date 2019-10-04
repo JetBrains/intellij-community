@@ -8,6 +8,7 @@ import com.intellij.psi.PsiReferenceBase;
 import com.intellij.sh.psi.ShFunctionDefinition;
 import com.intellij.sh.psi.ShFunctionName;
 import com.intellij.sh.psi.ShGenericCommandDirective;
+import com.intellij.sh.psi.ShLiteral;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -67,12 +68,14 @@ public class ShFunctionReference extends PsiReferenceBase<PsiElement> {
     if (element instanceof ShGenericCommandDirective) {
       // Check if command linked to function which we searching for. If linked function is not visited, we should check
       // all its entire function and add them to the execution context
-      if (myExecutionContext.containsKey(element.getText())) {
-        FunctionContext functionContext = myExecutionContext.get(element.getText());
+      ShGenericCommandDirective genericCommand = (ShGenericCommandDirective)element;
+      ShLiteral literal = genericCommand.getLiteral();
+      if (literal != null && myExecutionContext.containsKey(literal.getText())) {
+        FunctionContext functionContext = myExecutionContext.get(literal.getText());
         if (visitInnerFunctions) {
-          if (element == myElement && functionContext.visited) return functionContext.function.getFunctionName();
+          if (literal == myElement && functionContext.visited) return functionContext.function.getFunctionName();
         } else {
-          if (element == myElement) return functionContext.function.getFunctionName();
+          if (literal == myElement) return functionContext.function.getFunctionName();
           if (!functionContext.visited) {
             functionContext.visited = true;
             PsiElement target = checkChildren(functionContext.function, visitInnerFunctions);
