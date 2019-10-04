@@ -51,6 +51,11 @@ class LibraryLicense {
   final String attachedTo
 
   /**
+   * Set to {@code true} if this entry describes license for a transitive dependency included into the library specified by {@link #libraryName}
+   */
+  final boolean transitiveDependency
+
+  /**
    * Type of a license (e.g. {@code 'Apache 2.0'})
    */
   final String license
