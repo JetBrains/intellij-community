@@ -12,7 +12,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import org.toml.lang.psi.TomlFileType
 
 abstract class TomlFileTypeDetectorBase : FileTypeRegistry.FileTypeDetector {
-    override fun getVersion() = 1
+    override fun getVersion(): Int = 1
 
     override fun detect(file: VirtualFile, firstBytes: ByteSequence, firstCharsIfText: CharSequence?): FileType? =
         if (file.name == "config" && file.parent?.name == ".cargo") TomlFileType else null

@@ -5,10 +5,11 @@
 
 package org.toml.lang
 
+import com.intellij.openapi.fileTypes.FileType
 import org.toml.lang.psi.TomlFileType
 
 class TomlFileTypeDetector : TomlFileTypeDetectorBase() {
-    override fun getDetectedFileTypes() = listOf(TomlFileType)
+    override fun getDetectedFileTypes(): Collection<FileType> = listOf(TomlFileType)
 
-    override fun getDesiredContentPrefixLength() = 0
+    override fun getDesiredContentPrefixLength(): Int = 0
 }
