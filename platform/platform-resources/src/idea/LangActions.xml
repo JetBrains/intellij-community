@@ -1007,7 +1007,7 @@
     <group id="ConsoleView.PopupMenu">
       <reference ref="ConsoleEditorPopupMenu"/>
       <separator/>
-      <action id="ConsoleView.ClearAll" class="com.intellij.execution.impl.ConsoleViewImpl$ClearAllAction"/>
+      <action id="ConsoleView.ClearAll" class="com.intellij.execution.actions.ClearConsoleAction"/>
     </group>
 
     <action id="SendEOF" class="com.intellij.execution.actions.EOFAction" text="Send EOF"/>
