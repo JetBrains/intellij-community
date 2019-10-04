@@ -56,7 +56,8 @@ class LibraryLicense {
   final String license
 
   /**
-   * URL of a page on the library site (or a generic site) containing the license text, may be {@code null} if there is no such page.
+   * URL of a page on the library site (or a generic site) containing the license text, may be {@code null} for standard licenses
+   * (see {@link #PREDEFINED_LICENSE_URLS}) or if there is no such page.
    */
   final String licenseUrl
 
