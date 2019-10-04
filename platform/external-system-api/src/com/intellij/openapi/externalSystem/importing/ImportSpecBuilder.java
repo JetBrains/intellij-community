@@ -106,7 +106,7 @@ public class ImportSpecBuilder {
     mySpec.setProgressExecutionMode(myProgressExecutionMode);
     mySpec.setForceWhenUptodate(myForceWhenUptodate);
     mySpec.setCreateDirectoriesForEmptyContentRoots(myCreateDirectoriesForEmptyContentRoots);
-    mySpec.setCallback(myCallback == null ? getDefaultCallback(mySpec) : myCallback);
+    mySpec.setCallback(myCallback == null ? new DefaultProjectRefreshCallback(mySpec) : myCallback);
     mySpec.setPreviewMode(isPreviewMode);
     mySpec.setReportRefreshError(isReportRefreshError);
     mySpec.setArguments(myArguments);
@@ -116,16 +116,7 @@ public class ImportSpecBuilder {
 
   @NotNull
   private static ExternalProjectRefreshCallback getDefaultCallback(ImportSpecImpl mySpec) {
-    return new ExternalProjectRefreshCallback() {
-      @Override
-      public void onSuccess(@Nullable final DataNode<ProjectData> externalProject) {
-        if (externalProject == null) {
-          return;
-        }
-        final boolean synchronous = mySpec.getProgressExecutionMode() == ProgressExecutionMode.MODAL_SYNC;
-        ServiceManager.getService(ProjectDataManager.class).importData(externalProject, mySpec.getProject(), synchronous);
-      }
-    };
+    return new DefaultProjectRefreshCallback(mySpec);
   }
 
   private void apply(ImportSpec spec) {
@@ -138,5 +129,21 @@ public class ImportSpecBuilder {
     isReportRefreshError = spec.isReportRefreshError();
     myArguments = spec.getArguments();
     myVmOptions = spec.getVmOptions();
+  }
+
+  @ApiStatus.Internal
+  public final static class DefaultProjectRefreshCallback implements ExternalProjectRefreshCallback {
+    private final ImportSpecImpl myMySpec;
+
+    public DefaultProjectRefreshCallback(ImportSpecImpl mySpec) {myMySpec = mySpec;}
+
+    @Override
+    public void onSuccess(@Nullable final DataNode<ProjectData> externalProject) {
+      if (externalProject == null) {
+        return;
+      }
+      final boolean synchronous = myMySpec.getProgressExecutionMode() == ProgressExecutionMode.MODAL_SYNC;
+      ServiceManager.getService(ProjectDataManager.class).importData(externalProject, myMySpec.getProject(), synchronous);
+    }
   }
 }
