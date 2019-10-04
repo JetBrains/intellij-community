@@ -3,6 +3,8 @@ package org.jetbrains.plugins.gradle.service.project;
 
 import com.amazon.ion.IonType;
 import com.google.gson.GsonBuilder;
+import com.intellij.build.events.MessageEvent;
+import com.intellij.build.issue.BuildIssue;
 import com.intellij.execution.configurations.SimpleJavaParameters;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -39,11 +41,13 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.net.HttpConfigurable;
-import com.intellij.util.text.CharArrayUtil;
 import gnu.trove.THash;
 import org.codehaus.groovy.runtime.typehandling.ShortTypeHandling;
 import org.gradle.internal.impldep.com.google.common.collect.Multimap;
-import org.gradle.tooling.model.*;
+import org.gradle.tooling.model.DomainObjectSet;
+import org.gradle.tooling.model.GradleModuleVersion;
+import org.gradle.tooling.model.GradleTask;
+import org.gradle.tooling.model.UnsupportedMethodException;
 import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.tooling.model.gradle.GradleBuild;
 import org.gradle.tooling.model.idea.*;
@@ -51,6 +55,7 @@ import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.issue.UnresolvedDependencySyncIssue;
 import org.jetbrains.plugins.gradle.model.*;
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData;
 import org.jetbrains.plugins.gradle.model.tests.ExternalTestSourceMapping;
@@ -75,6 +80,8 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static com.intellij.openapi.util.Pair.pair;
+import static com.intellij.openapi.util.text.StringUtil.join;
+import static com.intellij.openapi.util.text.StringUtil.split;
 import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolver.CONFIGURATION_ARTIFACTS;
 import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolver.MODULES_OUTPUTS;
 import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil.*;
@@ -1110,18 +1117,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
       if (unresolved) {
         // Gradle uses names like 'unresolved dependency - commons-collections commons-collections 3.2' for unresolved dependencies.
         libraryName = binaryPath.getName().substring(UNRESOLVED_DEPENDENCY_PREFIX.length());
-        int i = libraryName.indexOf(' ');
-        if (i >= 0) {
-          i = CharArrayUtil.shiftForward(libraryName, i + 1, " ");
-        }
-
-        if (i >= 0 && i < libraryName.length()) {
-          int dependencyNameIndex = i;
-          i = libraryName.indexOf(' ', dependencyNameIndex);
-          if (i > 0) {
-            libraryName = String.format("%s-%s", libraryName.substring(dependencyNameIndex, i), libraryName.substring(i + 1));
-          }
-        }
+        libraryName = join(split(libraryName, " "), ":");
       }
     }
     else {
@@ -1149,7 +1145,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
     }
 
     // add packaging type to distinguish different artifact dependencies with same groupId:artifactId:version
-    if (StringUtil.isNotEmpty(libraryName) && !FileUtilRt.extensionEquals(binaryPath.getName(), "jar")) {
+    if (!unresolved && StringUtil.isNotEmpty(libraryName) && !FileUtilRt.extensionEquals(binaryPath.getName(), "jar")) {
       libraryName += (":" + FileUtilRt.getExtension(binaryPath.getName()));
     }
 
@@ -1162,6 +1158,12 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
 
     if (!unresolved) {
       library.addPath(LibraryPathType.BINARY, binaryPath.getAbsolutePath());
+    }
+    else {
+      boolean isOfflineWork = resolverCtx.getSettings() != null && resolverCtx.getSettings().isOfflineWork();
+      String message = String.format("Could not resolve %s.", libraryName);
+      BuildIssue buildIssue = new UnresolvedDependencySyncIssue(libraryName, message, resolverCtx.getProjectPath(), isOfflineWork);
+      resolverCtx.report(MessageEvent.Kind.ERROR, buildIssue);
     }
 
     File sourcePath = dependency.getSource();

@@ -8,6 +8,7 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Experimental
 interface BuildIssue {
+  val title: String
   val description: String
   val quickFixes: List<BuildIssueQuickFix>
 }

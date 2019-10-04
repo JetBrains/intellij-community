@@ -347,7 +347,7 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
             @Override
             public void onFailure(@NotNull ExternalSystemTaskId id, @NotNull Exception e) {
               FailureResult failureResult =
-                ExternalSystemUtil.createFailureResult(executionName + " failed", e, id.getProjectSystemId(), myProject);
+                ExternalSystemUtil.createFailureResult(executionName + " failed", e, id.getProjectSystemId(), myProject, progressListener);
               eventDispatcher.onEvent(id, new FinishBuildEventImpl(id, null, System.currentTimeMillis(), "failed", failureResult));
               processHandler.notifyProcessTerminated(1);
             }
