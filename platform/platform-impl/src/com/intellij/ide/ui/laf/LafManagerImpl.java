@@ -218,11 +218,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
           return;
         }
 
-        String editorScheme = theme.getEditorScheme();
-        if (editorScheme != null) {
-          ((EditorColorsManagerImpl)EditorColorsManager.getInstance()).getSchemeManager()
-            .loadBundledScheme(editorScheme, theme);
-        }
+        ((EditorColorsManagerImpl)EditorColorsManager.getInstance()).handleThemeAdded(theme);
 
         List<UIManager.LookAndFeelInfo> lafList = myLaFs.getValue();
         List<UIManager.LookAndFeelInfo> newLaFs = new ArrayList<>(lafList.size() + 1);

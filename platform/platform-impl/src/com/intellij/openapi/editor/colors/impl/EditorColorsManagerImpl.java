@@ -277,6 +277,14 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
     myTreeDispatcher.getMulticaster().globalSchemeChange(newScheme);
   }
 
+  public void handleThemeAdded(UITheme theme) {
+    String editorScheme = theme.getEditorScheme();
+    if (editorScheme != null) {
+      getSchemeManager().loadBundledScheme(editorScheme, theme);
+      initEditableBundledSchemesCopies();
+    }
+  }
+
   static final class BundledScheme extends EditorColorsSchemeImpl implements ReadOnlyColorsScheme {
     BundledScheme() {
       super(null);
