@@ -7,9 +7,9 @@ import com.intellij.execution.configuration.RemoteTargetAwareRunProfile;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.junit.RefactoringListeners;
-import com.intellij.execution.remote.LanguageRuntimeConfiguration;
 import com.intellij.execution.remote.LanguageRuntimeType;
 import com.intellij.execution.remote.RemoteTargetConfiguration;
+import com.intellij.execution.remote.java.JavaLanguageRuntimeConfiguration;
 import com.intellij.execution.remote.java.JavaLanguageRuntimeType;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.util.JavaParametersUtil;
@@ -266,10 +266,7 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
 
   @Override
   public boolean canRunOn(@NotNull RemoteTargetConfiguration target) {
-    for (LanguageRuntimeConfiguration config : target.getRuntimes().resolvedConfigs()) {
-      //todo[remoteServers]: find Java config
-    }
-    return true;
+    return target.getRuntimes().findByType(JavaLanguageRuntimeConfiguration.class) != null;
   }
 
   @Nullable
