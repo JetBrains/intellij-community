@@ -23,6 +23,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
+import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.generate.exception.GenerateCodeException;
@@ -54,8 +55,7 @@ public class JavaGenerateMemberCompletionContributor {
           fileText.substring(modifierList.getTextRange().getStartOffset(), parameters.getOffset())));
       }
       suggestGeneratedMethods(result, position, modifierList);
-    } else if (psiElement(PsiIdentifier.class)
-      .withParents(PsiJavaCodeReferenceElement.class, PsiAnnotation.class, PsiModifierList.class, PsiClass.class).accepts(position)) {
+    } else if (isTypingAnnotationForNewMember(position)) {
       PsiAnnotation annotation = ObjectUtils.assertNotNull(PsiTreeUtil.getParentOfType(position, PsiAnnotation.class));
       int annoStart = annotation.getTextRange().getStartOffset();
 
@@ -69,10 +69,33 @@ public class JavaGenerateMemberCompletionContributor {
 
   }
 
+  private static boolean isTypingAnnotationForNewMember(PsiElement position) {
+    if (psiElement(PsiIdentifier.class)
+      .withParents(PsiJavaCodeReferenceElement.class, PsiAnnotation.class, PsiModifierList.class).accepts(position)) {
+      PsiElement parent = Objects.requireNonNull(PsiTreeUtil.getParentOfType(position, PsiModifierList.class)).getParent();
+      if (parent instanceof PsiClass) {
+        return true;
+      }
+
+      if (parent instanceof PsiMethod || parent instanceof PsiField) {
+        PsiAnnotation anno = Objects.requireNonNull(PsiTreeUtil.getParentOfType(position, PsiAnnotation.class));
+        return anno.getTextRange().getStartOffset() == parent.getTextRange().getStartOffset() && isFollowedByEol(anno);
+      }
+    }
+    return false;
+  }
+
+  private static boolean isFollowedByEol(PsiAnnotation anno) {
+    CharSequence fileText = anno.getContainingFile().getViewProvider().getContents();
+    int afterAnno = CharArrayUtil.shiftForward(fileText, anno.getTextRange().getEndOffset(), " \t");
+    return fileText.length() > afterAnno && fileText.charAt(afterAnno) == '\n';
+  }
+
   @NotNull
   private static LookupElementBuilder itemWithOverrideImplementDialog(int annoStart) {
     return LookupElementBuilder.create("Override/Implement methods...").withInsertHandler((context, item) -> {
       context.getDocument().deleteString(annoStart, context.getTailOffset());
+      context.commitDocument();
       context.setAddCompletionChar(false);
       context.setLaterRunnable(() -> {
         new OverrideMethodsHandler().invoke(context.getProject(), context.getEditor(), context.getFile());

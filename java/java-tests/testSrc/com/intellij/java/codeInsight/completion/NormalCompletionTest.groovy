@@ -1519,6 +1519,13 @@ class XInternalError {}
     checkResult()
   }
 
+  void testSuggestToOverrideMethodsWhenTypingOverrideAnnotationBeforeMethod() {
+    configure()
+    myFixture.assertPreferredCompletionItems 0, 'Override/Implement methods...', 'Override'
+    myFixture.type('\n')
+    checkResult()
+  }
+
   void testStrikeOutDeprecatedSuperMethods() {
     configure()
     myFixture.assertPreferredCompletionItems 0, 'void foo1', 'void foo2'

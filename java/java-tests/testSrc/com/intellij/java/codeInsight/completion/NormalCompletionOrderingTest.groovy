@@ -578,7 +578,7 @@ interface TxANotAnno {}
   }
 
   void testPreferAnnotationsToInterfaceKeyword() {
-    checkPreferredItems 0, 'Deprecated', 'Override'
+    checkPreferredItems 0, 'Override/Implement methods...', 'Deprecated', 'Override'
   }
 
   void testPreferThrownExceptionsInCatch() {
