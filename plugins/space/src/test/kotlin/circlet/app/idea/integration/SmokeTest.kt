@@ -108,7 +108,7 @@ class SmokeTest : BasePlatformTestCase() {
 
         object : circlet.pipelines.config.dsl.api.Project(executor) {
             init {
-                task("myTask") {
+                job("myTask") {
                     fork {
                         run("hello-world1")
                         run("hello-world2")
