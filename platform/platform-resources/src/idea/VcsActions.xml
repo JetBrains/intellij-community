@@ -390,8 +390,10 @@
     </group>
 
     <group>
+      <reference ref="Vcs.ToggleAmendCommitMode"/>
       <reference ref="CheckinProject"/>
       <reference ref="CheckinFiles"/>
+      <reference ref="ChangesView.ShowCommitOptions"/>
       <reference ref="UpdateFiles"/>
       <reference ref="CheckStatusForFiles"/>
       <reference ref="IntegrateFiles"/>
