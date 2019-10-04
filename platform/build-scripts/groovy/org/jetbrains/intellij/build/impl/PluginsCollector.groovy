@@ -84,6 +84,10 @@ class PluginsCollector {
         return
       }
 
+      if (xml.getAttributeValue('implementation-detail') == 'true') {
+        return
+      }
+
       String id = xml.getChildTextTrim("id") ?: xml.getChildTextTrim("name")
       if (!id) {
         return
