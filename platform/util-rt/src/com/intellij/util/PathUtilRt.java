@@ -24,7 +24,11 @@ public class PathUtilRt {
     }
 
     int end = getEnd(path);
-    return path.substring(getLastIndexOfPathSeparator(path, end) + 1, end);
+    int start = getLastIndexOfPathSeparator(path, end);
+    if (Platform.CURRENT == Platform.WINDOWS && isUNCRoot(path, start)) {
+      start = -1;
+    }
+    return path.substring(start + 1, end);
   }
 
   @Nullable
@@ -54,6 +58,9 @@ public class PathUtilRt {
     if (end == -1 || end == 0) {
       return "";
     }
+    if (Platform.CURRENT == Platform.WINDOWS && isUNCRoot(path, end)) {
+      return "";
+    }
     // parent of '//host' is root
     char prev = path.charAt(end - 1);
     if (prev == '/' || prev == '\\') {
@@ -64,6 +71,10 @@ public class PathUtilRt {
 
   private static int getLastIndexOfPathSeparator(@NotNull String path, int end) {
     return Math.max(path.lastIndexOf('/', end - 1), path.lastIndexOf('\\', end - 1));
+  }
+
+  private static boolean isUNCRoot(@NotNull String path, int lastPathSeparatorPosition) {
+    return (path.startsWith("//") || path.startsWith("\\\\")) && getLastIndexOfPathSeparator(path, lastPathSeparatorPosition) == 1;
   }
 
   @NotNull

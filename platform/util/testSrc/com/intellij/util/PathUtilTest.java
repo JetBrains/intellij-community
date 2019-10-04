@@ -1,15 +1,16 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.PathUtilRt.Platform;
+import org.junit.Assume;
 import org.junit.Test;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class PathUtilTest {
   @Test
@@ -62,5 +63,19 @@ public class PathUtilTest {
     assertTrue(PathUtilRt.isValidFileName("имя файла", Platform.UNIX, false, StandardCharsets.UTF_8));
     assertTrue(PathUtilRt.isValidFileName("název souboru", Platform.UNIX, false, StandardCharsets.UTF_8));
     assertTrue(PathUtilRt.isValidFileName("文件名", Platform.UNIX, false, StandardCharsets.UTF_8));
+  }
+
+  @Test
+  public void windowsUNCPaths() {
+    Assume.assumeTrue(SystemInfo.isWindows);
+    assertThat(PathUtilRt.getFileName("//wsl$/Ubuntu")).isEqualTo("//wsl$/Ubuntu");
+    assertThat(PathUtilRt.getFileName("//wsl$/Ubuntu/")).isEqualTo("//wsl$/Ubuntu");
+    assertThat(PathUtilRt.getFileName("//wsl$/Ubuntu/usr")).isEqualTo("usr");
+    assertThat(PathUtilRt.getFileName("//wsl$/Ubuntu/usr/")).isEqualTo("usr");
+
+    assertThat(PathUtilRt.getParentPath("//wsl$/Ubuntu")).isEqualTo("");
+    assertThat(PathUtilRt.getParentPath("//wsl$/Ubuntu/")).isEqualTo("");
+    assertThat(PathUtilRt.getParentPath("//wsl$/Ubuntu/usr/")).isEqualTo("//wsl$/Ubuntu");
+    assertThat(PathUtilRt.getParentPath("//wsl$/Ubuntu/usr/bin/gcc")).isEqualTo("//wsl$/Ubuntu/usr/bin");
   }
 }
