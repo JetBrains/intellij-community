@@ -4,13 +4,23 @@
 package com.intellij.java.navigation
 
 import com.intellij.codeInsight.JavaProjectCodeInsightSettings
-import com.intellij.ide.util.gotoByName.*
+import com.intellij.ide.actions.searcheverywhere.ClassSearchEverywhereContributor
+import com.intellij.ide.actions.searcheverywhere.FileSearchEverywhereContributor
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
+import com.intellij.ide.actions.searcheverywhere.SymbolSearchEverywhereContributor
+import com.intellij.ide.util.gotoByName.ChooseByNamePopup
+import com.intellij.ide.util.scopeChooser.ScopeDescriptor
 import com.intellij.lang.java.JavaLanguage
+import com.intellij.mock.MockProgressIndicator
+import com.intellij.openapi.project.Project
 import com.intellij.psi.*
+import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait
+
 /**
  * @author peter
  */
@@ -177,12 +187,11 @@ class Intf {
     def fooContext = addEmptyFile("foo/context.html")
     def barContext = addEmptyFile("bar/context.html")
 
-    def popup = createPopup(new GotoFileModel(project), fooContext)
-    assert calcPopupElements(popup, "index") == [fooIndex, barIndex]
-    popup.close(false)
+    def contributor = createFileContributor(project, fooContext)
+    assert calcContributorElements(contributor, "index") == [fooIndex, barIndex]
 
-    popup = createPopup(new GotoFileModel(project), barContext)
-    assert calcPopupElements(popup, "index") == [barIndex, fooIndex]
+    contributor = createFileContributor(project, barContext)
+    assert calcContributorElements(contributor, "index") == [barIndex, fooIndex]
   }
 
   private PsiFile addEmptyFile(String relativePath) {
@@ -205,39 +214,37 @@ class Intf {
     PsiFile fooIndex = addEmptyFile("foo/index.html")
     PsiFile barIndex = addEmptyFile("bar.txt/bar.txt")
 
-    def popup = createPopup(new GotoFileModel(project), fooIndex)
+    def contributor = createFileContributor(project, fooIndex)
 
     def fooDir = fooIndex.containingDirectory
     def barDir = barIndex.containingDirectory
 
-    assert calcPopupElements(popup, "foo/") == [fooDir]
-    assert calcPopupElements(popup, "foo\\") == [fooDir]
-    assert calcPopupElements(popup, "/foo") == [fooDir]
-    assert calcPopupElements(popup, "\\foo") == [fooDir]
-    assert calcPopupElements(popup, "foo") == [fooDir]
-    assert calcPopupElements(popup, "/index.html") == [fooIndex]
-    assert calcPopupElements(popup, "\\index.html") == [fooIndex]
-    assert calcPopupElements(popup, "index.html/") == []
-    assert calcPopupElements(popup, "index.html\\") == []
+    assert calcContributorElements(contributor, "foo/") == [fooDir]
+    assert calcContributorElements(contributor, "foo\\") == [fooDir]
+    assert calcContributorElements(contributor, "/foo") == [fooDir]
+    assert calcContributorElements(contributor, "\\foo") == [fooDir]
+    assert calcContributorElements(contributor, "foo") == [fooDir]
+    assert calcContributorElements(contributor, "/index.html") == [fooIndex]
+    assert calcContributorElements(contributor, "\\index.html") == [fooIndex]
+    assert calcContributorElements(contributor, "index.html/") == []
+    assert calcContributorElements(contributor, "index.html\\") == []
 
-    assert calcPopupElements(popup, "bar.txt/") == [barDir]
-    assert calcPopupElements(popup, "bar.txt\\") == [barDir]
-    assert calcPopupElements(popup, "/bar.txt") == [barIndex, barDir]
-    assert calcPopupElements(popup, "\\bar.txt") == [barIndex, barDir]
-    assert calcPopupElements(popup, "bar.txt") == [barIndex, barDir]
-    assert calcPopupElements(popup, "bar") == [barIndex, barDir]
-    popup.close(false)
+    assert calcContributorElements(contributor, "bar.txt/") == [barDir]
+    assert calcContributorElements(contributor, "bar.txt\\") == [barDir]
+    assert calcContributorElements(contributor, "/bar.txt") == [barIndex, barDir]
+    assert calcContributorElements(contributor, "\\bar.txt") == [barIndex, barDir]
+    assert calcContributorElements(contributor, "bar.txt") == [barIndex, barDir]
+    assert calcContributorElements(contributor, "bar") == [barIndex, barDir]
   }
 
   void "test prefer files to directories even if longer"() {
     def fooFile = addEmptyFile('dir/fooFile.txt')
     def fooDir = addEmptyFile('foo/barFile.txt').containingDirectory
 
-    def popup = createPopup(new GotoFileModel(project))
-    def popupElements = calcPopupElements(popup, 'foo')
+    def contributor = createFileContributor(project)
+    def popupElements = calcContributorElements(contributor, 'foo')
 
     assert popupElements == [fooFile, fooDir]
-    assert popup.calcSelectedIndex(popupElements.toArray(), 'foo') == 0
   }
 
   void "test find method by qualified name"() {
@@ -355,21 +362,19 @@ class Intf {
     def wanted = myFixture.addClass('class XFile {}')
     def smth1 = myFixture.addClass('class xfilterExprOwner {}')
     def smth2 = myFixture.addClass('class xfile_baton_t {}')
-    def popup = createPopup(new GotoClassModel2(project))
-    def popupElements = calcPopupElements(popup, 'xfile', false)
+    def contributor = createClassContributor(project)
+    def popupElements = calcContributorElements(contributor, 'xfile')
 
     assert popupElements == [wanted, smth2, smth1]
-    assert popup.calcSelectedIndex(popupElements.toArray(), 'xfile') == 0
   }
 
   void "test prefer prefix match"() {
     def wanted = myFixture.addClass('class PsiClassImpl {}')
     def smth = myFixture.addClass('class DroolsPsiClassImpl {}')
-    def popup = createPopup(new GotoClassModel2(project))
-    def popupElements = calcPopupElements(popup, 'PsiCl', false)
+    def contributor = createClassContributor(project)
+    def popupElements = calcContributorElements(contributor, 'PsiCl')
 
     assert popupElements == [wanted, smth]
-    assert popup.calcSelectedIndex(popupElements.toArray(), 'PsiCl') == 0
   }
 
   void "test out-of-project-content files"() {
@@ -382,11 +387,11 @@ class Intf {
     def foo = myFixture.addClass('package foo; class List {}')
     def bar = myFixture.addClass('package bar; class List {}')
 
-    def popup = createPopup(new GotoClassModel2(project), myFixture.addClass('class Context {}'))
-    assert calcPopupElements(popup, "List", false) == [bar, foo]
+    def contributor = createClassContributor(project, myFixture.addClass('class Context {}'))
+    assert calcContributorElements(contributor, "List") == [bar, foo]
 
     JavaProjectCodeInsightSettings.setExcludedNames(project, testRootDisposable, 'bar')
-    assert calcPopupElements(popup, "List", false) == [foo, bar]
+    assert calcContributorElements(contributor, "List") == [foo, bar]
   }
 
   void "test file path matching without slashes"() {
@@ -522,31 +527,91 @@ class Intf {
   }
 
   private List<Object> gotoClass(String text, boolean checkboxState = false) {
-    return getPopupElements(new GotoClassModel2(project), text, checkboxState)
+    return getContributorElements(createClassContributor(project, null, checkboxState), text)
   }
 
   private List<Object> gotoSymbol(String text, boolean checkboxState = false) {
-    return getPopupElements(new GotoSymbolModel2(project), text, checkboxState)
+    return getContributorElements(createSymbolContributor(project, null, checkboxState), text)
   }
 
   private List<Object> gotoFile(String text, boolean checkboxState = false) {
-    return getPopupElements(new GotoFileModel(project), text, checkboxState)
+    return getContributorElements(createFileContributor(project, null, checkboxState), text)
   }
 
-  private List<Object> getPopupElements(ChooseByNameModel model, String text, boolean checkboxState = false) {
-    return calcPopupElements(createPopup(model), text, checkboxState)
+  private static List<Object> getContributorElements(SearchEverywhereContributor<?> contributor, String text) {
+    return calcContributorElements(contributor, text)
   }
 
-  static List<Object> calcPopupElements(ChooseByNamePopup popup, String text, boolean checkboxState = false) {
-    return popup.calcPopupElements(text, checkboxState)
+  static List<Object> calcContributorElements(SearchEverywhereContributor<?> contributor, String text) {
+    def res = new ArrayList<Object>()
+    invokeAdnWait({ -> contributor.fetchElements(text, new MockProgressIndicator(), { item -> res.add(item) }) })
+    return res
   }
 
-  private ChooseByNamePopup createPopup(ChooseByNameModel model, PsiElement context = null) {
-    if (myPopup) {
-      myPopup.close(false)
+  static SearchEverywhereContributor<Object> createClassContributor(Project project, PsiElement context = null, boolean everywhere = false) {
+    def res = new TestClassContributor(project, context)
+    res.setEverywhere(everywhere)
+    return res
+  }
+
+  static SearchEverywhereContributor<Object> createFileContributor(Project project, PsiElement context = null, boolean everywhere = false) {
+    def res = new TestFileContributor(project, context)
+    res.setEverywhere(everywhere)
+    return res
+  }
+
+  static SearchEverywhereContributor<Object> createSymbolContributor(Project project, PsiElement context = null, boolean everywhere = false) {
+    def res = new TestSymbolContributor(project, context)
+    res.setEverywhere(everywhere)
+    return res
+  }
+
+  private static class TestClassContributor extends ClassSearchEverywhereContributor {
+
+    TestClassContributor(@Nullable Project project, @Nullable PsiElement context) {
+      super(project, context)
     }
 
-    return myPopup = ChooseByNamePopup.createPopup(project, model, (PsiElement)context, "")
+    void setEverywhere(boolean state) {
+      myScopeDescriptor = new ScopeDescriptor(state
+                                                ? GlobalSearchScope.everythingScope(myProject)
+                                                : GlobalSearchScope.projectScope(myProject)
+      )
+    }
+  }
+
+  private static class TestFileContributor extends FileSearchEverywhereContributor {
+
+    TestFileContributor(@Nullable Project project, @Nullable PsiElement context) {
+      super(project, context)
+    }
+
+    void setEverywhere(boolean state) {
+      myScopeDescriptor = new ScopeDescriptor(state
+                                                ? GlobalSearchScope.everythingScope(myProject)
+                                                : GlobalSearchScope.projectScope(myProject)
+      )
+    }
+  }
+
+  private static class TestSymbolContributor extends SymbolSearchEverywhereContributor {
+
+    TestSymbolContributor(@Nullable Project project, @Nullable PsiElement context) {
+      super(project, context)
+    }
+
+    void setEverywhere(boolean state) {
+      myScopeDescriptor = new ScopeDescriptor(state
+                                                ? GlobalSearchScope.everythingScope(myProject)
+                                                : GlobalSearchScope.projectScope(myProject)
+      )
+    }
+  }
+
+  private static void invokeAdnWait(Runnable runnable) {
+    def thread = new Thread(runnable)
+    thread.start()
+    thread.join()
   }
 
 }

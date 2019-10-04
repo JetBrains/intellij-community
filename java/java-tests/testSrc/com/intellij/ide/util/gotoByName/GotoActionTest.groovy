@@ -1,7 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.gotoByName
 
-
+import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 import com.intellij.ide.ui.OptionsTopHitProvider
 import com.intellij.ide.ui.search.BooleanOptionDescription
 import com.intellij.ide.ui.search.OptionDescription
@@ -12,6 +13,7 @@ import com.intellij.idea.IdeaTestApplication
 import com.intellij.java.navigation.ChooseByNameTest
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.testFramework.PlatformTestUtil
@@ -23,6 +25,7 @@ import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 
+import java.awt.Component
 import java.util.concurrent.TimeUnit
 
 /**
@@ -161,30 +164,22 @@ class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
   void "test same action is not reported twice"() {
     def patterns = ["Patch", "Add", "Delete", "Show", "Toggle", "New", "New Class"]
 
-    def model = new GotoActionModel(project, null, null)
-    def provider = new GotoActionItemProvider(model)
-
-    def popup = ChooseByNamePopup.createPopup(project, model, provider)
-    try {
-      patterns.forEach { String pattern ->
-        def result = ChooseByNameTest.calcPopupElements(popup, pattern, true)
-        def actions = result.findResults {
-          if (it instanceof MatchedValue) {
-            def value = it.value
-            if (value instanceof ActionWrapper) {
-              return (value as ActionWrapper).action
-            }
-            if (value instanceof OptionDescription) {
-              return value
-            }
+    def contributor = createActionContributor(project)
+    patterns.forEach { String pattern ->
+      def result = ChooseByNameTest.calcContributorElements(contributor, pattern)
+      def actions = result.findResults {
+        if (it instanceof MatchedValue) {
+          def value = it.value
+          if (value instanceof ActionWrapper) {
+            return (value as ActionWrapper).action
           }
-          return null
+          if (value instanceof OptionDescription) {
+            return value
+          }
         }
-        assert actions.size() == actions.toSet().size()
+        return null
       }
-    }
-    finally {
-      popup.close(false)
+      assert actions.size() == actions.toSet().size()
     }
   }
 
@@ -332,20 +327,13 @@ class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   private static List<ActionWrapper> getActionsFromPopup(Project project, String pattern) {
-    def model = new GotoActionModel(project, null, null)
-    def provider = new GotoActionItemProvider(model)
-    def popup = ChooseByNamePopup.createPopup(project, model, provider)
-    try {
-      return ChooseByNameTest.calcPopupElements(popup, pattern, true).findResults {
-        if (it instanceof MatchedValue && it.value instanceof ActionWrapper) {
-          return it.value as ActionWrapper
-        }
-        return null
-      } as List<ActionWrapper>
-    }
-    finally {
-      popup.close(false)
-    }
+    def contributor = createActionContributor(project)
+    return ChooseByNameTest.calcContributorElements(contributor, pattern).findResults {
+      if (it instanceof MatchedValue && it.value instanceof ActionWrapper) {
+        return it.value as ActionWrapper
+      }
+      return null
+    } as List<ActionWrapper>
   }
 
   private def actionMatches(String pattern, AnAction action) {
@@ -401,5 +389,21 @@ class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
       }
     }
     return new MatchedValue(option, pattern)
+  }
+
+  private static SearchEverywhereContributor<?> createActionContributor(Project project) {
+    def res = new TestActionContributor(project, null, null)
+    res.setShowDisabled(true)
+    return res
+  }
+
+  private static class TestActionContributor extends ActionSearchEverywhereContributor {
+    TestActionContributor(Project project, Component contextComponent, Editor editor) {
+      super(project, contextComponent, editor)
+    }
+
+    void setShowDisabled(boolean val) {
+      myDisabledActions = val
+    }
   }
 }
