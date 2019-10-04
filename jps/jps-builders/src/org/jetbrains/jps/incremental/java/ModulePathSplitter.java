@@ -104,10 +104,10 @@ public class ModulePathSplitter {
 
     try {
       Object mf = myModuleFinderCreateMethod.invoke(null, (Object)new Path[]{f.toPath()}); //  ModuleFinder.of(f.toPath());
-      for (Object moduleRef : (Set)myFindAll.invoke(mf)) {  // mf.findAll()
+      for (Object moduleRef : (Set<?>)myFindAll.invoke(mf)) {  // mf.findAll()
         final Object descriptor = myGetDescriptor.invoke(moduleRef); // moduleRef.descriptor()
         final String moduleName = (String)myDescriptorName.invoke(descriptor); // descriptor.name();
-        final Set requires = (Set)myDescriptorRequires.invoke(descriptor); //descriptor.requires();
+        final Set<?> requires = (Set<?>)myDescriptorRequires.invoke(descriptor); //descriptor.requires();
         if (requires.isEmpty()) {
           info = new ModuleInfo(moduleName);
         }
