@@ -296,6 +296,22 @@ class FooFoo {
     myFixture.assertPreferredCompletionItems 0, 'materialQualities', 'materialQualities1', 'qualities', 'materialQualityIterable', 'qualityIterable', 'iterable'
   }
 
+  void "test suggest parameter name from javadoc"() {
+    myFixture.configureByText 'a.java', '''
+class FooFoo {
+    /**
+    * @param existing
+    * @param abc
+    * @param def
+    * @param <T>
+    */
+    void set(int existing, int <caret>) {}
+}
+'''
+    myFixture.completeBasic()
+    assert myFixture.lookupElementStrings as Set == ['abc', 'def', 'i'] as Set
+  }
+
   void "test no name suggestions when the type is unresolved because it is actually a mistyped keyword"() {
     myFixture.configureByText 'a.java', '''
 class C {
