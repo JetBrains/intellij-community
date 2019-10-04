@@ -1,13 +1,14 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.util.PathUtilRt.Platform;
-import org.junit.Assume;
 import org.junit.Test;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.function.Function;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
@@ -67,15 +68,22 @@ public class PathUtilTest {
 
   @Test
   public void windowsUNCPaths() {
-    Assume.assumeTrue(SystemInfo.isWindows);
-    assertThat(PathUtilRt.getFileName("//wsl$/Ubuntu")).isEqualTo("//wsl$/Ubuntu");
-    assertThat(PathUtilRt.getFileName("//wsl$/Ubuntu/")).isEqualTo("//wsl$/Ubuntu");
-    assertThat(PathUtilRt.getFileName("//wsl$/Ubuntu/usr")).isEqualTo("usr");
-    assertThat(PathUtilRt.getFileName("//wsl$/Ubuntu/usr/")).isEqualTo("usr");
+    IoTestUtil.assumeWindows();
+    windowsUNCPaths(true);
+    windowsUNCPaths(false);
+  }
 
-    assertThat(PathUtilRt.getParentPath("//wsl$/Ubuntu")).isEqualTo("");
-    assertThat(PathUtilRt.getParentPath("//wsl$/Ubuntu/")).isEqualTo("");
-    assertThat(PathUtilRt.getParentPath("//wsl$/Ubuntu/usr/")).isEqualTo("//wsl$/Ubuntu");
-    assertThat(PathUtilRt.getParentPath("//wsl$/Ubuntu/usr/bin/gcc")).isEqualTo("//wsl$/Ubuntu/usr/bin");
+  private static void windowsUNCPaths(boolean convertToSystemDependentPaths) {
+    final Function<String, String> toPath = path -> convertToSystemDependentPaths ? FileUtil.toSystemDependentName(path) : path;
+
+    assertThat(PathUtilRt.getFileName(toPath.apply("//wsl$/Ubuntu"))).isEqualTo(toPath.apply("//wsl$/Ubuntu"));
+    assertThat(PathUtilRt.getFileName(toPath.apply("//wsl$/Ubuntu/"))).isEqualTo(toPath.apply("//wsl$/Ubuntu"));
+    assertThat(PathUtilRt.getFileName(toPath.apply("//wsl$/Ubuntu/usr"))).isEqualTo("usr");
+    assertThat(PathUtilRt.getFileName(toPath.apply("//wsl$/Ubuntu/usr/"))).isEqualTo("usr");
+
+    assertThat(PathUtilRt.getParentPath(toPath.apply("//wsl$/Ubuntu"))).isEqualTo("");
+    assertThat(PathUtilRt.getParentPath(toPath.apply("//wsl$/Ubuntu/"))).isEqualTo("");
+    assertThat(PathUtilRt.getParentPath(toPath.apply("//wsl$/Ubuntu/usr/"))).isEqualTo(toPath.apply("//wsl$/Ubuntu"));
+    assertThat(PathUtilRt.getParentPath(toPath.apply("//wsl$/Ubuntu/usr/bin/gcc"))).isEqualTo(toPath.apply("//wsl$/Ubuntu/usr/bin"));
   }
 }
