@@ -25,6 +25,7 @@ import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.library.JpsOrderRootType
+import org.jetbrains.jps.model.library.JpsRepositoryLibraryType
 import org.jetbrains.jps.model.module.JpsModule
 /**
  * @author nik
@@ -63,8 +64,16 @@ class LibraryLicensesListGenerator {
         usedLibraries[libraryName] = module.name
       }
     }
+    Map<String, String> libraryVersions = (project.libraryCollection.libraries + project.modules.collectMany {it.libraryCollection.libraries})
+      .collect { it.asTyped(JpsRepositoryLibraryType.INSTANCE) }
+      .findAll { it != null}
+      .collectEntries { [it.name, it.properties.data.version] }
 
     licensesList.findAll { it.license != LibraryLicense.JETBRAINS_OWN }.each { LibraryLicense lib ->
+      if (lib.libraryName != null && lib.version == null && libraryVersions.containsKey(lib.libraryName)) {
+        lib = new LibraryLicense(lib.name, lib.url, libraryVersions[lib.libraryName], lib.libraryName, lib.additionalLibraryNames,
+                                 lib.attachedTo, lib.transitiveDependency, lib.license, lib.licenseUrl)
+      }
       if (usedModulesNames.contains(lib.attachedTo)) {
         licenses[lib] = lib.attachedTo
       }

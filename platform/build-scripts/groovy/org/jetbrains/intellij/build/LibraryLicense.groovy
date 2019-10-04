@@ -25,7 +25,8 @@ class LibraryLicense {
   final String url
 
   /**
-   * Version of the library
+   * Version of the library. If {@link #libraryName} points to a Maven library version is taken from the library configuration so it must
+   * not be specified explicitly.
    */
   final String version
 
