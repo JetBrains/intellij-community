@@ -32,6 +32,8 @@ import com.intellij.find.findUsages.FindUsagesManager;
 import com.intellij.find.findUsages.FindUsagesOptions;
 import com.intellij.find.impl.FindManagerImpl;
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.actions.searcheverywhere.ClassSearchEverywhereContributor;
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.ide.structureView.StructureViewBuilder;
@@ -50,6 +52,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
@@ -131,6 +134,8 @@ import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
@@ -163,7 +168,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   private EditorTestFixture myEditorTestFixture;
   private String myTestDataPath;
   private VirtualFileFilter myVirtualFileFilter = new FileTreeAccessFilter();
-  private ChooseByNamePopup myChooseByNamePopup;
+  private SearchEverywhereContributor<Object> myChooseByNamePopup;
   private boolean myAllowDirt;
   private boolean myCaresAboutInjection = true;
   private VirtualFilePointerTracker myVirtualFilePointerTracker;
@@ -1887,14 +1892,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @NotNull
   @Override
   public List<Object> getGotoClassResults(@NotNull String pattern, boolean searchEverywhere, @Nullable PsiElement contextForSorting) {
-    final ChooseByNamePopup chooseByNamePopup = getMockChooseByNamePopup(contextForSorting);
+    SearchEverywhereContributor<Object> contributor = createMockContributor(contextForSorting);
     final ArrayList<Object> results = new ArrayList<>();
-    chooseByNamePopup.getProvider().filterElements(chooseByNamePopup,
-                                                   chooseByNamePopup.transformPattern(pattern),
-                                                   searchEverywhere,
-                                                   new MockProgressIndicator(),
-                                                   new CommonProcessors.CollectProcessor<>(results));
-    chooseByNamePopup.close(true);
+    invokeAndWait(() -> contributor.fetchElements(pattern, new MockProgressIndicator(), new CommonProcessors.CollectProcessor<>(results)));
     return results;
   }
 
@@ -1904,14 +1904,22 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     return myEditorTestFixture.getBreadcrumbsAtCaret();
   }
 
-  @NotNull
-  private ChooseByNamePopup getMockChooseByNamePopup(@Nullable PsiElement contextForSorting) {
+  private static void invokeAndWait(Runnable task) {
+    try {
+      Application application = ApplicationManager.getApplication();
+      Future<?> future = application.executeOnPooledThread(task);
+      future.get();
+    }
+    catch (Exception e) {}
+  }
+
+  private SearchEverywhereContributor<Object> createMockContributor(@Nullable PsiElement contextForSorting) {
     final Project project = getProject();
     if (contextForSorting != null) {
-      return ChooseByNamePopup.createPopup(project, new GotoClassModel2(project), contextForSorting);
+      return new ClassSearchEverywhereContributor(project, contextForSorting);
     }
     if (myChooseByNamePopup == null) {
-      myChooseByNamePopup = ChooseByNamePopup.createPopup(project, new GotoClassModel2(project), (PsiElement)null);
+      myChooseByNamePopup = new ClassSearchEverywhereContributor(project, null);
     }
     return myChooseByNamePopup;
   }
