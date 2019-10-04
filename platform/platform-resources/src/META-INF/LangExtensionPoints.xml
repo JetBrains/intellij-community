@@ -177,7 +177,8 @@
     </extensionPoint>
 
     <extensionPoint name="lang.commenter"
-                    beanClass="com.intellij.lang.LanguageExtensionPoint">
+                    beanClass="com.intellij.lang.LanguageExtensionPoint"
+                    dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.lang.Commenter"/>
     </extensionPoint>
 
@@ -197,7 +198,8 @@
     </extensionPoint>
 
     <extensionPoint name="lang.foldingBuilder"
-                    beanClass="com.intellij.lang.LanguageExtensionPoint">
+                    beanClass="com.intellij.lang.LanguageExtensionPoint"
+                    dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.lang.folding.FoldingBuilder"/>
     </extensionPoint>
 
@@ -222,7 +224,7 @@
       <with attribute="implementationClass" implements="com.intellij.lang.ASTFactory"/>
     </extensionPoint>
 
-    <extensionPoint name="lang.formatter" beanClass="com.intellij.lang.LanguageExtensionPoint">
+    <extensionPoint name="lang.formatter" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.formatting.FormattingModelBuilder"/>
     </extensionPoint>
 
