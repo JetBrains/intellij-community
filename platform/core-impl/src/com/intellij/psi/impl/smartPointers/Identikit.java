@@ -168,8 +168,10 @@ public abstract class Identikit {
     }
 
     private boolean isAcceptable(@NotNull PsiElement element) {
+      IElementType type = PsiUtilCore.getElementType(element);
       return myElementClassName.equals(element.getClass().getName()) &&
-             myElementTypeId == PsiUtilCore.getElementType(element).getIndex();
+             type != null &&
+             myElementTypeId == type.getIndex();
     }
   }
 
