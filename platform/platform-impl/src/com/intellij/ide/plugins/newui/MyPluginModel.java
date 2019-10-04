@@ -187,6 +187,10 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
       if (enabled != descriptor.isEnabled()) {
         // PluginDescriptor fields are cleaned after the plugin is loaded, so we need to reload the descriptor to check if it's dynamic
         IdeaPluginDescriptorImpl fullDescriptor = PluginManagerCore.loadDescriptor(descriptor.getPath(), PluginManagerCore.PLUGIN_XML, true);
+        if (fullDescriptor == null) {
+          LOG.error("Could not load full descriptor for plugin " + descriptor.getPath());
+          fullDescriptor = (IdeaPluginDescriptorImpl)descriptor;
+        }
         if (!enabled) {
           pluginDescriptorsToDisable.add(fullDescriptor);
         }
