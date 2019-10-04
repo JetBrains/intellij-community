@@ -320,7 +320,7 @@ public class MavenPropertyResolverTest extends MavenImportingTestCase {
                                             "    <properties>" +
                                             "        <first>one</first>" +
                                             "        <second>${first}</second>" +
-                                            "        <third>${second}${parent.version}</second>" +
+                                            "        <third>${second}${parent.version}</third>" +
                                             "    </properties>" +
                                             "</project>");
 
