@@ -279,6 +279,12 @@ public class EditorActionTest extends AbstractEditorTest {
     checkResultByText("<selection>bar\nfoo\n<caret></selection>baz");
   }
 
+  public void testLastEmptyLineIsNotTouchedBySort() {
+    initText("foo\nba<caret>r\nbaz\n");
+    executeAction(IdeActions.ACTION_EDITOR_SORT_LINES);
+    checkResultByText("ba<caret>r\nbaz\nfoo\n");
+  }
+
   public void testReverseLinesNoSelection() {
     initText("foo\nbar\nba<caret>z");
     executeAction(IdeActions.ACTION_EDITOR_REVERSE_LINES);
