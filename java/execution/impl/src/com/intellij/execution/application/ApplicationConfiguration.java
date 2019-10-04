@@ -121,7 +121,6 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
 
   @Nullable
   public String getMainClassName() {
-    //noinspection deprecation
     return MAIN_CLASS_NAME;
   }
 
@@ -144,7 +143,6 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
 
   @Override
   public void setMainClassName(@Nullable String qualifiedName) {
-    //noinspection deprecation
     MAIN_CLASS_NAME = qualifiedName;
     getOptions().setMainClassName(qualifiedName);
   }
@@ -173,21 +171,18 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
 
   @Override
   public void setProgramParameters(@Nullable String value) {
-    //noinspection deprecation
     PROGRAM_PARAMETERS = value;
     getOptions().setProgramParameters(value);
   }
 
   @Override
   public String getProgramParameters() {
-    //noinspection deprecation
     return PROGRAM_PARAMETERS;
   }
 
   @Override
   public void setWorkingDirectory(@Nullable String value) {
     String normalizedValue = StringUtil.isEmptyOrSpaces(value) ? null : value.trim();
-    //noinspection deprecation
     WORKING_DIRECTORY = PathUtil.toSystemDependentName(normalizedValue);
 
     String independentValue = PathUtil.toSystemIndependentName(normalizedValue);
@@ -196,7 +191,6 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
 
   @Override
   public String getWorkingDirectory() {
-    //noinspection deprecation
     return WORKING_DIRECTORY;
   }
 
@@ -235,11 +229,9 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
 
   @Override
   public boolean isAlternativeJrePathEnabled() {
-    //noinspection deprecation
     return ALTERNATIVE_JRE_PATH_ENABLED;
   }
 
-  @SuppressWarnings("deprecation")
   @Override
   public void setAlternativeJrePathEnabled(boolean enabled) {
     boolean changed = ALTERNATIVE_JRE_PATH_ENABLED != enabled;
@@ -251,11 +243,9 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
   @Nullable
   @Override
   public String getAlternativeJrePath() {
-    //noinspection deprecation
     return ALTERNATIVE_JRE_PATH;
   }
 
-  @SuppressWarnings("deprecation")
   @Override
   public void setAlternativeJrePath(@Nullable String path) {
     boolean changed = !Objects.equals(ALTERNATIVE_JRE_PATH, path);
@@ -314,7 +304,6 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
     JavaRunConfigurationExtensionManager.getInstance().readExternal(this, element);
   }
 
-  @SuppressWarnings("deprecation")
   private void syncOldStateFields() {
     JvmMainMethodRunConfigurationOptions options = getOptions();
 
