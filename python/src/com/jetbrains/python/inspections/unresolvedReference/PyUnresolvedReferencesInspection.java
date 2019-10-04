@@ -1086,7 +1086,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       // Remove those unsed, that are reported to be skipped by extension points
       final Set<PyImportedNameDefiner> unusedImportToSkip = new HashSet<>();
       for (final PyImportedNameDefiner unusedImport : unusedImports) {
-        if (PyInspectionExtension.EP_NAME.getExtensionList().stream().anyMatch(o -> o.unusedImportShouldBeSkipped(unusedImport))) {
+        if (PyInspectionExtension.EP_NAME.getExtensionList().stream().anyMatch(o -> o.ignoreUnusedImports(unusedImport))) {
           unusedImportToSkip.add(unusedImport);
         }
       }
