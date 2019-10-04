@@ -60,5 +60,6 @@ iml_module(
         "//tools/idea/platform/testFramework/core:intellij.platform.testFramework.core[module]",
         "//tools/idea/.idea/libraries:kotlin-test",
         "//tools/idea/platform/bootstrap:intellij.platform.bootstrap[module]",
+        "//tools/idea/platform/service-container:intellij.platform.serviceContainer[module]",
     ],
 )

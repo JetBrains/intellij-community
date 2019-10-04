@@ -17,17 +17,16 @@ iml_module(
     resources = ["resources"],
     # do not sort: must match IML order
     test_runtime_deps = [
-        "//tools/idea/uast/uast-tests:intellij.platform.uast.tests",
         "//tools/idea/plugins/IntelliLang/intellilang-jps-plugin:intellij.java.langInjection.jps",
         "//tools/idea/plugins/groovy/jps-plugin:intellij.groovy.jps",
         "//tools/idea/plugins/ant/jps-plugin:intellij.ant.jps",
         "//tools/idea/plugins/java-decompiler/plugin:intellij.java.decompiler",
         "//tools/idea/plugins/properties:intellij.properties",
         "//tools/idea/jvm/jvm-analysis-java-tests:intellij.jvm.analysis.java.tests",
+        "//tools/idea/uast/uast-tests:intellij.platform.uast.tests",
         "//tools/idea/java/typeMigration:intellij.java.typeMigration",
         "//tools/idea/java/manifest:intellij.java.manifest",
         "//tools/idea/plugins/java-i18n:intellij.java.i18n",
-        "//tools/idea/java/ide-customization:intellij.java.ide.customization",
         "//tools/idea/plugins/IntelliLang:intellij.java.langInjection",
         "//tools/idea/java/remote-servers/impl:intellij.java.remoteServers.impl",
         "//tools/idea/plugins/testng:intellij.testng",
@@ -72,5 +71,6 @@ iml_module(
         "//tools/idea/platform/configuration-store-impl:intellij.platform.configurationStore.impl[module]",
         "//tools/idea/platform/object-serializer:intellij.platform.objectSerializer[module]",
         "//tools/idea/.idea/libraries:jackson[test]",
+        "//tools/idea/platform/service-container:intellij.platform.serviceContainer[module]",
     ],
 )

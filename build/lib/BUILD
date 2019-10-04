@@ -9,13 +9,3 @@ filegroup(
     ]),
     visibility = ["//visibility:public"],
 )
-
-java_import(
-    name = "jps",
-    jars = [
-        "jps/jps-builders.jar",
-        "jps/jps-model.jar",
-        "jps/util.jar",
-    ],
-    visibility = ["//visibility:public"],
-)

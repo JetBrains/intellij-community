@@ -55,5 +55,7 @@ iml_module(
         "//tools/idea/.idea/libraries:miglayout-swing[test]",
         "//tools/idea/platform/object-serializer:intellij.platform.objectSerializer.tests[module, test]",
         "//tools/idea/.idea/libraries:batik-transcoder[test]",
+        "//tools/idea/platform/diff-impl:intellij.platform.diff.impl[module, test]",
+        "//tools/idea/platform/service-container:intellij.platform.serviceContainer[module]",
     ],
 )

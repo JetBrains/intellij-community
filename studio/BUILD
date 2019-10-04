@@ -21,6 +21,7 @@ java_test(
     ],
     jvm_flags = ["-Dtest.suite.jar=AndroidStudioBundleTest.jar"],
     tags = [
+        "manual",  # b/144578907
         "no_windows",
     ],
     test_class = "com.android.testutils.JarTestSuite",
@@ -42,6 +43,7 @@ java_test(
         "//tools/idea:android-studio.tar.gz",
     ],
     tags = [
+        "manual",  # b/144578907
         "no_test_mac",  # TODO: we run out of file handles on Mac, double-check whether 'sysctl kern.maxfiles' is sane
         "no_windows",
     ],
@@ -51,10 +53,4 @@ java_test(
         "//tools/base/third_party:junit_junit",
         "//tools/idea/.idea/libraries:commons-compress",
     ],
-)
-
-filegroup(
-    name = "ant_prebuilts",
-    srcs = glob(["build-scripts-deps/*.jar"]),
-    visibility = ["//visibility:public"],
 )

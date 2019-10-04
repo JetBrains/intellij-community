@@ -14,8 +14,8 @@ iml_module(
     # do not sort: must match IML order
     test_runtime_deps = [
         "//tools/idea/xml/dom-openapi:intellij.xml.dom",
-        "//tools/idea/images:intellij.platform.images",
         "//tools/idea/xml/dom-impl:intellij.xml.dom.impl",
+        "//tools/idea/images:intellij.platform.images",
         "//tools/idea/platform/testFramework/extensions:intellij.platform.testExtensions",
     ],
     visibility = ["//visibility:public"],
@@ -73,6 +73,7 @@ iml_module(
         "//tools/idea/.idea/libraries:jna",
         "//tools/idea/.idea/libraries:lz4-java",
         "//tools/idea/platform/util:intellij.platform.util[module]",
+        "//tools/idea/platform/service-container:intellij.platform.serviceContainer[module]",
         "//tools/idea/.idea/libraries:protobuf",
         "//tools/idea/.idea/libraries:studio-analytics-proto",
         "//tools/analytics-library/tracker:analytics-tracker[module]",
@@ -87,8 +88,8 @@ iml_module(
     # do not sort: must match IML order
     test_runtime_deps = [
         "//tools/idea/xml/dom-openapi:intellij.xml.dom",
-        "//tools/idea/images:intellij.platform.images",
         "//tools/idea/xml/dom-impl:intellij.xml.dom.impl",
+        "//tools/idea/images:intellij.platform.images",
     ],
     test_srcs = ["testSources"],
     test_tags = ["manual"],

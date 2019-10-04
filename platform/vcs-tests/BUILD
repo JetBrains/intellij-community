@@ -42,6 +42,7 @@ iml_module(
         "//tools/idea/.idea/libraries:mockito[test]",
         "//tools/idea/platform/util:intellij.platform.util.tests[module, test]",
         "//tools/idea/platform/testFramework:intellij.platform.testFramework[module, test]",
+        "//tools/idea/platform/diff-impl:intellij.platform.diff.impl[module]",
     ],
 )
 

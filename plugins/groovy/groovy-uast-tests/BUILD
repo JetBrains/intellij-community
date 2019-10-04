@@ -19,7 +19,6 @@ iml_module(
         "//tools/idea/java/typeMigration:intellij.java.typeMigration",
         "//tools/idea/java/manifest:intellij.java.manifest",
         "//tools/idea/plugins/java-i18n:intellij.java.i18n",
-        "//tools/idea/java/ide-customization:intellij.java.ide.customization",
         "//tools/idea/plugins/IntelliLang:intellij.java.langInjection",
         "//tools/idea/java/remote-servers/impl:intellij.java.remoteServers.impl",
         "//tools/idea/plugins/testng:intellij.testng",

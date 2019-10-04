@@ -12,8 +12,8 @@ iml_module(
     # do not sort: must match IML order
     test_runtime_deps = [
         "//tools/idea/xml/dom-openapi:intellij.xml.dom",
-        "//tools/idea/images:intellij.platform.images",
         "//tools/idea/xml/dom-impl:intellij.xml.dom.impl",
+        "//tools/idea/images:intellij.platform.images",
     ],
     test_srcs = ["testSrc"],
     test_tags = ["manual"],
@@ -50,5 +50,6 @@ iml_module(
         "//tools/idea/.idea/libraries:lz4-java",
         "//tools/idea/.idea/libraries:kotlinx-coroutines-jdk8",
         "//tools/idea/platform/object-serializer:intellij.platform.objectSerializer[module]",
+        "//tools/idea/platform/service-container:intellij.platform.serviceContainer[module]",
     ],
 )

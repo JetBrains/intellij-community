@@ -55,6 +55,8 @@ iml_module(
         "//tools/idea/platform/lang-impl:intellij.platform.lang.impl[module]",
         "//tools/idea/.idea/libraries:miglayout-swing",
         "//tools/idea/.idea/libraries:jackson-databind",
+        "//tools/idea/.idea/libraries:jackson-module-kotlin",
         "//tools/idea/platform/editor-ui-api:intellij.platform.editor[module]",
+        "//tools/idea/platform/diff-impl:intellij.platform.diff.impl[module]",
     ],
 )

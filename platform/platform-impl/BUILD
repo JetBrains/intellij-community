@@ -10,8 +10,8 @@ iml_module(
     # do not sort: must match IML order
     test_runtime_deps = [
         "//tools/idea/xml/dom-openapi:intellij.xml.dom",
-        "//tools/idea/images:intellij.platform.images",
         "//tools/idea/xml/dom-impl:intellij.xml.dom.impl",
+        "//tools/idea/images:intellij.platform.images",
         "//tools/idea/platform/testFramework/extensions:intellij.platform.testExtensions",
     ],
     visibility = ["//visibility:public"],
@@ -100,5 +100,6 @@ iml_module(
         "//tools/idea/platform/util:intellij.platform.util.ui[module]",
         "//tools/idea/platform/platform-util-io:intellij.platform.ide.util.io[module]",
         "//tools/idea/platform/util:intellij.platform.util[module]",
+        "//tools/idea/platform/service-container:intellij.platform.serviceContainer[module]",
     ],
 )

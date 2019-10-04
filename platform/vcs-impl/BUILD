@@ -12,18 +12,15 @@ iml_module(
     # do not sort: must match IML order
     test_runtime_deps = [
         "//tools/idea/xml/dom-openapi:intellij.xml.dom",
-        "//tools/idea/images:intellij.platform.images",
         "//tools/idea/xml/dom-impl:intellij.xml.dom.impl",
+        "//tools/idea/images:intellij.platform.images",
         "//tools/idea/platform/testFramework/extensions:intellij.platform.testExtensions",
     ],
     test_srcs = ["testSrc"],
     test_tags = ["manual"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
-    exports = [
-        "//tools/idea/platform/vcs-api:intellij.platform.vcs",
-        "//tools/idea/platform/diff-impl:intellij.platform.diff.impl",
-    ],
+    exports = ["//tools/idea/platform/vcs-api:intellij.platform.vcs"],
     # do not sort: must match IML order
     runtime_deps = [
         "//tools/idea/xml/xml-structure-view-impl:intellij.xml.structureView.impl",

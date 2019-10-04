@@ -12,5 +12,6 @@ iml_module(
         "//tools/idea/.idea/libraries:kotlin-stdlib-jdk8",
         "//tools/idea/java/java-psi-api:intellij.java.psi[module]",
         "//tools/idea/java/java-psi-impl:intellij.java.psi.impl[module]",
+        "//tools/idea/platform/util-ex:intellij.platform.util.ex[module]",
     ],
 )

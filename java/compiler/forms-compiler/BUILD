@@ -17,5 +17,6 @@ iml_module(
         "//tools/idea/.idea/libraries:JUnit3[test]",
         "//tools/idea/.idea/libraries:jgoodies-forms",
         "//tools/idea/java/compiler/instrumentation-util:intellij.java.compiler.instrumentationUtil[module]",
+        "//tools/idea/platform/util:intellij.platform.util[module, test]",
     ],
 )

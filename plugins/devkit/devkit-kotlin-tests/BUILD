@@ -4,15 +4,14 @@ load("//tools/base/bazel:bazel.bzl", "iml_module")
 iml_module(
     name = "intellij.devkit.kotlin.tests",
     iml_files = ["intellij.devkit.kotlin.tests.iml"],
+    test_resources = ["testData"],
     # do not sort: must match IML order
     test_runtime_deps = [
-        "//tools/idea/uast/uast-tests:intellij.platform.uast.tests",
         "//tools/idea/plugins/java-decompiler/plugin:intellij.java.decompiler",
         "//tools/idea/jvm/jvm-analysis-java-tests:intellij.jvm.analysis.java.tests",
-        "//tools/idea/plugins/java-i18n:intellij.java.i18n",
+        "//tools/idea/uast/uast-tests:intellij.platform.uast.tests",
         "//tools/idea/plugins/testng:intellij.testng",
         "//tools/idea:intellij.java.ui.tests",
-        "//tools/idea/plugins/ui-designer:intellij.java.guiForms.designer",
         "//tools/idea/plugins/eclipse:intellij.eclipse",
     ],
     test_srcs = ["testSrc"],
@@ -23,9 +22,8 @@ iml_module(
         "//tools/idea/.idea/libraries:KotlinPlugin",
         "//tools/idea/platform/tasks-platform-impl:intellij.platform.tasks.impl",
         "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
-        "//tools/idea/jvm/jvm-analysis-impl:intellij.jvm.analysis.impl",
-        "//tools/idea/java/ide-customization:intellij.java.ide.customization",
         "//tools/idea/java/ide-resources:intellij.java.ide.resources",
+        "//tools/idea/jvm/jvm-analysis-impl:intellij.jvm.analysis.impl",
         "//tools/idea/java/compiler/instrumentation-util-8:intellij.java.compiler.instrumentationUtil.java8",
         "//tools/idea/plugins/devkit/jps-plugin:intellij.devkit.jps",
         "//tools/idea/plugins/IntelliLang/intellilang-jps-plugin:intellij.java.langInjection.jps",

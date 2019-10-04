@@ -12,8 +12,8 @@ iml_module(
     # do not sort: must match IML order
     test_runtime_deps = [
         "//tools/idea/xml/dom-openapi:intellij.xml.dom",
-        "//tools/idea/images:intellij.platform.images",
         "//tools/idea/xml/dom-impl:intellij.xml.dom.impl",
+        "//tools/idea/images:intellij.platform.images",
     ],
     test_srcs = ["test"],
     test_tags = ["manual"],
@@ -47,8 +47,5 @@ iml_module(
         "//tools/idea/platform/projectModel-impl:intellij.platform.projectModel.impl[module]",
         "//tools/idea/platform/testFramework/extensions:intellij.platform.testExtensions[module, test]",
         "//tools/idea/.idea/libraries:snakeyaml",
-        "//prebuilts/tools/common/m2/repository/com/github/hypfvieh/dbus-java/3.0.2:jar",
-        "//prebuilts/tools/common/m2/repository/com/github/hypfvieh/java-utils/1.0.5:jar",
-        "//prebuilts/tools/common/m2/repository/org/slf4j/slf4j-api/1.7.25:jar",
     ],
 )

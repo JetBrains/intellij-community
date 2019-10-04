@@ -19,8 +19,8 @@ iml_module(
     test_resources = ["testData"],
     # do not sort: must match IML order
     test_runtime_deps = [
-        "//tools/idea/images:intellij.platform.images",
         "//tools/idea/xml/dom-impl:intellij.xml.dom.impl",
+        "//tools/idea/images:intellij.platform.images",
         "//tools/idea/platform/testFramework/extensions:intellij.platform.testExtensions",
     ],
     test_srcs = ["test"],

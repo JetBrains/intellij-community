@@ -14,5 +14,6 @@ iml_module(
         "//tools/idea/.idea/libraries:TestNG",
         "//tools/idea/.idea/libraries:intellij-coverage",
         "//tools/idea/.idea/libraries:intellij-test-discovery",
+        "//tools/idea/java/java-runtime:intellij.java.rt[module]",
     ],
 )

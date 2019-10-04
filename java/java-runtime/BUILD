@@ -10,6 +10,7 @@ iml_module(
     # do not sort: must match IML order
     deps = [
         "//tools/idea/.idea/libraries:JUnit4",
-        "//tools/idea/.idea/libraries:Ant",
+        "//prebuilts/tools/common/m2/repository/org/apache/ant/ant-launcher/1.7.1:jar",
+        "//prebuilts/tools/common/m2/repository/org/apache/ant/ant/1.7.1:jar",
     ],
 )

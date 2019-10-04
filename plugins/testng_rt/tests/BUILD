@@ -8,7 +8,6 @@ iml_module(
     test_runtime_deps = [
         "//tools/idea/plugins/IntelliLang/intellilang-jps-plugin:intellij.java.langInjection.jps",
         "//tools/idea/java/manifest:intellij.java.manifest",
-        "//tools/idea/java/ide-customization:intellij.java.ide.customization",
         "//tools/idea/java/remote-servers/impl:intellij.java.remoteServers.impl",
         "//tools/idea:intellij.java.ui.tests",
         "//tools/idea/java/plugin:intellij.java.plugin",

@@ -75,5 +75,6 @@ iml_module(
         "//tools/idea/platform/tasks-platform-api:intellij.platform.tasks[module, test]",
         "//tools/idea/.idea/libraries:assertJ[test]",
         "//tools/idea/.idea/libraries:commons-codec",
+        "//tools/idea/platform/diff-impl:intellij.platform.diff.impl[module]",
     ],
 )
