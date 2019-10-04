@@ -37,7 +37,7 @@ public class DefaultRemoteServersServiceViewContributor extends RemoteServersSer
 
   @NotNull
   @Override
-  public ServiceViewDescriptor getViewDescriptor() {
+  public ServiceViewDescriptor getViewDescriptor(@NotNull Project project) {
     return CONTRIBUTOR_DESCRIPTOR;
   }
 

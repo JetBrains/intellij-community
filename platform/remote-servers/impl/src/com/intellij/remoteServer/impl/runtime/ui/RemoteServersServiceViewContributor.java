@@ -56,8 +56,8 @@ public abstract class RemoteServersServiceViewContributor
 
   @NotNull
   @Override
-  public ServiceViewDescriptor getServiceDescriptor(@NotNull RemoteServerNodeServiceViewContributor service) {
-    return service.getViewDescriptor();
+  public ServiceViewDescriptor getServiceDescriptor(@NotNull Project project, @NotNull RemoteServerNodeServiceViewContributor service) {
+    return service.getViewDescriptor(project);
   }
 
   @Override
@@ -176,7 +176,7 @@ public abstract class RemoteServersServiceViewContributor
 
     @NotNull
     @Override
-    public ServiceViewDescriptor getViewDescriptor() {
+    public ServiceViewDescriptor getViewDescriptor(@NotNull Project project) {
       return new RemoteServerNodeDescriptor(myNode, myRootContributor.getActionGroups());
     }
 
@@ -188,8 +188,8 @@ public abstract class RemoteServersServiceViewContributor
 
     @NotNull
     @Override
-    public ServiceViewDescriptor getServiceDescriptor(@NotNull RemoteServerNodeServiceViewContributor service) {
-      return service.getViewDescriptor();
+    public ServiceViewDescriptor getServiceDescriptor(@NotNull Project project, @NotNull RemoteServerNodeServiceViewContributor service) {
+      return service.getViewDescriptor(project);
     }
 
     @NotNull
