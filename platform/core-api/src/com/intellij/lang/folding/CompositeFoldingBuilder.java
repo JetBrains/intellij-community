@@ -6,7 +6,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
@@ -25,7 +24,6 @@ import java.util.Set;
  * @see LanguageFolding
  */
 public class CompositeFoldingBuilder extends FoldingBuilderEx implements PossiblyDumbAware {
-  public static final Key<FoldingBuilder> FOLDING_BUILDER = new Key<>("FOLDING_BUILDER");
   private final List<? extends FoldingBuilder> myBuilders;
 
   CompositeFoldingBuilder(List<? extends FoldingBuilder> builders) {
@@ -41,8 +39,7 @@ public class CompositeFoldingBuilder extends FoldingBuilderEx implements Possibl
     for (FoldingBuilder builder : DumbService.getInstance(root.getProject()).filterByDumbAwareness(myBuilders)) {
       for (FoldingDescriptor descriptor : LanguageFolding.buildFoldingDescriptorsNoPlaceholderCaching(builder, root, document, quick)) {
         if (rangesCoveredByDescriptors.add(descriptor.getRange())) {
-          descriptor.getElement().putUserData(FOLDING_BUILDER, builder);
-          descriptors.add(descriptor);
+          descriptors.add(new FoldingDescriptorWrapper(descriptor, builder));
         }
       }
     }
@@ -52,22 +49,26 @@ public class CompositeFoldingBuilder extends FoldingBuilderEx implements Possibl
 
   @Override
   public String getPlaceholderText(@NotNull ASTNode node, @NotNull TextRange range) {
-    final FoldingBuilder builder = node.getUserData(FOLDING_BUILDER);
-    return !mayUseBuilder(node, builder) ? node.getText() :
-           builder instanceof FoldingBuilderEx ? ((FoldingBuilderEx)builder).getPlaceholderText(node, range)
-                                               : builder.getPlaceholderText(node);
+    // We reach this when a FoldingDescriptor was created by a regular FoldingBuilder but a composite FoldingBuilder is actually registered for the language
+    return node.getText();
   }
 
   @Override
   public String getPlaceholderText(@NotNull ASTNode node) {
-    final FoldingBuilder builder = node.getUserData(FOLDING_BUILDER);
-    return !mayUseBuilder(node, builder) ? node.getText() : builder.getPlaceholderText(node);
+    // We reach this when a FoldingDescriptor was created by a regular FoldingBuilder but a composite FoldingBuilder is actually registered for the language
+    return node.getText();
   }
 
   @Override
   public boolean isCollapsedByDefault(@NotNull ASTNode node) {
-    final FoldingBuilder builder = node.getUserData(FOLDING_BUILDER);
-    return mayUseBuilder(node, builder) && builder.isCollapsedByDefault(node);
+    // We reach this when a FoldingDescriptor was created by a regular FoldingBuilder but a composite FoldingBuilder is actually registered for the language
+    return false;
+  }
+
+  @Override
+  public boolean isCollapsedByDefault(@NotNull FoldingDescriptor foldingDescriptor) {
+    final FoldingBuilder builder = ((FoldingDescriptorWrapper) foldingDescriptor).myBuilder;
+    return mayUseBuilder(foldingDescriptor.getElement(), builder) && builder.isCollapsedByDefault(foldingDescriptor.getElement());
   }
 
   private static boolean mayUseBuilder(@NotNull ASTNode node, @Nullable FoldingBuilder builder) {
@@ -101,5 +102,54 @@ public class CompositeFoldingBuilder extends FoldingBuilderEx implements Possibl
       }
     }
     return false;
+  }
+
+  @Nullable
+  public static FoldingBuilder getOriginalBuilder(@NotNull FoldingDescriptor foldingDescriptor) {
+    if (foldingDescriptor instanceof FoldingDescriptorWrapper) {
+      return ((FoldingDescriptorWrapper) foldingDescriptor).myBuilder;
+    }
+    return null;
+  }
+
+  static class FoldingDescriptorWrapper extends FoldingDescriptor {
+    @NotNull private final FoldingDescriptor myFoldingDescriptor;
+    @NotNull private final FoldingBuilder myBuilder;
+
+    FoldingDescriptorWrapper(@NotNull FoldingDescriptor foldingDescriptor, @NotNull FoldingBuilder builder) {
+      super(foldingDescriptor.getElement(),
+            foldingDescriptor.getRange(),
+            foldingDescriptor.getGroup(),
+            foldingDescriptor.getDependencies(),
+            foldingDescriptor.isNonExpandable(),
+            foldingDescriptor.getCachedPlaceholderText(),
+            foldingDescriptor.isCollapsedByDefault());
+      myFoldingDescriptor = foldingDescriptor;
+      myBuilder = builder;
+    }
+
+    @NotNull
+    @Override
+    public Set<Object> getDependencies() {
+      return myFoldingDescriptor.getDependencies();
+    }
+
+    @Override
+    protected String calcPlaceholderText() {
+      ASTNode element = getElement();
+      return !mayUseBuilder(element, myBuilder) ? element.getText() :
+             myBuilder instanceof FoldingBuilderEx ? ((FoldingBuilderEx)myBuilder).getPlaceholderText(element, getRange())
+                                                 : myBuilder.getPlaceholderText(element);
+    }
+
+    @Override
+    public boolean canBeRemovedWhenCollapsed() {
+      return myFoldingDescriptor.canBeRemovedWhenCollapsed();
+    }
+
+    @Override
+    public void setCanBeRemovedWhenCollapsed(boolean canBeRemovedWhenCollapsed) {
+      myFoldingDescriptor.setCanBeRemovedWhenCollapsed(canBeRemovedWhenCollapsed);
+    }
   }
 }
