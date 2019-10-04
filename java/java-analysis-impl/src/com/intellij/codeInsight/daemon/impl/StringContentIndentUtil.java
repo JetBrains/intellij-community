@@ -1,10 +1,12 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -17,6 +19,21 @@ public class StringContentIndentUtil {
 
   private static final Key<Integer> TEXT_BLOCK_INDENT_KEY = Key.create("TextBlockOffset");
   private static final Key<List<RangeHighlighter>> TEXT_BLOCK_HIGHLIGHTERS_IN_EDITOR_KEY = Key.create("TextBlockHighlightersInEditor");
+  private static final Key<Long> LAST_TIME_CONTENT_INDENT_CHANGED = Key.create("LastTimeContentIndentChanged");
+
+  @Contract("null -> false")
+  static boolean isDocumentUpdated(@NotNull Editor editor) {
+    Document document = editor.getDocument();
+    long stamp = editor.getSettings().isStringContentIndentGuideShown() ? document.getModificationStamp() : -1;
+    Long prevStamp = document.getUserData(LAST_TIME_CONTENT_INDENT_CHANGED);
+    return prevStamp == null || prevStamp != stamp;
+  }
+
+  static void updateTimestamp(@NotNull Editor editor) {
+    Document document = editor.getDocument();
+    long timestamp = editor.getSettings().isStringContentIndentGuideShown() ? document.getModificationStamp() : -1;
+    document.putUserData(LAST_TIME_CONTENT_INDENT_CHANGED, timestamp);
+  }
 
   /**
    * Extract indent highlighters from editor and group them by (startOffset, endOffset) ranges.

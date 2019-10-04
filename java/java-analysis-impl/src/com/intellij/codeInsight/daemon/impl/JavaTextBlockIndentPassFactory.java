@@ -18,6 +18,7 @@ public class JavaTextBlockIndentPassFactory implements TextEditorHighlightingPas
   public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
     PsiJavaFile javaFile = ObjectUtils.tryCast(file, PsiJavaFile.class);
     if (javaFile == null || !HighlightUtil.Feature.TEXT_BLOCKS.isAvailable(file)) return null;
+    if (!StringContentIndentUtil.isDocumentUpdated(editor)) return null;
     return new JavaTextBlockIndentPass(file.getProject(), editor, (PsiJavaFile)file);
   }
 

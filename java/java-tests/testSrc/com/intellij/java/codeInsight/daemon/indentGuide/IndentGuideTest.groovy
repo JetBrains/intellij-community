@@ -3,15 +3,16 @@
  */
 package com.intellij.java.codeInsight.daemon.indentGuide
 
+import com.intellij.openapi.editor.IndentsModel
 import com.intellij.openapi.editor.impl.IndentsModelImpl
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.util.ArrayUtilRt
 import org.jetbrains.annotations.NotNull
 /**
  * @author Denis Zhdanov
  */
-class IndentGuideTest extends LightJavaCodeInsightFixtureTestCase {
+class IndentGuideTest extends BaseIndentGuideTest {
 
   @Override
   protected void setUp() throws Exception {
@@ -149,62 +150,38 @@ class C {
   }
 
   private void doTest(@NotNull String text) {
-    IndentGuideTestData testData = parse(text)
-    myFixture.configureByText("${getTestName(false)}.java", testData.documentText)
-    CodeInsightTestFixtureImpl.instantiateAndRun(myFixture.file, myFixture.editor, ArrayUtilRt.EMPTY_INT_ARRAY, false)
-    IndentsModelImpl model = myFixture.editor.indentsModel as IndentsModelImpl
-    assertEquals(
-      "expected to find ${testData.guides.size()} indent guides (" +
-      "${testData.guides.collect { startLine, endLine, level -> "$level ($startLine-$endLine)"}}) " +
-      "but got ${model.indents.size()} (${model.indents})",
-      testData.guides.size(), model.indents.size()
-    )
+    doTest(text, { IndentModelGuidesProvider.create(it) })
+  }
 
-    testData.guides.each {
-      def descriptor = model.getDescriptor(it[0], it[1])
-      assertNotNull("expected to find an indent guide at lines ${it[0]}-${it[1]}", descriptor)
-      assertEquals(
-        "expected that indent guide descriptor at lines ${it[0]}-${it[1]} has indent ${it[2]} but got ${descriptor.indentLevel}",
-        it[2], descriptor.indentLevel
-      )
+  private static class IndentModelGuidesProvider implements IndentGuidesProvider {
+
+    private final IndentsModel myIndentsModel
+    private final List<Guide> myGuides
+
+    private IndentModelGuidesProvider(IndentsModel indentsModel, List<Guide> guides) {
+      myIndentsModel = indentsModel
+      myGuides = guides
+    }
+
+    private static IndentModelGuidesProvider create(CodeInsightTestFixture fixture) {
+      def indentsModel = fixture.editor.indentsModel
+      def guides = extractIndentGuides(indentsModel)
+      return new IndentModelGuidesProvider(indentsModel, guides)
+    }
+
+    private static List<Guide> extractIndentGuides(IndentsModel indentsModel) {
+      (indentsModel as IndentsModelImpl).indents.collect {new Guide(it.startLine, it.endLine, it.indentLevel)}
+    }
+
+    @NotNull
+    @Override
+    List<Guide> getGuides() {
+      return myGuides
+    }
+
+    @Override
+    Integer getIndentAt(int startLine, int endLine) {
+      return myIndentsModel.getDescriptor(startLine, endLine)?.indentLevel
     }
   }
-  
-  @NotNull
-  private static IndentGuideTestData parse(@NotNull String text) {
-    def buffer = new StringBuilder()
-    def indentGuides = []
-    def prevLineIndents = [:] // indent level -> start line
-    int shift, i, textStart
-    text.eachLine { lineText, line ->
-      shift = textStart = 0
-      def endedGuides = prevLineIndents.clone() as Map
-      for (i = lineText.indexOf('|', 0); i >= 0; i = lineText.indexOf('|', textStart)) {
-        def indentLevel = i - shift
-        if (prevLineIndents[indentLevel]) {
-          endedGuides.remove(indentLevel)
-        }
-        else {
-          prevLineIndents[indentLevel] = line - 1
-        }
-        shift++
-        buffer << lineText[textStart..<i]
-        textStart = i + 1
-      }
-      endedGuides.each { level, startLine ->
-        indentGuides << [startLine, line, level]
-        prevLineIndents.remove(level)
-      }
-      if (textStart < lineText.length()) {
-        buffer << lineText[textStart..-1]
-      }
-      buffer << '\n'
-    }
-    new IndentGuideTestData(documentText: buffer[0..-2], guides: indentGuides)
-  }
-}
-
-class IndentGuideTestData {
-  String documentText
-  List guides // List of three element lists: [start indent line; end indent line; indent level]
 }
