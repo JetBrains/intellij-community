@@ -25,7 +25,7 @@ public class PathUtilRt {
 
     int end = getEnd(path);
     int start = getLastIndexOfPathSeparator(path, end);
-    if (Platform.CURRENT == Platform.WINDOWS && isUNCRoot(path, start)) {
+    if (isWindowsUNCRoot(path, start)) {
       start = -1;
     }
     return path.substring(start + 1, end);
@@ -58,7 +58,7 @@ public class PathUtilRt {
     if (end == -1 || end == 0) {
       return "";
     }
-    if (Platform.CURRENT == Platform.WINDOWS && isUNCRoot(path, end)) {
+    if (isWindowsUNCRoot(path, end)) {
       return "";
     }
     // parent of '//host' is root
@@ -73,8 +73,9 @@ public class PathUtilRt {
     return Math.max(path.lastIndexOf('/', end - 1), path.lastIndexOf('\\', end - 1));
   }
 
-  private static boolean isUNCRoot(@NotNull String path, int lastPathSeparatorPosition) {
-    return (path.startsWith("//") || path.startsWith("\\\\")) && getLastIndexOfPathSeparator(path, lastPathSeparatorPosition) == 1;
+  private static boolean isWindowsUNCRoot(@NotNull String path, int lastPathSeparatorPosition) {
+    return Platform.CURRENT == Platform.WINDOWS &&
+           (path.startsWith("//") || path.startsWith("\\\\")) && getLastIndexOfPathSeparator(path, lastPathSeparatorPosition) == 1;
   }
 
   @NotNull
