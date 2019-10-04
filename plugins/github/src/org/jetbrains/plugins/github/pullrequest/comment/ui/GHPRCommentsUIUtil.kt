@@ -10,7 +10,6 @@ import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.fileTypes.FileTypes
 import com.intellij.openapi.keymap.KeymapUtil
-import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.ui.EditorTextField
@@ -25,18 +24,17 @@ import net.miginfocom.swing.MigLayout
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.pullrequest.avatars.GHAvatarIconsProvider
-import org.jetbrains.plugins.github.pullrequest.data.GHPRReviewServiceAdapter
 import org.jetbrains.plugins.github.util.handleOnEdt
-import org.jetbrains.plugins.github.util.successOnEdt
+import java.util.concurrent.CompletableFuture
 import javax.swing.JButton
 import javax.swing.JComponent
 import javax.swing.JPanel
 
 object GHPRCommentsUIUtil {
 
-  fun createCommentField(project: Project, reviewService: GHPRReviewServiceAdapter, thread: GHPRReviewThreadModel,
-                         avatarIconsProvider: GHAvatarIconsProvider, author: GHUser,
-                         @Nls(capitalization = Nls.Capitalization.Title) actionName: String = "Comment"): JComponent {
+  fun createCommentField(project: Project, avatarIconsProvider: GHAvatarIconsProvider, author: GHUser,
+                         @Nls(capitalization = Nls.Capitalization.Title) actionName: String = "Comment",
+                         request: (String) -> CompletableFuture<*>): JComponent {
 
     val submitShortcut = CommonShortcuts.CTRL_ENTER
     val document = EditorFactory.getInstance().createDocument("")
@@ -53,14 +51,14 @@ object GHPRCommentsUIUtil {
       }
     }.also {
       object : DumbAwareAction() {
-        override fun actionPerformed(e: AnActionEvent) = submit(project, it, reviewService, thread)
+        override fun actionPerformed(e: AnActionEvent) = submit(project, it, request)
       }.registerCustomShortcutSet(submitShortcut, it)
     }
 
     val button = JButton(actionName).apply {
       isOpaque = false
       addActionListener {
-        submit(project, textField, reviewService, thread)
+        submit(project, textField, request)
       }
       toolTipText = KeymapUtil.getShortcutsText(submitShortcut.shortcuts)
       putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
@@ -91,21 +89,16 @@ object GHPRCommentsUIUtil {
     }
   }
 
-  private fun submit(project: Project, textField: EditorTextField, reviewService: GHPRReviewServiceAdapter, thread: GHPRReviewThreadModel) {
+  private fun submit(project: Project, textField: EditorTextField, request: (String) -> CompletableFuture<*>) {
     val document = textField.document
     if (document.text.isBlank()) return
     textField.isEnabled = false
 
-    reviewService.addComment(EmptyProgressIndicator(), document.text, thread.firstCommentDatabaseId)
-      .successOnEdt {
-        thread
-          .addComment(GHPRReviewCommentModel(it.nodeId, it.createdAt, it.bodyHtml, it.user.login, it.user.htmlUrl, it.user.avatarUrl))
+    request(document.text).handleOnEdt { _, _ ->
+      executeCommand(project) {
+        runWriteAction { document.setText("") }
       }
-      .handleOnEdt { _, _ ->
-        executeCommand(project) {
-          runWriteAction { document.setText("") }
-        }
-        textField.isEnabled = true
-      }
+      textField.isEnabled = true
+    }
   }
 }
