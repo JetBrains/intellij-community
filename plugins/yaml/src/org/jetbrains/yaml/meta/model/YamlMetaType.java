@@ -13,6 +13,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.psi.YAMLKeyValue;
+import org.jetbrains.yaml.psi.YAMLValue;
 
 import javax.swing.*;
 import java.util.List;
@@ -55,7 +56,11 @@ public abstract class YamlMetaType {
   @Nullable
   public abstract Field findFeatureByName(@NotNull String name);
 
-  public void validateKeyValue(@NotNull YAMLKeyValue keyValue, @NotNull ProblemsHolder problemsHolder) {
+  public void validateKey(@NotNull YAMLKeyValue keyValue, @NotNull ProblemsHolder problemsHolder) {
+    //
+  }
+
+  public void validateValue(@NotNull YAMLValue value, @NotNull ProblemsHolder problemsHolder) {
     //
   }
 

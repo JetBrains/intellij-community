@@ -37,21 +37,9 @@ public abstract class YamlScalarType extends YamlMetaType {
   }
 
   @Override
-  public void validateKeyValue(@NotNull YAMLKeyValue keyValue, @NotNull ProblemsHolder problemsHolder) {
-    YAMLValue value = keyValue.getValue();
-    if (value == null) {
-      return;
-    }
+  public void validateValue(@NotNull YAMLValue value, @NotNull ProblemsHolder problemsHolder) {
     if (value instanceof YAMLScalar) {
       validateScalarValue((YAMLScalar)value, problemsHolder);
-    }
-    else if (value instanceof YAMLSequence) {
-      for (YAMLSequenceItem nextItem : ((YAMLSequence)value).getItems()) {
-        YAMLValue nextValue = nextItem.getValue();
-        if (nextValue instanceof YAMLScalar) {
-          validateScalarValue((YAMLScalar)nextValue, problemsHolder);
-        }
-      }
     }
     else if (value instanceof YAMLCompoundValue) {
       problemsHolder.registerProblem(value, YAMLBundle.message("YamlScalarType.error.scalar.value"), ProblemHighlightType.ERROR);

@@ -8,8 +8,8 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.YAMLBundle;
-import org.jetbrains.yaml.psi.YAMLKeyValue;
 import org.jetbrains.yaml.psi.YAMLScalar;
+import org.jetbrains.yaml.psi.YAMLValue;
 
 import java.util.*;
 
@@ -99,10 +99,10 @@ public class YamlMetaClass extends YamlMetaType {
   }
 
   @Override
-  public void validateKeyValue(@NotNull YAMLKeyValue keyValue, @NotNull ProblemsHolder problemsHolder) {
-    super.validateKeyValue(keyValue, problemsHolder);
-    if (keyValue.getValue() instanceof YAMLScalar) {
-      problemsHolder.registerProblem(keyValue.getValue(),
+  public void validateValue(@NotNull YAMLValue value, @NotNull ProblemsHolder problemsHolder) {
+    super.validateValue(value, problemsHolder);
+    if (value instanceof YAMLScalar) {
+      problemsHolder.registerProblem(value,
                                      YAMLBundle.message("YamlMetaClass.error.scalar.value", ArrayUtil.EMPTY_OBJECT_ARRAY));
     }
   }
