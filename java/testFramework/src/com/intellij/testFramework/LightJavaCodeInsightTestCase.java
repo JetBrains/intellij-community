@@ -1,8 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
-import com.intellij.openapi.module.ModuleType;
-import com.intellij.openapi.module.StdModuleTypes;
+import com.intellij.openapi.module.ModuleTypeId;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.Disposer;
@@ -75,7 +74,7 @@ public abstract class LightJavaCodeInsightTestCase extends LightPlatformCodeInsi
 
   @NotNull
   @Override
-  protected ModuleType getModuleType() {
-    return StdModuleTypes.JAVA;
+  protected String getModuleTypeId() {
+    return ModuleTypeId.JAVA_MODULE;
   }
 }

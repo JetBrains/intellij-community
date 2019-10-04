@@ -12,11 +12,17 @@ import com.jetbrains.python.formatter.PyCodeStyleSettings;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.PyStatement;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
  */
 public class PyFormatterTest extends PyTestCase {
+  @NotNull
+  private PyCodeStyleSettings getPythonCodeStyleSettings() {
+    return getCodeStyleSettings().getCustomSettings(PyCodeStyleSettings.class);
+  }
+
   public void testBlankLineBetweenMethods() {
     doTest();
   }

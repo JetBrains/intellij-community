@@ -20,9 +20,11 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.formatter.PyCodeStyleSettings;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyImportStatementBase;
 import com.jetbrains.python.psi.impl.PyFileImpl;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -30,6 +32,10 @@ import java.util.List;
  * @author yole
  */
 public class PyOptimizeImportsTest extends PyTestCase {
+  @NotNull
+  private PyCodeStyleSettings getPythonCodeStyleSettings() {
+    return getCodeStyleSettings().getCustomSettings(PyCodeStyleSettings.class);
+  }
 
   public void testSimple() {
     doTest();

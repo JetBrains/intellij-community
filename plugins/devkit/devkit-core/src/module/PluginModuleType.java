@@ -29,7 +29,7 @@ import java.util.Set;
 
 public class PluginModuleType extends ModuleType<PluginModuleBuilder> {
 
-  @NonNls private static final String ID = "PLUGIN_MODULE";
+  @NonNls public static final String ID = "PLUGIN_MODULE";
 
   public PluginModuleType() {
     super(ID);

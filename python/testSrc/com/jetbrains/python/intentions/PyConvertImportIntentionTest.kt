@@ -4,8 +4,12 @@ package com.jetbrains.python.intentions
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonTestUtil
+import com.jetbrains.python.formatter.PyCodeStyleSettings
 
 class PyConvertImportIntentionTest : PyIntentionTestCase() {
+  private val pythonCodeStyleSettings: PyCodeStyleSettings
+    get() = codeStyleSettings.getCustomSettings(PyCodeStyleSettings::class.java)
+
   override fun getTestDataPath(): String = PythonTestUtil.getTestDataPath() + "/intentions/convertImport"
 
   // PY-37858

@@ -6,15 +6,9 @@ import com.google.common.collect.Lists;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupEx;
-import com.intellij.execution.actions.ConfigurationContext;
-import com.intellij.execution.actions.ConfigurationFromContext;
-import com.intellij.execution.actions.RunConfigurationProducer;
-import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.find.findUsages.CustomUsageSearcher;
 import com.intellij.find.findUsages.FindUsagesOptions;
-import com.intellij.ide.DataManager;
 import com.intellij.idea.IdeaTestApplication;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
@@ -58,7 +52,6 @@ import com.jetbrains.python.PythonTestUtil;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
-import com.jetbrains.python.formatter.PyCodeStyleSettings;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyFileImpl;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
@@ -433,11 +426,6 @@ public abstract class PyTestCase extends UsefulTestCase {
   @NotNull
   protected CommonCodeStyleSettings getCommonCodeStyleSettings() {
     return getCodeStyleSettings().getCommonSettings(PythonLanguage.getInstance());
-  }
-
-  @NotNull
-  protected PyCodeStyleSettings getPythonCodeStyleSettings() {
-    return getCodeStyleSettings().getCustomSettings(PyCodeStyleSettings.class);
   }
 
   @NotNull

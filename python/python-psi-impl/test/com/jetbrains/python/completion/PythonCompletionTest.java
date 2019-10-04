@@ -1,5 +1,5 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.jetbrains.python;
+package com.jetbrains.python.completion;
 
 import com.google.common.collect.Lists;
 import com.intellij.codeInsight.completion.CompletionType;
@@ -11,6 +11,10 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.TestDataPath;
+import com.jetbrains.python.PyNames;
+import com.jetbrains.python.PythonCodeStyleService;
+import com.jetbrains.python.PythonFileType;
+import com.jetbrains.python.PythonTestUtil;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -892,7 +896,7 @@ public class PythonCompletionTest extends PyTestCase {
 
   // PY-15197
   public void testKeywordArgumentEqualsSignSurroundedWithSpaces() {
-    getPythonCodeStyleSettings().SPACE_AROUND_EQ_IN_KEYWORD_ARGUMENT = true;
+    PythonCodeStyleService.getInstance().setSpaceAroundEqInKeywordArgument(myFixture.getProject(), true);
     doTest();
   }
 

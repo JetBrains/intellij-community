@@ -31,8 +31,8 @@ public abstract class PluginModuleTestCase extends LightJavaCodeInsightFixtureTe
 
     @NotNull
     @Override
-    public ModuleType getModuleType() {
-      return PluginModuleType.getInstance();
+    public String getModuleTypeId() {
+      return PluginModuleType.ID;
     }
   };
 

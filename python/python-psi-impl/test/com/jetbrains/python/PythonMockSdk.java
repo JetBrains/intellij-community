@@ -15,8 +15,7 @@
  */
 package com.jetbrains.python;
 
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SdkType;
+import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.projectRoots.impl.MockSdk;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -25,10 +24,11 @@ import com.intellij.util.containers.MultiMap;
 import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.PythonSdkUtil;
+import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
@@ -45,7 +45,6 @@ public class PythonMockSdk {
     final String mock_path = PythonTestUtil.getTestDataPath() + "/MockSdk" + version + "/";
 
     String sdkHome = new File(mock_path, "bin/python" + version).getPath();
-    SdkType sdkType = PythonSdkType.getInstance();
 
     MultiMap<OrderRootType, VirtualFile> roots = MultiMap.create();
 
@@ -73,9 +72,50 @@ public class PythonMockSdk {
       roots.putValue(OrderRootType.CLASSES, root);
     }
 
-    MockSdk sdk = new MockSdk(MOCK_SDK_NAME + " " + version, sdkHome, "Python " + version + " Mock SDK", roots, sdkType);
+    MockSdk sdk = new MockSdk(MOCK_SDK_NAME + " " + version, sdkHome, "Python " + version + " Mock SDK", roots, new PyMockSdkType());
 
     // com.jetbrains.python.psi.resolve.PythonSdkPathCache.getInstance() corrupts SDK, so have to clone
     return sdk.clone();
+  }
+
+  private static class PyMockSdkType extends SdkType {
+
+    public PyMockSdkType() {
+      super(PyNames.PYTHON_SDK_ID_NAME);
+    }
+
+    @Nullable
+    @Override
+    public String suggestHomePath() {
+      return null;
+    }
+
+    @Override
+    public boolean isValidSdkHome(String path) {
+      return true;
+    }
+
+    @NotNull
+    @Override
+    public String suggestSdkName(@Nullable String currentSdkName, String sdkHome) {
+      return "Python";
+    }
+
+    @Nullable
+    @Override
+    public AdditionalDataConfigurable createAdditionalDataConfigurable(@NotNull SdkModel sdkModel, @NotNull SdkModificator sdkModificator) {
+      return null;
+    }
+
+    @NotNull
+    @Override
+    public String getPresentableName() {
+      return "Python";
+    }
+
+    @Override
+    public void saveAdditionalData(@NotNull SdkAdditionalData additionalData, @NotNull Element additional) {
+
+    }
   }
 }

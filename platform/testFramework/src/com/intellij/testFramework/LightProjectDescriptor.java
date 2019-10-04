@@ -20,7 +20,6 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.EmptyModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -82,13 +81,13 @@ public class LightProjectDescriptor {
         //temporary workaround for IDEA-147530: otherwise if someone saved module with this name before the created module will get its settings
         FileUtil.delete(imlFile);
       }
-      return ModuleManager.getInstance(project).newModule(moduleFilePath, getModuleType().getId());
+      return ModuleManager.getInstance(project).newModule(moduleFilePath, getModuleTypeId());
     });
   }
 
   @NotNull
-  public ModuleType getModuleType() {
-    return EmptyModuleType.getInstance();
+  public String getModuleTypeId() {
+    return EmptyModuleType.EMPTY_MODULE;
   }
 
   @Nullable
