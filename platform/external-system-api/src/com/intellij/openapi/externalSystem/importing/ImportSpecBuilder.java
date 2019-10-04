@@ -114,11 +114,6 @@ public class ImportSpecBuilder {
     return mySpec;
   }
 
-  @NotNull
-  private static ExternalProjectRefreshCallback getDefaultCallback(ImportSpecImpl mySpec) {
-    return new DefaultProjectRefreshCallback(mySpec);
-  }
-
   private void apply(ImportSpec spec) {
     myWhenAutoImportEnabled = spec.whenAutoImportEnabled();
     myProgressExecutionMode = spec.getProgressExecutionMode();
