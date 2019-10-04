@@ -19,21 +19,20 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.*;
-import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.javadoc.PsiDocComment;
-import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.javadoc.PsiDocTagValue;
-import com.intellij.psi.javadoc.PsiDocToken;
-import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.Collections;
 import java.util.List;
-import java.util.Set;
+import java.util.Objects;
 
 /**
  * @author mike
@@ -50,39 +49,18 @@ public class PsiDocParamRef extends CompositePsiElement implements PsiDocTagValu
     final PsiJavaDocumentedElement owner = comment.getOwner();
     if (!(owner instanceof PsiMethod) &&
         !(owner instanceof PsiClass)) return null;
-    final ASTNode valueToken = findChildByType(JavaDocTokenType.DOC_TAG_VALUE_TOKEN);
+    ASTNode valueToken = getValueToken();
     if (valueToken == null) return null;
     final String name = valueToken.getText();
-    PsiElement reference = null;
-    final PsiElement firstChild = getFirstChild();
-    if (firstChild instanceof PsiDocToken && ((PsiDocToken)firstChild).getTokenType().equals(JavaDocTokenType.DOC_TAG_VALUE_LT)) {
-      final PsiTypeParameter[] typeParameters = ((PsiTypeParameterListOwner)owner).getTypeParameters();
-      for (PsiTypeParameter typeParameter : typeParameters) {
-        if (typeParameter.getName().equals(name)) {
-          reference = typeParameter;
-        }
-      }
-    }
-    else if (owner instanceof PsiMethod) {
-      final PsiParameter[] parameters = ((PsiMethod)owner).getParameterList().getParameters();
-      for (PsiParameter parameter : parameters) {
-        if (parameter.getName().equals(name)) {
-          reference = parameter;
-        }
-      }
-    }
+    boolean isTypeParamRef = isTypeParamRef();
+    PsiElement target = ContainerUtil.find(getAllParameters(comment),
+                                           param -> isTypeParamRef == param instanceof PsiTypeParameter && name.equals(param.getName()));
 
-    final PsiElement resultReference = reference;
-    return new PsiJavaReference() {
+    TextRange range = TextRange.from(valueToken.getPsi().getStartOffsetInParent(), valueToken.getTextLength());
+    return new PsiReferenceBase<PsiElement>(this, range) {
       @Override
       public PsiElement resolve() {
-        return resultReference;
-      }
-
-      @Override
-      @NotNull
-      public String getCanonicalText() {
-        return valueToken.getText();
+        return target;
       }
 
       @Override
@@ -99,88 +77,34 @@ public class PsiDocParamRef extends CompositePsiElement implements PsiDocTagValu
         if(!(element instanceof PsiParameter)) {
           throw new IncorrectOperationException("Unsupported operation");
         }
-        return handleElementRename(((PsiParameter) element).getName());
-      }
-
-      @Override
-      public boolean isReferenceTo(@NotNull PsiElement element) {
-        if (!(element instanceof PsiNamedElement)) return false;
-        PsiNamedElement namedElement = (PsiNamedElement)element;
-        if (!getCanonicalText().equals(namedElement.getName())) return false;
-        return getManager().areElementsEquivalent(resolve(), element);
-      }
-
-      @Override
-      @NotNull
-      public PsiElement[] getVariants() {
-        final PsiElement firstChild = getFirstChild();
-
-        Set<String> usedNames = new HashSet<>();
-        for (PsiDocTag tag : comment.getTags()) {
-          if (tag.getName().equals("param")) {
-            PsiDocTagValue valueElement = tag.getValueElement();
-            if (valueElement != null) {
-              usedNames.add(valueElement.getText());
-            }
-          }
-        }
-
-        PsiNamedElement[] result = PsiNamedElement.EMPTY_ARRAY;
-        if (firstChild instanceof PsiDocToken && ((PsiDocToken)firstChild).getTokenType().equals(JavaDocTokenType.DOC_TAG_VALUE_LT)) {
-          result = ((PsiTypeParameterListOwner)owner).getTypeParameters();
-        } else if (owner instanceof PsiMethod) {
-          result = ((PsiMethod)owner).getParameterList().getParameters();
-        }
-        List<PsiElement> filtered = new ArrayList<>();
-        for (PsiNamedElement namedElement : result) {
-          if (!usedNames.contains(namedElement.getName())) {
-            filtered.add(namedElement);
-          }
-        }
-        return filtered.toArray(PsiElement.EMPTY_ARRAY);
-      }
-
-      @Override
-      public boolean isSoft(){
-        return false;
-      }
-
-      @NotNull
-      @Override
-      public TextRange getRangeInElement() {
-        final int startOffsetInParent = valueToken.getPsi().getStartOffsetInParent();
-        return new TextRange(startOffsetInParent, startOffsetInParent + valueToken.getTextLength());
-      }
-
-      @NotNull
-      @Override
-      public PsiElement getElement() {
-        return PsiDocParamRef.this;
-      }
-
-      @Override
-      public void processVariants(@NotNull PsiScopeProcessor processor) {
-        for (final PsiElement element : getVariants()) {
-          if (!processor.execute(element, ResolveState.initial())) {
-            return;
-          }
-        }
-      }
-
-      @Override
-      @NotNull
-      public JavaResolveResult advancedResolve(boolean incompleteCode) {
-        return resultReference == null ? JavaResolveResult.EMPTY : new CandidateInfo(resultReference, PsiSubstitutor.EMPTY);
-      }
-
-      @Override
-      @NotNull
-      public JavaResolveResult[] multiResolve(boolean incompleteCode) {
-        return resultReference == null
-               ? JavaResolveResult.EMPTY_ARRAY
-               : new JavaResolveResult[]{new CandidateInfo(resultReference, PsiSubstitutor.EMPTY)};
+        return handleElementRename(Objects.requireNonNull(((PsiParameter)element).getName()));
       }
     };
+  }
+
+  @NotNull
+  public static List<PsiNamedElement> getAllParameters(@NotNull PsiDocComment comment) {
+    List<PsiNamedElement> allParams = new ArrayList<>();
+    PsiJavaDocumentedElement owner = comment.getOwner();
+    if (owner instanceof PsiMethod) {
+      Collections.addAll(allParams, ((PsiMethod)owner).getParameterList().getParameters());
+    }
+    if (owner instanceof PsiMethod || owner instanceof PsiClass) {
+      PsiTypeParameterList tpl = ((PsiTypeParameterListOwner)owner).getTypeParameterList();
+      if (tpl != null) {
+        Collections.addAll(allParams, tpl.getTypeParameters());
+      }
+    }
+    return allParams;
+  }
+
+  public boolean isTypeParamRef() {
+    return PsiUtilCore.getElementType(getFirstChild()) == JavaDocTokenType.DOC_TAG_VALUE_LT;
+  }
+
+  @Nullable
+  public ASTNode getValueToken() {
+    return findChildByType(JavaDocTokenType.DOC_TAG_VALUE_TOKEN);
   }
 
   @Override

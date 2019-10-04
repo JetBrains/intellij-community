@@ -17,9 +17,11 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.javadoc.PsiDocParamRef;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.util.ThreeState;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,7 +36,7 @@ public class JavadocCompletionConfidence extends CompletionConfidence {
   @Override
   public ThreeState shouldSkipAutopopup(@NotNull PsiElement contextElement, @NotNull PsiFile psiFile, int offset) {
     if (psiElement().inside(PsiDocTag.class).accepts(contextElement)) {
-      if (findJavaReference(psiFile, offset - 1) != null) {
+      if (hasKnownReference(psiFile, offset - 1)) {
         return ThreeState.NO;
       }
       if (PlatformPatterns.psiElement(JavaDocTokenType.DOC_TAG_NAME).accepts(contextElement)) {
@@ -47,17 +49,14 @@ public class JavadocCompletionConfidence extends CompletionConfidence {
     return super.shouldSkipAutopopup(contextElement, psiFile, offset);
   }
 
-  @Nullable
-  private static PsiJavaReference findJavaReference(final PsiFile file, final int offset) {
+  private static boolean hasKnownReference(final PsiFile file, final int offset) {
     PsiReference reference = file.findReferenceAt(offset);
-    if (reference instanceof PsiMultiReference) {
-      for (final PsiReference psiReference : ((PsiMultiReference)reference).getReferences()) {
-        if (psiReference instanceof PsiJavaReference) {
-          return (PsiJavaReference)psiReference;
-        }
-      }
-    }
-    return reference instanceof PsiJavaReference ? (PsiJavaReference)reference : null;
+    return reference instanceof PsiMultiReference
+           ? ContainerUtil.exists(((PsiMultiReference)reference).getReferences(), JavadocCompletionConfidence::isKnownReference)
+           : isKnownReference(reference);
   }
 
+  private static boolean isKnownReference(@Nullable PsiReference reference) {
+    return reference instanceof PsiJavaReference || reference != null && reference.getElement() instanceof PsiDocParamRef;
+  }
 }

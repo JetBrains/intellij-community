@@ -82,7 +82,15 @@ public class JavaDocCompletionContributor extends CompletionContributor {
         boolean onlyConstants = !isArg && tag != null && tag.getName().equals(VALUE_TAG);
 
         final PsiReference ref = position.getContainingFile().findReferenceAt(parameters.getOffset());
-        if (ref instanceof PsiJavaReference) {
+        PsiElement refElement = ref == null ? null : ref.getElement();
+        if (refElement instanceof PsiDocParamRef) {
+          result = result.withPrefixMatcher(
+            refElement.getText().substring(0, parameters.getOffset() - refElement.getTextRange().getStartOffset()));
+          for (PsiNamedElement param : getParametersToSuggest(PsiTreeUtil.getParentOfType(position, PsiDocComment.class))) {
+            result.addElement(PrioritizedLookupElement.withPriority(LookupElementBuilder.create(param, nameForParamTag(param)), param instanceof PsiTypeParameter ? 0 : 1));
+          }
+        }
+        else if (ref instanceof PsiJavaReference) {
           result = JavaCompletionSorting.addJavaSorting(parameters, result);
           result.stopHere();
 
@@ -340,14 +348,8 @@ public class JavaDocCompletionContributor extends CompletionContributor {
       }
 
       if ("param".equals(tagName)) {
-        PsiMethod psiMethod = PsiTreeUtil.getParentOfType(comment, PsiMethod.class);
-        if (psiMethod != null) {
-          PsiDocTag[] tags = comment.getTags();
-          for (PsiParameter param : psiMethod.getParameterList().getParameters()) {
-            if (!JavadocHighlightUtil.hasTagForParameter(tags, param)) {
-              result.add(tagName + " " + param.getName());
-            }
-          }
+        for (PsiNamedElement parameter : getParametersToSuggest(comment)) {
+          result.add(tagName + " " + nameForParamTag(parameter));
         }
         return;
       }
@@ -365,6 +367,17 @@ public class JavaDocCompletionContributor extends CompletionContributor {
         }
       }
     }
+  }
+
+  private static List<PsiNamedElement> getParametersToSuggest(PsiDocComment comment) {
+    List<PsiNamedElement> allParams = PsiDocParamRef.getAllParameters(comment);
+    PsiDocTag[] tags = comment.getTags();
+    return ContainerUtil.filter(allParams, param -> !JavadocHighlightUtil.hasTagForParameter(tags, param));
+  }
+
+  private static String nameForParamTag(PsiNamedElement param) {
+    String name = param.getName();
+    return param instanceof PsiTypeParameter ? "<" + name + ">" : name;
   }
 
   private static class InlineInsertHandler implements InsertHandler<LookupElement> {

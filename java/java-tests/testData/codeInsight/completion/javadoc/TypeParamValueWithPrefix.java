@@ -1,7 +1,7 @@
 class C{
     
     /**
-     * @param <caret>
+     * @param <<caret>
      */
     private <A, B> int foo(int a, char b, String c) {}
 }
