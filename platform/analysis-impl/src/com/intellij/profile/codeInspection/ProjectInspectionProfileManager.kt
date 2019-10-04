@@ -82,7 +82,9 @@ class ProjectInspectionProfileManager(val project: Project) : BaseInspectionProf
       }
     }
 
-    override fun onCurrentSchemeSwitched(oldScheme: InspectionProfileImpl?, newScheme: InspectionProfileImpl?) {
+    override fun onCurrentSchemeSwitched(oldScheme: InspectionProfileImpl?,
+                                         newScheme: InspectionProfileImpl?,
+                                         processChangeSynchronously: Boolean) {
       project.messageBus.syncPublisher(ProfileChangeAdapter.TOPIC).profileActivated(oldScheme, newScheme)
     }
   }, schemeNameToFileName = OLD_NAME_CONVERTER, streamProvider = schemeManagerIprProvider)

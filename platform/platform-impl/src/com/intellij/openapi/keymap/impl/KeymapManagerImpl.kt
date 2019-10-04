@@ -52,7 +52,9 @@ class KeymapManagerImpl : KeymapManagerEx(), PersistentStateComponent<Element> {
                                 name: String,
                                 attributeProvider: Function<in String, String?>,
                                 isBundled: Boolean) = KeymapImpl(name, dataHolder)
-      override fun onCurrentSchemeSwitched(oldScheme: Keymap?, newScheme: Keymap?) {
+      override fun onCurrentSchemeSwitched(oldScheme: Keymap?,
+                                           newScheme: Keymap?,
+                                           processChangeSynchronously: Boolean) {
         fireActiveKeymapChanged(newScheme)
       }
 

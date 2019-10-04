@@ -102,11 +102,18 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
       }
 
       @Override
-      public void onCurrentSchemeSwitched(@Nullable EditorColorsScheme oldScheme, @Nullable EditorColorsScheme newScheme) {
-        ApplicationManager.getApplication().invokeLater(() -> { // don't do heavy operations right away
+      public void onCurrentSchemeSwitched(@Nullable EditorColorsScheme oldScheme,
+                                          @Nullable EditorColorsScheme newScheme,
+                                          boolean processChangeSynchronously) {
+        if (processChangeSynchronously) {
           LafManager.getInstance().updateUI();
           schemeChangedOrSwitched(newScheme);
-        });
+        }
+        else {
+          ApplicationManager.getApplication().invokeLater(() -> { // don't do heavy operations right away
+            onCurrentSchemeSwitched(oldScheme, newScheme, true);
+          });
+        }
       }
 
       @NotNull
@@ -376,8 +383,12 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
 
   @Override
   public void setGlobalScheme(@Nullable EditorColorsScheme scheme) {
+    setGlobalScheme(scheme, false);
+  }
+
+  public void setGlobalScheme(@Nullable EditorColorsScheme scheme, boolean processChangeSynchronously) {
     boolean notify = LoadingState.COMPONENTS_LOADED.isOccurred();
-    mySchemeManager.setCurrent(scheme == null ? getDefaultScheme() : scheme, notify);
+    mySchemeManager.setCurrent(scheme == null ? getDefaultScheme() : scheme, notify, processChangeSynchronously);
   }
 
   private void setGlobalSchemeInner(@Nullable EditorColorsScheme scheme) {
