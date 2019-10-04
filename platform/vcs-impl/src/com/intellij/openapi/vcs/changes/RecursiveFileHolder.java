@@ -3,8 +3,7 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.vcsUtil.VcsUtil;
+import com.intellij.openapi.vcs.FilePath;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -16,7 +15,7 @@ public class RecursiveFileHolder implements IgnoredFilesHolder {
 
   private final Project myProject;
   private final HolderType myHolderType;
-  private final Set<VirtualFile> myMap;
+  private final Set<FilePath> myMap;
 
   public RecursiveFileHolder(final Project project, final HolderType holderType) {
     myProject = project;
@@ -39,7 +38,7 @@ public class RecursiveFileHolder implements IgnoredFilesHolder {
   }
 
   @Override
-  public void addFile(@NotNull final VirtualFile file) {
+  public void addFile(@NotNull FilePath file) {
     if (!containsFile(file)) {
       myMap.add(file);
     }
@@ -53,38 +52,37 @@ public class RecursiveFileHolder implements IgnoredFilesHolder {
   }
 
   @Override
-  public boolean containsFile(@NotNull final VirtualFile file) {
+  public boolean containsFile(@NotNull FilePath file) {
     if (myMap.isEmpty()) return false;
-    VirtualFile parent = file;
+    FilePath parent = file;
     while (parent != null) {
       if (myMap.contains(parent)) return true;
-      parent = parent.getParent();
+      parent = parent.getParentPath();
     }
     return false;
   }
 
-  @Override
   @NotNull
-  public Collection<VirtualFile> values() {
+  @Override
+  public Collection<FilePath> values() {
     return myMap;
   }
 
   @Override
   public void cleanAndAdjustScope(@NotNull final VcsModifiableDirtyScope scope) {
     if (myProject.isDisposed()) return;
-    final Iterator<VirtualFile> iterator = myMap.iterator();
+    final Iterator<FilePath> iterator = myMap.iterator();
     while (iterator.hasNext()) {
-      final VirtualFile file = iterator.next();
+      final FilePath file = iterator.next();
       if (isFileDirty(scope, file)) {
         iterator.remove();
       }
     }
   }
 
-  private static boolean isFileDirty(final VcsDirtyScope scope, final VirtualFile file) {
-    if (!file.isValid()) return true;
+  private static boolean isFileDirty(@NotNull VcsDirtyScope scope, @NotNull FilePath filePath) {
     final AbstractVcs[] vcsArr = new AbstractVcs[1];
-    if (scope.belongsTo(VcsUtil.getFilePath(file), vcs -> vcsArr[0] = vcs)) {
+    if (scope.belongsTo(filePath, vcs -> vcsArr[0] = vcs)) {
       return true;
     }
     return vcsArr[0] == null;

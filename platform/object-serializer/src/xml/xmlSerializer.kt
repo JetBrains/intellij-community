@@ -111,10 +111,7 @@ internal class JdomSerializerImpl : JdomSerializer {
 
   override fun <T> deserialize(url: URL, aClass: Class<T>): T {
     try {
-      @Suppress("DEPRECATION")
-      var document = JDOMUtil.loadDocument(URLUtil.openStream(url))
-      document = JDOMXIncluder.resolve(document, url.toExternalForm())
-      return deserialize(document.rootElement, aClass)
+      return deserialize(JDOMXIncluder.resolveRoot(JDOMUtil.load(URLUtil.openStream(url)), url), aClass)
     }
     catch (e: IOException) {
       throw XmlSerializationException(e)

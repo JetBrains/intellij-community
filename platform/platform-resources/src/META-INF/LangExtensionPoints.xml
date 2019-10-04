@@ -144,6 +144,11 @@
       <with attribute="implementationClass" implements="com.intellij.lang.annotation.ExternalAnnotator"/>
     </extensionPoint>
 
+    <extensionPoint name="lang.syntaxHighlighter"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.openapi.fileTypes.SyntaxHighlighter"/>
+    </extensionPoint>
+
     <extensionPoint name="lang.refactoringSupport"
                     beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.lang.refactoring.RefactoringSupportProvider"/>
@@ -381,7 +386,8 @@
     <extensionPoint name="fileTemplateGroup"
                     interface="com.intellij.ide.fileTemplates.FileTemplateGroupDescriptorFactory"/>
     <extensionPoint name="iconProvider"
-                    interface="com.intellij.ide.IconProvider"/>
+                    interface="com.intellij.ide.IconProvider"
+                    dynamic="true"/>
     <extensionPoint name="colorProvider"
                     interface="com.intellij.openapi.editor.ElementColorProvider"/>
     <extensionPoint name="createFromTemplateHandler"
@@ -411,6 +417,7 @@
     <extensionPoint name="include.provider" interface="com.intellij.psi.impl.include.FileIncludeProvider"/>
     <extensionPoint name="globalIndexFilter" interface="com.intellij.util.indexing.GlobalIndexFilter"/>
     <extensionPoint name="indexImporterFactory" interface="com.intellij.index.IndexImporterFactory"/>
+    <extensionPoint name="fileBasedIndex.providedLocator" interface="com.intellij.util.indexing.provided.ProvidedIndexExtensionLocator"/>
 
     <extensionPoint name="refactoring.copyHandler" interface="com.intellij.refactoring.copy.CopyHandlerDelegate"/>
     <extensionPoint name="refactoring.moveHandler" interface="com.intellij.refactoring.move.MoveHandlerDelegate"/>
@@ -470,8 +477,7 @@
 
     <extensionPoint name="projectTaskRunner" interface="com.intellij.task.ProjectTaskRunner"/>
 
-    <!-- e.g. TeamCity plugin wants DefaultDebugExecutor in constructor -->
-    <extensionPoint name="executor" interface="com.intellij.execution.Executor" registerInPicoContainer="true"/>
+    <extensionPoint name="executor" interface="com.intellij.execution.Executor"/>
 
     <extensionPoint name="executionTargetProvider"
                     interface="com.intellij.execution.ExecutionTargetProvider"/>
@@ -545,6 +551,18 @@
       <with attribute="implementationClass" implements="com.intellij.codeInsight.completion.CompletionConfidence"/>
     </extensionPoint>
 
+    <extensionPoint name="completion.ml.contextFeatures" beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.codeInsight.completion.ml.ContextFeatureProvider"/>
+    </extensionPoint>
+
+    <extensionPoint name="completion.ml.elementFeatures" beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.codeInsight.completion.ml.ElementFeatureProvider"/>
+    </extensionPoint>
+
+    <extensionPoint name="completion.plainTextSymbol" beanClass="com.intellij.codeInsight.completion.PlainTextSymbolCompletionContributorEP">
+      <with attribute="implementationClass" implements="com.intellij.codeInsight.completion.PlainTextSymbolCompletionContributor"/>
+    </extensionPoint>
+
     <extensionPoint name="completion.preselectionBehaviourProvider"
                     interface="com.intellij.codeInsight.completion.CompletionPreselectionBehaviourProvider"/>
 
@@ -552,6 +570,11 @@
     <extensionPoint name="lookup.charFilter" interface="com.intellij.codeInsight.lookup.CharFilter"/>
     <extensionPoint name="lookup.actionProvider" interface="com.intellij.codeInsight.lookup.LookupActionProvider"/>
     <extensionPoint name="originInfoProvider" interface="com.intellij.codeInsight.completion.originInfo.OriginInfoProvider"/>
+
+    <extensionPoint name="createDirectoryCompletionContributor"
+                    beanClass="com.intellij.ide.actions.CreateDirectoryCompletionContributorEP">
+      <with attribute="implementationClass" implements="com.intellij.ide.actions.CreateDirectoryCompletionContributor"/>
+    </extensionPoint>
 
     <extensionPoint name="highlightRangeExtension" interface="com.intellij.codeInsight.daemon.impl.HighlightRangeExtension"/>
 
@@ -597,8 +620,6 @@
                     interface="com.intellij.codeInsight.navigation.actions.TypeDeclarationProvider"/>
     <extensionPoint name="gotoTargetRendererProvider"
                     interface="com.intellij.codeInsight.navigation.GotoTargetRendererProvider"/>
-    <extensionPoint name="gotoDeclaration"
-                    interface="com.intellij.codeInsight.navigation.GotoDeclarationProvider"/>
 
     <extensionPoint name="navbar" interface="com.intellij.ide.navigationToolbar.NavBarModelExtension"/>
 
@@ -1013,6 +1034,7 @@
     <extensionPoint name="trafficLightRendererContributor" interface="com.intellij.codeInsight.daemon.impl.TrafficLightRendererContributor"/>
 
     <extensionPoint name="implementationViewSessionFactory" interface="com.intellij.codeInsight.hint.ImplementationViewSessionFactory"/>
+    <extensionPoint name="implementationViewDocumentFactory" interface="com.intellij.codeInsight.hint.ImplementationViewDocumentFactory"/>
   </extensionPoints>
 </idea-plugin>
 

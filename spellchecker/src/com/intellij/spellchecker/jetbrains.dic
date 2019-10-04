@@ -126,6 +126,7 @@ commonjs
 comonad
 comparision
 concat
+concatenable
 cond
 conda
 conf
@@ -614,9 +615,6 @@ preconfigured
 preconfigures
 prefetch
 premain
-prepend
-prepended
-prepends
 preprocessor
 preprocessors
 println
@@ -722,6 +720,7 @@ sharding
 shellcheck
 shfmt
 sigabrt
+sigaction
 sigaio
 sigalrm
 sigbus
@@ -742,6 +741,7 @@ sigprof
 sigpwr
 sigquit
 sigsegv
+sigset
 sigstop
 sigsys
 sigterm

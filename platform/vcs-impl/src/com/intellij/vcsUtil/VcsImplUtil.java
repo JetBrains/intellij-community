@@ -62,9 +62,8 @@ public class VcsImplUtil {
   }
 
   @Nullable
-  public static IgnoredFileContentProvider findIgnoredFileContentProvider(@NotNull Project project,
-                                                                          @NotNull AbstractVcs vcs) {
-    IgnoredFileContentProvider ignoreContentProvider = IgnoredFileContentProvider.IGNORE_FILE_CONTENT_PROVIDER.extensions(project)
+  public static IgnoredFileContentProvider findIgnoredFileContentProvider(@NotNull AbstractVcs vcs) {
+    IgnoredFileContentProvider ignoreContentProvider = IgnoredFileContentProvider.IGNORE_FILE_CONTENT_PROVIDER.extensions(vcs.getProject())
       .filter((provider) -> provider.getSupportedVcs().equals(vcs.getKeyInstanceMethod()))
       .findFirst()
       .orElse(null);
@@ -97,15 +96,6 @@ public class VcsImplUtil {
       return;
     }
     ignoredFileGenerator.generateFile(ignoreFileRoot, vcs, notify);
-  }
-
-  @Nullable
-  public static IgnoredFileContentProvider getIgnoredFileContentProvider(@NotNull Project project,
-                                                                          @NotNull AbstractVcs vcs) {
-    return IgnoredFileContentProvider.IGNORE_FILE_CONTENT_PROVIDER.extensions(project)
-      .filter((provider) -> provider.getSupportedVcs().equals(vcs.getKeyInstanceMethod()))
-      .findFirst()
-      .orElse(null);
   }
 
   private static boolean isFileSharedInVcs(@NotNull Project project, @NotNull ChangeListManagerEx changeListManager, @NotNull String filePath) {

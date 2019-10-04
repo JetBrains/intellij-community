@@ -95,7 +95,7 @@ class MacDmgBuilder {
   }
 
   private def getJavaExePath(String archivePath, boolean isModular) {
-    def topLevelDir = isModular && buildContext.bundledJreManager.hasJbrRootDir(new File(archivePath)) ? 'jbr' : 'jdk'
+    def topLevelDir = buildContext.bundledJreManager.jbrRootDir(new File(archivePath)) ?: 'jdk'
     return "../${topLevelDir}/Contents/Home/${isModular ? '' : 'jre/'}bin/java"
   }
 
@@ -122,8 +122,12 @@ class MacDmgBuilder {
     }
 
     ftpAction("mkdir") {}
-    signMacZip(sitFile, jreArchivePath, notarize)
-    buildDmg(targetName)
+    try {
+      signMacZip(sitFile, jreArchivePath, notarize)
+      buildDmg(targetName)
+    } finally {
+      deleteRemoteDir()
+    }
   }
 
   private void buildDmg(String targetFileName) {
@@ -149,7 +153,6 @@ class MacDmgBuilder {
         include(name: "**/${targetFileName}.dmg")
       }
     }
-    deleteRemoteDir()
     def dmgFilePath = "$artifactsPath/${targetFileName}.dmg"
     if (!new File(dmgFilePath).exists()) {
       buildContext.messages.error("Failed to build .dmg file")
@@ -194,18 +197,15 @@ class MacDmgBuilder {
                            macHostProperties.userName,
                            macHostProperties.password,
                            "\"${macHostProperties.codesignString}\"",
-                           (customizer.helpId != null ? "${customizer.helpId}.help" : "no-help"),
+                           jreArchivePath != null ? '"' + PathUtilRt.getFileName(jreArchivePath) + '"' : "no-jdk",
                            notarize ? "yes" : "no",
-                           customizer.bundleIdentifier
+                           customizer.bundleIdentifier,
       ]
-      if (jreArchivePath != null) {
-        args += '"' + PathUtilRt.getFileName(jreArchivePath) + '"'
-      }
       def env = ''
       ENV_FOR_MAC_BUILDER.each {
         def value = System.getenv(it)
         if (value != null && !value.isEmpty()) {
-          env << "$it=$value "
+          env += "$it=$value "
         }
       }
 

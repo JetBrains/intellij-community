@@ -34,12 +34,22 @@ import static com.intellij.testFramework.assertions.Assertions.assertThat;
  */
 public class JpsProjectSerializationTest extends JpsSerializationTestCase {
   public static final String SAMPLE_PROJECT_PATH = "/jps/model-serialization/testData/sampleProject";
+  public static final String SAMPLE_PROJECT_IPR_PATH = "/jps/model-serialization/testData/sampleProject-ipr/sampleProject.ipr";
 
   public void testLoadProject() {
     loadProject(SAMPLE_PROJECT_PATH);
-    File baseDirPath = getTestDataAbsoluteFile(SAMPLE_PROJECT_PATH).toFile();
-    assertTrue(FileUtil.filesEqual(baseDirPath, JpsModelSerializationDataService.getBaseDirectory(myProject)));
     assertEquals("sampleProjectName", myProject.getName());
+    checkSampleProjectConfiguration(getTestDataAbsoluteFile(SAMPLE_PROJECT_PATH).toFile());
+  }
+
+  public void testLoadIprProject() {
+    loadProject(SAMPLE_PROJECT_IPR_PATH);
+    assertEquals("sampleProject", myProject.getName());
+    checkSampleProjectConfiguration(getTestDataAbsoluteFile(SAMPLE_PROJECT_IPR_PATH).toFile().getParentFile());
+  }
+
+  private void checkSampleProjectConfiguration(File baseDirPath) {
+    assertTrue(FileUtil.filesEqual(baseDirPath, JpsModelSerializationDataService.getBaseDirectory(myProject)));
     List<JpsModule> modules = myProject.getModules();
     assertEquals(3, modules.size());
     JpsModule main = modules.get(0);
@@ -173,6 +183,15 @@ public class JpsProjectSerializationTest extends JpsSerializationTestCase {
 
   public void testLoadEncoding() {
     loadProject(SAMPLE_PROJECT_PATH);
+    checkEncodingConfigurationInSampleProject();
+  }
+
+  public void testLoadEncodingIpr() {
+    loadProject(SAMPLE_PROJECT_IPR_PATH);
+    checkEncodingConfigurationInSampleProject();
+  }
+
+  private void checkEncodingConfigurationInSampleProject() {
     JpsEncodingConfigurationService service = JpsEncodingConfigurationService.getInstance();
     assertEquals("UTF-8", service.getProjectEncoding(myModel));
     JpsEncodingProjectConfiguration configuration = service.getEncodingConfiguration(myProject);

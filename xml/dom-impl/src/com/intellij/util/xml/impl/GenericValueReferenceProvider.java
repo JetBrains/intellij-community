@@ -40,7 +40,7 @@ public class GenericValueReferenceProvider extends PsiReferenceProvider {
   public final PsiReference[] getReferencesByElement(@NotNull PsiElement psiElement, @NotNull final ProcessingContext context) {
     final DomManagerImpl domManager = DomManagerImpl.getDomManager(psiElement.getProject());
 
-    final DomInvocationHandler<?, ?> handler;
+    final DomInvocationHandler handler;
     if (psiElement instanceof XmlTag) {
       handler = domManager.getDomHandler((XmlTag)psiElement);
     } else if (psiElement instanceof XmlAttributeValue && psiElement.getParent() instanceof XmlAttribute) {

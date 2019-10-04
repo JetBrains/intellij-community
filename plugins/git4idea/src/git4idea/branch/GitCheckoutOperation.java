@@ -27,6 +27,7 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.changes.GitChangeUtils;
 import git4idea.commands.*;
+import git4idea.config.GitVcsSettings;
 import git4idea.repo.GitRepository;
 import git4idea.util.GitPreservingProcess;
 import org.jetbrains.annotations.NotNull;
@@ -41,7 +42,6 @@ import static com.intellij.util.containers.UtilKt.getIfSingle;
 import static git4idea.GitUtil.*;
 import static git4idea.branch.GitSmartOperationDialog.Choice.FORCE;
 import static git4idea.branch.GitSmartOperationDialog.Choice.SMART;
-import static git4idea.config.GitVcsSettings.UpdateChangesPolicy.STASH;
 import static git4idea.util.GitUIUtil.code;
 
 /**
@@ -255,9 +255,10 @@ class GitCheckoutOperation extends GitBranchOperation {
   private boolean smartCheckout(@NotNull final List<? extends GitRepository> repositories, @NotNull final String reference,
                                 @Nullable final String newBranch, @NotNull ProgressIndicator indicator) {
     AtomicBoolean result = new AtomicBoolean();
+    GitVcsSettings.UpdateChangesPolicy saveMethod = GitVcsSettings.getInstance(myProject).updateChangesPolicy();
     GitPreservingProcess preservingProcess =
-      new GitPreservingProcess(myProject, myGit, getRootsFromRepositories(repositories), "checkout", reference, STASH, indicator,
-                               () -> result .set(checkoutOrNotify(repositories, reference, newBranch, false)));
+      new GitPreservingProcess(myProject, myGit, getRootsFromRepositories(repositories), "checkout", reference, saveMethod, indicator,
+                               () -> result.set(checkoutOrNotify(repositories, reference, newBranch, false)));
     preservingProcess.execute();
     return result.get();
   }

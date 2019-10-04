@@ -25,21 +25,9 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface ConverterManager {
 
-  void addConverter(Class clazz, Converter converter);
-
   @NotNull
   Converter getConverterInstance(Class<? extends Converter> converterClass);
 
   @Nullable
   Converter getConverterByClass(Class<?> convertingClass);
-
-  /**
-   * Registers the given {@link Converter} implementation at runtime.
-   *
-   * @param converterInterface Interface defined in {@link DomElement} definition.
-   * @param converterImpl      Implementation to use.
-   * @deprecated use com.intellij.dom.converter extension instead
-   */
-  @Deprecated
-  <T extends Converter> void registerConverterImplementation(Class<T> converterInterface, T converterImpl);
 }

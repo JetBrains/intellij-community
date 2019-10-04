@@ -29,12 +29,9 @@ import com.intellij.util.ThreeState.UNSURE
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.vcs.log.VcsLogProperties
 import com.intellij.vcs.log.data.DataPackChangeListener
-import com.intellij.vcs.log.graph.impl.facade.PermanentGraphImpl
-import com.intellij.vcs.log.graph.impl.facade.ReachableNodes
-import com.intellij.vcs.log.graph.utils.DfsWalk
-import com.intellij.vcs.log.graph.utils.LinearGraphUtils
 import com.intellij.vcs.log.impl.VcsLogContentUtil
 import com.intellij.vcs.log.impl.VcsProjectLog
+import com.intellij.vcs.log.util.exclusiveCommits
 import com.intellij.vcs.log.util.findBranch
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 import com.intellij.vcs.log.visible.filters.VcsLogUserFilterImpl
@@ -44,10 +41,7 @@ import git4idea.repo.GitRepositoryManager
 import gnu.trove.TIntHashSet
 import java.awt.BorderLayout
 import java.awt.event.KeyEvent
-import javax.swing.Icon
-import javax.swing.JComponent
-import javax.swing.JList
-import javax.swing.ListSelectionModel
+import javax.swing.*
 import javax.swing.event.DocumentEvent
 
 private val LOG = logger<GitCleanupBranchesAction>()
@@ -421,33 +415,9 @@ private fun isMyBranch(log: VcsProjectLog,
 
 private fun findExclusiveCommits(log: VcsProjectLog, branchName: String, repo: GitRepository): TIntHashSet? {
   val dataPack = log.dataManager!!.dataPack
-  val permanentGraph = dataPack.permanentGraph as PermanentGraphImpl<Int>
-  val storage = log.dataManager!!.storage
 
-  val ref = dataPack.refsModel.findBranch(branchName, repo.root) ?: return null
+  val ref = dataPack.findBranch(branchName, repo.root) ?: return null
   if (!ref.type.isBranch) return null
 
-  val branchRefIndex = storage.getCommitIndex(ref.commitHash, ref.root)
-  val branchNodeId = permanentGraph.permanentCommitsInfo.getNodeId(branchRefIndex)
-
-  val exclusiveCommits = TIntHashSet()
-  DfsWalk(listOf(branchNodeId), permanentGraph.linearGraph).walk(true) { node: Int ->
-    val reachableNodes = ReachableNodes(LinearGraphUtils.asLiteLinearGraph(permanentGraph.linearGraph))
-    val containingBranchesIndexes = reachableNodes.getContainingBranches(node, permanentGraph.branchNodeIds)
-
-    if (!containingBranchesIndexes.contains(branchNodeId)) {
-      LOG.error("The branch $branchName doesn't contain commit reachable from it")
-    }
-
-    if (containingBranchesIndexes.size > 1) {
-      // there are other containing branches
-      false
-    }
-    else {
-      val commitId = permanentGraph.permanentCommitsInfo.getCommitId(node)
-      exclusiveCommits.add(commitId)
-      true
-    }
-  }
-  return exclusiveCommits
+  return dataPack.exclusiveCommits(ref, log.dataManager!!.storage)
 }

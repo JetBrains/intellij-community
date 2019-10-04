@@ -20,6 +20,7 @@
       <action id="ImportProject" class="com.intellij.ide.actions.ImportProjectAction" text="Project from Existing Sources..."/>
       <group id="NewProjectFromVCS" class="com.intellij.openapi.vcs.checkout.NewProjectFromVCSGroup" text="Project from Version Control"
              popup="true"/>
+      <action class="com.intellij.openapi.wm.impl.welcomeScreen.ProjectFromVersionControlAction" text="Project from Version Control..."/>
       <separator/>
       <action id="NewModule" class="com.intellij.openapi.roots.ui.configuration.actions.NewModuleAction" text="Module..."/>
       <action id="ImportModule" class="com.intellij.ide.actions.ImportModuleAction" text="Module from Existing Sources..."/>
@@ -166,6 +167,12 @@
       <add-to-group group-id="FeatureUsage.Internal" anchor="last"/>
     </action>
 
+    <action internal="true" id="CollectFUStatisticsAction"
+            class="com.intellij.internal.statistic.actions.CollectFUStatisticsAction"
+            text="Collect Statistics from Collector...">
+      <add-to-group group-id="FeatureUsage.Internal" anchor="last"/>
+    </action>
+
     <!-- Help -->
     <action id="WhatsNewAction" class="com.intellij.ide.actions.WhatsNewAction">
       <add-to-group group-id="HelpMenu" anchor="after" relative-to-action="ShowTips"/>
@@ -304,13 +311,14 @@
 
     <action id="ChangesView.GroupBy.Module" text="Module" class="com.intellij.openapi.vcs.changes.actions.SetModuleChangesGroupingAction">
       <add-to-group group-id="ChangesView.GroupBy"/>
-      <keyboard-shortcut first-keystroke="control alt M" keymap="$default"/>
     </action>
 
     <group id="JavaGenerateGroup1">
       <action id="GenerateTestMethod" class="com.intellij.testIntegration.GenerateTestMethodAction"/>
       <action id="GenerateSetUpMethod" class="com.intellij.testIntegration.GenerateSetUpMethodAction"/>
       <action id="GenerateTearDownMethod" class="com.intellij.testIntegration.GenerateTearDownMethodAction"/>
+      <action id="GenerateBeforeClassMethod" class="com.intellij.testIntegration.GenerateBeforeClassMethodAction"/>       
+      <action id="GenerateAfterClassMethod" class="com.intellij.testIntegration.GenerateAfterClassMethodAction"/> 
       <action id="GenerateDataMethod" class="com.intellij.testIntegration.GenerateDataMethodAction"/>
       <separator/>
       <action id="GenerateConstructor" class="com.intellij.codeInsight.generation.actions.GenerateConstructorAction"/>
@@ -458,6 +466,9 @@
       <action id="StaticIconFields" internal="true" class="com.intellij.internal.StaticIconFieldsAction"
               text="List Static Field Initializers"/>
 
+      <action id="DumpIndex" internal="true" class="com.intellij.internal.DumpIndexAction"
+              text="Dump Index"/>
+
       <add-to-group group-id="Internal"/>
     </group>
 
@@ -551,6 +562,7 @@
               icon="AllIcons.Debugger.Db_set_breakpoint">
         <add-to-group group-id="XDebugger.ToolWindow.TopToolbar"/>
       </action>
+      <action id="Debugger.ReloadFile" class="com.intellij.debugger.actions.ReloadFileAction" text="Compile And Reload File"/>
     </group>
 
     <action class="com.intellij.debugger.memory.action.ShowInstancesByClassAction"
@@ -620,6 +632,7 @@
     <group id="EditorPopupMenuDebugJava">
       <separator/>
       <reference ref="ToggleFieldBreakpoint"/>
+      <reference ref="Debugger.ReloadFile"/>
       <separator/>
       <add-to-group group-id="EditorPopupMenuDebug" anchor="last"/>
     </group>
@@ -769,17 +782,6 @@
     <action class="com.intellij.compiler.backwardRefs.view.TestCompilerRefFindUsagesAction" id="TestCompilerReferenceServiceFindUsages" internal="true"/>
     <action class="com.intellij.compiler.backwardRefs.view.TestCompilerRefFunctionalExpressionSearchAction" id="TestCompilerReferenceServiceFunctionalExpressionSearch" internal="true"/>
     <action class="com.intellij.compiler.backwardRefs.view.TestCompilerRefInheritanceAction" id="TestCompilerReferenceServiceInheritance" internal="true"/>
-
-    <group id="AnnotationHintsContextMenu" popup="true">
-      <action id="ToggleExternalAnnotationsHintsAction"
-              class="com.intellij.codeInsight.hints.AnnotationHintsPass$ToggleExternalAnnotationsHintsAction"
-              text="Show External Annotations"/>
-      <action id="ToggleInferredAnnotationsHintsAction"
-              class="com.intellij.codeInsight.hints.AnnotationHintsPass$ToggleInferredAnnotationsHintsAction"
-              text="Show Inferred Annotations"/>
-      <separator/>
-      <reference ref="EditorPopupMenu"/>
-    </group>
 
 
     <action id="MethodOverloadSwitchUp" class="com.intellij.codeInsight.editorActions.JavaMethodOverloadSwitchUpAction"/>

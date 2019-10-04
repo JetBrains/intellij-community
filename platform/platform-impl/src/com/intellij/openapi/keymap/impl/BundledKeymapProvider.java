@@ -13,7 +13,10 @@ import java.util.function.Function;
 /**
  * Name file as "Your scheme name.xml" and put it to keymaps.
  * Since 2017.1 file name must be equal to scheme name and no wrapping "component" tag.
+ *
+ * @deprecated Use {@link BundledKeymapBean} instead.
  */
+@Deprecated
 public interface BundledKeymapProvider {
   ExtensionPointName<BundledKeymapProvider> EP_NAME = ExtensionPointName.create("com.intellij.bundledKeymapProvider");
 

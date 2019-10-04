@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.util
 
 import com.intellij.openapi.components.service
@@ -7,8 +7,8 @@ import com.intellij.openapi.vfs.VirtualFile
 import git4idea.GitUtil
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
-import org.jetbrains.plugins.github.api.GithubFullPath
-import org.jetbrains.plugins.github.api.GithubRepositoryPath
+import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
+import org.jetbrains.plugins.github.api.GHRepositoryPath
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
 
@@ -22,8 +22,8 @@ class GithubGitHelper(private val githubSettings: GithubSettings,
                       private val authenticationManager: GithubAuthenticationManager,
                       private val migrationHelper: GithubAccountsMigrationHelper) {
 
-  fun getRemoteUrl(server: GithubServerPath, repoPath: GithubFullPath): String {
-    return getRemoteUrl(server, repoPath.user, repoPath.repository)
+  fun getRemoteUrl(server: GithubServerPath, repoPath: GHRepositoryPath): String {
+    return getRemoteUrl(server, repoPath.owner, repoPath.repository)
   }
 
   fun getRemoteUrl(server: GithubServerPath, user: String, repo: String): String {
@@ -45,11 +45,11 @@ class GithubGitHelper(private val githubSettings: GithubSettings,
 
   private fun isRemoteUrlAccessible(url: String) = authenticationManager.getAccounts().find { it.server.matches(url) } != null
 
-  fun getPossibleRepositories(repository: GitRepository): Set<GithubRepositoryPath> {
+  fun getPossibleRepositories(repository: GitRepository): Set<GHRepositoryCoordinates> {
     val knownServers = getKnownGithubServers()
     return repository.getRemoteUrls().mapNotNull { url ->
       knownServers.find { it.matches(url) }
-        ?.let { server -> GithubUrlUtil.getUserAndRepositoryFromRemoteUrl(url)?.let { GithubRepositoryPath(server, it) } }
+        ?.let { server -> GithubUrlUtil.getUserAndRepositoryFromRemoteUrl(url)?.let { GHRepositoryCoordinates(server, it) } }
     }.toSet()
   }
 

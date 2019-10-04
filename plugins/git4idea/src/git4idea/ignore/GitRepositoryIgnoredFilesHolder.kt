@@ -18,7 +18,7 @@ class GitRepositoryIgnoredFilesHolder(private val project: Project,
 
   @Throws(VcsException::class)
   override fun requestIgnored(paths: Collection<FilePath>?) =
-    HashSet(git.ignoredFiles(project, repository.root, paths))
+    HashSet(git.ignoredFilePaths(project, repository.root, paths))
 
   override fun scanTurnedOff() = !Registry.`is`("git.process.ignored")
 }

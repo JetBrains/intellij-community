@@ -15,7 +15,7 @@
  */
 package com.jetbrains.python.packaging;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.webcore.packaging.PackageManagementService;
@@ -28,7 +28,7 @@ public abstract class PyPackageManagers {
 
   @NotNull
   public static PyPackageManagers getInstance() {
-    return ServiceManager.getService(PyPackageManagers.class);
+    return ApplicationManager.getApplication().getComponent(PyPackageManagers.class);
   }
 
   @NotNull

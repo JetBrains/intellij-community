@@ -223,7 +223,7 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration> {
 
       myFileType.setRenderer(new FileTypeRenderer() {
         @Override
-        public void customize(JList<? extends FileType> list, FileType value, int index, boolean selected, boolean hasFocus) {
+        public void customize(@NotNull JList<? extends FileType> list, FileType value, int index, boolean selected, boolean hasFocus) {
           if (value == null) {
             setIcon(AllIcons.Actions.Cancel);
             setText("Disabled");

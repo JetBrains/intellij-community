@@ -28,6 +28,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -167,6 +168,7 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
    */
   @NotNull
   @Deprecated //todo to be removed in IDEA 17
+  @ApiStatus.ScheduledForRemoval(inVersion = "2017")
   public static Query<PsiClass> search(@NotNull final PsiClass aClass, @NotNull SearchScope scope, final boolean checkDeep, final boolean checkInheritance) {
     return search(aClass, scope, checkDeep, checkInheritance, true);
   }

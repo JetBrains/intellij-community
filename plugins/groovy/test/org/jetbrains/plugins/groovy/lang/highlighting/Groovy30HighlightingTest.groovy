@@ -11,7 +11,7 @@ import org.jetbrains.plugins.groovy.util.TestUtils
 @CompileStatic
 class Groovy30HighlightingTest extends GroovyVersionBasedTest {
 
-  final LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_3_0
+  final LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_3_0_REAL_JDK
   final String basePath = TestUtils.testDataPath + 'highlighting/v30/'
 
   void 'test default method in interfaces'() {
@@ -79,5 +79,9 @@ I i = {3}
 
   void 'test illegal single argument lambda'() {
     highlightingTest ()
+  }
+
+  void 'test type use in annotation description'() {
+    highlightingTest()
   }
 }

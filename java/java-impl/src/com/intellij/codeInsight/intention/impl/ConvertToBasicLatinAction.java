@@ -67,9 +67,13 @@ public class ConvertToBasicLatinAction extends PsiElementBaseIntentionAction {
     toReplace.replace(newElement);
   }
 
+  private static class Lazy {
+    private static final Handler[] ourHandlers = {new LiteralHandler(), new DocCommentHandler(), new CommentHandler()};
+  }
+
   @Nullable
   private static Pair<PsiElement, Handler> findHandler(PsiElement element) {
-    for (Handler handler : ourHandlers) {
+    for (Handler handler : Lazy.ourHandlers) {
       PsiElement applicable = handler.findApplicable(element);
       if (applicable != null) {
         return pair(applicable, handler);
@@ -106,7 +110,6 @@ public class ConvertToBasicLatinAction extends PsiElementBaseIntentionAction {
     protected abstract PsiElement getSubstitution(PsiElementFactory factory, PsiElement element, String newText);
   }
 
-  private static final Handler[] ourHandlers = {new LiteralHandler(), new DocCommentHandler(), new CommentHandler()};
 
   private static class LiteralHandler extends Handler {
     private static final TokenSet LITERALS = TokenSet.create(JavaTokenType.CHARACTER_LITERAL, JavaTokenType.STRING_LITERAL);

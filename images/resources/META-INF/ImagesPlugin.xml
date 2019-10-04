@@ -6,7 +6,6 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-    <search.topHitProvider implementation="org.intellij.images.options.impl.ImagesOptionsTopHitProvider"/>
     <applicationConfigurable groupId="editor" instance="org.intellij.images.options.impl.ImagesConfigurable" id="Images" displayName="Images"/>
     <fileEditorProvider implementation="org.intellij.images.editor.impl.ImageFileEditorProvider"/>
     <selectInTarget implementation="org.intellij.images.thumbnail.impl.ThumbnailSelectInTarget"/>
@@ -17,7 +16,8 @@
                         serviceImplementation="org.intellij.images.options.impl.OptionsManagerImpl"/>
     <projectService serviceInterface="org.intellij.images.thumbnail.ThumbnailManager"
                     serviceImplementation="org.intellij.images.thumbnail.impl.ThumbnailManagerImpl"/>
-    <fileTypeFactory implementation="org.intellij.images.fileTypes.impl.ImageFileTypeManagerImpl" />
+    <!-- ImageIO.getReaderFormatNames() -->
+    <fileType name="Image" implementationClass="org.intellij.images.fileTypes.impl.ImageFileType" fieldName="INSTANCE" extensions="bigtiff;bmp;dcx;gif;icns;ico;jbig2;jpeg;jpg;pam;pbm;pcx;pgm;png;pnm;ppm;psd;rgbe;tga;tif;tiff;wbmp;xbm;xpm" />
     <fileType name="SVG" implementationClass="org.intellij.images.fileTypes.impl.SvgFileType" fieldName="INSTANCE" extensions="svg" language="SVG"/>
     <lang.parserDefinition language="SVG" implementationClass="org.intellij.images.fileTypes.impl.SvgParserDefinition"/>
     <fileBasedIndex implementation="org.intellij.images.index.ImageInfoIndex"/>
@@ -42,9 +42,6 @@
       </action>
       <action class="org.intellij.images.actions.ShowThumbnailsAction"
               id="Images.ShowThumbnails" text="Show Image Thumbnails">
-        <keyboard-shortcut first-keystroke="shift control T" keymap="$default"/>
-        <add-to-group anchor="after" group-id="ProjectViewPopupMenu" relative-to-action="AddToFavorites"/>
-        <add-to-group anchor="after" group-id="NavbarPopupMenu" relative-to-action="AddToFavorites"/>
       </action>
       <action class="org.intellij.images.actions.ToggleTransparencyChessboardAction"
               id="Images.ToggleTransparencyChessboard"

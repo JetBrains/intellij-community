@@ -108,7 +108,14 @@ class BuildTasksImpl extends BuildTasks {
     String configPath = "$tempDir/config"
 
     def ideClasspath = new LinkedHashSet<String>()
-    modules.collectMany(ideClasspath) { buildContext.getModuleRuntimeClasspath(buildContext.findRequiredModule(it), false) }
+    buildContext.messages.debug("Collecting classpath to run application starter '${arguments.first()}:")
+    for (moduleName in modules) {
+      for (pathElement in buildContext.getModuleRuntimeClasspath(buildContext.findRequiredModule(moduleName), false)) {
+        if (ideClasspath.add(pathElement)) {
+          buildContext.messages.debug(" $pathElement from $moduleName")
+        }
+      }
+    }
 
     String classpathFile = "$tempDir/classpath.txt"
     new File(classpathFile).text = ideClasspath.join("\n")
@@ -318,11 +325,22 @@ idea.fatal.error.notification=disabled
     def distributionJARsBuilder = compileModulesForDistribution(patchedApplicationInfo)
     logFreeDiskSpace("after compilation")
     def mavenArtifacts = buildContext.productProperties.mavenArtifacts
-    if (mavenArtifacts.forIdeModules || !mavenArtifacts.additionalModules.isEmpty()) {
+    if (mavenArtifacts.forIdeModules || !mavenArtifacts.additionalModules.isEmpty() || !mavenArtifacts.proprietaryModules.isEmpty()) {
       buildContext.executeStep("Generate Maven artifacts", BuildOptions.MAVEN_ARTIFACTS_STEP) {
-        def bundledPlugins = buildContext.productProperties.productLayout.allBundledPluginsModules
-        def moduleNames = distributionJARsBuilder.platformModules + buildContext.productProperties.productLayout.getIncludedPluginModules(bundledPlugins)
-        new MavenArtifactsBuilder(buildContext).generateMavenArtifacts(moduleNames)
+        def mavenArtifactsBuilder = new MavenArtifactsBuilder(buildContext)
+        def moduleNames
+        if (mavenArtifacts.forIdeModules) {
+          def bundledPlugins = buildContext.productProperties.productLayout.allBundledPluginsModules
+          moduleNames = distributionJARsBuilder.platformModules + buildContext.productProperties.productLayout.getIncludedPluginModules(bundledPlugins)
+        } else {
+          moduleNames = mavenArtifacts.additionalModules
+        }
+        if (!moduleNames.isEmpty()) {
+          mavenArtifactsBuilder.generateMavenArtifacts(moduleNames, 'maven-artifacts')
+        }
+        if (!mavenArtifacts.proprietaryModules.isEmpty()) {
+          mavenArtifactsBuilder.generateMavenArtifacts(mavenArtifacts.proprietaryModules, 'proprietary-maven-artifacts')
+        }
       }
     }
 
@@ -485,18 +503,9 @@ idea.fatal.error.notification=disabled
 
 
   private def copyDependenciesFile() {
-    def inputFile = null
-    if (buildContext.options.dependenciesFile == null) {
-      if (buildContext.gradle.forceRun('Preparing dependencies file', 'dependenciesFile')) {
-        inputFile = "$buildContext.paths.communityHome/build/dependencies/build/dependencies.properties"
-      }
-    } else {
-      inputFile = "$buildContext.paths.communityHome/$buildContext.options.dependenciesFile"
-    }
-
-    if (inputFile != null) {
+    if (buildContext.gradle.forceRun('Preparing dependencies file', 'dependenciesFile')) {
       def outputFile = "$buildContext.paths.artifacts/dependencies.txt"
-      buildContext.ant.copy(file: inputFile, tofile: outputFile)
+      buildContext.ant.copy(file: "$buildContext.paths.communityHome/build/dependencies/build/dependencies.properties", tofile: outputFile)
       buildContext.notifyArtifactBuilt(outputFile)
     }
   }
@@ -640,7 +649,7 @@ idea.fatal.error.notification=disabled
       return
     }
     checkModules(pluginModules, fieldName)
-    def unknownBundledPluginModules = pluginModules.findAll { !optionalModules.contains(it) && !buildContext.hasResource(it, "META-INF/plugin.xml") }
+    def unknownBundledPluginModules = pluginModules.findAll { !optionalModules.contains(it) && buildContext.findFileInModuleSources(it, "META-INF/plugin.xml") == null }
     if (!unknownBundledPluginModules.empty) {
       buildContext.messages.error(
         "The following modules from $fieldName don't contain META-INF/plugin.xml file and aren't specified as optional plugin modules " +
@@ -755,6 +764,19 @@ idea.fatal.error.notification=disabled
         basedir: "$buildContext.paths.buildOutputRoot",
         includes: "sdk-patcher/*",
     )
+  }
+
+  @Override
+  void runTestBuild() {
+    checkProductProperties()
+    def patchedApplicationInfo = patchApplicationInfo()
+    def distributionJARsBuilder = compileModulesForDistribution(patchedApplicationInfo)
+    distributionJARsBuilder.buildJARs()
+    distributionJARsBuilder.buildInternalUtilities()
+    if (buildContext.productProperties.scrambleMainJar) {
+      scramble()
+    }
+    layoutShared()
   }
 
   @Override

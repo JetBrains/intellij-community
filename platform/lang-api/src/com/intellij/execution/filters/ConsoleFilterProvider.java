@@ -20,6 +20,11 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * @see ConsoleDependentFilterProvider
+ * @see ConsoleFilterProviderEx
+ * @see com.intellij.execution.impl.ConsoleViewUtil#computeConsoleFilters
+ */
 public interface ConsoleFilterProvider {
   ExtensionPointName<ConsoleFilterProvider> FILTER_PROVIDERS = ExtensionPointName.create("com.intellij.consoleFilterProvider");
 

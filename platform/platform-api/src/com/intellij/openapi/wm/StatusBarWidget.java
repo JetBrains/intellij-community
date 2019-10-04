@@ -3,8 +3,10 @@ package com.intellij.openapi.wm;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,7 +14,15 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.event.MouseEvent;
 
+/**
+ * @see StatusBarWidgetProvider
+ */
 public interface StatusBarWidget extends Disposable {
+  /**
+   * @deprecated do not use it
+   */
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated
   enum PlatformType {
     DEFAULT, MAC
   }
@@ -21,9 +31,21 @@ public interface StatusBarWidget extends Disposable {
   String ID();
 
   @Nullable
-  WidgetPresentation getPresentation(@NotNull PlatformType type);
+  default WidgetPresentation getPresentation() {
+    return getPresentation(SystemInfo.isMac ? PlatformType.MAC : PlatformType.DEFAULT);
+  }
 
-  void install(@NotNull final StatusBar statusBar);
+  /**
+   * @deprecated use this{@link #getPresentation()} instead
+   */
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated
+  @Nullable
+  default WidgetPresentation getPresentation(@NotNull PlatformType type) {
+    return null;
+  }
+
+  void install(@NotNull StatusBar statusBar);
 
   interface Multiframe extends StatusBarWidget {
     StatusBarWidget copy();
@@ -51,6 +73,7 @@ public interface StatusBarWidget extends Disposable {
      */
     @NotNull
     @Deprecated
+    @ApiStatus.ScheduledForRemoval
     default String getMaxPossibleText() { return ""; }
 
     float getAlignment();
@@ -68,6 +91,7 @@ public interface StatusBarWidget extends Disposable {
      */
     @NotNull
     @Deprecated
+    @ApiStatus.ScheduledForRemoval
     default String getMaxValue() { return ""; }
   }
 

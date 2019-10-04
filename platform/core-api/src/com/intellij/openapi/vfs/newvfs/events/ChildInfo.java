@@ -6,17 +6,20 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/** An internal class for data transfer from refresh worker to persistent FS impl, do not use. */
 @ApiStatus.Internal
-// internal class for data transfer from refresh worker to persistent FS impl, do not use
 public interface ChildInfo {
   ChildInfo[] EMPTY_ARRAY = new ChildInfo[0];
+
   int getId();
-  @NotNull
-  CharSequence getName();
+
+  @NotNull CharSequence getName();
+
   int getNameId();
+
   String getSymLinkTarget();
-  @Nullable // null means children are unknown
-  ChildInfo[] getChildren();
+
+  @Nullable("null means children are unknown") ChildInfo[] getChildren();
 
   FileAttributes getFileAttributes();
 }

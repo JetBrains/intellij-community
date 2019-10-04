@@ -15,7 +15,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SpellCheckingEditorCustomizationProvider;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsListener;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.EditorMarkupModelImpl;
 import com.intellij.openapi.fileTypes.FileTypes;
@@ -23,7 +24,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vcs.CommitMessageI;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -33,6 +33,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.ui.*;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.vcs.commit.CommitMessageUi;
+import com.intellij.vcs.commit.message.BodyLimitSettings;
 import com.intellij.vcs.commit.message.CommitMessageInspectionProfile;
 import org.jetbrains.annotations.*;
 
@@ -49,11 +50,11 @@ import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.addIfNotNull;
 import static com.intellij.util.containers.ContainerUtil.newUnmodifiableList;
 import static com.intellij.util.ui.JBUI.Panels.simplePanel;
-import static com.intellij.vcs.commit.message.CommitMessageInspectionProfile.getBodyRightMargin;
+import static com.intellij.vcs.commit.message.CommitMessageInspectionProfile.getBodyLimitSettings;
 import static java.util.Collections.singletonList;
 import static javax.swing.BorderFactory.createEmptyBorder;
 
-public class CommitMessage extends JPanel implements Disposable, DataProvider, CommitMessageUi, CommitMessageI {
+public class CommitMessage extends JPanel implements Disposable, DataProvider, CommitMessageUi, CommitMessageI, EditorColorsListener {
   public static final Key<CommitMessage> DATA_KEY = Key.create("Vcs.CommitMessage.Panel");
 
   private static final EditorCustomization BACKGROUND_FROM_COLOR_SCHEME_CUSTOMIZATION = editor -> editor.setBackgroundColor(null);
@@ -93,14 +94,20 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
 
     setBorder(createEmptyBorder());
 
-    fixEditorBackgroundOnColorSchemeChange(project);
+    updateOnInspectionProfileChanged(project);
   }
 
-  private void fixEditorBackgroundOnColorSchemeChange(@NotNull Project project) {
-    project.getMessageBus().connect(this).subscribe(EditorColorsManager.TOPIC, scheme -> {
+  private void updateOnInspectionProfileChanged(@NotNull Project project) {
+    project.getMessageBus().connect(this).subscribe(CommitMessageInspectionProfile.TOPIC, () -> {
       Editor editor = myEditorField.getEditor();
-      if (editor instanceof EditorEx) BACKGROUND_FROM_COLOR_SCHEME_CUSTOMIZATION.customize((EditorEx)editor);
+      if (editor instanceof EditorEx) RightMarginCustomization.customize(project, (EditorEx)editor);
     });
+  }
+
+  @Override
+  public void globalSchemeChange(@Nullable EditorColorsScheme scheme) {
+    Editor editor = myEditorField.getEditor();
+    if (editor instanceof EditorEx) BACKGROUND_FROM_COLOR_SCHEME_CUSTOMIZATION.customize((EditorEx)editor);
   }
 
   @NotNull
@@ -149,14 +156,7 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
   private static EditorTextField createCommitMessageEditor(@NotNull Project project, boolean runInspections) {
     Set<EditorCustomization> features = new HashSet<>();
 
-    VcsConfiguration configuration = VcsConfiguration.getInstance(project);
-    if (configuration != null) {
-      features.add(new RightMarginEditorCustomization(configuration.USE_COMMIT_MESSAGE_MARGIN, getBodyRightMargin(project)));
-      features.add(WrapWhenTypingReachesRightMarginCustomization.getInstance(configuration.WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN));
-    } else {
-      features.add(new RightMarginEditorCustomization(false, -1));
-    }
-
+    features.add(new RightMarginCustomization(project));
     features.add(SoftWrapsEditorCustomization.ENABLED);
     features.add(AdditionalPageAtBottomEditorCustomization.DISABLED);
     features.add(BACKGROUND_FROM_COLOR_SCHEME_CUSTOMIZATION);
@@ -243,6 +243,27 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
   @CalledWithReadLock
   public synchronized List<ChangeList> getChangeLists() {
     return myChangeLists;
+  }
+
+  private static class RightMarginCustomization implements EditorCustomization {
+    @NotNull private final Project myProject;
+
+    private RightMarginCustomization(@NotNull Project project) {
+      myProject = project;
+    }
+
+    @Override
+    public void customize(@NotNull EditorEx editor) {
+      customize(myProject, editor);
+    }
+
+    private static void customize(@NotNull Project project, @NotNull EditorEx editor) {
+      BodyLimitSettings settings = getBodyLimitSettings(project);
+
+      editor.getSettings().setRightMargin(settings.getRightMargin());
+      editor.getSettings().setRightMarginShown(settings.isShowRightMargin());
+      editor.getSettings().setWrapWhenTypingReachesRightMargin(settings.isWrapOnTyping());
+    }
   }
 
   private static class InspectionCustomization implements EditorCustomization {

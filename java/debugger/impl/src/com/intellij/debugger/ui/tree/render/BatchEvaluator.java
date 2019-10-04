@@ -1,11 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.DebuggerManager;
-import com.intellij.debugger.engine.DebugProcess;
-import com.intellij.debugger.engine.DebugProcessListener;
-import com.intellij.debugger.engine.JVMNameUtil;
-import com.intellij.debugger.engine.SuspendContext;
+import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
@@ -76,7 +73,7 @@ public class BatchEvaluator {
       }
 
       if (batchEvaluatorClass != null) {
-        Method constructor = batchEvaluatorClass.concreteMethodByName(JVMNameUtil.CONSTRUCTOR_NAME, "()V");
+        Method constructor = DebuggerUtils.findMethod(batchEvaluatorClass, JVMNameUtil.CONSTRUCTOR_NAME, "()V");
         if(constructor != null){
           ObjectReference evaluator = null;
           try {
@@ -88,7 +85,7 @@ public class BatchEvaluator {
           myBatchEvaluatorObject = evaluator;
 
           if(myBatchEvaluatorObject != null) {
-            myBatchEvaluatorMethod = batchEvaluatorClass.concreteMethodByName("evaluate", "([Ljava/lang/Object;)[Ljava/lang/Object;");
+            myBatchEvaluatorMethod = DebuggerUtils.findMethod(batchEvaluatorClass, "evaluate", "([Ljava/lang/Object;)[Ljava/lang/Object;");
           }
         }
       }

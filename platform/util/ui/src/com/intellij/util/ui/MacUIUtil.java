@@ -115,15 +115,6 @@ public class MacUIUtil {
   }
 
   public static void drawComboboxFocusRing(@NotNull final JComboBox combobox, @NotNull final Graphics g) {
-    if (SystemInfo.isMac && combobox.isEnabled() && combobox.isEditable() && UIUtil.isUnderAquaLookAndFeel()) {
-      final Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-      if (focusOwner != null) {
-        final Container ancestor = SwingUtilities.getAncestorOfClass(JComboBox.class, focusOwner);
-        if (ancestor == combobox) {
-          paintComboboxFocusRing((Graphics2D)g, combobox.getBounds());
-        }
-      }
-    }
   }
 
   @NotNull

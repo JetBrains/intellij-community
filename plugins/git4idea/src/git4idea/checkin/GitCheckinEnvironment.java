@@ -9,14 +9,10 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.TransactionGuard;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.ui.popup.BalloonBuilder;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
@@ -35,41 +31,24 @@ import com.intellij.openapi.vcs.impl.LineStatusTrackerManager;
 import com.intellij.openapi.vcs.impl.PartialChangesUtil;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.EditorTextField;
 import com.intellij.ui.GuiUtils;
-import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.components.JBCheckBox;
-import com.intellij.ui.components.JBLabel;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.concurrency.FutureResult;
-import com.intellij.util.textCompletion.DefaultTextCompletionValueDescriptor;
-import com.intellij.util.textCompletion.TextCompletionProvider;
-import com.intellij.util.textCompletion.TextFieldWithCompletion;
-import com.intellij.util.textCompletion.ValuesCompletionProvider.ValuesCompletionProviderDumbAware;
-import com.intellij.util.ui.GridBag;
-import com.intellij.util.ui.JBUI;
 import com.intellij.vcs.commit.AmendCommitAware;
-import com.intellij.vcs.commit.AmendCommitHandler;
-import com.intellij.vcs.commit.AmendCommitModeListener;
-import com.intellij.vcs.commit.ToggleAmendCommitOption;
 import com.intellij.vcs.log.Hash;
-import com.intellij.vcs.log.VcsUser;
-import com.intellij.vcs.log.VcsUserRegistry;
 import com.intellij.vcs.log.impl.HashImpl;
-import com.intellij.vcs.log.util.VcsUserUtil;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
-import git4idea.GitUserRegistry;
 import git4idea.GitUtil;
 import git4idea.branch.GitBranchUtil;
 import git4idea.changes.GitChangeUtils;
+import git4idea.changes.GitChangeUtils.GitDiffChange;
 import git4idea.checkin.GitCheckinExplicitMovementProvider.Movement;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitLineHandler;
 import git4idea.config.GitConfigUtil;
-import git4idea.config.GitVcsSettings;
 import git4idea.config.GitVersionSpecialty;
 import git4idea.i18n.GitBundle;
 import git4idea.index.GitIndexUtil;
@@ -77,30 +56,28 @@ import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import git4idea.util.GitFileUtils;
 import gnu.trove.THashSet;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
-import java.awt.event.*;
 import java.io.*;
 import java.text.SimpleDateFormat;
-import java.util.List;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 
 import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
-import static com.intellij.openapi.util.text.StringUtil.escapeXmlEntities;
 import static com.intellij.openapi.vcs.changes.ChangesUtil.*;
 import static com.intellij.util.ObjectUtils.assertNotNull;
 import static com.intellij.util.containers.ContainerUtil.*;
 import static com.intellij.vcs.commit.AbstractCommitWorkflowKt.isAmendCommitMode;
 import static com.intellij.vcs.commit.ToggleAmendCommitOption.isAmendCommitOptionSupported;
-import static com.intellij.vcs.log.util.VcsUserUtil.isSamePerson;
 import static git4idea.GitUtil.*;
 import static git4idea.checkin.GitCommitAndPushExecutorKt.isPushAfterCommit;
+import static git4idea.checkin.GitCommitOptionsKt.*;
+import static git4idea.checkin.GitSkipHooksCommitHandlerFactoryKt.isSkipHooks;
 import static git4idea.repo.GitSubmoduleKt.isSubmodule;
 import static java.util.Arrays.asList;
-import static one.util.streamex.StreamEx.of;
 
 public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAware {
   private static final Logger LOG = Logger.getInstance(GitCheckinEnvironment.class);
@@ -110,21 +87,16 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
   private final Project myProject;
   public static final SimpleDateFormat COMMIT_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
   private final VcsDirtyScopeManager myDirtyScopeManager;
-  private final GitVcsSettings mySettings;
 
   private String myNextCommitAuthor = null; // The author for the next commit
   private boolean myNextCommitAmend; // If true, the next commit is amended
   private Date myNextCommitAuthorDate;
   private boolean myNextCommitSignOff;
   private boolean myNextCommitSkipHook;
-  private boolean myNextCommitCommitRenamesSeparately;
 
-  public GitCheckinEnvironment(@NotNull Project project,
-                               @NotNull final VcsDirtyScopeManager dirtyScopeManager,
-                               final GitVcsSettings settings) {
+  public GitCheckinEnvironment(@NotNull Project project, @NotNull VcsDirtyScopeManager dirtyScopeManager) {
     myProject = project;
     myDirtyScopeManager = dirtyScopeManager;
-    mySettings = settings;
   }
 
   @Override
@@ -135,7 +107,8 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
   @NotNull
   @Override
   public RefreshableOnComponent createCommitOptions(@NotNull CheckinProjectPanel commitPanel, @NotNull CommitContext commitContext) {
-    return new GitCheckinOptions(myProject, commitPanel, isAmendCommitOptionSupported(commitPanel, this));
+    return new GitCheckinOptions(
+      commitPanel, commitContext, collectActiveMovementProviders(myProject), isAmendCommitOptionSupported(commitPanel, this));
   }
 
   @Override
@@ -210,13 +183,21 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
     return Git.getInstance().runCommand(h).getOutputOrThrow();
   }
 
+  private void updateState(@NotNull CommitContext commitContext) {
+    myNextCommitAmend = isAmendCommitMode(commitContext);
+    myNextCommitSkipHook = isSkipHooks(commitContext);
+    myNextCommitAuthor = getCommitAuthor(commitContext);
+    myNextCommitAuthorDate = getCommitAuthorDate(commitContext);
+    myNextCommitSignOff = isSignOffCommit(commitContext);
+  }
+
   @NotNull
   @Override
   public List<VcsException> commit(@NotNull List<Change> changes,
                                    @NotNull String commitMessage,
                                    @NotNull CommitContext commitContext,
                                    @NotNull Set<String> feedback) {
-    myNextCommitAmend = isAmendCommitMode(commitContext);
+    updateState(commitContext);
 
     GitRepositoryManager manager = getRepositoryManager(myProject);
     List<VcsException> exceptions = new ArrayList<>();
@@ -228,7 +209,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
       Collection<Change> rootChanges = sortedChanges.get(repository.getRoot());
       Collection<CommitChange> toCommit = map(rootChanges, CommitChange::new);
 
-      if (myNextCommitCommitRenamesSeparately) {
+      if (isCommitRenamesSeparately(commitContext)) {
         Pair<Collection<CommitChange>, List<VcsException>> pair = commitExplicitRenames(repository, toCommit, commitMessage);
         toCommit = pair.first;
         List<VcsException> moveExceptions = pair.second;
@@ -329,16 +310,16 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
       }
 
       // Check what is staged besides our changes
-      Collection<Change> stagedChanges = GitChangeUtils.getStagedChanges(myProject, root);
-      LOG.debug("Found staged changes: " + GitUtil.getLogString(rootPath, stagedChanges));
+      Collection<GitDiffChange> stagedChanges = GitChangeUtils.getStagedChanges(myProject, root);
+      LOG.debug("Found staged changes: " + getLogStringGitDiffChanges(rootPath, stagedChanges));
       Collection<ChangedPath> excludedStagedChanges = new ArrayList<>();
       processExcludedPaths(stagedChanges, added, removed, (before, after) -> {
         if (before != null || after != null) excludedStagedChanges.add(new ChangedPath(before, after));
       });
 
       // Find unstaged deletions, we might not be able to restore them after
-      Collection<Change> unstagedChanges = GitChangeUtils.getUnstagedChanges(myProject, root, false);
-      LOG.debug("Found unstaged changes: " + GitUtil.getLogString(rootPath, unstagedChanges));
+      Collection<GitDiffChange> unstagedChanges = GitChangeUtils.getUnstagedChanges(myProject, root, false);
+      LOG.debug("Found unstaged changes: " + getLogStringGitDiffChanges(rootPath, unstagedChanges));
       Set<FilePath> excludedUnstagedDeletions = new HashSet<>();
       processExcludedPaths(unstagedChanges, added, removed, (before, after) -> {
         if (before != null && after == null) excludedUnstagedDeletions.add(before);
@@ -562,13 +543,13 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
     return files;
   }
 
-  private static void processExcludedPaths(@NotNull Collection<? extends Change> changes,
+  private static void processExcludedPaths(@NotNull Collection<? extends GitDiffChange> changes,
                                            @NotNull Set<FilePath> added,
                                            @NotNull Set<FilePath> removed,
                                            @NotNull PairConsumer<? super FilePath, ? super FilePath> function) {
-    for (Change change : changes) {
-      FilePath before = getBeforePath(change);
-      FilePath after = getAfterPath(change);
+    for (GitDiffChange change : changes) {
+      FilePath before = change.beforePath;
+      FilePath after = change.afterPath;
       if (removed.contains(before)) before = null;
       if (added.contains(after)) after = null;
       function.consume(before, after);
@@ -1140,276 +1121,75 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
     myDirtyScopeManager.dirDirtyRecursively(root);
   }
 
-  public void reset() {
-    myNextCommitAuthor = null;
-    myNextCommitAuthorDate = null;
-    myNextCommitSkipHook = false;
-  }
+  @SuppressWarnings("InnerClassMayBeStatic") // used by external plugins
+  public class GitCheckinOptions implements CheckinChangeListSpecificComponent, RefreshableOnComponent, Disposable {
+    @NotNull private final GitCommitOptionsUi myOptionsUi;
 
-  public class GitCheckinOptions
-    implements CheckinChangeListSpecificComponent, RefreshableOnComponent, AmendCommitModeListener, Disposable {
-    private final List<GitCheckinExplicitMovementProvider> myExplicitMovementProviders;
-
-    @NotNull private final CheckinProjectPanel myCheckinProjectPanel;
-    @NotNull private final JPanel myPanel;
-    @NotNull private final EditorTextField myAuthorField;
-    @Nullable private Date myAuthorDate;
-    @NotNull private final JCheckBox mySignOffCheckbox;
-    @NotNull private final JCheckBox myCommitRenamesSeparatelyCheckbox;
-    @NotNull private final BalloonBuilder myAuthorNotificationBuilder;
-    @Nullable private Balloon myAuthorBalloon;
-
-    GitCheckinOptions(@NotNull Project project, @NotNull CheckinProjectPanel panel, boolean showAmendOption) {
-      myExplicitMovementProviders = collectActiveMovementProviders(myProject);
-
-      myCheckinProjectPanel = panel;
-      myAuthorField = createTextField(project, getAuthors(project));
-      myAuthorField.addFocusListener(new FocusAdapter() {
-        @Override
-        public void focusLost(FocusEvent e) {
-          clearAuthorWarn();
-        }
-      });
-      myAuthorNotificationBuilder = JBPopupFactory.getInstance().
-        createBalloonBuilder(new JLabel(GitBundle.getString("commit.author.diffs"))).
-        setBorderInsets(UIManager.getInsets("Balloon.error.textInsets")).
-        setBorderColor(JBUI.CurrentTheme.Validator.warningBorderColor()).
-        setFillColor(JBUI.CurrentTheme.Validator.warningBackgroundColor()).
-        setHideOnClickOutside(true).
-        setHideOnFrameResize(false);
-      myAuthorField.addHierarchyListener(new HierarchyListener() {
-        @Override
-        public void hierarchyChanged(HierarchyEvent e) {
-          if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0 && myAuthorField.isShowing()) {
-            if (!StringUtil.isEmptyOrSpaces(myAuthorField.getText())) {
-              showAuthorBalloonNotification();
-              myAuthorField.removeHierarchyListener(this);
-            }
-          }
-        }
-      });
-      JLabel authorLabel = new JBLabel(GitBundle.message("commit.author"));
-      authorLabel.setLabelFor(myAuthorField);
-
-      ToggleAmendCommitOption amendOption = showAmendOption ? new ToggleAmendCommitOption(myCheckinProjectPanel, this) : null;
-
-      mySignOffCheckbox = new JBCheckBox("Sign-off commit", mySettings.shouldSignOffCommit());
-      mySignOffCheckbox.setMnemonic(KeyEvent.VK_G);
-      mySignOffCheckbox.setToolTipText(getToolTip(project, panel));
-      myCommitRenamesSeparatelyCheckbox = new JBCheckBox(getExplicitMovementDescription(), mySettings.isCommitRenamesSeparately());
-
-      GridBag gb = new GridBag().
-        setDefaultAnchor(GridBagConstraints.WEST).
-        setDefaultInsets(JBUI.insets(2));
-      myPanel = new JPanel(new GridBagLayout());
-      myPanel.add(authorLabel, gb.nextLine().next());
-      myPanel.add(myAuthorField, gb.next().fillCellHorizontally().weightx(1));
-      if (amendOption != null) myPanel.add(amendOption, gb.nextLine().next().coverLine());
-      myPanel.add(mySignOffCheckbox, gb.nextLine().next().coverLine());
-      myPanel.add(myCommitRenamesSeparatelyCheckbox, gb.nextLine().next().coverLine());
-
-      getAmendHandler().addAmendCommitModeListener(this, this);
+    GitCheckinOptions(@NotNull CheckinProjectPanel commitPanel,
+                      @NotNull CommitContext commitContext,
+                      @NotNull List<GitCheckinExplicitMovementProvider> explicitMovementProviders,
+                      boolean showAmendOption) {
+      myOptionsUi = new GitCommitOptionsUi(commitPanel, commitContext, explicitMovementProviders, showAmendOption);
+      Disposer.register(this, myOptionsUi);
     }
 
-    @NotNull
-    private AmendCommitHandler getAmendHandler() {
-      return myCheckinProjectPanel.getCommitWorkflowHandler().getAmendCommitHandler();
+    @SuppressWarnings("unused") // used by external plugins
+    @Nullable
+    public String getAuthor() {
+      return myOptionsUi.getAuthor();
+    }
+
+    @SuppressWarnings("unused") // used by external plugins
+    public boolean isAmend() {
+      return myOptionsUi.getAmendHandler().isAmendCommitMode();
+    }
+
+    @Override
+    public JComponent getComponent() {
+      return myOptionsUi.getComponent();
+    }
+
+    @Override
+    public void restoreState() {
+      myOptionsUi.restoreState();
+    }
+
+    @Override
+    public void refresh() {
+      myOptionsUi.refresh();
+    }
+
+    @Override
+    public void saveState() {
+      myOptionsUi.saveState();
+    }
+
+    @Override
+    public void onChangeListSelected(@NotNull LocalChangeList list) {
+      myOptionsUi.onChangeListSelected(list);
     }
 
     @Override
     public void dispose() {
     }
-
-    @Override
-    public void amendCommitModeToggled() {
-      updateRenamesCheckboxState();
-    }
-
-    public boolean isAmend() {
-      return getAmendHandler().isAmendCommitMode();
-    }
-
-    @Nullable
-    public String getAuthor() {
-      String author = myAuthorField.getText();
-      if (StringUtil.isEmptyOrSpaces(author)) return null;
-      return GitCommitAuthorCorrector.correct(author);
-    }
-
-    @NotNull
-    private String getToolTip(@NotNull Project project, @NotNull CheckinProjectPanel panel) {
-      VcsUser user = getFirstItem(mapNotNull(panel.getRoots(), it -> GitUserRegistry.getInstance(project).getUser(it)));
-      String signature = user != null ? escapeXmlEntities(VcsUserUtil.toExactString(user)) : "";
-      return "<html>Adds the following line at the end of the commit message:<br/>" +
-             "Signed-off by: " + signature + "</html>";
-    }
-
-    @NotNull
-    private String getExplicitMovementDescription() {
-      if (myExplicitMovementProviders.size() == 1) {
-        return myExplicitMovementProviders.get(0).getDescription();
-      }
-      return "Create extra commit with file movements";
-    }
-
-    @CalledInAwt
-    private void showAuthorBalloonNotification() {
-      if (myAuthorBalloon == null || myAuthorBalloon.isDisposed()) {
-        myAuthorBalloon = myAuthorNotificationBuilder.createBalloon();
-        myAuthorBalloon.show(new RelativePoint(myAuthorField, new Point(myAuthorField.getWidth() / 2, myAuthorField.getHeight())),
-                             Balloon.Position.below);
-      }
-    }
-
-    @NotNull
-    private List<String> getAuthors(@NotNull Project project) {
-      Set<String> authors = new HashSet<>(getUsersList(project));
-      addAll(authors, mySettings.getCommitAuthors());
-      List<String> list = new ArrayList<>(authors);
-      Collections.sort(list);
-      return list;
-    }
-
-    @NotNull
-    private EditorTextField createTextField(@NotNull Project project, @NotNull List<String> list) {
-      TextCompletionProvider completionProvider =
-        new ValuesCompletionProviderDumbAware<>(new DefaultTextCompletionValueDescriptor.StringValueDescriptor(), list);
-      return new TextFieldWithCompletion(project, completionProvider, "", true, true, true) {
-        @Override
-        public void updateUI() {
-          // When switching from Darcula to IntelliJ `getBackground()` has `UIUtil.getTextFieldBackground()` value which is `UIResource`.
-          // `LookAndFeel.installColors()` (called from `updateUI()`) calls `setBackground()` and sets panel background (gray) to be used.
-          // So we clear background to allow default behavior (use background from color scheme).
-          setBackground(null);
-          super.updateUI();
-        }
-      };
-    }
-
-    @NotNull
-    private List<String> getUsersList(@NotNull Project project) {
-      VcsUserRegistry userRegistry = ServiceManager.getService(project, VcsUserRegistry.class);
-      return map(userRegistry.getUsers(), VcsUserUtil::toExactString);
-    }
-
-    private void updateRenamesCheckboxState() {
-      if (myExplicitMovementProviders.isEmpty() || !Registry.is("git.allow.explicit.commit.renames")) {
-        myCommitRenamesSeparatelyCheckbox.setVisible(false);
-        myCommitRenamesSeparatelyCheckbox.setEnabled(false);
-      }
-      else {
-        myCommitRenamesSeparatelyCheckbox.setVisible(true);
-        myCommitRenamesSeparatelyCheckbox.setEnabled(!isAmend());
-      }
-    }
-
-    @Override
-    public void refresh() {
-      updateRenamesCheckboxState();
-      myAuthorField.setText(null);
-      clearAuthorWarn();
-      myAuthorDate = null;
-      reset();
-    }
-
-    @Override
-    public void saveState() {
-      myNextCommitAuthor = getAuthor();
-      if (myNextCommitAuthor != null) {
-        mySettings.saveCommitAuthor(myNextCommitAuthor);
-      }
-      myNextCommitAuthorDate = myAuthorDate;
-
-      mySettings.setSignOffCommit(mySignOffCheckbox.isSelected());
-      myNextCommitSignOff = mySignOffCheckbox.isSelected();
-
-      mySettings.setCommitRenamesSeparately(myCommitRenamesSeparatelyCheckbox.isSelected());
-      myNextCommitCommitRenamesSeparately = myCommitRenamesSeparatelyCheckbox.isEnabled() && myCommitRenamesSeparatelyCheckbox.isSelected();
-    }
-
-    @Override
-    public void restoreState() {
-      refresh();
-    }
-
-    @Override
-    public void onChangeListSelected(LocalChangeList list) {
-      updateRenamesCheckboxState();
-      Object data = list.getData();
-      clearAuthorWarn();
-      if (data instanceof ChangeListData) {
-        fillAuthorAndDateFromData((ChangeListData)data);
-      }
-      else {
-        myAuthorField.setText(null);
-        myAuthorDate = null;
-      }
-      myPanel.revalidate();
-      myPanel.repaint();
-    }
-
-    private void fillAuthorAndDateFromData(@NotNull ChangeListData data) {
-      VcsUser author = data.getAuthor();
-      if (author != null && !isDefaultAuthor(author)) {
-        myAuthorField.setText(VcsUserUtil.toExactString(author));
-        myAuthorField.putClientProperty("JComponent.outline", "warning");
-        if (myAuthorField.isShowing()) {
-          showAuthorBalloonNotification();
-        }
-      }
-      else {
-        myAuthorField.setText(null);
-      }
-      myAuthorDate = data.getDate();
-    }
-
-    private void clearAuthorWarn() {
-      myAuthorField.putClientProperty("JComponent.outline", null);
-      if (myAuthorBalloon != null) {
-        myAuthorBalloon.hide();
-        myAuthorBalloon = null;
-      }
-    }
-
-    @Override
-    public JComponent getComponent() {
-      return myPanel;
-    }
-
-    public boolean isDefaultAuthor(@NotNull VcsUser author) {
-      GitRepositoryManager manager = getRepositoryManager(myProject);
-      Collection<VirtualFile> affectedGitRoots = filter(myCheckinProjectPanel.getRoots(),
-                                                        root -> manager.getRepositoryForRoot(root) != null);
-      GitUserRegistry gitUserRegistry = GitUserRegistry.getInstance(myProject);
-      return of(affectedGitRoots).map(vf -> gitUserRegistry.getUser(vf)).allMatch(user -> user != null && isSamePerson(author, user));
-    }
-
-    @NotNull
-    private List<GitCheckinExplicitMovementProvider> collectActiveMovementProviders(@NotNull Project project) {
-      GitCheckinExplicitMovementProvider[] allProviders = GitCheckinExplicitMovementProvider.EP_NAME.getExtensions();
-      List<GitCheckinExplicitMovementProvider> enabledProviders = filter(allProviders, it -> it.isEnabled(project));
-      if (enabledProviders.isEmpty()) return Collections.emptyList();
-      if (Registry.is("git.explicit.commit.renames.prohibit.multiple.calls")) return enabledProviders;
-
-      List<CommitChange> changes = map(ChangeListManager.getInstance(project).getAllChanges(), CommitChange::new);
-      List<FilePath> beforePaths = mapNotNull(changes, it -> it.beforePath);
-      List<FilePath> afterPaths = mapNotNull(changes, it -> it.afterPath);
-
-      return filter(enabledProviders, it -> {
-        Collection<Movement> movements = it.collectExplicitMovements(project, beforePaths, afterPaths);
-        List<Movement> filteredMovements = filterExcludedChanges(movements, changes);
-        return !filteredMovements.isEmpty();
-      });
-    }
   }
 
-  public void setSkipHooksForNextCommit(boolean skipHooksForNextCommit) {
-    myNextCommitSkipHook = skipHooksForNextCommit;
-  }
+  @NotNull
+  private static List<GitCheckinExplicitMovementProvider> collectActiveMovementProviders(@NotNull Project project) {
+    GitCheckinExplicitMovementProvider[] allProviders = GitCheckinExplicitMovementProvider.EP_NAME.getExtensions();
+    List<GitCheckinExplicitMovementProvider> enabledProviders = filter(allProviders, it -> it.isEnabled(project));
+    if (enabledProviders.isEmpty()) return Collections.emptyList();
+    if (Registry.is("git.explicit.commit.renames.prohibit.multiple.calls")) return enabledProviders;
 
-  @TestOnly
-  public void setCommitRenamesSeparately(boolean commitRenamesSeparately) {
-    myNextCommitCommitRenamesSeparately = commitRenamesSeparately;
+    List<CommitChange> changes = map(ChangeListManager.getInstance(project).getAllChanges(), CommitChange::new);
+    List<FilePath> beforePaths = mapNotNull(changes, it -> it.beforePath);
+    List<FilePath> afterPaths = mapNotNull(changes, it -> it.afterPath);
+
+    return filter(enabledProviders, it -> {
+      Collection<Movement> movements = it.collectExplicitMovements(project, beforePaths, afterPaths);
+      List<Movement> filteredMovements = filterExcludedChanges(movements, changes);
+      return !filteredMovements.isEmpty();
+    });
   }
 
   private static class ChangedPath {

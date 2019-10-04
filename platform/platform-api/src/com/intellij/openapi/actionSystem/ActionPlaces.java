@@ -10,9 +10,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Set;
 
 /**
- * Possible places in the IDEA user interface where an action can appear.
+ * Possible places in the IDE user interface where an action can appear.
  */
-
 @SuppressWarnings("HardCodedStringLiteral")
 public abstract class ActionPlaces {
   public static final String UNKNOWN = "unknown";
@@ -36,6 +35,7 @@ public abstract class ActionPlaces {
   public static final String COMMANDER_POPUP = "CommanderPopup";
   public static final String COMMANDER_TOOLBAR = "CommanderToolbar";
   public static final String CONTEXT_TOOLBAR = "ContextToolbar";
+  public static final String TOOLWINDOW_POPUP = "ToolwindowPopup";
   public static final String TOOLWINDOW_TITLE = "ToolwindowTitle";
   public static final String TOOLWINDOW_CONTENT = "ToolwindowContent";
 
@@ -163,7 +163,7 @@ public abstract class ActionPlaces {
     METHOD_HIERARCHY_VIEW_POPUP, CALL_HIERARCHY_VIEW_POPUP, J2EE_ATTRIBUTES_VIEW_POPUP, J2EE_VIEW_POPUP, USAGE_VIEW_POPUP,
     STRUCTURE_VIEW_POPUP, TODO_VIEW_POPUP, COMPILER_MESSAGES_POPUP, ANT_MESSAGES_POPUP, ANT_EXPLORER_POPUP, UPDATE_POPUP,
     FILEVIEW_POPUP, CHECKOUT_POPUP, LVCS_DIRECTORY_HISTORY_POPUP, GUI_DESIGNER_EDITOR_POPUP, GUI_DESIGNER_COMPONENT_TREE_POPUP,
-    GUI_DESIGNER_PROPERTY_INSPECTOR_POPUP,
+    GUI_DESIGNER_PROPERTY_INSPECTOR_POPUP, TOOLWINDOW_POPUP,
     CREATE_EJB_POPUP, CHANGES_VIEW_POPUP, DATABASE_VIEW_POPUP, REMOTE_HOST_VIEW_POPUP, REMOTE_HOST_DIALOG_POPUP, TFS_TREE_POPUP,
     ACTION_PLACE_VCS_QUICK_LIST_POPUP_ACTION, PHING_EXPLORER_POPUP, NAVIGATION_BAR_POPUP, JS_BUILD_TOOL_POPUP,
     V8_CPU_PROFILING_POPUP, V8_HEAP_PROFILING_POPUP, V8_HEAP_PROFILING_POPUP, RUN_DASHBOARD_POPUP, SERVICES_POPUP, EDITOR_GUTTER_POPUP
@@ -189,7 +189,7 @@ public abstract class ActionPlaces {
   }
 
   /**
-   * Returns true if the Mac system menu is enabled and the action is invoked from the regular menu or via a keyboard shortcut.
+   * Returns {@code true} if the Mac system menu is enabled and the action is invoked from the regular menu or via a keyboard shortcut.
    * (Used to avoid duplicate processing of the same action.)
    */
   @ApiStatus.Internal

@@ -9,7 +9,7 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Manager of listeners for notifications about activation and deactivation of the
- * IDEA window.
+ * IDE window.
  */
 public abstract class FrameStateManager {
   /**
@@ -34,7 +34,7 @@ public abstract class FrameStateManager {
   public abstract void addListener(@NotNull FrameStateListener listener, @Nullable Disposable disposable);
 
   /**
-   * Removes a listener which is called when the IDEA window is activated or deactivated.
+   * Removes a listener which is called when the IDE window is activated or deactivated.
    *
    * @param listener the listener instance.
    */

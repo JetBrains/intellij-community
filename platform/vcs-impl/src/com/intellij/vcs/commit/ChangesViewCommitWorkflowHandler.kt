@@ -8,13 +8,11 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.CheckinProjectPanel
+import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsConfiguration
-import com.intellij.openapi.vcs.changes.Change
-import com.intellij.openapi.vcs.changes.ChangeListChange
-import com.intellij.openapi.vcs.changes.ChangeListManager
-import com.intellij.openapi.vcs.changes.LocalChangeList
+import com.intellij.openapi.vcs.VcsException
+import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.actions.DefaultCommitExecutorAction
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.commit.AbstractCommitWorkflow.Companion.getCommitExecutors
 import gnu.trove.THashSet
 
@@ -35,12 +33,15 @@ class ChangesViewCommitWorkflowHandler(
 
   private val inclusionModel = PartialCommitInclusionModel(project)
 
+  private var areCommitOptionsCreated = false
+
   init {
     Disposer.register(this, Disposable { workflow.disposeCommitOptions() })
     Disposer.register(this, inclusionModel)
     Disposer.register(ui, this)
 
     workflow.addListener(this, this)
+    workflow.addCommitListener(CommitListener(), this)
 
     ui.addExecutorListener(this, this)
     ui.addDataProvider(createDataProvider())
@@ -52,8 +53,8 @@ class ChangesViewCommitWorkflowHandler(
   }
 
   private fun ensureCommitOptions(): CommitOptions {
-    if (!workflow.areCommitOptionsCreated) {
-      workflow.areCommitOptionsCreated = true
+    if (!areCommitOptionsCreated) {
+      areCommitOptionsCreated = true
 
       workflow.initCommitOptions(createCommitOptions())
       commitOptions.restoreState()
@@ -84,7 +85,7 @@ class ChangesViewCommitWorkflowHandler(
     return group.getChildren(null).toList() + executors.filter { it.useDefaultAction() }.map { DefaultCommitExecutorAction(it) }
   }
 
-  fun synchronizeInclusion(changeLists: List<LocalChangeList>, unversionedFiles: List<VirtualFile>) {
+  fun synchronizeInclusion(changeLists: List<LocalChangeList>, unversionedFiles: List<FilePath>) {
     if (!inclusionModel.isInclusionEmpty()) {
       val possibleInclusion = changeLists.flatMapTo(THashSet(ChangeListChange.HASHING_STRATEGY)) { it.changes }
       possibleInclusion.addAll(unversionedFiles)
@@ -161,5 +162,17 @@ class ChangesViewCommitWorkflowHandler(
 
   override fun saveCommitMessage(success: Boolean) = VcsConfiguration.getInstance(project).saveCommitMessage(getCommitMessage())
 
-  override fun customCommitSucceeded() = Unit
+  private inner class CommitListener : CommitResultHandler {
+    override fun onSuccess(commitMessage: String) = resetState()
+    override fun onCancel() = Unit
+    override fun onFailure(errors: List<VcsException>) = resetState()
+
+    private fun resetState() {
+      workflow.disposeCommitOptions()
+      areCommitOptionsCreated = false
+
+      workflow.clearCommitContext()
+      initCommitHandlers()
+    }
+  }
 }

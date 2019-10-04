@@ -69,6 +69,7 @@ public class ThreadTracker {
     "AWT-Windows",
     "Batik CleanerThread",
     "CompilerThread0",
+    "dockerjava-netty",
     "External compiler",
     "Finalizer",
     FlushingDaemon.NAME,

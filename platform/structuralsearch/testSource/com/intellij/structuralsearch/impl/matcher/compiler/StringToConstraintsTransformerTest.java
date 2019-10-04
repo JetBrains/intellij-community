@@ -58,15 +58,15 @@ public class StringToConstraintsTransformerTest {
   @Test
   public void testCountedOccurs() {
     test("'_a{3,}'_b{4} '_c{,5}");
-    MatchVariableConstraint constraint = myOptions.getVariableConstraint("a");
-    assertEquals(3, constraint.getMinCount());
-    assertEquals(Integer.MAX_VALUE, constraint.getMaxCount());
-    constraint = myOptions.getVariableConstraint("b");
-    assertEquals(4, constraint.getMinCount());
-    assertEquals(4, constraint.getMaxCount());
-    constraint = myOptions.getVariableConstraint("c");
-    assertEquals(0, constraint.getMinCount());
-    assertEquals(5, constraint.getMaxCount());
+    MatchVariableConstraint a = myOptions.getVariableConstraint("a");
+    assertEquals(3, a.getMinCount());
+    assertEquals(Integer.MAX_VALUE, a.getMaxCount());
+    MatchVariableConstraint b = myOptions.getVariableConstraint("b");
+    assertEquals(4, b.getMinCount());
+    assertEquals(4, b.getMaxCount());
+    MatchVariableConstraint c = myOptions.getVariableConstraint("c");
+    assertEquals(0, c.getMinCount());
+    assertEquals(5, c.getMaxCount());
   }
 
   @Test

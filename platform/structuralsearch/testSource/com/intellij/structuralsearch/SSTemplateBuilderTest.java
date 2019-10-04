@@ -7,6 +7,7 @@ import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.PsiFile;
+import com.intellij.structuralsearch.plugin.ui.StructuralSearchTemplateBuilder;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
 public class SSTemplateBuilderTest extends LightJavaCodeInsightFixtureTestCase {

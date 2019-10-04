@@ -331,7 +331,7 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
 
     private static class JdkBundleItemRenderer extends SimpleListCellRenderer<JdkBundleItem> {
       @Override
-      public void customize(JList<? extends JdkBundleItem> list, JdkBundleItem value, int index, boolean selected, boolean hasFocus) {
+      public void customize(@NotNull JList<? extends JdkBundleItem> list, JdkBundleItem value, int index, boolean selected, boolean hasFocus) {
         if (value == RESET) {
           setText("<reset to default>");
         }

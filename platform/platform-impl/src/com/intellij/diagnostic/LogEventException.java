@@ -6,10 +6,12 @@ import com.intellij.openapi.diagnostic.ExceptionWithAttachments;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /** @deprecated use {@link RuntimeExceptionWithAttachments#RuntimeExceptionWithAttachments(String, String, Attachment...)} (to be removed in IDEA 2020) */
 @Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2020")
 @SuppressWarnings({"DeprecatedIsStillUsed", "unused"})
 public class LogEventException extends RuntimeException implements ExceptionWithAttachments {
   private final IdeaLoggingEvent myLogMessage;

@@ -38,20 +38,9 @@ abstract class WindowsDistributionCustomizer {
   boolean includeBatchLaunchers = true
 
   /**
-   * Specify bitness of bundled JRE. If {@code null} no JRE will be bundled
-   */
-  JvmArchitecture bundledJreArchitecture = JvmArchitecture.x64
-
-  /**
    * If {@code false} only 64-bit *64.exe launcher and *64.exe.vmoptions files will be created.
    */
   boolean include32BitLauncher = true
-
-  /**
-   * If {@code true} a Zip archive containing the installation with bundled Oracle JRE will be produced
-   * @deprecated artifacts with bundled Oracle JRE shouldn't be produced anymore
-   */
-  boolean buildZipWithBundledOracleJre = false
 
   /**
    * If {@code true} a Zip archive containing the installation with bundled JetBrains RE will be produced

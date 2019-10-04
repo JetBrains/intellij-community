@@ -29,11 +29,8 @@ internal val DEFAULT_INVESTIGATOR by lazy {
 
 internal class Investigator(val email: String, var isAssigned: Boolean = false)
 
-internal fun assignInvestigation(investigator: Investigator, reviews: List<String>): Investigator {
-  val report = if (reviews.isNotEmpty()) {
-    "Please review and cherry-pick ${reviews.joinToString()}."
-  }
-  else "Unexpected error, please investigate."
+internal fun assignInvestigation(investigator: Investigator): Investigator {
+  val report = "Unexpected error, please investigate."
   assignInvestigation(investigator, report)
   if (!investigator.isAssigned) {
     var nextAttempts = guessEmail(investigator.email)

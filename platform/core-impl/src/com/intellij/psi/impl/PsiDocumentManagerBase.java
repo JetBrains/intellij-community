@@ -107,7 +107,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   }
 
   @Deprecated
-  @ApiStatus.ScheduledForRemoval
+  @ApiStatus.ScheduledForRemoval(inVersion = "2017")
   // todo remove when plugins come to their senses and stopped using it
   // todo to be removed in idea 17
   public static void cachePsi(@NotNull Document document, @Nullable PsiFile file) {
@@ -676,12 +676,14 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   }
 
   void fireDocumentCreated(@NotNull Document document, PsiFile file) {
+    myProject.getMessageBus().syncPublisher(PsiDocumentListener.TOPIC).documentCreated(document, file, myProject);
     for (Listener listener : myListeners) {
       listener.documentCreated(document, file);
     }
   }
 
   private void fireFileCreated(@NotNull Document document, @NotNull PsiFile file) {
+    myProject.getMessageBus().syncPublisher(PsiDocumentListener.TOPIC).fileCreated(file, document);
     for (Listener listener : myListeners) {
       listener.fileCreated(file, document);
     }
@@ -866,13 +868,24 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       if (forceCommit) {
         commitDocument(document);
       }
-      else if (!((DocumentEx)document).isInBulkUpdate() && myPerformBackgroundCommit) {
+      else if (!document.isInBulkUpdate() && myPerformBackgroundCommit) {
         myDocumentCommitProcessor.commitAsynchronously(myProject, document, event, TransactionGuard.getInstance().getContextTransaction());
       }
     }
     else {
       clearUncommittedInfo(document);
     }
+  }
+
+  @Override
+  public void bulkUpdateStarting(@NotNull Document document) {
+    document.putUserData(BlockSupport.DO_NOT_REPARSE_INCREMENTALLY, Boolean.TRUE);
+  }
+
+  @Override
+  public void bulkUpdateFinished(@NotNull Document document) {
+    myDocumentCommitProcessor.commitAsynchronously(myProject, document, "Bulk update finished",
+                                                   TransactionGuard.getInstance().getContextTransaction());
   }
 
   class PriorityEventCollector implements PrioritizedInternalDocumentListener {

@@ -16,19 +16,21 @@
 package com.intellij.updater;
 
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.testFramework.rules.TempDirectory;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 
 import java.io.File;
-import java.io.FileWriter;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
 import static org.junit.Assume.assumeFalse;
-import static org.junit.Assume.assumeTrue;
 
 public class UtilsTest {
   @Rule public TempDirectory tempDir = new TempDirectory();
@@ -60,16 +62,16 @@ public class UtilsTest {
 
   @Test
   public void testDeleteLockedFileOnWindows() throws Exception {
-    assumeTrue("windows only", Utils.IS_WINDOWS);
+    IoTestUtil.assumeWindows();
 
     File f = tempDir.newFile("temp_file");
     assertTrue(f.exists());
 
     long ts = 0;
-    try (FileWriter fw = new FileWriter(f)) {
+    try (OutputStream os = new FileOutputStream(f)) {
       // This locks the file on Windows, preventing it from being deleted.
       // Utils.delete() will retry for about 100 ms.
-      fw.write("test");
+      os.write("test".getBytes(StandardCharsets.UTF_8));
       ts = System.nanoTime();
 
       Utils.delete(f);
@@ -84,13 +86,13 @@ public class UtilsTest {
 
   @Test
   public void testDeleteLockedFileOnUnix() throws Exception {
-    assumeFalse("windows-allergic",Utils.IS_WINDOWS);
+    assumeFalse("Windows-allergic", Utils.IS_WINDOWS);
 
     File f = tempDir.newFile("temp_file");
     assertTrue(f.exists());
 
-    try (FileWriter fw = new FileWriter(f)) {
-      fw.write("test");
+    try (OutputStream os = new FileOutputStream(f)) {
+      os.write("test".getBytes(StandardCharsets.UTF_8));
       Utils.delete(f);
     }
   }
@@ -112,7 +114,7 @@ public class UtilsTest {
 
   @Test
   public void testNonRecursiveSymlinkDelete() throws Exception {
-    assumeFalse("windows-allergic",Utils.IS_WINDOWS);
+    IoTestUtil.assumeSymLinkCreationIsSupported();
 
     File dir = tempDir.newFolder("temp_dir");
     File file = new File(dir, "file");
@@ -131,7 +133,7 @@ public class UtilsTest {
 
   @Test
   public void testDeleteDanglingSymlink() throws Exception {
-    assumeFalse("windows-allergic",Utils.IS_WINDOWS);
+    IoTestUtil.assumeSymLinkCreationIsSupported();
 
     File dir = tempDir.newFolder("temp_dir");
     File link = new File(dir, "link");

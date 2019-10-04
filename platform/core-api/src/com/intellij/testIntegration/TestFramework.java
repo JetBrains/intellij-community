@@ -64,6 +64,24 @@ public interface TestFramework {
   @NotNull
   FileTemplateDescriptor getTestMethodFileTemplateDescriptor();
 
+  @Nullable
+  default PsiElement findBeforeClassMethod(@NotNull PsiElement clazz) {
+    return null;
+  }
+
+  default FileTemplateDescriptor getBeforeClassMethodFileTemplateDescriptor() {
+    return null;
+  }
+
+  @Nullable
+  default PsiElement findAfterClassMethod(@NotNull PsiElement clazz) {
+    return null;
+  }
+
+  default FileTemplateDescriptor getAfterClassMethodFileTemplateDescriptor() {
+    return null;
+  }
+
   /**
    * should be checked for abstract method error
    */

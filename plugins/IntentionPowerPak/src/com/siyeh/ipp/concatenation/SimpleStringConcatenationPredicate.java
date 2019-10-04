@@ -32,7 +32,7 @@ class SimpleStringConcatenationPredicate implements PsiElementPredicate {
 
   @Override
   public boolean satisfiedBy(PsiElement element) {
-    if (!ExpressionUtils.isConcatenation(element)) {
+    if (!ExpressionUtils.isStringConcatenation(element)) {
       return false;
     }
     return !(excludeConcatenationsInsideAnnotations && (AnnotationUtil.isInsideAnnotation(element) || 

@@ -1,3 +1,3 @@
-import exceptions
+import collections
 
-exceptions
+collections

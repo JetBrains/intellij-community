@@ -40,7 +40,8 @@ public class LowMemoryWatcher {
     LOG.info("Low memory signal received: afterGc=" + afterGc);
     for (LowMemoryWatcher watcher : ourListeners.toStrongList()) {
       try {
-        if (watcher.myType == LowMemoryWatcherType.ALWAYS || (watcher.myType == LowMemoryWatcherType.ONLY_AFTER_GC && afterGc)) {
+        if (watcher.myType == LowMemoryWatcherType.ALWAYS
+            || watcher.myType == LowMemoryWatcherType.ONLY_AFTER_GC && afterGc) {
           watcher.myRunnable.run();
         }
       }
@@ -78,12 +79,7 @@ public class LowMemoryWatcher {
   public static void register(@NotNull Runnable runnable, @NotNull LowMemoryWatcherType notificationType,
                               @NotNull Disposable parentDisposable) {
     final LowMemoryWatcher watcher = new LowMemoryWatcher(runnable, notificationType);
-    Disposer.register(parentDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        watcher.stop();
-      }
-    });
+    Disposer.register(parentDisposable, () -> watcher.stop());
   }
 
   public static void register(@NotNull Runnable runnable, @NotNull Disposable parentDisposable) {

@@ -33,7 +33,6 @@ import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.compiler.PatternCompiler;
 import com.intellij.structuralsearch.impl.matcher.predicates.ScriptLog;
 import com.intellij.structuralsearch.impl.matcher.predicates.ScriptSupport;
-import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
 import com.intellij.structuralsearch.plugin.util.StructuralSearchScriptScope;
 import com.intellij.ui.EditorTextField;
@@ -253,7 +252,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
   void copyValuesFromUI(@Nullable String varName) {
     if (varName == null) return;
     if (isReplacementVariable(varName)) {
-      saveScriptInfo(getOrAddReplacementVariableDefinition(varName, myConfiguration));
+      saveScriptInfo(UIUtil.getOrAddReplacementVariable(stripReplacementVarDecoration(varName), myConfiguration));
       return;
     }
 
@@ -298,19 +297,6 @@ class EditVarConstraintsDialog extends DialogWrapper {
                                    ? referenceTargetConstraint
                                    : '"' + referenceTargetConstraint + '"');
     varInfo.setInvertReference(invertReferenceTarget.isSelected());
-  }
-
-  private static ReplacementVariableDefinition getOrAddReplacementVariableDefinition(String varName, Configuration configuration) {
-    final ReplaceOptions replaceOptions = configuration.getReplaceOptions();
-    final String realVariableName = stripReplacementVarDecoration(varName);
-    ReplacementVariableDefinition variableDefinition = replaceOptions.getVariableDefinition(realVariableName);
-
-    if (variableDefinition == null) {
-      variableDefinition = new ReplacementVariableDefinition();
-      variableDefinition.setName(realVariableName);
-      replaceOptions.addVariableDefinition(variableDefinition);
-    }
-    return variableDefinition;
   }
 
   private void saveScriptInfo(NamedScriptableDefinition varInfo) {

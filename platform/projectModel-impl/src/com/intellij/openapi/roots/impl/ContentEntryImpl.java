@@ -254,6 +254,7 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
     mySourceFolders.clear();
   }
 
+  @NotNull
   @Override
   public ExcludeFolder addExcludeFolder(@NotNull VirtualFile file) {
     assert !isDisposed();
@@ -261,6 +262,7 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
     return addExcludeFolder(new ExcludeFolderImpl(file, this));
   }
 
+  @NotNull
   @Override
   public ExcludeFolder addExcludeFolder(@NotNull String url) {
     assert !isDisposed();
@@ -347,7 +349,8 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
     }
   }
 
-  private ExcludeFolder addExcludeFolder(ExcludeFolder f) {
+  @NotNull
+  private ExcludeFolder addExcludeFolder(@NotNull ExcludeFolder f) {
     Disposer.register(this, (Disposable)f);
     myExcludeFolders.add(f);
     return f;

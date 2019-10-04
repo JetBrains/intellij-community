@@ -39,7 +39,7 @@ public class IterateOverIterableIntention implements IntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    final TemplateImpl template = getTemplate();
+    final TemplateImpl template = file instanceof PsiJavaFile ? getTemplate() : null;
     if (template != null) {
       int offset = editor.getCaretModel().getOffset();
       int startOffset = offset;

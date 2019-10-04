@@ -9,6 +9,7 @@ import com.intellij.remoteServer.ServerType;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.RemoteServersManager;
 import com.intellij.util.text.UniqueNameGenerator;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -96,6 +97,7 @@ public abstract class CloudConfigurableBase<SC extends CloudConfigurationBase> e
   /**
    * This method is not used anymore and will be removed in 2019.1
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2019.1")
   @Deprecated
   protected final RemoteServer<SC> createTempServer() {
     RemoteServer<SC> tempServer = RemoteServersManager.getInstance().createServer(myCloudType, generateServerName());

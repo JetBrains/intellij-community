@@ -3,8 +3,8 @@ class Test {
   }
 
   void bar() {
-      E[] strs = {E.E1, E.E2};
-      foo(strs);
+      E[] strings = {E.E1, E.E2};
+      foo(strings);
   }
 }
 

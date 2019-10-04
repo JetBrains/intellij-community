@@ -43,7 +43,7 @@ class PersistentRangeMarkerUtil {
       return false;
     }
 
-    // Perform complex processing only if significant document part is updated.
-    return (Math.max(e.getNewLength(), e.getOldLength()) * 1.0) / e.getDocument().getTextLength() >= 0.8;
+    // Perform complex processing only if at least 80% of document was updated.
+    return Math.max(e.getNewLength(), e.getOldLength()) * 5 >= e.getDocument().getTextLength() * 4;
   }
 }

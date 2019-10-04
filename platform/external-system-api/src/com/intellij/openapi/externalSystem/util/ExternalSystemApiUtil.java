@@ -19,6 +19,7 @@ import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalS
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsListener;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -50,7 +51,8 @@ import java.io.StringWriter;
 import java.util.*;
 import java.util.function.Consumer;
 
-import static com.intellij.util.PlatformUtils.*;
+import static com.intellij.util.PlatformUtils.getPlatformPrefix;
+import static com.intellij.util.PlatformUtils.isIntelliJ;
 
 /**
  * @author Denis Zhdanov
@@ -162,7 +164,7 @@ public class ExternalSystemApiUtil {
 
   @NotNull
   public static String getLocalFileSystemPath(@NotNull VirtualFile file) {
-    if (file.getFileType() == ArchiveFileType.INSTANCE) {
+    if (FileTypeRegistry.getInstance().isFileOfType(file, ArchiveFileType.INSTANCE)) {
       final VirtualFile jar = JarFileSystem.getInstance().getVirtualFileForJar(file);
       if (jar != null) {
         return jar.getPath();
@@ -173,7 +175,7 @@ public class ExternalSystemApiUtil {
 
   @Nullable
   public static ExternalSystemManager<?, ?, ?, ?, ?> getManager(@NotNull ProjectSystemId externalSystemId) {
-    for (ExternalSystemManager manager : ExternalSystemManager.EP_NAME.getExtensions()) {
+    for (ExternalSystemManager manager : ExternalSystemManager.EP_NAME.getIterable()) {
       if (externalSystemId.equals(manager.getSystemId())) {
         return manager;
       }
@@ -446,7 +448,7 @@ public class ExternalSystemApiUtil {
    */
   public static boolean isOneToOneMapping(@NotNull Project ideProject, @NotNull ProjectData projectData) {
     String linkedExternalProjectPath = null;
-    for (ExternalSystemManager<?, ?, ?, ?, ?> manager : getAllManagers()) {
+    for (ExternalSystemManager<?, ?, ?, ?, ?> manager : ExternalSystemManager.EP_NAME.getIterable()) {
       ProjectSystemId externalSystemId = manager.getSystemId();
       AbstractExternalSystemSettings systemSettings = getSettings(ideProject, externalSystemId);
       Collection projectsSettings = systemSettings.getLinkedProjectsSettings();
@@ -556,7 +558,9 @@ public class ExternalSystemApiUtil {
     }
   }
 
-  private static String stacktraceAsString(Throwable unwrapped) {
+  @NotNull
+  public static String stacktraceAsString(@NotNull Throwable throwable) {
+    Throwable unwrapped = RemoteUtil.unwrap(throwable);
     StringWriter writer = new StringWriter();
     unwrapped.printStackTrace(new PrintWriter(writer));
     return writer.toString();
@@ -721,18 +725,6 @@ public class ExternalSystemApiUtil {
 
   @ApiStatus.Experimental
   @Nullable
-  public static DataNode<ModuleData> findModuleData(@NotNull Module module,
-                                                    @NotNull ProjectSystemId systemId) {
-    String externalProjectPath = getExternalProjectPath(module);
-    if (externalProjectPath == null) return null;
-    Project project = module.getProject();
-    DataNode<ProjectData> projectNode = findProjectData(project, systemId, externalProjectPath);
-    if (projectNode == null) return null;
-    return find(projectNode, ProjectKeys.MODULE, node -> externalProjectPath.equals(node.getData().getLinkedExternalProjectPath()));
-  }
-
-  @ApiStatus.Experimental
-  @Nullable
   public static DataNode<ProjectData> findProjectData(@NotNull Project project,
                                                       @NotNull ProjectSystemId systemId,
                                                       @NotNull String projectPath) {
@@ -749,9 +741,8 @@ public class ExternalSystemApiUtil {
     AbstractExternalSystemSettings settings = getSettings(project, systemId);
     ExternalProjectSettings linkedProjectSettings = settings.getLinkedProjectSettings(projectPath);
     if (linkedProjectSettings == null) return null;
-    return ProjectDataManager.getInstance().getExternalProjectsData(project, systemId).stream()
-      .filter(info -> FileUtil.pathsEqual(linkedProjectSettings.getExternalProjectPath(), info.getExternalProjectPath()))
-      .findFirst().orElse(null);
+    String rootProjectPath = linkedProjectSettings.getExternalProjectPath();
+    return ProjectDataManager.getInstance().getExternalProjectData(project, systemId, rootProjectPath);
   }
 
   /**

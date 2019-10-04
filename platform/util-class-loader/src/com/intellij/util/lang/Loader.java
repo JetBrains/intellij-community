@@ -14,35 +14,38 @@ import java.net.URL;
  * @see FileLoader
  */
 abstract class Loader {
+  @NotNull
   private final URL myURL;
   private final int myIndex;
   private ClasspathCache.NameFilter myLoadingFilter;
 
-  Loader(URL url, int index) {
+  Loader(@NotNull URL url, int index) {
     myURL = url;
     myIndex = index;
   }
 
+  @NotNull
   URL getBaseURL() {
     return myURL;
   }
 
   @Nullable
-  abstract Resource getResource(String name);
+  abstract Resource getResource(@NotNull String name);
   
-  @NotNull abstract ClasspathCache.LoaderData buildData() throws IOException;
+  @NotNull
+  abstract ClasspathCache.LoaderData buildData() throws IOException;
 
   int getIndex() {
     return myIndex;
   }
 
-  boolean containsName(String name, String shortName) {
-    if (name == null || name.isEmpty()) return true;
+  boolean containsName(@NotNull String name, @NotNull String shortName) {
+    if (name.isEmpty()) return true;
     ClasspathCache.NameFilter filter = myLoadingFilter;
     return filter == null || filter.maybeContains(shortName);
   }
 
-  void applyData(ClasspathCache.LoaderData loaderData) {
+  void applyData(@NotNull ClasspathCache.LoaderData loaderData) {
     myLoadingFilter = loaderData.getNameFilter();
   }
 }

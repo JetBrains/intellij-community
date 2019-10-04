@@ -33,8 +33,8 @@ open class SingleChangeListCommitWorkflow(
   val initialChangeList: LocalChangeList? = null,
   executors: List<CommitExecutor> = emptyList(),
   final override val isDefaultCommitEnabled: Boolean = executors.isEmpty(),
-  val vcsToCommit: AbstractVcs<*>? = null,
-  affectedVcses: Set<AbstractVcs<*>> = if (vcsToCommit != null) setOf(vcsToCommit) else emptySet(),
+  val vcsToCommit: AbstractVcs? = null,
+  affectedVcses: Set<AbstractVcs> = if (vcsToCommit != null) setOf(vcsToCommit) else emptySet(),
   private val isDefaultChangeListFullyIncluded: Boolean = true,
   val initialCommitMessage: String? = null,
   private val resultHandler: CommitResultHandler? = null
@@ -75,22 +75,26 @@ open class SingleChangeListCommitWorkflow(
 
   protected open fun doCommit(commitState: ChangeListCommitState) {
     LOG.debug("Do actual commit")
-    val committer = SingleChangeListCommitter(project, commitState, commitContext, commitHandlers, vcsToCommit, DIALOG_TITLE,
-                                              isDefaultChangeListFullyIncluded)
 
-    committer.addResultHandler(resultHandler ?: DefaultCommitResultHandler(committer))
-    committer.runCommit(DIALOG_TITLE, false)
+    with(SingleChangeListCommitter(project, commitState, commitContext, vcsToCommit, DIALOG_TITLE, isDefaultChangeListFullyIncluded)) {
+      addResultHandler(CommitHandlersNotifier(commitHandlers))
+      addResultHandler(getCommitEventDispatcher())
+      addResultHandler(resultHandler ?: ShowNotificationCommitResultHandler(this))
+
+      runCommit(DIALOG_TITLE, false)
+    }
   }
 
   private fun doCommitCustom(executor: CommitExecutor, session: CommitSession) {
     val cleaner = DefaultNameChangeListCleaner(project, commitState)
-    var success = false
-    try {
-      success = doCommitCustom(executor, session, commitState.changes, commitState.commitMessage)
-    }
-    finally {
-      if (success) cleaner.clean()
-      resultHandler?.let { if (success) it.onSuccess(commitState.commitMessage) else it.onFailure() }
+
+    with(CustomCommitter(project, session, commitState.changes, commitState.commitMessage)) {
+      addResultHandler(CommitHandlersNotifier(commitHandlers))
+      addResultHandler(CommitResultHandler { cleaner.clean() })
+      addResultHandler(getCommitCustomEventDispatcher())
+      resultHandler?.let { addResultHandler(it) }
+
+      runCommit(executor.actionText)
     }
   }
 }

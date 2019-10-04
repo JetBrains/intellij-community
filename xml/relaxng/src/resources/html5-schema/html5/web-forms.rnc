@@ -584,6 +584,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 		(	common.attrs
 		&	(	common.attrs.aria.implicit.group
 			|	common.attrs.aria.role.group
+			|	common.attrs.aria.role.radiogroup
 			|	common.attrs.aria.role.presentation
 			)?
 		)

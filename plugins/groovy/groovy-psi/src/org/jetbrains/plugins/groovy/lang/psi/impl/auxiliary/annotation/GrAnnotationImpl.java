@@ -197,6 +197,10 @@ public class GrAnnotationImpl extends GrStubElementBase<GrAnnotationStub> implem
     if (owner instanceof GrTypeElement) {
       return new TargetType[]{TargetType.TYPE_USE};
     }
+    if (owner instanceof GrCodeReferenceElement) {
+      return new TargetType[]{TargetType.TYPE_USE};
+    }
+
 
     return TargetType.EMPTY_ARRAY;
   }

@@ -175,21 +175,21 @@ class ImmutableCollectionModelUtils {
       PsiStatement statement = ObjectUtils.tryCast(RefactoringUtil.getParentStatement(call, false), PsiStatement.class);
       if (statement == null) return;
 
+      model.myCall = call;
       String assignedVariable = model.myAssignedVariable;
       if (assignedVariable != null) {
-        String initializerText = model.myType.getInitializerText(model.myIsVarArgCall ? null : model.myCall.getText());
+        String initializerText = model.myType.getInitializerText(model.myIsVarArgCall ? null : call.getText());
         PsiReplacementUtil.replaceExpressionAndShorten(call, initializerText, new CommentTracker());
         PsiElement anchor = addUpdates(assignedVariable, model, statement);
         if (myEditor != null) myEditor.getCaretModel().moveToOffset(anchor.getTextRange().getEndOffset());
       }
       else {
-        createVariable(call, statement, model);
+        createVariable(statement, model);
       }
     }
 
-    private void createVariable(@NotNull PsiMethodCallExpression call,
-                                @NotNull PsiStatement statement,
-                                @NotNull ImmutableCollectionModel model) {
+    private void createVariable(@NotNull PsiStatement statement, @NotNull ImmutableCollectionModel model) {
+      PsiMethodCallExpression call = model.myCall;
       PsiType type = call.getType();
       if (type == null) return;
       String[] names = getNameSuggestions(call, type);
@@ -295,7 +295,7 @@ class ImmutableCollectionModelUtils {
    */
   static class ImmutableCollectionModel {
 
-    private final PsiMethodCallExpression myCall;
+    private PsiMethodCallExpression myCall;
     private final CollectionType myType;
     private final boolean myIsVarArgCall;
     private final PsiExpression[] myArgs;

@@ -9,6 +9,7 @@ import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.util.TimeoutUtil
+import org.jetbrains.ide.PooledThreadExecutor
 import java.awt.event.InputEvent
 import java.util.*
 

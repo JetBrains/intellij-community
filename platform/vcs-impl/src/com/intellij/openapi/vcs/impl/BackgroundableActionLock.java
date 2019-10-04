@@ -16,7 +16,6 @@
 package com.intellij.openapi.vcs.impl;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 
@@ -65,12 +64,13 @@ public class BackgroundableActionLock {
 
   @CalledInAwt
   public static void unlock(@NotNull Project project, @NotNull Object... keys) {
+    if (project.isDisposed()) return;
     getManager(project).stopBackgroundTask(keys);
   }
 
   @NotNull
   private static ProjectLevelVcsManagerImpl getManager(@NotNull Project project) {
-    return (ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(project);
+    return ProjectLevelVcsManagerImpl.getInstanceImpl(project);
   }
 
 

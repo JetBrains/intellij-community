@@ -1564,7 +1564,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
       else {
         setValid(true);
         int newOffset = Math.min(intervalStart(), e.getOffset() + e.getNewLength());
-        if (!((DocumentEx)e.getDocument()).isInBulkUpdate() && e.isWholeTextReplaced()) {
+        if (!e.getDocument().isInBulkUpdate() && e.isWholeTextReplaced()) {
           try {
             final int line = ((DocumentEventImpl)e).translateLineViaDiff(myLogicalCaret.line);
             newOffset = myEditor.logicalPositionToOffset(new LogicalPosition(line, myLogicalCaret.column));

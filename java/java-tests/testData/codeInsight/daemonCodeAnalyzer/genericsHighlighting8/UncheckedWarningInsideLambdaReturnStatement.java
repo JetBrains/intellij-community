@@ -12,7 +12,7 @@ class Test {
 
         class AB {
           List<String> a() {
-            return <warning descr="Unchecked assignment: 'java.util.ArrayList' to 'java.util.List<java.lang.String>'">new ArrayList()</warning>;
+            return new <warning descr="Unchecked assignment: 'java.util.ArrayList' to 'java.util.List<java.lang.String>'">ArrayList</warning>();
           }
         }
 

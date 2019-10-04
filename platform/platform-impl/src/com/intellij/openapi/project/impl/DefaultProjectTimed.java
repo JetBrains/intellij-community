@@ -7,10 +7,11 @@ import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.util.TimedReference;
 import org.jetbrains.annotations.NotNull;
 
-public abstract class DefaultProjectTimed extends TimedReference<Project> {
+public abstract class DefaultProjectTimed extends TimedReference<ProjectEx> {
   @NotNull
   private final Disposable myParentDisposable;
 
@@ -20,14 +21,14 @@ public abstract class DefaultProjectTimed extends TimedReference<Project> {
   }
 
   @NotNull
-  abstract Project compute();
+  abstract ProjectEx compute();
 
   abstract void init(Project project);
 
   @NotNull
   @Override
-  public synchronized Project get() {
-    Project value = super.get();
+  public synchronized ProjectEx get() {
+    ProjectEx value = super.get();
     if (value == null) {
       value = compute();
       set(value);
@@ -49,6 +50,8 @@ public abstract class DefaultProjectTimed extends TimedReference<Project> {
       }
     };
     if (ApplicationManager.getApplication().isDispatchThread()) {
+      // to prevent deadlock, ensure correct lock ordering: app write lock->sync(Timed)
+      ApplicationManager.getApplication().assertWriteAccessAllowed();
       doDispose.run();
     }
     else {

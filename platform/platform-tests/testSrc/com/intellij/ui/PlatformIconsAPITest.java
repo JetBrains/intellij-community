@@ -12,7 +12,6 @@ import java.util.TreeSet;
  * @author Konstantin Bulenkov
  */
 public class PlatformIconsAPITest extends TestCase {
-
   public void testCurrentAPI() {
     //todo[kb, tav] Check that icons added to AllIcons are also added to PUBLIC_API_ICONS. Add svg icons
   }

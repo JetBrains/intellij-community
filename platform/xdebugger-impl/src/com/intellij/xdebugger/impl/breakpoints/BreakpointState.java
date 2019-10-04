@@ -25,7 +25,7 @@ public class BreakpointState<B extends XBreakpoint<P>, P extends XBreakpointProp
   private String myTypeId;
   private boolean myEnabled;
   private Element myPropertiesElement;
-  private SuspendPolicy mySuspendPolicy = XBreakpointType.DEFAULT_SUSPEND_POLICY;
+  private SuspendPolicy mySuspendPolicy = SuspendPolicy.ALL;
   private boolean myLogMessage;
   private boolean myLogStack;
   private LogExpression myLogExpression;

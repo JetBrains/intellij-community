@@ -55,7 +55,7 @@ abstract class FileIndexBase implements FileIndex {
   public boolean iterateContentUnderDirectory(@NotNull final VirtualFile dir,
                                               @NotNull final ContentIterator processor,
                                               @Nullable VirtualFileFilter customFilter) {
-    final VirtualFileVisitor.Result result = VfsUtilCore.visitChildrenRecursively(dir, new VirtualFileVisitor() {
+    final VirtualFileVisitor.Result result = VfsUtilCore.visitChildrenRecursively(dir, new VirtualFileVisitor<Void>() {
       @NotNull
       @Override
       public Result visitFileEx(@NotNull VirtualFile file) {
@@ -65,6 +65,10 @@ abstract class FileIndexBase implements FileIndex {
             if (!info.processContentBeneathExcluded(file, content -> iterateContentUnderDirectory(content, processor, customFilter))) {
               return skipTo(dir);
             }
+            return SKIP_CHILDREN;
+          }
+          if (info.isIgnored()) {
+            // it's certain nothing can be found under ignored directory
             return SKIP_CHILDREN;
           }
         }

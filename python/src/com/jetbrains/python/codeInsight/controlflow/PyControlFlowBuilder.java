@@ -912,7 +912,8 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     final PyExpression assignedValue = node.getAssignedValue();
     if (assignedValue != null) assignedValue.accept(this);
 
-    node.getTarget().accept(this);
+    final PyTargetExpression target = node.getTarget();
+    if (target != null) target.accept(this);
   }
 
   private void abruptFlow(final PsiElement node) {

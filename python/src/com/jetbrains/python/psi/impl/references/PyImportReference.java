@@ -182,21 +182,25 @@ public class PyImportReference extends PyReferenceImpl {
       if (fromImport != null && myElement.getParent() != fromImport) { // in "from foo import _"
         PyReferenceExpression src = fromImport.getImportSource();
         if (src != null) {
-          PsiElement modCandidate = src.getReference().resolve();
-          if (modCandidate instanceof PyExpression) {
-            addImportedNames(fromImport.getImportElements()); // don't propose already imported items
-            // try to collect submodules
-            PyExpression module = (PyExpression)modCandidate;
-            PyType qualifierType = myContext.getType(module);
-            if (qualifierType != null) {
-              ProcessingContext ctx = new ProcessingContext();
-              ctx.put(PyType.CTX_NAMES, myNamesAlready);
-              Collections.addAll(myObjects, qualifierType.getCompletionVariants(myElement.getName(), myElement, ctx));
+          ResolveResult[] resolved = src.getReference().multiResolve(false);
+          for (ResolveResult result : resolved) {
+            PsiElement modCandidate = result.getElement();
+            if (modCandidate instanceof PyExpression) {
+              addImportedNames(fromImport.getImportElements()); // don't propose already imported items
+              // try to collect submodules
+              PyExpression module = (PyExpression)modCandidate;
+              PyType qualifierType = myContext.getType(module);
+              if (qualifierType != null) {
+                ProcessingContext ctx = new ProcessingContext();
+                ctx.put(PyType.CTX_NAMES, myNamesAlready);
+                Collections.addAll(myObjects, qualifierType.getCompletionVariants(myElement.getName(), myElement, ctx));
+              }
             }
-            return myObjects.toArray();
+            else if (modCandidate instanceof PsiDirectory) {
+              fillFromDir((PsiDirectory)modCandidate, ImportKeywordHandler.INSTANCE);
+            }
           }
-          else if (modCandidate instanceof PsiDirectory) {
-            fillFromDir((PsiDirectory)modCandidate, ImportKeywordHandler.INSTANCE);
+          if (!myObjects.isEmpty()) {
             return myObjects.toArray();
           }
         }

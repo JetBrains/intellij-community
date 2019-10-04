@@ -35,11 +35,13 @@ public class DefaultDebugExecutor extends Executor {
   private final String myStartActionText = XDebuggerBundle.message("debugger.runner.start.action.text");
   private final String myDescription = XDebuggerBundle.message("string.debugger.runner.description");
 
+  @NotNull
   @Override
   public String getToolWindowId() {
     return ToolWindowId.DEBUG;
   }
 
+  @NotNull
   @Override
   public Icon getToolWindowIcon() {
     return AllIcons.Toolwindows.ToolWindowDebugger;

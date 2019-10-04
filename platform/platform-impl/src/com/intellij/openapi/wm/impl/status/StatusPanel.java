@@ -22,7 +22,6 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.JBMenuItem;
@@ -38,6 +37,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import sun.swing.SwingUtilities2;
 
 import javax.accessibility.AccessibleContext;
 import javax.accessibility.AccessibleRole;
@@ -52,13 +52,12 @@ import java.awt.event.MouseEvent;
  * @author peter
  */
 class StatusPanel extends JPanel {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.status.StatusPanel");
   private Notification myCurrentNotification;
-  private int myTimeStart;
+  @Nullable private String myTimeText;
   private boolean myDirty;
   private boolean myAfterClick;
   private Alarm myLogAlarm;
-  private final Action myCopyAction;
+  private Action myCopyAction;
   private final TextPanel myTextPanel = new TextPanel() {
     @Override
     protected String getTextForPreferredSize() {
@@ -72,18 +71,13 @@ class StatusPanel extends JPanel {
 
     @Override
     protected String truncateText(String text, Rectangle bounds, FontMetrics fm, Rectangle textR, Rectangle iconR, int maxWidth) {
-      if (myTimeStart > 0) {
-        if (myTimeStart >= text.length()) {
-          LOG.error(myTimeStart + " " + text.length());
-        }
-        final String time = text.substring(myTimeStart);
-        final int withoutTime = maxWidth - fm.stringWidth(time);
-
-        int end = Math.min(myTimeStart - 1, 1000);
+      if (myTimeText != null && text.endsWith(myTimeText)) {
+        int withoutTime = maxWidth - SwingUtilities2.stringWidth(this, fm, myTimeText);
+        int end = Math.min(text.length() - myTimeText.length() - 1, 1000);
         while (end > 0) {
           final String truncated = text.substring(0, end) + "... ";
-          if (fm.stringWidth(truncated) < withoutTime) {
-            text = truncated + time;
+          if (SwingUtilities2.stringWidth(this, fm, truncated) < withoutTime) {
+            text = truncated + myTimeText;
             break;
           }
           end--;
@@ -112,7 +106,6 @@ class StatusPanel extends JPanel {
         return true;
       }
     }.installOn(myTextPanel);
-    myCopyAction = createCopyAction();
 
     myTextPanel.addMouseListener(new MouseAdapter() {
       @Override
@@ -127,7 +120,9 @@ class StatusPanel extends JPanel {
 
       @Override
       public void mouseReleased(MouseEvent e) {
-        if (myCopyAction != null && e.isPopupTrigger()) {
+        if (SwingUtilities.isRightMouseButton(e)) {
+          if (myCopyAction == null) myCopyAction = createCopyAction();
+
           JBPopupMenu menu = new JBPopupMenu();
           menu.add(new JBMenuItem(myCopyAction));
           menu.show(myTextPanel, e.getX(), e.getY());
@@ -207,10 +202,10 @@ class StatusPanel extends JPanel {
           assert statusMessage != null;
           String text = statusMessage.second;
           if (myDirty || System.currentTimeMillis() - statusMessage.third >= DateFormatUtil.MINUTE) {
-            myTimeStart = text.length() + 1;
-            text += " (" + StringUtil.decapitalize(DateFormatUtil.formatPrettyDateTime(statusMessage.third)) + ")";
+            myTimeText = "(" + StringUtil.decapitalize(DateFormatUtil.formatPrettyDateTime(statusMessage.third)) + ")";
+            text += " " + myTimeText;
           } else {
-            myTimeStart = -1;
+            myTimeText = null;
           }
           setStatusText(text);
           alarm.addRequest(this, 30000);
@@ -218,7 +213,7 @@ class StatusPanel extends JPanel {
       }.run();
     }
     else {
-      myTimeStart = -1;
+      myTimeText = null;
       UIUtil.setCursor(myTextPanel, Cursor.getDefaultCursor());
       myDirty = true;
       setStatusText(nonLogText);

@@ -28,10 +28,6 @@ import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 import org.jetbrains.jps.model.java.JavaSourceRootProperties
 import org.jetbrains.jps.model.module.JpsModule
 
-import java.nio.file.FileSystems
-import java.nio.file.Files
-import java.nio.file.Path
-import java.nio.file.Paths
 import java.util.function.BiFunction
 /**
  * @author nik
@@ -200,21 +196,6 @@ class BuildContextImpl extends BuildContext {
     getSourceRootsWithPrefixes(findRequiredModule(moduleName)).collect {
       new File(it.first, StringUtil.trimStart(relativePath, it.second))
     }.find {it.exists()}
-  }
-
-  @Override
-  boolean hasResource(String moduleName, String relativePath) {
-    String propertyName = "module." + moduleName + ".output." + "main"
-    def output = ant.project.getProperty(propertyName)
-    if (output.endsWith(".jar")) {
-      // If it is precompiled check the jar
-      def outputPath = Paths.get(output)
-      def fs = FileSystems.newFileSystem(outputPath, null)
-      return Files.exists(fs.getPath(relativePath))
-    } else{
-      // Otherwise, find the source file
-      return findFileInModuleSources(moduleName, relativePath)
-    }
   }
 
   @SuppressWarnings(["GrUnresolvedAccess", "GroovyInArgumentCheck"])

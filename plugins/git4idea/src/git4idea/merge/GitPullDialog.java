@@ -164,9 +164,6 @@ public class GitPullDialog extends DialogWrapper {
   public GitLineHandler makeHandler(@NotNull List<String> urls) {
     GitLineHandler h = new GitLineHandler(myProject, gitRoot(), GitCommand.PULL, REBASE_CONFIG_PARAMS);
     h.setUrls(urls);
-    if(GitVersionSpecialty.ABLE_TO_USE_PROGRESS_IN_REMOTE_COMMANDS.existsIn(myProject)) {
-      h.addParameters("--progress");
-    }
     h.addParameters("--no-stat");
     if (myNoCommitCheckBox.isSelected()) {
       h.addParameters("--no-commit");
@@ -300,14 +297,7 @@ public class GitPullDialog extends DialogWrapper {
         text = GitBundle.getString("util.remote.renderer.self");
       }
       else {
-        String key;
-        if (defaultRemote != null && defaultRemote.equals(remote.getName())) {
-          key = "util.remote.renderer.default";
-        }
-        else {
-          key = "util.remote.renderer.normal";
-        }
-        text = GitBundle.message(key, remote.getName(), remote.getFirstUrl());
+        text = String.format("<html><b>%s</b>(<i>%s</i>)</html>", remote.getName(), remote.getFirstUrl());
       }
       label.setText(text);
     });

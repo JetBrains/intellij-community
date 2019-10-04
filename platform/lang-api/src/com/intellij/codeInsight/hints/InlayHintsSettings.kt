@@ -5,6 +5,7 @@ import com.intellij.configurationStore.deserializeInto
 import com.intellij.configurationStore.serialize
 import com.intellij.lang.Language
 import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import org.jdom.Element
@@ -18,6 +19,8 @@ class InlayHintsSettings : PersistentStateComponent<InlayHintsSettings.State> {
     var disabledHintProviderIds: MutableSet<String> = hashSetOf()
     // We can't store Map<String, Any> directly, because values deserialized as Object
     var settingsMapElement = Element("settingsMapElement")
+
+    var lastViewedProviderKeyId: String? = null
   }
 
   private val myCachedSettingsMap: MutableMap<String, Any> = hashMapOf()
@@ -29,6 +32,14 @@ class InlayHintsSettings : PersistentStateComponent<InlayHintsSettings.State> {
     } else {
       myState.disabledHintProviderIds.add(id)
     }
+  }
+
+  fun saveLastViewedProviderId(providerId: String) = synchronized(lock) {
+    state.lastViewedProviderKeyId = providerId
+  }
+
+  fun getLastViewedProviderId() : String? {
+    return state.lastViewedProviderKeyId
   }
 
   fun invertHintTypeStatus(key: SettingsKey<*>, language: Language) = synchronized(lock) {
@@ -44,10 +55,9 @@ class InlayHintsSettings : PersistentStateComponent<InlayHintsSettings.State> {
   /**
    * @param uninitSettings is a setting, that was obtained from createSettings method of provider
    */
-  fun <T: Any> findSettings(key: SettingsKey<T>, language: Language, uninitSettings: T): T = synchronized(lock) {
+  fun <T: Any> findSettings(key: SettingsKey<T>, language: Language, uninitSettings: ()->T): T = synchronized(lock) {
     val fullId = key.getFullId(language)
-    @Suppress("UNCHECKED_CAST")
-    return getSettingCached(fullId, uninitSettings) as T
+    return getSettingCached(fullId, uninitSettings)
   }
 
   fun <T: Any> storeSettings(key: SettingsKey<T>, language: Language, value: T) = synchronized(lock){
@@ -88,13 +98,14 @@ class InlayHintsSettings : PersistentStateComponent<InlayHintsSettings.State> {
   }
 
   // may return parameter settings object or cached object
-  private fun getSettingCached(id: String, settings: Any): Any {
-    val cachedValue = myCachedSettingsMap[id]
+  private fun <T : Any> getSettingCached(id: String, settings: ()->T): T {
+    @Suppress("UNCHECKED_CAST")
+    val cachedValue = myCachedSettingsMap[id] as T?
     if (cachedValue != null) return cachedValue
-    return getSettingNotCached(id, settings)
+    return getSettingNotCached(id, settings())
   }
 
-  private fun getSettingNotCached(id: String, settings: Any): Any {
+  private fun <T : Any> getSettingNotCached(id: String, settings: T): T {
     val state = myState.settingsMapElement
     val settingsElement = state.getChild(id) ?: return settings
     val settingsElementChildren= settingsElement.children
@@ -102,6 +113,13 @@ class InlayHintsSettings : PersistentStateComponent<InlayHintsSettings.State> {
     settingsElementChildren.first().deserializeInto(settings)
     myCachedSettingsMap[id] = settings
     return settings
+  }
+
+  companion object {
+    @JvmStatic
+    fun instance(): InlayHintsSettings {
+      return ServiceManager.getService(InlayHintsSettings::class.java)
+    }
   }
 }
 

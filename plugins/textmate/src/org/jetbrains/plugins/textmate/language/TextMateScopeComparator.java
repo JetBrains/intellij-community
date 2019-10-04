@@ -17,9 +17,9 @@ public class TextMateScopeComparator<T extends TextMateScopeSelectorOwner> imple
   @NotNull
   private static final TextMateSelectorWeigher myWeigher = new TextMateSelectorCachingWeigher(new TextMateSelectorWeigherImpl());
   @NotNull
-  private final String myScope;
+  private final CharSequence myScope;
 
-  public TextMateScopeComparator(@NotNull String scope) {
+  public TextMateScopeComparator(@NotNull CharSequence scope) {
     myScope = scope;
   }
 

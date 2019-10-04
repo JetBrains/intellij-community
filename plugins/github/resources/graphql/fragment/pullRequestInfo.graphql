@@ -1,0 +1,33 @@
+fragment pullRequestInfo on PullRequest {
+  ...pullRequestInfoShort
+
+  bodyHTML
+  mergeable
+
+  author {
+    ...actorInfo
+  }
+  createdAt
+
+  reviewRequests(first: 100) {
+    nodes {
+      ... on ReviewRequest {
+        requestedReviewer {
+          ...pullRequestReviewerInfo
+        }
+      }
+    }
+  }
+
+  baseRefName
+  baseRefOid
+
+  headRefName
+  headRefOid
+  headRepository {
+    nameWithOwner
+  }
+
+  viewerCanUpdate
+  viewerDidAuthor
+}

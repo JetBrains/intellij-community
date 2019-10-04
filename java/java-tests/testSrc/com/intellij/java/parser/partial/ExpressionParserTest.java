@@ -34,7 +34,8 @@ public class ExpressionParserTest extends JavaParsingTestCase {
   public void testNot0() { doParserTest("!!a"); }
   public void testNot1() { doParserTest("!"); }
 
-  public void testCast() { doParserTest("(Type)var"); }
+  public void testCast0() { doParserTest("(Type)var"); }
+  public void testCast1() { doParserTest("(double)1 / 5"); }
 
   public void testParenth0() { doParserTest("(c)"); }
   public void testParenth1() { doParserTest("(this).f--"); }
@@ -142,7 +143,7 @@ public class ExpressionParserTest extends JavaParsingTestCase {
   public void testLambdaExpression24() { doParserTest("var -> var"); }
   public void testLambdaExpression25() { doParserTest("(var) -> var"); }
   public void testLambdaExpression26() { doParserTest("(var var) -> var"); }
-  public void testAmbiguousLambdaExpression() { doParserTest("f( (x) < y , z > (w) -> v )"); }
+  public void testLambdaExpression27() { doParserTest("z > (w) -> v"); }
 
   public void testTextBlockLiteral0() { doParserTest("\"\"\".\"\"\""); }
 

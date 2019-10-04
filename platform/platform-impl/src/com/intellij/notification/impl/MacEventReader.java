@@ -3,7 +3,6 @@ package com.intellij.notification.impl;
 
 import com.intellij.notification.Notification;
 import com.intellij.notification.Notifications;
-import com.intellij.notification.NotificationsAdapter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -13,19 +12,17 @@ import com.intellij.util.ConcurrencyUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executor;
 
 class MacEventReader {
   private static final int MAX_MESSAGE_LENGTH = 100;
   private static final Logger LOG = Logger.getInstance("#com.intellij.notification.impl.MacEventReader");
-  private static final NotificationsAdapter ourNotificationAdapter = new NotificationsAdapter() {
+  private static final Notifications ourNotificationAdapter = new Notifications() {
     @Override
     public void notify(@NotNull Notification notification) {
       process(notification);
     }
   };
-
-  private static ExecutorService ourService = null;
 
   MacEventReader() {
     if (SystemInfo.isMac) {
@@ -55,7 +52,7 @@ class MacEventReader {
 
     if (!message.isEmpty()) {
       final String copy = message;
-      getService().submit(() -> {
+      ExecutorHolder.ourService.execute(() -> {
         try {
           Runtime.getRuntime().exec("say " + copy).waitFor();
         }
@@ -66,11 +63,8 @@ class MacEventReader {
     }
   }
 
-  private static synchronized ExecutorService getService() {
-    if (ourService == null) {
-      ourService = ConcurrencyUtil.newSingleThreadExecutor("Mac event reader");
-    }
-    return ourService;
+  private static class ExecutorHolder  {
+    private static final Executor ourService = ConcurrencyUtil.newSingleThreadExecutor("Mac event reader");
   }
 
   public static class ProjectTracker {

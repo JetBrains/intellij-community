@@ -60,6 +60,7 @@ public class FileCodeStyleProviderTest extends UsefulTestCase {
 
   public void testFileCodeStyleProvider() {
     PsiFile file = myFixture.configureByText("a.java", "class Foo {}");
+    CodeStyle.dropTemporarySettings(file.getProject());
     CodeStyleSettings settings = CodeStyle.getSettings(file);
     assertSame(myTestSettings, settings);
   }

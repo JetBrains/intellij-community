@@ -16,6 +16,8 @@
 package com.intellij.junit3;
 
 import com.intellij.rt.execution.junit.*;
+import com.intellij.rt.junit.DeafStream;
+import com.intellij.rt.junit.IdeaTestRunner;
 import junit.framework.*;
 import junit.textui.ResultPrinter;
 import junit.textui.TestRunner;

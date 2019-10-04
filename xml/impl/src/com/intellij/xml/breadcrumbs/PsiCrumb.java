@@ -8,19 +8,20 @@ import com.intellij.psi.PsiAnchor;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.breadcrumbs.BreadcrumbsProvider;
 import com.intellij.ui.components.breadcrumbs.Crumb;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Sergey.Malenkov
  */
-final class PsiCrumb extends Crumb.Impl implements NavigatableCrumb {
+final class PsiCrumb extends Crumb.Impl implements NavigatableCrumb, LazyTooltipCrumb {
   private final PsiAnchor anchor;
-  private BreadcrumbsProvider provider;
-  private String tooltip;
+  private volatile BreadcrumbsProvider provider;
+  private volatile String tooltip;
   final CrumbPresentation presentation;
 
-  PsiCrumb(PsiElement element, BreadcrumbsProvider provider, CrumbPresentation presentation) {
+  PsiCrumb(@NotNull PsiElement element, @NotNull BreadcrumbsProvider provider, @Nullable CrumbPresentation presentation) {
     super(provider.getElementIcon(element), provider.getElementInfo(element), null, provider.getContextActions(element));
     anchor = PsiAnchor.create(element);
     this.provider = provider;
@@ -29,12 +30,18 @@ final class PsiCrumb extends Crumb.Impl implements NavigatableCrumb {
 
   @Override
   public String getTooltip() {
-    if (tooltip == null && provider != null) {
+    if (needCalculateTooltip()) {
       PsiElement element = getElement(this);
-      if (element != null) tooltip = provider.getElementTooltip(element);
+      tooltip = element == null ? null
+                                : provider.getElementTooltip(element);
       provider = null; // do not try recalculate tooltip
     }
     return tooltip;
+  }
+
+  @Override
+  public boolean needCalculateTooltip() {
+    return provider != null && tooltip == null;
   }
 
   @Override
@@ -43,6 +50,7 @@ final class PsiCrumb extends Crumb.Impl implements NavigatableCrumb {
     return element != null ? element.getTextOffset() : -1;
   }
 
+  @Nullable
   @Override
   public TextRange getHighlightRange() {
     PsiElement element = anchor.retrieve();
@@ -71,12 +79,12 @@ final class PsiCrumb extends Crumb.Impl implements NavigatableCrumb {
     }
   }
 
-  @Nullable
+  @Contract("null -> null")
   static PsiElement getElement(Crumb crumb) {
     return crumb instanceof PsiCrumb ? ((PsiCrumb)crumb).anchor.retrieve() : null;
   }
 
-  @Nullable
+  @Contract(value = "null -> null", pure = true)
   static CrumbPresentation getPresentation(Crumb crumb) {
     return crumb instanceof PsiCrumb ? ((PsiCrumb)crumb).presentation : null;
   }

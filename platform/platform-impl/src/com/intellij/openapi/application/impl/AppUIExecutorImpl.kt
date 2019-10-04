@@ -8,15 +8,18 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.TransactionGuard
 import com.intellij.openapi.application.constraints.ConstrainedExecution.ContextConstraint
-import com.intellij.openapi.application.constraints.ExpirableConstrainedExecution
 import com.intellij.openapi.application.constraints.Expiration
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
-import org.jetbrains.concurrency.CancellablePromise
-import java.util.concurrent.Callable
+import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.util.concurrent.Executor
 import java.util.function.BooleanSupplier
+import kotlin.coroutines.ContinuationInterceptor
+import kotlin.coroutines.CoroutineContext
 
 /**
  * @author peter
@@ -26,32 +29,31 @@ internal class AppUIExecutorImpl private constructor(private val modality: Modal
                                                      constraints: Array<ContextConstraint>,
                                                      cancellationConditions: Array<BooleanSupplier>,
                                                      expirableHandles: Set<Expiration>)
-  : ExpirableConstrainedExecution<AppUIExecutorEx>(constraints, cancellationConditions, expirableHandles), AppUIExecutorEx {
+  : AppUIExecutor,
+    BaseExpirableExecutorMixinImpl<AppUIExecutorImpl>(constraints, cancellationConditions, expirableHandles, MyExecutor(modality)) {
 
-  constructor(modality: ModalityState) : this(modality, arrayOf(/* fallback */ object : ContextConstraint {
-    override fun isCorrectContext(): Boolean =
-      ApplicationManager.getApplication().isDispatchThread && !ModalityState.current().dominates(modality)
+  constructor(modality: ModalityState) : this(modality, emptyArray(), emptyArray(), emptySet())
 
-    override fun schedule(runnable: Runnable) {
-      ApplicationManager.getApplication().invokeLater(runnable, modality)
+  private class MyExecutor(private val modality: ModalityState) : Executor {
+    override fun execute(command: Runnable) {
+      if (ApplicationManager.getApplication().isDispatchThread && !ModalityState.current().dominates(modality)) {
+        command.run()
+      }
+      else {
+        ApplicationManager.getApplication().invokeLater(command, modality)
+      }
     }
-
-    override fun toString() = "onUiThread($modality)"
-  }), emptyArray(), emptySet())
+  }
 
   override fun cloneWith(constraints: Array<ContextConstraint>,
                          cancellationConditions: Array<BooleanSupplier>,
-                         expirationSet: Set<Expiration>): AppUIExecutorEx =
+                         expirationSet: Set<Expiration>): AppUIExecutorImpl =
     AppUIExecutorImpl(modality, constraints, cancellationConditions, expirationSet)
 
   override fun dispatchLaterUnconstrained(runnable: Runnable) =
     ApplicationManager.getApplication().invokeLater(runnable, modality)
 
-  override fun execute(command: Runnable): Unit = asExecutor().execute(command)
-  override fun submit(task: Runnable): CancellablePromise<*> = asExecutor().submit(task)
-  override fun <T : Any?> submit(task: Callable<T>): CancellablePromise<T> = asExecutor().submit(task)
-
-  override fun later(): AppUIExecutor {
+  override fun later(): AppUIExecutorImpl {
     val edtEventCount = if (ApplicationManager.getApplication().isDispatchThread) IdeEventQueue.getInstance().eventCount else -1
     return withConstraint(object : ContextConstraint {
       @Volatile
@@ -74,15 +76,11 @@ internal class AppUIExecutorImpl private constructor(private val modality: Modal
     })
   }
 
-  override fun withDocumentsCommitted(project: Project): AppUIExecutor {
+  override fun withDocumentsCommitted(project: Project): AppUIExecutorImpl {
     return withConstraint(WithDocumentsCommitted(project, modality), project)
   }
 
-  override fun inSmartMode(project: Project): AppUIExecutor {
-    return withConstraint(InSmartMode(project), project)
-  }
-
-  override fun inTransaction(parentDisposable: Disposable): AppUIExecutor {
+  override fun inTransaction(parentDisposable: Disposable): AppUIExecutorImpl {
     val id = TransactionGuard.getInstance().contextTransaction
     return withConstraint(object : ContextConstraint {
       override fun isCorrectContext(): Boolean =
@@ -99,7 +97,7 @@ internal class AppUIExecutorImpl private constructor(private val modality: Modal
     }).expireWith(parentDisposable)
   }
 
-  override fun inUndoTransparentAction(): AppUIExecutor {
+  fun inUndoTransparentAction(): AppUIExecutorImpl {
     return withConstraint(object : ContextConstraint {
       override fun isCorrectContext(): Boolean =
         CommandProcessor.getInstance().isUndoTransparentActionInProgress
@@ -112,7 +110,7 @@ internal class AppUIExecutorImpl private constructor(private val modality: Modal
     })
   }
 
-  override fun inWriteAction(): AppUIExecutor {
+  fun inWriteAction(): AppUIExecutorImpl {
     return withConstraint(object : ContextConstraint {
       override fun isCorrectContext(): Boolean =
         ApplicationManager.getApplication().isWriteAccessAllowed
@@ -124,7 +122,30 @@ internal class AppUIExecutorImpl private constructor(private val modality: Modal
       override fun toString() = "inWriteAction"
     })
   }
+
+  override fun inSmartMode(project: Project): AppUIExecutorImpl {
+    return withConstraint(InSmartMode(project), project)
+  }
 }
+
+
+fun AppUIExecutor.inUndoTransparentAction(): AppUIExecutor =
+  (this as AppUIExecutorImpl).inUndoTransparentAction()
+fun AppUIExecutor.inWriteAction():AppUIExecutor =
+  (this as AppUIExecutorImpl).inWriteAction()
+
+fun AppUIExecutor.withConstraint(constraint: ContextConstraint): AppUIExecutor =
+  (this as AppUIExecutorImpl).withConstraint(constraint)
+fun AppUIExecutor.withConstraint(constraint: ContextConstraint, parentDisposable: Disposable): AppUIExecutor =
+  (this as AppUIExecutorImpl).withConstraint(constraint, parentDisposable)
+
+/**
+ * A [context][CoroutineContext] to be used with the standard [launch], [async], [withContext] coroutine builders.
+ * Contains: [ContinuationInterceptor].
+ */
+fun AppUIExecutor.coroutineDispatchingContext(): ContinuationInterceptor =
+  (this as AppUIExecutorImpl).asCoroutineDispatcher()
+
 
 internal class WithDocumentsCommitted(private val project: Project, private val modality: ModalityState) : ContextConstraint {
   override fun isCorrectContext(): Boolean =

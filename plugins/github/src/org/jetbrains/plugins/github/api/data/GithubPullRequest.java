@@ -4,7 +4,6 @@ package org.jetbrains.plugins.github.api.data;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.github.api.data.util.GithubLink;
 
 import java.util.Date;
 import java.util.List;

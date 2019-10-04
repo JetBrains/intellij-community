@@ -148,9 +148,4 @@ public class DomExtensionImpl implements DomExtension {
     }
     return t;
   }
-
-  @Override
-  public String toString() {
-    return getXmlName().toString();
-  }
 }

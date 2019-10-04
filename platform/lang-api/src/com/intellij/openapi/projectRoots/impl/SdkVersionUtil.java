@@ -4,6 +4,7 @@
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.util.concurrency.AppExecutorUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JdkVersionDetector;
@@ -15,6 +16,7 @@ public class SdkVersionUtil {
   private SdkVersionUtil() { }
 
   /** @deprecated use {@link #getJdkVersionInfo(String)} (to be removed in IDEA 2019) */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2019")
   @Deprecated
   @Nullable
   public static String detectJdkVersion(@NotNull String homePath) {

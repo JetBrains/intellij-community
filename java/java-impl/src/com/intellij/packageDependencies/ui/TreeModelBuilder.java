@@ -194,7 +194,7 @@ public class TreeModelBuilder {
   }
 
   private void processFilesRecursively(@NotNull VirtualFile file) {
-    VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor() {
+    VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor<Void>() {
       private PackageDependenciesNode parent;
 
       @Override
@@ -218,7 +218,7 @@ public class TreeModelBuilder {
   }
 
   private void countFilesRecursively(VirtualFile file) {
-    VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor() {
+    VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor<Void>() {
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {
         if (!file.isDirectory()) {

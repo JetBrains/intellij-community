@@ -19,10 +19,14 @@ import com.intellij.codeInsight.completion.CompletionLocation;
 import com.intellij.codeInsight.completion.CompletionWeigher;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
 import com.jetbrains.python.PythonLanguage;
-import org.jetbrains.annotations.NonNls;
+import com.jetbrains.python.psi.PyReferenceExpression;
 import org.jetbrains.annotations.NotNull;
+
 
 /**
  * Weighs down items starting with two underscores.
@@ -31,15 +35,13 @@ import org.jetbrains.annotations.NotNull;
  */
 public class PythonCompletionWeigher extends CompletionWeigher {
 
-  public static final int WEIGHT_DELTA = 5;
-
-  @NonNls private static final String SINGLE_UNDER = "_";
-  @NonNls private static final String DOUBLE_UNDER = "__";
+  public static final int PRIORITY_WEIGHT = 5;
+  private static final Logger LOG = Logger.getInstance(PythonCompletionWeigher.class);
 
   @Override
   public Comparable weigh(@NotNull final LookupElement element, @NotNull final CompletionLocation location) {
     if (!PsiUtilCore.findLanguageFromElement(location.getCompletionParameters().getPosition()).isKindOf(PythonLanguage.getInstance())) {
-      return 0;
+      return PyCompletionUtilsKt.FALLBACK_WEIGHT;
     }
 
     final String name = element.getLookupString();
@@ -48,13 +50,18 @@ public class PythonCompletionWeigher extends CompletionWeigher {
     if ("dict key".equals(presentation.getTypeText())) {
       return element.getLookupString().length();
     }
-    if (name.startsWith(DOUBLE_UNDER)) {
-      if (name.endsWith(DOUBLE_UNDER)) return -4 * WEIGHT_DELTA; // __foo__ is lowest
-      else return -2 * WEIGHT_DELTA; // __foo is lower than normal
+
+    PsiElement psiElement = element.getPsiElement();
+    PsiFile file = location.getCompletionParameters().getOriginalFile();
+    if (psiElement != null) {
+      if (psiElement.getContainingFile() == file) return PRIORITY_WEIGHT;
+
+      PsiElement dummyParent = location.getCompletionParameters().getPosition().getParent();
+      boolean isQualified = dummyParent instanceof PyReferenceExpression && ((PyReferenceExpression)dummyParent).isQualified();
+      int completionWeight = PyCompletionUtilsKt.computeCompletionWeight(psiElement, name, null, file, isQualified);
+      LOG.debug("Combined weight for completion item ", name, ": ", completionWeight);
+      return completionWeight;
     }
-    if (name.startsWith(SINGLE_UNDER)) {
-      return -1 * WEIGHT_DELTA;
-    }
-    return 0; // default
+    return PyCompletionUtilsKt.FALLBACK_WEIGHT;
   }
 }

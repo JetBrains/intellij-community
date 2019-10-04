@@ -33,5 +33,13 @@ public interface RangeHighlighterEx extends RangeHighlighter, RangeMarkerEx {
    */
   boolean isVisibleIfFolded();
 
+  default boolean isRenderedInGutter() {
+    return getGutterIconRenderer() != null || getLineMarkerRenderer() != null;
+  }
+
+  default boolean isRenderedInScrollBar() {
+    return getErrorStripeMarkColor() != null;
+  }
+
   Comparator<RangeHighlighterEx> BY_AFFECTED_START_OFFSET = Comparator.comparingInt(RangeHighlighterEx::getAffectedAreaStartOffset);
 }

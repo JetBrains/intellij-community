@@ -27,7 +27,7 @@ import java.nio.charset.Charset;
 
 public class EncodingPanel extends EditorBasedStatusBarPopup {
   public EncodingPanel(@NotNull Project project) {
-    super(project);
+    super(project, true);
   }
 
   @NotNull
@@ -75,7 +75,7 @@ public class EncodingPanel extends EditorBasedStatusBarPopup {
 
   @NotNull
   @Override
-  protected StatusBarWidget createInstance(Project project) {
+  protected StatusBarWidget createInstance(@NotNull Project project) {
     return new EncodingPanel(project);
   }
 

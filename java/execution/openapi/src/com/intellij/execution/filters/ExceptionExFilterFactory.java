@@ -64,7 +64,7 @@ public class ExceptionExFilterFactory implements ExceptionFilterFactory {
     public void applyHeavyFilter(@NotNull final Document copiedFragment,
                                  final int startOffset,
                                  int startLineNumber,
-                                 @NotNull final Consumer<AdditionalHighlight> consumer) {
+                                 @NotNull final Consumer<? super AdditionalHighlight> consumer) {
       Map<String, ExceptionWorker.ParsedLine> visited = new THashMap<>();
       ExceptionWorker.ParsedLine emptyInfo = new ExceptionWorker.ParsedLine(TextRange.EMPTY_RANGE, TextRange.EMPTY_RANGE, TextRange.EMPTY_RANGE, null, -1);
 

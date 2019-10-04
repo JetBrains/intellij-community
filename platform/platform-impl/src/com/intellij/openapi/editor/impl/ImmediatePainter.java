@@ -25,7 +25,7 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Consumer;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.ImageUtil;
 import sun.awt.image.SunVolatileImage;
 
 import javax.swing.*;
@@ -209,7 +209,7 @@ class ImmediatePainter {
   private void createOrUpdateImageBuffer(final JComponent component, final Dimension size) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       if (myImage == null || !isLargeEnough(myImage, size)) {
-        myImage = UIUtil.createImage(size.width, size.height, BufferedImage.TYPE_INT_ARGB);
+        myImage = ImageUtil.createImage(size.width, size.height, BufferedImage.TYPE_INT_ARGB);
       }
     }
     else {

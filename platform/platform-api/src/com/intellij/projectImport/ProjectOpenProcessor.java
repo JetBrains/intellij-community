@@ -12,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.nio.file.Path;
 
 public abstract class ProjectOpenProcessor {
   public static final ExtensionPointName<ProjectOpenProcessor> EXTENSION_POINT_NAME =
@@ -57,18 +58,8 @@ public abstract class ProjectOpenProcessor {
    */
   @Nullable
   public static ProjectOpenProcessor getImportProvider(@NotNull VirtualFile file, boolean onlyIfExistingProjectFile) {
-    for (ProjectOpenProcessor provider : EXTENSION_POINT_NAME.getExtensionList()) {
+    for (ProjectOpenProcessor provider : EXTENSION_POINT_NAME.getIterable()) {
       if (provider.canOpenProject(file) && (!onlyIfExistingProjectFile || provider.isProjectFile(file))) {
-        return provider;
-      }
-    }
-    return null;
-  }
-
-  @Nullable
-  public static ProjectOpenProcessor getStrongImportProvider(@NotNull VirtualFile file) {
-    for (ProjectOpenProcessor provider : EXTENSION_POINT_NAME.getExtensionList()) {
-      if (provider.isStrongProjectInfoHolder() && provider.canOpenProject(file)) {
         return provider;
       }
     }
@@ -82,6 +73,6 @@ public abstract class ProjectOpenProcessor {
     return false;
   }
 
-  public void refreshProjectFiles(@NotNull VirtualFile baseDir) {
+  public void refreshProjectFiles(@NotNull Path baseDir) {
   }
 }

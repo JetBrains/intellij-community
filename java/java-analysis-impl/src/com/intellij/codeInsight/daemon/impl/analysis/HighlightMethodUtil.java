@@ -26,14 +26,17 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiSuperMethodImplUtil;
+import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.*;
+import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.MostlySingularMultiMap;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.intellij.lang.annotations.Language;
@@ -46,7 +49,7 @@ import java.util.stream.Stream;
 
 public class HighlightMethodUtil {
   private static final QuickFixFactory QUICK_FIX_FACTORY = QuickFixFactory.getInstance();
-  private static final String MISMATCH_COLOR = UIUtil.isUnderDarcula() ? "ff6464" : "red";
+  private static final String MISMATCH_COLOR = StartupUiUtil.isUnderDarcula() ? "ff6464" : "red";
   private static final Logger LOG = Logger.getInstance(HighlightMethodUtil.class);
 
   private HighlightMethodUtil() { }
@@ -393,15 +396,7 @@ public class HighlightMethodUtil {
       }
 
       if (highlightInfo == null) {
-        String errorMessage = ((MethodCandidateInfo)resolveResult).getInferenceErrorMessage();
-        if (errorMessage != null) {
-          highlightInfo = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(errorMessage).range(fixRange).create();
-          if (highlightInfo != null) {
-            registerMethodCallIntentions(highlightInfo, methodCall, list, resolveHelper);
-            registerMethodReturnFixAction(highlightInfo, (MethodCandidateInfo)resolveResult, methodCall);
-            registerTargetTypeFixesBasedOnApplicabilityInference(methodCall, (MethodCandidateInfo)resolveResult, (PsiMethod)resolved, highlightInfo);
-          }
-        }
+        highlightInfo = createIncompatibleTypeHighlightInfo(methodCall, resolveHelper, (MethodCandidateInfo)resolveResult, fixRange);
       }
     }
     else {
@@ -483,6 +478,31 @@ public class HighlightMethodUtil {
     return highlightInfo;
   }
 
+  public static HighlightInfo createIncompatibleTypeHighlightInfo(@NotNull PsiCallExpression methodCall,
+                                                                  @NotNull PsiResolveHelper resolveHelper,
+                                                                  MethodCandidateInfo resolveResult,
+                                                                  TextRange fixRange) {
+    String errorMessage = resolveResult.getInferenceErrorMessage();
+    if (errorMessage == null) return null;
+    PsiMethod method = resolveResult.getElement();
+    HighlightInfo highlightInfo;
+    PsiType expectedTypeByParent = InferenceSession.getTargetTypeByParent(methodCall);
+    PsiType actualType = resolveResult.getSubstitutor(false).substitute(method.getReturnType());
+    if (expectedTypeByParent != null && actualType != null && !expectedTypeByParent.isAssignableFrom(actualType)) {
+      highlightInfo = HighlightUtil
+        .createIncompatibleTypeHighlightInfo(expectedTypeByParent, actualType, fixRange, 0, XmlStringUtil.escapeString(errorMessage));
+    }
+    else {
+      highlightInfo = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(errorMessage).range(fixRange).create();
+    }
+    if (highlightInfo != null && methodCall instanceof PsiMethodCallExpression) {
+      registerMethodCallIntentions(highlightInfo, (PsiMethodCallExpression)methodCall, ((PsiMethodCallExpression)methodCall).getArgumentList(), resolveHelper);
+      registerMethodReturnFixAction(highlightInfo, resolveResult, methodCall);
+      registerTargetTypeFixesBasedOnApplicabilityInference((PsiMethodCallExpression)methodCall, resolveResult, method, highlightInfo);
+    }
+    return highlightInfo;
+  }
+
   private static void registerUsageFixes(@NotNull PsiMethodCallExpression methodCall,
                                          @Nullable HighlightInfo highlightInfo,
                                          @NotNull TextRange range) {
@@ -522,7 +542,8 @@ public class HighlightMethodUtil {
       PsiType rType = methodCall.getType();
       if (rType != null && !variable.getType().isAssignableFrom(rType)) {
         PsiType expectedTypeByApplicabilityConstraints = resolveResult.getSubstitutor(false).substitute(resolved.getReturnType());
-        if (expectedTypeByApplicabilityConstraints != null && !variable.getType().isAssignableFrom(expectedTypeByApplicabilityConstraints)) {
+        if (expectedTypeByApplicabilityConstraints != null && !variable.getType().isAssignableFrom(expectedTypeByApplicabilityConstraints) &&
+            PsiTypesUtil.allTypeParametersResolved(variable, expectedTypeByApplicabilityConstraints)) {
           HighlightFixUtil.registerChangeVariableTypeFixes(variable, expectedTypeByApplicabilityConstraints, methodCall, highlightInfo);
         }
       }
@@ -607,36 +628,41 @@ public class HighlightMethodUtil {
     final PsiSubstitutor substitutor = candidateInfo.getSubstitutor();
     final PsiParameter[] parameters = resolvedMethod.getParameterList().getParameters();
     if (expressions.length == parameters.length && parameters.length > 1) {
-      int idx = -1;
-      for (int i = 0; i < expressions.length; i++) {
-        PsiExpression expression = expressions[i];
-        if (!TypeConversionUtil.areTypesAssignmentCompatible(substitutor.substitute(parameters[i].getType()), expression)) {
-          if (idx != -1) {
-            idx = -1;
-            break;
-          }
-          else {
-            idx = i;
-          }
-        }
-      }
-
+      int idx = oneMismatchArgIdx(expressions, substitutor, parameters);
       if (idx > -1) {
         final PsiExpression wrongArg = expressions[idx];
         final PsiType argType = wrongArg.getType();
         if (argType != null) {
           elementToHighlight.set(wrongArg);
-          final String message = JavaErrorMessages
-            .message("incompatible.call.types", idx + 1, substitutor.substitute(parameters[idx].getType()).getCanonicalText(), argType.getCanonicalText());
-
-          return XmlStringUtil.wrapInHtml("<body>" + XmlStringUtil.escapeString(message) +
-                                          " <a href=\"#assignment/" + XmlStringUtil.escapeString(createMismatchedArgumentsHtmlTooltip(candidateInfo, list)) + "\"" +
-                                          (UIUtil.isUnderDarcula() ? " color=\"7AB4C9\" " : "") +
-                                          ">" + DaemonBundle.message("inspection.extended.description") + "</a></body>");
+          String moreLink =
+            " <a href=\"#assignment/" + XmlStringUtil.escapeString(createMismatchedArgumentsHtmlTooltip(candidateInfo, list)) + "\"" +
+            (StartupUiUtil.isUnderDarcula() ? " color=\"7AB4C9\" " : "") +
+            ">" + DaemonBundle.message("inspection.extended.description") + "</a>";
+          return
+            HighlightUtil.createIncompatibleTypesTooltip(substitutor.substitute(parameters[idx].getType()), argType,
+                                                         (lRawType, lTypeArguments, rRawType, rTypeArguments) ->
+                                                          JavaErrorMessages.message("incompatible.call.types.tooltip", idx + 1, lRawType, lTypeArguments, rRawType, rTypeArguments, moreLink));
         }
       }
     }
     return null;
+  }
+
+  private static int oneMismatchArgIdx(PsiExpression[] expressions, PsiSubstitutor substitutor, PsiParameter[] parameters) {
+    int idx = -1;
+    for (int i = 0; i < expressions.length; i++) {
+      PsiExpression expression = expressions[i];
+      if (!TypeConversionUtil.areTypesAssignmentCompatible(substitutor.substitute(parameters[i].getType()), expression)) {
+        if (idx != -1) {
+          idx = -1;
+          break;
+        }
+        else {
+          idx = i;
+        }
+      }
+    }
+    return idx;
   }
 
   static boolean isDummyConstructorCall(@NotNull PsiMethodCallExpression methodCall,
@@ -690,15 +716,16 @@ public class HighlightMethodUtil {
 
       description = HighlightUtil.staticContextProblemDescription(element);
     }
+    else if (candidates.length == 0) {
+      PsiClass qualifierClass = RefactoringChangeUtil.getQualifierClass(referenceToMethod);
+      String qualifier = qualifierClass != null ? qualifierClass.getName() : null;
+
+      description = qualifier != null ? JavaErrorMessages.message("ambiguous.method.call.no.match", referenceToMethod.getReferenceName(), qualifier)
+                                      : JavaErrorMessages.message("cannot.resolve.method", referenceToMethod.getReferenceName() + buildArgTypesList(list));
+      highlightInfoType = HighlightInfoType.WRONG_REF;
+    }
     else {
-      String methodName = referenceToMethod.getReferenceName() + buildArgTypesList(list);
-      description = JavaErrorMessages.message("cannot.resolve.method", methodName);
-      if (candidates.length == 0) {
-        highlightInfoType = HighlightInfoType.WRONG_REF;
-      }
-      else {
-        return null;
-      }
+      return null;
     }
 
     String toolTip = XmlStringUtil.escapeString(description);
@@ -1031,12 +1058,12 @@ public class HighlightMethodUtil {
       PsiParameter parameter = i < parameters.length ? parameters[i] : null;
       PsiExpression expression = i < expressions.length ? expressions[i] : null;
       boolean showShort = showShortType(i, parameters, expressions, substitutor);
-      String mismatchColor = showShort ? null : UIUtil.isUnderDarcula() ? "FF6B68" : "red";
+      String mismatchColor = showShort ? null : StartupUiUtil.isUnderDarcula() ? "FF6B68" : "red";
 
       s.append("<tr");
       if (i % 2 == 0) {
         //noinspection SpellCheckingInspection
-        String bg = UIUtil.isUnderDarcula() ? ColorUtil.toHex(ColorUtil.shift(UIUtil.getToolTipBackground(), 1.1)) : "eeeeee";
+        String bg = StartupUiUtil.isUnderDarcula() ? ColorUtil.toHex(ColorUtil.shift(UIUtil.getToolTipBackground(), 1.1)) : "eeeeee";
         s.append(" style='background-color: #").append(bg).append("'");
       }
       s.append(">");

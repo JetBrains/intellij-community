@@ -30,7 +30,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import com.intellij.util.BitUtil;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.TimerUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -152,11 +152,6 @@ public class HintManagerImpl extends HintManager {
         }
       }
     };
-  }
-
-  @Override
-  public boolean isHint(Window component) {
-    return myHintsStack.contains(component);
   }
 
   /**
@@ -351,7 +346,7 @@ public class HintManagerImpl extends HintManager {
 
     myHintsStack.add(new HintInfo(hint, flags, reviveOnEditorChange));
     if (timeout > 0) {
-      Timer timer = UIUtil.createNamedTimer("Hint timeout", timeout, event -> hint.hide());
+      Timer timer = TimerUtil.createNamedTimer("Hint timeout", timeout, event -> hint.hide());
       timer.setRepeats(false);
       timer.start();
     }
@@ -390,7 +385,7 @@ public class HintManagerImpl extends HintManager {
     }, flags, false);
     myHintsStack.add(info);
     if (timeout > 0) {
-      Timer timer = UIUtil.createNamedTimer("Popup timeout", timeout, event -> Disposer.dispose(popup));
+      Timer timer = TimerUtil.createNamedTimer("Popup timeout", timeout, event -> Disposer.dispose(popup));
       timer.setRepeats(false);
       timer.start();
     }
@@ -401,18 +396,23 @@ public class HintManagerImpl extends HintManager {
     JComponent externalComponent = getExternalComponent(editor);
     Dimension size = updateSize ? hint.getComponent().getPreferredSize() : hint.getComponent().getSize();
 
-    if (hint.isRealPopup()) {
-      final Point editorCorner = editor.getComponent().getLocation();
-      SwingUtilities.convertPointToScreen(editorCorner, externalComponent);
+    if (hint.isRealPopup() || hintInfo.isPopupForced()) {
       final Point point = new Point(p);
       SwingUtilities.convertPointToScreen(point, externalComponent);
       final Rectangle editorScreen = ScreenUtil.getScreenRectangle(point.x, point.y);
 
+      p = new Point(p);
+      if (hintInfo.getPreferredPosition() == Balloon.Position.atLeft) {
+        p.x -= size.width;
+      }
       SwingUtilities.convertPointToScreen(p, externalComponent);
       final Rectangle rectangle = new Rectangle(p, size);
       ScreenUtil.moveToFit(rectangle, editorScreen, null);
       p = rectangle.getLocation();
       SwingUtilities.convertPointFromScreen(p, externalComponent);
+      if (hintInfo.getPreferredPosition() == Balloon.Position.atLeft) {
+        p.x += size.width;
+      }
     }
     else if (externalComponent.getWidth() < p.x + size.width && !hintInfo.isAwtTooltip()) {
       p.x = Math.max(0, externalComponent.getWidth() - size.width);

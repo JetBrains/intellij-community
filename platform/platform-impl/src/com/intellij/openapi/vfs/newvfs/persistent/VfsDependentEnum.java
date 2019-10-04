@@ -16,7 +16,6 @@
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.containers.ConcurrentList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
@@ -28,7 +27,6 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentMap;
 
 // Relatively small T <-> int mapping for elements that have int numbers stored in vfs, similar to PersistentEnumerator<T>,
 // unlike later numbers assigned to T are consequent and retained in memory / expected to be small.
@@ -43,17 +41,18 @@ public class VfsDependentEnum<T> {
   // GuardedBy("myLock")
   private boolean myMarkedForInvalidation;
 
-  private final ConcurrentList<T> myInstances = ContainerUtil.createConcurrentList();
-  private final ConcurrentMap<T, Integer> myInstanceToId = ContainerUtil.newConcurrentMap();
+  private final List<T> myInstances = ContainerUtil.createConcurrentList();
+  private final Map<T, Integer> myInstanceToId = ContainerUtil.newConcurrentMap();
   private final Object myLock = new Object();
   private boolean myTriedToLoadFile;
 
-  public VfsDependentEnum(String fileName, KeyDescriptor<T> descriptor, int version) {
+  public VfsDependentEnum(@NotNull String fileName, @NotNull KeyDescriptor<T> descriptor, int version) {
     myFile = new File(FSRecords.basePath(), DEPENDENT_PERSISTENT_LIST_START_PREFIX + fileName  + FSRecords.VFS_FILES_EXTENSION);
     myKeyDescriptor = descriptor;
     myVersion = version;
   }
 
+  @NotNull
   static File getBaseFile() {
     return new File(FSRecords.basePath(), DEPENDENT_PERSISTENT_LIST_START_PREFIX);
   }

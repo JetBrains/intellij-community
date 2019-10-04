@@ -34,7 +34,7 @@ public class ScriptSupport {
    * We use a randomly generated uuid for this, so the chance of accidental collision with an existing variable name is extremely small.
    * This also enables to filter out this uuid from Groovy error messages, to clarify for which SSR variable the script failed.
    */
-  static final String UUID = "a3cd264774bf4efb9ab609b250c5165c";
+  public static final String UUID = "a3cd264774bf4efb9ab609b250c5165c";
 
   private final Script script;
   private final ScriptLog myScriptLog;

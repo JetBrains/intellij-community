@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.jvm;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.util.containers.ContainerUtil.filter;
@@ -14,6 +15,7 @@ public interface JvmModifiersOwner extends JvmAnnotatedElement {
    * @deprecated To be removed in 2018.3
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2018.3")
   @NotNull
   default JvmModifier[] getModifiers() {
     return filter(JvmModifier.values(), this::hasModifier).toArray(new JvmModifier[0]);

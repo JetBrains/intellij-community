@@ -204,8 +204,8 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
     while (each != null) {
       message += "\n each of class " + each.getClass() + "; valid=" + each.isValid();
       if (each instanceof StubBasedPsiElementBase) {
-        message += "; ref=" + ((StubBasedPsiElementBase)each).mySubstrateRef;
-        each = ((StubBasedPsiElementBase)each).getParentByStub();
+        message += "; ref=" + ((StubBasedPsiElementBase<?>)each).mySubstrateRef;
+        each = ((StubBasedPsiElementBase<?>)each).getParentByStub();
       }
       else {
         if (each instanceof PsiFile) {
@@ -214,9 +214,9 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
         break;
       }
     }
-    StubElement eachStub = getStub();
+    StubElement<?> eachStub = getStub();
     while (eachStub != null) {
-      message += "\n each stub " + (eachStub instanceof PsiFileStubImpl ? ((PsiFileStubImpl)eachStub).getDiagnostics() : eachStub);
+      message += "\n each stub " + (eachStub instanceof PsiFileStubImpl ? ((PsiFileStubImpl<?>)eachStub).getDiagnostics() : eachStub);
       eachStub = eachStub.getParentStub();
     }
 
@@ -335,7 +335,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
   @Override
   public PsiElement getParent() {
     T stub = getGreenStub();
-    if (stub != null && !((ObjectStubBase)stub).isDangling()) {
+    if (stub != null && !((ObjectStubBase<?>)stub).isDangling()) {
       return stub.getParentStub().getPsi();
     }
 
@@ -347,7 +347,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
     if (!(myElementType instanceof IStubElementType)) {
       throw new ClassCastException("Not a stub type: " + myElementType + " in " + getClass());
     }
-    return (IStubElementType)myElementType;
+    return (IStubElementType<?, ?>)myElementType;
   }
 
   /**
@@ -509,7 +509,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
 
   @Override
   protected Object clone() {
-    final StubBasedPsiElementBase copy = (StubBasedPsiElementBase)super.clone();
+    final StubBasedPsiElementBase<?> copy = (StubBasedPsiElementBase<?>)super.clone();
     copy.setSubstrateRef(SubstrateRef.createAstStrongRef(getNode()));
     return copy;
   }

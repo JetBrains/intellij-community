@@ -39,7 +39,7 @@ public final class ExtensionPointName<T> extends BaseExtensionPointName {
     return getPoint(null).getExtensionList();
   }
 
-  public void forEachExtensionSafe(Consumer<T> consumer) {
+  public void forEachExtensionSafe(@NotNull Consumer<? super T> consumer) {
     getPoint(null).forEachExtensionSafe(consumer);
   }
 
@@ -50,7 +50,8 @@ public final class ExtensionPointName<T> extends BaseExtensionPointName {
 
   @NotNull
   public List<T> getExtensionsIfPointIsRegistered(@Nullable AreaInstance areaInstance) {
-    ExtensionPoint<T> point = Extensions.getArea(areaInstance).getExtensionPointIfRegistered(getName());
+    ExtensionsArea area = areaInstance == null ? Extensions.getRootArea() : areaInstance.getExtensionArea();
+    ExtensionPoint<T> point = area == null ? null : area.getExtensionPointIfRegistered(getName());
     return point == null ? Collections.emptyList() : point.getExtensionList();
   }
 
@@ -89,7 +90,8 @@ public final class ExtensionPointName<T> extends BaseExtensionPointName {
 
   @NotNull
   public ExtensionPoint<T> getPoint(@Nullable AreaInstance areaInstance) {
-    return Extensions.getArea(areaInstance).getExtensionPoint(getName());
+    ExtensionsArea area = areaInstance == null ? Extensions.getRootArea() : areaInstance.getExtensionArea();
+    return area.getExtensionPoint(getName());
   }
 
   @Nullable
@@ -125,7 +127,7 @@ public final class ExtensionPointName<T> extends BaseExtensionPointName {
   @NotNull
   @ApiStatus.Experimental
   public Iterable<T> getIterable(@Nullable AreaInstance areaInstance) {
-    return ((ExtensionPointImpl<T>)getPoint(areaInstance));
+    return (ExtensionPointImpl<T>)getPoint(areaInstance);
   }
 
   @NotNull
@@ -136,7 +138,7 @@ public final class ExtensionPointName<T> extends BaseExtensionPointName {
 
   @ApiStatus.Experimental
   @ApiStatus.Internal
-  public void processWithPluginDescriptor(@NotNull BiConsumer<T, PluginDescriptor> consumer) {
-    (((ExtensionPointImpl<T>)getPoint(null))).processWithPluginDescriptor(consumer);
+  public void processWithPluginDescriptor(@NotNull BiConsumer<? super T, ? super PluginDescriptor> consumer) {
+    ((ExtensionPointImpl<T>)getPoint(null)).processWithPluginDescriptor(consumer);
   }
 }

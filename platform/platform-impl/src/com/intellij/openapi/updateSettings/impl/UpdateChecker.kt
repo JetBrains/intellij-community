@@ -90,7 +90,7 @@ object UpdateChecker {
 
   /**
    * For manual update checks (Help | Check for Updates, Settings | Updates | Check Now)
-   * (the latter action may pass customised update settings).
+   * (the latter action may pass customized update settings).
    */
   @JvmStatic
   fun updateAndShowResult(project: Project?, customSettings: UpdateSettings?) {
@@ -160,27 +160,18 @@ object UpdateChecker {
   }
 
   private fun checkPlatformUpdate(settings: UpdateSettings): CheckForUpdateResult {
-    val updateInfo: UpdatesInfo?
-    try {
+    val updateInfo = try {
       var updateUrl = Urls.newFromEncoded(updateUrl)
       if (updateUrl.scheme != URLUtil.FILE_PROTOCOL) {
         updateUrl = prepareUpdateCheckArgs(updateUrl)
       }
       LogUtil.debug(LOG, "load update xml (UPDATE_URL='%s')", updateUrl)
-
-      updateInfo = HttpRequests.request(updateUrl)
-        .connect {
-          try {
-            //We should ping update server anyway
-            val updatesInfo = UpdatesInfo(JDOMUtil.load(it.reader))
-            if (settings.isPlatformUpdateEnabled) updatesInfo else null
-          }
-          catch (e: JDOMException) {
-            // corrupted content, don't bother telling user
-            LOG.info(e)
-            null
-          }
-        }
+      HttpRequests.request(updateUrl).connect { UpdatesInfo(JDOMUtil.load(it.reader)) }
+    }
+    catch (e: JDOMException) {
+      // corrupted content, don't bother telling user
+      LOG.info(e)
+      null
     }
     catch (e: Exception) {
       LOG.info(e)
@@ -195,7 +186,7 @@ object UpdateChecker {
       return CheckForUpdateResult(UpdateStrategy.State.CONNECTION_ERROR, RuntimeException(e))
     }
 
-    if (updateInfo == null) {
+    if (updateInfo == null || !settings.isPlatformUpdateEnabled) {
       return CheckForUpdateResult(UpdateStrategy.State.NOTHING_LOADED, null)
     }
 
@@ -250,7 +241,7 @@ object UpdateChecker {
   }
 
   /**
-   * Returns a list of plugins which are currently installed or were installed in the previous installation from which
+   * Returns a list of plugins that are currently installed or were installed in the previous installation from which
    * we're importing the settings.
    */
   private fun collectUpdateablePlugins(): MutableMap<PluginId, IdeaPluginDescriptor> {
@@ -331,7 +322,7 @@ object UpdateChecker {
     if (PluginManagerCore.isDisabled(pluginId)) return
 
     val pluginVersion = downloader.pluginVersion
-    val installedPlugin = PluginManager.getPlugin(PluginId.getId(pluginId))
+    val installedPlugin = PluginManagerCore.getPlugin(PluginId.getId(pluginId))
     if (installedPlugin == null || pluginVersion == null || PluginDownloader.compareVersionsSkipBrokenAndIncompatible(installedPlugin, pluginVersion) > 0) {
       var descriptor: IdeaPluginDescriptor?
 
@@ -355,7 +346,7 @@ object UpdateChecker {
       }
     }
 
-    // collect plugins which were not updated and would be incompatible with new version
+    // collect plugins that were not updated and would be incompatible with the new version
     if (incompatiblePlugins != null && installedPlugin != null && installedPlugin.isEnabled &&
         !toUpdate.containsKey(installedPlugin.pluginId) &&
         !PluginManagerCore.isCompatible(installedPlugin, downloader.buildNumber)) {
@@ -656,7 +647,7 @@ object UpdateChecker {
     if (!ourHasFailedPlugins) {
       val app = ApplicationManager.getApplication()
       if (app != null && !app.isDisposed && !app.isDisposeInProgress && UpdateSettings.getInstance().isCheckNeeded) {
-        val pluginDescriptor = PluginManager.getPlugin(IdeErrorsDialog.findPluginId(event.throwable))
+        val pluginDescriptor = PluginManagerCore.getPlugin(IdeErrorsDialog.findPluginId(event.throwable))
         if (pluginDescriptor != null && !pluginDescriptor.isBundled) {
           ourHasFailedPlugins = true
           updateAndShowResult()

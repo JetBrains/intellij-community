@@ -7,13 +7,15 @@ import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.openapi.editor.Editor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Please implement InsertHandler instead.
+ * @deprecated Please implement InsertHandler instead.
  * To remove after IDEA 16
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2016")
 public class DefaultInsertHandler implements InsertHandler {
 
   @Override

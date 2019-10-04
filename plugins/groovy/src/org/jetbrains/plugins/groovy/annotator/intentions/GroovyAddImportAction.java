@@ -55,12 +55,12 @@ public class GroovyAddImportAction extends ImportClassFixBase<GrReferenceElement
   }
 
   @Override
-  protected String getQualifiedName(GrReferenceElement reference) {
+  protected String getQualifiedName(@NotNull GrReferenceElement reference) {
     return reference.getCanonicalText();
   }
 
   @Override
-  protected boolean isQualified(GrReferenceElement reference) {
+  protected boolean isQualified(@NotNull GrReferenceElement reference) {
     return reference.getQualifier() != null;
   }
 
@@ -91,7 +91,10 @@ public class GroovyAddImportAction extends ImportClassFixBase<GrReferenceElement
         if (vars.length == 1) {
           PsiExpression initializer = vars[0].getInitializer();
           if (initializer != null) {
-            return filterAssignableFrom(initializer.getType(), candidates);
+            PsiType type = initializer.getType();
+            if (type != null) {
+              return filterAssignableFrom(type, candidates);
+            }
           }
         }
       }
@@ -104,7 +107,7 @@ public class GroovyAddImportAction extends ImportClassFixBase<GrReferenceElement
   }
 
   @Override
-  protected String getRequiredMemberName(GrReferenceElement reference) {
+  protected String getRequiredMemberName(@NotNull GrReferenceElement reference) {
     if (reference.getParent() instanceof GrReferenceElement) {
       return ((GrReferenceElement)reference.getParent()).getReferenceName();
     }
@@ -112,7 +115,7 @@ public class GroovyAddImportAction extends ImportClassFixBase<GrReferenceElement
   }
 
   @Override
-  protected boolean isAccessible(PsiMember member, GrReferenceElement reference) {
+  protected boolean isAccessible(@NotNull PsiMember member, @NotNull GrReferenceElement reference) {
     return true;
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
 import com.intellij.lang.jvm.types.JvmPrimitiveType;
@@ -191,6 +191,13 @@ public class PsiPrimitiveType extends PsiType.Stub implements JvmPrimitiveType {
     return type instanceof PsiPrimitiveType ? (PsiPrimitiveType)type : getUnboxedType(type);
   }
 
+  /**
+   * This method is nullable since {@link PsiType#NULL} has no FQN.<br/>
+   * Consider using {@link JvmPrimitiveTypeKind#getBoxedFqn()} if you know the type you need to get FQN of,
+   * e.g. instead of {@code PsiType.INT.getBoxedTypeName()} use {@code JvmPrimitiveTypeKind.INT.getBoxedFqn()}.
+   *
+   * @see JvmPrimitiveTypeKind#getBoxedFqn
+   */
   @Nullable
   public String getBoxedTypeName() {
     return myKind == null ? null : myKind.getBoxedFqn();

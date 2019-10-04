@@ -6,9 +6,7 @@ class Test {
   }
 
   void m(List l){
-    boolean foo = <error descr="Incompatible types. Required boolean but 'foo' was inferred to T:
-Incompatible types: Object is not convertible to boolean">foo(l);</error>
-    String s = <error descr="Incompatible types. Required String but 'foo' was inferred to T:
-Incompatible types: Object is not convertible to String">foo(l);</error>
+    boolean foo = <error descr="Incompatible types. Found: 'java.lang.Object', required: 'boolean'">foo(l);</error>
+    String s = <error descr="Incompatible types. Found: 'java.lang.Object', required: 'java.lang.String'">foo(l);</error>
   }
 }

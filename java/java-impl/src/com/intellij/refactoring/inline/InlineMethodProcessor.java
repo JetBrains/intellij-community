@@ -5,6 +5,7 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.ExpressionUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
+import com.intellij.codeInsight.daemon.impl.quickfix.SimplifyBooleanExpressionFix;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
 import com.intellij.lang.Language;
@@ -317,9 +318,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     element.accept(collector);
     final Map<PsiMember, Set<PsiMember>> containersToReferenced = getInaccessible(collector.myReferencedMembers, usages, element);
 
-    final Set<PsiMember> containers = containersToReferenced.keySet();
-    for (PsiMember container : containers) {
-      Set<PsiMember> referencedInaccessible = containersToReferenced.get(container);
+    containersToReferenced.forEach((container, referencedInaccessible) -> {
       for (PsiMember referenced : referencedInaccessible) {
         final String referencedDescription = RefactoringUIUtil.getDescription(referenced, true);
         final String containerDescription = RefactoringUIUtil.getDescription(container, true);
@@ -327,7 +326,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
                                                    referencedDescription, containerDescription);
         conflicts.putValue(container, CommonRefactoringUtil.capitalize(message));
       }
-    }
+    });
   }
 
   /**
@@ -1056,6 +1055,16 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
         }
       }
     }
+
+    if (expr instanceof PsiLiteralExpression && PsiType.BOOLEAN.equals(expr.getType())) {
+      Boolean value = tryCast(((PsiLiteralExpression)expr).getValue(), Boolean.class);
+      if (value != null) {
+        SimplifyBooleanExpressionFix fix = new SimplifyBooleanExpressionFix(expr, value);
+        if (fix.isAvailable()) {
+          fix.invoke(myProject, expr.getContainingFile(), expr, expr);
+        }
+      }
+    }
     return initializer;
   }
 
@@ -1478,19 +1487,17 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       }
     }
 
-    final Set<PsiField> fields = myAddedClassInitializers.keySet();
-
-    for (PsiField psiField : fields) {
-      final PsiClassInitializer classInitializer = myAddedClassInitializers.get(psiField);
-      final PsiExpression initializer = getSimpleFieldInitializer(psiField, classInitializer);
-      if (initializer != null) {
-        psiField.getInitializer().replace(initializer);
+    myAddedClassInitializers.forEach((psiField, classInitializer) -> {
+      PsiExpression newInitializer = getSimpleFieldInitializer(psiField, classInitializer);
+      PsiExpression fieldInitializer = Objects.requireNonNull(psiField.getInitializer());
+      if (newInitializer != null) {
+        fieldInitializer.replace(newInitializer);
         classInitializer.delete();
       }
       else {
-        psiField.getInitializer().delete();
+        fieldInitializer.delete();
       }
-    }
+    });
   }
 
   private static boolean ifStatementWithAppendableElseBranch(PsiStatement statement) {
@@ -1515,6 +1522,9 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     return ((PsiAssignmentExpression)expression).getRExpression();
   }
 
+  /**
+   * @deprecated use {@link #checkUnableToInsertCodeBlock(PsiCodeBlock, PsiElement)}
+   */
   @Deprecated
   public static String checkCalledInSuperOrThisExpr(PsiCodeBlock methodBody, final PsiElement element) {
     return checkUnableToInsertCodeBlock(methodBody, element,

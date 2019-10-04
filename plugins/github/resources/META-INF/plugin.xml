@@ -44,7 +44,12 @@
     <statistics.applicationUsagesCollector
         implementation="org.jetbrains.plugins.github.authentication.accounts.GithubAccountsStatisticsCollector"/>
 
-    <diff.DiffExtension implementation="org.jetbrains.plugins.github.pullrequest.comment.GithubPullRequestCommentsDiffExtension"/>
+    <diff.DiffExtension implementation="org.jetbrains.plugins.github.pullrequest.comment.GHPRReviewThreadsDiffExtension"/>
+    <openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension
+        implementation="org.jetbrains.plugins.github.ui.cloneDialog.GHCloneDialogExtension"/>
+
+    <fileType name="GithubPullRequest" implementationClass="org.jetbrains.plugins.github.pullrequest.GHPRFileType"/>
+    <fileEditorProvider implementation="org.jetbrains.plugins.github.pullrequest.GHPREditorProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="Git4Idea">

@@ -24,8 +24,10 @@ import com.intellij.vcs.log.VcsLog;
 import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.impl.VcsGoToRefComparator;
+import com.intellij.vcs.log.impl.VcsLogManager;
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
+import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -40,6 +42,7 @@ public class GoToHashOrRefAction extends DumbAwareAction {
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     VcsLog log = e.getRequiredData(VcsLogDataKeys.VCS_LOG);
     VcsLogUi ui = e.getRequiredData(VcsLogDataKeys.VCS_LOG_UI);
+    VcsLogManager logManager = e.getRequiredData(VcsLogInternalDataKeys.LOG_MANAGER);
     assert ui instanceof AbstractVcsLogUi;
     AbstractVcsLogUi logUi = (AbstractVcsLogUi)ui;
 
@@ -47,7 +50,7 @@ public class GoToHashOrRefAction extends DumbAwareAction {
     GoToHashOrRefPopup popup =
       new GoToHashOrRefPopup(project, logUi.getDataPack().getRefs(), visibleRoots, log::jumpToReference,
                              vcsRef -> logUi.jumpToCommit(vcsRef.getCommitHash(), vcsRef.getRoot()),
-                             logUi.getColorManager(),
+                             logManager.getColorManager(),
                              new VcsGoToRefComparator(logUi.getDataPack().getLogProviders()));
     popup.show(logUi.getTable());
   }

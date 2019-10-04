@@ -41,7 +41,7 @@ public class FrequentEventDetector {
   private final int myEventCountThreshold;
   private final int myTimeSpanMs;
   private final Level myLevel;
-  private static AtomicInteger disableRequests = new AtomicInteger();
+  private static final AtomicInteger disableRequests = new AtomicInteger();
 
   public FrequentEventDetector(int eventCountThreshold, int timeSpanMs) {
     this(eventCountThreshold, timeSpanMs, Level.INFO);

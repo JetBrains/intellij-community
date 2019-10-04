@@ -20,7 +20,10 @@ import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.sun.jdi.Value;
 
 public interface ExpressionEvaluator {
-  //call evaluate before
+
+  /**
+   * @deprecated obsolete API, use {@link #evaluate(EvaluationContext)}
+   */
   @Deprecated
   default Value getValue() {
     return null;

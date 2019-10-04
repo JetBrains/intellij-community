@@ -10,7 +10,6 @@ import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.ChangesUtil.processChangesByVcs
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesCache
-import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.update.RefreshVFsSynchronously
 import com.intellij.util.WaitForProgressToShow.runOrInvokeLaterAboveProgress
 
@@ -19,9 +18,8 @@ open class LocalChangesCommitter(
   changes: List<Change>,
   commitMessage: String,
   commitContext: CommitContext,
-  handlers: List<CheckinHandler>,
   private val localHistoryActionName: String = "Commit Changes"
-) : AbstractCommitter(project, changes, commitMessage, commitContext, handlers) {
+) : AbstractCommitter(project, changes, commitMessage, commitContext) {
 
   private var myAction = LocalHistoryAction.NULL
 

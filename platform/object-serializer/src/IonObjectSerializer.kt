@@ -16,7 +16,7 @@ import java.lang.reflect.Type
 import java.nio.file.Path
 import kotlin.experimental.or
 
-private const val FORMAT_VERSION = 2
+private const val FORMAT_VERSION = 3
 
 internal class IonObjectSerializer {
   val readerBuilder: IonReaderBuilder = IonReaderBuilder.standard().immutable()

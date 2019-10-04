@@ -5,10 +5,7 @@ import com.intellij.diff.util.Side;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.VcsOutgoingChangesProvider;
-import com.intellij.openapi.vcs.VcsRoot;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.ex.PartialCommitHelper;
 import com.intellij.openapi.vcs.impl.PartialChangesUtil;
@@ -35,16 +32,17 @@ public class IdeaTextPatchBuilder {
                                                                           boolean honorExcludedFromCommit) throws VcsException {
     final List<BeforeAfter<AirContentRevision>> result = new ArrayList<>(changes.size());
     Map<VcsRoot, List<Change>> byRoots =
-      groupByRoots(project, changes, change -> chooseNotNull(getBeforePath(change), getAfterPath(change)));
+      groupByRoots(project, changes, true, change -> chooseNotNull(getBeforePath(change), getAfterPath(change)));
 
     for (VcsRoot root : byRoots.keySet()) {
       final Collection<Change> rootChanges = byRoots.get(root);
 
-      if (root.getVcs() == null || root.getVcs().getOutgoingChangesProvider() == null) {
+      AbstractVcs vcs = root != null ? root.getVcs() : null;
+      if (vcs == null || vcs.getOutgoingChangesProvider() == null) {
         addConvertChanges(project, rootChanges, result, null, honorExcludedFromCommit);
       }
       else {
-        final VcsOutgoingChangesProvider<?> provider = root.getVcs().getOutgoingChangesProvider();
+        final VcsOutgoingChangesProvider<?> provider = vcs.getOutgoingChangesProvider();
         final Collection<Change> basedOnLocal = provider.filterLocalChangesBasedOnLocalCommits(rootChanges, root.getPath());
         rootChanges.removeAll(basedOnLocal);
 

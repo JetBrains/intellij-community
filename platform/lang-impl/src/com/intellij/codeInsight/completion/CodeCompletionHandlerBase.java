@@ -30,6 +30,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
+import com.intellij.openapi.editor.actionSystem.TypedAction;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
@@ -257,7 +258,7 @@ public class CodeCompletionHandlerBase {
     }
     CompletionServiceImpl.setCompletionPhase(phase);
 
-    AppUIExecutor.onUiThread().withDocumentsCommitted(initContext.getProject()).expireWith(phase).submit(() -> {
+    AppUIExecutor.onUiThread().withDocumentsCommitted(initContext.getProject()).expireWith(phase).execute(() -> {
       if (phase instanceof CompletionPhase.CommittingDocuments) {
         ((CompletionPhase.CommittingDocuments)phase).replaced = true;
       }
@@ -658,7 +659,8 @@ public class CodeCompletionHandlerBase {
     }
     else {
       DataContext dataContext = DataManager.getInstance().getDataContext(context.getEditor().getContentComponent());
-      EditorActionManager.getInstance().getTypedAction().getHandler().execute(context.getEditor(), context.getCompletionChar(), dataContext);
+      EditorActionManager.getInstance();
+      TypedAction.getInstance().getHandler().execute(context.getEditor(), context.getCompletionChar(), dataContext);
     }
   }
 

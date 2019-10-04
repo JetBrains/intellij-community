@@ -45,7 +45,7 @@ public class ShRunConfigurationProfileState implements RunProfileState {
     if (shRunner == null || !shRunner.isAvailable(myProject)) {
       return buildExecutionResult();
     }
-    shRunner.run(buildCommand());
+    shRunner.run(buildCommand(), myRunConfiguration.getScriptWorkingDirectory());
     return null;
   }
 
@@ -98,7 +98,7 @@ public class ShRunConfigurationProfileState implements RunProfileState {
     commandLine.withConsoleMode(false);
     commandLine.withInitialColumns(120);
     commandLine.withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.CONSOLE);
-    commandLine.setWorkDirectory(virtualFile.getParent().getPath());
+    commandLine.setWorkDirectory(myRunConfiguration.getScriptWorkingDirectory());
 
     commandLine.setExePath(myRunConfiguration.getInterpreterPath());
     if (StringUtil.isNotEmpty(myRunConfiguration.getInterpreterOptions())) {

@@ -101,7 +101,7 @@ public abstract class CachedValueBase<T> {
   }
 
   @Nullable
-  final Data<T> getRawData() {
+  private Data<T> getRawData() {
     return SoftReference.dereference(myData);
   }
 

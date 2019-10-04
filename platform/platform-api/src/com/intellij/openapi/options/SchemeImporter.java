@@ -1,3 +1,4 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options;
 
 import com.intellij.openapi.project.Project;
@@ -6,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Provides functionality to import a scheme from another non-IntelliJ IDEA format.
+ * Provides functionality to import a scheme from another non-IntelliJ format.
  * 
  * @author Rustam Vishnyakov
  */
@@ -46,7 +47,7 @@ public interface SchemeImporter <T extends Scheme> {
   }
 
   /**
-   * @return File to import scheme. If it's {@code null} than file chooser is shown.
+   * @return File to import scheme. If {@code null}, file chooser is shown.
    */
   @Nullable
   default VirtualFile getImportFile() {

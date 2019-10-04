@@ -18,12 +18,13 @@ package com.intellij.execution.testframework.actions;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.TestFrameworkRunningModel;
+import com.intellij.ui.UIBundle;
 import com.intellij.util.config.ToggleBooleanProperty;
 
 public class ScrollToTestSourceAction extends ToggleBooleanProperty.Disablable {
   private TestFrameworkRunningModel myModel;
   public ScrollToTestSourceAction(final TestConsoleProperties properties) {
-    super(ExecutionBundle.message("junit.auto.scroll.to.source.action.name"),
+    super(UIBundle.message("autoscroll.to.source.action.name"),
           ExecutionBundle.message("junit.open.text.in.editor.action.name"),
           null, properties, TestConsoleProperties.SCROLL_TO_SOURCE);
   }

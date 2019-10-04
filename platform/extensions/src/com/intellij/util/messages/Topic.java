@@ -1,0 +1,128 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.util.messages;
+
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+
+/**
+ * Defines messaging endpoint within particular {@link MessageBus bus}.
+ *
+ * @param <L>  type of the interface that defines contract for working with the particular topic instance
+ */
+public class Topic<L> {
+  private final String myDisplayName;
+  private final Class<L> myListenerClass;
+  private final BroadcastDirection myBroadcastDirection;
+
+  public Topic(@NonNls @NotNull String displayName, @NotNull Class<L> listenerClass) {
+    this(displayName, listenerClass, BroadcastDirection.TO_CHILDREN);
+  }
+
+  public Topic(@NotNull Class<L> listenerClass) {
+    this(listenerClass.getSimpleName(), listenerClass, BroadcastDirection.TO_CHILDREN);
+  }
+
+  public Topic(@NonNls @NotNull String displayName, @NotNull Class<L> listenerClass, @NotNull BroadcastDirection broadcastDirection) {
+    myDisplayName = displayName;
+    myListenerClass = listenerClass;
+    myBroadcastDirection = broadcastDirection;
+  }
+
+  /**
+   * @return    human-readable name of the current topic. Is intended to be used in informational/logging purposes only
+   */
+  @NotNull
+  @NonNls
+  public String getDisplayName() {
+    return myDisplayName;
+  }
+
+  /**
+   * Allows to retrieve class that defines contract for working with the current topic. Either publishers or subscribers use it:
+   * <ul>
+   *   <li>
+   *     publisher {@link MessageBus#syncPublisher(Topic) receives} object that IS-A target interface from the messaging infrastructure.
+   *     It calls target method with the target arguments on it then (method of the interface returned by the current method);
+   *   </li>
+   *   <li>
+   *     the same method is called on handlers of all {@link MessageBusConnection#subscribe(Topic, Object) subscribers} that
+   *     should receive the message;
+   *   </li>
+   * </ul>
+   *
+   * @return    class of the interface that defines contract for working with the current topic
+   */
+  @NotNull
+  public Class<L> getListenerClass() {
+    return myListenerClass;
+  }
+
+  public String toString() {
+    return myDisplayName;
+  }
+
+  @NotNull
+  public static <L> Topic<L> create(@NonNls @NotNull String displayName, @NotNull Class<L> listenerClass) {
+    return new Topic<>(displayName, listenerClass);
+  }
+
+  @NotNull
+  public static <L> Topic<L> create(@NonNls @NotNull String displayName, @NotNull Class<L> listenerClass, BroadcastDirection direction) {
+    return new Topic<>(displayName, listenerClass, direction);
+  }
+
+  /**
+   * @return    broadcasting strategy configured for the current topic. Default value is {@link BroadcastDirection#TO_CHILDREN}
+   * @see BroadcastDirection
+   */
+  @NotNull
+  public BroadcastDirection getBroadcastDirection() {
+    return myBroadcastDirection;
+  }
+
+  /**
+   * {@link MessageBus Message buses} may be organised into {@link MessageBus#getParent() hierarchies}. That allows to provide
+   * additional messaging features like {@code 'broadcasting'}. Here it means that messages sent to particular topic within
+   * particular message bus may be dispatched to subscribers of the same topic within another message buses.
+   * <p/>
+   * Current enum holds available broadcasting options.
+   */
+  public enum BroadcastDirection {
+
+    /**
+     * The message is dispatched to all subscribers of the target topic registered within the child message buses.
+     * <p/>
+     * Example:
+     * <pre>
+     *                         parent-bus &lt;--- topic1
+     *                          /       \
+     *                         /         \
+     *    topic1 ---&gt; child-bus1     child-bus2 &lt;--- topic1
+     * </pre>
+     * <p/>
+     * Here subscribers of the {@code 'topic1'} registered within the {@code 'child-bus1'} and {@code 'child-bus2'}
+     * will receive the message sent to the {@code 'topic1'} topic at the {@code 'parent-bus'}.
+     */
+    TO_CHILDREN,
+
+    /**
+     * No broadcasting is performed for the
+     */
+    NONE,
+
+    /**
+     * The message send to particular topic at particular bus is dispatched to all subscribers of the same topic within the parent bus.
+     * <p/>
+     * Example:
+     * <pre>
+     *           parent-bus &lt;--- topic1
+     *                |
+     *            child-bus &lt;--- topic1
+     * </pre>
+     * <p/>
+     * Here subscribers of the {@code topic1} registered within {@code 'parent-bus'} will receive messages posted
+     * to the same topic within {@code 'child-bus'}.
+     */
+    TO_PARENT
+  }
+}

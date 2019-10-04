@@ -162,7 +162,7 @@ public class GraphTableController {
       CommitId commitId = myLogData.getCommitId(commit);
       if (commitId != null) {
         balloonText = "Jump to commit" + " " + commitId.getHash().toShortString();
-        if (myColorManager.isMultipleRoots()) {
+        if (myColorManager.hasMultiplePaths()) {
           balloonText += " in " + commitId.getRoot().getName();
         }
       }
@@ -208,7 +208,7 @@ public class GraphTableController {
   }
 
   private void performRootColumnAction() {
-    if (myColorManager.isMultipleRoots() && myProperties.exists(CommonUiProperties.SHOW_ROOT_NAMES)) {
+    if (myColorManager.hasMultiplePaths() && myProperties.exists(CommonUiProperties.SHOW_ROOT_NAMES)) {
       triggerClick("root.column");
       myProperties.set(CommonUiProperties.SHOW_ROOT_NAMES, !myProperties.get(CommonUiProperties.SHOW_ROOT_NAMES));
     }
@@ -300,6 +300,7 @@ public class GraphTableController {
 
     @Override
     public void mouseMoved(MouseEvent e) {
+      if (myTable.getRowCount() == 0) return;
       if (myTable.isResizingColumns()) return;
       myTable.getExpandableItemsHandler().setEnabled(true);
 

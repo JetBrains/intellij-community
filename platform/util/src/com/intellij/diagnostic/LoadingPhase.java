@@ -15,22 +15,37 @@ import java.util.stream.Collectors;
 
 @ApiStatus.Internal
 public enum LoadingPhase {
-  BOOTSTRAP,
-  SPLASH,
-  CONFIGURATION_STORE_INITIALIZED,
-  FRAME_SHOWN,
-  PROJECT_OPENED,
-  INDEXING_FINISHED;
+  BOOTSTRAP("bootstrap"),
+  SPLASH("splash shown"),
+  LAF_INITIALIZED("LaF is initialized"),
+  COMPONENT_REGISTERED("app component registered"),
+  CONFIGURATION_STORE_INITIALIZED("app store initialized"),
+  COMPONENT_LOADED("app component loaded"),
+  PROJECT_OPENED("project opened"),
+  INDEXING_FINISHED("indexing finished");
+
+  private final String displayName;
+
+  LoadingPhase(@NotNull String displayName) {
+    this.displayName = displayName;
+  }
 
   @NotNull
   private static Logger getLogger() {
     return Logger.getInstance(LoadingPhase.class);
   }
 
-  private final static boolean KEEP_IN_MIND_LOADING_PHASE = Boolean.parseBoolean("idea.keep.in.mind.loading.phase");
+  private static boolean CHECK_LOADING_PHASE;
+
+  public static void setStrictMode() {
+    CHECK_LOADING_PHASE = true;
+  }
 
   public static void setCurrentPhase(@NotNull LoadingPhase phase) {
-    currentPhase.set(phase);
+    LoadingPhase old = currentPhase.getAndSet(phase);
+    if (old.ordinal() > phase.ordinal()) {
+      getLogger().error("New phase " + phase + " cannot be earlier than old " + old);
+    }
     logPhaseSet(phase);
   }
 
@@ -64,16 +79,20 @@ public enum LoadingPhase {
   }
 
   private static void logPhaseSet(@NotNull LoadingPhase phase) {
-    getLogger().info("Reached " + phase + " loading phase");
+    StartUpMeasurer.addInstantEvent(phase.displayName);
+
+    if (phase.ordinal() >= CONFIGURATION_STORE_INITIALIZED.ordinal()) {
+      getLogger().info("Reached the loading phase " + phase);
+    }
   }
 
-  public static void assertAtLeast(@NotNull LoadingPhase phase) {
-    if (!KEEP_IN_MIND_LOADING_PHASE) {
+  public void assertAtLeast() {
+    if (!CHECK_LOADING_PHASE) {
       return;
     }
 
     LoadingPhase currentPhase = LoadingPhase.currentPhase.get();
-    if (currentPhase.ordinal() >= phase.ordinal() || isKnownViolator()) {
+    if (currentPhase.ordinal() >= ordinal() || isKnownViolator()) {
       return;
     }
 
@@ -83,26 +102,27 @@ public enum LoadingPhase {
         return;
       }
 
-      getLogger().warn("Should be called at least at phase " + phase + ", the current phase is: " + currentPhase + "\n" +
+      getLogger().error("Should be called at least at the phase " + this + ", the current phase is: " + currentPhase + "\n" +
                        "Current violators count: " + stackTraces.size() + "\n\n",
                        t);
     }
   }
 
   private static boolean isKnownViolator() {
-    return Arrays.stream(Thread.currentThread().getStackTrace())
-      .anyMatch(element -> {
-        String className = element.getClassName();
-        return className.equals("com.intellij.openapi.application.Preloader") ||
-               className.contains("com.intellij.util.indexing.IndexInfrastructure");
-      });
+    for (StackTraceElement element : Thread.currentThread().getStackTrace()) {
+      String className = element.getClassName();
+      if (className.contains("com.intellij.util.indexing.IndexInfrastructure") || className.contains("com.intellij.psi.impl.search.IndexPatternSearcher")) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public static boolean isStartupComplete() {
-    return isComplete(INDEXING_FINISHED);
+    return INDEXING_FINISHED.isComplete();
   }
 
-  public static boolean isComplete(@NotNull LoadingPhase phase) {
-    return currentPhase.get().ordinal() >= phase.ordinal();
+  public boolean isComplete() {
+    return currentPhase.get().ordinal() >= ordinal();
   }
 }

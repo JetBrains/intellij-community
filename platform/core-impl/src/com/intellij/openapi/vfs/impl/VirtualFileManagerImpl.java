@@ -31,7 +31,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Disposable {
+public class  VirtualFileManagerImpl extends VirtualFileManagerEx implements Disposable {
   protected static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.VirtualFileManagerImpl");
 
   private static class VirtualFileSystemBean extends KeyedLazyInstanceEP<VirtualFileSystem> {
@@ -165,10 +165,9 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Disp
   }
 
   @Nullable
-  private VirtualFileSystem getFileSystemForUrl(String url) {
+  private VirtualFileSystem getFileSystemForUrl(@NotNull String url) {
     String protocol = extractProtocol(url);
-    if (protocol == null) return null;
-    return getFileSystem(protocol);
+    return protocol == null ? null : getFileSystem(protocol);
   }
 
   @Override
@@ -291,7 +290,7 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Disp
 
     @Override
     public void fileCopied(@NotNull VirtualFileCopyEvent event) {
-      LOG.debug("fileCopied: file = " + event.getFile() + "originalFile = " + event.getOriginalFile() +
+      LOG.debug("fileCopied: file = " + event.getFile() + ", originalFile = " + event.getOriginalFile() +
                 ", requestor = " + event.getRequestor());
     }
 
@@ -317,5 +316,16 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Disp
       LOG.debug("beforeFileMovement: file = " + event.getFile() + ", oldParent = " + event.getOldParent() +
                 ", newParent = " + event.getNewParent() + ", requestor = " + event.getRequestor());
     }
+  }
+
+  @Override
+  public int storeName(@NotNull String name) {
+    throw new AbstractMethodError();
+  }
+
+  @NotNull
+  @Override
+  public CharSequence getVFileName(int nameId) {
+    throw new AbstractMethodError();
   }
 }

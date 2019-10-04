@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.ide.*;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -35,9 +36,12 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
+/**
+ * Allows opening file in editor, optionally at specific line/column position.
+ */
 public class OpenFileDescriptor implements Navigatable, Comparable<OpenFileDescriptor> {
   /**
-   * Tells descriptor to navigate in specific editor rather than file editor in main IDEA window.
+   * Tells descriptor to navigate in specific editor rather than file editor in main IDE window.
    * For example if you want to navigate in editor embedded into modal dialog, you should provide this data.
    */
   public static final DataKey<Editor> NAVIGATE_IN_EDITOR = DataKey.create("NAVIGATE_IN_EDITOR");
@@ -142,6 +146,10 @@ public class OpenFileDescriptor implements Navigatable, Comparable<OpenFileDescr
     @SuppressWarnings("deprecation") DataContext ctx = DataManager.getInstance().getDataContext();
     Editor e = NAVIGATE_IN_EDITOR.getData(ctx);
     if (e == null) return false;
+    if (e.isDisposed()) {
+      Logger.getInstance(OpenFileDescriptor.class).error("Disposed editor returned for NAVIGATE_IN_EDITOR from " + ctx);
+      return false;
+    }
     if (!Comparing.equal(FileDocumentManager.getInstance().getFile(e.getDocument()), myFile)) return false;
     
     navigateIn(e);

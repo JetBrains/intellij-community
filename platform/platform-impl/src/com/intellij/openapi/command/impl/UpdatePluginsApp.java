@@ -8,8 +8,10 @@ import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.updateSettings.impl.UpdateInstaller;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -29,12 +31,12 @@ public class UpdatePluginsApp implements ApplicationStarter {
   }
 
   @Override
-  public void premain(String[] args) {
+  public void premain(@NotNull List<String> args) {
     System.setProperty("idea.skip.indices.initialization", "true");
   }
 
   @Override
-  public void main(String[] args) {
+  public void main(@NotNull String[] args) {
     if (Boolean.getBoolean(StartupUtil.FORCE_PLUGIN_UPDATES)) {
       log("Updates applied.");
       System.exit(0);

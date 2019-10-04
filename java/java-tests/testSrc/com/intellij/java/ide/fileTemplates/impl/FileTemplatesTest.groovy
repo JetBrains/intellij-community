@@ -5,8 +5,8 @@ import com.intellij.ide.fileTemplates.*
 import com.intellij.ide.fileTemplates.impl.CustomFileTemplate
 import com.intellij.ide.fileTemplates.impl.FTManager
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.PathManagerEx
-import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
@@ -17,8 +17,8 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.JavaProjectTestCase
-import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.PsiTestUtil
+import com.intellij.testFramework.ServiceContainerUtil
 import com.intellij.util.io.PathKt
 import com.intellij.util.properties.EncodingAwareProperties
 
@@ -159,7 +159,7 @@ class FileTemplatesTest extends JavaProjectTestCase {
 
   void testFileNameTrimming() {
     CreateFromTemplateHandler handler = new DefaultCreateFromTemplateHandler()
-    PlatformTestUtil.registerExtension(Extensions.getRootArea(), CreateFromTemplateHandler.EP_NAME, handler, getTestRootDisposable())
+    ServiceContainerUtil.registerExtension(ApplicationManager.getApplication(), CreateFromTemplateHandler.EP_NAME, handler, getTestRootDisposable())
     FileTemplate template = FileTemplateManager.getInstance(getProject()).addTemplate(name, "txt")
     disposeOnTearDown({ FileTemplateManager.getInstance(getProject()).removeTemplate(template) } as Disposable)
     template.setText('${FILE_NAME}')

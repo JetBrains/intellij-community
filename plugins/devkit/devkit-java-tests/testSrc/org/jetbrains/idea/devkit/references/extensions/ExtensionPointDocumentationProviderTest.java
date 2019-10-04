@@ -13,6 +13,10 @@ public class ExtensionPointDocumentationProviderTest extends LightJavaCodeInsigh
     return DevkitJavaTestsUtil.TESTDATA_PATH + "references/extensions";
   }
 
+  private PsiElement getOriginalElement() {
+    return myFixture.getFile().findElementAt(myFixture.getEditor().getCaretModel().getOffset());
+  }
+
   public void testExtensionPointDocumentation() {
     myFixture.configureByFiles("extensionPointDocumentation.xml", "bar/MyExtensionPoint.java");
 
@@ -26,7 +30,7 @@ public class ExtensionPointDocumentationProviderTest extends LightJavaCodeInsigh
                           "<a href=\"psi_element://bar.MyExtensionPoint\"><code>MyExtensionPoint</code></a>";
 
     assertEquals(epDefinition,
-                 provider.getQuickNavigateInfo(docElement, null));
+                 provider.getQuickNavigateInfo(docElement, getOriginalElement()));
 
     assertEquals("<div class='definition'><pre><b>bar</b> [foo]<br>" +
                  "<a href=\"psi_element://bar.MyExtensionPoint\"><code>MyExtensionPoint</code></a><br>" +
@@ -39,7 +43,7 @@ public class ExtensionPointDocumentationProviderTest extends LightJavaCodeInsigh
                  "<em>Extension Point Implementation Class</em>" +
                  "<div class='definition'><pre>bar<br>public interface <b>MyExtensionPoint</b></pre></div>" +
                  "<div class='content'>\n   MyExtensionPoint JavaDoc.\n </div><table class='sections'><p></table></div>",
-                 provider.generateDoc(docElement, null));
+                 provider.generateDoc(docElement, getOriginalElement()));
   }
 
   public void testExtensionPointDocumentationQualifiedName() {
@@ -55,7 +59,7 @@ public class ExtensionPointDocumentationProviderTest extends LightJavaCodeInsigh
                           "<a href=\"psi_element://bar.MyExtensionPoint\"><code>MyExtensionPoint</code></a>";
 
     assertEquals(epDefinition,
-                 provider.getQuickNavigateInfo(docElement, null));
+                 provider.getQuickNavigateInfo(docElement, getOriginalElement()));
 
     assertEquals("<div class='definition'><pre><b>com.my.bar</b><br>" +
                  "<a href=\"psi_element://bar.MyExtensionPoint\"><code>MyExtensionPoint</code></a><br>" +
@@ -68,6 +72,6 @@ public class ExtensionPointDocumentationProviderTest extends LightJavaCodeInsigh
                  "<em>Extension Point Implementation Class</em>" +
                  "<div class='definition'><pre>bar<br>public interface <b>MyExtensionPoint</b></pre></div>" +
                  "<div class='content'>\n   MyExtensionPoint JavaDoc.\n </div><table class='sections'><p></table></div>",
-                 provider.generateDoc(docElement, null));
+                 provider.generateDoc(docElement, getOriginalElement()));
   }
 }

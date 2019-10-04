@@ -17,8 +17,8 @@ package org.jetbrains.jps.incremental.fs;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.containers.ObjectLinkedOpenHashSet;
 import com.intellij.util.io.IOUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.BuildRootDescriptor;
@@ -38,8 +38,8 @@ public final class FilesDelta {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.fs.FilesDelta");
   private final ReentrantLock myDataLock = new ReentrantLock();
 
-  private final Set<String> myDeletedPaths = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
-  private final Map<BuildRootDescriptor, Set<File>> myFilesToRecompile = new HashMap<>();
+  private final Set<String> myDeletedPaths = new ObjectLinkedOpenHashSet<>(FileUtil.PATH_HASHING_STRATEGY);
+  private final Map<BuildRootDescriptor, Set<File>> myFilesToRecompile = new LinkedHashMap<>();
 
   public void lockData(){
     myDataLock.lock();
@@ -110,13 +110,13 @@ public final class FilesDelta {
         if (descriptor != null) {
           files = myFilesToRecompile.get(descriptor);
           if (files == null) {
-            files = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
+            files = new ObjectLinkedOpenHashSet<>(FileUtil.FILE_HASHING_STRATEGY);
             myFilesToRecompile.put(descriptor, files);
           }
         }
         else {
           LOG.debug("Cannot find root by " + rootId + ", delta will be skipped");
-          files = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
+          files = new ObjectLinkedOpenHashSet<>(FileUtil.FILE_HASHING_STRATEGY);
         }
         int filesCount = in.readInt();
         while (filesCount-- > 0) {
@@ -222,7 +222,7 @@ public final class FilesDelta {
   private boolean _addToRecompiled(BuildRootDescriptor root, Collection<? extends File> filesToAdd) {
     Set<File> files = myFilesToRecompile.get(root);
     if (files == null) {
-      files = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
+      files = new ObjectLinkedOpenHashSet<>(FileUtil.FILE_HASHING_STRATEGY);
       myFilesToRecompile.put(root, files);
     }
     return files.addAll(filesToAdd);
@@ -260,9 +260,7 @@ public final class FilesDelta {
     lockData();
     try {
       try {
-        final THashSet<String> _paths = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
-        _paths.addAll(myDeletedPaths);
-        return _paths;
+        return new ObjectLinkedOpenHashSet<>(myDeletedPaths, FileUtil.PATH_HASHING_STRATEGY) ;
       }
       finally {
         myDeletedPaths.clear();

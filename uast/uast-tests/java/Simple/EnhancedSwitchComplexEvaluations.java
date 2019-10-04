@@ -47,17 +47,16 @@ public class Main {
       switch (known) {
         case "foo":
         case "bar":
-          break 0;
+          yield 0;
         default:
           if (unknown.length() > 0) {
-            break 12;
+            yield 12;
           } else
             throw new IllegalArgumentException();
       };
 
     return switchResult;
   }
-
 
   private static int getThrowOrOneInside(String unknown) {
     String known = "abc";
@@ -66,16 +65,16 @@ public class Main {
       switch (known) {
         case "foo":
         case "bar":
-          break 0;
+          yield 0;
         default:
           if (unknown.length() <= 0) {
             throw new IllegalArgumentException();
           }
           else if (unknown.equals("true")) {
-            break 12;
+            yield 12;
           }
           else {
-            break 18;
+            yield 18;
           }
       };
 

@@ -45,14 +45,14 @@ class PySwitchSdkAction : DumbAwareAction("Switch Project Interpreter", null, nu
   }
 }
 
-private class PySdkStatusBar(project: Project) : EditorBasedStatusBarPopup(project) {
+private class PySdkStatusBar(project: Project) : EditorBasedStatusBarPopup(project, false) {
 
   private var module: Module? = null
 
   override fun getWidgetState(file: VirtualFile?): WidgetState {
     if (file == null) return WidgetState.HIDDEN
 
-    module = ModuleUtil.findModuleForFile(file, project!!) ?: return WidgetState.HIDDEN
+    module = ModuleUtil.findModuleForFile(file, project) ?: return WidgetState.HIDDEN
 
     val sdk = PythonSdkType.findPythonSdk(module)
     return if (sdk == null) {
@@ -64,7 +64,7 @@ private class PySdkStatusBar(project: Project) : EditorBasedStatusBarPopup(proje
   }
 
   override fun registerCustomListeners() {
-    project!!
+    project
       .messageBus
       .connect(this)
       .subscribe(
@@ -75,7 +75,7 @@ private class PySdkStatusBar(project: Project) : EditorBasedStatusBarPopup(proje
       )
   }
 
-  override fun createPopup(context: DataContext): ListPopup? = module?.let { PySdkPopupFactory(project!!, it).createPopup(context) }
+  override fun createPopup(context: DataContext): ListPopup? = module?.let { PySdkPopupFactory(project, it).createPopup(context) }
 
   override fun ID(): String = "PythonInterpreter"
 
@@ -109,7 +109,7 @@ private class PySdkPopupFactory(val project: Project, val module: Module) {
     group.add(InterpreterSettingsAction())
     group.add(AddInterpreterAction())
 
-    val currentSdk = PythonSdkType.findPythonSdk(module)
+    val currentSdkName = PythonSdkType.findPythonSdk(module)?.name
     return JBPopupFactory.getInstance().createActionGroupPopup(
       "Project Interpreter",
       group,
@@ -118,12 +118,17 @@ private class PySdkPopupFactory(val project: Project, val module: Module) {
       false,
       null,
       -1,
-      Condition { it is SwitchToSdkAction && it.sdk == currentSdk },
+      Condition { it is SwitchToSdkAction && it.sdk.name == currentSdkName },
       null
-    )
+    ).apply { setHandleAutoSelectionBeforeShow(true) }
   }
 
   private fun shortenNameInPopup(sdk: Sdk) = name(sdk).trimMiddle(100)
+
+  private fun switchToSdk(sdk: Sdk) {
+    project.pythonSdk = sdk
+    module.pythonSdk = sdk
+  }
 
   private inner class SwitchToSdkAction(val sdk: Sdk) : DumbAwareAction() {
 
@@ -134,10 +139,7 @@ private class PySdkPopupFactory(val project: Project, val module: Module) {
       presentation.icon = icon(sdk)
     }
 
-    override fun actionPerformed(e: AnActionEvent) {
-      project.pythonSdk = sdk
-      module.pythonSdk = sdk
-    }
+    override fun actionPerformed(e: AnActionEvent) = switchToSdk(sdk)
   }
 
   private inner class InterpreterSettingsAction : DumbAwareAction("Interpreter Settings...") {
@@ -157,6 +159,7 @@ private class PySdkPopupFactory(val project: Project, val module: Module) {
           if (it != null && model.findSdk(it.name) == null) {
             model.addSdk(it)
             model.apply()
+            switchToSdk(it)
           }
         }
       )

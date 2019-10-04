@@ -44,8 +44,8 @@ public class ModuleOrderEnumerator extends OrderEnumeratorBase {
   }
 
   @Override
-  protected void forEach(@NotNull PairProcessor<? super OrderEntry, ? super List<OrderEnumerationHandler>> processor) {
-    processEntries(myRootModel, processor, myRecursively ? new THashSet<>() : null, true, getCustomHandlers(myRootModel.getModule()));
+  protected void forEach(@NotNull PairProcessor<? super OrderEntry, ? super List<? extends OrderEnumerationHandler>> processor) {
+    processEntries(myRootModel, myRecursively ? new THashSet<>() : null, true, getCustomHandlers(myRootModel.getModule()), processor);
   }
 
   @Override

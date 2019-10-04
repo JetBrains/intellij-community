@@ -26,6 +26,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,6 +43,7 @@ public class FileContentUtil extends FileContentUtilCore {
   /**
    * @deprecated to be removed after IDEA 15. Use {@link VfsUtil#saveText(VirtualFile, String)} instead.
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2015")
   @Deprecated
   public static void setFileText(@Nullable Project project, final VirtualFile virtualFile, final String text) throws IOException {
     if (project == null) {

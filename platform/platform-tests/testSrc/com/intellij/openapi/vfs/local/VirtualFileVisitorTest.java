@@ -40,7 +40,7 @@ public class VirtualFileVisitorTest extends BareTestFixtureTestCase {
     createTestFile(d11, "f11.1");
     createTestFile(d11, "f11.2");
     createTestFile(d1, "f1.1");
-    File d12 = createTestDir(d1, "d12");
+    createTestDir(d1, "d12");
     File d13 = createTestDir(d1, "d13");
     createTestFile(d13, "f13.1");
     createTestFile(d13, "f13.2");

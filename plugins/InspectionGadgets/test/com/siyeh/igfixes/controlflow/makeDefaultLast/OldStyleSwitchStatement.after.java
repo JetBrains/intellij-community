@@ -3,10 +3,10 @@ class MyTest {
     int j = switch(i) {
         <caret>case 2: 
         System.out.println();
-        break 45;
+        yield 45;
         default:
             System.out.println();
-            break 4;//comment
+            yield 4;//comment
     }
   }
 }

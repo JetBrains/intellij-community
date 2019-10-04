@@ -11,7 +11,6 @@ import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.reference.SoftReference;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.GlobalMatchingVisitor;
 import com.intellij.structuralsearch.impl.matcher.PatternTreeContext;
@@ -40,7 +39,6 @@ public abstract class StructuralSearchProfile {
   public static final ExtensionPointName<StructuralSearchProfile> EP_NAME =
     ExtensionPointName.create("com.intellij.structuralsearch.profile");
   protected static final String PATTERN_PLACEHOLDER = "$$PATTERN_PLACEHOLDER$$";
-  protected SoftReference<Runnable> myProblemCallback;
 
   public abstract void compile(PsiElement[] elements, @NotNull GlobalCompilingVisitor globalVisitor);
 
@@ -53,6 +51,7 @@ public abstract class StructuralSearchProfile {
   @NotNull
   public abstract CompiledPattern createCompiledPattern();
 
+  @NotNull
   public List<MatchPredicate> getCustomPredicates(MatchVariableConstraint constraint, String name, MatchOptions options) {
     return Collections.emptyList();
   }
@@ -68,9 +67,7 @@ public abstract class StructuralSearchProfile {
                                         @NotNull Project project,
                                         boolean physical) {
     final String strContext = getContext(text, language, contextId);
-    final int offset = strContext.indexOf(PATTERN_PLACEHOLDER);
 
-    final int patternLength = text.length();
     final String patternInContext = strContext.replace(PATTERN_PLACEHOLDER, text);
 
     final String name = "__dummy." + fileType.getDefaultExtension();
@@ -79,8 +76,7 @@ public abstract class StructuralSearchProfile {
       return PsiElement.EMPTY_ARRAY;
     }
 
-    final List<PsiElement> result = new SmartList<>();
-
+    final int offset = strContext.indexOf(PATTERN_PLACEHOLDER);
     PsiElement element = file.findElementAt(offset);
     if (element == null) {
       return PsiElement.EMPTY_ARRAY;
@@ -89,6 +85,7 @@ public abstract class StructuralSearchProfile {
     PsiElement topElement = element;
     element = element.getParent();
 
+    final int patternLength = text.length();
     while (element != null) {
       if (element.getTextRange().getStartOffset() == offset && element.getTextLength() <= patternLength) {
         topElement = element;
@@ -100,10 +97,11 @@ public abstract class StructuralSearchProfile {
       return topElement.getChildren();
     }
 
-    final int endOffset = offset + patternLength;
+    final List<PsiElement> result = new SmartList<>();
     result.add(topElement);
     topElement = topElement.getNextSibling();
 
+    final int endOffset = offset + patternLength;
     while (topElement != null && topElement.getTextRange().getEndOffset() <= endOffset) {
       result.add(topElement);
       topElement = topElement.getNextSibling();
@@ -178,10 +176,6 @@ public abstract class StructuralSearchProfile {
 
   public boolean highlightProblemsInEditor() {
     return false;
-  }
-
-  public void setProblemCallback(Runnable callback) {
-    myProblemCallback = new SoftReference<>(callback);
   }
 
   public boolean shouldShowProblem(HighlightInfo highlightInfo, PsiFile file, PatternContext context) {

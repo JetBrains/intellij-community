@@ -28,7 +28,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
 import static org.junit.Assume.assumeTrue;
 
-@SuppressWarnings("SuspiciousPackagePrivateAccess")
 public abstract class FileAttributesReadingTest {
   public static class MainTest extends FileAttributesReadingTest {
     @BeforeClass
@@ -277,6 +276,8 @@ public abstract class FileAttributesReadingTest {
 
   @Test
   public void innerSymlinkResolve() throws IOException {
+    IoTestUtil.assumeSymLinkCreationIsSupported();
+
     File file = tempDir.newFile("dir/file.txt");
     File link = new File(tempDir.getRoot(), "link");
     Files.createSymbolicLink(link.toPath(), file.getParentFile().toPath());
@@ -330,7 +331,7 @@ public abstract class FileAttributesReadingTest {
 
   @Test
   public void hiddenDir() throws IOException {
-    assumeTrue("windows-only", SystemInfo.isWindows);
+    IoTestUtil.assumeWindows();
     File dir = tempDir.newFolder("dir");
     FileAttributes attributes = getAttributes(dir);
     assertFalse(attributes.isHidden());
@@ -341,7 +342,7 @@ public abstract class FileAttributesReadingTest {
 
   @Test
   public void hiddenFile() throws IOException {
-    assumeTrue("windows-only", SystemInfo.isWindows);
+    IoTestUtil.assumeWindows();
     File file = tempDir.newFile("file");
     FileAttributes attributes = getAttributes(file);
     assertFalse(attributes.isHidden());
@@ -370,7 +371,7 @@ public abstract class FileAttributesReadingTest {
 
   @Test
   public void wellHiddenFile() {
-    assumeTrue("windows-only", SystemInfo.isWindows);
+    IoTestUtil.assumeWindows();
     File file = new File("C:\\Documents and Settings\\desktop.ini");
     assumeTrue(file +" is not there", file.exists());
 
@@ -424,13 +425,14 @@ public abstract class FileAttributesReadingTest {
 
   @Test
   public void subst() throws IOException {
-    assumeTrue("windows-only", SystemInfo.isWindows);
+    IoTestUtil.assumeWindows();
 
     tempDir.newFile("file.txt");  // just to populate a directory
     File substRoot = IoTestUtil.createSubst(tempDir.getRoot().getPath());
     try {
       FileAttributes attributes = getAttributes(substRoot);
-      assertEquals(FileAttributes.Type.DIRECTORY, attributes.type);
+      assertEquals(substRoot + " " + attributes, FileAttributes.Type.DIRECTORY, attributes.type);
+      assertFalse(substRoot + " " + attributes, attributes.isSymLink());
       assertDirectoriesEqual(substRoot);
 
       File[] children = substRoot.listFiles();

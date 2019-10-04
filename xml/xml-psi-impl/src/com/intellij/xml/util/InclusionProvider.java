@@ -25,6 +25,7 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.JDOMXIncluder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -61,7 +62,12 @@ class InclusionProvider implements CachedValueProvider<PsiElement[]> {
         String pointer = matcher.group(1);
         matcher = JDOMXIncluder.CHILDREN_PATTERN.matcher(pointer);
         if (matcher.matches() && matcher.group(1).equals(rootTag.getName())) {
-          return rootTag.getSubTags();
+          XmlTag[] tags = rootTag.getSubTags();
+          String subTagName = matcher.group(2);
+          if (subTagName == null) return tags;
+
+          XmlTag subTag = ContainerUtil.find(tags, t -> subTagName.substring(1).equals(t.getName()));
+          return subTag == null ? XmlTag.EMPTY : subTag.getSubTags();
         }
       }
     }

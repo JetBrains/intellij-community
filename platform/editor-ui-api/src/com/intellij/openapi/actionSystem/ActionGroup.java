@@ -106,6 +106,10 @@ public abstract class ActionGroup extends AnAction {
     return myPopup;
   }
 
+  public boolean isPopup(@NotNull String place) {
+    return isPopup();
+  }
+
   /**
    * Sets the type of the group.
    *

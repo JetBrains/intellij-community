@@ -60,6 +60,9 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     if (conflicts.isEmpty()) return null;
     if (conflicts.size() == 1) return conflicts.get(0);
 
+    checkStaticMethodsOfInterfaces(conflicts);
+    if (conflicts.size() == 1) return conflicts.get(0);
+
     final Map<MethodCandidateInfo, PsiSubstitutor> map = FactoryMap.create(key -> key.getSubstitutor(false));
     boolean atLeastOneMatch = checkParametersNumber(conflicts, getActualParametersLength(), map, true);
     if (conflicts.size() == 1) return conflicts.get(0);
@@ -71,9 +74,6 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     if (conflicts.size() == 1) return conflicts.get(0);
 
     checkParametersNumber(conflicts, getActualParametersLength(), map, false);
-    if (conflicts.size() == 1) return conflicts.get(0);
-
-    checkStaticMethodsOfInterfaces(conflicts);
     if (conflicts.size() == 1) return conflicts.get(0);
 
     if (atLeastOneMatch) {
@@ -303,8 +303,12 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
       }
       else if (expression == null && !ImportsUtil.hasStaticImportOn(parent, method, true)) {
         PsiClass qualifierClass = PsiTreeUtil.getParentOfType(parent, PsiClass.class);
-        if (qualifierClass != null && !PsiTreeUtil.isAncestor(method.getContainingClass(), qualifierClass, true)) {
-          return qualifierClass;
+        if (qualifierClass != null) {
+          PsiClass containingClass = method.getContainingClass();
+          if (!PsiTreeUtil.isAncestor(containingClass, qualifierClass, true) ||
+              qualifierClass.isInheritor(containingClass, true)) {
+            return qualifierClass;
+          }
         }
       }
 

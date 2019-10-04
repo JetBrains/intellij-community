@@ -17,6 +17,7 @@
   <depends>com.intellij.modules.json</depends>
   <depends config-file="gradle-devkit.xml" optional="true">org.jetbrains.plugins.gradle</depends>
   <depends config-file="groovy-devkit.xml" optional="true">org.intellij.groovy</depends>
+  <depends config-file="uidesigner-devkit.xml" optional="true">com.intellij.uiDesigner</depends>
 
   <resource-bundle>org.jetbrains.idea.devkit.DevKitBundle</resource-bundle>
 
@@ -46,7 +47,7 @@
                       rootTagName="idea-plugin"
                       stubVersion="12"/>
     <dom.extender domClass="org.jetbrains.idea.devkit.dom.Extensions"
-                  extenderClass="org.jetbrains.idea.devkit.dom.impl.ExtensionDomExtender"/>
+                  extenderClass="org.jetbrains.idea.devkit.dom.impl.ExtensionsDomExtender"/>
     <dom.extender domClass="org.jetbrains.idea.devkit.dom.Action"
                   extenderClass="org.jetbrains.idea.devkit.dom.impl.InternalDomExtender$ForAction"/>
     <dom.extender domClass="org.jetbrains.idea.devkit.dom.Group"
@@ -61,9 +62,16 @@
                         implementationClass="org.jetbrains.idea.devkit.dom.impl.ExtensionsImpl"/>
 
     <fileBasedIndex implementation="org.jetbrains.idea.devkit.dom.index.IdeaPluginRegistrationIndex"/>
+    <fileBasedIndex implementation="org.jetbrains.idea.devkit.dom.index.PluginIdModuleIndex"/>
+    <fileBasedIndex implementation="org.jetbrains.idea.devkit.dom.index.PluginIdDependenciesIndex"/>
+    <fileBasedIndex implementation="org.jetbrains.idea.devkit.dom.index.ExtensionPointIndex"/>
 
     <editorTabTitleProvider implementation="org.jetbrains.idea.devkit.dom.ide.PluginDescriptorEditorTabTitleProvider"/>
     <useScopeEnlarger implementation="org.jetbrains.idea.devkit.dom.ide.PluginDescriptorUseScopeEnlarger"/>
+    <searchScopesProvider
+        order="last"
+        implementation="org.jetbrains.idea.devkit.dom.impl.PluginDescriptorDomFileSearchScopeProvider"/>
+
     <properties.implicitPropertyUsageProvider implementation="org.jetbrains.idea.devkit.inspections.RegistryImplicitPropertyUsageProvider"/>
 
     <configurationType implementation="org.jetbrains.idea.devkit.run.PluginConfigurationType"/>
@@ -194,7 +202,7 @@
                      groupPath="Plugin DevKit" groupKey="inspections.group.code"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.PsiElementConcatenationInspection"/>
-    <localInspection language="UAST" shortName="NonDefaultConstructor" displayName="Non default constructors for extension class"
+    <localInspection language="UAST" shortName="NonDefaultConstructor" displayName="Non-default constructors for service and extension class"
                      groupPath="Plugin DevKit" groupKey="inspections.group.code"
                      enabledByDefault="true" level="ERROR"
                      implementationClass="org.jetbrains.idea.devkit.inspections.NonDefaultConstructorInspection"/>
@@ -241,7 +249,7 @@
     <stacktrace.fold substring="at com.intellij.testFramework.fixtures.CodeInsightTestFixture$"/>
     <stacktrace.fold substring="at com.intellij.testFramework.LightPlatformTestCase"/>
     <stacktrace.fold substring="at com.intellij.testFramework.LightPlatformCodeInsightTestCase"/>
-    <stacktrace.fold substring="at com.intellij.testFramework.PlatformTestCase"/>
+    <stacktrace.fold substring="at com.intellij.testFramework.HeavyPlatformTestCase"/>
     <stacktrace.fold substring="at com.intellij.testFramework.EditorActionTestCase"/>
     <stacktrace.fold substring="at com.intellij.testFramework.ExpectedHighlightingData"/>
 
@@ -352,7 +360,8 @@
               text="Toggle Expected Highlighting Markup"
               id="ToggleHighlightingMarkup"/>
 
-      <action internal="true" class="org.jetbrains.idea.devkit.actions.ShuffleNamesAction" text="Shuffle Names"
+      <action class="org.jetbrains.idea.devkit.actions.ShuffleNamesAction"
+              text="Shuffle/Scramble/Anonymize/Permute Names"
               id="ShuffleNamesAction"/>
 
       <action internal="true" class="org.jetbrains.idea.devkit.actions.ShowSerializedXmlAction" text="Show Serialized XML for Class"
@@ -375,6 +384,10 @@
     <action id="DumpCleanTestData" internal="true" class="org.jetbrains.idea.devkit.internal.DumpCleanHighlightingTestdataAction"
             text="Dump Highlighting-Markup-Free Data">
       <add-to-group group-id="Internal.Dump"/>
+    </action>
+    <action id="AnalyzeUnloadablePlugins" internal="true" class="org.jetbrains.idea.devkit.internal.AnalyzeUnloadablePluginsAction"
+            text="Analyze Unloadable Plugins">
+      <add-to-group group-id="Internal.DevKit"/>
     </action>
 
     <!-- Theme Toolbar -->

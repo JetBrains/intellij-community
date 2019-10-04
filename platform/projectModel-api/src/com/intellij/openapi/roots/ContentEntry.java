@@ -170,6 +170,7 @@ public interface ContentEntry extends Synthetic {
    * @param file the file or directory to add as an exclude root.
    * @return the object representing the added root.
    */
+  @NotNull
   ExcludeFolder addExcludeFolder(@NotNull VirtualFile file);
 
   /**
@@ -178,6 +179,7 @@ public interface ContentEntry extends Synthetic {
    * @param url the file or directory url to add as an exclude root.
    * @return the object representing the added root.
    */
+  @NotNull
   ExcludeFolder addExcludeFolder(@NotNull String url);
 
   /**

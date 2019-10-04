@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -20,31 +20,30 @@ import java.util.function.Consumer;
 public class VcsExecutablePathSelector {
   private final JPanel myMainPanel;
   private final TextFieldWithBrowseButton myPathSelector;
-  private final JButton myTestButton;
   private final JBCheckBox myProjectPathCheckbox;
 
   @Nullable private String mySavedPath;
   private String myAutoDetectedPath;
 
-  public VcsExecutablePathSelector(@NotNull Consumer<String> executableTester) {
+  public VcsExecutablePathSelector(@NotNull String vcsName, @NotNull Consumer<String> executableTester) {
     BorderLayoutPanel panel = JBUI.Panels.simplePanel(UIUtil.DEFAULT_HGAP, 0);
 
-    myPathSelector = new TextFieldWithBrowseButton(new JBTextField(10));
+    myPathSelector = new TextFieldWithBrowseButton();
     myPathSelector.addBrowseFolderListener(VcsBundle.getString("executable.select.title"),
                                            null,
                                            null,
                                            FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor());
     panel.addToCenter(myPathSelector);
 
-    myTestButton = new JButton(VcsBundle.getString("executable.test"));
-    myTestButton.addActionListener(e -> executableTester.accept(ObjectUtils.notNull(getCurrentPath(), myAutoDetectedPath)));
-    panel.addToRight(myTestButton);
+    JButton testButton = new JButton(VcsBundle.getString("executable.test"));
+    testButton.addActionListener(e -> executableTester.accept(ObjectUtils.notNull(getCurrentPath(), myAutoDetectedPath)));
+    panel.addToRight(testButton);
 
     myProjectPathCheckbox = new JBCheckBox(VcsBundle.getString("executable.project.override"));
     myProjectPathCheckbox.addActionListener(e -> handleProjectOverrideStateChanged());
 
     myMainPanel = UI.PanelFactory.grid()
-      .add(UI.PanelFactory.panel(panel).withLabel(VcsBundle.getString("executable.select.label")))
+      .add(UI.PanelFactory.panel(panel).withLabel(VcsBundle.message("executable.select.label", vcsName)))
       .add(UI.PanelFactory.panel(myProjectPathCheckbox))
       .createPanel();
   }

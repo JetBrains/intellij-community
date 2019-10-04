@@ -38,8 +38,8 @@ public final class LanguageCodeStylePropertyMapper extends AbstractCodeStyleProp
 
   @Nullable
   @Override
-  protected CodeStylePropertyAccessor getAccessor(@NotNull Object codeStyleObject, @NotNull Field field) {
-    CodeStylePropertyAccessor accessor = mySettingsProvider != null ? mySettingsProvider.getAccessor(codeStyleObject, field) : null;
+  protected CodeStylePropertyAccessor<?> getAccessor(@NotNull Object codeStyleObject, @NotNull Field field) {
+    CodeStylePropertyAccessor<?> accessor = mySettingsProvider != null ? mySettingsProvider.getAccessor(codeStyleObject, field) : null;
     if (accessor != null) {
       return accessor;
     }
@@ -47,11 +47,11 @@ public final class LanguageCodeStylePropertyMapper extends AbstractCodeStyleProp
   }
 
   @Override
-  protected void addAdditionalAccessors(@NotNull Map<String, CodeStylePropertyAccessor> accessorMap) {
+  protected void addAdditionalAccessors(@NotNull Map<String, CodeStylePropertyAccessor<?>> accessorMap) {
     accessorMap.put(VisualGuidesAccessor.VISUAL_GUIDES_PROPERTY_NAME, new VisualGuidesAccessor(getRootSettings(), myLanguage));
     if (mySettingsProvider != null) {
       for (CustomCodeStyleSettings customSettings :  myCustomSettings) {
-        for (CodeStylePropertyAccessor accessor : mySettingsProvider.getAdditionalAccessors(customSettings)) {
+        for (CodeStylePropertyAccessor<?> accessor : mySettingsProvider.getAdditionalAccessors(customSettings)) {
           accessorMap.put(accessor.getPropertyName(), accessor);
         }
       }

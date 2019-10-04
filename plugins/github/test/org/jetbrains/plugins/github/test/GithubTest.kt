@@ -1,21 +1,19 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.test
 
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.components.service
-import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.util.Clock
 import com.intellij.testFramework.RunAll
 import com.intellij.testFramework.VfsTestUtil
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.text.DateFormatUtil
 import git4idea.test.GitPlatformTest
+import org.jetbrains.plugins.github.api.GHRepositoryPath
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutorManager
 import org.jetbrains.plugins.github.api.GithubApiRequests
-import org.jetbrains.plugins.github.api.GithubFullPath
 import org.jetbrains.plugins.github.api.data.GithubRepo
-import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import java.util.concurrent.ThreadLocalRandom
@@ -137,9 +135,9 @@ abstract class GithubTest : GitPlatformTest() {
            "_" + rnd.nextLong()
   }
 
-  protected fun checkRepoExists(account: AccountData, repoPath: GithubFullPath) {
+  protected fun checkRepoExists(account: AccountData, repoPath: GHRepositoryPath) {
     val repo = account.executor.execute(
-      GithubApiRequests.Repos.get(account.account.server, repoPath.user, repoPath.repository))
+      GithubApiRequests.Repos.get(account.account.server, repoPath.owner, repoPath.repository))
     assertNotNull("GitHub repository does not exist", repo)
     recycleRepo(account, repo!!.url)
   }

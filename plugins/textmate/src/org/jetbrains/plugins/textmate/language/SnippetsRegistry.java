@@ -16,7 +16,7 @@ public class SnippetsRegistry {
   }
 
   @NotNull
-  public Collection<TextMateSnippet> findSnippet(@NotNull String key, @Nullable String scopeSelector) {
+  public Collection<TextMateSnippet> findSnippet(@NotNull String key, @Nullable CharSequence scopeSelector) {
     if (scopeSelector == null) {
       return Collections.emptyList();
     }
@@ -24,7 +24,7 @@ public class SnippetsRegistry {
   }
 
   @NotNull
-  public Collection<TextMateSnippet> getAvailableSnippets(@Nullable String scopeSelector) {
+  public Collection<TextMateSnippet> getAvailableSnippets(@Nullable CharSequence scopeSelector) {
     if (scopeSelector == null) {
       return Collections.emptyList();
     }

@@ -40,7 +40,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.Objects;
 
 import static com.intellij.dvcs.branch.DvcsBranchPopup.MyMoreIndex.DEFAULT_NUM;
 import static com.intellij.dvcs.branch.DvcsBranchPopup.MyMoreIndex.MAX_NUM;
@@ -147,7 +146,6 @@ class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
     popupGroup.addSeparator("Common Local Branches");
     List<BranchActionGroup> localBranchActions = myMultiRootBranchConfig.getLocalBranchNames().stream()
       .map(l -> createLocalBranchActions(allRepositories, l))
-      .filter(Objects::nonNull)
       .sorted(FAVORITE_BRANCH_COMPARATOR)
       .collect(toList());
     int topShownBranches = getNumOfTopShownBranches(localBranchActions);
@@ -169,13 +167,10 @@ class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
                                getNumOfTopShownBranches(remoteBranchActions), SHOW_ALL_REMOTES_KEY);
   }
 
-  @Nullable
+  @NotNull
   private GitBranchPopupActions.LocalBranchActions createLocalBranchActions(@NotNull List<? extends GitRepository> allRepositories,
                                                                             @NotNull String branch) {
-    List<GitRepository> repositories = filterRepositoriesNotOnThisBranch(branch, allRepositories);
-    return repositories.isEmpty()
-           ? null
-           : new GitBranchPopupActions.LocalBranchActions(myProject, repositories, branch, myCurrentRepository);
+    return new GitBranchPopupActions.LocalBranchActions(myProject, allRepositories, branch, myCurrentRepository);
   }
 
   @NotNull

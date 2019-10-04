@@ -83,7 +83,9 @@ class DirectoryInfoWithExcludePatterns extends DirectoryInfoImpl {
       current = current.getParent();
     }
     if (current == null) {
-      LOG.error("File " + file + " is not under this directory (" + myRoot + ")");
+      IllegalArgumentException e = new IllegalArgumentException("File " + file + " is not under this directory (" + myRoot + ")");
+      LOG.warn(e);
+      throw e;
     }
     return false;
   }

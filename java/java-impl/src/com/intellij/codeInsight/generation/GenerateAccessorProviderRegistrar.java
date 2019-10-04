@@ -23,7 +23,7 @@ public class GenerateAccessorProviderRegistrar {
     ourProviders.addAll(EP_NAME.getExtensionList());
   }
 
-  /** @see #EP_NAME */
+  /** @deprecated use extension point {@link #EP_NAME} */
   @Deprecated
   synchronized static void registerProvider(NotNullFunction<PsiClass, Collection<EncapsulatableClassMember>> function) {
     ourProviders.add(function);

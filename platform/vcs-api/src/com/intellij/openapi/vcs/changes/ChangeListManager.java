@@ -157,6 +157,8 @@ public abstract class ChangeListManager implements ChangeListModification {
 
   public abstract boolean isIgnoredFile(@NotNull VirtualFile file);
 
+  public abstract boolean isIgnoredFile(@NotNull FilePath file);
+
   /**
    * @deprecated All potential ignores should be contributed to VCS native ignores by corresponding {@link IgnoredFileProvider}.
    */

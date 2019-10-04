@@ -4,12 +4,10 @@ package com.intellij.ui.components;
 import com.intellij.openapi.util.Key;
 import com.intellij.ui.components.JBScrollPane.Alignment;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.MouseEventAdapter;
-import com.intellij.util.ui.RegionPainter;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 
 import javax.swing.*;
+import javax.swing.Timer;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.plaf.ScrollBarUI;
@@ -28,7 +26,7 @@ class DefaultScrollBarUI extends ScrollBarUI {
   static final Key<Component> TRAILING = Key.create("JB_SCROLL_BAR_TRAILING_COMPONENT");
 
   private final Listener myListener = new Listener();
-  private final Timer myScrollTimer = UIUtil.createNamedTimer("ScrollBarThumbScrollTimer", 60, myListener);
+  private final Timer myScrollTimer = TimerUtil.createNamedTimer("ScrollBarThumbScrollTimer", 60, myListener);
 
   private final int myThickness;
   private final int myThicknessMax;

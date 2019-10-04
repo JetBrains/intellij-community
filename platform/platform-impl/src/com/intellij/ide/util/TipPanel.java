@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util;
 
 import com.intellij.ide.GeneralSettings;
@@ -11,6 +11,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -21,7 +22,6 @@ import java.util.List;
 import static com.intellij.openapi.util.SystemInfo.isWin10OrNewer;
 import static com.intellij.openapi.util.text.StringUtil.isEmpty;
 import static com.intellij.ui.Gray.xD0;
-import static com.intellij.util.ui.UIUtil.isUnderDarcula;
 
 public class TipPanel extends JPanel implements DoNotAskOption {
   private static final JBColor DIVIDER_COLOR = new JBColor(0xd9d9d9, 0x515151);
@@ -34,7 +34,7 @@ public class TipPanel extends JPanel implements DoNotAskOption {
 
   public TipPanel() {
     setLayout(new BorderLayout());
-    if (isWin10OrNewer && !isUnderDarcula()) {
+    if (isWin10OrNewer && !StartupUiUtil.isUnderDarcula()) {
       setBorder(JBUI.Borders.customLine(xD0, 1, 0, 0, 0));
     }
     myBrowser = TipUIUtil.createBrowser();

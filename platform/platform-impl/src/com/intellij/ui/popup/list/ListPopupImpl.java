@@ -137,7 +137,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     }
     else {
       final int defaultIndex = listStep.getDefaultOptionIndex();
-      if (defaultIndex >= 0 && defaultIndex < myList.getModel().getSize()) {
+      if (isSelectableAt(defaultIndex)) {
         ScrollingUtil.selectItem(myList, defaultIndex);
         selected = true;
       }
@@ -170,6 +170,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
       int elementsCount = myListModel.getSize();
       for (int i = 0; i < elementsCount; i++) {
         Object value = myListModel.getElementAt(i);
+        if (!isSelectable(value)) continue;
         final String text = getListStep().getTextFor(value);
         final int count =
             StatisticsManager.getInstance().getUseCount(new StatisticsInfo("#list_popup:" + myStep.getTitle() + "#" + filter, text));
@@ -245,9 +246,10 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     if (step instanceof ListPopupStepEx) {
       ((ListPopupStepEx)step).setEmptyText(myList.getEmptyText());
     }
-    myList.setSelectionMode(isMultiSelectionEnabled() ? ListSelectionModel.MULTIPLE_INTERVAL_SELECTION : ListSelectionModel.SINGLE_SELECTION);
 
-    myList.setSelectedIndex(0);
+    myList.setSelectionModel(new MyListSelectionModel());
+
+    selectFirstSelectableItem();
     Insets padding = UIUtil.getListViewportPadding();
     myList.setBorder(new EmptyBorder(padding));
 
@@ -481,7 +483,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
       Point point = e.getPoint();
       int index = myList.locationToIndex(point);
 
-      if (index != myLastSelectedIndex) {
+      if (index != myLastSelectedIndex && isSelectableAt(index)) {
         if (!isMultiSelectionEnabled() || !UIUtil.isSelectionButtonDown(e) && myList.getSelectedIndices().length <= 1) {
           myList.setSelectedIndex(index);
         }
@@ -583,6 +585,37 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     }
   }
 
+  private class MyListSelectionModel extends DefaultListSelectionModel {
+    private MyListSelectionModel() {
+      setSelectionMode(isMultiSelectionEnabled() ? MULTIPLE_INTERVAL_SELECTION : SINGLE_SELECTION);
+    }
+
+    @Override
+    public void setSelectionInterval(int index0, int index1) {
+      if (getSelectionMode() == SINGLE_SELECTION) {
+        if (index0 > getLeadSelectionIndex()) {
+          for (int i = index0; i < myListModel.getSize(); i++) {
+            if (getListStep().isSelectable(myListModel.getElementAt(i))) {
+              super.setSelectionInterval(i, i);
+              break;
+            }
+          }
+        }
+        else {
+          for (int i = index0; i >= 0; i--) {
+            if (getListStep().isSelectable(myListModel.getElementAt(i))) {
+              super.setSelectionInterval(i, i);
+              break;
+            }
+          }
+        }
+      }
+      else {
+        super.setSelectionInterval(index0, index1); // TODO: support when needed
+      }
+    }
+  }
+
   @Override
   protected void onSpeedSearchPatternChanged() {
     myListModel.refilter();
@@ -595,18 +628,18 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
 
   private void selectBestMatch() {
     int fullMatchIndex = myListModel.getClosestMatchIndex();
-    if (fullMatchIndex != -1) {
+    if (fullMatchIndex != -1 && isSelectableAt(fullMatchIndex)) {
       myList.setSelectedIndex(fullMatchIndex);
     }
 
     if (myListModel.getSize() <= myList.getSelectedIndex() || !myListModel.isVisible(myList.getSelectedValue())) {
-      myList.setSelectedIndex(0);
+      selectFirstSelectableItem();
     }
   }
 
   @Override
   protected void onSelectByMnemonic(Object value) {
-    if (myListModel.isVisible(value)) {
+    if (myListModel.isVisible(value) && isSelectable(value)) {
       myList.setSelectedValue(value, true);
       myList.repaint();
       handleSelect(true);
@@ -620,7 +653,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
 
   @Override
   protected void onChildSelectedFor(Object value) {
-    if (myList.getSelectedValue() != value) {
+    if (myList.getSelectedValue() != value && isSelectable(value)) {
       myList.setSelectedValue(value, false);
     }
   }
@@ -658,5 +691,22 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
         }
       });
     }
+  }
+
+  private boolean isSelectable(@Nullable Object value) {
+    return value != null && getListStep().isSelectable(value);
+  }
+
+  @Nullable
+  private Object getSelectableAt(int index) {
+    if (0 <= index && index < myListModel.getSize()) {
+      Object value = myListModel.getElementAt(index);
+      if (isSelectable(value)) return value;
+    }
+    return null;
+  }
+
+  private boolean isSelectableAt(int index) {
+    return null != getSelectableAt(index);
   }
 }

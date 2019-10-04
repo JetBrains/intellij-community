@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.uast
 
 import com.intellij.psi.*
@@ -35,7 +35,7 @@ class GrUClass(val grElement: GrTypeDefinition,
 
   override val uastParent: UElement? by lazy(parentProvider)
 
-  override val annotations: List<UAnnotation> by lazy { grAnnotations(grElement.modifierList, this) }
+  override val uAnnotations: List<UAnnotation> by lazy { grAnnotations(grElement.modifierList, this) }
 
   override fun getSuperClass(): UClass? = super.getSuperClass()
 
@@ -67,7 +67,7 @@ class GrUMethod(val grElement: GrMethod,
   override val uastAnchor: UIdentifier
     get() = UIdentifier(grElement.nameIdentifierGroovy, this)
 
-  override val annotations: List<UAnnotation> by lazy { grAnnotations(grElement.modifierList, this) }
+  override val uAnnotations: List<UAnnotation> by lazy { grAnnotations(grElement.modifierList, this) }
 
   override fun getBody(): PsiCodeBlock? = null
 
@@ -86,7 +86,7 @@ class GrUParameter(val grElement: GrParameter,
 
   override val uastInitializer: UExpression? by lazy {
     val initializer = grElement.initializerGroovy ?: return@lazy null
-    getLanguagePlugin().convertElement(initializer, this) as? UExpression
+    UastFacade.findPlugin(initializer)?.convertElement(initializer, this) as? UExpression
   }
 
   override val typeReference: UTypeReferenceExpression? = null //not implemented
@@ -94,7 +94,7 @@ class GrUParameter(val grElement: GrParameter,
   override val uastAnchor: UIdentifier
     get() = UIdentifier(grElement.nameIdentifierGroovy, this)
 
-  override val annotations: List<UAnnotation> by lazy { grAnnotations(grElement.modifierList, this) }
+  override val uAnnotations: List<UAnnotation> by lazy { grAnnotations(grElement.modifierList, this) }
 
   override fun getInitializer(): PsiExpression? = grElement.initializer
 

@@ -31,6 +31,7 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 
 import static com.intellij.openapi.project.ProjectUtil.isProjectOrWorkspaceFile;
 
@@ -61,7 +62,7 @@ public class MergeUtil {
 
     switch (result) {
       case CANCEL:
-        return "Abort";
+        return "Cancel";
       case LEFT:
         return "Accept Left";
       case RIGHT:
@@ -136,15 +137,25 @@ public class MergeUtil {
   public static boolean showExitWithoutApplyingChangesDialog(@NotNull JComponent component,
                                                              @NotNull MergeRequest request,
                                                              @NotNull MergeContext context) {
-    String message = DiffBundle.message("merge.dialog.exit.without.applying.changes.confirmation.message");
-    String title = DiffBundle.message("cancel.visual.merge.dialog.title");
     Couple<String> customMessage = DiffUtil.getUserData(request, context, DiffUserDataKeysEx.MERGE_CANCEL_MESSAGE);
     if (customMessage != null) {
-      title = customMessage.first;
-      message = customMessage.second;
+      String title = customMessage.first;
+      String message = customMessage.second;
+      return Messages.showConfirmationDialog(component, message, title, "Yes", "No") == Messages.YES;
     }
 
-    return Messages.showYesNoDialog(component.getRootPane(), message, title, Messages.getQuestionIcon()) == Messages.YES;
+    return showConfirmDiscardChangesDialog(component, "Cancel Merge", true);
+  }
+
+  public static boolean showConfirmDiscardChangesDialog(@NotNull JComponent parent,
+                                                        @NotNull String actionName,
+                                                        boolean contentWasModified) {
+    if (!contentWasModified) return true;
+    String message = "There are unsaved changes in the result file. Discard changes and " + actionName.toLowerCase(Locale.ENGLISH) + " anyway?";
+    String yesText = "Discard Changes and " + actionName;
+    String noText = "Continue Merge";
+
+    return Messages.showConfirmationDialog(parent, message, actionName, yesText, noText) == Messages.YES;
   }
 
   public static boolean shouldRestoreOriginalContentOnCancel(@NotNull MergeRequest request) {

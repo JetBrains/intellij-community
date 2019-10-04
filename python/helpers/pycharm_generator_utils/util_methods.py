@@ -303,19 +303,6 @@ def is_property(x):
     return isinstance(x, _prop_types)
 
 
-def sanitize_ident(x, is_clr=False):
-    """Takes an identifier and returns it sanitized"""
-    if x in ("class", "object", "def", "list", "tuple", "int", "float", "str", "unicode" "None"):
-        return "p_" + x
-    else:
-        if is_clr:
-            # it tends to have names like "int x", turn it to just x
-            xs = x.split(" ")
-            if len(xs) == 2:
-                return sanitize_ident(xs[1])
-        return x.replace("-", "_").replace(" ", "_").replace(".", "_") # for things like "list-or-tuple" or "list or tuple"
-
-
 def reliable_repr(value):
     # some subclasses of built-in types (see PyGtk) may provide invalid __repr__ implementations,
     # so we need to sanitize the output
@@ -346,13 +333,6 @@ def sanitize_value(p_value):
             return repr(repr(p_value)) # function -> "<function ...>", etc
 
 
-def extract_alpha_prefix(p_string, default_prefix="some"):
-    """Returns 'foo' for things like 'foo1' or 'foo2'; if prefix cannot be found, the default is returned"""
-    match = NUM_IDENT_PATTERN.match(p_string)
-    prefix = match and match.groups()[match.lastindex - 1] or None
-    return prefix or default_prefix
-
-
 def report(msg, *data):
     """Say something at error level (stderr)"""
     sys.stderr.write(msg % data)
@@ -363,71 +343,6 @@ def say(msg, *data):
     """Say something at info level (stdout)"""
     sys.stdout.write(msg % data)
     sys.stdout.write("\n")
-
-
-def transform_seq(results, toplevel=True):
-    """Transforms a tree of ParseResults into a param spec string."""
-    is_clr = sys.platform == "cli"
-    ret = [] # add here token to join
-    for token in results:
-        token_type = token[0]
-        if token_type is T_SIMPLE:
-            token_name = token[1]
-            if len(token) == 3: # name with value
-                if toplevel:
-                    ret.append(sanitize_ident(token_name, is_clr) + "=" + sanitize_value(token[2]))
-                else:
-                    # smth like "a, (b1=1, b2=2)", make it "a, p_b"
-                    return ["p_" + results[0][1]] # NOTE: for each item of tuple, return the same name of its 1st item.
-            elif token_name == TRIPLE_DOT:
-                if toplevel and not has_item_starting_with(ret, "*"):
-                    ret.append("*more")
-                else:
-                    # we're in a "foo, (bar1, bar2, ...)"; make it "foo, bar_tuple"
-                    return extract_alpha_prefix(results[0][1]) + "_tuple"
-            else: # just name
-                ret.append(sanitize_ident(token_name, is_clr))
-        elif token_type is T_NESTED:
-            inner = transform_seq(token[1:], False)
-            if len(inner) != 1:
-                ret.append(inner)
-            else:
-                ret.append(inner[0]) # [foo] -> foo
-        elif token_type is T_OPTIONAL:
-            ret.extend(transform_optional_seq(token))
-        elif token_type is T_RETURN:
-            pass # this is handled elsewhere
-        else:
-            raise Exception("This cannot be a token type: " + repr(token_type))
-    return ret
-
-
-def transform_optional_seq(results):
-    """
-    Produces a string that describes the optional part of parameters.
-    @param results must start from T_OPTIONAL.
-    """
-    assert results[0] is T_OPTIONAL, "transform_optional_seq expects a T_OPTIONAL node, sees " + \
-                                     repr(results[0])
-    is_clr = sys.platform == "cli"
-    ret = []
-    for token in results[1:]:
-        token_type = token[0]
-        if token_type is T_SIMPLE:
-            token_name = token[1]
-            if len(token) == 3: # name with value; little sense, but can happen in a deeply nested optional
-                ret.append(sanitize_ident(token_name, is_clr) + "=" + sanitize_value(token[2]))
-            elif token_name == '...':
-                # we're in a "foo, [bar, ...]"; make it "foo, *bar"
-                return ["*" + extract_alpha_prefix(
-                    results[1][1])] # we must return a seq; [1] is first simple, [1][1] is its name
-            else: # just name
-                ret.append(sanitize_ident(token_name, is_clr) + "=None")
-        elif token_type is T_OPTIONAL:
-            ret.extend(transform_optional_seq(token))
-            # maybe handle T_NESTED if such cases ever occur in real life
-            # it can't be nested in a sane case, really
-    return ret
 
 
 def flatten(seq):
@@ -465,13 +380,6 @@ def make_names_unique(seq, name_map=None):
                 name_map[one_key] = 1
             ret.append(one)
     return ret
-
-
-def has_item_starting_with(p_seq, p_start):
-    for item in p_seq:
-        if isinstance(item, STR_TYPES) and item.startswith(p_start):
-            return True
-    return False
 
 
 def out_docstring(out_func, docstring, indent):

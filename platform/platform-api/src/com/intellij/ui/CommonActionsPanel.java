@@ -9,7 +9,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtilRt;
-import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -125,13 +124,12 @@ public class CommonActionsPanel extends JPanel {
           toolbarActions.set(i, ((AnActionButton.CheckedAnActionButton)toolbarActions.get(i)).getDelegate());
         }
     }
-    myDecorateButtons = UIUtil.isUnderAquaLookAndFeel() && position == ActionToolbarPosition.BOTTOM;
+    myDecorateButtons = false;
 
     final ActionManagerEx mgr = (ActionManagerEx)ActionManager.getInstance();
     myToolbar = mgr.createActionToolbar("ToolbarDecorator",
                                         new DefaultActionGroup(toolbarActions.toArray(AnAction.EMPTY_ARRAY)),
-                                        position == ActionToolbarPosition.BOTTOM || position == ActionToolbarPosition.TOP,
-                                        myDecorateButtons);
+                                        position == ActionToolbarPosition.BOTTOM || position == ActionToolbarPosition.TOP);
     myToolbar.getComponent().setBorder(null);
     add(myToolbar.getComponent(), BorderLayout.CENTER);
   }
@@ -147,18 +145,6 @@ public class CommonActionsPanel extends JPanel {
     if (position == ActionToolbarPosition.LEFT) add(myToolbar.getComponent(), BorderLayout.EAST);
     else if (position == ActionToolbarPosition.RIGHT) add(myToolbar.getComponent(), BorderLayout.WEST);
     else add(myToolbar.getComponent(), BorderLayout.CENTER);
-  }
-
-  @Override
-  protected void paintComponent(Graphics g2) {
-    final Graphics2D g = (Graphics2D)g2;
-    if (myDecorateButtons) {
-      myToolbar.getComponent().setOpaque(false);
-      MacUIUtil.drawToolbarDecoratorBackground(g, getWidth(), getHeight());
-    }
-    else {
-      super.paintComponent(g);
-    }
   }
 
   public AnActionButton getAnActionButton(Buttons button) {

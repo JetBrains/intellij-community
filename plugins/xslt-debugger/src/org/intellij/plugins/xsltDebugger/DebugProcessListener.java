@@ -29,15 +29,17 @@ import org.jetbrains.annotations.NotNull;
 class DebugProcessListener extends ProcessAdapter {
   private final Project myProject;
   private final int myPort;
+  private final String myAccessToken;
 
-  DebugProcessListener(Project project, int port) {
+  DebugProcessListener(Project project, int port, String accessToken) {
     myProject = project;
     myPort = port;
+    myAccessToken = accessToken;
   }
 
   @Override
   public void startNotified(@NotNull ProcessEvent event) {
-    final DebuggerConnector connector = new DebuggerConnector(myProject, event.getProcessHandler(), myPort);
+    final DebuggerConnector connector = new DebuggerConnector(myProject, event.getProcessHandler(), myPort, myAccessToken);
     ApplicationManager.getApplication().executeOnPooledThread(connector);
   }
 

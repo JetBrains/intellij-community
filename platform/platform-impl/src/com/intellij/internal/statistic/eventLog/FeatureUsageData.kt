@@ -1,7 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog
 
+import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.execution.Executor
+import com.intellij.internal.statistic.eventLog.StatisticsEventEscaper.escapeFieldName
 import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext
 import com.intellij.internal.statistic.utils.PluginInfo
 import com.intellij.internal.statistic.utils.addPluginInfoTo
@@ -11,11 +13,12 @@ import com.intellij.lang.Language
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.Version
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
+import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 import java.util.*
@@ -36,6 +39,7 @@ import java.util.*
  * </p>
  */
 class FeatureUsageData {
+  private val LOG = Logger.getInstance(FeatureUsageData::class.java)
   private var data: MutableMap<String, Any> = HashMap()
 
   companion object {
@@ -131,7 +135,15 @@ class FeatureUsageData {
     return this
   }
 
-  fun addInputEvent(event: AnActionEvent): FeatureUsageData {
+  fun addInputEvent(event: InputEvent?, place: String?): FeatureUsageData {
+    val inputEvent = ShortcutDataProvider.getInputEventText(event, place)
+    if (inputEvent != null && StringUtil.isNotEmpty(inputEvent)) {
+      data["input_event"] = inputEvent
+    }
+    return this
+  }
+
+  fun addInputEvent(event: AnActionEvent?): FeatureUsageData {
     val inputEvent = ShortcutDataProvider.getActionEventText(event)
     if (inputEvent != null && StringUtil.isNotEmpty(inputEvent)) {
       data["input_event"] = inputEvent
@@ -170,7 +182,7 @@ class FeatureUsageData {
   }
 
   private fun isCommonPlace(place: String): Boolean {
-    return ActionPlaces.isCommonPlace(place) || ToolWindowContentUi.POPUP_PLACE == place
+    return ActionPlaces.isCommonPlace(place) || ActionPlaces.TOOLWINDOW_POPUP == place
   }
 
   fun addExecutor(executor: Executor): FeatureUsageData {
@@ -217,10 +229,16 @@ class FeatureUsageData {
   }
 
   private fun addDataInternal(key: String, value: Any): FeatureUsageData {
-    if (ApplicationManager.getApplication().isUnitTestMode || !platformDataKeys.contains(key)) {
-      val escapedKey = escapeFieldName(key)
-      data[escapedKey] = value
+    if (!ApplicationManager.getApplication().isUnitTestMode && platformDataKeys.contains(key)) {
+      LOG.warn("Collectors should not reuse platform keys: $key")
+      return this
     }
+
+    val escapedKey = escapeFieldName(key)
+    if (escapedKey != key) {
+      LOG.warn("Key contains invalid symbols, they will be escaped: '$key' -> '$escapedKey'")
+    }
+    data[escapedKey] = value
     return this
   }
 

@@ -27,13 +27,14 @@ import java.util.Map;
  * @author peter
  */
 class UserDataInterner {
-  private static final LinkedHashMap<MapReference, MapReference> ourCache = new LinkedHashMap<MapReference, MapReference>(20, true) {
+  private static final Map<MapReference, MapReference> ourCache = new LinkedHashMap<MapReference, MapReference>(20, true) {
     @Override
     protected boolean removeEldestEntry(Map.Entry<MapReference, MapReference> eldest) {
       return size() > 15;
     }
   };
-  
+
+  @NotNull
   static KeyFMap internUserData(@NotNull KeyFMap map) {
     if (shouldIntern(map)) {
       MapReference key = new MapReference(map);
@@ -43,7 +44,6 @@ class UserDataInterner {
 
         ourCache.put(key, key);
       }
-      return map;
     }
     return map;
   }
@@ -54,9 +54,9 @@ class UserDataInterner {
 }
 
 class MapReference extends WeakReference<KeyFMap> {
-  final int myHash;
+  private final int myHash;
 
-  MapReference(KeyFMap referent) {
+  MapReference(@NotNull KeyFMap referent) {
     super(referent);
     myHash = referent.getValueIdentityHashCode();
   }

@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.history.integration;
 
-import com.intellij.openapi.diff.impl.patch.BinaryFilePatch;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.PatchReader;
 import com.intellij.openapi.diff.impl.patch.PatchVirtualFileReader;
@@ -37,7 +36,7 @@ public abstract class PatchingTestCase extends IntegrationTestCase {
 
     List<FilePatch> patches = new ArrayList<>(reader.readTextPatches());
 
-    new PatchApplier<BinaryFilePatch>(myProject, myRoot, patches, null, null).execute();
+    new PatchApplier(myProject, myRoot, patches, null, null).execute();
   }
 
   protected static void createChildDataWithContent(@NotNull VirtualFile dir, @NotNull String name) {

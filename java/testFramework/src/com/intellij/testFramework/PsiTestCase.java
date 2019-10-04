@@ -7,5 +7,6 @@ import com.intellij.testFramework.fixtures.BasePlatformTestCase;
  * @deprecated Use {@link JavaPsiTestCase} for Java-dependent tests,
  * {@link BasePlatformTestCase} for non-Java-dependent tests
  */
+@Deprecated
 public abstract class PsiTestCase extends JavaPsiTestCase {
 }

@@ -314,8 +314,8 @@ public class AddAnnotationFixTest extends UsefulTestCase {
 
   public void testEditingMultiRootAnnotations() {
     addLibrary("/content/annoMultiRoot/root1", "/content/annoMultiRoot/root2");
-    myFixture.configureByFiles("/content/annoMultiRoot/root1/multiRoot/annotations.xml",
-                               "/content/annoMultiRoot/root2/multiRoot/annotations.xml");
+    myFixture.configureByFiles("content/annoMultiRoot/root1/multiRoot/annotations.xml",
+                               "content/annoMultiRoot/root2/multiRoot/annotations.xml");
     myFixture.configureByFiles("lib/multiRoot/Test.java");
 
     final ExternalAnnotationsManager manager = ExternalAnnotationsManager.getInstance(myFixture.getProject());
@@ -367,7 +367,7 @@ public class AddAnnotationFixTest extends UsefulTestCase {
 
   public void testListenerNotifiedOnExternalChanges() throws IOException {
     addDefaultLibrary();
-    myFixture.configureByFiles("/content/anno/p/annotations.xml");
+    myFixture.configureByFiles("content/anno/p/annotations.xml");
     myFixture.configureByFiles("lib/p/Test.java");
 
     ExternalAnnotationsManager.getInstance(myFixture.getProject()).findExternalAnnotation(getOwner(), AnnotationUtil.NOT_NULL); // force creating service
@@ -383,10 +383,9 @@ public class AddAnnotationFixTest extends UsefulTestCase {
     stopListeningAndCheckEvents();
   }
 
-
   public void testAnnotationsUpdatedWhenFileEdited() {
     addDefaultLibrary();
-    final PsiFile[] files = myFixture.configureByFiles("/content/anno/edit/annotations.xml", "lib/edit/Foo.java");
+    final PsiFile[] files = myFixture.configureByFiles("content/anno/edit/annotations.xml", "lib/edit/Foo.java");
     final PsiClass fooJava = ((PsiClassOwner)files[1]).getClasses()[0];
     ExternalAnnotationsManager.getInstance(myFixture.getProject());
 

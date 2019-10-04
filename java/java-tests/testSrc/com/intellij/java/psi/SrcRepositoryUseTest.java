@@ -25,7 +25,7 @@ import com.intellij.psi.text.BlockSupport;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.JavaPsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 
@@ -34,7 +34,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
 @SuppressWarnings("ConstantConditions")
-@PlatformTestCase.WrapInCommand
+@HeavyPlatformTestCase.WrapInCommand
 public class SrcRepositoryUseTest extends JavaPsiTestCase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.SrcRepositoryUseTest");
   private static final Key<String> TEST_KEY = Key.create("TEST");

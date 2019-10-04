@@ -5,9 +5,13 @@ package com.intellij.openapi.vcs.changes.ui;
 import com.intellij.CommonBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffBundle;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -18,6 +22,7 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBLoadingPanel;
+import com.intellij.util.Function;
 import com.intellij.util.ui.StatusText;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,6 +31,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Collection;
 import java.util.Collections;
+
+import static com.intellij.openapi.util.text.StringUtil.notNullize;
 
 public class ChangeListViewerDialog extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance(ChangeListViewerDialog.class);
@@ -81,7 +88,7 @@ public class ChangeListViewerDialog extends DialogWrapper {
     StatusText emptyText = myChangesPanel.getChangesBrowser().getViewer().getEmptyText();
     emptyText.setText("");
 
-    BackgroundTaskUtil.executeAndTryWait(indicator -> {
+    Function<ProgressIndicator, Runnable> task = progressIndicator -> {
       try {
         ChangelistData result = computable.compute();
         return () -> {
@@ -91,15 +98,20 @@ public class ChangeListViewerDialog extends DialogWrapper {
           emptyText.setText(DiffBundle.message("diff.count.differences.status.text", 0));
         };
       }
+      catch (ProcessCanceledException e) {
+        return EmptyRunnable.INSTANCE;
+      }
       catch (Exception e) {
         LOG.warn(e);
         return () -> {
           myLoadingPanel.stopLoading();
           myChangesPanel.setChangeList(CommittedChangeListPanel.createChangeList(Collections.emptySet()));
-          emptyText.setText(e.getMessage(), SimpleTextAttributes.ERROR_ATTRIBUTES);
+          emptyText.setText(notNullize(e.getMessage(), "Can't load changes"), SimpleTextAttributes.ERROR_ATTRIBUTES);
         };
       }
-    }, () -> myLoadingPanel.startLoading());
+    };
+    ProgressIndicator indicator = BackgroundTaskUtil.executeAndTryWait(task, () -> myLoadingPanel.startLoading());
+    Disposer.register(getDisposable(), () -> indicator.cancel());
   }
 
   @Override

@@ -14,9 +14,6 @@
             "edge": {
               "version_added": true
             },
-            "edge_mobile": {
-              "version_added": true
-            },
             "firefox": {
               "version_added": "1",
               "notes": "Before Firefox 4, creating a &lt;kbd&gt; element incorrectly resulted in an <code>HTMLSpanElement</code> object, instead of the expected <code>HTMLElement</code>."

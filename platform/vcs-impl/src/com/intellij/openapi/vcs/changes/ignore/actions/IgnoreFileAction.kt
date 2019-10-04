@@ -68,7 +68,7 @@ private fun writeIgnoreFileEntries(project: Project,
   OpenFileDescriptor(project, ignoreFile).navigate(true)
 }
 
-private fun getIgnoredFileBeans(e: AnActionEvent, vcs: AbstractVcs<*>): List<IgnoredFileBean> {
+private fun getIgnoredFileBeans(e: AnActionEvent, vcs: AbstractVcs): List<IgnoredFileBean> {
   val project = e.getRequiredData(CommonDataKeys.PROJECT)
   val unversionedFiles = e.getData(ChangesListView.EXACTLY_SELECTED_FILES_DATA_KEY)?.toList()
 

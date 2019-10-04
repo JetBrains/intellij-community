@@ -7,11 +7,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
@@ -21,15 +19,9 @@ import git4idea.update.GitUpdateResult;
 import git4idea.util.GitUIUtil;
 import git4idea.util.GitUntrackedFilesHelper;
 import git4idea.util.LocalChangesWouldBeOverwrittenHelper;
-import git4idea.util.StringScanner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -152,36 +144,6 @@ public class GitRebaser {
       }
     }
     return rebasingRoots;
-  }
-
-  /**
-   * Reorders commits so that the given commits go before others, just after the given parentCommit.
-   * For example, if A->B->C->D are unpushed commits and B and D are supplied to this method, then after rebase the commits will
-   * look like that: B->D->A->C.
-   * NB: If there are merges in the unpushed commits being reordered, a conflict would happen. The calling code should probably
-   * prohibit reordering merge commits.
-   */
-  public boolean reoderCommitsIfNeeded(@NotNull final VirtualFile root, @NotNull String parentCommit, @NotNull List<String> olderCommits) {
-    List<String> allCommits = new ArrayList<>(); //TODO
-    if (olderCommits.isEmpty() || olderCommits.size() == allCommits.size()) {
-      LOG.info("Nothing to reorder. olderCommits: " + olderCommits + " allCommits: " + allCommits);
-      return true;
-    }
-
-    final GitLineHandler h = new GitLineHandler(myProject, root, GitCommand.REBASE);
-    h.setStdoutSuppressed(false);
-    h.addParameters("-i", "-m", "-v");
-    h.addParameters(parentCommit);
-
-    final GitRebaseProblemDetector rebaseConflictDetector = new GitRebaseProblemDetector();
-    h.addLineListener(rebaseConflictDetector);
-
-    final PushRebaseEditor pushRebaseEditor = new PushRebaseEditor(root, olderCommits, false);
-    try (GitHandlerRebaseEditorManager ignored = GitHandlerRebaseEditorManager.prepareEditor(h, pushRebaseEditor)) {
-      final GitTask rebaseTask = new GitTask(myProject, h, "Reordering commits");
-      rebaseTask.setProgressIndicator(myProgressIndicator);
-      return executeRebaseTaskInBackground(root, h, rebaseConflictDetector, rebaseTask);
-    }
   }
 
   private boolean executeRebaseTaskInBackground(VirtualFile root, GitLineHandler h, GitRebaseProblemDetector rebaseConflictDetector, GitTask rebaseTask) {
@@ -338,71 +300,4 @@ public class GitRebaser {
       return myRebaser.continueRebase(myRoot);
     }
   }
-
-  /**
-   * The rebase editor that just overrides the list of commits
-   */
-  class PushRebaseEditor extends GitInteractiveRebaseEditorHandler {
-    private final Logger LOG = Logger.getInstance(PushRebaseEditor.class);
-    private final List<String> myCommits; // The reordered commits
-    private final boolean myHasMerges; // true means that the root has merges
-
-    /**
-     * The constructor from fields that is expected to be
-     * accessed only from {@link GitRebaseEditorService}.
-     *
-     * @param rebaseEditorService
-     * @param root      the git repository root
-     * @param commits   the reordered commits
-     * @param hasMerges if true, the vcs root has merges
-     */
-    PushRebaseEditor(final VirtualFile root,
-                     List<String> commits,
-                     boolean hasMerges) {
-      super(myProject, root);
-      myCommits = commits;
-      myHasMerges = hasMerges;
-    }
-
-    @Override
-    public int editCommits(@NotNull String path) {
-      if (!myRebaseEditorShown) {
-        myRebaseEditorShown = true;
-        if (myHasMerges) {
-          return 0;
-        }
-        try {
-          TreeMap<String, String> pickLines = new TreeMap<>();
-          StringScanner s = new StringScanner(new String(FileUtil.loadFileText(new File(path), CharsetToolkit.UTF8)));
-          while (s.hasMoreData()) {
-            if (!s.tryConsume("pick ")) {
-              s.line();
-              continue;
-            }
-            String commit = s.spaceToken();
-            pickLines.put(commit, "pick " + commit + " " + s.line());
-          }
-          try (PrintWriter w = new PrintWriter(new OutputStreamWriter(new FileOutputStream(path), StandardCharsets.UTF_8))) {
-            for (String commit : myCommits) {
-              String key = pickLines.headMap(commit + "\u0000").lastKey();
-              if (key == null || !commit.startsWith(key)) {
-                continue; // commit from merged branch
-              }
-              w.print(pickLines.get(key) + "\n");
-            }
-          }
-          return 0;
-        }
-        catch (Exception ex) {
-          LOG.error("Editor failed: ", ex);
-          return 1;
-        }
-      }
-      else {
-        return super.editCommits(path);
-      }
-    }
-  }
-
-
 }

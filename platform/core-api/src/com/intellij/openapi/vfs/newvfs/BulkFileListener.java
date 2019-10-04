@@ -16,6 +16,7 @@
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -28,6 +29,7 @@ public interface BulkFileListener {
   /**
    * @deprecated obsolete, implement {@link BulkFileListener} directly (to be removed in IDEA 2019)
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2019")
   @Deprecated
   class Adapter implements BulkFileListener {
 

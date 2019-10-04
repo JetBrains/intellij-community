@@ -552,12 +552,11 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
               else {
                 description = PyBundle.message("INSP.unresolved.ref.$0.for.class.$1", refText, type.getName());
               }
-              markedQualified = true;
             }
             else {
               description = PyBundle.message("INSP.cannot.find.$0.in.$1", refText, type.getName());
-              markedQualified = true;
             }
+            markedQualified = true;
           }
         }
         if (!markedQualified) {

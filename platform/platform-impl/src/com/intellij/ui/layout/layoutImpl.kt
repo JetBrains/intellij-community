@@ -6,7 +6,6 @@ import com.intellij.ui.layout.migLayout.*
 import java.awt.Container
 import javax.swing.ButtonGroup
 import javax.swing.JComponent
-import javax.swing.JLabel
 
 @PublishedApi
 @JvmOverloads
@@ -15,22 +14,20 @@ internal fun createLayoutBuilder(isUseMagic: Boolean = true): LayoutBuilder {
 }
 
 interface LayoutBuilderImpl {
-  fun newRow(label: JLabel? = null, buttonGroup: ButtonGroup? = null, isSeparated: Boolean = false): Row
-
-  fun newTitledRow(title: String): Row
-
-  // backward compatibility
-  @Deprecated(level = DeprecationLevel.HIDDEN, message = "deprecated")
-  fun newRow(label: JLabel? = null, buttonGroup: ButtonGroup? = null, separated: Boolean = false, indented: Boolean = false) = newRow(label, buttonGroup, separated)
+  val rootRow: Row
+  val topButtonGroup: ButtonGroup?
+  fun withButtonGroup(buttonGroup: ButtonGroup, body: () -> Unit)
 
   fun build(container: Container, layoutConstraints: Array<out LCFlags>)
 
-  fun noteRow(text: String, linkHandler: ((url: String) -> Unit)? = null)
-
-  fun commentRow(text: String)
-
   val preferredFocusedComponent: JComponent?
+
+  // Validators applied when Apply is pressed
   val validateCallbacks: List<() -> ValidationInfo?>
+
+  // Validators applied immediately on input
+  val componentValidateCallbacks: Map<JComponent, () -> String?>
+
   val applyCallbacks: List<() -> Unit>
   val resetCallbacks: List<() -> Unit>
   val isModifiedCallbacks: List<() -> Boolean>

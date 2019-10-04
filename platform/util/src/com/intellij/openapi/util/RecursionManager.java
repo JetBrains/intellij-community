@@ -192,6 +192,7 @@ public class RecursionManager {
     MyKey(String guardId, @NotNull Object userObject, boolean mayCallEquals) {
       this.guardId = guardId;
       this.userObject = userObject;
+      LOG.assertTrue(!userObject.getClass().isArray(), "Arrays use the default hashCode/equals implementation");
       // remember user object hashCode to ensure our internal maps consistency
       myHashCode = guardId.hashCode() * 31 + userObject.hashCode();
       myCallEquals = mayCallEquals;
@@ -287,7 +288,9 @@ public class RecursionManager {
 
       Integer value = progressMap.remove(realKey);
       depth--;
-      preventions.remove(realKey);
+      if (!preventions.isEmpty()) {
+        preventions.remove(realKey);
+      }
 
       if (depth == 0) {
         intermediateCache.clear();

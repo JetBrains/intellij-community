@@ -122,15 +122,6 @@ public class LazyParseableElement extends CompositeElement {
   }
 
   @Override
-  public int getNotCachedLength() {
-    CharSequence text = myText();
-    if (text != null) {
-      return text.length();
-    }
-    return super.getNotCachedLength();
-  }
-
-  @Override
   public int hc() {
     CharSequence text = myText();
     return text == null ? super.hc() : LeafElement.leafHC(text);
@@ -236,7 +227,7 @@ public class LazyParseableElement extends CompositeElement {
   @Override
   public void rawAddChildrenWithoutNotifications(@NotNull TreeElement first) {
     if (!isParsed()) {
-      LOG.error("Mutating collapsed chameleon");
+      LOG.error("Mutating collapsed chameleon " + this.getClass());
     }
     super.rawAddChildrenWithoutNotifications(first);
   }

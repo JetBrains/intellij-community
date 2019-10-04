@@ -27,6 +27,7 @@ public class RowIcon extends JBCachingScalableIcon<RowIcon> implements com.intel
   @ApiStatus.ScheduledForRemoval
   public enum Alignment {TOP, CENTER, BOTTOM}
 
+  @NotNull
   private final Icon[] myIcons;
   private Icon[] myScaledIcons;
 
@@ -67,7 +68,7 @@ public class RowIcon extends JBCachingScalableIcon<RowIcon> implements com.intel
     updateSize();
   }
 
-  protected RowIcon(RowIcon icon) {
+  protected RowIcon(@NotNull RowIcon icon) {
     super(icon);
 
     myAlignment = icon.myAlignment;
@@ -101,7 +102,8 @@ public class RowIcon extends JBCachingScalableIcon<RowIcon> implements com.intel
     return myScaledIcons = scaleIcons(myIcons, getScale());
   }
 
-  static Icon[] scaleIcons(Icon[] icons, float scale) {
+  @NotNull
+  static Icon[] scaleIcons(@NotNull Icon[] icons, float scale) {
     if (scale == 1f) return icons;
     Icon[] scaledIcons = new Icon[icons.length];
     for (int i = 0; i < icons.length; i++) {
@@ -190,11 +192,12 @@ public class RowIcon extends JBCachingScalableIcon<RowIcon> implements com.intel
     myHeight = height;
   }
 
+  @NotNull
   @Override
   public Icon getDarkIcon(boolean isDark) {
     RowIcon newIcon = copy();
     for (int i=0; i<newIcon.myIcons.length; i++) {
-      newIcon.myIcons[i] = IconLoader.getDarkIcon(newIcon.myIcons[i], isDark);
+      newIcon.myIcons[i] = newIcon.myIcons[i] == null ? null : IconLoader.getDarkIcon(newIcon.myIcons[i], isDark);
     }
     return newIcon;
   }

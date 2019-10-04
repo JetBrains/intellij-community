@@ -460,8 +460,8 @@ public final class ScreenUtil {
     // Check if the mouse goes out of the control.
     if (dx > 0 && bounds.x >= prevLocation.x) return false;
     if (dx < 0 && bounds.x + bounds.width <= prevLocation.x) return false;
-    if (dy > 0 && bounds.y + bounds.height >= prevLocation.y) return false;
-    if (dy < 0 && bounds.y <= prevLocation.y) return false;
+    if (dy < 0 && bounds.y + bounds.height <= prevLocation.y) return false;
+    if (dy > 0 && bounds.y >= prevLocation.y) return false;
     if (dx == 0) {
       return (location.x >= bounds.x && location.x < bounds.x + bounds.width)
              && (dy > 0 ^ bounds.y > location.y);

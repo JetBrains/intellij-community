@@ -46,6 +46,9 @@ public interface ConstructorBodyGenerator {
     }
   }
 
+  /**
+   * @deprecated use {@link #generateFieldInitialization(StringBuilder, PsiField[], PsiParameter[], Collection)}
+   */
   @Deprecated
   default void generateFieldInitialization(@NotNull StringBuilder buffer, @NotNull PsiField[] fields, @NotNull PsiParameter[] parameters) {}
 

@@ -1,6 +1,8 @@
 package org.jetbrains.plugins.textmate.language;
 
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.Interner;
+import com.intellij.util.containers.PathInterner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.textmate.bundles.Bundle;
 import org.jetbrains.plugins.textmate.editor.TextMateSnippet;
@@ -54,8 +56,9 @@ public class TextMateSnippetsLoadingTest {
     final Bundle bundle = getBundle(bundleName);
     assertNotNull(bundle);
     final SnippetsRegistry snippetsRegistry = new SnippetsRegistry();
+    Interner<CharSequence> interner = new PathInterner.PathEnumerator();
     for (File file : bundle.getSnippetFiles()) {
-      final TextMateSnippet snippet = PreferencesReadUtil.loadSnippet(file, PLIST_READER.read(file));
+      final TextMateSnippet snippet = PreferencesReadUtil.loadSnippet(file, PLIST_READER.read(file), interner);
       if (snippet != null) {
         snippetsRegistry.register(snippet);
       }

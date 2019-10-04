@@ -335,7 +335,6 @@ public class InferenceSession {
 
     PsiExpressionList argumentList = getArgumentList(parent);
     if (properties != null && argumentList != null && !MethodCandidateInfo.isOverloadCheck(argumentList)) {
-      String expectedActualErrorMessage = null;
       final PsiMethod method = properties.getElement();
       if (parent instanceof PsiCallExpression && PsiPolyExpressionUtil.isMethodCallPolyExpression((PsiExpression)parent, method)) {
         final PsiType returnType = method.getReturnType();
@@ -349,15 +348,11 @@ public class InferenceSession {
           if (targetType != null && !PsiType.VOID.equals(targetType)) {
             PsiType actualType = PsiUtil.isRawSubstitutor(method, mySiteSubstitutor) ? returnType : mySiteSubstitutor.substitute(returnType);
             registerReturnTypeConstraints(actualType, targetType, myContext);
-            expectedActualErrorMessage = "Incompatible types. Required " + targetType.getPresentableText() + " but '" + method.getName() + "' was inferred to " + actualType.getPresentableText() + ":";
           }
         }
       }
 
       if (!repeatInferencePhases()) {
-        if (expectedActualErrorMessage != null && myErrorMessages != null) {
-          myErrorMessages.add(0, expectedActualErrorMessage);
-        }
         if (isPertinentToApplicabilityCheckOnContainingCall(parent)) {
           return;
         }
@@ -565,7 +560,7 @@ public class InferenceSession {
   }
 
   InitialInferenceState createInitialState(InferenceSessionContainer container,
-                                           Collection<InferenceVariable> variables,
+                                           Collection<InitialInferenceState.VariableInfo> variables,
                                            PsiSubstitutor topInferenceSubstitutor) {
     return new InitialInferenceState(variables,
                                      topInferenceSubstitutor,
@@ -771,6 +766,14 @@ public class InferenceSession {
     }
     return targetType;
   }
+  
+  public static PsiType getTargetTypeByParent(PsiElement context) {
+    PsiType targetType = getTargetTypeFromParent(context, new Ref<>(), false);
+    if (targetType instanceof PsiClassType) {
+      return ((PsiClassType)targetType).setLanguageLevel(PsiUtil.getLanguageLevel(context));
+    }
+    return targetType;
+  }
 
   /**
    * @param inferParent false during inference; 
@@ -820,7 +823,7 @@ public class InferenceSession {
     }
     PsiSwitchExpression switchExpression = PsiTreeUtil.getParentOfType(parent, PsiSwitchExpression.class);
     if (switchExpression  != null && PsiUtil.getSwitchResultExpressions(switchExpression).contains(context)) {
-      return getTargetType(switchExpression);
+      return getTargetTypeFromParent(switchExpression, errorMessage, inferParent);
     }
     return null;
   }
@@ -996,9 +999,10 @@ public class InferenceSession {
   protected void resolveBounds(final Collection<InferenceVariable> inferenceVariables,
                              @NotNull PsiSubstitutor substitutor) {
     final UniqueNameGenerator uniqueNameGenerator = new UniqueNameGenerator();
-    final Collection<InferenceVariable> allVars = new ArrayList<>(inferenceVariables);
+    final List<InferenceVariable> allVars = new ArrayList<>(inferenceVariables);
+    Map<InferenceVariable, Set<InferenceVariable>> dependencies = InferenceVariablesOrder.getDependencies(allVars, this);
     while (!allVars.isEmpty()) {
-      final List<InferenceVariable> vars = InferenceVariablesOrder.resolveOrder(allVars, this);
+      final List<InferenceVariable> vars = InferenceVariablesOrder.resolveOrder(allVars, dependencies);
       List<InferenceVariable> unresolved = new ArrayList<>();
       for (InferenceVariable var : vars) {
         final PsiType eqBound = getEqualsBound(var, substitutor);

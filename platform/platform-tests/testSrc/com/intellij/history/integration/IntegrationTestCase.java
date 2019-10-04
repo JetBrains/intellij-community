@@ -21,7 +21,7 @@ import com.intellij.openapi.util.Clock;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
@@ -32,7 +32,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.List;
 
-public abstract class IntegrationTestCase extends PlatformTestCase {
+public abstract class IntegrationTestCase extends HeavyPlatformTestCase {
   protected static final int TIMESTAMP_INCREMENT = 3000;
   protected static final String FILTERED_DIR_NAME = "CVS";
 

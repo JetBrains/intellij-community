@@ -29,11 +29,12 @@ import static com.intellij.util.ObjectUtils.assertNotNull;
 public class UnixProcessManager {
   private static final Logger LOG = Logger.getInstance(UnixProcessManager.class);
 
-  public static final int SIGINT = getSignalNumber("INT");
-  public static final int SIGKILL = getSignalNumber("KILL");
-  public static final int SIGTERM = getSignalNumber("TERM");
+  // https://en.wikipedia.org/wiki/Signal_(IPC)#POSIX_signals
+  public static final int SIGINT = 2;
+  public static final int SIGKILL = 9;
+  public static final int SIGTERM = 15;
+  public static final int SIGPIPE = getSignalNumber("PIPE");
 
-  @SuppressWarnings("SpellCheckingInspection")
   private interface CLib extends Library {
     int getpid();
     int kill(int pid, int signal);
@@ -65,7 +66,7 @@ public class UnixProcessManager {
       return assertNotNull(ReflectionUtil.getField(process.getClass(), process, int.class, "pid"));
     }
     catch (Throwable t) {
-      throw new IllegalStateException("Failed to get PID from instance of " + process.getClass() + ", OS: " + SystemInfo.OS_NAME, t);
+      throw new IllegalStateException("Failed to get PID from an instance of " + process.getClass() + ", OS: " + SystemInfo.OS_NAME, t);
     }
   }
 

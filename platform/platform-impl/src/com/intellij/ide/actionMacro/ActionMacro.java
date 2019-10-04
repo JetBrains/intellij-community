@@ -275,7 +275,8 @@ public class ActionMacro {
     @Override
     public void playBack(DataContext context) {
       Editor editor = CommonDataKeys.EDITOR.getData(context);
-      final TypedAction typedAction = EditorActionManager.getInstance().getTypedAction();
+      EditorActionManager.getInstance();
+      final TypedAction typedAction = TypedAction.getInstance();
       for (final char aChar : myText.toCharArray()) {
         typedAction.actionPerformed(editor, aChar, context);
       }

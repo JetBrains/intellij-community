@@ -15,28 +15,32 @@
  */
 package com.intellij.openapi.keymap.impl.ui;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.awt.BorderLayout;
-import java.awt.Component;
-import java.util.Collection;
-import javax.swing.JComponent;
-import javax.swing.JPanel;
+import javax.swing.*;
+import java.awt.*;
+import java.util.List;
+import java.util.*;
 
 /**
  * @author Sergey.Malenkov
  */
 final class KeyboardShortcutDialog extends ShortcutDialog<KeyboardShortcut> {
   private final JComponent myPreferredFocusedComponent;
+  private final @Nullable Map<KeyStroke, String> mySystemShortcuts;
 
-  KeyboardShortcutDialog(Component parent, boolean allowSecondStroke) {
+  KeyboardShortcutDialog(Component parent, boolean allowSecondStroke, @Nullable Map<KeyStroke, String> systemShortcuts) {
     super(parent, "keyboard.shortcut.dialog.title", new KeyboardShortcutPanel(true, new BorderLayout()));
 
     KeyboardShortcutPanel panel = (KeyboardShortcutPanel)myShortcutPanel;
     myPreferredFocusedComponent = panel.myFirstStroke;
+    mySystemShortcuts = systemShortcuts;
 
     JPanel inner = new JPanel(new BorderLayout());
     inner.add(BorderLayout.CENTER, panel.mySecondStroke);
@@ -68,6 +72,30 @@ final class KeyboardShortcutDialog extends ShortcutDialog<KeyboardShortcut> {
 
   @Override
   Collection<String> getConflicts(KeyboardShortcut shortcut, String actionId, Keymap keymap) {
-    return keymap.getConflicts(actionId, shortcut).keySet();
+    final String sysAct = getSystemShortcutAction(shortcut.getFirstKeyStroke());
+    final Collection<String> keymapConflicts = keymap.getConflicts(actionId, shortcut).keySet();
+    if (sysAct == null)
+      return keymapConflicts;
+    if (keymapConflicts == null || keymapConflicts.isEmpty()) {
+      return Arrays.asList(sysAct);
+    }
+
+    List<String> result = new ArrayList<>();
+    result.addAll(keymapConflicts);
+    result.add(sysAct);
+    return result;
+  }
+
+  @Override
+  protected void addSystemActionsIfPresented(Group group) {
+    if (mySystemShortcuts != null) {
+      Group macOsSysGroup = new Group("MacOS shortcuts", AllIcons.Nodes.KeymapOther);
+      mySystemShortcuts.forEach((ks, actid) -> macOsSysGroup.addActionId(actid));
+      group.addGroup(macOsSysGroup);
+    }
+  }
+
+  private @Nullable String getSystemShortcutAction(@NotNull KeyStroke keyStroke) {
+    return mySystemShortcuts == null ? null : mySystemShortcuts.get(keyStroke);
   }
 }

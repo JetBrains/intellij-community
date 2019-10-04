@@ -15,10 +15,13 @@
  */
 package com.intellij.openapi.application;
 
+import org.jetbrains.annotations.ApiStatus;
+
 /**
  * @deprecated To remove in 2017.
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2017")
 public class RuntimeInterruptedException extends RuntimeException {
   public RuntimeInterruptedException(InterruptedException cause) {
     super(cause);

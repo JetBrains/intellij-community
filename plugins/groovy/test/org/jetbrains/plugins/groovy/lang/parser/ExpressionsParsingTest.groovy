@@ -943,4 +943,28 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
   void testlambda$return3() { doTest() }
 
   void testlambda$return4() { doTest() }
+
+  void testtypeAnnotations$field1() { doTest() }
+
+  void testtypeAnnotations$field2() { doTest() }
+
+  void testtypeAnnotations$methodSignature() { doTest() }
+
+  void testtypeAnnotations$methodSignature2() { doTest() }
+
+  void testtypeAnnotations$methodSignature3() { doTest() }
+
+  void testtypeAnnotations$classDecl1() { doTest() }
+
+  void testtypeAnnotations$classDecl2() { doTest() }
+
+  void testtypeAnnotations$tryCatch() { doTest() }
+
+  void testtypeAnnotations$cast() { doTest() }
+
+  void testtypeAnnotations$newExpression1() { doTest() }
+
+  void testtypeAnnotations$newExpression2() { doTest() }
+
+  void testtypeAnnotations$newExpression3() { doTest() }
 }

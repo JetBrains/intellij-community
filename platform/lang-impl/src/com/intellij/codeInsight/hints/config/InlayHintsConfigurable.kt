@@ -1,7 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hints.config
 
+import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.hints.HintUtils
+import com.intellij.codeInsight.hints.config.language.SingleLanguageInlayHintsConfigurable
 import com.intellij.ide.DataManager
 import com.intellij.lang.Language
 import com.intellij.openapi.options.Configurable
@@ -10,12 +12,12 @@ import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.project.Project
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.util.ui.JBUI
-import javax.swing.BoxLayout
-import javax.swing.JComponent
-import javax.swing.JPanel
+import java.awt.BorderLayout
+import javax.swing.*
+import javax.swing.border.EmptyBorder
 
 class InlayHintsConfigurable(val project: Project) : Configurable, Configurable.Composite {
-  private val configurables: List<SingleLanguageInlayHintsConfigurable> = HintUtils.getLanguagesWithHintsSupport(project)
+  private val configurables: List<SingleLanguageInlayHintsConfigurable> = HintUtils.getLanguagesWithParamAndInlayHintsSupport(project)
     .map { SingleLanguageInlayHintsConfigurable(project, it) }
     .sortedBy { it.displayName }
 
@@ -23,16 +25,32 @@ class InlayHintsConfigurable(val project: Project) : Configurable, Configurable.
     return configurables.toTypedArray()
   }
 
-  private val panel = JPanel().also {
-    it.layout = BoxLayout(it, BoxLayout.Y_AXIS)
-    it.border = JBUI.Borders.empty(0, 10, 0, 0)
+  private val listPanel = createPanel()
+
+  private fun createPanel() : JPanel {
+    val outer = JPanel()
+    outer.layout = BorderLayout()
+    val label = JLabel(CodeInsightBundle.message("inlay.hints.language.list.description"))
+    outer.add(label, BorderLayout.NORTH)
+    outer.add(createListPanel(), BorderLayout.WEST)
+    return outer
+  }
+
+  private fun createListPanel(): JPanel {
+    val panel = JPanel()
+    panel.layout = BoxLayout(panel, BoxLayout.Y_AXIS)
+    panel.border = JBUI.Borders.empty(0, 10, 0, 0)
+    panel.add(Box.createRigidArea(JBUI.size(0, 10)))
     for (configurable in configurables) {
       val label = LinkLabel.create(configurable.language.displayName) {
-        val settings = Settings.KEY.getData(DataManager.getInstance().getDataContext(it))
+        val settings = Settings.KEY.getData(DataManager.getInstance().getDataContext(panel))
         settings?.select(configurable)
       }
-      it.add(label)
+      label.alignmentX = 0f
+      label.border = EmptyBorder(1, 17, 3, 1)
+      panel.add(label)
     }
+    return panel
   }
 
   override fun isModified(): Boolean {
@@ -44,7 +62,7 @@ class InlayHintsConfigurable(val project: Project) : Configurable, Configurable.
   }
 
   override fun createComponent(): JComponent {
-    return panel
+    return listPanel
   }
 
   override fun apply() {
@@ -53,7 +71,7 @@ class InlayHintsConfigurable(val project: Project) : Configurable, Configurable.
 
   fun loadFromSettings() {
     for (configurable in configurables) {
-      configurable.loadFromSettings()
+      configurable.reset()
     }
   }
 

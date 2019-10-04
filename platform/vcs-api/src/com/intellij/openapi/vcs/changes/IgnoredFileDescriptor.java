@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,5 +27,11 @@ public interface IgnoredFileDescriptor {
   @NotNull
   IgnoreSettingsType getType();
 
+  /**
+   * @deprecated use {@link #matchesFile(FilePath)}
+   */
+  @Deprecated
   boolean matchesFile(@NotNull VirtualFile file);
+
+  boolean matchesFile(@NotNull FilePath filePath);
 }

@@ -63,9 +63,9 @@ public class PreviewDiffSplitterComponent extends OnePixelSplitter {
 
   public void setDetailsOn(boolean detailsOn) {
     myDetailsOn = detailsOn;
-    updatePreview(false);
     if (myDetailsOn == (getSecondComponent() == null)) {
       updateVisibility();
     }
+    updatePreview(false);
   }
 }

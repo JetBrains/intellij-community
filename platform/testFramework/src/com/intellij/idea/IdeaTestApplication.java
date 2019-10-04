@@ -2,7 +2,7 @@
 package com.intellij.idea;
 
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
-import com.intellij.diagnostic.LoadingPhase;
+import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.impl.HeadlessDataManager;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
@@ -11,11 +11,9 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.registry.RegistryKeyBean;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.ui.IconManager;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -23,9 +21,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 public final class IdeaTestApplication implements Disposable {
   private static volatile IdeaTestApplication ourInstance;
@@ -51,14 +50,10 @@ public final class IdeaTestApplication implements Disposable {
   }
 
   public static IdeaTestApplication getInstance() {
-    return getInstance(null);
-  }
-
-  public static IdeaTestApplication getInstance(@Nullable String configPath) {
     IdeaTestApplication instance = ourInstance;
     if (instance == null) {
       try {
-        instance = createInstance(configPath);
+        instance = createInstance();
       }
       catch (RuntimeException e) {
         bootstrapError = e;
@@ -70,7 +65,7 @@ public final class IdeaTestApplication implements Disposable {
   }
 
   @NotNull
-  private static synchronized IdeaTestApplication createInstance(@Nullable String configPath) {
+  private static synchronized IdeaTestApplication createInstance() {
     if (ourInstance != null) {
       return ourInstance;
     }
@@ -79,13 +74,12 @@ public final class IdeaTestApplication implements Disposable {
       throw bootstrapError;
     }
 
-
     if (isBootstrappingAppNow) {
       throw new IllegalStateException("App bootstrap is already in process");
     }
     isBootstrappingAppNow = true;
 
-    PlatformTestCase.doAutodetectPlatformPrefix();
+    HeavyPlatformTestCase.doAutodetectPlatformPrefix();
 
     String[] args = {"inspect", "", "", ""};
     Main.setFlags(args);
@@ -94,25 +88,29 @@ public final class IdeaTestApplication implements Disposable {
     PluginManagerCore.isUnitTestMode = true;
     IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(true);
 
-    Future<List<IdeaPluginDescriptor>> loadedPluginFuture = AppExecutorUtil.getAppExecutorService().submit(() -> PluginManagerCore.getLoadedPlugins());
+    CompletableFuture<List<IdeaPluginDescriptor>> loadedPluginFuture = CompletableFuture.supplyAsync(() -> {
+      return PluginManagerCore.getLoadedPlugins(IdeaTestApplication.class.getClassLoader());
+    }, AppExecutorUtil.getAppExecutorService());
+
     ApplicationImpl.patchSystem();
-    ApplicationImpl app = new ApplicationImpl(true, true, true, true, ApplicationManagerEx.IDEA_APPLICATION);
+    ApplicationImpl app = new ApplicationImpl(true, true, true, true);
     IconManager.activate();
-    List<IdeaPluginDescriptor> loadedPlugins = null;
     try {
-      loadedPlugins = loadedPluginFuture.get(5, TimeUnit.SECONDS);
+      ApplicationLoader.registerRegistryAndInitStore(loadedPluginFuture.thenApply(it -> {
+        app.registerComponents(it);
+        return it;
+      }), app)
+        .thenCompose(it -> ApplicationLoader.preloadServices(app, it))
+        .get(20, TimeUnit.SECONDS);
     }
-    catch (ExecutionException e) {
+    catch (TimeoutException e) {
+      throw new RuntimeException("Cannot load plugin descriptors in 20 seconds: " + ThreadDumper.dumpThreadsToString(), e);
+    }
+    catch (ExecutionException | InterruptedException e) {
       ExceptionUtil.rethrow(e.getCause() == null ? e : e.getCause());
     }
-    catch (Exception e) {
-      ExceptionUtil.rethrow(e);
-    }
-    ApplicationImpl.registerMessageBusListeners(app, loadedPlugins, true);
-    app.registerComponents(loadedPlugins);
-    RegistryKeyBean.addKeysFromPlugins();
-    app.load(configPath, null);
-    LoadingPhase.setCurrentPhase(LoadingPhase.FRAME_SHOWN);
+
+    app.loadComponents(null);
 
     isBootstrappingAppNow = false;
     ourInstance = new IdeaTestApplication();
@@ -128,7 +126,8 @@ public final class IdeaTestApplication implements Disposable {
     if (ourInstance != null) {
       Application application = ApplicationManager.getApplication();
       if (application != null) {
-        Disposer.dispose(application);  // `ApplicationManager#ourApplication` will be automatically set to `null`
+        // `ApplicationManager#ourApplication` will be automatically set to `null`
+        Disposer.dispose(application);
       }
       ourInstance = null;
     }

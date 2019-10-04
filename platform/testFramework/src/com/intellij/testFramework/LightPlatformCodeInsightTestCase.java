@@ -475,7 +475,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     else {
       EditorActionManager actionManager = EditorActionManager.getInstance();
       final DataContext dataContext = DataManager.getInstance().getDataContext();
-      TypedAction action = actionManager.getTypedAction();
+      TypedAction action = TypedAction.getInstance();
       action.actionPerformed(editor, c, dataContext);
     }
   }

@@ -4,6 +4,7 @@ package com.intellij.ide;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.text.NameUtilCore;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -29,6 +30,9 @@ public abstract class TypePresentationService {
   @Nullable
   public abstract String getTypeName(Object o);
 
+  @ApiStatus.Internal
+  @Nullable
+  public abstract String getObjectName(Object o);
 
   public static String getDefaultTypeName(final Class aClass) {
     String simpleName = aClass.getSimpleName();

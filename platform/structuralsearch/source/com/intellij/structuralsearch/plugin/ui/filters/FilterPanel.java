@@ -3,9 +3,7 @@ package com.intellij.structuralsearch.plugin.ui.filters;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionToolbarPosition;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -13,6 +11,7 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.MatchVariableConstraint;
+import com.intellij.structuralsearch.NamedScriptableDefinition;
 import com.intellij.structuralsearch.StructuralSearchProfile;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
@@ -51,12 +50,13 @@ public class FilterPanel implements FilterTable {
 
   @NotNull final Project myProject;
   private CompiledPattern myCompiledPattern;
-  MatchVariableConstraint myConstraint;
+  NamedScriptableDefinition myConstraint;
   StructuralSearchProfile myProfile;
 
   final Header myHeader = new Header();
+  private final ScriptFilter myScriptFilter = new ScriptFilter(this);
   private final List<FilterAction> myFilters =
-    Arrays.asList(new TextFilter(this), new CountFilter(this), new TypeFilter(this), new ReferenceFilter(this), new ScriptFilter(this));
+    Arrays.asList(new TextFilter(this), new CountFilter(this), new TypeFilter(this), new ReferenceFilter(this), myScriptFilter);
   private Runnable myConstraintChangedCallback;
   boolean myValid;
 
@@ -94,7 +94,7 @@ public class FilterPanel implements FilterTable {
         if (point == null) return;
         showAddFilterPopup(button.getContextComponent(), point);
       })
-      .setAddActionUpdater(e -> myValid)
+      .setAddActionUpdater(e -> myValid && myFilters.stream().anyMatch(f -> f.isAvailable()))
       .setRemoveAction(button -> {
         myFilterTable.stopEditing();
         final int selectedRow = myFilterTable.getTable().getSelectedRow();
@@ -104,15 +104,13 @@ public class FilterPanel implements FilterTable {
         }
       })
       .setRemoveActionUpdater(e -> myValid && myFilterTable.getTable().getSelectedRow() != 0)
-      .setPanelBorder(null)
+      .setPanelBorder(JBUI.Borders.empty())
       .createPanel();
     myFilterPanel.setPreferredSize(new Dimension(350, 60));
-    myFilterPanel.setBorder(BorderFactory.createCompoundBorder(JBUI.Borders.empty(3, 0), myFilterPanel.getBorder()));
   }
 
   @Override
   public void addFilter(FilterAction filter) {
-    filter.getTemplatePresentation().setEnabledAndVisible(false);
     final JBTable table = myFilterTable.getTable();
     TableUtil.stopEditing(table);
     table.setRowHeight(table.getRowHeight()); // reset
@@ -138,26 +136,17 @@ public class FilterPanel implements FilterTable {
     }
   }
 
-  public final void addFilterIfPresent(FilterAction filter) {
-    if (filter.hasFilter()) {
-      filter.getTemplatePresentation().setEnabledAndVisible(false);
-      if (myTableModel.getRowCount() == 0) {
-        myTableModel.addRow(myHeader);
-      }
-      myTableModel.addRow(filter);
-    }
-    else {
-      filter.getTemplatePresentation().setEnabledAndVisible(true);
-    }
-  }
-
   public final void initFilter(FilterAction filter, List<? extends PsiElement> nodes, boolean completePattern, boolean target) {
-    if (filter.isApplicable(nodes, completePattern, target) && !myTableModel.getItems().contains(filter)) {
-      addFilterIfPresent(filter);
+    if (filter.checkApplicable(nodes, completePattern, target)) {
+      if (filter.hasFilter() && !myTableModel.getItems().contains(filter)) {
+        if (myTableModel.getRowCount() == 0) {
+          myTableModel.addRow(myHeader);
+        }
+        myTableModel.addRow(filter);
+      }
     }
     else {
       filter.clearFilter();
-      filter.getTemplatePresentation().setEnabledAndVisible(false);
     }
   }
 
@@ -166,13 +155,12 @@ public class FilterPanel implements FilterTable {
     final int index = myTableModel.indexOf(filter);
     if (index >= 0) myTableModel.removeRow(index);
     if (myTableModel.getRowCount() == 1) myTableModel.removeRow(0); // remove header
-    filter.getTemplatePresentation().setEnabledAndVisible(true);
     filter.clearFilter();
     myConstraintChangedCallback.run();
   }
 
   @Override
-  public MatchVariableConstraint getConstraint() {
+  public NamedScriptableDefinition getVariable() {
     return myConstraint;
   }
 
@@ -190,11 +178,20 @@ public class FilterPanel implements FilterTable {
 
   void showAddFilterPopup(Component component, RelativePoint point) {
     myFilterTable.getTable().requestFocus();
-    final DefaultActionGroup group = new DefaultActionGroup(myFilters);
-    final DataContext context = DataManager.getInstance().getDataContext(component);
-    final ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup("Add Filter", group, context,
-                                                                                JBPopupFactory.ActionSelectionAid.ALPHA_NUMBERING, true, null);
-    popup.show(point);
+    if (myConstraint instanceof MatchVariableConstraint) {
+      final DefaultActionGroup group = new DefaultActionGroup(myFilters);
+      final DataContext context = DataManager.getInstance().getDataContext(component);
+      final ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup("Add Filter", group, context,
+                                                                                  JBPopupFactory.ActionSelectionAid.ALPHA_NUMBERING, true,
+                                                                                  null);
+      popup.show(point);
+    }
+    else {
+      final AnActionEvent event =
+        AnActionEvent.createFromAnAction(myScriptFilter, null, ActionPlaces.UNKNOWN,
+                                         DataContext.EMPTY_CONTEXT);
+      myScriptFilter.actionPerformed(event);
+    }
   }
 
   public JComponent getComponent() {
@@ -218,7 +215,7 @@ public class FilterPanel implements FilterTable {
     return myConstraint != null;
   }
 
-  public void initFilters(@NotNull MatchVariableConstraint constraint) {
+  public void initFilters(@NotNull NamedScriptableDefinition constraint) {
     if (myCompiledPattern == null) {
       return;
     }
@@ -226,7 +223,7 @@ public class FilterPanel implements FilterTable {
     final String varName = myConstraint.getName();
     final List<PsiElement> nodes = myCompiledPattern.getVariableNodes(varName);
     final boolean completePattern = Configuration.CONTEXT_VAR_NAME.equals(varName);
-    final boolean target = myConstraint.isPartOfSearchResults();
+    final boolean target = constraint instanceof MatchVariableConstraint && ((MatchVariableConstraint)constraint).isPartOfSearchResults();
     myTableModel.setItems(new SmartList<>());
     ReadAction.run(() -> {
       for (FilterAction filter : myFilters) {
@@ -234,13 +231,20 @@ public class FilterPanel implements FilterTable {
       }
     });
 
-    final String message = Configuration.CONTEXT_VAR_NAME.equals(varName)
-                           ? "No filters added for the complete match."
-                           : "No Filters added for $" + varName + "$.";
+    final String message;
+    if (constraint instanceof MatchVariableConstraint) {
+      message = Configuration.CONTEXT_VAR_NAME.equals(varName)
+                ? "No filters added for the whole template."
+                : "No filters added for $" + varName + "$.";
+    }
+    else {
+      message = "No script added for $" + varName + "$.";
+    }
     final StatusText statusText = myFilterTable.getTable().getEmptyText();
     statusText.setText(message);
     if (myValid) {
-      statusText.appendSecondaryText("Add filter", SimpleTextAttributes.LINK_ATTRIBUTES,
+      statusText.appendSecondaryText(myConstraint instanceof MatchVariableConstraint ? "Add filter" : "Add script",
+                                     SimpleTextAttributes.LINK_ATTRIBUTES,
                                      e -> {
                                        final JBTable table = myFilterTable.getTable();
                                        showAddFilterPopup(table, new RelativePoint(table, table.getMousePosition()));
@@ -272,7 +276,9 @@ public class FilterPanel implements FilterTable {
     public SimpleColoredComponent getRenderer() {
       myLabel.clear();
       final String varName = myConstraint.getName();
-      myLabel.append(Configuration.CONTEXT_VAR_NAME.equals(varName) ? "Filters for the Complete Match:" : "Filters for $" + varName + "$:",
+      myLabel.append(Configuration.CONTEXT_VAR_NAME.equals(varName)
+                     ? "Filters for the whole template:"
+                     : "Filters for $" + varName + "$:",
                      SimpleTextAttributes.GRAYED_ATTRIBUTES);
       return myLabel;
     }

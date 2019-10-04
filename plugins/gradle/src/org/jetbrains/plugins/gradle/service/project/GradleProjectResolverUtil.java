@@ -18,14 +18,16 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PathUtilRt;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.LinkedMultiMap;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.hash.EqualityPolicy;
+import gnu.trove.THashMap;
+import gnu.trove.THashSet;
+import gnu.trove.TObjectHashingStrategy;
 import org.gradle.api.artifacts.Dependency;
 import org.gradle.tooling.model.GradleProject;
-import org.gradle.tooling.model.gradle.BasicGradleProject;
-import org.gradle.tooling.model.gradle.GradleBuild;
 import org.gradle.tooling.model.idea.IdeaModule;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
@@ -44,8 +46,6 @@ import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 import java.util.stream.Collectors;
-
-import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolver.CONFIGURATION_ARTIFACTS;
 
 /**
  * @author Vladislav.Soroka
@@ -163,15 +163,11 @@ public class GradleProjectResolverUtil {
   public static String getModuleConfigPath(@NotNull ProjectResolverContext resolverCtx,
                                            @NotNull IdeaModule gradleModule,
                                            @NotNull String rootProjectPath) {
-    GradleBuild build = resolverCtx.getExtraProject(gradleModule, GradleBuild.class);
-    if (build != null) {
-      String gradlePath = gradleModule.getGradleProject().getPath();
-      File moduleDirPath = getModuleDirPath(build, gradlePath);
-      if (moduleDirPath == null) {
-        throw new IllegalStateException(String.format("Unable to find root directory for module '%s'", gradleModule.getName()));
-      }
+    ExternalProject externalProject = resolverCtx.getExtraProject(gradleModule, ExternalProject.class);
+    if (externalProject != null) {
+      File projectDir = externalProject.getProjectDir();
       try {
-        return ExternalSystemApiUtil.toCanonicalPath(moduleDirPath.getCanonicalPath());
+        return ExternalSystemApiUtil.toCanonicalPath(projectDir.getCanonicalPath());
       }
       catch (IOException e) {
         LOG.warn("construction of the canonical path for the module fails", e);
@@ -179,35 +175,6 @@ public class GradleProjectResolverUtil {
     }
 
     return GradleUtil.getConfigPath(gradleModule.getGradleProject(), rootProjectPath);
-  }
-
-  /**
-   * Returns the physical path of the module's root directory (the path in the file system.)
-   * <p>
-   * It is important to note that Gradle has its own "logical" path that may or may not be equal to the physical path of a Gradle project.
-   * For example, the sub-project at ${projectRootDir}/apps/app will have the Gradle path :apps:app. Gradle also allows mapping physical
-   * paths to a different logical path. For example, in settings.gradle:
-   * <pre>
-   *   include ':app'
-   *   project(':app').projectDir = new File(rootDir, 'apps/app')
-   * </pre>
-   * In this example, sub-project at ${projectRootDir}/apps/app will have the Gradle path :app.
-   * </p>
-   *
-   * @param build contains information about the root Gradle project and its sub-projects. Such information includes the physical path of
-   *              the root Gradle project and its sub-projects.
-   * @param path  the Gradle "logical" path. This path uses colon as separator, and may or may not be equal to the physical path of a
-   *              Gradle project.
-   * @return the physical path of the module's root directory.
-   */
-  @Nullable
-  public static File getModuleDirPath(@NotNull GradleBuild build, @NotNull String path) {
-    for (BasicGradleProject project: build.getProjects()) {
-      if (project.getPath().equals(path)) {
-        return project.getProjectDirectory();
-      }
-    }
-    return null;
   }
 
   @NotNull
@@ -364,78 +331,100 @@ public class GradleProjectResolverUtil {
   }
 
   public static void attachSourcesAndJavadocFromGradleCacheIfNeeded(File gradleUserHomeDir, LibraryData libraryData) {
+    attachSourcesAndJavadocFromGradleCacheIfNeeded(null, gradleUserHomeDir, libraryData);
+  }
+
+  private static final com.intellij.openapi.util.Key<Set<LibraryData>> LIBRARIES_CACHE =
+    com.intellij.openapi.util.Key.create("GradleProjectResolverUtil.LIBRARIES_CACHE");
+  private static final com.intellij.openapi.util.Key<Map<String, Map<LibraryPathType, List<String>>>> PATHS_CACHE =
+    com.intellij.openapi.util.Key.create("GradleProjectResolverUtil.PATHS_CACHE");
+
+  public static void attachSourcesAndJavadocFromGradleCacheIfNeeded(ProjectResolverContext context,
+                                                                    File gradleUserHomeDir,
+                                                                    LibraryData libraryData) {
     if (!libraryData.getPaths(LibraryPathType.SOURCE).isEmpty() && !libraryData.getPaths(LibraryPathType.DOC).isEmpty()) {
       return;
     }
 
-    for (String path: libraryData.getPaths(LibraryPathType.BINARY)) {
-      try {
-        final Path file = Paths.get(path);
-        if (!FileUtil.isAncestor(gradleUserHomeDir.getPath(), path, true)) continue;
-        Path binaryFileParent = file.getParent();
-        Path grandParentFile = binaryFileParent.getParent();
-
-        final boolean[] sourceFound = {false};
-        final boolean[] docFound = {false};
-        Files.walkFileTree(grandParentFile, EnumSet.noneOf(FileVisitOption.class), 2, new SimpleFileVisitor<Path>() {
-          @Override
-          public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-            if (binaryFileParent.equals(dir)) {
-              return FileVisitResult.SKIP_SUBTREE;
-            }
-            return super.preVisitDirectory(dir, attrs);
-          }
-
-          @Override
-          public FileVisitResult visitFile(Path sourceCandidate, BasicFileAttributes attrs) throws IOException {
-            if (!sourceCandidate.getParent().getParent().equals(grandParentFile)) {
-              return FileVisitResult.SKIP_SIBLINGS;
-            }
-            if (attrs.isRegularFile()) {
-              if (StringUtil.endsWith(sourceCandidate.getFileName().toString(), "-sources.jar")) {
-                libraryData.addPath(LibraryPathType.SOURCE, sourceCandidate.toFile().getAbsolutePath());
-                sourceFound[0] = true;
-              }
-              else if (StringUtil.endsWith(sourceCandidate.getFileName().toString(), "-javadoc.jar")) {
-                libraryData.addPath(LibraryPathType.DOC, sourceCandidate.toFile().getAbsolutePath());
-                docFound[0] = true;
-              }
-            }
-            if (sourceFound[0] && docFound[0]) {
-              return FileVisitResult.TERMINATE;
-            }
-            return super.visitFile(file, attrs);
-          }
-        });
+    Map<String, Map<LibraryPathType, List<String>>> pathsCache = null;
+    if (context != null) {
+      // skip already processed libraries
+      Set<LibraryData> libsCache = context.getUserData(LIBRARIES_CACHE);
+      if (libsCache == null) {
+        libsCache = context.putUserDataIfAbsent(LIBRARIES_CACHE, new THashSet<>(TObjectHashingStrategy.IDENTITY));
       }
-      catch (IOException | InvalidPathException e) {
-        LOG.debug(e);
+      if (!libsCache.add(libraryData)) return;
+
+      pathsCache = context.getUserData(PATHS_CACHE);
+      if (pathsCache == null) pathsCache = context.putUserDataIfAbsent(PATHS_CACHE, new THashMap<>());
+    }
+
+    for (String path: libraryData.getPaths(LibraryPathType.BINARY)) {
+      if (!FileUtil.isAncestor(gradleUserHomeDir.getPath(), path, true)) continue;
+
+      // take already processed paths from cache
+      Map<LibraryPathType, List<String>> collectedPaths = pathsCache == null ? null : pathsCache.get(path);
+      if (collectedPaths == null) {
+        collectedPaths = new THashMap<>();
+        if (pathsCache != null) {
+          pathsCache.put(path, collectedPaths);
+        }
+        collectSourcesAndJavadocsFor(path, collectedPaths);
+      }
+
+      for (Map.Entry<LibraryPathType, List<String>> each : collectedPaths.entrySet()) {
+        for (String cachedPath : each.getValue()) {
+          libraryData.addPath(each.getKey(), cachedPath);
+        }
       }
     }
   }
 
-  @Deprecated
-  @SuppressWarnings("unchecked")
-  public static Collection<DependencyData> getIdeDependencies(@NotNull ProjectResolverContext resolverCtx,
-                                                              @NotNull DataNode<? extends ModuleData> moduleDataNode,
-                                                              @NotNull Collection<ExternalDependency> dependencies)
-    throws IllegalStateException {
+  private static void collectSourcesAndJavadocsFor(@NotNull String binaryPath, @NotNull Map<LibraryPathType, List<String>> collect) {
+    try {
+      final Path file = Paths.get(binaryPath);
+      Path binaryFileParent = file.getParent();
+      Path grandParentFile = binaryFileParent.getParent();
 
-    final DataNode<ProjectData> ideProject = ExternalSystemApiUtil.findParent(moduleDataNode, ProjectKeys.PROJECT);
-    assert ideProject != null;
+      final boolean[] sourceFound = {false};
+      final boolean[] docFound = {false};
 
-    final Map<String, Pair<DataNode<GradleSourceSetData>, ExternalSourceSet>> sourceSetMap =
-      ideProject.getUserData(GradleProjectResolver.RESOLVED_SOURCE_SETS);
-    assert sourceSetMap != null;
+      Files.walkFileTree(grandParentFile, EnumSet.noneOf(FileVisitOption.class), 2, new SimpleFileVisitor<Path>() {
+        @Override
+        public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+          if (binaryFileParent.equals(dir)) {
+            return FileVisitResult.SKIP_SUBTREE;
+          }
+          return super.preVisitDirectory(dir, attrs);
+        }
 
-    final Map<String, String> artifactsMap = ideProject.getUserData(CONFIGURATION_ARTIFACTS);
-    assert artifactsMap != null;
-
-    DataNode fakeNode = new DataNode(CONTAINER_KEY, moduleDataNode.getData(), null);
-    buildDependencies(resolverCtx, sourceSetMap, artifactsMap, fakeNode, dependencies, null);
-    final Collection<DataNode<?>> dataNodes =
-      ExternalSystemApiUtil.findAllRecursively(fakeNode, node -> node.getData() instanceof DependencyData);
-    return ContainerUtil.map(dataNodes, node -> (DependencyData)node.getData());
+        @Override
+        public FileVisitResult visitFile(Path sourceCandidate, BasicFileAttributes attrs) throws IOException {
+          if (!sourceCandidate.getParent().getParent().equals(grandParentFile)) {
+            return FileVisitResult.SKIP_SIBLINGS;
+          }
+          if (attrs.isRegularFile()) {
+            if (StringUtil.endsWith(sourceCandidate.getFileName().toString(), "-sources.jar")) {
+              collect.computeIfAbsent(LibraryPathType.SOURCE, type -> new SmartList<>())
+                .add(sourceCandidate.toFile().getAbsolutePath());
+              sourceFound[0] = true;
+            }
+            else if (StringUtil.endsWith(sourceCandidate.getFileName().toString(), "-javadoc.jar")) {
+              collect.computeIfAbsent(LibraryPathType.DOC, type -> new SmartList<>())
+                .add(sourceCandidate.toFile().getAbsolutePath());
+              docFound[0] = true;
+            }
+          }
+          if (sourceFound[0] && docFound[0]) {
+            return FileVisitResult.TERMINATE;
+          }
+          return super.visitFile(file, attrs);
+        }
+      });
+    }
+    catch (IOException | InvalidPathException e) {
+      LOG.debug(e);
+    }
   }
 
   public static void buildDependencies(@NotNull ProjectResolverContext resolverCtx,
@@ -599,7 +588,7 @@ public class GradleProjectResolverUtil {
             for (File artifact: projectDependency.getProjectDependencyArtifacts()) {
               library.addPath(LibraryPathType.BINARY, artifact.getPath());
             }
-            depOwnerDataNode = ownerDataNode.createChild(ProjectKeys.LIBRARY_DEPENDENCY, intern(resolverCtx, libraryDependencyData));
+            depOwnerDataNode = ownerDataNode.createChild(ProjectKeys.LIBRARY_DEPENDENCY, libraryDependencyData);
           }
           else {
             depOwnerDataNode = ownerDataNode;
@@ -615,7 +604,7 @@ public class GradleProjectResolverUtil {
             moduleDependencyData.setOrder(mergedDependency.getClasspathOrder());
             moduleDependencyData.setExported(mergedDependency.getExported());
             moduleDependencyData.setModuleDependencyArtifacts(ContainerUtil.map(projectDependencyInfo.dependencyArtifacts, File::getPath));
-            depOwnerDataNode = ownerDataNode.createChild(ProjectKeys.MODULE_DEPENDENCY, intern(resolverCtx, moduleDependencyData));
+            depOwnerDataNode = ownerDataNode.createChild(ProjectKeys.MODULE_DEPENDENCY, moduleDependencyData);
           }
 
           // put transitive dependencies to the ownerDataNode,
@@ -651,7 +640,7 @@ public class GradleProjectResolverUtil {
         libraryDependencyData.setScope(dependencyScope);
         libraryDependencyData.setOrder(mergedDependency.getClasspathOrder());
         libraryDependencyData.setExported(mergedDependency.getExported());
-        depOwnerDataNode = ownerDataNode.createChild(ProjectKeys.LIBRARY_DEPENDENCY, intern(resolverCtx, libraryDependencyData));
+        depOwnerDataNode = ownerDataNode.createChild(ProjectKeys.LIBRARY_DEPENDENCY, libraryDependencyData);
       }
       else if (mergedDependency instanceof ExternalMultiLibraryDependency) {
         final LibraryLevel level = LibraryLevel.MODULE;
@@ -675,7 +664,7 @@ public class GradleProjectResolverUtil {
           library.addPath(LibraryPathType.DOC, file.getAbsolutePath());
         }
 
-        depOwnerDataNode = ownerDataNode.createChild(ProjectKeys.LIBRARY_DEPENDENCY, intern(resolverCtx, libraryDependencyData));
+        depOwnerDataNode = ownerDataNode.createChild(ProjectKeys.LIBRARY_DEPENDENCY, libraryDependencyData);
       }
       else if (mergedDependency instanceof FileCollectionDependency) {
         final LibraryLevel level = LibraryLevel.MODULE;
@@ -690,7 +679,7 @@ public class GradleProjectResolverUtil {
           library.addPath(LibraryPathType.BINARY, file.getAbsolutePath());
         }
 
-        ownerDataNode.createChild(ProjectKeys.LIBRARY_DEPENDENCY, intern(resolverCtx, libraryDependencyData));
+        ownerDataNode.createChild(ProjectKeys.LIBRARY_DEPENDENCY, libraryDependencyData);
       }
       else if (mergedDependency instanceof UnresolvedExternalDependency) {
         String libraryName = mergedDependency.getId().getPresentableName();
@@ -702,7 +691,7 @@ public class GradleProjectResolverUtil {
         LibraryLevel level = linkProjectLibrary(resolverCtx, ideProject, library) ? LibraryLevel.PROJECT : LibraryLevel.MODULE;
         LibraryDependencyData libraryDependencyData = new LibraryDependencyData(ownerModule, library, level);
         libraryDependencyData.setScope(dependencyScope);
-        ownerDataNode.createChild(ProjectKeys.LIBRARY_DEPENDENCY, intern(resolverCtx, libraryDependencyData));
+        ownerDataNode.createChild(ProjectKeys.LIBRARY_DEPENDENCY, libraryDependencyData);
       }
 
       if (depOwnerDataNode != null) {
@@ -742,24 +731,10 @@ public class GradleProjectResolverUtil {
     DataNode<LibraryData> libraryData = ExternalSystemApiUtil.find(ideProject, ProjectKeys.LIBRARY,
                                                                    node -> libraryName.equals(node.getData().getExternalName()));
     if (libraryData == null) {
-      ideProject.createChild(ProjectKeys.LIBRARY, intern(context, library));
+      ideProject.createChild(ProjectKeys.LIBRARY, library);
       return true;
     }
     return libraryData.getData().equals(library);
-  }
-
-  public static <T> T intern(ProjectResolverContext context, T value) {
-    // interning is disabled in 192 since it's not tested enough
-    // API for compatibility
-    return value;
-
-    /*
-    if (context == null) {
-      LOG.warn("ProjectResolverContext should not be null, it is used to intern objects");
-      return value;
-    }
-    return ((DefaultProjectResolverContext)context).intern(value);
-    */
   }
 
   public static boolean isIdeaTask(final String taskName, @Nullable String group) {

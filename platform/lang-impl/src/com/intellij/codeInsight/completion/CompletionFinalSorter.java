@@ -35,15 +35,16 @@ public abstract class CompletionFinalSorter {
 
 
   @NotNull
-  public abstract Iterable<LookupElement> sort(@NotNull Iterable<LookupElement> initial, @NotNull CompletionParameters parameters);
+  public abstract Iterable<? extends LookupElement> sort(@NotNull Iterable<? extends LookupElement> initial,
+                                                         @NotNull CompletionParameters parameters);
 
   /**
-   * For debugging purposes, provide weights by which completion will be sorted  
+   * For debugging purposes, provide weights by which completion will be sorted.
    */
   @NotNull
   public abstract Map<LookupElement, List<Pair<String, Object>>> getRelevanceObjects(@NotNull Iterable<LookupElement> elements);
-  
-  
+
+
   @ApiStatus.Internal
   public interface Factory {
     @NotNull
@@ -51,7 +52,6 @@ public abstract class CompletionFinalSorter {
   }
 
   @NotNull
-  @SuppressWarnings("deprecation")
   public static CompletionFinalSorter newSorter() {
     Factory factory = ServiceManager.getService(Factory.class);
     return factory != null ? factory.newSorter() : EMPTY_SORTER;
@@ -61,7 +61,8 @@ public abstract class CompletionFinalSorter {
   private static final CompletionFinalSorter EMPTY_SORTER = new CompletionFinalSorter() {
     @NotNull
     @Override
-    public Iterable<LookupElement> sort(@NotNull Iterable<LookupElement> initial, @NotNull CompletionParameters parameters) {
+    public Iterable<? extends LookupElement> sort(@NotNull Iterable<? extends LookupElement> initial,
+                                                  @NotNull CompletionParameters parameters) {
       return initial;
     }
 
@@ -71,8 +72,6 @@ public abstract class CompletionFinalSorter {
       return Collections.emptyMap();
     }
   };
-  
-  
 }
 
 

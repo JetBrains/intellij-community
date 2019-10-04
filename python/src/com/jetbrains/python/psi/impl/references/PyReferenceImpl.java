@@ -270,7 +270,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     final ScopeOwner resolvedOwner = processor.getOwner();
 
     final Collection<PsiElement> resolvedElements = processor.getElements();
-    if (resolvedOwner != null && !resolvedElements.isEmpty()) {
+    if (resolvedOwner != null && !resolvedElements.isEmpty() && !ControlFlowCache.getScope(resolvedOwner).isGlobal(referencedName)) {
       if (resolvedOwner == referenceOwner) {
         final List<Instruction> instructions = getLatestDefinitions(referencedName, resolvedOwner, realContext);
         // TODO: Use the results from the processor as a cache for resolving to latest defs
@@ -707,8 +707,8 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
 
     // This method is probably called for completion, so use appropriate context here
     // in a call, include function's arg names
-    KeywordArgumentCompletionUtil.collectFunctionArgNames(element, ret, TypeEvalContext.codeCompletion(element.getProject(), element.getContainingFile()));
-
+    final TypeEvalContext context = TypeEvalContext.codeCompletion(element.getProject(), element.getContainingFile());
+    KeywordArgumentCompletionUtil.collectFunctionArgNames(element, ret, context, true);
     // include builtin names
     final PyFile builtinsFile = builtinCache.getBuiltinsFile();
     if (builtinsFile != null) {

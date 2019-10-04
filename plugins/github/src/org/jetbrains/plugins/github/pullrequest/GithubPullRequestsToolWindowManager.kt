@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest
 
 import com.intellij.dvcs.repo.VcsRepositoryManager
@@ -18,13 +18,11 @@ import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryChangeListener
 import git4idea.repo.GitRepositoryManager
 import icons.GithubIcons
-import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
-import org.jetbrains.plugins.github.api.data.GithubAuthenticatedUser
-import org.jetbrains.plugins.github.api.data.GithubRepoDetailed
 import org.jetbrains.plugins.github.authentication.accounts.AccountTokenChangedListener
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountManager
-import javax.swing.JComponent
+import org.jetbrains.plugins.github.pullrequest.data.GHPullRequestsDataContext
+import org.jetbrains.plugins.github.util.GitRemoteUrlCoordinates
 
 const val TOOL_WINDOW_ID = "GitHub Pull Requests"
 
@@ -39,17 +37,11 @@ internal class GithubPullRequestsToolWindowManager(private val project: Project,
                                                    private val accountManager: GithubAccountManager,
                                                    private val componentFactory: GithubPullRequestsComponentFactory) {
 
-  fun createPullRequestsTab(requestExecutor: GithubApiRequestExecutor,
-                            repository: GitRepository, remote: GitRemote, remoteUrl: String,
-                            accountDetails: GithubAuthenticatedUser, repoDetails: GithubRepoDetailed,
-                            account: GithubAccount) {
+  fun createPullRequestsTab(ctx: GHPullRequestsDataContext) {
     var toolWindow = toolWindowManager.getToolWindow(TOOL_WINDOW_ID)
     val contentManager: ContentManager
 
     if (toolWindow == null) {
-      val component = componentFactory.createComponent(requestExecutor, repository, remote, accountDetails, repoDetails, account)
-                      ?: return
-
       toolWindow = toolWindowManager.registerToolWindow(TOOL_WINDOW_ID, true, ToolWindowAnchor.BOTTOM, project, true)
         .apply {
           icon = GithubIcons.PullRequestsToolWindow
@@ -63,45 +55,41 @@ internal class GithubPullRequestsToolWindowManager(private val project: Project,
         }
       })
 
-      val content = createContent(contentManager, component, repository, remote, remoteUrl, account)
+      val content = createContent(contentManager, ctx)
       contentManager.addContent(content)
     }
     else {
       contentManager = toolWindow.contentManager
-      val existingContent = contentManager.findContent(repository, remote, remoteUrl, account)
+      val existingContent = contentManager.findContent(ctx.gitRepositoryCoordinates, ctx.account)
       if (existingContent == null) {
-        val component = componentFactory.createComponent(requestExecutor, repository, remote, accountDetails, repoDetails, account)
-                        ?: return
-        val content = createContent(contentManager, component, repository, remote, remoteUrl, account)
+        val content = createContent(contentManager, ctx)
         contentManager.addContent(content)
       }
     }
   }
 
-  fun showPullRequestsTabIfExists(repository: GitRepository, remote: GitRemote, remoteUrl: String, account: GithubAccount): Boolean {
+  fun showPullRequestsTabIfExists(remoteCoordinates: GitRemoteUrlCoordinates, account: GithubAccount): Boolean {
     val toolWindow = toolWindowManager.getToolWindow(TOOL_WINDOW_ID) ?: return false
-    val content = toolWindow.contentManager.findContent(repository, remote, remoteUrl, account) ?: return false
+    val content = toolWindow.contentManager.findContent(remoteCoordinates, account) ?: return false
     toolWindow.contentManager.setSelectedContent(content, true)
     toolWindow.show { }
     return true
   }
 
-  private fun createContent(contentManager: ContentManager,
-                            component: JComponent,
-                            repository: GitRepository,
-                            remote: GitRemote,
-                            remoteUrl: String,
-                            account: GithubAccount): Content {
+  private fun createContent(contentManager: ContentManager, ctx: GHPullRequestsDataContext): Content {
+    val component = componentFactory.createComponent(ctx)
+    val coordinates = ctx.gitRepositoryCoordinates
+
     return contentManager.factory.createContent(component, null, false)
       .apply {
         setPreferredFocusedComponent { component }
         isCloseable = true
-        displayName = remote.name
+        displayName = coordinates.remote.name
 
-        putUserData(REPOSITORY_KEY, repository)
-        putUserData(REMOTE_KEY, remote)
-        putUserData(REMOTE_URL_KEY, remoteUrl)
-        putUserData(ACCOUNT_KEY, account)
+        putUserData(REPOSITORY_KEY, coordinates.repository)
+        putUserData(REMOTE_KEY, coordinates.remote)
+        putUserData(REMOTE_URL_KEY, coordinates.url)
+        putUserData(ACCOUNT_KEY, ctx.account)
       }
   }
 
@@ -174,11 +162,11 @@ internal class GithubPullRequestsToolWindowManager(private val project: Project,
     }
   }
 
-  private fun ContentManager.findContent(repository: GitRepository, remote: GitRemote, remoteUrl: String, account: GithubAccount) =
+  private fun ContentManager.findContent(remoteCoordinates: GitRemoteUrlCoordinates, account: GithubAccount) =
     contents.find {
-      it.getUserData(REMOTE_URL_KEY) == remoteUrl &&
-      it.getUserData(REMOTE_KEY) == remote &&
-      it.getUserData(REPOSITORY_KEY) == repository &&
+      it.getUserData(REMOTE_URL_KEY) == remoteCoordinates.url &&
+      it.getUserData(REMOTE_KEY) == remoteCoordinates.remote &&
+      it.getUserData(REPOSITORY_KEY) == remoteCoordinates.repository &&
       it.getUserData(ACCOUNT_KEY) == account
     }
 }

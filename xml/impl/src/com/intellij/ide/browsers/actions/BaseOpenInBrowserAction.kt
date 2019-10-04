@@ -16,7 +16,6 @@ import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.openapi.vcs.vfs.ContentRevisionVirtualFile
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
@@ -99,19 +98,21 @@ internal class BaseOpenInBrowserAction(private val browser: WebBrowser) : DumbAw
 
     var description = templatePresentation.text
     if (ActionPlaces.CONTEXT_TOOLBAR == e.place) {
-      val builder = StringBuilder(description)
-      builder.append(" (")
-      val shortcuts = KeymapManager.getInstance().activeKeymap.getShortcuts("WebOpenInAction")
-      val exists = shortcuts.isNotEmpty()
-      if (exists) {
-        builder.append(KeymapUtil.getShortcutText(shortcuts[0]))
-      }
+      val shortcutInfo = buildString {
+        val shortcuts = KeymapManager.getInstance().activeKeymap.getShortcuts("WebOpenInAction")
+        val exists = shortcuts.isNotEmpty()
+        if (exists) {
+          append(KeymapUtil.getShortcutText(shortcuts[0]))
+        }
 
-      if (HtmlUtil.isHtmlFile(result.file)) {
-        builder.append(if (exists) ", " else "").append("hold Shift to open URL of local file")
+        if (HtmlUtil.isHtmlFile(result.file)) {
+          append(if (exists) ", " else "")
+          append("hold Shift to open URL of local file")
+        }
       }
-      builder.append(')')
-      description = builder.toString()
+      if (shortcutInfo.isNotEmpty()) {
+        description = "$description ($shortcutInfo)"
+      }
     }
     e.presentation.text = description
   }
@@ -133,7 +134,7 @@ private fun createRequest(context: DataContext, isForceFileUrlIfNoUrlProvider: B
       psiFile = PsiManager.getInstance(project).findFile(virtualFile)
     }
 
-    if (psiFile != null && psiFile.virtualFile !is ContentRevisionVirtualFile) {
+    if (psiFile != null) {
       return createOpenInBrowserRequest(psiFile, isForceFileUrlIfNoUrlProvider)
     }
   }
@@ -141,7 +142,7 @@ private fun createRequest(context: DataContext, isForceFileUrlIfNoUrlProvider: B
     val project = editor.project
     if (project != null && project.isInitialized) {
       val psiFile = CommonDataKeys.PSI_FILE.getData(context) ?: PsiDocumentManager.getInstance(project).getPsiFile(editor.document)
-      if (psiFile != null && psiFile.virtualFile !is ContentRevisionVirtualFile) {
+      if (psiFile != null) {
         return object : OpenInBrowserRequest(psiFile, isForceFileUrlIfNoUrlProvider) {
           private val lazyElement by lazy { file.findElementAt(editor.caretModel.offset) }
 

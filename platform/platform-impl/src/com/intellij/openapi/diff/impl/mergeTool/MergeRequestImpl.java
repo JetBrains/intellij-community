@@ -17,7 +17,6 @@ package com.intellij.openapi.diff.impl.mergeTool;
 
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.diff.ActionButtonPresentation;
 import com.intellij.openapi.diff.DiffContent;
 import com.intellij.openapi.diff.MergeRequest;
 import com.intellij.openapi.diff.SimpleContent;
@@ -46,32 +45,28 @@ public class MergeRequestImpl extends MergeRequest {
   public MergeRequestImpl(@NotNull String left,
                           @NotNull MergeVersion base,
                           @NotNull String right,
-                          @Nullable Project project,
-                          @Nullable final ActionButtonPresentation okButtonPresentation,
-                          @Nullable final ActionButtonPresentation cancelButtonPresentation) {
-    this(new SimpleContent(left), new MergeContent(base, project), new SimpleContent(right), project, okButtonPresentation,
-         cancelButtonPresentation);
+                          @Nullable Project project) {
+    this(new SimpleContent(left),
+         new MergeContent(base, project),
+         new SimpleContent(right),
+         project);
   }
 
   public MergeRequestImpl(@NotNull String left,
                           @NotNull String base,
                           @NotNull String right,
                           @Nullable FileType type,
-                          @Nullable Project project,
-                          @Nullable final ActionButtonPresentation okButtonPresentation,
-                          @Nullable final ActionButtonPresentation cancelButtonPresentation) {
+                          @Nullable Project project) {
     this(new SimpleContent(left, type),
          new SimpleContent(base, type),
          new SimpleContent(right, type),
-         project, okButtonPresentation, cancelButtonPresentation);
+         project);
   }
 
   private MergeRequestImpl(@NotNull DiffContent left,
                            @NotNull DiffContent base,
                            @NotNull DiffContent right,
-                           @Nullable Project project,
-                           @Nullable final ActionButtonPresentation okButtonPresentation,
-                           @Nullable final ActionButtonPresentation cancelButtonPresentation) {
+                           @Nullable Project project) {
     super(project);
     myDiffContents[0] = left;
     myDiffContents[1] = base;

@@ -30,6 +30,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -47,10 +48,11 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import one.util.streamex.StreamEx;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -281,7 +283,12 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   public void addToolbarActions(@NotNull DefaultActionGroup actionGroup) {
   }
 
+  /**
+   * @deprecated added in {@link ProjectViewImpl} automatically
+   */
   @NotNull
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
   protected ToggleAction createFlattenModulesAction(@NotNull BooleanSupplier isApplicable) {
     return new FlattenModulesToggleAction(myProject, () -> isApplicable.getAsBoolean() && ProjectView.getInstance(myProject).isShowModules(getId()),
                                           () -> ProjectView.getInstance(myProject).isFlattenModules(getId()),
@@ -707,10 +714,47 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     myTreeBuilder = treeBuilder;
   }
 
+  @ApiStatus.Internal
+  public boolean supportsAbbreviatePackageNames() {
+    return true;
+  }
+
+  @ApiStatus.Internal
+  public boolean supportsCompactDirectories() {
+    return false;
+  }
+
+  @ApiStatus.Internal
+  public boolean supportsFlattenModules() {
+    return false;
+  }
+
+  @ApiStatus.Internal
   public boolean supportsFoldersAlwaysOnTop() {
     return true;
   }
 
+  @ApiStatus.Internal
+  public boolean supportsHideEmptyMiddlePackages() {
+    return true;
+  }
+
+  @ApiStatus.Internal
+  public boolean supportsShowExcludedFiles() {
+    return false;
+  }
+
+  @ApiStatus.Internal
+  public boolean supportsShowLibraryContents() {
+    return false;
+  }
+
+  @ApiStatus.Internal
+  public boolean supportsShowModules() {
+    return false;
+  }
+
+  @ApiStatus.Internal
   public boolean supportsSortByType() {
     return true;
   }
@@ -754,6 +798,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
       });
     }
 
+    // copy/paste from com.intellij.ide.dnd.aware.DnDAwareTree.createDragImage
     @Nullable
     @Override
     public Pair<Image, Point> createDraggedImage(DnDAction action, Point dragOrigin, @NotNull DnDDragStartBean bean) {
@@ -762,13 +807,13 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
 
       final int count = paths.length;
 
-      final JLabel label = new JLabel(String.format("%s item%s", count, count == 1 ? "" : "s"));
+      final JLabel label = new JLabel(count + " " + StringUtil.pluralize("item", count));
       label.setOpaque(true);
       label.setForeground(myTree.getForeground());
       label.setBackground(myTree.getBackground());
       label.setFont(myTree.getFont());
       label.setSize(label.getPreferredSize());
-      final BufferedImage image = UIUtil.createImage(label.getWidth(), label.getHeight(), BufferedImage.TYPE_INT_ARGB);
+      final BufferedImage image = ImageUtil.createImage(label.getWidth(), label.getHeight(), BufferedImage.TYPE_INT_ARGB);
 
       Graphics2D g2 = (Graphics2D)image.getGraphics();
       g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.7f));

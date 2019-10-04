@@ -90,7 +90,7 @@ public abstract class AbstractConvertLineSeparatorsAction extends AnAction {
     VirtualFile projectVirtualDirectory = ProjectKt.getStateStore(project).getDirectoryStoreFile();
     final FileTypeRegistry fileTypeManager = FileTypeRegistry.getInstance();
     for (VirtualFile file : virtualFiles) {
-      VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor() {
+      VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor<Void>() {
         @NotNull
         @Override
         public Result visitFileEx(@NotNull VirtualFile file) {

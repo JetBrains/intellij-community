@@ -28,6 +28,7 @@ public class PythonSdkTypeTest extends PlatformLiteFixture {
   @Override
   public void setUp() throws Exception {
     super.setUp();
+    initApplication();
     MockitoAnnotations.initMocks(this);
     registerExtension(CredentialsLanguageContribution.EP_NAME, credentialsLanguageContribution);
   }

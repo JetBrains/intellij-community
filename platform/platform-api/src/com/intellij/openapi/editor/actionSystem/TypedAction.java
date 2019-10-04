@@ -4,6 +4,7 @@ package com.intellij.openapi.editor.actionSystem;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.reporting.FreezeLogger;
@@ -12,13 +13,15 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Provides services for registering actions which are activated by typing in the editor.
- *
- * @see EditorActionManager#getTypedAction()
  */
-public class TypedAction {
+public abstract class TypedAction {
   private TypedActionHandler myRawHandler;
   private TypedActionHandler myHandler;
   private boolean myHandlersLoaded;
+
+  public static TypedAction getInstance() {
+    return ServiceManager.getService(TypedAction.class);
+  }
 
   public TypedAction() {
     myHandler = new Handler();

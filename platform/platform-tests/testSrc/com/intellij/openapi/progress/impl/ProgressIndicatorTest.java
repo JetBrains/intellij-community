@@ -183,25 +183,24 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
       int N = 10;
       Semaphore started = new Semaphore(N);
       Semaphore others = new Semaphore(1);
-      List<Thread> threads = ContainerUtil.map(Collections.nCopies(N, ""),
-                                               __ -> new Thread(() -> ProgressManager.getInstance().executeProcessUnderProgress(() -> {
-                                                 try {
-                                                   started.up();
-                                                   others.waitFor();
-                                                   indicator.cancel();
-                                                   ProgressManager.checkCanceled();
-                                                   fail("checkCanceled() must know about canceled indicator even from different thread");
-                                                 }
-                                                 catch (ProcessCanceledException ignored) {
-                                                 }
-                                                 catch (Throwable e) {
-                                                   exception = e;
-                                                 }
-                                               }, indicator), "indicator test"));
-      threads.forEach(Thread::start);
+      List<Future<?>> threads = ContainerUtil.map(Collections.nCopies(N, ""),
+          __ -> ApplicationManager.getApplication().executeOnPooledThread(() -> ProgressManager.getInstance().executeProcessUnderProgress(() -> {
+            try {
+              started.up();
+              others.waitFor();
+              indicator.cancel();
+              ProgressManager.checkCanceled();
+              fail("checkCanceled() must know about canceled indicator even from different thread");
+            }
+            catch (ProcessCanceledException ignored) {
+            }
+            catch (Throwable e) {
+              exception = e;
+            }
+          }, indicator)));
       started.waitFor();
       others.up();
-      ConcurrencyUtil.joinAll(threads);
+      ConcurrencyUtil.getAll(threads);
     }
     if (exception != null) throw exception;
   }

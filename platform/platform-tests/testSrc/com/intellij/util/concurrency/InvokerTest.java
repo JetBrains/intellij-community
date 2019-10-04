@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.concurrency;
 
 import com.intellij.idea.IdeaTestApplication;
@@ -20,6 +6,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.util.ThreeState;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.CancellablePromise;
 import org.jetbrains.concurrency.Obsolescent;
@@ -39,6 +26,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 
+import static com.intellij.openapi.application.ApplicationManager.getApplication;
 import static javax.swing.SwingUtilities.isEventDispatchThread;
 
 /**
@@ -69,12 +57,12 @@ public class InvokerTest {
 
   @Test
   public void testValidBgPool() {
-    testValidThread(new Invoker.BackgroundPool(parent));
+    testValidThread(new Invoker.Background(parent, 10));
   }
 
   @Test
   public void testValidBgThread() {
-    testValidThread(new Invoker.BackgroundThread(parent));
+    testValidThread(new Invoker.Background(parent));
   }
 
   private static void testValidThread(Invoker invoker) {
@@ -89,12 +77,12 @@ public class InvokerTest {
 
   @Test
   public void testInvokeLaterOnBgPool() {
-    testInvokeLater(new Invoker.BackgroundPool(parent));
+    testInvokeLater(new Invoker.Background(parent, 10));
   }
 
   @Test
   public void testInvokeLaterOnBgThread() {
-    testInvokeLater(new Invoker.BackgroundThread(parent));
+    testInvokeLater(new Invoker.Background(parent));
   }
 
   private static void testInvokeLater(Invoker invoker) {
@@ -113,12 +101,12 @@ public class InvokerTest {
 
   @Test
   public void testScheduleOnBgPool() {
-    testSchedule(new Invoker.BackgroundPool(parent));
+    testSchedule(new Invoker.Background(parent, 10));
   }
 
   @Test
   public void testScheduleOnBgThread() {
-    testSchedule(new Invoker.BackgroundThread(parent));
+    testSchedule(new Invoker.Background(parent));
   }
 
   private static void testSchedule(Invoker invoker) {
@@ -137,12 +125,12 @@ public class InvokerTest {
 
   @Test
   public void testInvokeLaterIfNeededOnBgPool() {
-    testInvokeLaterIfNeeded(new Invoker.BackgroundPool(parent));
+    testInvokeLaterIfNeeded(new Invoker.Background(parent, 10));
   }
 
   @Test
   public void testInvokeLaterIfNeededOnBgThread() {
-    testInvokeLaterIfNeeded(new Invoker.BackgroundThread(parent));
+    testInvokeLaterIfNeeded(new Invoker.Background(parent));
   }
 
   private static void testInvokeLaterIfNeeded(Invoker invoker) {
@@ -155,18 +143,56 @@ public class InvokerTest {
   }
 
   @Test
+  public void testReadActionYes() {
+    testReadAction(new Invoker.Background(parent, ThreeState.YES), true, true);
+  }
+
+  @Test
+  public void testReadActionNo() {
+    testReadAction(new Invoker.Background(parent, ThreeState.NO), false, false);
+  }
+
+  @Test
+  public void testReadAction() {
+    testReadAction(new Invoker.Background(parent, ThreeState.UNSURE), false, true);
+  }
+
+  private static boolean isExpected(CountDownLatch latch, AtomicReference<? super String> error, String message, boolean expected) {
+    if (expected == getApplication().isReadAccessAllowed()) return true;
+    StringBuilder sb = new StringBuilder(expected ? "No expected" : "Unexpected");
+    error.set(sb.append(" read action ").append(message).append(" acquiring a read lock").toString());
+    latch.countDown(); // interrupt with the specified error
+    return false;
+  }
+
+  private static void testReadAction(Invoker invoker, boolean expectedBefore, boolean expectedAfter) {
+    CountDownLatch latch = new CountDownLatch(1);
+    test(invoker, latch, error -> {
+      if (isExpected(latch, error, "before", expectedBefore)) {
+        getApplication().runReadAction(() -> {
+          futures.add(invoker.runOrInvokeLater(() -> {
+            if (isExpected(latch, error, "after", expectedAfter)) {
+              latch.countDown(); // interrupt without any error
+            }
+          }));
+        });
+      }
+    });
+  }
+
+  @Test
   public void testRestartOnEDT() {
     testRestartOnPCE(new Invoker.EDT(parent));
   }
 
   @Test
   public void testRestartOnBgPool() {
-    testRestartOnPCE(new Invoker.BackgroundPool(parent));
+    testRestartOnPCE(new Invoker.Background(parent, 10));
   }
 
   @Test
   public void testRestartOnBgThread() {
-    testRestartOnPCE(new Invoker.BackgroundThread(parent));
+    testRestartOnPCE(new Invoker.Background(parent));
   }
 
   private static void testRestartOnPCE(Invoker invoker) {
@@ -185,12 +211,12 @@ public class InvokerTest {
 
   @Test
   public void testQueueOnBgPool() {
-    testQueue(new Invoker.BackgroundPool(parent), false);
+    testQueue(new Invoker.Background(parent, 10), false);
   }
 
   @Test
   public void testQueueOnBgThread() {
-    testQueue(new Invoker.BackgroundThread(parent), true);
+    testQueue(new Invoker.Background(parent), true);
   }
 
   private static void testQueue(Invoker invoker, boolean ordered) {
@@ -210,12 +236,12 @@ public class InvokerTest {
 
   @Test
   public void testThreadChangingOnBgPool() {
-    testThreadChanging(new Invoker.BackgroundPool(parent));
+    testThreadChanging(new Invoker.Background(parent, 10));
   }
 
   @Test
   public void testThreadChangingOnBgThread() {
-    testThreadChanging(new Invoker.BackgroundThread(parent));
+    testThreadChanging(new Invoker.Background(parent));
   }
 
   private static void testThreadChanging(Invoker invoker) {
@@ -229,42 +255,42 @@ public class InvokerTest {
 
   @Test
   public void testThreadChangingOnEDTfromBgPool() {
-    testThreadChanging(new Invoker.EDT(parent), new Invoker.BackgroundPool(parent), false);
+    testThreadChanging(new Invoker.EDT(parent), new Invoker.Background(parent, 10), false);
   }
 
   @Test
   public void testThreadChangingOnEDTfromBgThread() {
-    testThreadChanging(new Invoker.EDT(parent), new Invoker.BackgroundThread(parent), false);
+    testThreadChanging(new Invoker.EDT(parent), new Invoker.Background(parent), false);
   }
 
   @Test
   public void testThreadChangingOnBgPoolFromEDT() {
-    testThreadChanging(new Invoker.BackgroundPool(parent), new Invoker.EDT(parent), false);
+    testThreadChanging(new Invoker.Background(parent, 10), new Invoker.EDT(parent), false);
   }
 
   @Test
   public void testThreadChangingOnBgPoolFromBgPool() {
-    testThreadChanging(new Invoker.BackgroundPool(parent), new Invoker.BackgroundPool(parent), true);
+    testThreadChanging(new Invoker.Background(parent, 10), new Invoker.Background(parent, 10), false);
   }
 
   @Test
   public void testThreadChangingOnBgPoolFromBgThread() {
-    testThreadChanging(new Invoker.BackgroundPool(parent), new Invoker.BackgroundThread(parent), true);
+    testThreadChanging(new Invoker.Background(parent, 10), new Invoker.Background(parent), false);
   }
 
   @Test
   public void testThreadChangingOnBgThreadFromEDT() {
-    testThreadChanging(new Invoker.BackgroundThread(parent), new Invoker.EDT(parent), false);
+    testThreadChanging(new Invoker.Background(parent), new Invoker.EDT(parent), false);
   }
 
   @Test
   public void testThreadChangingOnBgThreadFromBgPool() {
-    testThreadChanging(new Invoker.BackgroundThread(parent), new Invoker.BackgroundPool(parent), null);
+    testThreadChanging(new Invoker.Background(parent), new Invoker.Background(parent, 10), false);
   }
 
   @Test
   public void testThreadChangingOnBgThreadFromBgThread() {
-    testThreadChanging(new Invoker.BackgroundThread(parent), new Invoker.BackgroundThread(parent), null);
+    testThreadChanging(new Invoker.Background(parent), new Invoker.Background(parent), false);
   }
 
   private static void testThreadChanging(Invoker foreground, Invoker background, Boolean equal) {
@@ -317,13 +343,13 @@ public class InvokerTest {
   @Test
   public void testDisposeOnBgThread() {
     Disposable parent = Disposer.newDisposable("disposed");
-    testInterrupt(parent, new Invoker.BackgroundThread(parent), promise -> Disposer.dispose(parent));
+    testInterrupt(parent, new Invoker.Background(parent), promise -> Disposer.dispose(parent));
   }
 
   @Test
   public void testDisposeOnBgPool() {
     Disposable parent = Disposer.newDisposable("disposed");
-    testInterrupt(parent, new Invoker.BackgroundPool(parent), promise -> Disposer.dispose(parent));
+    testInterrupt(parent, new Invoker.Background(parent, 10), promise -> Disposer.dispose(parent));
   }
 
   @Test
@@ -335,13 +361,13 @@ public class InvokerTest {
   @Test
   public void testCancelOnBgThread() {
     Disposable parent = Disposer.newDisposable("cancelled");
-    testInterrupt(parent, new Invoker.BackgroundThread(parent), promise -> promise.cancel());
+    testInterrupt(parent, new Invoker.Background(parent), promise -> promise.cancel());
   }
 
   @Test
   public void testCancelOnBgPool() {
     Disposable parent = Disposer.newDisposable("cancelled");
-    testInterrupt(parent, new Invoker.BackgroundPool(parent), promise -> promise.cancel());
+    testInterrupt(parent, new Invoker.Background(parent, 10), promise -> promise.cancel());
   }
 
   private static void testInterrupt(Disposable parent, Invoker invoker, Consumer<CancellablePromise<?>> interrupt) {

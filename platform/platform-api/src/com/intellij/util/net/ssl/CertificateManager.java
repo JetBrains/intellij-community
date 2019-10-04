@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.net.ssl;
 
 import com.intellij.openapi.application.Application;
@@ -10,17 +10,20 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
-import org.apache.http.conn.ssl.BrowserCompatHostnameVerifier;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.crypto.BadPaddingException;
-import javax.net.ssl.*;
+import javax.net.ssl.KeyManager;
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
@@ -36,13 +39,12 @@ import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * {@code CertificateManager} is responsible for negotiation SSL connection with server
- * and deals with untrusted/self-singed/expired and other kinds of digital certificates.
+ * and deals with untrusted/self-signed/expired and other kinds of digital certificates.
  * <h1>Integration details:</h1>
  * If you're using httpclient-3.1 without custom {@code Protocol} instance for HTTPS you don't have to do anything
  * at all: default {@code HttpClient} will use "Default" {@code SSLContext}, which is set up by this component itself.
  * <p/>
  * However for httpclient-4.x you have several of choices:
- * <pre>
  * <ol>
  *  <li>Client returned by {@code HttpClients.createSystem()} will use "Default" SSL context as it does in httpclient-3.1.</li>
  *  <li>If you want to customize {@code HttpClient} using {@code HttpClients.custom()}, you can use the following methods of the builder
@@ -55,7 +57,6 @@ import java.util.concurrent.atomic.AtomicReference;
  *      </ol>
  *    </li>
  * </ol>
- * </pre>
  *
  * @author Mikhail Golubev
  */
@@ -69,30 +70,6 @@ public class CertificateManager implements PersistentStateComponent<CertificateM
   private static final Logger LOG = Logger.getInstance(CertificateManager.class);
 
   /**
-   * Note that deprecated {@link org.apache.http.conn.ssl.BrowserCompatHostnameVerifier} is used intentionally here
-   * since external clients might expect implementor of {@link org.apache.http.conn.ssl.X509HostnameVerifier} and
-   * {@link org.apache.http.conn.ssl.DefaultHostnameVerifier} is not.
-   *
-   * @deprecated To be removed in IDEA 18. Use specific host name verifiers from httpclient-4.x instead.
-   */
-  @Deprecated
-  public static final HostnameVerifier HOSTNAME_VERIFIER = new HostnameVerifier() {
-    private volatile HostnameVerifier myHostnameVerifier; 
-    @Override
-    public boolean verify(String s, SSLSession session) {
-      HostnameVerifier hostnameVerifier = myHostnameVerifier;
-      if (hostnameVerifier == null) {
-        //noinspection SynchronizeOnThis
-        synchronized (this) {
-          hostnameVerifier = myHostnameVerifier;
-          if (hostnameVerifier == null) myHostnameVerifier = hostnameVerifier = new BrowserCompatHostnameVerifier();
-        }
-      }
-      return hostnameVerifier.verify(s, session);
-    }
-  };
-
-  /**
    * Used to check whether dialog is visible to prevent possible deadlock, e.g. when some external resource is loaded by
    * {@link java.awt.MediaTracker}.
    */
@@ -102,41 +79,34 @@ public class CertificateManager implements PersistentStateComponent<CertificateM
     return ApplicationManager.getApplication().getComponent(CertificateManager.class);
   }
 
-  private final String myCacertsPath;
-  private final String myPassword;
-  private final Config myConfig;
+  private final Config myConfig = new Config();
 
-  private final ConfirmingTrustManager myTrustManager;
+  private final AtomicNotNullLazyValue<ConfirmingTrustManager> myTrustManager =
+    AtomicNotNullLazyValue.createValue(() -> ConfirmingTrustManager.createForStorage(DEFAULT_PATH, DEFAULT_PASSWORD));
 
-  /**
-   * Lazy initialized
-   */
-  private SSLContext mySslContext;
+  private final AtomicNotNullLazyValue<SSLContext> mySslContext = AtomicNotNullLazyValue.createValue(() -> calcSslContext());
 
   /**
    * Component initialization constructor
    */
   public CertificateManager() {
-    myCacertsPath = DEFAULT_PATH;
-    myPassword = DEFAULT_PASSWORD;
-    myConfig = new Config();
-    myTrustManager = ConfirmingTrustManager.createForStorage(myCacertsPath, myPassword);
-
-    try {
-      // Don't do this: protocol created this way will ignore SSL tunnels. See IDEA-115708.
-      // Protocol.registerProtocol("https", CertificateManager.createDefault().createProtocol());
-      SSLContext.setDefault(getSslContext());
-      LOG.info("Default SSL context initialized");
-    }
-    catch (Exception e) {
-      LOG.error(e);
-    }
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      try {
+        // Don't do this: protocol created this way will ignore SSL tunnels. See IDEA-115708.
+        // Protocol.registerProtocol("https", CertificateManager.createDefault().createProtocol());
+        SSLContext.setDefault(getSslContext());
+        LOG.info("Default SSL context initialized");
+      }
+      catch (Exception e) {
+        LOG.error(e);
+      }
+    });
   }
 
   /**
    * Creates special kind of {@code SSLContext}, which X509TrustManager first checks certificate presence in
    * in default system-wide trust store (usually located at {@code ${JAVA_HOME}/lib/security/cacerts} or specified by
-   * {@code javax.net.ssl.trustStore} property) and when in the one specified by field {@link #myCacertsPath}.
+   * {@code javax.net.ssl.trustStore} property) and when in the one specified by the constant {@link #DEFAULT_PATH}.
    * If certificate wasn't found in either, manager will ask user, whether it can be
    * accepted (like web-browsers do) and then, if it does, certificate will be added to specified trust store.
    * <p/>
@@ -150,20 +120,22 @@ public class CertificateManager implements PersistentStateComponent<CertificateM
    */
   @NotNull
   public synchronized SSLContext getSslContext() {
-    if (mySslContext == null) {
-      SSLContext context = getSystemSslContext();
-      try {
-        // SSLContext context = SSLContext.getDefault();
-        // NOTE: existence of default trust manager can be checked here as
-        // assert systemManager.getAcceptedIssuers().length != 0
-        context.init(getDefaultKeyManagers(), new TrustManager[]{getTrustManager()}, null);
-      }
-      catch (KeyManagementException e) {
-        LOG.error(e);
-      }
-      mySslContext = context;
+    return mySslContext.getValue();
+  }
+
+  @NotNull
+  private SSLContext calcSslContext() {
+    SSLContext context = getSystemSslContext();
+    try {
+      // SSLContext context = SSLContext.getDefault();
+      // NOTE: existence of default trust manager can be checked here as
+      // assert systemManager.getAcceptedIssuers().length != 0
+      context.init(getDefaultKeyManagers(), new TrustManager[]{getTrustManager()}, null);
     }
-    return mySslContext;
+    catch (KeyManagementException e) {
+      LOG.error(e);
+    }
+    return context;
   }
 
   @NotNull
@@ -242,22 +214,22 @@ public class CertificateManager implements PersistentStateComponent<CertificateM
 
   @NotNull
   public String getCacertsPath() {
-    return myCacertsPath;
+    return DEFAULT_PATH;
   }
 
   @NotNull
   public String getPassword() {
-    return myPassword;
+    return DEFAULT_PASSWORD;
   }
 
   @NotNull
   public ConfirmingTrustManager getTrustManager() {
-    return myTrustManager;
+    return myTrustManager.getValue();
   }
 
   @NotNull
   public ConfirmingTrustManager.MutableTrustManager getCustomTrustManager() {
-    return myTrustManager.getCustomManager();
+    return getTrustManager().getCustomManager();
   }
 
   public static boolean showAcceptDialog(final @NotNull Callable<? extends DialogWrapper> dialogFactory) {
@@ -313,12 +285,13 @@ public class CertificateManager implements PersistentStateComponent<CertificateM
 
   public <T, E extends Throwable> T runWithUntrustedCertificateStrategy(@NotNull final ThrowableComputable<T, E> computable,
                                                                         @NotNull final UntrustedCertificateStrategy strategy) throws E {
-    myTrustManager.myUntrustedCertificateStrategy.set(strategy);
+    ConfirmingTrustManager trustManager = getTrustManager();
+    trustManager.myUntrustedCertificateStrategy.set(strategy);
     try {
       return computable.compute();
     }
     finally {
-      myTrustManager.myUntrustedCertificateStrategy.remove();
+      trustManager.myUntrustedCertificateStrategy.remove();
     }
   }
 

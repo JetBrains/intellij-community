@@ -6,6 +6,9 @@ import com.intellij.openapi.extensions.PluginId;
 import org.jetbrains.annotations.NotNull;
 
 final class UndefinedPluginDescriptor implements PluginDescriptor {
+  UndefinedPluginDescriptor() {
+  }
+
   @NotNull
   @Override
   public PluginId getPluginId() {

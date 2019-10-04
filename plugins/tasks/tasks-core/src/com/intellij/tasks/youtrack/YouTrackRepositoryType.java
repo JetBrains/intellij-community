@@ -57,4 +57,9 @@ public class YouTrackRepositoryType extends BaseRepositoryType<YouTrackRepositor
   public TaskRepositoryEditor createEditor(YouTrackRepository repository, Project project, Consumer<YouTrackRepository> changeListener) {
     return new YouTrackRepositoryEditor(project, repository, changeListener);
   }
+
+  @Override
+  public int getSortOrder() {
+    return 1;
+  }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.refResolve;
 
 import com.intellij.ide.PowerSaveMode;
@@ -8,6 +8,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -241,10 +242,6 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
 
     HeavyProcessLatch.INSTANCE.addListener(new HeavyProcessLatch.HeavyProcessListener() {
       @Override
-      public void processStarted() {
-      }
-
-      @Override
       public void processFinished() {
         wakeUp();
       }
@@ -276,8 +273,8 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
 
   public static boolean isSupportedFileType(@NotNull VirtualFile virtualFile) {
     if (virtualFile.isDirectory()) return true;
-    if (virtualFile.getFileType() == StdFileTypes.JAVA) return true;
-    if (virtualFile.getFileType() == StdFileTypes.XML && !ProjectUtil.isProjectOrWorkspaceFile(virtualFile)) return true;
+    if (FileTypeRegistry.getInstance().isFileOfType(virtualFile, StdFileTypes.JAVA)) return true;
+    if (FileTypeRegistry.getInstance().isFileOfType(virtualFile, StdFileTypes.XML) && !ProjectUtil.isProjectOrWorkspaceFile(virtualFile)) return true;
     final String extension = virtualFile.getExtension();
     if ("groovy".equals(extension) || "kt".equals(extension)) return true;
     return false;
@@ -574,7 +571,7 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
 
   private void countAndMarkUnresolved(@NotNull VirtualFile file, @NotNull final Set<VirtualFile> result, final boolean inDbOnly) {
     if (file.isDirectory()) {
-      VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor() {
+      VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor<Void>() {
         @Override
         public boolean visitFile(@NotNull VirtualFile file) {
           return doCountAndMarkUnresolved(file, result);

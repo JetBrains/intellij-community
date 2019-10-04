@@ -3,7 +3,10 @@ package com.intellij.ide.plugins;
 
 import com.google.gson.stream.JsonWriter;
 import com.intellij.openapi.application.ApplicationStarter;
+import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.PlainTextLikeFileType;
 import com.intellij.openapi.util.io.FileUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -23,7 +26,7 @@ public class BundledPluginsLister implements ApplicationStarter {
   }
 
   @Override
-  public void main(String[] args) {
+  public void main(@NotNull String[] args) {
     try {
       OutputStream out;
       if (args.length == 2) {
@@ -49,9 +52,17 @@ public class BundledPluginsLister implements ApplicationStarter {
                                        .sorted()
                                        .collect(Collectors.toList());
 
+        FileTypeManager fileTypeManager = FileTypeManager.getInstance();
+        List<String> extensions = Arrays.stream(fileTypeManager.getRegisteredFileTypes()).
+          filter(type -> !(type instanceof PlainTextLikeFileType)).
+          flatMap(type -> fileTypeManager.getAssociations(type).stream()).
+          map(matcher -> matcher.getPresentableString()).
+          collect(Collectors.toList());
+
         writer.beginObject();
         writeList(writer, "modules", modules);
         writeList(writer, "plugins", pluginIds);
+        writeList(writer, "extensions", extensions);
         writer.endObject();
       }
     }

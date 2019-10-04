@@ -32,6 +32,22 @@ class DeviceIdManagerTest {
   }
 
   @Test
+  fun testDeviceIdWithCustomFormatLocale() {
+    val formatLocale = Locale.getDefault(Locale.Category.FORMAT)
+    try {
+      val locale = Locale("th", "TH", "TH")
+      Locale.setDefault(Locale.Category.FORMAT, locale)
+      val calendar = Calendar.getInstance(Locale.ENGLISH)
+      calendar.set(2000, Calendar.APRIL, 15)
+      val id = DeviceIdManager.generateId(calendar, '2')
+      assertEquals("150400", id.substring(0, 6))
+    }
+    finally {
+      Locale.setDefault(Locale.Category.FORMAT, formatLocale)
+    }
+  }
+
+  @Test
   fun testDeviceIdDatePrefixDateBelowLimit() {
     val calendar = Calendar.getInstance()
     calendar.set(1970, Calendar.JANUARY, 15)

@@ -19,13 +19,11 @@ import com.intellij.openapi.util.text.CharSequenceWithStringHash;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.text.CharArrayUtil;
-import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -88,7 +86,7 @@ public class PathInterner {
 
       int oldLen = sb.length();
       sb.setLength(oldLen + length());
-      byte[] bytes = (byte[]) encodedString;
+      byte[] bytes = (byte[])encodedString;
       for (int i = 0; i < bytes.length; i++) {
         sb.setCharAt(oldLen + i, (char)bytes[i]);
       }
@@ -98,7 +96,7 @@ public class PathInterner {
       if (encodedString instanceof CharSequence) {
         return ((CharSequence)encodedString).charAt(i);
       }
-      return (char)((byte[]) encodedString)[i];
+      return (char)((byte[])encodedString)[i];
     }
 
     @Override
@@ -172,7 +170,7 @@ public class PathInterner {
       if (encodedString instanceof CharSequence) {
         return ((CharSequence)encodedString).charAt(start + i);
       }
-      return (char)((byte[]) encodedString)[start + i];
+      return (char)((byte[])encodedString)[start + i];
     }
 
     @Override
@@ -187,7 +185,7 @@ public class PathInterner {
 
     @NotNull
     CharSegment createPersistentCopy(boolean asBytes) {
-      CharSequence string = (CharSequence) encodedString;
+      CharSequence string = (CharSequence)encodedString;
       Object newEncodedString;
       if (asBytes) {
         byte[] bytes = new byte[length()];
@@ -257,7 +255,7 @@ public class PathInterner {
       int base = 31;
       int r = 1;
       while (p != 0) {
-        if ((p&1) != 0) {
+        if ((p & 1) != 0) {
           r *= base;
         }
         base *= base;
@@ -340,10 +338,6 @@ public class PathInterner {
       }
     }
 
-    public int getExistingPathIndex(@NotNull CharSequence path) {
-      CharSegment[] key = myInterner.internParts(path, false);
-      return key != null && mySeqToIdx.containsKey(key) ? mySeqToIdx.get(key) : 0;
-    }
     public boolean containsPath(@NotNull CharSequence path) {
       CharSegment[] key = myInterner.internParts(path, false);
       return key != null && mySeqToIdx.containsKey(key);
@@ -367,28 +361,5 @@ public class PathInterner {
       mySeqToIdx.clear();
       myIdxToSeq.clear();
     }
-
   }
-
-  public static class PathMap<T> {
-    private final THashMap<CharSegment[], T> myMap = new THashMap<>(HASHING_STRATEGY);
-    private final PathInterner myInterner = new PathInterner();
-
-    @Nullable
-    public T get(@NotNull CharSequence path) {
-      CharSegment[] seq = myInterner.internParts(path, false);
-      return seq == null ? null : myMap.get(seq);
-    }
-
-    public void put(@NotNull CharSequence path, @NotNull T value) {
-      myMap.put(myInterner.internParts(path, true), value);
-    }
-
-
-    @NotNull
-    public Iterable<T> values() {
-      return myMap.values();
-    }
-  }
-
 }

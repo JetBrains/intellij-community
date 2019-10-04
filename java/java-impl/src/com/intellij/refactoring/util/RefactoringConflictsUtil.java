@@ -184,7 +184,7 @@ public class RefactoringConflictsUtil {
       }
     }
 
-    for (PsiElement child : scope.getChildren()) {
+    for (PsiElement child = scope.getFirstChild(); child != null; child = child.getNextSibling()) {
       if (child instanceof PsiWhiteSpace || child instanceof PsiComment) continue;
       checkUsedElements(member, child, membersToMove, abstractMethods, targetClass, child instanceof PsiClass ? (PsiClass)child : accessClass, context, conflicts);
     }

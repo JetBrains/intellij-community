@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testGuiFramework.tests.community
 
 import com.intellij.ide.IdeBundle
@@ -17,7 +17,8 @@ import com.intellij.testGuiFramework.utils.TestUtilsClassCompanion
 import org.fest.swing.exception.ComponentLookupException
 import org.fest.swing.exception.WaitTimedOutError
 import org.junit.Assert
-import java.io.File
+import java.nio.file.Path
+import java.nio.file.Paths
 
 val GuiTestCase.CommunityProjectCreator by CommunityProjectCreator
 
@@ -119,10 +120,9 @@ class CommunityProjectCreator(guiTestCase: GuiTestCase) : TestUtilsClass(guiTest
   /**
    * @projectName of importing project should be locate in the current module testData/
    */
-  fun importProject(projectName: String): File {
+  fun importProject(projectName: String): Path {
     val projectDirUrl = this.javaClass.classLoader.getResource(projectName)
-    val projectDirFile = File(projectDirUrl.toURI())
-    return guiTestCase.guiTestRule.importProject(projectDirFile)
+    return guiTestCase.guiTestRule.importProject(Paths.get(projectDirUrl.toURI()))
   }
 
   fun importCommandLineApp() {

@@ -5,50 +5,27 @@
  */
 package com.intellij.util.messages;
 
-import com.intellij.util.messages.impl.MessageBusImpl;
+import com.intellij.openapi.components.ServiceManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.concurrent.atomic.AtomicReference;
+public abstract class MessageBusFactory {
+  public static MessageBusFactory getInstance() {
+    return ServiceManager.getService(MessageBusFactory.class);
+  }
 
-public final class MessageBusFactory {
-  private static final AtomicReference<Impl> ourImpl = new AtomicReference<>(Impl.DEFAULT);
-
-  private MessageBusFactory() {}
+  @NotNull
+  public abstract MessageBus createMessageBus(@NotNull Object owner);
+  @NotNull
+  public abstract MessageBus createMessageBus(@NotNull Object owner, @NotNull MessageBus parentBus);
 
   @NotNull
   public static MessageBus newMessageBus(@NotNull Object owner) {
-    return ourImpl.get().newMessageBus(owner);
+    return getInstance().createMessageBus(owner);
   }
 
   @NotNull
   public static MessageBus newMessageBus(@NotNull Object owner, @Nullable MessageBus parentBus) {
-    return ourImpl.get().newMessageBus(owner, parentBus);
-  }
-
-  public static void setImpl(@NotNull Impl impl) {
-    ourImpl.set(impl);
-  }
-
-  public interface Impl {
-    Impl DEFAULT = new Impl() {
-      @NotNull
-      @Override
-      public MessageBus newMessageBus(@NotNull Object owner) {
-        return new MessageBusImpl.RootBus(owner);
-      }
-
-      @NotNull
-      @Override
-      public MessageBus newMessageBus(@NotNull Object owner, @Nullable MessageBus parentBus) {
-        return parentBus == null ? newMessageBus(owner) : new MessageBusImpl(owner, parentBus);
-      }
-    };
-
-    @NotNull
-    MessageBus newMessageBus(@NotNull Object owner);
-
-    @NotNull
-    MessageBus newMessageBus(@NotNull Object owner, @Nullable MessageBus parentBus);
+    return parentBus == null ? newMessageBus(owner) : getInstance().createMessageBus(owner, parentBus);
   }
 }

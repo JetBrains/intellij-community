@@ -43,12 +43,9 @@ public abstract class PyMultiFileResolveTestCase extends PyResolveTestCase {
   protected PsiElement doResolve(PsiFile psiFile) {
     final PsiReference ref = PyResolveTestCase.findReferenceByMarker(psiFile);
     final PsiManagerEx psiManager = (PsiManagerEx)myFixture.getPsiManager();
-    psiManager.setAssertOnFileLoadingFilter(new VirtualFileFilter() {
-      @Override
-      public boolean accept(VirtualFile file) {
-        FileType fileType = file.getFileType();
-        return fileType == PythonFileType.INSTANCE;
-      }
+    psiManager.setAssertOnFileLoadingFilter(file -> {
+      FileType fileType = file.getFileType();
+      return fileType == PythonFileType.INSTANCE;
     }, myFixture.getTestRootDisposable());
     final PsiElement result;
     if (ref instanceof PsiPolyVariantReference) {

@@ -351,7 +351,7 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     }
 
     @Override
-    public void setIcon(Icon icon) {
+    public void setIcon(@NotNull Icon icon) {
     }
 
     @Override

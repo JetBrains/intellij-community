@@ -4,6 +4,7 @@ package com.intellij.openapi.fileChooser;
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -306,7 +307,7 @@ public class FileChooserDescriptor implements Cloneable {
     if (file.isDirectory() && (myChooseFolders || isFileSelectable(file))) {
       return file;
     }
-    boolean isJar = file.getFileType() == ArchiveFileType.INSTANCE;
+    boolean isJar = FileTypeRegistry.getInstance().isFileOfType(file, ArchiveFileType.INSTANCE);
     if (!isJar) {
       return acceptAsGeneralFile(file) ? file : null;
     }

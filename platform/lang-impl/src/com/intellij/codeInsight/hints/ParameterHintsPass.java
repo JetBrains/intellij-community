@@ -1,27 +1,12 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hints;
 
 import com.intellij.codeHighlighting.EditorBoundHighlightingPass;
 import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager;
-import com.intellij.diff.util.DiffUtil;
 import com.intellij.lang.Language;
+import com.intellij.openapi.diff.impl.DiffUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.Inlay;
-import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
@@ -78,13 +63,13 @@ public class ParameterHintsPass extends EditorBoundHighlightingPass {
 
     Language language = myFile.getLanguage();
     InlayParameterHintsProvider provider = InlayParameterHintsExtension.INSTANCE.forLanguage(language);
-    if (provider == null || !provider.canShowHintsWhenDisabled() && !isEnabled() || DiffUtil.isDiffEditor(myEditor)) return;
+    if (provider == null || !provider.canShowHintsWhenDisabled() && !isEnabled(language) || DiffUtil.isDiffEditor(myEditor)) return;
 
     myTraverser.forEach(element -> process(element, provider));
   }
 
-  private static boolean isEnabled() {
-    return EditorSettingsExternalizable.getInstance().isShowParameterNameHints();
+  private static boolean isEnabled(Language language) {
+    return HintUtilsKt.isParameterHintsEnabledForLanguage(language);
   }
 
   private void process(PsiElement element, InlayParameterHintsProvider provider) {

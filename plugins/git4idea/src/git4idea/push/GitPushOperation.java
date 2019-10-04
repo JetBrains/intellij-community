@@ -16,6 +16,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -131,6 +132,7 @@ public class GitPushOperation {
       for (int pushAttempt = 0;
            pushAttempt < MAX_PUSH_ATTEMPTS && !remainingRoots.isEmpty();
            pushAttempt++, remainingRoots = getRejectedAndNotPushed(results)) {
+        LOG.debug("Starting push attempt #" + pushAttempt);
         Map<GitRepository, GitPushRepoResult> resultMap = push(myRepositoryManager.sortByDependency(remainingRoots));
         results.putAll(resultMap);
 
@@ -141,35 +143,27 @@ public class GitPushOperation {
           break;
         }
 
-        // propose to update if rejected
         if (!result.rejected.isEmpty()) {
-          boolean shouldUpdate = true;
-          if (myForceMode.isForce() || pushingToNotTrackedBranch(result.rejected)) {
-            shouldUpdate = false;
-          }
-          else if (pushAttempt == 0 && !mySettings.autoUpdateIfPushRejected()) {
+
+          if (myForceMode.isForce() || pushingToNotTrackedBranch(result.rejected) || pushingNotCurrentBranch(result.rejected)) break;
+
+          // propose to update if rejected
+          if (pushAttempt == 0 && !mySettings.autoUpdateIfPushRejected()) {
             // the dialog will be shown => check for rebase-over-merge problem in advance to avoid showing several dialogs in a row
             rebaseOverMergeProblemDetected = !findRootsWithMergeCommits(getRootsToUpdate(updateSettings,
                                                                                          result.rejected.keySet())).isEmpty();
 
             updateSettings = showDialogAndGetExitCode(result.rejected.keySet(), updateSettings,
                                                       rebaseOverMergeProblemDetected.booleanValue());
-            if (updateSettings != null) {
-              savePushUpdateSettings(updateSettings, rebaseOverMergeProblemDetected.booleanValue());
-            }
-            else {
-              shouldUpdate = false;
-            }
-          }
-
-          if (!shouldUpdate) {
-            break;
+            if (updateSettings == null) break;
+            savePushUpdateSettings(updateSettings, rebaseOverMergeProblemDetected.booleanValue());
           }
 
           if (beforePushLabel == null) { // put the label only before the very first update
             beforePushLabel = LocalHistory.getInstance().putSystemLabel(myProject, "Before push");
           }
           Collection<GitRepository> rootsToUpdate = getRootsToUpdate(updateSettings, result.rejected.keySet());
+          LOG.debug("roots to update: " + rootsToUpdate);
           GitUpdateResult updateResult = update(rootsToUpdate, updateSettings.getUpdateMethod(), rebaseOverMergeProblemDetected == null);
           for (GitRepository repository : rootsToUpdate) {
             updatedRoots.put(repository, updateResult); // TODO update result in GitUpdateProcess is a single for several roots
@@ -223,13 +217,25 @@ public class GitPushOperation {
   }
 
   private static boolean pushingToNotTrackedBranch(@NotNull Map<GitRepository, GitPushRepoResult> rejected) {
-    return ContainerUtil.exists(rejected.entrySet(), entry -> {
+    boolean pushingToNotTrackedBranch = ContainerUtil.exists(rejected.entrySet(), entry -> {
       GitRepository repository = entry.getKey();
       GitLocalBranch currentBranch = repository.getCurrentBranch();
       assert currentBranch != null;
       GitBranchTrackInfo trackInfo = GitBranchUtil.getTrackInfoForBranch(repository, currentBranch);
       return trackInfo == null || !trackInfo.getRemoteBranch().getFullName().equals(entry.getValue().getTargetBranch());
     });
+    LOG.debug("Pushing to not tracked branch condition is [" + pushingToNotTrackedBranch + "]");
+    return pushingToNotTrackedBranch;
+  }
+
+  private static boolean pushingNotCurrentBranch(@NotNull Map<GitRepository, GitPushRepoResult> rejected) {
+    boolean pushingNotCurrentBranch = ContainerUtil.exists(rejected.entrySet(), entry -> {
+      GitRepository repository = entry.getKey();
+      String currentBranch = Objects.requireNonNull(repository.getCurrentBranch()).getFullName();
+      return !StringUtil.equals(currentBranch, entry.getValue().getSourceBranch());
+    });
+    LOG.debug("Pushing non current branch condition is [" + pushingNotCurrentBranch + "]");
+    return pushingNotCurrentBranch;
   }
 
   @NotNull

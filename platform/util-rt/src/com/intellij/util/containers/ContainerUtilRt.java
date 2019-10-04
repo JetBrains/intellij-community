@@ -75,27 +75,6 @@ public class ContainerUtilRt {
   }
 
   /**
-   * @deprecated Use {@link TreeMap#TreeMap()}
-   */
-  @NotNull
-  @Contract(value = " -> new", pure = true)
-  @Deprecated
-  public static <K extends Comparable<? super K>, V> TreeMap<K, V> newTreeMap() {
-    return new TreeMap<K, V>();
-  }
-
-  /**
-   * @deprecated Use {@link TreeMap#TreeMap(Map)}
-   */
-  @SuppressWarnings("unused")
-  @NotNull
-  @Contract(value = "_ -> new", pure = true)
-  @Deprecated
-  public static <K extends Comparable<? super K>, V> TreeMap<K, V> newTreeMap(@NotNull Map<? extends K, ? extends V> map) {
-    return new TreeMap<K, V>(map);
-  }
-
-  /**
    * @deprecated Use {@link LinkedHashMap#LinkedHashMap()}
    */
   @NotNull
@@ -103,26 +82,6 @@ public class ContainerUtilRt {
   @Deprecated
   public static <K, V> LinkedHashMap<K, V> newLinkedHashMap() {
     return new LinkedHashMap<K, V>();
-  }
-
-  /**
-   * @deprecated Use {@link LinkedHashMap#LinkedHashMap(int)}
-   */
-  @NotNull
-  @Contract(value = "_ -> new", pure = true)
-  @Deprecated
-  public static <K, V> LinkedHashMap<K, V> newLinkedHashMap(int capacity) {
-    return new LinkedHashMap<K, V>(capacity);
-  }
-
-  /**
-   * @deprecated Use {@link LinkedHashMap#LinkedHashMap(Map)}
-   */
-  @NotNull
-  @Contract(value = "_ -> new", pure = true)
-  @Deprecated
-  public static <K, V> LinkedHashMap<K, V> newLinkedHashMap(@NotNull Map<? extends K, ? extends V> map) {
-    return new LinkedHashMap<K, V>(map);
   }
 
   @NotNull
@@ -250,16 +209,6 @@ public class ContainerUtilRt {
   }
 
   /**
-   * @deprecated Use {@link TreeSet#TreeSet(Comparator)}
-   */
-  @Deprecated
-  @NotNull
-  @Contract(value = "_ -> new", pure = true)
-  public static <T> TreeSet<T> newTreeSet(@Nullable Comparator<? super T> comparator) {
-    return new TreeSet<T>(comparator);
-  }
-
-  /**
    * A variant of {@link Collections#emptyList()},
    * except that {@link #toArray()} here does not create garbage {@code new Object[0]} constantly.
    */
@@ -338,16 +287,6 @@ public class ContainerUtilRt {
   public static <T> List<T> emptyList() {
     //noinspection unchecked
     return (List<T>)EmptyList.INSTANCE;
-  }
-
-  /**
-   * @deprecated use {@link #addIfNotNull(Collection, Object)}
-   */
-  @Deprecated
-  public static <T> void addIfNotNull(@Nullable T element, @NotNull Collection<? super T> result) {
-    if (element != null) {
-      result.add(element);
-    }
   }
 
   public static <T> void addIfNotNull(@NotNull Collection<? super T> result, @Nullable T element) {
@@ -446,16 +385,6 @@ public class ContainerUtilRt {
   @Contract(pure=true)
   public static <T> T[] toArray(@NotNull List<T> collection, @NotNull T[] array) {
     return collection.toArray(array);
-  }
-
-  /**
-   * @deprecated use {@link Collection#toArray(Object[])} instead
-   */
-  @Deprecated
-  @NotNull
-  @Contract(pure=true)
-  public static <T> T[] toArray(@NotNull Collection<? extends T> c, @NotNull T[] sample) {
-    return c.toArray(sample);
   }
 
   @Contract(pure=true)

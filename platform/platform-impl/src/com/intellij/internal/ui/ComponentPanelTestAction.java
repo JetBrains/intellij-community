@@ -94,6 +94,9 @@ public class ComponentPanelTestAction extends DumbAwareAction {
     private static final ValidationInfo NULL_VALUE_ERROR = new ValidationInfo("Null value");
     private static final ValidationInfo NAN_VALUE_ERROR = new ValidationInfo("Not a number");
 
+    private static final String LONG_TEXT1 = "In advance of the dogs, on wide snowshoes, toiled a man. At the rear of the sled toiled a second man.<p/>On the sled, in the box, lay a third man whose toil was over, - a man whom the Wild had conquered and beaten down until he would never move nor struggle again.";
+    private static final String LONG_TEXT2 = "It is not the way of the Wild to like movement.<p/>Life is an offence to it, for life is movement; and the Wild aims always to destroy movement.";
+
     private final Alarm myAlarm = new Alarm(getDisposable());
     private ProgressTimerRequest progressTimerRequest;
 
@@ -753,14 +756,21 @@ public class ComponentPanelTestAction extends DumbAwareAction {
 
       DefaultActionGroup subActions = new DefaultActionGroup("Ratings", true);
       subActions.getTemplatePresentation().setIcon(AllIcons.Ide.Rating);
-      subActions.addAll(new MyAction("Rating one", AllIcons.Ide.Rating1),
-                        new MyAction("Rating two", AllIcons.Ide.Rating2),
-                        new MyAction("Rating three", AllIcons.Ide.Rating3),
-                        new MyAction("Rating four", AllIcons.Ide.Rating4));
+      subActions.addAll(new MyAction("Rating one", AllIcons.Ide.Rating1).withDefaultDescription(),
+                        new MyAction("Rating two", AllIcons.Ide.Rating2).withDefaultDescription(),
+                        new MyAction("Rating three", AllIcons.Ide.Rating3).withDefaultDescription(),
+                        new MyAction("Rating four", AllIcons.Ide.Rating4).withDefaultDescription());
       actions.add(subActions);
 
       DefaultActionGroup toolbarActions = new DefaultActionGroup();
       toolbarActions.add(new SplitButtonAction(actions));
+      toolbarActions.add(new MyAction("Short", AllIcons.Ide.Rating1).withShortCut("control K"));
+      toolbarActions.add(new MyAction("Short", AllIcons.Ide.Rating2)
+                           .withDescription(LONG_TEXT1)
+                           .withShortCut("control N"));
+      toolbarActions.add(new MyAction(null, AllIcons.Ide.Rating3)
+                           .withDescription(LONG_TEXT2)
+                           .withShortCut("control P"));
 
       ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("TOP", toolbarActions, true);
       JComponent toolbarComponent = toolbar.getComponent();
@@ -770,13 +780,28 @@ public class ComponentPanelTestAction extends DumbAwareAction {
   }
 
   private static class MyAction extends DumbAwareAction {
-    private MyAction(String name, Icon icon) {
-      super(name, name + " track", icon);
+    private MyAction(@Nullable String name, @Nullable Icon icon) {
+      super(name, null, icon);
     }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       System.out.println(e.getPresentation().getDescription());
+    }
+
+    public MyAction withDefaultDescription() {
+      getTemplatePresentation().setDescription(getTemplateText() + " description");
+      return this;
+    }
+
+    public MyAction withDescription(@Nullable String description) {
+      getTemplatePresentation().setDescription(description);
+      return this;
+    }
+
+    public MyAction withShortCut(@NotNull String shortCut) {
+      setShortcutSet(CustomShortcutSet.fromString(shortCut));
+      return this;
     }
   }
 

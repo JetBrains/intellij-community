@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.DataManager;
@@ -212,37 +212,33 @@ public final class WindowWatcher implements PropertyChangeListener{
    * @param project may be null (for example, if no projects are opened)
    */
   @Nullable
-  public final Window suggestParentWindow(@Nullable final Project project){
-    synchronized(myLock){
-      Window window=getFocusedWindowForProject(project);
-      if(window==null){
-        if (project != null) {
-          return (Window)WindowManagerEx.getInstanceEx().findFrameFor(project);
-        }
-        else{
-          return null;
-        }
+  public final Window suggestParentWindow(@Nullable Project project, @NotNull WindowManagerEx windowManager) {
+    synchronized (myLock) {
+      Window window = getFocusedWindowForProject(project);
+      if (window == null) {
+        return project == null ? null : (Window)windowManager.findFrameFor(project);
       }
 
       LOG.assertTrue(window.isDisplayable());
       LOG.assertTrue(window.isShowing());
 
-      while(window!=null){
+      while (window != null) {
         // skip not visible and disposed/not shown windows
-        if(!window.isDisplayable()||!window.isShowing()){
+        if (!window.isDisplayable() || !window.isShowing()) {
           window = window.getOwner();
           continue;
         }
         // skip windows that have not associated WindowInfo
-        final WindowInfo info=myWindow2Info.get(window);
-        if(info==null){
-          window=window.getOwner();
+        final WindowInfo info = myWindow2Info.get(window);
+        if (info == null) {
+          window = window.getOwner();
           continue;
         }
-        if(info.mySuggestAsParent){
+        if (info.mySuggestAsParent) {
           return window;
-        }else{
-          window=window.getOwner();
+        }
+        else {
+          window = window.getOwner();
         }
       }
       return null;

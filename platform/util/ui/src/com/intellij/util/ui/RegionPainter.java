@@ -108,7 +108,7 @@ public interface RegionPainter<T> {
      * @return new {@link BufferedImage} object
      */
     protected BufferedImage createImage(int width, int height) {
-      return UIUtil.createImage(width, height, BufferedImage.TYPE_INT_ARGB);
+      return ImageUtil.createImage(width, height, BufferedImage.TYPE_INT_ARGB);
     }
 
     /**

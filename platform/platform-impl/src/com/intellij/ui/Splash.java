@@ -5,13 +5,12 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.ex.ProgressSlide;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.ImageLoader;
+import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.StartupUiUtil;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -91,8 +90,8 @@ public final class Splash extends Window {
         font = SystemInfo.isMacOSYosemite ? createFont("HelveticaNeue-Regular") : null;
       }
 
-      if (font == null || UIUtil.isDialogFont(font)) {
-        font = createFont(UIUtil.ARIAL_FONT_NAME);
+      if (font == null || StartupUiUtil.isDialogFont(font)) {
+        font = createFont(StartupUiUtil.ARIAL_FONT_NAME);
       }
       return font;
     });
@@ -195,7 +194,7 @@ public final class Splash extends Window {
       return true;
     }
 
-    UIUtil.applyRenderingHints(g);
+    GraphicsUtil.applyRenderingHints(g);
     g.setFont(font.getValue());
     g.setColor(info.getSplashTextColor());
 

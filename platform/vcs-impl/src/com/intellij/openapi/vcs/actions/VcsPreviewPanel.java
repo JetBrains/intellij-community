@@ -80,7 +80,10 @@ class VcsPreviewPanel implements PreviewPanel {
       "Added line\n\n" +
       "Line with modified whitespaces\n\n" +
       "Added line\n" +
-      "Line with modified whitespaces and deletion after\n"
+      "Line with modified whitespaces and deletion after\n\n" +
+      "Deleted ignored line below\n\n" +
+      "Modified ignored line\n\n" +
+      "Added ignored line\n\n"
     );
     int additionalLines = Math.max(0, AnnotationsSettings.getInstance().getOrderedColors(colorsScheme).size() - StringUtil.countNewLines(sb));
     sb.append(StringUtil.repeat("\n", additionalLines));
@@ -89,11 +92,15 @@ class VcsPreviewPanel implements PreviewPanel {
     myEditor.getMarkupModel().removeAllHighlighters();
     myEditor.getGutterComponentEx().closeAllAnnotations();
 
-    addHighlighter(new Range(1, 1, 0, 1), EditorColors.DELETED_LINES_COLOR);
-    addHighlighter(createModifiedRange(2, Range.MODIFIED), EditorColors.MODIFIED_LINES_COLOR);
-    addHighlighter(createModifiedRange(4, Range.INSERTED), EditorColors.ADDED_LINES_COLOR);
-    addHighlighter(createModifiedRange(6, Range.EQUAL), EditorColors.WHITESPACES_MODIFIED_LINES_COLOR);
-    addHighlighter(createModifiedRange(8, Range.INSERTED, Range.EQUAL, Range.DELETED), EditorColors.WHITESPACES_MODIFIED_LINES_COLOR);
+    addHighlighter(new Range(1, 1, 0, 1), false, EditorColors.DELETED_LINES_COLOR);
+    addHighlighter(createModifiedRange(2, Range.MODIFIED), false, EditorColors.MODIFIED_LINES_COLOR);
+    addHighlighter(createModifiedRange(4, Range.INSERTED), false, EditorColors.ADDED_LINES_COLOR);
+    addHighlighter(createModifiedRange(6, Range.EQUAL), false, EditorColors.WHITESPACES_MODIFIED_LINES_COLOR);
+    addHighlighter(createModifiedRange(8, Range.INSERTED, Range.EQUAL, Range.DELETED), false, EditorColors.WHITESPACES_MODIFIED_LINES_COLOR);
+
+    addHighlighter(new Range(12, 12, 0, 1), true, EditorColors.IGNORED_DELETED_LINES_BORDER_COLOR);
+    addHighlighter(createModifiedRange(13, Range.MODIFIED), true, EditorColors.IGNORED_MODIFIED_LINES_BORDER_COLOR);
+    addHighlighter(new Range(15, 16, 0, 0), true, EditorColors.IGNORED_ADDED_LINES_BORDER_COLOR);
 
     List<Color> annotationColors = AnnotationsSettings.getInstance().getOrderedColors(colorsScheme);
     List<Integer> anchorIndexes = AnnotationsSettings.getInstance().getAnchorIndexes(colorsScheme);
@@ -122,12 +129,12 @@ class VcsPreviewPanel implements PreviewPanel {
     return new Range(currentLine, currentLine + currentInnerLine, 0, 1, innerRanges);
   }
 
-  private void addHighlighter(@NotNull Range range, @NotNull ColorKey colorKey) {
+  private void addHighlighter(@NotNull Range range, boolean isIgnored, @NotNull ColorKey colorKey) {
     RangeHighlighter highlighter = LineStatusMarkerRenderer.createTooltipRangeHighlighter(range, myEditor.getMarkupModel());
     highlighter.setLineMarkerRenderer(new ActiveGutterRenderer() {
       @Override
       public void paint(Editor editor, Graphics g, Rectangle r) {
-        LineStatusMarkerRenderer.paintRange(g, myEditor, range, 0);
+        LineStatusMarkerRenderer.paintRange(g, myEditor, range, 0, isIgnored);
       }
 
       @Override

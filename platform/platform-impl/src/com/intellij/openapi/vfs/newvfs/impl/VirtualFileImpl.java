@@ -52,7 +52,7 @@ import java.util.Collection;
 import java.util.Collections;
 
 public class VirtualFileImpl extends VirtualFileSystemEntry {
-  VirtualFileImpl(int id, VfsData.Segment segment, VirtualDirectoryImpl parent) {
+  VirtualFileImpl(int id, @NotNull VfsData.Segment segment, VirtualDirectoryImpl parent) {
     super(id, segment, parent);
   }
 
@@ -200,7 +200,7 @@ public class VirtualFileImpl extends VirtualFileSystemEntry {
   }
 
   @Override
-  protected boolean changeUserMap(KeyFMap oldMap, KeyFMap newMap) {
+  protected boolean changeUserMap(@NotNull KeyFMap oldMap, @NotNull KeyFMap newMap) {
     VirtualDirectoryImpl.checkLeaks(newMap);
     return mySegment.changeUserMap(myId, oldMap, UserDataInterner.internUserData(newMap));
   }

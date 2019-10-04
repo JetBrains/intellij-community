@@ -17,7 +17,7 @@ class RemovedMappingTracker {
     private final String myFileTypeName;
     private boolean myApproved;
 
-    private RemovedMapping(FileNameMatcher matcher, String name, boolean approved) {
+    private RemovedMapping(@NotNull FileNameMatcher matcher, @NotNull String name, boolean approved) {
       myFileNameMatcher = matcher;
       myFileTypeName = name;
       myApproved = approved;
@@ -45,13 +45,13 @@ class RemovedMappingTracker {
   @NonNls private static final String ELEMENT_REMOVED_MAPPING = "removed_mapping";
   /** Applied for removed mappings approved by user */
   @NonNls private static final String ATTRIBUTE_APPROVED = "approved";
-  @NonNls static final String ATTRIBUTE_TYPE = "type";
+  @NonNls private static final String ATTRIBUTE_TYPE = "type";
 
   void clear() {
     myRemovedMappings.clear();
   }
 
-  public void add(FileNameMatcher matcher, String fileTypeName, boolean approved) {
+  public void add(@NotNull FileNameMatcher matcher, @NotNull String fileTypeName, boolean approved) {
     myRemovedMappings.put(matcher, new RemovedMapping(matcher, fileTypeName, approved));
   }
 
@@ -71,7 +71,9 @@ class RemovedMappingTracker {
     List<RemovedMapping> result = new ArrayList<>();
     for (Element mapping : children) {
       String ext = mapping.getAttributeValue(AbstractFileType.ATTRIBUTE_EXT);
-      FileNameMatcher matcher = ext == null ? FileTypeManager.parseFromString(mapping.getAttributeValue(AbstractFileType.ATTRIBUTE_PATTERN)) : new ExtensionFileNameMatcher(ext);
+      FileNameMatcher matcher = ext == null
+                                ? FileTypeManager.parseFromString(mapping.getAttributeValue(AbstractFileType.ATTRIBUTE_PATTERN))
+                                : new ExtensionFileNameMatcher(ext);
       boolean approved = Boolean.parseBoolean(mapping.getAttributeValue(ATTRIBUTE_APPROVED));
       String fileTypeName = mapping.getAttributeValue(ATTRIBUTE_TYPE);
       if (fileTypeName == null) continue;
@@ -82,7 +84,7 @@ class RemovedMappingTracker {
     return result;
   }
 
-  public void save(Element element) {
+  public void save(@NotNull Element element) {
     for (RemovedMapping mapping : myRemovedMappings.values()) {
       Element content = writeRemovedMapping(mapping.myFileTypeName, mapping.myFileNameMatcher, true, mapping.myApproved);
       if (content != null) {
@@ -91,7 +93,7 @@ class RemovedMappingTracker {
     }
   }
 
-  public void saveRemovedMappingsForFileType(Element map, String fileTypeName, Set<FileNameMatcher> associations, boolean specifyTypeName) {
+  void saveRemovedMappingsForFileType(@NotNull Element map, @NotNull String fileTypeName, @NotNull Set<? extends FileNameMatcher> associations, boolean specifyTypeName) {
     for (FileNameMatcher matcher : associations) {
       Element content = writeRemovedMapping(fileTypeName, matcher, specifyTypeName, isApproved(matcher));
       if (content != null) {
@@ -100,24 +102,25 @@ class RemovedMappingTracker {
     }
   }
 
-  boolean hasRemovedMapping(FileNameMatcher matcher) {
+  boolean hasRemovedMapping(@NotNull FileNameMatcher matcher) {
     return myRemovedMappings.containsKey(matcher);
   }
 
-  boolean isApproved(FileNameMatcher matcher) {
+  private boolean isApproved(@NotNull FileNameMatcher matcher) {
     RemovedMapping mapping = myRemovedMappings.get(matcher);
     return mapping != null && mapping.isApproved();
    }
 
-  public void approveRemoval(String fileTypeName, FileNameMatcher matcher) {
+  void approveRemoval(@NotNull String fileTypeName, @NotNull FileNameMatcher matcher) {
     myRemovedMappings.put(matcher, new RemovedMapping(matcher, fileTypeName, true));
   }
 
+  @NotNull
   public List<RemovedMapping> getRemovedMappings() {
     return new ArrayList<>(myRemovedMappings.values());
   }
 
-  public List<FileNameMatcher> getMappingsForFileType(String name) {
+  List<FileNameMatcher> getMappingsForFileType(@NotNull String name) {
     List<FileNameMatcher> result = new ArrayList<>();
     for (RemovedMapping mapping : myRemovedMappings.values()) {
       if (mapping.myFileTypeName.equals(name)) {
@@ -127,15 +130,11 @@ class RemovedMappingTracker {
     return result;
   }
 
-  void removeMatching(BiPredicate<FileNameMatcher, String> predicate) {
-    for (Iterator<Map.Entry<FileNameMatcher, RemovedMapping>> it = myRemovedMappings.entrySet().iterator(); it.hasNext(); ) {
-      Map.Entry<FileNameMatcher, RemovedMapping> next = it.next();
-      if (predicate.test(next.getValue().myFileNameMatcher, next.getValue().myFileTypeName)) {
-        it.remove();
-      }
-    }
+  void removeMatching(@NotNull BiPredicate<? super FileNameMatcher, ? super String> predicate) {
+    myRemovedMappings.entrySet().removeIf(next -> predicate.test(next.getValue().myFileNameMatcher, next.getValue().myFileTypeName));
   }
 
+  @NotNull
   List<RemovedMapping> retrieveUnapprovedMappings() {
     List<RemovedMapping> result = new ArrayList<>();
     for (Iterator<Map.Entry<FileNameMatcher, RemovedMapping>> it = myRemovedMappings.entrySet().iterator(); it.hasNext(); ) {
@@ -148,10 +147,10 @@ class RemovedMappingTracker {
     return result;
   }
 
-  static Element writeRemovedMapping(@NotNull String fileTypeName,
-                                     @NotNull FileNameMatcher matcher,
-                                     boolean specifyTypeName,
-                                     boolean approved) {
+  private static Element writeRemovedMapping(@NotNull String fileTypeName,
+                                             @NotNull FileNameMatcher matcher,
+                                             boolean specifyTypeName,
+                                             boolean approved) {
     Element mapping = new Element(ELEMENT_REMOVED_MAPPING);
     if (matcher instanceof ExtensionFileNameMatcher) {
       mapping.setAttribute(AbstractFileType.ATTRIBUTE_EXT, ((ExtensionFileNameMatcher)matcher).getExtension());

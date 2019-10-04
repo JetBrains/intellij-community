@@ -380,7 +380,7 @@ public final class IdeMouseEventDispatcher {
     return findHorizontalScrollBar(c.getParent());
   }
 
-  private static boolean isDiagramViewComponent(@Nullable Component component) {
+  public static boolean isDiagramViewComponent(@Nullable Component component) {
     // in production yfiles classes is obfuscated
     return UIUtil.isClientPropertyTrue(component, "Diagram-View-Component-Key");
   }

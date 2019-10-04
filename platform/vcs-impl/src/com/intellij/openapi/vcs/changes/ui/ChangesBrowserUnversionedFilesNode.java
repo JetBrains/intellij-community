@@ -16,16 +16,16 @@
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.UnversionedViewDialog;
-import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class ChangesBrowserUnversionedFilesNode extends ChangesBrowserSpecificFilesNode {
+public class ChangesBrowserUnversionedFilesNode extends ChangesBrowserSpecificFilePathsNode {
 
   public ChangesBrowserUnversionedFilesNode(@NotNull Project project,
-                                            @NotNull List<VirtualFile> files) {
+                                            @NotNull List<FilePath> files) {
     super(UNVERSIONED_FILES_TAG, files, () -> {
       if (!project.isDisposed()) new UnversionedViewDialog(project).show();
     });

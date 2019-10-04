@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.intellij.plugins.relaxNG;
 
 import com.intellij.codeHighlighting.Pass;
@@ -39,14 +38,16 @@ import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.intellij.plugins.relaxNG.inspections.RngDomInspection;
 import org.intellij.plugins.testUtil.IdeaCodeInsightTestCase;
 import org.intellij.plugins.testUtil.ResourceUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 public abstract class HighlightingTestBase extends UsefulTestCase implements IdeaCodeInsightTestCase {
   protected CodeInsightTestFixture myTestFixture;
@@ -60,9 +61,9 @@ public abstract class HighlightingTestBase extends UsefulTestCase implements Ide
 
     myTestFixture.setTestDataPath(getTestDataBasePath() + getTestDataPath());
 
-    Class<? extends LocalInspectionTool>[] inspectionClasses = new DefaultInspectionProvider().getInspectionClasses();
+    List<Class<? extends LocalInspectionTool>> inspectionClasses = Arrays.asList(new DefaultInspectionProvider().getInspectionClasses());
     if (getName().contains("Inspection")) {
-      inspectionClasses = ArrayUtil.mergeArrays(inspectionClasses, ApplicationLoader.getInspectionClasses());
+      inspectionClasses = ContainerUtil.concat(inspectionClasses, RelaxNgMetaDataContributor.getInspectionClasses());
     }
 
     myTestFixture.setUp();
@@ -70,7 +71,7 @@ public abstract class HighlightingTestBase extends UsefulTestCase implements Ide
     myTestFixture.enableInspections(inspectionClasses);
 
     WriteAction.runAndWait(() -> {
-      ResourceUtil.copyFiles(HighlightingTestBase.this);
+      ResourceUtil.copyFiles(this);
       init();
     });
   }
@@ -91,11 +92,11 @@ public abstract class HighlightingTestBase extends UsefulTestCase implements Ide
   }
 
   protected CodeInsightTestFixture createContentFixture(IdeaTestFixtureFactory factory) {
-    final TestFixtureBuilder<IdeaProjectTestFixture> builder = factory.createFixtureBuilder(getName());
-    final EmptyModuleFixtureBuilder moduleBuilder = builder.addModule(EmptyModuleFixtureBuilder.class);
-    final IdeaProjectTestFixture fixture = builder.getFixture();
+    TestFixtureBuilder<IdeaProjectTestFixture> builder = factory.createFixtureBuilder(getName());
+    EmptyModuleFixtureBuilder<?> moduleBuilder = builder.addModule(EmptyModuleFixtureBuilder.class);
+    IdeaProjectTestFixture fixture = builder.getFixture();
 
-    final CodeInsightTestFixture testFixture = factory.createCodeInsightFixture(fixture);
+    CodeInsightTestFixture testFixture = factory.createCodeInsightFixture(fixture);
 
     moduleBuilder.addContentRoot(testFixture.getTempDirPath());
     moduleBuilder.addSourceRoot("/");
@@ -211,11 +212,9 @@ public abstract class HighlightingTestBase extends UsefulTestCase implements Ide
   private static class DefaultInspectionProvider implements InspectionToolProvider {
     @NotNull
     @Override
-    public Class[] getInspectionClasses() {
-      return new Class[]{
-              RngDomInspection.class,
-              RequiredAttributesInspection.class
-      };
+    public Class<? extends LocalInspectionTool>[] getInspectionClasses() {
+      //noinspection unchecked
+      return new Class[]{RngDomInspection.class, RequiredAttributesInspection.class};
     }
   }
 }

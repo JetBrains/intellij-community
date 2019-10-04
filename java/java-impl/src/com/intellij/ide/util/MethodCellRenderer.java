@@ -4,6 +4,7 @@ package com.intellij.ide.util;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -36,7 +37,7 @@ public class MethodCellRenderer extends PsiElementListCellRenderer<PsiMethod>{
     return super.getIcon(myShowMethodNames ? element : fetchContainer((PsiMethod)element));
   }
 
-  private static PsiNamedElement fetchContainer(PsiMethod element){
+  private static PsiNamedElement fetchContainer(@NotNull PsiMethod element){
     PsiClass aClass = element.getContainingClass();
     return aClass == null ? element.getContainingFile() : aClass;
   }

@@ -43,13 +43,13 @@ public final class CallHierarchyNodeDescriptor extends HierarchyNodeDescriptor i
   /**
    * @return PsiMethod or PsiClass or JspFile
    */
-  public final PsiMember getEnclosingElement(){
+  public final PsiMember getEnclosingElement() {
     PsiElement element = getPsiElement();
     return element == null ? null : getEnclosingElement(element);
   }
 
-  public static PsiMember getEnclosingElement(final PsiElement element){
-    return PsiTreeUtil.getNonStrictParentOfType(element, PsiMethod.class, PsiClass.class);
+  public static PsiMember getEnclosingElement(final PsiElement element) {
+    return PsiTreeUtil.getNonStrictParentOfType(element, PsiField.class, PsiMethod.class, PsiClass.class);
   }
 
   public final void incrementUsageCount(){
@@ -69,13 +69,13 @@ public final class CallHierarchyNodeDescriptor extends HierarchyNodeDescriptor i
   }
 
   @Override
-  public final boolean update(){
+  public final boolean update() {
     final CompositeAppearance oldText = myHighlightedText;
     final Icon oldIcon = getIcon();
 
     boolean changes = super.update();
 
-    final PsiElement enclosingElement = getEnclosingElement();
+    PsiMember enclosingElement = getEnclosingElement();
 
     if (enclosingElement == null) {
       return invalidElement();
@@ -88,24 +88,25 @@ public final class CallHierarchyNodeDescriptor extends HierarchyNodeDescriptor i
     if (myColor != null) {
       mainTextAttributes = new TextAttributes(myColor, null, null, null, Font.PLAIN);
     }
-    if (enclosingElement instanceof PsiMethod) {
+    if (enclosingElement instanceof PsiMethod || enclosingElement instanceof PsiField) {
       if (enclosingElement instanceof SyntheticElement) {
         PsiFile file = enclosingElement.getContainingFile();
         myHighlightedText.getEnding().addText(file != null ? file.getName() : IdeBundle.message("node.call.hierarchy.unknown.jsp"), mainTextAttributes);
       }
       else {
-        final PsiMethod method = (PsiMethod)enclosingElement;
-        final StringBuilder buffer = new StringBuilder(128);
-        final PsiClass containingClass = method.getContainingClass();
+        StringBuilder buffer = new StringBuilder(128);
+        PsiClass containingClass = enclosingElement.getContainingClass();
         if (containingClass != null) {
           buffer.append(ClassPresentationUtil.getNameForClass(containingClass, false));
           buffer.append('.');
         }
-        final String methodText = PsiFormatUtil.formatMethod(
-          method,
-          PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS,
-          PsiFormatUtilBase.SHOW_TYPE
-        );
+        String methodText =
+          enclosingElement instanceof PsiMethod
+          ? PsiFormatUtil.formatMethod(
+            (PsiMethod)enclosingElement,
+            PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS,
+            PsiFormatUtilBase.SHOW_TYPE)
+          : enclosingElement.getName();
         buffer.append(methodText);
 
         myHighlightedText.getEnding().addText(buffer.toString(), mainTextAttributes);
@@ -122,9 +123,7 @@ public final class CallHierarchyNodeDescriptor extends HierarchyNodeDescriptor i
       myHighlightedText.getEnding().addText(IdeBundle.message("node.call.hierarchy.N.usages", myUsageCount), HierarchyNodeDescriptor.getUsageCountPrefixAttributes());
     }
     if (!(FileTypeUtils.isInServerPageFile(enclosingElement) && enclosingElement instanceof PsiFile)) {
-      final PsiClass containingClass = enclosingElement instanceof PsiMethod
-                                       ? ((PsiMethod)enclosingElement).getContainingClass()
-                                       : (PsiClass)enclosingElement;
+      PsiClass containingClass = enclosingElement.getContainingClass();
       if (containingClass != null) {
         final String packageName = JavaHierarchyUtil.getPackageName(containingClass);
         myHighlightedText.getEnding().addText("  (" + packageName + ")", HierarchyNodeDescriptor.getPackageNameAttributes());

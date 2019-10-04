@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.commit
 
-import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
@@ -19,7 +18,6 @@ class ChangesViewCommitWorkflow(project: Project) : AbstractCommitWorkflow(proje
 
   override val isDefaultCommitEnabled: Boolean get() = true
 
-  internal var areCommitOptionsCreated: Boolean = false
   internal lateinit var commitState: CommitState
 
   init {
@@ -37,9 +35,7 @@ class ChangesViewCommitWorkflow(project: Project) : AbstractCommitWorkflow(proje
     executeCustom(executor, session, commitState.changes, commitState.commitMessage)
 
   override fun processExecuteCustomChecksResult(executor: CommitExecutor, session: CommitSession, result: CheckinHandler.ReturnResult) {
-    if (result == CheckinHandler.ReturnResult.COMMIT) {
-      doCommitCustom(executor, session, commitState.changes, commitState.commitMessage)
-    }
+    if (result == CheckinHandler.ReturnResult.COMMIT) doCommitCustom(executor, session)
   }
 
   override fun doRunBeforeCommitChecks(checks: Runnable) =
@@ -47,22 +43,21 @@ class ChangesViewCommitWorkflow(project: Project) : AbstractCommitWorkflow(proje
 
   private fun doCommit() {
     LOG.debug("Do actual commit")
-    val committer = LocalChangesCommitter(project, commitState.changes, commitState.commitMessage, commitContext, commitHandlers)
 
-    committer.addResultHandler(DefaultCommitResultHandler(committer))
-    committer.addResultHandler(ResultHandler(this))
-    committer.runCommit("Commit Changes", false)
-  }
+    with(LocalChangesCommitter(project, commitState.changes, commitState.commitMessage, commitContext)) {
+      addResultHandler(CommitHandlersNotifier(commitHandlers))
+      addResultHandler(getCommitEventDispatcher())
+      addResultHandler(ShowNotificationCommitResultHandler(this))
 
-  private class ResultHandler(private val workflow: ChangesViewCommitWorkflow) : CommitResultHandler {
-    override fun onSuccess(commitMessage: String) = resetState()
-    override fun onFailure() = resetState()
-
-    private fun resetState() = runInEdt {
-      workflow.disposeCommitOptions()
-      workflow.areCommitOptionsCreated = false
-
-      workflow.clearCommitContext()
+      runCommit("Commit Changes", false)
     }
   }
+
+  private fun doCommitCustom(executor: CommitExecutor, session: CommitSession) =
+    with(CustomCommitter(project, session, commitState.changes, commitState.commitMessage)) {
+      addResultHandler(CommitHandlersNotifier(commitHandlers))
+      addResultHandler(getCommitCustomEventDispatcher())
+
+      runCommit(executor.actionText)
+    }
 }

@@ -1,5 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.meta;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -20,8 +19,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.function.Supplier;
 
-public class MetaRegistry extends MetaDataRegistrar {
-
+public final class MetaRegistry extends MetaDataRegistrar {
   private static final Logger LOG = Logger.getInstance(MetaRegistry.class);
   private static final List<MyBinding> ourBindings = ContainerUtil.createLockFreeCopyOnWriteList();
   private static volatile boolean ourContributorsLoaded;

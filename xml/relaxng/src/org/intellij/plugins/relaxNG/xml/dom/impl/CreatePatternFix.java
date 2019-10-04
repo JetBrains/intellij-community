@@ -30,7 +30,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlText;
 import com.intellij.util.IncorrectOperationException;
-import org.intellij.plugins.relaxNG.ApplicationLoader;
+import org.intellij.plugins.relaxNG.RelaxNgMetaDataContributor;
 import org.intellij.plugins.relaxNG.xml.dom.RngGrammar;
 import org.jetbrains.annotations.NotNull;
 
@@ -99,7 +99,7 @@ class CreatePatternFix implements IntentionAction, LocalQuickFix {
   private void doFix() throws IncorrectOperationException {
     final XmlTag tag = PsiTreeUtil.getParentOfType(myReference.getElement(), XmlTag.class);
     assert tag != null;
-    final XmlTag defineTag = tag.createChildTag("define", ApplicationLoader.RNG_NAMESPACE, "\n \n", false);
+    final XmlTag defineTag = tag.createChildTag("define", RelaxNgMetaDataContributor.RNG_NAMESPACE, "\n \n", false);
     defineTag.setAttribute("name", myReference.getCanonicalText());
 
     final RngGrammar grammar = ((DefinitionReference)myReference).getScope();

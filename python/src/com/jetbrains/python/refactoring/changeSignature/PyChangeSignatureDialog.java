@@ -309,8 +309,6 @@ public class PyChangeSignatureDialog extends
 
             final JBLabel inSignatureLabel = new JBLabel(PyBundle.message("refactoring.change.signature.dialog.default.value.checkbox"),
                                                          UIUtil.ComponentStyle.SMALL);
-            IJSwingUtilities.adjustComponentsOnMac(inSignatureLabel,
-                                                   myDefaultInSignature);
             defaultValuePanel.add(inSignatureLabel, BorderLayout.WEST);
             myDefaultInSignature = new JCheckBox();
             myDefaultInSignature.setSelected(((PyParameterTableModelItem)item).isDefaultInSignature());
@@ -332,7 +330,6 @@ public class PyChangeSignatureDialog extends
             myDefaultValueEditor = new EditorTextField(doc, getProject(), getFileType());
             final JBLabel defaultValueLabel = new JBLabel(PyBundle.message("refactoring.change.signature.dialog.default.value.label"),
                                                           UIUtil.ComponentStyle.SMALL);
-            IJSwingUtilities.adjustComponentsOnMac(defaultValueLabel, myDefaultValueEditor);
             defaultValuePanel.add(defaultValueLabel);
             defaultValuePanel.add(myDefaultValueEditor);
             myDefaultValueEditor.setPreferredWidth(getTable().getWidth() / 2);
@@ -345,7 +342,6 @@ public class PyChangeSignatureDialog extends
             myNameEditor = new EditorTextField(item.parameter.getName(), getProject(), getFileType());
             final JBLabel nameLabel = new JBLabel(PyBundle.message("refactoring.change.signature.dialog.name.label"),
                                                   UIUtil.ComponentStyle.SMALL);
-            IJSwingUtilities.adjustComponentsOnMac(nameLabel, myNameEditor);
             namePanel.add(nameLabel);
             namePanel.add(myNameEditor);
             myNameEditor.setPreferredWidth(getTable().getWidth() / 2);

@@ -13,7 +13,6 @@ import org.junit.Test
 /**
  * @author kir
  */
-@Suppress("SuspiciousPackagePrivateAccess")
 class DialogAppenderTest : BareTestFixtureTestCase() {
   @Test fun testIdeaLoggerMessage() {
     val appender = DialogAppender()

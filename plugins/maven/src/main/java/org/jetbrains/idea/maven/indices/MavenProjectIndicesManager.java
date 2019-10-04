@@ -29,7 +29,10 @@ import org.jetbrains.idea.maven.utils.MavenMergingUpdateQueue;
 import org.jetbrains.idea.maven.utils.MavenSimpleProjectComponent;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public final class MavenProjectIndicesManager extends MavenSimpleProjectComponent {
@@ -93,13 +96,7 @@ public final class MavenProjectIndicesManager extends MavenSimpleProjectComponen
           ReadAction.compute(() -> myProject.isDisposed() ? null : collectRemoteRepositoriesIdsAndUrls());
         File localRepository = ReadAction.compute(() -> myProject.isDisposed() ? null : getLocalRepository());
         if (remoteRepositoriesIdsAndUrls == null || localRepository == null) return;
-        Iterator<Pair<String, String>> iterator = remoteRepositoriesIdsAndUrls.iterator();
-        while (iterator.hasNext()) {
-          Pair<String, String> next = iterator.next();
-          if ("central".equals(next.first) || next.second.contains("repo1.maven.org/maven2")) {
-            iterator.remove();
-          }
-        }
+
 
         if (remoteRepositoriesIdsAndUrls.isEmpty()) {
           myProjectIndices.clear();
@@ -107,6 +104,7 @@ public final class MavenProjectIndicesManager extends MavenSimpleProjectComponen
         else {
           myProjectIndices = MavenIndicesManager.getInstance().ensureIndicesExist(myProject, remoteRepositoriesIdsAndUrls);
         }
+        myProjectIndices.add(MavenIndicesManager.getInstance().createIndexForLocalRepo(myProject, localRepository));
         myDependencySearchService.reload();
 
         if (consumer != null) {

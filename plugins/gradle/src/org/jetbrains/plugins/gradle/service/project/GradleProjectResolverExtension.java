@@ -177,7 +177,6 @@ public interface GradleProjectResolverExtension extends ParametersEnhancer {
    * @param models obtained after projects loaded phase
    * @see #getProjectsLoadedModelProvider()
    */
-  @ApiStatus.Experimental
   default void projectsLoaded(@Nullable ModelsHolder<BuildModel, ProjectModel> models) {}
 
   /**
@@ -212,5 +211,5 @@ public interface GradleProjectResolverExtension extends ParametersEnhancer {
                              @NotNull Consumer<String> initScriptConsumer,
                              boolean testExecutionExpected) {
     enhanceTaskProcessing(taskNames, jvmParametersSetup, initScriptConsumer);
-  };
+  }
 }

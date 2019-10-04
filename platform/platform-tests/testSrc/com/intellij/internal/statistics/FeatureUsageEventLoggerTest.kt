@@ -1,16 +1,18 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistics
 
-import com.intellij.internal.statistic.eventLog.*
-import com.intellij.testFramework.PlatformTestCase
+import com.intellij.internal.statistic.eventLog.EventLogGroup
+import com.intellij.internal.statistic.eventLog.LogEvent
+import com.intellij.internal.statistic.eventLog.StatisticsEventLogWriter
+import com.intellij.internal.statistic.eventLog.StatisticsFileEventLogger
+import com.intellij.testFramework.HeavyPlatformTestCase
 import org.junit.Test
 import java.io.File
 import java.util.*
 import java.util.concurrent.TimeUnit
-import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-class FeatureUsageEventLoggerTest : PlatformTestCase() {
+class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
 
   @Test
   fun testSingleEvent() {
@@ -268,7 +270,7 @@ class FeatureUsageEventLoggerTest : PlatformTestCase() {
     callback(logger)
     logger.dispose()
 
-    val actual = logger.testWriter.logged.mapNotNull { line -> LogEventSerializer.fromString(line) }
+    val actual = logger.testWriter.logged
     assertEquals(expected.size, actual.size)
     for (i in 0 until expected.size) {
       assertEvent(actual[i], expected[i])
@@ -310,17 +312,18 @@ class TestFeatureUsageFileEventLogger(session: String,
 
   override fun dispose() {
     super.dispose()
-    myLogExecutor.awaitTermination(10, TimeUnit.SECONDS)
+    logExecutor.awaitTermination(10, TimeUnit.SECONDS)
   }
 }
 
 class TestFeatureUsageEventWriter : StatisticsEventLogWriter {
-  val logged = ArrayList<String>()
+  val logged = ArrayList<LogEvent>()
 
-  override fun log(message: String) {
-    logged.add(message)
+  override fun log(logEvent: LogEvent) {
+    logged.add(logEvent)
   }
 
+  override fun getActiveFile(): File? = null
   override fun getFiles(): List<File> = emptyList()
   override fun cleanup() = Unit
   override fun rollOver() = Unit

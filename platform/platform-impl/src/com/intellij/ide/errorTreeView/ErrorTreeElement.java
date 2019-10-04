@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
 public abstract class ErrorTreeElement {
   public static final ErrorTreeElement[] EMPTY_ARRAY = new ErrorTreeElement[0];
 
-  private final ErrorTreeElementKind myKind;
+  private ErrorTreeElementKind myKind;
 
   protected ErrorTreeElement() {
     this(ErrorTreeElementKind.GENERIC);
@@ -24,6 +24,10 @@ public abstract class ErrorTreeElement {
   @NotNull
   public ErrorTreeElementKind getKind() {
     return myKind;
+  }
+
+  public void setKind(@NotNull ErrorTreeElementKind kind) {
+    myKind = kind;
   }
 
   public abstract String[] getText();

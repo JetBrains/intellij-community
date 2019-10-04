@@ -78,7 +78,7 @@ public interface InlayModel {
   /**
    * Same as {@link #getInlineElementsInRange(int, int)}, but returned list contains only inlays with renderer of given type.
    */
-  default <T> List<Inlay<? extends T>> getInlineElementsInRange(int startOffset, int endOffset, Class<T> type) {
+  default <T> List<Inlay<? extends T>> getInlineElementsInRange(int startOffset, int endOffset, @NotNull Class<T> type) {
     //noinspection unchecked
     return (List)ContainerUtil.filter(getInlineElementsInRange(startOffset, endOffset), inlay -> type.isInstance(inlay.getRenderer()));
   }
@@ -93,7 +93,7 @@ public interface InlayModel {
   /**
    * Same as {@link #getBlockElementsInRange(int, int)}, but returned list contains only inlays with renderer of given type.
    */
-  default <T> List<Inlay<? extends T>> getBlockElementsInRange(int startOffset, int endOffset, Class<T> type) {
+  default <T> List<Inlay<? extends T>> getBlockElementsInRange(int startOffset, int endOffset, @NotNull Class<T> type) {
     //noinspection unchecked
     return (List)ContainerUtil.filter(getBlockElementsInRange(startOffset, endOffset), inlay -> type.isInstance(inlay.getRenderer()));
   }
@@ -153,6 +153,17 @@ public interface InlayModel {
   Inlay getElementAt(@NotNull Point point);
 
   /**
+   * Return a custom visual element with renderer of given type at given coordinates in editor's coordinate space,
+   * or {@code null} if there's no such element at given point.
+   */
+  @Nullable
+  default <T> Inlay<? extends T> getElementAt(@NotNull Point point, @NotNull Class<T> type) {
+    Inlay inlay = getElementAt(point);
+    //noinspection unchecked
+    return inlay != null && type.isInstance(inlay.getRenderer()) ? inlay : null;
+  }
+
+  /**
    * Returns a list of after-line-end elements for a given offset range (both limits are inclusive).
    * Returned list is sorted by offset. Both visible and invisible (due to folding) elements are returned.
    *
@@ -165,7 +176,7 @@ public interface InlayModel {
    * Same as {@link #getAfterLineEndElementsInRange(int, int)}, but returned list contains only inlays with renderer of given type.
    */
   @NotNull
-  default <T> List<Inlay<? extends T>> getAfterLineEndElementsInRange(int startOffset, int endOffset, Class<T> type) {
+  default <T> List<Inlay<? extends T>> getAfterLineEndElementsInRange(int startOffset, int endOffset, @NotNull Class<T> type) {
     //noinspection unchecked
     return (List)ContainerUtil.filter(getAfterLineEndElementsInRange(startOffset, endOffset),
                                       inlay -> type.isInstance(inlay.getRenderer()));

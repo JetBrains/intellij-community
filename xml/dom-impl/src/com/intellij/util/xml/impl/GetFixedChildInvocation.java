@@ -28,7 +28,7 @@ public class GetFixedChildInvocation implements Invocation {
   }
 
   @Override
-  public Object invoke(final DomInvocationHandler<?, ?> handler, final Object[] args) throws Throwable {
+  public Object invoke(final DomInvocationHandler handler, final Object[] args) throws Throwable {
     return handler.getFixedChild(myPair).getProxy();
   }
 }

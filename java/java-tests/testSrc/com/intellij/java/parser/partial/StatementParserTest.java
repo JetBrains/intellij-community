@@ -27,14 +27,13 @@ public class StatementParserTest extends JavaParsingTestCase {
   public void testBreakNormal0() { doParserTest("break;"); }
   public void testBreakNormal1() { doParserTest("break LABEL;"); }
   public void testBreakIncomplete() { doParserTest("break"); }
-  public void testBreakExpr() { doParserTest("break boo();"); }
 
   public void testYield() { doParserTest("yield yield;"); }
   public void testYieldNested() { doParserTest("yield switch (0) { default: yield 42; };"); }
   public void testYieldIncomplete0() { doParserTest("yield "); }
   public void testYieldIncomplete1() { doParserTest("yield x"); }
   public void testYieldCall() { doParserTest("foo.yield();"); }
-  public void testYieldCompatibility() { setLanguageLevel(LanguageLevel.JDK_12_PREVIEW); doParserTest("yield(2);"); }
+  public void testYieldCompatibility() { setLanguageLevel(LanguageLevel.JDK_12); doParserTest("yield(2);"); }
 
   public void testContinueNormal0() { doParserTest("continue;"); }
   public void testContinueNormal1() { doParserTest("continue LABEL;"); }

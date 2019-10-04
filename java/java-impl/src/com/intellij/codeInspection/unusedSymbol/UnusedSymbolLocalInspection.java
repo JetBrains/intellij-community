@@ -27,7 +27,7 @@ import java.awt.event.ActionListener;
 public class UnusedSymbolLocalInspection extends UnusedSymbolLocalInspectionBase {
 
   /**
-   * use {@link com.intellij.codeInspection.deadCode.UnusedDeclarationInspection} instead
+   * @deprecated use {@link com.intellij.codeInspection.deadCode.UnusedDeclarationInspection} instead
    */
   @Deprecated
   public UnusedSymbolLocalInspection() {

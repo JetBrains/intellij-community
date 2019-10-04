@@ -1,8 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework
 
+import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.annotations.TestOnly
@@ -38,8 +38,8 @@ fun <V> runInEdtAndGet(compute: () -> V): V {
 @TestOnly
 fun runInEdtAndWait(runnable: () -> Unit) {
   val app = ApplicationManager.getApplication()
-  if (app is ApplicationImpl) {
-    if (app.isDispatchThread()) {
+  if (app is Application) {
+    if (app.isDispatchThread) {
       // reduce stack trace
       runnable()
     }

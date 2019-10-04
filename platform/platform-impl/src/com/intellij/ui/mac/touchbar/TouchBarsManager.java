@@ -505,6 +505,7 @@ public final class TouchBarsManager {
       // System.out.println("ERROR: RunnersGroup for touchbar isn't a group");
       return;
     }
+
     final ActionGroup g = (ActionGroup)runButtons;
     for (Executor exec: ExecutorRegistry.getInstance().getRegisteredExecutors()) {
       if (exec != null && (exec.getId().equals(ToolWindowId.RUN) || exec.getId().equals(ToolWindowId.DEBUG))) {

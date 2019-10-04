@@ -4,6 +4,7 @@ package com.intellij.openapi.vfs;
 import com.intellij.openapi.application.CachedSingletonsRegistry;
 import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.util.io.URLUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 public class StandardFileSystems {
@@ -47,6 +48,7 @@ public class StandardFileSystems {
   //<editor-fold desc="Deprecated stuff.">
 
   /** @deprecated use ArchiveFileSystem#getRootByLocal(VirtualFile) (to remove in IDEA 2018) */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2018")
   @Deprecated
   public static VirtualFile getJarRootForLocalFile(@NotNull VirtualFile local) {
     return jar().findFileByPath(local.getPath() + URLUtil.JAR_SEPARATOR);

@@ -3,6 +3,7 @@ package com.intellij.psi.impl.source.resolve.reference.impl;
 
 import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
+import com.intellij.codeInsight.completion.JavaLookupElementBuilder;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.psi.*;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
@@ -108,7 +109,7 @@ public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExp
             return Arrays.stream(ownerClass.getPsiClass().getFields())
               .filter(field -> field.getName() != null)
               .sorted(Comparator.comparing(PsiField::getName))
-              .map(field -> lookupField(field))
+              .map(field -> JavaLookupElementBuilder.forField(field))
               .toArray();
 
           case GET_FIELD: {
@@ -116,7 +117,7 @@ public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExp
             return Arrays.stream(ownerClass.getPsiClass().getAllFields())
               .filter(field -> isPotentiallyAccessible(field, ownerClass) && field.getName() != null && uniqueNames.add(field.getName()))
               .sorted(Comparator.comparingInt((PsiField field) -> isPublic(field) ? 0 : 1).thenComparing(PsiField::getName))
-              .map(field -> withPriority(lookupField(field), isPublic(field)))
+              .map(field -> withPriority(JavaLookupElementBuilder.forField(field), isPublic(field)))
               .toArray();
           }
 
@@ -143,7 +144,7 @@ public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExp
             return Arrays.stream(ownerClass.getPsiClass().getFields())
               .filter(field -> field.getName() != null)
               .sorted(Comparator.comparingInt((PsiField field) -> isAtomicallyUpdateable(field) ? 0 : 1).thenComparing(PsiField::getName))
-              .map(field -> withPriority(lookupField(field), isAtomicallyUpdateable(field)))
+              .map(field -> withPriority(JavaLookupElementBuilder.forField(field), isAtomicallyUpdateable(field)))
               .toArray();
           }
         }

@@ -12,8 +12,10 @@ import com.intellij.openapi.vcs.VcsApplicationSettings;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.impl.LineStatusTrackerSettingListener;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -41,6 +43,7 @@ public class ChangelistConflictConfigurable extends BindableConfigurable impleme
   private JBList myIgnoredFiles;
   private JButton myClearButton;
   private JCheckBox myEnablePartialChangelists;
+  private JPanel myIgnoredFilesPanel;
   private boolean myIgnoredFilesCleared;
 
   private final ChangelistConflictTracker myConflictTracker;
@@ -61,6 +64,8 @@ public class ChangelistConflictConfigurable extends BindableConfigurable impleme
       }
     });
 
+    myIgnoredFilesPanel.setBorder(IdeBorderFactory.createTitledBorder(VcsBundle.message("settings.files.with.ignored.conflicts.list.title"), false,
+                                                                      JBUI.insetsTop(8)).setShowLine(false));
     myIgnoredFiles.getEmptyText().setText(VcsBundle.message("no.ignored.files"));
   }
 

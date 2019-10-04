@@ -33,10 +33,10 @@ final class GitOptionsTopHitProvider implements OptionsSearchTopHitProvider.Proj
       if ("Git".equals(descriptor.getDisplayName())) {
         final GitVcsSettings settings = GitVcsSettings.getInstance(project);
         ArrayList<BooleanOptionDescription> options = new ArrayList<>();
-        options.add(option(project, "Git: Commit automatically on cherry-pick", "isAutoCommitOnCherryPick", "setAutoCommitOnCherryPick"));
+        options.add(applicationOption("Git: Commit automatically on cherry-pick", "isAutoCommitOnCherryPick", "setAutoCommitOnCherryPick"));
         options.add(option(project, "Git: Auto-update if push of the current branch was rejected", "autoUpdateIfPushRejected", "setAutoUpdateIfPushRejected"));
         GitRepositoryManager manager = GitRepositoryManager.getInstance(project);
-        if (manager != null && manager.moreThanOneRoot()) {
+        if (manager.moreThanOneRoot()) {
           options.add(new BooleanOptionDescription("Git: Control repositories synchronously", "vcs.Git") {
             @Override
             public boolean isOptionEnabled() {
@@ -62,6 +62,15 @@ final class GitOptionsTopHitProvider implements OptionsSearchTopHitProvider.Proj
       @Override
       public Object getInstance() {
         return GitVcsSettings.getInstance(project);
+      }
+    };
+  }
+
+  private static BooleanOptionDescription applicationOption(String option, String getter, String setter) {
+    return new PublicMethodBasedOptionDescription(option, "vcs.Git", getter, setter) {
+      @Override
+      public Object getInstance() {
+        return GitVcsApplicationSettings.getInstance();
       }
     };
   }

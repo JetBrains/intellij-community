@@ -10,7 +10,7 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.PlatformTestCase
+import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.vcs.log.VcsLogObjectsFactory
 import com.intellij.vcs.log.VcsLogProvider
 import com.intellij.vcs.log.VcsRef
@@ -113,7 +113,7 @@ fun createRepository(project: Project, root: String, makeInitialCommit: Boolean)
 
 fun GitRepository.createSubRepository(name: String): GitRepository {
   val childRoot = File(this.root.path, name)
-  PlatformTestCase.assertTrue(childRoot.mkdir())
+  HeavyPlatformTestCase.assertTrue(childRoot.mkdir())
   val repo = createRepository(this.project, childRoot.path)
   this.tac(".gitignore", name)
   return repo
@@ -123,7 +123,7 @@ fun registerRepo(project: Project, root: String): GitRepository {
   val vcsManager = ProjectLevelVcsManager.getInstance(project) as ProjectLevelVcsManagerImpl
   vcsManager.setDirectoryMapping(root, GitVcs.NAME)
   val file = LocalFileSystem.getInstance().findFileByIoFile(File(root))
-  assertFalse(vcsManager.allVcsRoots.isEmpty())
+  assertFalse("There are no VCS roots. Active VCSs: ${vcsManager.allActiveVcss}", vcsManager.allVcsRoots.isEmpty())
   val repository = GitUtil.getRepositoryManager(project).getRepositoryForRoot(file)
   assertNotNull("Couldn't find repository for root $root", repository)
   cd(root)

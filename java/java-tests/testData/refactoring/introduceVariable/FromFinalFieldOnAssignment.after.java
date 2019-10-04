@@ -3,6 +3,6 @@ public class C {
 
   public C() {
     myStr = "";
-      String strs = myStr;
+      String strings = myStr;
   }
 }

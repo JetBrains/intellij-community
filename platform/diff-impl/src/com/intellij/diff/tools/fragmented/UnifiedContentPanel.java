@@ -15,25 +15,21 @@
  */
 package com.intellij.diff.tools.fragmented;
 
-import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.List;
 
 class UnifiedContentPanel extends JPanel {
-  UnifiedContentPanel(@NotNull List<? extends JComponent> titles, @NotNull Editor editor) {
+  UnifiedContentPanel(@Nullable JComponent titlesPanel, @NotNull Editor editor) {
     super(new BorderLayout());
-    assert titles.size() == 2;
 
     add(editor.getComponent(), BorderLayout.CENTER);
 
-    titles = ContainerUtil.skipNulls(titles);
-    if (!titles.isEmpty()) {
-      add(DiffUtil.createStackedComponents(titles, DiffUtil.TITLE_GAP), BorderLayout.NORTH);
+    if (titlesPanel != null) {
+      add(titlesPanel, BorderLayout.NORTH);
     }
   }
 }

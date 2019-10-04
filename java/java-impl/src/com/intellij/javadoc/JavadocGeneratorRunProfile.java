@@ -270,7 +270,7 @@ Android Studio: See Change Ic0e27ac6 / commit 85eff73 */
           List<VirtualFile> classRoots = classPathEnumerator.getPathsList().getRootDirs();
 
           if (sourceRoots.size() + classRoots.size() > 0) {
-            if (hasJavaModules) {
+            if (hasJavaModules && JavaSdkUtil.isJdkAtLeast(jdk, JavaSdkVersion.JDK_1_9)) {
               if (!sourceRoots.isEmpty()) {
                 String path = sourceRoots.stream().map(MyJavaCommandLineState::localPath).collect(Collectors.joining(File.pathSeparator));
                 writer.println("--source-path");
@@ -283,8 +283,8 @@ Android Studio: See Change Ic0e27ac6 / commit 85eff73 */
               }
             }
             else {
-              // placing source roots on a classpath is perfectly legal and allows to generate correct Javadoc
-              // when a module without a module-info.java file depends on another module which has one
+              // placing source roots on a classpath is perfectly legal and allows generating correct Javadoc
+              // when a module without a module-info.java file depends on another module that has one
               Stream<VirtualFile> roots = Stream.concat(sourceRoots.stream(), classRoots.stream());
               String path = roots.map(MyJavaCommandLineState::localPath).collect(Collectors.joining(File.pathSeparator));
               writer.println("-classpath");

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.java.actions
 
 import com.intellij.codeInsight.ExpectedTypeInfo
@@ -14,7 +14,8 @@ import com.intellij.lang.jvm.types.JvmSubstitutor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.intellij.psi.PsiModifier.ModifierConstant
-import com.intellij.psi.impl.compiled.ClsClassImpl
+import com.intellij.psi.impl.source.PsiClassImpl
+import com.intellij.psi.impl.source.jsp.jspJava.JspClass
 
 @ModifierConstant
 internal fun JvmModifier.toPsiModifier(): String = when (this) {
@@ -39,11 +40,14 @@ internal fun JvmModifier.toPsiModifier(): String = when (this) {
  * @return Java PsiClass or `null` if the receiver is not a Java PsiClass
  */
 internal fun JvmClass.toJavaClassOrNull(): PsiClass? {
-  if (this !is PsiClass) return null
-  if (this is PsiTypeParameter) return null
-  if (this is ClsClassImpl) return null
-  if (this.language != JavaLanguage.INSTANCE) return null
-  return this
+  if (this is PsiClassImpl || this is JspClass) {
+    // `is JspClass` check should be removed when JSP will define its own action factory,
+    // since Java should know nothing about JSP.
+    if ((this as PsiClass).language == JavaLanguage.INSTANCE) {
+      return this
+    }
+  }
+  return null
 }
 
 internal val visibilityModifiers = setOf(

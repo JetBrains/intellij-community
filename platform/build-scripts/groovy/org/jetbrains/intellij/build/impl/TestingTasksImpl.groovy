@@ -256,28 +256,75 @@ class TestingTasksImpl extends TestingTasks {
   }
 
   private void runTestsProcess(String mainModule, String testGroups, String testPatterns,
-                               List<String> additionalJvmOptions, Map<String, String> additionalSystemProperties, Map<String, String> envVariables, boolean remoteDebugging) {
+                               List<String> jvmArgs, Map<String, String> systemProperties, Map<String, String> envVariables, boolean remoteDebugging) {
     List<String> testsClasspath = context.getModuleRuntimeClasspath(context.findRequiredModule(mainModule), true)
     List<String> bootstrapClasspath = context.getModuleRuntimeClasspath(context.findRequiredModule("intellij.tools.testsBootstrap"), false)
-
-    if (additionalJvmOptions.contains("-Djava.system.class.loader=com.intellij.util.lang.UrlClassLoader")) {
-      def utilModule = context.findRequiredModule("intellij.platform.util")
-      JpsJavaDependenciesEnumerator enumerator = JpsJavaExtensionService.dependencies(utilModule).recursively().withoutSdk().includedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME)
-      def utilClasspath = enumerator.classes().roots.collect { it.absolutePath }
-      bootstrapClasspath.addAll(utilClasspath - bootstrapClasspath)
-    }
 
     def classpathFile = new File("$context.paths.temp/junit.classpath")
     FileUtilRt.createParentDirs(classpathFile)
     classpathFile.text = testsClasspath.findAll({ new File(it).exists() }).join('\n')
 
+    [
+      "classpath.file"                         : classpathFile.absolutePath,
+      "intellij.build.test.patterns"           : testPatterns,
+      "intellij.build.test.groups"             : testGroups,
+      "intellij.build.test.sorter"             : System.getProperty("intellij.build.test.sorter"),
+      "bootstrap.testcases"                    : "com.intellij.AllTests",
+      "idea.performance.tests"                 : System.getProperty("idea.performance.tests"),
+    ].each { k, v -> systemProperties.putIfAbsent(k, v) }
+
+    prepareEnvForTestRun(jvmArgs, systemProperties, bootstrapClasspath, remoteDebugging)
+
+    context.messages.info("Starting ${testGroups != null ? "test from groups '${testGroups}'" : "all tests"}")
+    if (options.customJrePath != null) {
+      context.messages.info("JVM: $options.customJrePath")
+    }
+    context.messages.info("JVM options: $jvmArgs")
+    context.messages.info("System properties: $systemProperties")
+    context.messages.info("Bootstrap classpath: $bootstrapClasspath")
+    context.messages.info("Tests classpath: $testsClasspath")
+    if (!envVariables.isEmpty()) {
+      context.messages.info("Environment variables: $envVariables")
+    }
+
+    runJUnitTask(jvmArgs, systemProperties, envVariables, isBootstrapSuiteDefault() ? bootstrapClasspath : testsClasspath)
+
+    notifySnapshotBuilt(jvmArgs)
+  }
+
+  private void notifySnapshotBuilt(List<String> jvmArgs) {
+    def option = "-XX:HeapDumpPath="
+    def filePath = jvmArgs.find { it.startsWith(option) }.substring(option.length())
+    if (new File(filePath).exists()) {
+      context.notifyArtifactBuilt(filePath)
+    }
+  }
+
+  @Override
+  @CompileDynamic
+  File createSnapshotsDirectory() {
+    File snapshotsDir = new File("$context.paths.projectHome/out/snapshots")
+    context.ant.delete(dir: snapshotsDir)
+    context.ant.mkdir(dir: snapshotsDir)
+    return snapshotsDir
+  }
+
+  @Override
+  void prepareEnvForTestRun(List<String> jvmArgs, Map<String, String> systemProperties, List<String> classPath, boolean remoteDebugging) {
+    if (jvmArgs.contains("-Djava.system.class.loader=com.intellij.util.lang.UrlClassLoader")) {
+      def utilModule = context.findRequiredModule("intellij.platform.util")
+      JpsJavaDependenciesEnumerator enumerator = JpsJavaExtensionService.dependencies(utilModule).recursively().withoutSdk().includedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME)
+      def utilClasspath = enumerator.classes().roots.collect { it.absolutePath }
+      classPath.addAll(utilClasspath - classPath)
+    }
+
     File snapshotsDir = createSnapshotsDirectory()
     String hprofSnapshotFilePath = new File(snapshotsDir, "intellij-tests-oom.hprof").absolutePath
-    List<String> jvmArgs = VmOptionsGenerator.COMMON_VM_OPTIONS + [
+    List<String> defaultJvmArgs = VmOptionsGenerator.COMMON_VM_OPTIONS + [
       '-XX:+HeapDumpOnOutOfMemoryError',
       '-XX:HeapDumpPath=' + hprofSnapshotFilePath,
     ]
-    jvmArgs.addAll(additionalJvmOptions)
+    jvmArgs.addAll(0, defaultJvmArgs)
     if (options.jvmMemoryOptions != null) {
       jvmArgs.addAll(options.jvmMemoryOptions.split())
     }
@@ -296,19 +343,15 @@ class TestingTasksImpl extends TestingTasks {
 
     removeConfigAndSystemDirectories(configPath, systemPath)
 
-    Map<String, String> systemProperties = [
-      "classpath.file"                         : classpathFile.absolutePath,
+    Map<String, String> defaultSystemProperties = [
       "idea.platform.prefix"                   : options.platformPrefix,
       "idea.home.path"                         : context.paths.projectHome,
       "idea.config.path"                       : configPath,
       "idea.system.path"                       : systemPath,
-      "intellij.build.test.patterns"           : testPatterns,
-      "intellij.build.test.groups"             : testGroups,
-      "intellij.build.test.sorter"             : System.getProperty("intellij.build.test.sorter"),
-      "idea.performance.tests"                 : System.getProperty("idea.performance.tests"),
+      "intellij.build.compiled.classes.archives.metadata" : System.getProperty("intellij.build.compiled.classes.archives.metadata"),
+      "intellij.build.compiled.classes.archive"           : System.getProperty("intellij.build.compiled.classes.archive"),
       "idea.coverage.enabled.build"            : System.getProperty("idea.coverage.enabled.build"),
       "teamcity.buildConfName"                 : System.getProperty("teamcity.buildConfName"),
-      "bootstrap.testcases"                    : "com.intellij.AllTests",
       "java.io.tmpdir"                         : tempDir,
       "teamcity.build.tempDir"                 : tempDir,
       "teamcity.tests.recentlyFailedTests.file": System.getProperty("teamcity.tests.recentlyFailedTests.file"),
@@ -317,7 +360,7 @@ class TestingTasksImpl extends TestingTasks {
       "file.encoding"                          : "UTF-8",
       "io.netty.leakDetectionLevel"            : "PARANOID",
     ] as Map<String, String>
-    systemProperties.putAll(additionalSystemProperties)
+    defaultSystemProperties.each { k, v -> systemProperties.putIfAbsent(k, v) }
 
     (System.getProperties() as Hashtable<String, String>).each { String key, String value ->
       if (key.startsWith("pass.")) {
@@ -347,49 +390,12 @@ class TestingTasksImpl extends TestingTasks {
       */
     }
 
-    context.messages.info("Starting ${testGroups != null ? "test from groups '${testGroups}'" : "all tests"}")
-    if (options.customJrePath != null) {
-      context.messages.info("JVM: $options.customJrePath")
-    }
-    context.messages.info("JVM options: $jvmArgs")
-    context.messages.info("System properties: $systemProperties")
-    context.messages.info("Bootstrap classpath: $bootstrapClasspath")
-    context.messages.info("Tests classpath: $testsClasspath")
-    if (!envVariables.isEmpty()) {
-      context.messages.info("Environment variables: $envVariables")
-    }
-
     if (suspendDebugProcess) {
       context.messages.info("""
 ------------->------------- The process suspended until remote debugger connects to debug port -------------<-------------
 ---------------------------------------^------^------^------^------^------^------^----------------------------------------
 """)
     }
-    if (isBootstrapSuiteDefault()) {
-      if ("android-uitests".equals(mainModule)) {
-        runUiTestTask(jvmArgs, systemProperties, bootstrapClasspath, classpathFile.getAbsolutePath())
-      }
-      else {
-        runJUnitTask(jvmArgs, systemProperties, envVariables, bootstrapClasspath)
-      }
-    }
-    else {
-      //run other suites instead of BootstrapTests
-      runJUnitTask(jvmArgs, systemProperties, envVariables, testsClasspath)
-    }
-
-    if (new File(hprofSnapshotFilePath).exists()) {
-      context.notifyArtifactBuilt(hprofSnapshotFilePath)
-    }
-  }
-
-  @Override
-  @CompileDynamic
-  File createSnapshotsDirectory() {
-    File snapshotsDir = new File("$context.paths.projectHome/out/snapshots")
-    context.ant.delete(dir: snapshotsDir)
-    context.ant.mkdir(dir: snapshotsDir)
-    return snapshotsDir
   }
 
   @SuppressWarnings("GrUnresolvedAccess")
@@ -516,43 +522,6 @@ class TestingTasksImpl extends TestingTasks {
     pathJUnit.createPathElement().setLocation(new File("$communityLib/ant/lib/ant-junit4.jar"))
     ant.project.addReference(junitTaskLoaderRef, new AntClassLoader(ant.project.getClass().getClassLoader(), ant.project, pathJUnit))
     ant.taskdef(name: "junit", classname: "org.apache.tools.ant.taskdefs.optional.junit.JUnitTask", loaderRef: junitTaskLoaderRef)
-  }
-
-  @CompileDynamic
-  private void runUiTestTask(List<String> jvmArgs, Map<String, String> systemProperties, List<String> bootstrapClasspath, String classpathFile) {
-    defineUiTestTask(context.ant, "$context.paths.communityHome/lib")
-
-    context.ant.uitest(classpathFile: classpathFile, testGroups: options.uiTestGroups) {
-      jvmArgs.each { jvmarg(value: it) }
-      systemProperties.each { key, value ->
-        if (value != null) {
-          jvmarg(value: "-D${key}=${value}")
-        }
-      }
-
-      classpath {
-        bootstrapClasspath.each {
-          pathelement(location: it)
-        }
-      }
-    }
-  }
-
-
-  static boolean uiTaskDefined
-
-  @CompileDynamic
-  static private def defineUiTestTask(AntBuilder ant, String communityLib) {
-    if (uiTaskDefined) return
-    uiTaskDefined = true
-
-    def junitUiTaskLoaderRef = "JUNIT_UITASK_CLASS_LOADER"
-    Path pathJUnit = new Path(ant.project)
-    pathJUnit.createPathElement().setLocation(new File("$communityLib/ant/lib/ant-junit.jar"))
-    pathJUnit.createPathElement().setLocation(new File("$communityLib/ant/lib/ant-junit4.jar"))
-    pathJUnit.createPathElement().setLocation(new File("$communityLib/../build/lib/jps/antuitest.jar"))
-    ant.project.addReference(junitUiTaskLoaderRef, new AntClassLoader(ant.project.getClass().getClassLoader(), ant.project, pathJUnit))
-    ant.taskdef(name: "uitest", classname: "com.android.antuitest.tasks.UiTestTask", loaderRef: junitUiTaskLoaderRef)
   }
 
   private boolean isBootstrapSuiteDefault() {

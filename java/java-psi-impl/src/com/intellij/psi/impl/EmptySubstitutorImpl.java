@@ -65,6 +65,12 @@ public final class EmptySubstitutorImpl extends EmptySubstitutor {
     return another;
   }
 
+  @NotNull
+  @Override
+  public PsiSubstitutor putAll(@NotNull Map<PsiTypeParameter, PsiType> map) {
+    return map.isEmpty() ? EMPTY : new PsiSubstitutorImpl(map);
+  }
+
   @Override
   @NotNull
   public Map<PsiTypeParameter, PsiType> getSubstitutionMap() {

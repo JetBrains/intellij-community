@@ -24,8 +24,7 @@ fun generateServiceName(subsystem: String, key: String) = "$SERVICE_NAME_PREFIX 
 data class CredentialAttributes @JvmOverloads constructor(val serviceName: String,
                                                           val userName: String? = null,
                                                           val requestor: Class<*>? = null,
-                                                          val isPasswordMemoryOnly: Boolean = false,
-                                                          val cacheDeniedItems: Boolean = true)
+                                                          val isPasswordMemoryOnly: Boolean = false)
 
 /**
  * Pair of user and password.

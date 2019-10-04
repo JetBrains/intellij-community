@@ -17,6 +17,7 @@ import java.util.Collections;
 /**
  * A reference to a PSI element. For example, the variable name used in an expression.
  * The "Go to Declaration" action can be used to go from a reference to the element it references.
+ * <p>
  * Generally returned from {@link PsiElement#getReferences()} and {@link PsiReferenceService#getReferences},
  * but may be contributed to some elements by third party plugins via {@link PsiReferenceContributor}.
  *
@@ -61,7 +62,7 @@ public interface PsiReference extends SymbolReference {
   /**
    * Returns the element which is the target of the reference.
    *
-   * @return the target element, or null if it was not possible to resolve the reference to a valid target.
+   * @return the target element, or {@code null} if it was not possible to resolve the reference to a valid target.
    * @see PsiPolyVariantReference#multiResolve(boolean)
    */
   @Nullable
@@ -102,7 +103,7 @@ public interface PsiReference extends SymbolReference {
    * Checks if the reference targets the specified element.
    *
    * @param element the element to check target for.
-   * @return true if the reference targets that element, false otherwise.
+   * @return {@code true} if the reference targets that element, {@code false} otherwise.
    */
   boolean isReferenceTo(@NotNull PsiElement element);
 
@@ -111,7 +112,7 @@ public interface PsiReference extends SymbolReference {
    * instances representing all identifiers that are visible at the location of the reference. The contents
    * of the returned array is used to build the lookup list for basic code completion. (The list
    * of visible identifiers may not be filtered by the completion prefix string - the
-   * filtering is performed later by IDEA core.)
+   * filtering is performed later by the IDE.)
    * <p>
    * This method is default since 2018.3.
    *
@@ -123,12 +124,12 @@ public interface PsiReference extends SymbolReference {
   }
 
   /**
-   * Returns false if the underlying element is guaranteed to be a reference, or true
+   * Returns {@code false} if the underlying element is guaranteed to be a reference, or {@code true}
    * if the underlying element is a possible reference which should not be reported as
    * an error if it fails to resolve. For example, a text in an XML file which looks
    * like a full-qualified Java class name is a soft reference.
    *
-   * @return true if the reference is soft, false otherwise.
+   * @return {@code true} if the reference is soft, {@code false} otherwise.
    */
   boolean isSoft();
 

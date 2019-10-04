@@ -11,6 +11,7 @@ import com.intellij.ui.paint.PaintUtil.RoundingMode;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.data.VcsLogData;
@@ -42,15 +43,13 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
 
   public GraphCommitCellRenderer(@NotNull VcsLogData logData,
                                  @NotNull GraphCellPainter painter,
-                                 @NotNull VcsLogGraphTable table,
-                                 boolean compact,
-                                 boolean showTagNames) {
+                                 @NotNull VcsLogGraphTable table) {
     myLogData = logData;
     myGraphTable = table;
 
     LabelIconCache iconCache = new LabelIconCache();
-    myComponent = new MyComponent(logData, painter, table, iconCache, compact, showTagNames);
-    myTemplateComponent = new MyComponent(logData, painter, table, iconCache, compact, showTagNames);
+    myComponent = new MyComponent(logData, painter, table, iconCache);
+    myTemplateComponent = new MyComponent(logData, painter, table, iconCache);
   }
 
   @Override
@@ -131,6 +130,11 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
     myTemplateComponent.getReferencePainter().setShowTagNames(showTagNames);
   }
 
+  public void setLeftAligned(boolean leftAligned) {
+    myComponent.getReferencePainter().setLeftAligned(leftAligned);
+    myTemplateComponent.getReferencePainter().setLeftAligned(leftAligned);
+  }
+
   public static Font getLabelFont() {
     return UIUtil.getLabelFont();
   }
@@ -142,7 +146,7 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
     @NotNull private final IssueLinkRenderer myIssueLinkRenderer;
     @NotNull private final LabelPainter myReferencePainter;
 
-    @NotNull protected GraphImage myGraphImage = new GraphImage(UIUtil.createImage(1, 1, BufferedImage.TYPE_INT_ARGB), 0);
+    @NotNull protected GraphImage myGraphImage = new GraphImage(ImageUtil.createImage(1, 1, BufferedImage.TYPE_INT_ARGB), 0);
     @NotNull private Font myFont;
     private int myHeight;
     private AffineTransform myAffineTransform;
@@ -150,13 +154,11 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
     MyComponent(@NotNull VcsLogData data,
                 @NotNull GraphCellPainter painter,
                 @NotNull VcsLogGraphTable table,
-                @NotNull LabelIconCache iconCache,
-                boolean compact,
-                boolean showTags) {
+                @NotNull LabelIconCache iconCache) {
       myPainter = painter;
       myGraphTable = table;
 
-      myReferencePainter = new LabelPainter(data, table, iconCache, compact, showTags);
+      myReferencePainter = new LabelPainter(data, table, iconCache);
       myIssueLinkRenderer = new IssueLinkRenderer(data.getProject(), this);
 
       myFont = getLabelFont();
@@ -219,7 +221,9 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
         myReferencePainter.customizePainter(refs, getBackground(), baseForeground, isSelected,
                                             getAvailableWidth(column, myGraphImage.getWidth()));
 
-        appendTextPadding(myGraphImage.getWidth() + myReferencePainter.getSize().width + LabelPainter.RIGHT_PADDING.get());
+        int referencesWidth = myReferencePainter.getSize().width;
+        if (referencesWidth > 0) referencesWidth += LabelPainter.RIGHT_PADDING.get();
+        appendTextPadding(myGraphImage.getWidth() + referencesWidth);
         appendText(cell, style, isSelected);
       }
       else {

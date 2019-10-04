@@ -7,8 +7,6 @@ import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.FunctionalInterfaceParameterizationUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -88,35 +86,6 @@ public class MethodReferenceCompletionProvider extends CompletionProvider<Comple
             runnable.run();
           }
         }
-      }
-    }
-  }
-
-  private static class JavaMethodReferenceElement extends JavaMethodCallElement {
-    private final PsiMethod myMethod;
-    private final PsiElement myRefPlace;
-
-    JavaMethodReferenceElement(PsiMethod method, PsiElement refPlace) {
-      super(method, method.isConstructor() ? "new" : method.getName());
-      myMethod = method;
-      myRefPlace = refPlace;
-    }
-
-    @Override
-    public void handleInsert(@NotNull InsertionContext context) {
-      if (!(myRefPlace instanceof PsiMethodReferenceExpression)) {
-        final PsiClass containingClass = myMethod.getContainingClass();
-        LOG.assertTrue(containingClass != null);
-        final String qualifiedName = containingClass.getQualifiedName();
-        LOG.assertTrue(qualifiedName != null);
-
-        final Editor editor = context.getEditor();
-        final Document document = editor.getDocument();
-        final int startOffset = context.getStartOffset();
-
-        document.insertString(startOffset, qualifiedName + "::");
-        JavaCompletionUtil.shortenReference(context.getFile(), startOffset + qualifiedName.length() - 1);
-        JavaCompletionUtil.insertTail(context, this, handleCompletionChar(context.getEditor(), this, context.getCompletionChar()), false);
       }
     }
   }

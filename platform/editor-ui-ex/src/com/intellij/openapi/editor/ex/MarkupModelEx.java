@@ -60,6 +60,12 @@ public interface MarkupModelEx extends MarkupModel {
   @NotNull
   MarkupIterator<RangeHighlighterEx> overlappingIterator(int startOffset, int endOffset);
 
+  @NotNull
+  MarkupIterator<RangeHighlighterEx> overlappingIterator(int startOffset,
+                                                         int endOffset,
+                                                         boolean onlyRenderedInGutter,
+                                                         boolean onlyRenderedInScrollBar);
+
   // optimization: creates highlighter and fires only one event: highlighterCreated
   @NotNull
   RangeHighlighterEx addRangeHighlighterAndChangeAttributes(int startOffset,

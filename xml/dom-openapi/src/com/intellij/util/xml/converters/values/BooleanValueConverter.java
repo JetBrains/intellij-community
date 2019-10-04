@@ -84,7 +84,7 @@ public class BooleanValueConverter extends ResolvingConverter<String> {
 
   @Override
   @NotNull
-  public Collection<? extends String> getVariants(final ConvertContext context) {
+  public Collection<String> getVariants(final ConvertContext context) {
     return Arrays.asList(VARIANTS);
   }
 

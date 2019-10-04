@@ -49,6 +49,7 @@ public interface RunDashboardManager {
 
   String getToolWindowId();
 
+  @NotNull
   Icon getToolWindowIcon();
 
   String getToolWindowContextHelpId();

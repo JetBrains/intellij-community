@@ -4,28 +4,23 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.TransactionGuard;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
-import com.intellij.openapi.options.SchemeManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.Interner;
+import com.intellij.util.containers.WeakInterner;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -46,46 +41,45 @@ import org.jetbrains.plugins.textmate.language.preferences.ShellVariablesRegistr
 import org.jetbrains.plugins.textmate.language.preferences.TextMateShellVariable;
 import org.jetbrains.plugins.textmate.language.syntax.TextMateSyntaxTable;
 import org.jetbrains.plugins.textmate.language.syntax.highlighting.TextMateCustomTextAttributes;
-import org.jetbrains.plugins.textmate.language.syntax.highlighting.TextMateEmulatedTheme;
-import org.jetbrains.plugins.textmate.language.syntax.highlighting.TextMateTheme;
 import org.jetbrains.plugins.textmate.plist.CompositePlistReader;
 import org.jetbrains.plugins.textmate.plist.Plist;
 import org.jetbrains.plugins.textmate.plist.PlistReader;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class TextMateServiceImpl extends TextMateService {
   private static boolean ourBuiltinBundlesDisabled;
 
-  private final AtomicBoolean myInitialized = new AtomicBoolean(false);
+  private final AtomicBoolean myInitialized = new AtomicBoolean(false); 
   
-  private final Map<String, TextMateCustomTextAttributes> myCustomHighlightingColors = new HashMap<>();
+  private final THashMap<CharSequence, TextMateCustomTextAttributes> myCustomHighlightingColors = new THashMap<>();
+  private final THashMap<String, CharSequence> myExtensionsMapping = new THashMap<>();
 
   private final PlistReader myPlistReader = new CompositePlistReader();
   private final BundleFactory myBundleFactory = new BundleFactory(myPlistReader);
   private final TextMateSyntaxTable mySyntaxTable = new TextMateSyntaxTable();
-  private final Map<String, TextMateTheme> myThemeHashMap = new HashMap<>();
   private final SnippetsRegistry mySnippetsRegistry = new SnippetsRegistry();
   private final PreferencesRegistry myPreferencesRegistry = new PreferencesRegistry();
   private final ShellVariablesRegistry myShellVariablesRegistry = new ShellVariablesRegistry();
-  private final Map<String, String> myExtensionsMapping = new THashMap<>();
-  @NonNls private static final String PREINSTALLED_THEMES_PATH =
-    FileUtil.join(PathManager.getCommunityHomePath(), "plugins", "textmate", "lib", "themes");
-  @NonNls private static final String INSTALLED_THEMES_PATH = FileUtil.join(PathManager.getPluginsPath(), "textmate", "lib", "themes");
   @NonNls public static final String PREINSTALLED_BUNDLES_PATH =
     FileUtil.toSystemIndependentName(FileUtil.join(PathManager.getCommunityHomePath(), "plugins", "textmate", "lib", "bundles"));
-  @NonNls public static final String INSTALLED_BUNDLES_PATH = FileUtil.toSystemIndependentName(FileUtil.join(PathManager.getPluginsPath(), "textmate", "lib", "bundles"));
-  private final Set<TextMateBundleListener> myListeners = new HashSet<>();
+  @NonNls public static final String INSTALLED_BUNDLES_PATH =
+    FileUtil.toSystemIndependentName(FileUtil.join(PathManager.getPluginsPath(), "textmate", "lib", "bundles"));
+  private final Interner<CharSequence> myInterner = new WeakInterner<>();
 
   @Override
-  public void registerEnabledBundles() {
-    doRegisterEnabledBundles(true);
+  public void reloadEnabledBundles() {
+    unregisterAllBundles();
+    registerBundles(true);
   }
 
-  private void doRegisterEnabledBundles(boolean fireEvents) {
+  private void registerBundles(boolean fireEvents) {
     TextMateSettings settings = TextMateSettings.getInstance();
     if (settings == null) {
       return;
@@ -93,7 +87,7 @@ public class TextMateServiceImpl extends TextMateService {
     if (!ourBuiltinBundlesDisabled) {
       loadBuiltinBundles(settings);
     }
-    THashMap<String, String> newExtensionsMapping = new THashMap<>();
+    THashMap<String, CharSequence> newExtensionsMapping = new THashMap<>();
     for (BundleConfigBean bundleConfigBean : settings.getBundles()) {
       if (bundleConfigBean.isEnabled()) {
         boolean result = registerBundle(LocalFileSystem.getInstance().findFileByPath(bundleConfigBean.getPath()), newExtensionsMapping);
@@ -111,6 +105,9 @@ public class TextMateServiceImpl extends TextMateService {
         fireFileTypesChangedEvent();
       }
     }
+    mySyntaxTable.compact();
+    myExtensionsMapping.trimToSize();
+    myCustomHighlightingColors.trimToSize();
   }
 
   private static void fireFileTypesChangedEvent() {
@@ -149,30 +146,13 @@ public class TextMateServiceImpl extends TextMateService {
     settings.loadState(state);
   }
 
-
-  @Override
-  public void unregisterAllBundles() {
+  private void unregisterAllBundles() {
     myExtensionsMapping.clear();
     myPreferencesRegistry.clear();
     myCustomHighlightingColors.clear();
     mySyntaxTable.clear();
     mySnippetsRegistry.clear();
     myShellVariablesRegistry.clear();
-  }
-
-  @Override
-  public void addListener(@NotNull TextMateBundleListener listener) {
-    myListeners.add(listener);
-  }
-
-  @Override
-  public void removeListener(@NotNull TextMateBundleListener listener) {
-    myListeners.remove(listener);
-  }
-
-  @Override
-  public void clearListeners() {
-    myListeners.clear();
   }
 
   @Override
@@ -183,14 +163,14 @@ public class TextMateServiceImpl extends TextMateService {
 
   @NotNull
   @Override
-  public Map<String, TextMateCustomTextAttributes> getCustomHighlightingColors() {
+  public Map<CharSequence, TextMateCustomTextAttributes> getCustomHighlightingColors() {
     ensureInitialized();
     return myCustomHighlightingColors;
   }
 
   @NotNull
   @Override
-  public List<Preferences> getPreferencesForSelector(@NotNull String selector) {
+  public List<Preferences> getPreferencesForSelector(@NotNull CharSequence selector) {
     ensureInitialized();
     return myPreferencesRegistry.getPreferences(selector);
   }
@@ -227,89 +207,8 @@ public class TextMateServiceImpl extends TextMateService {
   public TextMateLanguageDescriptor getLanguageDescriptorByExtension(@Nullable CharSequence extension) {
     if (StringUtil.isEmpty(extension)) return null;
     ensureInitialized();
-    final String scopeName = myExtensionsMapping.get(extension.toString());
-    return StringUtil.isNotEmpty(scopeName) ? new TextMateLanguageDescriptor(scopeName, mySyntaxTable.getSyntax(scopeName)) : null;
-  }
-
-  @Override
-  public boolean registerTheme(@Nullable VirtualFile themeFile) {
-    if (themeFile == null || !themeFile.isValid()) {
-      return false;
-    }
-    synchronized (myThemeHashMap) {
-      try {
-        final TextMateTheme theme = TextMateTheme.load(myPlistReader.read(themeFile.getInputStream()));
-        if (theme != TextMateTheme.EMPTY_THEME) {
-          myThemeHashMap.put(theme.getName(), theme);
-          for (TextMateBundleListener listener : myListeners) {
-            listener.colorSchemeChanged();
-          }
-          return true;
-        }
-        else {
-          return false;
-        }
-      }
-      catch (IOException e) {
-        return false;
-      }
-    }
-  }
-
-  @NotNull
-  @Override
-  public String[] getThemeNames() {
-    ensureInitialized();
-    synchronized (myThemeHashMap) {
-      return ArrayUtilRt.toStringArray(myThemeHashMap.keySet());
-    }
-  }
-
-  @Override
-  @NotNull
-  public TextMateTheme getCurrentTheme() {
-    ensureInitialized();
-    if (Registry.is("textmate.theme.emulation")) {
-      return TextMateEmulatedTheme.THEME;
-    }
-    synchronized (myThemeHashMap) {
-      String currentIdeaSchemeName = SchemeManager.getDisplayName(EditorColorsManager.getInstance().getGlobalScheme());
-      String textmateSchemeName = TextMateSettings.getInstance().getTextMateThemeName(currentIdeaSchemeName, this);
-      String schemeName = myThemeHashMap.containsKey(textmateSchemeName) ? textmateSchemeName : TextMateSettings.DEFAULT_THEME_NAME;
-      TextMateTheme scheme = myThemeHashMap.get(schemeName);
-      return scheme != null ? scheme : TextMateTheme.EMPTY_THEME;
-    }
-  }
-
-  @Override
-  public void reloadThemesFromDisk() {
-    synchronized (myThemeHashMap) {
-      myThemeHashMap.clear();
-    }
-    Application application = ApplicationManager.getApplication();
-    application.executeOnPooledThread(() -> {
-      if (application.isDisposed()) return;
-
-      LocalFileSystem fileSystem = LocalFileSystem.getInstance();
-      VirtualFile themesDirectory = ObjectUtils.chooseNotNull(
-        fileSystem.findFileByPath(INSTALLED_THEMES_PATH),
-        fileSystem.findFileByPath(PREINSTALLED_THEMES_PATH));
-
-      if (themesDirectory != null) {
-        final VirtualFile finalThemesDirectory = themesDirectory;
-        Runnable reloadThemes = () -> {
-          if (application.isDisposed()) return;
-          synchronized (myThemeHashMap) {
-            if (finalThemesDirectory.isValid()) {
-              for (VirtualFile themeFile : finalThemesDirectory.getChildren()) {
-                registerTheme(themeFile);
-              }
-            }
-          }
-        };
-        themesDirectory.refresh(true, false, () -> application.executeOnPooledThread(reloadThemes));
-      }
-    });
+    CharSequence scopeName = myExtensionsMapping.get(extension.toString());
+    return !StringUtil.isEmpty(scopeName) ? new TextMateLanguageDescriptor(scopeName, mySyntaxTable.getSyntax(scopeName)) : null;
   }
 
   @Override
@@ -326,35 +225,25 @@ public class TextMateServiceImpl extends TextMateService {
 
   private void ensureInitialized() {
     if (myInitialized.compareAndSet(false, true)) {
-      doRegisterEnabledBundles(false);
+      registerBundles(false);
     }
   }
 
-  private boolean registerBundle(@Nullable VirtualFile directory, @NotNull THashMap<String, String> extensionsMapping) {
+  private boolean registerBundle(@Nullable VirtualFile directory, @NotNull THashMap<String, CharSequence> extensionsMapping) {
     final Bundle bundle = createBundle(directory);
     if (bundle != null) {
       registerLanguageSupport(bundle, extensionsMapping);
       registerPreferences(bundle);
       registerSnippets(bundle);
-      registerThemes(bundle);
       return true;
     }
     return false;
   }
 
-  private void registerThemes(@NotNull Bundle bundle) {
-    synchronized (myThemeHashMap) {
-      for (File themeFile : bundle.getThemeFiles()) {
-        VirtualFile virtualFile = VfsUtil.findFileByIoFile(themeFile, true);
-        registerTheme(virtualFile);
-      }
-    }
-  }
-
   private void registerSnippets(@NotNull Bundle bundle) {
     for (File snippetFile : bundle.getSnippetFiles()) {
       try {
-        TextMateSnippet snippet = PreferencesReadUtil.loadSnippet(snippetFile, myPlistReader.read(snippetFile));
+        TextMateSnippet snippet = PreferencesReadUtil.loadSnippet(snippetFile, myPlistReader.read(snippetFile), myInterner);
         if (snippet != null) {
           mySnippetsRegistry.register(snippet);
         }
@@ -370,9 +259,10 @@ public class TextMateServiceImpl extends TextMateService {
       try {
         for (Pair<String, Plist> settingsPair : bundle.loadPreferenceFile(preferenceFile)) {
           if (settingsPair != null) {
-            myPreferencesRegistry.fillFromPList(settingsPair.first, settingsPair.second);
-            myShellVariablesRegistry.fillVariablesFromPlist(settingsPair.first, settingsPair.second);
-            readCustomHighlightingColors(settingsPair.first, settingsPair.second);
+            CharSequence scopeName = myInterner.intern(settingsPair.first);
+            myPreferencesRegistry.fillFromPList(scopeName, settingsPair.second);
+            myShellVariablesRegistry.fillVariablesFromPlist(scopeName, settingsPair.second);
+            readCustomHighlightingColors(scopeName, settingsPair.second);
           }
         }
       }
@@ -382,7 +272,7 @@ public class TextMateServiceImpl extends TextMateService {
     }
   }
 
-  private void readCustomHighlightingColors(@NotNull String scopeName, @NotNull Plist preferencesPList) {
+  private void readCustomHighlightingColors(@NotNull CharSequence scopeName, @NotNull Plist preferencesPList) {
     final TextAttributes textAttributes = new TextAttributes();
     final boolean hasHighlightingSettings = PreferencesReadUtil.fillTextAttributes(textAttributes, preferencesPList, null);
     if (hasHighlightingSettings) {
@@ -391,11 +281,11 @@ public class TextMateServiceImpl extends TextMateService {
     }
   }
 
-  private void registerLanguageSupport(@NotNull Bundle bundle, @NotNull THashMap<String, String> extensionsMapping) {
+  private void registerLanguageSupport(@NotNull Bundle bundle, @NotNull THashMap<String, CharSequence> extensionsMapping) {
     for (File grammarFile : bundle.getGrammarFiles()) {
       try {
         Plist plist = myPlistReader.read(grammarFile);
-        String rootScopeName = mySyntaxTable.loadSyntax(plist);
+        CharSequence rootScopeName = mySyntaxTable.loadSyntax(plist, myInterner);
         Collection<String> extensions = bundle.getExtensions(grammarFile, plist);
         for (String extension : extensions) {
           extensionsMapping.put(extension, rootScopeName);
@@ -410,12 +300,10 @@ public class TextMateServiceImpl extends TextMateService {
   @TestOnly
   public static void disableBuiltinBundles(Disposable disposable) {
     ourBuiltinBundlesDisabled = true;
-    TextMateService.getInstance().unregisterAllBundles();
-    TextMateService.getInstance().registerEnabledBundles();
+    TextMateService.getInstance().reloadEnabledBundles();
     Disposer.register(disposable, () -> {
       ourBuiltinBundlesDisabled = false;
-      TextMateService.getInstance().unregisterAllBundles();
-      TextMateService.getInstance().registerEnabledBundles();
+      TextMateService.getInstance().reloadEnabledBundles();
     });
   }
 }

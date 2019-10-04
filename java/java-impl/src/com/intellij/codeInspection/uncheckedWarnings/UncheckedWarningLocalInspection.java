@@ -19,6 +19,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.util.*;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
 import org.intellij.lang.annotations.Pattern;
 import org.jdom.Element;
@@ -188,7 +189,16 @@ public class UncheckedWarningLocalInspection extends AbstractBaseJavaLocalInspec
           final String referenceName = ((PsiMethodCallExpression)callExpression).getMethodExpression().getReferenceName();
           message += ". Reason: '" + rawExpression + "' has raw type, so result of " + referenceName + " is erased";
         }
-        holder.registerProblem(psiElement, message, quickFixes);
+
+        PsiElement element2Highlight = null;
+        if (psiElement instanceof PsiNewExpression) {
+          element2Highlight = ((PsiNewExpression)psiElement).getClassOrAnonymousClassReference();
+        }
+        else if (psiElement instanceof PsiMethodCallExpression) {
+          element2Highlight = ((PsiMethodCallExpression)psiElement).getMethodExpression();
+        }
+
+        holder.registerProblem(ObjectUtils.notNull(element2Highlight, psiElement), message, quickFixes);
       }
     };
   }
@@ -284,10 +294,7 @@ public class UncheckedWarningLocalInspection extends AbstractBaseJavaLocalInspec
       final String description = getUncheckedCallDescription(callExpression, result);
       if (description != null) {
         if (IGNORE_UNCHECKED_CALL) return;
-        final PsiExpression element = callExpression instanceof PsiMethodCallExpression
-                                         ? ((PsiMethodCallExpression)callExpression).getMethodExpression()
-                                         : callExpression;
-        registerProblem(description, null, element, myGenerifyFixes);
+        registerProblem(description, null, callExpression, myGenerifyFixes);
       }
       else {
         if (IGNORE_UNCHECKED_ASSIGNMENT) return;

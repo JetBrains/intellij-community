@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
@@ -39,7 +39,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PairFunction;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -652,11 +651,6 @@ public class PsiImplUtil {
     }
   }
 
-  @Contract("null -> false")
-  public static boolean isUnqualifiedReference(@Nullable PsiExpression expression) {
-    return expression instanceof PsiReferenceExpression && ((PsiReferenceExpression)expression).getQualifierExpression() == null;
-  }
-
   @Nullable
   public static PsiLoopStatement findEnclosingLoop(@NotNull PsiElement start) {
     for (PsiElement e = start; !isCodeBoundary(e); e = e.getParent()) {
@@ -666,9 +660,17 @@ public class PsiImplUtil {
   }
 
   @Nullable
-  public static PsiElement findEnclosingSwitchOrLoop(@NotNull PsiElement start) {
+  public static PsiStatement findEnclosingSwitchOrLoop(@NotNull PsiElement start) {
     for (PsiElement e = start; !isCodeBoundary(e); e = e.getParent()) {
-      if (e instanceof PsiSwitchBlock || e instanceof PsiLoopStatement) return e;
+      if (e instanceof PsiSwitchStatement || e instanceof PsiLoopStatement) return (PsiStatement)e;
+    }
+    return null;
+  }
+
+  @Nullable
+  public static PsiSwitchExpression findEnclosingSwitchExpression(@NotNull PsiElement start) {
+    for (PsiElement e = start; !isCodeBoundary(e); e = e.getParent()) {
+      if (e instanceof PsiSwitchExpression) return (PsiSwitchExpression)e;
     }
     return null;
   }

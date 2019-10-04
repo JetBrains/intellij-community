@@ -60,7 +60,7 @@ class FieldAccessorFactory {
   }
 
   @Nullable
-  CodeStyleFieldAccessor createAccessor(@NotNull Object codeStyleObject) {
+  CodeStyleFieldAccessor<?,?> createAccessor(@NotNull Object codeStyleObject) {
     if (mayHaveAccessor()) {
       switch (getValueType()) {
         case BOOLEAN:

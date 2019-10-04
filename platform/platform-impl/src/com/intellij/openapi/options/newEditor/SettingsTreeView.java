@@ -46,8 +46,6 @@ import javax.accessibility.AccessibleRole;
 import javax.swing.*;
 import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeExpansionListener;
-import javax.swing.event.TreeSelectionEvent;
-import javax.swing.event.TreeSelectionListener;
 import javax.swing.plaf.TreeUI;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeCellRenderer;
@@ -69,19 +67,19 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
   private static final Color MODIFIED_CONTENT = JBColor.namedColor("Tree.modifiedItemForeground", JBColor.BLUE);
 
   final SimpleTree myTree;
-  final FilteringTreeBuilder myBuilder;
+  private final FilteringTreeBuilder myBuilder;
 
   private final SettingsFilter myFilter;
   private final MyRoot myRoot;
   private final JScrollPane myScroller;
-  private final IdentityHashMap<Configurable, MyNode> myConfigurableToNodeMap = new IdentityHashMap<>();
+  private final Map<Configurable, MyNode> myConfigurableToNodeMap = new IdentityHashMap<>();
   private final MergingUpdateQueue myQueue = new MergingUpdateQueue("SettingsTreeView", 150, false, this, this, this)
     .setRestartTimerOnAdd(true);
 
   private Configurable myQueuedConfigurable;
   private MyControl myControl;
 
-  public SettingsTreeView(SettingsFilter filter, List<ConfigurableGroup> groups) {
+  public SettingsTreeView(@NotNull SettingsFilter filter, @NotNull List<? extends ConfigurableGroup> groups) {
     myFilter = filter;
     myRoot = new MyRoot(groups);
     myTree = new MyTree();
@@ -164,12 +162,9 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
       }
     });
 
-    myTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
-      @Override
-      public void valueChanged(TreeSelectionEvent event) {
-        MyNode node = extractNode(event.getNewLeadSelectionPath());
-        select(node == null ? null : node.myConfigurable);
-      }
+    myTree.getSelectionModel().addTreeSelectionListener(event -> {
+      MyNode node = extractNode(event.getNewLeadSelectionPath());
+      select(node == null ? null : node.myConfigurable);
     });
     myBuilder = new MyBuilder(new SimpleTreeStructure.Impl(myRoot));
     myBuilder.setFilteringMerge(300, null);
@@ -478,7 +473,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
   private final class MyRoot extends CachingSimpleNode {
     private final List<? extends ConfigurableGroup> myGroups;
 
-    private MyRoot(List<? extends ConfigurableGroup> groups) {
+    private MyRoot(@NotNull List<? extends ConfigurableGroup> groups) {
       super(null);
       myGroups = groups;
     }
@@ -619,7 +614,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
       boolean isGroup = node != null && myRoot == node.getParent();
       String name = node != null ? node.myDisplayName : String.valueOf(value);
       myTextLabel.append(name, isGroup ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
-      myTextLabel.setFont(isGroup ? myTree.getFont() : UIUtil.getLabelFont());
+      myTextLabel.setFont(isGroup ? myTree.getFont() : StartupUiUtil.getLabelFont());
 
       // update font color for modified configurables
       myTextLabel.setForeground(selected ? UIUtil.getTreeSelectionForeground(true) : UIUtil.getTreeForeground());
@@ -826,7 +821,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
 
   private static final class MyTreeUi extends WideSelectionTreeUI {
     boolean processMouseEvent(MouseEvent event) {
-      if (super.tree instanceof SimpleTree) {
+      if (tree instanceof SimpleTree) {
         SimpleTree tree = (SimpleTree)super.tree;
 
         boolean toggleNow = MouseEvent.MOUSE_RELEASED == event.getID()

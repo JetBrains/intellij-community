@@ -25,6 +25,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitContentRevision;
 import git4idea.GitFormatException;
 import git4idea.GitRevisionNumber;
+import git4idea.GitUtil;
+import git4idea.changes.GitChangeUtils;
+import git4idea.changes.GitChangeUtils.GitDiffChange;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitHandler;
@@ -56,7 +59,7 @@ class GitChangesCollector {
   @NotNull private final VirtualFile myVcsRoot;
 
   private final Collection<Change> myChanges = new HashSet<>();
-  private final Set<VirtualFile> myUnversionedFiles = new HashSet<>();
+  private final Set<FilePath> myUnversionedFiles = new HashSet<>();
   private final Collection<GitConflict> myConflicts = new HashSet<>();
 
   /**
@@ -72,7 +75,7 @@ class GitChangesCollector {
   }
 
   @NotNull
-  Collection<VirtualFile> getUnversionedFiles() {
+  Collection<FilePath> getUnversionedFilePaths() {
     return myUnversionedFiles;
   }
 
@@ -178,28 +181,24 @@ class GitChangesCollector {
 
   // calls 'git status' and parses the output, feeding myChanges.
   private void collectChanges(Collection<? extends FilePath> dirtyPaths) throws VcsException {
-    GitLineHandler handler = statusHandler(dirtyPaths);
+    VcsRevisionNumber head = getHead();
+
+    GitLineHandler handler = GitUtil.createHandlerWithPaths(dirtyPaths, () -> statusHandler());
     String output = myGit.runCommand(handler).getOutputOrThrow();
-    parseOutput(output, handler);
+    List<FilePath> bothModifiedPaths = parseOutput(output, head, handler);
+
+    collectStagedUnstagedModifications(bothModifiedPaths, head);
   }
 
   private void collectUnversionedFiles() throws VcsException {
     GitUntrackedFilesHolder untrackedFilesHolder = myRepository.getUntrackedFilesHolder();
-    myUnversionedFiles.addAll(untrackedFilesHolder.retrieveUntrackedFiles());
+    myUnversionedFiles.addAll(untrackedFilesHolder.retrieveUntrackedFilePaths());
   }
 
-  private GitLineHandler statusHandler(Collection<? extends FilePath> dirtyPaths) {
+  private GitLineHandler statusHandler() {
     GitLineHandler handler = new GitLineHandler(myProject, myVcsRoot, GitCommand.STATUS);
     final String[] params = {"--porcelain", "-z", "--untracked-files=no"};   // untracked files are stored separately
     handler.addParameters(params);
-    handler.endOptions();
-    handler.addRelativePaths(dirtyPaths);
-    if (handler.isLargeCommandLine()) {
-      // if there are too much files, just get all changes for the project
-      handler = new GitLineHandler(myProject, myVcsRoot, GitCommand.STATUS);
-      handler.addParameters(params);
-      handler.endOptions();
-    }
     handler.setSilent(true);
     return handler;
   }
@@ -207,10 +206,13 @@ class GitChangesCollector {
   /**
    * Parses the output of the 'git status --porcelain -z' command filling myChanges and myUnversionedFiles.
    * See <a href=http://www.kernel.org/pub/software/scm/git/docs/git-status.html#_output">Git man</a> for details.
+   *
+   * @param handler used for debugging purposes in case of parse error
+   * @return list of MM paths, that should be checked explicitly (in case if staged and unstaged modifications cancel each other)
    */
-  // handler is here for debugging purposes in the case of parse error
-  private void parseOutput(@NotNull String output, @NotNull GitHandler handler) throws VcsException {
-    VcsRevisionNumber head = getHead();
+  @NotNull
+  private List<FilePath> parseOutput(@NotNull String output, @NotNull VcsRevisionNumber head, @NotNull GitHandler handler) {
+    List<FilePath> bothModifiedPaths = new ArrayList<>();
 
     final String[] split = output.split("\u0000");
 
@@ -269,7 +271,10 @@ class GitChangesCollector {
           break;
 
         case 'M':
-          if (yStatus == ' ' || yStatus == 'M' || yStatus == 'T') {
+          if (yStatus == 'M') {
+            bothModifiedPaths.add(filepath); // schedule 'git diff HEAD' command to detect staged changes, that were reverted
+          }
+          else if (yStatus == ' ' || yStatus == 'T') {
             reportModified(filepath, head);
           }
           else if (yStatus == 'D') {
@@ -368,6 +373,25 @@ class GitChangesCollector {
 
         default:
           throwGFE("Unexpected symbol as xStatus.", handler, output, line, xStatus, yStatus);
+      }
+    }
+
+    return bothModifiedPaths;
+  }
+
+  private void collectStagedUnstagedModifications(@NotNull List<FilePath> bothModifiedPaths,
+                                                  @NotNull VcsRevisionNumber head) throws VcsException {
+    if (bothModifiedPaths.isEmpty()) return;
+
+    Collection<GitDiffChange> changes = GitChangeUtils.getWorkingTreeChanges(myProject, myVcsRoot, bothModifiedPaths, false);
+
+    // no directories expected here, hierarchical comparator is not necessary
+    Set<FilePath> expectedPaths = new HashSet<>(bothModifiedPaths);
+
+    for (GitDiffChange change : changes) {
+      FilePath filePath = change.getFilePath();
+      if (expectedPaths.contains(filePath)) {
+        reportModified(filePath, head);
       }
     }
   }

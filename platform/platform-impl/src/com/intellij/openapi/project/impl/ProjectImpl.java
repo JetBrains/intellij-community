@@ -5,7 +5,7 @@ import com.intellij.configurationStore.StoreUtil;
 import com.intellij.diagnostic.Activity;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.diagnostic.StartUpMeasurer.Phases;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.ContainerDescriptor;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.startup.StartupManagerEx;
@@ -13,14 +13,11 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.LaterInvocator;
-import com.intellij.openapi.components.*;
-import com.intellij.openapi.components.impl.PlatformComponentManagerImpl;
-import com.intellij.openapi.components.impl.ProjectPathMacroManager;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
@@ -41,18 +38,17 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.FrameTitleBuilder;
 import com.intellij.project.ProjectStoreOwner;
 import com.intellij.psi.impl.DebugUtil;
+import com.intellij.serviceContainer.PlatformComponentManagerImpl;
 import com.intellij.util.PathUtil;
 import com.intellij.util.TimedReference;
 import org.jetbrains.annotations.*;
-import org.picocontainer.MutablePicoContainer;
 
 import javax.swing.*;
-import java.util.List;
+import java.nio.file.Path;
 
 public class ProjectImpl extends PlatformComponentManagerImpl implements ProjectEx, ProjectStoreOwner {
   private static final Logger LOG = Logger.getInstance("#com.intellij.project.impl.ProjectImpl");
 
-  public static final String NAME_FILE = ".name";
   public static final Key<Long> CREATION_TIME = Key.create("ProjectImpl.CREATION_TIME");
 
   /**
@@ -73,11 +69,8 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     return ServiceManager.getService(ProjectStoreFactory.class).createStore(this);
   });
 
-  /**
-   * @param filePath System-independent path
-   */
-  protected ProjectImpl(@NotNull String filePath, @Nullable String projectName) {
-    super(ApplicationManager.getApplication(), "Project " + (projectName == null ? filePath : projectName));
+  protected ProjectImpl(@NotNull Path filePath, @Nullable String projectName) {
+    super(ApplicationManager.getApplication());
 
     putUserData(CREATION_TIME, System.nanoTime());
     creationTrace = ApplicationManager.getApplication().isUnitTestMode() ? DebugUtil.currentStackTrace() : null;
@@ -86,13 +79,14 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
 
     myName = projectName;
     // light project may be changed later during test, so we need to remember its initial state
-    myLight = ApplicationManager.getApplication().isUnitTestMode() && filePath.contains(LIGHT_PROJECT_NAME);
+    //noinspection TestOnlyProblems
+    myLight = ApplicationManager.getApplication().isUnitTestMode() && filePath.toString().contains(LIGHT_PROJECT_NAME);
   }
 
   static final String TEMPLATE_PROJECT_NAME = "Default (Template) Project";
   // default project constructor
   ProjectImpl() {
-    super(ApplicationManager.getApplication(), TEMPLATE_PROJECT_NAME);
+    super(ApplicationManager.getApplication());
 
     putUserData(CREATION_TIME, System.nanoTime());
     if (ApplicationManager.getApplication().isUnitTestMode()) {
@@ -105,11 +99,14 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     myLight = false;
   }
 
+
+
   @Override
   public boolean isDisposed() {
     return super.isDisposed() || temporarilyDisposed;
   }
 
+  @Override
   @TestOnly
   public boolean isLight() {
     return myLight;
@@ -143,14 +140,6 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     }
   }
 
-  @Override
-  protected void bootstrapPicoContainer(@NotNull String name) {
-    Extensions.instantiateArea(ExtensionAreas.IDEA_PROJECT, this, null);
-    super.bootstrapPicoContainer(name);
-
-    getPicoContainer().registerComponentImplementation(PathMacroManager.class, ProjectPathMacroManager.class);
-  }
-
   // do not call for default project
   @NotNull
   public final IProjectStore getStateStore() {
@@ -170,21 +159,13 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
 
   @Override
   public boolean isInitialized() {
-    if (isDisposed() || !isOpen()) return false;
-    StartupManagerEx managerEx = StartupManagerEx.getInstanceEx(this);
-    return managerEx != null && managerEx.startupActivityPassed();
+    return !isDisposed() && isOpen() && StartupManagerEx.getInstanceEx(this).startupActivityPassed();
   }
 
   @NotNull
   @Override
-  public List<ComponentConfig> getMyComponentConfigsFromDescriptor(@NotNull IdeaPluginDescriptor plugin) {
-    return plugin.getProjectComponents();
-  }
-
-  @NotNull
-  @Override
-  protected List<ServiceDescriptor> getServices(@NotNull IdeaPluginDescriptor pluginDescriptor) {
-    return ((IdeaPluginDescriptorImpl)pluginDescriptor).getProjectServices();
+  protected ContainerDescriptor getContainerDescriptor(@NotNull IdeaPluginDescriptorImpl pluginDescriptor) {
+    return pluginDescriptor.getProject();
   }
 
   @Nullable
@@ -254,9 +235,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     }
 
     Application app = ApplicationManager.getApplication();
-    if (app.isUnitTestMode()) {
-      app.getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).projectComponentsRegistered(this);
-    }
+    app.getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).projectComponentsRegistered(this);
   }
 
   public void init(@Nullable ProgressIndicator indicator) {
@@ -330,7 +309,6 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     // we use super here, because temporarilyDisposed will be true if project closed
     LOG.assertTrue(!super.isDisposed(), this + " is disposed already");
     disposeComponents();
-    Extensions.disposeArea(this);
 
     super.dispose();
 
@@ -343,18 +321,6 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     LaterInvocator.purgeExpiredItems();
   }
 
-  @NotNull
-  @Override
-  public <T> T[] getExtensions(@NotNull final ExtensionPointName<T> extensionPointName) {
-    return Extensions.getArea(this).getExtensionPoint(extensionPointName).getExtensions();
-  }
-
-  @NotNull
-  @Override
-  protected MutablePicoContainer createPicoContainer() {
-    return Extensions.getArea(this).getPicoContainer();
-  }
-
   @Override
   public boolean isDefault() {
     return false;
@@ -365,7 +331,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   public String toString() {
     return "Project" +
            (isDisposed() ? " (Disposed" + (temporarilyDisposed ? " temporarily" : "") + ")"
-                         : " '" + getPresentableUrl() + "'") +
+                         : " '" + (myComponentStore.isComputed() ? getPresentableUrl() : "<no component store>") + "'") +
            " " + myName;
   }
 
@@ -375,8 +341,9 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   }
 
   @Nullable
+  @ApiStatus.Internal
   @Override
-  protected String activityNamePrefix() {
+  public String activityNamePrefix() {
     return "project ";
   }
 }

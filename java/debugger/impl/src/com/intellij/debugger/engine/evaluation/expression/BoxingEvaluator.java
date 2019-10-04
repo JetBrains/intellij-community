@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine.evaluation.expression;
 
 import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.JVMNameUtil;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
@@ -44,9 +45,9 @@ public class BoxingEvaluator implements Evaluator{
     final ClassType wrapperClass = (ClassType)process.findClass(context, wrapperTypeName, null);
     final String methodSignature = "(" + JVMNameUtil.getPrimitiveSignature(value.type().name()) + ")L" + wrapperTypeName.replace('.', '/') + ";";
 
-    Method method = wrapperClass.concreteMethodByName("valueOf", methodSignature);
+    Method method = DebuggerUtils.findMethod(wrapperClass, "valueOf", methodSignature);
     if (method == null) { // older JDK version
-      method = wrapperClass.concreteMethodByName(JVMNameUtil.CONSTRUCTOR_NAME, methodSignature);
+      method = DebuggerUtils.findMethod(wrapperClass, JVMNameUtil.CONSTRUCTOR_NAME, methodSignature);
     }
     if (method == null) {
       throw new EvaluateException("Cannot construct wrapper object for value of type " + value.type() + ": Unable to find either valueOf() or constructor method");

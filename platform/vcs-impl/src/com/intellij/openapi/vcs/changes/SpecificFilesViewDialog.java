@@ -11,11 +11,11 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.openapi.vcs.changes.ui.TreeActionsToolbarPanel;
 import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
@@ -44,8 +44,8 @@ abstract class SpecificFilesViewDialog extends DialogWrapper {
 
   protected SpecificFilesViewDialog(@NotNull Project project,
                                     @NotNull String title,
-                                    @NotNull DataKey<Stream<VirtualFile>> shownDataKey,
-                                    @NotNull List<? extends VirtualFile> initDataFiles) {
+                                    @NotNull DataKey<Stream<FilePath>> shownDataKey,
+                                    @NotNull List<? extends FilePath> initDataFiles) {
     super(project, true);
     setTitle(title);
     myProject = project;
@@ -95,10 +95,10 @@ abstract class SpecificFilesViewDialog extends DialogWrapper {
     return new Action[]{getOKAction()};
   }
 
-  private void initData(@NotNull final List<? extends VirtualFile> files) {
+  private void initData(@NotNull final List<? extends FilePath> files) {
     final TreeState state = TreeState.createOn(myView, (ChangesBrowserNode)myView.getModel().getRoot());
 
-    DefaultTreeModel model = TreeModelBuilder.buildFromVirtualFiles(myProject, myView.getGrouping(), files);
+    DefaultTreeModel model = TreeModelBuilder.buildFromFilePaths(myProject, myView.getGrouping(), files);
     myView.setModel(model);
     myView.expandPath(new TreePath(((ChangesBrowserNode)model.getRoot()).getPath()));
 
@@ -179,5 +179,5 @@ abstract class SpecificFilesViewDialog extends DialogWrapper {
   }
 
   @NotNull
-  protected abstract List<VirtualFile> getFiles();
+  protected abstract List<FilePath> getFiles();
 }

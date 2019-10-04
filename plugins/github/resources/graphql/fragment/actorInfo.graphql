@@ -1,0 +1,10 @@
+fragment actorInfo on Actor {
+  ...nodeInfo
+  __typename
+  login
+  url
+  avatarUrl
+  ... on User {
+    name
+  }
+}

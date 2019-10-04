@@ -36,9 +36,11 @@ public final class SplashManager {
       }
     }
 
+    // must be out of activity measurement
+    ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
     assert SPLASH_WINDOW == null;
     Activity activity = ParallelActivity.PREPARE_APP_INIT.start(ActivitySubNames.INITIALIZE_SPLASH);
-    SPLASH_WINDOW = new Splash(ApplicationInfoImpl.getShadowInstance());
+    SPLASH_WINDOW = new Splash(appInfo);
     activity.end();
   }
 
@@ -107,18 +109,35 @@ public final class SplashManager {
     };
   }
 
+  public static void hideBeforeShow(@NotNull Window window) {
+    Runnable hideSplashTask = getHideTask();
+    if (hideSplashTask != null) {
+      window.addWindowListener(new WindowAdapter() {
+        @Override
+        public void windowOpened(WindowEvent e) {
+          hideSplashTask.run();
+          window.removeWindowListener(this);
+        }
+      });
+    }
+  }
+
   @Nullable
   public static Runnable getHideTask() {
     if (SPLASH_WINDOW == null) {
       return null;
     }
 
-    Ref<Splash> splash = new Ref<>(SPLASH_WINDOW);
+    Ref<Splash> splashRef = new Ref<>(SPLASH_WINDOW);
     SPLASH_WINDOW = null;
+
     return () -> {
-      splash.get().setVisible(false);
-      splash.get().dispose();
-      splash.set(null);
+      final Splash splash = splashRef.get();
+      if (splash != null) {
+        splashRef.set(null);
+        splash.setVisible(false);
+        splash.dispose();
+      }
     };
   }
 }

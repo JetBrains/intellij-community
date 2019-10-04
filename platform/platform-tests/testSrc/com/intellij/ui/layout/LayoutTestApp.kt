@@ -35,8 +35,8 @@ object IntelliJUiTestApp {
 }
 
 private fun run(laf: LookAndFeel) {
-  val isDebugEnabled = true
-  //    val isDebugEnabled = false
+  //val isDebugEnabled = true
+      val isDebugEnabled = false
   @Suppress("ConstantConditionIf")
   if (isDebugEnabled) {
     LayoutUtil.setGlobalDebugMillis(1000)
@@ -59,7 +59,8 @@ private fun run(laf: LookAndFeel) {
 //          val panel = visualPaddingsPanel()
 //          val panel = withVerticalButtons()
 //    val panel = createLafTestPanel()
-    val panel = checkBoxFollowedBySpinner()
+//    val panel = checkBoxFollowedBySpinner()
+    val panel = separatorAndComment()
 
     val dialog = dialog(
       title = "",

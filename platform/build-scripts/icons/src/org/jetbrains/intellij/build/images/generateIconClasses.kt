@@ -20,6 +20,10 @@ internal fun generateIconsClasses() {
   project.modules.parallelStream().forEach(optimizer::optimizeIcons)
   optimizer.printStats()
 
+  val preCompiler = ImageSvgPreCompiler()
+  preCompiler.preCompileIcons(project.modules)
+  preCompiler.printStats()
+
   val checker = ImageSanityChecker(home)
   project.modules.forEach { module ->
     checker.check(module)

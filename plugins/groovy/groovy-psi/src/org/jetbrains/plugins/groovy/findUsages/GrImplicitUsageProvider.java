@@ -31,7 +31,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
  */
 public class GrImplicitUsageProvider implements ImplicitUsageProvider {
   @Override
-  public boolean isImplicitUsage(PsiElement element) {
+  public boolean isImplicitUsage(@NotNull PsiElement element) {
     if (element instanceof GrMethod) {
       final GrMethod method = (GrMethod)element;
 
@@ -53,13 +53,13 @@ public class GrImplicitUsageProvider implements ImplicitUsageProvider {
   }
 
   @Override
-  public boolean isImplicitRead(PsiElement element) {
+  public boolean isImplicitRead(@NotNull PsiElement element) {
     if (element instanceof GrField && isDelegateAnnotated((GrField)element)) return true;
     return false;
   }
 
   @Override
-  public boolean isImplicitWrite(PsiElement element) {
+  public boolean isImplicitWrite(@NotNull PsiElement element) {
     return false;
   }
 

@@ -18,6 +18,7 @@ import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
 import org.jetbrains.jps.builders.storage.StorageProvider;
 import org.jetbrains.jps.cmdline.BuildRunner;
 import org.jetbrains.jps.incremental.IncProjectBuilder;
+import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
 
 import java.io.*;
 import java.util.Collection;
@@ -49,6 +50,7 @@ public class BuildDataManager implements StorageOwner {
   private final BuildTargetsState myTargetsState;
   private final OutputToTargetRegistry myOutputToTargetRegistry;
   private final File myVersionFile;
+  private final PathRelativizerService myRelativizer;
   private final StorageOwner myTargetStoragesOwner = new CompositeStorageOwner() {
     @Override
     protected Iterable<? extends StorageOwner> getChildStorages() {
@@ -77,7 +79,6 @@ public class BuildDataManager implements StorageOwner {
     }
   };
 
-
   private interface LazyValueFactory<K, V> {
     AtomicNotNullLazyValue<V> create(K key);
   }
@@ -90,7 +91,7 @@ public class BuildDataManager implements StorageOwner {
         @Override
         protected SourceToOutputMappingImpl compute() {
           try {
-            return new SourceToOutputMappingImpl(new File(getSourceToOutputMapRoot(key), SRC_TO_OUTPUT_FILE_NAME));
+            return new SourceToOutputMappingImpl(new File(getSourceToOutputMapRoot(key), SRC_TO_OUTPUT_FILE_NAME), myRelativizer);
           }
           catch (IOException e) {
             throw new BuildDataCorruptedException(e);
@@ -113,13 +114,17 @@ public class BuildDataManager implements StorageOwner {
     }
   };
 
-  public BuildDataManager(final BuildDataPaths dataPaths, BuildTargetsState targetsState, final boolean useMemoryTempCaches) throws IOException {
+  public BuildDataManager(BuildDataPaths dataPaths,
+                          BuildTargetsState targetsState,
+                          PathRelativizerService relativizer,
+                          boolean useMemoryTempCaches) throws IOException {
     myDataPaths = dataPaths;
     myTargetsState = targetsState;
-    mySrcToFormMap = new OneToManyPathsMapping(new File(getSourceToFormsRoot(), "data"));
-    myOutputToTargetRegistry = new OutputToTargetRegistry(new File(getOutputToSourceRegistryRoot(), "data"));
-    myMappings = new Mappings(getMappingsRoot(myDataPaths.getDataStorageRoot()), useMemoryTempCaches);
+    mySrcToFormMap = new OneToManyPathsMapping(new File(getSourceToFormsRoot(), "data"), relativizer);
+    myOutputToTargetRegistry = new OutputToTargetRegistry(new File(getOutputToSourceRegistryRoot(), "data"), relativizer);
+    myMappings = new Mappings(getMappingsRoot(myDataPaths.getDataStorageRoot()), relativizer, useMemoryTempCaches);
     myVersionFile = new File(myDataPaths.getDataStorageRoot(), "version.dat");
+    myRelativizer = relativizer;
   }
 
   public BuildTargetsState getTargetsState() {
@@ -137,13 +142,13 @@ public class BuildDataManager implements StorageOwner {
   }
 
   public SourceToOutputMappingImpl createSourceToOutputMapForStaleTarget(BuildTargetType<?> targetType, String targetId) throws IOException {
-    return new SourceToOutputMappingImpl(new File(getSourceToOutputMapRoot(targetType, targetId), SRC_TO_OUTPUT_FILE_NAME));
+    return new SourceToOutputMappingImpl(new File(getSourceToOutputMapRoot(targetType, targetId), SRC_TO_OUTPUT_FILE_NAME), myRelativizer);
   }
 
   @NotNull
   public <S extends StorageOwner> S getStorage(@NotNull BuildTarget<?> target, @NotNull StorageProvider<S> provider) throws IOException {
     final BuildTargetStorages storages = fetchValue(myTargetStorages, target, TARGET_STORAGES_VALUE_FACTORY);
-    return storages.getOrCreateStorage(provider);
+    return storages.getOrCreateStorage(provider, myRelativizer);
   }
 
   public OneToManyPathsMapping getSourceToFormMap() {
@@ -342,6 +347,10 @@ public class BuildDataManager implements StorageOwner {
     return myDataPaths;
   }
 
+  public PathRelativizerService getRelativizer() {
+    return myRelativizer;
+  }
+
   public static File getMappingsRoot(final File dataStorageRoot) {
     return new File(dataStorageRoot, MAPPINGS_STORAGE);
   }
@@ -397,6 +406,10 @@ public class BuildDataManager implements StorageOwner {
       catch (IOException ignored) {
       }
     }
+  }
+
+  public void reportUnhandledRelativizerPaths() {
+    myRelativizer.reportUnhandledPaths();
   }
 
   private final class SourceToOutputMappingWrapper implements SourceToOutputMapping {

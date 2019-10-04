@@ -40,6 +40,8 @@ import com.intellij.testGuiFramework.util.ScreenshotTaker
 import com.intellij.ui.Splash
 import com.intellij.ui.components.labels.ActionLink
 import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.io.delete
+import com.intellij.util.io.isDirectory
 import com.intellij.util.lang.UrlClassLoader
 import org.fest.swing.core.Robot
 import org.fest.swing.exception.ComponentLookupException
@@ -64,16 +66,16 @@ import java.awt.Frame
 import java.awt.KeyboardFocusManager
 import java.io.File
 import java.net.URL
+import java.nio.file.Path
 import java.time.Duration
 import java.util.*
 import java.util.concurrent.TimeUnit
 import javax.swing.JButton
 
 class GuiTestRule(enableScreenshotsDuringTest: Boolean) : TestRule {
-
   var CREATE_NEW_PROJECT_ACTION_NAME: String = "Create New Project"
 
-  val projectsFolder: File = File(GuiTestOptions.projectsDir, UUID.randomUUID().toString())
+  val projectsFolder = GuiTestOptions.projectsDir.resolve(UUID.randomUUID().toString())
 
   val LOG: Logger = Logger.getInstance(GuiTestRule::class.java.name)
 
@@ -346,7 +348,7 @@ class GuiTestRule(enableScreenshotsDuringTest: Boolean) : TestRule {
     return NewProjectWizardFixture.find(robot())
   }
 
-  fun findIdeFrame(projectName: String, projectPath: File): IdeFrameFixture {
+  fun findIdeFrame(projectName: String, projectPath: Path): IdeFrameFixture {
     return IdeFrameFixture.find(robot(), projectPath, projectName)
   }
 
@@ -398,24 +400,24 @@ class GuiTestRule(enableScreenshotsDuringTest: Boolean) : TestRule {
 
   fun importProjectAndWaitForProjectSyncToFinish(projectDirName: String, gradleVersion: String?): IdeFrameFixture {
     val projectPath = setUpProject(projectDirName)
-    val toSelect = VfsUtil.findFileByIoFile(projectPath, false)
+    val toSelect = VfsUtil.findFile(projectPath, false)
     Assert.assertNotNull(toSelect)
     doImportProject(toSelect!!)
     //TODO: add wait to open project
     return findIdeFrame(projectPath)
   }
 
-  fun importProject(projectDirName: String): File {
+  fun importProject(projectDirName: String): Path {
     val projectPath = setUpProject(projectDirName)
-    val toSelect = VfsUtil.findFileByIoFile(projectPath, false)
+    val toSelect = VfsUtil.findFile(projectPath, false)
     Assert.assertNotNull(toSelect)
     doImportProject(toSelect!!)
     return projectPath
   }
 
-  fun importProject(projectFile: File): File {
+  fun importProject(projectFile: Path): Path {
     val projectPath = setUpProject(projectFile)
-    val toSelect = VfsUtil.findFileByIoFile(projectPath, false)
+    val toSelect = VfsUtil.findFile(projectPath, false)
     Assert.assertNotNull(toSelect)
     doImportProject(toSelect!!)
     return projectPath
@@ -429,41 +431,39 @@ class GuiTestRule(enableScreenshotsDuringTest: Boolean) : TestRule {
   }
 
 
-  private fun setUpProject(projectDirName: String): File {
+  private fun setUpProject(projectDirName: String): Path {
     val projectPath = copyProjectBeforeOpening(projectDirName)
     Assert.assertNotNull(projectPath)
     return projectPath
   }
 
-  private fun setUpProject(projectDirFile: File): File {
+  private fun setUpProject(projectDirFile: Path): Path {
     val projectPath = copyProjectBeforeOpening(projectDirFile)
     Assert.assertNotNull(projectPath)
     return projectPath
   }
 
-
-  fun copyProjectBeforeOpening(projectDirName: String): File {
+  fun copyProjectBeforeOpening(projectDirName: String): Path {
     val masterProjectPath = getMasterProjectDirPath(projectDirName)
 
     val projectPath = getTestProjectDirPath(projectDirName)
-    if (projectPath.isDirectory) {
-      FileUtilRt.delete(projectPath)
-      println(String.format("Deleted project path '%1\$s'", projectPath.path))
+    if (projectPath.isDirectory()) {
+      projectPath.delete()
+      println(String.format("Deleted project path '%1\$s'", projectPath.toString()))
     }
-    FileUtil.copyDir(masterProjectPath, projectPath)
-    println("Copied project '$projectDirName' to path '${projectPath.path}'")
+    FileUtil.copyDir(masterProjectPath, projectPath.toFile())
+    println("Copied project '$projectDirName' to path '${projectPath}'")
     return projectPath
   }
 
-  fun copyProjectBeforeOpening(projectDirFile: File): File {
-
-    val projectPath = getTestProjectDirPath(projectDirFile.name)
-    if (projectPath.isDirectory) {
-      FileUtilRt.delete(projectPath)
-      println(String.format("Deleted project path '%1\$s'", projectPath.path))
+  fun copyProjectBeforeOpening(projectDirFile: Path): Path {
+    val projectPath = getTestProjectDirPath(projectDirFile.fileName.toString())
+    if (projectPath.isDirectory()) {
+      projectPath.delete()
+      println(String.format("Deleted project path '%1\$s'", projectPath))
     }
-    FileUtil.copyDir(projectDirFile, projectPath)
-    println("Copied project '${projectDirFile.name}' to path '${projectPath.path}'")
+    FileUtil.copyDir(projectDirFile.toFile(), projectPath.toFile())
+    println("Copied project '${projectDirFile.fileName}' to path '${projectPath}'")
     return projectPath
   }
 
@@ -472,8 +472,8 @@ class GuiTestRule(enableScreenshotsDuringTest: Boolean) : TestRule {
     return File(GuiTestUtil.testProjectsRootDirPath, projectDirName)
   }
 
-  private fun getTestProjectDirPath(projectDirName: String): File {
-    return File(projectsFolder, projectDirName)
+  private fun getTestProjectDirPath(projectDirName: String): Path {
+    return projectsFolder.resolve(projectDirName)
   }
 
   fun cleanUpProjectForImport(projectPath: File) {
@@ -510,7 +510,7 @@ class GuiTestRule(enableScreenshotsDuringTest: Boolean) : TestRule {
     }
   }
 
-  fun findIdeFrame(projectPath: File, timeout: org.fest.swing.timing.Timeout = Timeouts.defaultTimeout): IdeFrameFixture {
+  fun findIdeFrame(projectPath: Path, timeout: org.fest.swing.timing.Timeout = Timeouts.defaultTimeout): IdeFrameFixture {
     return IdeFrameFixture.find(robot(), projectPath, null, timeout)
   }
 

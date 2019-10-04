@@ -13,6 +13,8 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.util.CommonProcessors;
+import com.intellij.util.Processor;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.XmlName;
 import com.intellij.util.xml.impl.DomFileElementImpl;
@@ -46,7 +48,7 @@ public class XIncludeStub extends ObjectStubBase<ElementStub> {
   }
 
   @Override
-  public ObjectStubSerializer getStubType() {
+  public ObjectStubSerializer<?, ?> getStubType() {
     return DomElementTypeHolder.XIncludeStub;
   }
 
@@ -56,18 +58,22 @@ public class XIncludeStub extends ObjectStubBase<ElementStub> {
     if (myCachedValue == null) {
       myCachedValue = CachedValuesManager.getManager(file.getProject()).createCachedValue(() -> {
         DomElement result = computeValue(parent);
-        return CachedValueProvider.Result.create(result, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
+        return CachedValueProvider.Result.create(result, PsiModificationTracker.MODIFICATION_COUNT);
       });
     }
 
     DomElement rootElement = myCachedValue.getValue();
     if (rootElement != null) {
-      rootElement.acceptChildren(element -> {
-        if (element.getXmlElementName().equals(xmlName.getLocalName())) {
-          included.add(element);
-        }
-      });
+      processChildrenWithLocalName(rootElement, xmlName.getLocalName(), new CommonProcessors.CollectProcessor<>(included));
     }
+  }
+
+  private static void processChildrenWithLocalName(DomElement parent, String localName, Processor<DomElement> processor) {
+    parent.acceptChildren(element -> {
+      if (element.getXmlElementName().equals(localName)) {
+        processor.process(element);
+      }
+    });
   }
 
   @Nullable
@@ -93,7 +99,13 @@ public class XIncludeStub extends ObjectStubBase<ElementStub> {
       DomFileElementImpl<DomElement> element = parent.getManager().getFileElement((XmlFile)fileSystemItem);
       if (element != null) {
         DomElement result = element.getRootElement();
-        if (result != null && tagName.equals(result.getXmlElementName())) {
+        if (tagName.equals(result.getXmlElementName())) {
+          String subTagName = matcher.group(2);
+          if (subTagName != null) {
+            CommonProcessors.FindFirstProcessor<DomElement> processor = new CommonProcessors.FindFirstProcessor<>();
+            processChildrenWithLocalName(result, subTagName.substring(1), processor);
+            return processor.getFoundValue();
+          }
           return result;
         }
       }
@@ -133,7 +145,7 @@ public class XIncludeStub extends ObjectStubBase<ElementStub> {
 
     @Override
     public String toString() {
-      return "XInclide";
+      return "XInclude";
     }
   }
 }

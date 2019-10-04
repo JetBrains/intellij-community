@@ -190,7 +190,7 @@ public class JdkChooserPanel extends JPanel {
               String suggestedName = version != null ? version.toString() : "";
               Sdk jdk = sdkType.createJdk(suggestedName, homePath, false);
               if (jdk instanceof ProjectJdkImpl) {
-                ProjectJdkImpl tmp = SdkConfigurationUtil.createSdk(allJdks.toArray(new Sdk[0]), virtualFile, sdkType, null, suggestedName);
+                ProjectJdkImpl tmp = SdkConfigurationUtil.createSdk(allJdks, virtualFile, sdkType, null, suggestedName);
                 String improvedName = tmp.getName();
                 ((ProjectJdkImpl)jdk).setName(improvedName);
               }

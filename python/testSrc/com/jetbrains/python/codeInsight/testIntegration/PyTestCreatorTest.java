@@ -19,13 +19,14 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.fixtures.PyTestCase;
-import org.easymock.IMocksControl;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.testing.PythonTestConfigurationsModel;
+import com.jetbrains.python.testing.TestRunnerService;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
-
-import static org.easymock.EasyMock.createNiceControl;
-import static org.easymock.EasyMock.expect;
 
 /**
  * Checks how test classes are created
@@ -33,28 +34,44 @@ import static org.easymock.EasyMock.expect;
  * @author Ilya.Kazakevich
  */
 public final class PyTestCreatorTest extends PyTestCase {
-  public void testCreateTest() {
 
+  public void testCreateUnitTest() {
+    final PyTestCreationModel model = prepareAndCreateModel();
+    TestRunnerService testRunnerService = TestRunnerService.getInstance(myFixture.getModule());
+    testRunnerService.setProjectConfiguration(PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME);
+    checkResult(model, "create_tst_class.expected_unittest.py");
+  }
+
+  public void testCreatePyTest() {
+    final PyTestCreationModel model = prepareAndCreateModel();
+    boolean p2k = LanguageLevel.forElement(myFixture.getFile()).isPython2();
+    TestRunnerService testRunnerService = TestRunnerService.getInstance(myFixture.getModule());
+    testRunnerService.setProjectConfiguration(PyNames.PY_TEST);
+
+    checkResult(model, (p2k ? "create_tst_class.expected_pytest_2k.py" : "create_tst_class.expected_pytest_3k.py"));
+
+    model.setClassName("");
+    model.setFileName("tests_no_class.py");
+
+    checkResult(model, "create_tst.expected.py");
+  }
+
+  @NotNull
+  private PyTestCreationModel prepareAndCreateModel() {
     myFixture.configureByFile("/create_tests/create_tst.py");
 
     final VirtualFile[] roots = ModuleRootManager.getInstance(myFixture.getModule()).getSourceRoots();
     assert roots.length > 0 : "Empty roots for module " + myFixture.getModule();
     final VirtualFile root = roots[0];
 
-    final IMocksControl mockControl = createNiceControl();
-    final CreateTestDialog dialog = mockControl.createMock(CreateTestDialog.class);
-    expect(dialog.getFileName()).andReturn("tests.py").anyTimes();
-    expect(dialog.getClassName()).andReturn("Spam").anyTimes();
-    // Target dir is first module source
-    expect(dialog.getTargetDir()).andReturn(root.getCanonicalPath()).anyTimes();
-    expect(dialog.getMethods()).andReturn(Arrays.asList("eggs", "eggs_and_ham")).anyTimes();
-    mockControl.replay();
+    return new PyTestCreationModel("tests.py", root.getCanonicalPath(), "Spam", Arrays.asList("eggs", "eggs_and_ham"));
+  }
 
-
+  private void checkResult(@NotNull final PyTestCreationModel model, @NotNull final String fileName) {
     WriteCommandAction.runWriteCommandAction(myFixture.getProject(), () -> {
-      final PsiFile file = PyTestCreator.generateTest(myFixture.getProject(), dialog).getContainingFile();
+      final PsiFile file = PyTestCreator.generateTest(myFixture.getFile(), model).getContainingFile();
       myFixture.configureByText(file.getFileType(), file.getText());
-      myFixture.checkResultByFile("/create_tests/create_tst.expected.py");
+      myFixture.checkResultByFile("/create_tests/" + fileName);
     });
   }
 }

@@ -21,8 +21,10 @@ package com.intellij.execution.configurations;
 
 import com.intellij.execution.CantRunException;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 
 /** @deprecated use {@link SimpleJavaParameters#toCommandLine()} (to be removed in IDEA 2019) */
+@ApiStatus.ScheduledForRemoval(inVersion = "2019")
 @Deprecated
 public class CommandLineBuilder {
   private CommandLineBuilder() { }

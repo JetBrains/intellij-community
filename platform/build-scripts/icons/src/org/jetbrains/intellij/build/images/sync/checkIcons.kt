@@ -43,7 +43,7 @@ internal fun checkIcons(context: Context = Context(), loggerImpl: Consumer<Strin
       }
       catch (e: Throwable) {
         val investigator = Investigator(DEFAULT_INVESTIGATOR)
-        assignInvestigation(investigator, emptyList())
+        assignInvestigation(investigator)
         if (context.notifySlack) callSafely {
           notifySlackChannel(investigator, context)
         }
@@ -52,8 +52,6 @@ internal fun checkIcons(context: Context = Context(), loggerImpl: Consumer<Strin
       if (context.doSyncDevRepo || context.iconsCommitHashesToSync.isNotEmpty()) {
         createReviewForDev(context)?.also {
           context.createdReviews = listOf(it)
-          assignInvestigation(Investigator(triggeredBy().email),
-                              context.createdReviews.map(Review::url))
         }
       }
     }
@@ -75,10 +73,14 @@ private fun push(context: Context) {
         val devCommitsLinks = context.devCommitsToSync
           .values.asSequence().flatten()
           .filter { it.committer == pushedCommit.committer }
-          .map { slackLink("'${it.subject}'", commitUrl(UPSOURCE_DEV_PROJECT_ID, it)) }
-          .joinToString()
+          .map {
+            commitUrl(UPSOURCE_DEV_PROJECT_ID, it)?.let { url ->
+              slackLink("'${it.subject}'", url)
+            } ?: "'${it.subject}'"
+          }.joinToString()
         val commitUrl = commitUrl(UPSOURCE_ICONS_PROJECT_ID, pushedCommit)
-        "Icons from $devCommitsLinks are ${slackLink("synced", commitUrl)}"
+        val synced = commitUrl?.let { slackLink("synced", it) } ?: "synced"
+        "Icons from $devCommitsLinks are $synced"
       }, context, success = true
     )
   }
@@ -190,7 +192,7 @@ private fun readIconsRepo(context: Context) = protectStdErr {
     // read icon hashes
     Icon(file).isValid
   }.also {
-    if (it.isEmpty()) error("${context.iconsRepoName} repo doesn't contain icons")
+    if (it.isEmpty()) log("${context.iconsRepoName} repo doesn't contain icons")
   }
 }
 

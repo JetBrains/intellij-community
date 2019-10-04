@@ -64,7 +64,7 @@ task dependenciesFile() {
   }
 }
 
-task wrapper(type: Wrapper) {
-  gradleVersion = '4.3.1'
+wrapper {
+  gradleVersion = '5.5'
   distributionUrl = "https://cache-redirector.jetbrains.com/services.gradle.org/distributions/gradle-${gradleVersion}-all.zip"
 }

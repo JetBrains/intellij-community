@@ -5,15 +5,14 @@ import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.internal.statistic.utils.StatisticsUtilKt;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.AbstractExtensionPointBean;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.LazyInstance;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.serviceContainer.BaseKeyedLazyInstance;
 import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class FileTypeUsageCounterCollector {
   private static final Logger LOG = Logger.getInstance("#" + FileTypeUsageCounterCollector.class.getPackage().getName());
@@ -31,10 +30,8 @@ public class FileTypeUsageCounterCollector {
 
   private static void trigger(@NotNull Project project,
                               @NotNull VirtualFile file,
-                              @NotNull String type) {
-    final FeatureUsageData data = new FeatureUsageData().addData("type", type);
-    FileType fileType = file.getFileType();
-
+                              @NotNull String event) {
+    final FeatureUsageData data = FileTypeUsagesCollector.newFeatureUsageData(file.getFileType());
     for (FileTypeUsageSchemaDescriptorEP<FileTypeUsageSchemaDescriptor> ext : EP.getExtensionList()) {
       FileTypeUsageSchemaDescriptor instance = ext.getInstance();
       if (ext.schema == null) {
@@ -48,11 +45,10 @@ public class FileTypeUsageCounterCollector {
       }
     }
 
-    final String id = FileTypeUsagesCollector.toReportedId(fileType, data);
-    FUCounterUsageLogger.getInstance().logEvent(project, "file.types.usage", id, data);
+    FUCounterUsageLogger.getInstance().logEvent(project, "file.types.usage", event, data);
   }
 
-  public static class FileTypeUsageSchemaDescriptorEP<T> extends AbstractExtensionPointBean implements KeyedLazyInstance<T> {
+  public static final class FileTypeUsageSchemaDescriptorEP<T> extends BaseKeyedLazyInstance<T> implements KeyedLazyInstance<T> {
     // these must be public for scrambling compatibility
     @Attribute("schema")
     public String schema;
@@ -60,17 +56,10 @@ public class FileTypeUsageCounterCollector {
     @Attribute("implementationClass")
     public String implementationClass;
 
-    private final LazyInstance<T> myHandler = new LazyInstance<T>() {
-      @Override
-      protected Class<T> getInstanceClass() throws ClassNotFoundException {
-        return findClass(implementationClass);
-      }
-    };
-
-    @NotNull
+    @Nullable
     @Override
-    public T getInstance() {
-      return myHandler.getValue();
+    protected String getImplementationClassName() {
+      return implementationClass;
     }
 
     @Override

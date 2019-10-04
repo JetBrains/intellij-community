@@ -767,8 +767,9 @@ public final class IdeKeyEventDispatcher implements Disposable {
   }
 
   private static final KeyboardShortcut CONTROL_ENTER = KeyboardShortcut.fromString("control ENTER");
+  private static final KeyboardShortcut CMD_ENTER = KeyboardShortcut.fromString("meta ENTER");
   private static boolean isControlEnterOnDialog(Component component, Shortcut sc) {
-    return CONTROL_ENTER.equals(sc)
+    return (CONTROL_ENTER.equals(sc) || (SystemInfo.isMac && CMD_ENTER.equals(sc)))
            && !IdeEventQueue.getInstance().isPopupActive() //avoid Control+Enter in completion
            && DialogWrapper.findInstance(component) != null;
   }

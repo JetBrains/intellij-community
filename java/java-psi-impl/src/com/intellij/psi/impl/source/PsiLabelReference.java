@@ -4,7 +4,7 @@ package com.intellij.psi.impl.source;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
-import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -67,7 +67,7 @@ public class PsiLabelReference implements PsiReference {
   @NotNull
   @Override
   public String[] getVariants() {
-    return ArrayUtilRt.toStringArray(PsiImplUtil.findAllEnclosingLabels(myStatement));
+    return ArrayUtil.toStringArray(PsiImplUtil.findAllEnclosingLabels(myStatement));
   }
 
   @Override

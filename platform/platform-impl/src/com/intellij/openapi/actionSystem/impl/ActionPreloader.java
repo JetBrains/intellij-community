@@ -3,20 +3,14 @@ package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.codeInsight.editorActions.TypedHandlerDelegate;
 import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PreloadingActivity;
 import com.intellij.openapi.progress.ProgressIndicator;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
 final class ActionPreloader extends PreloadingActivity {
   @Override
   public void preload(@NotNull ProgressIndicator indicator) {
-    if (!ApplicationManager.getApplication().isUnitTestMode() && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      ((ActionManagerImpl)ActionManager.getInstance()).preloadActions(indicator);
-    }
+    ((ActionManagerImpl)ActionManager.getInstance()).preloadActions(indicator);
     TypedHandlerDelegate.EP_NAME.getExtensionList();
   }
 }

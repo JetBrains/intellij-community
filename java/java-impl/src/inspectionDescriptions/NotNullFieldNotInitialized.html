@@ -1,0 +1,23 @@
+<html>
+<body>
+Reports fields annotated as not-null which are not initialized in constructor. Example:
+<pre>public class MyClass {
+  private @NotNull String value;
+
+  public void setValue(@NotNull String value) {
+    this.value = value;
+  }
+
+  public @NotNull String getValue() {
+    return value;
+  }
+}</pre>
+<p>
+  Such fields may violate the not-null constraint. E.g. in the example above while <code>setValue</code> parameter is annotated as not-null
+  <code>getValue</code> may return null if setter was not called.
+</p>
+<!-- tooltip end -->
+<p>Use the checkboxes below to control whether warning should be issued if field could be initialized implicitly
+  (e.g. via dependency injection) or if field is written in test case setUp() method.</p>
+</body>
+</html>

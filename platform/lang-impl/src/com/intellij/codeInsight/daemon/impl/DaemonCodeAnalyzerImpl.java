@@ -441,12 +441,6 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
   }
 
   @Override
-  public void updateVisibleHighlighters(@NotNull Editor editor) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    // no need, will not work anyway
-  }
-
-  @Override
   public synchronized void setUpdateByTimerEnabled(boolean value) {
     myUpdateByTimerEnabled = value;
     stopProcess(value, "Update by timer change");
@@ -642,7 +636,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
     final List<HighlightInfo> foundInfoList = new SmartList<>();
     processHighlightsNearOffset(document, myProject, minSeverity, offset, includeFixRange,
         info -> {
-          if (info.getSeverity() == HighlightInfoType.ELEMENT_UNDER_CARET_SEVERITY) {
+          if (info.getSeverity() == HighlightInfoType.ELEMENT_UNDER_CARET_SEVERITY || info.type == HighlightInfoType.TODO) {
             return true;
           }
           if (!foundInfoList.isEmpty()) {

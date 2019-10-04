@@ -22,6 +22,8 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -32,21 +34,21 @@ import org.jetbrains.annotations.NotNull;
 public class JavaCallHierarchyProvider implements HierarchyProvider {
   @Override
   public PsiElement getTarget(@NotNull final DataContext dataContext) {
-    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) return null;
-
-    final PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
+    PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
+    if (element instanceof PsiField) return element;
     return PsiTreeUtil.getParentOfType(element, PsiMethod.class, false);
   }
 
   @Override
   @NotNull
   public HierarchyBrowser createHierarchyBrowser(@NotNull PsiElement target) {
-    return new CallHierarchyBrowser(target.getProject(), (PsiMethod) target);
+    return new CallHierarchyBrowser(target.getProject(), (PsiMember)target);
   }
 
   @Override
   public void browserActivated(@NotNull final HierarchyBrowser hierarchyBrowser) {
-    ((CallHierarchyBrowser) hierarchyBrowser).changeView(CallHierarchyBrowserBase.CALLER_TYPE);
+    ((CallHierarchyBrowser)hierarchyBrowser).changeView(CallHierarchyBrowserBase.CALLER_TYPE);
   }
 }

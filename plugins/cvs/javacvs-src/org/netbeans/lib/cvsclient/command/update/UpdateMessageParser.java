@@ -103,7 +103,7 @@ public final class UpdateMessageParser extends AbstractMessageParser implements 
       return;
     }
 
-    if (line.indexOf(EXAM_DIR) >= 0) {
+    if (line.contains(EXAM_DIR)) {
       return;
     }
 
@@ -171,7 +171,7 @@ public final class UpdateMessageParser extends AbstractMessageParser implements 
     if (line.length() > 2) {
       if (line.charAt(1) == ' ') {
         final String firstChar = line.substring(0, 1);
-        if (STATES.indexOf(firstChar) >= 0) {
+        if (STATES.contains(firstChar)) {
           processFile(line.substring(2), firstChar);
         }
       }

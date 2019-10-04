@@ -30,6 +30,10 @@ public class FilePathHashingStrategy {
   public static TObjectHashingStrategy<String> create() {
     return create(SystemInfo.isFileSystemCaseSensitive);
   }
+  @NotNull
+  public static TObjectHashingStrategy<CharSequence> createForCharSequence() {
+    return SystemInfo.isFileSystemCaseSensitive ? CharSequenceHashingStrategy.CASE_SENSITIVE : CharSequenceHashingStrategy.CASE_INSENSITIVE;
+  }
 
   @NotNull
   public static TObjectHashingStrategy<String> create(boolean caseSensitive) {

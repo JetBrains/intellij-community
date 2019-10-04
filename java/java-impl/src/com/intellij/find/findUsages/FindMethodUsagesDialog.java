@@ -48,6 +48,7 @@ public class FindMethodUsagesDialog extends JavaFindUsagesDialog<JavaMethodFindU
     }
     options.isCheckDeepInheritance = true;
     FUStateUsagesLogger.logStateEvent(myEventLogGroup, "FindMethodUsages", createFeatureUsageData(options));
+    options.storeDefaults(myProject);
   }
 
   @Override

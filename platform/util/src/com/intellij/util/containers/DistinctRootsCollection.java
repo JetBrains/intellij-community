@@ -30,11 +30,11 @@ public abstract class DistinctRootsCollection<T> implements Collection<T> {
   public DistinctRootsCollection() {
   }
 
-  public DistinctRootsCollection(Collection<? extends T> collection) {
+  public DistinctRootsCollection(@NotNull Collection<? extends T> collection) {
     addAll(collection);
   }
 
-  public DistinctRootsCollection(T[] collection) {
+  public DistinctRootsCollection(@NotNull T[] collection) {
     this(Arrays.asList(collection));
   }
 

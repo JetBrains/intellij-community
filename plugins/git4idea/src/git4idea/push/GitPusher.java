@@ -18,18 +18,11 @@ package git4idea.push;
 import com.intellij.dvcs.push.PushSpec;
 import com.intellij.dvcs.push.Pusher;
 import com.intellij.dvcs.push.VcsPushOptionValue;
-import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.NotificationsManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
-import com.intellij.openapi.vcs.update.AbstractCommonUpdateAction;
-import com.intellij.openapi.vcs.update.UpdateInfoTree;
-import com.intellij.openapi.vcs.update.UpdatedFiles;
-import com.intellij.vcs.ViewUpdateInfoNotification;
 import git4idea.GitUtil;
-import git4idea.GitVcs;
 import git4idea.config.GitVcsSettings;
 import git4idea.repo.GitRepository;
 import git4idea.update.GitUpdateInfoAsLog;
@@ -38,11 +31,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
-
-import static com.intellij.openapi.util.text.StringUtil.pluralize;
-import static com.intellij.openapi.vcs.update.ActionInfo.UPDATE;
-import static git4idea.push.GitPushResultNotification.VIEW_FILES_UPDATED_DURING_THE_PUSH;
-import static java.util.Collections.singletonList;
 
 class GitPusher extends Pusher<GitRepository, GitPushSource, GitPushTarget> {
 
@@ -85,38 +73,8 @@ class GitPusher extends Pusher<GitRepository, GitPushSource, GitPushTarget> {
                                                            null;
 
     ApplicationManager.getApplication().invokeLater(() -> {
-      GitPushResultNotification notification = GitPushResultNotification.create(project, pushResult, pushOperation,
-                                                                                GitUtil.getRepositoryManager(project).moreThanOneRoot());
-      if (AbstractCommonUpdateAction.showsCustomNotification(singletonList(GitVcs.getInstance(project)))) {
-        if (notificationData == null) {
-          notification.notify(project);
-        }
-        else {
-          String commitsNumber;
-          if (notificationData.getFilteredCommitsCount() == null) {
-            commitsNumber = String.valueOf(notificationData.getReceivedCommitsCount());
-          }
-          else {
-            commitsNumber = notificationData.getFilteredCommitsCount() + " of " + notificationData.getReceivedCommitsCount();
-          }
-          String actionText = String.format("View %s %s received during the push", commitsNumber,
-                                            pluralize("commit", notificationData.getReceivedCommitsCount()));
-          notification.addAction(NotificationAction.createSimple(actionText, notificationData.getViewCommitAction()));
-          notification.notify(project);
-        }
-      }
-      else {
-        UpdatedFiles updatedFiles = pushResult.getUpdatedFiles();
-        if (!updatedFiles.isEmpty()) {
-          UpdateInfoTree tree = ProjectLevelVcsManagerEx.getInstanceEx(project).showUpdateProjectInfo(updatedFiles, "Update", UPDATE, false);
-          if (tree != null) {
-            tree.setBefore(pushResult.getBeforeUpdateLabel());
-            tree.setAfter(pushResult.getAfterUpdateLabel());
-            notification.addAction(new ViewUpdateInfoNotification(project, tree, VIEW_FILES_UPDATED_DURING_THE_PUSH, notification));
-          }
-        }
-        notification.notify(project);
-      }
+      boolean multiRepoProject = GitUtil.getRepositoryManager(project).moreThanOneRoot();
+      GitPushResultNotification.create(project, pushResult, pushOperation, multiRepoProject, notificationData).notify(project);
     });
   }
 

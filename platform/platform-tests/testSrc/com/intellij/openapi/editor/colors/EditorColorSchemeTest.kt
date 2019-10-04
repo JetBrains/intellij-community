@@ -1,9 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.colors
 
 import com.intellij.configurationStore.schemeManager.SchemeManagerFactoryBase
 import com.intellij.ide.ui.UISettings
-import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager
 import com.intellij.openapi.editor.colors.impl.AbstractColorsScheme
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl
 import com.intellij.testFramework.ProjectRule
@@ -36,7 +35,7 @@ class EditorColorSchemeTest {
     </scheme>""".trimIndent()
     schemeFile.write(schemeData)
     val schemeManagerFactory = SchemeManagerFactoryBase.TestSchemeManagerFactory(fsRule.fs.getPath(""))
-    val manager = EditorColorsManagerImpl(DefaultColorSchemesManager.getInstance(), schemeManagerFactory)
+    val manager = EditorColorsManagerImpl(schemeManagerFactory)
 
     val scheme = manager.getScheme("Foo")
     assertThat(scheme.name).isEqualTo("Foo")

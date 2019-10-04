@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.ui.UISettings;
@@ -46,6 +32,7 @@ import com.intellij.util.PairFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -177,7 +164,7 @@ public class IdeBackgroundUtil {
   public static Color getIdeBackgroundColor() {
     return new JBColor(() -> {
       Color light = ColorUtil.darker(UIUtil.getPanelBackground(), 3);
-      return UIUtil.isUnderDarcula() ? Gray._40 : light;
+      return StartupUiUtil.isUnderDarcula() ? Gray._40 : light;
     });
   }
 
@@ -386,7 +373,7 @@ public class IdeBackgroundUtil {
       Shape prevClip = getClip();
       Shape tmpClip = calcTempClip(prevClip, sourceShape != null ? sourceShape : new Rectangle(x, y, width, height));
       if (tmpClip == null) return;
-      
+
       boolean preserve = preserved != null && reason instanceof Color && preserved.value((Color)reason);
       if (preserve) {
         myDelegate.setRenderingHint(ADJUST_ALPHA, Boolean.TRUE);
@@ -427,8 +414,8 @@ public class IdeBackgroundUtil {
       if (gg instanceof MyGraphics) {
         Component view = c instanceof JViewport ? ((JViewport)c).getView() : c;
         Color selection1 = view instanceof JTree ? UIUtil.getTreeSelectionBackground() :
-                           view instanceof JList ? UIUtil.getListSelectionBackground() :
-                           view instanceof JTable ? UIUtil.getTableSelectionBackground() : null;
+                           view instanceof JList ? UIUtil.getListSelectionBackground(true) :
+                           view instanceof JTable ? UIUtil.getTableSelectionBackground(true) : null;
         Color selection2 = view instanceof JTree ? UIUtil.getTreeUnfocusedSelectionBackground() :
                            view instanceof JList ? UIUtil.getListUnfocusedSelectionBackground() :
                            view instanceof JTable ? UIUtil.getTableUnfocusedSelectionBackground() : null;

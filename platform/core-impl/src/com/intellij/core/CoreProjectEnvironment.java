@@ -8,7 +8,6 @@ import com.intellij.mock.MockProject;
 import com.intellij.mock.MockResolveScopeManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Disposer;
@@ -51,9 +50,9 @@ public class CoreProjectEnvironment {
     PsiModificationTrackerImpl modificationTracker = new PsiModificationTrackerImpl(myProject);
     myProject.registerService(PsiModificationTracker.class, modificationTracker);
     myProject.registerService(FileIndexFacade.class, myFileIndexFacade);
-    myProject.registerService(ResolveCache.class, new ResolveCache(myMessageBus));
+    myProject.registerService(ResolveCache.class, new ResolveCache(myProject));
 
-    myPsiManager = new PsiManagerImpl(myProject, null, null, myFileIndexFacade, myMessageBus, modificationTracker);
+    myPsiManager = new PsiManagerImpl(myProject);
     registerProjectComponent(PsiManager.class, myPsiManager);
     myProject.registerService(SmartPointerManager.class, SmartPointerManagerImpl.class);
     registerProjectComponent(PsiDocumentManager.class, new CorePsiDocumentManager(myProject, myPsiManager,
@@ -97,7 +96,7 @@ public class CoreProjectEnvironment {
 
   public <T> void registerProjectExtensionPoint(@NotNull ExtensionPointName<T> extensionPointName,
                                                 @NotNull Class<? extends T> aClass) {
-    CoreApplicationEnvironment.registerExtensionPoint(Extensions.getArea(myProject), extensionPointName, aClass);
+    CoreApplicationEnvironment.registerExtensionPoint(myProject.getExtensionArea(), extensionPointName, aClass);
   }
 
   public <T> void addProjectExtension(@NotNull ExtensionPointName<T> name, @NotNull final T extension) {

@@ -70,17 +70,14 @@ public class GitLogDiffHandler implements VcsLogDiffHandler {
       showDiffForPaths(root, Collections.singleton(chooseNotNull(leftPath, rightPath)), leftHash, rightHash);
     }
     else {
-      loadDiffAndShow(new ThrowableComputable<DiffRequest, VcsException>() {
-                        @Override
-                        public DiffRequest compute() throws VcsException {
-                          DiffContent leftDiffContent = createDiffContent(root, leftPath, leftHash);
-                          DiffContent rightDiffContent = createDiffContent(root, rightPath, rightHash);
+      loadDiffAndShow((ThrowableComputable<DiffRequest, VcsException>)() -> {
+        DiffContent leftDiffContent = createDiffContent(root, leftPath, leftHash);
+        DiffContent rightDiffContent = createDiffContent(root, rightPath, rightHash);
 
-                          return new SimpleDiffRequest(getTitle(leftPath, rightPath, DIFF_TITLE_RENAME_SEPARATOR),
-                                                       leftDiffContent, rightDiffContent,
-                                                       leftHash.asString(), rightHash.asString());
-                        }
-                      },
+        return new SimpleDiffRequest(getTitle(leftPath, rightPath, DIFF_TITLE_RENAME_SEPARATOR),
+                                     leftDiffContent, rightDiffContent,
+                                     leftHash.asString(), rightHash.asString());
+      },
                       request -> DiffManager.getInstance().showDiff(myProject, request),
                       "Calculating Diff for " + chooseNotNull(rightPath, leftPath).getName());
     }
@@ -93,16 +90,13 @@ public class GitLogDiffHandler implements VcsLogDiffHandler {
       showDiffForPaths(root, Collections.singleton(localPath), revisionHash, null);
     }
     else {
-      loadDiffAndShow(new ThrowableComputable<DiffRequest, VcsException>() {
-                        @Override
-                        public DiffRequest compute() throws VcsException {
-                          DiffContent leftDiffContent = createDiffContent(root, revisionPath, revisionHash);
-                          DiffContent rightDiffContent = createCurrentDiffContent(localPath);
-                          return new SimpleDiffRequest(getTitle(revisionPath, localPath, DIFF_TITLE_RENAME_SEPARATOR),
-                                                       leftDiffContent, rightDiffContent,
-                                                       revisionHash.asString(), "(Local)");
-                        }
-                      },
+      loadDiffAndShow((ThrowableComputable<DiffRequest, VcsException>)() -> {
+        DiffContent leftDiffContent = createDiffContent(root, revisionPath, revisionHash);
+        DiffContent rightDiffContent = createCurrentDiffContent(localPath);
+        return new SimpleDiffRequest(getTitle(revisionPath, localPath, DIFF_TITLE_RENAME_SEPARATOR),
+                                     leftDiffContent, rightDiffContent,
+                                     revisionHash.asString(), "(Local)");
+      },
                       request -> DiffManager.getInstance().showDiff(myProject, request), "Calculating Diff for " + localPath.getName());
     }
   }

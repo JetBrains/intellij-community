@@ -134,22 +134,22 @@ public class UnusedSymbolUtil {
     }
     else {
       //class maybe used in some weird way, e.g. from XML, therefore the only constructor is used too
-      boolean isConstructor = method.isConstructor();
-      if (containingClass != null && isConstructor
-          && containingClass.getConstructors().length == 1
-          && isClassUsed(project, containingFile, containingClass, progress, helper)) {
+      if (isTheOnlyConstructor(method, containingClass) &&
+          isClassUsed(project, containingFile, containingClass, progress, helper)) {
         return true;
       }
       if (isImplicitUsage(project, method, progress)) return true;
 
-      if (!isConstructor && FindSuperElementsHelper.findSuperElements(method).length != 0) {
+      if (!method.isConstructor() && FindSuperElementsHelper.findSuperElements(method).length != 0) {
         return true;
       }
-      if (!weAreSureThereAreNoUsages(project, containingFile, method, progress, helper)) {
-        return true;
-      }
+      return !weAreSureThereAreNoUsages(project, containingFile, method, progress, helper);
     }
     return false;
+  }
+
+  private static boolean isTheOnlyConstructor(@NotNull PsiMethod method, @Nullable PsiClass containingClass) {
+    return method.isConstructor() && containingClass != null && containingClass.getConstructors().length == 1;
   }
 
   private static boolean weAreSureThereAreNoUsages(@NotNull Project project,

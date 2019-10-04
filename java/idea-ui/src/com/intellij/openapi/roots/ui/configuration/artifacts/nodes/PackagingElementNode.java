@@ -142,20 +142,6 @@ public class PackagingElementNode<E extends PackagingElement<?>> extends Artifac
     return myContext;
   }
 
-  @Nullable
-  public CompositePackagingElementNode findCompositeChild(@NotNull String name) {
-    final SimpleNode[] children = getChildren();
-    for (SimpleNode child : children) {
-      if (child instanceof CompositePackagingElementNode) {
-        final CompositePackagingElementNode composite = (CompositePackagingElementNode)child;
-        if (name.equals(composite.getFirstElement().getName())) {
-          return composite;
-        }
-      }
-    }
-    return null;
-  }
-
 
   public List<PackagingElementNode<?>> getNodesByPath(List<? extends PackagingElement<?>> pathToPlace) {
     List<PackagingElementNode<?>> result = new ArrayList<>();

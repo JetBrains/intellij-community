@@ -22,6 +22,7 @@ import com.intellij.lang.LanguageUtil;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -75,7 +76,7 @@ public class PyLineBreakpointType extends XLineBreakpointTypeBase {
   }
 
   protected boolean isSuitableFileType(@NotNull Project project, @NotNull VirtualFile file) {
-    return file.getFileType() == getFileType() ||
+    return FileTypeRegistry.getInstance().isFileOfType(file, getFileType()) ||
            (ScratchUtil.isScratch(file) && LanguageUtil.getLanguageForPsi(project, file) == getFileLanguage());
   }
 

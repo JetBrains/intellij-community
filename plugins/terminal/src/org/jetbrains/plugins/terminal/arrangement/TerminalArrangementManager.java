@@ -15,6 +15,7 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.terminal.ShellTerminalWidget;
 import org.jetbrains.plugins.terminal.TerminalTabState;
 import org.jetbrains.plugins.terminal.TerminalView;
 
@@ -24,7 +25,7 @@ import java.util.List;
 import java.util.Set;
 
 @State(name = "TerminalArrangementManager", storages = {
-  @Storage(StoragePathMacros.CACHE_FILE)
+  @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)
 })
 public class TerminalArrangementManager implements PersistentStateComponent<TerminalArrangementState> {
 
@@ -82,7 +83,7 @@ public class TerminalArrangementManager implements PersistentStateComponent<Term
       TerminalTabState tabState = new TerminalTabState();
       tabState.myTabName = content.getTabName();
       tabState.myWorkingDirectory = myWorkingDirectoryManager.getWorkingDirectory(content);
-      String historyFilePath = terminalWidget.getCommandHistoryFilePath();
+      String historyFilePath = ShellTerminalWidget.getCommandHistoryFilePath(terminalWidget);
       tabState.myCommandHistoryFileName = historyFilePath != null ? PathUtil.getFileName(historyFilePath) : null;
       arrangementState.myTabStates.add(tabState);
     }
@@ -123,7 +124,9 @@ public class TerminalArrangementManager implements PersistentStateComponent<Term
       }
     }
     myTrackingCommandHistoryFileNames.add(historyFile.getName());
-    terminalWidget.setCommandHistoryFilePath(historyFile.getAbsolutePath());
+    if (terminalWidget instanceof ShellTerminalWidget) {
+      ((ShellTerminalWidget)terminalWidget).setCommandHistoryFilePath(historyFile.getAbsolutePath());
+    }
   }
 
   @NotNull

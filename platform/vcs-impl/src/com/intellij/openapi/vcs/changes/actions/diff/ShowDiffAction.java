@@ -40,7 +40,7 @@ import java.util.Map;
 public class ShowDiffAction implements AnActionExtensionProvider {
   @Override
   public boolean isActive(@NotNull AnActionEvent e) {
-    return true;
+    return true; // order="last"
   }
 
   @Override

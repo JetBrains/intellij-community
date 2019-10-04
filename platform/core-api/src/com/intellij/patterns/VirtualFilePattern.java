@@ -17,6 +17,7 @@
 package com.intellij.patterns;
 
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
@@ -33,7 +34,7 @@ public class VirtualFilePattern extends TreeElementPattern<VirtualFile, VirtualF
     return with(new PatternCondition<VirtualFile>("ofType") {
       @Override
       public boolean accepts(@NotNull final VirtualFile virtualFile, final ProcessingContext context) {
-        return type.equals(virtualFile.getFileType());
+        return FileTypeRegistry.getInstance().isFileOfType(virtualFile, type);
       }
     });
   }

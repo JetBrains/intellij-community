@@ -29,9 +29,9 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import org.intellij.plugins.relaxNG.ApplicationLoader;
+import org.intellij.plugins.relaxNG.RelaxNgMetaDataContributor;
 import org.intellij.plugins.relaxNG.compact.RncFileType;
-import org.intellij.plugins.relaxNG.validation.ValidateAction;
+import org.intellij.plugins.relaxNG.validation.RngValidateHandler;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -68,7 +68,7 @@ public class ConvertSchemaAction extends AnAction {
           final XmlTag rootTag = document.getRootTag();
           assert rootTag != null;
           final String uri = rootTag.getNamespace();
-          if (ApplicationLoader.RNG_NAMESPACE.equals(uri) && files.length == 1) {
+          if (RelaxNgMetaDataContributor.RNG_NAMESPACE.equals(uri) && files.length == 1) {
             return SchemaType.RNG;
           }
         }
@@ -103,7 +103,7 @@ public class ConvertSchemaAction extends AnAction {
         return;
       }
 
-      ValidateAction.saveFiles(files);
+      RngValidateHandler.saveFiles(files);
 
       final ConvertSchemaSettings settings = dialog.getSettings();
       final IdeaErrorHandler errorHandler = new IdeaErrorHandler(project);

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.zmlx.hg4idea.status.ui;
 
 import com.intellij.icons.AllIcons;
@@ -16,7 +16,6 @@ import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.status.EditorBasedWidget;
 import com.intellij.util.Consumer;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.CalledInAwt;
@@ -57,7 +56,7 @@ public class HgIncomingOutgoingWidget extends EditorBasedWidget
     myChangesStatus = new HgChangesetStatus(isIncoming ? "In" : "Out");
     isAlreadyShown = false;
     myEnabledIcon = myIsIncoming ? AllIcons.Ide.IncomingChangesOn : AllIcons.Ide.OutgoingChangesOn;
-    myDisabledIcon = ObjectUtils.notNull(IconLoader.getDisabledIcon(myEnabledIcon), myEnabledIcon);
+    myDisabledIcon = IconLoader.getDisabledIcon(myEnabledIcon);
     myCurrentIcon = myDisabledIcon;
     Disposer.register(project, this);
   }
@@ -75,7 +74,7 @@ public class HgIncomingOutgoingWidget extends EditorBasedWidget
   }
 
   @Override
-  public WidgetPresentation getPresentation(@NotNull PlatformType type) {
+  public WidgetPresentation getPresentation() {
     return this;
   }
 

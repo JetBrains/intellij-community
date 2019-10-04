@@ -8,6 +8,6 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.java.ide.resources" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.java.ide.customization" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.ide.customization" scope="TEST" />
   </component>
 </module>

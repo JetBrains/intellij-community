@@ -87,13 +87,7 @@ public class ToolWindowEP extends AbstractExtensionPointBean {
         return null;
       }
 
-      try {
-        myFactoryClass = findClass(factoryClass);
-      }
-      catch(Exception e) {
-        LOG.error(e);
-        return null;
-      }
+      myFactoryClass = findClassNoExceptions(factoryClass);
     }
     return myFactoryClass;
   }
@@ -102,7 +96,7 @@ public class ToolWindowEP extends AbstractExtensionPointBean {
   public Condition<Project> getCondition() {
     if (conditionClass != null) {
       try {
-        return instantiate(conditionClass, ApplicationManager.getApplication().getPicoContainer());
+        return instantiateClass(conditionClass, ApplicationManager.getApplication().getPicoContainer());
       }
       catch (Exception e) {
         LOG.error(e);

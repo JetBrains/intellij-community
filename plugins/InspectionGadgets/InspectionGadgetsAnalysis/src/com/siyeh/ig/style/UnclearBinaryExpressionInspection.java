@@ -179,7 +179,7 @@ public class UnclearBinaryExpressionInspection extends BaseInspection {
       appendText(polyadicExpression, parentheses, out);
     }
     else if (expression instanceof PsiParenthesizedExpression) {
-      for (PsiElement child : expression.getChildren()) {
+      for (PsiElement child = expression.getFirstChild(); child != null; child = child.getNextSibling()) {
         if (child instanceof PsiExpression) {
           final PsiExpression unwrappedExpression = (PsiExpression)child;
           createReplacementText(unwrappedExpression, out);
@@ -235,7 +235,7 @@ public class UnclearBinaryExpressionInspection extends BaseInspection {
     if (parentheses) {
       out.append('(');
     }
-    for (PsiElement child : expression.getChildren()) {
+    for (PsiElement child = expression.getFirstChild(); child != null; child = child.getNextSibling()) {
       if (child instanceof PsiExpression) {
         createReplacementText((PsiExpression)child, out);
       }

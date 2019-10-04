@@ -1,0 +1,11 @@
+<!-- included from ExtensionsHighlighting.xml can access all its EPs -->
+<idea-plugin>
+    <extensions defaultExtensionNs="com.intellij">
+        <myPlugin.foo.bar implementation="java.util.ArrayList" os="<error descr="Unknown enum value 'INVALID_VALUE'">INVALID_VALUE</error>"/>
+
+        <completion.contributor/>
+        <custom.custom/>
+        <indirect.indirect/>
+
+    </extensions>
+</idea-plugin>

@@ -10,7 +10,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkListener;
-import java.awt.*;
 
 /**
  * @author cdr
@@ -27,8 +26,6 @@ public abstract class HintManager {
   public static final short RIGHT = 4;
   public static final short RIGHT_UNDER = 5;
   public static final short DEFAULT = 6;
-
-  public abstract boolean isHint(Window window);
 
   @MagicConstant(intValues = {ABOVE, UNDER, LEFT, RIGHT, RIGHT_UNDER, DEFAULT})
   public @interface PositionFlags {}

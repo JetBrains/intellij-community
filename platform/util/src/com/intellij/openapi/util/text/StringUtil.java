@@ -12,6 +12,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.*;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TLongArrayList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,13 +35,14 @@ import java.util.stream.Collectors;
 //TeamCity inherits StringUtil: do not add private constructors!!!
 @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
 public class StringUtil extends StringUtilRt {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.text.StringUtil");
+  private static final Logger LOG = Logger.getInstance(StringUtil.class);
 
   @SuppressWarnings("SpellCheckingInspection") private static final String VOWELS = "aeiouy";
   private static final Pattern EOL_SPLIT_KEEP_SEPARATORS = Pattern.compile("(?<=(\r\n|\n))|(?<=\r)(?=[^\n])");
   private static final Pattern EOL_SPLIT_PATTERN = Pattern.compile(" *(\r|\n|\r\n)+ *");
   private static final Pattern EOL_SPLIT_PATTERN_WITH_EMPTY = Pattern.compile(" *(\r|\n|\r\n) *");
   private static final Pattern EOL_SPLIT_DONT_TRIM_PATTERN = Pattern.compile("(\r|\n|\r\n)+");
+  public static final String ELLIPSIS = "\u2026";
 
   /**
    * @return a lightweight CharSequence which results from replacing {@code [start, end)} range in the {@code charSeq} with {@code replacement}.
@@ -874,7 +876,12 @@ public class StringUtil extends StringUtilRt {
 
   @Contract(pure = true)
   public static int stringHashCode(@NotNull CharSequence chars, int from, int to) {
-    int h = 0;
+    return stringHashCode(chars, from, to, 0);
+  }
+
+  @Contract(pure = true)
+  public static int stringHashCode(@NotNull CharSequence chars, int from, int to, int prefixHash) {
+    int h = prefixHash;
     for (int off = from; off < to; off++) {
       h = 31 * h + chars.charAt(off);
     }
@@ -901,7 +908,12 @@ public class StringUtil extends StringUtilRt {
 
   @Contract(pure = true)
   public static int stringHashCodeInsensitive(@NotNull CharSequence chars, int from, int to) {
-    int h = 0;
+    return stringHashCodeInsensitive(chars, from, to, 0);
+  }
+
+  @Contract(pure = true)
+  public static int stringHashCodeInsensitive(@NotNull CharSequence chars, int from, int to, int prefixHash) {
+    int h = prefixHash;
     for (int off = from; off < to; off++) {
       h = 31 * h + toLowerCase(chars.charAt(off));
     }
@@ -1843,6 +1855,18 @@ public class StringUtil extends StringUtilRt {
     return StringUtilRt.endsWith(text, suffix);
   }
 
+  @Contract(pure = true)
+  public static boolean endsWith(@NotNull CharSequence text, int start, int end, @NotNull CharSequence suffix) {
+    int suffixLen = suffix.length();
+    if (end < suffixLen) return false;
+
+    for (int i = end - 1; i >= end - suffixLen && i >= start; i--) {
+      if (text.charAt(i) != suffix.charAt(i + suffixLen - end)) return false;
+    }
+
+    return true;
+  }
+
   @NotNull
   @Contract(pure = true)
   public static String commonPrefix(@NotNull String s1, @NotNull String s2) {
@@ -2093,7 +2117,7 @@ public class StringUtil extends StringUtilRt {
   @Contract(pure = true)
   public static String firstLast(@NotNull String text, int length) {
     return text.length() > length
-           ? text.subSequence(0, length / 2) + "\u2026" + text.subSequence(text.length() - length / 2 - 1, text.length())
+           ? text.subSequence(0, length / 2) + ELLIPSIS + text.subSequence(text.length() - length / 2 - 1, text.length())
            : text;
   }
 
@@ -3078,7 +3102,7 @@ public class StringUtil extends StringUtilRt {
                                                final int maxLength,
                                                final int suffixLength,
                                                boolean useEllipsisSymbol) {
-    String symbol = useEllipsisSymbol ? "\u2026" : "...";
+    String symbol = useEllipsisSymbol ? ELLIPSIS : "...";
     return shortenTextWithEllipsis(text, maxLength, suffixLength, symbol);
   }
 
@@ -3400,6 +3424,7 @@ public class StringUtil extends StringUtilRt {
 
   /** @deprecated use {@link #startsWithConcatenation(String, String...)} (to remove in IDEA 15) */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2015")
   public static boolean startsWithConcatenationOf(@NotNull String string, @NotNull String firstPrefix, @NotNull String secondPrefix) {
     return startsWithConcatenation(string, firstPrefix, secondPrefix);
   }
@@ -3421,5 +3446,43 @@ public class StringUtil extends StringUtilRt {
       return false;
     }
     return true;
+  }
+
+  @Contract(value = "null -> null; !null->!null", pure = true)
+  public static String internEmptyString(String s) {
+    return s == null ? null : s.isEmpty() ? "" : s;
+  }
+
+  /**
+   * Finds the next position in the supplied CharSequence which is neither a space nor a tab.
+   * @param text text
+   * @param pos starting position
+   * @return position of the first non-whitespace character after or equal to pos; or the length of the CharSequence
+   * if no non-whitespace character found
+   */
+  public static int skipWhitespaceForward(@NotNull CharSequence text, int pos) {
+    int length = text.length();
+    while (pos < length && isWhitespaceOrTab(text.charAt(pos))) {
+      pos++;
+    }
+    return pos;
+  }
+
+  /**
+   * Finds the previous position in the supplied CharSequence which is neither a space nor a tab.
+   * @param text text
+   * @param pos starting position
+   * @return position of the character before or equal to pos which has no space or tab before;
+   * or zero if no non-whitespace character found
+   */
+  public static int skipWhitespaceBackward(@NotNull CharSequence text, int pos) {
+    while (pos > 0 && isWhitespaceOrTab(text.charAt(pos - 1))) {
+      pos--;
+    }
+    return pos;
+  }
+
+  private static boolean isWhitespaceOrTab(char c) {
+    return c == ' ' || c == '\t';
   }
 }

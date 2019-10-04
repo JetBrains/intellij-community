@@ -26,7 +26,6 @@ public class Bundle {
   // all extensions should be lowercased
   private static final FileFilter SYNTAX_FILES_FILTER = new BundleFilesFilter("tmlanguage", "plist", "tmlanguage.json");
   private static final FileFilter PREFERENCE_FILES_FILTER = new BundleFilesFilter("tmpreferences", "plist");
-  private static final FileFilter THEME_FILES_FILTER = new BundleFilesFilter("tmtheme", "plist");
 
   protected final String myName;
   protected final File bundleFile;
@@ -51,11 +50,6 @@ public class Bundle {
   @NotNull
   public Collection<File> getPreferenceFiles() {
     return getFilesInBundle(myType.getPreferencesPath(), PREFERENCE_FILES_FILTER);
-  }
-  
-  @NotNull
-  public Collection<File> getThemeFiles() {
-    return getFilesInBundle(myType.getThemesPath(), THEME_FILES_FILTER);
   }
 
   @NotNull

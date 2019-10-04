@@ -69,7 +69,7 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   public boolean USE_COMMIT_MESSAGE_MARGIN = true;
   public boolean WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN = false;
   public boolean SHOW_UNVERSIONED_FILES_WHILE_COMMIT = true;
-  public boolean LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN = false;
+  public boolean LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN = true;
   public boolean SHELVE_DETAILS_PREVIEW_SHOWN = false;
   public boolean VCS_LOG_DETAILS_PREVIEW_SHOWN = false;
   public boolean RELOAD_CONTEXT = true;

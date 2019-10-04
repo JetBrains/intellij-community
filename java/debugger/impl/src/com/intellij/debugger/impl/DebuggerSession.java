@@ -487,6 +487,7 @@ public class DebuggerSession implements AbstractDebuggerSession {
       }
 
       final StackFrameContext positionContext;
+      SourcePosition position;
 
       if (currentThread == null) {
         //Pause pressed
@@ -545,9 +546,11 @@ public class DebuggerSession implements AbstractDebuggerSession {
           }
         }
         positionContext = new SimpleStackFrameContext(proxy, myDebugProcess);
+        position = ContextUtil.getSourcePosition(positionContext);
       }
       else {
         positionContext = suspendContext;
+        position = myDebugProcess.getPositionManager().getSourcePosition(suspendContext.getLocation());
       }
 
       if (currentThread != null) {
@@ -562,8 +565,6 @@ public class DebuggerSession implements AbstractDebuggerSession {
           resetIgnoreStepFiltersFlag();
         }
       }
-
-      SourcePosition position = ContextUtil.getSourcePosition(positionContext);
 
       if (position != null) {
         final List<Pair<Breakpoint, com.sun.jdi.event.Event>> eventDescriptors = DebuggerUtilsEx.getEventDescriptors(suspendContext);

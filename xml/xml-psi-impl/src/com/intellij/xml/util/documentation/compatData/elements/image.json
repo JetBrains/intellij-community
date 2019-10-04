@@ -14,9 +14,6 @@
             "edge": {
               "version_added": null
             },
-            "edge_mobile": {
-              "version_added": null
-            },
             "firefox": {
               "version_added": true,
               "notes": "Before Firefox 22, creating an &lt;image&gt; element incorrectly resulted in an <code>HTMLSpanElement</code> object, instead of the expected <code>HTMLElement</code>."

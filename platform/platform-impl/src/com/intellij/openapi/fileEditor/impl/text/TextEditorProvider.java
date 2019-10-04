@@ -241,7 +241,7 @@ public class TextEditorProvider implements DefaultPlatformFileEditorProvider, Du
     }
 
     final FileType ft = file.getFileType();
-    return !ft.isBinary() || BinaryFileTypeDecompilers.INSTANCE.forFileType(ft) != null;
+    return !ft.isBinary() || BinaryFileTypeDecompilers.getInstance().forFileType(ft) != null;
   }
 
   private static int getLine(@Nullable LogicalPosition pos) {

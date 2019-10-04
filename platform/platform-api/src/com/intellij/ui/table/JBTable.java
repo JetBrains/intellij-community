@@ -461,7 +461,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
 
   @NotNull
   protected AsyncProcessIcon createBusyIcon() {
-    return new AsyncProcessIcon(toString()).setUseMask(false);
+    return new AsyncProcessIcon(toString());
   }
 
   public boolean isStriped() {
@@ -548,7 +548,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
 
   private static boolean isTableDecorationSupported() {
     return UIUtil.isUnderNativeMacLookAndFeel()
-           || UIUtil.isUnderDarcula()
+           || StartupUiUtil.isUnderDarcula()
            || UIUtil.isUnderIntelliJLaF();
   }
 

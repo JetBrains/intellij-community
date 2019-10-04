@@ -74,12 +74,10 @@ public class PyMethodMayBeStaticInspectionTest extends PyInspectionTestCase {
   }
 
   public void testAbstractProperty() {
-    myFixture.configureByFile(getTestCaseDirectory() + "abc.py");
     doTest();
   }
 
   public void testPropertyWithAlias() {
-    myFixture.configureByFile(getTestCaseDirectory() + "abc.py");
     doTest();
   }
 

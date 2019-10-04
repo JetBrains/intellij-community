@@ -25,7 +25,7 @@ import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.paint.PaintUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.ImageUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,6 +48,7 @@ import static com.intellij.util.ui.UIUtil.useSafely;
  */
 public final class ToolWindowsPane extends JBLayeredPane implements UISettingsListener, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.ToolWindowsPane");
+  public static final String TEMPORARY_ADDED = "TEMPORARY_ADDED";
 
   private final IdeFrameImpl myFrame;
 
@@ -278,7 +279,9 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
   @NotNull
   final FinalizableCommand createRemoveDecoratorCmd(@NotNull String id, final boolean dirtyMode, @NotNull Runnable finishCallBack) {
     final Component decorator = getDecoratorById(id);
+    LOG.assertTrue(decorator != null, "Decorator not found: id = " + id);
     final WindowInfoImpl info = getDecoratorInfoById(id);
+    LOG.assertTrue(info != null, "WindowInfo not found: id = " + id);
 
     myDecorator2Info.remove(decorator);
     myId2Decorator.remove(id);
@@ -876,11 +879,11 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
   }
 
   private final class AddSlidingComponentCmd extends FinalizableCommand {
-    private final Component myComponent;
+    private final JComponent myComponent;
     private final WindowInfoImpl myInfo;
     private final boolean myDirtyMode;
 
-    AddSlidingComponentCmd(@NotNull Component component,
+    AddSlidingComponentCmd(@NotNull JComponent component,
                            @NotNull WindowInfoImpl info,
                            final boolean dirtyMode,
                            @NotNull Runnable finishCallBack) {
@@ -900,11 +903,16 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
           Rectangle bounds =  myComponent.getBounds();
 
           useSafely(topImage.getGraphics(), topGraphics -> {
-            myLayeredPane.add(myComponent, JLayeredPane.PALETTE_LAYER);
-            myLayeredPane.moveToFront(myComponent);
-            myLayeredPane.setBoundsInPaletteLayer(myComponent, myInfo.getAnchor(), myInfo.getWeight());
-            myComponent.paint(topGraphics);
-            myLayeredPane.remove(myComponent);
+            myComponent.putClientProperty(TEMPORARY_ADDED, Boolean.TRUE);
+            try {
+              myLayeredPane.add(myComponent, JLayeredPane.PALETTE_LAYER);
+              myLayeredPane.moveToFront(myComponent);
+              myLayeredPane.setBoundsInPaletteLayer(myComponent, myInfo.getAnchor(), myInfo.getWeight());
+              myComponent.paint(topGraphics);
+              myLayeredPane.remove(myComponent);
+            } finally {
+              myComponent.putClientProperty(TEMPORARY_ADDED, null);
+            }
           });
 
           // Prepare bottom image.
@@ -1249,7 +1257,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     private final Function<ScaleContext, ImageRef> myImageProvider = __ -> {
       int width = Math.max(Math.max(1, getWidth()), myFrame.getWidth());
       int height = Math.max(Math.max(1, getHeight()), myFrame.getHeight());
-      return new ImageRef(UIUtil.createImage(getGraphicsConfiguration(), width, height, BufferedImage.TYPE_INT_RGB));
+      return new ImageRef(ImageUtil.createImage(getGraphicsConfiguration(), width, height, BufferedImage.TYPE_INT_RGB));
     };
 
     /*

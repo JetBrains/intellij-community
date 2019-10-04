@@ -8,7 +8,6 @@ import com.intellij.json.JsonFileType;
 import com.intellij.json.psi.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Trinity;
@@ -19,6 +18,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider;
@@ -30,7 +30,6 @@ import com.jetbrains.jsonSchema.impl.inspections.JsonSchemaComplianceInspection;
 import com.jetbrains.jsonSchema.schemaFile.TestJsonSchemaMappingsProjectConfiguration;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
-import org.picocontainer.MutablePicoContainer;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -236,10 +235,7 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
       public void registerSchemes() {
         final String moduleDir = getModuleDir(getProject());
 
-        MutablePicoContainer container = Extensions.getArea(getProject()).getPicoContainer();
-        final String key = JsonSchemaMappingsProjectConfiguration.class.getName();
-        container.unregisterComponent(key);
-        container.registerComponentImplementation(key, TestJsonSchemaMappingsProjectConfiguration.class);
+        ServiceContainerUtil.replaceService(getProject(), JsonSchemaMappingsProjectConfiguration.class, new TestJsonSchemaMappingsProjectConfiguration(myProject), getTestRootDisposable());
 
         final UserDefinedJsonSchemaConfiguration inherited
           = new UserDefinedJsonSchemaConfiguration("inherited", JsonSchemaVersion.SCHEMA_4, moduleDir + "/referencingGlobalSchema.json", false,

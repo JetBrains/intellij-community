@@ -7,13 +7,12 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.DumbService
 import com.intellij.psi.*
-import com.intellij.ui.components.fields.IntegerField
+import com.intellij.ui.JBIntSpinner
 import com.intellij.ui.layout.*
 import com.intellij.util.ui.JBUI
 import com.siyeh.ig.psiutils.ExpressionUtils
+import org.intellij.lang.annotations.Language
 import javax.swing.JPanel
-import javax.swing.event.DocumentEvent
-import javax.swing.event.DocumentListener
 
 class MethodChainsInlayProvider : InlayHintsProvider<MethodChainsInlayProvider.Settings> {
   override fun getCollectorFor(file: PsiFile, editor: Editor, settings: Settings, sink: InlayHintsSink) =
@@ -39,8 +38,11 @@ class MethodChainsInlayProvider : InlayHintsProvider<MethodChainsInlayProvider.S
         }
         if (uniqueTypes.size < settings.uniqueTypeCount) return true // to hide hints for builders, where type is obvious
         val javaFactory = JavaTypeHintsPresentationFactory(factory, 3)
+        var lastType : PsiType? = null
         for ((index, currentCall) in chain.withIndex()) {
           val type = types[index]
+          if (lastType == type) continue
+          lastType = type
           val presentation = javaFactory.typeHint(type)
           val project = file.project
           val finalPresentation = InsetPresentation(MenuOnClickPresentation(presentation, project) {
@@ -57,29 +59,31 @@ class MethodChainsInlayProvider : InlayHintsProvider<MethodChainsInlayProvider.S
     get() = ourKey
 
   override fun createConfigurable(settings: Settings) = object : ImmediateConfigurable {
-    val uniqueTypeCountName = "Unique type count"
+    val uniqueTypeCountName = "Minimal unique type count to show hints"
 
-    private val field = IntegerField(uniqueTypeCountName, 1, 10)
+    private val uniqueTypeCount = JBIntSpinner(1, 1, 10)
 
     override fun createComponent(listener: ChangeListener): JPanel {
-      field.value = settings.uniqueTypeCount
-      field.document.addDocumentListener(object : DocumentListener {
-        override fun changedUpdate(e: DocumentEvent?) = handleChange(listener)
-        override fun insertUpdate(e: DocumentEvent?) = handleChange(listener)
-        override fun removeUpdate(e: DocumentEvent?) = handleChange(listener)
-      })
+      reset()
+      uniqueTypeCount.addChangeListener {
+        handleChange(listener)
+      }
       val panel = panel {
         row {
           label(uniqueTypeCountName)
-          field(pushX)
+          uniqueTypeCount(pushX)
         }
       }
       panel.border = JBUI.Borders.empty(5)
       return panel
     }
 
+    override fun reset() {
+      uniqueTypeCount.value = settings.uniqueTypeCount
+    }
+
     private fun handleChange(listener: ChangeListener) {
-      settings.uniqueTypeCount = field.value
+      settings.uniqueTypeCount = uniqueTypeCount.number
       listener.settingsChanged()
     }
   }
@@ -90,9 +94,29 @@ class MethodChainsInlayProvider : InlayHintsProvider<MethodChainsInlayProvider.S
     get() = "Method chains"
 
   override val previewText: String?
-    get() = "class Main {\n  public static void main(String[] args) {\n    new A()\n      .b()\n      .a()\n      .b()\n      .c();\n  }\n}" +
-            "\n\nclass A{\n  B b() {return null;}\n  C c() {return null;}\n}\n\nclass B {\n  A a() {return null;}\n  C c() {return null;}\n}" +
-            "\n\nclass C {\n\n  B b() {return null;}\n  A a() {return null;}\n}\n\n"
+    @Language("JAVA")
+    get() = """class Main {
+  void layout(A a) {
+    a
+     .b()
+     .a()
+     .b()
+     .c();
+  }
+  interface A {
+    B b();
+    C c();
+  }
+  interface B {
+    A a();
+    C c();
+  }
+  interface C {
+    B b();
+    A a();
+  }
+}
+"""
 
 
   private fun isFirstCall(call: PsiMethodCallExpression, editor: Editor): Boolean {
@@ -137,5 +161,7 @@ class MethodChainsInlayProvider : InlayHintsProvider<MethodChainsInlayProvider.S
     val ourKey: SettingsKey<Settings> = SettingsKey("chain.hints")
   }
 
-  data class Settings(var uniqueTypeCount: Int = 2)
+  data class Settings(var uniqueTypeCount: Int) {
+    constructor() : this(2)
+  }
 }

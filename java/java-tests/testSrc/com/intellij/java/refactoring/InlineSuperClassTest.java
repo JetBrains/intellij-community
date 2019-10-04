@@ -76,6 +76,7 @@ public class InlineSuperClassTest extends LightMultiFileTestCase {
   }
   public void testThisQualificationInsideAnonymous() { doTest(); }
   public void testOrderOfInnerClasses() { doTest(); }
+  public void testSuperMethodWithoutBody() { doTest(); }
 
   private void doTest() {
     doTest(false, false);

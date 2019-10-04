@@ -270,7 +270,7 @@ public final class JBUIScale {
    */
   public static float sysScale(@Nullable GraphicsConfiguration gc) {
     if (JreHiDpiUtil.isJreHiDPIEnabled() && gc != null) {
-      if (gc.getDevice().getType() == GraphicsDevice.TYPE_RASTER_SCREEN) {
+      if (gc.getDevice().getType() != GraphicsDevice.TYPE_PRINTER) {
         if (SystemInfo.isMac && JreHiDpiUtil.isJreHiDPI_earlierVersion()) {
           return DetectRetinaKit.isOracleMacRetinaDevice(gc.getDevice()) ? 2f : 1f;
         }

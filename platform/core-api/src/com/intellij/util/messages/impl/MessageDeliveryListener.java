@@ -8,5 +8,5 @@ import org.jetbrains.annotations.NotNull;
 @FunctionalInterface
 @ApiStatus.Internal
 public interface MessageDeliveryListener {
-  void messageDelivered(@NotNull Topic topic, @NotNull String messageName, @NotNull Object handler, long durationNanos);
+  void messageDelivered(@NotNull Topic<?> topic, @NotNull String messageName, @NotNull Object handler, long durationNanos);
 }

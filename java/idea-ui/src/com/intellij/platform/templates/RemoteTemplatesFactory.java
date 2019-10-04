@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform.templates;
 
-import com.intellij.ide.plugins.PluginManager;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.diagnostic.Logger;
@@ -107,7 +107,7 @@ public class RemoteTemplatesFactory extends ProjectTemplatesFactory {
 
   private static boolean checkRequiredPlugins(Element element) {
     for (Element plugin : element.getChildren("requiredPlugin")) {
-      if (!PluginManager.isPluginInstalled(PluginId.getId(plugin.getTextTrim()))) {
+      if (!PluginManagerCore.isPluginInstalled(PluginId.getId(plugin.getTextTrim()))) {
         return false;
       }
     }

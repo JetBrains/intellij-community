@@ -31,7 +31,7 @@ public class FileContentQueue {
   private static final long PROCESSED_FILE_BYTES_THRESHOLD = 1024 * 1024 * 3;
   private static final long LARGE_SIZE_REQUEST_THRESHOLD = PROCESSED_FILE_BYTES_THRESHOLD - 1024 * 300; // 300k for other threads
 
-  private static final ExecutorService ourExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("FileContentQueue Pool");
+  private static final Executor ourExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("FileContentQueue Pool");
 
   // Unbounded (!)
   private final LinkedBlockingDeque<FileContent> myLoadedContents = new LinkedBlockingDeque<>();
@@ -77,7 +77,7 @@ public class FileContentQueue {
         contentQueue = ourContentLoadingQueues.pollFirst();
       }
     };
-    ourExecutor.submit(task);
+    ourExecutor.execute(task);
   }
 
   private enum PreloadState {

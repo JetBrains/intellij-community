@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.pty4j.windows.WinPtyProcess;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jvnet.winp.WinProcess;
@@ -94,12 +95,16 @@ public class OSProcessUtil {
   }
 
   public static int getProcessID(@NotNull Process process) {
+    return getProcessID(process, Registry.is("disable.winp"));
+  }
+
+  public static int getProcessID(@NotNull Process process, Boolean disableWinp) {
     if (SystemInfo.isWindows) {
       try {
         if (process instanceof WinPtyProcess) {
           return ((WinPtyProcess)process).getChildProcessId();
         }
-        if (!Registry.is("disable.winp")) {
+        if (!disableWinp) {
           try {
             return createWinProcess(process).getPid();
           }
@@ -111,7 +116,7 @@ public class OSProcessUtil {
       }
       catch (Throwable e) {
         throw new IllegalStateException("Cannot get PID from instance of " + process.getClass()
-                                        + ", OS: " + SystemInfo.OS_NAME, e);
+          + ", OS: " + SystemInfo.OS_NAME, e);
       }
     }
     else if (SystemInfo.isUnix) {
@@ -157,6 +162,7 @@ public class OSProcessUtil {
   }
 
   /** @deprecated trivial; use {@link #getProcessList()} directly (to be removed in IDEA 2019) */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2019")
   @Deprecated
   public static List<String> getCommandLinesOfRunningProcesses() {
     List<String> result = new ArrayList<>();

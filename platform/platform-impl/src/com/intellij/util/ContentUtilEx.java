@@ -110,11 +110,6 @@ public class ContentUtilEx extends ContentsUtil {
     return tabbedContent;
   }
 
-  public static boolean isContentTab(@NotNull Content content, @NotNull String groupPrefix) {
-    return (content instanceof TabbedContent && content.getTabName().startsWith(getFullPrefix(groupPrefix))) ||
-           groupPrefix.equals(content.getUserData(Content.TAB_GROUP_NAME_KEY));
-  }
-
   @NotNull
   public static String getFullName(@NotNull String groupPrefix, @NotNull String tabName) {
     return getFullPrefix(groupPrefix) + tabName;
@@ -219,23 +214,22 @@ public class ContentUtilEx extends ContentsUtil {
     return -1;
   }
 
-  public static boolean renameTabbedContent(@NotNull ContentManager manager,
-                                            @NotNull JComponent contentComponent,
-                                            @NotNull String newName) {
+  public static void renameTabbedContent(@NotNull ContentManager manager,
+                                         @NotNull JComponent contentComponent,
+                                         @NotNull String newName) {
     for (Content content : manager.getContents()) {
       if (content instanceof TabbedContentImpl) {
         if (((TabbedContentImpl)content).rename(contentComponent, newName)) {
-          return true;
+          return;
         }
       }
       else if (Comparing.equal(content.getComponent(), contentComponent)) {
         String groupPrefix = content.getUserData(Content.TAB_GROUP_NAME_KEY);
         if (groupPrefix != null) {
           content.setDisplayName(getFullName(groupPrefix, newName));
-          return true;
+          return;
         }
       }
     }
-    return false;
   }
 }

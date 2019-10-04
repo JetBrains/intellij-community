@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.event;
 
+import com.intellij.openapi.Disposable;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.EventListener;
@@ -9,7 +10,7 @@ import java.util.EventListener;
  * Allows to receive information about mouse clicks in an editor.
  *
  * @see com.intellij.openapi.editor.Editor#addEditorMouseListener(EditorMouseListener)
- * @see EditorEventMulticaster#addEditorMouseListener(EditorMouseListener)
+ * @see EditorEventMulticaster#addEditorMouseListener(EditorMouseListener, Disposable)
  * @see EditorMouseMotionListener
  */
 public interface EditorMouseListener extends EventListener {

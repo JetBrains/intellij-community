@@ -7,14 +7,18 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
 /**
+ * Provides documentation for PSI elements.
+ * <p>
+ * Extend {@link AbstractDocumentationProvider}.
+ *
  * @see com.intellij.lang.LanguageDocumentation
  * @see DocumentationProviderEx
- * @see AbstractDocumentationProvider
  * @see ExternalDocumentationProvider
  * @see ExternalDocumentationHandler
  */
@@ -31,7 +35,7 @@ public interface DocumentationProvider {
    * @param element         the element for which the documentation is requested (for example, if the mouse is over
    *                        a method reference, this will be the method to which the reference is resolved).
    * @param originalElement the element under the mouse cursor
-   * @return the documentation to show, or null if the provider can't provide any documentation for this element. Documentation can contain
+   * @return the documentation to show, or {@code null} if the provider can't provide any documentation for this element. Documentation can contain
    * HTML markup. If HTML special characters need to be shown in popup, they should be properly escaped.
    */
   @Nullable
@@ -57,20 +61,21 @@ public interface DocumentationProvider {
   }
 
   /**
-   * Callback for asking the doc provider for the complete documentation.
-   * <p/>
-   * Underlying implementation may be time-consuming, that's why this method is expected not to be called from EDT.
-   * <p/>
-   * One can use {@link DocumentationMarkup} to get proper content layout. Typical sample will look like this:
+   * <p>Callback for asking the doc provider for the complete documentation.
+   * Underlying implementation may be time-consuming, that's why this method is expected not to be called from EDT.</p>
+   *
+   * <p>One can use {@link DocumentationMarkup} to get proper content layout. Typical sample will look like this:
    * <pre>
    * DEFINITION_START + definition + DEFINITION_END +
    * CONTENT_START + main description + CONTENT_END +
    * SECTIONS_START +
    *   SECTION_HEADER_START + section name +
-   *     SECTION_SEPARATOR + "<p>" + section content + SECTION_END +
+   *     SECTION_SEPARATOR + "&lt;p&gt;" + section content + SECTION_END +
    *   ... +
    * SECTIONS_END
    * </pre>
+   * </p>
+   * To show different content on mouse hover in editor, {@link #generateHoverDoc(PsiElement, PsiElement)} should be implemented.
    *
    * @param element         the element for which the documentation is requested (for example, if the mouse is over
    *                        a method reference, this will be the method to which the reference is resolved).
@@ -81,6 +86,17 @@ public interface DocumentationProvider {
   @Nullable
   default String generateDoc(PsiElement element, @Nullable PsiElement originalElement) {
     return null;
+  }
+
+  /**
+   * Same as {@link #generateDoc(PsiElement, PsiElement)}, but used for documentation showed on mouse hover in editor.
+   * <p>
+   * At the moment it's only invoked to get initial on-hover documentation. If user navigates any link in that documentation,
+   * {@link #generateDoc(PsiElement, PsiElement)} will be used to fetch corresponding content.
+   */
+  @Nullable
+  default String generateHoverDoc(@NotNull PsiElement element, @Nullable PsiElement originalElement) {
+    return generateDoc(element, originalElement);
   }
 
   @Nullable
@@ -95,7 +111,7 @@ public interface DocumentationProvider {
    * @param psiManager the PSI manager for the project in which the documentation is requested.
    * @param link       the text of the link, not including the protocol.
    * @param context    the element from which the navigation is performed.
-   * @return the navigation target, or null if the link couldn't be resolved.
+   * @return the navigation target, or {@code null} if the link couldn't be resolved.
    * @see DocumentationManagerUtil#createHyperlink(StringBuilder, String, String, boolean)
    */
   @Nullable

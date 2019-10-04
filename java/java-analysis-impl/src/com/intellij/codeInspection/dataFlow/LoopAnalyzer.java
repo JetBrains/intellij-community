@@ -33,12 +33,11 @@ class LoopAnalyzer {
           int[] froms = myIns.get(toIndex);
           if (froms == null) {
             froms = new int[]{fromIndex};
-            myIns.put(toIndex, froms);
           }
           else {
             froms = ArrayUtil.append(froms, fromIndex);
-            myIns.put(toIndex, froms);
           }
+          myIns.put(toIndex, froms);
         }
       }
     }

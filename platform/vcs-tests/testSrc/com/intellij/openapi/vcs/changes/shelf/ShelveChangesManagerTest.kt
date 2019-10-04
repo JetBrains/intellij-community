@@ -4,12 +4,12 @@ package com.intellij.openapi.vcs.changes.shelf
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.VcsTestUtil
-import com.intellij.testFramework.PlatformTestCase
+import com.intellij.testFramework.HeavyPlatformTestCase
 import junit.framework.TestCase
 import java.io.File
 import java.nio.file.Path
 
-class ShelveChangesManagerTest : PlatformTestCase() {
+class ShelveChangesManagerTest : HeavyPlatformTestCase() {
   private lateinit var myShelvedChangesManager: ShelveChangesManager
 
   override fun doCreateProject(projectFile: Path): Project {

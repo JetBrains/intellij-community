@@ -19,7 +19,6 @@ import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.util.containers.hash.HashMap;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.execution.MavenPropertiesPanel;
 import org.jetbrains.idea.maven.model.MavenArchetype;
@@ -31,6 +30,7 @@ import org.jetbrains.idea.maven.utils.MavenUtil;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.history.integration.ui.views;
 
@@ -35,17 +35,17 @@ public class RecentChangesPopup {
   }
 
   private static class RecentChangesListCellRenderer implements ListCellRenderer {
-    private final JPanel myPanel = new JPanel(new BorderLayout());
+    private final JPanel myPanel = new JPanel(new FlowLayout(FlowLayout.LEADING,UIUtil.DEFAULT_HGAP,2));
     private final JLabel myActionLabel = new JLabel("", JLabel.LEFT);
-    private final JLabel myDateLabel = new JLabel("", JLabel.RIGHT);
+    private final JLabel myDateLabel = new JLabel("", JLabel.LEFT);
     private final JPanel mySpacePanel = new JPanel();
 
     RecentChangesListCellRenderer() {
-      myPanel.add(myActionLabel, BorderLayout.WEST);
-      myPanel.add(myDateLabel, BorderLayout.EAST);
-      myPanel.add(mySpacePanel, BorderLayout.CENTER);
+      myPanel.add(myDateLabel);
+      myPanel.add(mySpacePanel);
+      myPanel.add(myActionLabel);
 
-      Dimension d = new Dimension(40, mySpacePanel.getPreferredSize().height);
+      Dimension d = new Dimension(10, mySpacePanel.getPreferredSize().height);
       mySpacePanel.setMinimumSize(d);
       mySpacePanel.setMaximumSize(d);
       mySpacePanel.setPreferredSize(d);
@@ -62,8 +62,8 @@ public class RecentChangesPopup {
     }
 
     private void updateColors(boolean isSelected) {
-      Color bg = isSelected ? UIUtil.getTableSelectionBackground() : UIUtil.getTableBackground();
-      Color fg = isSelected ? UIUtil.getTableSelectionForeground() : UIUtil.getTableForeground();
+      Color bg = isSelected ? UIUtil.getTableSelectionBackground(true) : UIUtil.getTableBackground();
+      Color fg = isSelected ? UIUtil.getTableSelectionForeground(true) : UIUtil.getTableForeground();
 
       setColors(bg, fg, myPanel, myActionLabel, myDateLabel, mySpacePanel);
     }

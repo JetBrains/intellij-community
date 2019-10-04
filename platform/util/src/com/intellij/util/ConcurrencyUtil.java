@@ -125,6 +125,14 @@ public class ConcurrencyUtil {
     return executor;
   }
 
+  /**
+   * Service which executes tasks synchronously immediately after they submitted
+   */
+  @NotNull
+  public static ExecutorService newSameThreadExecutorService() {
+    return new SameThreadExecutorService();
+  }
+
   @NotNull
   public static ThreadFactory newNamedThreadFactory(@NonNls @NotNull final String name, final boolean isDaemon, final int priority) {
     return r -> {
@@ -188,6 +196,11 @@ public class ConcurrencyUtil {
   }
   public static void joinAll(@NotNull Thread... threads) throws RuntimeException {
     joinAll(Arrays.asList(threads));
+  }
+  public static void getAll(@NotNull Collection<? extends Future<?>> futures) throws ExecutionException, InterruptedException {
+    for (Future<?> future : futures) {
+      future.get();
+    }
   }
 
   @NotNull

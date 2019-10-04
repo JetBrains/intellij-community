@@ -571,6 +571,16 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return null;
   }
 
+  @NotNull
+  public static List<Location> locationsOfLine(@NotNull Method method, int line) {
+    try {
+      return method.locationsOfLine(DebugProcess.JAVA_STRATUM, null, line);
+    }
+    catch (AbsentInformationException ignored) {
+    }
+    return Collections.emptyList();
+  }
+
   public static List<Value> getArgumentValues(@NotNull StackFrame frame) {
     try {
       return frame.getArgumentValues();

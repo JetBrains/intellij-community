@@ -16,7 +16,6 @@
 package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
-import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;
 
 /**
  * @author nik
@@ -124,26 +123,6 @@ abstract class MacDistributionCustomizer {
    * @return map propertyName-&gt;propertyValue
    */
   Map<String, String> getCustomIdeaProperties(ApplicationInfoProperties applicationInfo) { [:] }
-
-  /**
-   * Help bundle identifier for bundle in <a href="https://developer.apple.com/library/mac/documentation/Carbon/Conceptual/ProvidingUserAssitAppleHelp/authoring_help/authoring_help_book.html">Apple Help Bundle</a> format.
-   * If this field has non-null value, {@link #getPathToHelpZip} must be overridden to specify path to archive with help files.
-   * @deprecated help no longer bundled with IDEs
-   */
-  @Deprecated
-  @ScheduledForRemoval(inVersion = "2019.3")
-  String helpId = null
-
-  /**
-   * Override this method if you need to bundle help with macOS distribution of the product.
-   * @return path to zip archive containing directory "{@link #helpId}.help" with bundled help files inside.
-   * @deprecated help no longer bundled with IDEs
-   */
-  @Deprecated
-  @ScheduledForRemoval(inVersion = "2019.3")
-  String getPathToHelpZip(BuildContext context) {
-    null
-  }
 
   /**
    * Additional files to be copied to the distribution, e.g. help bundle or debugger binaries

@@ -32,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 public class PackageViewModuleNode extends AbstractModuleNode{
@@ -43,10 +44,12 @@ public class PackageViewModuleNode extends AbstractModuleNode{
   @NotNull
   public Collection<AbstractTreeNode> getChildren() {
     return AbstractTreeUi.calculateYieldingToWriteAction(() -> {
-      List<VirtualFile> roots = Arrays.asList(ModuleRootManager.getInstance(getValue()).getSourceRoots());
-      final Collection<AbstractTreeNode> result = PackageUtil.createPackageViewChildrenOnFiles(roots, myProject, getSettings(), getValue(), false);
+      Module module = getValue();
+      if (module == null || module.isDisposed()) return Collections.emptyList();
+      List<VirtualFile> roots = Arrays.asList(ModuleRootManager.getInstance(module).getSourceRoots());
+      final Collection<AbstractTreeNode> result = PackageUtil.createPackageViewChildrenOnFiles(roots, myProject, getSettings(), module, false);
       if (getSettings().isShowLibraryContents()) {
-        result.add(new PackageViewLibrariesNode(getProject(), getValue(),getSettings()));
+        result.add(new PackageViewLibrariesNode(getProject(), module, getSettings()));
       }
       return result;
     });

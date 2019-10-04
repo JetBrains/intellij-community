@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.find.impl;
 
@@ -40,8 +40,10 @@ import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.impl.VirtualFileManagerImpl;
+import com.intellij.packageDependencies.ChangeListsScopesProvider;
 import com.intellij.psi.*;
 import com.intellij.psi.search.*;
+import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.ui.content.Content;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewContentManager;
@@ -53,8 +55,8 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.PatternUtil;
 import com.intellij.util.Processor;
-import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
@@ -117,20 +119,11 @@ public class FindInProjectUtil {
         Change change = ArrayUtil.getFirstElement(dataContext.getData(VcsDataKeys.CHANGES));
         changeList = change == null ? null : ChangeListManager.getInstance(project).getChangeList(change);
       }
-
-      if (changeList != null) {
-        String changeListName = changeList.getName();
-        DefaultSearchScopeProviders.ChangeLists changeListsScopeProvider =
-          SearchScopeProvider.EP_NAME.findExtension(DefaultSearchScopeProviders.ChangeLists.class);
-        if (changeListsScopeProvider != null) {
-          SearchScope changeListScope = ContainerUtil.find(changeListsScopeProvider.getSearchScopes(project),
-                                                           scope -> scope.getDisplayName().equals(changeListName));
-          if (changeListScope != null) {
-            model.setCustomScope(true);
-            model.setCustomScopeName(changeListScope.getDisplayName());
-            model.setCustomScope(changeListScope);
-          }
-        }
+      NamedScope namedScope = changeList == null ? null : ChangeListsScopesProvider.getInstance(project).getCustomScope(changeList.getName());
+      if (namedScope != null) {
+        model.setCustomScope(true);
+        model.setCustomScopeName(namedScope.getName());
+        model.setCustomScope(GlobalSearchScopesCore.filterScope(project, namedScope));
       }
     }
 
@@ -139,6 +132,7 @@ public class FindInProjectUtil {
   }
 
   /** @deprecated to remove in IDEA 2018 */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2018")
   @Deprecated
   @Nullable
   public static PsiDirectory getPsiDirectory(@NotNull FindModel findModel, @NotNull Project project) {
@@ -162,8 +156,7 @@ public class FindInProjectUtil {
 
       for (VirtualFileSystem fs : fileSystems) {
         if (!(fs instanceof LocalFileProvider)) continue;
-        // note that findLocalVirtualFileByPath works differently from findFileByPath e.g. for path =  Foo.jar
-        VirtualFile file = ((LocalFileProvider)fs).findLocalVirtualFileByPath(path);
+        VirtualFile file = fs.findFileByPath(path);
         if (file != null && file.isDirectory()) {
           if (file.getChildren().length > 0) {
             virtualFile = file;
@@ -173,6 +166,9 @@ public class FindInProjectUtil {
             virtualFile = file;
           }
         }
+      }
+      if (virtualFile == null && !path.contains(JarFileSystem.JAR_SEPARATOR)) {
+        virtualFile = JarFileSystem.getInstance().findFileByPath(path + JarFileSystem.JAR_SEPARATOR);
       }
     }
     return virtualFile;
@@ -217,6 +213,7 @@ public class FindInProjectUtil {
    * @deprecated Use {@link #findUsages(FindModel, Project, Processor, FindUsagesProcessPresentation)} instead. To remove in IDEA 16
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2016")
   public static void findUsages(@NotNull FindModel findModel,
                                 @Nullable final PsiDirectory psiDirectory,
                                 @NotNull final Project project,

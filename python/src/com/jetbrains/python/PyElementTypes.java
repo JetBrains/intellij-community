@@ -16,10 +16,36 @@
 package com.jetbrains.python;
 
 import com.intellij.psi.tree.TokenSet;
-import com.jetbrains.python.psi.PyElementType;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.*;
+import com.jetbrains.python.psi.stubs.*;
 
-public interface PyElementTypes extends PyStubElementTypes {
+public interface PyElementTypes {
+
+  PyStubElementType<PyFunctionStub, PyFunction> FUNCTION_DECLARATION = PyStubElementTypes.FUNCTION_DECLARATION;
+  PyStubElementType<PyClassStub, PyClass> CLASS_DECLARATION = PyStubElementTypes.CLASS_DECLARATION;
+  PyStubElementType<PyParameterListStub, PyParameterList> PARAMETER_LIST = PyStubElementTypes.PARAMETER_LIST;
+
+  PyStubElementType<PyDecoratorListStub, PyDecoratorList> DECORATOR_LIST = PyStubElementTypes.DECORATOR_LIST;
+
+  PyStubElementType<PyNamedParameterStub, PyNamedParameter> NAMED_PARAMETER = PyStubElementTypes.NAMED_PARAMETER;
+  PyStubElementType<PyTupleParameterStub, PyTupleParameter> TUPLE_PARAMETER = PyStubElementTypes.TUPLE_PARAMETER;
+  PyStubElementType<PySlashParameterStub, PySlashParameter> SLASH_PARAMETER = PyStubElementTypes.SLASH_PARAMETER;
+  PyStubElementType<PySingleStarParameterStub, PySingleStarParameter> SINGLE_STAR_PARAMETER = PyStubElementTypes.SINGLE_STAR_PARAMETER;
+
+  PyStubElementType<PyDecoratorStub, PyDecorator> DECORATOR_CALL = PyStubElementTypes.DECORATOR_CALL;
+
+  PyStubElementType<PyImportElementStub, PyImportElement> IMPORT_ELEMENT = PyStubElementTypes.IMPORT_ELEMENT;
+
+  PyStubElementType<PyAnnotationStub, PyAnnotation> ANNOTATION = PyStubElementTypes.ANNOTATION;
+
+  PyStubElementType<PyStarImportElementStub, PyStarImportElement> STAR_IMPORT_ELEMENT = PyStubElementTypes.STAR_IMPORT_ELEMENT;
+  PyStubElementType<PyExceptPartStub, PyExceptPart> EXCEPT_PART = PyStubElementTypes.EXCEPT_PART;
+
+  PyStubElementType<PyFromImportStatementStub, PyFromImportStatement> FROM_IMPORT_STATEMENT = PyStubElementTypes.FROM_IMPORT_STATEMENT;
+  PyStubElementType<PyImportStatementStub, PyImportStatement> IMPORT_STATEMENT = PyStubElementTypes.IMPORT_STATEMENT;
+
+  PyStubElementType<PyTargetExpressionStub, PyTargetExpression> TARGET_EXPRESSION = PyStubElementTypes.TARGET_EXPRESSION;
 
   TokenSet PARAMETER_LIST_SET = TokenSet.create(PARAMETER_LIST);
 

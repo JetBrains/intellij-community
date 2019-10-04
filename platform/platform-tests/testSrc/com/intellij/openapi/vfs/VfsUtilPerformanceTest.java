@@ -90,18 +90,19 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
 
     JarFileSystem fs = JarFileSystem.getInstance();
     String path = jar.getPath() + "!/";
-    NewVirtualFile root = ManagingFS.getInstance().findRoot(path, fs);
-    PlatformTestUtil.startPerformanceTest("finding root", 10_000,
-        () -> JobLauncher.getInstance().invokeConcurrentlyUnderProgress(
+    ManagingFS managingFS = ManagingFS.getInstance();
+    NewVirtualFile root = managingFS.findRoot(path, fs);
+    PlatformTestUtil.startPerformanceTest("finding root", 20_000,
+      () -> JobLauncher.getInstance().invokeConcurrentlyUnderProgress(
         Collections.nCopies(500, null), null,
         __ -> {
-          for (int i = 0; i < 20_000; i++) {
-            NewVirtualFile rootJar = ManagingFS.getInstance().findRoot(path, fs);
+          for (int i = 0; i < 100_000; i++) {
+            NewVirtualFile rootJar = managingFS.findRoot(path, fs);
             assertNotNull(rootJar);
             assertSame(root, rootJar);
           }
           return true;
-        })).assertTiming();
+        })).usesAllCPUCores().assertTiming();
   }
 
   @Test

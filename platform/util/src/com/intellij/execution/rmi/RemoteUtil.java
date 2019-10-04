@@ -144,22 +144,14 @@ public class RemoteUtil {
   }
 
   public static <T> T substituteClassLoader(@NotNull final T remote, @Nullable final ClassLoader classLoader) throws Exception {
-    return executeWithClassLoader(new ThrowableComputable<T, Exception>() {
-      @Override
-      public T compute() {
-        Object proxy = Proxy.newProxyInstance(classLoader, remote.getClass().getInterfaces(), new InvocationHandler() {
-          @Override
-          public Object invoke(Object proxy, final Method method, final Object[] args) throws Throwable {
-            return executeWithClassLoader(new ThrowableComputable<Object, Exception>() {
-              @Override
-              public Object compute() throws Exception {
-                return invokeRemote(method, method, remote, args, classLoader, true);
-              }
-            }, classLoader);
-          }
-        });
-        return (T)proxy;
-      }
+    return executeWithClassLoader(() -> {
+      Object proxy = Proxy.newProxyInstance(classLoader, remote.getClass().getInterfaces(), new InvocationHandler() {
+        @Override
+        public Object invoke(Object proxy, final Method method, final Object[] args) throws Throwable {
+          return executeWithClassLoader(() -> invokeRemote(method, method, remote, args, classLoader, true), classLoader);
+        }
+      });
+      return (T)proxy;
     }, classLoader);
   }
 

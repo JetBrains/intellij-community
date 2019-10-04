@@ -3,12 +3,17 @@ package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.openapi.vcs.checkout.CheckoutActionGroup;
 import com.intellij.ui.UIBundle;
 import org.jetbrains.annotations.NotNull;
 
-public class GetFromVcsAction extends WelcomePopupAction{
+/**
+ * @deprecated superseded by {@link GetFromVersionControlAction}
+ */
+@Deprecated
+public class GetFromVcsAction extends WelcomePopupAction {
 
   @Override
   protected void fillActions(DefaultActionGroup group) {
@@ -32,6 +37,7 @@ public class GetFromVcsAction extends WelcomePopupAction{
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    e.getPresentation().setEnabled(CheckoutProvider.EXTENSION_POINT_NAME.hasAnyExtensions());
+    boolean isEnabled = !Registry.is("vcs.use.new.clone.dialog") && CheckoutProvider.EXTENSION_POINT_NAME.hasAnyExtensions();
+    e.getPresentation().setEnabledAndVisible(isEnabled);
   }
 }

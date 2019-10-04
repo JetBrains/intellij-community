@@ -31,6 +31,7 @@ import com.intellij.spellchecker.util.SpellCheckerBundle;
 import com.intellij.spellchecker.util.Strings;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -144,6 +145,7 @@ public class SpellCheckerManager implements Disposable {
    * {@link SpellCheckerManager#acceptWordAsCorrect(String, Project)} or
    * {@link ProjectDictionaryState#getProjectDictionary() and {@link CachedDictionaryState#getDictionary()}} instead
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2018.3")
   @Deprecated
   public EditableDictionary getUserDictionary() {
     return new AggregatedDictionary(myProjectDictionary, myAppDictionary);
@@ -171,7 +173,7 @@ public class SpellCheckerManager implements Disposable {
   }
 
   private void initUserDictionaries() {
-    final CachedDictionaryState cachedDictionaryState = ServiceManager.getService(project, CachedDictionaryState.class);
+    CachedDictionaryState cachedDictionaryState = CachedDictionaryState.getInstance();
     cachedDictionaryState.addCachedDictListener((dict) -> restartInspections());
     if (cachedDictionaryState.getDictionary() == null) {
       cachedDictionaryState.setDictionary(new UserDictionary(CachedDictionaryState.DEFAULT_NAME));
@@ -467,7 +469,7 @@ public class SpellCheckerManager implements Disposable {
       final String path = toSystemDependentName(file.getPath());
       if (!affectCustomDicts(path)) return;
 
-      visitChildrenRecursively(file, new VirtualFileVisitor() {
+      visitChildrenRecursively(file, new VirtualFileVisitor<Void>() {
         @Override
         public boolean visitFile(@NotNull VirtualFile file) {
           final boolean isDirectory = file.isDirectory();

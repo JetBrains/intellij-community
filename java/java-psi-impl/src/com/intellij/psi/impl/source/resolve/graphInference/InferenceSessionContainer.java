@@ -2,12 +2,15 @@
 package com.intellij.psi.impl.source.resolve.graphInference;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
 import com.intellij.psi.impl.source.resolve.ParameterTypeInferencePolicy;
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.ExpressionCompatibilityConstraint;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.*;
+import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -121,7 +124,9 @@ public class InferenceSessionContainer {
                                             @NotNull final MethodCandidateInfo currentMethod,
                                             @NotNull final InferenceSession parentSession) {
     final List<String> errorMessages = parentSession.getIncompatibleErrorMessages();
-    if (errorMessages != null) {
+    if (errorMessages != null && !MethodCandidateInfo.isOverloadCheck()) {
+      //for lambda parameter type calculation, the parent inference may contain errors due to skipping that lambda constraints
+      //but the type of the lambda parameter should not depend on the lambda body, thus the nested inference may still provide valid results
       return null;
     }
 
@@ -204,22 +209,28 @@ public class InferenceSessionContainer {
       }
     };
     final Map<PsiElement, InferenceSession> nestedSessions = topLevelSession.getInferenceSessionContainer().myNestedSessions;
-    for (Map.Entry<PsiElement, InferenceSession> entry : nestedSessions.entrySet()) {
-      nestedStates.put(entry.getKey(), entry.getValue().createInitialState(copy, topLevelSession.getInferenceVariables(), topInferenceSubstitutor));
+    if (!nestedSessions.isEmpty()) {
+      Project project = nestedSessions.keySet().iterator().next().getProject();
+      PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+      List<InitialInferenceState.VariableInfo> variableInfos = ContainerUtil
+        .map(topLevelSession.getInferenceVariables(), var -> new InitialInferenceState.VariableInfo(var, topInferenceSubstitutor, factory));
+      for (Map.Entry<PsiElement, InferenceSession> entry : nestedSessions.entrySet()) {
+        nestedStates.put(entry.getKey(), entry.getValue().createInitialState(copy, variableInfos, topInferenceSubstitutor));
+      }
     }
 
-    PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
+    Map<PsiTypeParameter, PsiType> map = new THashMap<>();
     for (InferenceVariable variable : topLevelSession.getInferenceVariables()) {
       final PsiType instantiation = variable.getInstantiation();
       if (instantiation != PsiType.NULL) {
         final PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(topInferenceSubstitutor.substitute(variable));
         if (psiClass instanceof InferenceVariable) {
-          substitutor = substitutor.put((PsiTypeParameter)psiClass, instantiation);
+          map.put((PsiTypeParameter)psiClass, instantiation);
         }
       }
     }
 
-    return new CompoundInitialState(substitutor, nestedStates);
+    return new CompoundInitialState(PsiSubstitutor.createSubstitutor(map), nestedStates);
   }
 
   @Nullable
@@ -248,17 +259,18 @@ public class InferenceSessionContainer {
   @NotNull
   private static PsiSubstitutor replaceVariables(Collection<InferenceVariable> inferenceVariables) {
     final List<InferenceVariable> targetVars = new ArrayList<>();
-    PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
+    Map<PsiTypeParameter, PsiType> map = new THashMap<>();
     final InferenceVariable[] oldVars = inferenceVariables.toArray(new InferenceVariable[0]);
     for (InferenceVariable variable : oldVars) {
       final InferenceVariable newVariable = new InferenceVariable(variable.getCallContext(), variable.getParameter(), variable.getName());
-      substitutor = substitutor.put(variable, JavaPsiFacade.getElementFactory(variable.getProject()).createType(newVariable));
+      map.put(variable, JavaPsiFacade.getElementFactory(variable.getProject()).createType(newVariable));
       targetVars.add(newVariable);
       if (variable.isThrownBound()) {
         newVariable.setThrownBound();
       }
       newVariable.putUserData(InferenceSession.ORIGINAL_CAPTURE, variable.getUserData(InferenceSession.ORIGINAL_CAPTURE));
     }
+    PsiSubstitutor substitutor = PsiSubstitutor.createSubstitutor(map);
 
     for (int i = 0; i < targetVars.size(); i++) {
       InferenceVariable var = targetVars.get(i);

@@ -11,6 +11,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.PathUtilRt;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.UrlClassLoader;
@@ -44,6 +45,7 @@ class InProcessGroovyc implements GroovycFlavor {
   private static final Pattern GROOVY_ALL_JAR_PATTERN = Pattern.compile("groovy-all(-(.*))?\\.jar");
   private static final Pattern GROOVY_JAR_PATTERN = Pattern.compile("groovy(-(.*))?\\.jar");
   private static final Pattern GROOVY_ECLIPSE_BATCH_PATTERN = Pattern.compile("groovy-eclipse-batch-(.*)\\.jar");
+  private static final Pattern GROOVY_JPS_PLUGIN_JARS_PATTERN = Pattern.compile("groovy-((jps-)|(rt-)|(constants-rt-)).*\\.jar");
   private static final ThreadPoolExecutor ourExecutor = ConcurrencyUtil.newSingleThreadExecutor("Groovyc");
   private static final String GROOVYC_FINISHED = "Groovyc finished";
   private static SoftReference<Pair<String, ClassLoader>> ourParentLoaderCache;
@@ -213,26 +215,35 @@ class InProcessGroovyc implements GroovycFlavor {
       });
   }
 
-  @Nullable
-  private static ClassLoader obtainParentLoader(Collection<String> compilationClassPath) throws MalformedURLException {
+  static String evaluatePathToGroovyAllForParentClassloader(Collection<String> compilationClassPath) {
     if (!SystemInfo.IS_AT_LEAST_JAVA9 && !"true".equals(System.getProperty("groovyc.reuse.compiler.classes", "true"))) {
       return null;
     }
 
     List<String> groovyJars = ContainerUtil.findAll(compilationClassPath, s -> {
-      String fileName = StringUtil.getShortName(s, '/');
+      String fileName = PathUtilRt.getFileName(s);
       return GROOVY_ALL_JAR_PATTERN.matcher(fileName).matches() || GROOVY_JAR_PATTERN.matcher(fileName).matches();
     });
-    ContainerUtil.retainAll(groovyJars, s -> !GROOVY_ECLIPSE_BATCH_PATTERN.matcher(StringUtil.getShortName(s, '/')).matches());
+    ContainerUtil.retainAll(groovyJars, s -> {
+      String fileName = PathUtilRt.getFileName(s);
+      return !GROOVY_ECLIPSE_BATCH_PATTERN.matcher(fileName).matches() && !GROOVY_JPS_PLUGIN_JARS_PATTERN.matcher(fileName).matches();
+    });
 
     LOG.debug("Groovy jars: " + groovyJars);
 
-    if (groovyJars.size() != 1 || !GROOVY_ALL_JAR_PATTERN.matcher(StringUtil.getShortName(groovyJars.get(0), '/')).matches()) {
+    if (groovyJars.size() != 1 || !GROOVY_ALL_JAR_PATTERN.matcher(PathUtilRt.getFileName(groovyJars.get(0))).matches()) {
       // avoid complications caused by caching classes from several groovy versions in classpath
       return null;
     }
 
-    String groovyAll = groovyJars.get(0);
+    return groovyJars.get(0);
+  }
+
+  @Nullable
+  private static ClassLoader obtainParentLoader(Collection<String> compilationClassPath) throws MalformedURLException {
+    String groovyAll = evaluatePathToGroovyAllForParentClassloader(compilationClassPath);
+    if (groovyAll == null) return null;
+
     Pair<String, ClassLoader> pair = SoftReference.dereference(ourParentLoaderCache);
     if (pair != null && pair.first.equals(groovyAll)) {
       return pair.second;
@@ -305,8 +316,6 @@ class InProcessGroovyc implements GroovycFlavor {
     ourParentLoaderCache = new SoftReference<>(Pair.create(groovyAll, wrapper));
     return wrapper;
   }
-
-
 
 
   @NotNull

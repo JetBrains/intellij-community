@@ -1,23 +1,8 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic.errordialog;
 
 import com.intellij.diagnostic.DiagnosticBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.extensions.PluginId;
@@ -163,7 +148,7 @@ public class PluginConflictDialog extends DialogWrapper {
     assert myRadioButtons != null && myRadioButtons.size() == myConflictingPlugins.size() + 1;
 
     for (int i = 0; i < myConflictingPlugins.size(); i++) {
-      final IdeaPluginDescriptor pluginDescriptor = PluginManager.getPlugin(myConflictingPlugins.get(i));
+      final IdeaPluginDescriptor pluginDescriptor = PluginManagerCore.getPlugin(myConflictingPlugins.get(i));
       if (pluginDescriptor != null
           && (pluginDescriptor.isBundled() || StringUtil.equalsIgnoreCase(pluginDescriptor.getVendor(), "JetBrains"))) {
         myRadioButtons.get(i).setSelected(true);
@@ -177,7 +162,7 @@ public class PluginConflictDialog extends DialogWrapper {
   private static JPanel getPluginDescriptionPanel(@NotNull PluginId plugin, boolean addUseWord) {
     final JPanel panel = new JPanel(new BorderLayout());
 
-    final IdeaPluginDescriptor pluginDescriptor = PluginManager.getPlugin(plugin);
+    final IdeaPluginDescriptor pluginDescriptor = PluginManagerCore.getPlugin(plugin);
     if (pluginDescriptor == null) {
       panel.add(new JBLabel(plugin.getIdString()), BorderLayout.CENTER);
       return panel;
@@ -198,7 +183,7 @@ public class PluginConflictDialog extends DialogWrapper {
 
   @NotNull
   private static String getPluginNameOrId(@NotNull PluginId pluginId) {
-    final IdeaPluginDescriptor pluginDescriptor = PluginManager.getPlugin(pluginId);
+    final IdeaPluginDescriptor pluginDescriptor = PluginManagerCore.getPlugin(pluginId);
     if (pluginDescriptor == null) {
       return pluginId.getIdString();
     }

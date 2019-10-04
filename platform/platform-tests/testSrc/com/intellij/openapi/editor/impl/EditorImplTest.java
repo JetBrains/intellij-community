@@ -5,7 +5,7 @@ import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.FontPreferences;
-import com.intellij.openapi.editor.ex.DocumentBulkUpdateListener;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
@@ -299,17 +299,14 @@ public class EditorImplTest extends AbstractEditorTest {
   }
 
   public void testChangingHighlightersInBulkModeListener() {
-    DocumentBulkUpdateListener.Adapter listener = new DocumentBulkUpdateListener.Adapter() {
-      @Override
-      public void updateFinished(@NotNull Document doc) {
-        if (doc == getEditor().getDocument()) {
-          getEditor().getMarkupModel().addRangeHighlighter(7, 8, 0, null, HighlighterTargetArea.EXACT_RANGE);
-        }
-      }
-    };
-    getProject().getMessageBus().connect(getTestRootDisposable()).subscribe(DocumentBulkUpdateListener.TOPIC, listener);
     initText("abcdef");
-    DocumentEx document = (DocumentEx)getEditor().getDocument();
+    Document document = getEditor().getDocument();
+    document.addDocumentListener(new DocumentListener() {
+      @Override
+      public void bulkUpdateFinished(@NotNull Document document) {
+        getEditor().getMarkupModel().addRangeHighlighter(7, 8, 0, null, HighlighterTargetArea.EXACT_RANGE);
+      }
+    }, getTestRootDisposable());
     runWriteCommand(() -> DocumentUtil.executeInBulk(document, true, ()-> document.insertString(3, "\n\n")));
     RangeHighlighter[] highlighters = getEditor().getMarkupModel().getAllHighlighters();
     assertEquals(1, highlighters.length);

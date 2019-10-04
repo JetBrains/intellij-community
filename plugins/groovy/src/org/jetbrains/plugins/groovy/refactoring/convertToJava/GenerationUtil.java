@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -10,7 +10,7 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.TypeConversionUtil;
 import java.util.HashMap;
-import com.intellij.util.containers.hash.HashSet;
+import java.util.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -518,6 +518,17 @@ public class GenerationUtil {
         myResult = true;
         return false;
       }
+
+      if (myMember instanceof PsiMethod) {
+        PsiMethod[] methods = ((PsiMethod)myMember).findSuperMethods();
+        for (PsiMethod method: methods) {
+          if (myManager.areElementsEquivalent(element, method)) {
+            myResult = true;
+            return false;
+          }
+        }
+      }
+
       return true;
     }
 

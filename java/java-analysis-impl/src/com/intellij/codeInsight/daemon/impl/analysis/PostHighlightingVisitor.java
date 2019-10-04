@@ -70,7 +70,7 @@ class PostHighlightingVisitor {
       // schedule optimise action at the time of session disposal, which is after all applyInformation() calls
       Disposable invokeFixLater = () -> {
         // later because should invoke when highlighting is finished
-        AppUIExecutor.onUiThread().later().inTransaction(myProject).withDocumentsCommitted(myProject).submit(() -> {
+        AppUIExecutor.onUiThread().later().inTransaction(myProject).withDocumentsCommitted(myProject).execute(() -> {
           if (!myFile.isValid() || !myFile.isWritable()) return;
           IntentionAction optimizeImportsFix = QuickFixFactory.getInstance().createOptimizeImportsFix(true);
           if (optimizeImportsFix.isAvailable(myProject, null, myFile)) {

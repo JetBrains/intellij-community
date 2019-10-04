@@ -1,19 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.injected.editor.VirtualFileWindow;
@@ -25,6 +10,7 @@ import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.ModificationTracker;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,14 +20,15 @@ import java.util.Collection;
 /**
  * @author yole
  */
-public class ProjectFileIndexFacade extends FileIndexFacade {
-  private final DirectoryIndex myDirectoryIndex;
+public final class ProjectFileIndexFacade extends FileIndexFacade {
+  // PsiManagerImpl is created for default project, but DirectoryIndex must be not created for default project.
+  private final NotNullLazyValue<DirectoryIndex> myDirectoryIndex = NotNullLazyValue.createValue(() -> DirectoryIndex.getInstance(myProject));
   private final ProjectFileIndex myFileIndex;
 
-  public ProjectFileIndexFacade(final Project project, final ProjectRootManager rootManager, final DirectoryIndex directoryIndex) {
+  ProjectFileIndexFacade(@NotNull Project project) {
     super(project);
-    myDirectoryIndex = directoryIndex;
-    myFileIndex = rootManager.getFileIndex();
+
+    myFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
   }
 
   @Override
@@ -93,7 +80,7 @@ public class ProjectFileIndexFacade extends FileIndexFacade {
     while (true) {
       if (childDir == null) return false;
       if (childDir.equals(baseDir)) return true;
-      if (!myDirectoryIndex.getInfoForFile(childDir).isInProject(childDir)) return false;
+      if (!myDirectoryIndex.getValue().getInfoForFile(childDir).isInProject(childDir)) return false;
       childDir = childDir.getParent();
     }
   }
@@ -114,7 +101,7 @@ public class ProjectFileIndexFacade extends FileIndexFacade {
   public boolean isInProjectScope(@NotNull VirtualFile file) {
     // optimization: equivalent to the super method but has fewer getInfoForFile() calls
     if (file instanceof VirtualFileWindow) return true;
-    DirectoryInfo info = myDirectoryIndex.getInfoForFile(file);
+    DirectoryInfo info = myDirectoryIndex.getValue().getInfoForFile(file);
     if (!info.isInProject(file)) return false;
     if (info.hasLibraryClassRoot() && !info.isInModuleSource(file)) return false;
     return info.getModule() != null;

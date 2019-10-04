@@ -71,8 +71,8 @@ public class UnnecessaryParenthesesInspection
         private float pageHeight; // in cm.
 
         public void foo() {
-            final float width = <error descr="Cannot resolve method 'getSize()'">getSize</error>().width; // actual width in dots
-            final float height = <error descr="Cannot resolve method 'getSize()'">getSize</error>().height; // actual height in dots
+            final float width = <error descr="Cannot resolve method 'getSize' in 'ParenBug'">getSize</error>().width; // actual width in dots
+            final float height = <error descr="Cannot resolve method 'getSize' in 'ParenBug'">getSize</error>().height; // actual height in dots
 
             // to determine the ratio, do the following:
             final float ratio;

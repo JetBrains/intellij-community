@@ -17,7 +17,7 @@
 package com.intellij.refactoring.inlineSuperClass;
 
 import com.intellij.codeInsight.TargetElementUtil;
-import com.intellij.lang.StdLanguages;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
@@ -42,7 +42,7 @@ public class InlineSuperClassRefactoringHandler extends JavaInlineActionHandler 
   @Override
   public boolean canInlineElement(PsiElement element) {
     if (!(element instanceof PsiClass)) return false;
-    if (element.getLanguage() != StdLanguages.JAVA) return false;
+    if (element.getLanguage() != JavaLanguage.INSTANCE) return false;
     Collection<PsiClass> inheritors = DirectClassInheritorsSearch.search((PsiClass)element).findAll();
     return inheritors.size() > 0;
   }

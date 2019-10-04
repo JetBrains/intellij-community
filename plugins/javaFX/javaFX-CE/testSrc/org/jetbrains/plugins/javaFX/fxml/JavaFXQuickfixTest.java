@@ -141,8 +141,7 @@ public class JavaFXQuickfixTest extends LightJavaCodeInsightFixtureTestCase {
     assertNotNull(intention);
     Set<String> languages = JavaFxInjectPageLanguageIntention.getAvailableLanguages(getProject());
     assertContainsElements(languages, "groovy");
-    JavaFxInjectPageLanguageIntention languageIntention =
-      (JavaFxInjectPageLanguageIntention)((IntentionActionDelegate)intention).getDelegate();
+    JavaFxInjectPageLanguageIntention languageIntention = (JavaFxInjectPageLanguageIntention)IntentionActionDelegate.unwrap(intention);
     languageIntention.registerPageLanguage(getProject(), (XmlFile)myFixture.getFile(), "groovy");
     myFixture.checkResultByFile(getTestName(true) + ".fxml", getTestName(true) + "_after.fxml", true);
   }

@@ -15,8 +15,10 @@
  */
 package com.siyeh.ipp.concatenation;
 
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ipp.IPPTestCase;
+import org.jetbrains.annotations.NotNull;
 
 public class JoinConcatenatedStringLiteralsIntentionTest extends IPPTestCase {
     public void testSimple() { doTest(); }
@@ -26,6 +28,15 @@ public class JoinConcatenatedStringLiteralsIntentionTest extends IPPTestCase {
     public void testNotAvailable() { assertIntentionNotAvailable(); }
     public void testInvalidLiteral() { assertIntentionNotAvailable(); }
     public void testKeepCommentsAndWhitespace() { doTest(); }
+    public void testTextBlocks() { doTest(); }
+    public void testTextBlocksTailingLineBreak() { doTest(); }
+    public void testTextBlocksAndStringLiteral() { doTest(); }
+
+    @NotNull
+    @Override
+    protected LightProjectDescriptor getProjectDescriptor() {
+        return JAVA_13;
+    }
 
     @Override
     protected String getIntentionName() {

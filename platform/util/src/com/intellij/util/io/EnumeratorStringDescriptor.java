@@ -25,7 +25,10 @@ import java.io.IOException;
  * @author Eugene Zhuravlev
  */
 public class EnumeratorStringDescriptor implements KeyDescriptor<String> {
-  public static final EnumeratorStringDescriptor INSTANCE = new EnumeratorStringDescriptor();
+  private static class EnumeratorStringDescriptorImpl
+    extends EnumeratorStringDescriptor
+    implements DifferentSerializableBytesImplyNonEqualityPolicy {}
+  public static final EnumeratorStringDescriptor INSTANCE = new EnumeratorStringDescriptorImpl();
 
   @Override
   public int getHashCode(final String value) {

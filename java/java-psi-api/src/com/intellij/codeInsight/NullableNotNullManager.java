@@ -4,7 +4,6 @@ package com.intellij.codeInsight;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.CachedValueProvider;
@@ -13,6 +12,7 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -152,6 +152,7 @@ public abstract class NullableNotNullManager {
 
   /** @deprecated use {@link #copyNotNullAnnotation(PsiModifierListOwner, PsiModifierListOwner)} (to be removed in IDEA 17) */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2017")
   public PsiAnnotation copyNotNullAnnotation(@NotNull PsiModifierListOwner owner) {
     NullabilityAnnotationInfo info = findOwnNullabilityInfo(owner);
     if (info == null || info.getNullability() != Nullability.NOT_NULL) return null;

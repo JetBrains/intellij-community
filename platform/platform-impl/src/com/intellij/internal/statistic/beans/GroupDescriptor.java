@@ -15,7 +15,10 @@
  */
 package com.intellij.internal.statistic.beans;
 
-@Deprecated // to be removed in 2018.2
+import org.jetbrains.annotations.ApiStatus;
+
+@Deprecated // to be removed in 2019.1
+@ApiStatus.ScheduledForRemoval(inVersion = "2019.1")
 public class GroupDescriptor {
   public static final double DEFAULT_PRIORITY = 0.0;
   public static final double HIGHER_PRIORITY = 100.0;
@@ -33,7 +36,7 @@ public class GroupDescriptor {
   }
 
   private GroupDescriptor(String id, double priority) {
-    myId = ConvertUsagesUtil.ensureProperKey(id);
+    myId = id;
     myPriority = priority;
   }
   public String getId() {

@@ -960,24 +960,16 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
       if (classMember != null && myBaseClassMembers.contains(classMember) && !isDelegated(classMember)) {
         final FieldAccessibility delegateFieldVisibility = new FieldAccessibility(true, getPsiClass());
         final InheritanceToDelegationUsageInfo usageInfo;
-        if (classMemberReference instanceof PsiReferenceExpression) {
-          if (((PsiReferenceExpression) classMemberReference).getQualifierExpression() == null) {
-            usageInfo = new UnqualifiedNonDelegatedMemberUsageInfo(classMemberReference, classMember,
-                                                                   delegateFieldVisibility);
-          } else {
-            usageInfo = new NonDelegatedMemberUsageInfo(
-                    ((PsiReferenceExpression) classMemberReference).getQualifierExpression(),
-                    classMember, delegateFieldVisibility
-            );
-          }
-          myUsageInfoStorage.add(usageInfo);
+        if (classMemberReference instanceof PsiReferenceExpression &&
+            ((PsiReferenceExpression)classMemberReference).getQualifierExpression() != null) {
+          usageInfo = new NonDelegatedMemberUsageInfo(((PsiReferenceExpression)classMemberReference).getQualifierExpression(),
+                                                      classMember, delegateFieldVisibility);
         }
-        else /*if (classMemberReference instanceof PsiJavaCodeReferenceElement)*/ {
-            usageInfo = new UnqualifiedNonDelegatedMemberUsageInfo(classMemberReference, classMember,
-                                                                   delegateFieldVisibility);
-            myUsageInfoStorage.add(usageInfo);
-
+        else {
+          usageInfo = new UnqualifiedNonDelegatedMemberUsageInfo(classMemberReference, classMember,
+                                                                 delegateFieldVisibility);
         }
+        myUsageInfoStorage.add(usageInfo);
       }
     }
 
@@ -1004,7 +996,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
   }
 
   /**
-   * This visitor should be called for overriden methods before they are moved to an inner class
+   * This visitor should be called for overridden methods before they are moved to an inner class
    */
   private class OverriddenMethodClassMemberReferencesVisitor extends ClassMemberReferencesVisitor {
     private final ArrayList<PsiAction> myPsiActions;

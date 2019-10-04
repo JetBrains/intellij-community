@@ -42,7 +42,7 @@ public class InlayModelImpl implements InlayModel, Disposable, Dumpable {
   private final EditorImpl myEditor;
   private final EventDispatcher<Listener> myDispatcher = EventDispatcher.create(Listener.class);
 
-  final List<InlayImpl> myInlaysInvalidatedOnMove = new ArrayList<>();
+  private final List<InlayImpl> myInlaysInvalidatedOnMove = new ArrayList<>();
   final RangeMarkerTree<InlineInlayImpl> myInlineElementsTree;
   final MarkerTreeWithPartialSums<BlockInlayImpl> myBlockElementsTree;
   final RangeMarkerTree<AfterLineEndInlayImpl> myAfterLineEndElementsTree;
@@ -77,7 +77,7 @@ public class InlayModelImpl implements InlayModel, Disposable, Dumpable {
                 caretPosition.column >= inlaysStartPosition.column && caretPosition.column <= inlaysStartPosition.column + inlayCount) {
               myInlaysAtCaret = inlays;
               for (int i = 0; i < inlayCount; i++) {
-                ((InlayImpl)inlays.get(i)).setStickingToRight(i >= (caretPosition.column - inlaysStartPosition.column));
+                ((InlayImpl)inlays.get(i)).setStickingToRight(i >= caretPosition.column - inlaysStartPosition.column);
               }
             }
           }
@@ -169,7 +169,7 @@ public class InlayModelImpl implements InlayModel, Disposable, Dumpable {
 
   @NotNull
   @Override
-  public <T> List<Inlay<? extends T>> getInlineElementsInRange(int startOffset, int endOffset, Class<T> type) {
+  public <T> List<Inlay<? extends T>> getInlineElementsInRange(int startOffset, int endOffset, @NotNull Class<T> type) {
     List<InlineInlayImpl> range =
       getElementsInRange(myInlineElementsTree, startOffset, endOffset, inlay -> type.isInstance(inlay.myRenderer),
                          INLINE_ELEMENTS_COMPARATOR);
@@ -188,7 +188,7 @@ public class InlayModelImpl implements InlayModel, Disposable, Dumpable {
 
   @NotNull
   @Override
-  public <T> List<Inlay<? extends T>> getBlockElementsInRange(int startOffset, int endOffset, Class<T> type) {
+  public <T> List<Inlay<? extends T>> getBlockElementsInRange(int startOffset, int endOffset, @NotNull Class<T> type) {
     List<BlockInlayImpl> range = getElementsInRange(myBlockElementsTree, startOffset, endOffset, inlay -> type.isInstance(inlay.myRenderer),
                                                     BLOCK_ELEMENTS_PRIORITY_COMPARATOR);
     //noinspection unchecked
@@ -304,9 +304,9 @@ public class InlayModelImpl implements InlayModel, Disposable, Dumpable {
     boolean hasAfterLineEndElements = hasAfterLineEndElements();
     if (!hasInlineElements && !hasBlockElements && !hasAfterLineEndElements) return null;
 
-    int offset = -1;
     VisualPosition visualPosition = myEditor.xyToVisualPosition(point);
     if (hasBlockElements) {
+      int startX = myEditor.getContentComponent().getInsets().left;
       int visualLine = visualPosition.line;
       int baseY = myEditor.visualLineToY(visualLine);
       if (point.y < baseY) {
@@ -315,10 +315,14 @@ public class InlayModelImpl implements InlayModel, Disposable, Dumpable {
         for (int i = inlays.size() - 1; i >= 0; i--) {
           Inlay inlay = inlays.get(i);
           int height = inlay.getHeightInPixels();
-          if (yDiff <= height) return inlay;
+          if (yDiff <= height) {
+            int relX = point.x - startX;
+            return relX >= 0 && relX < inlay.getWidthInPixels() ? inlay : null;
+          }
           yDiff -= height;
         }
-        throw new IllegalStateException();
+        LOG.error("Inconsistent state");
+        return null;
       }
       else {
         int lineBottom = baseY + myEditor.getLineHeight();
@@ -327,13 +331,18 @@ public class InlayModelImpl implements InlayModel, Disposable, Dumpable {
           int yDiff = point.y - lineBottom;
           for (Inlay inlay : inlays) {
             int height = inlay.getHeightInPixels();
-            if (yDiff < height) return inlay;
+            if (yDiff < height) {
+              int relX = point.x - startX;
+              return relX >= 0 && relX < inlay.getWidthInPixels() ? inlay : null;
+            }
             yDiff -= height;
           }
-          throw new IllegalStateException();
+          LOG.error("Inconsistent state");
+          return null;
         }
       }
     }
+    int offset = -1;
     if (hasInlineElements) {
       offset = myEditor.logicalPositionToOffset(myEditor.visualToLogicalPosition(visualPosition));
       List<Inlay> inlays = getInlineElementsInRange(offset, offset);
@@ -381,7 +390,7 @@ public class InlayModelImpl implements InlayModel, Disposable, Dumpable {
 
   @NotNull
   @Override
-  public <T> List<Inlay<? extends T>> getAfterLineEndElementsInRange(int startOffset, int endOffset, Class<T> type) {
+  public <T> List<Inlay<? extends T>> getAfterLineEndElementsInRange(int startOffset, int endOffset, @NotNull Class<T> type) {
     if (!hasAfterLineEndElements()) return Collections.emptyList();
     List<AfterLineEndInlayImpl> range =
       getElementsInRange(myAfterLineEndElementsTree, startOffset, endOffset, inlay -> type.isInstance(inlay.myRenderer),

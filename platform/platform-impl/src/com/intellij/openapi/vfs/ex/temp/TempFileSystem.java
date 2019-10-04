@@ -223,7 +223,7 @@ public class TempFileSystem extends LocalFileSystemBase implements VirtualFilePo
       public void close() throws IOException {
         super.close();
         final FSItem fsItem = convert(file);
-        assert fsItem instanceof FSFile;
+        assert fsItem instanceof FSFile : fsItem;
 
         ((FSFile)fsItem).myContent = toByteArray();
         setTimeStamp(file, modStamp);

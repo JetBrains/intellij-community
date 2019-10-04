@@ -111,7 +111,7 @@ public class SsiConditional implements SsiCommand {
   /**
    * Retrieves the expression from the specified arguments and performs the necessary evaluation steps.
    */
-  private static boolean evaluateArguments(@NotNull List<? extends String> names, @NotNull String[] values, @NotNull SsiProcessingState ssiProcessingState) {
+  private static boolean evaluateArguments(@NotNull List<String> names, @NotNull String[] values, @NotNull SsiProcessingState ssiProcessingState) {
     String expression = "expr".equalsIgnoreCase(names.get(0)) ? values[0] : null;
     if (expression == null) {
       throw new SsiStopProcessingException();

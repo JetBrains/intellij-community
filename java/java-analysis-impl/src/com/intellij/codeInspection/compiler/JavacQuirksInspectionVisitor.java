@@ -32,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 
 public class JavacQuirksInspectionVisitor extends JavaElementVisitor {
-  private static final ElementPattern QUALIFIER_REFERENCE =
+  private static final ElementPattern<PsiElement> QUALIFIER_REFERENCE =
     psiElement().withParent(PsiJavaCodeReferenceElement.class).withSuperParent(2, PsiJavaCodeReferenceElement.class);
 
   private final ProblemsHolder myHolder;

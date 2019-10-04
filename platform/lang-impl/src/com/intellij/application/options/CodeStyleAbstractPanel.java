@@ -32,7 +32,7 @@ import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.ui.UserActivityWatcher;
 import com.intellij.ui.tabs.JBTabs;
-import com.intellij.ui.tabs.newImpl.TabLabel;
+import com.intellij.ui.tabs.impl.TabLabel;
 import com.intellij.util.Alarm;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
@@ -585,6 +585,17 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
     return Collections.emptySet();
   }
 
+  @NotNull
+  public OptionsContainingConfigurable getOptionIndexer() {
+    return new OptionsContainingConfigurable() {
+      @NotNull
+      @Override
+      public Set<String> processListOptions() {
+        return CodeStyleAbstractPanel.this.processListOptions();
+      }
+    };
+  }
+
   public final void applyPredefinedSettings(@NotNull PredefinedCodeStyle codeStyle) {
     codeStyle.apply(mySettings);
     ((CodeStyleSchemesModel.ModelSettings) mySettings).doWithLockedSettings(()->resetImpl(mySettings));
@@ -645,6 +656,9 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
         }
       }
     }
+  }
+
+  public void highlightOptions(@NotNull String searchString) {
   }
 
   @Nullable

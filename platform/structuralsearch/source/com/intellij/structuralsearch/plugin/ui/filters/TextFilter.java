@@ -1,9 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui.filters;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.MatchVariableConstraint;
+import com.intellij.structuralsearch.NamedScriptableDefinition;
 import com.intellij.structuralsearch.StructuralSearchProfile;
 import com.intellij.structuralsearch.plugin.ui.UIUtil;
 import com.intellij.ui.ContextHelpLabel;
@@ -27,13 +28,21 @@ public class TextFilter extends FilterAction {
 
   @Override
   public boolean hasFilter() {
-    final MatchVariableConstraint constraint = myTable.getConstraint();
+    final NamedScriptableDefinition variable = myTable.getVariable();
+    if (!(variable instanceof MatchVariableConstraint)) {
+      return false;
+    }
+    final MatchVariableConstraint constraint = (MatchVariableConstraint)variable;
     return !StringUtil.isEmpty(constraint.getRegExp()) || constraint.isWithinHierarchy();
   }
 
   @Override
   public void clearFilter() {
-    final MatchVariableConstraint constraint = myTable.getConstraint();
+    final NamedScriptableDefinition variable = myTable.getVariable();
+    if (!(variable instanceof MatchVariableConstraint)) {
+      return;
+    }
+    final MatchVariableConstraint constraint = (MatchVariableConstraint)variable;
     constraint.setRegExp("");
     constraint.setWholeWordsOnly(false);
     constraint.setWithinHierarchy(false);
@@ -41,6 +50,9 @@ public class TextFilter extends FilterAction {
 
   @Override
   public boolean isApplicable(List<? extends PsiElement> nodes, boolean completePattern, boolean target) {
+    if (!(myTable.getVariable() instanceof MatchVariableConstraint)) {
+      return false;
+    }
     final StructuralSearchProfile profile = myTable.getProfile();
     showHierarchy = profile.isApplicableConstraint(UIUtil.TEXT_HIERARCHY, nodes, completePattern, target);
     return profile.isApplicableConstraint(UIUtil.TEXT, nodes, completePattern, target);
@@ -48,7 +60,7 @@ public class TextFilter extends FilterAction {
 
   @Override
   protected void setLabel(SimpleColoredComponent component) {
-    final MatchVariableConstraint constraint = myTable.getConstraint();
+    final MatchVariableConstraint constraint = (MatchVariableConstraint)myTable.getVariable();
     myLabel.append("text=");
     if (constraint.isInvertRegExp()) myLabel.append("!");
     myLabel.append(constraint.getRegExp());
@@ -58,7 +70,7 @@ public class TextFilter extends FilterAction {
 
   @Override
   public FilterEditor getEditor() {
-    return new FilterEditor(myTable.getConstraint(), myTable.getConstraintChangedCallback()) {
+    return new FilterEditor<MatchVariableConstraint>(myTable.getVariable(), myTable.getConstraintChangedCallback()) {
 
       private final EditorTextField myTextField = UIUtil.createRegexComponent("", myTable.getProject());
       private final JCheckBox myWordsCheckBox = new JCheckBox("Words", false);

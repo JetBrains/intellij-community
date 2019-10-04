@@ -112,6 +112,10 @@ public class JavaModuleGraphUtil {
     return getRequiresGraph(source).reads(source, destination);
   }
 
+  public static Set<PsiJavaModule> getAllRequires(PsiJavaModule source) {
+    return getRequiresGraph(source).getAllRequires(source);
+  }
+
   @Nullable
   public static Trinity<String, PsiJavaModule, PsiJavaModule> findConflict(@NotNull PsiJavaModule module) {
     return getRequiresGraph(module).findConflict(module);
@@ -304,6 +308,23 @@ public class JavaModuleGraphUtil {
 
     public static String key(PsiJavaModule module, PsiJavaModule exporter) {
       return module.getName() + '/' + exporter.getName();
+    }
+
+    public Set<PsiJavaModule> getAllRequires(PsiJavaModule module) {
+      HashSet<PsiJavaModule> requires = new HashSet<>();
+      new Object() {
+        void traverse(PsiJavaModule m) {
+          for (Iterator<PsiJavaModule> iterator = myGraph.getIn(m); iterator.hasNext();) {
+            final PsiJavaModule dep = iterator.next();
+            if (!requires.contains(dep)) {
+              requires.add(dep);
+              traverse(dep);
+            }
+          }
+        }
+      }.traverse(module);
+
+      return requires;
     }
   }
 

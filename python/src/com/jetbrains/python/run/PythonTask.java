@@ -23,7 +23,6 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.NotNullFunction;
@@ -294,12 +293,7 @@ public class PythonTask {
     final ProgressManager manager = ProgressManager.getInstance();
     final Output output;
     if (SwingUtilities.isEventDispatchThread()) {
-      output = manager.runProcessWithProgressSynchronously(new ThrowableComputable<Output, ExecutionException>() {
-        @Override
-        public Output compute() throws ExecutionException {
-          return getOutputInternal();
-        }
-      }, myRunTabTitle, false, myModule.getProject());
+      output = manager.runProcessWithProgressSynchronously(() -> getOutputInternal(), myRunTabTitle, false, myModule.getProject());
     }
     else {
       output = getOutputInternal();

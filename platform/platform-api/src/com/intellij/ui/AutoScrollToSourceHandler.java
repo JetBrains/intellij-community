@@ -146,6 +146,14 @@ public abstract class AutoScrollToSourceHandler {
     }
   }
 
+  protected String getActionName() {
+    return UIBundle.message("autoscroll.to.source.action.name");
+  }
+
+  protected String getActionDescription() {
+    return UIBundle.message("autoscroll.to.source.action.description");
+  }
+
   protected boolean needToCheckFocus(){
     return true;
   }
@@ -180,13 +188,12 @@ public abstract class AutoScrollToSourceHandler {
 
   @NotNull
   public ToggleAction createToggleAction() {
-    return new AutoscrollToSourceAction();
+    return new AutoscrollToSourceAction(getActionName(), getActionDescription());
   }
 
   private class AutoscrollToSourceAction extends ToggleAction implements DumbAware {
-    AutoscrollToSourceAction() {
-      super(UIBundle.message("autoscroll.to.source.action.name"), UIBundle.message("autoscroll.to.source.action.description"),
-            AllIcons.General.AutoscrollToSource);
+    AutoscrollToSourceAction(String actionName, String actionDescription) {
+      super(actionName, actionDescription, AllIcons.General.AutoscrollToSource);
     }
 
     @Override

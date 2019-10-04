@@ -3,7 +3,7 @@ package com.intellij.openapi.vfs.impl.local;
 
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessOutputTypes;
-import com.intellij.ide.actions.ShowFilePathAction;
+import com.intellij.ide.actions.RevealFileAction;
 import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationBundle;
@@ -80,7 +80,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
     }
     else if (!myExecutable.canExecute()) {
       String message = ApplicationBundle.message("watcher.exe.not.exe", myExecutable);
-      notifyOnFailure(message, (notification, event) -> ShowFilePathAction.openFile(myExecutable));
+      notifyOnFailure(message, (notification, event) -> RevealFileAction.openFile(myExecutable));
     }
     else {
       try {

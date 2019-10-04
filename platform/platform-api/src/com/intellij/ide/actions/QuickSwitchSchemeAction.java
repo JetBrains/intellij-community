@@ -20,6 +20,7 @@ public abstract class QuickSwitchSchemeAction extends AnAction implements DumbAw
   protected static final Icon ourCurrentAction = AllIcons.Actions.Forward;
 
   protected static final Icon ourNotCurrentAction = new IconLoader.LazyIcon() {
+    @NotNull
     @Override
     protected Icon compute() {
       return EmptyIcon.create(AllIcons.Actions.Forward.getIconWidth(), AllIcons.Actions.Forward.getIconHeight());

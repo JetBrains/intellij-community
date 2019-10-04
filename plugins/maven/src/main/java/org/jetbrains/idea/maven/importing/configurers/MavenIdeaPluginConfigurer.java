@@ -31,7 +31,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
@@ -40,9 +39,7 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager;
  */
 public class MavenIdeaPluginConfigurer extends MavenModuleConfigurer {
   @Override
-  public void configure(@NotNull MavenProject mavenProject, @NotNull Project project, @Nullable Module module) {
-    if (module == null) return;
-
+  public void configure(@NotNull MavenProject mavenProject, @NotNull Project project, @NotNull Module module) {
     Element cfg = mavenProject.getPluginConfiguration("com.googlecode", "maven-idea-plugin");
     if (cfg == null) return;
 

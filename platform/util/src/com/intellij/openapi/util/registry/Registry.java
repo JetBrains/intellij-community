@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.registry;
 
+import com.intellij.diagnostic.LoadingPhase;
 import com.intellij.util.ConcurrencyUtil;
 import gnu.trove.THashMap;
 import org.jdom.Element;
@@ -19,7 +20,7 @@ import java.util.concurrent.ConcurrentMap;
  * Provides a UI to configure internal settings of the IDE. Plugins can provide their own registry keys using the
  * {@code <registryKey>} extension point (see {@link com.intellij.openapi.util.registry.RegistryKeyBean} for more details).
  */
-public class Registry  {
+public final class Registry  {
   private static Reference<ResourceBundle> ourBundle;
 
   @NonNls
@@ -27,7 +28,7 @@ public class Registry  {
 
   private final Map<String, String> myUserProperties = new LinkedHashMap<>();
   private final ConcurrentMap<String, RegistryValue> myValues = new ConcurrentHashMap<>();
-  private final Map<String, RegistryKeyDescriptor> myContributedKeys = new THashMap<>();
+  private final THashMap<String, RegistryKeyDescriptor> myContributedKeys = new THashMap<>();
 
   private static final Registry ourInstance = new Registry();
 
@@ -47,6 +48,11 @@ public class Registry  {
   }
 
   public static boolean is(@NotNull String key, boolean defaultValue) {
+    if (!LoadingPhase.COMPONENT_REGISTERED.isComplete()) {
+      LoadingPhase.LAF_INITIALIZED.assertAtLeast();
+      return defaultValue;
+    }
+
     try {
       return get(key).asBoolean();
     }
@@ -60,6 +66,11 @@ public class Registry  {
   }
 
   public static int intValue(@NotNull String key, int defaultValue) {
+    if (!LoadingPhase.COMPONENT_REGISTERED.isComplete()) {
+      LoadingPhase.LAF_INITIALIZED.assertAtLeast();
+      return defaultValue;
+    }
+
     try {
       return get(key).asInteger();
     }
@@ -111,6 +122,7 @@ public class Registry  {
 
   @NotNull
   public static Registry getInstance() {
+    LoadingPhase.COMPONENT_REGISTERED.assertAtLeast();
     return ourInstance;
   }
 
@@ -197,15 +209,26 @@ public class Registry  {
     return false;
   }
 
+  /**
+   * @deprecated Use extension point `com.intellij.registryKey`.
+   */
+  @Deprecated
   public static synchronized void addKey(@NotNull String key, @NotNull String description, @NotNull String defaultValue, boolean restartRequired) {
     getInstance().myContributedKeys.put(key, new RegistryKeyDescriptor(key, description, defaultValue, restartRequired, false));
   }
 
   public static synchronized void addKeys(@NotNull List<RegistryKeyDescriptor> descriptors) {
-    Map<String, RegistryKeyDescriptor> map = getInstance().myContributedKeys;
+    // getInstance must be not used here - phase COMPONENT_REGISTERED is not yet completed
+    THashMap<String, RegistryKeyDescriptor> map = ourInstance.myContributedKeys;
+    map.ensureCapacity(descriptors.size());
     for (RegistryKeyDescriptor descriptor : descriptors) {
       map.put(descriptor.getName(), descriptor);
     }
+  }
+
+  public static synchronized void removeKey(String key) {
+    ourInstance.myContributedKeys.remove(key);
+    ourInstance.myValues.remove(key);
   }
 
   /**
@@ -216,6 +239,10 @@ public class Registry  {
     addKey(key, description, Integer.toString(defaultValue), restartRequired);
   }
 
+  /**
+   * @deprecated Use extension point `com.intellij.registryKey`.
+   */
+  @Deprecated
   public static void addKey(@NotNull String key, @NotNull String description, boolean defaultValue, boolean restartRequired) {
     addKey(key, description, Boolean.toString(defaultValue), restartRequired);
   }

@@ -14,17 +14,16 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Internal
-@ApiStatus.AvailableSince("2019.2")
 public class PyAssignmentExpressionImpl extends PyElementImpl implements PyAssignmentExpression {
 
   public PyAssignmentExpressionImpl(@NotNull ASTNode astNode) {
     super(astNode);
   }
 
-  @NotNull
+  @Nullable
   @Override
   public PyTargetExpression getTarget() {
-    return notNullChild(ObjectUtils.tryCast(getFirstChild(), PyTargetExpression.class));
+    return ObjectUtils.tryCast(getFirstChild(), PyTargetExpression.class);
   }
 
   @Nullable
@@ -36,7 +35,8 @@ public class PyAssignmentExpressionImpl extends PyElementImpl implements PyAssig
   @Nullable
   @Override
   public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
-    return context.getType(getTarget());
+    final PyTargetExpression target = getTarget();
+    return target == null ? null : context.getType(target);
   }
 
   @Override

@@ -30,10 +30,7 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ResourceUtil;
 import com.intellij.util.SVGLoader;
 import com.intellij.util.io.IOUtil;
-import com.intellij.util.ui.ImageUtil;
-import com.intellij.util.ui.JBHtmlEditorKit;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import com.twelvemonkeys.imageio.stream.ByteArrayImageInputStream;
 /* Android Studio: b/67589184
 import javafx.application.Platform;
@@ -68,7 +65,6 @@ import java.net.URL;
 import java.util.*;
 
 import static com.intellij.util.ui.UIUtil.drawImage;
-import static com.intellij.util.ui.UIUtil.isUnderDarcula;
 
 /**
  * @author dsl
@@ -116,7 +112,8 @@ public class TipUIUtil {
       if (tipFile.isAbsolute() && tipFile.exists()) {
         text.append(FileUtil.loadFile(tipFile));
         updateImages(text, null, tipFile.getParentFile().getAbsolutePath(), component);
-        cssText = FileUtil.loadFile(new File(tipFile.getParentFile(), isUnderDarcula() ? "css/tips_darcula.css" : "css/tips.css"));
+        cssText = FileUtil.loadFile(new File(tipFile.getParentFile(), StartupUiUtil.isUnderDarcula()
+                                                                      ? "css/tips_darcula.css" : "css/tips.css"));
       }
       else {
         PluginDescriptor pluginDescriptor = tip.getPluginDescriptor();
@@ -129,7 +126,8 @@ public class TipUIUtil {
         }
         text.append(ResourceUtil.loadText(tipStream));
         updateImages(text, tipLoader, "", component);
-        InputStream cssResourceStream = ResourceUtil.getResourceAsStream(tipLoader, "/tips/", isUnderDarcula() ? "css/tips_darcula.css" : "css/tips.css");
+        InputStream cssResourceStream = ResourceUtil.getResourceAsStream(tipLoader, "/tips/", StartupUiUtil.isUnderDarcula()
+                                                                                              ? "css/tips_darcula.css" : "css/tips.css");
         cssText = cssResourceStream != null ? ResourceUtil.loadText(cssResourceStream) : "";
       }
 
@@ -165,7 +163,7 @@ public class TipUIUtil {
   }
 
   private static void updateImages(StringBuilder text, ClassLoader tipLoader, String tipPath, Component component) {
-    final boolean dark = isUnderDarcula();
+    final boolean dark = StartupUiUtil.isUnderDarcula();
 
     int index = text.indexOf("<img", 0);
     while (index != -1) {
@@ -351,7 +349,8 @@ public class TipUIUtil {
           }
         }
       );
-      URL resource = ResourceUtil.getResource(TipUIUtil.class, "/tips/css/", isUnderDarcula() ? "tips_darcula.css" : "tips.css");
+      URL resource = ResourceUtil.getResource(TipUIUtil.class, "/tips/css/", StartupUiUtil.isUnderDarcula()
+                                                                             ? "tips_darcula.css" : "tips.css");
       HTMLEditorKit kit = new JBHtmlEditorKit(false) {
         private final ViewFactory myFactory = createViewFactory();
         //SVG support

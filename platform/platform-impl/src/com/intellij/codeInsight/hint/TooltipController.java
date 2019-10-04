@@ -25,6 +25,7 @@ import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.awt.event.MouseEvent;
@@ -50,12 +51,16 @@ public class TooltipController {
     }
   }
 
-  public void showTooltipByMouseMove(@NotNull final Editor editor,
-                                     @NotNull final RelativePoint point,
-                                     final TooltipRenderer tooltipObject,
-                                     final boolean alignToRight,
-                                     @NotNull final TooltipGroup group,
-                                     @NotNull HintHint hintHint) {
+  /**
+   * Returns newly created hint, or already existing (for the same renderer)
+   */
+  @Nullable
+  public LightweightHint showTooltipByMouseMove(@NotNull final Editor editor,
+                                                @NotNull final RelativePoint point,
+                                                final TooltipRenderer tooltipObject,
+                                                final boolean alignToRight,
+                                                @NotNull final TooltipGroup group,
+                                                @NotNull HintHint hintHint) {
     LightweightHint currentTooltip = myCurrentTooltip;
     if (currentTooltip == null || !currentTooltip.isVisible()) {
       if (currentTooltip != null) {
@@ -70,7 +75,7 @@ public class TooltipController {
 
     if (Comparing.equal(tooltipObject, myCurrentTooltipObject)) {
       IdeTooltipManager.getInstance().cancelAutoHide();
-      return;
+      return myCurrentTooltip;
     }
     hideCurrentTooltip();
 
@@ -81,11 +86,12 @@ public class TooltipController {
       }
 
       Project project = editor.getProject();
-      if (project != null && !project.isOpen()) return;
+      if (project != null && !project.isOpen()) return null;
       if (editor.getContentComponent().isShowing()) {
-        showTooltip(editor, p, tooltipObject, alignToRight, group, hintHint);
+        return doShowTooltip(editor, p, tooltipObject, alignToRight, group, hintHint);
       }
     }
+    return null;
   }
 
   private void hideCurrentTooltip() {
@@ -123,15 +129,25 @@ public class TooltipController {
                           boolean alignToRight,
                           @NotNull TooltipGroup group,
                           @NotNull HintHint hintInfo) {
+    doShowTooltip(editor, p, tooltipRenderer, alignToRight, group, hintInfo);
+  }
+
+  @Nullable
+  private LightweightHint doShowTooltip(@NotNull Editor editor,
+                                        @NotNull Point p,
+                                        @NotNull TooltipRenderer tooltipRenderer,
+                                        boolean alignToRight,
+                                        @NotNull TooltipGroup group,
+                                        @NotNull HintHint hintInfo) {
     if (myCurrentTooltip == null || !myCurrentTooltip.isVisible()) {
       myCurrentTooltipObject = null;
     }
 
     if (Comparing.equal(tooltipRenderer, myCurrentTooltipObject)) {
       IdeTooltipManager.getInstance().cancelAutoHide();
-      return;
+      return null;
     }
-    if (myCurrentTooltipGroup != null && group.compareTo(myCurrentTooltipGroup) < 0) return;
+    if (myCurrentTooltipGroup != null && group.compareTo(myCurrentTooltipGroup) < 0) return null;
 
     p = new Point(p);
     hideCurrentTooltip();
@@ -141,6 +157,8 @@ public class TooltipController {
     myCurrentTooltipGroup = group;
     myCurrentTooltip = hint;
     myCurrentTooltipObject = tooltipRenderer;
+
+    return hint;
   }
 
   public boolean shouldSurvive(final MouseEvent e) {

@@ -31,6 +31,7 @@ import java.awt.font.TextLayout;
 import java.text.AttributedCharacterIterator;
 import java.text.AttributedString;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
 import java.util.function.BooleanSupplier;
@@ -91,10 +92,20 @@ import java.util.function.BooleanSupplier;
  */
 
 public class HelpTooltip {
-  private static final Color BACKGROUND_COLOR = JBColor.namedColor("HelpTooltip.background", 0xf7f7f7);
-  private static final Color FONT_COLOR = JBColor.namedColor("HelpTooltip.foreground", 0x1a1a1a);
-  private static final Color SHORTCUT_COLOR = JBColor.namedColor("HelpTooltip.shortcutForeground", 0x787878);
-  private static final Color BORDER_COLOR = JBColor.namedColor("HelpTooltip.borderColor", 0xadadad);
+  private static final Color BACKGROUND_COLOR = JBColor.namedColor("ToolTip.background", new JBColor(0xf7f7f7, 0x474a4c));
+  private static final Color FOREGROUND_COLOR = JBColor.namedColor("ToolTip.foreground", new JBColor(0x1a1a1a, 0xbfbfbf));
+  private static final Color SHORTCUT_COLOR = JBColor.namedColor("ToolTip.shortcutForeground", new JBColor(0x787878, 0x878787));
+  private static final Color INFO_COLOR = JBColor.namedColor("ToolTip.infoForeground", UIUtil.getContextHelpForeground());
+  private static final Color BORDER_COLOR = JBColor.namedColor("ToolTip.borderColor", new JBColor(0xadadad, 0x636569));
+
+  private static final JBValue VGAP = new JBValue.UIInteger("HelpTooltip.verticalGap", 4);
+  private static final JBValue HGAP = new JBValue.UIInteger("HelpTooltip.horizontalGap", 8);
+  private static final JBValue MAX_WIDTH = new JBValue.UIInteger("HelpTooltip.maxWidth", 250);
+  private static final JBValue X_OFFSET = new JBValue.UIInteger("HelpTooltip.xOffset", 0);
+  private static final JBValue Y_OFFSET = new JBValue.UIInteger("HelpTooltip.yOffset", 0);
+  private static final JBValue HEADER_FONT_SIZE_DELTA = new JBValue.UIInteger("HelpTooltip.fontSizeDelta", 0);
+  private static final JBValue DESCRIPTION_FONT_SIZE_DELTA = new JBValue.UIInteger("HelpTooltip.descriptionSizeDelta", 0);
+  private static final JBValue CURSOR_OFFSET = new JBValue.UIInteger("HelpTooltip.mouseCursorOffset", 20);
 
   private static final String DOTS = "...";
   private static final String PARAGRAPH_SPLITTER = "<p/?>";
@@ -106,7 +117,7 @@ public class HelpTooltip {
   private String description;
   private LinkLabel link;
   private boolean neverHide;
-  private Alignment alignment = Alignment.BOTTOM;
+  private Alignment alignment = Alignment.CURSOR;
 
   private BooleanSupplier masterPopupOpenCondition;
 
@@ -118,34 +129,41 @@ public class HelpTooltip {
   private boolean isMultiline;
   private int myDismissDelay;
 
-  private MouseAdapter myMouseListener;
+  protected MouseAdapter myMouseListener;
 
   /**
    * Location of the HelpTooltip relatively to the owner component.
    */
   public enum Alignment {
     RIGHT {
-      @Override public Point getPointFor(JComponent owner, Dimension popupSize) {
+      @Override public Point getPointFor(Component owner, Dimension popupSize, Point mouseLocation) {
         Dimension size = owner.getSize();
         return new Point(size.width + JBUIScale.scale(5) - X_OFFSET.get(), JBUIScale.scale(1) + Y_OFFSET.get());
       }
     },
 
     BOTTOM {
-      @Override public Point getPointFor(JComponent owner, Dimension popupSize) {
+      @Override public Point getPointFor(Component owner, Dimension popupSize, Point mouseLocation) {
         Dimension size = owner.getSize();
         return new Point(JBUIScale.scale(1) + X_OFFSET.get(), JBUIScale.scale(5) + size.height - Y_OFFSET.get());
       }
     },
 
     HELP_BUTTON {
-      @Override public Point getPointFor(JComponent owner, Dimension popupSize) {
-        Insets i  = owner.getInsets();
+      @Override public Point getPointFor(Component owner, Dimension popupSize, Point mouseLocation) {
+        Insets i  = ((JComponent)owner).getInsets();
         return new Point(X_OFFSET.get() - JBUIScale.scale(40), i.top + Y_OFFSET.get() - JBUIScale.scale(6) - popupSize.height);
+      }
+    },
+
+    CURSOR {
+      @Override public Point getPointFor(Component owner, Dimension popupSize, Point mouseLocation) {
+        mouseLocation.y += CURSOR_OFFSET.get();
+        return mouseLocation;
       }
     };
 
-    public abstract Point getPointFor(JComponent owner, Dimension popupSize);
+    public abstract Point getPointFor(Component owner, Dimension popupSize, Point mouseLocation);
   }
 
   /**
@@ -225,15 +243,27 @@ public class HelpTooltip {
    * @param component is the owner component for the tooltip.
    */
   public void installOn(@NotNull JComponent component) {
-    myDismissDelay = Registry.intValue(isMultiline ? "ide.helptooltip.full.dismissDelay" : "ide.helptooltip.regular.dismissDelay");
+    getDismissDelay();
     neverHide = neverHide || UIUtil.isHelpButton(component);
 
+    createMouseListeners();
+    initPopupBuilder();
+
+    component.putClientProperty(TOOLTIP_PROPERTY, this);
+    installMouseListeners(component);
+  }
+
+  protected final void getDismissDelay() {
+    myDismissDelay = Registry.intValue(isMultiline ? "ide.helptooltip.full.dismissDelay" : "ide.helptooltip.regular.dismissDelay");
+  }
+
+  protected final void createMouseListeners() {
     myMouseListener = new MouseAdapter() {
       @Override public void mouseEntered(MouseEvent e) {
         if (myPopup != null && !myPopup.isDisposed()){
           myPopup.cancel();
         }
-        scheduleShow((JComponent)e.getComponent(), Registry.intValue("ide.tooltip.initialReshowDelay"));
+        scheduleShow(e, Registry.intValue("ide.tooltip.initialReshowDelay"));
       }
 
       @Override public void mouseExited(MouseEvent e) {
@@ -242,22 +272,25 @@ public class HelpTooltip {
 
       @Override public void mouseMoved(MouseEvent e) {
         if (myPopup == null || myPopup.isDisposed()) {
-          scheduleShow((JComponent)e.getComponent(), Registry.intValue("ide.tooltip.reshowDelay"));
+          scheduleShow(e, Registry.intValue("ide.tooltip.reshowDelay"));
         }
       }
     };
-
-    initPopupBuilder();
-
-    component.putClientProperty(TOOLTIP_PROPERTY, this);
-    installMouseListeners(component);
   }
 
   private void initPopupBuilder() {
     JComponent tipPanel = createTipPanel();
     myPopupSize = tipPanel.getPreferredSize();
     myPopupBuilder = JBPopupFactory.getInstance().
-        createComponentPopupBuilder(tipPanel, null).setBorderColor(BORDER_COLOR).setShowShadow(false);
+        createComponentPopupBuilder(tipPanel, null).
+        setShowBorder(UIManager.getBoolean("ToolTip.paintBorder")).
+        setBorderColor(BORDER_COLOR).setShowShadow(true);
+  }
+
+  protected void initPopupBuilder(@NotNull HelpTooltip instance) {
+    instance.initPopupBuilder();
+    myPopupSize = instance.myPopupSize;
+    myPopupBuilder = instance.myPopupBuilder;
   }
 
   private JPanel createTipPanel() {
@@ -278,22 +311,27 @@ public class HelpTooltip {
     tipPanel.setLayout(new VerticalLayout(VGAP.get()));
     tipPanel.setBackground(BACKGROUND_COLOR);
 
-    if (StringUtil.isNotEmpty(title)) {
+    boolean hasTitle = StringUtil.isNotEmpty(title);
+    if (hasTitle) {
       tipPanel.add(new Header(), VerticalLayout.TOP);
     }
 
     if (StringUtil.isNotEmpty(description)) {
       String[] pa = description.split(PARAGRAPH_SPLITTER);
       isMultiline = pa.length > 1;
-      for (String p : pa) {
-        if (!p.isEmpty()) {
-          tipPanel.add(new Paragraph(p), VerticalLayout.TOP);
-        }
-      }
+      Arrays.stream(pa).filter(p -> !p.isEmpty()).forEach(p -> tipPanel.add(new Paragraph(p, hasTitle), VerticalLayout.TOP));
+    }
+
+    if (!hasTitle && StringUtil.isNotEmpty(shortcut)) {
+      JLabel shortcutLabel = new JLabel(shortcut);
+      shortcutLabel.setFont(deriveDescriptionFont(shortcutLabel.getFont(), hasTitle));
+      shortcutLabel.setForeground(SHORTCUT_COLOR);
+
+      tipPanel.add(shortcutLabel, VerticalLayout.TOP);
     }
 
     if (link != null) {
-      link.setFont(modifyFont(link.getFont()));
+      link.setFont(deriveDescriptionFont(link.getFont(), hasTitle));
       tipPanel.add(link, VerticalLayout.TOP);
     }
 
@@ -384,12 +422,14 @@ public class HelpTooltip {
     }
   }
 
-  private void scheduleShow(JComponent owner, int delay) {
+  private void scheduleShow(MouseEvent e, int delay) {
     popupAlarm.cancelAllRequests();
     popupAlarm.addRequest(() -> {
       if (masterPopupOpenCondition == null || masterPopupOpenCondition.getAsBoolean()) {
         myPopup = myPopupBuilder.createPopup();
-        myPopup.show(new RelativePoint(owner, alignment.getPointFor(owner, myPopupSize)));
+
+        Component owner = e.getComponent();
+        myPopup.show(new RelativePoint(owner, alignment.getPointFor(owner, myPopupSize, e.getPoint())));
         if (!neverHide) {
           scheduleHide(true, myDismissDelay);
         }
@@ -402,7 +442,7 @@ public class HelpTooltip {
     popupAlarm.addRequest(() -> hidePopup(force), delay);
   }
 
-  private void hidePopup(boolean force) {
+  protected void hidePopup(boolean force) {
     popupAlarm.cancelAllRequests();
     if (myPopup != null && myPopup.isVisible() && (!isOverPopup || force)) {
       myPopup.cancel();
@@ -410,20 +450,19 @@ public class HelpTooltip {
     }
   }
 
-  private static final JBValue VGAP = new JBValue.UIInteger("HelpTooltip.verticalGap", 4);
-  private static final JBValue HGAP = new JBValue.UIInteger("HelpTooltip.horizontalGap", 10);
-  private static final JBValue MAX_WIDTH = new JBValue.UIInteger("HelpTooltip.maxWidth", 250);
-  private static final JBValue X_OFFSET = new JBValue.UIInteger("HelpTooltip.xOffset", 0);
-  private static final JBValue Y_OFFSET = new JBValue.UIInteger("HelpTooltip.yOffset", 0);
-  private static final JBValue FONT_DELTA_SIZE = new JBValue.UIInteger("HelpTooltip.fontSizeDelta", 0);
-
-  private static Border textBorder(boolean isDefault) {
-    Insets i = UIManager.getInsets(isDefault ? "HelpTooltip.defaultTextBorderInsets" : "HelpTooltip.smallTextBorderInsets");
+  private static Border textBorder(boolean multiline) {
+    Insets i = UIManager.getInsets(multiline ? "HelpTooltip.defaultTextBorderInsets" : "HelpTooltip.smallTextBorderInsets");
     return i != null ? new JBEmptyBorder(i) : JBUI.Borders.empty();
   }
 
-  private static Font modifyFont(Font font) {
-    return font.deriveFont((float)font.getSize() + FONT_DELTA_SIZE.get());
+  private static Font deriveHeaderFont(Font font) {
+    return font.deriveFont((float)font.getSize() + HEADER_FONT_SIZE_DELTA.get());
+  }
+
+  private static Font deriveDescriptionFont(Font font, boolean hasTitle) {
+    return hasTitle ?
+           font.deriveFont((float)font.getSize() + DESCRIPTION_FONT_SIZE_DELTA.get()) :
+           deriveHeaderFont(font);
   }
 
   private class Header extends JPanel {
@@ -441,11 +480,10 @@ public class HelpTooltip {
     private Header() {
       setOpaque(false);
 
-      Font font = modifyFont(getFont());
+      Font font = deriveHeaderFont(getFont());
       setFont(font);
 
-      Font titleFont = StringUtil.isNotEmpty(description) ? font.deriveFont(Font.BOLD) : font;
-      Map<TextAttribute,?> tfa = titleFont.getAttributes();
+      Map<TextAttribute,?> tfa = font.getAttributes();
       titleString = new AttributedString(title, tfa);
       dotString = new AttributedString(DOTS, tfa);
       shortcutString = StringUtil.isNotEmpty(shortcut) ? new AttributedString(shortcut, font.getAttributes()) : null;
@@ -455,7 +493,7 @@ public class HelpTooltip {
       paragraphEnd = paragraph.getEndIndex();
 
       // Compute preferred size
-      FontMetrics tfm = getFontMetrics(titleFont);
+      FontMetrics tfm = getFontMetrics(font);
       int titleWidth = UIUtilities.stringWidth(this, tfm, title);
 
       FontMetrics fm = getFontMetrics(font);
@@ -469,7 +507,7 @@ public class HelpTooltip {
     @Override public void paintComponent(Graphics g) {
       Graphics2D g2 = (Graphics2D)g.create();
       try {
-        g2.setColor(FONT_COLOR);
+        g2.setColor(FOREGROUND_COLOR);
         GraphicsUtil.setupAntialiasing(g2);
         if (lineMeasurer == null) {
           FontRenderContext frc = g2.getFontRenderContext();
@@ -517,7 +555,8 @@ public class HelpTooltip {
             g2.setColor(SHORTCUT_COLOR);
             shortcutLayout.draw(g2, layout.getAdvance() + dotLayout.getAdvance() + HGAP.get(), drawPosY);
           }
-        } else if (layout != null && shortcutString != null) {
+        }
+        else if (layout != null && shortcutString != null) {
           g2.setColor(SHORTCUT_COLOR);
           if (Float.compare(getWidth() - layout.getAdvance(), shortcutLayout.getAdvance() + HGAP.get()) >= 0) {
             drawPosY = shortcutLayout.getAscent();
@@ -527,20 +566,17 @@ public class HelpTooltip {
             shortcutLayout.draw(g2, 0, drawPosY);
           }
         }
-      } finally {
+      }
+      finally {
         g2.dispose();
       }
     }
   }
 
   private class Paragraph extends JLabel {
-    private Paragraph(String text) {
-      init(text);
-    }
-
-    private void init(String text) {
-      setForeground(FONT_COLOR);
-      setFont(modifyFont(getFont()));
+    private Paragraph(String text, boolean hasTitle) {
+      setForeground(hasTitle ? INFO_COLOR : FOREGROUND_COLOR);
+      setFont(deriveDescriptionFont(getFont(), hasTitle));
 
       View v = BasicHTML.createHTMLView(this, String.format("<html>%s</html>", text));
       float width = v.getPreferredSpan(View.X_AXIS);

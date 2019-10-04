@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.util;
 
 import com.google.common.util.concurrent.FutureCallback;
@@ -11,8 +11,10 @@ import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.navigation.History;
@@ -24,8 +26,8 @@ import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.VcsLogProgress;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
-import com.intellij.vcs.log.ui.frame.DetailsPanel;
 import com.intellij.vcs.log.ui.frame.ProgressStripe;
+import com.intellij.vcs.log.ui.frame.VcsLogCommitDetailsListPanel;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.visible.VisiblePackRefresherImpl;
 import org.jetbrains.annotations.NotNull;
@@ -92,7 +94,7 @@ public class VcsLogUiUtil {
   }
 
   public static void installDetailsListeners(@NotNull VcsLogGraphTable graphTable,
-                                             @NotNull DetailsPanel detailsPanel,
+                                             @NotNull VcsLogCommitDetailsListPanel detailsPanel,
                                              @NotNull VcsLogData logData,
                                              @NotNull Disposable disposableParent) {
     Runnable miniDetailsLoadedListener = () -> {
@@ -136,6 +138,26 @@ public class VcsLogUiUtil {
       }
     });
     return history;
+  }
+
+  @NotNull
+  public static String shortenTextToFit(@NotNull String text, @NotNull FontMetrics fontMetrics, int availableWidth, int maxLength,
+                                        @NotNull String symbol) {
+    if (fontMetrics.stringWidth(text) <= availableWidth) return text;
+
+    for (int i = text.length(); i > maxLength; i--) {
+      String result = StringUtil.shortenTextWithEllipsis(text, i, 0, symbol);
+      if (fontMetrics.stringWidth(result) <= availableWidth) {
+        return result;
+      }
+    }
+    return StringUtil.shortenTextWithEllipsis(text, maxLength, 0, symbol);
+  }
+
+  public static int getHorizontalTextPadding(@NotNull SimpleColoredComponent component) {
+    Insets borderInsets = component.getMyBorder().getBorderInsets(component);
+    Insets ipad = component.getIpad();
+    return borderInsets.left + borderInsets.right + ipad.left + ipad.right;
   }
 
   private static class VcsLogPlaceNavigator implements Place.Navigator {

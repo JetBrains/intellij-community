@@ -125,7 +125,7 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
           myConnection.subscribe(ApplicationActivationListener.TOPIC, ActionPopupMenuImpl.this);
        }
       }
-
+      assert component.isShowing() : "Component: " + component;
       super.show(component, x, y);
     }
 

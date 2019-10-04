@@ -102,7 +102,10 @@ abstract class BaseIdeaProperties extends ProductProperties {
 
     //for compatibility with generated Ant build.xml files which refer to this file
     productLayout.additionalPlatformJars.
-      putAll("javac2.jar", ["intellij.java.compiler.antTasks", "intellij.java.guiForms.compiler", "intellij.java.guiForms.rt", "intellij.java.compiler.instrumentationUtil", "intellij.java.compiler.instrumentationUtil.java8", "intellij.java.jps.javacRefScanner8"])
+      putAll("javac2.jar",
+             ["intellij.java.compiler.antTasks", "intellij.java.guiForms.compiler", "intellij.java.guiForms.rt",
+              "intellij.java.compiler.instrumentationUtil", "intellij.java.compiler.instrumentationUtil.java8",
+              "intellij.java.jps.javacRefScanner8"])
 
     productLayout.additionalPlatformJars.put("resources.jar", "intellij.java.ide.resources")
 
@@ -119,6 +122,10 @@ abstract class BaseIdeaProperties extends ProductProperties {
         withProjectLibrary("commons-net")
 
         withoutProjectLibrary("Ant")
+
+        // there is a patched version of the org.gradle.api.JavaVersion class placed into the Gradle plugin classpath as "rt" jar
+        // to avoid class linkage conflicts "Gradle" library is placed into the 'lib' directory of the Gradle plugin layout so we need to exclude it from the platform layout explicitly
+        // TODO should be used as regular project library when the issue will be fixed at the Gradle tooling api side https://github.com/gradle/gradle/issues/8431 and the patched class will be removed
         withoutProjectLibrary("Gradle")
 
         //this library is placed into subdirectory of 'lib' directory in Android plugin layout so we need to exclude it from the platform layout explicitly

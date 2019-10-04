@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.groovy.editor.actions.joinLines;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
@@ -23,6 +24,10 @@ public class GrVariableJoinLinesHandler extends GrJoinLinesHandlerBase {
           assert resolved instanceof GrVariable;
           if (((GrVariable)resolved).getInitializerGroovy() == null) {
             ((GrVariable)resolved).setInitializerGroovy(rValue);
+            PsiElement prev = rValue.getPrevSibling();
+            if (prev instanceof PsiWhiteSpace) {
+              resolved.addBefore(prev, ((GrVariable)resolved).getInitializerGroovy());
+            }
             second.delete();
             GrExpression newInitializer = ((GrVariable)resolved).getInitializerGroovy();
             assert newInitializer != null;

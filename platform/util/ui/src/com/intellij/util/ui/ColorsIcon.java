@@ -19,7 +19,7 @@ import java.util.Arrays;
  */
 public class ColorsIcon extends ColorIcon {
   private static final int SQUARE_SIZE = JBUIScale.scale(6);
-  private static final BufferedImage CHESS_IMAGE = UIUtil.createImage(SQUARE_SIZE, SQUARE_SIZE, BufferedImage.TYPE_INT_RGB);
+  private static final BufferedImage CHESS_IMAGE = ImageUtil.createImage(SQUARE_SIZE, SQUARE_SIZE, BufferedImage.TYPE_INT_RGB);
   private static final TexturePaint CHESS;
 
   static {

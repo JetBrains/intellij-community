@@ -11,13 +11,15 @@ public final class ListenerDescriptor {
   public final String topicClassName;
 
   public final boolean activeInTestMode;
+  public final boolean activeInHeadlessMode;
 
   public transient final PluginDescriptor pluginDescriptor;
 
-  public ListenerDescriptor(@NotNull String listenerClassName, @NotNull String topicClassName, boolean activeInTestMode, @NotNull PluginDescriptor pluginDescriptor) {
+  public ListenerDescriptor(@NotNull String listenerClassName, @NotNull String topicClassName, boolean activeInTestMode, boolean activeInHeadlessMode, @NotNull PluginDescriptor pluginDescriptor) {
     this.listenerClassName = listenerClassName;
     this.topicClassName = topicClassName;
     this.activeInTestMode = activeInTestMode;
+    this.activeInHeadlessMode = activeInHeadlessMode;
     this.pluginDescriptor = pluginDescriptor;
   }
 }

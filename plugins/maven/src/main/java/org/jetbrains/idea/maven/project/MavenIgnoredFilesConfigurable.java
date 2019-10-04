@@ -21,6 +21,8 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.ui.IdeBorderFactory;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -43,9 +45,16 @@ public class MavenIgnoredFilesConfigurable implements SearchableConfigurable, Co
   private JPanel myMainPanel;
   private ElementsChooser<String> myIgnoredFilesPathsChooser;
   private JTextArea myIgnoredFilesPattersEditor;
+  private JPanel myIgnoredFilesPatternsPanel;
+  private JPanel myIgnoredFilesPanel;
 
   public MavenIgnoredFilesConfigurable(Project project) {
     myManager = MavenProjectsManager.getInstance(project);
+    myIgnoredFilesPatternsPanel.setBorder(
+      IdeBorderFactory.createTitledBorder("Path patterns (comma-separated, '*' and '?' wildcards allowed):", false, JBUI.insetsTop(8)).setShowLine(false));
+
+    myIgnoredFilesPanel.setBorder(
+      IdeBorderFactory.createTitledBorder("Ignored files:", false, JBUI.insetsTop(8)).setShowLine(false));
   }
 
   private void createUIComponents() {

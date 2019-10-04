@@ -3,7 +3,7 @@ package com.intellij.ui.mac.touchbar;
 
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.mac.foundation.Foundation;
-import com.intellij.util.containers.hash.HashSet;
+import java.util.HashSet;
 
 import javax.swing.*;
 import java.util.Collection;
@@ -90,13 +90,13 @@ public class TouchbarTest {
         txt = "show";
         action = ()->SwingUtilities.invokeLater(()->{
           ourVisible = !ourVisible;
-          NST.showScrubberItem(scrubber.myNativePeer, _makeRandomCollection(size - 1), ourVisible);
+          NST.showScrubberItem(scrubber.myNativePeer, _makeRandomCollection(size - 1), ourVisible, false);
         });
       } else if (c == 2) {
         txt = "enable";
         action = ()->SwingUtilities.invokeLater(()->{
           ourEnabled = !ourEnabled;
-          NST.enableScrubberItem(scrubber.myNativePeer, _makeRandomCollection(size - 1), ourEnabled);
+          NST.enableScrubberItems(scrubber.myNativePeer, _makeRandomCollection(size - 1), ourEnabled);
         });
       }
 

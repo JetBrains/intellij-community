@@ -4,6 +4,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.JdkOrderEntry;
 import com.intellij.psi.search.GlobalSearchScope;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,6 +13,7 @@ import org.jetbrains.annotations.Nullable;
  * @deprecated todo remove in IDEA 16
  * use com.intellij.psi.ResolveScopeProvider
  */
+@ApiStatus.ScheduledForRemoval(inVersion = "2016")
 @Deprecated
 public abstract class SdkResolveScopeProvider {
   public static final ExtensionPointName<SdkResolveScopeProvider> EP_NAME =

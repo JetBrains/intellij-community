@@ -16,7 +16,6 @@
 package com.intellij.embedding;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.LighterLazyParseableNode;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.impl.DelegateMarker;
@@ -55,19 +54,7 @@ public class MasqueradingPsiBuilderAdapter extends PsiBuilderAdapter {
                         @NotNull final MasqueradingLexer lexer,
                         @NotNull final ASTNode chameleon,
                         @NotNull final CharSequence text) {
-    this(new PsiBuilderImpl(project, parserDefinition, lexer, chameleon, text));
-  }
-
-  public MasqueradingPsiBuilderAdapter(@NotNull final Project project,
-                        @NotNull final ParserDefinition parserDefinition,
-                        @NotNull final MasqueradingLexer lexer,
-                        @NotNull final LighterLazyParseableNode chameleon,
-                        @NotNull final CharSequence text) {
-    this(new PsiBuilderImpl(project, parserDefinition, lexer, chameleon, text));
-  }
-
-  private MasqueradingPsiBuilderAdapter(PsiBuilderImpl builder) {
-    super(builder);
+    super(new PsiBuilderImpl(project, parserDefinition, lexer, chameleon, text));
 
     LOG.assertTrue(myDelegate instanceof PsiBuilderImpl);
     myBuilderDelegate = ((PsiBuilderImpl)myDelegate);

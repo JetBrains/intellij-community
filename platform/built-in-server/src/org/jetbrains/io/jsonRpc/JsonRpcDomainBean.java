@@ -37,17 +37,12 @@ public class JsonRpcDomainBean extends AbstractExtensionPointBean {
         @NotNull
         @Override
         protected Object compute() {
-          try {
-            if (service == null) {
-              Class<Object> aClass = findClass(implementation);
-              return asInstance ? instantiate(aClass, ApplicationManager.getApplication().getPicoContainer()) : aClass;
-            }
-            else {
-              return ServiceManager.getService(findClass(service));
-            }
+          if (service == null) {
+            Class<Object> aClass = findExtensionClass(implementation);
+            return asInstance ? instantiate(aClass, ApplicationManager.getApplication().getPicoContainer()) : aClass;
           }
-          catch (ClassNotFoundException e) {
-            throw new RuntimeException(e);
+          else {
+            return ServiceManager.getService(findExtensionClass(service));
           }
         }
       };

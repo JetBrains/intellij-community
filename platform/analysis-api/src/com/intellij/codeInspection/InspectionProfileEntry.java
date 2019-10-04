@@ -15,6 +15,7 @@ import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.serialization.SerializationException;
 import com.intellij.util.ResourceUtil;
 import com.intellij.util.ThreeState;
@@ -154,6 +155,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
 
   @NotNull
   public static Set<InspectionSuppressor> getSuppressors(@NotNull PsiElement element) {
+    PsiUtilCore.ensureValid(element);
     FileViewProvider viewProvider = element.getContainingFile().getViewProvider();
     final List<InspectionSuppressor> elementLanguageSuppressor = LanguageInspectionSuppressors.INSTANCE.allForLanguage(element.getLanguage());
     if (viewProvider instanceof TemplateLanguageFileViewProvider) {
@@ -304,6 +306,14 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
   }
 
   /**
+   * @return true iff default configuration options should be shown for the tool. E.g. scope-severity settings.
+   * @apiNote if {@code false} returned, only panel provided by {@link #createOptionsPanel()} is shown if any.
+   */
+  public boolean showDefaultConfigurationOptions() {
+    return true;
+  }
+
+  /**
    * Read in settings from XML config.
    * Default implementation uses XmlSerializer so you may use public fields (like {@code int TOOL_OPTION})
    * and bean-style getters/setters (like {@code int getToolOption(), void setToolOption(int)}) to store your options.
@@ -409,6 +419,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
     return null;
   }
 
+  /** @deprecated This method is no longer internally used */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
   @Nullable

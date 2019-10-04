@@ -96,8 +96,12 @@ public class DeclarationJoinLinesHandler implements JoinLinesHandlerDelegate {
         newDecl.addRangeBefore(child.getNextSibling(), statement.getLastChild(), null);
       }
 
-      decl.replace(newDecl);
+      PsiElement prev = statement.getPrevSibling();
+      if (prev instanceof PsiWhiteSpace) {
+        prev.delete();
+      }
       statement.delete();
+      decl.replace(newDecl);
       return startOffset + newDecl.getTextRange().getEndOffset() - newDecl.getTextRange().getStartOffset();
     }
     catch (IncorrectOperationException e) {

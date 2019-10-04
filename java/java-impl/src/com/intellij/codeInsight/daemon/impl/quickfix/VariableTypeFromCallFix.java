@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
 import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.typeMigration.TypeMigrationProcessor;
 import com.intellij.refactoring.typeMigration.TypeMigrationRules;
@@ -37,7 +38,7 @@ public class VariableTypeFromCallFix implements IntentionAction {
     return QuickFixBundle.message("fix.variable.type.text",
                                   UsageViewUtil.getType(myVar),
                                   myVar.getName(),
-                                  myExpressionType.getCanonicalText());
+                                  myExpressionType.getPresentableText());
   }
 
   @Override
@@ -48,7 +49,7 @@ public class VariableTypeFromCallFix implements IntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return myExpressionType.isValid() && myVar.isValid();
+    return myExpressionType.isValid() && PsiTypesUtil.allTypeParametersResolved(myVar, myExpressionType) && myVar.isValid();
   }
 
   @Override

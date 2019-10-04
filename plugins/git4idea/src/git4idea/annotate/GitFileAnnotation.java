@@ -31,8 +31,8 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.impl.AbstractVcsHelperImpl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.text.DateFormatUtil;
+import com.intellij.util.text.JBDateFormat;
 import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitContentRevision;
@@ -41,6 +41,7 @@ import git4idea.GitRevisionNumber;
 import git4idea.GitVcs;
 import git4idea.changes.GitCommittedChangeList;
 import git4idea.changes.GitCommittedChangeListProvider;
+import git4idea.log.GitCommitTooltipLinkHandler;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import gnu.trove.TObjectIntHashMap;
@@ -64,7 +65,7 @@ public class GitFileAnnotation extends FileAnnotation {
   private final LineAnnotationAspect DATE_ASPECT = new GitAnnotationAspect(LineAnnotationAspect.DATE, true) {
     @Override
     public String doGetValue(LineInfo info) {
-      return DateFormatUtil.formatPrettyDate(info.getAuthorDate());
+      return JBDateFormat.getFormatter("vcs.annotate").formatPrettyDate(info.getAuthorDate());
     }
   };
 
@@ -152,25 +153,37 @@ public class GitFileAnnotation extends FileAnnotation {
   @Nullable
   @Override
   public String getToolTip(int lineNumber) {
+    return getToolTip(lineNumber, false);
+  }
+
+  @Nullable
+  @Override
+  public String getHtmlToolTip(int lineNumber) {
+    return getToolTip(lineNumber, true);
+  }
+
+  @Nullable
+  private String getToolTip(int lineNumber, boolean asHtml) {
     LineInfo lineInfo = getLineInfo(lineNumber);
     if (lineInfo == null) return null;
 
+    AnnotationTooltipBuilder atb = new AnnotationTooltipBuilder(myProject, asHtml);
     GitRevisionNumber revisionNumber = lineInfo.getRevisionNumber();
 
-    String path = null;
+    atb.appendRevisionLine(revisionNumber, it -> GitCommitTooltipLinkHandler.createLink(it.asString(), it));
+    atb.appendLine("Author: " + lineInfo.getAuthor());
+    atb.appendLine("Date: " + DateFormatUtil.formatDateTime(lineInfo.getAuthorDate()));
+
     if (!myFilePath.equals(lineInfo.myFilePath)) {
-      path = FileUtil.getLocationRelativeToUserHome(lineInfo.myFilePath.getPresentableUrl());
+      String path = FileUtil.getLocationRelativeToUserHome(lineInfo.myFilePath.getPresentableUrl());
+      atb.appendLine("Path: " + path);
     }
 
     String commitMessage = getCommitMessage(revisionNumber);
     if (commitMessage == null) commitMessage = lineInfo.getSubject() + "\n...";
-    commitMessage = VcsUtil.trimCommitMessageToSaneSize(commitMessage);
+    atb.appendCommitMessageBlock(commitMessage);
 
-    return "commit " + revisionNumber.asString() +
-           "\nAuthor: " + lineInfo.getAuthor() +
-           "\nDate: " + DateFormatUtil.formatDateTime(lineInfo.getAuthorDate()) +
-           (path != null ? "\nPath: " + path : "") +
-           "\n\n" + commitMessage;
+    return atb.toString();
   }
 
   @Nullable

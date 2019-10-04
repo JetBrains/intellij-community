@@ -4,6 +4,7 @@ package com.intellij.openapi.vfs.impl.http;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
@@ -46,7 +47,7 @@ class HttpVirtualFileImpl extends HttpVirtualFile {
           ApplicationManager.getApplication().invokeLater(() -> {
             HttpVirtualFileImpl file = HttpVirtualFileImpl.this;
             FileDocumentManager.getInstance().reloadFiles(file);
-            if (!localFile.getFileType().equals(myInitialFileType)) {
+            if (!FileTypeRegistry.getInstance().isFileOfType(localFile, myInitialFileType)) {
               FileContentUtilCore.reparseFiles(file);
             }
           });
@@ -72,14 +73,8 @@ class HttpVirtualFileImpl extends HttpVirtualFile {
       }
       else {
         int prevSlash = path.lastIndexOf('/', lastSlash - 1);
-        if (prevSlash < 0) {
-          myParentPath = path.substring(0, lastSlash + 1);
-          myName = path.substring(lastSlash + 1);
-        }
-        else {
-          myParentPath = path.substring(0, lastSlash);
-          myName = path.substring(lastSlash + 1);
-        }
+        myParentPath = path.substring(0, prevSlash < 0 ? lastSlash + 1 : lastSlash);
+        myName = path.substring(lastSlash + 1);
       }
     }
   }

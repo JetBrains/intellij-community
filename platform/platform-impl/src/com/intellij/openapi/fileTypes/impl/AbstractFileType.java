@@ -34,7 +34,7 @@ public class AbstractFileType extends UserFileType<AbstractFileType> implements 
   private static final String SEMICOLON = ";";
   protected SyntaxTable mySyntaxTable;
   private SyntaxTable myDefaultSyntaxTable;
-  protected Commenter myCommenter = null;
+  protected Commenter myCommenter;
   @NonNls public static final String ELEMENT_HIGHLIGHTING = "highlighting";
   @NonNls private static final String ELEMENT_OPTIONS = "options";
   @NonNls private static final String ELEMENT_OPTION = "option";
@@ -62,7 +62,7 @@ public class AbstractFileType extends UserFileType<AbstractFileType> implements 
     mySyntaxTable = syntaxTable;
   }
 
-  public void initSupport() {
+  void initSupport() {
     for (FileTypeRegistrator registrator : Extensions.getRootArea().getExtensionPoint(FileTypeRegistrator.EP_NAME).getExtensions()) {
       registrator.initFileType(this);
     }
@@ -109,7 +109,7 @@ public class AbstractFileType extends UserFileType<AbstractFileType> implements 
   }
 
   @NotNull
-  public static SyntaxTable readSyntaxTable(@NotNull Element root) {
+  static SyntaxTable readSyntaxTable(@NotNull Element root) {
     SyntaxTable table = new SyntaxTable();
 
     for (Element element : root.getChildren()) {
@@ -186,7 +186,7 @@ public class AbstractFileType extends UserFileType<AbstractFileType> implements 
       StringTokenizer tokenizer = new StringTokenizer(value, SEMICOLON);
       while(tokenizer.hasMoreElements()) {
         String keyword = tokenizer.nextToken().trim();
-        if (keyword.length() != 0) keywords.add(keyword);
+        if (!keyword.isEmpty()) keywords.add(keyword);
       }
     }
     for (final Object o1 : element.getChildren(ELEMENT_KEYWORD)) {
@@ -272,7 +272,7 @@ public class AbstractFileType extends UserFileType<AbstractFileType> implements 
   }
 
   private static Element writeKeywords(Set<String> keywords, String tagName, Element highlightingElement) {
-    if (keywords.size() == 0 && !ELEMENT_KEYWORDS.equals(tagName)) return null;
+    if (keywords.isEmpty() && !ELEMENT_KEYWORDS.equals(tagName)) return null;
     Element keywordsElement = new Element(tagName);
     String[] strings = ArrayUtilRt.toStringArray(keywords);
     Arrays.sort(strings);
@@ -311,7 +311,7 @@ public class AbstractFileType extends UserFileType<AbstractFileType> implements 
   @NonNls static final String ATTRIBUTE_TYPE = "type";
 
   @NotNull
-  public static List<Pair<FileNameMatcher, String>> readAssociations(@NotNull Element element) {
+  static List<Pair<FileNameMatcher, String>> readAssociations(@NotNull Element element) {
     List<Element> children = element.getChildren(ELEMENT_MAPPING);
     if (children.isEmpty()) {
       return Collections.emptyList();
@@ -329,7 +329,7 @@ public class AbstractFileType extends UserFileType<AbstractFileType> implements 
   }
 
   @Nullable
-  public static Element writeMapping(String typeName, @NotNull FileNameMatcher matcher, boolean specifyTypeName) {
+  static Element writeMapping(String typeName, @NotNull FileNameMatcher matcher, boolean specifyTypeName) {
     Element mapping = new Element(ELEMENT_MAPPING);
     if (matcher instanceof ExtensionFileNameMatcher) {
       mapping.setAttribute(ATTRIBUTE_EXT, ((ExtensionFileNameMatcher)matcher).getExtension());

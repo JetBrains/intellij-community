@@ -40,7 +40,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
-import org.intellij.plugins.relaxNG.ApplicationLoader;
+import org.intellij.plugins.relaxNG.RelaxNgMetaDataContributor;
 import org.intellij.plugins.relaxNG.compact.psi.RncDefine;
 import org.intellij.plugins.relaxNG.compact.psi.RncElementVisitor;
 import org.intellij.plugins.relaxNG.compact.psi.RncGrammar;
@@ -115,7 +115,7 @@ public class UnusedDefineInspection extends BaseInspection {
       if (!tag.getLocalName().equals("define")) {
         return;
       }
-      if (!tag.getNamespace().equals(ApplicationLoader.RNG_NAMESPACE)) {
+      if (!tag.getNamespace().equals(RelaxNgMetaDataContributor.RNG_NAMESPACE)) {
         return;
       }
       if (tag.getAttribute("combine") != null) {

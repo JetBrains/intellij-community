@@ -7,6 +7,8 @@ import org.jetbrains.annotations.NotNull;
  * A wrapper over a user scale supplier, representing a state of a UI element
  * in which its initial size is either pre-scaled (according to {@link #currentScale()})
  * or not (given in a standard resolution, e.g. 16x16 for an icon).
+ *
+ * @author tav
  */
 public abstract class Scaler {
   @SuppressWarnings("AbstractMethodCallInConstructor")

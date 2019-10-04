@@ -43,6 +43,7 @@ public class GetFileContentOperation extends LocalPathIndifferentOperation {
       return myContent == null && myBinaryContent == null;
     }
 
+    @NotNull
     public byte[] getReadContent() {
       if (myBinaryContent != null) {
         return myBinaryContent;
@@ -174,6 +175,7 @@ public class GetFileContentOperation extends LocalPathIndifferentOperation {
 
   }
 
+  @NotNull
   public synchronized byte[] getFileBytes() {
     if (myFileBytes == null) {
       if (myState == DELETED) return ArrayUtilRt.EMPTY_BYTE_ARRAY;
@@ -197,6 +199,7 @@ public class GetFileContentOperation extends LocalPathIndifferentOperation {
     return myState == DELETED;
   }
 
+  @NotNull
   private synchronized byte[] loadFileBytes() {
     if (myState != LOADING) {
       LOG.error("state = " + myState);

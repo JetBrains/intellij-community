@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui.filters;
 
-import com.intellij.structuralsearch.MatchVariableConstraint;
+import com.intellij.structuralsearch.NamedScriptableDefinition;
 import com.intellij.util.ui.table.JBTableRow;
 import com.intellij.util.ui.table.JBTableRowEditor;
 
@@ -10,13 +10,14 @@ import javax.swing.*;
 /**
  * @author Bas Leijdekkers
  */
-public abstract class FilterEditor extends JBTableRowEditor {
+public abstract class FilterEditor<T extends NamedScriptableDefinition> extends JBTableRowEditor {
 
-  protected final MatchVariableConstraint myConstraint;
+  protected final T myConstraint;
   private final Runnable myConstraintChangedCallback;
 
-  public FilterEditor(MatchVariableConstraint constraint, Runnable constraintChangedCallback) {
-    myConstraint = constraint;
+  public FilterEditor(NamedScriptableDefinition constraint, Runnable constraintChangedCallback) {
+    //noinspection unchecked
+    myConstraint = (T)constraint;
     myConstraintChangedCallback = constraintChangedCallback;
   }
 

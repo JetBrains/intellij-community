@@ -27,7 +27,7 @@ public class AppleBoldDottedPainter {
 
   @SuppressWarnings("PointlessArithmeticExpression")
   private AppleBoldDottedPainter(Color color) {
-    myImage = UIUtil.createImage(PATTERN_WIDTH, HEIGHT, BufferedImage.TYPE_INT_ARGB);
+    myImage = ImageUtil.createImage(PATTERN_WIDTH, HEIGHT, BufferedImage.TYPE_INT_ARGB);
     Graphics2D g = myImage.createGraphics();
     try {
       g.setColor(color);

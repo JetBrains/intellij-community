@@ -18,10 +18,13 @@ package com.intellij.ui.colorpicker
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.wm.WindowManager
+import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
 import java.awt.*
-import java.awt.event.*
+import java.awt.event.KeyAdapter
+import java.awt.event.KeyEvent
+import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
 import java.awt.image.BufferedImage
 import java.awt.image.ImageObserver
 import javax.swing.*
@@ -80,8 +83,8 @@ private class PickerDialog(val parent: JComponent, val callback: ColorPipette.Ca
   private val zoomRect = Rectangle(0, 0, ZOOM_RECTANGLE_SIZE, ZOOM_RECTANGLE_SIZE)
   private val captureRect = Rectangle()
 
-  private val maskImage = UIUtil.createImage(ZOOM_RECTANGLE_SIZE, ZOOM_RECTANGLE_SIZE, BufferedImage.TYPE_INT_ARGB)
-  private val magnifierImage = UIUtil.createImage(ZOOM_RECTANGLE_SIZE, ZOOM_RECTANGLE_SIZE, BufferedImage.TYPE_INT_ARGB)
+  private val maskImage = ImageUtil.createImage(ZOOM_RECTANGLE_SIZE, ZOOM_RECTANGLE_SIZE, BufferedImage.TYPE_INT_ARGB)
+  private val magnifierImage = ImageUtil.createImage(ZOOM_RECTANGLE_SIZE, ZOOM_RECTANGLE_SIZE, BufferedImage.TYPE_INT_ARGB)
 
   private val image: BufferedImage = let {
     val image = parent.graphicsConfiguration.createCompatibleImage(ZOOM_RECTANGLE_SIZE, ZOOM_RECTANGLE_SIZE, Transparency.TRANSLUCENT)

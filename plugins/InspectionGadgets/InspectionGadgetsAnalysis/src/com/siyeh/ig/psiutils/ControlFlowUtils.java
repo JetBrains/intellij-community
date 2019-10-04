@@ -27,7 +27,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,8 +37,7 @@ import java.util.List;
 import static com.siyeh.ig.psiutils.ControlFlowUtils.InitializerUsageStatus.*;
 
 public class ControlFlowUtils {
-
-  private ControlFlowUtils() {}
+  private ControlFlowUtils() { }
 
   public static boolean isElseIf(PsiIfStatement ifStatement) {
     PsiElement parent = ifStatement.getParent();
@@ -80,7 +78,7 @@ public class ControlFlowUtils {
       if (method == null) {
         return true;
       }
-      @NonNls final String methodName = method.getName();
+      final String methodName = method.getName();
       if (!methodName.equals("exit")) {
         return true;
       }
@@ -205,7 +203,7 @@ public class ControlFlowUtils {
       }
       if (statement instanceof PsiBreakStatement) {
         final PsiBreakStatement breakStatement = (PsiBreakStatement)statement;
-        if (breakStatement.getLabelExpression() == null) {
+        if (breakStatement.getLabelIdentifier() == null) {
           return true;
         }
       }
@@ -501,15 +499,10 @@ public class ControlFlowUtils {
 
   @Nullable
   public static PsiStatement getLastStatementInBlock(@Nullable PsiCodeBlock codeBlock) {
-    return getLastChildOfType(codeBlock, PsiStatement.class);
-  }
-
-  private static <T extends PsiElement> T getLastChildOfType(@Nullable PsiElement element, @NotNull Class<T> aClass) {
-    if (element == null) return null;
-    for (PsiElement child = element.getLastChild(); child != null; child = child.getPrevSibling()) {
-      if (aClass.isInstance(child)) {
-        //noinspection unchecked
-        return (T)child;
+    if (codeBlock == null) return null;
+    for (PsiElement child = codeBlock.getLastChild(); child != null; child = child.getPrevSibling()) {
+      if (child instanceof PsiStatement) {
+        return (PsiStatement)child;
       }
     }
     return null;
@@ -616,7 +609,7 @@ public class ControlFlowUtils {
   @Contract("null, _ -> false")
   public static boolean statementBreaksLoop(PsiStatement statement, PsiLoopStatement loop) {
     if(statement instanceof PsiBreakStatement) {
-      return ((PsiBreakStatement)statement).findExitedElement() == loop;
+      return ((PsiBreakStatement)statement).findExitedStatement() == loop;
     }
     if(statement instanceof PsiReturnStatement) {
       PsiExpression returnValue = ((PsiReturnStatement)statement).getReturnValue();
@@ -1125,7 +1118,7 @@ public class ControlFlowUtils {
 
     @Override
     public void visitBreakStatement(PsiBreakStatement statement) {
-      if (statement.getLabelExpression() != null) {
+      if (statement.getLabelIdentifier() != null) {
         return;
       }
       m_found = true;
@@ -1181,7 +1174,7 @@ public class ControlFlowUtils {
       if (method == null) {
         return;
       }
-      @NonNls final String methodName = method.getName();
+      final String methodName = method.getName();
       if (!methodName.equals("exit")) {
         return;
       }
@@ -1239,7 +1232,7 @@ public class ControlFlowUtils {
         return;
       }
       super.visitBreakStatement(statement);
-      final PsiStatement exitedStatement = ObjectUtils.tryCast(statement.findExitedElement(), PsiStatement.class);
+      final PsiStatement exitedStatement = statement.findExitedStatement();
       if (exitedStatement == null) {
         return;
       }

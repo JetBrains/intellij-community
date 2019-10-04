@@ -37,7 +37,6 @@ import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.PeekableIterator;
 import com.intellij.util.containers.PeekableIteratorWrapper;
-import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexImpl;
 import com.intellij.util.lang.CompoundRuntimeException;
@@ -62,6 +61,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
@@ -88,7 +88,7 @@ public abstract class UsefulTestCase extends TestCase {
   @NotNull
   private final Disposable myTestRootDisposable = new TestDisposable();
 
-  static String ourPathToKeep;
+  static Path ourPathToKeep;
   private final List<String> myPathsToKeep = new ArrayList<>();
 
   private String myTempDir;
@@ -233,12 +233,12 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   private boolean hasTmpFilesToKeep() {
-    return ourPathToKeep != null && FileUtil.isAncestor(myTempDir, ourPathToKeep, false) || !myPathsToKeep.isEmpty();
+    return ourPathToKeep != null && FileUtil.isAncestor(myTempDir, ourPathToKeep.toString(), false) || !myPathsToKeep.isEmpty();
   }
 
   private boolean shouldKeepTmpFile(@NotNull File file) {
     String path = file.getPath();
-    if (FileUtil.pathsEqual(path, ourPathToKeep)) return true;
+    if (FileUtil.pathsEqual(path, ourPathToKeep.toString())) return true;
     for (String pathToKeep : myPathsToKeep) {
       if (FileUtil.pathsEqual(path, pathToKeep)) return true;
     }
@@ -246,7 +246,7 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   private static final Set<String> DELETE_ON_EXIT_HOOK_DOT_FILES;
-  private static final Class DELETE_ON_EXIT_HOOK_CLASS;
+  private static final Class<?> DELETE_ON_EXIT_HOOK_CLASS;
   static {
     Class<?> aClass;
     try {
@@ -880,14 +880,14 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   protected static void clearFields(@NotNull Object test) throws IllegalAccessException {
-    Class aClass = test.getClass();
+    Class<?> aClass = test.getClass();
     while (aClass != null) {
       clearDeclaredFields(test, aClass);
       aClass = aClass.getSuperclass();
     }
   }
 
-  public static void clearDeclaredFields(@NotNull Object test, @NotNull Class aClass) throws IllegalAccessException {
+  public static void clearDeclaredFields(@NotNull Object test, @NotNull Class<?> aClass) throws IllegalAccessException {
     for (final Field field : aClass.getDeclaredFields()) {
       final String name = field.getDeclaringClass().getName();
       if (!name.startsWith("junit.framework.") && !name.startsWith("com.intellij.testFramework.")) {
@@ -959,7 +959,7 @@ public abstract class UsefulTestCase extends TestCase {
    *
    * @param exceptionCase Block annotated with some exception type
    */
-  protected void assertException(@NotNull AbstractExceptionCase exceptionCase) {
+  protected void assertException(@NotNull AbstractExceptionCase<?> exceptionCase) {
     assertException(exceptionCase, null);
   }
 
@@ -1097,7 +1097,7 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   public static void refreshRecursively(@NotNull VirtualFile file) {
-    VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor() {
+    VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor<Void>() {
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {
         file.getChildren();
@@ -1107,7 +1107,6 @@ public abstract class UsefulTestCase extends TestCase {
     file.refresh(false, true);
   }
 
-  @Nullable
   public static VirtualFile refreshAndFindFile(@NotNull final File file) {
     return UIUtil.invokeAndWaitIfNeeded(() -> LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file));
   }

@@ -4,10 +4,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 public class PListValue {
   private final Object myValue;
@@ -104,7 +101,7 @@ public class PListValue {
     PListValue value = (PListValue)o;
 
     if (myType != value.myType) return false;
-    if (myValue != null ? !myValue.equals(value.myValue) : value.myValue != null) return false;
+    if (!Objects.equals(myValue, value.myValue)) return false;
 
     return true;
   }

@@ -56,14 +56,13 @@ public class XmlPolicy extends XmlFormattingPolicy{
 
   @Override
   public WrapType getWrappingTypeForTagEnd(final XmlTag xmlTag) {
-    return xmlTag.getSubTags().length > 0 ? WrapType.ALWAYS
-           : WrapType.NORMAL;
+    return AbstractXmlBlock.hasSubTags(xmlTag) ? WrapType.ALWAYS : WrapType.NORMAL;
   }
 
   @Override
   public WrapType getWrappingTypeForTagBegin(final XmlTag tag) {
     final PsiElement element = tag.getNextSibling();
-    if (element instanceof XmlText && !(element.getFirstChild() instanceof PsiWhiteSpace) && tag.getSubTags().length == 0) return WrapType.NORMAL;
+    if (element instanceof XmlText && !(element.getFirstChild() instanceof PsiWhiteSpace) && !AbstractXmlBlock.hasSubTags(tag)) return WrapType.NORMAL;
     return WrapType.ALWAYS;
   }
 

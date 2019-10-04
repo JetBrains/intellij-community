@@ -23,6 +23,9 @@ import org.jetbrains.annotations.Nullable;
  * @author peter
  */
 public abstract class TooltipLinkHandler {
+
+  public static final String INSPECTION_INFO = "Inspection info";
+
   /**
    * Override to handle mouse clicks on a link.
    *
@@ -46,5 +49,17 @@ public abstract class TooltipLinkHandler {
   @Nullable
   public String getDescription(@NotNull String refSuffix, @NotNull Editor editor) {
     return null;
+  }
+
+  /**
+   * Override to change the title above shown {@link #getDescription(String, Editor)}
+   *
+   * @param refSuffix part of link's href attribute after registered prefix.
+   * @param editor    an editor in which tooltip with a link was shown.
+   * @return title above detailed description in the expanded tooltip
+   */
+  @NotNull
+  public String getDescriptionTitle(@NotNull String refSuffix, @NotNull Editor editor) {
+    return INSPECTION_INFO;
   }
 }

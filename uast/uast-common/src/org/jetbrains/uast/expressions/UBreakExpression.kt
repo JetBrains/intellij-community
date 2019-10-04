@@ -1,19 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.uast
 
 import org.jetbrains.uast.internal.acceptList
@@ -25,10 +10,9 @@ import org.jetbrains.uast.visitor.UastVisitor
  * Represents a `break` expression.
  */
 interface UBreakExpression : UJumpExpression {
-
   override fun accept(visitor: UastVisitor) {
     if (visitor.visitBreakExpression(this)) return
-    annotations.acceptList(visitor)
+    uAnnotations.acceptList(visitor)
     visitor.afterVisitBreakExpression(this)
   }
 
@@ -38,25 +22,4 @@ interface UBreakExpression : UJumpExpression {
   override fun asLogString(): String = log("label = $label")
 
   override fun asRenderString(): String = label?.let { "break@$it" } ?: "break"
-}
-
-interface UBreakWithValueExpression : UBreakExpression {
-
-  val valueExpression: UExpression?
-
-  override fun accept(visitor: UastVisitor) {
-    if (visitor.visitBreakExpression(this)) return
-    annotations.acceptList(visitor)
-    valueExpression?.accept(visitor)
-    visitor.afterVisitBreakExpression(this)
-  }
-
-  override fun asLogString(): String = log("label = $label, hasValue = ${valueExpression != null}")
-
-  override fun asRenderString(): String = buildString {
-    append("break")
-    label?.let { append("@$it") }
-    valueExpression?.let { append(" ${it.asRenderString()}") }
-  }
-
 }

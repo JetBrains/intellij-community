@@ -20,4 +20,9 @@ import org.jetbrains.annotations.NotNull;
 public interface IntentionActionDelegate {
   @NotNull
   IntentionAction getDelegate();
+
+  @NotNull
+  static IntentionAction unwrap(@NotNull IntentionAction action) {
+    return action instanceof IntentionActionDelegate ? unwrap(((IntentionActionDelegate)action).getDelegate()) : action;
+  }
 }

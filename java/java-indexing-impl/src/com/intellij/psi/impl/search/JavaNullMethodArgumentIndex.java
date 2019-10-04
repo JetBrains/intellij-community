@@ -35,14 +35,14 @@ import java.util.*;
 
 import static com.intellij.psi.impl.source.tree.JavaElementType.*;
 
-public class JavaNullMethodArgumentIndex extends ScalarIndexExtension<JavaNullMethodArgumentIndex.MethodCallData> implements PsiDependentIndex {
+public class JavaNullMethodArgumentIndex extends ScalarIndexExtension<JavaNullMethodArgumentIndex.MethodCallData> {
   private static final Logger LOG = Logger.getInstance(JavaNullMethodArgumentIndex.class);
 
   public static final ID<MethodCallData, Void> INDEX_ID = ID.create("java.null.method.argument");
   private interface Lazy {
     TokenSet CALL_TYPES = TokenSet.create(METHOD_CALL_EXPRESSION, NEW_EXPRESSION, ANONYMOUS_CLASS);
     TIntHashSet WHITE_SPACE_OR_EOL_SYMBOLS = new TIntHashSet(new int[]{' ', '\n', '\r', '\t', '\f'});
-    TIntHashSet STOP_SYMBOLS = new TIntHashSet(new int[]{'(', ',', ')', '/'}); // stop at slash, bracket, сomma
+    TIntHashSet STOP_SYMBOLS = new TIntHashSet(new int[]{'(', ',', ')', '/'}); // stop at slash, bracket, comma
   }
   private final boolean myOfflineMode = ApplicationManager.getApplication().isCommandLine() &&
                                         !ApplicationManager.getApplication().isUnitTestMode();
@@ -84,11 +84,8 @@ public class JavaNullMethodArgumentIndex extends ScalarIndexExtension<JavaNullMe
   }
 
   private static boolean containsStopSymbol(int startIndex, @NotNull CharSequence text, boolean leftDirection) {
-    int i = startIndex;
+    int i = leftDirection ? startIndex - 1 : startIndex + 1;
     while (true) {
-
-      if (leftDirection) i--; else i++;
-
       if (leftDirection) {
         if (i < 0) return false;
       } else {
@@ -100,6 +97,8 @@ public class JavaNullMethodArgumentIndex extends ScalarIndexExtension<JavaNullMe
       if (!Lazy.WHITE_SPACE_OR_EOL_SYMBOLS.contains(c) && !Character.isWhitespace(c)) {
         return false;
       }
+
+      if (leftDirection) i--; else i++;
     }
   }
 
@@ -192,7 +191,7 @@ public class JavaNullMethodArgumentIndex extends ScalarIndexExtension<JavaNullMe
 
   @Override
   public int getVersion() {
-    return 0;
+    return 1;
   }
 
   @NotNull
@@ -208,6 +207,11 @@ public class JavaNullMethodArgumentIndex extends ScalarIndexExtension<JavaNullMe
 
   @Override
   public boolean dependsOnFileContent() {
+    return true;
+  }
+
+  @Override
+  public boolean hasSnapshotMapping() {
     return true;
   }
 

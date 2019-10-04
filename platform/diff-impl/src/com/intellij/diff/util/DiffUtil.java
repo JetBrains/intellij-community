@@ -37,6 +37,7 @@ import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.command.undo.DocumentReferenceManager;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.impl.GenericDataProvider;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -52,10 +53,7 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.PlainTextFileType;
-import com.intellij.openapi.fileTypes.SyntaxHighlighter;
-import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
+import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -87,15 +85,13 @@ import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.DocumentUtil;
-import com.intellij.util.ImageLoader;
-import com.intellij.util.LineSeparator;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.components.BorderLayoutPanel;
 import gnu.trove.Equality;
 import gnu.trove.TIntFunction;
 import org.jetbrains.annotations.*;
@@ -105,9 +101,13 @@ import javax.swing.border.Border;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.util.List;
 import java.util.*;
+
+import static com.intellij.diff.util.DiffUserDataKeysEx.EDITORS_TITLE_CUSTOMIZER;
 
 public class DiffUtil {
   private static final Logger LOG = Logger.getInstance(DiffUtil.class);
@@ -162,7 +162,7 @@ public class DiffUtil {
       return highlighterFactory.createEditorHighlighter(syntaxHighlighter, EditorColorsManager.getInstance().getGlobalScheme());
     }
     if (file != null && file.isValid()) {
-      if ((type == null || type == PlainTextFileType.INSTANCE) || file.getFileType() == type || file instanceof LightVirtualFile) {
+      if ((type == null || type == PlainTextFileType.INSTANCE) || FileTypeRegistry.getInstance().isFileOfType(file, type) || file instanceof LightVirtualFile) {
         return highlighterFactory.createEditorHighlighter(project, file);
       }
     }
@@ -373,6 +373,11 @@ public class DiffUtil {
   // UI
   //
 
+  public static boolean isFromShortcut(@NotNull AnActionEvent e) {
+    String place = e.getPlace();
+    return ActionPlaces.KEYBOARD_SHORTCUT.equals(place) || ActionPlaces.MOUSE_SHORTCUT.equals(place);
+  }
+
   public static void registerAction(@NotNull AnAction action, @NotNull JComponent component) {
     action.registerCustomShortcutSet(action.getShortcutSet(), component);
   }
@@ -502,8 +507,10 @@ public class DiffUtil {
     }
 
     List<JComponent> components = new ArrayList<>(titles.size());
+    List<DiffEditorTitleCustomizer> diffTitleCustomizers = request.getUserData(EDITORS_TITLE_CUSTOMIZER);
     for (int i = 0; i < contents.size(); i++) {
-      JComponent title = createTitle(StringUtil.notNullize(titles.get(i)));
+      JComponent title = createTitle(StringUtil.notNullize(titles.get(i)),
+                                     diffTitleCustomizers != null ? diffTitleCustomizers.get(i) : null);
       title = createTitleWithNotifications(title, contents.get(i));
       components.add(title);
     }
@@ -524,9 +531,14 @@ public class DiffUtil {
     if (equalCharsets && equalSeparators && !ContainerUtil.exists(titles, Condition.NOT_NULL)) {
       return Collections.nCopies(titles.size(), null);
     }
-
+    List<DiffEditorTitleCustomizer> diffTitleCustomizers = request.getUserData(EDITORS_TITLE_CUSTOMIZER);
     for (int i = 0; i < contents.size(); i++) {
-      JComponent title = createTitle(StringUtil.notNullize(titles.get(i)), contents.get(i), equalCharsets, equalSeparators, editors.get(i));
+      JComponent title = createTitle(StringUtil.notNullize(titles.get(i)),
+                                     contents.get(i),
+                                     equalCharsets,
+                                     equalSeparators,
+                                     editors.get(i),
+                                     diffTitleCustomizers != null ? diffTitleCustomizers.get(i) : null);
       title = createTitleWithNotifications(title, contents.get(i));
       result.add(title);
     }
@@ -559,7 +571,8 @@ public class DiffUtil {
                                         @NotNull DiffContent content,
                                         boolean equalCharsets,
                                         boolean equalSeparators,
-                                        @Nullable Editor editor) {
+                                        @Nullable Editor editor,
+                                        @Nullable DiffEditorTitleCustomizer titleCustomizer) {
     if (content instanceof EmptyContent) return null;
     DocumentContent documentContent = (DocumentContent)content;
 
@@ -568,12 +581,17 @@ public class DiffUtil {
     LineSeparator separator = equalSeparators ? null : documentContent.getLineSeparator();
     boolean isReadOnly = editor == null || editor.isViewer() || !canMakeWritable(editor.getDocument());
 
-    return createTitle(title, separator, charset, bom, isReadOnly);
+    return createTitle(title, separator, charset, bom, isReadOnly, titleCustomizer);
   }
 
   @NotNull
   public static JComponent createTitle(@NotNull String title) {
-    return createTitle(title, null, null, null, false);
+    return createTitle(title, null, null, null, false, null);
+  }
+
+  @NotNull
+  public static JComponent createTitle(@NotNull String title, @Nullable DiffEditorTitleCustomizer titleCustomizer) {
+    return createTitle(title, null, null, null, false, titleCustomizer);
   }
 
   @NotNull
@@ -581,12 +599,17 @@ public class DiffUtil {
                                        @Nullable LineSeparator separator,
                                        @Nullable Charset charset,
                                        @Nullable Boolean bom,
-                                       boolean readOnly) {
+                                       boolean readOnly,
+                                       @Nullable DiffEditorTitleCustomizer titleCustomizer) {
     JPanel panel = new JPanel(new BorderLayout());
     panel.setBorder(JBUI.Borders.empty(0, 4));
-    JBLabel titleLabel = new JBLabel(title).setCopyable(true);
-    if (readOnly) titleLabel.setIcon(AllIcons.Ide.Readonly);
-    panel.add(titleLabel, BorderLayout.CENTER);
+    BorderLayoutPanel labelWithIcon = new BorderLayoutPanel();
+    JComponent titleLabel = titleCustomizer == null ? new JBLabel(title).setCopyable(true) : titleCustomizer.getLabel();
+    labelWithIcon.addToCenter(titleLabel);
+    if (readOnly) {
+      labelWithIcon.addToLeft(new JBLabel(AllIcons.Ide.Readonly));
+    }
+    panel.add(labelWithIcon, BorderLayout.CENTER);
     if (charset != null && separator != null) {
       JPanel panel2 = new JPanel();
       panel2.setLayout(new BoxLayout(panel2, BoxLayout.X_AXIS));
@@ -666,6 +689,16 @@ public class DiffUtil {
     }
 
     return panel;
+  }
+
+  @NotNull
+  public static String getStatusText(int totalCount, int excludedCount, @NotNull ThreeState isContentsEqual) {
+    if (totalCount == 0 && isContentsEqual == ThreeState.NO) {
+      return DiffBundle.message("diff.all.differences.ignored.text");
+    }
+    String message = DiffBundle.message("diff.count.differences.status.text", totalCount - excludedCount);
+    if (excludedCount > 0) message += " " + DiffBundle.message("diff.inactive.count.differences.status.text", excludedCount);
+    return message;
   }
 
   //
@@ -838,6 +871,22 @@ public class DiffUtil {
       inverted[indexes[i]] = i;
     }
     return inverted;
+  }
+
+  public static boolean compareStreams(@Nullable InputStream stream1, @Nullable InputStream stream2) throws IOException {
+    try (InputStream s1 = stream1) {
+      try (InputStream s2 = stream2) {
+        if (s1 == null && s2 == null) return true;
+        if (s1 == null || s2 == null) return false;
+
+        while (true) {
+          int b1 = s1.read();
+          int b2 = s2.read();
+          if (b1 != b2) return false;
+          if (b1 == -1) return true;
+        }
+      }
+    }
   }
 
   //

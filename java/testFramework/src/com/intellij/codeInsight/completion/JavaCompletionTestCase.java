@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
@@ -7,7 +7,7 @@ import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,7 +17,7 @@ import java.util.List;
 /**
  * @author mike
  */
-@PlatformTestCase.WrapInCommand
+@HeavyPlatformTestCase.WrapInCommand
 public abstract class JavaCompletionTestCase extends DaemonAnalyzerTestCase {
   protected String myPrefix;
   protected LookupElement[] myItems;
@@ -87,7 +87,7 @@ public abstract class JavaCompletionTestCase extends DaemonAnalyzerTestCase {
     for (final LookupElement myItem : myItems) {
       for (String value : values) {
         if (value == null) {
-          assertFalse("Unacceptable value reached", true);
+          fail("Unacceptable value reached");
         }
         if (value.equals(myItem.getLookupString())) {
           index++;

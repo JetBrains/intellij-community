@@ -15,7 +15,6 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.impl.DesktopLayout;
@@ -23,6 +22,8 @@ import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.scale.JBUIScale;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
 import javax.swing.plaf.FontUIResource;
@@ -68,15 +69,16 @@ public class TogglePresentationModeAction extends AnAction implements DumbAware 
 
     tweakUIDefaults(settings, inPresentation);
 
-    ActionCallback callback = project == null ? ActionCallback.DONE : tweakFrameFullScreen(project, inPresentation);
-    callback.doWhenProcessed(() -> {
+    Promise<?> callback = project == null ? Promises.resolvedPromise() : tweakFrameFullScreen(project, inPresentation);
+    callback.onSuccess(o -> {
       tweakEditorAndFireUpdateUI(settings, inPresentation);
 
       restoreToolWindows(project, layoutStored, inPresentation);
     });
   }
 
-  private static ActionCallback tweakFrameFullScreen(Project project, boolean inPresentation) {
+  @NotNull
+  private static Promise<?> tweakFrameFullScreen(Project project, boolean inPresentation) {
     Window window = IdeFrameImpl.getActiveFrame();
     if (window instanceof IdeFrameImpl) {
       IdeFrameImpl frame = (IdeFrameImpl)window;
@@ -92,7 +94,7 @@ public class TogglePresentationModeAction extends AnAction implements DumbAware 
         }
       }
     }
-    return ActionCallback.DONE;
+    return Promises.resolvedPromise();
   }
 
   private static void tweakEditorAndFireUpdateUI(UISettings settings, boolean inPresentation) {

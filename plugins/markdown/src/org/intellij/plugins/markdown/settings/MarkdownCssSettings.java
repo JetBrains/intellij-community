@@ -1,7 +1,8 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.settings;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,7 +32,7 @@ public final class MarkdownCssSettings {
   private String myStylesheetText;
 
   private MarkdownCssSettings() {
-    this(UIUtil.isUnderDarcula());
+    this(StartupUiUtil.isUnderDarcula());
   }
 
   private MarkdownCssSettings(boolean isDarcula) {

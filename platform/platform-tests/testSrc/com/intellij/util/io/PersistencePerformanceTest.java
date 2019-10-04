@@ -7,7 +7,7 @@ import com.intellij.openapi.project.CacheUpdateRunner;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -97,7 +97,7 @@ public class PersistencePerformanceTest extends BasePlatformTestCase {
       File file = FileUtil.createTempFile("", ".txt");
       VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
       assertNotNull(virtualFile);
-      PlatformTestCase.setFileText(virtualFile, "foo bar");
+      HeavyPlatformTestCase.setFileText(virtualFile, "foo bar");
       files.add(virtualFile);
     }
 

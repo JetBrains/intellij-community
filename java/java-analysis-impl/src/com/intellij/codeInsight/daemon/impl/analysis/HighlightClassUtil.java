@@ -385,7 +385,7 @@ public class HighlightClassUtil {
     PsiElement context = null;
     PsiModifierList modifierList = aClass.getModifierList();
     if (modifierList != null) {
-      for (PsiElement element : modifierList.getChildren()) {
+      for (PsiElement element = modifierList.getFirstChild(); element != null; element = element.getNextSibling()) {
         if (Comparing.equal(element.getText(), PsiModifier.STATIC)) {
           context = element;
           break;

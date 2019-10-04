@@ -7,53 +7,30 @@ import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.components.JBRadioButton
-import com.intellij.ui.components.Label
-import com.intellij.ui.layout.migLayout.*
 import java.awt.event.ActionListener
 import javax.swing.ButtonGroup
+import javax.swing.JComponent
 import javax.swing.JLabel
-import kotlin.reflect.KMutableProperty0
-import kotlin.reflect.KProperty0
 
-open class LayoutBuilder @PublishedApi internal constructor(@PublishedApi internal val builder: LayoutBuilderImpl, val buttonGroup: ButtonGroup? = null) {
-  inline fun row(label: String, init: Row.() -> Unit) = row(label = Label(label), init = init)
-
-  inline fun row(label: JLabel? = null, separated: Boolean = false, init: Row.() -> Unit): Row {
-    val row = builder.newRow(label, buttonGroup, separated)
-    row.init()
-    return row
+open class LayoutBuilder @PublishedApi internal constructor(@PublishedApi internal val builder: LayoutBuilderImpl) : RowBuilder {
+  override fun createChildRow(label: JLabel?, isSeparated: Boolean, noGrid: Boolean, title: String?): Row {
+    return builder.rootRow.createChildRow(label, isSeparated, noGrid, title)
   }
 
-  inline fun titledRow(title: String, init: Row.() -> Unit): Row {
-    val row = builder.newTitledRow(title)
-    row.init()
-    return row
+  override fun createNoteOrCommentRow(component: JComponent): Row {
+    return builder.rootRow.createNoteOrCommentRow(component)
   }
 
-  // linkHandler is not an optional for backward compatibility
-  /**
-   * Hyperlinks are supported (`<a href=""></a>`), new lines and <br> are supported only if no links (file issue if need).
-   */
-  @JvmOverloads
-  fun noteRow(text: String, linkHandler: ((url: String) -> Unit)? = null) {
-    builder.noteRow(text, linkHandler)
+  override fun withButtonGroup(buttonGroup: ButtonGroup, body: () -> Unit) {
+    builder.withButtonGroup(buttonGroup, body)
   }
 
-  fun commentRow(text: String) {
-    builder.commentRow(text)
-  }
-
-  inline fun buttonGroup(init: LayoutBuilder.() -> Unit) {
-    LayoutBuilder(builder, ButtonGroup()).init()
-  }
-
-  fun <T : Any> buttonGroup(prop: KMutableProperty0<T>, init: LayoutBuilderWithButtonGroupProperty<T>.() -> Unit) {
-    LayoutBuilderWithButtonGroupProperty(builder, prop).init()
-  }
-
-  inline fun buttonGroup(crossinline elementActionListener: () -> Unit, init: LayoutBuilder.() -> Unit): ButtonGroup {
+  inline fun buttonGroup(crossinline elementActionListener: () -> Unit, crossinline init: LayoutBuilder.() -> Unit): ButtonGroup {
     val group = ButtonGroup()
-    LayoutBuilder(builder, group).init()
+
+    builder.withButtonGroup(group) {
+      LayoutBuilder(builder).init()
+    }
 
     val listener = ActionListener { elementActionListener() }
     for (button in group.elements) {
@@ -69,8 +46,21 @@ open class LayoutBuilder @PublishedApi internal constructor(@PublishedApi intern
     get() = builder
 }
 
-class LayoutBuilderWithButtonGroupProperty<T : Any>
-    @PublishedApi internal constructor(builder: LayoutBuilderImpl, private val prop: KMutableProperty0<T>) : LayoutBuilder(builder, ButtonGroup()) {
+class CellBuilderWithButtonGroupProperty<T : Any>
+@PublishedApi internal constructor(private val prop: PropertyBinding<T>)  {
+
+  fun Cell.radioButton(text: String, value: T): CellBuilder<JBRadioButton> {
+    val component = JBRadioButton(text, prop.get() == value)
+    return component()
+      .onApply { if (component.isSelected) prop.set(value) }
+      .onReset { component.isSelected = prop.get() == value }
+      .onIsModified { component.isSelected != (prop.get() == value) }
+  }
+}
+
+
+class RowBuilderWithButtonGroupProperty<T : Any>
+    @PublishedApi internal constructor(private val builder: RowBuilder, private val prop: PropertyBinding<T>) : RowBuilder by builder {
 
   fun Row.radioButton(text: String, value: T): CellBuilder<JBRadioButton> {
     val component = JBRadioButton(text, prop.get() == value)

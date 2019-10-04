@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.testFramework.fixtures;
 
@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * This is to be provided by IDEA and not by plugin authors.
+ * This is to be provided by the test framework and not by plugin authors.
  */
 public abstract class IdeaTestFixtureFactory {
   private static final IdeaTestFixtureFactory ourInstance = new IdeaTestFixtureFactoryImpl();

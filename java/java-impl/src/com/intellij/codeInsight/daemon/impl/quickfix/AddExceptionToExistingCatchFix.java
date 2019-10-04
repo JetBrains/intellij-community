@@ -81,7 +81,7 @@ public class AddExceptionToExistingCatchFix extends PsiElementBaseIntentionActio
 
   private static void addTypeToCatch(@NotNull List<? extends PsiClassType> exceptionsToAdd, @NotNull PsiCatchSection catchSection) {
     Project project = catchSection.getProject();
-    WriteCommandAction.runWriteCommandAction(project, () -> {
+    WriteCommandAction.runWriteCommandAction(project, QuickFixBundle.message("add.exception.to.existing.catch.family"), null, () -> {
       if (!catchSection.isValid() || !exceptionsToAdd.stream().allMatch(type -> type.isValid())) return;
       PsiParameter parameter = catchSection.getParameter();
       if (parameter == null) return;
@@ -204,5 +204,10 @@ public class AddExceptionToExistingCatchFix extends PsiElementBaseIntentionActio
       return false;
     }
     return newException.isAssignableFrom(catchType);
+  }
+
+  @Override
+  public boolean startInWriteAction() {
+    return false;
   }
 }

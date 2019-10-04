@@ -17,6 +17,7 @@ import com.intellij.execution.process.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ExecutionConsole;
+import com.intellij.execution.util.ProgramParametersConfigurator;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
@@ -96,10 +97,9 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
       final ProcessHandler processHandler = startProcess(processStarter, patchers);
 
       TerminalExecutionConsole executeConsole = new TerminalExecutionConsole(myConfig.getProject(), processHandler);
-      executeConsole.withEnterKeyDefaultCodeEnabled(true);
 
-      executeConsole.addMessageFilter(myConfig.getProject(), new PythonTracebackFilter(myConfig.getProject()));
-      executeConsole.addMessageFilter(myConfig.getProject(), new UrlFilter());
+      executeConsole.addMessageFilter(new PythonTracebackFilter(myConfig.getProject()));
+      executeConsole.addMessageFilter(new UrlFilter());
 
       processHandler.startNotify();
 
@@ -226,7 +226,7 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
       }
     }
 
-    final String scriptOptionsString = myConfig.getScriptParameters();
+    final String scriptOptionsString = getExpandedScriptParameters();
     if (scriptOptionsString != null) scriptParameters.addParametersString(scriptOptionsString);
 
     if (!StringUtil.isEmptyOrSpaces(myConfig.getWorkingDirectory())) {
@@ -236,6 +236,12 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
     if (myConfig.isRedirectInput() && !StringUtil.isEmptyOrSpaces(inputFile)) {
       commandLine.withInput(new File(inputFile));
     }
+  }
+
+  @Nullable
+  private String getExpandedScriptParameters() {
+    final String parameters = myConfig.getScriptParameters();
+    return ProgramParametersConfigurator.expandMacros(parameters);
   }
 
   private static String escape(String s) {
@@ -267,7 +273,8 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
 
     sb.append("runfile('").append(escape(scriptPath)).append("'");
 
-    final String[] scriptParameters = ParametersList.parse(myConfig.getScriptParameters());
+    final String parametersString = getExpandedScriptParameters();
+    final String[] scriptParameters = parametersString != null ? ParametersList.parse(parametersString) : ArrayUtil.EMPTY_STRING_ARRAY;
     if (scriptParameters.length != 0) {
       sb.append(", args=[");
       for (int i = 0; i < scriptParameters.length; i++) {

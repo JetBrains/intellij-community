@@ -46,6 +46,13 @@ public abstract class PushSupport<Repo extends Repository, Source extends PushSo
   @Nullable
   public abstract Target getDefaultTarget(@NotNull Repo repository);
 
+
+  /**
+   * @return Push destination for source
+   */
+  @Nullable
+  public Target getDefaultTarget(@NotNull Repo repository, @NotNull Source source) {return null;}
+
   /**
    * @return current source(branch) for repository
    */
@@ -64,7 +71,9 @@ public abstract class PushSupport<Repo extends Repository, Source extends PushSo
   }
 
   @NotNull
-  public abstract PushTargetPanel<Target> createTargetPanel(@NotNull Repo repository, @Nullable Target defaultTarget);
+  public abstract PushTargetPanel<Target> createTargetPanel(@NotNull Repo repository,
+                                                            @NotNull Source source,
+                                                            @Nullable Target defaultTarget);
 
   public boolean shouldRequestIncomingChangesForNotCheckedRepositories() {
     return true;
@@ -84,4 +93,5 @@ public abstract class PushSupport<Repo extends Repository, Source extends PushSo
   public boolean mayChangeTargetsSync() {
     return false;
   }
+
 }

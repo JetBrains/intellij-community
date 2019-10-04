@@ -45,23 +45,20 @@ class TeamcityServiceMessages:
         self.message('testSuiteFinished', name=suiteName)
         self.__pop_current_test()
 
-    def testStarted(self, testName, location=None):
-        self.message('testStarted', name=testName, locationHint=location)
+    def testStarted(self, testName, location=None, **properties):
+        self.message('testStarted', name=testName, locationHint=location, **properties)
         self.test_stack.append(testName)
         self.number_of_tests = self.number_of_tests + 1
 
-
-    def testFinished(self, testName, duration=None):
-        self.message('testFinished', name=testName, duration=duration)
+    def testFinished(self, testName, duration=None, **properties):
+        self.message('testFinished', name=testName, duration=duration, **properties)
         self.__pop_current_test()
 
-
-
-    def testIgnored(self, testName, message=''):
+    def testIgnored(self, testName, message='', **properties):
         self.message('testIgnored', name=testName, message=message)
-        self.testFinished(testName)
+        self.testFinished(testName, **properties)
 
-    def testFailed(self, testName, message='', details='', expected='', actual='', duration=None):
+    def testFailed(self, testName, message='', details='', expected='', actual='', duration=None, **properties):
         """
         Marks test as failed. *CAUTION*: This method calls ``testFinished``, so you do not need
         to call it second time. Try to provide ``duration`` if possible.
@@ -69,11 +66,10 @@ class TeamcityServiceMessages:
         """
         if expected and actual:
             self.message('testFailed', type='comparisonFailure', name=testName, message=message,
-                         details=details, expected=expected, actual=actual)
+                         details=details, expected=expected, actual=actual, **properties)
         else:
-            self.message('testFailed', name=testName, message=message, details=details)
-        self.testFinished(testName, int(duration) if duration else None)
-
+            self.message('testFailed', name=testName, message=message, details=details, **properties)
+        self.testFinished(testName, int(duration) if duration else None, **properties)
 
     def __pop_current_test(self):
         try:
@@ -85,15 +81,14 @@ class TeamcityServiceMessages:
         self.message('testFailed', name=testName, message=message, details=details, error="true")
         self.testFinished(testName, int(duration) if duration else None)
 
-
     def current_test_name(self):
         """
         :return: name of current test we are in
         """
         return self.test_stack[-1] if len(self.test_stack) > 0 else None
 
-    def testStdOut(self, testName, out):
-        self.message('testStdOut', name=testName, out=out)
+    def testStdOut(self, testName, out, **properties):
+        self.message('testStdOut', name=testName, out=out, **properties)
 
     def testStdErr(self, testName, out):
         self.message('testStdErr', name=testName, out=out)
@@ -101,5 +96,5 @@ class TeamcityServiceMessages:
     def testCount(self, count):
         self.message('testCount', count=count)
 
-    def testMatrixEntered(self):
-        self.message('enteredTheMatrix')
+    def testMatrixEntered(self, **kwargs):
+        self.message('enteredTheMatrix', **kwargs)

@@ -19,11 +19,15 @@ package com.intellij.util.indexing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Processor;
+import com.intellij.util.indexing.impl.UpdateData;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
+import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
 
 /**
  * @author Eugene Zhuravlev
@@ -39,10 +43,31 @@ public interface UpdatableIndex<Key, Value, Input> extends InvertedIndex<Key,Val
   Lock getWriteLock();
 
   @NotNull
+  ReadWriteLock getLock();
+
+  @NotNull
   Map<Key, Value> getIndexedFileData(int fileId) throws StorageException;
 
   void setIndexedStateForFile(int fileId, @NotNull VirtualFile file);
   void resetIndexedStateForFile(int fileId);
 
   boolean isIndexedStateForFile(int fileId, @NotNull VirtualFile file);
+
+  long getModificationStamp();
+
+  void removeTransientDataForFile(int inputId);
+
+  void removeTransientDataForKeys(int inputId, @NotNull Collection<? extends Key> keys);
+
+  @NotNull
+  IndexExtension<Key, Value, Input> getExtension();
+
+  void updateWithMap(@NotNull UpdateData<Key, Value> updateData) throws StorageException;
+
+  void setBufferingEnabled(boolean enabled);
+
+  void cleanupMemoryStorage();
+
+  @TestOnly
+  void cleanupForNextTest();
 }

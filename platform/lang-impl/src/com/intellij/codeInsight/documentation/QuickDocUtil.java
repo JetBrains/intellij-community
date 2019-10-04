@@ -7,8 +7,10 @@ import com.intellij.concurrency.SensitiveProgressWrapper;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.EditorMouseHoverPopupManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -67,7 +69,7 @@ public class QuickDocUtil {
       component = selectedContent == null ? null : (DocumentationComponent)selectedContent.getComponent();
     }
     else {
-      component = null;
+      component = EditorMouseHoverPopupManager.getInstance().getDocumentationComponent();
     }
     return component;
   }
@@ -101,6 +103,16 @@ public class QuickDocUtil {
       }
     }
     return result;
+  }
+
+  /**
+   * Same as {@link #runInReadActionWithWriteActionPriorityWithRetries(Runnable, long, long, ProgressIndicator)} using current thread's
+   * progress indicator ({@link ProgressManager#getProgressIndicator()}).
+   */
+  public static boolean runInReadActionWithWriteActionPriorityWithRetries(@NotNull final Runnable action,
+                                                                          long timeout, long pauseBetweenRetries) {
+    return runInReadActionWithWriteActionPriorityWithRetries(action, timeout, pauseBetweenRetries,
+                                                             ProgressIndicatorProvider.getGlobalProgressIndicator());
   }
 
   @Contract("_, _, _, null -> null")

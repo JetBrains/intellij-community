@@ -424,16 +424,14 @@ public class IfCanBeSwitchInspection extends BaseInspection {
     }
   }
 
-  private static void appendElement(PsiElement element, boolean renameBreakElements, String breakLabelString,
-                                    @NonNls StringBuilder switchStatementText) {
+  private static void appendElement(PsiElement element, boolean renameBreakElements, String breakLabelString, StringBuilder switchStatementText) {
     final String text = element.getText();
     if (!renameBreakElements) {
       switchStatementText.append(text);
     }
     else if (element instanceof PsiBreakStatement) {
-      final PsiBreakStatement breakStatement = (PsiBreakStatement)element;
-      final PsiExpression labelExpression = breakStatement.getLabelExpression();
-      if (labelExpression == null) {
+      final PsiIdentifier labelIdentifier = ((PsiBreakStatement)element).getLabelIdentifier();
+      if (labelIdentifier == null) {
         switchStatementText.append("break ").append(breakLabelString).append(';');
       }
       else {

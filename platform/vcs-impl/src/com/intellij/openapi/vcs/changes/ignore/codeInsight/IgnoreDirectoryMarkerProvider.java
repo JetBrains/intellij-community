@@ -27,6 +27,7 @@ package com.intellij.openapi.vcs.changes.ignore.codeInsight;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.LineMarkerProvider;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.changes.ignore.cache.PatternCache;
@@ -36,6 +37,8 @@ import com.intellij.openapi.vcs.changes.ignore.util.RegexUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.impl.source.tree.LeafElement;
+import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,17 +51,18 @@ import java.util.regex.Pattern;
  * {@link LineMarkerProvider} that marks ignore entry lines with {@link PlatformIcons#FOLDER_ICON} if they point to the directory in file
  * system.
  */
-public class IgnoreDirectoryMarkerProvider implements LineMarkerProvider {
+public final class IgnoreDirectoryMarkerProvider implements LineMarkerProvider {
 
   @Nullable
   @Override
-  public LineMarkerInfo getLineMarkerInfo(@NotNull PsiElement element) {
+  public LineMarkerInfo<?> getLineMarkerInfo(@NotNull PsiElement element) {
     return null;
   }
 
   @Override
   public void collectSlowLineMarkers(@NotNull List<PsiElement> elements, @NotNull Collection<LineMarkerInfo> result) {
     for (PsiElement element : elements) {
+      ProgressManager.checkCanceled();
       if (!(element instanceof IgnoreEntryFile)) {
         continue;
       }
@@ -80,15 +84,25 @@ public class IgnoreDirectoryMarkerProvider implements LineMarkerProvider {
       }
 
       if (isDirectory) {
-        result.add(new LineMarkerInfo<>(element.getFirstChild(), element.getTextRange(),
-                                        PlatformIcons.FOLDER_ICON, null, null, GutterIconRenderer.Alignment.CENTER));
+        final PsiElement leafElement = firstLeafOrNull(element);
+        if (leafElement != null) {
+          result.add(new LineMarkerInfo<>(leafElement, element.getTextRange(),
+                                          PlatformIcons.FOLDER_ICON, null, null, GutterIconRenderer.Alignment.CENTER));
+        }
       }
     }
+  }
+
+  @Nullable
+  private static PsiElement firstLeafOrNull(@NotNull PsiElement element) {
+    LeafElement firstLeaf = TreeUtil.findFirstLeaf(element.getNode());
+    return firstLeaf != null ? firstLeaf.getPsi() : null;
   }
 
   private static boolean isDirectoryExist(@NotNull VirtualFile root, @NotNull Pattern pattern) {
     Ref<Boolean> found = Ref.create(false);
     VfsUtilCore.iterateChildrenRecursively(root, file -> file.isDirectory(), (dir) -> {
+      ProgressManager.checkCanceled();
       String path = VfsUtilCore.getRelativePath(dir, root);
       if (path != null && RegexUtil.match(pattern, path)) {
         found.set(true);

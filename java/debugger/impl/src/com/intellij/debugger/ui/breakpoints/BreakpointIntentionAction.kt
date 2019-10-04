@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.breakpoints
 
 import com.intellij.debugger.InstanceFilter
@@ -131,6 +131,9 @@ internal abstract class BreakpointIntentionAction(protected val myBreakpoint: XB
     @JvmField
     val THIS_TYPE_KEY = Key.create<String>("THIS_TYPE_KEY")
 
+    @JvmField
+    val THIS_ID_KEY = Key.create<Long>("THIS_ID_KEY")
+
     @JvmStatic
     fun getIntentions(breakpoint: XBreakpoint<*>, currentSession: XDebugSession?): List<AnAction> {
       val process = currentSession?.debugProcess
@@ -146,7 +149,7 @@ internal abstract class BreakpointIntentionAction(protected val myBreakpoint: XB
             res.add(AddClassNotFilter(breakpoint, it))
           }
 
-          frameDescriptor.thisObject?.uniqueID()?.let {
+          frameDescriptor.getUserData(THIS_ID_KEY)?.let {
             res.add(AddInstanceFilter(breakpoint, it))
           }
 

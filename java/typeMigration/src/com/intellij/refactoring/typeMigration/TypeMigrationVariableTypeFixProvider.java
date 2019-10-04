@@ -43,7 +43,7 @@ public class TypeMigrationVariableTypeFixProvider implements ChangeVariableTypeQ
       @NotNull
       @Override
       public String getText() {
-        return "Migrate \'" + myName + "\' type to \'" + getReturnType().getCanonicalText() + "\'";
+        return "Migrate \'" + myName + "\' type to \'" + getReturnType().getPresentableText() + "\'";
       }
 
       @Override

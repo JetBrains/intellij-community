@@ -25,10 +25,10 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
  */
 class JavaLangInvokeHandleSignatureTest : LightJavaCodeInsightFixtureTestCase() {
 
-  override fun getBasePath() = JavaTestUtil.getRelativeJavaTestDataPath() + "/inspection/invokeHandleSignature"
+  override fun getBasePath() = "${JavaTestUtil.getRelativeJavaTestDataPath()}/inspection/invokeHandleSignature"
 
   override fun getProjectDescriptor(): LightProjectDescriptor {
-    return LightJavaCodeInsightFixtureTestCase.JAVA_9
+    return JAVA_9
   }
 
   override fun setUp() {
@@ -53,6 +53,6 @@ class JavaLangInvokeHandleSignatureTest : LightJavaCodeInsightFixtureTestCase() 
   fun testSpecial() = doTest()
 
   private fun doTest() {
-    myFixture.testHighlighting(getTestName(false) + ".java")
+    myFixture.testHighlighting("${getTestName(false)}.java")
   }
 }

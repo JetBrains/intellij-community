@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.io;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
@@ -19,6 +20,8 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.util.Collection;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.function.Predicate;
 import java.util.jar.JarFile;
 import java.util.stream.Collectors;
@@ -86,7 +89,10 @@ public class IoTestUtil {
   }
 
   public static void assumeSymLinkCreationIsSupported() throws AssumptionViolatedException {
-    Assume.assumeTrue("Expected can create symlinks", isSymLinkCreationSupported);
+    Assume.assumeTrue("Expected can create symlinks, but it seems '"+SystemInfo.getOsNameAndVersion()+"' is unwilling", isSymLinkCreationSupported);
+  }
+  public static void assumeWindows() throws AssumptionViolatedException {
+    Assume.assumeTrue("Expected windows but got: '" + SystemInfo.getOsNameAndVersion()+"'", SystemInfo.isWindows);
   }
 
   @NotNull
@@ -149,7 +155,8 @@ public class IoTestUtil {
 
       Process process = builder.start();
       StringBuilder output = new StringBuilder();
-      Thread thread = new Thread(() -> {
+
+      Future<?> thread = ApplicationManager.getApplication().executeOnPooledThread(() -> {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8))) {
           String line;
           while ((line = reader.readLine()) != null) {
@@ -159,16 +166,15 @@ public class IoTestUtil {
         catch (IOException e) {
           throw new RuntimeException(e);
         }
-      }, "io test");
-      thread.start();
+      });
       int ret = process.waitFor();
-      thread.join();
+      thread.get();
 
       if (ret != 0) {
         throw new RuntimeException(builder.command() + "\nresult: " + ret + "\noutput:\n" + output);
       }
     }
-    catch (IOException | InterruptedException e) {
+    catch (IOException | InterruptedException | ExecutionException e) {
       throw new RuntimeException(e);
     }
   }
@@ -321,9 +327,9 @@ public class IoTestUtil {
     }
   }
 
-  @SuppressWarnings({"SSBasedInspection", "ResultOfMethodCallIgnored"})
   private static boolean canCreateSymlinks() {
-    File target = null, link = null;
+    File target = null;
+    File link = null;
     try {
       target = File.createTempFile("IOTestUtil_link_target.", ".txt");
       link = new File(target.getParent(), target.getName().replace("IOTestUtil_link_target", "IOTestUtil_link"));
@@ -334,8 +340,14 @@ public class IoTestUtil {
       return false;
     }
     finally {
-      if (link != null) link.delete();
-      if (target != null) target.delete();
+      if (link != null) {
+        //noinspection ResultOfMethodCallIgnored
+        link.delete();
+      }
+      if (target != null) {
+        //noinspection ResultOfMethodCallIgnored
+        target.delete();
+      }
     }
   }
 }

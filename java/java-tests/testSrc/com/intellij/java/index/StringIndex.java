@@ -64,13 +64,13 @@ public class StringIndex {
       @NotNull
       @Override
       public KeyDescriptor<String> getKeyDescriptor() {
-        return new EnumeratorStringDescriptor();
+        return EnumeratorStringDescriptor.INSTANCE;
       }
 
       @NotNull
       @Override
       public DataExternalizer<String> getValueExternalizer() {
-        return new EnumeratorStringDescriptor();
+        return EnumeratorStringDescriptor.INSTANCE;
       }
 
       @Override

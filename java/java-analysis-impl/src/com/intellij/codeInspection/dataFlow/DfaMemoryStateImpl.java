@@ -14,8 +14,11 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtilBase;
+import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import gnu.trove.THashMap;
@@ -228,12 +231,6 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
         }
       }
     }
-    else if (DfaUtil.isComparedByEquals(value.getType()) && !DfaUtil.isComparedByEquals(var.getType())) {
-      // Like Object x = "foo" or Object x = 5;
-      TypeConstraint typeConstraint = TypeConstraint.empty().withInstanceofValue(myFactory.createDfaType(value.getType()));
-      DfaFactMap facts = filterFactsOnAssignment(var, getFactMap(value).with(DfaFactType.TYPE_CONSTRAINT, typeConstraint));
-      setVariableState(var, createVariableState(var).withFacts(facts));
-    }
     else {
       setVariableState(var, isNull(value) ? state.withFact(DfaFactType.NULLABILITY, DfaNullability.NULL) : state);
       DfaRelationValue dfaEqual = myFactory.getRelationFactory().createRelation(var, RelationType.EQ, value);
@@ -372,6 +369,15 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       }
     }
     return thisToThat;
+  }
+
+  @Override
+  public boolean shouldCompareByEquals(DfaValue dfaLeft, DfaValue dfaRight) {
+    if (dfaLeft == dfaRight && !(dfaLeft instanceof DfaBoxedValue) && !(dfaLeft instanceof DfaConstValue)) {
+      return false;
+    }
+    return !isNull(dfaLeft) && !isNull(dfaRight) &&
+           DfaUtil.isComparedByEquals(getPsiType(dfaLeft)) && DfaUtil.isComparedByEquals(getPsiType(dfaRight));
   }
 
   private static boolean isSuperValue(DfaValue superValue, DfaValue subValue) {
@@ -738,7 +744,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     LongRangeSet leftRange = getValueFact(left, DfaFactType.RANGE);
     LongRangeSet rightRange = getValueFact(right, DfaFactType.RANGE);
     if (leftRange == null || rightRange == null) return true;
-    LongRangeSet result = Objects.requireNonNull(leftRange.binOpFromToken(binOp.getTokenType(), rightRange, isLong));
+    LongRangeSet result = getBinOpRange(binOp);
+    assert result != null;
     if (!result.intersects(appliedRange)) return false;
     LongRangeSet leftConstraint = LongRangeSet.all();
     LongRangeSet rightConstraint = LongRangeSet.all();
@@ -941,6 +948,11 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
           }
         }
       }
+      if (op == DfaBinOpValue.BinOp.PLUS && RelationType.EQ == type && resultRange != null &&
+          !resultRange.intersects(LongRangeSet.all().mul(LongRangeSet.point(2), true))) {
+        // a+b == odd => a != b
+        if (!applyRelation(sum.getLeft(), sum.getRight(), true)) return false;
+      }
       if (right instanceof DfaVariableValue) {
         // a+b (rel) c && a == c => b (rel) 0
         if (areEqual(sum.getLeft(), right)) {
@@ -1044,6 +1056,21 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       return !isNegated || (dfaLeft instanceof DfaVariableValue && ((DfaVariableValue)dfaLeft).containsCalls());
     }
 
+    if (dfaLeft instanceof DfaVariableValue && (dfaRight instanceof DfaVariableValue || dfaRight instanceof DfaConstValue) &&
+        (type == RelationType.NE || type == RelationType.EQ)) {
+      DfaConstValue leftConstant = getConstantValue(dfaLeft, false);
+      DfaConstValue rightConstant = getConstantValue(dfaRight, false);
+      if (leftConstant != null && leftConstant.getValue() instanceof PsiType && rightConstant == null) {
+        assert dfaRight instanceof DfaVariableValue; // otherwise rightConstant is not-null
+        ThreeState result = processGetClass((DfaVariableValue)dfaRight, (PsiType)leftConstant.getValue(), isNegated);
+        if (result != ThreeState.UNSURE) return result.toBoolean();
+      }
+      if (rightConstant != null && rightConstant.getValue() instanceof PsiType && leftConstant == null) {
+        ThreeState result = processGetClass((DfaVariableValue)dfaLeft, (PsiType)rightConstant.getValue(), isNegated);
+        if (result != ThreeState.UNSURE) return result.toBoolean();
+      }
+    }
+
     if (isNull(dfaLeft) && isNotNull(dfaRight) || isNull(dfaRight) && isNotNull(dfaLeft)) {
       return isNegated;
     }
@@ -1069,6 +1096,53 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       return false;
     }
     return applyUnboxedRelation(dfaLeft, dfaRight, isNegated);
+  }
+
+  @NotNull
+  private ThreeState processGetClass(DfaVariableValue variable, PsiType value, boolean negated) {
+    EqClass eqClass = getEqClass(variable);
+    List<DfaVariableValue> variables = eqClass == null ? Collections.singletonList(variable)
+                                                       : eqClass.getVariables(false);
+    boolean hasUnprocessed = false;
+    for (DfaVariableValue var : variables) {
+      PsiModifierListOwner psi = var.getPsiVariable();
+      DfaVariableValue qualifier = var.getQualifier();
+      if (psi instanceof PsiMethod && PsiTypesUtil.isGetClass((PsiMethod)psi) && qualifier != null) {
+        switch (applyGetClassRelation(qualifier, value, negated)) {
+          case NO:
+            return ThreeState.NO;
+          case YES:
+            continue;
+          case UNSURE:
+            break;
+        }
+      }
+      hasUnprocessed = true;
+    }
+    return hasUnprocessed ? ThreeState.UNSURE : ThreeState.YES;
+  }
+
+  @NotNull
+  private ThreeState applyGetClassRelation(@NotNull DfaVariableValue qualifier, @NotNull PsiType value, boolean negated) {
+    DfaPsiType dfaType = myFactory.createDfaType(value);
+    TypeConstraint constraint = TypeConstraint.exact(dfaType);
+    PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(value);
+    if (psiClass != null && (psiClass.isInterface() || psiClass.hasModifierProperty(PsiModifier.ABSTRACT))) {
+      // getClass() result cannot be an interface or an abstract class
+      return ThreeState.fromBoolean(negated);
+    }
+    if (!negated) {
+      return ThreeState.fromBoolean(applyFact(qualifier, DfaFactType.TYPE_CONSTRAINT, constraint));
+    }
+    TypeConstraint existingConstraint = getValueFact(qualifier, DfaFactType.TYPE_CONSTRAINT);
+    if (existingConstraint != null && existingConstraint.isExact()) {
+      return ThreeState.fromBoolean(!existingConstraint.equals(constraint));
+    }
+    if (dfaType.asConstraint().isExact()) { // final class
+      return ThreeState.fromBoolean(
+        applyFact(qualifier, DfaFactType.TYPE_CONSTRAINT, TypeConstraint.empty().withNotInstanceofValue(dfaType)));
+    }
+    return ThreeState.UNSURE;
   }
 
   private boolean applyRangeToRelatedValues(DfaValue value, LongRangeSet appliedRange) {
@@ -1144,10 +1218,13 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   @Nullable
-  private static PsiType getPsiType(@NotNull DfaValue value) {
-    if (value instanceof DfaFactMapValue) {
-      TypeConstraint constraint = ((DfaFactMapValue)value).get(DfaFactType.TYPE_CONSTRAINT);
-      return constraint == null ? null : constraint.getPsiType();
+  private PsiType getPsiType(@NotNull DfaValue value) {
+    TypeConstraint constraint = getValueFact(value, DfaFactType.TYPE_CONSTRAINT);
+    if (constraint != null) {
+      PsiType type = constraint.getPsiType();
+      if (type != null) {
+        return type;
+      }
     }
     return value.getType();
   }
@@ -1252,7 +1329,9 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   private static boolean isPrimitive(DfaValue value) {
-    return value instanceof DfaVariableValue && value.getType() instanceof PsiPrimitiveType;
+    return value instanceof DfaVariableValue &&
+           value.getType() instanceof PsiPrimitiveType &&
+           !PsiType.VOID.equals(value.getType()); // void is used for temporary variables sometimes
   }
 
   private static boolean preserveConstantDistinction(final Object c1, final Object c2) {
@@ -1336,14 +1415,20 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
         }
       }
     }
+    if (binOp.getOperation() == DfaBinOpValue.BinOp.PLUS && areEqual(binOp.getLeft(), binOp.getRight())) {
+      return LongRangeSet.point(2).mul(left, isLong);
+    }
     return result;
   }
 
   @Override
   public <T> void forceVariableFact(@NotNull DfaVariableValue var, @NotNull DfaFactType<T> factType, @Nullable T value) {
     DfaVariableState state = getVariableState(var);
-    if (factType.equals(DfaFactType.NULLABILITY) && value == DfaNullability.NOT_NULL && isNull(var)) {
-      removeEquivalenceForVariableAndWrappers(var);
+    if (factType.equals(DfaFactType.NULLABILITY)) {
+      if (value == DfaNullability.NOT_NULL && isNull(var) ||
+          value == DfaNullability.NULLABLE && isNotNull(var)) {
+        removeEquivalenceForVariableAndWrappers(var);
+      }
     }
     setVariableState(var, state.withFact(factType, value));
     updateEqClassesByState(var);

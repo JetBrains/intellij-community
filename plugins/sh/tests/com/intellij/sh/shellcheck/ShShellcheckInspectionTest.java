@@ -11,13 +11,13 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.sh.shellcheck.intention.DisableInspectionIntention;
 import com.intellij.sh.shellcheck.intention.SuppressInspectionIntention;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.List;
 
-public class ShShellcheckInspectionTest extends LightJavaCodeInsightFixtureTestCase {
+public class ShShellcheckInspectionTest extends BasePlatformTestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();

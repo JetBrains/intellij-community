@@ -3,16 +3,15 @@ package com.intellij.vcs.commit
 
 import com.intellij.CommonBundle.getCancelButtonText
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages.*
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.CheckinProjectPanel
-import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.*
@@ -28,6 +27,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.EventDispatcher
 import com.intellij.util.containers.ContainerUtil.newUnmodifiableList
 import com.intellij.util.containers.ContainerUtil.unmodifiableOrEmptySet
+import com.intellij.util.containers.forEachLoggingErrors
 import java.util.*
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
@@ -54,20 +54,20 @@ interface CommitWorkflowListener : EventListener {
 
   fun beforeCommitChecksStarted()
   fun beforeCommitChecksEnded(isDefaultCommit: Boolean, result: CheckinHandler.ReturnResult)
-
-  fun customCommitSucceeded()
 }
 
 abstract class AbstractCommitWorkflow(val project: Project) {
-  protected val eventDispatcher = EventDispatcher.create(CommitWorkflowListener::class.java)
+  private val eventDispatcher = EventDispatcher.create(CommitWorkflowListener::class.java)
+  private val commitEventDispatcher = EventDispatcher.create(CommitResultHandler::class.java)
+  private val commitCustomEventDispatcher = EventDispatcher.create(CommitResultHandler::class.java)
 
   var commitContext: CommitContext = CommitContext()
     private set
 
   abstract val isDefaultCommitEnabled: Boolean
 
-  private val _vcses = mutableSetOf<AbstractVcs<*>>()
-  val vcses: Set<AbstractVcs<*>> get() = unmodifiableOrEmptySet(_vcses.toSet())
+  private val _vcses = mutableSetOf<AbstractVcs>()
+  val vcses: Set<AbstractVcs> get() = unmodifiableOrEmptySet(_vcses.toSet())
 
   private val _commitExecutors = mutableListOf<CommitExecutor>()
   val commitExecutors: List<CommitExecutor> get() = newUnmodifiableList(_commitExecutors)
@@ -78,7 +78,7 @@ abstract class AbstractCommitWorkflow(val project: Project) {
   private val _commitOptions = MutableCommitOptions()
   val commitOptions: CommitOptions get() = _commitOptions.toUnmodifiableOptions()
 
-  protected fun updateVcses(vcses: Set<AbstractVcs<*>>) {
+  protected fun updateVcses(vcses: Set<AbstractVcs>) {
     if (_vcses != vcses) {
       _vcses.clear()
       _vcses += vcses
@@ -112,6 +112,11 @@ abstract class AbstractCommitWorkflow(val project: Project) {
   }
 
   fun addListener(listener: CommitWorkflowListener, parent: Disposable) = eventDispatcher.addListener(listener, parent)
+  fun addCommitListener(listener: CommitResultHandler, parent: Disposable) = commitEventDispatcher.addListener(listener, parent)
+  fun addCommitCustomListener(listener: CommitResultHandler, parent: Disposable) = commitCustomEventDispatcher.addListener(listener, parent)
+
+  protected fun getCommitEventDispatcher(): CommitResultHandler = EdtCommitResultHandler(commitEventDispatcher.multicaster)
+  protected fun getCommitCustomEventDispatcher(): CommitResultHandler = commitCustomEventDispatcher.multicaster
 
   fun addUnversionedFiles(changeList: LocalChangeList, unversionedFiles: List<VirtualFile>, callback: (List<Change>) -> Unit): Boolean {
     if (unversionedFiles.isEmpty()) return true
@@ -155,18 +160,26 @@ abstract class AbstractCommitWorkflow(val project: Project) {
       val previousResult = result
       result = Runnable {
         LOG.debug("CheckinMetaHandler.runCheckinHandlers: $metaHandler")
-        metaHandler.runCheckinHandlers(previousResult)
+        try {
+          metaHandler.runCheckinHandlers(previousResult)
+        }
+        catch (e: Throwable) {
+          LOG.error(e)
+          previousResult.run()
+        }
       }
     }
     return result
   }
 
   private fun runBeforeCommitHandlersChecks(executor: CommitExecutor?): CheckinHandler.ReturnResult {
-    commitHandlers.asSequence().filter { it.acceptExecutor(executor) }.forEach { handler ->
-      LOG.debug("CheckinHandler.beforeCheckin: $handler")
+    commitHandlers.forEachLoggingErrors(LOG) { handler ->
+      if (handler.acceptExecutor(executor)) {
+        LOG.debug("CheckinHandler.beforeCheckin: $handler")
 
-      val result = handler.beforeCheckin(executor, commitContext.additionalDataConsumer)
-      if (result != CheckinHandler.ReturnResult.COMMIT) return result
+        val result = handler.beforeCheckin(executor, commitContext.additionalDataConsumer)
+        if (result != CheckinHandler.ReturnResult.COMMIT) return result
+      }
     }
 
     return CheckinHandler.ReturnResult.COMMIT
@@ -212,39 +225,18 @@ abstract class AbstractCommitWorkflow(val project: Project) {
                                                       session: CommitSession,
                                                       result: CheckinHandler.ReturnResult) = Unit
 
-  protected fun doCommitCustom(executor: CommitExecutor, session: CommitSession, changes: List<Change>, commitMessage: String): Boolean {
-    try {
-      val completed = ProgressManager.getInstance().runProcessWithProgressSynchronously(
-        { session.execute(changes, commitMessage) }, executor.actionText, true, project)
-
-      if (completed) {
-        LOG.debug("Commit successful")
-        commitHandlers.forEach { it.checkinSuccessful() }
-        eventDispatcher.multicaster.customCommitSucceeded()
-        return true
-      }
-
-      LOG.debug("Commit canceled")
-      session.executionCanceled()
-    }
-    catch (e: Throwable) {
-      showErrorDialog(message("error.executing.commit", executor.actionText, e.localizedMessage), executor.actionText)
-
-      val errors = listOf(VcsException(e))
-      commitHandlers.forEach { it.checkinFailed(errors) }
-    }
-    return false
-  }
-
   companion object {
     @JvmStatic
-    fun getCommitHandlerFactories(project: Project): List<BaseCheckinHandlerFactory> =
-      CheckinHandlersManager.getInstance().getRegisteredCheckinHandlerFactories(ProjectLevelVcsManager.getInstance(project).allActiveVcss)
+    fun getCommitHandlerFactories(vcses: Collection<AbstractVcs>): List<BaseCheckinHandlerFactory> =
+      CheckinHandlersManager.getInstance().getRegisteredCheckinHandlerFactories(vcses.toTypedArray())
 
-    // TODO Seems, it is better to get handlers/factories for workflow.vcses, but not allActiveVcss
     @JvmStatic
-    fun getCommitHandlers(commitPanel: CheckinProjectPanel, commitContext: CommitContext) =
-      getCommitHandlerFactories(commitPanel.project)
+    fun getCommitHandlers(
+      vcses: Collection<AbstractVcs>,
+      commitPanel: CheckinProjectPanel,
+      commitContext: CommitContext
+    ): List<CheckinHandler> =
+      getCommitHandlerFactories(vcses)
         .map { it.createHandler(commitPanel, commitContext) }
         .filter { it != CheckinHandler.DUMMY }
 
@@ -252,7 +244,13 @@ abstract class AbstractCommitWorkflow(val project: Project) {
     fun getCommitExecutors(project: Project, changes: Collection<Change>): List<CommitExecutor> =
       getCommitExecutors(project, getAffectedVcses(changes, project))
 
-    internal fun getCommitExecutors(project: Project, vcses: Collection<AbstractVcs<*>>): List<CommitExecutor> =
+    internal fun getCommitExecutors(project: Project, vcses: Collection<AbstractVcs>): List<CommitExecutor> =
       vcses.flatMap { it.commitExecutors } + ChangeListManager.getInstance(project).registeredExecutors
   }
+}
+
+private class EdtCommitResultHandler(private val handler: CommitResultHandler) : CommitResultHandler {
+  override fun onSuccess(commitMessage: String) = runInEdt { handler.onSuccess(commitMessage) }
+  override fun onCancel() = runInEdt { handler.onCancel() }
+  override fun onFailure(errors: List<VcsException>) = runInEdt { handler.onFailure(errors) }
 }

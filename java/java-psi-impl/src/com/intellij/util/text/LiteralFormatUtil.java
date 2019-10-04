@@ -22,12 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class LiteralFormatUtil {
-  private static final CharFilter UNDERSCORES_FILTER = new CharFilter() {
-    @Override
-    public boolean accept(final char ch) {
-      return ch != '_';
-    }
-  };
+  private static final CharFilter UNDERSCORES_FILTER = ch -> ch != '_';
 
   private LiteralFormatUtil() { }
 

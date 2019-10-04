@@ -1,14 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.utils
 
 import com.intellij.ide.plugins.*
-import com.intellij.internal.statistic.beans.UsageDescriptor
-import com.intellij.internal.statistic.beans.newMetric
-import com.intellij.internal.statistic.beans.newCounterMetric
-import com.intellij.internal.statistic.beans.newBooleanMetric
-import com.intellij.internal.statistic.beans.addBoolIfDiffers
-import com.intellij.internal.statistic.beans.addCounterIfDiffers
-import com.intellij.internal.statistic.beans.addIfDiffers
+import com.intellij.internal.statistic.beans.*
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration
 import com.intellij.internal.statistic.eventLog.newData
 import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext
@@ -45,7 +39,7 @@ fun addPluginInfoTo(info: PluginInfo, data : MutableMap<String, Any>) {
 }
 
 fun isDevelopedByJetBrains(pluginId: PluginId?): Boolean {
-  val plugin = PluginManager.getPlugin(pluginId)
+  val plugin = PluginManagerCore.getPlugin(pluginId)
   return plugin == null || PluginManagerMain.isDevelopedByJetBrains(plugin.vendor)
 }
 
@@ -290,7 +284,7 @@ fun isSafeToReport(pluginId: String?): Boolean {
  */
 fun getPluginType(clazz: Class<*>): PluginType {
   val pluginId = PluginManagerCore.getPluginByClassName(clazz.name) ?: return PluginType.PLATFORM
-  val plugin = PluginManager.getPlugin(pluginId) ?: return PluginType.UNKNOWN
+  val plugin = PluginManagerCore.getPlugin(pluginId) ?: return PluginType.UNKNOWN
 
   if (PluginManagerMain.isDevelopedByJetBrains(plugin)) {
     return if (plugin.isBundled) PluginType.JB_BUNDLED else PluginType.JB_NOT_BUNDLED

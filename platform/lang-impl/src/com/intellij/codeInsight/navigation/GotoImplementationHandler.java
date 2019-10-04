@@ -75,6 +75,7 @@ public class GotoImplementationHandler extends GotoTargetHandler {
     PsiElement[] targets = new ImplementationSearcher.FirstImplementationsSearcher() {
       @Override
       protected boolean accept(PsiElement element) {
+        if (reference != null && !reference.getElement().isValid()) return false;
         return instance.acceptImplementationForReference(reference, element);
       }
 
@@ -127,8 +128,11 @@ public class GotoImplementationHandler extends GotoTargetHandler {
       }
       return true;
     };
+    Project project = editor.getProject();
+    if (project == null) return;
+
     GotoDeclarationAction
-      .chooseAmbiguousTarget(editor, offset, navigateProcessor, CodeInsightBundle.message("declaration.navigation.title"), null);
+      .chooseAmbiguousTarget(project, editor, offset, navigateProcessor, CodeInsightBundle.message("declaration.navigation.title"), null);
   }
 
   private static PsiElement getContainer(PsiElement refElement) {

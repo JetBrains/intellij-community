@@ -16,6 +16,7 @@
 package com.intellij.find.findUsages;
 
 import com.intellij.find.FindBundle;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.SearchScope;
 import org.jetbrains.annotations.NotNull;
@@ -36,6 +37,22 @@ public class JavaPackageFindUsagesOptions extends JavaFindUsagesOptions {
 
   public JavaPackageFindUsagesOptions(@NotNull SearchScope searchScope) {
     super(searchScope);
+  }
+
+  @Override
+  protected void setDefaults(@NotNull PropertiesComponent properties, @NotNull String prefix) {
+    super.setDefaults(properties, prefix);
+    isClassesUsages = properties.getBoolean(prefix + "isClassesUsages", false);
+    isIncludeSubpackages = properties.getBoolean(prefix + "isIncludeSubpackages", true);
+    isSkipPackageStatements = properties.getBoolean(prefix + "isSkipPackageStatements", false);
+  }
+
+  @Override
+  protected void storeDefaults(@NotNull PropertiesComponent properties, @NotNull String prefix) {
+    super.storeDefaults(properties, prefix);
+    properties.setValue(prefix + "isClassesUsages", isClassesUsages);
+    properties.setValue(prefix + "isIncludeSubpackages", isIncludeSubpackages);
+    properties.setValue(prefix + "isSkipPackageStatements", isSkipPackageStatements);
   }
 
   @Override

@@ -1,11 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.replace;
 
 import com.intellij.codeInsight.template.impl.TemplateImplUtil;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.structuralsearch.ReplacementVariableDefinition;
-import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
 import org.jdom.Attribute;
 import org.jdom.DataConversionException;
 import org.jdom.Element;
@@ -98,14 +97,9 @@ public class ReplaceOptions implements JDOMExternalizable {
   }
 
   public void removeUnusedVariables() {
-    final Set<String> nameSet = getUsedVariableNames();
-    for (final Iterator<String> iterator = variableDefs.keySet().iterator(); iterator.hasNext(); ) {
-      final String key = iterator.next();
-      if (!nameSet.contains(key + ReplaceConfiguration.REPLACEMENT_VARIABLE_SUFFIX)) {
-        iterator.remove();
-      }
-    }
+    variableDefs.keySet().removeIf(key -> !getUsedVariableNames().contains(key));
   }
+
   @Override
   public void readExternal(Element element) {
     matchOptions.readExternal(element);
@@ -191,6 +185,12 @@ public class ReplaceOptions implements JDOMExternalizable {
 
   public void addVariableDefinition(ReplacementVariableDefinition definition) {
     variableDefs.put(definition.getName(), definition);
+  }
+
+  public ReplacementVariableDefinition addNewVariableDefinition(String name) {
+    final ReplacementVariableDefinition definition = new ReplacementVariableDefinition(name);
+    variableDefs.put(name, definition);
+    return definition;
   }
 
   public Collection<ReplacementVariableDefinition> getVariableDefinitions() {

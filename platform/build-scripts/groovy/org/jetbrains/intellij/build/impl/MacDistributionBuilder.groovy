@@ -81,19 +81,6 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
     layoutMacApp(ideaProperties, customIdeaProperties, docTypes, macDistPath)
     BuildTasksImpl.unpackPty4jNative(buildContext, macDistPath, "macosx")
 
-    if (customizer.helpId != null) {
-      def helpZip = customizer.getPathToHelpZip(buildContext)
-      if (helpZip == null) {
-        buildContext.messages.error("Path to zip archive with help files isn't specified")
-      }
-      if (!new File(helpZip).exists() && buildContext.options.isInDevelopmentMode) {
-        buildContext.messages.warning("Help won't be bundled with macOS distribution: $helpZip doesn't exist")
-      }
-      else {
-        buildContext.ant.unzip(src: helpZip, dest: "$macDistPath/Resources")
-      }
-    }
-
     customizer.copyAdditionalFiles(buildContext, macDistPath)
 
     if (!customizer.binariesToSign.empty) {
@@ -119,7 +106,8 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
       }
       else {
         buildContext.executeStep("Build .dmg artifact for macOS", BuildOptions.MAC_DMG_STEP) {
-          boolean notarize = SystemProperties.getBooleanProperty("intellij.build.mac.notarize", true)
+          boolean notarize = SystemProperties.getBooleanProperty("intellij.build.mac.notarize", true) &&
+                             !SystemProperties.getBooleanProperty("build.is.personal", false)
           // With second JRE
           def jreManager = buildContext.bundledJreManager
           if (jreManager.doBundleSecondJre()) {
@@ -167,11 +155,6 @@ Android Studio: removed by Change I22bfabed */
 
     String icnsPath = (buildContext.applicationInfo.isEAP ? customizer.icnsPathForEAP : null) ?: customizer.icnsPath
     buildContext.ant.copy(file: icnsPath, tofile: "$target/Resources/$targetIcnsFileName")
-    String helpId = macCustomizer.helpId
-    if (helpId != null) {
-      String helpIcns = "$target/Resources/${helpId}.help/Contents/Resources/Shared/product.icns"
-      buildContext.ant.copy(file: icnsPath, tofile: helpIcns)
-    }
 
     String fullName = buildContext.applicationInfo.productName
 
@@ -197,7 +180,7 @@ Android Studio: removed by Change I22bfabed */
     }
 
     new File("$target/bin/idea.properties").text = effectiveProperties.toString()
-    String ideaVmOptions = "${VmOptionsGenerator.vmOptionsForArch(JvmArchitecture.x64, buildContext.productProperties)} -XX:+UseCompressedOops -Dfile.encoding=UTF-8 ${VmOptionsGenerator.computeCommonVmOptions(buildContext.applicationInfo.isEAP)} -Xverify:none ${buildContext.productProperties.additionalIdeJvmArguments} -XX:ErrorFile=\$USER_HOME/java_error_in_${executable}_%p.log -XX:HeapDumpPath=\$USER_HOME/java_error_in_${executable}.hprof".trim()
+    String ideaVmOptions = "${VmOptionsGenerator.vmOptionsForArch(JvmArchitecture.x64, buildContext.productProperties)} -XX:+UseCompressedOops -Dfile.encoding=UTF-8 ${VmOptionsGenerator.computeCommonVmOptions(buildContext.applicationInfo.isEAP)} ${buildContext.productProperties.additionalIdeJvmArguments} -XX:ErrorFile=\$USER_HOME/java_error_in_${executable}_%p.log -XX:HeapDumpPath=\$USER_HOME/java_error_in_${executable}.hprof".trim()
     new File("$target/bin/${executable}.vmoptions").text = ideaVmOptions.split(" ").join("\n")
 
     String classPath = buildContext.bootClassPathJarNames.collect { "\$APP_PACKAGE/Contents/lib/${it}" }.join(":")
@@ -233,19 +216,6 @@ Android Studio: removed by Change I22bfabed */
       </array>
 """
     }
-    String bundledHelpAttributes
-    if (helpId != null) {
-      bundledHelpAttributes = """
-        <key>CFBundleHelpBookName</key>
-        <string>JetBrains.${helpId}.help</string>
-        <key>CFBundleHelpBookFolder</key>
-        <string>${helpId}.help</string>
-"""
-    }
-    else {
-      bundledHelpAttributes = ""
-    }
-
     String todayYear = LocalDate.now().year
     buildContext.ant.replace(file: "$target/Info.plist") {
       replacefilter(token: "@@build@@", value: buildContext.fullBuildNumber)
@@ -262,11 +232,9 @@ Android Studio: removed by Change I22bfabed */
       replacefilter(token: "@@version@@", value: version)
       replacefilter(token: "@@idea_properties@@", value: coreProperties)
       replacefilter(token: "@@class_path@@", value: classPath)
-      replacefilter(token: "@@help_id@@", value: helpId)
       replacefilter(token: "@@url_schemes@@", value: urlSchemesString)
       replacefilter(token: "@@archs@@", value: archsString)
       replacefilter(token: "@@min_osx@@", value: macCustomizer.minOSXVersion)
-      replacefilter(token: "@@bundled_help_attributes@@", value: bundledHelpAttributes)
     }
 
     buildContext.ant.copy(todir: "$target/bin") {

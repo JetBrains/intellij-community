@@ -14,8 +14,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiFileImpl;
-import com.intellij.psi.impl.source.tree.LeafElement;
-import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.search.TextOccurenceProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtilRt;
@@ -56,70 +54,58 @@ public class LowLevelSearchUtil {
     return hasMatchedRange ? Boolean.TRUE : null;
   }
 
-  /**
-   * @return null to stop or last found TreeElement
-   * to be reused via <code>lastElement<code/> param in subsequent calls to avoid full tree rescan (n^2->n).
-   */
-  private static TreeElement processTreeUp(@NotNull Project project,
-                                           @NotNull PsiElement scope,
-                                           @NotNull StringSearcher searcher,
-                                           final int offset,
-                                           final boolean processInjectedPsi,
-                                           @NotNull ProgressIndicator progress,
-                                           TreeElement lastElement,
-                                           @NotNull TextOccurenceProcessor processor) {
-    final ASTNode scopeNode = scope.getNode();
-    if (scopeNode == null) {
-      throw new IllegalArgumentException(
-        "Scope doesn't have node, can't scan: " + scope + "; containingFile: " + scope.getContainingFile()
-      );
-    }
-    final int scopeStartOffset = scope.getTextRange().getStartOffset();
+  private static boolean processTreeUp(@NotNull Project project,
+                                       @NotNull PsiElement scope,
+                                       final @NotNull ASTNode leafNode,
+                                       final int offsetInLeaf,
+                                       @NotNull StringSearcher searcher,
+                                       final boolean processInjectedPsi,
+                                       @NotNull ProgressIndicator progress,
+                                       @NotNull TextOccurenceProcessor processor) {
     final int patternLength = searcher.getPatternLength();
-
-    TreeElement leafNode = findNextLeafElementAt(scopeNode, lastElement, offset);
-    if (leafNode == null) return lastElement;
-    int start = offset - leafNode.getStartOffset() + scopeStartOffset;
-    if (start < 0) {
-      throw new AssertionError("offset=" + offset + "; scopeStartOffset=" + scopeStartOffset + "; scope=" + scope);
-    }
     InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(project);
-    lastElement = leafNode;
+    ASTNode currentNode = leafNode;
+    int currentOffset = offsetInLeaf;
     boolean contains = false;
-    TreeElement prevNode = null;
+    ASTNode prevNode = null;
     PsiElement run = null;
     while (run != scope) {
       ProgressManager.checkCanceled();
-      start += prevNode == null ? 0 : prevNode.getStartOffsetInParent();
-      prevNode = leafNode;
-      run = leafNode.getPsi();
-      if (!contains) contains = run.getTextLength() - start >= patternLength;  //do not compute if already contains
+      currentOffset += prevNode == null ? 0 : prevNode.getStartOffsetInParent();
+      prevNode = currentNode;
+      run = currentNode.getPsi();
+      if (!contains) contains = run.getTextLength() - currentOffset >= patternLength;  //do not compute if already contains
       if (contains) {
         if (processInjectedPsi) {
-          Boolean result = processInjectedFile(run, searcher, start, progress, injectedLanguageManager, processor);
+          Boolean result = processInjectedFile(run, searcher, currentOffset, progress, injectedLanguageManager, processor);
           if (result != null) {
-            return result.booleanValue() ? lastElement : null;
+            return result.booleanValue();
           }
         }
-        if (!processor.execute(run, start)) {
-          return null;
+        if (!processor.execute(run, currentOffset)) {
+          return false;
         }
       }
-      leafNode = leafNode.getTreeParent();
-      if (leafNode == null) break;
+      currentNode = currentNode.getTreeParent();
+      if (currentNode == null) break;
     }
-    assert run == scope: "Malbuilt PSI; scopeNode: "+scope+"; containingFile:" + PsiTreeUtil.getParentOfType(scope, PsiFile.class, false) +
-                         "; leafNode: "+run+"; isAncestor="+ PsiTreeUtil.isAncestor(scope, run, false)+"; in same file: "+(PsiTreeUtil.getParentOfType(scope, PsiFile.class, false) == PsiTreeUtil.getParentOfType(run, PsiFile.class, false));
+    assert run == scope : "Malbuilt PSI; scopeNode: " + scope +
+                          "; containingFile: " + PsiTreeUtil.getParentOfType(scope, PsiFile.class, false) +
+                          "; currentNode: " + run +
+                          "; isAncestor: " + PsiTreeUtil.isAncestor(scope, run, false) +
+                          "; in same file: " +
+                          (PsiTreeUtil.getParentOfType(scope, PsiFile.class, false) ==
+                           PsiTreeUtil.getParentOfType(run, PsiFile.class, false));
 
-    return lastElement;
+    return true;
   }
 
-  private static TreeElement findNextLeafElementAt(ASTNode scopeNode, TreeElement last, int offset) {
+  private static ASTNode findNextLeafElementAt(ASTNode scopeNode, ASTNode last, int offset) {
     int offsetR = offset;
-    if (last !=null) {
+    if (last != null) {
       offsetR -= last.getStartOffset() - scopeNode.getStartOffset() + last.getTextLength();
       while (offsetR >= 0) {
-        TreeElement next = last.getTreeNext();
+        ASTNode next = last.getTreeNext();
         if (next == null) {
           last = last.getTreeParent();
           continue;
@@ -131,7 +117,7 @@ public class LowLevelSearchUtil {
       scopeNode = last;
       offsetR += scopeNode.getTextLength();
     }
-    return (LeafElement)scopeNode.findLeafElementAt(offsetR);
+    return scopeNode.findLeafElementAt(offsetR);
   }
 
   public static boolean processElementsContainingWordInElement(@NotNull final TextOccurenceProcessor processor,
@@ -178,12 +164,32 @@ public class LowLevelSearchUtil {
                                           int[] offsetsInScope, @NotNull TextOccurenceProcessor processor) {
     if (offsetsInScope.length == 0) return true;
 
-    Project project = scope.getProject();
-    TreeElement lastElement = null;
+    final Project project = scope.getProject();
+    final ASTNode scopeNode = scope.getNode();
+    if (scopeNode == null) {
+      throw new IllegalArgumentException(
+        "Scope doesn't have node, can't scan: " + scope + "; containingFile: " + scope.getContainingFile()
+      );
+    }
+    final int scopeStartOffset = scope.getTextRange().getStartOffset();
+
+    // helps to avoid full tree rescan in subsequent com.intellij.lang.ASTNode#findLeafElementAt calls (O(n) instead of O(n^2))
+    ASTNode lastElement = null;
     for (int offset : offsetsInScope) {
       progress.checkCanceled();
-      lastElement = processTreeUp(project, scope, searcher, offset, processInjectedPsi, progress, lastElement, processor);
-      if (lastElement == null) return false;
+      final ASTNode leafNode = findNextLeafElementAt(scopeNode, lastElement, offset);
+      if (leafNode == null) {
+        LOG.error("Cannot find leaf: scope=" + scope + "; offset=" + offset + "; lastElement=" + lastElement);
+        continue;
+      }
+      final int offsetInLeaf = offset - leafNode.getStartOffset() + scopeStartOffset;
+      if (offsetInLeaf < 0) {
+        throw new AssertionError("offset=" + offset + "; scopeStartOffset=" + scopeStartOffset + "; scope=" + scope);
+      }
+      if (!processTreeUp(project, scope, leafNode, offsetInLeaf, searcher, processInjectedPsi, progress, processor)) {
+        return false;
+      }
+      lastElement = leafNode;
     }
     return true;
   }

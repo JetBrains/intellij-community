@@ -22,7 +22,6 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.indexing.DataIndexer;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileContent;
@@ -36,10 +35,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.BiFunction;
 
 /**
@@ -66,7 +62,6 @@ public class SchemaTypeInheritanceIndex extends XmlIndex<Set<SchemaTypeInfo>> {
   private static class MyWorker implements BiFunction<String, String, List<Set<SchemaTypeInfo>>> {
     private final Project myProject;
     private final VirtualFile myCurrentFile;
-    private final GlobalSearchScope myFilter;
     private final boolean myShouldParseCurrent;
     private MultiMap<SchemaTypeInfo,SchemaTypeInfo> myMap;
 
@@ -74,8 +69,8 @@ public class SchemaTypeInheritanceIndex extends XmlIndex<Set<SchemaTypeInfo>> {
       myCurrentFile = currentFile;
       myProject = project;
 
-      myFilter = createFilter(project);
-      myShouldParseCurrent = (myCurrentFile != null && ! myFilter.contains(myCurrentFile));
+      GlobalSearchScope filter = createFilter(project);
+      myShouldParseCurrent = (myCurrentFile != null && ! filter.contains(myCurrentFile));
     }
 
     @Override

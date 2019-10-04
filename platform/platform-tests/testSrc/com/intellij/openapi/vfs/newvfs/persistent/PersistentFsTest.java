@@ -22,8 +22,8 @@ import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
+import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.LoggedErrorProcessor;
-import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
@@ -43,9 +43,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.jar.JarFile;
 
-import static org.junit.Assume.assumeTrue;
-
-public class PersistentFsTest extends PlatformTestCase {
+public class PersistentFsTest extends HeavyPlatformTestCase {
   private PersistentFS myFs;
   private LocalFileSystem myLocalFs;
 
@@ -645,7 +643,7 @@ public class PersistentFsTest extends PlatformTestCase {
   }
 
   public void testRenameInBackgroundDoesntLeadToDuplicateFilesError() throws IOException {
-    assumeTrue("Windows is required", SystemInfo.isWindows);
+    IoTestUtil.assumeWindows();
     File temp = createTempDir("", false);
     File file = new File(temp, "rename.txt");
     FileUtil.createParentDirs(file);

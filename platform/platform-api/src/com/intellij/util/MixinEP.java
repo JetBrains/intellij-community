@@ -45,19 +45,14 @@ public class MixinEP<T> extends AbstractExtensionPointBean {
         }
         throw new IllegalArgumentException(error);
       }
-      try {
-        return findClass(key);
-      }
-      catch (ClassNotFoundException e) {
-        throw new RuntimeException(e);
-      }
+      return findExtensionClass(key);
     }
   };
 
   private final LazyInstance<T> myHandler = new LazyInstance<T>() {
     @Override
-    protected Class<T> getInstanceClass() throws ClassNotFoundException {
-      return findClass(implementationClass);
+    protected Class<T> getInstanceClass() {
+      return findExtensionClass(implementationClass);
     }
   };
 

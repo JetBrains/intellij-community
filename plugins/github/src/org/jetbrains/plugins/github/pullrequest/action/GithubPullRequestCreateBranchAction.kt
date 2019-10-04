@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.github.pullrequest.action
 
@@ -20,14 +20,14 @@ class GithubPullRequestCreateBranchAction : DumbAwareAction("Create New Local Br
                                                             null) {
   override fun update(e: AnActionEvent) {
     val project = e.getData(CommonDataKeys.PROJECT)
-    val selection = e.getData(GithubPullRequestKeys.DATA_CONTEXT)?.selectedPullRequestDataProvider
+    val selection = e.getData(GithubPullRequestKeys.ACTION_DATA_CONTEXT)?.selectedPullRequestDataProvider
     e.presentation.isEnabled = project != null && !project.isDefault && selection != null
   }
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.getRequiredData(CommonDataKeys.PROJECT)
-    val context = e.getRequiredData(GithubPullRequestKeys.DATA_CONTEXT)
-    val repository = context.gitRepository
+    val context = e.getRequiredData(GithubPullRequestKeys.ACTION_DATA_CONTEXT)
+    val repository = context.gitRepositoryCoordinates.repository
     val repositoryList = listOf(repository)
     val dataProvider = context.selectedPullRequestDataProvider ?: return
 
@@ -41,7 +41,7 @@ class GithubPullRequestCreateBranchAction : DumbAwareAction("Create New Local Br
         private val vcsNotifier = project.service<VcsNotifier>()
 
         override fun run(indicator: ProgressIndicator) {
-          val sha = GithubAsyncUtil.awaitFuture(indicator, dataProvider.detailsRequest).head.sha
+          val sha = GithubAsyncUtil.awaitFuture(indicator, dataProvider.detailsRequest).headRefOid
           GithubAsyncUtil.awaitFuture(indicator, dataProvider.branchFetchRequest)
 
           indicator.text = "Creating branch"
@@ -64,7 +64,7 @@ class GithubPullRequestCreateBranchAction : DumbAwareAction("Create New Local Br
         private val vcsNotifier = project.service<VcsNotifier>()
 
         override fun run(indicator: ProgressIndicator) {
-          val sha = GithubAsyncUtil.awaitFuture(indicator, dataProvider.detailsRequest).head.sha
+          val sha = GithubAsyncUtil.awaitFuture(indicator, dataProvider.detailsRequest).headRefOid
           GithubAsyncUtil.awaitFuture(indicator, dataProvider.branchFetchRequest)
 
           indicator.text = "Checking out branch"

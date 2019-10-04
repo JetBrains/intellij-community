@@ -35,30 +35,23 @@ class GitModulesFileReader {
     catch (e: IOException) {
       return listOf()
     }
-    val classLoader = findClassLoader()
 
     val modules = mutableSetOf<GitSubmoduleInfo>()
     for ((sectionName, section) in ini) {
       val matcher = MODULE_SECTION.matcher(sectionName)
       if (matcher.matches() && matcher.groupCount() == 1) {
-        val bean = section.`as`(ModuleBean::class.java, classLoader)
-        val path = bean.getPath()
-        val url = bean.getUrl()
+        val path = section["path"]
+        val url = section["url"]
         if (path == null || url == null) {
-          LOG.warn("Partially defined submodule: " + section.toString())
+          LOG.warn("Partially defined submodule: $section")
         }
         else {
           val module = GitSubmoduleInfo(path, url)
-          LOG.debug("Found submodule " + module)
+          LOG.debug("Found submodule $module")
           modules.add(module)
         }
       }
     }
     return modules
-  }
-
-  private interface ModuleBean {
-    fun getPath(): String?
-    fun getUrl(): String?
   }
 }

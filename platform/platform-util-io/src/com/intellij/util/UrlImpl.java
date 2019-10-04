@@ -131,7 +131,9 @@ public final class UrlImpl implements Url {
       return toDecodedForm();
     }
 
-    String result = Urls.toUriWithoutParameters(this).toASCIIString();
+    String result = (StringUtil.isEmpty(authority) && StringUtil.isEmpty(path)) ?
+                    scheme + "://" :
+                    Urls.toUriWithoutParameters(this).toASCIIString();
     if (parameters != null) {
       result += parameters;
     }

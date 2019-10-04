@@ -10,6 +10,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -56,7 +57,25 @@ public abstract class PythonSdkFlavor {
     PythonEnvUtil.addToPythonPath(envs, pythonPathList);
   }
 
-  public Collection<String> suggestHomePaths(@Nullable Module module) {
+  /**
+   * @param context used as cache.
+   *                If provided, must have "session"-scope.
+   *                Session could be one dialog or wizard.
+   */
+  @NotNull
+  public Collection<String> suggestHomePaths(@Nullable final Module module, @Nullable final UserDataHolder context) {
+    return suggestHomePaths(module);
+  }
+
+
+  /**
+   * @deprecated use {@link #suggestHomePaths(Module, UserDataHolder)}.
+   * Will be deleted in 2020.3
+   */
+  @SuppressWarnings("unused")
+  @Deprecated
+  @NotNull
+  public Collection<String> suggestHomePaths(@Nullable final Module module) {
     return Collections.emptyList();
   }
 

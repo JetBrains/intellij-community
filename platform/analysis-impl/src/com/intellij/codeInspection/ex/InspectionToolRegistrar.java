@@ -5,7 +5,6 @@ import com.intellij.codeInspection.*;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.progress.ProgressManager;
@@ -20,13 +19,13 @@ import java.util.function.Supplier;
 /**
  * @author max
  */
-public class InspectionToolRegistrar implements Supplier<List<InspectionToolWrapper>> {
+public final class InspectionToolRegistrar implements Supplier<List<InspectionToolWrapper>> {
   private static final Logger LOG = Logger.getInstance(InspectionToolRegistrar.class);
 
   @NotNull
   private final NotNullLazyValue<List<Supplier<InspectionToolWrapper>>> myInspectionToolFactories = NotNullLazyValue.createValue(() -> {
     Set<InspectionToolProvider> providers = new THashSet<>();
-    providers.addAll((((ComponentManagerImpl)ApplicationManager.getApplication()).getComponentInstancesOfType(InspectionToolProvider.class)));
+    providers.addAll((ApplicationManager.getApplication().getComponentInstancesOfType(InspectionToolProvider.class)));
     providers.addAll(InspectionToolProvider.EXTENSION_POINT_NAME.getExtensionList());
 
     List<Supplier<InspectionToolWrapper>> factories = new ArrayList<>();
@@ -79,8 +78,7 @@ public class InspectionToolRegistrar implements Supplier<List<InspectionToolWrap
   private static void registerTools(@NotNull Collection<? extends InspectionToolProvider> providers,
                                     @NotNull List<Supplier<InspectionToolWrapper>> factories) {
     for (InspectionToolProvider provider : providers) {
-      //noinspection unchecked
-      for (Class<InspectionProfileEntry> aClass : provider.getInspectionClasses()) {
+      for (Class<? extends LocalInspectionTool> aClass : provider.getInspectionClasses()) {
         factories.add(() -> {
           InspectionProfileEntry entry = InspectionToolsRegistrarCore.instantiateTool(aClass);
           return entry == null ? null : wrapTool(entry);

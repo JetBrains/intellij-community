@@ -39,20 +39,14 @@ import java.util.*;
 /**
  * @author cdr
  */
-public class ConcatenationInjector implements ConcatenationAwareInjector {
-  private final Configuration myConfiguration;
+public final class ConcatenationInjector implements ConcatenationAwareInjector {
   private final Project myProject;
-  private final TemporaryPlacesRegistry myTemporaryPlacesRegistry;
 
   private final LanguageInjectionSupport mySupport;
 
-
-  public ConcatenationInjector(Project project) {
-    myConfiguration = Configuration.getProjectInstance(project);
+  public ConcatenationInjector(@NotNull Project project) {
     myProject = project;
-    myTemporaryPlacesRegistry = TemporaryPlacesRegistry.getInstance(project);
     mySupport = InjectorUtils.findNotNullInjectionSupport(JavaLanguageInjectionSupport.JAVA_SUPPORT_ID);
-
   }
 
   @Override
@@ -61,6 +55,7 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
     boolean hasLiteral = false;
     InjectedLanguage tempInjectedLanguage = null;
     PsiFile containingFile = null;
+    TemporaryPlacesRegistry temporaryPlaceRegistry = TemporaryPlacesRegistry.getInstance(myProject);
     for (PsiElement operand : operands) {
       if (PsiUtilEx.isStringOrCharacterLiteral(operand)) {
         hasLiteral = true;
@@ -68,7 +63,7 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
           containingFile = operands[0].getContainingFile();
         }
 
-        tempInjectedLanguage = myTemporaryPlacesRegistry.getLanguageFor((PsiLanguageInjectionHost)operand, containingFile);
+        tempInjectedLanguage = temporaryPlaceRegistry.getLanguageFor((PsiLanguageInjectionHost)operand, containingFile);
         if (tempInjectedLanguage != null) break;
       }
     }
@@ -83,7 +78,7 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
     LanguageInjectionSupport injectionSupport = tempLanguage == null
                                                 ? mySupport
                                                 : TemporaryPlacesRegistry.getInstance(myProject).getLanguageInjectionSupport();
-    InjectionProcessor injectionProcessor = new InjectionProcessor(myConfiguration, injectionSupport, operands) {
+    InjectionProcessor injectionProcessor = new InjectionProcessor(Configuration.getProjectInstance(myProject), injectionSupport, operands) {
       @Override
       protected Pair<PsiLanguageInjectionHost, Language> processInjection(Language language,
                                                                           List<? extends Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> list,
@@ -126,7 +121,6 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
   }
 
   public static class InjectionProcessor {
-
     private final Configuration myConfiguration;
     private final LanguageInjectionSupport mySupport;
     private final PsiElement[] myOperands;

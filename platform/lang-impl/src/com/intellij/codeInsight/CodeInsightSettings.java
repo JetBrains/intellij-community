@@ -32,10 +32,10 @@ import java.lang.reflect.Field;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-@State(
-  name = "CodeInsightSettings",
-  storages = @Storage("editor.codeinsight.xml")
-)
+@State(name = "CodeInsightSettings", storages = {
+  @Storage("editor.xml"),
+  @Storage(value = "editor.codeinsight.xml", deprecated = true),
+})
 public class CodeInsightSettings implements PersistentStateComponent<Element>, Cloneable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.CodeInsightSettings");
   private final List<PropertyChangeListener> myListeners = new CopyOnWriteArrayList<>();
@@ -156,7 +156,7 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
   public boolean INDENT_TO_CARET_ON_PASTE;
 
   @MagicConstant(intValues = {YES, NO, ASK})
-  public int ADD_IMPORTS_ON_PASTE = ASK;
+  public int ADD_IMPORTS_ON_PASTE = YES;
   public static final int YES = 1;
   public static final int NO = 2;
   public static final int ASK = 3;

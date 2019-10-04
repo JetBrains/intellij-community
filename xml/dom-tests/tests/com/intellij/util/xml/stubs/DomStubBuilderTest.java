@@ -1,21 +1,7 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xml.stubs;
 
-import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiManagerEx;
@@ -24,7 +10,8 @@ import com.intellij.psi.stubs.ObjectStubTree;
 import com.intellij.psi.stubs.Stub;
 import com.intellij.psi.stubs.StubTreeLoader;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ref.GCWatcher;
 import com.intellij.util.xml.DomFileElement;
@@ -85,7 +72,7 @@ public class DomStubBuilderTest extends DomStubTest {
     DomExtenderEP ep = new DomExtenderEP();
     ep.domClassName = Bar.class.getName();
     ep.extenderClassName = TestExtender.class.getName();
-    PlatformTestUtil.registerExtension(Extensions.getRootArea(), DomExtenderEP.EP_NAME, ep, myFixture.getTestRootDisposable());
+    ServiceContainerUtil.registerExtension(ApplicationManager.getApplication(), DomExtenderEP.EP_NAME, ep, myFixture.getTestRootDisposable());
 
     doBuilderTest("extender.xml", "File:foo\n" +
                                   "  Element:foo\n" +
@@ -106,8 +93,11 @@ public class DomStubBuilderTest extends DomStubTest {
     assertNotNull(stubTree);
   }
 
-  public void testInclusion() {
+  public void testInclusionOnStubs() {
     doInclusionTest(true);
+  }
+
+  public void testInclusionOnAST() {
     doInclusionTest(false);
   }
 
@@ -115,11 +105,12 @@ public class DomStubBuilderTest extends DomStubTest {
     myFixture.copyFileToProject("include.xml");
     doBuilderTest("inclusion.xml", "File:foo\n" +
                                    "  Element:foo\n" +
-                                   "    XInclide:href=include.xml xpointer=xpointer(/foo/*)\n" +
+                                   "    XInclude:href=include.xml xpointer=xpointer(/foo/*)\n" +
                                    "    Element:bar\n" +
                                    "      Attribute:string:xxx\n" +
                                    "      Attribute:int:666\n" +
-                                   "    Element:bar\n");
+                                   "    Element:bar\n" +
+                                   "      XInclude:href=include.xml xpointer=xpointer(/foo/bar-2/*)\n");
 
     PsiFile file = myFixture.getFile();
     if (onStubs) {
@@ -127,12 +118,24 @@ public class DomStubBuilderTest extends DomStubTest {
     }
     assertEquals(!onStubs, ((PsiFileImpl) file).isContentsLoaded());
 
-    DomFileElement<Foo> element = DomManager.getDomManager(getProject()).getFileElement((XmlFile)file, Foo.class);
+    DomManager domManager = DomManager.getDomManager(getProject());
+    DomFileElement<Foo> element = domManager.getFileElement((XmlFile)file, Foo.class);
     assert element != null;
     List<Bar> bars = element.getRootElement().getBars();
     assertEquals(3, bars.size());
     assertEquals("included", bars.get(0).getString().getValue());
 //    assertEquals("inclusion.xml", bar.getXmlTag().getContainingFile().getName());
+
+    assertEquals(!onStubs, ((PsiFileImpl) file).isContentsLoaded());
+
+    Bar lastBar = bars.get(2);
+    assertEquals("included2", assertOneElement(lastBar.getBars()).getString().getStringValue());
+
+    XmlTag[] barTags = ((XmlFile)file).getRootTag().findSubTags("bar");
+    assertSize(3, barTags);
+    for (int i = 1; i < barTags.length; i++) {
+      assertEquals(String.valueOf(i), bars.get(i), domManager.getDomElement(barTags[i]));
+    }
   }
 
   public static class TestExtender extends DomExtender<Bar> {

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.openapi.project.Project;
@@ -55,7 +55,8 @@ public class StringTokenizerDelimiterInspection extends AbstractBaseJavaLocalIns
         final Set<Character> chars = new THashSet<>();
         for (char c : delimiters.toCharArray()) {
           if (!chars.add(c)) {
-            holder.registerProblem(delimiterArgument, "Delimiters argument contains duplicated characters", new ReplaceDelimitersWithUnique(delimiterArgument));
+            holder.registerProblem(delimiterArgument, "Delimiters argument contains duplicated characters",
+                                   new ReplaceDelimitersWithUnique(delimiterArgument));
             return;
           }
         }
@@ -91,8 +92,7 @@ public class StringTokenizerDelimiterInspection extends AbstractBaseJavaLocalIns
       }
       final String newDelimiters = StringUtil.join(uniqueChars, "");
       final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
-      delimiterArgument.replace(elementFactory.createExpressionFromText(StringUtil.wrapWithDoubleQuote(StringUtil.escaper(true, "\"").fun(
-        newDelimiters)), null));
+      delimiterArgument.replace(elementFactory.createExpressionFromText('"' + StringUtil.escapeStringCharacters(newDelimiters) + '"', null));
     }
   }
 }

@@ -3,7 +3,6 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.application.options.EditorFontsConstants;
 import com.intellij.codeInsight.hint.EditorFragmentComponent;
-import com.intellij.concurrency.JobScheduler;
 import com.intellij.diagnostic.Dumpable;
 import com.intellij.ide.*;
 import com.intellij.ide.dnd.DnDManager;
@@ -79,10 +78,7 @@ import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.intellij.lang.annotations.JdkConstants;
 import org.intellij.lang.annotations.MagicConstant;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import javax.swing.Timer;
 import javax.swing.*;
@@ -125,13 +121,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   public static final int TEXT_ALIGNMENT_RIGHT = 1;
 
   private static final int MIN_FONT_SIZE = 8;
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.EditorImpl");
+  private static final Logger LOG = Logger.getInstance(EditorImpl.class);
   private static final Key DND_COMMAND_KEY = Key.create("DndCommand");
   /**
    * @deprecated Use {@link EditorMouseHoverPopupControl} instead. To be removed in 2020.1.
    */
   @NonNls
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
   public static final Object IGNORE_MOUSE_TRACKING = "ignore_mouse_tracking";
   private static final Key<JComponent> PERMANENT_HEADER = Key.create("PERMANENT_HEADER");
   public static final Key<Boolean> DO_DOCUMENT_UPDATE_TEST = Key.create("DoDocumentUpdateTest");
@@ -163,7 +160,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     Cursor emptyCursor = null;
     if (!GraphicsEnvironment.isHeadless()) {
       try {
-        emptyCursor = Toolkit.getDefaultToolkit().createCustomCursor(UIUtil.createImage(1, 1, BufferedImage.TYPE_INT_ARGB),
+        emptyCursor = Toolkit.getDefaultToolkit().createCustomCursor(ImageUtil.createImage(1, 1, BufferedImage.TYPE_INT_ARGB),
                                                                      new Point(),
                                                                      "Empty cursor");
       }
@@ -223,7 +220,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @NotNull private final InlayModelImpl myInlayModel;
 
   @NotNull private static final RepaintCursorCommand ourCaretBlinkingCommand = new RepaintCursorCommand();
-  private final DocumentBulkUpdateListener myBulkUpdateListener;
 
   @MouseSelectionState
   private int myMouseSelectionState;
@@ -372,14 +368,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myCommandProcessor = CommandProcessor.getInstance();
 
     myImmediatePainter = new ImmediatePainter(this);
-
-    if (myDocument instanceof DocumentImpl) {
-      myBulkUpdateListener = new EditorDocumentBulkUpdateAdapter();
-      ((DocumentImpl)myDocument).addInternalBulkModeListener(myBulkUpdateListener);
-    }
-    else {
-      myBulkUpdateListener = null;
-    }
 
     myMarkupModelListener = new MarkupModelListener() {
       @Override
@@ -1037,9 +1025,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     CodeStyleSettingsManager.removeListener(myProject, this);
 
-    if (myBulkUpdateListener != null) {
-      ((DocumentImpl)myDocument).removeInternalBulkModeListener(myBulkUpdateListener);
-    }
     Disposer.dispose(myDisposable);
     myVerticalScrollBar.setUI(null); // clear error panel's cached image
   }
@@ -1293,7 +1278,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   void processKeyTypedImmediately(char c, Graphics graphics, DataContext dataContext) {
     EditorActionPlan plan = new EditorActionPlan(this);
-    EditorActionManager.getInstance().getTypedAction().beforeActionPerformed(this, c, dataContext, plan);
+    EditorActionManager.getInstance();
+    TypedAction.getInstance().beforeActionPerformed(this, c, dataContext, plan);
     if (myImmediatePainter.paint(graphics, plan)) {
       measureTypingLatency();
       myLastTypedActionTimestamp = -1;
@@ -1301,7 +1287,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   void processKeyTypedNormally(char c, DataContext dataContext) {
-    EditorActionManager.getInstance().getTypedAction().actionPerformed(this, c, dataContext);
+    EditorActionManager.getInstance();
+    TypedAction.getInstance().actionPerformed(this, c, dataContext);
   }
 
   private void fireFocusLost(@NotNull FocusEvent event) {
@@ -2676,7 +2663,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     private void setBlinkPeriod(int blinkPeriod) {
-      mySleepTime = blinkPeriod > 10 ? blinkPeriod : 10;
+      mySleepTime = Math.max(blinkPeriod, 10);
       start();
     }
 
@@ -2914,86 +2901,87 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
 
 
-      myTimer = UIUtil.createNamedTimer("Editor scroll timer", TIMER_PERIOD, e -> {
+      myTimer = TimerUtil.createNamedTimer("Editor scroll timer", TIMER_PERIOD, e -> {
         if (isDisposed()) {
           stop();
           return;
         }
         myCommandProcessor.executeCommand(myProject, new DocumentRunnable(myDocument, myProject) {
-          @Override
-          public void run() {
-            int oldSelectionStart = mySelectionModel.getLeadSelectionOffset();
-            VisualPosition caretPosition = myMultiSelectionInProgress ? myTargetMultiSelectionPosition : getCaretModel().getVisualPosition();
-            int column = caretPosition.column;
-            xPassedCycles++;
-            if (xPassedCycles >= myXCycles) {
-              xPassedCycles = 0;
-              column += myDx;
-            }
+                                            @Override
+                                            public void run() {
+                                              int oldSelectionStart = mySelectionModel.getLeadSelectionOffset();
+                                              VisualPosition caretPosition =
+                                                myMultiSelectionInProgress ? myTargetMultiSelectionPosition : getCaretModel().getVisualPosition();
+                                              int column = caretPosition.column;
+                                              xPassedCycles++;
+                                              if (xPassedCycles >= myXCycles) {
+                                                xPassedCycles = 0;
+                                                column += myDx;
+                                              }
 
-            int line = caretPosition.line;
-            yPassedCycles++;
-            if (yPassedCycles >= myYCycles) {
-              yPassedCycles = 0;
-              line += myDy;
-            }
+                                              int line = caretPosition.line;
+                                              yPassedCycles++;
+                                              if (yPassedCycles >= myYCycles) {
+                                                yPassedCycles = 0;
+                                                line += myDy;
+                                              }
 
-            line = Math.max(0, line);
-            column = Math.max(0, column);
-            VisualPosition pos = new VisualPosition(line, column);
-            if (!myMultiSelectionInProgress) {
-              getCaretModel().moveToVisualPosition(pos);
-              getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-            }
+                                              line = Math.max(0, line);
+                                              column = Math.max(0, column);
+                                              VisualPosition pos = new VisualPosition(line, column);
+                                              if (!myMultiSelectionInProgress) {
+                                                getCaretModel().moveToVisualPosition(pos);
+                                                getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+                                              }
 
-            int newCaretOffset = getCaretModel().getOffset();
-            int caretShift = newCaretOffset - mySavedSelectionStart;
+                                              int newCaretOffset = getCaretModel().getOffset();
+                                              int caretShift = newCaretOffset - mySavedSelectionStart;
 
-            if (getMouseSelectionState() != MOUSE_SELECTION_STATE_NONE) {
-              if (caretShift < 0) {
-                int newSelection = newCaretOffset;
-                if (getMouseSelectionState() == MOUSE_SELECTION_STATE_WORD_SELECTED) {
-                  newSelection = myCaretModel.getWordAtCaretStart();
-                }
-                else {
-                  if (getMouseSelectionState() == MOUSE_SELECTION_STATE_LINE_SELECTED) {
-                    newSelection =
-                      logicalPositionToOffset(visualToLogicalPosition(new VisualPosition(getCaretModel().getVisualPosition().line, 0)));
-                  }
-                }
-                if (newSelection < 0) newSelection = newCaretOffset;
-                mySelectionModel.setSelection(validateOffset(mySavedSelectionEnd), newSelection);
-                getCaretModel().moveToOffset(newSelection);
-              }
-              else {
-                int newSelection = newCaretOffset;
-                if (getMouseSelectionState() == MOUSE_SELECTION_STATE_WORD_SELECTED) {
-                  newSelection = myCaretModel.getWordAtCaretEnd();
-                }
-                else {
-                  if (getMouseSelectionState() == MOUSE_SELECTION_STATE_LINE_SELECTED) {
-                    newSelection = logicalPositionToOffset(
-                      visualToLogicalPosition(new VisualPosition(getCaretModel().getVisualPosition().line + 1, 0)));
-                  }
-                }
-                if (newSelection < 0) newSelection = newCaretOffset;
-                mySelectionModel.setSelection(validateOffset(mySavedSelectionStart), newSelection);
-                getCaretModel().moveToOffset(newSelection);
-              }
-              return;
-            }
+                                              if (getMouseSelectionState() != MOUSE_SELECTION_STATE_NONE) {
+                                                if (caretShift < 0) {
+                                                  int newSelection = newCaretOffset;
+                                                  if (getMouseSelectionState() == MOUSE_SELECTION_STATE_WORD_SELECTED) {
+                                                    newSelection = myCaretModel.getWordAtCaretStart();
+                                                  }
+                                                  else {
+                                                    if (getMouseSelectionState() == MOUSE_SELECTION_STATE_LINE_SELECTED) {
+                                                      newSelection =
+                                                        logicalPositionToOffset(visualToLogicalPosition(new VisualPosition(getCaretModel().getVisualPosition().line, 0)));
+                                                    }
+                                                  }
+                                                  if (newSelection < 0) newSelection = newCaretOffset;
+                                                  mySelectionModel.setSelection(validateOffset(mySavedSelectionEnd), newSelection);
+                                                  getCaretModel().moveToOffset(newSelection);
+                                                }
+                                                else {
+                                                  int newSelection = newCaretOffset;
+                                                  if (getMouseSelectionState() == MOUSE_SELECTION_STATE_WORD_SELECTED) {
+                                                    newSelection = myCaretModel.getWordAtCaretEnd();
+                                                  }
+                                                  else {
+                                                    if (getMouseSelectionState() == MOUSE_SELECTION_STATE_LINE_SELECTED) {
+                                                      newSelection = logicalPositionToOffset(
+                                                        visualToLogicalPosition(new VisualPosition(getCaretModel().getVisualPosition().line + 1, 0)));
+                                                    }
+                                                  }
+                                                  if (newSelection < 0) newSelection = newCaretOffset;
+                                                  mySelectionModel.setSelection(validateOffset(mySavedSelectionStart), newSelection);
+                                                  getCaretModel().moveToOffset(newSelection);
+                                                }
+                                                return;
+                                              }
 
-            if (myMultiSelectionInProgress && myLastMousePressedLocation != null) {
-              myTargetMultiSelectionPosition = pos;
-              LogicalPosition newLogicalPosition = visualToLogicalPosition(pos);
-              getScrollingModel().scrollTo(newLogicalPosition, ScrollType.RELATIVE);
-              createSelectionTill(newLogicalPosition);
-            }
-            else {
-              mySelectionModel.setSelection(oldSelectionStart, getCaretModel().getOffset());
-            }
-          }
-        }, EditorBundle.message("move.cursor.command.name"), DocCommandGroupId.noneGroupId(getDocument()), UndoConfirmationPolicy.DEFAULT,
+                                              if (myMultiSelectionInProgress && myLastMousePressedLocation != null) {
+                                                myTargetMultiSelectionPosition = pos;
+                                                LogicalPosition newLogicalPosition = visualToLogicalPosition(pos);
+                                                getScrollingModel().scrollTo(newLogicalPosition, ScrollType.RELATIVE);
+                                                createSelectionTill(newLogicalPosition);
+                                              }
+                                              else {
+                                                mySelectionModel.setSelection(oldSelectionStart, getCaretModel().getOffset());
+                                              }
+                                            }
+                                          }, EditorBundle.message("move.cursor.command.name"), DocCommandGroupId.noneGroupId(getDocument()), UndoConfirmationPolicy.DEFAULT,
                                           getDocument());
       });
       myTimer.start();
@@ -3469,11 +3457,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     @NotNull
     @Override
     public Rectangle getTextLocation(TextHitInfo offset) {
+      if (isDisposed()) return new Rectangle();
       Point caret = logicalPositionToXY(getCaretModel().getLogicalPosition());
       Rectangle r = new Rectangle(caret, new Dimension(1, getLineHeight()));
       Point p = getLocationOnScreen(getContentComponent());
       r.translate(p.x, p.y);
-
       return r;
     }
 
@@ -4047,7 +4035,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     KeymapManager keymapManager = KeymapManager.getInstance();
     if (keymapManager == null) return false;
     Keymap keymap = keymapManager.getActiveKeymap();
-    if (keymap == null) return false;
     MouseShortcut mouseShortcut = KeymapUtil.createMouseShortcut(e);
     String[] mappedActions = keymap.getActionIds(mouseShortcut);
     if (!ArrayUtil.contains(actionId, mappedActions)) return false;
@@ -4442,7 +4429,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
       if (currentTimeMillis - lastRepaintTime < TIME_PER_FRAME) {
         UIUtil.drawImage(g, scaledImage, x, y, null);
-        JobScheduler.getScheduler().schedule(() -> component.repaint(x, y, myWidth, myHeight), TIME_PER_FRAME, TimeUnit.MILLISECONDS);
+        EdtExecutorService.getScheduledExecutorInstance().schedule(() -> component.repaint(x, y, myWidth, myHeight), TIME_PER_FRAME, TimeUnit.MILLISECONDS);
         return;
       }
       lastRepaintTime = currentTimeMillis;
@@ -4649,24 +4636,18 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     @Override
-    public int getPriority() {
-      return EditorDocumentPriorities.EDITOR_DOCUMENT_ADAPTER;
-    }
-  }
-
-  private class EditorDocumentBulkUpdateAdapter implements DocumentBulkUpdateListener {
-    @Override
-    public void updateStarted(@NotNull Document doc) {
-      if (doc != getDocument()) return;
-
+    public void bulkUpdateStarting(@NotNull Document document) {
       bulkUpdateStarted();
     }
 
     @Override
-    public void updateFinished(@NotNull Document doc) {
-      if (doc != getDocument()) return;
+    public void bulkUpdateFinished(@NotNull Document document) {
+      EditorImpl.this.bulkUpdateFinished();
+    }
 
-      bulkUpdateFinished();
+    @Override
+    public int getPriority() {
+      return EditorDocumentPriorities.EDITOR_DOCUMENT_ADAPTER;
     }
   }
 

@@ -12,6 +12,8 @@ import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.mac.TouchbarDataKeys;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.ui.ImageUtil;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.Language;
 import org.jdesktop.swingx.graphics.GraphicsUtilities;
@@ -84,6 +86,8 @@ public class SheetController implements Disposable {
 
   private final JEditorPane messageTextPane = new JEditorPane();
   private final Dimension messageArea = new Dimension(250, Short.MAX_VALUE);
+
+  private final JEditorPane headerLabel = new JEditorPane();
 
   SheetController(final SheetMessage sheetMessage,
                   final String title,
@@ -253,7 +257,7 @@ public class SheetController implements Disposable {
 
         paintShadow(g);
         // draw the sheet background
-        if (UIUtil.isUnderDarcula()) {
+        if (StartupUiUtil.isUnderDarcula()) {
           g.fillRoundRect((int)dialog.getX(), (int)dialog.getY() - 5, (int)dialog.getWidth(), (int)(5 + dialog.getHeight()), 5, 5);
         } else {
           //todo make bottom corners
@@ -280,11 +284,6 @@ public class SheetController implements Disposable {
         myIcon.paintIcon(this, g, 0, 0);
       }
     };
-
-
-    JEditorPane headerLabel = new JEditorPane();
-
-
 
     headerLabel.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, Boolean.TRUE);
     headerLabel.setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD));
@@ -421,7 +420,7 @@ public class SheetController implements Disposable {
 
 
   private static float getShadowAlpha() {
-    return ((UIUtil.isUnderDarcula())) ? .85f : .35f;
+    return ((StartupUiUtil.isUnderDarcula())) ? .85f : .35f;
   }
 
   private void paintShadowFromParent(Graphics2D g2d) {
@@ -446,6 +445,7 @@ public class SheetController implements Disposable {
     int buttonsRowWidth = LEFT_SHEET_OFFSET + buttonWidth + RIGHT_OFFSET;
 
     // update the pane if the sheet is going to be wider
+    headerLabel.setSize(Math.max(headerLabel.getWidth(), buttonWidth), headerLabel.getHeight());
     messageTextPane.setSize(Math.max(messageTextPane.getWidth(), buttonWidth), messageTextPane.getHeight());
 
     SHEET_WIDTH = Math.max(buttonsRowWidth, SHEET_WIDTH);
@@ -498,7 +498,7 @@ public class SheetController implements Disposable {
     myOffScreenFrame.add(mySheetPanel);
     myOffScreenFrame.getRootPane().setDefaultButton(myDefaultButton);
 
-    BufferedImage image = UIUtil.createImage(SHEET_NC_WIDTH, SHEET_NC_HEIGHT, BufferedImage.TYPE_INT_ARGB);
+    BufferedImage image = ImageUtil.createImage(SHEET_NC_WIDTH, SHEET_NC_HEIGHT, BufferedImage.TYPE_INT_ARGB);
 
     Graphics g = image.createGraphics();
     mySheetPanel.paint(g);

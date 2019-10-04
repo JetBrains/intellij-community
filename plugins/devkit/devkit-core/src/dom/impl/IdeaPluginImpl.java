@@ -3,6 +3,7 @@ package org.jetbrains.idea.devkit.dom.impl;
 
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.VolatileNullableLazyValue;
+import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.xml.DomUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
@@ -30,5 +31,14 @@ public abstract class IdeaPluginImpl implements IdeaPlugin {
   @Override
   public String getPluginId() {
     return myPluginId.getValue();
+  }
+
+  @Override
+  public String toString() {
+    XmlElement xml = getXmlElement();
+    if (xml != null) {
+      return xml.getContainingFile().getViewProvider().getVirtualFile().getPath();
+    }
+    return null;
   }
 }

@@ -272,14 +272,15 @@ public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
           final EvaluateException exception = descriptor.getEvaluateException();
           if(exception != null) {
             final String errorMessage = exception.getMessage();
-            if(valueLabel.endsWith(errorMessage)) {
-              appendValueTextWithEscapesRendering(descriptorText, valueLabel.substring(0, valueLabel.length() - errorMessage.length()), valueLabelAttribs, colorScheme);
-              descriptorText.append(errorMessage, XDebuggerUIConstants.EXCEPTION_ATTRIBUTES);
+            final String valueText;
+            if (valueLabel.endsWith(errorMessage)) {
+              valueText = valueLabel.substring(0, valueLabel.length() - errorMessage.length());
             }
             else {
-              appendValueTextWithEscapesRendering(descriptorText, valueLabel, valueLabelAttribs, colorScheme);
-              descriptorText.append(errorMessage, XDebuggerUIConstants.EXCEPTION_ATTRIBUTES);
+              valueText = valueLabel;
             }
+            appendValueTextWithEscapesRendering(descriptorText, valueText, valueLabelAttribs, colorScheme);
+            descriptorText.append(errorMessage, XDebuggerUIConstants.EXCEPTION_ATTRIBUTES);
           }
           else {
             if(valueLabel.equals(XDebuggerUIConstants.COLLECTING_DATA_MESSAGE)) {

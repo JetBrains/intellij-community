@@ -17,7 +17,7 @@ import java.util.stream.Stream;
  */
 public class UIDesignerImplicitUsageProvider implements ImplicitUsageProvider {
   @Override
-  public boolean isImplicitUsage(PsiElement element) {
+  public boolean isImplicitUsage(@NotNull PsiElement element) {
     if (element instanceof PsiMethod) {
       PsiMethod method = (PsiMethod) element;
       if ((AsmCodeGenerator.CREATE_COMPONENTS_METHOD_NAME.equals(method.getName()) ||
@@ -30,12 +30,12 @@ public class UIDesignerImplicitUsageProvider implements ImplicitUsageProvider {
   }
 
   @Override
-  public boolean isImplicitRead(PsiElement element) {
+  public boolean isImplicitRead(@NotNull PsiElement element) {
     return false;
   }
 
   @Override
-  public boolean isImplicitWrite(PsiElement element) {
+  public boolean isImplicitWrite(@NotNull PsiElement element) {
     return element instanceof PsiField && FormReferenceProvider.getFormFile((PsiField)element) != null;
   }
 

@@ -84,7 +84,7 @@ public class SubstitutionHandler extends MatchingHandler {
     this.subtype = subtype;
   }
 
-  public void setPredicate(MatchPredicate handler) {
+  public void setPredicate(@NotNull MatchPredicate handler) {
     predicate = handler;
   }
 

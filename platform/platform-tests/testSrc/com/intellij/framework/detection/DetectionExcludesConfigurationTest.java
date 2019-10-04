@@ -21,7 +21,7 @@ import com.intellij.framework.detection.impl.exclude.ExcludedFileState;
 import com.intellij.framework.detection.impl.exclude.ExcludesConfigurationState;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.HeavyPlatformTestCase;
 
 import java.io.File;
 import java.io.IOException;
@@ -29,7 +29,7 @@ import java.io.IOException;
 /**
  * @author nik
  */
-public class DetectionExcludesConfigurationTest extends PlatformTestCase {
+public class DetectionExcludesConfigurationTest extends HeavyPlatformTestCase {
   private VirtualFile myTempDir;
   private VirtualFile myTempFile;
 

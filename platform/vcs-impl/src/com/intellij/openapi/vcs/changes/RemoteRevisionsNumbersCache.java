@@ -132,12 +132,13 @@ public class RemoteRevisionsNumbersCache implements ChangesOnServerTracker {
         }
         final VirtualFile vf = pair.getFirst();
         final AbstractVcs newVcs = pair.getSecond();
+        final VirtualFile newRoot = newVcs != null ? myVcsManager.getVcsRootFor(vf) : null;
 
-        if (newVcs == null) {
+        if (newRoot == null) {
           myData.remove(key);
           getQueue(storedVcsRoot).forceRemove(key);
-        } else {
-          final VirtualFile newRoot = myVcsManager.getVcsRootFor(vf);
+        }
+        else {
           final VcsRoot newVcsRoot = new VcsRoot(newVcs, newRoot);
           if (! storedVcsRoot.equals(newVcsRoot)) {
             switchVcs(storedVcsRoot, newVcsRoot, key);

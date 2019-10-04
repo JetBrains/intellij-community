@@ -32,8 +32,10 @@ public abstract class Executor {
    * @return the ID of the toolwindow (usually {@link com.intellij.openapi.wm.ToolWindowId#RUN} or
    * {@link com.intellij.openapi.wm.ToolWindowId#DEBUG}).
    */
+  @NotNull
   public abstract String getToolWindowId();
 
+  @NotNull
   public abstract Icon getToolWindowIcon();
 
   /**

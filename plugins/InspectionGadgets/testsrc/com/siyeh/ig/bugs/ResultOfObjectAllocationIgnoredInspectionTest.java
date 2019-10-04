@@ -41,6 +41,6 @@ public class ResultOfObjectAllocationIgnoredInspectionTest extends LightJavaInsp
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_12;
+    return JAVA_13;
   }
 }

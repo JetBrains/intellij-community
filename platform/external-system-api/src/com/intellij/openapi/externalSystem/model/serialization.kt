@@ -2,8 +2,8 @@
 package com.intellij.openapi.externalSystem.model
 
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.externalSystem.ExternalSystemManager
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
-import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.serialization.NonDefaultConstructorInfo
 import com.intellij.serialization.ReadConfiguration
 import com.intellij.serialization.WriteConfiguration
@@ -13,7 +13,7 @@ fun createCacheWriteConfiguration() = WriteConfiguration(allowAnySubTypes = true
 
 private fun createDataClassResolver(log: Logger): (name: String, hostObject: DataNode<*>?) -> Class<*>? {
   val projectDataManager = ProjectDataManager.getInstance()
-  val managerClassLoaders = ExternalSystemApiUtil.getAllManagers().asSequence()
+  val managerClassLoaders = ExternalSystemManager.EP_NAME.iterable.asSequence()
     .map { it.javaClass.classLoader }
     .toSet()
   return fun(name: String, hostObject: DataNode<*>?): Class<*>? {

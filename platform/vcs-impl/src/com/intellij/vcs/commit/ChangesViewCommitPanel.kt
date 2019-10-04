@@ -5,7 +5,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.MnemonicHelper
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.editor.colors.EditorColorsListener
-import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.ComponentContainer
 import com.intellij.openapi.ui.Messages
@@ -14,6 +14,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.ui.*
@@ -71,10 +72,8 @@ private fun JBPopup.showAbove(component: JComponent) {
   show(northWest)
 }
 
-internal fun ChangesBrowserNode<*>.subtreeRootObject(): Any? = (path.getOrNull(1) as? ChangesBrowserNode<*>)?.userObject
-
 class ChangesViewCommitPanel(private val changesView: ChangesListView, private val rootComponent: JComponent) :
-  BorderLayoutPanel(), ChangesViewCommitWorkflowUi, ComponentContainer, DataProvider {
+  BorderLayoutPanel(), ChangesViewCommitWorkflowUi, EditorColorsListener, ComponentContainer, DataProvider {
 
   private val project get() = changesView.project
 
@@ -113,7 +112,6 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView, private v
     Disposer.register(this, commitMessage)
 
     buildLayout()
-    project.messageBus.connect(this).subscribe(EditorColorsManager.TOPIC, EditorColorsListener { needUpdateCommitOptionsUi = true })
 
     with(changesView) {
       setInclusionListener { inclusionEventDispatcher.multicaster.inclusionChanged() }
@@ -157,6 +155,10 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView, private v
     DumbAwareAction.create {
       if (commitButton.isEnabled) commitButton.showPopup()
     }.registerCustomShortcutSet(getDefaultShowPopupShortcut(), component, this)
+  }
+
+  override fun globalSchemeChange(scheme: EditorColorsScheme?) {
+    needUpdateCommitOptionsUi = true
   }
 
   override val commitMessageUi: CommitMessageUi get() = commitMessage
@@ -238,16 +240,16 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView, private v
   override fun addExecutorListener(listener: CommitExecutorListener, parent: Disposable) =
     executorEventDispatcher.addListener(listener, parent)
 
-  override fun refreshData() = (ChangesViewManager.getInstance(project) as ChangesViewManager).refreshImmediately()
+  override fun refreshData() = ChangesViewManager.getInstanceEx(project).refreshImmediately()
 
   override fun getDisplayedChanges(): List<Change> = all(changesView).userObjects(Change::class.java)
   override fun getIncludedChanges(): List<Change> = included(changesView).userObjects(Change::class.java)
 
   override fun getDisplayedUnversionedFiles(): List<VirtualFile> =
-    allUnderTag(changesView, UNVERSIONED_FILES_TAG).userObjects(VirtualFile::class.java)
+    allUnderTag(changesView, UNVERSIONED_FILES_TAG).userObjects(FilePath::class.java).mapNotNull { it.virtualFile }
 
   override fun getIncludedUnversionedFiles(): List<VirtualFile> =
-    includedUnderTag(changesView, UNVERSIONED_FILES_TAG).userObjects(VirtualFile::class.java)
+    includedUnderTag(changesView, UNVERSIONED_FILES_TAG).userObjects(FilePath::class.java).mapNotNull { it.virtualFile }
 
   override var inclusionModel: InclusionModel?
     get() = changesView.inclusionModel

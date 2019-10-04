@@ -17,7 +17,7 @@ package com.intellij.testFramework.fixtures.impl;
 
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.LightPlatformTestCase;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.RunAll;
 import com.intellij.testFramework.fixtures.BareTestFixture;
 
@@ -33,7 +33,7 @@ public class BareTestFixtureImpl extends BaseFixture implements BareTestFixture 
     // don't use method references here to make stack trace reading easier
     //noinspection Convert2MethodRef
     new RunAll(
-      () -> EdtTestUtil.runInEdtAndWait(() -> PlatformTestCase.cleanupApplicationCaches(null)),
+      () -> EdtTestUtil.runInEdtAndWait(() -> HeavyPlatformTestCase.cleanupApplicationCaches(null)),
       () -> super.tearDown()
     ).run();
   }

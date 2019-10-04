@@ -46,6 +46,9 @@ public abstract class JavaFindUsagesDialog<T extends JavaFindUsagesOptions> exte
   @Override
   protected void init() {
     myIncludeOverloadedMethodsAvailable = myPsiElement instanceof PsiMethod && MethodSignatureUtil.hasOverloads((PsiMethod)myPsiElement);
+    if (myFindUsagesOptions instanceof JavaFindUsagesOptions) {
+      ((JavaFindUsagesOptions)myFindUsagesOptions).setDefaults(myProject);
+    }
     super.init();
   }
 

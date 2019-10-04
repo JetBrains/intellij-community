@@ -25,7 +25,6 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.MavenProject;
 
 /**
@@ -36,9 +35,7 @@ public class MavenCompilerConfigurer extends MavenModuleConfigurer {
   public static final Key<Boolean> IGNORE_MAVEN_COMPILER_TARGET_KEY = Key.create("idea.maven.skip.compiler.target.level");
 
   @Override
-  public void configure(@NotNull MavenProject mavenProject, @NotNull Project project, @Nullable Module module) {
-    if (module == null) return;
-
+  public void configure(@NotNull MavenProject mavenProject, @NotNull Project project, @NotNull Module module) {
     CompilerConfiguration configuration = CompilerConfiguration.getInstance(project);
     if (!Boolean.TRUE.equals(module.getUserData(IGNORE_MAVEN_COMPILER_TARGET_KEY))) {
       String targetLevel = mavenProject.getTargetLevel();

@@ -7,6 +7,7 @@ import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.MouseEventAdapter;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -232,7 +233,7 @@ public class WideSelectionTreeUI extends BasicTreeUI {
   }
 
   private boolean shouldPaintLines() {
-    if (UIUtil.isUnderAquaBasedLookAndFeel() || UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) {
+    if (UIUtil.isUnderAquaBasedLookAndFeel() || StartupUiUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) {
       return false;
     }
     return myForceDontPaintLines || !"None".equals(tree.getClientProperty("JTree.lineStyle"));
@@ -307,7 +308,7 @@ public class WideSelectionTreeUI extends BasicTreeUI {
         }
       }
       else {
-        if (selected && (UIUtil.isUnderAquaBasedLookAndFeel() || UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF())) {
+        if (selected && (UIUtil.isUnderAquaBasedLookAndFeel() || StartupUiUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF())) {
           Color bg = getSelectionBackground(tree, true);
 
           if (myWideSelectionCondition.value(row)) {
@@ -331,7 +332,7 @@ public class WideSelectionTreeUI extends BasicTreeUI {
 
   @Override
   public void paint(Graphics g, JComponent c) {
-    if (myWideSelection && !UIUtil.isUnderAquaBasedLookAndFeel() && !UIUtil.isUnderDarcula() && !UIUtil.isUnderIntelliJLaF()) {
+    if (myWideSelection && !UIUtil.isUnderAquaBasedLookAndFeel() && !StartupUiUtil.isUnderDarcula() && !UIUtil.isUnderIntelliJLaF()) {
       paintSelectedRows(g, ((JTree)c));
     }
     if (myWideSelection) {

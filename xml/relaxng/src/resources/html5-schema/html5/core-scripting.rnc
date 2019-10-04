@@ -19,6 +19,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	script.attrs.integrity?
 		&	script.attrs.nonce?
 		&	embedded.content.attrs.crossorigin?
+		&	referrerpolicy?
 		&	(	common.attrs.aria.role.presentation
 			|	common.attrs.aria.role.menuitem
 			)?
@@ -37,6 +38,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	script.attrs.integrity?
 		&	script.attrs.nonce?
 		&	embedded.content.attrs.crossorigin?
+		&	referrerpolicy?
 		&	(	common.attrs.aria.role.presentation
 			|	common.attrs.aria.role.menuitem
 			)?

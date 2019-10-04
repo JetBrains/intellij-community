@@ -17,8 +17,6 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.*
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.changes.*
-import com.intellij.openapi.vcs.checkin.CheckinHandler
-import com.intellij.util.ExceptionUtil
 import com.intellij.util.concurrency.Semaphore
 import com.intellij.util.containers.ContainerUtil.createLockFreeCopyOnWriteList
 
@@ -49,13 +47,12 @@ private fun unmarkCommittingDocuments(committingDocuments: Collection<Document>)
   document.putUserData<Any>(AbstractCommitter.DOCUMENT_BEING_COMMITTED_KEY, null)
 }
 
-// TODO "handlers" are just used here to run callbacks, but not for other commit handlers lifecycle. Looks better to remove this field
-// TODO and register corresponding event listener (that'll notify commit handlers) in commit workflow instead.
-abstract class AbstractCommitter(val project: Project,
-                                 val changes: List<Change>,
-                                 val commitMessage: String,
-                                 val commitContext: CommitContext,
-                                 val handlers: List<CheckinHandler>) {
+abstract class AbstractCommitter(
+  val project: Project,
+  val changes: List<Change>,
+  val commitMessage: String,
+  val commitContext: CommitContext
+) {
   private val committingDocuments = mutableListOf<Document>()
   private val resultHandlers = createLockFreeCopyOnWriteList<CommitResultHandler>()
 
@@ -106,7 +103,7 @@ abstract class AbstractCommitter(val project: Project,
 
   protected abstract fun onFinish()
 
-  protected fun commit(vcs: AbstractVcs<*>, changes: List<Change>) {
+  protected fun commit(vcs: AbstractVcs, changes: List<Change>) {
     val environment = vcs.checkinEnvironment
     if (environment != null) {
       _pathsToRefresh.addAll(ChangesUtil.getPaths(changes))
@@ -133,6 +130,11 @@ abstract class AbstractCommitter(val project: Project,
             doRunCommit()
           }, indicator)
       }
+      catch (ignored: ProcessCanceledException) {
+      }
+      catch (e: Throwable) {
+        LOG.error(e)
+      }
       finally {
         endSemaphore.up()
       }
@@ -145,6 +147,7 @@ abstract class AbstractCommitter(val project: Project,
   }
 
   private fun doRunCommit() {
+    var canceled = false
     try {
       runReadAction { markCommittingDocuments() }
       try {
@@ -156,38 +159,39 @@ abstract class AbstractCommitter(val project: Project,
 
       afterCommit()
     }
-    catch (pce: ProcessCanceledException) {
-      throw pce
+    catch (e: ProcessCanceledException) {
+      canceled = true
+      throw e
     }
     catch (e: Throwable) {
       LOG.error(e)
       _exceptions.add(VcsException(e))
-      ExceptionUtil.rethrow(e)
     }
     finally {
-      finishCommit()
+      finishCommit(canceled)
       onFinish()
     }
   }
 
-  private fun finishCommit() {
+  private fun finishCommit(canceled: Boolean) {
     val errors = collectErrors(_exceptions)
     val noErrors = errors.isEmpty()
     val noWarnings = _exceptions.isEmpty()
 
-    if (noErrors) {
-      handlers.forEach { it.checkinSuccessful() }
-      onSuccess()
+    if (canceled) {
+      resultHandlers.forEach { it.onCancel() }
+    }
+    else if (noErrors) {
       resultHandlers.forEach { it.onSuccess(commitMessage) }
+      onSuccess()
 
       if (noWarnings) {
         progress(message("commit.dialog.completed.successfully"))
       }
     }
     else {
-      handlers.forEach { it.checkinFailed(errors) }
+      resultHandlers.forEach { it.onFailure(errors) }
       onFailure()
-      resultHandlers.forEach { it.onFailure() }
     }
   }
 

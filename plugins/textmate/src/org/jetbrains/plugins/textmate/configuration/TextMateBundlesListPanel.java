@@ -54,8 +54,7 @@ public class TextMateBundlesListPanel implements Disposable {
       }
     };
     myBundlesList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-    //noinspection unchecked
-    new ListSpeedSearch(myBundlesList, (Function<Object, String>)o -> ((JCheckBox)o).getText());
+    new ListSpeedSearch<>(myBundlesList, (Function<JCheckBox, String>)box -> box.getText());
   }
 
   private static boolean isBuiltin(BundleConfigBean bean) {

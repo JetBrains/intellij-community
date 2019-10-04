@@ -11,6 +11,8 @@ import com.intellij.util.io.serverBootstrap
 import io.netty.bootstrap.ServerBootstrap
 import io.netty.channel.*
 import io.netty.channel.nio.NioEventLoopGroup
+import io.netty.channel.oio.OioEventLoopGroup
+import io.netty.util.internal.logging.InternalLoggerFactory
 import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.util.*
@@ -30,7 +32,7 @@ class BuiltInServer private constructor(val eventLoopGroup: EventLoopGroup, val 
       // IDEA-120811
       if (SystemProperties.getBooleanProperty("io.netty.random.id", true)) {
         System.setProperty("io.netty.machineId", "28:f0:76:ff:fe:16:65:0e")
-        System.setProperty("io.netty.processId", Integer.toString(Random().nextInt(65535)))
+        System.setProperty("io.netty.processId", Random().nextInt(65535).toString())
         System.setProperty("io.netty.serviceThreadPrefix", "Netty ")
 
         // https://youtrack.jetbrains.com/issue/IDEA-208908
@@ -38,6 +40,11 @@ class BuiltInServer private constructor(val eventLoopGroup: EventLoopGroup, val 
         System.setProperty("io.netty.allocator.numDirectArenas", numArenas)
         System.setProperty("io.netty.allocator.numHeapArenas", numArenas)
       }
+
+      val logger = IdeaNettyLogger()
+      InternalLoggerFactory.setDefaultFactory(object : InternalLoggerFactory() {
+        override fun newInstance(name: String) = logger
+      })
     }
 
     @JvmStatic
@@ -59,7 +66,7 @@ class BuiltInServer private constructor(val eventLoopGroup: EventLoopGroup, val 
       catch (e: IllegalStateException) {
         logger<BuiltInServer>().warn(e)
         @Suppress("DEPRECATION")
-        io.netty.channel.oio.OioEventLoopGroup(1, threadFactory)
+        (OioEventLoopGroup(1, threadFactory))
       }
 
       return start(loopGroup, true, firstPort, portsCount, tryAnyPort, handler)

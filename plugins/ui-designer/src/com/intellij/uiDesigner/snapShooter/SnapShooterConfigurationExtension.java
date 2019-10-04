@@ -41,7 +41,7 @@ import java.util.TreeSet;
  */
 public class SnapShooterConfigurationExtension extends RunConfigurationExtension {
   @Override
-  public void updateJavaParameters(RunConfigurationBase configuration, JavaParameters params, RunnerSettings runnerSettings) {
+  public void updateJavaParameters(@NotNull RunConfigurationBase configuration, @NotNull JavaParameters params, RunnerSettings runnerSettings) {
     if (!isApplicableFor(configuration)) {
       return;
     }

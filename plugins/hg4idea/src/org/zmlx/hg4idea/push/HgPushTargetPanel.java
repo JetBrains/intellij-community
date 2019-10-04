@@ -30,11 +30,11 @@ public class HgPushTargetPanel extends PushTargetPanel<HgTarget> {
   private final TextFieldWithCompletion myDestTargetPanel;
   private final VcsEditableTextComponent myTargetRenderedComponent;
 
-  public HgPushTargetPanel(@NotNull HgRepository repository, @Nullable HgTarget defaultTarget) {
+  public HgPushTargetPanel(@NotNull HgRepository repository, @NotNull HgPushSource source, @Nullable HgTarget defaultTarget) {
     setLayout(new BorderLayout());
     setOpaque(false);
     myRepository = repository;
-    myBranchName = myRepository.getCurrentBranchName();
+    myBranchName = source.getBranch();
     final List<String> targetVariants = HgUtil.getTargetNames(repository);
     String defaultText = defaultTarget != null ? defaultTarget.getPresentation() : "";
     myTargetRenderedComponent = new VcsEditableTextComponent("<a href=''>" + defaultText + "</a>", null);

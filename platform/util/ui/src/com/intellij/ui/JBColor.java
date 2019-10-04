@@ -3,6 +3,7 @@ package com.intellij.ui;
 
 import com.intellij.util.NotNullProducer;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,7 +26,7 @@ public class JBColor extends Color {
   public static final Color PanelBackground = namedColor("Panel.background", 0xffffff);
 
   private static final class Lazy {
-    private static volatile boolean DARK = UIUtil.isUnderDarcula();
+    private static volatile boolean DARK = StartupUiUtil.isUnderDarcula();
   }
 
   private final Color darkColor;
@@ -53,9 +54,14 @@ public class JBColor extends Color {
   }
 
   @NotNull
+  public static JBColor namedColor(@NotNull String propertyName, int defaultValueRGB, int darkValueRGB) {
+    return namedColor(propertyName, new JBColor(defaultValueRGB, darkValueRGB));
+  }
+
+  @NotNull
   public static JBColor namedColor(@NotNull final String propertyName, @NotNull final Color defaultColor) {
     return new JBColor(() -> {
-      Color color = notNull(UIManager.getColor(propertyName),
+      Color color = notNull(UIManager.getColor(propertyName), () ->
                             notNull(findPatternMatch(propertyName), defaultColor));
       if (UIManager.get(propertyName) == null) {
         UIManager.put(propertyName, color);

@@ -30,7 +30,6 @@ import com.intellij.util.Consumer;
 import com.intellij.util.FilteringProcessor;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.FilteringIterator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -78,7 +77,17 @@ public class EditorFilteringMarkupModelEx implements MarkupModelEx {
   @Override
   @NotNull
   public MarkupIterator<RangeHighlighterEx> overlappingIterator(int startOffset, int endOffset) {
-    return new MyFilteringIterator(myDelegate.overlappingIterator(startOffset, endOffset));
+    return new FilteringMarkupIterator<>(myDelegate.overlappingIterator(startOffset, endOffset), this::isAvailable);
+  }
+
+  @NotNull
+  @Override
+  public MarkupIterator<RangeHighlighterEx> overlappingIterator(int startOffset,
+                                                                int endOffset,
+                                                                boolean onlyRenderedInGutter,
+                                                                boolean onlyRenderedInScrollBar) {
+    return new FilteringMarkupIterator<>(
+      myDelegate.overlappingIterator(startOffset, endOffset, onlyRenderedInGutter, onlyRenderedInScrollBar), this::isAvailable);
   }
 
   @Override
@@ -90,21 +99,6 @@ public class EditorFilteringMarkupModelEx implements MarkupModelEx {
 
   @Override
   public void dispose() {
-  }
-
-  private class MyFilteringIterator extends FilteringIterator<RangeHighlighterEx, RangeHighlighterEx>
-    implements MarkupIterator<RangeHighlighterEx> {
-    private final MarkupIterator<? extends RangeHighlighterEx> myDelegate;
-
-    MyFilteringIterator(@NotNull MarkupIterator<? extends RangeHighlighterEx> delegate) {
-      super(delegate, IS_AVAILABLE);
-      myDelegate = delegate;
-    }
-
-    @Override
-    public void dispose() {
-      myDelegate.dispose();
-    }
   }
 
   //

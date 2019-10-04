@@ -29,6 +29,7 @@ import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.UIBundle;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBOptionButton;
 import com.intellij.ui.components.JBScrollPane;
@@ -36,8 +37,10 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.mac.TouchbarDataKeys;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
+import kotlin.Unit;
 import kotlin.jvm.functions.Function0;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.Nls;
@@ -51,6 +54,9 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.plaf.UIResource;
 import java.awt.*;
 import java.awt.event.*;
+import java.beans.PropertyChangeListener;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.util.List;
 import java.util.*;
 import java.util.stream.IntStream;
@@ -299,7 +305,7 @@ public abstract class DialogWrapper {
 
   @NotNull
   protected String getDoNotShowMessage() {
-    return CommonBundle.message("dialog.options.do.not.show");
+    return UIBundle.message("dialog.options.do.not.show");
   }
 
   public void setDoNotAskOption(@Nullable DoNotAskOption doNotAsk) {
@@ -456,7 +462,7 @@ public abstract class DialogWrapper {
   }
 
   protected static boolean isMoveHelpButtonLeft() {
-    return UIUtil.isUnderAquaBasedLookAndFeel() || UIUtil.isUnderDarcula() || UIUtil.isUnderWin10LookAndFeel();
+    return UIUtil.isUnderAquaBasedLookAndFeel() || StartupUiUtil.isUnderDarcula() || UIUtil.isUnderWin10LookAndFeel();
   }
 
   private static boolean isRemoveHelpButton() {
@@ -479,6 +485,9 @@ public abstract class DialogWrapper {
     boolean addHelpToLeftSide = false;
     if (isRemoveHelpButton()) {
       actions.remove(helpAction);
+    }
+    else if (!actions.contains(helpAction) && getHelpId() == null) {
+      helpAction.setEnabled(false);
     }
     else if (isMoveHelpButtonLeft() && actions.remove(helpAction) && !leftSideActions.contains(helpAction)) {
       addHelpToLeftSide = true;
@@ -695,7 +704,7 @@ public abstract class DialogWrapper {
 
       buttonsPanel.add(button);
       if (i < buttons.size() - 1) {
-        int gap = UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF() ? BASE_BUTTON_GAP.get() - insets.left - insets.right : JBUIScale
+        int gap = StartupUiUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF() ? BASE_BUTTON_GAP.get() - insets.left - insets.right : JBUIScale
           .scale(8);
         buttonsPanel.add(Box.createRigidArea(new Dimension(gap, 0)));
       }
@@ -944,7 +953,7 @@ public abstract class DialogWrapper {
     unregisterKeyboardActions(rootPane);
     Container contentPane = rootPane.getContentPane();
     if (contentPane != null) contentPane.removeAll();
-    Disposer.clearOwnFields(rootPane, field -> {
+    clearOwnFields(rootPane, field -> {
       String clazz = field.getDeclaringClass().getName();
       // keep AWT and Swing fields intact, except some
       if (!clazz.startsWith("java.") && !clazz.startsWith("javax.")) return true;
@@ -1311,6 +1320,10 @@ public abstract class DialogWrapper {
         DialogPanel dialogPanel = (DialogPanel)centerPanel;
         myPreferredFocusedComponentFromPanel = dialogPanel.getPreferredFocusedComponent();
         myValidateCallbacks.addAll(dialogPanel.getValidateCallbacks());
+        dialogPanel.registerValidators(myDisposable, (map) -> {
+          setOKActionEnabled(map.isEmpty());
+          return Unit.INSTANCE;
+        });
         myDialogPanel = dialogPanel;
       }
     }
@@ -1835,9 +1848,16 @@ public abstract class DialogWrapper {
     protected abstract void doAction(ActionEvent e);
   }
 
+  private final PropertyChangeListener myRepaintOnNameChangeListener = evt -> {
+    if (Action.NAME.equals(evt.getPropertyName())) {
+      repaint();
+    }
+  };
+
   protected class OkAction extends DialogWrapperAction {
     protected OkAction() {
       super(CommonBundle.getOkButtonText());
+      addPropertyChangeListener(myRepaintOnNameChangeListener);
       putValue(DEFAULT_ACTION, Boolean.TRUE);
     }
 
@@ -1871,6 +1891,7 @@ public abstract class DialogWrapper {
   protected class CancelAction extends DialogWrapperAction {
     private CancelAction() {
       super(CommonBundle.getCancelButtonText());
+      addPropertyChangeListener(myRepaintOnNameChangeListener);
     }
 
     @Override
@@ -2155,7 +2176,7 @@ public abstract class DialogWrapper {
       @NotNull
       @Override
       public String getDoNotShowMessage() {
-        return CommonBundle.message("dialog.options.do.not.ask");
+        return UIBundle.message("dialog.options.do.not.ask");
       }
 
       @Override
@@ -2219,4 +2240,18 @@ public abstract class DialogWrapper {
       this.info = info;
     }
   }
+
+  private static void clearOwnFields(@Nullable Object object, @NotNull Condition<? super Field> selectCondition) {
+    if (object == null) return;
+    for (Field each : ReflectionUtil.collectFields(object.getClass())) {
+      if ((each.getModifiers() & (Modifier.FINAL | Modifier.STATIC)) > 0) continue;
+      if (!selectCondition.value(each)) continue;
+      try {
+        ReflectionUtil.resetField(object, each);
+      }
+      catch (Exception ignore) {
+      }
+    }
+  }
+
 }

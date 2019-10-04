@@ -16,6 +16,7 @@ import com.intellij.util.containers.ObjectIntHashMap;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.ui.JBUI;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,7 +30,10 @@ import java.util.Map;
  * This class represents map between strings and rectangles. It's intended to store
  * sizes of window, dialogs, etc.
  */
-@State(name = "DimensionService", storages = @Storage(value = "dimensions.xml", roamingType = RoamingType.DISABLED))
+@State(name = "DimensionService", storages = {
+  @Storage(value = "window.state.xml", roamingType = RoamingType.DISABLED),
+  @Storage(value = "dimensions.xml", roamingType = RoamingType.DISABLED, deprecated = true),
+})
 public class DimensionService extends SimpleModificationTracker implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(DimensionService.class);
 
@@ -65,8 +69,11 @@ public class DimensionService extends SimpleModificationTracker implements Persi
 
   @Nullable
   public synchronized Point getLocation(@NotNull String key, Project project) {
+    Point point = getProjectLocation(key, project);
+    if (point != null) return point;
+
     Pair<String, Float> pair = keyPair(key, project);
-    Point point = myKey2Location.get(pair.first);
+    point = myKey2Location.get(pair.first);
     if (point != null) {
       point = (Point)point.clone();
       float scale = pair.second;
@@ -92,6 +99,10 @@ public class DimensionService extends SimpleModificationTracker implements Persi
 
   public synchronized void setLocation(@NotNull String key, Point point, Project project) {
     Pair<String, Float> pair = keyPair(key, project);
+    if (project != null) {
+      WindowStateService.getInstance(project).putLocation(key, point);
+      return;
+    }
     if (point != null) {
       point = (Point)point.clone();
       float scale = pair.second;
@@ -117,8 +128,11 @@ public class DimensionService extends SimpleModificationTracker implements Persi
 
   @Nullable
   public synchronized Dimension getSize(@NotNull @NonNls String key, Project project) {
+    Dimension size = getProjectSize(key, project);
+    if (size != null) return size;
+
     Pair<String, Float> pair = keyPair(key, project);
-    Dimension size = myKey2Size.get(pair.first);
+    size = myKey2Size.get(pair.first);
     if (size != null) {
       size = (Dimension)size.clone();
       float scale = pair.second;
@@ -129,15 +143,12 @@ public class DimensionService extends SimpleModificationTracker implements Persi
 
   @Nullable
   private static Dimension getProjectSize(@NonNls @NotNull String key, @Nullable Project project) {
-    if (project == null) return null;
-    WindowStateService windowStateService = WindowStateService.getInstance(project);
-    return windowStateService.getSize(key);
+    return project != null ? WindowStateService.getInstance(project).getSize(key) : null;
   }
+
   @Nullable
   private static Point getProjectLocation(@NonNls @NotNull String key, @Nullable Project project) {
-    if (project == null) return null;
-    WindowStateService windowStateService = WindowStateService.getInstance(project);
-    return windowStateService.getLocation(key);
+    return project != null ? WindowStateService.getInstance(project).getLocation(key) : null;
   }
 
   /**
@@ -154,6 +165,9 @@ public class DimensionService extends SimpleModificationTracker implements Persi
 
   public synchronized void setSize(@NotNull @NonNls String key, Dimension size, Project project) {
     Pair<String, Float> pair = keyPair(key, project);
+    if (project != null) {
+      WindowStateService.getInstance(project).putSize(key, size);
+    }
     if (size != null) {
       size = (Dimension)size.clone();
       float scale = pair.second;
@@ -235,12 +249,9 @@ public class DimensionService extends SimpleModificationTracker implements Persi
     }
   }
 
-  /**
-   * @deprecated Use {@link com.intellij.ide.util.PropertiesComponent}
-   */
-  @Deprecated
-  public int getExtendedState(String key) {
-    return myKey2ExtendedState.get(key);
+  @ApiStatus.Internal
+  public boolean getDefaultMaximizedFor(@NotNull String key) {
+    return Frame.MAXIMIZED_BOTH == myKey2ExtendedState.get(key);
   }
 
   @Nullable

@@ -34,7 +34,7 @@ public class CachedVcsContext implements VcsContext {
   private final VirtualFile mySelectedFile;
   private final VirtualFile[] mySelectedFiles;
   private final Collection<VirtualFile> mySelectedFilesCollection;
-  private final List<VirtualFile> mySelectedUnversionedFiles;
+  private final List<FilePath> mySelectedUnversionedFiles;
   private final Editor myEditor;
   private final File[] mySelectedIOFiles;
   private final int myModifiers;
@@ -52,7 +52,7 @@ public class CachedVcsContext implements VcsContext {
     mySelectedFile = baseContext.getSelectedFile();
     mySelectedFiles = baseContext.getSelectedFiles();
     mySelectedFilesCollection = baseContext.getSelectedFilesCollection();
-    mySelectedUnversionedFiles = baseContext.getSelectedUnversionedFiles();
+    mySelectedUnversionedFiles = baseContext.getSelectedUnversionedFilePaths();
     myEditor = baseContext.getEditor();
     mySelectedIOFiles = baseContext.getSelectedIOFiles();
     myModifiers = baseContext.getModifiers();
@@ -89,7 +89,7 @@ public class CachedVcsContext implements VcsContext {
 
   @NotNull
   @Override
-  public List<VirtualFile> getSelectedUnversionedFiles() {
+  public List<FilePath> getSelectedUnversionedFilePaths() {
     return mySelectedUnversionedFiles;
   }
 

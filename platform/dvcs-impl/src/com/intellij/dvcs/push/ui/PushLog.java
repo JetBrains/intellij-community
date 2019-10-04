@@ -1,9 +1,14 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.dvcs.push.ui;
 
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.dvcs.push.PushSettings;
+import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonShortcuts;
+import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
@@ -17,21 +22,24 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBViewport;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.treeStructure.actions.CollapseAllAction;
 import com.intellij.ui.treeStructure.actions.ExpandAllAction;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.ThreeStateCheckBox;
+import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.ui.VcsLogActionPlaces;
+import com.intellij.vcs.log.ui.details.commit.CommitDetailsPanel;
+import kotlin.Unit;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
+import javax.swing.border.Border;
 import javax.swing.event.*;
 import javax.swing.tree.*;
 import java.awt.*;
@@ -40,6 +48,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.List;
 import java.util.*;
+import java.util.function.Consumer;
 
 import static com.intellij.openapi.actionSystem.IdeActions.ACTION_COLLAPSE_ALL;
 import static com.intellij.openapi.actionSystem.IdeActions.ACTION_EXPAND_ALL;
@@ -49,12 +58,15 @@ public class PushLog extends JPanel implements DataProvider {
 
   private static final String CONTEXT_MENU = "Vcs.Push.ContextMenu";
   private static final String START_EDITING = "startEditing";
-  private static final String SPLITTER_PROPORTION = "Vcs.Push.Splitter.Proportion";
+  private static final String TREE_SPLITTER_PROPORTION = "Vcs.Push.Splitter.Tree.Proportion";
+  private static final String DETAILS_SPLITTER_PROPORTION = "Vcs.Push.Splitter.Details.Proportion";
   private final SimpleChangesBrowser myChangesBrowser;
   private final CheckboxTree myTree;
   private final MyTreeCellRenderer myTreeCellRenderer;
   private final JScrollPane myScrollPane;
   private final VcsCommitInfoBalloon myBalloon;
+  private final CommitDetailsPanel myDetailsPanel;
+  private final MyShowDetailsAction myShowDetailsAction;
   private boolean myShouldRepaint = false;
   private boolean mySyncStrategy;
   @Nullable private String mySyncRenderedText;
@@ -64,7 +76,6 @@ public class PushLog extends JPanel implements DataProvider {
     myAllowSyncStrategy = allowSyncStrategy;
     DefaultTreeModel treeModel = new DefaultTreeModel(root);
     treeModel.nodeStructureChanged(root);
-    final AnAction quickDocAction = ActionManager.getInstance().getAction(IdeActions.ACTION_QUICK_JAVADOC);
     myTreeCellRenderer = new MyTreeCellRenderer();
     myTree = new CheckboxTree(myTreeCellRenderer, root) {
 
@@ -96,9 +107,8 @@ public class PushLog extends JPanel implements DataProvider {
           return "";
         }
         if (node instanceof TooltipNode) {
-          return KeymapUtil.createTooltipText(
-            ((TooltipNode)node).getTooltip() +
-            "<p style='font-style:italic;color:gray;'>Show commit details", quickDocAction) + "</p>";
+          return ((TooltipNode)node).getTooltip() +
+                 "<p style='font-style:italic;color:gray;'>Select to show commit details </p>";
         }
         return "";
       }
@@ -141,7 +151,7 @@ public class PushLog extends JPanel implements DataProvider {
       }
     };
     myTree.setUI(new MyTreeUi());
-    myTree.setBorder(new EmptyBorder(2, 0, 0, 0));  //additional vertical indent
+    myTree.setBorder(JBUI.Borders.emptyTop(10));
     myTree.setEditable(true);
     myTree.setShowsRootHandles(root.getChildCount() > 1);
     MyTreeCellEditor treeCellEditor = new MyTreeCellEditor();
@@ -211,8 +221,6 @@ public class PushLog extends JPanel implements DataProvider {
     });
     myTree.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0), START_EDITING);
     myTree.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), "");
-    MyShowCommitInfoAction showCommitInfoAction = new MyShowCommitInfoAction();
-    showCommitInfoAction.registerCustomShortcutSet(quickDocAction.getShortcutSet(), myTree);
     ExpandAllAction expandAllAction = new ExpandAllAction(myTree);
     expandAllAction.registerCustomShortcutSet(ActionManager.getInstance().getAction(ACTION_EXPAND_ALL).getShortcutSet(), myTree);
     CollapseAllAction collapseAll = new CollapseAllAction(myTree);
@@ -221,15 +229,38 @@ public class PushLog extends JPanel implements DataProvider {
     ToolTipManager.sharedInstance().registerComponent(myTree);
     PopupHandler.installPopupHandler(myTree, VcsLogActionPlaces.POPUP_ACTION_GROUP, CONTEXT_MENU);
 
-    myChangesBrowser = new SimpleChangesBrowser(project, false, false);
+    myChangesBrowser = new SimpleChangesBrowser(project, false, false) {
+      @NotNull
+      @Override
+      protected Border createViewerBorder() {
+        return IdeBorderFactory.createBorder(SideBorder.TOP);
+      }
+    };
     myChangesBrowser.getDiffAction().registerCustomShortcutSet(myChangesBrowser.getDiffAction().getShortcutSet(), myTree);
     final EditSourceForDialogAction editSourceAction = new EditSourceForDialogAction(myChangesBrowser);
     editSourceAction.registerCustomShortcutSet(CommonShortcuts.getEditSource(), myChangesBrowser);
     myChangesBrowser.addToolbarAction(editSourceAction);
-    myChangesBrowser.setMinimumSize(new Dimension(JBUIScale.scale(200), myChangesBrowser.getPreferredSize().height));
     setDefaultEmptyText();
 
-    JBSplitter splitter = new JBSplitter(SPLITTER_PROPORTION, 0.7f);
+    myDetailsPanel = new CommitDetailsPanel(project, e -> Unit.INSTANCE);
+    JScrollPane detailsScrollPane =
+      new JBScrollPane(myDetailsPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+    detailsScrollPane.setBorder(JBUI.Borders.empty());
+    detailsScrollPane.setViewportBorder(JBUI.Borders.empty());
+    BorderLayoutPanel detailsContentPanel = new BorderLayoutPanel();
+    detailsContentPanel.addToCenter(detailsScrollPane);
+
+    JBSplitter detailsSplitter = new OnePixelSplitter(true, DETAILS_SPLITTER_PROPORTION, 0.67f);
+    detailsSplitter.setFirstComponent(myChangesBrowser);
+
+    myShowDetailsAction = new MyShowDetailsAction(project, (state) -> {
+      detailsSplitter.setSecondComponent(state ? detailsContentPanel : null);
+    });
+    myShowDetailsAction.setEnabled(false);
+    myChangesBrowser.addToolbarSeparator();
+    myChangesBrowser.addToolbarAction(myShowDetailsAction);
+
+    JBSplitter splitter = new OnePixelSplitter(TREE_SPLITTER_PROPORTION, 0.5f);
     final JComponent syncStrategyPanel = myAllowSyncStrategy ? createStrategyPanel() : null;
     myScrollPane = new JBScrollPane(myTree) {
 
@@ -253,14 +284,14 @@ public class PushLog extends JPanel implements DataProvider {
     if (syncStrategyPanel != null) {
       myScrollPane.add(syncStrategyPanel);
     }
+    myScrollPane.setBorder(JBUI.Borders.empty());
     splitter.setFirstComponent(myScrollPane);
-    splitter.setSecondComponent(myChangesBrowser);
+    splitter.setSecondComponent(detailsSplitter);
 
+    setBorder(IdeBorderFactory.createBorder(SideBorder.TOP | SideBorder.BOTTOM));
     setLayout(new BorderLayout());
     add(splitter);
-    myTree.setMinimumSize(new Dimension(JBUIScale.scale(400), myTree.getPreferredSize().height));
     myTree.setRowHeight(0);
-    myScrollPane.setMinimumSize(new Dimension(myTree.getMinimumSize().width, myScrollPane.getPreferredSize().height));
   }
 
   public void highlightNodeOrFirst(@Nullable RepositoryNode repositoryNode, boolean shouldScrollTo) {
@@ -268,18 +299,6 @@ public class PushLog extends JPanel implements DataProvider {
     myTree.setSelectionPath(selectionPath);
     if (shouldScrollTo) {
       myTree.scrollPathToVisible(selectionPath);
-    }
-  }
-
-  private class MyShowCommitInfoAction extends DumbAwareAction {
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      myBalloon.showCommitDetails();
-    }
-
-    @Override
-    public void update(@NotNull AnActionEvent e) {
-      e.getPresentation().setEnabled(getSelectedCommitNodes().size() == 1);
     }
   }
 
@@ -293,7 +312,7 @@ public class PushLog extends JPanel implements DataProvider {
     final JPanel labelPanel = new JPanel(new BorderLayout());
     labelPanel.setBackground(myTree.getBackground());
     final LinkLabel<String> linkLabel = new LinkLabel<>("Edit all targets", null);
-    linkLabel.setBorder(new EmptyBorder(2, 2, 2, 2));
+    linkLabel.setBorder(JBUI.Borders.empty(2));
     linkLabel.setListener(new LinkListener<String>() {
       @Override
       public void linkSelected(LinkLabel aSource, String aLinkData) {
@@ -393,6 +412,13 @@ public class PushLog extends JPanel implements DataProvider {
       setDefaultEmptyText();
     }
     myChangesBrowser.setChangesToDisplay(collectAllChanges(commitNodes));
+    if (commitNodes.size() == 1 && getSelectedTreeNodes().stream().noneMatch(it -> it instanceof RepositoryNode)) {
+      myDetailsPanel.setCommit(commitNodes.get(0).getUserObject());
+      myShowDetailsAction.setEnabled(true);
+    }
+    else {
+      myShowDetailsAction.setEnabled(false);
+    }
   }
 
   private void setDefaultEmptyText() {
@@ -585,10 +611,17 @@ public class PushLog extends JPanel implements DataProvider {
       myCheckbox.setBorder(null); //checkBox may have no border by default, but insets are not null,
       // it depends on LaF, OS and isItRenderedPane, see com.intellij.ide.ui.laf.darcula.ui.DarculaCheckBoxBorder.
       // null border works as expected always.
+      ColoredTreeCellRenderer renderer = getTextRenderer();
+      renderer.setIpad(JBUI.emptyInsets());
       if (value instanceof RepositoryNode) {
         //todo simplify, remove instance of
         RepositoryNode valueNode = (RepositoryNode)value;
-        myCheckbox.setVisible(valueNode.isCheckboxVisible());
+        boolean isCheckboxVisible = valueNode.isCheckboxVisible();
+        myCheckbox.setVisible(isCheckboxVisible);
+        if (!isCheckboxVisible) {
+          // if we don't set right inset, "new" icon will be cropped
+          renderer.setIpad(JBUI.insets(0, 10));
+        }
         if (valueNode.isChecked() && valueNode.isLoading()) {
           myCheckbox.setState(ThreeStateCheckBox.State.DONT_CARE);
         }
@@ -597,7 +630,6 @@ public class PushLog extends JPanel implements DataProvider {
         }
       }
       Object userObject = ((DefaultMutableTreeNode)value).getUserObject();
-      ColoredTreeCellRenderer renderer = getTextRenderer();
       if (value instanceof CustomRenderedTreeNode) {
         if (tree.isEditing() && mySyncStrategy && value instanceof RepositoryNode) {
           //sync rendering all editable fields
@@ -718,6 +750,38 @@ public class PushLog extends JPanel implements DataProvider {
     public Dimension getExtentSize() {
       Dimension defaultSize = super.getExtentSize();
       return new Dimension(defaultSize.width, defaultSize.height - myHeightToReduce);
+    }
+  }
+
+  private static class MyShowDetailsAction extends ToggleActionButton implements DumbAware {
+    @NotNull private final PushSettings mySettings;
+    @NotNull private final Consumer<Boolean> myOnUpdate;
+
+    MyShowDetailsAction(@NotNull Project project, @NotNull Consumer<Boolean> onUpdate) {
+      super("Show Details", AllIcons.Actions.PreviewDetailsVertically);
+      mySettings = ServiceManager.getService(project, PushSettings.class);
+      myOnUpdate = onUpdate;
+    }
+
+    private boolean getValue() {
+      return mySettings.getShowDetailsInPushDialog();
+    }
+
+    @Override
+    public boolean isSelected(AnActionEvent e) {
+      return getValue();
+    }
+
+    @Override
+    public void setSelected(AnActionEvent e, boolean state) {
+      mySettings.setShowDetailsInPushDialog(state);
+      myOnUpdate.accept(state);
+    }
+
+    @Override
+    public void setEnabled(boolean enabled) {
+      myOnUpdate.accept(enabled && getValue());
+      super.setEnabled(enabled);
     }
   }
 }

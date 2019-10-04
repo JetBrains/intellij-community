@@ -63,7 +63,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingManagerImpl;
@@ -98,13 +97,13 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.lang.management.GarbageCollectorMXBean;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.Method;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.concurrent.DelayQueue;
 import java.util.concurrent.Delayed;
@@ -114,8 +113,6 @@ import java.util.concurrent.TimeUnit;
  * @author yole
  */
 public abstract class LightPlatformTestCase extends UsefulTestCase implements DataProvider {
-  @NonNls private static final String LIGHT_PROJECT_MARK = "Light project: ";
-
   private static IdeaTestApplication ourApplication;
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
   private static Project ourProject;
@@ -217,7 +214,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     ((PersistentFSImpl)PersistentFS.getInstance()).cleanPersistedContents();
   }
 
-  private static void initProject(@NotNull final LightProjectDescriptor descriptor) throws IOException {
+  private static void initProject(@NotNull final LightProjectDescriptor descriptor) {
     ourProjectDescriptor = descriptor;
 
     if (ourProject != null) {
@@ -225,14 +222,10 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     }
     ApplicationManager.getApplication().runWriteAction(LightPlatformTestCase::cleanPersistedVFSContent);
 
-    final File projectFile = FileUtil.createTempFile(ProjectImpl.LIGHT_PROJECT_NAME, ProjectFileType.DOT_DEFAULT_EXTENSION);
-    LocalFileSystem.getInstance().refreshAndFindFileByIoFile(projectFile);
-
-    ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-    new Throwable(projectFile.getPath()).printStackTrace(new PrintStream(buffer));
-
-    setProject(PlatformTestCase.createProject(projectFile, LIGHT_PROJECT_MARK + buffer));
-    ourPathToKeep = projectFile.getPath();
+    Path tempDirectory = TemporaryDirectory.generateTemporaryPath(ProjectImpl.LIGHT_PROJECT_NAME + ProjectFileType.DOT_DEFAULT_EXTENSION);
+    HeavyPlatformTestCase.synchronizeTempDirVfs(tempDirectory);
+    setProject(HeavyPlatformTestCase.createProject(tempDirectory));
+    ourPathToKeep = tempDirectory;
     ourPsiManager = null;
 
     try {
@@ -303,7 +296,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   @NotNull
   public static Pair.NonNull<Project, Module> doSetup(@NotNull LightProjectDescriptor descriptor,
                                                       @NotNull LocalInspectionTool[] localInspectionTools,
-                                                      @NotNull Disposable parentDisposable) throws Exception {
+                                                      @NotNull Disposable parentDisposable) {
     assertNull("Previous test " + ourTestCase + " hasn't called tearDown(). Probably overridden without super call.", ourTestCase);
     IdeaLogger.ourErrorsOccurred = null;
     ApplicationManager.getApplication().assertIsDispatchThread();
@@ -443,7 +436,6 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       append(() -> UsefulTestCase.doPostponedFormatting(project)).
       append(() -> LookupManager.hideActiveLookup(project)).
       append(() -> ((StartupManagerImpl)StartupManager.getInstance(project)).prepareForNextTest()).
-      append(() -> { if (ProjectManager.getInstance() == null) throw new AssertionError("Application components damaged"); }).
       append(() -> WriteCommandAction.runWriteCommandAction(project, () -> {
         if (ourSourceRoot != null) {
           try {
@@ -462,7 +454,12 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
           ((FileDocumentManagerImpl)manager).dropAllUnsavedDocuments();
         }
       })).
-      append(() -> EditorHistoryManager.getInstance(project).removeAllFiles()).
+      append(() -> {
+        EditorHistoryManager editorHistoryManager = project.getServiceIfCreated(EditorHistoryManager.class);
+        if (editorHistoryManager != null) {
+          editorHistoryManager.removeAllFiles();
+        }
+      }).
       append(() -> assertFalse(PsiManager.getInstance(project).isDisposed())).
       append(() -> {
         clearEncodingManagerDocumentQueue();
@@ -474,14 +471,24 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
         }
       }).
       append(() -> clearUncommittedDocuments(project)).
-      append(() -> ((HintManagerImpl)HintManager.getInstance()).cleanup()).
+      append(() -> {
+        HintManagerImpl hintManager = (HintManagerImpl)ApplicationManager.getApplication().getServiceIfCreated(HintManager.class);
+        if (hintManager != null) {
+          hintManager.cleanup();
+        }
+      }).
       append(() -> ((UndoManagerImpl)UndoManager.getGlobalInstance()).dropHistoryInTests()).
       append(() -> ((UndoManagerImpl)UndoManager.getInstance(project)).dropHistoryInTests()).
       append(() -> ((DocumentReferenceManagerImpl)DocumentReferenceManager.getInstance()).cleanupForNextTest()).
-      append(() -> TemplateDataLanguageMappings.getInstance(project).cleanupForNextTest()).
+      append(() -> {
+        TemplateDataLanguageMappings templateDataLanguageMappings = project.getServiceIfCreated(TemplateDataLanguageMappings.class);
+        if (templateDataLanguageMappings != null) {
+          templateDataLanguageMappings.cleanupForNextTest();
+        }
+      }).
       append(() -> ((PsiManagerImpl)PsiManager.getInstance(project)).cleanupForNextTest()).
       append(() -> ((StructureViewFactoryImpl)StructureViewFactory.getInstance(project)).cleanupForNextTest()).
-      append(() -> PlatformTestCase.waitForProjectLeakingThreads(project, 10, TimeUnit.SECONDS)).
+      append(() -> HeavyPlatformTestCase.waitForProjectLeakingThreads(project, 10, TimeUnit.SECONDS)).
       append(() -> ProjectManagerEx.getInstanceEx().closeTestProject(project)).
       append(() -> application.setDataProvider(null)).
       append(() -> UiInterceptors.clear()).
@@ -580,7 +587,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
         try {
           Application application = ApplicationManager.getApplication();
           if (application instanceof ApplicationEx) {
-            PlatformTestCase.cleanupApplicationCaches(getProject());
+            HeavyPlatformTestCase.cleanupApplicationCaches(getProject());
           }
           resetAllFields();
         }
@@ -730,11 +737,14 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
     // project may be disposed but empty folder may still be there
     if (ourPathToKeep != null) {
-      File parent = new File(ourPathToKeep).getParentFile();
-      if (parent.getName().startsWith(UsefulTestCase.TEMP_DIR_MARKER)) {
+      Path parent = ourPathToKeep.getParent();
+      if (parent.getFileName().toString().startsWith(UsefulTestCase.TEMP_DIR_MARKER)) {
         // delete only empty folders
-        //noinspection ResultOfMethodCallIgnored
-        parent.delete();
+        try {
+          Files.deleteIfExists(parent);
+        }
+        catch (IOException ignore) {
+        }
       }
     }
 

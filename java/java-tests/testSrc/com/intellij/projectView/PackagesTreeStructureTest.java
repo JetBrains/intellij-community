@@ -21,7 +21,9 @@ import com.intellij.ide.projectView.impl.ProjectAbstractTreeStructureBase;
 import com.intellij.ide.projectView.impl.ProjectViewImpl;
 import com.intellij.lang.properties.projectView.ResourceBundleGrouper;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.module.impl.ModuleManagerImpl;
+import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.module.ModifiableModuleModel;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -35,7 +37,10 @@ import java.io.IOException;
 
 public class PackagesTreeStructureTest extends TestSourceBasedTestCase {
   public void testPackageView() {
-    ModuleManagerImpl.getInstanceImpl(myProject).setModuleGroupPath(myModule, new String[]{"Group"});
+    ModifiableModuleModel moduleModel = ModuleManager.getInstance(myProject).getModifiableModel();
+    moduleModel.setModuleGroupPath(myModule, new String[]{"Group"});
+    WriteAction.runAndWait(() -> moduleModel.commit());
+
     final VirtualFile srcFile = getSrcDirectory().getVirtualFile();
     if (srcFile.findChild("empty") == null){
       ApplicationManager.getApplication().runWriteAction(new Runnable() {

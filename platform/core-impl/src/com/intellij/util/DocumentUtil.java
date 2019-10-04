@@ -18,7 +18,6 @@ package com.intellij.util;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,25 +35,21 @@ public final class DocumentUtil {
    * @param executeInBulk  {@code true} to force given document to be in bulk mode when given task is executed;
    *                       {@code false} to force given document to be <b>not</b> in bulk mode when given task is executed
    * @param task           task to execute
+   *
+   * @see Document#setInBulkUpdate(boolean)
    */
   public static void executeInBulk(@NotNull Document document, final boolean executeInBulk, @NotNull Runnable task) {
-    if (!(document instanceof DocumentEx)) {
+    if (executeInBulk == document.isInBulkUpdate()) {
       task.run();
       return;
     }
 
-    DocumentEx documentEx = (DocumentEx)document;
-    if (executeInBulk == documentEx.isInBulkUpdate()) {
-      task.run();
-      return;
-    }
-
-    documentEx.setInBulkUpdate(executeInBulk);
+    document.setInBulkUpdate(executeInBulk);
     try {
       task.run();
     }
     finally {
-      documentEx.setInBulkUpdate(!executeInBulk);
+      document.setInBulkUpdate(!executeInBulk);
     }
   }
 

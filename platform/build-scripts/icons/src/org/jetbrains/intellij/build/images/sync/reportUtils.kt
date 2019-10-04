@@ -51,9 +51,11 @@ internal fun findCommitsToSync(context: Context) {
   }
 }
 
-private fun Map<File, Collection<CommitInfo>>.commitMessage() = "Icons from ${entries.joinToString { entry ->
-  "${entry.value.joinToString { it.hash.substring(0..8) }}: ${getOriginUrl(entry.key)}"
-}}"
+private fun Map<File, Collection<CommitInfo>>.commitMessage() = entries.joinToString("\n\n") { entry ->
+  entry.value.joinToString("\n") {
+    "'${it.subject}' from ${it.hash.substring(0..8)}"
+  } + " from ${getOriginUrl(entry.key)}"
+}
 
 private fun withTmpBranch(repos: Collection<File>, master: String, action: (String) -> Review?): Review? {
   val branch = "icons-sync/${UUID.randomUUID()}"

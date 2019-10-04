@@ -54,6 +54,7 @@ import java.util.LinkedHashMap;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLong;
 
+import static com.intellij.openapi.module.ModuleGrouperKt.isQualifiedModuleNamesEnabled;
 import static com.intellij.ui.ScrollPaneFactory.createScrollPane;
 import static com.intellij.ui.SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES;
 import static com.intellij.util.ArrayUtilRt.EMPTY_STRING_ARRAY;
@@ -339,14 +340,6 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
   }
 
   @Override
-  public void addToolbarActions(@NotNull DefaultActionGroup actionGroup) {
-    actionGroup.addAction(new ShowModulesAction(myProject, ID)).setAsSecondary(true);
-    actionGroup.addAction(createFlattenModulesAction(() -> true)).setAsSecondary(true);
-    AnAction editScopesAction = ActionManager.getInstance().getAction("ScopeView.EditScopes");
-    if (editScopesAction != null) actionGroup.addAction(editScopesAction).setAsSecondary(true);
-  }
-
-  @Override
   protected void installComparator(AbstractTreeBuilder builder, @NotNull Comparator<? super NodeDescriptor> comparator) {
     if (myTreeModel != null) {
       myTreeModel.setComparator(comparator);
@@ -391,5 +384,35 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
       if (old != null) LOG.warn("DUPLICATED: " + filter);
     }
     return map;
+  }
+
+  @Override
+  public boolean supportsAbbreviatePackageNames() {
+    return false;
+  }
+
+  @Override
+  public boolean supportsCompactDirectories() {
+    return true;
+  }
+
+  @Override
+  public boolean supportsFlattenModules() {
+    return PlatformUtils.isIntelliJ() && isQualifiedModuleNamesEnabled(myProject) && ProjectView.getInstance(myProject).isShowModules(ID);
+  }
+
+  @Override
+  public boolean supportsHideEmptyMiddlePackages() {
+    return ProjectView.getInstance(myProject).isFlattenPackages(ID);
+  }
+
+  @Override
+  public boolean supportsShowExcludedFiles() {
+    return true;
+  }
+
+  @Override
+  public boolean supportsShowModules() {
+    return PlatformUtils.isIntelliJ();
   }
 }

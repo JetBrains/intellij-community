@@ -5,7 +5,7 @@ NOTE: does not work in Jython 2.2 or IronPython 1.x, because pyparsing does not.
 """
 
 import unittest
-from generator3 import *
+from pycharm_generator_utils.module_redeclarator import *
 
 M = ModuleRedeclarator
 

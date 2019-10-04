@@ -11,14 +11,17 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author gregsh
  */
-public class SystemPropertyBean implements PluginAware {
+public final class SystemPropertyBean implements PluginAware {
   public static final ExtensionPointName<SystemPropertyBean> EP_NAME = ExtensionPointName.create("com.intellij.systemProperty");
 
   private PluginDescriptor myPluginDescriptor;
 
   public static void initSystemProperties() {
-    for (SystemPropertyBean bean : EP_NAME.getExtensionList()) {
-      if (System.getProperty(bean.name) != null) continue;
+    for (SystemPropertyBean bean : EP_NAME.getIterable()) {
+      if (System.getProperty(bean.name) != null) {
+        continue;
+      }
+
       System.setProperty(bean.name, bean.value);
     }
   }

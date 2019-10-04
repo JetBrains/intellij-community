@@ -15,6 +15,8 @@
  */
 package com.intellij.psi;
 
+import org.jetbrains.annotations.ApiStatus;
+
 import java.util.List;
 
 /**
@@ -27,5 +29,6 @@ public interface PsiResourceList extends PsiElement, Iterable<PsiResourceListEle
 
   /** @deprecated use {@link #iterator()} (to be removed in IDEA 17) */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2017")
   List<PsiResourceVariable> getResourceVariables();
 }

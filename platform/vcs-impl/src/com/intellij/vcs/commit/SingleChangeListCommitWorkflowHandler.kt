@@ -7,6 +7,7 @@ import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
 import com.intellij.openapi.vcs.changes.ChangesUtil.getAffectedVcses
 import com.intellij.openapi.vcs.changes.ChangesUtil.getAffectedVcsesForFiles
+import com.intellij.openapi.vcs.changes.CommitResultHandler
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
 
@@ -38,6 +39,7 @@ class SingleChangeListCommitWorkflowHandler(
     Disposer.register(ui, this)
 
     workflow.addListener(this, this)
+    workflow.addCommitCustomListener(CommitCustomListener(), this)
 
     ui.addStateListener(this, this)
     ui.addExecutorListener(this, this)
@@ -77,8 +79,6 @@ class SingleChangeListCommitWorkflowHandler(
     if (isDefaultCommit && result == CheckinHandler.ReturnResult.COMMIT) ui.deactivate()
   }
 
-  override fun customCommitSucceeded() = ui.deactivate()
-
   override fun updateWorkflow() {
     workflow.commitState = getCommitState()
   }
@@ -115,5 +115,9 @@ class SingleChangeListCommitWorkflowHandler(
     val vcses = getAffectedVcses(getChangeList().changes, project) + getAffectedVcsesForFiles(unversionedFiles, project)
 
     ui.commitOptionsUi.setVisible(vcses)
+  }
+
+  private inner class CommitCustomListener : CommitResultHandler {
+    override fun onSuccess(commitMessage: String) = ui.deactivate()
   }
 }

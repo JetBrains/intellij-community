@@ -2,6 +2,7 @@
 package com.intellij.execution.dashboard.actions;
 
 import com.intellij.execution.dashboard.RunConfigurationsServiceViewContributor;
+import com.intellij.execution.dashboard.RunDashboardGroup;
 import com.intellij.execution.dashboard.RunDashboardRunConfigurationNode;
 import com.intellij.execution.dashboard.tree.GroupingNode;
 import com.intellij.execution.services.ServiceViewActionUtils;
@@ -18,7 +19,9 @@ import com.intellij.util.containers.TreeTraversal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 class RunDashboardActionUtils {
   private RunDashboardActionUtils() {
@@ -42,7 +45,7 @@ class RunDashboardActionUtils {
     JBIterable<Object> roots = JBIterable.of(e.getData(PlatformDataKeys.SELECTED_ITEMS));
     if (Registry.is("ide.service.view")) {
       Set<RunDashboardRunConfigurationNode> result = new LinkedHashSet<>();
-      if (!getLeaves(project, roots.toList(), Collections.emptyList(), result)) return JBIterable.empty();
+      if (!getLeaves(project, e, roots.toList(), result)) return JBIterable.empty();
 
       return JBIterable.from(result);
     }
@@ -52,7 +55,7 @@ class RunDashboardActionUtils {
         .traverse(TreeTraversal.LEAVES_DFS)
         .map(leaf -> {
           if (leaf instanceof AbstractTreeNode) {
-            AbstractTreeNode<?> parent = ((AbstractTreeNode<?>)leaf).getParent();
+            AbstractTreeNode parent = ((AbstractTreeNode)leaf).getParent();
             return parent instanceof RunDashboardRunConfigurationNode ? parent : leaf;
           }
           return leaf;
@@ -64,14 +67,11 @@ class RunDashboardActionUtils {
     }
   }
 
-  private static boolean getLeaves(Project project, List<Object> items, List<Object> valueSubPath,
-                                   Set<RunDashboardRunConfigurationNode> result) {
+  private static boolean getLeaves(Project project, AnActionEvent e, List<Object> items, Set<RunDashboardRunConfigurationNode> result) {
     for (Object item : items) {
-      if (item instanceof RunConfigurationsServiceViewContributor || item instanceof GroupingNode) {
-        List<Object> itemSubPath = new ArrayList<>(valueSubPath);
-        itemSubPath.add(item);
-        List<Object> children = ((ServiceViewManagerImpl)ServiceViewManager.getInstance(project)).getChildrenSafe(itemSubPath);
-        if (!getLeaves(project, children, itemSubPath, result)) {
+      if (item instanceof RunConfigurationsServiceViewContributor || item instanceof RunDashboardGroup) {
+        List<Object> children = ((ServiceViewManagerImpl)ServiceViewManager.getInstance(project)).getChildrenSafe(e, item);
+        if (!getLeaves(project, e, children, result)) {
           return false;
         }
       }
@@ -79,7 +79,7 @@ class RunDashboardActionUtils {
         result.add((RunDashboardRunConfigurationNode)item);
       }
       else if (item instanceof AbstractTreeNode) {
-        AbstractTreeNode<?> parent = ((AbstractTreeNode<?>)item).getParent();
+        AbstractTreeNode parent = ((AbstractTreeNode)item).getParent();
         if (parent instanceof RunDashboardRunConfigurationNode) {
           result.add((RunDashboardRunConfigurationNode)parent);
         }

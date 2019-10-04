@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vcs.impl.projectlevelman;
 
-import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.vcs.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,17 +39,8 @@ public class OptionsAndConfirmations {
     createSettingFor(VcsConfiguration.StandardOption.STATUS);
     createSettingFor(VcsConfiguration.StandardOption.EDIT);
 
-    myConfirmations.put(VcsConfiguration.StandardConfirmation.ADD.getId(), new VcsShowConfirmationOptionImpl(
-      VcsConfiguration.StandardConfirmation.ADD.getId(),
-      VcsBundle.message("label.text.when.files.created.with.idea", ApplicationNamesInfo.getInstance().getProductName()),
-      VcsBundle.message("radio.after.creation.do.not.add"), VcsBundle.message("radio.after.creation.show.options"),
-      VcsBundle.message("radio.after.creation.add.silently")));
-
-    myConfirmations.put(VcsConfiguration.StandardConfirmation.REMOVE.getId(), new VcsShowConfirmationOptionImpl(
-      VcsConfiguration.StandardConfirmation.REMOVE.getId(),
-      VcsBundle.message("label.text.when.files.are.deleted.with.idea", ApplicationNamesInfo.getInstance().getProductName()),
-      VcsBundle.message("radio.after.deletion.do.not.remove"), VcsBundle.message("radio.after.deletion.show.options"),
-      VcsBundle.message("radio.after.deletion.remove.silently")));
+    createConfirmationFor(VcsConfiguration.StandardConfirmation.ADD);
+    createConfirmationFor(VcsConfiguration.StandardConfirmation.REMOVE);
   }
 
   @NotNull
@@ -60,6 +50,11 @@ public class OptionsAndConfirmations {
 
   private void createSettingFor(final VcsConfiguration.StandardOption option) {
     getOrCreateOption(option.getId());
+  }
+
+  private void createConfirmationFor(final VcsConfiguration.StandardConfirmation confirmation) {
+    String id = confirmation.getId();
+    myConfirmations.put(id, new VcsShowConfirmationOptionImpl(id));
   }
 
   @NotNull

@@ -449,12 +449,41 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
   }
 
   public void testReplaceParameter() {
-    String s1 = "class A { void b(int c, int d, int e) {} }";
-    String s2 = "int d;";
-    String s3 = "int d2;";
-    String expectedResult = "class A { void b(int c, int d2, int e) {} }";
+    String in1 = "class A { void b(int c, int d, int e) {} }";
 
-    assertEquals("replace method parameter", expectedResult, replace(s1, s2, s3));
+    String expected1a = "class A { void b(int c, int d2, int e) {} }";
+    assertEquals("replace method parameter", expected1a, replace(in1, "int d;", "int d2;"));
+
+    String expected1b = "class A { void b(int /*!*/ c, int /*!*/ d, int /*!*/ e) {} }";
+    assertEquals(expected1b, replace(in1, "void b('_T '_v*);", "void b($T$ /*!*/ $v$);"));
+
+    String expected1c = "class A { void /**/ b(int c, int d, int e) {} }";
+    assertEquals("replace multi match parameter", expected1c, replace(in1, "void b(int '_x*);", "void /**/ b(int $x$);"));
+
+    String in2 = "class X {" +
+                 "  void x() {}" +
+                 "}";
+    String expected2 = "class X {" +
+                       "  void /**/ x() {}" +
+                       "}";
+    assertEquals("replace no match parameter", expected2, replace(in2, "void x(int '_a*);", "void /**/ x() {}"));
+
+    String in3 = "class X {" +
+                 "  void x(String s, Integer i) {}" +
+                 "}";
+    String expected3 = "class X {" +
+                       "  void x(List<String> /*>*/ s, List<Integer> /*>*/ i) {}" +
+                       "}";
+    assertEquals(expected3, replace(in3, "void x('_T '_v*);", "void x(List<$T$> /*>*/ $v$);"));
+
+    String in4 = "class X {" +
+                 "  void a(Map<String, Integer> b, Map<String, Integer> c) {}" +
+                 "}";
+    String expected4 = "class X {" +
+                       "  void a(Map<String, Integer> /*!*/ b, Map<, > /*!*/ c) {}" + // todo fix replacement of second parameter type
+                       "}";
+    assertEquals(expected4, replace(in4, "void a('_T<'_K, '_V> '_p*);", "void a($T$<$K$, $V$> /*!*/ $p$);"));
+
   }
 
   public void testReplaceWithComments() {
@@ -1184,7 +1213,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                             "   /**\n" +
                             "    * ppp\n" +
                             "    */\n" +
-                            "   private void f(int i ){//s\n" +
+                            "   private void f(int i){//s\n" +
                             "}\n" +
                             "}";
 
@@ -1194,7 +1223,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                             "   /**\n" +
                             "    * ppp\n" +
                             "    */\n" +
-                            "   private void f(int i ){int a = 1;\n" +
+                            "   private void f(int i){int a = 1;\n" +
                             "       //s\n" +
                             "}\n" +
                             "}";
@@ -2075,31 +2104,61 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
   }
 
   public void testReplaceAnnotation() {
-    String in = "@SuppressWarnings(\"ALL\")\n" +
+    String in1 = "@SuppressWarnings(\"ALL\")\n" +
                 "public class A {}";
     String what = "@SuppressWarnings(\"ALL\")";
 
-    final String by1 = "";
-    assertEquals("public class A {}", replace(in, what, by1));
+    final String expected1a = "public class A {}";
+    assertEquals(expected1a, replace(in1, what, ""));
 
-    final String by2 = "@SuppressWarnings(\"NONE\") @Deprecated";
-    assertEquals("@SuppressWarnings(\"NONE\") @Deprecated\n" +
-                 "public class A {}", replace(in, what, by2));
+    final String expected1b = "@SuppressWarnings(\"NONE\") @Deprecated\n" +
+                             "public class A {}";
+    assertEquals(expected1b, replace(in1, what, "@SuppressWarnings(\"NONE\") @Deprecated"));
+
+    final String expected1c = "@SuppressWarnings(\"ALL\") class B {}";
+    assertEquals("Should replace unmatched annotation parameters",
+                 expected1c, replace(in1, "@SuppressWarnings class A {}", "@SuppressWarnings class B {}"));
+
+    final String expected1d = "@ SuppressWarnings(\"ALL\")\n" +
+                             "public class A {}";
+    assertEquals("Should replace unmatched annotation parameters when matching just annotation",
+                 expected1d, replace(in1, "@SuppressWarnings", "@ SuppressWarnings"));
 
     final String in2 = "class X {" +
                  "  @SuppressWarnings(\"unused\") String s;" +
                  "}";
-    final String what2 = "@SuppressWarnings(\"unused\") String '_s;";
-    final String by3 = "@SuppressWarnings({\"unused\", \"other\"}) String $s$;";
-    assertEquals("class X {" +
-                 "  @SuppressWarnings({\"unused\", \"other\"}) String s;" +
-                 "}", replace(in2, what2, by3));
+    final String expected2a = "class X {" +
+                             "  @SuppressWarnings({\"unused\", \"other\"}) String s;" +
+                             "}";
+    assertEquals(expected2a, replace(in2, "@SuppressWarnings(\"unused\") String '_s;",
+                                    "@SuppressWarnings({\"unused\", \"other\"}) String $s$;"));
 
-    final String what3 = "@'_Anno('_v) String '_s;";
-    final String by4 = "@$Anno$($v$) String $s$ = \"undoubtedly\";";
-    assertEquals("class X {" +
-                 "  @SuppressWarnings(\"unused\") String s = \"undoubtedly\";" +
-                 "}", replace(in2, what3, by4));
+    final String expected2b = "class X {" +
+                             "  @SuppressWarnings(\"unused\") String s = \"undoubtedly\";" +
+                             "}";
+    assertEquals(expected2b, replace(in2, "@'_Anno('_v) String '_s;", "@$Anno$($v$) String $s$ = \"undoubtedly\";"));
+
+    final String expected2c = "class X {" +
+                             "  @SuppressWarnings(value=\"unused\") String s;" +
+                             "}";
+    assertEquals(expected2c, replace(in2, "@'_A('_v='_x)", "@$A$($v$=$x$)"));
+
+
+    final String in3 = "class X {" +
+                       "  @Language(value=\"RegExp\", prefix=\"xxx\") String pattern;" +
+                       "}";
+    final String expected3 = "class X {" +
+                             "  @ A(value=\"RegExp\", prefix=\"xxx\", suffix=\"\") String pattern;" +
+                             "}";
+    assertEquals(expected3, replace(in3, "@'_A('_v*='_x)", "@ A($v$=$x$, suffix=\"\")"));
+
+    final String in4 = "class X {" +
+                       "  @Anno(one=1, two=1) String s;" +
+                       "}";
+    final String expected4 = "class X {" +
+                             "  @Anno(one=1, two=1, three=1) String s;" +
+                             "}";
+    assertEquals(expected4, replace(in4, "@'_A('_p*=1)", "@$A$($p$=1, three=1)"));
   }
 
   public void testReplacePolyadicExpression() {
@@ -2179,10 +2238,8 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                       "}";
     final String what = "method('_arg+)";
     final String by = "method($newarg$)";
-    final ReplacementVariableDefinition variable = new ReplacementVariableDefinition();
-    variable.setName("newarg");
+    final ReplacementVariableDefinition variable = options.addNewVariableDefinition("newarg");
     variable.setScriptCodeConstraint("arg.collect { \"(String)\" + it.getText() }.join(',')");
-    options.addVariableDefinition(variable);
 
     final String expected = "class A {\n" +
                             "  void method(Object... os) {}\n" +
@@ -2215,11 +2272,9 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                  "}";
     final String what2 = "'_Instance:[exprtype( Limitless )].'property:[regex( get(.*) )]()";
     final String by2 = "$Instance$.$field$";
-    final ReplacementVariableDefinition variable2 = new ReplacementVariableDefinition();
-    variable2.setName("field");
+    final ReplacementVariableDefinition variable2 = options.addNewVariableDefinition("field");
     variable2.setScriptCodeConstraint("String name = property.methodExpression.referenceName[3..-1]\n" +
                                       "name[0].toLowerCase() + name[1..-1]");
-    options.addVariableDefinition(variable2);
     assertEquals("class Limitless {\n" +
                  "    public int id;\n" +
                  "    public String field;\n" +
@@ -2539,7 +2594,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     assertEquals("should keep array brackets 2",
                  "public abstract class Bar {\n" +
                  "    String[] x;\n" +
-                 "    abstract String[] foo (String[] x );\n" +
+                 "    abstract String[] foo (String[] x);\n" +
                  "}",
                  replace(in, "'_ReturnType '_Method('_ParameterType '_Parameter*);",
                          "$ReturnType$ $Method$ ($ParameterType$ $Parameter$);", true));

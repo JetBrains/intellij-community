@@ -8,6 +8,8 @@ import java.util.EnumMap;
 
 /**
  * A scale factor value of {@link ScaleType}.
+ *
+ * @author tav
  */
 public final class Scale {
   final double value;

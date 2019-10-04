@@ -21,7 +21,7 @@ import com.intellij.openapi.vcs.VcsTestUtil;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.text.DateFormatUtil;
 import org.jdom.Element;
@@ -32,7 +32,7 @@ import java.util.Date;
 
 import static com.intellij.openapi.vcs.Executor.debug;
 
-public class UnshelvedChangelistsCleaningTest extends PlatformTestCase {
+public class UnshelvedChangelistsCleaningTest extends HeavyPlatformTestCase {
 
   private Calendar myCalendar;
   private int TEST_YEAR;
@@ -95,11 +95,10 @@ public class UnshelvedChangelistsCleaningTest extends PlatformTestCase {
     assertTrue("Calendar date is: " + datePresentation, myCalendar.get(Calendar.YEAR) < TEST_YEAR);
     debug(datePresentation);
     shelveChangesManager.cleanUnshelved(myCalendar.getTimeInMillis());
-    PlatformTestUtil.saveProject(myProject);
-    
-    assertFalse(shelveChangesManager.getRecycledShelvedChangeLists().isEmpty());
+    PlatformTestUtil.saveProject(myProject, true);
     shelfDir.refresh(false, true);
     afterDir.refresh(false, true);
+    assertFalse(shelveChangesManager.getRecycledShelvedChangeLists().isEmpty());
     PlatformTestUtil.assertDirectoriesEqual(afterDir, shelfDir);
   }
 }

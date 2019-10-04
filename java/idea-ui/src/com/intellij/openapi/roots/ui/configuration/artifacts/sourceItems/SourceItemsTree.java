@@ -30,12 +30,12 @@ import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorImpl;
 import com.intellij.openapi.roots.ui.configuration.artifacts.SimpleDnDAwareTree;
 import com.intellij.openapi.roots.ui.configuration.artifacts.SourceItemsDraggingObject;
 import com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.actions.*;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.PackagingSourceItem;
 import com.intellij.ui.PopupHandler;
-import com.intellij.ui.treeStructure.SimpleTreeBuilder;
+import com.intellij.ui.tree.AsyncTreeModel;
+import com.intellij.ui.tree.StructureTreeModel;
 import com.intellij.ui.treeStructure.SimpleTreeStructure;
 import com.intellij.ui.treeStructure.WeightBasedComparator;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -51,16 +51,16 @@ import java.util.List;
  */
 public class SourceItemsTree extends SimpleDnDAwareTree implements AdvancedDnDSource, Disposable{
   private final ArtifactEditorImpl myArtifactsEditor;
-  private final SimpleTreeBuilder myBuilder;
+  private final StructureTreeModel<SourceItemsTreeStructure> myStructureTreeModel;
+  private final SourceItemsTreeStructure myTreeStructure;
 
   public SourceItemsTree(ArtifactEditorContext editorContext, ArtifactEditorImpl artifactsEditor) {
     myArtifactsEditor = artifactsEditor;
-    myBuilder = new SimpleTreeBuilder(this, this.getBuilderModel(), new SourceItemsTreeStructure(editorContext, artifactsEditor), new WeightBasedComparator(true)) {
-      // unique class to simplify search through the logs
-    };
+    myTreeStructure = new SourceItemsTreeStructure(editorContext, artifactsEditor);
+    myStructureTreeModel = new StructureTreeModel<>(myTreeStructure, new WeightBasedComparator(true), this);
+    setModel(new AsyncTreeModel(myStructureTreeModel, this));
     setRootVisible(false);
     setShowsRootHandles(true);
-    Disposer.register(this, myBuilder);
     PopupHandler.installPopupHandler(this, createPopupGroup(), ActionPlaces.UNKNOWN, ActionManager.getInstance());
     installDnD();
   }
@@ -91,11 +91,8 @@ public class SourceItemsTree extends SimpleDnDAwareTree implements AdvancedDnDSo
   }
 
   public void rebuildTree() {
-    myBuilder.updateFromRoot(true);
-  }
-
-  public void initTree() {
-    myBuilder.initRootNode();
+    myTreeStructure.clearCaches();
+    myStructureTreeModel.invalidate();
   }
 
   @Override

@@ -60,9 +60,6 @@
         <sysproperty key="compile.parallel" value="true" />
         <sysproperty key="gant.script" value="@{script}"/>
         <sysproperty key="gant.target" value="@{target}"/>
-        <sysproperty key="intellij.build.kotlin.plugin" value ="../../prebuilts/tools/common/kotlin-plugin-ij/Kotlin"/>
-        <sysproperty key="intellij.build.dependencies.file" value ="build/dependencies/gradle.properties"/>
-        <sysproperty key="intellij.build.scripts.deps" value ="studio/build-scripts-deps"/>
         <syspropertyset refid="intellij.build.properties"/>
         <arg value="-f"/>
         <arg value="${project.home}/build/gant.xml"/>

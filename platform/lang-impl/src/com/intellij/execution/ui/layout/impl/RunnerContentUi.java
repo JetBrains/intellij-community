@@ -15,7 +15,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.AbstractPainter;
-import com.intellij.openapi.ui.OnePixelDivider;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.ActiveRunnable;
 import com.intellij.openapi.util.Disposer;
@@ -25,6 +24,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.impl.ToolWindowsPane;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
@@ -38,10 +38,9 @@ import com.intellij.ui.docking.DragSession;
 import com.intellij.ui.docking.impl.DockManagerImpl;
 import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.ui.tabs.JBTabs;
-import com.intellij.ui.tabs.JBTabsFactory;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.TabsListener;
-import com.intellij.ui.tabs.newImpl.JBTabsImpl;
+import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
@@ -56,6 +55,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -185,16 +185,16 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     myToolbar.setContent(tb.getComponent());
     myLeftToolbarActions = group;
 
-    if(!JBTabsFactory.getUseNewTabs()) {
-      tb.getComponent().setBorder(
-        JBUI.Borders.merge(tb.getComponent().getBorder(), JBUI.Borders.customLine(OnePixelDivider.BACKGROUND, 0, 0, 0, 1), true));
-    }
     myComponent.revalidate();
     myComponent.repaint();
   }
 
   void setLeftToolbarVisible(boolean value) {
     myToolbar.setVisible(value);
+    Border border = myTabs.getComponent().getBorder();
+    if (border instanceof JBRunnerTabs.JBRunnerTabsBorder) {
+      ((JBRunnerTabs.JBRunnerTabsBorder)border).setSideMask(value ? SideBorder.LEFT : SideBorder.NONE);
+    }
     myComponent.revalidate();
     myComponent.repaint();
   }
@@ -699,16 +699,13 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
         }
         updateTabsUI(false);
         fireContentClosed(content);
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            if (Disposer.isDisposed(content)) {
-              AnAction[] actions = myViewActions.getChildren(null);
-              for (AnAction action : actions) {
-                if (action instanceof RestoreViewAction && ((RestoreViewAction)action).getContent() == content) {
-                  myViewActions.remove(action);
-                  break;
-                }
+        ApplicationManager.getApplication().invokeLater(() -> {
+          if (Disposer.isDisposed(content)) {
+            AnAction[] actions = myViewActions.getChildren(null);
+            for (AnAction action : actions) {
+              if (action instanceof RestoreViewAction && ((RestoreViewAction)action).getContent() == content) {
+                myViewActions.remove(action);
+                break;
               }
             }
           }
@@ -915,6 +912,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
       Wrapper eachPlaceholder = entry.getValue();
       ActionToolbar tb = myActionManager.createActionToolbar(ActionPlaces.RUNNER_LAYOUT_BUTTON_TOOLBAR, myViewActions, true);
       tb.setSecondaryActionsIcon(AllIcons.Debugger.RestoreLayout);
+      tb.setSecondaryActionsTooltip("Layout Settings");
       tb.setTargetComponent(myComponent);
       tb.getComponent().setBorder(null);
       tb.setReservePlaceAutoPopupIcon(false);
@@ -1470,6 +1468,10 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     @Override
     public void addNotify() {
       super.addNotify();
+      if (null !=
+          ComponentUtil.findParentByCondition(this, component -> UIUtil.isClientPropertyTrue(component, ToolWindowsPane.TEMPORARY_ADDED))) {
+        return;
+      }
 
       if (!myUiLastStateWasRestored && myOriginal == null) {
         myUiLastStateWasRestored = true;

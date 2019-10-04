@@ -22,6 +22,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -254,7 +255,7 @@ public class PsiTreeUtil {
   @Nullable
   @Contract("null, _ -> null")
   public static <T extends PsiElement> T findChildOfAnyType(@Nullable PsiElement element, @NotNull Class<? extends T>... classes) {
-    return findChildOfAnyType(element, true, (Class<T>[]) classes);
+    return findChildOfAnyType(element, true, classes);
   }
 
   /**
@@ -623,7 +624,7 @@ public class PsiTreeUtil {
   @SafeVarargs
   @Nullable
   public static <T extends PsiElement> T getContextOfType(@Nullable PsiElement element, @NotNull Class<? extends T>... classes) {
-    return getContextOfType(element, true, (Class<T>[]) classes);
+    return getContextOfType(element, true, classes);
   }
 
   @SafeVarargs
@@ -830,7 +831,7 @@ public class PsiTreeUtil {
     if (element == null || element instanceof PsiFile) return null;
     PsiElement parent = element.getParent();
     if (parent == null) return null;
-    return getNonStrictParentOfType(parent, (Class<T>[]) classes);
+    return getNonStrictParentOfType(parent, classes);
   }
 
   @SafeVarargs
@@ -1227,6 +1228,7 @@ public class PsiTreeUtil {
   /**
    * @deprecated use {@link SyntaxTraverser#psiTraverser()} (to be removed in IDEA 2019)
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2019")
   @Deprecated
   public static <T extends PsiElement> Iterator<T> childIterator(@NotNull PsiElement element, @NotNull Class<T> aClass) {
     return SyntaxTraverser.psiTraverser().children(element).filter(aClass).iterator();

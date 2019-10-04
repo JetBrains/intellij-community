@@ -1,10 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.command.impl;
 
-import com.intellij.CommonBundle;
 import com.intellij.diagnostic.Dumpable;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.undo.DocumentReference;
@@ -106,7 +106,7 @@ class UndoableGroup implements Dumpable {
     }
     LocalHistoryAction action;
     if (myProject != null && isGlobal()) {
-      String actionName = CommonBundle.message(isUndo ? "local.vcs.action.name.undo.command" : "local.vcs.action.name.redo.command", myCommandName);
+      String actionName = IdeBundle.message(isUndo ? "undo.command" : "redo.command", myCommandName);
       action = LocalHistory.getInstance().startAction(actionName);
     }
     else {
@@ -288,12 +288,12 @@ class UndoableGroup implements Dumpable {
     String message;
 
     if (isUndo) {
-      title = CommonBundle.message("cannot.undo.dialog.title");
-      message = CommonBundle.message("cannot.undo.message");
+      title = IdeBundle.message("cannot.undo.title");
+      message = IdeBundle.message("cannot.undo.message");
     }
     else {
-      title = CommonBundle.message("cannot.redo.dialog.title");
-      message = CommonBundle.message("cannot.redo.message");
+      title = IdeBundle.message("cannot.redo.title");
+      message = IdeBundle.message("cannot.redo.message");
     }
 
     if (!ApplicationManager.getApplication().isUnitTestMode()) {

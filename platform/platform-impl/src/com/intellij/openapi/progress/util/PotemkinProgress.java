@@ -17,6 +17,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.InvocationEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 import java.util.Objects;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -43,11 +45,11 @@ public class PotemkinProgress extends ProgressWindow implements PingProgress {
 
   private void startStealingInputEvents() {
     IdeEventQueue.getInstance().addPostEventListener(event -> {
-      if (event instanceof InputEvent) {
+      if (event instanceof MouseEvent || event instanceof KeyEvent && ((KeyEvent)event).getKeyCode() == KeyEvent.VK_ESCAPE) {
         myInputEvents.offer((InputEvent)event);
         return true;
       }
-      if (isUrgentInvocationEvent(event)) {
+      if (event instanceof InvocationEvent && isUrgentInvocationEvent(event)) {
         myInvocationEvents.offer((InvocationEvent)event);
         return true;
       }
@@ -62,7 +64,7 @@ public class PotemkinProgress extends ProgressWindow implements PingProgress {
 
     // problem (IDEA-192282): LWCToolkit event might be posted before PotemkinProgress appears,
     // and it then just sits in the queue blocking the whole UI until the progress is finished.
-    return event instanceof InvocationEvent && event.toString().contains(",runnable=sun.lwawt.macosx.LWCToolkit") ||
+    return event.toString().contains(",runnable=sun.lwawt.macosx.LWCToolkit") ||
            event instanceof MyInvocationEvent;
   }
 

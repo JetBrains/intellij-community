@@ -144,7 +144,7 @@ public abstract class CreateServiceClassFixBase implements IntentionAction {
 
   public static class PsiDirectoryListCellRenderer extends SimpleListCellRenderer<PsiDirectory> {
     @Override
-    public void customize(JList<? extends PsiDirectory> list, PsiDirectory value, int index, boolean selected, boolean hasFocus) {
+    public void customize(@NotNull JList<? extends PsiDirectory> list, PsiDirectory value, int index, boolean selected, boolean hasFocus) {
       if (value != null) {
         String text = ProjectUtil.calcRelativeToProjectPath(value.getVirtualFile(), value.getProject(), true, false, true);
         setText(text);

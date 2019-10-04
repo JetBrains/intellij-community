@@ -16,7 +16,7 @@ import kotlin.streams.asSequence
 
 private fun VcsContext.getRoots(): Sequence<FilePath> = selectedFilePathsStream.asSequence()
 
-private fun VcsContext.getCommonVcs(): AbstractVcs<*>? {
+private fun VcsContext.getCommonVcs(): AbstractVcs? {
   val project = project ?: return null
   return getRoots().mapNotNull { getVcsFor(project, it) }.distinct().singleOrNull()
 }

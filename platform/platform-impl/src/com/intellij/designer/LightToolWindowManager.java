@@ -185,9 +185,7 @@ public abstract class LightToolWindowManager implements Disposable {
     String key = getComponentName();
     LightToolWindow toolWindow = (LightToolWindow)designer.getClientProperty(key);
     designer.putClientProperty(key, null);
-    if (toolWindow != null) {
-      toolWindow.dispose();
-    }
+    toolWindow.dispose();
   }
 
   private final Consumer<DesignerEditorPanelFacade> myCreateAction =
@@ -196,9 +194,7 @@ public abstract class LightToolWindowManager implements Disposable {
   private final Consumer<DesignerEditorPanelFacade> myUpdateAnchorAction =
     designer -> {
       LightToolWindow toolWindow = (LightToolWindow)designer.getClientProperty(getComponentName());
-      if (toolWindow != null) {
-        toolWindow.updateAnchor(getEditorMode());
-      }
+      toolWindow.updateAnchor(getEditorMode());
     };
 
   private final Consumer<DesignerEditorPanelFacade> myDisposeAction = designer -> disposeContent(designer);

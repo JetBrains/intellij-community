@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
@@ -35,6 +36,7 @@ import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectObjectProcedure;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -101,7 +103,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   public transient Getter<PasswordAuthentication> myTestGenericAuthRunnable = new StaticGetter<>(null);
 
   public static HttpConfigurable getInstance() {
-    return ApplicationManager.getApplication().getComponent(HttpConfigurable.class);
+    return ServiceManager.getService(HttpConfigurable.class);
   }
 
   public static boolean editConfigurable(@Nullable JComponent parent) {
@@ -122,31 +124,32 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   }
 
   @Override
-  public void initializeComponent() {
-    final HttpConfigurable currentState = getState();
-    if (currentState != null) {
-      final Element serialized = XmlSerializer.serialize(currentState);
-      if (serialized == null) {
-        // all settings are defaults
-        // trying user's proxy configuration entered while obtaining the license
-        final SharedProxyConfig.ProxyParameters cfg = SharedProxyConfig.load();
-        if (cfg != null) {
-          SharedProxyConfig.clear();
-          if (cfg.host != null) {
-            USE_HTTP_PROXY = true;
-            PROXY_HOST = cfg.host;
-            PROXY_PORT = cfg.port;
-            if (cfg.login != null) {
-              setPlainProxyPassword(new String(cfg.password));
-              storeSecure("proxy.login", cfg.login);
-              PROXY_AUTHENTICATION = true;
-              KEEP_PROXY_PASSWORD = true;
-            }
-          }
-        }
-      }
+  public void noStateLoaded() {
+    // all settings are defaults
+    // trying user's proxy configuration entered while obtaining the license
+    SharedProxyConfig.ProxyParameters cfg = SharedProxyConfig.load();
+    if (cfg == null) {
+      return;
     }
 
+    SharedProxyConfig.clear();
+    if (cfg.host == null) {
+      return;
+    }
+
+    USE_HTTP_PROXY = true;
+    PROXY_HOST = cfg.host;
+    PROXY_PORT = cfg.port;
+    if (cfg.login != null) {
+      setPlainProxyPassword(new String(cfg.password));
+      storeSecure("proxy.login", cfg.login);
+      PROXY_AUTHENTICATION = true;
+      KEEP_PROXY_PASSWORD = true;
+    }
+  }
+
+  @Override
+  public void initializeComponent() {
     mySelector = new IdeaWideProxySelector(this);
     String name = getClass().getName();
     CommonProxy.getInstance().setCustom(name, mySelector);
@@ -390,10 +393,10 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   }
 
   /**
-   * todo [all] It is NOT necessary to call anything if you obey common IDEA proxy settings;
+   * todo [all] It is NOT necessary to call anything if you obey common IDE proxy settings;
    * todo if you want to define your own behaviour, refer to {@link CommonProxy}
    *
-   * also, this method is useful in a way that it test connection to the host [through proxy]
+   * Also, this method is useful in a way that it tests connection to the host [through proxy].
    *
    * @param url URL for HTTP connection
    */
@@ -470,6 +473,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
 
   /** @deprecated use {@link #getJvmProperties(boolean, URI)} (to be removed in IDEA 2018) */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2018")
   @SuppressWarnings({"unused"})
   public static List<KeyValue<String, String>> getJvmPropertiesList(boolean withAutodetection, @Nullable URI uri) {
     List<Pair<String, String>> properties = getInstance().getJvmProperties(withAutodetection, uri);
@@ -564,6 +568,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
 
   /** @deprecated use {@link com.intellij.execution.configurations.ParametersList#addProperty(String, String)} (to be removed in IDEA 2018) */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2018")
   @SuppressWarnings({"unused"})
   @NotNull
   public static List<String> convertArguments(@NotNull final List<? extends KeyValue<String, String>> list) {

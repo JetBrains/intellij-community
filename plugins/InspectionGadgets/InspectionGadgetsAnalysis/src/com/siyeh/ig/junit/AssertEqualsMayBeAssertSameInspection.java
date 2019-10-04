@@ -1,18 +1,4 @@
-/*
- * Copyright 2008-2017 Bas Leijdekkers
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.junit;
 
 import com.intellij.psi.*;
@@ -57,17 +43,11 @@ public class AssertEqualsMayBeAssertSameInspection extends BaseInspection {
       if (assertHint == null) {
         return;
       }
-      final PsiExpressionList argumentList = expression.getArgumentList();
-      final PsiExpression[] arguments = argumentList.getExpressions();
-      if (arguments.length != 3 && arguments.length != 2) {
-        return;
-      }
-      final int argIndex = assertHint.getArgIndex();
-      final PsiExpression argument1 = arguments[argIndex];
+      final PsiExpression argument1 = assertHint.getFirstArgument();
       if (!couldBeAssertSameArgument(argument1)) {
         return;
       }
-      final PsiExpression argument2 = arguments[argIndex + 1];
+      final PsiExpression argument2 = assertHint.getSecondArgument();
       if (!couldBeAssertSameArgument(argument2)) {
         return;
       }

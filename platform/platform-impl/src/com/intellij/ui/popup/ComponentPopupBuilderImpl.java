@@ -127,14 +127,14 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
 
   @Override
   @NotNull
-  public ComponentPopupBuilder setCancelOnMouseOutCallback(final MouseChecker shouldCancel) {
+  public ComponentPopupBuilder setCancelOnMouseOutCallback(@NotNull final MouseChecker shouldCancel) {
     myCancelOnMouseOutCallback = shouldCancel;
     return this;
   }
 
   @Override
   @NotNull
-  public ComponentPopupBuilder addListener(final JBPopupListener listener) {
+  public ComponentPopupBuilder addListener(@NotNull final JBPopupListener listener) {
     myListeners.add(listener);
     return this;
   }
@@ -164,7 +164,7 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
 
   @Override
   @NotNull
-  public ComponentPopupBuilder setCancelCallback(final Computable<Boolean> shouldProceed) {
+  public ComponentPopupBuilder setCancelCallback(@NotNull final Computable<Boolean> shouldProceed) {
     myCallback = shouldProceed;
     return this;
   }
@@ -254,7 +254,7 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
 
   @Override
   @NotNull
-  public ComponentPopupBuilder setRequestFocusCondition(Project project, Condition<? super Project> condition) {
+  public ComponentPopupBuilder setRequestFocusCondition(@NotNull Project project, @NotNull Condition<? super Project> condition) {
     myRequestFocus = condition.value(project);
     return this;
   }

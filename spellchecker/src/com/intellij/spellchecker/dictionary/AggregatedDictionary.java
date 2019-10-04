@@ -5,6 +5,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.spellchecker.state.CachedDictionaryState;
 import com.intellij.spellchecker.state.ProjectDictionaryState;
 import com.intellij.util.Consumer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,6 +16,7 @@ import java.util.Set;
  * @deprecated will be removed in 2018.X, use separate
  * {@link ProjectDictionaryState#getProjectDictionary() and {@link CachedDictionaryState#getDictionary()}} instead
  */
+@ApiStatus.ScheduledForRemoval(inVersion = "2018.3")
 @Deprecated
 public class AggregatedDictionary implements EditableDictionary {
   @NonNls private static final String DICTIONARY_NAME = "common";

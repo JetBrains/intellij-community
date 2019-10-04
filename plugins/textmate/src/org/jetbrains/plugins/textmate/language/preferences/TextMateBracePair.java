@@ -24,9 +24,7 @@ public class TextMateBracePair {
 
   @Override
   public int hashCode() {
-    int result = (int)leftChar;
-    result = 31 * result + (int)rightChar;
-    return result;
+    return 31 * (int)leftChar + (int)rightChar;
   }
 
   @Override

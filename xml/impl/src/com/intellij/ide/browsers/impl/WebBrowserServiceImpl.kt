@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.browsers.impl
 
 import com.intellij.ide.browsers.OpenInBrowserRequest
@@ -15,7 +15,7 @@ import com.intellij.util.Urls
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.xml.util.HtmlUtil
 
-private val URL_PROVIDER_EP: ExtensionPointName<WebBrowserUrlProvider> = ExtensionPointName.create<WebBrowserUrlProvider>("com.intellij.webBrowserUrlProvider")
+private val URL_PROVIDER_EP = ExtensionPointName<WebBrowserUrlProvider>("com.intellij.webBrowserUrlProvider")
 
 class WebBrowserServiceImpl : WebBrowserService() {
   companion object {
@@ -51,7 +51,7 @@ class WebBrowserServiceImpl : WebBrowserService() {
   }
 
   override fun getUrlsToOpen(request: OpenInBrowserRequest, preferLocalUrl: Boolean): Collection<Url> {
-    val isHtmlOrXml = WebBrowserService.isHtmlOrXmlFile(request.file)
+    val isHtmlOrXml = isHtmlOrXmlFile(request.file)
     if (!preferLocalUrl || !isHtmlOrXml) {
       val dumbService = DumbService.getInstance(request.project)
       for (urlProvider in URL_PROVIDER_EP.extensionList) {

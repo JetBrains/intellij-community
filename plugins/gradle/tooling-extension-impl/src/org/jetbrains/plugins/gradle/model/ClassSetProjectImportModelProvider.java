@@ -3,7 +3,6 @@ package org.jetbrains.plugins.gradle.model;
 
 import org.gradle.tooling.BuildController;
 import org.gradle.tooling.model.Model;
-import org.gradle.tooling.model.gradle.GradleBuild;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,7 +18,7 @@ public final class ClassSetProjectImportModelProvider implements ProjectImportMo
   }
 
   @Override
-  public void populateBuildModels(@NotNull BuildController controller, @NotNull GradleBuild build, @NotNull BuildModelConsumer consumer) {
+  public void populateBuildModels(@NotNull BuildController controller, @NotNull Model project, @NotNull BuildModelConsumer consumer) {
     // Do nothing, this provider only works on the project model level
   }
 

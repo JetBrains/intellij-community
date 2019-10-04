@@ -60,7 +60,7 @@ object JavaInlayHintsProvider {
       return infos.toSet()
     }
     
-    if (!EditorSettingsExternalizable.getInstance().isShowParameterNameHints) return emptySet()
+    if (!isParameterHintsEnabledForLanguage(callExpression.language)) return emptySet()
     
     val resolveResult = callExpression.resolveMethodGenerics()
     val hints = methodHints(callExpression, resolveResult)

@@ -19,7 +19,7 @@ public class TextMateSelectorCachingWeigher implements TextMateSelectorWeigher {
   }
 
   @Override
-  public TextMateWeigh weigh(@NotNull final String scopeSelector, @NotNull final String scope) {
+  public TextMateWeigh weigh(@NotNull final CharSequence scopeSelector, @NotNull final CharSequence scope) {
     try {
       return myCache.get(createCacheKey(scopeSelector, scope), () -> myOriginalWeigher.weigh(scopeSelector, scope));
     }
@@ -29,7 +29,7 @@ public class TextMateSelectorCachingWeigher implements TextMateSelectorWeigher {
     }
   }
 
-  private static String createCacheKey(String highlightingRule, String targetSelector) {
+  private static String createCacheKey(CharSequence highlightingRule, CharSequence targetSelector) {
     return highlightingRule + ";" + targetSelector;
   }
 }

@@ -32,7 +32,6 @@ import static org.junit.Assert.*;
 /**
  * @author Dmitry Avdeev
  */
-@SuppressWarnings("SuspiciousPackagePrivateAccess")
 public class UrlClassLoaderTest {
   @Rule public TempDirectory tempDir = new TempDirectory();
 

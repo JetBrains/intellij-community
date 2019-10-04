@@ -14,6 +14,7 @@ import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.fragments.MergeLineFragment;
 import com.intellij.diff.requests.ContentDiffRequest;
+import com.intellij.diff.requests.ProxySimpleDiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.diff.tools.simple.ThreesideTextDiffViewerEx;
 import com.intellij.diff.tools.util.DiffNotifications;
@@ -88,9 +89,10 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     myMergeRequest = request;
 
     DiffContext diffContext = new MergeUtil.ProxyDiffContext(myMergeContext);
-    ContentDiffRequest diffRequest = new SimpleDiffRequest(myMergeRequest.getTitle(),
-                                                           getDiffContents(myMergeRequest),
-                                                           getDiffContentTitles(myMergeRequest));
+    ContentDiffRequest diffRequest = new ProxySimpleDiffRequest(myMergeRequest.getTitle(),
+                                                                getDiffContents(myMergeRequest),
+                                                                getDiffContentTitles(myMergeRequest),
+                                                                myMergeRequest);
     diffRequest.putUserData(DiffUserDataKeys.FORCE_READ_ONLY_CONTENTS, new boolean[]{true, false, true});
 
     myViewer = new MyThreesideViewer(diffContext, diffRequest);
@@ -223,11 +225,6 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
         ar(HighlightPolicy.BY_LINE, HighlightPolicy.BY_WORD));
       myCurrentIgnorePolicy = myTextDiffProvider.getIgnorePolicy();
 
-      DiffUtil.registerAction(new ApplySelectedChangesAction(Side.LEFT, true), myPanel);
-      DiffUtil.registerAction(new ApplySelectedChangesAction(Side.RIGHT, true), myPanel);
-      DiffUtil.registerAction(new IgnoreSelectedChangesSideAction(Side.LEFT, true), myPanel);
-      DiffUtil.registerAction(new IgnoreSelectedChangesSideAction(Side.RIGHT, true), myPanel);
-      DiffUtil.registerAction(new ResolveSelectedConflictsAction(true), myPanel);
       DiffUtil.registerAction(new NavigateToChangeMarkerAction(false), myPanel);
       DiffUtil.registerAction(new NavigateToChangeMarkerAction(true), myPanel);
 
@@ -283,13 +280,13 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     protected List<AnAction> createEditorPopupActions() {
       List<AnAction> group = new ArrayList<>();
 
-      group.add(new ApplySelectedChangesAction(Side.LEFT, false));
-      group.add(new ApplySelectedChangesAction(Side.RIGHT, false));
+      group.add(new ApplySelectedChangesAction(Side.LEFT));
+      group.add(new ApplySelectedChangesAction(Side.RIGHT));
       group.add(new ResolveSelectedChangesAction(Side.LEFT));
       group.add(new ResolveSelectedChangesAction(Side.RIGHT));
-      group.add(new IgnoreSelectedChangesSideAction(Side.LEFT, false));
-      group.add(new IgnoreSelectedChangesSideAction(Side.RIGHT, false));
-      group.add(new ResolveSelectedConflictsAction(false));
+      group.add(new IgnoreSelectedChangesSideAction(Side.LEFT));
+      group.add(new IgnoreSelectedChangesSideAction(Side.RIGHT));
+      group.add(new ResolveSelectedConflictsAction());
       group.add(new IgnoreSelectedChangesAction());
 
       group.add(Separator.getInstance());
@@ -314,20 +311,20 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       return new AbstractAction(caption) {
         @Override
         public void actionPerformed(ActionEvent e) {
-          if ((result == MergeResult.LEFT || result == MergeResult.RIGHT) && myContentModified &&
-              Messages.showYesNoDialog(myPanel.getRootPane(),
-                                       DiffBundle.message("merge.dialog.resolve.side.with.discard.message", result == MergeResult.LEFT ? 0 : 1),
-                                       DiffBundle.message("merge.dialog.resolve.side.with.discard.title"), Messages.getQuestionIcon()) != Messages.YES) {
+          if ((result == MergeResult.LEFT || result == MergeResult.RIGHT) &&
+              !MergeUtil.showConfirmDiscardChangesDialog(myPanel.getRootPane(),
+                                                         result == MergeResult.LEFT ? "Accept Left" : "Accept Right",
+                                                         myContentModified)) {
             return;
           }
-          if (result == MergeResult.RESOLVED) {
-            if ((getChangesCount() > 0 || getConflictsCount() > 0) &&
-                Messages.showYesNoDialog(myPanel.getRootPane(),
-                                         DiffBundle.message("merge.dialog.apply.partially.resolved.changes.confirmation.message", getChangesCount(), getConflictsCount()),
-                                         DiffBundle.message("apply.partially.resolved.merge.dialog.title"),
-                                         Messages.getQuestionIcon()) != Messages.YES) {
-              return;
-            }
+          if (result == MergeResult.RESOLVED &&
+              (getChangesCount() > 0 || getConflictsCount() > 0) &&
+              Messages.showConfirmationDialog(myPanel.getRootPane(),
+                                              DiffBundle.message("merge.dialog.apply.partially.resolved.changes.confirmation.message", getChangesCount(), getConflictsCount()),
+                                              DiffBundle.message("apply.partially.resolved.merge.dialog.title"),
+                                              "Apply Changes and Mark Resolved",
+                                              "Continue Merge") != Messages.YES) {
+            return;
           }
           if (result == MergeResult.CANCEL &&
               !MergeUtil.showExitWithoutApplyingChangesDialog(TextMergeViewer.this, myMergeRequest, myMergeContext, myContentModified)) {
@@ -352,8 +349,10 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       }
 
       if (myContentModified) {
-        if (Messages.showYesNoDialog(myProject, "This operation will reset all applied changes. Are you sure you want to continue?",
-                                     "Restart Visual Merge", Messages.getQuestionIcon()) != Messages.YES) {
+        if (Messages.showYesNoDialog(myProject,
+                                     "Changing highlighting requires the file merge restart. Discard unsaved changes and restart merge anyway?",
+                                     "Update Highlighting Settings", "Discard Changes and Restart Merge", "Continue Merge",
+                                     Messages.getQuestionIcon()) != Messages.YES) {
           getTextSettings().setIgnorePolicy(myCurrentIgnorePolicy);
           return;
         }
@@ -966,15 +965,9 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     }
 
     private abstract class ApplySelectedChangesActionBase extends AnAction implements DumbAware {
-      private final boolean myShortcut;
-
-      ApplySelectedChangesActionBase(boolean shortcut) {
-        myShortcut = shortcut;
-      }
-
       @Override
       public void update(@NotNull AnActionEvent e) {
-        if (myShortcut) {
+        if (DiffUtil.isFromShortcut(e)) {
           // consume shortcut even if there are nothing to do - avoid calling some other action
           e.getPresentation().setEnabledAndVisible(true);
           return;
@@ -1047,8 +1040,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     private class IgnoreSelectedChangesSideAction extends ApplySelectedChangesActionBase {
       @NotNull private final Side mySide;
 
-      IgnoreSelectedChangesSideAction(@NotNull Side side, boolean shortcut) {
-        super(shortcut);
+      IgnoreSelectedChangesSideAction(@NotNull Side side) {
         mySide = side;
         ActionUtil.copyFrom(this, mySide.select("Diff.IgnoreLeftSide", "Diff.IgnoreRightSide"));
       }
@@ -1078,7 +1070,6 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
 
     private class IgnoreSelectedChangesAction extends ApplySelectedChangesActionBase {
       IgnoreSelectedChangesAction() {
-        super(false);
         getTemplatePresentation().setIcon(AllIcons.Diff.Remove);
       }
 
@@ -1108,8 +1099,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     private class ApplySelectedChangesAction extends ApplySelectedChangesActionBase {
       @NotNull private final Side mySide;
 
-      ApplySelectedChangesAction(@NotNull Side side, boolean shortcut) {
-        super(shortcut);
+      ApplySelectedChangesAction(@NotNull Side side) {
         mySide = side;
         ActionUtil.copyFrom(this, mySide.select("Diff.ApplyLeftSide", "Diff.ApplyRightSide"));
       }
@@ -1142,7 +1132,6 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       @NotNull private final Side mySide;
 
       ResolveSelectedChangesAction(@NotNull Side side) {
-        super(false);
         mySide = side;
       }
 
@@ -1171,8 +1160,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     }
 
     private class ResolveSelectedConflictsAction extends ApplySelectedChangesActionBase {
-      ResolveSelectedConflictsAction(boolean shortcut) {
-        super(shortcut);
+      ResolveSelectedConflictsAction() {
         ActionUtil.copyFrom(this, "Diff.ResolveConflict");
       }
 

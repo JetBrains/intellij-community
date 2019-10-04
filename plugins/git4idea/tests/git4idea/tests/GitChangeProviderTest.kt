@@ -7,7 +7,10 @@ import com.intellij.openapi.vcs.Executor.cd
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.VcsTestUtil.*
-import com.intellij.openapi.vcs.changes.*
+import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.changes.ChangesUtil
+import com.intellij.openapi.vcs.changes.ContentRevision
+import com.intellij.openapi.vcs.changes.VcsModifiableDirtyScope
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.vcs.MockChangeListManagerGate
@@ -19,9 +22,9 @@ import git4idea.status.GitChangeProvider
 import git4idea.test.GitSingleRepoTest
 import git4idea.test.addCommit
 import git4idea.test.createFileStructure
+import junit.framework.TestCase
 import org.junit.Assume
 import java.io.File
-import java.util.*
 
 /**
  * Tests GitChangeProvider functionality. Scenario is the same for all tests:
@@ -60,7 +63,7 @@ abstract class GitChangeProviderTest : GitSingleRepoTest() {
 
   override fun makeInitialCommit() = false
 
-  protected fun getVirtualFile(relativePath: String) = VfsUtil.findFileByIoFile(File(projectPath, relativePath), true)!!
+  private fun getVirtualFile(relativePath: String) = VfsUtil.findFileByIoFile(File(projectPath, relativePath), true)!!
 
   /**
    * Checks that the given files have respective statuses in the change list retrieved from myChangesProvider.
@@ -72,7 +75,8 @@ abstract class GitChangeProviderTest : GitSingleRepoTest() {
   }
 
   protected fun assertProviderChangesInPaths(paths: List<FilePath>, fileStatuses: List<FileStatus?>) {
-    val result = getProviderChanges(paths)
+    TestCase.assertEquals(paths.size, fileStatuses.size)
+    val result = getProviderChanges()
     for (i in paths.indices) {
       val fp = paths[i]
       val status = fileStatuses[i]
@@ -81,11 +85,11 @@ abstract class GitChangeProviderTest : GitSingleRepoTest() {
         continue
       }
       assertTrue("File [${tos(fp)}] didn't change. Changes: [${result.values.joinToString(",") { tos(it) }}]", result.containsKey(fp))
-      assertEquals("File statuses don't match for file [${tos(fp)}]", result[fp]!!.fileStatus, status)
+      assertEquals("File statuses don't match for file [${tos(fp)}]", status, result[fp]!!.fileStatus)
     }
   }
 
-  protected fun assertProviderChanges(virtualFile: VirtualFile, fileStatus: FileStatus) {
+  protected fun assertProviderChanges(virtualFile: VirtualFile, fileStatus: FileStatus?) {
     assertProviderChanges(listOf(virtualFile), listOf(fileStatus))
   }
 
@@ -95,22 +99,13 @@ abstract class GitChangeProviderTest : GitSingleRepoTest() {
   }
 
   /**
-   * Marks the given files dirty in myDirtyScope, gets changes from myChangeProvider and groups the changes in the map.
-   * Assumes that only one change for a file has happened.
+   * It is assumed that only one change for a file has happened.
    */
-  private fun getProviderChanges(changedPaths: List<FilePath>): Map<FilePath, Change> {
-    // get changes
+  private fun getProviderChanges(): Map<FilePath, Change> {
     val builder = MockChangelistBuilder()
-    changeProvider.getChanges(dirtyScope, builder, EmptyProgressIndicator(),
-                              MockChangeListManagerGate(ChangeListManager.getInstance(myProject)))
+    changeProvider.getChanges(dirtyScope, builder, EmptyProgressIndicator(), MockChangeListManagerGate(changeListManager))
     val changes = builder.changes
-
-    // get changes for files
-    val result = HashMap<FilePath, Change>()
-    for (change in changes) {
-      result.put(ChangesUtil.getFilePath(change), change)
-    }
-    return result
+    return changes.associateBy { ChangesUtil.getFilePath(it) }
   }
 
   protected fun create(parent: VirtualFile, name: String): VirtualFile {
@@ -121,12 +116,6 @@ abstract class GitChangeProviderTest : GitSingleRepoTest() {
 
   protected fun edit(file: VirtualFile, content: String) {
     editFileInCommand(myProject, file, content)
-    dirty(file)
-  }
-
-  protected fun moveFile(file: VirtualFile, newParent: VirtualFile) {
-    dirty(file)
-    moveFileInCommand(myProject, file, newParent)
     dirty(file)
   }
 

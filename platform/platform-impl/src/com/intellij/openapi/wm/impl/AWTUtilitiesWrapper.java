@@ -15,10 +15,17 @@
  */
 package com.intellij.openapi.wm.impl;
 
+import org.jetbrains.annotations.ApiStatus;
+
 import java.awt.*;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
+/**
+ * @deprecated use Java 1.7 API
+ */
+@Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2019.3")
 public class AWTUtilitiesWrapper {
 
   private static Class<?> awtUtilitiesClass;

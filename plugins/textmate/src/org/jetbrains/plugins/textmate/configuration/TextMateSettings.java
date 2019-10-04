@@ -1,19 +1,18 @@
 package org.jetbrains.plugins.textmate.configuration;
 
 import com.intellij.openapi.components.*;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import com.intellij.util.xmlb.annotations.Transient;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.textmate.TextMateService;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 @State(name = "TextMateSettings", storages = @Storage(value = "textmate_os.xml", roamingType = RoamingType.DISABLED))
 public class TextMateSettings implements PersistentStateComponent<TextMateSettings.TextMateSettingsState> {
-  @NonNls public static final String DEFAULT_THEME_NAME = "Mac Classic";
 
   private TextMateSettingsState myState;
 
@@ -36,52 +35,9 @@ public class TextMateSettings implements PersistentStateComponent<TextMateSettin
     return myState != null ? myState.getBundles() : Collections.emptyList();
   }
 
-  @NotNull
-  public String getTextMateThemeName(@NotNull String generalThemeName, @Nullable TextMateService textMateService) {
-    if (textMateService == null) {
-      return DEFAULT_THEME_NAME;
-    }
-
-    String result = myState != null ? myState.getThemesMapping().get(generalThemeName) : null;
-    if (result != null) {
-      return result;
-    }
-
-    for (String name : textMateService.getThemeNames()) {
-      if (name.equalsIgnoreCase(generalThemeName)) {
-        result = name;
-        break;
-      }
-    }
-    result = ObjectUtils.notNull(result, DEFAULT_THEME_NAME);
-    if (myState != null) {
-      myState.getThemesMapping().put(generalThemeName, result);
-    }
-    return result;
-  }
-
   public static class TextMateSettingsState {
-    private Map<String, String> themesMapping;
-
     @OptionTag
     private List<BundleConfigBean> bundles = new ArrayList<>();
-
-    public TextMateSettingsState() {
-      this(new HashMap<>());
-    }
-
-    public TextMateSettingsState(Map<String, String> themesMapping) {
-      this.themesMapping = themesMapping;
-    }
-
-    @NotNull
-    public Map<String, String> getThemesMapping() {
-      return themesMapping;
-    }
-
-    public void setThemesMapping(Map<String, String> themesMapping) {
-      this.themesMapping = themesMapping;
-    }
 
     @Transient
     public List<BundleConfigBean> getBundles() {

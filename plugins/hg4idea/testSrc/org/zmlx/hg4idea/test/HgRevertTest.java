@@ -1,5 +1,6 @@
 package org.zmlx.hg4idea.test;
 
+import com.intellij.openapi.vfs.CharsetToolkit;
 import org.junit.Test;
 import org.zmlx.hg4idea.HgRevisionNumber;
 import org.zmlx.hg4idea.command.HgCatCommand;
@@ -28,7 +29,8 @@ public class HgRevertTest extends HgSingleUserTest {
     HgCatCommand catCommand = new HgCatCommand(myProject);
     HgCommandResult result = catCommand.execute(getHgFile("file.txt"), null, Charset.defaultCharset());
     assertNotNull(result);
-    assertEquals("initial contents", result.getRawOutput());
+    assertEquals("Wrong cat output: " + result.getRawOutput() + "with error:" + result.getRawError(), "initial contents",
+                 new String(result.getBytesOutput(), CharsetToolkit.UTF8_CHARSET));
   }
 
 
@@ -48,7 +50,7 @@ public class HgRevertTest extends HgSingleUserTest {
     HgCatCommand catCommand = new HgCatCommand(myProject);
     HgCommandResult result = catCommand.execute(getHgFile("file.txt"), HgRevisionNumber.getLocalInstance("0"), Charset.defaultCharset());
     assertNotNull(result);
-    assertEquals("initial contents", result.getRawOutput());
+    assertEquals("Wrong cat output: " + result.getRawOutput() + "with error:" + result.getRawError(), "initial contents",
+                 new String(result.getBytesOutput(), CharsetToolkit.UTF8_CHARSET));
   }
-
 }

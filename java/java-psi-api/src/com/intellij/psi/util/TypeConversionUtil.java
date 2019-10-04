@@ -721,7 +721,11 @@ public class TypeConversionUtil {
                                       @NotNull PsiType right,
                                       boolean allowUncheckedConversion,
                                       boolean capture) {
-    if (left == right || left.equals(right)) return true;
+    if (left == right) return true;
+    if (left instanceof PsiClassType && left.equalsToText(JAVA_LANG_OBJECT)) {
+      if (right instanceof PsiMethodReferenceType || right instanceof PsiLambdaExpressionType) return false;
+    }
+    if (left.equals(right)) return true;
 
     if (isNullType(right)) {
       return !(left instanceof PsiPrimitiveType) || isNullType(left);

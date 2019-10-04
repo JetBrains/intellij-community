@@ -18,7 +18,6 @@ package com.intellij.psi.impl.smartPointers;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiSubstitutorImpl;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.NullableFunction;
@@ -143,7 +142,7 @@ public class SmartTypePointerManagerImpl extends SmartTypePointerManager {
           resurrected.put(typeParameter, null);
         }
       }
-      final PsiSubstitutor resurrectedSubstitutor = PsiSubstitutorImpl.createSubstitutor(resurrected);
+      final PsiSubstitutor resurrectedSubstitutor = PsiSubstitutor.createSubstitutor(resurrected);
 
       PsiAnnotation[] resurrectedAnnotations = Stream.of(myAnnotations).map(SmartPsiElementPointer::getElement).filter(Objects::nonNull).toArray(PsiAnnotation[]::new);
       return new PsiImmediateClassType((PsiClass)classElement, resurrectedSubstitutor, myLevel, resurrectedAnnotations);
@@ -215,7 +214,7 @@ public class SmartTypePointerManagerImpl extends SmartTypePointerManager {
 
       LanguageLevel languageLevel = classType.getLanguageLevel();
       return new ClassTypePointer(new PsiImmediateClassType(aClass,
-                                                            PsiSubstitutorImpl.createSubstitutor(map),
+                                                            PsiSubstitutor.createSubstitutor(map),
                                                             languageLevel,
                                                             classType.getAnnotations()),
                                   myPsiPointerManager.createSmartPsiElementPointer(aClass),

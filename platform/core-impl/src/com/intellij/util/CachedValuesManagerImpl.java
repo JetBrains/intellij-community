@@ -41,15 +41,6 @@ public class CachedValuesManagerImpl extends CachedValuesManager {
                               @NotNull Key<CachedValue<T>> key,
                               @NotNull CachedValueProvider<T> provider,
                               boolean trackValue) {
-    return dataHolder instanceof UserDataHolderEx
-           ? getCachedValueFromExHolder((UserDataHolderEx)dataHolder, key, provider, trackValue)
-           : getCachedValueFromHolder(dataHolder, key, provider, trackValue);
-  }
-
-  private <T> T getCachedValueFromExHolder(@NotNull UserDataHolderEx dataHolder,
-                                           @NotNull Key<CachedValue<T>> key,
-                                           @NotNull CachedValueProvider<T> provider,
-                                           boolean trackValue) {
     CachedValue<T> value = dataHolder.getUserData(key);
     if (value instanceof CachedValueBase && ((CachedValueBase)value).isFromMyProject(myProject)) {
       Getter<T> data = value.getUpToDateOrNull();
@@ -59,35 +50,27 @@ public class CachedValuesManagerImpl extends CachedValuesManager {
 
       CachedValueStabilityChecker.checkProvidersEquivalent(provider, value.getValueProvider(), key);
     }
-    while (isOutdated(value)) {
-      if (dataHolder.replace(key, value, null)) {
-        value = null;
-        break;
-      }
-      value = dataHolder.getUserData(key);
-    }
     if (value == null) {
-      value = dataHolder.putUserDataIfAbsent(key, freshCachedValue(dataHolder, key, provider, trackValue));
+      value = saveInUserData(dataHolder, key, freshCachedValue(dataHolder, key, provider, trackValue));
     }
     return value.getValue();
   }
 
-  private <T> T getCachedValueFromHolder(@NotNull UserDataHolder dataHolder,
-                                         @NotNull Key<CachedValue<T>> key,
-                                         @NotNull CachedValueProvider<T> provider, boolean trackValue) {
-    CachedValue<T> value;
+  private static <T> CachedValue<T> saveInUserData(@NotNull UserDataHolder dataHolder,
+                                                   @NotNull Key<CachedValue<T>> key, CachedValue<T> value) {
+    if (dataHolder instanceof UserDataHolderEx) {
+      return ((UserDataHolderEx)dataHolder).putUserDataIfAbsent(key, value);
+    }
+
     //noinspection SynchronizationOnLocalVariableOrMethodParameter
     synchronized (dataHolder) {
-      value = dataHolder.getUserData(key);
-      if (isOutdated(value)) {
-        value = null;
+      CachedValue<T> existing = dataHolder.getUserData(key);
+      if (existing != null) {
+        return existing;
       }
-      if (value == null) {
-        value = freshCachedValue(dataHolder, key, provider, trackValue);
-        dataHolder.putUserData(key, value);
-      }
+      dataHolder.putUserData(key, value);
+      return value;
     }
-    return value.getValue();
   }
 
   private <T> CachedValue<T> freshCachedValue(UserDataHolder dh, Key<CachedValue<T>> key, CachedValueProvider<T> provider, boolean trackValue) {
@@ -95,15 +78,6 @@ public class CachedValuesManagerImpl extends CachedValuesManager {
     CachedValue<T> value = createCachedValue(provider, trackValue);
     assert ((CachedValueBase)value).isFromMyProject(myProject);
     return value;
-  }
-
-  private boolean isOutdated(CachedValue<?> value) {
-    return value instanceof CachedValueBase &&
-           (!((CachedValueBase)value).isFromMyProject(myProject) || hasOutdatedValue((CachedValueBase)value));
-  }
-
-  private static boolean hasOutdatedValue(CachedValueBase base) {
-    return !base.hasUpToDateValue() && base.getRawData() != null;
   }
 
 }

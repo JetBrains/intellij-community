@@ -88,26 +88,6 @@ public class Patches {
   public static final boolean JDK_MAC_FONT_STYLE_BUG = SystemInfo.isMac && !SystemInfo.isJavaVersionAtLeast(8, 0, 60);
 
   /**
-   * On macOS, font ligatures are not supported for natively loaded fonts, a font needs to be loaded explicitly by JDK.
-   */
-  public static final boolean JDK_BUG_ID_7162125;
-  static {
-    boolean value;
-    if (!SystemInfo.isMac || SystemInfo.IS_AT_LEAST_JAVA9) value = false;
-    else if (!SystemInfo.isJetBrainsJvm) value = true;
-    else {
-      try {
-        Class.forName("sun.font.CCompositeFont");
-        value = Boolean.getBoolean("disable.font.substitution");
-      }
-      catch (Throwable e) {
-        value = true;
-      }
-    }
-    JDK_BUG_ID_7162125 = value;
-  }
-
-  /**
    * XToolkit.getScreenInsets() may be very slow.
    * See https://bugs.openjdk.java.net/browse/JDK-8004103.
    */

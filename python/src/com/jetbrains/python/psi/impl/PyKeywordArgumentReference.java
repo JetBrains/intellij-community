@@ -15,10 +15,15 @@
  */
 package com.jetbrains.python.psi.impl;
 
+import com.intellij.codeInsight.completion.CompletionUtil;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.references.KeywordArgumentCompletionUtil;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,6 +41,20 @@ public class PyKeywordArgumentReference extends PsiReferenceBase.Poly<PyKeywordA
 
   @NotNull
   @Override
+  public Object[] getVariants() {
+    final PyKeywordArgument originalElement = CompletionUtil.getOriginalElement(myElement);
+    if (originalElement != null) {
+      final List<LookupElement> ret = new ArrayList<>();
+      final TypeEvalContext evalCtx = TypeEvalContext.codeCompletion(originalElement.getProject(), originalElement.getContainingFile());
+      KeywordArgumentCompletionUtil.collectFunctionArgNames(originalElement, ret, evalCtx, false);
+      return ret.toArray();
+    }
+
+    return ArrayUtil.EMPTY_OBJECT_ARRAY;
+  }
+
+  @NotNull
+  @Override
   public ResolveResult[] multiResolve(boolean incompleteCode) {
     final String keyword = myElement.getKeyword();
     if (keyword == null) {
@@ -47,7 +66,7 @@ public class PyKeywordArgumentReference extends PsiReferenceBase.Poly<PyKeywordA
     }
     final PyExpression callee = ((PyCallExpression)call).getCallee();
     if (callee == null) return ResolveResult.EMPTY_ARRAY;
-    final PsiPolyVariantReference calleeReference = (PsiPolyVariantReference) callee.getReference();
+    final PsiPolyVariantReference calleeReference = (PsiPolyVariantReference)callee.getReference();
     if (calleeReference == null) return ResolveResult.EMPTY_ARRAY;
     final ResolveResult[] calleeCandidates = calleeReference.multiResolve(incompleteCode);
     List<ResolveResult> resultList = new ArrayList<>();

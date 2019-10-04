@@ -25,6 +25,9 @@ public class VariableImpl implements Variable {
 
   private final ValueModifier valueModifier;
 
+  // Workaround for 'set value in local scope'chrome bug https://bugs.chromium.org/p/chromium/issues/detail?id=874865
+  private Boolean valueForced = false;
+
   public VariableImpl(@NotNull String name, @Nullable Value value, @Nullable ValueModifier valueModifier) {
     this.name = name;
     this.value = value;
@@ -55,6 +58,13 @@ public class VariableImpl implements Variable {
 
   @Override
   public void setValue(Value value) {
+    if (!valueForced) {
+      this.value = value;
+    }
+  }
+
+  public void forceValue(Value value) {
+    valueForced = true;
     this.value = value;
   }
 

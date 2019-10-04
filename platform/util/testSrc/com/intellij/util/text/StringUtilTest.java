@@ -863,4 +863,11 @@ public class StringUtilTest {
     assertEquals("", StringUtil.trim("\n   my string ", (ch) -> false));
     assertEquals("\n   my string ", StringUtil.trim("\n   my string ", (ch) -> true));
   }
+
+  @Test
+  public void testEscapeToRegexp() {
+    assertEquals("a\\nb", StringUtil.escapeToRegexp("a\nb"));
+    assertEquals("a\\&\\%\\$b", StringUtil.escapeToRegexp("a&%$b"));
+    assertEquals("\uD83D\uDE80", StringUtil.escapeToRegexp("\uD83D\uDE80"));
+  }
 }

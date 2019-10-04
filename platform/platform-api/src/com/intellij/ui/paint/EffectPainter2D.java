@@ -8,7 +8,6 @@ import com.intellij.ui.paint.PaintUtil.RoundingMode;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.StartupUiUtil;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.WavePainter2D;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -253,7 +252,7 @@ public enum EffectPainter2D implements RegionPainter2D<Font> {
       @Override
       void paintImage(Graphics2D g, double width, double height, double period) {
         Double round = period <= 2 && !JreHiDpiUtil.isJreHiDPI(g) ? null : period;
-        for (int dx = 0; dx < width; dx += period + period) {
+        for (int dx = 0; dx < width; dx += period * 2) {
           RectanglePainter2D.FILL.paint(g, dx, 0, period, period, round, LinePainter2D.StrokeType.INSIDE, 1, RenderingHints.VALUE_ANTIALIAS_DEFAULT);
         }
       }
@@ -313,7 +312,7 @@ public enum EffectPainter2D implements RegionPainter2D<Font> {
       }
     };
 
-    // we should not recalculate caches when IDEA is on Retina and non-Retina
+    // we should not recalculate caches when IDE is on Retina and non-Retina
     private final ConcurrentHashMap<Integer, BufferedImage> myNormalCache = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<Integer, BufferedImage> myHiDPICache = new ConcurrentHashMap<>();
 
@@ -349,7 +348,7 @@ public enum EffectPainter2D implements RegionPainter2D<Font> {
       int width = (int)period << (paint instanceof Color ? 8 : 1);
       if (width <= 0 || height <= 0) return null;
 
-      BufferedImage image = UIUtil.createImage(g, width, height, BufferedImage.TYPE_INT_ARGB, RoundingMode.FLOOR);
+      BufferedImage image = ImageUtil.createImage(g, width, height, BufferedImage.TYPE_INT_ARGB, RoundingMode.FLOOR);
       paintImage(image.createGraphics(), paint, width, height, period);
       return image;
     }

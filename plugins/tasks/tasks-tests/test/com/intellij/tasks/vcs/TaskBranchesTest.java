@@ -26,7 +26,7 @@ import com.intellij.tasks.TaskManager;
 import com.intellij.tasks.actions.OpenTaskDialog;
 import com.intellij.tasks.impl.LocalTaskImpl;
 import com.intellij.tasks.impl.TaskManagerImpl;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.RunAll;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -38,7 +38,7 @@ import java.util.List;
 /**
  * @author Dmitry Avdeev
  */
-public abstract class TaskBranchesTest extends PlatformTestCase {
+public abstract class TaskBranchesTest extends HeavyPlatformTestCase {
 
   private TaskManagerImpl myTaskManager;
 

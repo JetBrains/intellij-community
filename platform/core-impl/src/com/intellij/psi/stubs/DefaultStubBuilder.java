@@ -88,7 +88,7 @@ public class DefaultStubBuilder implements StubBuilder {
     }
 
     @Nullable
-    private StubElement createStub(StubElement parentStub, ASTNode node) {
+    protected StubElement createStub(StubElement parentStub, ASTNode node) {
       IElementType nodeType = node.getElementType();
 
       if (nodeType instanceof IStubElementType) {

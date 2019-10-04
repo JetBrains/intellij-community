@@ -1,10 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application.impl;
 
+import com.intellij.diagnostic.LoadingPhase;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
@@ -91,9 +91,11 @@ public class LaterInvocator {
   @NotNull
   static ModalityStateEx modalityStateForWindow(@NotNull Window window) {
     return ourWindowModalities.computeIfAbsent(window, __ -> {
-      for (ModalityStateEx state : ourModalityStack) {
-        if (state.getModalEntities().contains(window)) {
-          return state;
+      synchronized (ourModalityStack) {
+        for (ModalityStateEx state : ourModalityStack) {
+          if (state.getModalEntities().contains(window)) {
+            return state;
+          }
         }
       }
 
@@ -200,9 +202,11 @@ public class LaterInvocator {
     ourModalityStateMulticaster.getMulticaster().beforeModalityStateChanged(true);
 
     ourModalEntities.add(modalEntity);
-    ourModalityStack.push(appendedState);
+    synchronized (ourModalityStack) {
+      ourModalityStack.push(appendedState);
+    }
 
-    TransactionGuardImpl guard = ApplicationManagerEx.isAppLoaded() ? (TransactionGuardImpl)TransactionGuard.getInstance() : null;
+    TransactionGuardImpl guard = LoadingPhase.COMPONENT_LOADED.isComplete() ? (TransactionGuardImpl)TransactionGuard.getInstance() : null;
     if (guard != null) {
       guard.enteredModality(appendedState);
     }
@@ -247,11 +251,7 @@ public class LaterInvocator {
     int index = ourModalEntities.indexOf(dialog);
 
     if (index != -1) {
-      ourModalEntities.remove(index);
-      ourModalityStack.remove(index + 1);
-      for (int i = 1; i < ourModalityStack.size(); i++) {
-        ourModalityStack.get(i).removeModality(dialog);
-      }
+      removeModality(dialog, index);
     } else if (project != null) {
       List<Dialog> dialogs = projectToModalEntities.get(project);
       int perProjectIndex = dialogs.indexOf(dialog);
@@ -266,6 +266,16 @@ public class LaterInvocator {
 
     reincludeSkippedItems();
     requestFlush();
+  }
+
+  private static void removeModality(@NotNull Object modalEntity, int index) {
+    ourModalEntities.remove(index);
+    synchronized (ourModalityStack) {
+      ourModalityStack.remove(index + 1);
+      for (int i = 1; i < ourModalityStack.size(); i++) {
+        ourModalityStack.get(i).removeModality(modalEntity);
+      }
+    }
   }
 
   private static void reincludeSkippedItems() {
@@ -288,11 +298,7 @@ public class LaterInvocator {
 
     int index = ourModalEntities.indexOf(modalEntity);
     LOG.assertTrue(index >= 0);
-    ourModalEntities.remove(index);
-    ourModalityStack.remove(index + 1);
-    for (int i = 1; i < ourModalityStack.size(); i++) {
-      ourModalityStack.get(i).removeModality(modalEntity);
-    }
+    removeModality(modalEntity, index);
 
     reincludeSkippedItems();
     requestFlush();
@@ -317,7 +323,9 @@ public class LaterInvocator {
   @NotNull
   public static ModalityStateEx getCurrentModalityState() {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    return ourModalityStack.peek();
+    synchronized (ourModalityStack) {
+      return ourModalityStack.peek();
+    }
   }
 
   public static boolean isInModalContextForProject(final Project project) {

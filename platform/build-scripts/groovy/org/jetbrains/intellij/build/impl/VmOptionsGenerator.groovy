@@ -23,7 +23,7 @@ Android Studio: removed by Change Ie7351d92 */
       '-XX:+HeapDumpOnOutOfMemoryError',
       '-XX:-OmitStackTraceInFastThrow',
 Android Studio: removed by Change Ie7351d92 */
-      '-Djdk.attach.allowAttachSelf',
+      '-Djdk.attach.allowAttachSelf=true',
       '-Dkotlinx.coroutines.debug=off',
       '-Djdk.module.illegalAccess.silent=true',
       '-Djna.nosys=true',  // Android Studio: added by Change Ie7351d92

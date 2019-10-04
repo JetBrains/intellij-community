@@ -35,7 +35,7 @@ public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl impl
     return "CollectionChildDescription:" + getXmlName();
   }
 
-  List<XmlTag> getCollectionSubTags(DomInvocationHandler<?,?> handler, @NotNull XmlTag tag, boolean processIncludes) {
+  List<XmlTag> getCollectionSubTags(DomInvocationHandler handler, @NotNull XmlTag tag, boolean processIncludes) {
     return DomImplUtil.findSubTags(tag, handler.createEvaluatedXmlName(getXmlName()), handler.getFile(), processIncludes);
   }
 
@@ -81,7 +81,7 @@ public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl impl
   @Override
   @NotNull
   public List<? extends DomElement> getValues(@NotNull final DomElement element) {
-    final DomInvocationHandler<?,?> handler = DomManagerImpl.getDomInvocationHandler(element);
+    final DomInvocationHandler handler = DomManagerImpl.getDomInvocationHandler(element);
     if (handler != null) {
       return handler.getCollectionChildren(this);
     }
@@ -89,7 +89,7 @@ public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl impl
     if (getterMethod == null) {
       final Collection<DomElement> collection = ModelMergerUtil.getFilteredImplementations(element);
       return ContainerUtil.concat(collection, (Function<DomElement, Collection<? extends DomElement>>)domElement -> {
-        final DomInvocationHandler<?,?> handler1 = DomManagerImpl.getDomInvocationHandler(domElement);
+        final DomInvocationHandler handler1 = DomManagerImpl.getDomInvocationHandler(domElement);
         assert handler1 != null : domElement;
         return handler1.getCollectionChildren(this);
       });

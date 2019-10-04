@@ -1,3 +1,12 @@
+## 10
+* Instant events in Trace Event Format.
+
+## 9
+* icon stats.
+
+## 8
+* compute own time for services.
+
 ## 7
 * add `icons`.
 * split post-startup activities into dumb-aware and edt.

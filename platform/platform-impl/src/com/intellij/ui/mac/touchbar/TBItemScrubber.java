@@ -14,6 +14,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 class TBItemScrubber extends TBItem implements NSTLibrary.ScrubberDelegate {
@@ -35,7 +36,7 @@ class TBItemScrubber extends TBItem implements NSTLibrary.ScrubberDelegate {
 
       final int chunkSize = 25;
       final int newItemsCount = Math.min(chunkSize, myItems.size() - myNativeItemsCount);
-      NST.appendScrubberItems(myNativePeer, myItems, myNativeItemsCount, newItemsCount);
+      NST.updateScrubberItems(myNativePeer, myItems, myNativeItemsCount, newItemsCount);
       myNativeItemsCount += newItemsCount;
       return newItemsCount;
     };
@@ -59,6 +60,27 @@ class TBItemScrubber extends TBItem implements NSTLibrary.ScrubberDelegate {
     return this;
   }
 
+  void enableItems(Collection<Integer> indices, boolean enabled) {
+    if (indices == null || indices.isEmpty())
+      return;
+
+    for (int c = 0; c < myItems.size(); ++c) {
+      if (!indices.contains(c))
+        continue;
+      final ItemData id = myItems.get(c);
+      id.myEnabled = enabled;
+    }
+
+    if (myNativePeer == ID.NIL)
+      return;
+
+    NST.enableScrubberItems(myNativePeer, indices, enabled);
+  }
+
+  void showItems(Collection<Integer> indices, boolean visible, boolean inverseOthers) {
+    NST.showScrubberItem(myNativePeer, indices, visible, inverseOthers);
+  }
+
   // NOTE: scrubber is immutable container => update doesn't called => _create/_update can be unsyncronized
 
   @Override
@@ -69,7 +91,9 @@ class TBItemScrubber extends TBItem implements NSTLibrary.ScrubberDelegate {
   @Override
   protected ID _createNativePeer() {
     myNativeItemsCount = myItems == null || myItems.isEmpty() ? 0 : Math.min(30, myItems.size());
-    return NST.createScrubber(myUid, myWidth, this, myUpdater, myItems, myNativeItemsCount);
+    final ID result = NST.createScrubber(myUid, myWidth, this, myUpdater, myItems, myNativeItemsCount);
+    NST.enableScrubberItems(result, _getDisabledIndices(), false);
+    return result;
   }
 
   @Override
@@ -81,6 +105,15 @@ class TBItemScrubber extends TBItem implements NSTLibrary.ScrubberDelegate {
       id.myAction.run();
   }
 
+  private List<Integer> _getDisabledIndices() {
+    final List<Integer> disabled = new ArrayList<>();
+    for (int c = 0; c < myItems.size(); ++c) {
+      if (!myItems.get(c).myEnabled)
+        disabled.add(c);
+    }
+    return disabled;
+  }
+
   static class ItemData {
     private byte[] myTextBytes; // cache
 
@@ -88,6 +121,7 @@ class TBItemScrubber extends TBItem implements NSTLibrary.ScrubberDelegate {
     final String myText;
     final Runnable myAction;
     final float fMulX;
+    boolean myEnabled = true;
 
     ItemData(Icon icon, String text, Runnable action) {
       this.myIcon = icon;

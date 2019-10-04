@@ -21,7 +21,12 @@ public class ValidateXmlAction extends AnAction {
   public ValidateXmlAction() {
   }
 
-  private ValidateXmlActionHandler getHandler(final @NotNull PsiFile file) {
+  private ValidateXmlHandler getHandler(final @NotNull PsiFile file) {
+    for (ValidateXmlHandler handler : ValidateXmlHandler.EP_NAME.getExtensionList()) {
+      if (handler.isAvailable((XmlFile)file)) {
+        return handler;
+      }
+    }
     ValidateXmlActionHandler handler = new ValidateXmlActionHandler(true);
     handler.setErrorReporter(new StdErrorReporter(handler, file, () -> doRunAction(file)));
     return handler;

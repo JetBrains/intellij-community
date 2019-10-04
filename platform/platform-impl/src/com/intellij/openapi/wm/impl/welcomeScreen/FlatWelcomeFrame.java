@@ -8,7 +8,8 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.dnd.FileCopyPasteUtil;
 import com.intellij.ide.impl.ProjectUtil;
-import com.intellij.ide.plugins.InstalledPluginsManagerMain;
+import com.intellij.ide.plugins.PluginDropHandler;
+import com.intellij.idea.SplashManager;
 import com.intellij.jdkEx.JdkEx;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.impl.IdeNotificationArea;
@@ -85,10 +86,12 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
   private boolean myDisposed;
 
   public FlatWelcomeFrame() {
-    final JRootPane rootPane = getRootPane();
+    SplashManager.hideBeforeShow(this);
+
+    JRootPane rootPane = getRootPane();
     myScreen = new FlatWelcomeScreen();
 
-    final IdeGlassPaneImpl glassPane = new IdeGlassPaneImpl(rootPane) {
+    IdeGlassPaneImpl glassPane = new IdeGlassPaneImpl(rootPane) {
       @Override
       public void addNotify() {
         super.addNotify();
@@ -106,14 +109,15 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       setContentPane(holder.getContent());
 
       defaultHeight+=holder.getHeaderHeight();
-    } else {
+    }
+    else {
       setContentPane(myScreen.getWelcomePanel());
     }
 
     setTitle(getWelcomeFrameTitle());
     AppUIUtil.updateWindowIcon(this);
-    final int width = RecentProjectsManager.getInstance().getRecentProjectsActions(false).length == 0 ? 666 : MAX_DEFAULT_WIDTH;
 
+    int width = RecentProjectsManager.getInstance().getRecentProjectsActions(false).length == 0 ? 666 : MAX_DEFAULT_WIDTH;
     getRootPane().setPreferredSize(JBUI.size(width, defaultHeight));
     setResizable(false);
 
@@ -147,6 +151,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     Disposer.register(ApplicationManager.getApplication(), this);
 
     UIUtil.decorateWindowHeader(getRootPane());
+    UIUtil.setCustomTitleBar(this, getRootPane(), runnable -> Disposer.register(this, () -> runnable.run()));
   }
 
   @Override
@@ -307,7 +312,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
           Transferable transferable = e.getTransferable();
           List<File> list = FileCopyPasteUtil.getFileList(transferable);
           if (list != null && list.size() > 0) {
-            InstalledPluginsManagerMain.PluginDropHandler pluginHandler = new InstalledPluginsManagerMain.PluginDropHandler();
+            PluginDropHandler pluginHandler = new PluginDropHandler();
             if (!pluginHandler.canHandle(transferable, null) || !pluginHandler.handleDrop(transferable, null, null)) {
               ProjectUtil.tryOpenFileList(null, list, "WelcomeFrame");
             }
@@ -507,7 +512,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
             icon = JBUI.scale(EmptyIcon.create(16));
           }
           action = wrapGroups(action);
-          ActionLink link = new ActionLink(text, icon, action, createUsageTracker(action));
+          ActionLink link = new ActionLink(text, icon, action, null, ActionPlaces.WELCOME_SCREEN);
           // Don't allow focus, as the containing panel is going to focusable.
           link.setFocusable(false);
           link.setPaintUnderline(false);
@@ -840,11 +845,6 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
 
   public static boolean isUseProjectGroups() {
     return Registry.is("welcome.screen.project.grouping.enabled");
-  }
-
-  private static Runnable createUsageTracker(final AnAction action) {
-    return () -> {
-    };
   }
 
   private static JLabel createArrow(final ActionLink link) {

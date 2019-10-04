@@ -1278,7 +1278,7 @@ public class MavenProjectsTree {
         embeddersManager.release(embedder);
       }
 
-      MavenUtil.restartConfigHighlightning(mavenProjects);
+      MavenUtil.restartConfigHighlightning(project, mavenProjects);
     }
   }
 

@@ -12,7 +12,6 @@ import org.junit.Test;
 import javax.swing.*;
 import java.awt.*;
 
-@SuppressWarnings("SuspiciousPackagePrivateAccess")
 public class TreeControlPainterTest {
   @ClassRule
   public static final RestoreScaleRule MANAGE_STATE = new RestoreScaleRule();

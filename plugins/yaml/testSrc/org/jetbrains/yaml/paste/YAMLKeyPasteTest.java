@@ -9,6 +9,7 @@ import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.yaml.smart.YAMLEditorOptions;
 
 import java.awt.datatransfer.StringSelection;
 
@@ -135,6 +136,17 @@ public class YAMLKeyPasteTest extends BasePlatformTestCase {
   // It is disputable behaviour
   public void testPasteKeysWithLeadingDot() {
     doTest(".leading.subKey");
+  }
+
+  public void testDoNotPasteWithOptionDisabled() {
+    assert YAMLEditorOptions.getInstance().isUseSmartPaste();
+    try {
+      YAMLEditorOptions.getInstance().setUseSmartPaste(false);
+      doTest("next.subKey");
+    }
+    finally {
+      YAMLEditorOptions.getInstance().setUseSmartPaste(true);
+    }
   }
 
   private void doTest(@NotNull String pasteText) {

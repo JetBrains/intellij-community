@@ -1123,7 +1123,12 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
             //  assertThreadSuspended(thread, context);
             if (!Patches.IBM_JDK_DISABLE_COLLECTION_BUG) {
               // ensure args are not collected
-              StreamEx.of(myArgs).select(ObjectReference.class).forEach(DebuggerUtilsEx::enableCollection);
+              for (Value arg : myArgs) {
+                if (arg instanceof ObjectReference) {
+                  getManagerThread()
+                    .schedule(PrioritizedTask.Priority.LOWEST, () -> DebuggerUtilsEx.enableCollection((ObjectReference)arg));
+                }
+              }
             }
           }
         }

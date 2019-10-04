@@ -36,10 +36,7 @@ import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.breadcrumbs.NavigatableCrumb;
 import gnu.trove.TIntFunction;
-import org.jetbrains.annotations.CalledInAwt;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.awt.*;
 import java.util.List;
@@ -973,15 +970,22 @@ public class FoldingModelSupport {
       }
 
       @Nullable
+      @CalledInBackground
       private String computeDescription() {
         try {
           ProgressManager.checkCanceled();
 
           FoldRegion region = myRegions[myIndex];
-          if (region == null || !region.isValid()) return null;
+          if (region == null) return null;
 
-          int startLine = myEditors[myIndex].getDocument().getLineNumber(region.getStartOffset());
-          int endLine = myEditors[myIndex].getDocument().getLineNumber(region.getEndOffset());
+          // Regions can be disposed without taking WriteLock
+          int startOffset = region.getStartOffset();
+          int endOffset = region.getEndOffset();
+          if (startOffset == -1 || endOffset == -1) return null;
+          if (!region.isValid()) return null;
+
+          int startLine = myEditors[myIndex].getDocument().getLineNumber(startOffset);
+          int endLine = myEditors[myIndex].getDocument().getLineNumber(endOffset);
           return getRangeDescription(myProject, startLine, endLine, myIndex, myDescriptionComputer);
         }
         catch (ProcessCanceledException e) {

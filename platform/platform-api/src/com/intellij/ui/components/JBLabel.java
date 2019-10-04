@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components;
 
 import com.intellij.ide.ui.UISettings;
@@ -17,6 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
+import javax.swing.event.HyperlinkListener;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.DefaultCaret;
 import javax.swing.text.EditorKit;
@@ -228,6 +229,14 @@ public class JBLabel extends JLabel implements AnchorableComponent, JBComponent<
   }
 
   /**
+   * This listener will be used in 'copyable' mode when a link is updated (clicked, entered, etc.).
+   */
+  @NotNull
+  protected HyperlinkListener createHyperlinkListener() {
+    return BrowserHyperlinkListener.INSTANCE;
+  }
+
+  /**
    * In 'copyable' mode JBLabel has the same appearance but user can select text with mouse and copy it to clipboard with standard shortcut.
    * By default JBLabel is NOT copyable
    * Also 'copyable' label supports web hyperlinks (e.g. opens browser on click)
@@ -283,7 +292,7 @@ public class JBLabel extends JLabel implements AnchorableComponent, JBComponent<
         myEditorPane.setEditable(false);
         myEditorPane.setBackground(UIUtil.TRANSPARENT_COLOR);
         myEditorPane.setOpaque(false);
-        myEditorPane.addHyperlinkListener(BrowserHyperlinkListener.INSTANCE);
+        myEditorPane.addHyperlinkListener(createHyperlinkListener());
         UIUtil.putClientProperty(myEditorPane, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, Collections.singleton(ellipsisLabel));
 
         myEditorPane.setEditorKit(UIUtil.getHTMLEditorKit());

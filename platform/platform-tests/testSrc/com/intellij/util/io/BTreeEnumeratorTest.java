@@ -15,7 +15,6 @@ import java.util.*;
 
 import static org.junit.Assert.*;
 
-@SuppressWarnings("SuspiciousPackagePrivateAccess")
 public class BTreeEnumeratorTest {
   private static final Logger LOG = Logger.getInstance(BTreeEnumeratorTest.class);
 

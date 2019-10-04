@@ -350,6 +350,14 @@ class Test88 {
     myFixture.assertPreferredCompletionItems 0, 'Strings::goo'
   }
 
+  void testOnlyAccessibleClassesInChainedMethodReference() {
+    configureByTestName()
+    def p = LookupElementPresentation.renderElement(assertOneElement(myFixture.lookupElements))
+    assert p.itemText == 'Entry::getKey'
+    assert p.tailText == ' java.util.Map'
+    assert !p.typeText
+  }
+
   void testPreferVariableToLambda() {
     configureByTestName()
     myFixture.assertPreferredCompletionItems 0, 'output', 'out -> '

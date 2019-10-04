@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.authentication.util
 
 import com.intellij.openapi.application.ApplicationNamesInfo
@@ -8,7 +8,7 @@ import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequests
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.api.data.GithubAuthorization
-import org.jetbrains.plugins.github.api.requests.GithubRequestPagination
+import org.jetbrains.plugins.github.api.data.request.GithubRequestPagination
 import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader
 import org.jetbrains.plugins.github.exceptions.GithubStatusCodeException
 import java.io.IOException
@@ -43,7 +43,8 @@ class GithubTokenCreator(private val server: GithubServerPath,
 
   private fun createUniqueNote(note: String): String {
     val existingNotes = GithubApiPagesLoader
-      .loadAll(executor, indicator, GithubApiRequests.Auth.pages(server, GithubRequestPagination()))
+      .loadAll(executor, indicator, GithubApiRequests.Auth.pages(server,
+                                                                 GithubRequestPagination()))
       .mapNotNull { it.note }
 
     val index = findNextDeduplicationIndex(note, existingNotes)

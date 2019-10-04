@@ -162,6 +162,7 @@ abstract class GitCommitEditingAction : DumbAwareAction() {
       REBASING -> "rebase"
       MERGING -> "merge"
       GRAFTING -> "cherry-pick"
+      REVERTING -> "revert"
       else -> state
     }
     return "Can't $operation during $stateName"

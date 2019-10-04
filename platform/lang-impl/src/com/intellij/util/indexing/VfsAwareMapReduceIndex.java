@@ -12,6 +12,7 @@ import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.cache.impl.id.IdIndex;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.impl.*;
@@ -24,11 +25,13 @@ import gnu.trove.THashSet;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
 
 /**
  * @author Eugene Zhuravlev
@@ -67,16 +70,19 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
          snapshotInputMappings != null ? new SharedIntMapForwardIndex(extension, snapshotInputMappings.getInputIndexStorageFile(), true)
                                        : getForwardIndexMap(extension),
          snapshotInputMappings != null ? snapshotInputMappings.getForwardIndexAccessor() : getForwardIndexAccessor(extension),
-         snapshotInputMappings);
+         snapshotInputMappings, null);
   }
 
-  protected VfsAwareMapReduceIndex(@NotNull IndexExtension<Key, Value, Input> extension,
-                                   @NotNull IndexStorage<Key, Value> storage,
-                                   @Nullable ForwardIndex forwardIndexMap,
-                                   @Nullable ForwardIndexAccessor<Key, Value> forwardIndexAccessor,
-                                   @Nullable SnapshotInputMappingIndex<Key, Value, Input> snapshotInputMappings) {
-    super(extension, storage, forwardIndexMap, forwardIndexAccessor, null);
-    SharedIndicesData.registerIndex((ID<Key, Value>)myIndexId, extension);
+  public VfsAwareMapReduceIndex(@NotNull IndexExtension<Key, Value, Input> extension,
+                                @NotNull IndexStorage<Key, Value> storage,
+                                @Nullable ForwardIndex forwardIndexMap,
+                                @Nullable ForwardIndexAccessor<Key, Value> forwardIndexAccessor,
+                                @Nullable SnapshotInputMappingIndex<Key, Value, Input> snapshotInputMappings,
+                                @Nullable ReadWriteLock lock) {
+    super(extension, storage, forwardIndexMap, forwardIndexAccessor, lock);
+    if (myIndexId instanceof ID) {
+      SharedIndicesData.registerIndex((ID<Key, Value>)myIndexId, extension);
+    }
     mySnapshotInputMappings = IndexImporterMappingIndex.wrap(snapshotInputMappings, extension);
     myUpdateMappings = snapshotInputMappings instanceof UpdatableSnapshotInputMappingIndex;
     installMemoryModeListener();
@@ -211,11 +217,31 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
     removeTransientDataForKeys(inputId, map.keySet());
   }
 
+  @Override
   public void removeTransientDataForKeys(int inputId, @NotNull Collection<? extends Key> keys) {
     MemoryIndexStorage memoryIndexStorage = (MemoryIndexStorage)getStorage();
     for (Key key : keys) {
       memoryIndexStorage.clearMemoryMapForId(key, inputId);
     }
+  }
+
+  @Override
+  public void setBufferingEnabled(boolean enabled) {
+    ((MemoryIndexStorage)getStorage()).setBufferingEnabled(enabled);
+  }
+
+  @Override
+  public void cleanupMemoryStorage() {
+    MemoryIndexStorage memStorage = (MemoryIndexStorage)getStorage();
+    ConcurrencyUtil.withLock(getWriteLock(), () -> memStorage.clearMemoryMap());
+    memStorage.fireMemoryStorageCleared();
+  }
+
+  @TestOnly
+  @Override
+  public void cleanupForNextTest() {
+    MemoryIndexStorage memStorage = (MemoryIndexStorage)getStorage();
+    ConcurrencyUtil.withLock(getReadLock(), () -> memStorage.clearCaches());
   }
 
   @Override
@@ -248,7 +274,7 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
       if (map != null) return map;
     }
     if (getForwardIndexAccessor() instanceof AbstractMapForwardIndexAccessor) {
-      ByteArraySequence serializedInputData = getForwardIndexMap().get(fileId);
+      ByteArraySequence serializedInputData = getForwardIndex().get(fileId);
       AbstractMapForwardIndexAccessor<Key, Value, ?> forwardIndexAccessor = (AbstractMapForwardIndexAccessor<Key, Value, ?>)getForwardIndexAccessor();
       return forwardIndexAccessor.convertToInputDataMap(serializedInputData);
     }

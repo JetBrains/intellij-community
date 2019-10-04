@@ -1,14 +1,14 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.vcs.changes.ui;
 
-import com.intellij.openapi.components.ServiceKt;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.*;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,7 +32,8 @@ public class ChangesBrowserChangeListNode extends ChangesBrowserNode<ChangeList>
     super(userObject);
     myChangeListRemoteState = changeListRemoteState;
     myClManager = (ChangeListManagerEx) ChangeListManager.getInstance(project);
-    myDecorators = ServiceKt.getComponents(project, ChangeListDecorator.class);
+    //noinspection deprecation
+    myDecorators = project.getComponentInstancesOfType(ChangeListDecorator.class);
   }
 
   @Override
@@ -52,7 +53,7 @@ public class ChangesBrowserChangeListNode extends ChangesBrowserNode<ChangeList>
       final String freezed = myClManager.isFreezed();
       if (freezed != null) {
         renderer.append(spaceAndThinSpace() + freezed, SimpleTextAttributes.GRAYED_ATTRIBUTES);
-      } 
+      }
       else if (myClManager.isInUpdate()) {
         appendUpdatingState(renderer);
       }
@@ -113,18 +114,18 @@ public class ChangesBrowserChangeListNode extends ChangesBrowserNode<ChangeList>
     final LocalChangeList dropList = (LocalChangeList)getUserObject();
     dragOwner.moveChangesTo(dropList, dragBean.getChanges());
 
-    final List<VirtualFile> toUpdate = new ArrayList<>();
+    final List<FilePath> toUpdate = new ArrayList<>();
 
     addIfNotNull(toUpdate, dragBean.getUnversionedFiles());
     addIfNotNull(toUpdate, dragBean.getIgnoredFiles());
     if (! toUpdate.isEmpty()) {
-      dragOwner.addUnversionedFiles(dropList, toUpdate);
+      dragOwner.addUnversionedFiles(dropList, ContainerUtil.mapNotNull(toUpdate, FilePath::getVirtualFile));
     }
   }
 
-  private static void addIfNotNull(final List<? super VirtualFile> unversionedFiles1, final List<? extends VirtualFile> ignoredFiles) {
+  private static void addIfNotNull(final List<? super FilePath> unversionedFiles, final List<? extends FilePath> ignoredFiles) {
     if (ignoredFiles != null) {
-      unversionedFiles1.addAll(ignoredFiles);
+      unversionedFiles.addAll(ignoredFiles);
     }
   }
 

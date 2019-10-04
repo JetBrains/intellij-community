@@ -227,7 +227,7 @@ internal class PasswordSafeConfigurableUi(private val mySettings: PasswordSafeSe
                 { getSelectedPgpKey() ?: pgpListModel.items.firstOrNull() },
                 { mySettings.state.pgpKeyId = if (usePgpKey.isSelected) it?.keyId else null },
                 growPolicy = GrowPolicy.MEDIUM_TEXT,
-                renderer = listCellRenderer { value, _, _ -> append("${value.userId} (${value.keyId})") }
+                renderer = listCellRenderer { value, _, _ -> setText("${value.userId} (${value.keyId})") }
               )
                 .enableIf(usePgpKey.selected)
                 .component

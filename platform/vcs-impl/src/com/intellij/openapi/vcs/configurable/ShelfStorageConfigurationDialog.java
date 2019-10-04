@@ -27,7 +27,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBCheckBox;
@@ -178,15 +177,10 @@ public class ShelfStorageConfigurationDialog extends DialogWrapper {
     super.doOKAction();
   }
 
-  private boolean checkAndIgnoreIfCreated(@NotNull String newPath) {
+  private static boolean checkAndIgnoreIfCreated(@NotNull String newPath) {
     File newDir = new File(newPath);
     if (newDir.exists()) return true;
     if (!newDir.mkdirs()) return false;
-    // new directory was successfully created -> should be ignored if under project
-    String basePath = myProject.getBasePath();
-    if (basePath != null && FileUtil.isAncestor(basePath, newPath, true)) {
-      ChangeListManager.getInstance(myProject).addDirectoryToIgnoreImplicitly(newDir.getAbsolutePath());
-    }
     return true;
   }
 

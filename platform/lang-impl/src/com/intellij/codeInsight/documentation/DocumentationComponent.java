@@ -4,6 +4,7 @@ package com.intellij.codeInsight.documentation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.hint.HintManagerImpl;
+import com.intellij.ui.WidthBasedLayout;
 import com.intellij.codeInsight.lookup.LookupEx;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.icons.AllIcons;
@@ -107,7 +108,7 @@ import java.net.URL;
 import java.util.List;
 import java.util.*;
 
-public class DocumentationComponent extends JPanel implements Disposable, DataProvider {
+public class DocumentationComponent extends JPanel implements Disposable, DataProvider, WidthBasedLayout {
 
   private static final Logger LOG = Logger.getInstance(DocumentationComponent.class);
   private static final String DOCUMENTATION_TOPIC_ID = "reference.toolWindows.Documentation";
@@ -121,7 +122,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
   private static final int PREFERRED_HEIGHT_MAX_EM = 10;
   private static final JBDimension MAX_DEFAULT = new JBDimension(650, 500);
-  private static final JBDimension MIN_DEFAULT = new JBDimension(300, 20);
+  private static final JBDimension MIN_DEFAULT = new JBDimension(300, Registry.is("editor.new.mouse.hover.popups") ? 36 : 20);
   private final ExternalDocAction myExternalDocAction;
 
   private DocumentationManager myManager;
@@ -265,6 +266,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
         }
       }
     };
+    boolean newLayout = Registry.is("editor.new.mouse.hover.popups");
     DataProvider helpDataProvider = dataId -> PlatformDataKeys.HELP_ID.is(dataId) ? DOCUMENTATION_TOPIC_ID : null;
     myEditorPane.putClientProperty(DataManager.CLIENT_PROPERTY_DATA_PROVIDER, helpDataProvider);
     myText = "";
@@ -276,106 +278,33 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
     else {
       myEditorPane.putClientProperty("caretWidth", 0); // do not reserve space for caret (making content one pixel narrower than component)
+      if (newLayout) {
+        UIUtil.doNotScrollToCaret(myEditorPane);
+      }
     }
     myEditorPane.setBackground(EditorColorsUtil.getGlobalOrDefaultColor(COLOR_KEY));
     HTMLEditorKit editorKit = new JBHtmlEditorKit(true) {
       @Override
       public ViewFactory getViewFactory() {
-        return new HTMLFactory() {
+        return new JBHtmlFactory() {
           @Override
           public View create(Element elem) {
+            AttributeSet attrs = elem.getAttributes();
             if ("icon".equals(elem.getName())) {
-              Object src = elem.getAttributes().getAttribute(HTML.Attribute.SRC);
+              Object src = attrs.getAttribute(HTML.Attribute.SRC);
               Icon icon = src != null ? IconLoader.findIcon((String)src, false) : null;
               if (icon == null) {
                 ModuleType id = ModuleTypeManager.getInstance().findByID((String)src);
                 if (id != null) icon = id.getIcon();
               }
               if (icon != null) {
-                Icon viewIcon = icon;
-                return new View(elem) {
-                  @Override
-                  public float getPreferredSpan(int axis) {
-                    switch (axis) {
-                      case View.X_AXIS:
-                        return viewIcon.getIconWidth();
-                      case View.Y_AXIS:
-                        return viewIcon.getIconHeight();
-                      default:
-                        throw new IllegalArgumentException("Invalid axis: " + axis);
-                    }
-                  }
-
-                  @Override
-                  public String getToolTipText(float x, float y, Shape allocation) {
-                     return (String)getElement().getAttributes().getAttribute(HTML.Attribute.ALT);
-                  }
-
-                  @Override
-                  public void paint(Graphics g, Shape allocation) {
-                    viewIcon.paintIcon(null, g, allocation.getBounds().x, allocation.getBounds().y - 4);
-                  }
-
-                  @Override
-                  public Shape modelToView(int pos, Shape a, Position.Bias b) throws BadLocationException {
-                    int p0 = getStartOffset();
-                    int p1 = getEndOffset();
-                    if ((pos >= p0) && (pos <= p1)) {
-                      Rectangle r = a.getBounds();
-                      if (pos == p1) {
-                        r.x += r.width;
-                      }
-                      r.width = 0;
-                      return r;
-                    }
-                    throw new BadLocationException(pos + " not in range " + p0 + "," + p1, pos);
-                  }
-
-                  @Override
-                  public int viewToModel(float x, float y, Shape a, Position.Bias[] bias) {
-                    Rectangle alloc = (Rectangle)a;
-                    if (x < alloc.x + (alloc.width / 2f)) {
-                      bias[0] = Position.Bias.Forward;
-                      return getStartOffset();
-                    }
-                    bias[0] = Position.Bias.Backward;
-                    return getEndOffset();
-                  }
-                };
+                return new MyIconView(elem, icon);
               }
             }
             View view = super.create(elem);
             if (view instanceof ImageView) {
               // we have to work with raw image, apply scaling manually
-              return new ImageView(elem) {
-                @Override
-                public float getMaximumSpan(int axis) {
-                  return super.getMaximumSpan(axis) / JBUIScale.sysScale(myEditorPane);
-                }
-
-                @Override
-                public float getMinimumSpan(int axis) {
-                  return super.getMinimumSpan(axis) / JBUIScale.sysScale(myEditorPane);
-                }
-
-                @Override
-                public float getPreferredSpan(int axis) {
-                  return super.getPreferredSpan(axis) / JBUIScale.sysScale(myEditorPane);
-                }
-
-                @Override
-                public void paint(Graphics g, Shape a) {
-                  Rectangle bounds = a.getBounds();
-                  int width = (int)super.getPreferredSpan(View.X_AXIS);
-                  int height = (int)super.getPreferredSpan(View.Y_AXIS);
-                  if (width <= 0 || height <= 0) return;
-                  @SuppressWarnings("UndesirableClassUsage")
-                  BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-                  Graphics2D graphics = image.createGraphics();
-                  super.paint(graphics, new Rectangle(image.getWidth(), image.getHeight()));
-                  UIUtil.drawImage(g, ImageUtil.ensureHiDPI(image, ScaleContext.create(myEditorPane)), bounds.x, bounds.y, null);
-                }
-              };
+              return new MyScalingImageView(elem);
             }
             return view;
           }
@@ -500,7 +429,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
           }
           else {
             Dimension d = component.getPreferredSize();
-            component.setBounds(r.width - d.width - 2, r.height - d.height - 3, d.width, d.height);
+            component.setBounds(r.width - d.width - 2, r.height - d.height - (newLayout ? 7 : 3), d.width, d.height);
           }
         }
       }
@@ -544,7 +473,8 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     add(layeredPane, BorderLayout.CENTER);
 
     myControlPanel = myToolBar.getComponent();
-    myControlPanel.setBorder(IdeBorderFactory.createBorder(SideBorder.BOTTOM));
+    myControlPanel.setBorder(IdeBorderFactory.createBorder(newLayout ? UIUtil.getTooltipSeparatorColor() : JBColor.border(),
+                                                           SideBorder.BOTTOM));
     myControlPanelVisible = false;
 
     HyperlinkListener hyperlinkListener = new HyperlinkListener() {
@@ -574,6 +504,15 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     registerActions();
 
     updateControlState();
+  }
+
+  @Override
+  public void setBackground(Color color) {
+    super.setBackground(color);
+    if (Registry.is("editor.new.mouse.hover.popups")) {
+      if (myEditorPane != null) myEditorPane.setBackground(color);
+      if (myControlPanel != null) myControlPanel.setBackground(color);
+    }
   }
 
   public AnAction[] getActions() {
@@ -624,19 +563,28 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   }
 
   private static void prepareCSS(HTMLEditorKit editorKit) {
-    Color borderColor = ColorUtil.mix(DOCUMENTATION_COLOR, BORDER_COLOR, 0.5);
+    boolean newLayout = Registry.is("editor.new.mouse.hover.popups");
+    Color borderColor = newLayout ? UIUtil.getTooltipSeparatorColor() : ColorUtil.mix(DOCUMENTATION_COLOR, BORDER_COLOR, 0.5);
+    int leftPadding = newLayout ? 8 : 7;
+    int definitionTopPadding = newLayout ? 4 : 3;
+    int htmlBottomPadding = newLayout ? 8 : 5;
     String editorFontName = StringUtil.escapeQuotes(EditorColorsManager.getInstance().getGlobalScheme().getEditorFontName());
     editorKit.getStyleSheet().addRule("code {font-family:\"" + editorFontName + "\"}");
     editorKit.getStyleSheet().addRule("pre {font-family:\"" + editorFontName + "\"}");
     editorKit.getStyleSheet().addRule(".pre {font-family:\"" + editorFontName + "\"}");
-    editorKit.getStyleSheet().addRule("html { padding-bottom: 5px; }");
+    editorKit.getStyleSheet().addRule("html { padding-bottom: " + htmlBottomPadding + "px; }");
     editorKit.getStyleSheet().addRule("h1, h2, h3, h4, h5, h6 { margin-top: 0; padding-top: 1px; }");
     editorKit.getStyleSheet().addRule("a { color: #" + ColorUtil.toHex(getLinkColor()) + "; text-decoration: none;}");
-    editorKit.getStyleSheet().addRule(".definition { padding: 3px 17px 1px 7px; border-bottom: thin solid #" + ColorUtil.toHex(borderColor) + "; }");
-    editorKit.getStyleSheet().addRule(".definition-only { padding: 3px 17px 0 7px; }");
-    editorKit.getStyleSheet().addRule(".content { padding: 5px 16px 0 7px; max-width: 100% }");
-    editorKit.getStyleSheet().addRule(".bottom { padding: 3px 16px 0 7px; }");
-    editorKit.getStyleSheet().addRule(".bottom-no-content { padding: 5px 16px 0 7px; }");
+    editorKit.getStyleSheet().addRule(".definition { padding: " + definitionTopPadding + "px 17px 1px " + leftPadding +
+                                      "px; border-bottom: thin solid #" + ColorUtil.toHex(borderColor) + "; }");
+    editorKit.getStyleSheet().addRule(".definition-only { padding: " + definitionTopPadding + "px 17px 0 " + leftPadding + "px; }");
+    if (newLayout) {
+      editorKit.getStyleSheet().addRule(".definition-only pre { margin-bottom: 0 }");
+    }
+    editorKit.getStyleSheet().addRule(".content { padding: 5px 16px 0 " + leftPadding + "px; max-width: 100% }");
+    editorKit.getStyleSheet().addRule(".content-only { padding: 8px 16px 0 " + leftPadding + "px; max-width: 100% }");
+    editorKit.getStyleSheet().addRule(".bottom { padding: 3px 16px 0 " + leftPadding + "px; }");
+    editorKit.getStyleSheet().addRule(".bottom-no-content { padding: 5px 16px 0 " + leftPadding + "px; }");
     editorKit.getStyleSheet().addRule("p { padding: 1px 0 2px 0; }");
     editorKit.getStyleSheet().addRule("ol { padding: 0 16px 0 0; }");
     editorKit.getStyleSheet().addRule("ul { padding: 0 16px 0 0; }");
@@ -645,9 +593,15 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     editorKit.getStyleSheet().addRule(".centered { text-align: center}");
 
     // sections table
-    editorKit.getStyleSheet().addRule(".sections { padding: 0 16px 0 7px; border-spacing: 0; }");
+    editorKit.getStyleSheet().addRule(".sections { padding: 0 16px 0 " + leftPadding + "; border-spacing: 0; }");
     editorKit.getStyleSheet().addRule("tr { margin: 0 0 0 0; padding: 0 0 0 0; }");
-    editorKit.getStyleSheet().addRule("td { margin: 2px 0 3.5px 0; padding: 0 0 0 0; }");
+    if (newLayout) {
+      editorKit.getStyleSheet().addRule("table p { padding-bottom: 0}");
+      editorKit.getStyleSheet().addRule("td { margin: 4px 0 0 0; padding: 0 0 0 0; }");
+    }
+    else {
+      editorKit.getStyleSheet().addRule("td { margin: 2px 0 3.5px 0; padding: 0 0 0 0; }");
+    }
     editorKit.getStyleSheet().addRule("th { text-align: left; }");
     editorKit.getStyleSheet().addRule(".section { color: " + ColorUtil.toHtmlColor(SECTION_COLOR) + "; padding-right: 4px}");
   }
@@ -857,7 +811,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     SwingUtilities.invokeLater(() -> {
       myEditorPane.scrollRectToVisible(viewRectToUse); // if ref is defined but is not found in document, this provides a default location
       if (refToUse != null) {
-        myEditorPane.scrollToReference(refToUse);
+        UIUtil.scrollToReference(myEditorPane, refToUse);
       }
       else if (ScreenReader.isActive()) {
         myEditorPane.setCaretPosition(0);
@@ -865,7 +819,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     });
   }
 
-  private void showHint() {
+  protected void showHint() {
     if (myHint == null) return;
 
     setHintSize();
@@ -877,9 +831,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     Window window = myHint.getPopupWindow();
     if (window != null) window.setFocusableWindowState(true);
 
-    if (myHint.getDimensionServiceKey() == null) {
-      registerSizeTracker();
-    }
+    registerSizeTracker();
   }
 
   private DataContext getDataContext() {
@@ -898,31 +850,16 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   private void setHintSize() {
     Dimension hintSize;
     if (!myManuallyResized && myHint.getDimensionServiceKey() == null) {
-      int minWidth = JBUIScale.scale(300);
-      int maxWidth = getPopupAnchor() != null ? JBUIScale.scale(435) : MAX_DEFAULT.width;
-
-      int width = definitionPreferredWidth();
-      if (width < 0) { // no definition found
-        width = myEditorPane.getPreferredSize().width;
-      }
-      else {
-        width = Math.max(width, myEditorPane.getMinimumSize().width);
-      }
-      width = Math.min(maxWidth, Math.max(minWidth, width));
-
-      myEditorPane.setBounds(0, 0, width, MAX_DEFAULT.height);
-      myEditorPane.setText(myDecoratedText);
-      Dimension preferredSize = myEditorPane.getPreferredSize();
-
-      int height = preferredSize.height + (needsToolbar() ? myControlPanel.getPreferredSize().height : 0);
-      height = Math.min(MAX_DEFAULT.height, Math.max(MIN_DEFAULT.height, height));
-
-      hintSize = new Dimension(width, height);
+      hintSize = getOptimalSize();
     }
     else {
-      hintSize = myManuallyResized
-                 ? myHint.getSize()
-                 : DimensionService.getInstance().getSize(DocumentationManager.NEW_JAVADOC_LOCATION_AND_SIZE, myManager.myProject);
+      if (myManuallyResized) {
+        hintSize = myHint.getSize();
+        JBInsets.removeFrom(hintSize, myHint.getContent().getInsets());
+      }
+      else {
+        hintSize = DimensionService.getInstance().getSize(DocumentationManager.NEW_JAVADOC_LOCATION_AND_SIZE, myManager.myProject);
+      }
       if (hintSize == null) {
         hintSize = new Dimension(MIN_DEFAULT);
       }
@@ -934,8 +871,41 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     myHint.setSize(hintSize);
   }
 
+  public Dimension getOptimalSize() {
+    int width = getPreferredWidth();
+    int height = getPreferredHeight(width);
+    return new Dimension(width, height);
+  }
+
+  @Override
+  public int getPreferredWidth() {
+    int minWidth = JBUIScale.scale(300);
+    int maxWidth = getPopupAnchor() != null ? JBUIScale.scale(435) : MAX_DEFAULT.width;
+
+    int width = definitionPreferredWidth();
+    if (width < 0) { // no definition found
+      width = myEditorPane.getPreferredSize().width;
+    }
+    else {
+      width = Math.max(width, myEditorPane.getMinimumSize().width);
+    }
+    Insets insets = getInsets();
+    return Math.min(maxWidth, Math.max(minWidth, width)) + insets.left + insets.right;
+  }
+
+  @Override
+  public int getPreferredHeight(int width) {
+    myEditorPane.setBounds(0, 0, width, MAX_DEFAULT.height);
+    myEditorPane.setText(myDecoratedText);
+    Dimension preferredSize = myEditorPane.getPreferredSize();
+
+    int height = preferredSize.height + (needsToolbar() ? myControlPanel.getPreferredSize().height : 0);
+    Insets insets = getInsets();
+    return Math.min(MAX_DEFAULT.height, Math.max(MIN_DEFAULT.height, height)) + insets.top + insets.bottom;
+  }
+
   private Component getPopupAnchor() {
-    LookupEx lookup = LookupManager.getActiveLookup(myManager.getEditor());
+    LookupEx lookup = myManager == null ? null : LookupManager.getActiveLookup(myManager.getEditor());
 
     if (lookup != null && lookup.getCurrentItem() != null && lookup.getComponent().isShowing()) {
       return lookup.getComponent();
@@ -1009,6 +979,9 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       } else if (!text.contains(DocumentationMarkup.SECTIONS_START)){
         text = StringUtil.replaceIgnoreCase(text, DocumentationMarkup.DEFINITION_START, "<div class='definition-only'><pre>");
       }
+    }
+    if (Registry.is("editor.new.mouse.hover.popups") && !text.contains(DocumentationMarkup.DEFINITION_START)) {
+      text = text.replace("class='content'", "class='content-only'");
     }
     String location = getLocationText();
     if (location != null) {
@@ -1295,7 +1268,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
   }
 
-  private boolean needsToolbar() {
+  public boolean needsToolbar() {
     return myManager.myToolWindow == null && Registry.is("documentation.show.toolbar");
   }
 
@@ -1568,6 +1541,10 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
           highlighter.changeHighlight(myHighlightingTag, startOffset, endOffset);
         }
         myEditorPane.setCaretPosition(startOffset);
+        if (Registry.is("editor.new.mouse.hover.popups") && !ScreenReader.isActive()) {
+          // scrolling to target location explicitly, as we've disabled auto-scrolling to caret
+          myEditorPane.scrollRectToVisible(myEditorPane.modelToView(startOffset));
+        }
       }
       catch (BadLocationException e) {
         LOG.warn("Error highlighting link", e);
@@ -1839,6 +1816,95 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
         myHint.setDimensionServiceKey(null);
       }
       showHint();
+    }
+  }
+
+  private class MyScalingImageView extends ImageView {
+    private MyScalingImageView(Element elem) {super(elem);}
+
+    @Override
+    public float getMaximumSpan(int axis) {
+      return super.getMaximumSpan(axis) / JBUIScale.sysScale(myEditorPane);
+    }
+
+    @Override
+    public float getMinimumSpan(int axis) {
+      return super.getMinimumSpan(axis) / JBUIScale.sysScale(myEditorPane);
+    }
+
+    @Override
+    public float getPreferredSpan(int axis) {
+      return super.getPreferredSpan(axis) / JBUIScale.sysScale(myEditorPane);
+    }
+
+    @Override
+    public void paint(Graphics g, Shape a) {
+      Rectangle bounds = a.getBounds();
+      int width = (int)super.getPreferredSpan(View.X_AXIS);
+      int height = (int)super.getPreferredSpan(View.Y_AXIS);
+      if (width <= 0 || height <= 0) return;
+      @SuppressWarnings("UndesirableClassUsage")
+      BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+      Graphics2D graphics = image.createGraphics();
+      super.paint(graphics, new Rectangle(image.getWidth(), image.getHeight()));
+      UIUtil.drawImage(g, ImageUtil.ensureHiDPI(image, ScaleContext.create(myEditorPane)), bounds.x, bounds.y, null);
+    }
+  }
+
+  private static class MyIconView extends View {
+    private final Icon myViewIcon;
+
+    private MyIconView(Element elem, Icon viewIcon) {
+      super(elem);
+      myViewIcon = viewIcon;
+    }
+
+    @Override
+    public float getPreferredSpan(int axis) {
+      switch (axis) {
+        case View.X_AXIS:
+          return myViewIcon.getIconWidth();
+        case View.Y_AXIS:
+          return myViewIcon.getIconHeight();
+        default:
+          throw new IllegalArgumentException("Invalid axis: " + axis);
+      }
+    }
+
+    @Override
+    public String getToolTipText(float x, float y, Shape allocation) {
+      return (String)super.getElement().getAttributes().getAttribute(HTML.Attribute.ALT);
+    }
+
+    @Override
+    public void paint(Graphics g, Shape allocation) {
+      myViewIcon.paintIcon(null, g, allocation.getBounds().x, allocation.getBounds().y - 4);
+    }
+
+    @Override
+    public Shape modelToView(int pos, Shape a, Position.Bias b) throws BadLocationException {
+      int p0 = getStartOffset();
+      int p1 = getEndOffset();
+      if ((pos >= p0) && (pos <= p1)) {
+        Rectangle r = a.getBounds();
+        if (pos == p1) {
+          r.x += r.width;
+        }
+        r.width = 0;
+        return r;
+      }
+      throw new BadLocationException(pos + " not in range " + p0 + "," + p1, pos);
+    }
+
+    @Override
+    public int viewToModel(float x, float y, Shape a, Position.Bias[] bias) {
+      Rectangle alloc = (Rectangle)a;
+      if (x < alloc.x + (alloc.width / 2f)) {
+        bias[0] = Position.Bias.Forward;
+        return getStartOffset();
+      }
+      bias[0] = Position.Bias.Backward;
+      return getEndOffset();
     }
   }
 }

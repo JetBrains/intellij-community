@@ -9,11 +9,6 @@ PsiJavaFileStub [java.util.concurrent]
       PsiTypeParameterListStub
       PsiRefListStub[EXTENDS_LIST:java.util.concurrent.TimeUnit]
       PsiRefListStub[IMPLEMENTS_LIST:]
-      PsiMethodStub[cons 7:void]
-        PsiModifierListStub[mask=4096]
-        PsiTypeParameterListStub
-        PsiParameterListStub
-        PsiRefListStub[THROWS_LIST:]
       PsiMethodStub[toNanos:long]
         PsiModifierListStub[mask=1]
         PsiTypeParameterListStub
@@ -86,11 +81,6 @@ PsiJavaFileStub [java.util.concurrent]
       PsiTypeParameterListStub
       PsiRefListStub[EXTENDS_LIST:java.util.concurrent.TimeUnit]
       PsiRefListStub[IMPLEMENTS_LIST:]
-      PsiMethodStub[cons 6:void]
-        PsiModifierListStub[mask=4096]
-        PsiTypeParameterListStub
-        PsiParameterListStub
-        PsiRefListStub[THROWS_LIST:]
       PsiMethodStub[toNanos:long]
         PsiModifierListStub[mask=1]
         PsiTypeParameterListStub
@@ -163,11 +153,6 @@ PsiJavaFileStub [java.util.concurrent]
       PsiTypeParameterListStub
       PsiRefListStub[EXTENDS_LIST:java.util.concurrent.TimeUnit]
       PsiRefListStub[IMPLEMENTS_LIST:]
-      PsiMethodStub[cons 5:void]
-        PsiModifierListStub[mask=4096]
-        PsiTypeParameterListStub
-        PsiParameterListStub
-        PsiRefListStub[THROWS_LIST:]
       PsiMethodStub[toNanos:long]
         PsiModifierListStub[mask=1]
         PsiTypeParameterListStub
@@ -240,11 +225,6 @@ PsiJavaFileStub [java.util.concurrent]
       PsiTypeParameterListStub
       PsiRefListStub[EXTENDS_LIST:java.util.concurrent.TimeUnit]
       PsiRefListStub[IMPLEMENTS_LIST:]
-      PsiMethodStub[cons 4:void]
-        PsiModifierListStub[mask=4096]
-        PsiTypeParameterListStub
-        PsiParameterListStub
-        PsiRefListStub[THROWS_LIST:]
       PsiMethodStub[toNanos:long]
         PsiModifierListStub[mask=1]
         PsiTypeParameterListStub
@@ -317,11 +297,6 @@ PsiJavaFileStub [java.util.concurrent]
       PsiTypeParameterListStub
       PsiRefListStub[EXTENDS_LIST:java.util.concurrent.TimeUnit]
       PsiRefListStub[IMPLEMENTS_LIST:]
-      PsiMethodStub[cons 3:void]
-        PsiModifierListStub[mask=4096]
-        PsiTypeParameterListStub
-        PsiParameterListStub
-        PsiRefListStub[THROWS_LIST:]
       PsiMethodStub[toNanos:long]
         PsiModifierListStub[mask=1]
         PsiTypeParameterListStub
@@ -394,11 +369,6 @@ PsiJavaFileStub [java.util.concurrent]
       PsiTypeParameterListStub
       PsiRefListStub[EXTENDS_LIST:java.util.concurrent.TimeUnit]
       PsiRefListStub[IMPLEMENTS_LIST:]
-      PsiMethodStub[cons 2:void]
-        PsiModifierListStub[mask=4096]
-        PsiTypeParameterListStub
-        PsiParameterListStub
-        PsiRefListStub[THROWS_LIST:]
       PsiMethodStub[toNanos:long]
         PsiModifierListStub[mask=1]
         PsiTypeParameterListStub
@@ -471,11 +441,6 @@ PsiJavaFileStub [java.util.concurrent]
       PsiTypeParameterListStub
       PsiRefListStub[EXTENDS_LIST:java.util.concurrent.TimeUnit]
       PsiRefListStub[IMPLEMENTS_LIST:]
-      PsiMethodStub[cons 1:void]
-        PsiModifierListStub[mask=4096]
-        PsiTypeParameterListStub
-        PsiParameterListStub
-        PsiRefListStub[THROWS_LIST:]
       PsiMethodStub[toNanos:long]
         PsiModifierListStub[mask=1]
         PsiTypeParameterListStub

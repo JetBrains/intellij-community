@@ -75,12 +75,6 @@ class UISettings constructor(private val notRoamableOptions: NotRoamableUiSettin
       state.colorBlindness = value
     }
 
-  var useContrastScrollbars: Boolean
-    get() = state.useContrastScrollBars
-    set(value) {
-      state.useContrastScrollBars = value
-    }
-
   var hideToolStripes: Boolean
     get() = state.hideToolStripes
     set(value) {
@@ -385,10 +379,10 @@ class UISettings constructor(private val notRoamableOptions: NotRoamableUiSettin
 
   init {
     // TODO Remove the registry keys and migration code in 2019.3
-    if (Registry.`is`("tabs.alphabetical")) {
+    if (Registry.`is`("tabs.alphabetical", false)) {
       sortTabsAlphabetically = true
     }
-    if (Registry.`is`("ide.editor.tabs.open.at.the.end")) {
+    if (Registry.`is`("ide.editor.tabs.open.at.the.end", false)) {
       openTabsAtTheEnd = true
     }
   }
@@ -422,7 +416,7 @@ class UISettings constructor(private val notRoamableOptions: NotRoamableUiSettin
     val instanceOrNull: UISettings?
       get() {
         var result = _instance
-        if (result == null && LoadingPhase.isComplete(LoadingPhase.CONFIGURATION_STORE_INITIALIZED)) {
+        if (result == null && LoadingPhase.CONFIGURATION_STORE_INITIALIZED.isComplete) {
           result = ServiceManager.getService(UISettings::class.java)
           _instance = result
         }
@@ -461,7 +455,7 @@ class UISettings constructor(private val notRoamableOptions: NotRoamableUiSettin
       if (application == null) {
         // We cannot use services while Application has not been loaded yet
         // So let's apply the default hints.
-        UIUtil.applyRenderingHints(g)
+        GraphicsUtil.applyRenderingHints(g)
         return
       }
 
@@ -519,18 +513,8 @@ class UISettings constructor(private val notRoamableOptions: NotRoamableUiSettin
         // Reset font to default on switch from IDE-managed HiDPI to JRE-managed HiDPI. Doesn't affect OSX.
         if (JreHiDpiUtil.isJreHiDPIEnabled() && !SystemInfo.isMac) size = UISettingsState.defFontSize
       }
-      else {
-        var oldDefFontScale = defFontScale
-        if (SystemInfo.isLinux) {
-          val fontData = JBUIScale.getSystemFontData()
-          // [tav] todo: temp workaround for transitioning IDEA 173 to 181
-          // not converting fonts stored with scale equal to the old calculation
-          oldDefFontScale = fontData.second / 12f
-          verbose("oldDefFontScale=%.2f", oldDefFontScale)
-        }
-        if (readScale != defFontScale && readScale != oldDefFontScale) {
-          size = ((readSize / readScale) * defFontScale).roundToInt()
-        }
+      else if (readScale != defFontScale) {
+        size = ((readSize / readScale) * defFontScale).roundToInt()
       }
       LOG.info("Loaded: fontSize=$readSize, fontScale=$readScale; restored: fontSize=$size, fontScale=$defFontScale")
       return size

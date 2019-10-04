@@ -59,7 +59,8 @@ class NonDefaultConstructorTest {
 
   @Test
   fun `skipped empty list and not null parameter`() {
-    test(NoDefaultConstructorBean("foo", emptyList()), defaultTestWriteConfiguration.copy(filter = SkipNullAndEmptySerializationFilter))
+    // must be some list impl and not just emptyList(), because otherwise test will be not representative (empty list is handled in another way
+    test(NoDefaultConstructorBean("foo", ArrayList()), defaultTestWriteConfiguration.copy(filter = SkipNullAndEmptySerializationFilter))
   }
 
   @Test
@@ -83,7 +84,7 @@ class NonDefaultConstructorTest {
     file.file.write("""
       {
         version:42,
-        formatVersion:2,
+        formatVersion:3,
         data:{
         }
       }

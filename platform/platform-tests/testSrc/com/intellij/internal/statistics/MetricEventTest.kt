@@ -5,11 +5,11 @@ package com.intellij.internal.statistics
 
 import com.intellij.internal.statistic.beans.*
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
-import com.intellij.testFramework.PlatformTestCase
+import com.intellij.testFramework.HeavyPlatformTestCase
 import org.junit.Assert
 import org.junit.Test
 
-class MetricEventTest : PlatformTestCase() {
+class MetricEventTest : HeavyPlatformTestCase() {
 
   @Test
   fun `test create new metric`() {

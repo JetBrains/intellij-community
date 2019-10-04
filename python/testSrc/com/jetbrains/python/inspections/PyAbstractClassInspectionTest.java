@@ -34,11 +34,6 @@ public class PyAbstractClassInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
-  // PY-30789
-  public void testHiddenForAbstractSubclassWithABCSuperclass() {
-    runWithLanguageLevel(LanguageLevel.PYTHON34, this::doMultiFileTest);
-  }
-
   // PY-16776
   public void testNotImplementedOverriddenInParent() {
     doTest();

@@ -110,7 +110,7 @@ public abstract class AbstractFieldPanel extends JPanel {
     this.add(myComponent, new GridBagConstraints(0, 1, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, JBUI.emptyInsets(), 0, 0));
 
     if (myBrowseButtonActionListener != null) {
-      if (Experiments.isFeatureEnabled("inline.browse.button") && myComponent instanceof ExtendableTextComponent) {
+      if (Experiments.getInstance().isFeatureEnabled("inline.browse.button") && myComponent instanceof ExtendableTextComponent) {
         ((ExtendableTextComponent)myComponent).addExtension(ExtendableTextComponent.Extension.create(
           getDefaultIcon(), getHoveredIcon(), getIconTooltip(), this::notifyActionListener));
         new DumbAwareAction() {

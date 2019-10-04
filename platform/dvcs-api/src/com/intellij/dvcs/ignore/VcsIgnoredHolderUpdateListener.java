@@ -11,6 +11,6 @@ public interface VcsIgnoredHolderUpdateListener extends EventListener {
 
   default void updateStarted() {}
 
-  default void updateFinished(@NotNull Collection<FilePath> ignoredPaths) {}
+  default void updateFinished(@NotNull Collection<FilePath> ignoredPaths, boolean isFullRescan) {}
 
 }

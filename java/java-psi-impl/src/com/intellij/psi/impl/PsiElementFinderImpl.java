@@ -30,6 +30,9 @@ public final class PsiElementFinderImpl extends PsiElementFinder implements Dumb
     myFileManager = JavaFileManager.getInstance(project);
   }
 
+  /**
+   * @deprecated use {@link #PsiElementFinderImpl(Project)}
+   */
   @Deprecated
   public PsiElementFinderImpl(Project project, JavaFileManager javaFileManager) {
     myProject = project;

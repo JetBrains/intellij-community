@@ -153,7 +153,6 @@ public final class Match {
       myParameterValues.put(psiVariable, values);
       final ArrayList<PsiElement> elements = new ArrayList<>();
       myParameterOccurrences.put(psiVariable, elements);
-      return true;
     }
     else {
       for (PsiElement val : currentValue) {
@@ -168,8 +167,8 @@ public final class Match {
         }
       }
       myParameterOccurrences.get(psiVariable).add(value);
-      return true;
     }
+    return true;
   }
 
   public ReturnValue getReturnValue() {

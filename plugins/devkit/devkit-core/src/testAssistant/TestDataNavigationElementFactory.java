@@ -80,10 +80,7 @@ public class TestDataNavigationElementFactory {
         }
       }
 
-      filePathsToCreate.forEach(path -> {
-        VirtualFile file = TestDataUtil.createFileByPath(project, path);
-        PsiNavigationSupport.getInstance().createNavigatable(project, file, -1).navigate(true);
-      });
+      filePathsToCreate.forEach(path -> TestDataUtil.createFileAndNavigate(project, path));
     }
 
     @Override

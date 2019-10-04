@@ -40,6 +40,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import static com.intellij.util.containers.ContainerUtilRt.emptyList;
+
 /**
  * Substitutes AbstractVcsHelperImpl for tests, where dialogs need to be tested.
  * Currently it's just a stub implementation notifying listeners about action invoked (which would mean than a dialog would have been
@@ -116,8 +118,10 @@ public class HgMockVcsHelper extends AbstractVcsHelper {
 
   @NotNull
   @Override
-  public List<VirtualFile> showMergeDialog(List<? extends VirtualFile> files, MergeProvider provider, @NotNull MergeDialogCustomizer mergeDialogCustomizer) {
-    return null;
+  public List<VirtualFile> showMergeDialog(List<? extends VirtualFile> files,
+                                           MergeProvider provider,
+                                           @NotNull MergeDialogCustomizer mergeDialogCustomizer) {
+    return emptyList();
   }
 
   @Override

@@ -86,6 +86,15 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
 
   @NotNull
   @Override
+  public LocalQuickFixAndIntentionActionOnPsiElement createMethodReturnFix(@NotNull PsiMethod method,
+                                                                           @NotNull PsiType toReturn,
+                                                                           boolean fixWholeHierarchy,
+                                                                           boolean suggestSuperTypes) {
+    return new MethodReturnTypeFix(method, toReturn, fixWholeHierarchy, suggestSuperTypes);
+  }
+
+  @NotNull
+  @Override
   public LocalQuickFixAndIntentionActionOnPsiElement createAddMethodFix(@NotNull PsiMethod method, @NotNull PsiClass toClass) {
     return new AddMethodFix(method, toClass);
   }
@@ -267,6 +276,14 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
   @Override
   public IntentionAction createConvertToStringLiteralAction() {
     return new ConvertToStringLiteralAction();
+  }
+
+  @NotNull
+  @Override
+  public IntentionAction createDeleteReturnFix(@NotNull PsiMethod method,
+                                               @NotNull PsiReturnStatement returnStatement,
+                                               @NotNull PsiExpression returnValue) {
+    return new DeleteReturnFix(method, returnStatement, returnValue);
   }
 
   @NotNull
@@ -923,19 +940,22 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
   public IntentionAction createSameErasureButDifferentMethodsFix(@NotNull PsiMethod method, @NotNull PsiMethod superMethod) {
     return new SameErasureButDifferentMethodsFix(method, superMethod);
   }
-  
+
+  @NotNull
   @Override
   public IntentionAction createAddMissingEnumBranchesFix(@NotNull PsiSwitchBlock switchBlock, @NotNull Set<String> missingCases) {
     return new CreateMissingSwitchBranchesFix(switchBlock, missingCases);
   } 
-  
+
+  @NotNull
   @Override
   public IntentionAction createAddSwitchDefaultFix(@NotNull PsiSwitchBlock switchBlock, String message) {
     return new CreateDefaultBranchFix(switchBlock, message);
   }
 
+  @Nullable
   @Override
-  public IntentionAction createCollapseAnnotationsFix(PsiAnnotation annotation) {
+  public IntentionAction createCollapseAnnotationsFix(@NotNull PsiAnnotation annotation) {
     return CollapseAnnotationsFix.from(annotation);
   }
 
@@ -943,5 +963,11 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
   @Override
   public IntentionAction createChangeModifierFix() {
     return new ChangeModifierIntention(true);
+  }
+
+  @NotNull
+  @Override
+  public IntentionAction createWrapSwitchRuleStatementsIntoBlockFix(PsiSwitchLabeledRuleStatement rule) {
+    return new WrapSwitchRuleStatementsIntoBlockFix(rule);
   }
 }

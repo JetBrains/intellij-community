@@ -262,8 +262,10 @@ public class ResolveUtil {
   private static void collectSuperTypes(PsiType type, Set<? super String> visited, Project project) {
     String qName = rawCanonicalText(type);
 
-    if (!visited.add(qName)) {
-      return;
+    if (!(type instanceof PsiClassType && ((PsiClassType)type).resolve() instanceof PsiTypeParameter)) {
+      if (!visited.add(qName)) {
+        return;
+      }
     }
 
     final PsiType[] superTypes = type.getSuperTypes();

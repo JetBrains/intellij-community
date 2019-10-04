@@ -23,7 +23,7 @@ private fun getChangesIn(project: Project, roots: Array<FilePath>): Set<Change> 
 }
 
 internal fun Project.getNonModalCommitWorkflowHandler() =
-  (ChangesViewManager.getInstance(this) as? ChangesViewManager)?.commitWorkflowHandler
+  ChangesViewManager.getInstanceEx(this).commitWorkflowHandler
 
 abstract class AbstractCommonCheckinAction : AbstractVcsAction(), UpdateInBackground {
   override fun update(vcsContext: VcsContext, presentation: Presentation) {
@@ -84,7 +84,7 @@ abstract class AbstractCommonCheckinAction : AbstractVcsAction(), UpdateInBackgr
     LOG.debug("invoking commit dialog after update")
 
     val selectedChanges = context.selectedChanges
-    val selectedUnversioned = context.selectedUnversionedFiles
+    val selectedUnversioned = context.selectedUnversionedFilePaths
     val initialChangeList = getInitiallySelectedChangeList(context, project)
     val changesToCommit: Collection<Change>
     val included: Collection<Any>

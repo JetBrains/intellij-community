@@ -57,11 +57,13 @@ internal abstract class GitDetailsCollector<R : GitLogRecord, C : VcsCommitMetad
         val firstRecord = records.first()
         val parents = firstRecord.parentsHashes
 
-        LOG.assertTrue(parents.isEmpty() || parents.size == records.size,
-                       "Not enough records for commit ${firstRecord.hash} " +
-                       "expected ${parents.size} records, but got ${records.size}")
-
-        commitConsumer.consume(createCommit(records, factory, requirements.diffRenameLimit))
+        if (parents.isEmpty() || parents.size == records.size) {
+          commitConsumer.consume(createCommit(records, factory, requirements.diffRenameLimit))
+        }
+        else {
+          LOG.warn("Not enough records for commit ${firstRecord.hash} " +
+                   "expected ${parents.size} records, but got ${records.size}")
+        }
       }
 
       val recordCollector = createRecordsCollector(consumer)

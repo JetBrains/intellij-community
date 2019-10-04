@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.java.stubs.index;
 
+import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
@@ -21,10 +22,23 @@ public class JavaAutoModuleNameIndex extends ScalarIndexExtension<String> {
   private static final ID<String, Void> NAME = ID.create("java.auto.module.name");
 
   private final FileBasedIndex.InputFilter myFilter =
-    file -> file.isDirectory() && file.getParent() == null && "jar".equalsIgnoreCase(file.getExtension()) && JavaModuleNameIndex.descriptorFile(file) == null;
+    new DefaultFileTypeSpecificInputFilter(ArchiveFileType.INSTANCE) {
+      @Override
+      public boolean acceptInput(@NotNull VirtualFile file) {
+        return file.isDirectory() &&
+               file.getParent() == null &&
+               "jar".equalsIgnoreCase(file.getExtension()) &&
+               JavaModuleNameIndex.descriptorFile(file) == null;
+      }
+    };
 
   private final DataIndexer<String, Void, FileContent> myIndexer =
     data -> singletonMap(LightJavaModule.moduleName(data.getFile()), null);
+
+  @Override
+  public boolean indexDirectories() {
+    return true;
+  }
 
   @NotNull
   @Override

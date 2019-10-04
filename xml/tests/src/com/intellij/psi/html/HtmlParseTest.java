@@ -1,6 +1,7 @@
 package com.intellij.psi.html;
 
 import com.intellij.ide.highlighter.HtmlFileType;
+import com.intellij.idea.Bombed;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
@@ -16,6 +17,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.Calendar;
 
 public class HtmlParseTest extends LightIdeaTestCase {
   private static final String BASE_PATH = "/xml/tests/testData/psi/old/html/";

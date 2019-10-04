@@ -15,8 +15,6 @@
  */
 package com.intellij.openapi.actionSystem;
 
-import org.jetbrains.annotations.NonNls;
-
 /**
  * Identifiers for data items which can be returned from {@link DataContext#getData(String)} and
  * {@link DataProvider#getData(String)}.
@@ -31,13 +29,6 @@ public interface DataConstants {
    * @deprecated use {@link PlatformDataKeys#PROJECT} instead
    */
   @Deprecated String PROJECT = CommonDataKeys.PROJECT.getName();
-
-  /**
-   * Returns {@link com.intellij.openapi.module.Module}
-   *
-   * @deprecated use {@link com.intellij.openapi.actionSystem.LangDataKeys#MODULE} instead
-   */
-  @Deprecated @NonNls String MODULE = "module";
 
   /**
    * Returns {@link com.intellij.openapi.vfs.VirtualFile}

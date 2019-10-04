@@ -7,23 +7,26 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Eugene Belyaev
  */
 public final class ClasspathEntryMacro extends Macro {
+  @NotNull
   @Override
   public String getName() {
     return "ClasspathEntry";
   }
 
+  @NotNull
   @Override
   public String getDescription() {
     return IdeBundle.message("macro.classpath.entry");
   }
 
   @Override
-  public String expand(final DataContext dataContext) {
+  public String expand(@NotNull final DataContext dataContext) {
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) return null;
     final VirtualFile file = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);

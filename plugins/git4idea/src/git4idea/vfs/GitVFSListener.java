@@ -33,20 +33,14 @@ import static com.intellij.util.containers.ContainerUtil.map;
 import static com.intellij.util.containers.ContainerUtil.map2Map;
 
 public class GitVFSListener extends VcsVFSListener {
-  private final Git myGit;
-  private final GitVcsConsoleWriter myVcsConsoleWriter;
 
-  private GitVFSListener(@NotNull GitVcs vcs, @NotNull Git git, @NotNull GitVcsConsoleWriter vcsConsoleWriter) {
+  private GitVFSListener(@NotNull GitVcs vcs) {
     super(vcs);
-    myGit = git;
-    myVcsConsoleWriter = vcsConsoleWriter;
   }
 
   @NotNull
-  public static GitVFSListener createInstance(@NotNull GitVcs vcs,
-                                              @NotNull Git git,
-                                              @NotNull GitVcsConsoleWriter vcsConsoleWriter) {
-    GitVFSListener listener = new GitVFSListener(vcs, git, vcsConsoleWriter);
+  public static GitVFSListener createInstance(@NotNull GitVcs vcs) {
+    GitVFSListener listener = new GitVFSListener(vcs);
     listener.installListeners();
     return listener;
   }
@@ -92,10 +86,10 @@ public class GitVFSListener extends VcsVFSListener {
           List<VirtualFile> files = e.getValue();
           pi.setText(root.getPresentableUrl());
           try {
-            retainedFiles.addAll(myGit.untrackedFiles(myProject, root, files));
+            retainedFiles.addAll(Git.getInstance().untrackedFiles(myProject, root, files));
           }
           catch (VcsException ex) {
-            myVcsConsoleWriter.showMessage(ex.getMessage());
+            GitVcsConsoleWriter.getInstance(myProject).showMessage(ex.getMessage());
           }
         }
         addedFiles.retainAll(retainedFiles);
@@ -222,7 +216,7 @@ public class GitVFSListener extends VcsVFSListener {
           RefreshVFsSynchronously.refreshFiles(toRefresh);
         }
         catch (VcsException ex) {
-          myVcsConsoleWriter.showMessage(ex.getMessage());
+          GitVcsConsoleWriter.getInstance(myProject).showMessage(ex.getMessage());
         }
       }
     });
@@ -257,7 +251,7 @@ public class GitVFSListener extends VcsVFSListener {
       GitLineHandler h = new GitLineHandler(myProject, root, GitCommand.MV);
       h.addParameters("-f");
       h.addRelativePaths(VcsUtil.getFilePath(info.myOldPath), VcsUtil.getFilePath(info.myNewPath));
-      myGit.runCommand(h);
+      Git.getInstance().runCommand(h);
       toRefresh.add(new File(info.myOldPath));
       toRefresh.add(new File(info.myNewPath));
     }
@@ -289,7 +283,7 @@ public class GitVFSListener extends VcsVFSListener {
             executor.execute(e.getKey(), e.getValue());
           }
           catch (final VcsException ex) {
-            myVcsConsoleWriter.showMessage(ex.getMessage());
+            GitVcsConsoleWriter.getInstance(myProject).showMessage(ex.getMessage());
           }
         }
         RefreshVFsSynchronously.refreshFiles(executor.getFilesToRefresh());
@@ -306,7 +300,7 @@ public class GitVFSListener extends VcsVFSListener {
   public void waitForAllEventsProcessedInTestMode() {
     assert ApplicationManager.getApplication().isUnitTestMode();
     ((ChangeListManagerImpl)myChangeListManager).waitEverythingDoneInTestMode();
-    ((ExternallyAddedFilesProcessorImpl)myExternalFilesProcessor).waitForEventsProcessedInTestMode();
+    myExternalFilesProcessor.waitForEventsProcessedInTestMode();
   }
 
 }

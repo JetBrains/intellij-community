@@ -24,6 +24,7 @@ inline fun panel(vararg constraints: LCFlags, title: String? = null, init: Layou
   builder.builder.build(panel, constraints)
   panel.preferredFocusedComponent = builder.builder.preferredFocusedComponent
   panel.validateCallbacks = builder.builder.validateCallbacks
+  panel.componentValidateCallbacks = builder.builder.componentValidateCallbacks
   panel.applyCallbacks = builder.builder.applyCallbacks
   panel.resetCallbacks = builder.builder.resetCallbacks
   panel.isModifiedCallbacks = builder.builder.isModifiedCallbacks

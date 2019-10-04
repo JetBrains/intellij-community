@@ -2,10 +2,8 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.diagnostic.IdeMessagePanel;
-import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.idea.SplashManager;
 import com.intellij.notification.impl.IdeNotificationArea;
 import com.intellij.openapi.MnemonicHelper;
@@ -18,13 +16,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite;
-import com.intellij.openapi.project.*;
+import com.intellij.openapi.project.DumbAwareRunnable;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.*;
@@ -38,26 +35,36 @@ import com.intellij.ui.BalloonLayoutImpl;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.mac.MacMainFrameDecorator;
-import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.io.SuperUserStatus;
-import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextAccessor;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 
 import javax.accessibility.AccessibleContext;
+import javax.imageio.IIOImage;
 import javax.imageio.ImageIO;
+import javax.imageio.ImageTypeSpecifier;
+import javax.imageio.ImageWriter;
+import javax.imageio.stream.MemoryCacheImageOutputStream;
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.lang.reflect.Field;
-import java.util.HashSet;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -67,7 +74,7 @@ import java.util.Set;
 public final class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContextAccessor, DataProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.IdeFrameImpl");
 
-  public static final String NORMAL_STATE_BOUNDS = "normalBounds";
+  static final String NORMAL_STATE_BOUNDS = "normalBounds";
   public static final Key<Boolean> SHOULD_OPEN_IN_FULL_SCREEN = Key.create("should.open.in.full.screen");
 
   private static boolean ourUpdatingTitle;
@@ -81,43 +88,13 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
   private IdeRootPane myRootPane;
   private BalloonLayout myBalloonLayout;
   private IdeFrameDecorator myFrameDecorator;
-  private boolean myRestoreFullScreen;
-  private final LafManagerListener myLafListener;
-  private final ComponentListener resizedListener;
 
-  private boolean ready;
-  private Image mySelfie;
+  private volatile Image selfie;
 
   public IdeFrameImpl() {
     super();
-    updateTitle();
 
-    Runnable hideSplashTask = SplashManager.getHideTask();
-    if (hideSplashTask != null) {
-      addWindowListener(new WindowAdapter() {
-        @Override
-        public void windowOpened(WindowEvent e) {
-          hideSplashTask.run();
-          removeWindowListener(this);
-        }
-      });
-    }
-
-    myRootPane = new IdeRootPane(this);
-    setRootPane(myRootPane);
-    setBackground(UIUtil.getPanelBackground());
-    LafManager.getInstance().addLafManagerListener(myLafListener = src -> setBackground(UIUtil.getPanelBackground()));
-
-    resizedListener = new ComponentAdapter() {
-      @Override
-      public void componentResized(ComponentEvent e) {
-        if (getExtendedState() == Frame.NORMAL) {
-          getRootPane().putClientProperty(NORMAL_STATE_BOUNDS, getBounds());
-        }
-      }
-    };
-
-    myRootPane.addComponentListener(resizedListener);
+    SplashManager.hideBeforeShow(this);
 
     Dimension size = ScreenUtil.getMainScreenBounds().getSize();
     size.width = Math.min(1400, size.width - 20);
@@ -132,89 +109,34 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
       setAutoRequestFocus(false);
     }
 
-    //LayoutFocusTraversalPolicyExt layoutFocusTraversalPolicy = new LayoutFocusTraversalPolicyExt();
-    setFocusTraversalPolicy(new LayoutFocusTraversalPolicyExt() {
-      @Override
-      public Component getComponentAfter(Container focusCycleRoot, Component aComponent) {
-        // Every time a component is removed, AWT asks focus layout policy
-        // who is supposed to be the next focus owner.
-        // Looks like for IdeFrame, the selected editor of the frame is a good candidate
-        if (myProject != null) {
-          final FileEditorManagerEx fileEditorManagerEx = FileEditorManagerEx.getInstanceEx(myProject);
-          if (fileEditorManagerEx != null) {
-            final EditorWindow window = fileEditorManagerEx.getCurrentWindow();
-            if (window != null) {
-              final EditorWithProviderComposite editor = window.getSelectedEditor();
-              if (editor != null) {
-                final JComponent component = editor.getPreferredFocusedComponent();
-                if (component != null) {
-                  return component;
-                }
-              }
-            }
-          }
-        }
-        return super.getComponentAfter(focusCycleRoot, aComponent);
-      }
-    });
-
     setupCloseAction();
-    MnemonicHelper.init(this);
+  }
 
-    myBalloonLayout = new BalloonLayoutImpl(myRootPane, JBUI.insets(8));
+  public void preInit(@Nullable Image selfie) {
+    this.selfie = selfie;
 
-    MouseGestureManager.getInstance().add(this);
+    updateTitle();
 
+    myRootPane = new IdeRootPane(this);
+    setRootPane(myRootPane);
+    // NB!: the root pane must be set before decorator,
+    // which holds its own client properties in a root pane
     myFrameDecorator = IdeFrameDecorator.decorate(this);
 
-    setFocusTraversalPolicy(new LayoutFocusTraversalPolicyExt() {
-      @Override
-      protected Component getDefaultComponentImpl(Container focusCycleRoot) {
-        Component component = findNextFocusComponent();
-        return component == null ? super.getDefaultComponentImpl(focusCycleRoot) : component;
-      }
-
-      @Override
-      protected Component getFirstComponentImpl(Container focusCycleRoot) {
-        Component component = findNextFocusComponent();
-        return component == null ? super.getFirstComponentImpl(focusCycleRoot) : component;
-      }
-
-      @Override
-      protected Component getLastComponentImpl(Container focusCycleRoot) {
-        Component component = findNextFocusComponent();
-        return component == null ? super.getLastComponentImpl(focusCycleRoot) : component;
-      }
-
-      @Override
-      protected Component getComponentAfterImpl(Container focusCycleRoot, Component aComponent) {
-        Component component = findNextFocusComponent();
-        return component == null ? super.getComponentAfterImpl(focusCycleRoot, aComponent) : component;
-      }
-
-      @Override
-      public Component getInitialComponent(Window window) {
-        Component component = findNextFocusComponent();
-        return component == null ? super.getInitialComponent(window) : component;
-      }
-
-      @Override
-      protected Component getComponentBeforeImpl(Container focusCycleRoot, Component aComponent) {
-        Component component = findNextFocusComponent();
-        return component == null ? super.getComponentBeforeImpl(focusCycleRoot, aComponent) : component;
-      }
-    });
+    myBalloonLayout = new BalloonLayoutImpl(myRootPane, JBUI.insets(8));
+    setBackground(UIUtil.getPanelBackground());
   }
 
   // purpose of delayed init - to show project frame as earlier as possible (and start loading of project too) and use it as project loading "splash"
   // show frame -> start project loading (performed in a pooled thread) -> do UI tasks while project loading
   public void init() {
-    IdeRootPane rootPane = myRootPane;
-    if (rootPane == null) {
-      return;
-    }
+    myRootPane.init(this);
 
-    rootPane.init(this);
+    MnemonicHelper.init(this);
+
+    ApplicationManager.getApplication().getMessageBus().connect().subscribe(LafManagerListener.TOPIC, source -> setBackground(UIUtil.getPanelBackground()));
+
+    setFocusTraversalPolicy(new MyLayoutFocusTraversalPolicyExt());
 
     // to show window thumbnail under Macs
     // http://lists.apple.com/archives/java-dev/2009/Dec/msg00240.html
@@ -222,38 +144,44 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
       setIconImage(null);
     }
 
+    IdeMenuBar.installAppMenuIfNeeded(this);
     // in production (not from sources) makes sense only on Linux
     AppUIUtil.updateWindowIcon(this);
+
+    MouseGestureManager.getInstance().add(this);
   }
 
+  @Nullable
   private Component findNextFocusComponent() {
-    if (myProject != null) {
-      Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-      ToolWindowManagerEx toolWindowManagerEx = ToolWindowManagerEx.getInstanceEx(myProject);
-      if (ToolWindowManagerEx.getInstanceEx(myProject).fallbackToEditor()) {
-        EditorWindow currentWindow = FileEditorManagerEx.getInstanceEx(myProject).getSplitters().getCurrentWindow();
-        if (currentWindow != null) {
-          EditorWithProviderComposite selectedEditor = currentWindow.getSelectedEditor();
-          if (selectedEditor != null) {
-            JComponent preferredFocusedComponent = selectedEditor.getPreferredFocusedComponent();
-            if (preferredFocusedComponent != null) {
-              return preferredFocusedComponent;
-            }
+    if (myProject == null) {
+      return null;
+    }
+
+    Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+    ToolWindowManagerEx toolWindowManagerEx = ToolWindowManagerEx.getInstanceEx(myProject);
+    if (ToolWindowManagerEx.getInstanceEx(myProject).fallbackToEditor()) {
+      EditorWindow currentWindow = FileEditorManagerEx.getInstanceEx(myProject).getSplitters().getCurrentWindow();
+      if (currentWindow != null) {
+        EditorWithProviderComposite selectedEditor = currentWindow.getSelectedEditor();
+        if (selectedEditor != null) {
+          JComponent preferredFocusedComponent = selectedEditor.getPreferredFocusedComponent();
+          if (preferredFocusedComponent != null) {
+            return preferredFocusedComponent;
           }
         }
       }
-      else if (focusOwner != null && !Windows.ToolWindowProvider.isInToolWindow(focusOwner)) {
-        String toolWindowId = toolWindowManagerEx.getLastActiveToolWindowId();
-        ToolWindow toolWindow = toolWindowManagerEx.getToolWindow(toolWindowId);
-        Content content = toolWindow == null ? null : toolWindow.getContentManager().getContent(0);
-        if (content != null) {
-          JComponent component = content.getPreferredFocusableComponent();
-          if (component == null) {
-            LOG.warn("Set preferredFocusableComponent in '" + content.getDisplayName() + "' content in " +
-                     toolWindowId + " tool window to avoid focus-related problems.");
-          }
-          return component == null ? getComponentToRequestFocus(toolWindow)  : component;
+    }
+    else if (focusOwner != null && !Windows.ToolWindowProvider.isInToolWindow(focusOwner)) {
+      String toolWindowId = toolWindowManagerEx.getLastActiveToolWindowId();
+      ToolWindow toolWindow = toolWindowManagerEx.getToolWindow(toolWindowId);
+      Content content = toolWindow == null ? null : toolWindow.getContentManager().getContent(0);
+      if (content != null) {
+        JComponent component = content.getPreferredFocusableComponent();
+        if (component == null) {
+          LOG.warn("Set preferredFocusableComponent in '" + content.getDisplayName() + "' content in " +
+                   toolWindowId + " tool window to avoid focus-related problems.");
         }
+        return component == null ? getComponentToRequestFocus(toolWindow)  : component;
       }
     }
     return null;
@@ -313,21 +241,24 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
     SwingUtilities.invokeLater(() -> setFocusableWindowState(true));
   }
 
-  /**
-   * This is overridden to get rid of strange Alloy LaF customization of frames. For unknown reason it sets the maxBounds rectangle
-   * and it does it plain wrong. Setting bounds to {@code null} means default value should be taken from the underlying OS.
-   */
-  @Override
-  public synchronized void setMaximizedBounds(Rectangle bounds) {
-    super.setMaximizedBounds(null);
-  }
-
   @Override
   public void setExtendedState(int state) {
-    if (getExtendedState() == Frame.NORMAL && (state & Frame.MAXIMIZED_BOTH) != 0) {
+    if (getExtendedState() == Frame.NORMAL && FrameInfoHelper.isMaximized(state)) {
       getRootPane().putClientProperty(NORMAL_STATE_BOUNDS, getBounds());
     }
     super.setExtendedState(state);
+  }
+
+  public boolean setExtendedState(@NotNull FrameInfo frameInfo, @Nullable Rectangle bounds) {
+    int state = frameInfo.getExtendedState();
+    boolean isMaximized = FrameInfoHelper.isMaximized(state);
+    if (bounds != null && isMaximized && getExtendedState() == Frame.NORMAL) {
+      getRootPane().putClientProperty(NORMAL_STATE_BOUNDS, bounds);
+    }
+
+    super.setExtendedState(state);
+
+    return isMaximized;
   }
 
   private void setupCloseAction() {
@@ -349,7 +280,7 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
   }
 
   @Override
-  public StatusBar getStatusBar() {
+  public IdeStatusBarImpl getStatusBar() {
     return myRootPane == null ? null : myRootPane.getStatusBar();
   }
 
@@ -472,99 +403,76 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
     }
 
     myProject = project;
-    if (project != null) {
-      if (WindowManager.getInstance().isFullScreenSupportedInCurrentOS()) {
-        myRestoreFullScreen = SHOULD_OPEN_IN_FULL_SCREEN.get(project) == Boolean.TRUE ||
-                              ProjectFrameBounds.getInstance(project).isInFullScreen();
-
-        if (!myRestoreFullScreen && PropertiesComponent.getInstance(project).getBoolean("FullScreen")) {
-          myRestoreFullScreen = true;
-          PropertiesComponent.getInstance(project).unsetValue("FullScreen");
-        }
-      }
-
+    if (project == null) {
+      //already disposed
       if (myRootPane != null) {
-        myRootPane.installNorthComponents(project);
-        StatusBar statusBar = myRootPane.getStatusBar();
-        if (statusBar != null) {
-          project.getMessageBus().connect().subscribe(StatusBar.Info.TOPIC, statusBar);
-        }
-      }
-
-      installDefaultProjectStatusBarWidgets(myProject);
-
-      ProjectManager.getInstance().addProjectManagerListener(myProject, new ProjectManagerListener() {
-        @Override
-        public void projectClosingBeforeSave(@NotNull Project project) {
-          takeASelfie();
-        }
-      });
-
-      StartupManager.getInstance(myProject).registerPostStartupActivity((DumbAwareRunnable)() -> ready = true);
-    }
-    else {
-      if (myRootPane != null) { //already disposed
         myRootPane.deinstallNorthComponents();
       }
+      return;
     }
 
-    if (myRestoreFullScreen && isVisible()) {
-      toggleFullScreen(true);
-      myRestoreFullScreen = false;
+    if (myRootPane != null) {
+      myRootPane.installNorthComponents(project);
+      StatusBar statusBar = myRootPane.getStatusBar();
+      if (statusBar != null) {
+        project.getMessageBus().connect().subscribe(StatusBar.Info.TOPIC, statusBar);
+      }
     }
+
+    installDefaultProjectStatusBarWidgets(myProject);
+    //noinspection CodeBlock2Expr
+    StartupManager.getInstance(myProject).registerPostStartupActivity((DumbAwareRunnable)() -> {
+      selfie = null;
+    });
   }
 
-  @SuppressWarnings("SSBasedInspection")
-  @Override
-  public void setVisible(boolean b) {
-    super.setVisible(b);
+  private final Set<String> widgetIds = new THashSet<>();
 
-    if (b && myRestoreFullScreen) {
-      SwingUtilities.invokeLater(() -> {
-        toggleFullScreen(true);
-        if (SystemInfo.isMacOSLion) {
-          setBounds(ScreenUtil.getScreenRectangle(getLocationOnScreen()));
-        }
-        myRestoreFullScreen = false;
-      });
-    }
-  }
-
-  private final Set<String> widgetIDs = new HashSet<>();
-
-  private void addWidget(StatusBar statusBar, StatusBarWidget widget, String anchor) {
-    if (!widgetIDs.add(widget.ID())) {
+  private void addWidget(@NotNull IdeStatusBarImpl statusBar, @NotNull StatusBarWidget widget, @NotNull String anchor) {
+    if (!widgetIds.add(widget.ID())) {
       LOG.error("Attempting to add more than one widget with ID: " + widget.ID());
       return;
     }
-    statusBar.addWidget(widget, anchor);
+
+    statusBar.doAddWidget(widget, anchor);
   }
 
-  private void installDefaultProjectStatusBarWidgets(@NotNull final Project project) {
-    final StatusBar statusBar = getStatusBar();
+  private void installDefaultProjectStatusBarWidgets(@NotNull Project project) {
+    IdeStatusBarImpl statusBar = Objects.requireNonNull(getStatusBar());
     addWidget(statusBar, new PositionPanel(project), StatusBar.Anchors.before(IdeMessagePanel.FATAL_ERROR));
-    addWidget(statusBar, new IdeNotificationArea(project), StatusBar.Anchors.before(IdeMessagePanel.FATAL_ERROR));
-    addWidget(statusBar, new EncodingPanel(project), StatusBar.Anchors.after(StatusBar.StandardWidgets.POSITION_PANEL));
-    addWidget(statusBar, new LineSeparatorPanel(project), StatusBar.Anchors.before(StatusBar.StandardWidgets.ENCODING_PANEL));
-    addWidget(statusBar, new ColumnSelectionModePanel(project), StatusBar.Anchors.after(StatusBar.StandardWidgets.ENCODING_PANEL));
-    addWidget(statusBar, new ToggleReadOnlyAttributePanel(project),
-              StatusBar.Anchors.after(StatusBar.StandardWidgets.COLUMN_SELECTION_MODE_PANEL));
+    addWidget(statusBar, new IdeNotificationArea(), StatusBar.Anchors.before(IdeMessagePanel.FATAL_ERROR));
+
+    LineSeparatorPanel lineSeparatorPanel = new LineSeparatorPanel(project);
+    addWidget(statusBar, lineSeparatorPanel, StatusBar.Anchors.after(StatusBar.StandardWidgets.POSITION_PANEL));
+    EncodingPanel encodingPanel = new EncodingPanel(project);
+    addWidget(statusBar, encodingPanel, StatusBar.Anchors.after(lineSeparatorPanel.ID()));
+
+    addWidget(statusBar, new ColumnSelectionModePanel(project), StatusBar.Anchors.after(encodingPanel.ID()));
+    addWidget(statusBar, new ToggleReadOnlyAttributePanel(), StatusBar.Anchors.after(StatusBar.StandardWidgets.COLUMN_SELECTION_MODE_PANEL));
 
     for (StatusBarWidgetProvider widgetProvider: StatusBarWidgetProvider.EP_NAME.getExtensions()) {
       StatusBarWidget widget = widgetProvider.getWidget(project);
-      if (widget == null) continue;
+      if (widget == null) {
+        continue;
+      }
+
       addWidget(statusBar, widget, widgetProvider.getAnchor());
     }
 
-    Disposer.register(project, () -> {
-      for (String widgetID: widgetIDs) {
-        statusBar.removeWidget(widgetID);
-      }
-      widgetIDs.clear();
+    statusBar.repaint();
 
-      if (statusBar instanceof IdeStatusBarImpl) {
-        ((IdeStatusBarImpl)statusBar).removeCustomIndicationComponents();
+    disposeWidgets(project);
+  }
+
+  private void disposeWidgets(@NotNull Project project) {
+    Disposer.register(project, () -> {
+      IdeStatusBarImpl statusBar = getStatusBar();
+      if (statusBar != null) {
+        for (String widgetID: widgetIds) {
+          statusBar.removeWidget(widgetID);
+        }
       }
+      widgetIds.clear();
     });
   }
 
@@ -594,7 +502,6 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         myRootPane.removeNotify();
       }
-      myRootPane.removeComponentListener(resizedListener);
       setRootPane(new JRootPane());
       Disposer.dispose(myRootPane);
       myRootPane = null;
@@ -603,7 +510,6 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
       Disposer.dispose(myFrameDecorator);
       myFrameDecorator = null;
     }
-    if (myLafListener != null) LafManager.getInstance().removeLafManagerListener(myLafListener);
 
     super.dispose();
   }
@@ -621,49 +527,54 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
   @Override
   public void paint(@NotNull Graphics g) {
     UISettings.setupAntialiasing(g);
-    if (shouldPaintSelfie()) {
-      try {
-        if (mySelfie == null) {
-          mySelfie = ImageUtil.ensureHiDPI(ImageIO.read(getSelfieLocation()), ScaleContext.create(this));
-        }
-      } catch (IOException ignored) {}
-      StartupUiUtil.drawImage(g, mySelfie, 0, 0, null);
+
+    Image selfie = this.selfie;
+    if (selfie != null) {
+      StartupUiUtil.drawImage(g, selfie, 0, 0, null);
       return;
-    } else {
-      mySelfie = null;
     }
+
     super.paint(g);
   }
 
-  private boolean shouldPaintSelfie() {
-    return !ready && Registry.is("ide.project.loading.show.last.state") &&
-           (myProject != null || ProjectManager.getInstance().getOpenProjects().length == 0);
-  }
-
-  public void takeASelfie() {
-    if (myProject == null || !Registry.is("ide.project.loading.show.last.state")) return;
-    BufferedImage image = UIUtil.createImage(this, getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
+  public void takeASelfie(@NotNull String projectWorkspaceId) throws IOException {
+    int width = getWidth();
+    int height = getHeight();
+    BufferedImage image = UIUtil.createImage(this, width, height, BufferedImage.TYPE_INT_ARGB);
     UISettings.setupAntialiasing(image.getGraphics());
-    paint(image.getGraphics());
-    try {
-      File selfie = getSelfieLocation();
-      if (selfie.getParentFile().exists() || selfie.getParentFile().mkdirs()) {
-        ImageIO.write(image, "png", selfie);
-        FileUtil.copy(selfie, getLastSelfieLocation());
+    super.paint(image.getGraphics());
+    Path selfieFile = getSelfieLocation(projectWorkspaceId);
+    Files.createDirectories(selfieFile.getParent());
+
+    // must be file, because for Path no optimized impl (output stream must be not used, otherwise cache file will be created by JDK)
+    //long start = System.currentTimeMillis();
+    try (OutputStream stream = Files.newOutputStream(selfieFile)) {
+      try (MemoryCacheImageOutputStream out = new MemoryCacheImageOutputStream(stream)) {
+        ImageWriter writer = ImageIO.getImageWriters(ImageTypeSpecifier.createFromRenderedImage(image), "png").next();
+        try {
+          writer.setOutput(out);
+          writer.write(null, new IIOImage(image, null, null), null);
+        }
+        finally {
+          writer.dispose();
+        }
       }
-    } catch (IOException ignored) {}
+    }
+
+    //System.out.println("Write image: " + (System.currentTimeMillis() - start) + "ms");
+    Path lastLink = selfieFile.getParent().resolve("last.png");
+    if (SystemInfo.isUnix) {
+      Files.deleteIfExists(lastLink);
+      Files.createSymbolicLink(lastLink, selfieFile);
+    }
+    else {
+      Files.copy(selfieFile, lastLink, StandardCopyOption.REPLACE_EXISTING);
+    }
   }
 
   @NotNull
-  private File getSelfieLocation() {
-    return myProject != null ?
-           ProjectUtil.getProjectCachePath(myProject, "selfies", false, ".png").toFile() :
-           getLastSelfieLocation();
-  }
-
-  @NotNull
-  private static File getLastSelfieLocation() {
-    return new File(PathManager.getSystemPath(), "selfies/last_closed_project.png");
+  public static Path getSelfieLocation(@NotNull String projectWorkspaceId) {
+    return PathManagerEx.getAppSystemDir().resolve("project-selfies").resolve(projectWorkspaceId + ".png");
   }
 
   @Override
@@ -688,15 +599,11 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
 
   @NotNull
   @Override
-  public ActionCallback toggleFullScreen(boolean state) {
-
-    if (temporaryFixForIdea156004(state)) return ActionCallback.DONE;
-
-    if (myFrameDecorator != null) {
-      return myFrameDecorator.toggleFullScreen(state);
+  public Promise<?> toggleFullScreen(boolean state) {
+    if (temporaryFixForIdea156004(state) || myFrameDecorator == null) {
+      return Promises.resolvedPromise();
     }
-
-    return ActionCallback.DONE;
+    return myFrameDecorator.toggleFullScreen(state);
   }
 
   private boolean temporaryFixForIdea156004(final boolean state) {
@@ -738,6 +645,44 @@ public final class IdeFrameImpl extends JFrame implements IdeFrameEx, Accessible
       builder.append(ApplicationNamesInfo.getInstance().getFullProductName());
 
       return builder.toString();
+    }
+  }
+
+  private class MyLayoutFocusTraversalPolicyExt extends LayoutFocusTraversalPolicyExt {
+    @Override
+    protected Component getDefaultComponentImpl(Container focusCycleRoot) {
+      Component component = findNextFocusComponent();
+      return component == null ? super.getDefaultComponentImpl(focusCycleRoot) : component;
+    }
+
+    @Override
+    protected Component getFirstComponentImpl(Container focusCycleRoot) {
+      Component component = findNextFocusComponent();
+      return component == null ? super.getFirstComponentImpl(focusCycleRoot) : component;
+    }
+
+    @Override
+    protected Component getLastComponentImpl(Container focusCycleRoot) {
+      Component component = findNextFocusComponent();
+      return component == null ? super.getLastComponentImpl(focusCycleRoot) : component;
+    }
+
+    @Override
+    protected Component getComponentAfterImpl(Container focusCycleRoot, Component aComponent) {
+      Component component = findNextFocusComponent();
+      return component == null ? super.getComponentAfterImpl(focusCycleRoot, aComponent) : component;
+    }
+
+    @Override
+    public Component getInitialComponent(Window window) {
+      Component component = findNextFocusComponent();
+      return component == null ? super.getInitialComponent(window) : component;
+    }
+
+    @Override
+    protected Component getComponentBeforeImpl(Container focusCycleRoot, Component aComponent) {
+      Component component = findNextFocusComponent();
+      return component == null ? super.getComponentBeforeImpl(focusCycleRoot, aComponent) : component;
     }
   }
 }

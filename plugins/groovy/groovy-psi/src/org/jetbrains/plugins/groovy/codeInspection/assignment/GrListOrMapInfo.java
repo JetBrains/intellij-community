@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.assignment;
 
 import com.intellij.psi.PsiClass;
@@ -13,10 +13,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-public class GrListOrMapInfo implements ConstructorCallInfo<GrListOrMap> {
+public class GrListOrMapInfo implements CallInfo<GrListOrMap> {
   private final GrListOrMap myListOrMap;
   private final LiteralConstructorReference myReference;
 
@@ -54,12 +53,6 @@ public class GrListOrMapInfo implements ConstructorCallInfo<GrListOrMap> {
     return null;
   }
 
-  @Nullable
-  @Override
-  public PsiType getQualifierInstanceType() {
-    return null;
-  }
-
   @NotNull
   @Override
   public PsiElement getElementToHighlight() {
@@ -67,13 +60,6 @@ public class GrListOrMapInfo implements ConstructorCallInfo<GrListOrMap> {
   }
 
   @NotNull
-  @Override
-  public GroovyResolveResult advancedResolve() {
-    return PsiImplUtil.extractUniqueResult(multiResolve());
-  }
-
-  @NotNull
-  @Override
   public GroovyResolveResult[] multiResolve() {
     GroovyResolveResult[] results = myReference.multiResolve(false);
     if (results.length == 1 && results[0].getElement() instanceof PsiClass) {
@@ -86,23 +72,5 @@ public class GrListOrMapInfo implements ConstructorCallInfo<GrListOrMap> {
   @Override
   public GrListOrMap getCall() {
     return myListOrMap;
-  }
-
-  @NotNull
-  @Override
-  public GrExpression[] getExpressionArguments() {
-    return myListOrMap.isMap() ? GrExpression.EMPTY_ARRAY : myListOrMap.getInitializers();
-  }
-
-  @NotNull
-  @Override
-  public GrClosableBlock[] getClosureArguments() {
-    return GrClosableBlock.EMPTY_ARRAY;
-  }
-
-  @NotNull
-  @Override
-  public GrNamedArgument[] getNamedArguments() {
-    return myListOrMap.isMap() ? myListOrMap.getNamedArguments() : GrNamedArgument.EMPTY_ARRAY;
   }
 }

@@ -3,6 +3,7 @@ package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.reference.SoftReference;
@@ -11,6 +12,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Interner;
 import com.intellij.util.containers.WeakInterner;
+import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.GenericDomValue;
 import com.intellij.util.xml.reflect.*;
@@ -53,7 +55,8 @@ public class DynamicGenericInfo extends DomGenericInfoEx {
 
     if (!myInvocationHandler.exists()) return true;
 
-    return RecursionManager.doPreventingRecursion(myInvocationHandler, false, () -> {
+    boolean fromIndexing = FileBasedIndex.getInstance().getFileBeingCurrentlyIndexed() != null;
+    return RecursionManager.doPreventingRecursion(Pair.create(myInvocationHandler, fromIndexing), false, () -> {
       DomExtensionsRegistrarImpl registrar = runDomExtenders();
 
       synchronized (myInvocationHandler) {

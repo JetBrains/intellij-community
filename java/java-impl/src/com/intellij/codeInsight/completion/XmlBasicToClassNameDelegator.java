@@ -16,8 +16,6 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.lang.StdLanguages;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
@@ -31,9 +29,7 @@ public class XmlBasicToClassNameDelegator extends CompletionContributor {
   public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull final CompletionResultSet result) {
     PsiElement position = parameters.getPosition();
     PsiFile file = position.getContainingFile();
-    if (parameters.getCompletionType() != CompletionType.BASIC ||
-        !JavaCompletionContributor.mayStartClassName(result) ||
-        !file.getLanguage().isKindOf(StdLanguages.XML)) {
+    if (parameters.getCompletionType() != CompletionType.BASIC || !JavaCompletionContributor.mayStartClassName(result)) {
       return;
     }
 
@@ -45,14 +41,13 @@ public class XmlBasicToClassNameDelegator extends CompletionContributor {
 
     if (empty && JavaClassReferenceCompletionContributor.findJavaClassReference(file, parameters.getOffset()) != null ||
         parameters.isExtendedCompletion()) {
-      CompletionService.getCompletionService().getVariantsFromContributors(parameters.delegateToClassName(), null, completionResult -> {
-        LookupElement lookupElement = completionResult.getLookupElement();
+      JavaClassNameCompletionContributor.addAllClasses(parameters, true, result.getPrefixMatcher(), lookupElement -> {
         JavaPsiClassReferenceElement classElement = lookupElement.as(JavaPsiClassReferenceElement.CLASS_CONDITION_KEY);
         if (classElement != null) {
           classElement.setAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE);
         }
         lookupElement.putUserData(XmlCompletionContributor.WORD_COMPLETION_COMPATIBLE, Boolean.TRUE); //todo think of a less dirty interaction
-        result.passResult(completionResult);
+        result.addElement(lookupElement);
       });
     }
   }

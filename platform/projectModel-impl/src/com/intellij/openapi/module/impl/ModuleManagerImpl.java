@@ -257,7 +257,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
         else {
           filepath = VirtualFileManager.extractPath(fileUrlValue);
         }
-        paths.add(new ModulePath(FileUtilRt.toSystemIndependentName(filepath), moduleElement.getAttributeValue(ATTRIBUTE_GROUP)));
+        paths.add(new ModulePath(FileUtilRt.toSystemIndependentName(Objects.requireNonNull(filepath)), moduleElement.getAttributeValue(ATTRIBUTE_GROUP)));
       }
     }
     return paths;
@@ -563,10 +563,11 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
   public Module[] getSortedModules() {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     deliverPendingEvents();
-    if (myCachedSortedModules == null) {
-      myCachedSortedModules = myModuleModel.getSortedModules();
+    Module[] sortedModules = myCachedSortedModules;
+    if (sortedModules == null) {
+      myCachedSortedModules = sortedModules = myModuleModel.getSortedModules();
     }
-    return myCachedSortedModules;
+    return sortedModules;
   }
 
   @Override
@@ -679,6 +680,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
       myIsWritable = false;
     }
 
+    @SuppressWarnings("CopyConstructorMissesField")
     private ModuleModelImpl(@NotNull ModuleModelImpl that) {
       myManager = that.myManager;
       myModules.putAll(that.myModules);
@@ -780,6 +782,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
         newModule.setModuleType(moduleTypeId);
         if (options != null) {
           for (Map.Entry<String, String> option : options.entrySet()) {
+            //noinspection deprecation
             newModule.setOption(option.getKey(), option.getValue());
           }
         }
@@ -966,6 +969,12 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
       else {
         myModuleGroupPath.put(module, groupPath);
       }
+    }
+
+    @NotNull
+    @Override
+    public Project getProject() {
+      return myManager.myProject;
     }
   }
 

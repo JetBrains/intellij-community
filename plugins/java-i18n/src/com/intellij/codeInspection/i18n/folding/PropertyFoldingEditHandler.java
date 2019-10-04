@@ -39,7 +39,7 @@ public class PropertyFoldingEditHandler {
   private static UCallExpression findCallExpression(PsiElement foldedPsiElement) {
     UCallExpression expression = UastContextKt.toUElement(foldedPsiElement, UCallExpression.class);
     if (expression != null) return expression;
-    for (PsiElement child : foldedPsiElement.getChildren()) {
+    for (PsiElement child = foldedPsiElement.getFirstChild(); child != null; child = child.getNextSibling()) {
       UCallExpression e = UastContextKt.toUElement(child, UCallExpression.class);
       if (e != null) return e;
     }

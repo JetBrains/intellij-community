@@ -226,6 +226,9 @@ public class VcsLogUiImpl extends AbstractVcsLogUi {
       else if (MainVcsLogUiProperties.SHOW_TAG_NAMES.equals(property)) {
         myMainFrame.getGraphTable().setShowTagNames(myUiProperties.get(MainVcsLogUiProperties.SHOW_TAG_NAMES));
       }
+      else if (MainVcsLogUiProperties.LABELS_LEFT_ALIGNED.equals(property)) {
+        myMainFrame.getGraphTable().setLabelsLeftAligned(myUiProperties.get(MainVcsLogUiProperties.LABELS_LEFT_ALIGNED));
+      }
       else if (MainVcsLogUiProperties.BEK_SORT_TYPE.equals(property)) {
         myRefresher.onSortTypeChange(myUiProperties.get(MainVcsLogUiProperties.BEK_SORT_TYPE));
       }

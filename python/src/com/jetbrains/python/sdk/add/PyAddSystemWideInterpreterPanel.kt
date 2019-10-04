@@ -18,6 +18,7 @@ package com.jetbrains.python.sdk.add
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.FormBuilder
 import com.jetbrains.python.sdk.PyDetectedSdk
@@ -29,9 +30,11 @@ import java.awt.BorderLayout
 /**
  * @author vlan
  */
-class PyAddSystemWideInterpreterPanel(module: Module?, private val existingSdks: List<Sdk>) : PyAddSdkPanel() {
+class PyAddSystemWideInterpreterPanel(module: Module?,
+                                      private val existingSdks: List<Sdk>,
+                                      context: UserDataHolderBase) : PyAddSdkPanel() {
   override val panelName: String = "System interpreter"
-  private val sdkComboBox = PySdkPathChoosingComboBox(detectSystemWideSdks(module, existingSdks), null)
+  private val sdkComboBox = PySdkPathChoosingComboBox()
 
   init {
     layout = BorderLayout()
@@ -50,6 +53,9 @@ class PyAddSystemWideInterpreterPanel(module: Module?, private val existingSdks:
       .addComponentToRightColumn(permWarning)
       .panel
     add(formPanel, BorderLayout.NORTH)
+    addInterpretersAsync(sdkComboBox) {
+      detectSystemWideSdks(module, existingSdks, context)
+    }
   }
 
   override fun validateAll(): List<ValidationInfo> = listOfNotNull(validateSdkComboBox(sdkComboBox))

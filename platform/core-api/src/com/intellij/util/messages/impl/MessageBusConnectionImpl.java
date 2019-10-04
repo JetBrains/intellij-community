@@ -1,8 +1,4 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-/*
- * @author max
- */
 package com.intellij.util.messages.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -15,10 +11,11 @@ import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Queue;
 
-public class MessageBusConnectionImpl implements MessageBusConnection {
+final class MessageBusConnectionImpl implements MessageBusConnection {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.messages.impl.MessageBusConnectionImpl");
 
   private final MessageBusImpl myBus;
@@ -26,19 +23,50 @@ public class MessageBusConnectionImpl implements MessageBusConnection {
   private final ThreadLocal<Queue<Message>> myPendingMessages = MessageBusImpl.createThreadLocalQueue();
 
   private MessageHandler myDefaultHandler;
-  private volatile SmartFMap<Topic, Object> mySubscriptions = SmartFMap.emptyMap();
+  private volatile SmartFMap<Topic<?>, Object> mySubscriptions = SmartFMap.emptyMap();
 
-  public MessageBusConnectionImpl(@NotNull MessageBusImpl bus) {
+  MessageBusConnectionImpl(@NotNull MessageBusImpl bus) {
     myBus = bus;
   }
 
   @Override
   public <L> void subscribe(@NotNull Topic<L> topic, @NotNull L handler) throws IllegalStateException {
     synchronized (myPendingMessages) {
-      if (mySubscriptions.get(topic) != null) {
-        throw new IllegalStateException("Subscription to " + topic + " already exists");
+      Object currentHandler = mySubscriptions.get(topic);
+      if (currentHandler == null) {
+        mySubscriptions = mySubscriptions.plus(topic, handler);
       }
-      mySubscriptions = mySubscriptions.plus(topic, handler);
+      else if (currentHandler instanceof List<?>) {
+        //noinspection unchecked
+        ((List<L>)currentHandler).add(handler);
+      }
+      else {
+        List<Object> newList = new ArrayList<>();
+        newList.add(currentHandler);
+        newList.add(handler);
+        mySubscriptions = mySubscriptions.plus(topic, newList);
+      }
+    }
+    myBus.notifyOnSubscription(this, topic);
+  }
+
+  // avoid notifyOnSubscription and map modification for each handler
+  <L> void subscribe(@NotNull Topic<L> topic, @NotNull List<Object> handlers) throws IllegalStateException {
+    synchronized (myPendingMessages) {
+      Object currentHandler = mySubscriptions.get(topic);
+      if (currentHandler == null) {
+        mySubscriptions = mySubscriptions.plus(topic, handlers);
+      }
+      else if (currentHandler instanceof List<?>) {
+        //noinspection unchecked
+        ((List<Object>)currentHandler).addAll(handlers);
+      }
+      else {
+        List<Object> newList = new ArrayList<>(handlers.size() + 1);
+        newList.add(currentHandler);
+        newList.addAll(handlers);
+        mySubscriptions = mySubscriptions.plus(topic, newList);
+      }
     }
     myBus.notifyOnSubscription(this, topic);
   }
@@ -88,20 +116,21 @@ public class MessageBusConnectionImpl implements MessageBusConnection {
     final Message messageOnLocalQueue = myPendingMessages.get().poll();
     assert messageOnLocalQueue == message;
 
-    final Topic topic = message.getTopic();
-    final Object handler = mySubscriptions.get(topic);
-
+    Topic<?> topic = message.getTopic();
+    Object handler = mySubscriptions.get(topic);
     try {
-      Method listenerMethod = message.getListenerMethod();
-
       if (handler == myDefaultHandler) {
-        myDefaultHandler.handle(listenerMethod, message.getArgs());
+        myDefaultHandler.handle(message.getListenerMethod(), message.getArgs());
       }
       else {
-        long startTime = System.nanoTime();
-        listenerMethod.invoke(handler, message.getArgs());
-        long endTime = System.nanoTime();
-        myBus.notifyMessageDeliveryListener(topic, listenerMethod.getName(), handler, endTime - startTime);
+        if (handler instanceof List<?>) {
+          for (Object o : (List<?>)handler) {
+            myBus.invokeListener(message, o);
+          }
+        }
+        else {
+          myBus.invokeListener(message, handler);
+        }
       }
     }
     catch (AbstractMethodError e) {
@@ -125,7 +154,7 @@ public class MessageBusConnectionImpl implements MessageBusConnection {
     myPendingMessages.get().offer(message);
   }
 
-  boolean containsMessage(@NotNull Topic topic) {
+  boolean containsMessage(@NotNull Topic<?> topic) {
     Queue<Message> pendingMessages = myPendingMessages.get();
     if (pendingMessages.isEmpty()) return false;
 

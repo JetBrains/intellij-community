@@ -26,24 +26,23 @@ import org.jetbrains.idea.maven.dom.MavenDomUtil;
 
 public class MavenTargetUtil {
   public static PsiElement getRefactorTarget(Editor editor, PsiFile file) {
-    PsiElement target = getFindTarget(editor, file);
+    PsiElement target = getFindTarget(editor, file, true);
     return target == null || !MavenDomUtil.isMavenProperty(target) ? null : target;
   }
 
-  public static PsiElement getFindTarget(Editor editor, PsiFile file) {
+  public static PsiElement getFindTarget(Editor editor, PsiFile file, boolean rename) {
     if (editor == null || file == null) return null;
-
+    if (!rename && !MavenDomUtil.isMavenFile(file)) return null;
     PsiElement target = TargetElementUtil.findTargetElement(editor, TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
     if (target instanceof MavenPsiElementWrapper) {
       return ((MavenPsiElementWrapper)target).getWrappee();
     }
 
+
     if (target == null || isSchema(target)) {
       target = file.findElementAt(editor.getCaretModel().getOffset());
       if (target == null) return null;
     }
-
-    if (!MavenDomUtil.isMavenFile(target)) return null;
 
     return PsiTreeUtil.getParentOfType(target, XmlTag.class, false);
   }

@@ -11,7 +11,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.util.concurrency.Semaphore;
-import com.intellij.util.io.storage.HeavyProcessLatch;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -30,7 +29,6 @@ import static com.intellij.util.ObjectUtils.notNull;
 @SomeQueue
 public class UpdateRequestsQueue {
   private final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.UpdateRequestsQueue");
-  private final boolean myTrackHeavyLatch = Boolean.parseBoolean(System.getProperty("vcs.local.changes.track.heavy.latch"));
 
   private final Project myProject;
   private final ChangeListManagerImpl.Scheduler myScheduler;
@@ -45,7 +43,6 @@ public class UpdateRequestsQueue {
   private final List<Runnable> myWaitingUpdateCompletionQueue = new ArrayList<>();
   private final List<Semaphore> myWaitingUpdateCompletionSemaphores = new ArrayList<>();
   private final ProjectLevelVcsManager myPlVcsManager;
-  //private final ScheduledSlowlyClosingAlarm mySharedExecutor;
   private final StartupManager myStartupManager;
 
   public UpdateRequestsQueue(final Project project, @NotNull ChangeListManagerImpl.Scheduler scheduler, final Runnable delegate) {
@@ -187,7 +184,7 @@ public class UpdateRequestsQueue {
   // true = do not execute
   private boolean checkHeavyOperations() {
     if (myIgnoreBackgroundOperation) return false;
-    return myPlVcsManager.isBackgroundVcsOperationRunning() || myTrackHeavyLatch && HeavyProcessLatch.INSTANCE.isRunning();
+    return myPlVcsManager.isBackgroundVcsOperationRunning();
   }
 
   // true = do not execute

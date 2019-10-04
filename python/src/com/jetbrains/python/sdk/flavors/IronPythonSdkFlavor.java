@@ -17,6 +17,7 @@ package com.jetbrains.python.sdk.flavors;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PatternUtil;
 import icons.PythonIcons;
@@ -39,8 +40,9 @@ public class IronPythonSdkFlavor extends PythonSdkFlavor {
 
   public static IronPythonSdkFlavor INSTANCE = new IronPythonSdkFlavor();
 
+  @NotNull
   @Override
-  public Collection<String> suggestHomePaths(@Nullable Module module) {
+  public Collection<String> suggestHomePaths(@Nullable Module module, @Nullable UserDataHolder context) {
     Set<String> result = new TreeSet<>();
     String root = System.getenv("ProgramFiles(x86)");
     if (root == null) {

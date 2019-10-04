@@ -38,6 +38,6 @@ public class ShowRootsColumnAction extends BooleanPropertyToggleAction {
   public void update(@NotNull AnActionEvent e) {
     super.update(e);
     VcsLogUi ui = e.getData(VcsLogDataKeys.VCS_LOG_UI);
-    if (ui == null || !((AbstractVcsLogUi)ui).getColorManager().isMultipleRoots()) e.getPresentation().setEnabledAndVisible(false);
+    if (ui == null || !((AbstractVcsLogUi)ui).getColorManager().hasMultiplePaths()) e.getPresentation().setEnabledAndVisible(false);
   }
 }

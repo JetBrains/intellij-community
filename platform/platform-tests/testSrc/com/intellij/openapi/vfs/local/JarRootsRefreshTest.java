@@ -15,12 +15,12 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.refactoring.move.MoveHandler;
 import com.intellij.refactoring.rename.RenameProcessor;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 
 import java.io.File;
 
-public class JarRootsRefreshTest extends PlatformTestCase {
+public class JarRootsRefreshTest extends HeavyPlatformTestCase {
   public void testJarRefreshOnRenameOrMove() {
     File jar = IoTestUtil.createTestJar();
     VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(jar);

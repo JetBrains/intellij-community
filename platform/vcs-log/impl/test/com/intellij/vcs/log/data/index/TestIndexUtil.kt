@@ -4,7 +4,7 @@ package com.intellij.vcs.log.data.index
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.PlatformTestCase
+import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.vcs.log.VcsLogProvider
 import com.intellij.vcs.log.data.VcsLogProgress
 import com.intellij.vcs.log.data.VcsLogStorageImpl
@@ -26,15 +26,15 @@ fun setUpIndex(project: Project, root: VirtualFile, logProvider: VcsLogProvider,
   val errorConsumer = TestErrorConsumer()
 
   val storage = VcsLogStorageImpl(project, providersMap, errorConsumer, disposable)
-  return VcsLogPersistentIndex(project, storage, VcsLogProgress(project, disposable), providersMap, errorConsumer, disposable)
+  return VcsLogPersistentIndex(project, storage, VcsLogProgress(disposable), providersMap, errorConsumer, disposable)
 }
 
 class TestErrorConsumer : FatalErrorHandler {
   override fun displayFatalErrorMessage(message: String) {
-    PlatformTestCase.fail(message)
+    HeavyPlatformTestCase.fail(message)
   }
 
   override fun consume(source: Any?, throwable: Throwable) {
-    PlatformTestCase.fail(throwable.message)
+    HeavyPlatformTestCase.fail(throwable.message)
   }
 }

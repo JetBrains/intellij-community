@@ -2,15 +2,23 @@
 package com.intellij.openapi.components;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.extensions.RequiredElement;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * Describes a service which is loaded on demand.
+ *
+ * <a href="http://www.jetbrains.org/intellij/sdk/docs/basics/plugin_structure/plugin_services.html">Plugin Services</a>
+ */
 public final class ServiceDescriptor {
-  @Attribute()
+
+  @Attribute
   public String serviceInterface;
 
-  @Attribute()
+  @Attribute
+  @RequiredElement
   public String serviceImplementation;
 
   @Attribute
@@ -27,10 +35,20 @@ public final class ServiceDescriptor {
   @Nullable
   public String configurationSchemaKey;
 
+  /**
+   * Preload service (before component creation). Applicable for application level only.
+   *
+   * Loading order and thread are not guaranteed, service should be decoupled as much as possible.
+   */
+  @Attribute
+  @ApiStatus.Experimental
+  public boolean preload;
+
   public String getInterface() {
     return serviceInterface != null ? serviceInterface : getImplementation();
   }
 
+  @Nullable
   public String getImplementation() {
     return testServiceImplementation != null && ApplicationManager.getApplication().isUnitTestMode() ? testServiceImplementation : serviceImplementation;
   }

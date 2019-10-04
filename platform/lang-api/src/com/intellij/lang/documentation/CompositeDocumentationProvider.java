@@ -143,6 +143,18 @@ public class CompositeDocumentationProvider extends DocumentationProviderEx impl
   }
 
   @Override
+  public String generateHoverDoc(@NotNull PsiElement element, @Nullable PsiElement originalElement) {
+    for (DocumentationProvider provider : getAllProviders()) {
+      String result = provider.generateHoverDoc(element, originalElement);
+      if (result != null) {
+        LOG.debug("generateHoverDoc: ", provider);
+        return result;
+      }
+    }
+    return null;
+  }
+
+  @Override
   public PsiElement getDocumentationElementForLookupItem(PsiManager psiManager, Object object, PsiElement element) {
     for (DocumentationProvider provider : getAllProviders()) {
       PsiElement result = provider.getDocumentationElementForLookupItem(psiManager, object, element);

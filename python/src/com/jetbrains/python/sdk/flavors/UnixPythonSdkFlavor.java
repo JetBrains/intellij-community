@@ -16,10 +16,12 @@
 package com.jetbrains.python.sdk.flavors;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -37,8 +39,9 @@ public class UnixPythonSdkFlavor extends CPythonSdkFlavor {
 
   public static final UnixPythonSdkFlavor INSTANCE = new UnixPythonSdkFlavor();
 
+  @NotNull
   @Override
-  public Collection<String> suggestHomePaths(@Nullable Module module) {
+  public Collection<String> suggestHomePaths(@Nullable Module module, @Nullable UserDataHolder context) {
     Set<String> candidates = new HashSet<>();
     collectUnixPythons("/usr/bin", candidates);
     return candidates;

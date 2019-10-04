@@ -4,6 +4,7 @@ package org.jetbrains.debugger
 import com.intellij.util.io.addChannelListener
 import com.intellij.util.io.shutdownIfOio
 import io.netty.channel.Channel
+import io.netty.util.ReferenceCountUtil
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.errorIfNotMessage
@@ -24,7 +25,12 @@ open class StandaloneVmHelper(private val vm: Vm, private val messageProcessor: 
 
   fun write(content: Any): Boolean {
     val channel = getChannelIfActive()
-    return channel != null && !channel.writeAndFlush(content).isCancelled
+    if (channel != null) {
+      return !channel.writeAndFlush(content).isCancelled
+    } else {
+      ReferenceCountUtil.release(content)
+      return false
+    }
   }
 
   interface VmEx : Vm {

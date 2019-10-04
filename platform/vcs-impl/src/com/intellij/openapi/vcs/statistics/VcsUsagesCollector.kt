@@ -61,7 +61,7 @@ class VcsUsagesCollector : ProjectUsagesCollector() {
 
       val projectMappedRoots = vcsManager.allVcsRoots
         .filter { it.vcs == defaultVcs }
-        .filter { it.path != null && !explicitRoots.contains(it.path) }
+        .filter { !explicitRoots.contains(it.path) }
 
       for (vcsRoot in projectMappedRoots) {
         val metric = newMetric("project.mapped.root")

@@ -362,13 +362,6 @@ public class NullabilityProblemKind<T extends PsiElement> {
           }
         }
       }
-      if (parent instanceof PsiBreakStatement) {
-        PsiElement exitedElement = ((PsiBreakStatement)parent).findExitedElement();
-        if (exitedElement instanceof PsiSwitchExpression) {
-          context = (PsiExpression)exitedElement;
-          continue;
-        }
-      }
       if (parent instanceof PsiYieldStatement) {
         PsiSwitchExpression enclosing = ((PsiYieldStatement)parent).findEnclosingExpression();
         if (enclosing != null) {

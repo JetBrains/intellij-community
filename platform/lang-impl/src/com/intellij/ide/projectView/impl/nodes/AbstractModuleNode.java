@@ -104,9 +104,8 @@ public abstract class AbstractModuleNode extends ProjectViewNode<Module> impleme
 
   @Override
   public boolean canNavigate() {
-    if (!ProjectSettingsService.getInstance(myProject).canOpenModuleSettings() ) return false;
-    final Module module = getValue();
-    return module != null && !module.isDisposed();
+    Module module = getValue();
+    return module != null && !module.isDisposed() && ProjectSettingsService.getInstance(myProject).canOpenModuleSettings();
   }
 
   @SuppressWarnings("deprecation")

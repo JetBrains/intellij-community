@@ -328,7 +328,7 @@ public final class ImageLoader implements Serializable {
   }
 
   @NotNull
-  public static Image scaleImage(Image image, double scale) {
+  public static Image scaleImage(@NotNull Image image, double scale) {
     if (scale == 1.0) return image;
 
     if (image instanceof JBHiDPIScaledImage) {

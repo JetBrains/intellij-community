@@ -9,7 +9,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.impl.JavaPsiFacadeEx;
 import org.jetbrains.annotations.NotNull;
 
-public abstract class JavaProjectTestCase extends PlatformTestCase {
+public abstract class JavaProjectTestCase extends HeavyPlatformTestCase {
   protected JavaPsiFacadeEx myJavaFacade;
 
   @Override

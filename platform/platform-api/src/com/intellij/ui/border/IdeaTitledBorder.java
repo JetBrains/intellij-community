@@ -4,6 +4,7 @@ package com.intellij.ui.border;
 import com.intellij.ui.TitledSeparator;
 import com.intellij.util.ui.DialogUtil;
 import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -69,6 +70,7 @@ public class IdeaTitledBorder extends TitledBorder {
 
   public IdeaTitledBorder setShowLine(boolean showLine) {
     myShowLine = showLine;
+    insideInsets.top = JBUI.scale(myShowLine ? TitledSeparator.BOTTOM_INSET : 3);
     return this;
   }
 
@@ -90,7 +92,7 @@ public class IdeaTitledBorder extends TitledBorder {
   @Override
   public Insets getBorderInsets(Component c, final Insets insets) {
     insets.top += getTitledSeparator(c).getPreferredSize().getHeight() - TitledSeparator.TOP_INSET - TitledSeparator.BOTTOM_INSET;
-    insets.top += UIUtil.DEFAULT_VGAP;
+    insets.top += myShowLine ? UIUtil.DEFAULT_VGAP : 0;
     insets.top += insideInsets.top;
     insets.left += insideInsets.left;
     insets.bottom += insideInsets.bottom;

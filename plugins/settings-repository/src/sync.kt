@@ -5,7 +5,6 @@ import com.intellij.configurationStore.*
 import com.intellij.configurationStore.schemeManager.SchemeManagerImpl
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.application.impl.coroutineDispatchingContext
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.stateStore
@@ -148,7 +147,7 @@ internal class SyncManager(private val icsManager: IcsManager, private val autoS
       // disable auto sync on exit
       autoSyncManager.enabled = false
       // force to avoid saveAll & confirmation
-      (ApplicationManager.getApplication() as ApplicationImpl).exit(true, true, true)
+      ApplicationManager.getApplication().exit(true, true, true)
     }
     else if (exception != null) {
       throw exception!!

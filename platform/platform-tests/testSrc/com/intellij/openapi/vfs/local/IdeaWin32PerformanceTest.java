@@ -2,7 +2,7 @@
 package com.intellij.openapi.vfs.local;
 
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.util.io.win32.FileInfo;
 import com.intellij.openapi.util.io.win32.IdeaWin32;
 import org.junit.Before;
@@ -13,7 +13,6 @@ import java.io.File;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assume.assumeTrue;
 
 public class IdeaWin32PerformanceTest {
   private IdeaWin32 myDriver;
@@ -21,7 +20,7 @@ public class IdeaWin32PerformanceTest {
 
   @Before
   public void setUp() {
-    assumeTrue("windows only", SystemInfo.isWindows);
+    IoTestUtil.assumeWindows();
     myDriver = IdeaWin32.getInstance();
     myIdeaTotal = myJavaTotal = 0;
   }

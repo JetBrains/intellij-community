@@ -14,7 +14,7 @@ public final class ProjectExtensionPointName<T> extends BaseExtensionPointName {
 
   @NotNull
   public ExtensionPoint<T> getPoint(@NotNull AreaInstance areaInstance) {
-    return Extensions.getArea(areaInstance).getExtensionPoint(getName());
+    return areaInstance.getExtensionArea().getExtensionPoint(getName());
   }
 
   @NotNull

@@ -89,10 +89,11 @@ public class ProjectJdkImpl extends UserDataHolderBase implements Sdk, SdkModifi
   @Override
   @NotNull
   public SdkTypeId getSdkType() {
-    if (mySdkType == null) {
-      mySdkType = ProjectJdkTable.getInstance().getDefaultSdkType();
+    SdkTypeId sdkType = mySdkType;
+    if (sdkType == null) {
+      mySdkType = sdkType = ProjectJdkTable.getInstance().getDefaultSdkType();
     }
-    return mySdkType;
+    return sdkType;
   }
 
   @Override

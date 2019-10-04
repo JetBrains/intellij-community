@@ -10,8 +10,7 @@
     </not>
   </condition>
 
-  <!-- Android Studio: modified by Change I1dba4249 / commit 8f836c4 -->
-  <target name="init" unless="intellij.build.scripts.deps">
+  <target name="init">
     <property name="gradle.home" value="${project.home}/build/dependencies"/>
     <condition property="gradle.daemon" value="--daemon" else="--no-daemon">
       <and>
@@ -43,23 +42,11 @@
   </target>
 
   <target name="doGant" depends="init">
-    <!-- Android Studio: added by Change I1dba4249 / commit 8f836c4 -->
-    <condition property="script.deps" value="${intellij.build.scripts.deps}" else="build/dependencies/build/build-scripts-deps">
-      <isset property="intellij.build.scripts.deps"/>
-    </condition>
-
     <path id="gant.classpath">
-      <fileset dir="${project.home}/build/lib/jps">
-        <include name="*.jar"/>
-      </fileset>
       <pathelement path="${project.home}/platform/build-scripts/groovy"/>
       <pathelement path="${project.home}/build/groovy"/>
-      <!-- Android Studio: modified by Change I1dba4249 / commit 8f836c4 -->
-      <fileset dir="${project.home}/${script.deps}">
+      <fileset dir="${project.home}/build/dependencies/build/build-scripts-deps">
         <include name="*.jar"/>
-      </fileset>
-      <fileset dir="${idea.lib}">
-        <include name="snappy-in-java-*.jar"/>
       </fileset>
     </path>
 

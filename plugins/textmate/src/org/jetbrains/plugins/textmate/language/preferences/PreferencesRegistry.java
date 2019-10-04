@@ -20,7 +20,7 @@ public class PreferencesRegistry {
   /**
    * Append table with new preferences
    */
-  public void fillFromPList(@NotNull String scopeName, @NotNull Plist plist) {
+  public void fillFromPList(@NotNull CharSequence scopeName, @NotNull Plist plist) {
     final Set<TextMateBracePair> highlightingPairs = PreferencesReadUtil.readPairs(plist.getPlistValue(Constants.HIGHLIGHTING_PAIRS_KEY));
     final Set<TextMateBracePair> smartTypingPairs = PreferencesReadUtil.readPairs(plist.getPlistValue(Constants.SMART_TYPING_PAIRS_KEY));
     if (highlightingPairs != null || smartTypingPairs != null) {
@@ -36,7 +36,7 @@ public class PreferencesRegistry {
    *         of rule selector relative to scope selector.
    */
   @NotNull
-  public List<Preferences> getPreferences(@NotNull String scopeSelector) {
+  public List<Preferences> getPreferences(@NotNull CharSequence scopeSelector) {
     return new TextMateScopeComparator<Preferences>(scopeSelector).sortAndFilter(myPreferences);
   }
 

@@ -4,6 +4,7 @@ package org.jetbrains.plugins.groovy.lang.psi.typeEnhancers;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiWildcardType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression;
@@ -48,7 +49,18 @@ public abstract class AbstractClosureParameterEnhancer extends GrVariableEnhance
       return ((PsiPrimitiveType)res).getBoxedType(functionalExpression);
     }
 
-    return res;
+    return res != null ? unwrapBound(res) : null;
+  }
+
+  @Nullable
+  private static PsiType unwrapBound(@NotNull PsiType type) {
+    if (type instanceof PsiWildcardType) {
+      PsiWildcardType wildcard = (PsiWildcardType)type;
+      return wildcard.isSuper() ? wildcard.getBound() : type;
+    }
+    else {
+      return type;
+    }
   }
 
   @Nullable

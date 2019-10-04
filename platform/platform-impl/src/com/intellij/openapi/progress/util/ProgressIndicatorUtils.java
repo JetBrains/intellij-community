@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.progress.util;
 
 import com.intellij.openapi.Disposable;
@@ -8,22 +8,18 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.EmptyRunnable;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.PooledThreadExecutor;
 
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
+import java.util.concurrent.locks.Lock;
 
 /**
  * Most methods in this class are used to equip long background processes which take read actions with a special listener
@@ -35,6 +31,8 @@ import java.util.concurrent.TimeUnit;
  * @author gregsh
  */
 public class ProgressIndicatorUtils {
+  private static final Logger LOG = Logger.getInstance(ProgressIndicatorUtils.class);
+
   @NotNull
   public static ProgressIndicator forceWriteActionPriority(@NotNull ProgressIndicator progress, @NotNull Disposable parentDisposable) {
     ApplicationManager.getApplication().addApplicationListener(new ApplicationListener() {
@@ -264,6 +262,54 @@ public class ProgressIndicatorUtils {
     }
     finally {
       cancelProgress.cancel(false);
+    }
+  }
+
+  public static <T, E extends Throwable> T computeWithLockAndCheckingCanceled(@NotNull Lock lock,
+                                                                              int timeout,
+                                                                              @NotNull TimeUnit timeUnit,
+                                                                              @NotNull ThrowableComputable<T, E> computable) throws E, ProcessCanceledException {
+    awaitWithCheckCancelled(lock, timeout, timeUnit);
+
+    try {
+      return computable.compute();
+    }
+    finally {
+      lock.unlock();
+    }
+  }
+
+  public static void awaitWithCheckCanceled(@NotNull CountDownLatch waiter) {
+    awaitWithCheckCanceled(() -> waiter.await(50, TimeUnit.MILLISECONDS));
+  }
+
+  public static void awaitWithCheckCanceled(@NotNull Future<?> waiter) {
+    awaitWithCheckCanceled(() -> {
+      try {
+        waiter.get(50, TimeUnit.MILLISECONDS);
+        return true;
+      }
+      catch (TimeoutException e) {
+        return false;
+      }
+    });
+  }
+
+  public static void awaitWithCheckCancelled(@NotNull Lock lock, int timeout, @NotNull TimeUnit timeUnit) {
+    awaitWithCheckCanceled(() -> lock.tryLock(timeout, timeUnit));
+  }
+
+  private static void awaitWithCheckCanceled(@NotNull ThrowableComputable<Boolean, ? extends Exception> waiter) {
+    boolean success = false;
+    while (!success) {
+      ProgressManager.checkCanceled();
+      try {
+        success = waiter.compute();
+      }
+      catch (Exception e) {
+        LOG.warn(e);
+        throw new ProcessCanceledException(e);
+      }
     }
   }
 }

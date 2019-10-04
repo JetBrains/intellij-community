@@ -184,7 +184,7 @@ class ModeReference extends SimpleAttributeReference implements PsiPolyVariantRe
     public boolean matches(XmlTag element) {
       final String s = element.getAttributeValue("mode");
       return myMode != null &&
-             s != null && s.indexOf(CompletionInitializationContext.DUMMY_IDENTIFIER_TRIMMED) == -1 &&
+             s != null && !s.contains(CompletionInitializationContext.DUMMY_IDENTIFIER_TRIMMED) &&
              super.matches(element);
     }
 

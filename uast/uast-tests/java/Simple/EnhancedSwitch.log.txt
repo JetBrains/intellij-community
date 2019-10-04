@@ -20,23 +20,23 @@ UFile (package = )
                                             UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
                                                 UIdentifier (Identifier (println))
                                                 ULiteralExpression (value = "here")
-                                        UBreakWithValueExpression (label = null, hasValue = true)
+                                        UYieldExpression
                                             ULiteralExpression (value = "FOO")
                                 USwitchClauseExpressionWithBody
                                     ULiteralExpression (value = "bar")
                                     ULiteralExpression (value = "beer")
                                     UExpressionList (switch_entry)
-                                        UBreakWithValueExpression (label = null, hasValue = true)
+                                        UYieldExpression
                                             ULiteralExpression (value = "BAR")
                                 USwitchClauseExpressionWithBody
                                     ULiteralExpression (value = "baz")
                                     UExpressionList (switch_entry)
-                                        UBreakWithValueExpression (label = null, hasValue = true)
+                                        UYieldExpression
                                             ULiteralExpression (value = "bAz")
                                 USwitchClauseExpressionWithBody
                                     UDefaultCaseExpression
                                     UExpressionList (switch_entry)
-                                        UBreakWithValueExpression (label = null, hasValue = true)
+                                        UYieldExpression
                                             ULiteralExpression (value = "default")
                 UDeclarationsExpression
                     ULocalVariable (name = numericString2)
@@ -46,12 +46,12 @@ UFile (package = )
                                 USwitchClauseExpressionWithBody
                                     ULiteralExpression (value = "foo")
                                     UExpressionList (switch_entry)
-                                        UBreakWithValueExpression (label = null, hasValue = true)
+                                        UYieldExpression
                                             ULiteralExpression (value = "FOO")
                                 USwitchClauseExpressionWithBody
                                     ULiteralExpression (value = "bar")
                                     UExpressionList (switch_entry)
-                                        UBreakWithValueExpression (label = null, hasValue = true)
+                                        UYieldExpression
                                             ULiteralExpression (value = "BAR")
                                 USwitchClauseExpressionWithBody
                                     ULiteralExpression (value = "baz")
@@ -64,12 +64,12 @@ UFile (package = )
                                             UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
                                                 UIdentifier (Identifier (println))
                                                 ULiteralExpression (value = "here")
-                                        UBreakWithValueExpression (label = null, hasValue = true)
+                                        UYieldExpression
                                             ULiteralExpression (value = "bAz")
                                 USwitchClauseExpressionWithBody
                                     UDefaultCaseExpression
                                     UExpressionList (switch_entry)
-                                        UBreakWithValueExpression (label = null, hasValue = true)
+                                        UYieldExpression
                                             ULiteralExpression (value = "default")
                 UReturnExpression
                     UBinaryExpression (operator = +)

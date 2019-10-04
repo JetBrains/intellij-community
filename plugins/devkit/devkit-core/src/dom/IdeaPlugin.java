@@ -38,6 +38,9 @@ public interface IdeaPlugin extends DomElement {
   @NotNull
   GenericAttributeValue<String> getUrl();
 
+  /**
+   * @deprecated Unused.
+   */
   @SuppressWarnings("DeprecatedIsStillUsed")
   @NotNull
   @Deprecated
@@ -138,14 +141,24 @@ public interface IdeaPlugin extends DomElement {
 
   Actions addActions();
 
+  /**
+   * Available since 192.
+   */
   @NotNull
   @SubTagList("applicationListeners")
-  @Stubbed
   List<Listeners> getApplicationListeners();
+
+  /**
+   * Available since 192.
+   */
+  @NotNull
+  @SubTagList("projectListeners")
+  List<Listeners> getProjectListeners();
 
   /**
    * @deprecated not used anymore
    */
+  @SuppressWarnings("SpellCheckingInspection")
   @Deprecated
   @NotNull
   List<Helpset> getHelpsets();

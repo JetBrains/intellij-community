@@ -36,15 +36,21 @@ public class NotificationPopup {
     this(owner, content, background, true);
   }
 
-  public NotificationPopup(final JComponent owner, final JComponent content, Color background, boolean useDefaultPreferredSize) {
+  private NotificationPopup(final JComponent owner, final JComponent content, Color background, boolean useDefaultPreferredSize) {
     this(owner, content, background, useDefaultPreferredSize, null, false);
   }
 
-  public NotificationPopup(final JComponent owner, final JComponent content, Color background, final boolean useDefaultPreferredSize, ActionListener clickHandler, boolean closeOnClick) {
+  private NotificationPopup(final JComponent owner,
+                            final JComponent content,
+                            Color background,
+                            final boolean useDefaultPreferredSize,
+                            ActionListener clickHandler,
+                            boolean closeOnClick) {
     final IdeFrame frame = findFrame(owner);
     if (frame == null || !((Window)frame).isShowing() || frame.getBalloonLayout() == null) {
       new FramelessNotificationPopup(owner, content, background, useDefaultPreferredSize, clickHandler);
-    } else {
+    }
+    else {
       final Wrapper wrapper = new NonOpaquePanel(content) {
         @Override
         public Dimension getPreferredSize() {

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.ui.UISettings;
@@ -14,6 +14,7 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.util.ui.JBSwingUtilities;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -73,7 +74,7 @@ final class Stripe extends JPanel implements UISettingsListener {
       if (insets.left == 1) UIUtil.drawLine(g, x, y, x, y + height);
       if (insets.bottom == 1) UIUtil.drawLine(g, x, y + height - 1, x + width, y + height - 1);
 
-      if (UIUtil.isUnderDarcula()) {
+      if (StartupUiUtil.isUnderDarcula()) {
         final Color c = g.getColor();
         if (insets.top == 2) {
           g.setColor(c);
@@ -410,10 +411,6 @@ final class Stripe extends JPanel implements UISettingsListener {
     if (Registry.is("disable.toolwindow.overlay")) return;
 
     Color bg = UIUtil.getPanelBackground();
-    if (UIUtil.isUnderAquaLookAndFeel()) {
-      float[] result = Color.RGBtoHSB(bg.getRed(), bg.getGreen(), bg.getBlue(), new float[3]);
-      bg = new Color(Color.HSBtoRGB(result[0], result[1], result[2] - 0.08f > 0 ? result[2] - 0.08f : result[2]));
-    }
     if (overlayed) {
       setBackground(ColorUtil.toAlpha(bg, 190));
     }
@@ -577,7 +574,7 @@ final class Stripe extends JPanel implements UISettingsListener {
       g.setColor(getBackground().brighter());
       g.fillRect(0, 0, getWidth(), getHeight());
     }
-    if (UIUtil.isUnderDarcula()) return;
+    if (StartupUiUtil.isUnderDarcula()) return;
     ToolWindowAnchor anchor = getAnchor();
     g.setColor(new Color(255, 255, 255, 40));
     Rectangle r = getBounds();

@@ -3,9 +3,11 @@
 package com.intellij.ide.util.gotoByName;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.intellij.BundleBase;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.ApplyIntentionAction;
 import com.intellij.ide.actions.ShowSettingsUtilImpl;
+import com.intellij.ide.ui.RegistryTextOptionDescriptor;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.ide.ui.search.OptionDescription;
@@ -13,6 +15,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.options.Configurable;
@@ -27,7 +30,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.MinusculeMatcher;
+import com.intellij.psi.codeStyle.WordPrefixMatcher;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.OnOffButton;
@@ -39,6 +42,7 @@ import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
@@ -60,6 +64,7 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 
 public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, DumbAware {
+  private static final Logger LOG = Logger.getInstance(GotoActionModel.class);
   private static final Pattern INNER_GROUP_WITH_IDS = Pattern.compile("(.*) \\(\\d+\\)");
 
   @Nullable private final Project myProject;
@@ -73,6 +78,8 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
   private final Map<AnAction, GroupMapping> myActionGroups = new HashMap<>();
 
   private final NotNullLazyValue<Map<String, String>> myConfigurablesNames = VolatileNotNullLazyValue.createValue(() -> {
+    if (SwingUtilities.isEventDispatchThread()) LOG.error("Configurable names must not be loaded on EDT");
+
     Map<String, String> map = new THashMap<>();
     for (Configurable configurable : ShowSettingsUtilImpl.getConfigurables(getProject(), true)) {
       if (configurable instanceof SearchableConfigurable) {
@@ -326,11 +333,11 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
 
   @NotNull
   public String getGroupName(@NotNull OptionDescription description) {
-    String name = description.getGroupName();
-    if (name == null) name = myConfigurablesNames.getValue().get(description.getConfigurableId());
+    if (description instanceof RegistryTextOptionDescriptor) return "Registry";
+    String groupName = description.getGroupName();
     String settings = SystemInfo.isMac ? "Preferences" : "Settings";
-    if (name == null || name.equals(description.getHit())) return settings;
-    return settings + " > " + name;
+    if (groupName == null || groupName.equals(description.getHit())) return settings;
+    return settings + " > " + groupName;
   }
 
   @NotNull
@@ -392,14 +399,14 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
     return ((MatchedValue) mv).getValueText();
   }
 
-  protected MatchMode actionMatches(@NotNull String pattern, MinusculeMatcher matcher, @NotNull AnAction anAction) {
+  protected MatchMode actionMatches(@NotNull String pattern, com.intellij.util.text.Matcher matcher, @NotNull AnAction anAction) {
     Presentation presentation = anAction.getTemplatePresentation();
     String text = presentation.getText();
     String description = presentation.getDescription();
     if (text != null && matcher.matches(text)) {
       return MatchMode.NAME;
     }
-    else if (description != null && !description.equals(text) && matcher.matches(description)) {
+    else if (description != null && !description.equals(text) && new WordPrefixMatcher(pattern).matches(description)) {
       return MatchMode.DESCRIPTION;
     }
     if (text == null) {
@@ -710,7 +717,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
       JPanel panel = new JPanel(new BorderLayout());
       panel.setBorder(JBUI.Borders.empty(2));
       panel.setOpaque(true);
-      Color bg = UIUtil.getListBackground(isSelected);
+      Color bg = UIUtil.getListBackground(isSelected, cellHasFocus);
       panel.setBackground(bg);
 
       SimpleColoredComponent nameComponent = new SimpleColoredComponent();
@@ -729,9 +736,9 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
         return panel;
       }
 
-      Color groupFg = isSelected ? UIUtil.getListSelectionForeground() : UIUtil.getInactiveTextColor();
+      Color groupFg = isSelected ? UIUtil.getListSelectionForeground(true) : UIUtil.getInactiveTextColor();
 
-      Object value = ((MatchedValue) matchedValue).value;
+      Object value = ((MatchedValue)matchedValue).value;
       String pattern = ((MatchedValue)matchedValue).pattern;
 
       Border eastBorder = JBUI.Borders.emptyRight(2);
@@ -777,29 +784,21 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
         appendWithColoredMatches(nameComponent, name, pattern, fg, isSelected);
         if (StringUtil.isNotEmpty(shortcutText)) {
           nameComponent.append(" " + shortcutText,
-                   new SimpleTextAttributes(SimpleTextAttributes.STYLE_SMALLER | SimpleTextAttributes.STYLE_BOLD, groupFg));
+                               new SimpleTextAttributes(SimpleTextAttributes.STYLE_SMALLER | SimpleTextAttributes.STYLE_BOLD, groupFg));
         }
       }
       else if (value instanceof OptionDescription) {
         if (!isSelected && !(value instanceof BooleanOptionDescription)) {
-          Color descriptorBg = UIUtil.isUnderDarcula() ? ColorUtil.brighter(UIUtil.getListBackground(), 1) : LightColors.SLIGHTLY_GRAY;
+          Color descriptorBg = StartupUiUtil.isUnderDarcula() ? ColorUtil.brighter(UIUtil.getListBackground(), 1) : LightColors.SLIGHTLY_GRAY;
           panel.setBackground(descriptorBg);
           nameComponent.setBackground(descriptorBg);
         }
-        String hit = ((OptionDescription)value).getHit();
-        if (hit == null) {
-          hit = ((OptionDescription)value).getOption();
-        }
-        hit = StringUtil.unescapeXmlEntities(hit);
-        hit = hit.replace("  ", " "); // avoid extra spaces from mnemonics and xml conversion
-        String fullHit = hit;
-        Color fg = UIUtil.getListForeground(isSelected);
+        String hit = calcHit((OptionDescription)value);
+        Color fg = UIUtil.getListForeground(isSelected, cellHasFocus);
 
         if (showIcon) {
           panel.add(new JLabel(EMPTY_ICON), BorderLayout.WEST);
         }
-        panel.setToolTipText(fullHit);
-
         if (value instanceof BooleanOptionDescription) {
           boolean selected = ((BooleanOptionDescription)value).isOptionEnabled();
           addOnOffButton(panel, selected);
@@ -812,10 +811,21 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
           panel.add(settingsLabel, BorderLayout.EAST);
         }
 
-        String name = cutName(fullHit, null, list, panel, nameComponent);
+        String name = cutName(hit, null, list, panel, nameComponent);
         appendWithColoredMatches(nameComponent, name, pattern, fg, isSelected);
       }
       return panel;
+    }
+
+    @NotNull
+    private static String calcHit(@NotNull OptionDescription value) {
+      if (value instanceof RegistryTextOptionDescriptor) {
+        return value.getHit() + " = " + value.getValue();
+      }
+      String hit = StringUtil.defaultIfEmpty(value.getHit(), value.getOption());
+      return StringUtil.unescapeXmlEntities(StringUtil.notNullize(hit))
+        .replace(BundleBase.MNEMONIC_STRING, "")
+        .replace("  ", " "); // avoid extra spaces from mnemonics and xml conversion
     }
 
     private static String cutName(String name, String shortcutText, JList list, JPanel panel, SimpleColoredComponent nameComponent) {

@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.VcsFileContent;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -50,6 +51,7 @@ public abstract class CvsFileContent implements VcsFileContent{
   public abstract VcsRevisionNumber getRevisionNumber();
 
   @Override
+  @NotNull
   public byte[] loadContent() throws IOException, VcsException {
     myComparableCvsRevisionOnOperation.loadContent();
     if (!isLoaded()) {

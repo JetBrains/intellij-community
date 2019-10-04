@@ -150,6 +150,21 @@ public class BoolUtils {
         return '(' + getNegatedExpressionText(operand, tracker) + ')';
       }
     }
+    if (expression instanceof PsiAssignmentExpression && expression.getParent() instanceof PsiExpressionStatement) {
+      String newOp = null;
+      IElementType tokenType = ((PsiAssignmentExpression)expression).getOperationTokenType();
+      if (tokenType == JavaTokenType.ANDEQ) {
+        newOp = "|=";
+      }
+      else if (tokenType == JavaTokenType.OREQ) {
+        newOp = "&=";
+      }
+      if (newOp != null) {
+        return tracker.text(((PsiAssignmentExpression)expression).getLExpression()) + 
+               newOp +
+               getNegatedExpressionText(((PsiAssignmentExpression)expression).getRExpression());
+      }
+    }
     if (expression instanceof PsiConditionalExpression) {
       final PsiConditionalExpression conditionalExpression = (PsiConditionalExpression)expression;
       final boolean needParenthesis = ParenthesesUtils.getPrecedence(conditionalExpression) >= precedence;

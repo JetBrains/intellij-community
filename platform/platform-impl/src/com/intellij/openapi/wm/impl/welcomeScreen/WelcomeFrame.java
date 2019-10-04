@@ -1,11 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-/*
- * @author max
- */
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.ide.GeneralSettings;
+import com.intellij.idea.SplashManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.application.ApplicationManager;
@@ -41,7 +38,7 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
 
-public class WelcomeFrame extends JFrame implements IdeFrame, AccessibleContextAccessor {
+public final class WelcomeFrame extends JFrame implements IdeFrame, AccessibleContextAccessor {
   public static final ExtensionPointName<WelcomeFrameProvider> EP = ExtensionPointName.create("com.intellij.welcomeFrameProvider");
   static final String DIMENSION_KEY = "WELCOME_SCREEN";
   private static IdeFrame ourInstance;
@@ -50,6 +47,8 @@ public class WelcomeFrame extends JFrame implements IdeFrame, AccessibleContextA
   private final BalloonLayout myBalloonLayout;
 
   public WelcomeFrame() {
+    SplashManager.hideBeforeShow(this);
+
     JRootPane rootPane = getRootPane();
     final WelcomeScreen screen = createScreen(rootPane);
 
@@ -159,37 +158,43 @@ public class WelcomeFrame extends JFrame implements IdeFrame, AccessibleContextA
       ApplicationManagerEx.getApplicationEx().exit(false, true);
     }
 
-    showNow(null);
+    Runnable show = prepareToShow();
+    if (show != null) {
+      show.run();
+    }
   }
 
-  public static void showNow(@Nullable Runnable beforeSetVisible) {
+  @Nullable
+  public static Runnable prepareToShow() {
     if (ourInstance != null) {
-      assert beforeSetVisible == null;
-      return;
+      return null;
     }
 
-    IdeFrame frame = null;
+    IdeFrame frame = createWelcomeFrame();
+    return () -> {
+      if (ourInstance != null) {
+        return;
+      }
+
+      ((JFrame)frame).setVisible(true);
+
+      IdeMenuBar.installAppMenuIfNeeded((JFrame)frame);
+      ourInstance = frame;
+      if (SystemInfo.isMac) {
+        ourTouchbar = TouchBarsManager.showDialogWrapperButtons(frame.getComponent());
+      }
+    };
+  }
+
+  @NotNull
+  private static IdeFrame createWelcomeFrame() {
     for (WelcomeFrameProvider provider : EP.getIterable()) {
-      frame = provider.createFrame();
+      IdeFrame frame = provider.createFrame();
       if (frame != null) {
-        break;
+        return frame;
       }
     }
-
-    if (frame == null) {
-      frame = new WelcomeFrame();
-    }
-
-    if (beforeSetVisible != null) {
-      beforeSetVisible.run();
-    }
-
-    ((JFrame)frame).setVisible(true);
-    IdeMenuBar.installAppMenuIfNeeded((JFrame)frame);
-    ourInstance = frame;
-    if (SystemInfo.isMac) {
-      ourTouchbar = TouchBarsManager.showDialogWrapperButtons(frame.getComponent());
-    }
+    return new WelcomeFrame();
   }
 
   public static void showIfNoProjectOpened() {
@@ -223,7 +228,7 @@ public class WelcomeFrame extends JFrame implements IdeFrame, AccessibleContextA
     return getBounds();
   }
 
-  @Nullable
+  @NotNull
   @Override
   public Project getProject() {
     return ProjectManager.getInstance().getDefaultProject();

@@ -14,9 +14,9 @@ import java.util.*;
 
 @RunWith(Parameterized.class)
 public class MapInvariantsTestSuite {
-  private final Factory<Map<Object, Object>> factory;
+  private final Factory<? extends Map<Object, Object>> factory;
 
-  public MapInvariantsTestSuite(@SuppressWarnings("unused") String name, Factory<Map<Object, Object>> fac) {
+  public MapInvariantsTestSuite(@SuppressWarnings("unused") String name, Factory<? extends Map<Object, Object>> fac) {
     factory = fac;
   }
 

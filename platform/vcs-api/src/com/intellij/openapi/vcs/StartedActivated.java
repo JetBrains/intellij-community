@@ -53,7 +53,7 @@ public abstract class StartedActivated {
           doShutdown();
         }
         catch (Throwable t) {
-          LOG.info(t);
+          LOG.warn(t);
         }
       }
     });

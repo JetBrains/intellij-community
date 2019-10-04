@@ -6,14 +6,14 @@ import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleWithNameAlreadyExists;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.UsefulTestCase;
 import junit.framework.TestCase;
 
 /**
  * @author peter
  */
-public class CreateModuleTest extends PlatformTestCase {
+public class CreateModuleTest extends HeavyPlatformTestCase {
   private static final String RENAMED_MODULE_NAME = "renamed";
   private ModuleManager myModuleManager;
 

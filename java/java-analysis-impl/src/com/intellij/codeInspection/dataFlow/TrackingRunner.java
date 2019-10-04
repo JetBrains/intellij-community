@@ -163,12 +163,15 @@ public class TrackingRunner extends StandardDataFlowRunner {
             Cause for "modifying an immutable collection"
             Cause for "Collection is always empty" (separate inspection now)
   TODO: 2. Describe causes in more cases:
-            Warning caused by contract
+            Warning caused by complex contracts
             Warning caused by CustomMethodHandler
             Warning caused by polyadic math
             Warning caused by unary minus
+            Warning caused by string concatenation
+            Warning caused by java.lang.Void nullability
+            Warning caused by getClass() equality
+            Warning caused by inliners
   TODO: 3. Check how it works with:
-            Inliners (notably: Stream API)
             Boxed numbers
    */
   @Nullable
@@ -356,9 +359,22 @@ public class TrackingRunner extends StandardDataFlowRunner {
       if (children.isEmpty()) {
         ((PossibleExecutionDfaProblemType)mergePoint.myProblem).myComplete = false;
       }
+      List<CauseItem> mergeChildren = mergePoint.myChildren;
       for (CauseItem child : children) {
-        if (!mergePoint.myChildren.contains(child)) {
-          mergePoint.myChildren.add(child);
+        if (!mergeChildren.contains(child)) {
+          boolean merged = false;
+          for (int i = 0; i < mergeChildren.size(); i++) {
+            CauseItem mergeChild = mergeChildren.get(i);
+            CauseItem result = mergeChild.merge(child);
+            if (result != null) {
+              mergeChildren.set(i, result);
+              merged = true;
+              break;
+            }
+          }
+          if (!merged) {
+            mergeChildren.add(child);
+          }
         }
       }
       return true;

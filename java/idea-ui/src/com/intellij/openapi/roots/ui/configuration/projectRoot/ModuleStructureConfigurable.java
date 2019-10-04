@@ -546,7 +546,9 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
       MyNode selected = (MyNode)selectionPath.getLastPathComponent();
       final Object o = selected.getConfigurable().getEditableObject();
       if (o instanceof ModuleGroup) {
-        myContext.myModulesConfigurator.getModuleModel().setModuleGroupPath(module, ((ModuleGroup)o).getGroupPath());
+        if (!ModuleGrouperKt.isQualifiedModuleNamesEnabled(module.getProject())) {
+          myContext.myModulesConfigurator.getModuleModel().setModuleGroupPath(module, ((ModuleGroup)o).getGroupPath());
+        }
         parent = selected;
       }
       else if (o instanceof Module) { //create near selected

@@ -48,7 +48,7 @@ public class HgConfigurationProjectPanel implements ConfigurableUi<HgProjectConf
     JPanel panel = new JPanel();
     panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 
-    myExecutablePathSelector = new VcsExecutablePathSelector(this::testExecutable);
+    myExecutablePathSelector = new VcsExecutablePathSelector("Mercurial", this::testExecutable);
     panel.add(myExecutablePathSelector.getMainPanel());
 
     myCheckIncomingOutgoingCbx = new JBCheckBox(HgVcsMessages.message("hg4idea.configuration.check.incoming.outgoing"));

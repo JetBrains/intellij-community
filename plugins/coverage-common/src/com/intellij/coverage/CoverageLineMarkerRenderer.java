@@ -97,29 +97,6 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
     mySubCoverageActive = subCoverageActive;
   }
 
-  /**
-   * To be removed in 2019.1. Use {@link CoverageLineMarkerRenderer#CoverageLineMarkerRenderer(int, String, TreeMap, boolean, Function, Function, CoverageSuitesBundle, boolean)}
-   */
-  @Deprecated
-  protected CoverageLineMarkerRenderer(final TextAttributesKey key,
-                                       @Nullable final String className,
-                                       final TreeMap<Integer, LineData> lines,
-                                       final boolean coverageByTestApplicable,
-                                       final Function<? super Integer, Integer> newToOldConverter,
-                                       final Function<? super Integer, Integer> oldToNewConverter,
-                                       final CoverageSuitesBundle coverageSuite,
-                                       boolean subCoverageActive) {
-    myKey = key;
-    myClassName = className;
-    myLines = lines;
-    myCoverageByTestApplicable = coverageByTestApplicable;
-    myNewToOldConverter = newToOldConverter;
-    myOldToNewConverter = oldToNewConverter;
-    myCoverageSuite = coverageSuite;
-    mySubCoverageActive = subCoverageActive;
-    myLineNumber = -1;
-  }
-
   private int getCurrentLineNumber(@NotNull Editor editor, Point mousePosition) {
     if (myLineNumber > -1) return myLineNumber;
     return editor.xyToLogicalPosition(mousePosition).line;

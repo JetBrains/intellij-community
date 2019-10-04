@@ -237,15 +237,18 @@ public class ExecutionUtil {
     }
   }
 
+  @NotNull
   public static Icon getLiveIndicator(@Nullable final Icon base) {
     return getLiveIndicator(base, 13, 13);
   }
 
   @SuppressWarnings("UseJBColor")
+  @NotNull
   public static Icon getLiveIndicator(@Nullable final Icon base, int emptyIconWidth, int emptyIconHeight) {
     return getIndicator(base, emptyIconWidth, emptyIconHeight, Color.GREEN);
   }
 
+  @NotNull
   public static Icon getIndicator(@Nullable final Icon base, int emptyIconWidth, int emptyIconHeight, Color color) {
     return new LayeredIcon(base, new Icon() {
       @SuppressWarnings("UseJBColor")

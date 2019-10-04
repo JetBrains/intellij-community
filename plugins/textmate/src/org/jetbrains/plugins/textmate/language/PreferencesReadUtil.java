@@ -7,6 +7,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
+import com.intellij.util.containers.Interner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.Constants;
@@ -17,7 +18,6 @@ import org.jetbrains.plugins.textmate.plist.Plist;
 
 import java.awt.*;
 import java.io.File;
-import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -109,17 +109,19 @@ public final class PreferencesReadUtil {
   }
 
   @Nullable
-  private static TextMateSnippet loadTextMateSnippet(@NotNull Plist plist, @NotNull String filePath) throws IOException {
+  private static TextMateSnippet loadTextMateSnippet(@NotNull Plist plist,
+                                                     @NotNull String filePath,
+                                                     @NotNull Interner<CharSequence> interner) {
     String name = plist.getPlistValue(Constants.NAME_KEY, "").getString();
     String key = plist.getPlistValue(Constants.TAB_TRIGGER_KEY, "").getString();
-    String content = plist.getPlistValue(Constants.CONTENT_KEY, "").getString();
+    String content = plist.getPlistValue(Constants.StringKey.CONTENT.value, "").getString();
     String scope = plist.getPlistValue(Constants.SCOPE_KEY, "").getString();
     String description = plist.getPlistValue(Constants.DESCRIPTION_KEY, "").getString();
     String uuid = plist.getPlistValue(Constants.UUID_KEY, "").getString();
     if (!key.isEmpty() && !content.isEmpty()) {
       if (name.isEmpty()) name = key;
       if (uuid.isEmpty()) uuid = filePath + ":" + name;
-      return new TextMateSnippet(key, content, scope, name, description, uuid);
+      return new TextMateSnippet(key, content, interner.intern(scope), name, description, uuid);
     }
     return null;
   }
@@ -168,9 +170,9 @@ public final class PreferencesReadUtil {
   }
 
   @Nullable
-  public static TextMateSnippet loadSnippet(@NotNull File snippetFile, @NotNull Plist plist) throws IOException {
+  public static TextMateSnippet loadSnippet(@NotNull File snippetFile, @NotNull Plist plist, @NotNull Interner<CharSequence> interner) {
     return FileUtilRt.extensionEquals(snippetFile.getName(), Constants.SUBLIME_SNIPPET_EXTENSION)
            ? loadSublimeSnippet(snippetFile)
-           : loadTextMateSnippet(plist, snippetFile.getAbsolutePath());
+           : loadTextMateSnippet(plist, snippetFile.getAbsolutePath(), interner);
   }
 }

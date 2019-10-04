@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.config;
 
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -43,7 +43,7 @@ public class GitSharedSettings implements PersistentStateComponent<GitSharedSett
     return Collections.unmodifiableList(myState.FORCE_PUSH_PROHIBITED_PATTERNS);
   }
 
-  public void setForcePushProhibitedPatters(@NotNull List<String> patterns) {
+  public void setForcePushProhibitedPatterns(@NotNull List<String> patterns) {
     myState.FORCE_PUSH_PROHIBITED_PATTERNS = new ArrayList<>(patterns);
   }
 

@@ -26,10 +26,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.event.EditorMouseEvent;
-import com.intellij.openapi.editor.event.EditorMouseEventArea;
-import com.intellij.openapi.editor.event.EditorMouseListener;
-import com.intellij.openapi.editor.event.EditorMouseMotionListener;
+import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.EditorImpl;
@@ -46,7 +43,6 @@ import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.*;
@@ -57,7 +53,7 @@ import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueLookupManager;
-import com.intellij.xdebugger.impl.reveal.XDebuggerRevealManager;
+import com.intellij.xdebugger.impl.pinned.items.XDebuggerPinToTopManager;
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.ExecutionPointHighlighter;
@@ -87,21 +83,23 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements Persistent
   private final Project myProject;
   private final XBreakpointManagerImpl myBreakpointManager;
   private final XDebuggerWatchesManager myWatchesManager;
-  private final XDebuggerRevealManager myRevealManager;
+  private final XDebuggerPinToTopManager myPinToTopManager;
   private final ExecutionPointHighlighter myExecutionPointHighlighter;
   private final Map<ProcessHandler, XDebugSessionImpl> mySessions = Collections.synchronizedMap(new LinkedHashMap<>());
   private final AtomicReference<XDebugSessionImpl> myActiveSession = new AtomicReference<>();
 
   private XDebuggerState myState = new XDebuggerState();
 
-  public XDebuggerManagerImpl(final Project project, MessageBus messageBus) {
+  public XDebuggerManagerImpl(@NotNull Project project) {
     myProject = project;
+
+    MessageBusConnection messageBusConnection = project.getMessageBus().connect();
+
     myBreakpointManager = new XBreakpointManagerImpl(project, this);
     myWatchesManager = new XDebuggerWatchesManager();
-    myRevealManager = new XDebuggerRevealManager();
+    myPinToTopManager = new XDebuggerPinToTopManager();
     myExecutionPointHighlighter = new ExecutionPointHighlighter(project);
 
-    MessageBusConnection messageBusConnection = messageBus.connect();
     messageBusConnection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerListener() {
       @Override
       public void fileContentLoaded(@NotNull VirtualFile file, @NotNull Document document) {
@@ -164,8 +162,9 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements Persistent
     });
 
     DebuggerEditorListener listener = new DebuggerEditorListener();
-    EditorFactory.getInstance().getEventMulticaster().addEditorMouseMotionListener(listener, myProject);
-    EditorFactory.getInstance().getEventMulticaster().addEditorMouseListener(listener, myProject);
+    EditorEventMulticaster eventMulticaster = EditorFactory.getInstance().getEventMulticaster();
+    eventMulticaster.addEditorMouseMotionListener(listener, myProject);
+    eventMulticaster.addEditorMouseListener(listener, myProject);
   }
 
   private void updateExecutionPoint(@NotNull VirtualFile file, boolean navigate) {
@@ -189,8 +188,8 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements Persistent
   }
 
   @NotNull
-  public XDebuggerRevealManager getRevealManager() {
-    return myRevealManager;
+  public XDebuggerPinToTopManager getPinToTopManager() {
+    return myPinToTopManager;
   }
 
   public Project getProject() {
@@ -350,7 +349,7 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements Persistent
     XDebuggerState state = myState;
     myBreakpointManager.saveState(state.getBreakpointManagerState());
     myWatchesManager.saveState(state.getWatchesManagerState());
-    myRevealManager.saveState(state.getRevealManagerState());
+    myPinToTopManager.saveState(state.getPinToTopManagerState());
     return state;
   }
 
@@ -363,7 +362,7 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements Persistent
     myState = state;
     myBreakpointManager.loadState(state.getBreakpointManagerState());
     myWatchesManager.loadState(state.getWatchesManagerState());
-    myRevealManager.loadState(state.getRevealManagerState());
+    myPinToTopManager.loadState(state.getPinToTopManagerState());
   }
 
   public void showExecutionPosition() {

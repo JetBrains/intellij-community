@@ -701,8 +701,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
   }
 
   private void reportFailingCasts(ProblemReporter reporter, DataFlowInstructionVisitor visitor) {
-    for (TypeCastInstruction instruction : visitor.getClassCastExceptionInstructions()) {
-      PsiTypeCastExpression typeCast = instruction.getExpression();
+    for (PsiTypeCastExpression typeCast : visitor.getFailingCastExpressions()) {
       PsiExpression operand = typeCast.getOperand();
       PsiTypeElement castType = typeCast.getCastType();
       assert castType != null;

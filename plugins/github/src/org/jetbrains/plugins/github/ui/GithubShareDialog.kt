@@ -4,16 +4,9 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
-import com.intellij.ui.components.JBBox
 import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTextField
-import com.intellij.util.ui.JBDimension
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UI
-import com.intellij.util.ui.UI.PanelFactory.grid
-import com.intellij.util.ui.UI.PanelFactory.panel
-import com.intellij.util.ui.UIUtil
+import com.intellij.ui.layout.*
 import com.intellij.util.ui.dialog.DialogUtils
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
@@ -24,7 +17,6 @@ import org.jetbrains.plugins.github.ui.util.DialogValidationUtils.notBlank
 import org.jetbrains.plugins.github.ui.util.Validator
 import java.awt.Component
 import java.util.regex.Pattern
-import javax.swing.JComponent
 import javax.swing.JTextArea
 
 
@@ -76,26 +68,24 @@ class GithubShareDialog(project: Project,
     }
   }
 
-  override fun createCenterPanel(): JComponent? {
-    val descriptionPane = JBScrollPane(descriptionTextArea).apply {
-      minimumSize = JBDimension(150, 50)
-      preferredSize = JBDimension(150, 50)
-    }
-
-    val repository = JBBox.createHorizontalBox()
-    repository.add(repositoryTextField)
-    repository.add(JBBox.createRigidArea(JBUI.size(UIUtil.DEFAULT_HGAP, 0)))
-    repository.add(privateCheckBox)
-    repository.add(JBBox.createRigidArea(JBUI.size(5, 0)))
-
-    return grid().resize()
-      .add(panel(repository).withLabel("Repository name:"))
-      .add(panel(remoteTextField).withLabel("Remote:"))
-      .add(panel(descriptionPane).withLabel("Description:").anchorLabelOn(UI.Anchor.Top).resizeY(true))
-      .apply {
-        if (accountSelector.isEnabled) add(panel(accountSelector).withLabel("Share by:").resizeX(false))
+  override fun createCenterPanel() = panel {
+    row("Repository name:") {
+      cell {
+        repositoryTextField(growX, pushX)
+        privateCheckBox()
       }
-      .createPanel()
+    }
+    row("Remote:") {
+      remoteTextField(growX, pushX)
+    }
+    row("Description:") {
+      scrollPane(descriptionTextArea)
+    }
+    if (accountSelector.isEnabled) {
+      row("Share by:") {
+        accountSelector(growX, pushX)
+      }
+    }
   }
 
   override fun doValidateAll(): List<ValidationInfo> {

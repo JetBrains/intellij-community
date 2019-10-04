@@ -416,17 +416,18 @@ public class EquivalenceChecker {
   }
 
   protected Match breakStatementsMatch(@NotNull PsiBreakStatement statement1, @NotNull PsiBreakStatement statement2) {
-    final PsiExpression expression1 = statement1.getExpression();
-    final PsiExpression expression2 = statement2.getExpression();
-    if (expression1 == null || expression2 == null) {
-      return Match.exact(expression1 == expression2);
-    }
-    return expressionsMatch(expression1, expression2);
+    final PsiIdentifier identifier1 = statement1.getLabelIdentifier();
+    final PsiIdentifier identifier2 = statement2.getLabelIdentifier();
+    return matchLabels(identifier1, identifier2);
   }
 
   protected Match continueStatementsMatch(@NotNull PsiContinueStatement statement1, @NotNull PsiContinueStatement statement2) {
     final PsiIdentifier identifier1 = statement1.getLabelIdentifier();
     final PsiIdentifier identifier2 = statement2.getLabelIdentifier();
+    return matchLabels(identifier1, identifier2);
+  }
+
+  private static Match matchLabels(PsiIdentifier identifier1, PsiIdentifier identifier2) {
     if (identifier1 == null || identifier2 == null) {
       return Match.exact(identifier1 == identifier2);
     }

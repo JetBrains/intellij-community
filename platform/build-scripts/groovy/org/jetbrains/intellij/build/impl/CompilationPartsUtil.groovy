@@ -151,18 +151,25 @@ class CompilationPartsUtil {
     }
 
     messages.block("Building zip archives") {
-      runUnderStatisticsTimer(messages, 'compile-parts:pack:time') {
-        contexts.each { PackAndUploadContext ctx ->
-          executor.submit {
-            pack(messages, context.ant, ctx, incremental)
+      try {
+        runUnderStatisticsTimer(messages, 'compile-parts:pack:time') {
+          contexts.each { PackAndUploadContext ctx ->
+            def childMessages = messages.forkForParallelTask(ctx.name)
+            executor.submit {
+              withForkedMessages(childMessages) { BuildMessages msgs ->
+                pack(msgs, context.ant, ctx, incremental)
+              }
+            }
           }
-        }
 
-        executor.waitForAllComplete(messages)
+          executor.waitForAllComplete(messages)
+        }
+        executor.reportErrors(messages)
+      }
+      finally {
+        messages.onAllForksFinished()
       }
     }
-
-    executor.reportErrors(messages)
 
     // TODO: Remove hardcoded constant
     String uploadPrefix = "intellij-compile/v1/$branch".toString()
@@ -269,6 +276,7 @@ class CompilationPartsUtil {
       messages.error("Cannot fetch compiled classes: metadata file not found at '$options.pathToCompiledClassesArchivesMetadata'")
       return
     }
+    boolean forInstallers = System.getProperty('intellij.fetch.compiled.classes.for.installers', 'false').toBoolean()
     CompilationPartsMetadata metadata
     try {
       metadata = new Gson().fromJson(FileUtil.loadFile(metadataFile, CharsetToolkit.UTF8),
@@ -286,7 +294,7 @@ class CompilationPartsUtil {
 
     List<FetchAndUnpackContext> contexts = new ArrayList<FetchAndUnpackContext>(metadata.files.size())
     new TreeMap<String, String>(metadata.files).each { entry ->
-      contexts.add(new FetchAndUnpackContext(entry.key, entry.value, new File("$classesOutput/$entry.key")))
+      contexts.add(new FetchAndUnpackContext(entry.key, entry.value, new File("$classesOutput/$entry.key"), !forInstallers))
     }
 
     //region Prepare executor
@@ -323,7 +331,7 @@ class CompilationPartsUtil {
               }
             }
             else {
-              messages.info("There's no .hash file in output directory '$ctx.name'")
+              messages.debug("There's no .hash file in output directory '$ctx.name'")
             }
           }
           FileUtil.delete(out)
@@ -487,20 +495,28 @@ class CompilationPartsUtil {
     }
 
     messages.block("Unpack compiled classes archives") {
-      long start = System.nanoTime()
-      toUnpack.each { ctx ->
-        executor.submit {
-          unpack(messages, ctx)
+      try {
+        long start = System.nanoTime()
+        toUnpack.each { ctx ->
+          def childMessages = messages.forkForParallelTask("Unpacking $ctx.name")
+          executor.submit {
+            withForkedMessages(childMessages) { BuildMessages msgs ->
+              unpack(msgs, ctx)
+            }
+          }
         }
+        executor.waitForAllComplete(messages)
+
+        messages.reportStatisticValue('compile-parts:unpacked:bytes', toUnpack.collect { it.jar.size() }.sum(0l).toString())
+        messages.reportStatisticValue('compile-parts:unpacked:count', toUnpack.size().toString())
+        messages.reportStatisticValue('compile-parts:unpack:time',
+                                      TimeUnit.NANOSECONDS.toMillis((System.nanoTime() - start)).toString())
+
+        executor.reportErrors(messages)
       }
-      executor.waitForAllComplete(messages)
-
-      messages.reportStatisticValue('compile-parts:unpacked:bytes', toUnpack.collect { it.jar.size() }.sum(0l).toString())
-      messages.reportStatisticValue('compile-parts:unpacked:count', toUnpack.size().toString())
-      messages.reportStatisticValue('compile-parts:unpack:time',
-                                    TimeUnit.NANOSECONDS.toMillis((System.nanoTime() - start)).toString())
-
-      executor.reportErrors(messages)
+      finally {
+        messages.onAllForksFinished()
+      }
     }
 
     executor.close()
@@ -512,8 +528,10 @@ class CompilationPartsUtil {
     messages.block("Unpacking $ctx.name") {
       FileUtil.ensureExists(ctx.output)
       new Decompressor.Zip(ctx.jar).overwrite(true).extract(ctx.output)
-      // Save actual hash
-      FileUtil.writeToFile(new File(ctx.output, ".hash"), ctx.hash)
+      if (ctx.saveHash) {
+        // Save actual hash
+        FileUtil.writeToFile(new File(ctx.output, ".hash"), ctx.hash)
+      }
     }
   }
 
@@ -594,13 +612,15 @@ class CompilationPartsUtil {
     final String name
     final String hash
     final File output
+    final boolean saveHash
 
     File jar
 
-    FetchAndUnpackContext(String name, String hash, File output) {
+    FetchAndUnpackContext(String name, String hash, File output, boolean saveHash) {
       this.name = name
       this.hash = hash
       this.output = output
+      this.saveHash = saveHash
     }
   }
 
@@ -610,7 +630,7 @@ class CompilationPartsUtil {
     private final ConcurrentLinkedDeque<Throwable> errors = new ConcurrentLinkedDeque<Throwable>()
 
     NamedThreadPoolExecutor(String threadNamePrefix, int maximumPoolSize) {
-      super(1, maximumPoolSize, 1, TimeUnit.MINUTES, new LinkedBlockingDeque(2048))
+      super(maximumPoolSize, maximumPoolSize, 1, TimeUnit.MINUTES, new LinkedBlockingDeque(2048))
       setThreadFactory(new ThreadFactory() {
         @NotNull
         @Override
@@ -692,6 +712,16 @@ class CompilationPartsUtil {
     finally {
       def time = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start)
       messages.reportStatisticValue(name, time.toString())
+    }
+  }
+
+  private static <V> V withForkedMessages(BuildMessages messages, Closure<V> body) {
+    messages.onForkStarted()
+    try {
+      return body.call(messages)
+    }
+    finally {
+      messages.onForkFinished()
     }
   }
 }

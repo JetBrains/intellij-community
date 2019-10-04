@@ -3,11 +3,17 @@ package com.intellij.internal.statistic.beans;
 
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
+/**
+ * @deprecated use {@link MetricEvent}
+ */
+@Deprecated // to be removed in 2020.2
+@ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
 public final class UsageDescriptor {
   private final String myKey;
   private final int myValue;
@@ -21,11 +27,9 @@ public final class UsageDescriptor {
     this(key, value, new FeatureUsageData());
   }
 
-  @Deprecated
-  public UsageDescriptor(@NotNull String key, int value, @NotNull String... contextData) {
-    this(key, value, contextData.length > 0 ? FUSUsageContext.create(contextData) : null);
-  }
-
+  /**
+   * @deprecated Create named event data with {@link FeatureUsageData}
+   */
   @Deprecated
   public UsageDescriptor(@NotNull String key, int value, @Nullable FUSUsageContext context) {
     this(key, value);
@@ -37,9 +41,9 @@ public final class UsageDescriptor {
   }
 
   public UsageDescriptor(@NotNull String key, int value, @Nullable FeatureUsageData data) {
-    myKey = ConvertUsagesUtil.ensureProperKey(key);
+    myKey = key;
     myValue = value;
-    myData = data;
+    myData = data == null ? new FeatureUsageData() : data;
   }
 
   public String getKey() {

@@ -1,4 +1,4 @@
-// "Change parameter 'i' type to 'java.lang.String'" "true"
+// "Change parameter 'i' type to 'String'" "true"
 
 class Ex{
  void foo(int i) {

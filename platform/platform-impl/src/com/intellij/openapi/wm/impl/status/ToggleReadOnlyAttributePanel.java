@@ -2,9 +2,7 @@
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.DataManager;
 import com.intellij.idea.ActionsBundle;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
@@ -19,7 +17,6 @@ import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.Consumer;
 import com.intellij.util.io.ReadOnlyAttributeUtil;
-import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,15 +24,8 @@ import javax.swing.*;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
 
-public class ToggleReadOnlyAttributePanel implements StatusBarWidget.Multiframe, StatusBarWidget.IconPresentation, FileEditorManagerListener {
-  private Project myProject;
+public final class ToggleReadOnlyAttributePanel implements StatusBarWidget.Multiframe, StatusBarWidget.IconPresentation {
   private StatusBar myStatusBar;
-
-  public ToggleReadOnlyAttributePanel(@NotNull Project project) {
-    myProject = project;
-    MessageBusConnection connection = project.getMessageBus().connect(this);
-    connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, this);
-  }
 
   @Override
   @Nullable
@@ -55,23 +45,35 @@ public class ToggleReadOnlyAttributePanel implements StatusBarWidget.Multiframe,
 
   @Override
   public StatusBarWidget copy() {
-    return new ToggleReadOnlyAttributePanel(myProject);
+    return new ToggleReadOnlyAttributePanel();
   }
 
   @Override
-  public WidgetPresentation getPresentation(@NotNull PlatformType type) {
+  public WidgetPresentation getPresentation() {
     return this;
   }
 
   @Override
   public void dispose() {
     myStatusBar = null;
-    myProject = null;
   }
 
   @Override
   public void install(@NotNull StatusBar statusBar) {
     myStatusBar = statusBar;
+    Project project = statusBar.getProject();
+    if (project == null) {
+      return;
+    }
+
+    project.getMessageBus().connect(this).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
+      @Override
+        public void selectionChanged(@NotNull FileEditorManagerEvent event) {
+          if (myStatusBar != null) {
+            myStatusBar.updateWidget(ID());
+          }
+        }
+    });
   }
 
   @Override
@@ -112,21 +114,14 @@ public class ToggleReadOnlyAttributePanel implements StatusBarWidget.Multiframe,
 
   @Nullable
   private Project getProject() {
-    return CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext((JComponent) myStatusBar));
+    return myStatusBar != null ? myStatusBar.getProject() : null;
   }
-  
+
   @Nullable
   private VirtualFile getCurrentFile() {
     final Project project = getProject();
     if (project == null) return null;
     EditorsSplitters splitters = FileEditorManagerEx.getInstanceEx(project).getSplittersFor(myStatusBar.getComponent());
     return splitters.getCurrentFile();
-  }
-
-  @Override
-  public void selectionChanged(@NotNull FileEditorManagerEvent event) {
-    if (myStatusBar != null) {
-      myStatusBar.updateWidget(ID());
-    }
   }
 }

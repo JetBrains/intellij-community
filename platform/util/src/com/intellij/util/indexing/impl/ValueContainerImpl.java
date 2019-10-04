@@ -17,6 +17,7 @@
 package com.intellij.util.indexing.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.IntIntFunction;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.EmptyIterator;
 import com.intellij.util.indexing.ValueContainer;
@@ -454,14 +455,16 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
 
   static final int NUMBER_OF_VALUES_THRESHOLD = 20;
 
-  public void readFrom(DataInputStream stream, DataExternalizer<? extends Value> externalizer) throws IOException {
+  public void readFrom(@NotNull DataInputStream stream,
+                       @NotNull DataExternalizer<? extends Value> externalizer,
+                       @NotNull IntIntFunction inputRemapping) throws IOException {
     FileId2ValueMapping<Value> mapping = null;
 
     while (stream.available() > 0) {
       final int valueCount = DataInputOutputUtil.readINT(stream);
       if (valueCount < 0) {
         // ChangeTrackingValueContainer marked inputId as invalidated, see ChangeTrackingValueContainer.saveTo
-        final int inputId = -valueCount;
+        final int inputId = inputRemapping.fun(-valueCount);
 
         if (mapping == null && size() > NUMBER_OF_VALUES_THRESHOLD) { // avoid O(NumberOfValues)
           mapping = new FileId2ValueMapping<>(this);
@@ -484,7 +487,7 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
 
           if (idCountOrSingleValue > 0) {
             addValue(idCountOrSingleValue, value);
-            if (mapping != null) mapping.associateFileIdToValue(idCountOrSingleValue, value);
+            if (mapping != null) mapping.associateFileIdToValue(inputRemapping.fun(idCountOrSingleValue), value);
           } else {
             idCountOrSingleValue = -idCountOrSingleValue;
             ChangeBufferingList changeBufferingList = ensureFileSetCapacityForValue(value, idCountOrSingleValue);
@@ -492,9 +495,10 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
 
             for (int i = 0; i < idCountOrSingleValue; i++) {
               final int id = DataInputOutputUtil.readINT(stream);
-              if (changeBufferingList != null)  changeBufferingList.add(prev + id);
-              else addValue(prev + id, value);
-              if (mapping != null) mapping.associateFileIdToValue(prev + id, value);
+              int remappedInputId = inputRemapping.fun(prev + id);
+              if (changeBufferingList != null) changeBufferingList.add(remappedInputId);
+              else addValue(remappedInputId, value);
+              if (mapping != null) mapping.associateFileIdToValue(remappedInputId, value);
               prev += id;
             }
           }

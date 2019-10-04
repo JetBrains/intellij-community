@@ -25,6 +25,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
+import com.intellij.psi.impl.source.xml.XmlFileImpl;
 import com.intellij.util.xml.ConvertContext;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
@@ -104,6 +105,17 @@ public class MavenPathReferenceConverter extends PathReferenceConverter {
                   PsiDirectory psiDirectory = context.getManager().findDirectory(file);
                   if (psiDirectory != null) {
                     result.add(new PsiElementResolveResult(psiDirectory));
+                  }
+                }
+              }
+              else if ("..".equals(resolvedText)) {
+                PsiFileSystemItem resolved = context.getParent();
+                if (resolved != null) {
+                  if (context instanceof XmlFileImpl) {
+                    resolved = resolved.getParent();  // calculated regarding parent directory, not the pom itself
+                  }
+                  if (resolved != null) {
+                    result.add(new PsiElementResolveResult(resolved));
                   }
                 }
               }

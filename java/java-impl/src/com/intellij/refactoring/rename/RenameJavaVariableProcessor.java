@@ -2,7 +2,7 @@
 package com.intellij.refactoring.rename;
 
 import com.intellij.codeInsight.generation.GetterSetterPrototypeProvider;
-import com.intellij.lang.StdLanguages;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -126,7 +126,7 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
 
   @Override
   public void prepareRenaming(@NotNull final PsiElement element, @NotNull final String newName, @NotNull final Map<PsiElement, String> allRenames) {
-    if (element instanceof PsiField && StdLanguages.JAVA.equals(element.getLanguage())) {
+    if (element instanceof PsiField && JavaLanguage.INSTANCE.equals(element.getLanguage())) {
       prepareFieldRenaming((PsiField)element, newName, allRenames);
     }
   }

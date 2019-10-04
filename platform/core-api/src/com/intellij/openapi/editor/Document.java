@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.editor.event.BulkAwareDocumentListener;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolder;
@@ -28,8 +15,8 @@ import org.jetbrains.annotations.Nullable;
 import java.beans.PropertyChangeListener;
 
 /**
- * Represents the contents of a text file loaded into memory, and possibly opened in an IDEA
- * text editor. Line breaks in the document text are always normalized as single \n characters,
+ * Represents the contents of a text file loaded into memory, and possibly opened in an IDE
+ * text editor. Line breaks in the document text are always normalized as single {@code \n} characters,
  * and are converted to proper format when the document is saved.
  * <p/>
  * Please see <a href="https://www.jetbrains.org/intellij/sdk/docs/basics/architectural_overview.html">IntelliJ Platform Architectural Overview</a>
@@ -52,13 +39,13 @@ public interface Document extends UserDataHolder {
    * @return document content.
    */
   @NotNull
-  @Contract(pure=true)
+  @Contract(pure = true)
   default String getText() {
     return getImmutableCharSequence().toString();
   }
 
   @NotNull
-  @Contract(pure=true)
+  @Contract(pure = true)
   default String getText(@NotNull TextRange range) {
     return range.substring(getText());
   }
@@ -72,7 +59,7 @@ public interface Document extends UserDataHolder {
    * @return inplace document content.
    * @see #getTextLength()
    */
-  @Contract(pure=true)
+  @Contract(pure = true)
   @NotNull
   default CharSequence getCharsSequence() {
     return getImmutableCharSequence();
@@ -83,7 +70,7 @@ public interface Document extends UserDataHolder {
    * @see com.intellij.util.text.ImmutableCharSequence
    */
   @NotNull
-  @Contract(pure=true)
+  @Contract(pure = true)
   CharSequence getImmutableCharSequence();
 
   /**
@@ -101,7 +88,7 @@ public interface Document extends UserDataHolder {
    * @return the length of the document text.
    * @see #getCharsSequence()
    */
-  @Contract(pure=true)
+  @Contract(pure = true)
   default int getTextLength() {
     return getImmutableCharSequence().length();
   }
@@ -111,17 +98,17 @@ public interface Document extends UserDataHolder {
    *
    * @return the number of lines in the document.
    */
-  @Contract(pure=true)
+  @Contract(pure = true)
   int getLineCount();
 
   /**
    * Returns the line number (0-based) corresponding to the specified offset in the document.
    *
    * @param offset the offset to get the line number for (must be in the range from 0 to
-   * getTextLength()-1)
+   *               getTextLength()-1)
    * @return the line number corresponding to the offset.
    */
-  @Contract(pure=true)
+  @Contract(pure = true)
   int getLineNumber(int offset);
 
   /**
@@ -130,7 +117,7 @@ public interface Document extends UserDataHolder {
    * @param line the line number (from 0 to getLineCount()-1)
    * @return the start offset for the line.
    */
-  @Contract(pure=true)
+  @Contract(pure = true)
   int getLineStartOffset(int line);
 
   /**
@@ -139,7 +126,7 @@ public interface Document extends UserDataHolder {
    * @param line the line number (from 0 to getLineCount()-1)
    * @return the end offset for the line.
    */
-  @Contract(pure=true)
+  @Contract(pure = true)
   int getLineEndOffset(int line);
 
   /**
@@ -154,8 +141,8 @@ public interface Document extends UserDataHolder {
    * the inserted text must be normalized as \n.
    *
    * @param offset the offset to insert the text at.
-   * @param s the text to insert.
-   * @throws ReadOnlyModificationException if the document is read-only.
+   * @param s      the text to insert.
+   * @throws ReadOnlyModificationException         if the document is read-only.
    * @throws ReadOnlyFragmentModificationException if the fragment to be modified is covered by a guarded block.
    */
   void insertString(int offset, @NotNull CharSequence s);
@@ -164,8 +151,8 @@ public interface Document extends UserDataHolder {
    * Deletes the specified range of text from the document.
    *
    * @param startOffset the start offset of the range to delete.
-   * @param endOffset the end offset of the range to delete.
-   * @throws ReadOnlyModificationException if the document is read-only.
+   * @param endOffset   the end offset of the range to delete.
+   * @throws ReadOnlyModificationException         if the document is read-only.
    * @throws ReadOnlyFragmentModificationException if the fragment to be modified is covered by a guarded block.
    */
   void deleteString(int startOffset, int endOffset);
@@ -175,9 +162,9 @@ public interface Document extends UserDataHolder {
    * Line breaks in the text to replace with must be normalized as \n.
    *
    * @param startOffset the start offset of the range to replace.
-   * @param endOffset the end offset of the range to replace.
-   * @param s the text to replace with.
-   * @throws ReadOnlyModificationException if the document is read-only.
+   * @param endOffset   the end offset of the range to replace.
+   * @param s           the text to replace with.
+   * @throws ReadOnlyModificationException         if the document is read-only.
    * @throws ReadOnlyFragmentModificationException if the fragment to be modified is covered by a guarded block.
    */
   void replaceString(int startOffset, int endOffset, @NotNull CharSequence s);
@@ -185,10 +172,10 @@ public interface Document extends UserDataHolder {
   /**
    * Checks if the document text is read-only.
    *
-   * @return true if the document text is writable, false if it is read-only.
+   * @return {@code true} if the document text is writable, {@code false} if it is read-only.
    * @see #fireReadOnlyModificationAttempt()
    */
-  @Contract(pure=true)
+  @Contract(pure = true)
   boolean isWritable();
 
   /**
@@ -199,7 +186,7 @@ public interface Document extends UserDataHolder {
    * @see com.intellij.psi.PsiFile#getModificationStamp()
    * @see com.intellij.openapi.vfs.VirtualFile#getModificationStamp()
    */
-  @Contract(pure=true)
+  @Contract(pure = true)
   long getModificationStamp();
 
   /**
@@ -236,7 +223,7 @@ public interface Document extends UserDataHolder {
    * by external changes to the document text (for example, reloading the file from disk).
    *
    * @param startOffset the start offset for the range of text covered by the marker.
-   * @param endOffset the end offset for the range of text covered by the marker.
+   * @param endOffset   the end offset for the range of text covered by the marker.
    * @return the marker instance.
    */
   @NotNull
@@ -249,12 +236,13 @@ public interface Document extends UserDataHolder {
    * is automatically adjusted when the document text is changed. The marker is optionally
    * invalidated by external changes to the document text (for example, reloading the file from disk).
    *
-   * @param startOffset the start offset for the range of text covered by the marker.
-   * @param endOffset the end offset for the range of text covered by the marker.
+   * @param startOffset             the start offset for the range of text covered by the marker.
+   * @param endOffset               the end offset for the range of text covered by the marker.
    * @param surviveOnExternalChange if true, the marker is not invalidated by external changes.
    * @return the marker instance.
    */
-  @NotNull RangeMarker createRangeMarker(int startOffset, int endOffset, boolean surviveOnExternalChange);
+  @NotNull
+  RangeMarker createRangeMarker(int startOffset, int endOffset, boolean surviveOnExternalChange);
 
   /**
    * Adds a listener for receiving notifications about changes in the properties of the document
@@ -290,7 +278,7 @@ public interface Document extends UserDataHolder {
    * range cause {@link ReadOnlyFragmentModificationException} to be thrown).
    *
    * @param startOffset the start offset of the text range to mark as read-only.
-   * @param endOffset the end offset of the text range to mark as read-only.
+   * @param endOffset   the end offset of the text range to mark as read-only.
    * @return the marker instance.
    * @see #removeGuardedBlock(RangeMarker)
    * @see #startGuardedBlockChecking()
@@ -312,7 +300,7 @@ public interface Document extends UserDataHolder {
    * Returns the read-only marker covering the specified offset in the document.
    *
    * @param offset the offset for which the marker is requested.
-   * @return the marker instance, or null if the specified offset is not covered by a read-only marker.
+   * @return the marker instance, or {@code null} if the specified offset is not covered by a read-only marker.
    */
   @Nullable
   default RangeMarker getOffsetGuard(int offset) {
@@ -323,8 +311,8 @@ public interface Document extends UserDataHolder {
    * Returns the read-only marker covering the specified range in the document.
    *
    * @param start the start offset of the range for which the marker is requested.
-   * @param end the end offset of the range for which the marker is requested.
-   * @return the marker instance, or null if the specified range is not covered by a read-only marker.
+   * @param end   the end offset of the range for which the marker is requested.
+   * @return the marker instance, or {@code null} if the specified range is not covered by a read-only marker.
    */
   @Nullable
   default RangeMarker getRangeGuard(int start, int end) {
@@ -366,8 +354,37 @@ public interface Document extends UserDataHolder {
     return createRangeMarker(textRange.getStartOffset(), textRange.getEndOffset());
   }
 
-  @Contract(pure=true)
+  @Contract(pure = true)
   default int getLineSeparatorLength(int line) {
     return 0;
   }
+
+  /**
+   * @see #setInBulkUpdate(boolean)
+   */
+  default boolean isInBulkUpdate() {
+    return false;
+  }
+
+  /**
+   * Enters or exits 'bulk' mode for processing of document changes. Bulk mode should be used when a large number of document changes
+   * are applied in batch (without user interaction for each change), to improve performance. E.g. this mode is sometimes used by the
+   * platform code during code formatting. In this mode some activities that usually happen on each document change will be muted, with
+   * reconciliation happening on bulk mode exit.
+   * <p>
+   * As the reconciliation after exiting bulk mode implies some additional overhead, bulk mode shouldn't be used if the number of document
+   * changes to be performed is relatively small. The number of changes which justifies switching to bulk mode is usually determined
+   * empirically, but typically it's around hundred(s) of changes.
+   * <p>
+   * In bulk mode editor(s) associated with the document will stop updating internal caches on each document change. As a result, certain
+   * operations with editor can return invalid results or lead to exception, if they are preformed in bulk mode. They include: querying
+   * or updating folding or soft wrap data, editor position recalculation functions (offset to logical position, logical to visual position,
+   * etc), querying or updating caret position or selection state.
+   * <p>
+   * Bulk mode shouldn't span more than one thread or EDT event. Typically it should turned on/off in a try/finally statement.
+   *
+   * @see com.intellij.util.DocumentUtil#executeInBulk(Document, boolean, Runnable)
+   * @see BulkAwareDocumentListener
+   */
+  default void setInBulkUpdate(boolean value) {}
 }

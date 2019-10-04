@@ -13,11 +13,8 @@ import com.intellij.internal.statistic.configurable.SendPeriod;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.RoamingType;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -30,7 +27,8 @@ import java.util.concurrent.TimeUnit;
   name = "UsagesStatistic",
   storages = @Storage(value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED)
 )
-public class UsageStatisticsPersistenceComponent extends BasicSentUsagesPersistenceComponent implements PersistentStateComponent<Element> {
+@Service
+public final class UsageStatisticsPersistenceComponent implements PersistentStateComponent<Element> {
   public static final String USAGE_STATISTICS_XML = "usage.statistics.xml";
 
   private boolean isAllowedForEAP = true;
@@ -41,16 +39,19 @@ public class UsageStatisticsPersistenceComponent extends BasicSentUsagesPersiste
   private static final String IS_ALLOWED_ATTR = "allowed";
   private static final String IS_ALLOWED_EAP_ATTR = "allowedEap";
   private static final String SHOW_NOTIFICATION_ATTR = "show-notification";
+  private long mySentTime = 0;
   private ILogger androidLogger;
 
-  public static UsageStatisticsPersistenceComponent getInstance() {
-    return ApplicationManager.getApplication().getComponent(UsageStatisticsPersistenceComponent.class);
+  public long getLastTimeSent() {
+    return mySentTime;
   }
 
-  public UsageStatisticsPersistenceComponent() {
-    if (ApplicationManager.getApplication().isInternal()) {
-      isShowNotification = false;
-    }
+  public void setSentTime(long time) {
+    mySentTime = time;
+  }
+
+  public static UsageStatisticsPersistenceComponent getInstance() {
+    return ServiceManager.getService(UsageStatisticsPersistenceComponent.class);
   }
 
   @Override
@@ -165,7 +166,6 @@ public class UsageStatisticsPersistenceComponent extends BasicSentUsagesPersiste
     AnalyticsPublisher.updatePublisher(logger, scheduler, application.getStrictVersion());
   }
 
-  @Override
   public boolean isAllowed() {
     /* Android Studio: we use our own mechanism
     final ConsentOptions options = ConsentOptions.getInstance();
@@ -190,9 +190,8 @@ public class UsageStatisticsPersistenceComponent extends BasicSentUsagesPersiste
     isShowNotification = showNotification;
   }
 
-  @Override
   public boolean isShowNotification() {
-    return isShowNotification;
+    return isShowNotification && !ApplicationManager.getApplication().isInternal();
   }
 
   private ILogger getAndroidLogger() {

@@ -416,6 +416,7 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
       assertEmpty(((PsiJavaFile)getFile()).getImportList().getAllImportStatements());
 
       caretRight();
+      type(" ");
 
       doHighlighting();
 

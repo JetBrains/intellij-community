@@ -320,7 +320,6 @@ public class AssertProcessor {
                  key.equals(InterpreterUtil.makeUniqueKey(fdparam.getName(), fdparam.getDescriptor().descriptorString));
         }
       }
-      return false;
     }
     else {
       if (exprent.type == Exprent.EXPRENT_FIELD) {
@@ -328,7 +327,7 @@ public class AssertProcessor {
         return classname.equals(fdparam.getClassname()) &&
                key.equals(InterpreterUtil.makeUniqueKey(fdparam.getName(), fdparam.getDescriptor().descriptorString));
       }
-      return false;
     }
+    return false;
   }
 }

@@ -22,8 +22,7 @@ public class EventLogExternalSettingsService extends SettingsConnectionService i
   private static final String PERCENT_TRAFFIC = "percent-traffic";
 
   /**
-   * Use {@link EventLogExternalSettingsService#getFeatureUsageSettings()}
-   * or create new instance with custom recorder id.
+   * @deprecated Use {@link EventLogExternalSettingsService#getFeatureUsageSettings()} or create new instance with custom recorder id.
    */
   @Deprecated
   public static EventLogExternalSettingsService getInstance() {

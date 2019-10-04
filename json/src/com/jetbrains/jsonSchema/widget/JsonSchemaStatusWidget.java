@@ -52,7 +52,7 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
   private static final AtomicBoolean myIsNotified = new AtomicBoolean(false);
 
   JsonSchemaStatusWidget(Project project) {
-    super(project);
+    super(project, false);
     myServiceLazy = new SynchronizedClearableLazy<>(() -> {
       if (!project.isDisposed()) {
         JsonSchemaService myService = JsonSchemaService.Impl.get(project);
@@ -297,7 +297,6 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
     if (virtualFile == null) return null;
 
     Project project = getProject();
-    if (project == null) return null;
     WidgetState state = getWidgetState(virtualFile);
     if (!(state instanceof MyWidgetState)) return null;
     JsonSchemaService service = getService();
@@ -334,7 +333,7 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
 
   @NotNull
   @Override
-  protected StatusBarWidget createInstance(Project project) {
+  protected StatusBarWidget createInstance(@NotNull Project project) {
     return new JsonSchemaStatusWidget(project);
   }
 

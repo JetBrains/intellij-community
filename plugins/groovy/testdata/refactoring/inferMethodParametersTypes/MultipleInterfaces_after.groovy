@@ -1,4 +1,4 @@
-def <T0 extends B & C> void foo(T0 a) {
+def <T extends B & C> void foo(T a) {
   a.doB()
   a.doC()
 }

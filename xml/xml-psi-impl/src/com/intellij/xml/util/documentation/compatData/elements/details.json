@@ -15,9 +15,6 @@
               "version_added": false,
               "notes": "<a href='https://developer.microsoft.com/microsoft-edge/platform/status/detailssummary?q=details'>Under consideration</a>."
             },
-            "edge_mobile": {
-              "version_added": false
-            },
             "firefox": {
               "version_added": "49",
               "notes": "Before Firefox 57, there was a bug meaning that <code>&lt;details&gt;</code> elements can't be made open by default using the <code>open</code> attribute if they have a CSS <code>animation</code> active on them."
@@ -66,9 +63,6 @@
               "edge": {
                 "version_added": false,
                 "notes": "<a href='https://developer.microsoft.com/microsoft-edge/platform/status/detailssummary?q=details'>Under consideration</a>."
-              },
-              "edge_mobile": {
-                "version_added": false
               },
               "firefox": {
                 "version_added": "49"

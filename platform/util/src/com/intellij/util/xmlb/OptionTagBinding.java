@@ -28,8 +28,8 @@ class OptionTagBinding extends BasePrimitiveBinding {
       myValueAttribute = Constants.VALUE;
     }
     else {
-      myNameAttribute = optionTag.nameAttribute();
-      myValueAttribute = optionTag.valueAttribute();
+      myNameAttribute = StringUtil.internEmptyString(optionTag.nameAttribute());
+      myValueAttribute = StringUtil.internEmptyString(optionTag.valueAttribute());
 
       String tagName = optionTag.tag();
       if (StringUtil.isEmpty(myNameAttribute) && Constants.OPTION.equals(tagName)) {

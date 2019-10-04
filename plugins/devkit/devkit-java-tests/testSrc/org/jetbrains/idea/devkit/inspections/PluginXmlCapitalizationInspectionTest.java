@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.inspections;
 
+import com.intellij.spellchecker.inspections.SpellCheckingInspection;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
@@ -12,6 +13,7 @@ public class PluginXmlCapitalizationInspectionTest extends LightJavaCodeInsightF
   protected String getBasePath() {
     return DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/pluginXmlCapitalization";
   }
+
   @Override
   protected void setUp() throws Exception {
     super.setUp();
@@ -21,5 +23,18 @@ public class PluginXmlCapitalizationInspectionTest extends LightJavaCodeInsightF
   public void testAction() {
     myFixture.testHighlighting("pluginXmlCapitalization_Action.xml",
                                "MyBundle.properties", "MyAction.java");
+  }
+
+  public void testExtensionPoint() {
+    myFixture.addClass("package com.intellij.util.xmlb.annotations; public @interface Attribute { String value() default \"\";}");
+    myFixture.addClass("package com.intellij.util.xmlb.annotations; public @interface Tag { String value() default \"\";}");
+
+    myFixture.addClass("package org.jetbrains.annotations; public @interface NonNls {}");
+    myFixture.addClass("package org.jetbrains.annotations; public @interface Nls {" +
+                       "  enum Capitalization {NotSpecified,Title,Sentence}" +
+                       "  Capitalization capitalization() default Capitalization.NotSpecified;" +
+                       "}");
+    myFixture.enableInspections(new SpellCheckingInspection());
+    myFixture.testHighlighting("pluginXmlCapitalization_extensionPoint.xml", "MyExtensionPoint.java");
   }
 }

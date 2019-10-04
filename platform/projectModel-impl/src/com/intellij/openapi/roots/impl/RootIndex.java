@@ -606,6 +606,10 @@ class RootIndex {
         if (ourFileTypes.isFileIgnored(each)) {
           return NonProjectDirectoryInfo.IGNORED;
         }
+        if (LOG.isDebugEnabled() && (id > 500_000_000 || id < 0)) {
+          LOG.error("Invalid id: " + id + " for " + file + " of " + file.getClass());
+        }
+
         myNonInterestingIds.set(id);
       }
     }
@@ -651,6 +655,9 @@ class RootIndex {
     return parentPackageName.isEmpty() ? subdirName : parentPackageName + "." + subdirName;
   }
 
+  /**
+   * @return list of all super-directories which are marked as some kind of root, or {@code null} if {@code deepDir} is under the ignored folder (with no nested roots)
+   */
   @Nullable("returns null only if dir is under ignored folder")
   private static List<VirtualFile> getHierarchy(@NotNull VirtualFile deepDir, @NotNull Set<? extends VirtualFile> allRoots, @NotNull RootInfo info) {
     List<VirtualFile> hierarchy = new ArrayList<>();

@@ -15,7 +15,6 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TIntIntHashMap;
 import gnu.trove.TIntIntProcedure;
@@ -50,13 +49,8 @@ public class ModifierKeyDoubleClickHandler implements Disposable, BaseComponent 
     KEY_CODE_TO_MODIFIER_MAP.put(KeyEvent.VK_SHIFT, InputEvent.SHIFT_MASK);
   }
 
-  private final ActionManagerEx myActionManagerEx;
   private final ConcurrentMap<String, MyDispatcher> myDispatchers = ContainerUtil.newConcurrentMap();
   private boolean myIsRunningAction;
-
-  private ModifierKeyDoubleClickHandler(ActionManagerEx actionManagerEx) {
-    myActionManagerEx = actionManagerEx;
-  }
 
   @Override
   public void initComponent() {
@@ -240,7 +234,8 @@ public class ModifierKeyDoubleClickHandler implements Disposable, BaseComponent 
     private boolean run(KeyEvent event) {
       myIsRunningAction = true;
       try {
-        AnAction action = myActionManagerEx.getAction(myActionId);
+        ActionManagerEx ex = ActionManagerEx.getInstanceEx();
+        AnAction action = ex.getAction(myActionId);
         if (action == null) return false;
 
         if (!action.isEnabledInModalContext()) {
@@ -249,30 +244,20 @@ public class ModifierKeyDoubleClickHandler implements Disposable, BaseComponent 
           if (focusedWindow != null && IdeKeyEventDispatcher.isModalContext(focusedWindow)) return false;
         }
 
-        DataContext context = calculateContext();
+        DataContext context = DataManager.getInstance().getDataContext(IdeFocusManager.findInstance().getFocusOwner());
         AnActionEvent anActionEvent = AnActionEvent.createFromAnAction(action, event, ActionPlaces.KEYBOARD_SHORTCUT, context);
         action.update(anActionEvent);
         if (!anActionEvent.getPresentation().isEnabled()) return false;
 
-        myActionManagerEx.fireBeforeActionPerformed(action, anActionEvent.getDataContext(), anActionEvent);
+        ex.fireBeforeActionPerformed(action, anActionEvent.getDataContext(), anActionEvent);
         action.actionPerformed(anActionEvent);
-        myActionManagerEx.fireAfterActionPerformed(action, anActionEvent.getDataContext(), anActionEvent);
+        ex.fireAfterActionPerformed(action, anActionEvent.getDataContext(), anActionEvent);
         ActionsCollector.getInstance().record("DoubleShortcut", anActionEvent.getInputEvent(), action.getClass());
         return true;
       }
       finally {
         myIsRunningAction = false;
       }
-    }
-
-    @NotNull
-    private DataContext calculateContext() {
-      IdeFocusManager focusManager = IdeFocusManager.findInstance();
-      Component focusedComponent = focusManager.getFocusOwner();
-      IdeFrame frame = focusManager.getLastFocusedFrame();
-      return frame == focusedComponent || focusedComponent == focusManager.getLastFocusedFor(frame)
-             ? DataManager.getInstance().getDataContext(focusedComponent)
-             : DataManager.getInstance().getDataContext();
     }
 
     private boolean shouldSkipIfActionHasShortcut() {

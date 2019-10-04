@@ -8,6 +8,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 public final class StartUpMeasurer {
@@ -19,26 +20,24 @@ public final class StartUpMeasurer {
   public static final class Phases {
     public static final String LOAD_MAIN_CLASS = "load main class";
 
-    // this phase name is not fully clear - it is time from `PluginManager.start` to `IdeaApplication.initApplication`
+    // this phase name is not fully clear - it is time from `PluginManager.start` to `ApplicationLoader.initApplication`
     public static final String PREPARE_TO_INIT_APP = "app initialization preparation";
     public static final String CHECK_SYSTEM_DIR = "check system dirs";
     public static final String LOCK_SYSTEM_DIRS = "lock system dirs";
-    public static final String START_LOGGING = "start logging";
 
     public static final String WAIT_TASKS = "wait tasks";
+    public static final String IMPORT_CONFIGS = "import configs";
 
     public static final String CONFIGURE_LOGGING = "configure logging";
+    public static final String APP_STARTER = "appStarter";
 
-    // this phase name is not fully clear - it is time from `IdeaApplication.initApplication` to `IdeaApplication.run`
+    // this phase name is not fully clear - it is time from `ApplicationLoader.initApplication` to `ApplicationLoader.run`
     public static final String INIT_APP = "app initialization";
 
     public static final String PLACE_ON_EVENT_QUEUE = "place on event queue";
 
-    public static final String WAIT_PLUGIN_INIT = "wait plugin initialization";
-
     // actually, now it is also registers services, not only components,but it doesn't worth to rename
     public static final String REGISTER_COMPONENTS_SUFFIX = "component registration";
-    public static final String COMPONENTS_REGISTERED_CALLBACK_SUFFIX = "component registered callback";
     public static final String CREATE_COMPONENTS_SUFFIX = "component creation";
 
     public static final String APP_INITIALIZED_CALLBACK = "app initialized callback";
@@ -83,7 +82,7 @@ public final class StartUpMeasurer {
     }
   }
 
-  private static final long classInitStartTime = System.nanoTime();
+  private static long startTime = System.nanoTime();
 
   private static final ConcurrentLinkedQueue<ActivityImpl> items = new ConcurrentLinkedQueue<>();
 
@@ -100,19 +99,41 @@ public final class StartUpMeasurer {
     return System.nanoTime();
   }
 
+  /**
+   * Since start in ms.
+   */
+  @SuppressWarnings("unused")
+  public static long sinceStart() {
+    return TimeUnit.NANOSECONDS.toMillis(getCurrentTime() - startTime);
+  }
+
   @NotNull
   public static Activity start(@NotNull String name, @Nullable String description) {
-    return new ActivityImpl(name, description, null, null);
+    ActivityImpl activity = new ActivityImpl(name, null, null);
+    activity.setDescription(description);
+    return activity;
+  }
+
+  /**
+   * The instant events correspond to something that happens but has no duration associated with it.
+   * See https://docs.google.com/document/d/1CvAClvFfyA5R-PhYUmn5OOQtYMH4h6I0nSsKchNAySU/preview#heading=h.lenwiilchoxp
+   *
+   * Scope is not supported — reported as global.
+   */
+  public static void addInstantEvent(@NotNull String name) {
+    ActivityImpl activity = new ActivityImpl(name, null, null);
+    activity.setEnd(-1);
+    add(activity);
   }
 
   @NotNull
   public static Activity start(@NotNull String name) {
-    return new ActivityImpl(name, null, null, null);
+    return new ActivityImpl(name, null, null);
   }
 
   @NotNull
   public static Activity start(@NotNull String name, @NotNull Level level) {
-    return new ActivityImpl(name, null, level, null);
+    return new ActivityImpl(name, level, null);
   }
 
   public static void processAndClear(boolean isContinueToCollect, @NotNull Consumer<? super ActivityImpl> consumer) {
@@ -129,8 +150,8 @@ public final class StartUpMeasurer {
   }
 
   @ApiStatus.Internal
-  public static long getClassInitStartTime() {
-    return classInitStartTime;
+  public static long getStartTime() {
+    return startTime;
   }
 
   static void add(@NotNull ActivityImpl activity) {
@@ -140,35 +161,48 @@ public final class StartUpMeasurer {
   }
 
   public static void addTimings(@NotNull LinkedHashMap<String, Long> timings, @NotNull String groupName) {
+    if (!items.isEmpty()) {
+      throw new IllegalStateException("addTimings must be not called if some events were already added using API");
+    }
+
     if (timings.isEmpty()) {
       return;
     }
 
     List<Map.Entry<String, Long>> entries = new ArrayList<>(timings.entrySet());
 
-    ActivityImpl parent = new ActivityImpl(groupName, null, entries.get(0).getValue(), null, Level.APPLICATION, null, null);
+    ActivityImpl parent = new ActivityImpl(groupName, entries.get(0).getValue(), null, Level.APPLICATION, null, null);
     parent.setEnd(getCurrentTime());
 
     for (int i = 0; i < entries.size(); i++) {
-      ActivityImpl activity = new ActivityImpl(entries.get(i).getKey(), null, entries.get(i).getValue(), parent, Level.APPLICATION, null, null);
+      long start = entries.get(i).getValue();
+      if (start < startTime) {
+        startTime = start;
+      }
+
+      ActivityImpl activity = new ActivityImpl(entries.get(i).getKey(), start, parent, Level.APPLICATION, null, null);
       activity.setEnd(i == entries.size() - 1 ? parent.getEnd() : entries.get(i + 1).getValue());
       items.add(activity);
     }
     items.add(parent);
   }
 
-  public static void addPluginCost(@Nullable String pluginId, @NotNull String phase, long timeNanos) {
-    if (pluginId == null || !measuringPluginStartupCosts) {
+  public static void addPluginCost(@NotNull String pluginId, @NotNull String phase, long time) {
+    if (!isMeasuringPluginStartupCosts()) {
       return;
     }
 
     synchronized (pluginCostMap) {
-      doAddPluginCost(pluginId, phase, timeNanos, pluginCostMap);
+      doAddPluginCost(pluginId, phase, time, pluginCostMap);
     }
   }
 
+  public static boolean isMeasuringPluginStartupCosts() {
+    return measuringPluginStartupCosts;
+  }
+
   @ApiStatus.Internal
-  public static void doAddPluginCost(@NotNull String pluginId, @NotNull String phase, long timeNanos, @NotNull Map<String, ObjectLongHashMap<String>> pluginCostMap) {
+  public static void doAddPluginCost(@NotNull String pluginId, @NotNull String phase, long time, @NotNull Map<String, ObjectLongHashMap<String>> pluginCostMap) {
     ObjectLongHashMap<String> costPerPhaseMap = pluginCostMap.get(pluginId);
     if (costPerPhaseMap == null) {
       costPerPhaseMap = new ObjectLongHashMap<>();
@@ -178,6 +212,6 @@ public final class StartUpMeasurer {
     if (oldCost == -1) {
       oldCost = 0L;
     }
-    costPerPhaseMap.put(phase, oldCost + timeNanos);
+    costPerPhaseMap.put(phase, oldCost + time);
   }
 }

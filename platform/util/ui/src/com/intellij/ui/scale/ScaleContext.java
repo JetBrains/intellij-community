@@ -20,6 +20,7 @@ import static com.intellij.ui.scale.ScaleType.USR_SCALE;
  * system scale (which may change as the component moves b/w devices).
  *
  * @see ScaleContextAware
+ * @author tav
  */
 @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "deprecation"})
 public class ScaleContext extends /*UserScaleContext*/JBUI.BaseScaleContext { // extends BaseScaleContext for backward compatibility

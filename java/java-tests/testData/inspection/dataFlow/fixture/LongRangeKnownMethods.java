@@ -22,7 +22,7 @@ public class LongRangeKnownMethods {
     if(<warning descr="Condition 'Integer.bitCount(i) == -1' is always 'false'">Integer.bitCount(i) == -1</warning>) {
       System.out.println("Impossible");
     }
-    if(Long.<error descr="Cannot resolve method 'numberOfLeadingZeroes(long)'">numberOfLeadingZeroes</error>(l) <= 64) {
+    if(Long.<error descr="Cannot resolve method 'numberOfLeadingZeroes' in 'Long'">numberOfLeadingZeroes</error>(l) <= 64) {
       System.out.println("Always");
     }
   }

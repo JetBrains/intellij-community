@@ -501,7 +501,7 @@ public class CreateFromUsageUtils {
   @SafeVarargs
   @NotNull
   public static PsiReferenceExpression[] collectExpressions(final PsiExpression expression, @NotNull Class<? extends PsiElement>... scopes) {
-    PsiElement parent = PsiTreeUtil.getParentOfType(expression, (Class<PsiElement>[])scopes);
+    PsiElement parent = PsiTreeUtil.getParentOfType(expression, scopes);
 
     final List<PsiReferenceExpression> result = new ArrayList<>();
     JavaRecursiveElementWalkingVisitor visitor = new JavaRecursiveElementWalkingVisitor() {

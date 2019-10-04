@@ -20,7 +20,7 @@ open class GroovyInferenceSession(
   private val expressionPredicates: Set<ExpressionPredicate> = emptySet()
 ) : InferenceSession(typeParams, contextSubstitutor, context.manager, context) {
 
-  private val nestedSessions = mutableMapOf<GroovyResolveResult, GroovyInferenceSession>()
+  protected val nestedSessions = mutableMapOf<GroovyResolveResult, GroovyInferenceSession>()
 
   private fun result(): PsiSubstitutor {
     resolveBounds(myInferenceVariables, contextSubstitutor)

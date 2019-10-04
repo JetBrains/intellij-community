@@ -79,6 +79,8 @@ public class Junit5AssertionsConverterFixTest extends IGQuickFixesTestCase {
 
     myFixture.addClass("package org.junit.jupiter.api;" +
                        "public @interface Test {}");
+    myFixture.addClass("package org.junit.platform.commons.annotation;" +
+                       "public @interface Testable {}");
 
     myFixture.addClass("package org.junit.jupiter.api;\n" +
                        "public final class Assertions {\n" +

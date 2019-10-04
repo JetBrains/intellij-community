@@ -26,6 +26,8 @@ import com.intellij.openapi.ui.Splitter
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.UserDataHolder
+import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.JBCardLayout
 import com.intellij.ui.components.JBList
@@ -64,6 +66,7 @@ class PyAddSdkDialog private constructor(private val project: Project?,
   private val mainPanel: JPanel = JPanel(JBCardLayout())
 
   private var selectedPanel: PyAddSdkView? = null
+  private val context = UserDataHolderBase()
   private var panels: List<PyAddSdkView> = emptyList()
 
   init {
@@ -76,10 +79,10 @@ class PyAddSdkDialog private constructor(private val project: Project?,
       .sortedWith(PreferredSdkComparator())
     val panels = arrayListOf<PyAddSdkView>(createVirtualEnvPanel(project, module, sdks),
                                            createAnacondaPanel(project, module),
-                                           PyAddSystemWideInterpreterPanel(module, existingSdks))
+                                           PyAddSystemWideInterpreterPanel(module, existingSdks, context))
     val extendedPanels = PyAddSdkProvider.EP_NAME.extensions
       .mapNotNull {
-        it.safeCreateView(project = project, module = module, existingSdks = existingSdks)
+        it.safeCreateView(project = project, module = module, existingSdks = existingSdks, context=context)
           .registerIfDisposable()
       }
     panels.addAll(extendedPanels)
@@ -211,15 +214,15 @@ class PyAddSdkDialog private constructor(private val project: Project?,
                                     module: Module?,
                                     existingSdks: List<Sdk>): PyAddSdkPanel {
     val newVirtualEnvPanel = when {
-      allowCreatingNewEnvironments(project) -> PyAddNewVirtualEnvPanel(project, module, existingSdks, null)
+      allowCreatingNewEnvironments(project) -> PyAddNewVirtualEnvPanel(project, module, existingSdks, null, context)
       else -> null
     }
-    val existingVirtualEnvPanel = PyAddExistingVirtualEnvPanel(project, module, existingSdks, null)
+    val existingVirtualEnvPanel = PyAddExistingVirtualEnvPanel(project, module, existingSdks, null, context)
     val panels = listOf(newVirtualEnvPanel,
                         existingVirtualEnvPanel)
       .filterNotNull()
     val defaultPanel = when {
-      detectVirtualEnvs(module, existingSdks).any { it.isAssociatedWithModule(module) } -> existingVirtualEnvPanel
+      detectVirtualEnvs(module, existingSdks, context).any { it.isAssociatedWithModule(module) } -> existingVirtualEnvPanel
       newVirtualEnvPanel != null -> newVirtualEnvPanel
       else -> existingVirtualEnvPanel
     }
@@ -228,11 +231,11 @@ class PyAddSdkDialog private constructor(private val project: Project?,
 
   private fun createAnacondaPanel(project: Project?, module: Module?): PyAddSdkPanel {
     val newCondaEnvPanel = when {
-      allowCreatingNewEnvironments(project) -> PyAddNewCondaEnvPanel(project, module, existingSdks, null)
+      allowCreatingNewEnvironments(project) -> PyAddNewCondaEnvPanel(project, module, existingSdks, null, context)
       else -> null
     }
     val panels = listOf(newCondaEnvPanel,
-                        PyAddExistingCondaEnvPanel(project, module, existingSdks, null))
+                        PyAddExistingCondaEnvPanel(project, module, existingSdks, null, context))
       .filterNotNull()
     return PyAddSdkGroupPanel("Conda environment", PythonIcons.Python.Anaconda, panels, panels[0])
   }
@@ -346,9 +349,10 @@ class PyAddSdkDialog private constructor(private val project: Project?,
      */
     private fun PyAddSdkProvider.safeCreateView(project: Project?,
                                                 module: Module?,
-                                                existingSdks: List<Sdk>): PyAddSdkView? {
+                                                existingSdks: List<Sdk>,
+                                                context:UserDataHolder): PyAddSdkView? {
       try {
-        return createView(project, module, null, existingSdks)
+        return createView(project, module, null, existingSdks, context)
       }
       catch (e: NoClassDefFoundError) {
         LOG.info(e)

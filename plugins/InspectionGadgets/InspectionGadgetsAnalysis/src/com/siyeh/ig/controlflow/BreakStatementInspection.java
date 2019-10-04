@@ -46,7 +46,7 @@ public class BreakStatementInspection extends BaseInspection {
     @Override
     public void visitBreakStatement(@NotNull PsiBreakStatement statement) {
       super.visitBreakStatement(statement);
-      if (statement.findExitedElement() instanceof PsiSwitchBlock) {
+      if (statement.findExitedStatement() instanceof PsiSwitchStatement) {
         return;
       }
       registerStatementError(statement);

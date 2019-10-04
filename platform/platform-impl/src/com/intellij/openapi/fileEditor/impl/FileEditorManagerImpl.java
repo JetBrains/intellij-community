@@ -19,6 +19,9 @@ import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.extensions.ExtensionPointListener;
+import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
@@ -53,11 +56,10 @@ import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.docking.DockContainer;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.docking.impl.DockManagerImpl;
-import com.intellij.ui.tabs.newImpl.JBTabsImpl;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
-import com.intellij.util.concurrency.SequentialTaskExecutor;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.impl.MessageListenerList;
@@ -70,7 +72,6 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
-import org.jetbrains.concurrency.CancellablePromise;
 import org.jetbrains.concurrency.Promise;
 
 import javax.swing.*;
@@ -86,7 +87,6 @@ import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -106,8 +106,6 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   private static final FileEditorProvider[] EMPTY_PROVIDER_ARRAY = {};
   public static final Key<Boolean> CLOSING_TO_REOPEN = Key.create("CLOSING_TO_REOPEN");
   public static final String FILE_EDITOR_MANAGER = "FileEditorManager";
-  private static final ExecutorService
-    ourSwapperExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("EditorFileSwapper");
 
   private volatile JPanel myPanels;
   private EditorsSplitters mySplitters;
@@ -178,7 +176,21 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
         }
       }
     });
-    Disposer.register(myProject, this);  // github.com/JetBrains/intellij-community/pull/1175
+
+    Extensions.getRootArea().getExtensionPoint(FileEditorProvider.EP_FILE_EDITOR_PROVIDER).addExtensionPointListener(
+      new ExtensionPointListener<FileEditorProvider>() {
+        @Override
+        public void extensionRemoved(@NotNull FileEditorProvider extension, @NotNull PluginDescriptor pluginDescriptor) {
+          for (EditorComposite editor : myOpenedEditors) {
+            for (FileEditorProvider provider : editor.getProviders()) {
+              if (provider.equals(extension)) {
+                closeFile(editor.getFile());
+                break;
+              }
+            }
+          }
+        }
+      }, false, this);
   }
 
   @Override
@@ -320,13 +332,6 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   private static class MyBorder implements Border {
     @Override
     public void paintBorder(@NotNull Component c, @NotNull Graphics g, int x, int y, int width, int height) {
-      if (UIUtil.isUnderAquaLookAndFeel()) {
-        g.setColor(JBTabsImpl.MAC_AQUA_BG_COLOR);
-        final Insets insets = getBorderInsets(c);
-        if (insets.top > 0) {
-          g.fillRect(x, y, width, height + insets.top);
-        }
-      }
     }
 
     @NotNull
@@ -543,38 +548,6 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
       currentWindow.changeOrientation();
     }
   }
-
-
-  @Override
-  public void flipTabs() {
-    /*
-    if (myTabs == null) {
-      myTabs = new EditorTabs (this, UISettings.getInstance().getEditorTabPlacement());
-      remove (mySplitters);
-      add (myTabs, BorderLayout.CENTER);
-      initTabs ();
-    } else {
-      remove (myTabs);
-      add (mySplitters, BorderLayout.CENTER);
-      myTabs.dispose ();
-      myTabs = null;
-    }
-    */
-    myPanels.revalidate();
-  }
-
-  @Override
-  public boolean tabsMode() {
-    return false;
-  }
-
-  private void setTabsMode(final boolean mode) {
-    if (tabsMode() != mode) {
-      flipTabs();
-    }
-    //LOG.assertTrue (tabsMode () == mode);
-  }
-
 
   @Override
   public boolean isInSplitter() {
@@ -865,8 +838,6 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     compositeRef.set(window.findFileComposite(file));
     boolean newEditor = compositeRef.isNull();
     if (newEditor) {
-      clearWindowIfNeeded(window);
-
       getProject().getMessageBus().syncPublisher(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER).beforeFileOpened(this, file);
 
       FileEditor[] newEditors = new FileEditor[newProviders.length];
@@ -1002,12 +973,6 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
       providers = providerList.toArray(new FileEditorProvider[0]);
     }
     return new EditorWithProviderComposite(file, editors, providers, this);
-  }
-
-  private static void clearWindowIfNeeded(@NotNull EditorWindow window) {
-    if (UISettings.getInstance().getEditorTabPlacement() == UISettings.TABS_NONE || UISettings.getInstance().getPresentationMode()) {
-      window.clear();
-    }
   }
 
   private void restoreEditorState(@NotNull VirtualFile file,
@@ -1502,7 +1467,6 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
     StartupManager.getInstance(myProject).registerPostStartupActivity((DumbAwareRunnable)() -> {
       if (myProject.isDisposed()) return;
-      setTabsMode(UISettings.getInstance().getEditorTabPlacement() != UISettings.TABS_NONE);
 
       ToolWindowManager.getInstance(myProject).invokeLater(() -> {
         if (!myProject.isDisposed()) {
@@ -1842,21 +1806,16 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   }
 
   private class MyRootsListener implements ModuleRootListener {
-    private CancellablePromise<?> prevTask;
 
     @Override
     public void rootsChanged(@NotNull ModuleRootEvent event) {
-      if (prevTask != null) {
-        prevTask.cancel();
-      }
-
       List<EditorWithProviderComposite> allEditors = StreamEx.of(getWindows()).flatArray(EditorWindow::getEditors).toList();
-      prevTask = ReadAction
+      ReadAction
         .nonBlocking(() -> calcEditorReplacements(allEditors))
         .inSmartMode(myProject)
         .finishOnUiThread(ModalityState.defaultModalityState(), this::replaceEditors)
-        .submit(ourSwapperExecutor);
-      prevTask.onProcessed(__ -> prevTask = null);
+        .coalesceBy(this)
+        .submit(AppExecutorUtil.getAppExecutorService());
     }
 
     private Map<EditorWithProviderComposite, Pair<VirtualFile, Integer>> calcEditorReplacements(List<EditorWithProviderComposite> allEditors) {
@@ -1925,8 +1884,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     }
 
     private void handleUiSettingChange(UISettings uiSettings) {
-      setTabsMode(uiSettings.getEditorTabPlacement() != UISettings.TABS_NONE && !uiSettings.getPresentationMode());
-
+      myPanels.revalidate();
       for (EditorsSplitters each : getAllSplitters()) {
         each.setTabsPlacement(uiSettings.getEditorTabPlacement());
         each.trimToSize(uiSettings.getEditorTabLimit());

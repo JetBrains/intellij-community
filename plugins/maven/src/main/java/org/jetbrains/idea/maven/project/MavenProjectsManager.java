@@ -35,6 +35,9 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.Alarm;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.NullableConsumer;
@@ -44,6 +47,7 @@ import com.intellij.util.io.PathKt;
 import com.intellij.util.ui.update.Update;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -115,6 +119,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   private MavenSyncConsole mySyncConsole;
   private final MavenMergingUpdateQueue mySaveQueue;
   private static final int SAVE_DELAY = 1000;
+  private volatile AsyncPromise<List<Module>> myRunningImportPromise;
 
   public static MavenProjectsManager getInstance(@NotNull Project project) {
     return project.getComponent(MavenProjectsManager.class);
@@ -149,6 +154,11 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
 
   @Override
   public void dispose() {
+  }
+
+  @ApiStatus.Experimental
+  AsyncPromise<List<Module>> getRunningImportPromise() {
+    return myRunningImportPromise;
   }
 
   public ModificationTracker getModificationTracker() {
@@ -571,7 +581,9 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
       if (m.isDisposed()) continue;
       ExternalSystemModulePropertyManager.getInstance(m).setMavenized(mavenized);
       // force re-save (since can be stored externally)
-      ((ModuleRootManagerImpl)ModuleRootManager.getInstance(m)).stateChanged();
+      if (ModuleRootManager.getInstance(m) instanceof ModuleRootManagerImpl) {
+        ((ModuleRootManagerImpl)ModuleRootManager.getInstance(m)).stateChanged();
+      }
     }
   }
 
@@ -692,18 +704,21 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
 
   @Nullable
   public MavenProject findProject(@NotNull Module module) {
-    VirtualFile f = findPomFile(module, new MavenModelsProvider() {
-      @Override
-      public Module[] getModules() {
-        throw new UnsupportedOperationException();
-      }
+    return CachedValuesManager.getManager(module.getProject()).getCachedValue(module, () -> {
+      VirtualFile f = findPomFile(module, new MavenModelsProvider() {
+        @Override
+        public Module[] getModules() {
+          throw new UnsupportedOperationException();
+        }
 
-      @Override
-      public VirtualFile[] getContentRoots(Module module) {
-        return ModuleRootManager.getInstance(module).getContentRoots();
-      }
+        @Override
+        public VirtualFile[] getContentRoots(Module module) {
+          return ModuleRootManager.getInstance(module).getContentRoots();
+        }
+      });
+      MavenProject result = f == null ? null : findProject(f);
+      return CachedValueProvider.Result.create(result, PsiModificationTracker.MODIFICATION_COUNT);
     });
-    return f == null ? null : findProject(f);
   }
 
   @Nullable
@@ -870,14 +885,15 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     return scheduleImportAndResolve(false);
   }
 
-  public void terminateImport(int exitCode) {
-    getSyncConsole().terminated(exitCode);
-  }
-
   public Promise<List<Module>> scheduleImportAndResolve(boolean fromAutoImport) {
+    Promise<List<Module>> toCheck = myRunningImportPromise;
+    if(toCheck != null){
+      return toCheck;
+    }
     getSyncConsole().startImport(myProgressListener, fromAutoImport);
     MavenSyncConsole console = getSyncConsole();
     AsyncPromise<List<Module>> promise = scheduleResolve();
+    myRunningImportPromise = promise;
     promise.onProcessed(m -> {
       completeMavenSyncOnImportCompletion(console);
     });
@@ -907,6 +923,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
                                   myPostProcessor.waitForCompletion();
                                 }
                                 console.finishImport();
+                                myRunningImportPromise = null;
                               });
   }
 
@@ -1165,12 +1182,6 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     unscheduleAllTasks(getProjects());
   }
 
-  @TestOnly
-  public void waitForImportFinishCompletion() {
-    completeMavenSyncOnImportCompletion(mySyncConsole);
-  }
-
-
   public void waitForReadingCompletion() {
     waitForTasksCompletion(null);
   }
@@ -1313,6 +1324,11 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   @TestOnly
   public void fireActivatedInTests() {
     fireActivated();
+  }
+
+  @TestOnly
+  public void replaceProgressListener(BuildProgressListener newProgressListener){
+    myProgressListener = newProgressListener;
   }
 
   private void fireActivated() {

@@ -33,7 +33,7 @@ public interface ImportOptimizer {
    * @param file file to check
    * @return {@code true} if implementation can handle the file
    */
-  boolean supports(PsiFile file);
+  boolean supports(@NotNull PsiFile file);
 
   /**
    * Implementers of the method are expected to perform all necessary calculations synchronously and return a {@code Runnable},
@@ -49,7 +49,7 @@ public interface ImportOptimizer {
    * @return a {@code java.lang.Runnable} object, which being called will replace original file imports with optimized version.
    */
   @NotNull
-  Runnable processFile(PsiFile file);
+  Runnable processFile(@NotNull PsiFile file);
 
   /**
    * In order to customize notification popup after reformat code action just return it from {@link #processFile} with proper information,

@@ -2,8 +2,8 @@
 package com.intellij.java.codeInspection;
 
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
-import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.EnhancedSwitchMigrationInspection;
+import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,6 +23,6 @@ public class EnhancedSwitchMigrationInspectionTest extends LightQuickFixParamete
 
   @Override
   protected LanguageLevel getLanguageLevel() {
-    return LanguageLevel.JDK_12_PREVIEW;
+    return LanguageLevel.JDK_13_PREVIEW;
   }
 }

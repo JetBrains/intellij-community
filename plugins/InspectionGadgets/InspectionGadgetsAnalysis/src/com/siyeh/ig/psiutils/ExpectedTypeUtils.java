@@ -285,15 +285,6 @@ public class ExpectedTypeUtils {
     }
 
     @Override
-    public void visitBreakStatement(PsiBreakStatement statement) {
-      final PsiElement element = statement.findExitedElement();
-      if (element instanceof PsiSwitchExpression) {
-        final PsiSwitchExpression switchExpression = (PsiSwitchExpression)element;
-        expectedType = switchExpression.getType();
-      }
-    }
-
-    @Override
     public void visitYieldStatement(PsiYieldStatement statement) {
       PsiSwitchExpression expression = statement.findEnclosingExpression();
       if (expression != null) {

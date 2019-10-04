@@ -36,6 +36,7 @@ import org.junit.runners.model.Statement
 import java.io.ByteArrayOutputStream
 import java.io.PrintStream
 import java.nio.file.Files
+import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicBoolean
 
 private var sharedModule: Module? = null
@@ -65,13 +66,11 @@ class ProjectRule(val projectDescriptor: LightProjectDescriptor = LightProjectDe
     private fun createLightProject(): ProjectEx {
       (PersistentFS.getInstance() as PersistentFSImpl).cleanPersistedContents()
 
-      val projectFile = generateTemporaryPath("light_temp_shared_project${ProjectFileType.DOT_DEFAULT_EXTENSION}")
-      val projectPath = projectFile.systemIndependentPath
-
+      val projectFile = TemporaryDirectory.generateTemporaryPath("light_temp_shared_project${ProjectFileType.DOT_DEFAULT_EXTENSION}")
       val buffer = ByteArrayOutputStream()
-      Throwable(projectPath, null).printStackTrace(PrintStream(buffer))
+      Throwable(projectFile.systemIndependentPath, null).printStackTrace(PrintStream(buffer))
 
-      val project = PlatformTestCase.createProject(projectPath, "Light project: $buffer") as ProjectEx
+      val project = HeavyPlatformTestCase.createProject(projectFile) as ProjectEx
       PlatformTestUtil.registerProjectCleanup {
         try {
           disposeProject()
@@ -233,8 +232,8 @@ inline fun <T> Project.runInLoadComponentStateMode(task: () -> T): T {
   }
 }
 
-fun createHeavyProject(path: String, useDefaultProjectSettings: Boolean = false): Project {
-  return ProjectManagerEx.getInstanceEx().newProject(null, path, useDefaultProjectSettings, false)!!
+fun createHeavyProject(path: Path, useDefaultProjectSettings: Boolean = false): Project {
+  return ProjectManagerEx.getInstanceEx().newProject(path, useDefaultProjectSettings)!!
 }
 
 suspend fun Project.use(task: suspend (Project) -> Unit) {
@@ -298,7 +297,7 @@ suspend fun createProjectAndUseInLoadComponentStateMode(tempDirManager: Temporar
   createOrLoadProject(tempDirManager, task = task, directoryBased = directoryBased, loadComponentState = true)
 }
 
-suspend fun loadAndUseProjectInLoadComponentStateMode(tempDirManager: TemporaryDirectory, projectCreator: (suspend (VirtualFile) -> String)? = null, task: suspend (Project) -> Unit) {
+suspend fun loadAndUseProjectInLoadComponentStateMode(tempDirManager: TemporaryDirectory, projectCreator: (suspend (VirtualFile) -> Path)? = null, task: suspend (Project) -> Unit) {
   createOrLoadProject(tempDirManager, projectCreator, task = task, directoryBased = false, loadComponentState = true)
 }
 
@@ -317,14 +316,14 @@ suspend fun <T> runNonUndoableWriteAction(file: VirtualFile, runnable: suspend (
 }
 
 suspend fun createOrLoadProject(tempDirManager: TemporaryDirectory,
-                                projectCreator: (suspend (VirtualFile) -> String)? = null,
+                                projectCreator: (suspend (VirtualFile) -> Path)? = null,
                                 directoryBased: Boolean = true,
                                 loadComponentState: Boolean = false,
                                 useDefaultProjectSettings: Boolean = true,
                                 task: suspend (Project) -> Unit) {
   withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
-    val filePath = if (projectCreator == null) {
-      tempDirManager.newPath("test${if (directoryBased) "" else ProjectFileType.DOT_DEFAULT_EXTENSION}", refreshVfs = true).systemIndependentPath
+    val file = if (projectCreator == null) {
+      tempDirManager.newPath("test${if (directoryBased) "" else ProjectFileType.DOT_DEFAULT_EXTENSION}", refreshVfs = true)
     }
     else {
       val dir = tempDirManager.newVirtualDirectory()
@@ -334,8 +333,8 @@ suspend fun createOrLoadProject(tempDirManager: TemporaryDirectory,
     }
 
     val project = when (projectCreator) {
-      null -> createHeavyProject(filePath, useDefaultProjectSettings = useDefaultProjectSettings)
-      else -> ProjectManagerEx.getInstanceEx().loadProject(filePath)!!
+      null -> createHeavyProject(file, useDefaultProjectSettings = useDefaultProjectSettings)
+      else -> ProjectManagerEx.getInstanceEx().loadProject(file, null)!!
     }
 
     if (loadComponentState) {

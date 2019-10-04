@@ -26,5 +26,6 @@
     <orderEntry type="module" module-name="intellij.platform.configurationStore.impl" />
     <orderEntry type="module" module-name="intellij.platform.objectSerializer" />
     <orderEntry type="library" scope="TEST" name="jackson" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.serviceContainer" />
   </component>
 </module>

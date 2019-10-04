@@ -118,7 +118,7 @@ class MissingRecentApiInspection : LocalInspectionTool() {
 
   private fun getSinceUntilRange(pluginXml: XmlFile): SinceUntilRange? {
     val ideaPlugin = DescriptorUtil.getIdeaPlugin(pluginXml) ?: return null
-    val ideaVersion = ideaPlugin.rootElement.ideaVersion
+    val ideaVersion = ideaPlugin.ideaVersion
     val sinceBuild = ideaVersion.sinceBuild.value
     val untilBuild = ideaVersion.untilBuild.value
     return SinceUntilRange(sinceBuild, untilBuild)

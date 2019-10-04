@@ -2,10 +2,11 @@
 package org.jetbrains.jps.model.java;
 
 import com.intellij.util.lang.JavaVersion;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * {@link com.intellij.pom.java.LanguageLevel} is an IDE-side counterpart of this enum.
+ * The {@link com.intellij.pom.java.LanguageLevel} class is an IDE-side counterpart of this enum.
  *
  * @author nik
  */
@@ -19,7 +20,7 @@ public enum LanguageLevel {
   JDK_1_9(9),
   JDK_10(10),
   JDK_11(11),
-  JDK_12(12), JDK_12_PREVIEW(12),
+  JDK_12(12),
   JDK_13(13), JDK_13_PREVIEW(13),
   JDK_X(14);
 
@@ -41,6 +42,7 @@ public enum LanguageLevel {
   }
 
   /** @deprecated use {@link JpsJavaSdkType#complianceOption} (to be removed in IDEA 2019) */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2019")
   @Deprecated
   public String getComplianceOption() {
     return JpsJavaSdkType.complianceOption(toJavaVersion());

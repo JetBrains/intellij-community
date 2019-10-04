@@ -4,6 +4,7 @@ package com.intellij.vcs.log.impl;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,6 +45,9 @@ public class VcsLogApplicationSettings implements PersistentStateComponent<VcsLo
     else if (SHOW_TAG_NAMES.equals(property)) {
       return (T)Boolean.valueOf(myState.SHOW_TAG_NAMES);
     }
+    else if (MainVcsLogUiProperties.LABELS_LEFT_ALIGNED.equals(property)) {
+      return (T)Boolean.valueOf(myState.LABELS_LEFT_ALIGNED);
+    }
     else if (SHOW_CHANGES_FROM_PARENTS.equals(property)) {
       return (T)Boolean.valueOf(myState.SHOW_CHANGES_FROM_PARENTS);
     }
@@ -68,6 +72,9 @@ public class VcsLogApplicationSettings implements PersistentStateComponent<VcsLo
     else if (SHOW_TAG_NAMES.equals(property)) {
       myState.SHOW_TAG_NAMES = (Boolean)value;
     }
+    else if (LABELS_LEFT_ALIGNED.equals(property)) {
+      myState.LABELS_LEFT_ALIGNED = (Boolean)value;
+    }
     else if (SHOW_CHANGES_FROM_PARENTS.equals(property)) {
       myState.SHOW_CHANGES_FROM_PARENTS = (Boolean)value;
     }
@@ -86,7 +93,7 @@ public class VcsLogApplicationSettings implements PersistentStateComponent<VcsLo
 
   @Override
   public <T> boolean exists(@NotNull VcsLogUiProperty<T> property) {
-    return COMPACT_REFERENCES_VIEW.equals(property) || SHOW_TAG_NAMES.equals(property) ||
+    return COMPACT_REFERENCES_VIEW.equals(property) || SHOW_TAG_NAMES.equals(property) || LABELS_LEFT_ALIGNED.equals(property) ||
            SHOW_CHANGES_FROM_PARENTS.equals(property) || SHOW_DIFF_PREVIEW.equals(property) ||
            COLUMN_ORDER.equals(property);
   }
@@ -111,6 +118,7 @@ public class VcsLogApplicationSettings implements PersistentStateComponent<VcsLo
   public static class State {
     public boolean COMPACT_REFERENCES_VIEW = true;
     public boolean SHOW_TAG_NAMES = false;
+    public boolean LABELS_LEFT_ALIGNED = Registry.is("vcs.log.labels.left.aligned");
     public boolean SHOW_CHANGES_FROM_PARENTS = false;
     public boolean SHOW_DIFF_PREVIEW = false;
     public List<Integer> COLUMN_ORDER = new ArrayList<>();

@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
     <id>com.intellij.myPlugin</id>
     <vendor>JetBrains</vendor>
     <version>1.0</version>
@@ -6,9 +6,16 @@
         <extensionPoint name="foo.bar" interface="java.util.List"/>
         <extensionPoint name="ext" interface="java.lang.Runnable"/>
         <extensionPoint name="deprecatedEP" interface="foo.MyDeprecatedEP"/>
+        <extensionPoint name="deprecatedBeanClassEP" beanClass="foo.MyDeprecatedEP"/>
+        <extensionPoint name="experimentalApiEP" interface="foo.MyExperimentalEP"
+                        <warning descr="Usage of API marked with @org.jetbrains.annotations.ApiStatus.Experimental. Such API may be changed or removed in future IDE versions causing compatibility problems.">dynamic="true"</warning>/>
     </extensionPoints>
 
     <depends>com.intellij.custom</depends>
+    <depends config-file="../ExtensionsHighlighting-via-depends.xml">com.myplugin.depends</depends>
+
+    <xi:include href="ExtensionsHighlighting-included.xml" xpointer="xpointer(/idea-plugin/*)"/>
+
 
     <extensions defaultExtensionNs="com.intellij">
         <<error descr="'implementation' attribute should be defined">myPlugin.ext</error>/>
@@ -16,7 +23,10 @@
         <myPlugin.ext implementation="<error descr="'java.util.concurrent.TimeUnit' is not assignable to 'java.lang.Runnable'"><error descr="Enum is not allowed"><error descr="Abstract class is not allowed">java.util.concurrent.TimeUnit</error></error></error>"/>
         <myPlugin.ext implementation="<error descr="'java.lang.String' is not assignable to 'java.lang.Runnable'">java.lang.String</error>"/>
 
-        <<error descr="Deprecated EP 'com.intellij.myPlugin.deprecatedEP'">myPlugin.deprecatedEP</error> implementation="foo.MyDeprecatedEPImpl"/>
+        <<error descr="Deprecated EP 'com.intellij.myPlugin.deprecatedEP'">myPlugin.deprecatedEP</error> implementation="foo.MyDeprecatedEPImpl" order="<error descr="Invalid 'order' attribute value">INVALID_VALUE</error>"/>
+        <<error descr="Deprecated EP 'com.intellij.myPlugin.deprecatedBeanClassEP'">myPlugin.deprecatedBeanClassEP</error>/>
+
+        <warning descr="Usage of API marked with @org.jetbrains.annotations.ApiStatus.Experimental. Such API may be changed or removed in future IDE versions causing compatibility problems."><myPlugin.experimentalApiEP implementation="foo.MyExperimentalEP" <warning descr="Usage of API marked with @org.jetbrains.annotations.ApiStatus.Experimental. Such API may be changed or removed in future IDE versions causing compatibility problems.">experimentalAttribute="java.lang.String"</warning>/></warning>
 
         <myService serviceImplementation="foo.<error descr="Cannot resolve class 'MyInvalid'">MyInvalid</error>"/>
 

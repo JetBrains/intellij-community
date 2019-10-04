@@ -16,6 +16,7 @@
 
 package com.intellij.openapi.vcs.impl;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.AbstractExtensionPointBean;
@@ -72,20 +73,20 @@ public class VcsEP extends AbstractExtensionPointBean {
   @Nullable
   private AbstractVcs getInstance(@NotNull Project project, @NotNull String vcsClass) {
     try {
-      final Class<? extends AbstractVcs> foundClass = findClass(vcsClass);
+      final Class<? extends AbstractVcs> foundClass = findExtensionClass(vcsClass);
       final Class<?>[] interfaces = foundClass.getInterfaces();
       for (Class<?> anInterface : interfaces) {
         if (BaseComponent.class.isAssignableFrom(anInterface)) {
           return project.getComponent(foundClass);
         }
       }
-      return instantiate(vcsClass, project.getPicoContainer());
+      return instantiateClass(vcsClass, project.getPicoContainer());
     }
     catch (ProcessCanceledException pce) {
       throw pce;
     }
     catch(Exception e) {
-      LOG.error(e);
+      LOG.error(new PluginException(e, getPluginId()));
       return null;
     }
   }

@@ -15,6 +15,8 @@
  */
 package com.jetbrains.python.sdk.add
 
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
@@ -84,5 +86,27 @@ abstract class PyAddSdkPanel : JPanel(), PyAddSdkView {
         field.selectedSdk == null -> ValidationInfo("Interpreter field is empty", field)
         else -> null
       }
+  }
+}
+
+/**
+ * Obtains list of sdk on pool using [sdkObtainer], then fills [sdkComboBox] on EDT
+ */
+fun addInterpretersAsync(sdkComboBox: PySdkPathChoosingComboBox,
+                         sdkObtainer: () -> List<Sdk>) {
+  ApplicationManager.getApplication().executeOnPooledThread {
+    ApplicationManager.getApplication().invokeLater({ sdkComboBox.setBusy(true) }, ModalityState.any())
+    var sdks = emptyList<Sdk>()
+    try {
+      sdks = sdkObtainer()
+    }
+    finally {
+      ApplicationManager.getApplication().invokeLater({
+                                                        sdkComboBox.setBusy(false)
+                                                        sdks.forEach {
+                                                          sdkComboBox.childComponent.addItem(it)
+                                                        }
+                                                      }, ModalityState.any())
+    }
   }
 }

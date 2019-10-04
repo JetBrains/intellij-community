@@ -12,9 +12,9 @@ public final class TextWithMnemonic {
   @NotNull private final String myText;
   private final int myMnemonicIndex;
 
-  private TextWithMnemonic(@NotNull String myText, int mnemonicIndex) {
-    this.myText = myText.isEmpty() ? "" : myText;
-    this.myMnemonicIndex = mnemonicIndex;
+  private TextWithMnemonic(@NotNull String text, int mnemonicIndex) {
+    myText = StringUtil.internEmptyString(text);
+    myMnemonicIndex = mnemonicIndex;
   }
 
   /**

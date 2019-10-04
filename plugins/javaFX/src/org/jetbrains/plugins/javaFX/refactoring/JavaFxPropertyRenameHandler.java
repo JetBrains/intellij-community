@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.javaFX.refactoring;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -46,11 +46,6 @@ public class JavaFxPropertyRenameHandler implements RenameHandler {
   public boolean isAvailableOnDataContext(@NotNull DataContext dataContext) {
     final PsiReference reference = getKnownReference(getReferences(dataContext));
     return reference != null;
-  }
-
-  @Override
-  public boolean isRenaming(@NotNull DataContext dataContext) {
-    return isAvailableOnDataContext(dataContext);
   }
 
   @Override

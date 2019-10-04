@@ -46,7 +46,7 @@ public class CustomDomChildrenDescriptionImpl extends AbstractDomChildDescriptio
   }
 
   @NotNull
-  public List<? extends DomElement> getValues(@NotNull final DomInvocationHandler<?,?> parent) {
+  public List<? extends DomElement> getValues(@NotNull final DomInvocationHandler parent) {
     if (!parent.getGenericInfo().checkInitialized()) {
       return Collections.emptyList();
     }
@@ -56,7 +56,7 @@ public class CustomDomChildrenDescriptionImpl extends AbstractDomChildDescriptio
   @Override
   @NotNull
   public List<? extends DomElement> getValues(@NotNull final DomElement parent) {
-    final DomInvocationHandler<?,?> handler = DomManagerImpl.getDomInvocationHandler(parent);
+    final DomInvocationHandler handler = DomManagerImpl.getDomInvocationHandler(parent);
     if (handler != null) return getValues(handler);
 
     assert myGetter != null;

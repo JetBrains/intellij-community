@@ -20,6 +20,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.ColorUtil;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -92,7 +93,7 @@ public class QuickChangeColorSchemeAction extends QuickSwitchSchemeAction {
         SwingUtilities.invokeLater(DarculaInstaller::install);
       }
     } else if (!isDarkEditorTheme &&
-               (UIUtil.isUnderDarcula() || theme != null && theme.isDark())) {
+               (StartupUiUtil.isUnderDarcula() || theme != null && theme.isDark())) {
       if (lafManager instanceof LafManagerImpl
           &&
           (/*applyAlways ||*/ Messages.showYesNoDialog(

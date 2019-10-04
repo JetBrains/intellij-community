@@ -61,6 +61,7 @@ public class PluginModuleType extends ModuleType<PluginModuleBuilder> {
     return DevKitBundle.message("module.description");
   }
 
+  @NotNull
   @Override
   public Icon getNodeIcon(boolean isOpened) {
     return AllIcons.Nodes.Plugin;

@@ -17,6 +17,7 @@ package com.intellij.openapi.wm.impl.content;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ui.Gray;
+import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;
 
 import javax.swing.*;
 import java.awt.*;
@@ -25,6 +26,7 @@ import java.awt.*;
  * @deprecated unused
  */
 @Deprecated
+@ScheduledForRemoval(inVersion = "2020.1")
 public class PushedTabBackground {
   private static final Icon ourLeftRound = AllIcons.General.Tab_grey_left;
   private static final Icon ourRightRound = AllIcons.General.Tab_grey_right;

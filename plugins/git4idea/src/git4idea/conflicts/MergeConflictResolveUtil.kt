@@ -7,7 +7,6 @@ import com.intellij.diff.DiffRequestFactory
 import com.intellij.diff.chains.DiffRequestProducerException
 import com.intellij.diff.merge.*
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.progress.ProgressIndicator
@@ -65,10 +64,8 @@ object MergeConflictResolveUtil {
         val mergeData = resolver.mergeData
         val byteContents = listOf(mergeData.CURRENT, mergeData.ORIGINAL, mergeData.LAST)
 
-        val request = runReadAction {
-          DiffRequestFactory.getInstance().createMergeRequest(project, resolver.virtualFile, byteContents,
-                                                              resolver.windowTitle, resolver.contentTitles)
-        }
+        val request = DiffRequestFactory.getInstance().createMergeRequest(project, resolver.virtualFile, byteContents,
+                                                                          resolver.windowTitle, resolver.contentTitles)
         MergeUtil.putRevisionInfos(request, mergeData)
         MergeCallback.register(request, MyMergeCallback(resolver))
         return request

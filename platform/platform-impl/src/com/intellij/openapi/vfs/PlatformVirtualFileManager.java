@@ -8,13 +8,14 @@ import com.intellij.openapi.vfs.impl.VirtualFileManagerImpl;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.RefreshSession;
+import com.intellij.openapi.vfs.newvfs.impl.FileNameCache;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
 
-public class PlatformVirtualFileManager extends VirtualFileManagerImpl {
+public final class PlatformVirtualFileManager extends VirtualFileManagerImpl {
   @NotNull private final ManagingFS myManagingFS;
 
   public PlatformVirtualFileManager() {
@@ -26,8 +27,9 @@ public class PlatformVirtualFileManager extends VirtualFileManagerImpl {
   @NotNull
   private static List<VirtualFileSystem> getVirtualFileSystems() {
     Application app = ApplicationManager.getApplication();
+    @SuppressWarnings("deprecation")
     List<VirtualFileSystem> result = app instanceof ComponentManagerImpl
-                                     ? ((ComponentManagerImpl)app).getComponentInstancesOfType(VirtualFileSystem.class, true)
+                                     ? app.getComponentInstancesOfType(VirtualFileSystem.class, true)
                                      : Collections.emptyList();
     if (!result.isEmpty()) {
       LOG.warn("Do not register file system as application component, instead, register as extension, for example:\n" +
@@ -65,5 +67,16 @@ public class PlatformVirtualFileManager extends VirtualFileManagerImpl {
   @Override
   public VirtualFile findFileById(int id) {
     return myManagingFS.findFileById(id);
+  }
+
+  @NotNull
+  @Override
+  public CharSequence getVFileName(int nameId) {
+    return FileNameCache.getVFileName(nameId);
+  }
+
+  @Override
+  public int storeName(@NotNull String name) {
+    return FileNameCache.storeName(name);
   }
 }

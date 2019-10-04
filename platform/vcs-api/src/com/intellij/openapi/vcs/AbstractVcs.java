@@ -24,7 +24,10 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThreeState;
 import com.intellij.util.ui.VcsSynchronousProgressWrapper;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.CalledInAwt;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
@@ -35,15 +38,13 @@ import java.util.function.Function;
  *
  * @see ProjectLevelVcsManager
  */
-public abstract class AbstractVcs<ComList extends CommittedChangeList> extends StartedActivated {
+public abstract class AbstractVcs extends StartedActivated {
   @NonNls protected static final String ourIntegerPattern = "\\d+";
 
   @NotNull
   protected final Project myProject;
   private final String myName;
   private final VcsKey myKey;
-  private VcsShowSettingOption myUpdateOption;
-  private VcsShowSettingOption myStatusOption;
 
   private CheckinEnvironment myCheckinEnvironment;
   private UpdateEnvironment myUpdateEnvironment;
@@ -136,9 +137,6 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
   }
 
   /**
-   * !!! concrete VCS should define {@link #createCheckinEnvironment} method
-   * this method wraps created environment with a listener
-   *
    * Returns the interface for performing checkin / commit / submit operations.
    *
    * @return the checkin interface, or null if checkins are not supported by the VCS.
@@ -157,9 +155,6 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
   }
 
   /**
-   * !!! concrete VCS should define {@link #createRollbackEnvironment()} method
-   * this method wraps created environment with a listener
-   *
    * @return the rollback interface, or null if rollbacks are not supported by the VCS.
    */
   @Nullable
@@ -190,9 +185,6 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
   }
 
   /**
-   * !!! concrete VCS should define {@link #createUpdateEnvironment()} method
-   * this method wraps created environment with a listener
-   *
    * @return the update interface, or null if the updates are not supported by the VCS.
    */
   @Nullable
@@ -294,24 +286,15 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
     return null;
   }
 
-  public VcsShowSettingOption getUpdateOptions() {
-    return myUpdateOption;
-  }
-
-
-  public VcsShowSettingOption getStatusOptions() {
-    return myStatusOption;
-  }
-
   public void loadSettings() {
     final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
 
     if (getUpdateEnvironment() != null) {
-      myUpdateOption = vcsManager.getStandardOption(VcsConfiguration.StandardOption.UPDATE, this);
+      vcsManager.getStandardOption(VcsConfiguration.StandardOption.UPDATE, this);
     }
 
     if (getStatusEnvironment() != null) {
-      myStatusOption = vcsManager.getStandardOption(VcsConfiguration.StandardOption.STATUS, this);
+      vcsManager.getStandardOption(VcsConfiguration.StandardOption.STATUS, this);
     }
   }
 
@@ -427,7 +410,18 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
     List<VirtualFile> convertRoots(@NotNull List<VirtualFile> result);
   }
 
-  @ApiStatus.Internal
+  /**
+   * This switch disables platform support for "default mapping" aka "&lt;Project&gt;".
+   * <p>
+   * If enabled, platform will do nothing. All roots from {@link com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy} will be registered as vcs root.
+   * Vcs can try using {@link RootsConvertor} to process roots itself.
+   * <p>
+   * If disabled, platform will use {@link VcsRootChecker} or {@link com.intellij.openapi.vcs.impl.VcsEP#administrativeAreaName} to find actual vcs roots.
+   * If vcs does not implement these EP, no vcs roots will be registered for "default mapping".
+   *
+   * @see ProjectLevelVcsManager
+   * @see com.intellij.openapi.vcs.impl.projectlevelman.NewMappings
+   */
   public boolean needsLegacyDefaultMappings() {
     if (getCustomConvertor() != null) return true;
 
@@ -488,12 +482,12 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
   }
 
   @Nullable
-  protected VcsOutgoingChangesProvider<ComList> getOutgoingProviderImpl() {
+  protected VcsOutgoingChangesProvider<CommittedChangeList> getOutgoingProviderImpl() {
     return null;
   }
 
   @Nullable
-  public final VcsOutgoingChangesProvider<ComList> getOutgoingChangesProvider() {
+  public final VcsOutgoingChangesProvider<CommittedChangeList> getOutgoingChangesProvider() {
     return VcsType.centralized.equals(getType()) ? null : getOutgoingProviderImpl();
   }
 

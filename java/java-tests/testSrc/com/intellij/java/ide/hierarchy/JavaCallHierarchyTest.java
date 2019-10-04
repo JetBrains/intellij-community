@@ -24,7 +24,8 @@ import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMember;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.TestActionEvent;
@@ -49,7 +50,7 @@ public class JavaCallHierarchyTest extends HierarchyViewTestBase {
   private void doJavaCallTypeHierarchyTest(final String classFqn, final String methodName, final String... fileNames) throws Exception {
     doHierarchyTest(() -> {
       final PsiClass psiClass = JavaPsiFacade.getInstance(getProject()).findClass(classFqn, ProjectScope.getProjectScope(getProject()));
-      final PsiMethod method = psiClass.findMethodsByName(methodName, false) [0];
+      final PsiMember method = psiClass.findMethodsByName(methodName, false) [0];
       return new CallerMethodsTreeStructure(getProject(), method, HierarchyBrowserBaseEx.SCOPE_PROJECT);
     }, fileNames);
   }
@@ -89,8 +90,16 @@ public class JavaCallHierarchyTest extends HierarchyViewTestBase {
   public void testMethodRef() throws Exception {
     doHierarchyTest(() -> {
       final PsiClass psiClass = JavaPsiFacade.getInstance(getProject()).findClass("A", ProjectScope.getProjectScope(getProject()));
-      final PsiMethod method = psiClass.findMethodsByName("testMethod", false) [0];
+      final PsiMember method = psiClass.findMethodsByName("testMethod", false) [0];
       return new CalleeMethodsTreeStructure(getProject(), method, HierarchyBrowserBaseEx.SCOPE_PROJECT);
+    }, "A.java");
+  }
+
+  public void testField() throws Exception {
+    doHierarchyTest(() -> {
+      PsiClass psiClass = JavaPsiFacade.getInstance(getProject()).findClass("A", ProjectScope.getProjectScope(getProject()));
+      PsiField field = psiClass.findFieldByName("testField", false);
+      return new CallerMethodsTreeStructure(getProject(), field, HierarchyBrowserBaseEx.SCOPE_PROJECT);
     }, "A.java");
   }
 

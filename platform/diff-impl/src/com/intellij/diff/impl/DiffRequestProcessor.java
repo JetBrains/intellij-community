@@ -684,7 +684,7 @@ public abstract class DiffRequestProcessor implements Disposable {
   protected class MyNextDifferenceAction extends NextDifferenceAction {
     @Override
     public void update(@NotNull AnActionEvent e) {
-      if (!isToolbarPlace(e.getPlace())) {
+      if (DiffUtil.isFromShortcut(e)) {
         e.getPresentation().setEnabledAndVisible(true);
         return;
       }
@@ -727,7 +727,7 @@ public abstract class DiffRequestProcessor implements Disposable {
   protected class MyPrevDifferenceAction extends PrevDifferenceAction {
     @Override
     public void update(@NotNull AnActionEvent e) {
-      if (!isToolbarPlace(e.getPlace())) {
+      if (DiffUtil.isFromShortcut(e)) {
         e.getPresentation().setEnabledAndVisible(true);
         return;
       }
@@ -827,7 +827,7 @@ public abstract class DiffRequestProcessor implements Disposable {
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      if (!isToolbarPlace(e.getPlace())) {
+      if (DiffUtil.isFromShortcut(e)) {
         e.getPresentation().setEnabledAndVisible(true);
         return;
       }
@@ -858,7 +858,7 @@ public abstract class DiffRequestProcessor implements Disposable {
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      if (!isToolbarPlace(e.getPlace())) {
+      if (DiffUtil.isFromShortcut(e)) {
         e.getPresentation().setEnabledAndVisible(true);
         return;
       }
@@ -898,10 +898,6 @@ public abstract class DiffRequestProcessor implements Disposable {
     }
 
     action.registerCustomShortcutSet(new CustomShortcutSet(newShortcuts.toArray(Shortcut.EMPTY_ARRAY)), null);
-  }
-
-  private static boolean isToolbarPlace(String place) {
-    return ActionPlaces.DIFF_TOOLBAR.equals(place) || ActionPlaces.TOUCHBAR_GENERAL.equals(place);
   }
 
   //

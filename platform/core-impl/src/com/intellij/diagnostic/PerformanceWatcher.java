@@ -1,18 +1,17 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
-import com.intellij.concurrency.JobScheduler;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.AppScheduledExecutorService;
 import com.intellij.util.containers.ContainerUtil;
@@ -28,47 +27,47 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryPoolMXBean;
-import java.lang.management.ThreadMXBean;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 
-/**
- * @author yole
- */
-public class PerformanceWatcher implements Disposable {
+public final class PerformanceWatcher implements Disposable {
   private static final Logger LOG = Logger.getInstance(PerformanceWatcher.class);
   private static final int TOLERABLE_LATENCY = 100;
   private static final String THREAD_DUMPS_PREFIX = "threadDumps-";
   private ScheduledFuture<?> myThread;
-  private final ThreadMXBean myThreadMXBean = ManagementFactory.getThreadMXBean();
+  private ScheduledFuture<?> myDumpTask;
   private final File myLogDir = new File(PathManager.getLogPath());
   private List<StackTraceElement> myStacktraceCommonPart;
-  private final IdePerformanceListener myPublisher =
-    ApplicationManager.getApplication().getMessageBus().syncPublisher(IdePerformanceListener.TOPIC);
 
   private volatile ApdexData mySwingApdex = ApdexData.EMPTY;
   private volatile ApdexData myGeneralApdex = ApdexData.EMPTY;
   private volatile long myLastSampling = System.currentTimeMillis();
   private long myLastDumpTime;
   private long myFreezeStart;
+  private boolean myFreezeDuringStartup;
   private final AtomicInteger myEdtRequestsQueued = new AtomicInteger(0);
 
   private static final long ourIdeStart = System.currentTimeMillis();
   private long myLastEdtAlive = System.currentTimeMillis();
 
+  private final ScheduledExecutorService myExecutor = AppExecutorUtil.createBoundedScheduledExecutorService("EDT Performance Checker", 1);
+  private Future<?> myCurrentEDTEventChecker;
+
+  private static final boolean PRECISE_MODE = shouldWatch() && Registry.is("performance.watcher.precise");
+
+  @NotNull
   public static PerformanceWatcher getInstance() {
-    if (LoadingPhase.isComplete(LoadingPhase.CONFIGURATION_STORE_INITIALIZED)) {
-      return ApplicationManager.getApplication().getComponent(PerformanceWatcher.class);
-    }
-    else {
-      return null;
-    }
+    LoadingPhase.CONFIGURATION_STORE_INITIALIZED.assertAtLeast();
+    return ServiceManager.getService(PerformanceWatcher.class);
   }
 
   public PerformanceWatcher() {
@@ -79,7 +78,7 @@ public class PerformanceWatcher implements Disposable {
       private final int ourReasonableThreadPoolSize = Registry.intValue("core.pooled.threads");
 
       @Override
-      public void consume(Thread thread) {
+      public void accept(Thread thread) {
         if (service.getBackendPoolExecutorSize() > ourReasonableThreadPoolSize
             && ApplicationInfoImpl.getShadowInstance().isEAP()) {
           File file = dumpThreads("newPooledThread/", true);
@@ -88,16 +87,23 @@ public class PerformanceWatcher implements Disposable {
       }
     });
 
-    ApplicationManager.getApplication().executeOnPooledThread(() -> cleanOldFiles(myLogDir, 0));
-
-    for (MemoryPoolMXBean bean : ManagementFactory.getMemoryPoolMXBeans()) {
-      if ("Code Cache".equals(bean.getName())) {
-        watchCodeCache(bean);
-        break;
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      for (MemoryPoolMXBean bean : ManagementFactory.getMemoryPoolMXBeans()) {
+        if ("Code Cache".equals(bean.getName())) {
+          watchCodeCache(bean);
+          break;
+        }
       }
-    }
+      cleanOldFiles(myLogDir, 0);
+    });
 
-    myThread = JobScheduler.getScheduler().scheduleWithFixedDelay(this::samplePerformance, getSamplingInterval(), getSamplingInterval(), TimeUnit.MILLISECONDS);
+    myThread =
+      myExecutor.scheduleWithFixedDelay(this::samplePerformance, getSamplingInterval(), getSamplingInterval(), TimeUnit.MILLISECONDS);
+  }
+
+  @NotNull
+  private static IdePerformanceListener getPublisher() {
+    return ApplicationManager.getApplication().getMessageBus().syncPublisher(IdePerformanceListener.TOPIC);
   }
 
   private static int getMaxAttempts() {
@@ -136,7 +142,8 @@ public class PerformanceWatcher implements Disposable {
       File child = children[i];
       if (i < children.length - 100 || ageInDays(child) > 10) {
         FileUtil.delete(child);
-      } else if (level < 3) {
+      }
+      else if (level < 3) {
         cleanOldFiles(child, level + 1);
       }
     }
@@ -151,11 +158,12 @@ public class PerformanceWatcher implements Disposable {
     if (myThread != null) {
       myThread.cancel(true);
     }
+    myExecutor.shutdownNow();
   }
 
   private static boolean shouldWatch() {
     return !ApplicationManager.getApplication().isHeadlessEnvironment() &&
-           Registry.intValue("performance.watcher.unresponsive.interval.ms") != 0 &&
+           getUnresponsiveInterval() != 0 &&
            getMaxAttempts() != 0;
   }
 
@@ -171,12 +179,14 @@ public class PerformanceWatcher implements Disposable {
       diff -= getSamplingInterval();
     }
 
-    int edtRequests = myEdtRequestsQueued.get();
-    if (edtRequests >= getMaxAttempts()) {
-      edtFrozen(millis);
-    }
-    else if (edtRequests == 0) {
-      edtResponds(millis);
+    if (!PRECISE_MODE) {
+      int edtRequests = myEdtRequestsQueued.get();
+      if (edtRequests >= getMaxAttempts()) {
+        edtFrozen(millis);
+      }
+      else if (edtRequests == 0) {
+        edtResponds(millis);
+      }
     }
 
     myEdtRequestsQueued.incrementAndGet();
@@ -187,32 +197,53 @@ public class PerformanceWatcher implements Disposable {
   @NotNull
   public static String printStacktrace(@NotNull String headerMsg, @NotNull Thread thread, @NotNull StackTraceElement[] stackTrace) {
     @SuppressWarnings("NonConstantStringShouldBeStringBuffer")
-    String trace = headerMsg + thread + " (" + (thread.isAlive() ? "alive" : "dead") + ") " + thread.getState() + "\n--- its stacktrace:\n";
+    StringBuilder trace = new StringBuilder(
+      headerMsg + thread + " (" + (thread.isAlive() ? "alive" : "dead") + ") " + thread.getState() + "\n--- its stacktrace:\n");
     for (final StackTraceElement stackTraceElement : stackTrace) {
-      trace += " at "+stackTraceElement +"\n";
+      trace.append(" at ").append(stackTraceElement).append("\n");
     }
-    trace += "---\n";
-    return trace;
+    trace.append("---\n");
+    return trace.toString();
   }
 
   private static int getSamplingInterval() {
     return Registry.intValue("performance.watcher.sampling.interval.ms");
   }
 
+  static int getDumpInterval() {
+    return getSamplingInterval() * getMaxAttempts();
+  }
+
+  static int getUnresponsiveInterval() {
+    return Registry.intValue("performance.watcher.unresponsive.interval.ms");
+  }
+
+  static int getMaxDumpDuration() {
+    return Registry.intValue("performance.watcher.dump.duration.s") * 1000;
+  }
+
   private void edtFrozen(long currentMillis) {
-    if (currentMillis - myLastDumpTime >= Registry.intValue("performance.watcher.unresponsive.interval.ms")) {
+    if (currentMillis - myLastDumpTime >= getUnresponsiveInterval()) {
       myLastDumpTime = currentMillis;
       if (myFreezeStart == 0) {
         myFreezeStart = myLastEdtAlive;
-        myPublisher.uiFreezeStarted();
+        myFreezeDuringStartup = !LoadingPhase.isStartupComplete();
+        getPublisher().uiFreezeStarted();
       }
-      dumpThreads(getFreezeFolderName(myFreezeStart) + "/", false);
+      dumpThreads();
     }
   }
 
+  private void edtFrozenPrecise(long start) {
+    myFreezeStart = start;
+    getPublisher().uiFreezeStarted();
+    stopDumping();
+    myDumpTask = myExecutor.scheduleWithFixedDelay(this::dumpThreads, 0, getDumpInterval(), TimeUnit.MILLISECONDS);
+  }
+
   @NotNull
-  private static String getFreezeFolderName(long freezeStartMs) {
-    return THREAD_DUMPS_PREFIX + "freeze-" + formatTime(freezeStartMs) + "-" + buildName();
+  private String getFreezeFolderName(long freezeStartMs) {
+    return THREAD_DUMPS_PREFIX + (myFreezeDuringStartup ? "freeze-startup-" : "freeze-") + formatTime(freezeStartMs) + "-" + buildName();
   }
 
   private static String buildName() {
@@ -223,18 +254,52 @@ public class PerformanceWatcher implements Disposable {
     return new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date(timeMs));
   }
 
+  private void stopDumping() {
+    if (myDumpTask != null) {
+      myDumpTask.cancel(false);
+    }
+  }
+
   private void edtResponds(long currentMillis) {
+    stopDumping();
+
     if (myFreezeStart != 0) {
       int unresponsiveDuration = (int)(currentMillis - myFreezeStart) / 1000;
       File dir = new File(myLogDir, getFreezeFolderName(myFreezeStart));
+      File reportDir = null;
       if (dir.exists()) {
-        //noinspection ResultOfMethodCallIgnored
-        dir.renameTo(new File(myLogDir, dir.getName() + getFreezePlaceSuffix() + "-" + unresponsiveDuration + "sec"));
+        reportDir = new File(myLogDir, dir.getName() + getFreezePlaceSuffix() + "-" + unresponsiveDuration + "sec");
+        if (!dir.renameTo(reportDir)) {
+          reportDir = null;
+        }
       }
-      myPublisher.uiFreezeFinished(unresponsiveDuration);
+      getPublisher().uiFreezeFinished(currentMillis - myFreezeStart, reportDir);
       myFreezeStart = 0;
 
       myStacktraceCommonPart = null;
+    }
+  }
+
+  public void edtEventStarted(long start) {
+    if (PRECISE_MODE) {
+      edtEventFinished(); // finish previous event if any, this way we handle nested event dispatchers
+      myCurrentEDTEventChecker = myExecutor
+        .schedule(() -> edtFrozenPrecise(start), getUnresponsiveInterval(), TimeUnit.MILLISECONDS);
+    }
+  }
+
+  public void edtEventFinished() {
+    if (myCurrentEDTEventChecker != null) {
+      if (!myCurrentEDTEventChecker.cancel(false)) {
+        long end = System.currentTimeMillis();
+        try {
+          myExecutor.submit(() -> edtResponds(end)).get();
+        }
+        catch (Exception e) {
+          LOG.warn(e);
+        }
+      }
+      myCurrentEDTEventChecker = null;
     }
   }
 
@@ -244,6 +309,15 @@ public class PerformanceWatcher implements Disposable {
       return "-" + StringUtil.getShortName(element.getClassName()) + "." + element.getMethodName();
     }
     return "";
+  }
+
+  private void dumpThreads() {
+    if (myFreezeStart != 0 && System.currentTimeMillis() - myFreezeStart <= getMaxDumpDuration()) {
+      dumpThreads(getFreezeFolderName(myFreezeStart) + "/", false);
+    }
+    else {
+      stopDumping();
+    }
   }
 
   @Nullable
@@ -268,7 +342,7 @@ public class PerformanceWatcher implements Disposable {
 
     checkMemoryUsage(file);
 
-    ThreadDump threadDump = ThreadDumper.getThreadDumpInfo(myThreadMXBean);
+    ThreadDump threadDump = ThreadDumper.getThreadDumpInfo(ManagementFactory.getThreadMXBean());
     try {
       FileUtil.writeToFile(file, threadDump.getRawDump());
       StackTraceElement[] edtStack = threadDump.getEDTStackTrace();
@@ -281,7 +355,7 @@ public class PerformanceWatcher implements Disposable {
         }
       }
 
-      myPublisher.dumpedThreads(file, threadDump);
+      getPublisher().dumpedThreads(file, threadDump);
     }
     catch (IOException e) {
       LOG.info("failed to write thread dump file: " + e.getMessage());
@@ -344,7 +418,7 @@ public class PerformanceWatcher implements Disposable {
       mySwingApdex = mySwingApdex.withEvent(TOLERABLE_LATENCY, latency);
       final Application application = ApplicationManager.getApplication();
       if (application.isDisposed()) return;
-      application.getMessageBus().syncPublisher(IdePerformanceListener.TOPIC).uiResponded(latency);
+      getPublisher().uiResponded(latency);
     }
   }
 
@@ -355,6 +429,7 @@ public class PerformanceWatcher implements Disposable {
 
     private Snapshot() {
     }
+
     public void logResponsivenessSinceCreation(@NotNull String activityName) {
       LOG.info(activityName + " took " + (System.currentTimeMillis() - myStartMillis) + "ms" +
                "; general responsiveness: " + myGeneralApdex.summarizePerformanceSince(myStartGeneralSnapshot) +
@@ -365,5 +440,9 @@ public class PerformanceWatcher implements Disposable {
   @NotNull
   public static Snapshot takeSnapshot() {
     return getInstance().new Snapshot();
+  }
+
+  ScheduledExecutorService getExecutor() {
+    return myExecutor;
   }
 }

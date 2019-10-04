@@ -33,6 +33,19 @@ abstract class TestingTasks {
 
   abstract File createSnapshotsDirectory()
 
+  /**
+   * <p>Updates given jvm args, system properties and classpath with common parameters used for running tests
+   * (Xmx, debugging, config path) etc.
+   *
+   * <p>The values passed as parameters have priority over the default ones, added in this method.
+   *
+   * <p>Mutates incoming collections.
+   */
+  abstract void prepareEnvForTestRun(List<String> jvmArgs,
+                                     Map<String, String> systemProperties,
+                                     List<String> classPath,
+                                     boolean remoteDebugging)
+
   static TestingTasks create(CompilationContext context, TestingOptions options = new TestingOptions()) {
     return new TestingTasksImpl(context, options)
   }

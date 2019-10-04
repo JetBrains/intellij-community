@@ -32,7 +32,6 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.lineIndent.LineIndentProvider;
 import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
-import com.intellij.psi.impl.source.codeStyle.lineIndent.FormatterBasedIndentAdjuster;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
@@ -160,7 +159,7 @@ public class EnterHandler extends BaseEnterHandler {
     }
 
     if (settings.SMART_INDENT_ON_ENTER && action.isIndentAdjustmentNeeded()) {
-      FormatterBasedIndentAdjuster.scheduleIndentAdjustment(project, document, editor.getCaretModel().getOffset());
+      CodeStyleManager.getInstance(project).scheduleIndentAdjustment(document, editor.getCaretModel().getOffset());
     }
   }
 
@@ -379,13 +378,12 @@ public class EnterHandler extends BaseEnterHandler {
               if (isCommentComplete(comment, commentContext.commenter, myEditor)) {
                 if (myOffset >= commentEnd) {
                   commentContext.docAsterisk = false;
-                  commentContext.docStart = false;
                 }
                 else {
                   commentContext.docAsterisk =
                     CodeStyleManager.getInstance(getProject()).getDocCommentSettings(myFile).isLeadingAsteriskEnabled();
-                  commentContext.docStart = false;
                 }
+                commentContext.docStart = false;
               }
               else {
                 generateJavadoc(commentContext.commenter);

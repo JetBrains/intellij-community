@@ -10,6 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -52,8 +53,12 @@ public abstract class AddDeleteListPanel<T> extends PanelWithButtons implements 
     setLayout(new BorderLayout());
     add(decorator.createPanel(), BorderLayout.CENTER);
     if (myTitle != null) {
-      setBorder(IdeBorderFactory.createTitledBorder(myTitle, false));
+      setBorder(createTitledBorder(myTitle));
     }
+  }
+
+  protected Border createTitledBorder(String title) {
+    return IdeBorderFactory.createTitledBorder(title, false);
   }
 
   protected void customizeDecorator(ToolbarDecorator decorator) {

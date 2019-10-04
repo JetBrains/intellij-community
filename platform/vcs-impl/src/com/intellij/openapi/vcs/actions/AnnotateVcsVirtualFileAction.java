@@ -32,6 +32,7 @@ import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.TextRevisionNumber;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
+import com.intellij.openapi.vcs.history.VcsFileRevisionEx;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.impl.BackgroundableActionLock;
 import com.intellij.openapi.vcs.vfs.ContentRevisionVirtualFile;
@@ -160,8 +161,13 @@ public class AnnotateVcsVirtualFileAction {
     FilePath filePath = null;
     VcsRevisionNumber revisionNumber = null;
     if (file instanceof VcsVirtualFile) {
-      filePath = VcsUtil.getFilePath(file.getPath());
       VcsFileRevision revision = ((VcsVirtualFile)file).getFileRevision();
+      if (revision instanceof VcsFileRevisionEx) {
+        filePath = ((VcsFileRevisionEx)revision).getPath();
+      }
+      else {
+        filePath = VcsUtil.getFilePath(file.getPath());
+      }
       revisionNumber = revision != null ? revision.getRevisionNumber() : null;
     }
     else if (file instanceof ContentRevisionVirtualFile) {

@@ -35,6 +35,7 @@ import java.util.Map;
 )
 public class DependencyValidationManagerImpl extends DependencyValidationManager {
   private static final Icon ourSharedScopeIcon = new IconLoader.LazyIcon() {
+    @NotNull
     @Override
     protected Icon compute() {
       return IconManager.getInstance().createLayered(AllIcons.Ide.LocalScope, AllIcons.Nodes.Shared);

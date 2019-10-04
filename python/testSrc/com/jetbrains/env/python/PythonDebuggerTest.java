@@ -15,7 +15,6 @@ import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.jetbrains.TestEnv;
 import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.env.PyProcessWithConsoleTestTask;
-import com.jetbrains.env.Staging;
 import com.jetbrains.env.StagingOn;
 import com.jetbrains.env.python.debug.PyDebuggerTask;
 import com.jetbrains.env.ut.PyTestTestProcessRunner;
@@ -43,7 +42,6 @@ import static org.junit.Assert.*;
 /**
  * @author traff
  */
-@Staging //Thread leak breaks all other tests
 public class PythonDebuggerTest extends PyEnvTestCase {
   private static class BreakpointStopAndEvalTask extends PyDebuggerTask {
     BreakpointStopAndEvalTask(String scriptName) {
@@ -82,7 +80,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
-  @Staging
   public void testPydevTests_Debugger() {
     pytests("tests_python/test_debugger.py", Sets.newHashSet("pytest", "-iron", "untangle"));
   }
@@ -98,7 +95,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
-  @Staging
   public void testFrameEvalAndTracing() {
     pytests("tests_python/test_frame_eval_and_tracing.py", Sets.newHashSet("pytest", "-iron"));
   }
@@ -182,7 +178,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
-  @Staging // thread leak
   public void testConditionalBreakpoint() {
     runPythonTest(new PyDebuggerTask("/debug", "test1.py") {
       @Override
@@ -214,7 +209,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
-  @Staging
   public void testDebugConsole() {
     runPythonTest(new PyDebuggerTask("/debug", "test1.py") {
       @Override
@@ -421,7 +415,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
-  @Staging
   public void testRunToLine() {
     runPythonTest(new PyDebuggerTask("/debug", "test_runtoline.py") {
       @Override
@@ -463,10 +456,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       public void testing() throws Exception {
         waitForPause();
         waitForOutput("message=\"python-exceptions.ZeroDivisionError\"", "message=\"python-builtins.ZeroDivisionError\"");
-        waitForOutput("Traceback (most recent call last):");
-        waitForOutput("line 7, in foo");
-        waitForOutput("return 1 / x");
-        waitForOutput("ZeroDivisionError: ");
         eval("__exception__[0].__name__").hasValue("'ZeroDivisionError'");
         resume();
         waitForTerminate();
@@ -558,6 +547,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
+  @StagingOn(os = TestEnv.WINDOWS)
   public void testExceptionBreakpointIgnoreLibrariesOnRaise() {
     runPythonTest(new PyDebuggerTask("/debug", "test_ignore_lib.py") {
 
@@ -1371,7 +1361,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
-  @Staging
   public void testSuspendAllThreadsPolicy() {
     runPythonTest(new PyDebuggerTask("/debug", "test_two_threads.py") {
       @Override
@@ -1403,7 +1392,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
-  @Staging
   public void testSuspendAllThreadsResume() {
     runPythonTest(new PyDebuggerTask("/debug", "test_two_threads_resume.py") {
       @Override
@@ -1452,7 +1440,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
-  @Staging
   public void testShowReferringObjects() {
     runPythonTest(new PyDebuggerTask("/debug", "test_ref.py") {
       @Override
@@ -1657,8 +1644,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
 
   //TODO: That doesn't work now: case from test_continuation.py and test_continuation2.py are treated differently by interpreter
   // (first line is executed in first case and last line in second)
-
-  @Staging
   @Test
   public void testBreakOnContinuationLine() {
     runPythonTest(new PyDebuggerTask("/debug", "test_continuation.py") {
@@ -1704,7 +1689,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     });
   }
 
-  @Staging
   @Test
   public void testShowCommandline() {
     runPythonTest(new PyDebuggerTask("/debug", "test2.py") {
@@ -1732,7 +1716,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     });
   }
 
-  @Staging
   @Test
   public void testShowCommandlineModule() {
     runPythonTest(new PyDebuggerTask("/debug", "test2") {
@@ -1763,7 +1746,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     });
   }
 
-  @Staging
   @Test
   public void testBuiltinBreakpoint() {
     runPythonTest(new PyDebuggerTask("/debug", "test_builtin_break.py") {
@@ -2037,6 +2019,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
+  @StagingOn(os = TestEnv.WINDOWS)
   public void testWarningsSuppressing() {
     runPythonTest(new PyDebuggerTask("/debug", "test_warnings_suppressing.py") {
       @Override
@@ -2115,6 +2098,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
+  @StagingOn(os = TestEnv.WINDOWS)
   public void testDontStopOnSystemExit() {
     runPythonTest(new PyDebuggerTask("/debug", "test_sys_exit.py") {
       @Override
@@ -2341,31 +2325,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
 
       private boolean hasPython2Tag() throws NullPointerException {
         return hasTag(PYTHON2_TAG);
-      }
-    });
-  }
-
-  @Test
-  public void testCodeEvaluationWithPandas() {
-    runPythonTest(new PyDebuggerTask("/debug", "test_dataframe.py") {
-      @Override
-      public void before() throws Exception {
-        toggleBreakpoint(getFilePath(getScriptName()), 30);
-      }
-
-      @Override
-      public void testing() throws Exception {
-        waitForPause();
-        consoleExec("x = 42");
-        resume();
-        waitForTerminate();
-        assertFalse(output().contains("ValueError: The truth value of a DataFrame is ambiguous."));
-      }
-
-      @NotNull
-      @Override
-      public Set<String> getTags() {
-        return ImmutableSet.of("pandas");
       }
     });
   }

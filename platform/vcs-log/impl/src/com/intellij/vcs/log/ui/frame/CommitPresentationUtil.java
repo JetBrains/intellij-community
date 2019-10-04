@@ -1,18 +1,15 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.frame;
 
-import com.intellij.codeInspection.ex.Tools;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ui.FontUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.text.DateFormatUtil;
-import com.intellij.vcs.commit.message.BaseCommitMessageInspection;
 import com.intellij.vcs.commit.message.CommitMessageInspectionProfile;
 import com.intellij.vcs.commit.message.SubjectLimitInspection;
 import com.intellij.vcs.log.CommitId;
@@ -41,11 +38,19 @@ import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 public class CommitPresentationUtil {
   @NotNull private static final Pattern HASH_PATTERN = Pattern.compile("[0-9a-f]{7,40}", Pattern.CASE_INSENSITIVE);
 
-  @NotNull static final String GO_TO_HASH = "go-to-hash:";
-  @NotNull static final String SHOW_HIDE_BRANCHES = "show-hide-branches";
+  @NotNull private static final String GO_TO_HASH = "go-to-hash:";
+  @NotNull private static final String SHOW_HIDE_BRANCHES = "show-hide-branches";
   private static final String ELLIPSIS = "...";
   private static final int BIG_CUT_SIZE = 10;
   private static final double EPSILON = 1.5;
+
+  public static boolean isShowHideBranches(@NotNull HyperlinkEvent e) {
+    return SHOW_HIDE_BRANCHES.equals(e.getDescription());
+  }
+
+  public static boolean isGoToHash(@NotNull HyperlinkEvent e) {
+    return e.getDescription().startsWith(GO_TO_HASH);
+  }
 
   @NotNull
   public static String getShortSummary(@NotNull VcsShortCommitDetails details) {
@@ -173,15 +178,7 @@ public class CommitPresentationUtil {
   }
 
   public static boolean isSubjectMarginEnabled(@NotNull Project project) {
-    return isInspectionEnabled(project, SubjectLimitInspection.class);
-  }
-
-  private static <T extends BaseCommitMessageInspection> boolean isInspectionEnabled(@NotNull Project project,
-                                                                                     @NotNull Class<T> inspectionClass) {
-    CommitMessageInspectionProfile inspectionProfile = CommitMessageInspectionProfile.getInstance(project);
-    List<Tools> tools = inspectionProfile.getAllEnabledInspectionTools(project);
-    T inspection = inspectionProfile.getTool(inspectionClass);
-    return ContainerUtil.find(tools, tool -> tool.getTool().getTool().equals(inspection)) != null;
+    return CommitMessageInspectionProfile.getInstance(project).isToolEnabled(SubjectLimitInspection.class);
   }
 
   @NotNull
@@ -252,7 +249,7 @@ public class CommitPresentationUtil {
   }
 
   @NotNull
-  static String getBranchesText(@Nullable List<String> branches, boolean expanded, int availableWidth, @NotNull FontMetrics metrics) {
+  public static String getBranchesText(@Nullable List<String> branches, boolean expanded, int availableWidth, @NotNull FontMetrics metrics) {
     if (branches == null) {
       return "In branches: loading...";
     }

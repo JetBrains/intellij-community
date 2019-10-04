@@ -28,6 +28,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.ide.actions.CopyReferenceUtil.*;
+import static com.intellij.openapi.actionSystem.ActionPlaces.KEYBOARD_SHORTCUT;
 
 /**
  * @author Alexey
@@ -43,6 +44,11 @@ public class CopyReferenceAction extends DumbAwareAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
+    if (CopyPathsAction.isCopyReferencePopupAvailable()) {
+      e.getPresentation().setEnabledAndVisible(KEYBOARD_SHORTCUT.equals(e.getPlace()));
+      return;
+    }
+
     boolean plural = false;
     boolean enabled;
     boolean paths = false;

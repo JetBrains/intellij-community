@@ -46,7 +46,7 @@ class SwitchExpression {
         yield 4;
     };
     System.out.println(i);
-    
+
     int p = switch (e) {
       case A:
         yield j = 1;
@@ -69,6 +69,11 @@ class SwitchExpression {
       default -> i = 10;
     };
     System.out.println(i);
+  }
+
+  SwitchExpression(boolean b) {
+    int x = switch(0) { default -> { { yield i = 2; } } };
+    System.out.println("i = " + i);
   }
 }
 class Lambda {

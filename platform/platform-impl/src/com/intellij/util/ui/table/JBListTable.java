@@ -16,6 +16,7 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.AbstractTableCellEditor;
 import com.intellij.util.ui.MouseEventHandler;
+import com.intellij.util.ui.TimerUtil;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntObjectHashMap;
@@ -111,8 +112,8 @@ public abstract class JBListTable {
     field.addSettingsProvider(EditorSettingsProvider.NO_WHITESPACE);
 
     if (selected && focused) {
-      panel.setBackground(UIUtil.getTableSelectionBackground());
-      field.setAsRendererWithSelection(UIUtil.getTableSelectionBackground(), UIUtil.getTableSelectionForeground());
+      panel.setBackground(UIUtil.getTableSelectionBackground(true));
+      field.setAsRendererWithSelection(UIUtil.getTableSelectionBackground(true), UIUtil.getTableSelectionForeground());
     } else {
       panel.setBackground(UIUtil.getTableBackground());
       if (selected) {
@@ -211,7 +212,7 @@ public abstract class JBListTable {
     private static final int RESIZE_AMOUNT_PER_STEP = 5;
 
     private final TIntObjectHashMap<RowAnimationState> myRowAnimationStates = new TIntObjectHashMap<>();
-    private final Timer myAnimationTimer = UIUtil.createNamedTimer("JBListTableTimer",ANIMATION_STEP_MILLIS, this);
+    private final Timer myAnimationTimer = TimerUtil.createNamedTimer("JBListTableTimer", ANIMATION_STEP_MILLIS, this);
     private final JTable myTable;
 
     RowResizeAnimator(JTable table) {

@@ -55,11 +55,9 @@ public abstract class EditorActionManager {
   public abstract EditorActionHandler setActionHandler(@NonNls @NotNull String actionId, @NotNull EditorActionHandler handler);
 
   /**
-   * Returns the service for registering actions activated by typing visible characters
-   * in the editor.
-   *
-   * @return the typed action service instance.
+   * @deprecated Use {@link TypedAction#getInstance()} instead
    */
+  @Deprecated
   @NotNull
   public abstract TypedAction getTypedAction();
 

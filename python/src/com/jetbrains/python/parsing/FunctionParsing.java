@@ -19,7 +19,6 @@ import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.WhitespacesBinders;
 import com.intellij.psi.tree.IElementType;
 import com.jetbrains.python.PyElementTypes;
-import com.jetbrains.python.PyStubElementTypes;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
@@ -203,7 +202,7 @@ public class FunctionParsing extends Parsing {
 
     if (myBuilder.getTokenType() == PyTokenTypes.DIV) {
       myBuilder.advanceLexer();
-      parameter.done(PyStubElementTypes.SLASH_PARAMETER);
+      parameter.done(PyElementTypes.SLASH_PARAMETER);
       return true;
     }
 
@@ -216,7 +215,7 @@ public class FunctionParsing extends Parsing {
           parameter = myBuilder.mark();
           advanceError(myBuilder, "Single star parameter is not supported in Python 2");
         }
-        parameter.done(PyStubElementTypes.SINGLE_STAR_PARAMETER);
+        parameter.done(PyElementTypes.SINGLE_STAR_PARAMETER);
         return true;
       }
 
@@ -239,7 +238,7 @@ public class FunctionParsing extends Parsing {
           invalidElements.error(message("PARSE.expected.expression"));
         }
       }
-      parameter.done(PyStubElementTypes.NAMED_PARAMETER);
+      parameter.done(PyElementTypes.NAMED_PARAMETER);
     }
     else {
       parameter.rollbackTo();

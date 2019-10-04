@@ -19,6 +19,7 @@ package com.intellij.util.indexing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.io.EnumeratorIntegerDescriptor;
 import com.intellij.util.io.KeyDescriptor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -26,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
  *
  * @author Eugene Zhuravlev
  */
+@ApiStatus.OverrideOnly
 public abstract class SingleEntryFileBasedIndexExtension<V> extends FileBasedIndexExtension<Integer, V>{
   @NotNull
   @Override

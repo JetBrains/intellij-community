@@ -9,12 +9,12 @@ import com.intellij.vcs.log.data.RefsModel
 import com.intellij.vcs.log.data.VcsLogStorage
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo
 import com.intellij.vcs.log.graph.impl.permanent.PermanentCommitsInfoImpl
+import com.intellij.vcs.log.graph.utils.exclusiveNodes
 import com.intellij.vcs.log.graph.utils.subgraphDifference
 import gnu.trove.TIntHashSet
 
-fun RefsModel.findBranch(name: String, root: VirtualFile): VcsRef? {
-  return VcsLogUtil.findBranch(this, root, name)
-}
+fun RefsModel.findBranch(name: String, root: VirtualFile): VcsRef? = VcsLogUtil.findBranch(this, root, name)
+fun DataPack.findBranch(name: String, root: VirtualFile): VcsRef? = refsModel.findBranch(name, root)
 
 fun DataPack.subgraphDifference(withRef: VcsRef, withoutRef: VcsRef, storage: VcsLogStorage): TIntHashSet? {
   if (withoutRef.root != withRef.root) return null
@@ -47,4 +47,14 @@ fun DataPack.containsAll(commits: Collection<CommitId>, storage: VcsLogStorage):
   }
   val nodeIds = permanentGraphInfo.permanentCommitsInfo.convertToNodeIds(commitIds)
   return nodeIds.size == commits.size && nodeIds.all { it >= 0 }
+}
+
+fun DataPack.exclusiveCommits(ref: VcsRef, storage: VcsLogStorage): TIntHashSet? {
+  val refIndex = storage.getCommitIndex(ref.commitHash, ref.root)
+  @Suppress("UNCHECKED_CAST") val permanentGraphInfo = permanentGraph as? PermanentGraphInfo<Int> ?: return null
+  val refNode = permanentGraphInfo.permanentCommitsInfo.getNodeId(refIndex)
+  if (refNode < 0) return null
+
+  val exclusiveNodes = permanentGraphInfo.linearGraph.exclusiveNodes(refNode)
+  return TroveUtil.map2IntSet(exclusiveNodes) { permanentGraphInfo.permanentCommitsInfo.getCommitId(it) }
 }

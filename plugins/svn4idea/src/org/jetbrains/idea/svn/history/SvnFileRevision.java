@@ -165,6 +165,7 @@ public class SvnFileRevision implements VcsFileRevision {
   }
 
   @Override
+  @NotNull
   public byte[] loadContent() throws IOException, VcsException {
     byte[] result;
 

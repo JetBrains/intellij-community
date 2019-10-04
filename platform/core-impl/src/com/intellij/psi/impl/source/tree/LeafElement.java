@@ -213,13 +213,11 @@ public abstract class LeafElement extends TreeElement {
   }
 
   static int leafHC(CharSequence text) {
-    final int len = text.length();
     int hc = 0;
-
-    for (int i = 0; i < len; i++) {
+    int length = text.length();
+    for (int i = 0; i < length; i++) {
       hc += text.charAt(i);
     }
-
     return hc;
   }
 
@@ -234,13 +232,8 @@ public abstract class LeafElement extends TreeElement {
   }
 
   @Override
-  public int getNotCachedLength() {
-    return myText.length();
-  }
-
-  @Override
   public int getCachedLength() {
-    return getNotCachedLength();
+    return myText.length();
   }
 
   @NotNull

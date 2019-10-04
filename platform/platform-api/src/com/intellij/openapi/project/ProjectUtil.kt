@@ -113,12 +113,10 @@ fun isProjectDirectoryExistsUsingIo(parent: VirtualFile): Boolean {
  *  There is no strict definition of what is a project directory, since a project can contain multiple modules located in different places,
  *  and the `.idea` directory can be located elsewhere (making the popular [Project.getBaseDir] method not applicable to get the "project
  *  directory"). This method should be preferred, although it can't provide perfect accuracy either.
- *
- *  @throws IllegalStateException if called on the default project, since there is no sense in "project dir" in that case.
  */
 fun Project.guessProjectDir() : VirtualFile? {
   if (isDefault) {
-    throw IllegalStateException("Not applicable for default project")
+    return null
   }
 
   val modules = ModuleManager.getInstance(this).modules

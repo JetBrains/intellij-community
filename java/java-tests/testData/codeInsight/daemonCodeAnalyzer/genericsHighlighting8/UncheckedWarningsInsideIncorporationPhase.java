@@ -4,8 +4,7 @@ abstract class Group {
   }
 
   public <T extends Category> T get(Key<T> key) {
-    return <error descr="Incompatible types. Required T but 'getCategory' was inferred to R:
-Incompatible types: Category is not convertible to T">getCategory(key);</error>
+    return <error descr="Incompatible types: Category is not convertible to T">getCategory(key);</error>
   }
 
   public abstract <R extends Category<R>> R getCategory(Key<R> key);

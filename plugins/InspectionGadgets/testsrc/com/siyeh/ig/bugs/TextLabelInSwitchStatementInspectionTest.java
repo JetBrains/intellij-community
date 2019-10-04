@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
@@ -31,8 +31,8 @@ public class TextLabelInSwitchStatementInspectionTest extends LightJavaInspectio
            "    void x(E e) {\n" +
            "        int i = switch (e) {\n" +
            "            case A,B:\n" +
-           "            /*Text label 'caseZ:' in 'switch' expression*/caseZ/**/: break 1;\n" +
-           "            case C: break 0;\n" +
+           "            /*Text label 'caseZ:' in 'switch' expression*/caseZ/**/: yield 1;\n" +
+           "            case C: yield 0;\n" +
            "        };\n" +
            "    }\n" +
            "}");
@@ -47,7 +47,7 @@ public class TextLabelInSwitchStatementInspectionTest extends LightJavaInspectio
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_12;
+    return JAVA_13;
   }
 
   @Override

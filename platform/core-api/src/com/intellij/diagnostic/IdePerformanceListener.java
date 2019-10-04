@@ -1,8 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
@@ -24,8 +25,19 @@ public interface IdePerformanceListener {
   /**
    * Invoked after the UI has become responsive again following a {@link #uiFreezeStarted()} event.
    * @param lengthInSeconds approximate length in seconds of the interval that the IDE was unresponsive
+   * @deprecated use {@link #uiFreezeFinished(long, File)}
    */
+  @Deprecated
   default void uiFreezeFinished(int lengthInSeconds) {
+  }
+
+  /**
+   * Invoked after the UI has become responsive again following a {@link #uiFreezeStarted()} event.
+   * @param durationMs freeze duration in milliseconds
+   * @param reportDir folder where all freeze report data is collected
+   */
+  default void uiFreezeFinished(long durationMs, @Nullable File reportDir) {
+    uiFreezeFinished((int)(durationMs / 1000));
   }
 
   /**

@@ -2,17 +2,16 @@
 package com.intellij.json.editor;
 
 import com.intellij.openapi.options.BeanConfigurable;
-import com.intellij.openapi.options.UnnamedConfigurable;
-import com.intellij.ui.IdeBorderFactory;
+import com.intellij.openapi.options.SearchableConfigurable;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-
-public class JsonSmartKeysConfigurable extends BeanConfigurable<JsonEditorOptions> implements UnnamedConfigurable {
+public class JsonSmartKeysConfigurable extends BeanConfigurable<JsonEditorOptions> implements SearchableConfigurable {
   public JsonSmartKeysConfigurable() {
     super(JsonEditorOptions.getInstance());
     JsonEditorOptions settings = getInstance();
 
-    checkBox("Insert missing comma on enter",
+    checkBox("Insert missing comma on Enter",
              () -> settings.COMMA_ON_ENTER,
              v -> settings.COMMA_ON_ENTER = v);
     checkBox("Insert missing comma after matching braces and quotes",
@@ -32,11 +31,15 @@ public class JsonSmartKeysConfigurable extends BeanConfigurable<JsonEditorOption
              v -> settings.AUTO_WHITESPACE_AFTER_COLON = v);
   }
 
+  @Nls(capitalization = Nls.Capitalization.Title)
   @Override
-  public JComponent createComponent() {
-    JComponent result = super.createComponent();
-    assert result != null;
-    result.setBorder(IdeBorderFactory.createTitledBorder("JSON"));
-    return result;
+  public String getDisplayName() {
+    return "JSON";
+  }
+
+  @NotNull
+  @Override
+  public String getId() {
+    return "editor.preferences.jsonOptions";
   }
 }

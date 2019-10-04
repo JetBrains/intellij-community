@@ -1,10 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform;
 
-import com.intellij.diagnostic.Activity;
-import com.intellij.diagnostic.StartUpMeasurer;
+import com.intellij.conversion.CannotConvertException;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.openapi.application.ApplicationManager;
@@ -13,11 +13,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
+import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.startup.StartupManager;
@@ -25,35 +26,31 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.wm.impl.IdeFrameImpl;
-import com.intellij.openapi.wm.impl.WindowManagerImpl;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
+import com.intellij.pom.Navigatable;
 import com.intellij.projectImport.ProjectAttachProcessor;
 import com.intellij.projectImport.ProjectOpenProcessor;
 import com.intellij.projectImport.ProjectOpenedCallback;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.EnumSet;
 
-/**
- * @author max
- */
-public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implements CommandLineProjectOpenProcessor {
+public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor implements CommandLineProjectOpenProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.platform.PlatformProjectOpenProcessor");
 
   public enum Option {
-    FORCE_NEW_FRAME, REOPEN, TEMP_PROJECT, DO_NOT_USE_DEFAULT_PROJECT
+    FORCE_NEW_FRAME, TEMP_PROJECT
   }
 
   public static PlatformProjectOpenProcessor getInstance() {
@@ -90,223 +87,250 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
   @Nullable
   @Override
   public Project doOpenProject(@NotNull VirtualFile virtualFile, @Nullable Project projectToClose, boolean forceOpenInNewFrame) {
-    EnumSet<Option> options = EnumSet.noneOf(Option.class);
-    if (forceOpenInNewFrame) {
-      options.add(Option.FORCE_NEW_FRAME);
-    }
+    OpenProjectTask options = new OpenProjectTask(forceOpenInNewFrame, projectToClose);
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       // doesn't make sense to use default project in tests for heavy projects
-      options.add(Option.DO_NOT_USE_DEFAULT_PROJECT);
+      options.useDefaultProjectAsTemplate = false;
     }
-    return doOpenProject(virtualFile, projectToClose, -1, null, options);
+    return doOpenProject(Paths.get(virtualFile.getPath()), options, -1);
   }
 
   @Override
   @Nullable
-  public Project openProjectAndFile(@NotNull VirtualFile file, int line, boolean tempProject) {
-    EnumSet<PlatformProjectOpenProcessor.Option> options = EnumSet.noneOf(PlatformProjectOpenProcessor.Option.class);
+  public Project openProjectAndFile(@NotNull VirtualFile virtualFile, int line, boolean tempProject) {
+    // force open in a new frame if temp project
+    OpenProjectTask options = new OpenProjectTask(/* forceOpenInNewFrame = */ tempProject);
+    Path file = Paths.get(virtualFile.getPath());
     if (tempProject) {
-      options.add(PlatformProjectOpenProcessor.Option.TEMP_PROJECT);
-      options.add(PlatformProjectOpenProcessor.Option.FORCE_NEW_FRAME);
+      return createTempProjectAndOpenFile(file, options, -1);
     }
-
-
-    return doOpenProject(file, null, line, null, options);
+    else {
+      return doOpenProject(file, options, line);
+    }
   }
 
-  /** @deprecated use {@link #doOpenProject(VirtualFile, Project, int, ProjectOpenedCallback, EnumSet)} (to be removed in IDEA 2019) */
+  /**
+   * @deprecated Use {@link #doOpenProject(Path, OpenProjectTask, int)}
+   */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2019")
   @Deprecated
   public static Project doOpenProject(@NotNull VirtualFile virtualFile,
                                       Project projectToClose,
                                       boolean forceOpenInNewFrame,
                                       int line,
-                                      @Nullable ProjectOpenedCallback callback,
-                                      boolean isReopen) {
-    EnumSet<Option> options = EnumSet.noneOf(Option.class);
-    if (forceOpenInNewFrame) options.add(Option.FORCE_NEW_FRAME);
-    if (isReopen) options.add(Option.REOPEN);
-    return doOpenProject(virtualFile, projectToClose, line, callback, options);
+                                      @SuppressWarnings("unused") @Nullable ProjectOpenedCallback callback,
+                                      @SuppressWarnings("unused") boolean isReopen) {
+    return doOpenProject(Paths.get(virtualFile.getPath()), new OpenProjectTask(forceOpenInNewFrame, projectToClose), line);
   }
 
+  /**
+   * @deprecated Use Path instead of VirtualFile.
+   */
   @Nullable
+  @Deprecated
   public static Project doOpenProject(@NotNull VirtualFile virtualFile,
                                       @Nullable Project projectToClose,
                                       int line,
                                       @Nullable ProjectOpenedCallback callback,
                                       @NotNull EnumSet<Option> options) {
-    VirtualFile baseDir = virtualFile;
-    boolean dummyProject = false;
-    String dummyProjectName = null;
-    boolean forceOpenInNewFrame = options.contains(Option.FORCE_NEW_FRAME);
-    boolean tempProject = options.contains(Option.TEMP_PROJECT);
-
-    if (!baseDir.isDirectory()) {
-      if (tempProject) {
-        baseDir = null;
-      }
-      else {
-        baseDir = virtualFile.getParent();
-        while (baseDir != null && !com.intellij.openapi.project.ProjectUtil.isProjectDirectoryExistsUsingIo(baseDir)) {
-          baseDir = baseDir.getParent();
-        }
-      }
-      // no reasonable directory -> create new temp one or use parent
-      if (baseDir == null) {
-        if (tempProject || Registry.is("ide.open.file.in.temp.project.dir")) {
-          try {
-            dummyProjectName = virtualFile.getName();
-            File directory = FileUtil.createTempDirectory(dummyProjectName, null, true);
-            baseDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(directory);
-            dummyProject = true;
-          }
-          catch (IOException ex) {
-            LOG.error(ex);
-          }
-        }
-        if (baseDir == null) {
-          baseDir = virtualFile.getParent();
-        }
-      }
-    }
-
-    Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
-    if (!forceOpenInNewFrame && openProjects.length > 0) {
-      if (projectToClose == null) {
-        // if several projects are opened, ask to reuse not last opened project frame, but last focused (to avoid focus switching)
-        IdeFrame lastFocusedFrame = IdeFocusManager.getGlobalInstance().getLastFocusedFrame();
-        projectToClose = lastFocusedFrame == null ? null : lastFocusedFrame.getProject();
-        if (projectToClose == null) {
-          projectToClose = openProjects[openProjects.length - 1];
-        }
-      }
-
-      if (checkExistingProjectOnOpen(projectToClose, callback, baseDir)) {
-        return null;
-      }
-    }
-
-    Pair<Project, Module> result = null;
-    if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      result = prepareAndOpenProject(virtualFile, options, baseDir, dummyProject, dummyProjectName);
-    }
-    else {
-      IdeFrameImpl frame = showFrame();
-      Ref<Pair<Project, Module>> refResult = Ref.create();
-      VirtualFile finalBaseDir = baseDir;
-      boolean finalDummyProject = dummyProject;
-      String finalDummyProjectName = dummyProjectName;
-      Runnable process = () -> refResult.set(prepareAndOpenProject(virtualFile, options, finalBaseDir, finalDummyProject, finalDummyProjectName));
-      boolean progressCompleted = ProgressManager.getInstance().runProcessWithProgressSynchronously(process, "Loading Project...", true, null, frame.getComponent());
-      if (progressCompleted) {
-        result = refResult.get();
-      }
-    }
-
-    if (result == null || result.first == null) {
-      WelcomeFrame.showIfNoProjectOpened();
-      return null;
-    }
-
-    if (!virtualFile.isDirectory()) {
-      openFileFromCommandLine(result.first, virtualFile, line);
-    }
-
-    if (callback != null) {
-      callback.projectOpened(result.first, result.second);
-    }
-
-    return result.first;
-  }
-
-  @NotNull
-  private static IdeFrameImpl showFrame() {
-    WindowManagerImpl windowManager = (WindowManagerImpl)WindowManager.getInstance();
-    IdeFrameImpl freeRootFrame = windowManager.getRootFrame();
-    if (freeRootFrame != null) {
-      return freeRootFrame;
-    }
-
-    Activity showFrameActivity = StartUpMeasurer.start("show frame");
-    IdeFrameImpl frame = windowManager.showFrame();
-    showFrameActivity.end();
-    // runProcessWithProgressSynchronously still processes EDT events
-    ApplicationManager.getApplication().invokeLater(() -> {
-      Activity activity = StartUpMeasurer.start("init frame");
-      if (frame.isDisplayable()) {
-        frame.init();
-      }
-      activity.end();
-    }, ModalityState.any());
-    return frame;
+    OpenProjectTask openProjectOptions = new OpenProjectTask(options.contains(Option.FORCE_NEW_FRAME), projectToClose);
+    openProjectOptions.callback = callback;
+    return doOpenProject(Paths.get(virtualFile.getPath()), openProjectOptions, line);
   }
 
   @Nullable
-  private static Pair<Project, Module> prepareAndOpenProject(@NotNull VirtualFile virtualFile,
-                                                             @NotNull EnumSet<Option> options,
-                                                             VirtualFile baseDir,
-                                                             boolean dummyProject,
-                                                             String dummyProjectName) {
-    boolean newProject = false;
-    ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
+  @ApiStatus.Internal
+  public static Project createTempProjectAndOpenFile(@NotNull Path file, @NotNull OpenProjectTask options, int line) {
+    String dummyProjectName = file.getFileName().toString();
+    Path baseDir;
+    try {
+      baseDir = FileUtil.createTempDirectory(dummyProjectName, null, true).toPath();
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+
+    OpenProjectTask copy = options.copy();
+    copy.isNewProject = true;
+    Project project = openExistingProject(file, baseDir, copy, dummyProjectName);
+    if (project != null) {
+      openFileFromCommandLine(project, file, line);
+    }
+    return project;
+  }
+
+  @Nullable
+  @ApiStatus.Internal
+  public static Project doOpenProject(@NotNull Path file, @NotNull OpenProjectTask options, int line) {
+    Path baseDir = file;
+    if (!Files.isDirectory(baseDir)) {
+      baseDir = file.getParent();
+      while (baseDir != null && !Files.exists(baseDir)) {
+        baseDir = baseDir.getParent();
+      }
+
+      // no reasonable directory -> create new temp one or use parent
+      if (baseDir == null) {
+        if (Registry.is("ide.open.file.in.temp.project.dir")) {
+          return createTempProjectAndOpenFile(file, options, line);
+        }
+
+        baseDir = file.getParent();
+        options.isNewProject = !Files.isDirectory(baseDir.resolve(Project.DIRECTORY_STORE_FOLDER));
+      }
+    }
+
+    Project project = openExistingProject(file, baseDir, options, null);
+    if (project != null && file != baseDir && !Files.isDirectory(file)) {
+      openFileFromCommandLine(project, file, line);
+    }
+    return project;
+  }
+
+  @Nullable
+  @ApiStatus.Internal
+  public static Project openExistingProject(@NotNull Path file,
+                                            @NotNull Path baseDir,
+                                            @NotNull OpenProjectTask options,
+                                            @Nullable String dummyProjectName) {
+    if (!options.forceOpenInNewFrame) {
+      Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
+      if (openProjects.length > 0) {
+        Project projectToClose = options.projectToClose;
+        if (projectToClose == null) {
+          // if several projects are opened, ask to reuse not last opened project frame, but last focused (to avoid focus switching)
+          IdeFrame lastFocusedFrame = IdeFocusManager.getGlobalInstance().getLastFocusedFrame();
+          projectToClose = lastFocusedFrame == null ? null : lastFocusedFrame.getProject();
+          if (projectToClose == null) {
+            projectToClose = openProjects[openProjects.length - 1];
+          }
+        }
+
+        if (checkExistingProjectOnOpen(projectToClose, options.callback, baseDir)) {
+          return null;
+        }
+      }
+    }
+
+    ProjectFrameAllocator frameAllocator = ApplicationManager.getApplication().isHeadlessEnvironment()
+                                           ? new ProjectFrameAllocator()
+                                           : new ProjectUiFrameAllocator(options, file);
+    Ref<Pair<Project, Module>> refResult = new Ref<>(Pair.empty());
+    boolean isCompleted = frameAllocator.run(() -> {
+      Pair<Project, Module> result;
+      CannotConvertException cannotConvertException = null;
+      try {
+        result = prepareProject(file, options, baseDir, dummyProjectName);
+      }
+      catch (ProcessCanceledException e) {
+        throw e;
+      }
+      catch (CannotConvertException e) {
+        LOG.info(e);
+        cannotConvertException = e;
+        result = Pair.empty();
+      }
+      catch (Exception e) {
+        result = Pair.empty();
+        LOG.error(e);
+      }
+
+      Project project = result.first;
+      if (project == null) {
+        frameAllocator.projectNotLoaded(cannotConvertException);
+        return;
+      }
+
+      refResult.set(result);
+      frameAllocator.projectLoaded(project);
+      if (ProjectManagerEx.getInstanceEx().openProject(project)) {
+        frameAllocator.projectOpened(project);
+      }
+      else {
+        refResult.set(Pair.empty());
+      }
+    });
+    if (!isCompleted) {
+      refResult.set(Pair.empty());
+    }
+
+    Project project = refResult.get().first;
+    if (project == null) {
+      if (options.showWelcomeScreen) {
+        WelcomeFrame.showIfNoProjectOpened();
+      }
+      return null;
+    }
+
+    if (options.callback != null) {
+      Module module = refResult.get().second;
+      if (module == null) {
+        module = ModuleManager.getInstance(project).getModules()[0];
+      }
+      options.callback.projectOpened(project, module);
+    }
+    return project;
+  }
+
+  @NotNull
+  private static Pair<Project, Module> prepareProject(@NotNull Path file,
+                                                      @NotNull OpenProjectTask options,
+                                                      @NotNull Path baseDir,
+                                                      @Nullable String dummyProjectName) throws CannotConvertException {
+    ProjectManagerImpl projectManager = (ProjectManagerImpl)ProjectManagerEx.getInstanceEx();
     Project project;
-    VirtualFile dotIdeaDir = baseDir.findChild(Project.DIRECTORY_STORE_FOLDER);
-    if (dotIdeaDir != null && dotIdeaDir.isDirectory()) {
-      project = tryLoadProject(baseDir);
+    boolean isNewProject = options.isNewProject;
+    if (isNewProject) {
+      String projectName = dummyProjectName == null ? baseDir.getFileName().toString() : dummyProjectName;
+      project = projectManager.newProject(baseDir, projectName, options);
     }
     else {
-      project = projectManager.newProject(dummyProject ? dummyProjectName : baseDir.getName(), baseDir.getPath(), !options.contains(Option.DO_NOT_USE_DEFAULT_PROJECT), dummyProject);
-      newProject = true;
+      for (ProjectOpenProcessor processor : ProjectOpenProcessor.EXTENSION_POINT_NAME.getIterable()) {
+        processor.refreshProjectFiles(baseDir);
+      }
+      project = projectManager.convertAndLoadProject(baseDir);
     }
 
     if (project == null) {
-      return null;
+      return Pair.empty();
     }
 
     ProjectBaseDirectory.getInstance(project).setBaseDir(baseDir);
 
-    Module module = configureNewProject(project, baseDir, virtualFile, dummyProject, newProject);
+    Module module = configureNewProject(project, baseDir, file, dummyProjectName == null, isNewProject);
 
-    if (newProject) {
+    if (isNewProject) {
       project.save();
     }
-    return projectManager.openProject(project) ? new Pair<>(project, module) : null;
+    return new Pair<>(project, module);
   }
 
-  private static Project tryLoadProject(VirtualFile baseDir) {
-    try {
-      for (ProjectOpenProcessor processor : ProjectOpenProcessor.EXTENSION_POINT_NAME.getExtensionList()) {
-        processor.refreshProjectFiles(baseDir);
-      }
-      return ProjectManagerEx.getInstanceEx().convertAndLoadProject(baseDir);
-    }
-    catch (Exception e) {
-      LOG.error(e);
-      return null;
-    }
-  }
-
-  private static Module configureNewProject(Project project, VirtualFile baseDir, @NotNull VirtualFile dummyFileContentRoot,
-                                            boolean dummyProject, boolean newProject) {
+  private static Module configureNewProject(@NotNull Project project,
+                                            @NotNull Path baseDir,
+                                            @NotNull Path dummyFileContentRoot,
+                                            boolean dummyProject,
+                                            boolean newProject) {
     boolean runConfigurators = newProject || ModuleManager.getInstance(project).getModules().length == 0;
-    final Ref<Module> module = new Ref<>();
+    Ref<Module> module = new Ref<>();
     if (runConfigurators) {
       ApplicationManager.getApplication().invokeAndWait(() -> module.set(runDirectoryProjectConfigurators(baseDir, project)));
     }
-    else {
-      module.set(ModuleManager.getInstance(project).getModules()[0]);
-    }
 
-    if (runConfigurators && dummyProject) { // add content root for chosen (single) file
+    if (runConfigurators && dummyProject) {
+      // add content root for chosen (single) file
       ModuleRootModificationUtil.updateModel(module.get(), model -> {
         ContentEntry[] entries = model.getContentEntries();
-        if (entries.length == 1) model.removeContentEntry(entries[0]); // remove custom content entry created for temp directory
-        model.addContentEntry(dummyFileContentRoot);
+        // remove custom content entry created for temp directory
+        if (entries.length == 1) {
+          model.removeContentEntry(entries[0]);
+        }
+        model.addContentEntry(VfsUtilCore.pathToUrl(dummyFileContentRoot.toString()));
       });
     }
     return module.get();
   }
 
-  private static boolean checkExistingProjectOnOpen(@NotNull Project projectToClose, @Nullable ProjectOpenedCallback callback, VirtualFile baseDir) {
+  private static boolean checkExistingProjectOnOpen(@NotNull Project projectToClose, @Nullable ProjectOpenedCallback callback, Path baseDir) {
     if (ProjectAttachProcessor.canAttachToProject() && GeneralSettings.getInstance().getConfirmOpenNewProject() == GeneralSettings.OPEN_PROJECT_ASK) {
       final int exitCode = ProjectUtil.confirmOpenOrAttachProject();
       if (exitCode == -1) {
@@ -318,7 +342,7 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
         }
       }
       else if (exitCode == GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH) {
-        if (attachToProject(projectToClose, Paths.get(FileUtil.toSystemDependentName(baseDir.getPath())), callback)) {
+        if (attachToProject(projectToClose, baseDir, callback)) {
           return true;
         }
       }
@@ -341,11 +365,21 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
     return false;
   }
 
+  /**
+   * @deprecated Use {@link #runDirectoryProjectConfigurators(Path, Project)}
+   */
+  @Deprecated
   public static Module runDirectoryProjectConfigurators(@NotNull VirtualFile baseDir, @NotNull Project project) {
+    return runDirectoryProjectConfigurators(Paths.get(baseDir.getPath()), project);
+  }
+
+  public static Module runDirectoryProjectConfigurators(@NotNull Path baseDir, @NotNull Project project) {
     final Ref<Module> moduleRef = new Ref<>();
+    VirtualFile virtualFile = ProjectUtil.getFileAndRefresh(baseDir);
+    LOG.assertTrue(virtualFile != null);
     for (DirectoryProjectConfigurator configurator: DirectoryProjectConfigurator.EP_NAME.getIterable()) {
       try {
-        configurator.configureProject(project, baseDir, moduleRef);
+        configurator.configureProject(project, virtualFile, moduleRef);
       }
       catch (Exception e) {
         LOG.error(e);
@@ -354,8 +388,8 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
     return moduleRef.get();
   }
 
-  public static boolean attachToProject(Project project, @NotNull Path projectDir, ProjectOpenedCallback callback) {
-    for (ProjectAttachProcessor processor : ProjectAttachProcessor.EP_NAME.getExtensionList()) {
+  public static boolean attachToProject(Project project, @NotNull Path projectDir, @Nullable ProjectOpenedCallback callback) {
+    for (ProjectAttachProcessor processor : ProjectAttachProcessor.EP_NAME.getIterable()) {
       if (processor.attachToProject(project, projectDir, callback)) {
         return true;
       }
@@ -363,13 +397,25 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor implement
     return false;
   }
 
-  private static void openFileFromCommandLine(Project project, VirtualFile file, int line) {
-    StartupManager.getInstance(project).registerPostStartupActivity(
-      (DumbAwareRunnable)() -> ApplicationManager.getApplication().invokeLater(() -> {
-        if (!project.isDisposed() && file.isValid()) {
-          (line > 0 ? new OpenFileDescriptor(project, file, line - 1, 0) : PsiNavigationSupport.getInstance().createNavigatable(project, file, -1)).navigate(true);
+  private static void openFileFromCommandLine(@NotNull Project project, @NotNull Path file, int line) {
+    //noinspection CodeBlock2Expr
+    StartupManager.getInstance(project).registerPostStartupActivity((DumbAwareRunnable)() -> {
+      ApplicationManager.getApplication().invokeLater(() -> {
+        if (project.isDisposed() || !Files.exists(file)) {
+          return;
         }
-      }, ModalityState.NON_MODAL));
+
+        VirtualFile virtualFile = ProjectUtil.getFileAndRefresh(file);
+        if (virtualFile == null) {
+          return;
+        }
+
+        Navigatable navigatable = line > 0
+                                  ? new OpenFileDescriptor(project, virtualFile, line - 1, 0)
+                                  : PsiNavigationSupport.getInstance().createNavigatable(project, virtualFile, -1);
+        navigatable.navigate(true);
+      }, ModalityState.NON_MODAL);
+    });
   }
 
   @Nullable

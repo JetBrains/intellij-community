@@ -5,8 +5,8 @@ import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.codeStyle.FileIndentOptionsProvider
+import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.LightPlatformTestCase
-import com.intellij.testFramework.PlatformTestUtil
 import org.junit.Test
 import org.mockito.ArgumentMatchers
 import org.mockito.Mockito.*
@@ -17,7 +17,7 @@ class ViewerEditorTest: LightPlatformTestCase() {
   override fun setUp() {
     super.setUp()
     mockProvider = mock(FileIndentOptionsProvider::class.java)
-    PlatformTestUtil.maskExtensions(FileIndentOptionsProvider.EP_NAME, listOf(mockProvider), testRootDisposable)
+    ExtensionTestUtil.maskExtensions(FileIndentOptionsProvider.EP_NAME, listOf(mockProvider), testRootDisposable)
   }
 
   @Test

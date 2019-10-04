@@ -10,6 +10,7 @@ import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
 import com.intellij.vcs.log.graph.api.elements.GraphEdgeType;
 import com.intellij.vcs.log.graph.api.elements.GraphNode;
+import gnu.trove.TIntIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,7 +30,7 @@ public class LinearGraphParser {
     List<GraphNode> graphNodes = new ArrayList<>();
 
     Map<GraphNode, List<String>> edges = new HashMap<>();
-    Map<Integer, Integer> nodeIdToNodeIndex = new HashMap<>();
+    TIntIntHashMap nodeIdToNodeIndex = new TIntIntHashMap();
 
     for (String line : toLines(in)) { // parse input and create nodes
       Pair<Pair<Integer, GraphNode>, List<String>> graphNodePair = parseLine(line, graphNodes.size());
@@ -51,8 +52,8 @@ public class LinearGraphParser {
         switch (type) {
           case USUAL:
           case DOTTED:
-            Integer downNodeIndex = nodeIdToNodeIndex.get(pairEdge.first);
-            assert downNodeIndex != null;
+            assert nodeIdToNodeIndex.containsKey(pairEdge.first);
+            int downNodeIndex = nodeIdToNodeIndex.get(pairEdge.first);
             edge = GraphEdge.createNormalEdge(graphNode.getNodeIndex(), downNodeIndex, type);
             break;
 

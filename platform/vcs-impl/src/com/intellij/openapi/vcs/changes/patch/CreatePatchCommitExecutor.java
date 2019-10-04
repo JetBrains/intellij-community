@@ -2,7 +2,7 @@
 package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.CommonBundle;
-import com.intellij.ide.actions.ShowFilePathAction;
+import com.intellij.ide.actions.RevealFileAction;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
@@ -20,6 +20,7 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.changes.ui.SessionDialog;
+import com.intellij.ui.UIBundle;
 import com.intellij.util.WaitForProgressToShow;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -153,7 +154,7 @@ public class CreatePatchCommitExecutor extends LocalCommitExecutor implements Pr
       WaitForProgressToShow.runOrInvokeLaterAboveProgress(() -> {
         final VcsConfiguration configuration = VcsConfiguration.getInstance(myProject);
         if (Boolean.TRUE.equals(configuration.SHOW_PATCH_IN_EXPLORER)) {
-          ShowFilePathAction.openFile(file);
+          RevealFileAction.openFile(file);
         }
         else if (configuration.SHOW_PATCH_IN_EXPLORER == null) {
           configuration.SHOW_PATCH_IN_EXPLORER = showDialog(file);
@@ -228,11 +229,11 @@ public class CreatePatchCommitExecutor extends LocalCommitExecutor implements Pr
       @NotNull
       @Override
       public String getDoNotShowMessage() {
-        return CommonBundle.message("dialog.options.do.not.ask");
+        return UIBundle.message("dialog.options.do.not.ask");
       }
     };
 
-    ShowFilePathAction.showDialog(myProject, message, title, file, option);
+    RevealFileAction.showDialog(myProject, message, title, file, option);
 
     return ref[0];
   }

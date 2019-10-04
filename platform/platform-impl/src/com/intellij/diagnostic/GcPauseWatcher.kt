@@ -17,6 +17,8 @@ package com.intellij.diagnostic
 
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.util.ConcurrencyUtil
+import com.intellij.util.concurrency.AppExecutorUtil
 import java.lang.management.GarbageCollectorMXBean
 import java.lang.management.ManagementFactory
 import java.util.concurrent.Executors
@@ -25,6 +27,11 @@ import java.util.concurrent.TimeUnit
 open class GcPauseWatcher {
   private val watchers = ManagementFactory.getGarbageCollectorMXBeans().map(::SingleCollectorWatcher)
 
+  init {
+    AppExecutorUtil.getAppScheduledExecutorService().scheduleWithFixedDelay(
+      ::checkForPauses, 0, SAMPLING_RATE_MS, TimeUnit.MILLISECONDS)
+  }
+  
   private inner class SingleCollectorWatcher(val bean: GarbageCollectorMXBean) {
     private var count = bean.collectionCount
     private var cumulativePauseTime = bean.collectionTime
@@ -47,12 +54,8 @@ open class GcPauseWatcher {
     }
   }
 
-  init {
-    Executors.newSingleThreadScheduledExecutor().scheduleWithFixedDelay(::checkForPauses, 0, SAMPLING_RATE_MS, TimeUnit.MILLISECONDS)
-  }
-
   private fun checkForPauses() {
-    watchers.forEach{it.update()}
+    watchers.forEach { it.update() }
   }
 
   companion object {
@@ -60,6 +63,6 @@ open class GcPauseWatcher {
 
     fun getInstance(): GcPauseWatcher = ServiceManager.getService(GcPauseWatcher::class.java)
 
-    val LOG = Logger.getInstance(GcPauseWatcher::class.java)
+    val LOG: Logger = Logger.getInstance(GcPauseWatcher::class.java)
   }
 }

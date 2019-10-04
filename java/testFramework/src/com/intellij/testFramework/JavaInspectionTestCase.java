@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
-import com.intellij.ToolExtensionPoints;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.GlobalInspectionTool;
 import com.intellij.codeInspection.InspectionEP;
@@ -14,7 +13,6 @@ import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.EntryPoint;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.openapi.application.ex.PathManagerEx;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -203,8 +201,7 @@ public abstract class JavaInspectionTestCase extends LightJavaCodeInsightFixture
       }
     };
 
-    Extensions.getRootArea().<EntryPoint>getExtensionPoint(ToolExtensionPoints.DEAD_CODE_TOOL)
-      .registerExtension(myUnusedCodeExtension, getTestRootDisposable());
+    EntryPointsManagerBase.DEAD_CODE_EP_NAME.getPoint(null).registerExtension(myUnusedCodeExtension, getTestRootDisposable());
   }
 
   @Override

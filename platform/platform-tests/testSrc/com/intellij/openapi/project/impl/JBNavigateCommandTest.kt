@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project.impl
 
-import com.intellij.idea.Bombed
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.JBProtocolCommand
 import com.intellij.openapi.application.impl.coroutineDispatchingContext
@@ -47,6 +46,10 @@ class JBNavigateCommandTest {
   @Rule
   val testName = TestName()
 
+  @Rule
+  @JvmField
+  val busConnection = RecentProjectManagerListenerRule()
+
   fun getTestDataPath(): String {
     return "${PlatformTestUtil.getPlatformTestDataPath()}/commands/navigate/"
   }
@@ -58,53 +61,6 @@ class JBNavigateCommandTest {
       navigate(project.name, mapOf("path" to "A.java"))
       assertThat(getCurrentElement(project).name).isEqualTo("A.java")
     }
-  }
-
-  @Bombed(year = 2019, month = 7, day = 1, user = "dima")
-  fun testFqn1() {
-    //val project = configureProject()
-    //
-    //navigate(project.name, mapOf("fqn" to "A"))
-    //
-    //UIUtil.dispatchAllInvocationEvents()
-    //TestCase.assertEquals(getCurrentElement(project).name, "A")
-    //PlatformTestUtil.forceCloseProjectWithoutSaving(project)
-  }
-
-  @Bombed(year = 2019, month = 7, day = 1, user = "dima")
-  fun testFqnMethod() {
-    //val project = configureProject()
-    //
-    //navigate(project.name, mapOf("fqn" to "A#main"))
-    //
-    //UIUtil.dispatchAllInvocationEvents()
-    //TestCase.assertEquals(getCurrentElement(project).name, "main")
-    //PlatformTestUtil.forceCloseProjectWithoutSaving(project)
-  }
-
-  @Bombed(year = 2019, month = 7, day = 1, user = "dima")
-  fun testFqnMultipleMethods() {
-    //val project = configureProject()
-    //
-    //navigate(project.name, mapOf("fqn1" to "A1#main1",
-    //                             "fqn2" to "A2#main2"))
-    //
-    //UIUtil.dispatchAllInvocationEvents()
-    //val elements = getCurrentElements(project)
-    //TestCase.assertEquals(elements[0].name, "main1")
-    //TestCase.assertEquals(elements[1].name, "main2")
-    //PlatformTestUtil.forceCloseProjectWithoutSaving(project)
-  }
-
-  @Bombed(year = 2019, month = 7, day = 1, user = "dima")
-  fun testFqnConstant() {
-    //val project = configureProject()
-    //
-    //navigate(project.name, mapOf("fqn" to "A#RUN_CONFIGURATION_AD_TEXT"))
-    //
-    //UIUtil.dispatchAllInvocationEvents()
-    //TestCase.assertEquals(getCurrentElement(project).name, "RUN_CONFIGURATION_AD_TEXT")
-    //PlatformTestUtil.forceCloseProjectWithoutSaving(project)
   }
 
   @Test
@@ -149,9 +105,7 @@ class JBNavigateCommandTest {
     }
   }
 
-  private fun getCurrentElement(project: Project): NavigatablePsiElement {
-    return getCurrentElements(project)[0]
-  }
+  private fun getCurrentElement(project: Project) = getCurrentElements(project).first()
 
   private fun getCurrentElements(project: Project): List<NavigatablePsiElement> {
     return FileEditorManager.getInstance(project).allEditors.map {

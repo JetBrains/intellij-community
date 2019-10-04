@@ -42,7 +42,7 @@ public class GetInvocation implements Invocation {
   }
 
   @Override
-  public Object invoke(final DomInvocationHandler<?, ?> handler, final Object[] args) throws Throwable {
+  public Object invoke(final DomInvocationHandler handler, final Object[] args) throws Throwable {
     if (myConverter == Converter.EMPTY_CONVERTER) {
       return getValueInner(handler, myConverter);
     }
@@ -63,7 +63,7 @@ public class GetInvocation implements Invocation {
   }
 
   @Nullable
-  private Object getOrCalcValue(final DomInvocationHandler<?, ?> handler, final List<Pair<Converter, Object>> list) {
+  private Object getOrCalcValue(final DomInvocationHandler handler, final List<Pair<Converter, Object>> list) {
     if (!list.isEmpty()) {
       //noinspection ForLoopReplaceableByForEach
       for (int i = 0; i < list.size(); i++) {
@@ -77,7 +77,7 @@ public class GetInvocation implements Invocation {
   }
 
   @Nullable
-  private static Object getValueInner(DomInvocationHandler<?, ?> handler, Converter converter) {
+  private static Object getValueInner(DomInvocationHandler handler, Converter converter) {
     final SubTag annotation = handler.getAnnotation(SubTag.class);
     if (annotation != null && annotation.indicator()) {
       final boolean tagNotNull = handler.getXmlTag() != null;

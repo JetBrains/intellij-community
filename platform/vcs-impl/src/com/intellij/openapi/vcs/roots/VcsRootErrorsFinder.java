@@ -6,7 +6,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -51,11 +50,7 @@ public class VcsRootErrorsFinder {
     Collection<VcsRootError> errors = new ArrayList<>();
     List<String> mappedPaths = mappingsToPathsWithSelectedVcs(mappings);
     for (VcsRoot root : vcsRoots) {
-      VirtualFile virtualFileFromRoot = root.getPath();
-      if (virtualFileFromRoot == null) {
-        continue;
-      }
-      String vcsPath = virtualFileFromRoot.getPath();
+      String vcsPath = root.getPath().getPath();
       if (root.getVcs() != null && !mappedPaths.contains(vcsPath)) {
         errors.add(new VcsRootErrorImpl(VcsRootError.Type.UNREGISTERED_ROOT, vcsPath, root.getVcs().getName()));
       }

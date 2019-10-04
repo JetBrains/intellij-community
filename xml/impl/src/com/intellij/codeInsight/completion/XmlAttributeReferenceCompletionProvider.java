@@ -76,7 +76,7 @@ public class XmlAttributeReferenceCompletionProvider extends CompletionProvider<
     final XmlTag tag = attribute.getParent();
     final PsiFile file = tag.getContainingFile();
     final XmlExtension extension = XmlExtension.getExtension(file);
-    final String prefix = attribute.getName().contains(":") && ((XmlAttributeImpl) attribute).getRealLocalName().length() > 0
+    final String prefix = attribute.getName().contains(":") && XmlAttributeImpl.getRealName(attribute).length() > 0
                           ? attribute.getNamespacePrefix() + ":"
                           : null;
 

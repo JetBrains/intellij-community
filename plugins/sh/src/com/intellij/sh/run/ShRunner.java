@@ -11,7 +11,7 @@ public abstract class ShRunner {
     myProject = project;
   }
 
-  public abstract void run(@NotNull String command);
+  public abstract void run(@NotNull String command, @NotNull String workingDirectory);
 
   public abstract boolean isAvailable(@NotNull Project project);
 }

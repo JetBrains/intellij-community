@@ -246,6 +246,11 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
 
   @NotNull
   public static JLabel createCommentComponent(@Nullable String commentText, boolean isCommentBelow) {
+    return createCommentComponent(commentText, isCommentBelow, 70);
+  }
+
+  @NotNull
+  public static JLabel createCommentComponent(@Nullable String commentText, boolean isCommentBelow, int maxLineLength) {
     // todo why our JBLabel cannot render html if render panel without frame (test only)
     boolean isCopyable = SystemProperties.getBooleanProperty("idea.ui.comment.copyable", true);
     JLabel component = new JBLabel("").setCopyable(isCopyable).setAllowAutoWrapping(true);
@@ -260,7 +265,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
     }
 
     if (isCopyable) {
-      setCommentText(component, commentText, isCommentBelow);
+      setCommentText(component, commentText, isCommentBelow, maxLineLength);
     }
     else {
       component.setText(commentText);
@@ -268,7 +273,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
     return component;
   }
 
-  private static void setCommentText(@NotNull JLabel component, @Nullable String commentText, boolean isCommentBelow) {
+  private static void setCommentText(@NotNull JLabel component, @Nullable String commentText, boolean isCommentBelow, int maxLineLength) {
     if (commentText != null) {
       String css = "<head><style type=\"text/css\">\n" +
                          "a, a:link {color:#" + ColorUtil.toHex(JBUI.CurrentTheme.Link.linkColor()) + ";}\n" +
@@ -277,7 +282,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
                          "a:active {color:#" + ColorUtil.toHex(JBUI.CurrentTheme.Link.linkPressedColor()) + ";}\n" +
                          //"body {background-color:#" + ColorUtil.toHex(JBColor.YELLOW) + ";}\n" + // Left for visual debugging
                          "</style>\n</head>";
-      if (commentText.length() > 70 && isCommentBelow) {
+      if (commentText.length() > maxLineLength && isCommentBelow) {
         int width = component.getFontMetrics(component.getFont()).stringWidth(commentText.substring(0, 70));
         component.setText(String.format("<html>" + css + "<body><div width=%d>%s</div></body></html>", width, commentText));
       }
@@ -318,7 +323,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
     }
 
     private void setCommentTextImpl(String commentText) {
-      ComponentPanelBuilder.setCommentText(comment, commentText, myCommentBelow);
+      ComponentPanelBuilder.setCommentText(comment, commentText, myCommentBelow, 70);
     }
 
     private void addToPanel(JPanel panel, GridBagConstraints gc) {

@@ -9,29 +9,35 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.remoteServer.impl.runtime.ui.tree.ServersTreeNodeSelector;
 import com.intellij.remoteServer.runtime.ServerConnection;
 import com.intellij.remoteServer.runtime.ui.RemoteServersView;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * @author nik
  */
 public class RemoteServersViewImpl extends RemoteServersView {
-  @NotNull private final Project myProject;
-  @NotNull private final List<Pair<ServersTreeNodeSelector, Condition<ServerConnection>>> myCustomSelectors = ContainerUtil.newSmartList();
+  private final Project myProject;
+  private final List<Pair<ServersTreeNodeSelector, Condition<ServerConnection>>> myCustomSelectors = new CopyOnWriteArrayList<>();
 
   public RemoteServersViewImpl(@NotNull Project project) {
     myProject = project;
   }
 
   @Override
-  public void showServerConnection(@NotNull final ServerConnection<?> connection) {
-    final ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(getToolWindowId(connection));
+  public void showServerConnection(@NotNull ServerConnection<?> connection) {
+    ServersTreeNodeSelector customSelector = findCustomSelector(connection);
+    if (customSelector != null) {
+      customSelector.select(connection);
+      return;
+    }
+
+    ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(getToolWindowId(connection));
     if (toolWindow != null) {
       toolWindow.activate(() -> {
-        ServersTreeNodeSelector selector = getSelector(toolWindow, connection);
+        ServersTreeNodeSelector selector = findSelector(toolWindow);
         if (selector != null) {
           selector.select(connection);
         }
@@ -39,11 +45,12 @@ public class RemoteServersViewImpl extends RemoteServersView {
     }
   }
 
-  private ServersTreeNodeSelector getSelector(ToolWindow toolWindow, ServerConnection<?> connection) {
+  private ServersTreeNodeSelector findSelector(ToolWindow toolWindow) {
     //todo[nik] register ServersToolWindowContent as project service?
-    ServersTreeNodeSelector selector = UIUtil.findComponentOfType(toolWindow.getComponent(), ServersToolWindowContent.class);
-    if (selector != null) return selector;
+    return UIUtil.findComponentOfType(toolWindow.getComponent(), ServersToolWindowContent.class);
+  }
 
+  private ServersTreeNodeSelector findCustomSelector(ServerConnection<?> connection) {
     for (Pair<ServersTreeNodeSelector, Condition<ServerConnection>> pair : myCustomSelectors) {
       if (pair.second.value(connection)) {
         return pair.first;
@@ -53,12 +60,18 @@ public class RemoteServersViewImpl extends RemoteServersView {
   }
 
   @Override
-  public void showDeployment(@NotNull final ServerConnection<?> connection, @NotNull final String deploymentName) {
+  public void showDeployment(@NotNull ServerConnection<?> connection, @NotNull String deploymentName) {
+    ServersTreeNodeSelector customSelector = findCustomSelector(connection);
+    if (customSelector != null) {
+      customSelector.select(connection, deploymentName);
+      return;
+    }
+
     ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
-    final ToolWindow toolWindow = toolWindowManager.getToolWindow(getToolWindowId(connection));
+    ToolWindow toolWindow = toolWindowManager.getToolWindow(getToolWindowId(connection));
     if (toolWindow != null) {
       toolWindowManager.invokeLater(() -> {
-        ServersTreeNodeSelector selector = getSelector(toolWindow, connection);
+        ServersTreeNodeSelector selector = findSelector(toolWindow);
         if (selector != null) {
           selector.select(connection, deploymentName);
         }

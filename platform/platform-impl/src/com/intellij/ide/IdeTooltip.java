@@ -15,6 +15,7 @@
  */
 package com.intellij.ide;
 
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.awt.RelativePoint;
@@ -131,7 +132,7 @@ public class IdeTooltip extends ComparableObject.Impl {
   }
 
   public int getShowDelay() {
-    return myHighlighter ? Registry.intValue("ide.tooltip.initialDelay.highlighter") : Registry.intValue("ide.tooltip.initialDelay");
+    return myHighlighter ? EditorSettingsExternalizable.getInstance().getTooltipsDelay() : Registry.intValue("ide.tooltip.initialDelay");
   }
 
   public int getInitialReshowDelay() {

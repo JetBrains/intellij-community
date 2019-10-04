@@ -20,14 +20,14 @@ internal class GitRebaseEntry(var action: Action, val commit: String, val subjec
   constructor(action: String, commit: String, subject: String) : this(Action.fromString(action), commit, subject)
 
   sealed class Action(val name: String, val mnemonic: Char) {
-    object PICK: Action("pick", 'p')
-    object EDIT: Action("edit", 'e')
-    object SKIP: Action("skip", 's')
-    object SQUASH: Action("squash", 'q')
-    object REWORD: Action("reword", 'r')
-    object FIXUP: Action("fixup", 'f')
+    object PICK : Action("pick", 'p')
+    object EDIT : Action("edit", 'e')
+    object DROP : Action("drop", 'd')
+    object SQUASH : Action("squash", 's')
+    object REWORD : Action("reword", 'r')
+    object FIXUP : Action("fixup", 'f')
 
-    class Other(name: String): Action(name, '?')
+    class Other(name: String) : Action(name, '?')
 
     override fun toString(): String {
       return name
@@ -35,10 +35,10 @@ internal class GitRebaseEntry(var action: Action, val commit: String, val subjec
 
     companion object {
       @JvmStatic
-      val knownActions = listOf(PICK, EDIT, SKIP, SQUASH, REWORD, FIXUP)
+      val knownActions = listOf(PICK, EDIT, DROP, SQUASH, REWORD, FIXUP)
 
       @JvmStatic
-      fun getKnownActionsArray() : Array<Action> = knownActions.toTypedArray()
+      fun getKnownActionsArray(): Array<Action> = knownActions.toTypedArray()
 
       internal fun fromString(actionName: String): Action {
         return knownActions.find { it.name == actionName } ?: Other(actionName)

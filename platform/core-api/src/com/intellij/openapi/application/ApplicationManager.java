@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.Disposable;
@@ -8,16 +8,11 @@ import com.intellij.openapi.util.Getter;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Provides access to the {@code Application}.
+ * Provides access to the {@link Application}.
  */
 public class ApplicationManager {
   protected static Application ourApplication;
 
-  /**
-   * Gets Application.
-   *
-   * @return {@code Application}
-   */
   public static Application getApplication() {
     return ourApplication;
   }

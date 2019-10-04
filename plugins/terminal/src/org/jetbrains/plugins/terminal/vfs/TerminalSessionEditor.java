@@ -25,7 +25,7 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.jediterm.terminal.TtyConnectorWaitFor;
 import com.jediterm.terminal.ui.TerminalAction;
 import com.jediterm.terminal.ui.TerminalActionProviderBase;
@@ -65,7 +65,8 @@ public class TerminalSessionEditor extends UserDataHolderBase implements FileEdi
       }
     });
 
-    myWaitFor = new TtyConnectorWaitFor(myFile.getTerminalWidget().getTtyConnector(), ConcurrencyUtil.newSingleThreadExecutor("Terminal session"));
+    myWaitFor = new TtyConnectorWaitFor(myFile.getTerminalWidget().getTtyConnector(), SequentialTaskExecutor
+      .createSequentialApplicationPoolExecutor("Terminal session"));
 
     myWaitFor
       .setTerminationCallback(integer -> {

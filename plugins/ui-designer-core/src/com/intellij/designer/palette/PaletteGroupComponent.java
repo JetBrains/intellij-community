@@ -1,9 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.designer.palette;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.Gray;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -41,9 +42,9 @@ public class PaletteGroupComponent extends JCheckBox {
   @Override
   public Color getBackground() {
     if (isFocusOwner()) {
-      return UIUtil.getListSelectionBackground();
+      return UIUtil.getListSelectionBackground(true);
     }
-    if (UIUtil.isUnderDarcula()) {
+    if (StartupUiUtil.isUnderDarcula()) {
       return Gray._100;
     }
     return super.getBackground();

@@ -25,12 +25,14 @@ import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.PlatformUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
+import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
 import org.jetbrains.idea.devkit.projectRoots.IdeaJdk;
 import org.jetbrains.idea.devkit.projectRoots.IntelliJPlatformProduct;
@@ -169,7 +171,7 @@ public class PluginRunConfiguration extends RunConfigurationBase<Element> implem
         vm.defineProperty("idea.classpath.index.enabled", "false");
 
         if (!vm.hasProperty(JetBrainsProtocolHandler.REQUIRED_PLUGINS_KEY) && PluginModuleType.isOfType(module)) {
-          final String id = DescriptorUtil.getPluginId(module);
+          final String id = getPluginId(module);
           if (id != null) {
             vm.defineProperty(JetBrainsProtocolHandler.REQUIRED_PLUGINS_KEY, id);
           }
@@ -334,5 +336,14 @@ public class PluginRunConfiguration extends RunConfigurationBase<Element> implem
 
   public void setModule(Module module) {
     myModule = module;
+  }
+
+  @Nullable
+  private static String getPluginId(Module plugin) {
+    final XmlFile pluginXml = PluginModuleType.getPluginXml(plugin);
+    if (pluginXml == null) return null;
+
+    final IdeaPlugin ideaPlugin = DescriptorUtil.getIdeaPlugin(pluginXml);
+    return ideaPlugin == null ? null : ideaPlugin.getPluginId();
   }
 }

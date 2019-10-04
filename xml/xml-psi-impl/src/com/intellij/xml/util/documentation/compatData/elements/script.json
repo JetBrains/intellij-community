@@ -14,9 +14,6 @@
             "edge": {
               "version_added": true
             },
-            "edge_mobile": {
-              "version_added": true
-            },
             "firefox": {
               "version_added": "1",
               "notes": "Starting in Firefox 4, inserting &lt;script&gt; elements that have been created by calling <code>document.createElement(\"script\")</code> no longer enforces execution in insertion order. This change lets Firefox properly abide by the specification. To make script-inserted external scripts execute in their insertion order, set <code>.async=false</code> on them."
@@ -62,9 +59,6 @@
                 "version_added": true
               },
               "edge": {
-                "version_added": true
-              },
-              "edge_mobile": {
                 "version_added": true
               },
               "firefox": {
@@ -114,9 +108,6 @@
               "edge": {
                 "version_added": true
               },
-              "edge_mobile": {
-                "version_added": null
-              },
               "firefox": {
                 "version_added": "13"
               },
@@ -164,9 +155,6 @@
                 "version_added": true
               },
               "edge": {
-                "version_added": true
-              },
-              "edge_mobile": {
                 "version_added": true
               },
               "firefox": {
@@ -219,9 +207,6 @@
                 "version_added": "17",
                 "partial_implementation": true
               },
-              "edge_mobile": {
-                "version_added": false
-              },
               "firefox": {
                 "version_added": "43"
               },
@@ -267,9 +252,6 @@
                 "version_added": true
               },
               "edge": {
-                "version_added": true
-              },
-              "edge_mobile": {
                 "version_added": true
               },
               "firefox": {
@@ -318,9 +300,6 @@
               },
               "edge": {
                 "version_added": "16"
-              },
-              "edge_mobile": {
-                "version_added": false
               },
               "firefox": [
                 {
@@ -395,9 +374,6 @@
               "edge": {
                 "version_added": null
               },
-              "edge_mobile": {
-                "version_added": null
-              },
               "firefox": {
                 "version_added": "65"
               },
@@ -440,9 +416,6 @@
                 "version_added": true
               },
               "edge": {
-                "version_added": true
-              },
-              "edge_mobile": {
                 "version_added": true
               },
               "firefox": {
@@ -492,9 +465,6 @@
               "edge": {
                 "version_added": true
               },
-              "edge_mobile": {
-                "version_added": true
-              },
               "firefox": {
                 "version_added": "1"
               },
@@ -542,9 +512,6 @@
               "edge": {
                 "version_added": true
               },
-              "edge_mobile": {
-                "version_added": true
-              },
               "firefox": {
                 "version_added": "1"
               },
@@ -590,9 +557,6 @@
                 },
                 "edge": {
                   "version_added": "16"
-                },
-                "edge_mobile": {
-                  "version_added": false
                 },
                 "firefox": [
                   {
@@ -666,9 +630,6 @@
                   "version_added": false
                 },
                 "edge": {
-                  "version_added": false
-                },
-                "edge_mobile": {
                   "version_added": false
                 },
                 "firefox": {

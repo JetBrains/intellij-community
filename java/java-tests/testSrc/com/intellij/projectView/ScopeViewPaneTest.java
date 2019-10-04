@@ -204,6 +204,7 @@ public class ScopeViewPaneTest extends TestSourceBasedTestCase {
     Disposer.dispose(pane);
   }
 
+  @Bombed(user = "SAM", year = 2020, month = Calendar.JANUARY, day = 10)
   public void testInScope() {
     ScopeTreeViewPanel pane = null;
     try {
@@ -218,6 +219,7 @@ public class ScopeViewPaneTest extends TestSourceBasedTestCase {
 
       final ProjectViewImpl view = (ProjectViewImpl)ProjectView.getInstance(getProject());
       changeView(view, ProjectFilesScope.INSTANCE);
+      view.setFlattenPackages(ScopeViewPane.ID, true);
       view.setHideEmptyPackages(ScopeViewPane.ID, true);
 
       pane.refreshScope(namedScope);

@@ -10,16 +10,8 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
  * @author Pavel.Dolgov
  */
 class DuplicateBranchesInEnhancedSwitchTest : LightJavaCodeInsightFixtureTestCase() {
-  val inspection = DuplicateBranchesInSwitchInspection()
-
-  override fun setUp() {
-    super.setUp()
-    myFixture.enableInspections(inspection)
-  }
-
   override fun getBasePath() = JavaTestUtil.getRelativeJavaTestDataPath() + "/inspection/duplicateBranchesInEnhancedSwitch"
-
-  override fun getProjectDescriptor(): LightProjectDescriptor = JAVA_12
+  override fun getProjectDescriptor(): LightProjectDescriptor = JAVA_13
 
   fun testSimpleExpression() = doTest()
   fun testSimpleStatement() = doTest()
@@ -35,6 +27,7 @@ class DuplicateBranchesInEnhancedSwitchTest : LightJavaCodeInsightFixtureTestCas
   fun testCaseLabelsExpressionSameComments() = doTest()
 
   private fun doTest() {
+    myFixture.enableInspections(DuplicateBranchesInSwitchInspection())
     myFixture.testHighlighting("${getTestName(false)}.java")
   }
 }

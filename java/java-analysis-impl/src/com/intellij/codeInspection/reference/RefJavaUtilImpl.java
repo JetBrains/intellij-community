@@ -295,7 +295,8 @@ public class RefJavaUtilImpl extends RefJavaUtil {
 
                        @Override
                        public boolean visitReturnExpression(@NotNull UReturnExpression node) {
-                         if (refFrom instanceof RefMethodImpl) {
+                         if (refFrom instanceof RefMethodImpl && 
+                             UastUtils.getParentOfType(node, UMethod.class, false, UClass.class, ULambdaExpression.class) == decl) {
                            RefMethodImpl refMethod = (RefMethodImpl)refFrom;
                            refMethod.updateReturnValueTemplate(node.getReturnExpression());
                          }

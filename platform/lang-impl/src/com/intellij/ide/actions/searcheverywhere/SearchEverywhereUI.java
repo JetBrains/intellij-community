@@ -183,11 +183,6 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
     return mySelectedTab.everywhereAction.isEverywhere();
   }
 
-  private boolean canToggleEverywhere() {
-    if (mySelectedTab.everywhereAction == null) return false;
-    return mySelectedTab.everywhereAction.canToggleEverywhere();
-  }
-
   public void switchToContributor(@NotNull String contributorID) {
     SETab selectedTab = myTabs.stream()
       .filter(tab -> tab.getID().equals(contributorID))
@@ -213,7 +208,7 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
     mySelectedTab = tab;
     boolean nextTabIsAll = isAllTabSelected();
 
-    if (myEverywhereAutoSet && isEverywhere() && canToggleEverywhere()) {
+    if (myEverywhereAutoSet && isEverywhere()) {
       setEverywhereAuto(false);
     }
 
@@ -626,21 +621,7 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
     myResultsList.addMouseMotionListener(listMouseListener);
     myResultsList.addMouseListener(listMouseListener);
 
-    mySearchField.addKeyListener(new KeyAdapter() {
-      @Override
-      public void keyPressed(KeyEvent e) {
-        if (e.isShiftDown()) {
-          if (e.getKeyCode() == KeyEvent.VK_DOWN) {
-            myResultsList.dispatchEvent(e);
-            e.consume();
-          }
-          if (e.getKeyCode() == KeyEvent.VK_UP) {
-            myResultsList.dispatchEvent(e);
-            e.consume();
-          }
-        }
-      }
-    });
+    ScrollingUtil.redirectExpandSelection(myResultsList, mySearchField);
 
     Consumer<AnActionEvent> nextTabAction = e -> {
       switchToNextTab();
@@ -691,7 +672,7 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
         String newSearchString = getSearchPattern();
         if (myNotFoundString != null) {
           boolean newPatternContainsPrevious = myNotFoundString.length() > 1 && newSearchString.contains(myNotFoundString);
-          if (myEverywhereAutoSet && isEverywhere() && canToggleEverywhere() && !newPatternContainsPrevious) {
+          if (myEverywhereAutoSet && isEverywhere() && !newPatternContainsPrevious) {
             myNotFoundString = null;
             setEverywhereAuto(false);
             return;
@@ -956,7 +937,7 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
   private class CompositeCellRenderer implements ListCellRenderer<Object> {
 
     @Override
-    public Component getListCellRendererComponent(JList<? extends Object> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+    public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
       if (value == SearchListModel.MORE_ELEMENT) {
         Component component = myMoreRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
         component.setPreferredSize(UIUtil.updateListRowHeight(component.getPreferredSize()));
@@ -974,6 +955,7 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
       if (component instanceof JComponent) {
         ((JComponent)component).setBorder(JBUI.Borders.empty(1, 2));
       }
+      AppUIUtil.targetToDevice(component, list);
       component.setPreferredSize(UIUtil.updateListRowHeight(component.getPreferredSize()));
       if (isAllTabSelected() && myListModel.isGroupFirstItem(index)) {
         component = myGroupTitleRenderer.withDisplayedData(contributor.getFullGroupName(), component);
@@ -1585,7 +1567,7 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
     @Override
     public void searchFinished(@NotNull Map<SearchEverywhereContributor<?>, Boolean> hasMoreContributors) {
       if (myResultsList.isEmpty() || myListModel.isResultsExpired()) {
-        if (myEverywhereAutoSet && !isEverywhere() && canToggleEverywhere() && !getSearchPattern().isEmpty()) {
+        if (myEverywhereAutoSet && !isEverywhere() && !getSearchPattern().isEmpty()) {
           setEverywhereAuto(true);
           myNotFoundString = getSearchPattern();
           return;

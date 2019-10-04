@@ -53,7 +53,7 @@ public class DebugAttachDetector {
       LOG.error(ex);
     }
     catch (IllegalAccessException ex) {
-      if (app.isInternal()) {
+      if (app.isInternal() && !PluginManagerCore.isRunningFromSources()) {
         LOG.warn("Unable to start DebugAttachDetector, please add `--add-exports=java.base/jdk.internal.vm=ALL-UNNAMED` to VM options");
       }
     }

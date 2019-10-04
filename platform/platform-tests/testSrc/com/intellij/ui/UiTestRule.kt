@@ -1,25 +1,36 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui
 
-import com.intellij.testFramework.UsefulTestCase
+import com.intellij.openapi.util.IconLoader
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.util.SmartList
 import com.intellij.util.ui.JBUI
+import org.junit.ClassRule
 import org.junit.rules.TestName
 import org.junit.runners.model.MultipleFailureException
 import java.nio.file.Path
+import java.nio.file.Paths
 import javax.swing.JPanel
 
 class UiTestRule(private val testDataRoot: Path) : RequireHeadlessMode() {
+  companion object {
+    @JvmField
+    @ClassRule
+    val uiRule = UiTestRule(Paths.get(PlatformTestUtil.getPlatformTestDataPath(), "ui", "layout"))
+  }
+
   override fun before() {
     super.before()
 
     IconManager.activate()
+    IconLoader.activate()
   }
 
   override fun after() {
     super.after()
 
     IconManager.deactivate()
+    IconLoader.deactivate()
   }
 
   fun validate(panel: JPanel, testName: TestName, lafName: String) {
@@ -35,18 +46,6 @@ class UiTestRule(private val testDataRoot: Path) : RequireHeadlessMode() {
     panel.doLayout()
 
     val errors = SmartList<Throwable>()
-
-    try {
-      validateBounds(panel, snapshotDir, snapshotName)
-    }
-    catch (e: Throwable) {
-      if (UsefulTestCase.IS_UNDER_TEAMCITY) {
-        // TC doesn't support MultipleFailureException correctly
-        throw e
-      }
-
-      errors.add(e)
-    }
 
     try {
       compareSvgSnapshot(svgRenderer.svgFileDir.resolve("$snapshotName.svg"), svgRenderer.render(panel), isUpdateSnapshotsGlobal)

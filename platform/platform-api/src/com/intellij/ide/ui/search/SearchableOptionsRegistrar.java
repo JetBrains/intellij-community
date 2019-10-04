@@ -22,7 +22,7 @@ public abstract class SearchableOptionsRegistrar{
   }
 
   @NotNull
-  public abstract ConfigurableHit getConfigurables(@NotNull List<ConfigurableGroup> groups,
+  public abstract ConfigurableHit getConfigurables(@NotNull List<? extends ConfigurableGroup> groups,
                                                    final DocumentEvent.EventType type,
                                                    @Nullable Set<? extends Configurable> configurables,
                                                    @NotNull String option,
@@ -43,7 +43,4 @@ public abstract class SearchableOptionsRegistrar{
   public abstract Set<String> getProcessedWordsWithoutStemming(@NotNull String text);
 
   public abstract Set<String> getProcessedWords(@NotNull String text);
-
-  @NotNull
-  public abstract Collection<String> getOptionsTopHit(@NotNull String configurableId);
 }

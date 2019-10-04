@@ -22,7 +22,6 @@ import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.annotate.LineAnnotationAspect;
 import com.intellij.openapi.vcs.annotate.TextAnnotationPresentation;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,7 +62,7 @@ public class AspectAnnotationFieldGutter extends AnnotationFieldGutter {
   @Nullable
   @Override
   public String getToolTip(final int line, final Editor editor) {
-    return isAvailable() ? XmlStringUtil.escapeString(myAnnotation.getToolTip(line)) : null;
+    return isAvailable() ? myAnnotation.getHtmlToolTip(line) : null;
   }
 
   @Override

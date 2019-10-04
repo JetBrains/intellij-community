@@ -669,7 +669,7 @@ public class ExpressionUtils {
     return null;
   }
 
-  public static boolean isConcatenation(PsiElement element) {
+  public static boolean isStringConcatenation(PsiElement element) {
     if (!(element instanceof PsiPolyadicExpression)) {
       return false;
     }
@@ -1415,13 +1415,6 @@ public class ExpressionUtils {
             expression = (PsiExpression)block;
             continue;
           }
-        }
-      }
-      else if (parent instanceof PsiBreakStatement) {
-        final PsiElement exitedElement = ((PsiBreakStatement)parent).findExitedElement();
-        if (exitedElement instanceof PsiSwitchExpression) {
-          expression = (PsiExpression)exitedElement;
-          continue;
         }
       }
       else if (parent instanceof PsiYieldStatement) {

@@ -35,7 +35,7 @@ public class DiscoveredTestsIndex extends MapReduceIndex<Integer, TIntArrayList,
   }
 
   public boolean containsDataFrom(int testId) throws IOException {
-    return getForwardIndexMap().get(testId) != null;
+    return getForwardIndex().get(testId) != null;
   }
 
   private static class MyIndexStorage extends MapIndexStorage<Integer, TIntArrayList> {

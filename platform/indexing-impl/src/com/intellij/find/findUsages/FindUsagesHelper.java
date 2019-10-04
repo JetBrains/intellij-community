@@ -75,7 +75,7 @@ public class FindUsagesHelper {
       return equivalentReferencesOnly ? null : new UsageInfo(usage, startOffset, endOffset, true);
     };
     for (String s : stringToSearch) {
-      if (!PsiSearchHelperImpl.processTextOccurrences(element, s, searchScope, processor, factory)) return false;
+      if (!PsiSearchHelperImpl.processTextOccurrences(element, s, searchScope, factory, processor)) return false;
     }
     return true;
   }

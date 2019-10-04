@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.projectView.impl;
 
@@ -9,6 +9,7 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -31,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
@@ -52,7 +54,15 @@ public class ProjectViewTree extends DnDAwareTree {
 
   public ProjectViewTree(TreeModel model) {
     super(model);
+    setCellRenderer(createCellRenderer());
+    HintUpdateSupply.installDataContextHintUpdateSupply(this);
+  }
 
+  /**
+   * @return custom renderer for tree nodes
+   */
+  @NotNull
+  protected TreeCellRenderer createCellRenderer() {
     final NodeRenderer cellRenderer = new NodeRenderer() {
       @Override
       protected void doPaint(Graphics2D g) {
@@ -91,15 +101,17 @@ public class ProjectViewTree extends DnDAwareTree {
             append(DateFormatUtil.formatDateTime(attr.lastModifiedTime().toMillis()), attributes);
             append(", " + StringUtil.formatFileSize(attr.size()), attributes);
           }
+
+          if (Registry.is("show.last.visited.timestamps") && file != null && node.getProject() != null) {
+            IdeDocumentHistoryImpl.appendTimestamp(node.getProject(), this, file);
+          }
         }
       }
     };
     cellRenderer.setOpaque(false);
     cellRenderer.setIconOpaque(false);
-    setCellRenderer(cellRenderer);
     cellRenderer.setTransparentIconBackground(true);
-
-    HintUpdateSupply.installDataContextHintUpdateSupply(this);
+    return cellRenderer;
   }
 
   /**

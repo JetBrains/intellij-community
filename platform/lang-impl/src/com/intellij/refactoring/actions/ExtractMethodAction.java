@@ -17,25 +17,10 @@
 package com.intellij.refactoring.actions;
 
 import com.intellij.lang.refactoring.RefactoringSupportProvider;
-import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringActionHandler;
 import org.jetbrains.annotations.NotNull;
 
-public class ExtractMethodAction extends BasePlatformRefactoringAction {
-  public ExtractMethodAction() {
-    setInjectedContext(true);
-  }
-
-  @Override
-  public boolean isAvailableInEditorOnly() {
-    return true;
-  }
-
-  @Override
-  public boolean isEnabledOnElements(@NotNull PsiElement[] elements) {
-    return false;
-  }
-
+public class ExtractMethodAction extends IntroduceActionBase {
   @Override
   protected RefactoringActionHandler getRefactoringHandler(@NotNull RefactoringSupportProvider provider) {
     return provider.getExtractMethodHandler();

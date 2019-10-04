@@ -16,7 +16,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.containers.ConcurrentList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBusConnection;
@@ -412,7 +411,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
     myCatalogManager.unregisterCatalogUpdateCallback(callback);
   }
 
-  private final ConcurrentList<Runnable> myResetActions = ContainerUtil.createConcurrentList();
+  private final List<Runnable> myResetActions = ContainerUtil.createConcurrentList();
 
   @Override
   public void registerResetAction(Runnable action) {

@@ -1,7 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui.impl;
 
-import com.intellij.ide.ui.LafManager;
+import com.intellij.ide.ui.LafManagerListener;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.ui.JreHiDpiUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
@@ -20,7 +21,7 @@ import java.awt.image.BufferedImage;
 /**
  * @author Konstantin Bulenkov
  */
-public class ShadowPainter extends ScaleContextSupport {
+public final class ShadowPainter extends ScaleContextSupport {
   private final Icon myTop;
   private final Icon myTopRight;
   private final Icon myRight;
@@ -49,7 +50,7 @@ public class ShadowPainter extends ScaleContextSupport {
     myTopLeft = topLeft;
 
     updateIcons(null);
-    LafManager.getInstance().addLafManagerListener(source -> updateIcons(null));
+    ApplicationManager.getApplication().getMessageBus().connect().subscribe(LafManagerListener.TOPIC, source -> updateIcons(null));
   }
 
   public ShadowPainter(Icon top, Icon topRight, Icon right, Icon bottomRight, Icon bottom, Icon bottomLeft, Icon left, Icon topLeft, @Nullable Color borderColor) {

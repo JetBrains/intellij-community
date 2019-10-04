@@ -15,7 +15,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.management.ManagementFactory;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -30,12 +29,13 @@ import java.util.regex.Pattern;
 /**
  * @author max
  */
-public class BootstrapClassLoaderUtil extends ClassUtilCore {
+public class BootstrapClassLoaderUtil {
+  public static final String CLASSPATH_ORDER_FILE = "classpath-order.txt";
+
   private static final String PROPERTY_IGNORE_CLASSPATH = "ignore.classpath";
   private static final String PROPERTY_ALLOW_BOOTSTRAP_RESOURCES = "idea.allow.bootstrap.resources";
   private static final String PROPERTY_ADDITIONAL_CLASSPATH = "idea.additional.classpath";
-  public static final String CLASSPATH_ORDER_FILE = "classpath-order.txt";
-  private static final String MARKETPLACE_PLUGIN_NAME = "marketplace";
+  private static final String MARKETPLACE_PLUGIN_DIR = "marketplace";
 
   private BootstrapClassLoaderUtil() { }
 
@@ -53,10 +53,10 @@ public class BootstrapClassLoaderUtil extends ClassUtilCore {
     addAdditionalClassPath(classpath);
     addParentClasspath(classpath, true);
 
-    final File mpBoot = new File(PathManager.getPluginsPath(), MARKETPLACE_PLUGIN_NAME + "/lib/boot/marketplace-bootstrap.jar");
-    final boolean installMarketplace = mpBoot.exists();
+    File mpBoot = new File(PathManager.getPluginsPath(), MARKETPLACE_PLUGIN_DIR + "/lib/boot/marketplace-bootstrap.jar");
+    boolean installMarketplace = mpBoot.exists();
     if (installMarketplace) {
-      final File marketplaceImpl = new File(PathManager.getPluginsPath(), MARKETPLACE_PLUGIN_NAME + "/lib/boot/marketplace-impl.jar");
+      File marketplaceImpl = new File(PathManager.getPluginsPath(), MARKETPLACE_PLUGIN_DIR + "/lib/boot/marketplace-impl.jar");
       if (marketplaceImpl.exists()) {
         classpath.add(marketplaceImpl.toURI().toURL());
       }
@@ -78,8 +78,8 @@ public class BootstrapClassLoaderUtil extends ClassUtilCore {
     if (installMarketplace) {
       try {
         List<BytecodeTransformer> transformers = new SmartList<>();
-        UrlClassLoader mpBootloader = UrlClassLoader.build().urls(mpBoot.toURI().toURL()).parent(BootstrapClassLoaderUtil.class.getClassLoader()).get();
-        for (BytecodeTransformer transformer : ServiceLoader.load(BytecodeTransformer.class, mpBootloader)) {
+        UrlClassLoader spiLoader = UrlClassLoader.build().urls(mpBoot.toURI().toURL()).parent(BootstrapClassLoaderUtil.class.getClassLoader()).get();
+        for (BytecodeTransformer transformer : ServiceLoader.load(BytecodeTransformer.class, spiLoader)) {
           transformers.add(transformer);
         }
         if (!transformers.isEmpty()) {
@@ -88,8 +88,8 @@ public class BootstrapClassLoaderUtil extends ClassUtilCore {
       }
       catch (Throwable e) {
         // at this point logging is not initialized yet, so reporting the error directly
-        final String message = "As a workaround you may uninstall or update JetBrains Marketplace Support plugin at " +
-                               new File(PathManager.getPluginsPath(), MARKETPLACE_PLUGIN_NAME).getAbsolutePath();
+        String path = new File(PathManager.getPluginsPath(), MARKETPLACE_PLUGIN_DIR).getAbsolutePath();
+        String message = "As a workaround, you may uninstall or update JetBrains Marketplace Support plugin at " + path;
         Main.showMessage("JetBrains Marketplace boot failure", new Exception(message, e));
       }
     }
@@ -160,7 +160,8 @@ public class BootstrapClassLoaderUtil extends ClassUtilCore {
       }
     }
     else if (!ext) {
-      parseClassPathString(ManagementFactory.getRuntimeMXBean().getClassPath(), classpath);
+      // ManagementFactory.getRuntimeMXBean().getClassPath() = System.getProperty("java.class.path"), but 100 times faster
+      parseClassPathString(System.getProperty("java.class.path"), classpath);
     }
   }
 
@@ -266,19 +267,19 @@ public class BootstrapClassLoaderUtil extends ClassUtilCore {
     }
 
     @Override
-    protected Class _defineClass(String name, byte[] b) {
+    protected Class<?> _defineClass(String name, byte[] b) {
       return super._defineClass(name, doTransform(name, null, b));
     }
 
     @Override
-    protected Class _defineClass(String name, byte[] b, @Nullable ProtectionDomain protectionDomain) {
+    protected Class<?> _defineClass(String name, byte[] b, @Nullable ProtectionDomain protectionDomain) {
       return super._defineClass(name, doTransform(name, protectionDomain, b), protectionDomain);
     }
 
     private byte[] doTransform(String name, ProtectionDomain protectionDomain, byte[] bytes) {
       byte[] b = bytes;
       for (BytecodeTransformer transformer : myTransformers) {
-        final byte[] result = transformer.transform(this, name, protectionDomain, b);
+        byte[] result = transformer.transform(this, name, protectionDomain, b);
         if (result != null) {
           b = result;
         }

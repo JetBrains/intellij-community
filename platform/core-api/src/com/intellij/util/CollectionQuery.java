@@ -49,6 +49,7 @@ public class CollectionQuery<T> implements Query<T> {
     return findAll().toArray(a);
   }
 
+  @NotNull
   @Override
   public Iterator<T> iterator() {
     return myCollection.iterator();

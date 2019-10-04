@@ -1,10 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("ModuleChooserUtil")
 
 package org.jetbrains.plugins.groovy.util
 
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdkType
 import com.intellij.openapi.roots.ModuleRootManager
@@ -15,6 +16,7 @@ import com.intellij.openapi.util.Condition
 import com.intellij.ui.popup.list.ListPopupImpl
 import com.intellij.util.Consumer
 import com.intellij.util.Function
+import org.jetbrains.plugins.groovy.config.GroovyFacetUtil
 
 private const val GROOVY_LAST_MODULE = "Groovy.Last.Module.Chosen"
 
@@ -57,25 +59,15 @@ private fun createSelectModulePopupStep(project: Project, modules: List<Module>,
 fun formatModuleVersion(module: Module, version: String): String = "${module.name} (${version})"
 
 fun filterGroovyCompatibleModules(modules: Collection<Module>, condition: Condition<Module>): List<Module> {
-  return filterGroovyCompatibleModules(modules, condition.toPredicate())
-}
-
-fun filterGroovyCompatibleModules(modules: Collection<Module>, condition: (Module) -> Boolean): List<Module> {
-  return modules.filter(isGroovyCompatibleModule(condition))
+  return modules.filter(isGroovyCompatibleModule(condition.toPredicate()))
 }
 
 fun hasGroovyCompatibleModules(modules: Collection<Module>, condition: Condition<Module>): Boolean {
-  return hasGroovyCompatibleModules(modules, condition.toPredicate())
+  return modules.any(isGroovyCompatibleModule(condition.toPredicate()))
 }
 
-fun hasGroovyCompatibleModules(modules: Collection<Module>, condition: (Module) -> Boolean): Boolean {
-  return modules.any(isGroovyCompatibleModule(condition))
-}
+private inline fun isGroovyCompatibleModule(crossinline condition: (Module) -> Boolean) = ::hasJavaSdk and condition
 
-private inline fun isGroovyCompatibleModule(crossinline condition: (Module) -> Boolean): (Module) -> Boolean {
-  val sdkTypeCheck = { it: Module ->
-    val sdk = ModuleRootManager.getInstance(it).sdk
-    sdk != null && sdk.sdkType is JavaSdkType
-  }
-  return sdkTypeCheck and condition
-}
+fun hasJavaSdk(module: Module): Boolean = ModuleRootManager.getInstance(module).sdk?.sdkType is JavaSdkType
+
+fun hasAcceptableModuleType(module: Module): Boolean = GroovyFacetUtil.isAcceptableModuleType(ModuleType.get(module))

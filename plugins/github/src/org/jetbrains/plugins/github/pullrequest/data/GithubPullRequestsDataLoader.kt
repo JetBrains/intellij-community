@@ -4,7 +4,7 @@ package org.jetbrains.plugins.github.pullrequest.data
 import com.intellij.openapi.Disposable
 import org.jetbrains.annotations.CalledInAwt
 
-internal interface GithubPullRequestsDataLoader {
+internal interface GithubPullRequestsDataLoader : Disposable {
   @CalledInAwt
   fun getDataProvider(number: Long): GithubPullRequestDataProvider
 

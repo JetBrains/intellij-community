@@ -16,6 +16,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  *
  * @author max
  * @author Konstantin Bulenkov
+ * @see KeyWithDefaultValue
  */
 public class Key<T> {
   private static final AtomicInteger ourKeysCounter = new AtomicInteger();
@@ -97,7 +98,9 @@ public class Key<T> {
     return (Key<T>)allKeys.get(index);
   }
 
-  /** @deprecated access to a key via its name is a dirty hack; use Key instance directly instead */
+  /**
+   * @deprecated access to a key via its name is a dirty hack; use Key instance directly instead
+   */
   @Deprecated
   @Nullable
   public static Key<?> findKeyByName(String name) {

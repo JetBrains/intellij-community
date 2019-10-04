@@ -21,7 +21,7 @@ class PropertyAccessorInvocation implements Invocation {
   }
 
   @Override
-  public final Object invoke(final DomInvocationHandler<?, ?> handler, final Object[] args) throws Throwable {
+  public final Object invoke(final DomInvocationHandler handler, final Object[] args) throws Throwable {
     return invoke(0, handler.getProxy());
   }
 

@@ -3,6 +3,8 @@ package com.intellij.ui.scale;
 
 /**
  * Support for {@link UserScaleContext} (device scale independent).
+ *
+ * @author tav
  */
 public class UserScaleContextSupport extends AbstractScaleContextAware<UserScaleContext> {
   public UserScaleContextSupport() {

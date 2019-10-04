@@ -2,37 +2,32 @@
 package com.intellij.util.xml;
 
 import net.n3.nanoxml.IXMLBuilder;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.Reader;
 
+@SuppressWarnings("RedundantThrows")
 public interface NanoXmlBuilder extends IXMLBuilder {
   @Override
-  default void startBuilding(String s, int i) throws Exception {
-  }
+  default void startBuilding(String systemID, int lineNr) throws Exception { }
 
   @Override
-  default void newProcessingInstruction(String s, Reader reader) throws Exception {
-  }
+  default void newProcessingInstruction(String target, Reader reader) throws Exception { }
 
   @Override
-  default void startElement(String s, String s1, String s2, String s3, int i) throws Exception {
-  }
+  default void startElement(String name, @Nullable String nsPrefix, @Nullable String nsSystemID, String systemID, int lineNr) throws Exception { }
 
   @Override
-  default void addAttribute(String s, String s1, String s2, String s3, String s4) throws Exception {
-  }
+  default void addAttribute(String key, @Nullable String nsPrefix, @Nullable String nsSystemID, String value, String type) throws Exception { }
 
   @Override
-  default void elementAttributesProcessed(String s, String s1, String s2) throws Exception {
-  }
+  default void elementAttributesProcessed(String name, @Nullable String nsPrefix, @Nullable String nsSystemID) throws Exception { }
 
   @Override
-  default void endElement(String s, String s1, String s2) throws Exception {
-  }
+  default void endElement(String name, @Nullable String nsPrefix, @Nullable String nsSystemID) throws Exception { }
 
   @Override
-  default void addPCData(Reader reader, String s, int i) throws Exception {
-  }
+  default void addPCData(Reader reader, String systemID, int lineNr) throws Exception { }
 
   @Override
   default Object getResult() throws Exception {

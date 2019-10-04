@@ -66,6 +66,7 @@ public abstract class AntConfiguration extends SimpleModificationTracker {
 
   public abstract List<AntBuildFileBase> getBuildFileList();
 
+  @Nullable
   public abstract AntBuildFile addBuildFile(final VirtualFile file) throws AntNoFileException;
 
   public abstract void removeBuildFile(final AntBuildFile file);

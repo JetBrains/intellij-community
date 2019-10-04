@@ -12,9 +12,7 @@ import com.intellij.ui.tabs.TabInfo;
 import com.intellij.util.ui.TimedDeadzone;
 
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.util.function.Consumer;
 
 class ActionButton extends IconButton implements ActionListener {
@@ -27,20 +25,45 @@ class ActionButton extends IconButton implements ActionListener {
   private boolean myAutoHide;
   private boolean myToShow;
 
-  ActionButton(JBTabsImpl tabs, TabInfo tabInfo, AnAction action, String place, Consumer<MouseEvent> pass, TimedDeadzone.Length deadzone) {
+  ActionButton(JBTabsImpl tabs, TabInfo tabInfo, AnAction action, String place, Consumer<MouseEvent> pass, Consumer<Boolean> hover, TimedDeadzone.Length deadzone) {
     super(null, action.getTemplatePresentation().getIcon());
     myTabs = tabs;
     myTabInfo = tabInfo;
     myAction = action;
     myPlace = place;
 
+    MouseListener myListener = new MouseAdapter() {
+      @Override
+      public void mouseEntered(MouseEvent e) {
+        hover.accept(true);
+      }
+
+      @Override
+      public void mouseExited(MouseEvent e) {
+        hover.accept(false);
+      }
+    };
+
     myButton = new InplaceButton(this, this, pass, deadzone) {
       @Override
       protected void doRepaintComponent(Component c) {
         repaintComponent(c);
       }
+
+      @Override
+      public void addNotify() {
+        super.addNotify();
+        myButton.addMouseListener(myListener);
+      }
+
+      @Override
+      public void removeNotify() {
+        super.removeNotify();
+        myButton.removeMouseListener(myListener);
+      }
     };
     myButton.setVisible(false);
+    myButton.setFillBg(false);
   }
 
   public InplaceButton getComponent() {

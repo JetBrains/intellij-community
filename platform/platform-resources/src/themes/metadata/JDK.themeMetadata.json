@@ -1332,10 +1332,6 @@
       "key": "ToolTip.foreground"
     },
     {
-      "key": "ToolTip.infoForeground",
-      "description": "\"Inspection Info\" text in inspection error tooltips"
-    },
-    {
       "key": "Tree.background"
     },
     {

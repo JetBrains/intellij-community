@@ -3,7 +3,6 @@ package git4idea.changes;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
@@ -12,6 +11,7 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitContentRevision;
 import git4idea.GitRevisionNumber;
@@ -20,14 +20,11 @@ import git4idea.GitVcs;
 import git4idea.commands.*;
 import git4idea.repo.GitRepository;
 import git4idea.util.StringScanner;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.*;
-
-import static java.util.Collections.emptySet;
 
 /**
  * Change related utilities
@@ -55,43 +52,15 @@ public class GitChangeUtils {
    * @param parentRevision the parent revision for this change list
    * @param s              the lines to parse
    * @param changes        a list of changes to update
-   * @param ignoreNames    a set of names ignored during collection of the changes
    * @throws VcsException if the input format does not matches expected format
    */
-  public static void parseChanges(Project project,
-                                  VirtualFile vcsRoot,
-                                  @Nullable GitRevisionNumber thisRevision,
-                                  GitRevisionNumber parentRevision,
-                                  String s,
-                                  Collection<? super Change> changes,
-                                  final Set<String> ignoreNames) throws VcsException {
-    StringScanner sc = new StringScanner(s);
-    parseChanges(project, vcsRoot, thisRevision, parentRevision, sc, changes, ignoreNames);
-    if (sc.hasMoreData()) {
-      throw new IllegalStateException("Unknown file status: " + sc.line());
-    }
-  }
-
-  public static Collection<String> parseDiffForPaths(final String rootPath, final StringScanner s) throws VcsException {
-    final Collection<String> result = new ArrayList<>();
-
-    while (s.hasMoreData()) {
-      if (s.isEol()) {
-        s.nextLine();
-        continue;
-      }
-      if ("CADUMR".indexOf(s.peek()) == -1) {
-        // exit if there is no next character
-        break;
-      }
-      assert 'M' != s.peek() : "Moves are not yet handled";
-      String[] tokens = s.line().split("\t");
-      String path = tokens[tokens.length - 1];
-      path = rootPath + File.separator + GitUtil.unescapePath(path);
-      path = FileUtil.toSystemDependentName(path);
-      result.add(path);
-    }
-    return result;
+  private static void parseChanges(Project project,
+                                   VirtualFile vcsRoot,
+                                   @Nullable GitRevisionNumber thisRevision,
+                                   GitRevisionNumber parentRevision,
+                                   String s,
+                                   Collection<? super Change> changes) throws VcsException {
+    parseChanges(project, vcsRoot, thisRevision, parentRevision, new StringScanner(s), changes);
   }
 
   /**
@@ -103,7 +72,6 @@ public class GitChangeUtils {
    * @param parentRevision the parent revision for this change list
    * @param s              the lines to parse
    * @param changes        a list of changes to update
-   * @param ignoreNames    a set of names ignored during collection of the changes
    * @throws VcsException if the input format does not matches expected format
    */
   private static void parseChanges(Project project,
@@ -111,8 +79,18 @@ public class GitChangeUtils {
                                    @Nullable GitRevisionNumber thisRevision,
                                    @Nullable GitRevisionNumber parentRevision,
                                    StringScanner s,
-                                   Collection<? super Change> changes,
-                                   final Set<String> ignoreNames) throws VcsException {
+                                   Collection<? super Change> changes) throws VcsException {
+    parseChanges(vcsRoot, s, (status, beforePath, afterPath) -> {
+      assert beforePath != null || afterPath != null;
+      ContentRevision before = beforePath != null ? GitContentRevision.createRevision(beforePath, parentRevision, project) : null;
+      ContentRevision after = afterPath != null ? GitContentRevision.createRevision(afterPath, thisRevision, project) : null;
+      changes.add(new Change(before, after, status));
+    });
+  }
+
+  private static void parseChanges(@NotNull VirtualFile vcsRoot,
+                                   @NotNull StringScanner s,
+                                   @NotNull FileStatusLineConsumer consumer) throws VcsException {
     while (s.hasMoreData()) {
       FileStatus status = null;
       if (s.isEol()) {
@@ -124,16 +102,16 @@ public class GitChangeUtils {
         return;
       }
       String[] tokens = s.line().split("\t");
-      final ContentRevision before;
-      final ContentRevision after;
+      final FilePath before;
+      final FilePath after;
       final String path = tokens[tokens.length - 1];
       final FilePath filePath = GitContentRevision.createPathFromEscaped(vcsRoot, path);
       switch (tokens[0].charAt(0)) {
         case 'C':
         case 'A':
-          before = null;
           status = FileStatus.ADDED;
-          after = GitContentRevision.createRevision(filePath, thisRevision, project);
+          before = null;
+          after = filePath;
           break;
         case 'U':
           status = FileStatus.MERGED_WITH_CONFLICTS;
@@ -141,32 +119,33 @@ public class GitChangeUtils {
           if (status == null) {
             status = FileStatus.MODIFIED;
           }
-          before = GitContentRevision.createRevision(filePath, parentRevision, project);
-          after = GitContentRevision.createRevision(filePath, thisRevision, project);
+          before = filePath;
+          after = filePath;
           break;
         case 'D':
           status = FileStatus.DELETED;
-          before = GitContentRevision.createRevision(filePath, parentRevision, project);
+          before = filePath;
           after = null;
           break;
         case 'R':
           status = FileStatus.MODIFIED;
-          final FilePath oldFilePath = GitContentRevision.createPathFromEscaped(vcsRoot, tokens[1]);
-          before = GitContentRevision.createRevision(oldFilePath, parentRevision, project);
-          after = GitContentRevision.createRevision(filePath, thisRevision, project);
+          before = GitContentRevision.createPathFromEscaped(vcsRoot, tokens[1]);
+          after = filePath;
           break;
         case 'T':
           status = FileStatus.MODIFIED;
-          before = GitContentRevision.createRevision(filePath, parentRevision, project);
-          after = GitContentRevision.createRevisionForTypeChange(filePath, thisRevision, project);
+          before = filePath;
+          after = filePath;
           break;
         default:
           throw new VcsException("Unknown file status: " + Arrays.asList(tokens));
       }
-      if (ignoreNames == null || !ignoreNames.contains(path)) {
-        changes.add(new Change(before, after, status));
-      }
+      consumer.consume(status, before, after);
     }
+  }
+
+  private interface FileStatusLineConsumer {
+    void consume(@NotNull FileStatus status, @Nullable FilePath beforePath, @Nullable FilePath afterPath);
   }
 
   /**
@@ -206,17 +185,6 @@ public class GitChangeUtils {
     handler.endOptions();
     handler.setSilent(true);
     return handler;
-  }
-
-  /**
-   * Check if the exception means that HEAD is missing for the current repository.
-   *
-   * @param e the exception to examine
-   * @return true if the head is missing
-   */
-  public static boolean isHeadMissing(final VcsException e) {
-    @NonNls final String errorText = "fatal: bad revision 'HEAD'\n";
-    return e.getMessage().equals(errorText);
   }
 
   /**
@@ -303,7 +271,7 @@ public class GitChangeUtils {
       final GitRevisionNumber parentRevision = parents.length > 0 ? resolveReference(project, root, parents[0]) : null;
       // This is the first or normal commit with the single parent.
       // Just parse changes in this commit as returned by the show command.
-      parseChanges(project, root, thisRevision, local ? null : parentRevision, s, changes, null);
+      parseChanges(project, root, thisRevision, local ? null : parentRevision, s, changes);
     }
     else {
       // This is the merge commit. It has multiple parent commits.
@@ -316,7 +284,7 @@ public class GitChangeUtils {
         diffHandler.setSilent(true);
         diffHandler.addParameters("--name-status", "-M", parentRevision.getRev(), thisRevision.getRev());
         String diff = Git.getInstance().runCommand(diffHandler).getOutputOrThrow();
-        parseChanges(project, root, thisRevision, parentRevision, diff, changes, null);
+        parseChanges(project, root, thisRevision, parentRevision, diff, changes);
 
         if (changes.size() > 0) {
           break;
@@ -370,38 +338,59 @@ public class GitChangeUtils {
     String output = getDiffOutput(project, root, range, dirtyPaths, false, detectRenames);
 
     Collection<Change> changes = new ArrayList<>();
-    parseChanges(project, root, newRev, oldRev, output, changes, emptySet());
+    parseChanges(project, root, newRev, oldRev, output, changes);
     return changes;
   }
 
   @NotNull
-  public static Collection<Change> getStagedChanges(@NotNull Project project, @NotNull VirtualFile root) throws VcsException {
-    return getLocalChanges(project, root, "--cached", "-M");
+  public static Collection<GitDiffChange> getStagedChanges(@NotNull Project project, @NotNull VirtualFile root) throws VcsException {
+    return getLocalChanges(project, root, null, "--cached", "-M");
   }
 
   @NotNull
-  public static Collection<Change> getUnstagedChanges(@NotNull Project project,
-                                                      @NotNull VirtualFile root,
-                                                      boolean detectMoves) throws VcsException {
+  public static Collection<GitDiffChange> getUnstagedChanges(@NotNull Project project,
+                                                             @NotNull VirtualFile root,
+                                                             boolean detectMoves) throws VcsException {
     if (detectMoves) {
-      return getLocalChanges(project, root, "-M");
+      return getLocalChanges(project, root, null, "-M");
     }
     else {
-      return getLocalChanges(project, root, "--no-renames");
+      return getLocalChanges(project, root, null, "--no-renames");
     }
   }
 
   @NotNull
-  private static Collection<Change> getLocalChanges(@NotNull Project project,
-                                                    @NotNull VirtualFile root,
-                                                    String... parameters) throws VcsException {
-    GitLineHandler diff = new GitLineHandler(project, root, GitCommand.DIFF);
-    diff.addParameters("--name-status");
-    diff.addParameters(parameters);
-    String output = Git.getInstance().runCommand(diff).getOutputOrThrow();
+  public static Collection<GitDiffChange> getWorkingTreeChanges(@NotNull Project project,
+                                                                @NotNull VirtualFile root,
+                                                                @Nullable Collection<FilePath> paths,
+                                                                boolean detectMoves) throws VcsException {
+    if (detectMoves) {
+      return getLocalChanges(project, root, paths, "-M", "HEAD");
+    }
+    else {
+      return getLocalChanges(project, root, paths, "--no-renames", "HEAD");
+    }
+  }
 
-    Collection<Change> changes = new ArrayList<>();
-    parseChanges(project, root, null, GitRevisionNumber.HEAD, output, changes, emptySet());
+  @NotNull
+  private static Collection<GitDiffChange> getLocalChanges(@NotNull Project project,
+                                                           @NotNull VirtualFile root,
+                                                           @Nullable Collection<FilePath> paths,
+                                                           String... parameters) throws VcsException {
+    if (paths != null && paths.isEmpty()) return Collections.emptyList();
+
+    GitLineHandler handler = GitUtil.createHandlerWithPaths(paths, () -> {
+      GitLineHandler diff = new GitLineHandler(project, root, GitCommand.DIFF);
+      diff.addParameters("--name-status");
+      diff.addParameters(parameters);
+      return diff;
+    });
+    String output = Git.getInstance().runCommand(handler).getOutputOrThrow();
+
+    Collection<GitDiffChange> changes = new ArrayList<>();
+    parseChanges(root, new StringScanner(output), (status, beforePath, afterPath) -> {
+      changes.add(new GitDiffChange(status, beforePath, afterPath));
+    });
     return changes;
   }
 
@@ -439,16 +428,15 @@ public class GitChangeUtils {
 
   @NotNull
   public static Collection<Change> getDiffWithWorkingDir(@NotNull Project project,
-                                                          @NotNull VirtualFile root,
-                                                          @NotNull String oldRevision,
-                                                          @Nullable Collection<? extends FilePath> dirtyPaths,
-                                                          boolean reverse,
-                                                          boolean detectRenames) throws VcsException {
+                                                         @NotNull VirtualFile root,
+                                                         @NotNull String oldRevision,
+                                                         @Nullable Collection<? extends FilePath> dirtyPaths,
+                                                         boolean reverse,
+                                                         boolean detectRenames) throws VcsException {
     String output = getDiffOutput(project, root, oldRevision, dirtyPaths, reverse, detectRenames);
     Collection<Change> changes = new ArrayList<>();
     final GitRevisionNumber revisionNumber = resolveReference(project, root, oldRevision);
-    parseChanges(project, root, reverse ? revisionNumber : null, reverse ? null : revisionNumber, output, changes,
-                 emptySet());
+    parseChanges(project, root, reverse ? revisionNumber : null, reverse ? null : revisionNumber, output, changes);
     return changes;
   }
 
@@ -470,44 +458,21 @@ public class GitChangeUtils {
                                       boolean reverse,
                                       boolean detectRenames)
     throws VcsException {
-    GitLineHandler handler = getDiffHandler(project, root, diffRange, dirtyPaths, reverse, detectRenames);
-    if (handler.isLargeCommandLine()) {
-      // if there are too much files, just get all changes for the project
-      handler = getDiffHandler(project, root, diffRange, null, reverse, detectRenames);
-    }
-    return Git.getInstance().runCommand(handler).getOutputOrThrow();
-  }
-
-  @NotNull
-  public static String getDiffOutput(@NotNull Project project, @NotNull VirtualFile root,
-                                     @NotNull String diffRange, @Nullable Collection<FilePath> dirtyPaths) throws VcsException {
-    return getDiffOutput(project, root, diffRange, dirtyPaths, false, true);
-  }
-
-
-  @NotNull
-  private static GitLineHandler getDiffHandler(@NotNull Project project,
-                                                 @NotNull VirtualFile root,
-                                                 @NotNull String diffRange,
-                                                 @Nullable Collection<? extends FilePath> dirtyPaths,
-                                                 boolean reverse,
-                                                 boolean detectRenames) {
-    GitLineHandler handler = new GitLineHandler(project, root, GitCommand.DIFF);
-    if (reverse) {
-      handler.addParameters("-R");
-    }
-    handler.addParameters("--name-status", "--diff-filter=ADCMRUXT");
-    if (detectRenames) {
-      handler.addParameters("-M");
-    }
-    handler.addParameters(diffRange);
-    handler.setSilent(true);
-    handler.setStdoutSuppressed(true);
-    handler.endOptions();
-    if (dirtyPaths != null) {
-      handler.addRelativePaths(dirtyPaths);
-    }
-    return handler;
+    GitLineHandler h = GitUtil.createHandlerWithPaths(dirtyPaths, () -> {
+      GitLineHandler handler = new GitLineHandler(project, root, GitCommand.DIFF);
+      if (reverse) {
+        handler.addParameters("-R");
+      }
+      handler.addParameters("--name-status", "--diff-filter=ADCMRUXT");
+      if (detectRenames) {
+        handler.addParameters("-M");
+      }
+      handler.addParameters(diffRange);
+      handler.setSilent(true);
+      handler.setStdoutSuppressed(true);
+      return handler;
+    });
+    return Git.getInstance().runCommand(h).getOutputOrThrow();
   }
 
   /**
@@ -539,6 +504,24 @@ public class GitChangeUtils {
     catch (VcsException e) {
       LOG.info("Couldn't collect changes between " + oldRevision + " and " + newRevision, e);
       return null;
+    }
+  }
+
+  public static class GitDiffChange {
+    @NotNull public final FileStatus status;
+    @Nullable public final FilePath beforePath;
+    @Nullable public final FilePath afterPath;
+
+    public GitDiffChange(@NotNull FileStatus status, @Nullable FilePath beforePath, @Nullable FilePath afterPath) {
+      assert beforePath != null || afterPath != null;
+      this.status = status;
+      this.beforePath = beforePath;
+      this.afterPath = afterPath;
+    }
+
+    @NotNull
+    public FilePath getFilePath() {
+      return ObjectUtils.assertNotNull(afterPath != null ? afterPath : beforePath);
     }
   }
 }

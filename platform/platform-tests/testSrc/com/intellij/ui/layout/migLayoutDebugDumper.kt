@@ -89,7 +89,7 @@ private fun dumpCellBounds(layout: MigLayout): Any {
 }
 
 @Suppress("UNCHECKED_CAST")
-internal fun serializeLayout(component: Container, isIncludeCellBounds: Boolean = true): String {
+internal fun serializeLayout(component: Container, isIncludeCellBounds: Boolean = true, isIncludeComponentBounds: Boolean = true): String {
   val layout = component.layout as MigLayout
 
   val componentConstrains = LinkedHashMap<String, Any>()
@@ -103,17 +103,24 @@ internal fun serializeLayout(component: Container, isIncludeCellBounds: Boolean 
   dumperOptions.lineBreak = DumperOptions.LineBreak.UNIX
   dumperOptions.width = 4096
   val yaml = Yaml(filter, dumperOptions)
-  @Suppress("SpellCheckingInspection")
-  return yaml.dump(linkedMapOf(
+  val mapToDump = linkedMapOf<String, Any>(
     "layoutConstraints" to layout.layoutConstraints,
     "rowConstraints" to layout.rowConstraints,
     "columnConstraints" to layout.columnConstraints,
-    "componentConstrains" to componentConstrains,
-    "cellBounds" to if (isIncludeCellBounds) dumpCellBounds(layout) else null,
-    "componentBounds" to dumpComponentBounds(component)
-  ))
+    "componentConstrains" to componentConstrains
+  )
+  if (isIncludeCellBounds) {
+    mapToDump["cellBounds"] = dumpCellBounds(layout)
+  }
+  if (isIncludeComponentBounds) {
+    mapToDump["componentBounds"] = dumpComponentBounds(component)
+  }
+
+  @Suppress("SpellCheckingInspection")
+  return yaml.dump(mapToDump)
     .replace("constaints", "constraints")
     .replace(" !!net.miginfocom.layout.CC", "")
     .replace(" !!net.miginfocom.layout.AC", "")
     .replace(" !!net.miginfocom.layout.LC", "")
+    .replace("2097051", "INF")
 }

@@ -67,7 +67,6 @@ public class PsiGenerationInfo<T extends PsiMember> extends GenerationInfoBase i
       PsiElement newMember = GenerateMembersUtil.insert(aClass, member, anchor, before);
       member = (T)JavaCodeStyleManager.getInstance(aClass.getProject()).shortenClassReferences(newMember);
       LOG.assertTrue(member.isValid(), member);
-      setMember(member);
     }
     else {
       final PsiModifierList modifierList = member.getModifierList();
@@ -94,7 +93,7 @@ public class PsiGenerationInfo<T extends PsiMember> extends GenerationInfoBase i
                   " self modified list: " + modifierList +
                   " existing modified list: " + existingModifierList);
       }
-      setMember(member);
     }
+    setMember(member);
   }
 }

@@ -113,6 +113,7 @@ public class EclipseProjectFinder implements EclipseXml {
     private String myURI;
     private String myLocation;
 
+    @NotNull
     public String getVariableName() {
       final int idx = myURI.indexOf('/');
       return idx > -1 ? myURI.substring(0, idx) : myURI;

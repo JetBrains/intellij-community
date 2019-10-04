@@ -1,27 +1,13 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.ant;
 
 import com.intellij.openapi.application.ApplicationStarter;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
-/**
- * @author max
- */
-public class GenerateAntMain implements ApplicationStarter {
+import java.util.List;
+
+final class GenerateAntMain implements ApplicationStarter {
   private GenerateAntApplication myApplication;
 
   @Override
@@ -31,16 +17,16 @@ public class GenerateAntMain implements ApplicationStarter {
   }
 
   @Override
-  public void premain(String[] args) {
+  public void premain(@NotNull List<String> args) {
     System.setProperty("idea.load.plugins", "false");
     myApplication = new GenerateAntApplication();
 
-    myApplication.myProjectPath = args[1];
-    myApplication.myOutPath = args[2];
+    myApplication.myProjectPath = args.get(1);
+    myApplication.myOutPath = args.get(2);
   }
 
   @Override
-  public void main(String[] args) {
+  public void main(@NotNull String[] args) {
     myApplication.startup();
   }
 

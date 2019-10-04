@@ -33,7 +33,7 @@ class GetCompositeCollectionInvocation implements Invocation {
   }
 
   @Override
-  public Object invoke(final DomInvocationHandler<?, ?> handler, final Object[] args) throws Throwable {
+  public Object invoke(final DomInvocationHandler handler, final Object[] args) throws Throwable {
     Map<XmlTag,DomElement> map = new THashMap<>();
     for (final CollectionChildDescriptionImpl qname : myQnames) {
       for (DomElement element : handler.getCollectionChildren(qname)) {

@@ -35,6 +35,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 
@@ -53,6 +54,12 @@ public class ShExternalFormatter implements ExternalFormatProcessor {
   public TextRange format(@NotNull PsiFile source, @NotNull TextRange range, boolean canChangeWhiteSpacesOnly) {
     doFormat(source.getProject(), source.getVirtualFile());
     return range;
+  }
+
+  @Nullable
+  @Override
+  public String indent(@NotNull PsiFile source, int lineStartOffset) {
+    return null;
   }
 
   private void doFormat(@NotNull Project project, @Nullable VirtualFile file) {
@@ -128,7 +135,7 @@ public class ShExternalFormatter implements ExternalFormatProcessor {
         .withExePath(shFmtExecutable)
         .withParameters(params);
 
-      OSProcessHandler handler = new OSProcessHandler(commandLine);
+      OSProcessHandler handler = new OSProcessHandler(commandLine.withCharset(StandardCharsets.UTF_8));
       handler.addProcessListener(new CapturingProcessAdapter() {
         @Override
         public void processTerminated(@NotNull ProcessEvent event) {

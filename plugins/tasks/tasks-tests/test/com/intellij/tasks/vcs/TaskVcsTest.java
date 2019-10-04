@@ -12,8 +12,6 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList;
-import com.intellij.vcs.commit.ChangeListCommitState;
-import com.intellij.vcs.commit.SingleChangeListCommitter;
 import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vcs.impl.projectlevelman.AllVcses;
@@ -28,6 +26,9 @@ import com.intellij.testFramework.RunAll;
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.vcs.commit.ChangeListCommitState;
+import com.intellij.vcs.commit.CommitHandlersNotifier;
+import com.intellij.vcs.commit.SingleChangeListCommitter;
 import com.intellij.vcsUtil.VcsUtil;
 import com.intellij.vfs.AsyncVfsEventsPostProcessorImpl;
 import icons.TasksIcons;
@@ -35,7 +36,12 @@ import org.easymock.EasyMock;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+
+import static java.util.Collections.singletonList;
 
 public class TaskVcsTest extends CodeInsightFixtureTestCase {
   private TestRepository myRepository;
@@ -312,12 +318,11 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     EasyMock.replay(panel);
 
     CheckinHandler checkinHandler = new TaskCheckinHandlerFactory().createHandler(panel, new CommitContext());
-
-    List<CheckinHandler> handlers = Arrays.asList(checkinHandler);
     ChangeListCommitState commitState = new ChangeListCommitState(changeList, changes, commitMessage);
     SingleChangeListCommitter committer =
-      new SingleChangeListCommitter(getProject(), commitState, new CommitContext(), handlers, null, "Commit", false);
+      new SingleChangeListCommitter(getProject(), commitState, new CommitContext(), null, "Commit", false);
 
+    committer.addResultHandler(new CommitHandlersNotifier(singletonList(checkinHandler)));
     committer.runCommit("Commit", true);
   }
 
@@ -339,7 +344,7 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     Change change = new Change(null,
                                new CurrentContentRevision(path));
 
-    List<Change> changes = Collections.singletonList(change);
+    List<Change> changes = singletonList(change);
     myChangeProvider.setChanges(changes);
 
     VcsDirtyScopeManager.getInstance(getProject()).markEverythingDirty();
@@ -492,13 +497,13 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     vcsManager.waitForInitialized();
 
     String tempDirPath = myFixture.getTempDirFixture().getTempDirPath();
-    vcsManager.setDirectoryMappings(Collections.singletonList(new VcsDirectoryMapping(tempDirPath, myVcs.getName())));
+    vcsManager.setDirectoryMappings(singletonList(new VcsDirectoryMapping(tempDirPath, myVcs.getName())));
     assertTrue(vcsManager.hasActiveVcss());
 
     myTaskManager = (TaskManagerImpl)TaskManager.getManager(getProject());
     myRepository = new TestRepository();
     myRepository.setTasks(new MyTask());
-    myTaskManager.setRepositories(Collections.singletonList(myRepository));
+    myTaskManager.setRepositories(singletonList(myRepository));
   }
 
   @Override

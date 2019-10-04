@@ -5,13 +5,13 @@ package com.intellij.internal.statistics
 
 import com.intellij.internal.statistic.beans.*
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
-import com.intellij.testFramework.PlatformTestCase
+import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.util.containers.ContainerUtil.newArrayList
 import gnu.trove.THashSet
 import org.junit.Assert
 import org.junit.Test
 
-class MetricEventUnitTest : PlatformTestCase() {
+class MetricEventUnitTest : HeavyPlatformTestCase() {
 
   @Test
   fun `test compare metric events`() {

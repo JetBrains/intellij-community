@@ -21,10 +21,7 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.Splitter
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.ThrowableComputable
-import com.intellij.openapi.vcs.ProjectLevelVcsManager
-import com.intellij.openapi.vcs.VcsDataKeys
-import com.intellij.openapi.vcs.VcsException
-import com.intellij.openapi.vcs.VcsNotifier
+import com.intellij.openapi.vcs.*
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.ui.SelectFilesDialog
 import com.intellij.openapi.vcs.ui.CommitMessage
@@ -50,6 +47,7 @@ import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutorManager
 import org.jetbrains.plugins.github.api.GithubApiRequests
+import org.jetbrains.plugins.github.api.data.request.Type
 import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
@@ -136,7 +134,7 @@ class GithubShareAction : DumbAwareAction("Share Project on GitHub", "Easily sha
             val user = requestExecutor.execute(progressManager.progressIndicator, GithubApiRequests.CurrentUser.get(account.server))
             val names = GithubApiPagesLoader
               .loadAll(requestExecutor, progressManager.progressIndicator,
-                       GithubApiRequests.CurrentUser.Repos.pages(account.server, false))
+                       GithubApiRequests.CurrentUser.Repos.pages(account.server, Type.OWNER))
               .mapSmartSet { it.name }
             user.canCreatePrivateRepo() to names
           }, "Loading Account Information For $account", true, project)
@@ -245,7 +243,8 @@ class GithubShareAction : DumbAwareAction("Share Project on GitHub", "Easily sha
 
             // ask for files to add
             val trackedFiles = ChangeListManager.getInstance(project).affectedFiles
-            val untrackedFiles = filterOutIgnored(project, repository.untrackedFilesHolder.retrieveUntrackedFiles())
+            val untrackedFiles =
+              filterOutIgnored(project, repository.untrackedFilesHolder.retrieveUntrackedFilePaths().mapNotNull(FilePath::getVirtualFile))
             trackedFiles.removeAll(untrackedFiles) // fix IDEA-119855
 
             val allFiles = ArrayList<VirtualFile>()

@@ -18,7 +18,7 @@
   <problem>
     <file>B.java</file>
     <line>8</line>
-    <description>Test-only method is called in production code</description>
+    <description>Test-only class is referenced in production code</description>
   </problem>
   <problem>
     <file>AGrandChild.java</file>

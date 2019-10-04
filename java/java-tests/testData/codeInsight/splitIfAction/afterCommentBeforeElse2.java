@@ -1,5 +1,5 @@
 class C {
-    void foo() {
+    void foo(boolean a, boolean b, boolean c) {
         if (a) {
             if (b) {
                 call();

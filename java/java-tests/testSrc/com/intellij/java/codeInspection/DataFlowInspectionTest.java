@@ -538,17 +538,17 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testImplicitlyInitializedField() {
     ImplicitUsageProvider.EP_NAME.getPoint(null).registerExtension(new ImplicitUsageProvider() {
       @Override
-      public boolean isImplicitUsage(PsiElement element) {
+      public boolean isImplicitUsage(@NotNull PsiElement element) {
         return false;
       }
 
       @Override
-      public boolean isImplicitRead(PsiElement element) {
+      public boolean isImplicitRead(@NotNull PsiElement element) {
         return false;
       }
 
       @Override
-      public boolean isImplicitWrite(PsiElement element) {
+      public boolean isImplicitWrite(@NotNull PsiElement element) {
         return false;
       }
 
@@ -665,4 +665,5 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testFieldRewrittenInInner() { doTest(); }
   public void testArrayElementLocality() { doTest(); }
   public void testOverwrittenParameter() { doTest(); }
+  public void testClassCastExceptionDispatch() { doTest(); }
 }

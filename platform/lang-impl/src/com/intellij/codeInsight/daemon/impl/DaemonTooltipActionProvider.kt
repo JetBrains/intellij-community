@@ -6,16 +6,14 @@ import com.intellij.codeInsight.intention.AbstractEmptyIntentionAction
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.IntentionActionDelegate
 import com.intellij.codeInsight.intention.impl.CachedIntentions
-import com.intellij.codeInsight.intention.impl.IntentionActionWithTextCaching
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler
-import com.intellij.ide.actions.ActionsCollector
+import com.intellij.internal.statistic.service.fus.collectors.TooltipActionsLogger
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.TooltipAction
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.xml.util.XmlStringUtil
-import org.jetbrains.annotations.NotNull
 import java.awt.event.InputEvent
 import java.util.*
 
@@ -34,9 +32,9 @@ class DaemonTooltipAction(private val myFixText: String, private val myActualOff
   }
 
   override fun execute(editor: Editor, inputEvent: InputEvent?) {
-    ActionsCollector.getInstance().record("tooltip.actions.execute", inputEvent, this::class.java)
-
     val project = editor.project ?: return
+
+    TooltipActionsLogger.logExecute(project, inputEvent)
     val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.document) ?: return
     val intentions = ShowIntentionsPass.getAvailableFixes(editor, psiFile, -1, myActualOffset)
 
@@ -52,10 +50,10 @@ class DaemonTooltipAction(private val myFixText: String, private val myActualOff
   }
 
   override fun showAllActions(editor: Editor) {
-    ActionsCollector.getInstance().record("tooltip.actions.show.all", this::class.java)
-
     editor.caretModel.moveToOffset(myActualOffset)
     val project = editor.project ?: return
+
+    TooltipActionsLogger.logShowAll(project)
     val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.document) ?: return
     ShowIntentionActionsHandler().invoke(project, editor, psiFile)
   }
@@ -101,10 +99,7 @@ fun getFirstAvailableAction(psiFile: PsiFile,
   if (allActions.isEmpty()) return null
 
   allActions.forEach {
-    var action = it.action
-    if (action is IntentionActionDelegate) {
-      action = action.delegate
-    }
+    val action = IntentionActionDelegate.unwrap(it.action)
 
     if (action !is AbstractEmptyIntentionAction && action.isAvailable(project, editor, psiFile)) {
       val text = it.text

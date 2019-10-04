@@ -148,12 +148,10 @@ public class CodeStyleSettingsManager implements PersistentStateComponent<Elemen
    * @see #dropTemporarySettings()
    */
   public void setTemporarySettings(@NotNull CodeStyleSettings settings) {
-    updateSettingsTracker();
     myTemporarySettings = settings;
   }
 
   public void dropTemporarySettings() {
-    updateSettingsTracker();
     myTemporarySettings = null;
   }
 

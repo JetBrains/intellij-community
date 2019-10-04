@@ -10,7 +10,7 @@ import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.HeavyPlatformTestCase;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 
@@ -21,7 +21,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class ModulesConfigurationTest extends PlatformTestCase {
+public class ModulesConfigurationTest extends HeavyPlatformTestCase {
   public void testAddRemoveModule() throws IOException, JDOMException {
     Pair<File, File> result = createProjectWithModule();
     File projectDir = result.getFirst();

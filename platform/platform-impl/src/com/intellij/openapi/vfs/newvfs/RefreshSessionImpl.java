@@ -173,7 +173,7 @@ class RefreshSessionImpl extends RefreshSession {
     }
   }
 
-  void fireEvents(List<? extends VFileEvent> events, @Nullable List<AsyncFileListener.ChangeApplier> appliers) {
+  void fireEvents(@NotNull List<? extends VFileEvent> events, @Nullable List<? extends AsyncFileListener.ChangeApplier> appliers) {
     try {
       if ((myFinishRunnable != null || !events.isEmpty()) && !ApplicationManager.getApplication().isDisposed()) {
         if (LOG.isDebugEnabled()) LOG.debug("events are about to fire: " + events);
@@ -185,7 +185,7 @@ class RefreshSessionImpl extends RefreshSession {
     }
   }
 
-  private void fireEventsInWriteAction(List<? extends VFileEvent> events, @Nullable List<AsyncFileListener.ChangeApplier> appliers) {
+  private void fireEventsInWriteAction(List<? extends VFileEvent> events, @Nullable List<? extends AsyncFileListener.ChangeApplier> appliers) {
     final VirtualFileManagerEx manager = (VirtualFileManagerEx)VirtualFileManager.getInstance();
 
     manager.fireBeforeRefreshStart(myIsAsync);

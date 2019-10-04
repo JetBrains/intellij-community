@@ -16,48 +16,19 @@
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.util.objectTree.ObjectTree;
-import com.intellij.openapi.util.objectTree.ObjectTreeAction;
-import com.intellij.util.ReflectionUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 import java.util.Map;
 
 public class Disposer {
-  private static final ObjectTree<Disposable> ourTree;
+  private static final ObjectTree ourTree = new ObjectTree();
 
-  static {
-    try {
-      ourTree = new ObjectTree<>();
-    }
-    catch (NoClassDefFoundError e) {
-      throw new RuntimeException("loader=" + Disposer.class.getClassLoader(), e);
-    }
-  }
-
-  private static final ObjectTreeAction<Disposable> ourDisposeAction = new ObjectTreeAction<Disposable>() {
-    @Override
-    public void execute(@NotNull final Disposable each) {
-      //noinspection SSBasedInspection
-      each.dispose();
-    }
-
-    @Override
-    public void beforeTreeExecution(@NotNull final Disposable parent) {
-      if (parent instanceof Disposable.Parent) {
-        ((Disposable.Parent)parent).beforeTreeDispose();
-      }
-    }
-  };
-
-  private static final String debugDisposer = System.getProperty("idea.disposer.debug");
   public static boolean isDebugDisposerOn() {
-    return "on".equals(debugDisposer);
+    return "on".equals(System.getProperty("idea.disposer.debug"));
   }
 
   private static boolean ourDebugMode;
@@ -72,7 +43,7 @@ public class Disposer {
   }
 
   @NotNull
-  public static Disposable newDisposable(@Nullable final String debugName) {
+  public static Disposable newDisposable(@Nullable String debugName) {
     // must not be lambda because we care about identity in ObjectTree.myObject2NodeMap
     return new Disposable() {
       @Override
@@ -101,7 +72,8 @@ public class Disposer {
   }
 
   private static class KeyDisposable implements Disposable {
-    @NotNull private final String myKey;
+    @NotNull
+    private final String myKey;
 
     KeyDisposable(@NotNull String key) {myKey = key;}
 
@@ -133,11 +105,11 @@ public class Disposer {
   }
 
   public static void dispose(@NotNull Disposable disposable, boolean processUnregistered) {
-    ourTree.executeAll(disposable, ourDisposeAction, processUnregistered);
+    ourTree.executeAll(disposable, processUnregistered);
   }
 
   @NotNull
-  public static ObjectTree<Disposable> getTree() {
+  public static ObjectTree getTree() {
     return ourTree;
   }
 
@@ -155,7 +127,7 @@ public class Disposer {
    */
   public static boolean setDebugMode(boolean debugMode) {
     if (debugMode) {
-      debugMode = !"off".equals(debugDisposer);
+      debugMode = !"off".equals(System.getProperty("idea.disposer.debug"));
     }
     boolean oldValue = ourDebugMode;
     ourDebugMode = debugMode;
@@ -166,24 +138,15 @@ public class Disposer {
     return ourDebugMode;
   }
 
-  public static void clearOwnFields(@Nullable Object object, @NotNull Condition<? super Field> selectCondition) {
-    if (object == null) return;
-    for (Field each : ReflectionUtil.collectFields(object.getClass())) {
-      if ((each.getModifiers() & (Modifier.FINAL | Modifier.STATIC)) > 0) continue;
-      if (!selectCondition.value(each)) continue;
-      try {
-        ReflectionUtil.resetField(object, each);
-      }
-      catch (Exception ignore) {
-      }
-    }
-  }
-
   /**
    * @return object registered on parentDisposable which is equal to object, or null if not found
    */
   @Nullable
   public static <T extends Disposable> T findRegisteredObject(@NotNull Disposable parentDisposable, @NotNull T object) {
     return ourTree.findRegisteredObject(parentDisposable, object);
+  }
+
+  public static Throwable getDisposalTrace(@NotNull Disposable disposable) {
+    return ObjectUtils.tryCast(getTree().getDisposalInfo(disposable), Throwable.class);
   }
 }

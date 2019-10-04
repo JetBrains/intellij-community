@@ -377,7 +377,7 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
               // This string always works,
               // because it is hard-coded in
               // the XML-RPC library)
-              if (executed.first != null && executed.first.indexOf(refusedConnPattern) != -1) {
+              if (executed.first != null && executed.first.contains(refusedConnPattern)) {
                 if (firstCommWorked) {
                   break;
                 }

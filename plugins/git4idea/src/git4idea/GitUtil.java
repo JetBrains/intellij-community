@@ -9,6 +9,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.ex.MultiLineLabel;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
@@ -970,6 +971,12 @@ public class GitUtil {
   }
 
   @NotNull
+  public static String getLogStringGitDiffChanges(@NotNull String root,
+                                                  @NotNull Collection<? extends GitChangeUtils.GitDiffChange> changes) {
+    return getLogString(root, changes, it -> it.beforePath, it -> it.afterPath);
+  }
+
+  @NotNull
   public static String getLogString(@NotNull String root, @NotNull Collection<? extends Change> changes) {
     return getLogString(root, changes, ChangesUtil::getBeforePath, ChangesUtil::getAfterPath);
   }
@@ -1104,5 +1111,27 @@ public class GitUtil {
     private GitRepositoryNotFoundException(@NotNull FilePath filePath) {
       super(String.format(MESSAGE, filePath.getPresentableUrl()));
     }
+  }
+
+  @NotNull
+  public static <T extends GitHandler> T createHandlerWithPaths(@Nullable Collection<? extends FilePath> paths,
+                                                                @NotNull Computable<T> handlerBuilder) {
+    T handler = handlerBuilder.compute();
+    handler.endOptions();
+    if (paths != null) {
+      handler.addRelativePaths(paths);
+      if (handler.isLargeCommandLine()) {
+        handler = handlerBuilder.compute();
+        handler.endOptions();
+      }
+    }
+    return handler;
+  }
+
+  @NotNull
+  public static Hash getHead(@NotNull GitRepository repository) throws VcsException {
+    GitCommandResult result = Git.getInstance().tip(repository, HEAD);
+    String head = result.getOutputOrThrow();
+    return HashImpl.build(head);
   }
 }

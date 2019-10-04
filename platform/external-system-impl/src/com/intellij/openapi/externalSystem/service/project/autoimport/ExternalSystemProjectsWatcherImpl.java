@@ -62,7 +62,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.util.*;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 import static com.intellij.util.ui.update.MergingUpdateQueue.ANY_COMPONENT;
 
@@ -622,6 +621,11 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
             ServiceManager.getService(ProjectDataManager.class).importData(externalProject, project, true);
           }
         }
+
+        @Override
+        public void onFailure(@NotNull String errorMessage, @Nullable String errorDetails) {
+          LOG.warn(errorMessage + "\n" + errorDetails);
+        }
       }, false, ProgressExecutionMode.IN_BACKGROUND_ASYNC, reportRefreshError);
   }
 
@@ -760,7 +764,7 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
     }
 
     @Override
-    protected void updateFile(VirtualFile file, VFileEvent event) {
+    protected void updateFile(@NotNull VirtualFile file, @NotNull VFileEvent event) {
       init();
       debug("File changed '" + file.getPath() + "'");
       refreshFileCrcInfo(file);
@@ -781,7 +785,7 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
     }
 
     @Override
-    protected void prepareFileDeletion(VirtualFile file) {
+    protected void prepareFileDeletion(@NotNull VirtualFile file) {
       for (String externalProjectPath : myKnownFiles.get(file.getPath())) {
         updateProjectStatus(externalProjectPath, it -> it.markModified(file.getModificationStamp()));
       }
@@ -849,11 +853,13 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
 
   @NotNull
   private List<Pair<ExternalSystemManager, ExternalProjectSettings>> findLinkedProjectsSettings() {
-    return ExternalSystemApiUtil.getAllManagers().stream()
-      .flatMap(
-        manager -> manager.getSettingsProvider().fun(myProject).getLinkedProjectsSettings().stream()
-          .map(settings -> Pair.create((ExternalSystemManager)manager, (ExternalProjectSettings)settings)))
-      .collect(Collectors.toList());
+    List<Pair<ExternalSystemManager, ExternalProjectSettings>> list = new ArrayList<>();
+    for (ExternalSystemManager<?, ?, ?, ?, ?> manager : ExternalSystemManager.EP_NAME.getIterable()) {
+      for (ExternalProjectSettings settings : manager.getSettingsProvider().fun(myProject).getLinkedProjectsSettings()) {
+        list.add(Pair.create(manager, settings));
+      }
+    }
+    return list;
   }
 
   @Nullable

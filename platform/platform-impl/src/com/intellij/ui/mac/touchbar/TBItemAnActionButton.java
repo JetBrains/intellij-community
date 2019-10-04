@@ -132,8 +132,9 @@ class TBItemAnActionButton extends TBItemButton {
         icon = presentation.getIcon();
       else {
         icon = presentation.getDisabledIcon();
-        if (icon == null)
-          icon = IconLoader.getDisabledIcon(presentation.getIcon());
+        if (icon == null) {
+          icon = presentation.getIcon() == null ? null : IconLoader.getDisabledIcon(presentation.getIcon());
+        }
       }
       // if (icon == null) System.out.println("WARN: can't obtain icon, action " + myActionId + ", presentation = " + _printPresentation(presentation));
     }

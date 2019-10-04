@@ -20,14 +20,16 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.extensions.*;
+import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.paths.WebReference;
 import com.intellij.openapi.project.Project;
@@ -40,10 +42,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileFilter;
+import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
@@ -65,6 +64,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
+import org.jetbrains.concurrency.InternalPromiseUtil;
 import org.jetbrains.concurrency.Promise;
 
 import javax.swing.*;
@@ -84,6 +84,7 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -91,7 +92,6 @@ import java.util.jar.JarFile;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.intellij.openapi.application.ApplicationManager.getApplication;
 import static org.junit.Assert.*;
 
 /**
@@ -132,44 +132,24 @@ public class PlatformTestUtil {
   }
 
   /**
-   * @see ExtensionPointImpl#maskAll(List, Disposable)
+   * @see ExtensionPointImpl#maskAll(List, Disposable, boolean)
    */
-  public static <T> void maskExtensions(@NotNull ExtensionPointName<T> pointName, @NotNull List<T> newExtensions, @NotNull Disposable parentDisposable) {
-    ((ExtensionPointImpl<T>)pointName.getPoint(null)).maskAll(newExtensions, parentDisposable);
-  }
-
-  /**
-   * @see ExtensionPointImpl#maskAll(List, Disposable)
-   */
-  public static <T> void maskExtensions(@NotNull ProjectExtensionPointName<T> pointName, @NotNull Project project, @NotNull List<T> newExtensions, @NotNull Disposable parentDisposable) {
-    ((ExtensionPointImpl<T>)pointName.getPoint(project)).maskAll(newExtensions, parentDisposable);
-  }
-
-  /**
-   * @deprecated Use {@link ExtensionPointName#getPoint(AreaInstance)} and {@link ExtensionPoint#registerExtension(Object, Disposable)}.
-   */
-  @Deprecated
-  public static <T> void registerExtension(@NotNull ExtensionPointName<T> name, @NotNull T t, @NotNull Disposable parentDisposable) {
-    registerExtension(Extensions.getRootArea(), name, t, parentDisposable);
-  }
-
-  public static <T> void registerExtension(@NotNull ExtensionsArea area,
-                                           @NotNull BaseExtensionPointName name,
-                                           @NotNull T t,
-                                           @NotNull Disposable parentDisposable) {
-    area.<T>getExtensionPoint(name.getName()).registerExtension(t, parentDisposable);
+  public static <T> void maskExtensions(@NotNull ProjectExtensionPointName<T> pointName,
+                                        @NotNull Project project,
+                                        @NotNull List<T> newExtensions,
+                                        @NotNull Disposable parentDisposable) {
+    ((ExtensionPointImpl<T>)pointName.getPoint(project)).maskAll(newExtensions, parentDisposable, true);
   }
 
   @Nullable
   public static String toString(@Nullable Object node, @Nullable Queryable.PrintInfo printInfo) {
     if (node instanceof AbstractTreeNode) {
       if (printInfo != null) {
-        return ((AbstractTreeNode)node).toTestString(printInfo);
+        return ((AbstractTreeNode<?>)node).toTestString(printInfo);
       }
       else {
-        @SuppressWarnings({"deprecation", "UnnecessaryLocalVariable"})
-        final String presentation = ((AbstractTreeNode)node).getTestPresentation();
-        return presentation;
+        //noinspection deprecation
+        return ((AbstractTreeNode<?>)node).getTestPresentation();
       }
     }
     return String.valueOf(node);
@@ -282,12 +262,12 @@ public class PlatformTestUtil {
   }
 
   private static void assertDispatchThreadWithoutWriteAccess() {
-    assertDispatchThreadWithoutWriteAccess(getApplication());
+    assertDispatchThreadWithoutWriteAccess(ApplicationManager.getApplication());
   }
 
   private static void assertDispatchThreadWithoutWriteAccess(Application application) {
     if (application != null) {
-      assert !application.isWriteAccessAllowed() : "do not wait under the write action to avoid possible deadlock";
+      assert !application.isWriteAccessAllowed() : "do not wait under write action to avoid possible deadlock";
       assert application.isDispatchThread();
     }
     else {
@@ -296,6 +276,7 @@ public class PlatformTestUtil {
     }
   }
 
+  @SuppressWarnings("deprecation")
   private static boolean isBusy(JTree tree, TreeModel model) {
     UIUtil.dispatchAllInvocationEvents();
     if (model instanceof AsyncTreeModel) {
@@ -337,6 +318,15 @@ public class PlatformTestUtil {
 
   @Nullable
   public static <T> T waitForPromise(@NotNull Promise<T> promise, long timeout) {
+    return waitForPromise(promise, timeout, false);
+  }
+
+  public static <T> T assertPromiseSucceeds(@NotNull Promise<T> promise) {
+    return waitForPromise(promise, MAX_WAIT_TIME, true);
+  }
+
+  @Nullable
+  private static <T> T waitForPromise(@NotNull Promise<T> promise, long timeout, boolean assertSucceeded) {
     assertDispatchThreadWithoutWriteAccess();
     AtomicBoolean complete = new AtomicBoolean(false);
     promise.onProcessed(ignore -> complete.set(true));
@@ -347,7 +337,12 @@ public class PlatformTestUtil {
       try {
         result = promise.blockingGet(20, TimeUnit.MILLISECONDS);
       }
-      catch (Exception ignore) {
+      catch (TimeoutException ignore) {
+      }
+      catch (java.util.concurrent.ExecutionException | InternalPromiseUtil.MessageError e) {
+        if (assertSucceeded) {
+          throw new AssertionError(e);
+        }
       }
       assertMaxWaitTimeSince(start, timeout);
     }
@@ -357,7 +352,7 @@ public class PlatformTestUtil {
   }
 
   public static void waitForAlarm(final int delay) {
-    @NotNull Application app = getApplication();
+    @NotNull Application app = ApplicationManager.getApplication();
     assertDispatchThreadWithoutWriteAccess();
 
     Disposable tempDisposable = Disposer.newDisposable();
@@ -460,7 +455,7 @@ public class PlatformTestUtil {
     return event1;
   }
 
-  public static StringBuilder print(AbstractTreeStructure structure, Object node, int currentLevel, @Nullable Comparator comparator,
+  public static StringBuilder print(AbstractTreeStructure structure, Object node, int currentLevel, @Nullable Comparator<?> comparator,
                                     int maxRowCount, char paddingChar, @Nullable Queryable.PrintInfo printInfo) {
     return print(structure, node, currentLevel, comparator, maxRowCount, paddingChar, o -> toString(o, printInfo));
   }
@@ -469,7 +464,7 @@ public class PlatformTestUtil {
     return print(structure, node, 0, Comparator.comparing(nodePresenter), -1, ' ', nodePresenter).toString();
   }
 
-  private static StringBuilder print(AbstractTreeStructure structure, Object node, int currentLevel, @Nullable Comparator comparator,
+  private static StringBuilder print(AbstractTreeStructure structure, Object node, int currentLevel, @Nullable Comparator<?> comparator,
                                      int maxRowCount, char paddingChar, Function<Object, String> nodePresenter) {
     StringBuilder buffer = new StringBuilder();
     doPrint(buffer, currentLevel, node, structure, comparator, maxRowCount, 0, paddingChar, nodePresenter);
@@ -480,7 +475,7 @@ public class PlatformTestUtil {
                              int currentLevel,
                              Object node,
                              AbstractTreeStructure structure,
-                             @Nullable Comparator comparator,
+                             @Nullable Comparator<?> comparator,
                              int maxRowCount,
                              int currentLine,
                              char paddingChar,
@@ -493,8 +488,9 @@ public class PlatformTestUtil {
     Object[] children = structure.getChildElements(node);
 
     if (comparator != null) {
-      ArrayList<?> list = new ArrayList<>(Arrays.asList(children));
-      @SuppressWarnings({"UnnecessaryLocalVariable", "unchecked"}) Comparator<Object> c = comparator;
+      List<?> list = new ArrayList<>(Arrays.asList(children));
+      @SuppressWarnings({"unchecked"})
+      Comparator<Object> c = (Comparator<Object>)comparator;
       Collections.sort(list, c);
       children = ArrayUtil.toObjectArray(list);
     }
@@ -513,7 +509,7 @@ public class PlatformTestUtil {
     return c.stream().map(each -> toString(each, null)).collect(Collectors.joining("\n"));
   }
 
-  public static String print(ListModel model) {
+  public static String print(@NotNull ListModel<?> model) {
     StringBuilder result = new StringBuilder();
     for (int i = 0; i < model.getSize(); i++) {
       result.append(toString(model.getElementAt(i), null));
@@ -568,10 +564,10 @@ public class PlatformTestUtil {
   }
 
   /**
-   * example usage: {@code startPerformanceTest("calculating pi",100, testRunnable).assertTiming();}
+   * An example: {@code startPerformanceTest("calculating pi",100, testRunnable).assertTiming();}
    */
   @Contract(pure = true) // to warn about not calling .assertTiming() in the end
-  public static PerformanceTestInfo startPerformanceTest(@NonNls @NotNull String what, int expectedMs, @NotNull ThrowableRunnable test) {
+  public static PerformanceTestInfo startPerformanceTest(@NonNls @NotNull String what, int expectedMs, @NotNull ThrowableRunnable<?> test) {
     return new PerformanceTestInfo(test, expectedMs, what);
   }
 
@@ -600,7 +596,7 @@ public class PlatformTestUtil {
   public static void forceCloseProjectWithoutSaving(@NotNull Project project) {
     ProjectManagerEx.getInstanceEx().forceCloseProject(project, false /* do not dispose */);
     // explicitly dispose because `dispose` option for forceCloseProject doesn't work todo why?
-    getApplication().runWriteAction(() -> Disposer.dispose(project));
+    ApplicationManager.getApplication().runWriteAction(() -> Disposer.dispose(project));
   }
 
   public static void saveProject(@NotNull Project project) {
@@ -710,7 +706,7 @@ public class PlatformTestUtil {
         assertArrayEquals(fileExpected.getPath(), fileExpected.contentsToByteArray(), fileActual.contentsToByteArray());
       }
       else if (!StringUtil.equals(expected, actual)) {
-        throw new FileComparisonFailure("Text mismatch in file " + fileExpected.getName(), expected, actual, fileExpected.getPath());
+        throw new FileComparisonFailure("Text mismatch in the file " + fileExpected.getName(), expected, actual, fileExpected.getPath());
       }
     }
   }
@@ -720,7 +716,7 @@ public class PlatformTestUtil {
     if (doc != null) {
       return doc.getText();
     }
-    if (!file.getFileType().isBinary() || file.getFileType() == FileTypes.UNKNOWN) {
+    if (!file.getFileType().isBinary() || FileTypeRegistry.getInstance().isFileOfType(file, FileTypes.UNKNOWN)) {
       return LoadTextUtil.getTextByBinaryPresentation(file.contentsToByteArray(false), file).toString();
     }
     return null;
@@ -745,7 +741,7 @@ public class PlatformTestUtil {
       assertNotNull(tempDirectory1.toString(), dirAfter);
       final VirtualFile dirBefore = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDirectory2);
       assertNotNull(tempDirectory2.toString(), dirBefore);
-      getApplication().runWriteAction(() -> {
+      ApplicationManager.getApplication().runWriteAction(() -> {
         dirAfter.refresh(false, true);
         dirBefore.refresh(false, true);
       });
@@ -756,6 +752,7 @@ public class PlatformTestUtil {
     }
   }
 
+  @NotNull
   public static String getCommunityPath() {
     final String homePath = IdeaTestExecutionPolicy.getHomePathWithPolicy();
     if (new File(homePath, "community/.idea").isDirectory()) {
@@ -764,11 +761,14 @@ public class PlatformTestUtil {
     return homePath;
   }
 
+  @NotNull
   public static String getPlatformTestDataPath() {
     return getCommunityPath().replace(File.separatorChar, '/') + "/platform/platform-tests/testData/";
   }
 
-  public static Comparator<AbstractTreeNode> createComparator(final Queryable.PrintInfo printInfo) {
+  @NotNull
+  @Contract(pure = true)
+  public static Comparator<AbstractTreeNode<?>> createComparator(final Queryable.PrintInfo printInfo) {
     return (o1, o2) -> {
       String displayText1 = o1.toTestString(printInfo);
       String displayText2 = o2.toTestString(printInfo);
@@ -787,7 +787,7 @@ public class PlatformTestUtil {
     return StringUtil.convertLineSeparators(FileUtil.loadFile(new File(fileName)));
   }
 
-  public static void withEncoding(@NotNull String encoding, @NotNull ThrowableRunnable r) {
+  public static void withEncoding(@NotNull String encoding, @NotNull ThrowableRunnable<?> r) {
     Charset.forName(encoding); // check the encoding exists
     try {
       Charset oldCharset = Charset.defaultCharset();
@@ -885,7 +885,7 @@ public class PlatformTestUtil {
 
       UIUtil.dispatchAllInvocationEvents();
 
-      ApplicationImpl application = (ApplicationImpl)getApplication();
+      ApplicationImpl application = (ApplicationImpl)ApplicationManager.getApplication();
       System.out.println(application.writeActionStatistics());
       System.out.println(ActionUtil.ActionPauses.STAT.statistics());
       System.out.println(((AppScheduledExecutorService)AppExecutorUtil.getAppScheduledExecutorService()).statistics());
@@ -908,7 +908,8 @@ public class PlatformTestUtil {
 
   public static void captureMemorySnapshot() {
     try {
-      Method snapshot = ReflectionUtil.getMethod(Class.forName("com.jetbrains.performancePlugin.profilers.YourKitProfilerHandler"), "captureMemorySnapshot");
+      @SuppressWarnings("SpellCheckingInspection") String className = "com.jetbrains.performancePlugin.profilers.YourKitProfilerHandler";
+      Method snapshot = ReflectionUtil.getMethod(Class.forName(className), "captureMemorySnapshot");
       if (snapshot != null) {
         Object path = snapshot.invoke(null);
         System.out.println("Memory snapshot captured to '" + path + "'");
@@ -977,5 +978,27 @@ public class PlatformTestUtil {
     "/**\n" +
     " * Created by ${USER} on ${DATE}.\n" +
     " */\n", parentDisposable);
+  }
+
+  /*
+   * 1. Think twice before use - do you really need to use VFS.
+   * 2. Be aware the method doesn't refresh VFS as it should be done in tests (see {@link PlatformTestCase#synchronizeTempDirVfs})
+   *    (it is assumed that project is already created in a correct way).
+   */
+  @NotNull
+  public static VirtualFile getOrCreateProjectTestBaseDir(@NotNull Project project) {
+    try {
+      String path = Objects.requireNonNull(project.getBasePath());
+      VirtualFile result = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
+      if (result != null) {
+        return result;
+      }
+
+      // createDirectories executes in write action
+      return Objects.requireNonNull(VfsUtil.createDirectories(Objects.requireNonNull(project.getBasePath())));
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 }

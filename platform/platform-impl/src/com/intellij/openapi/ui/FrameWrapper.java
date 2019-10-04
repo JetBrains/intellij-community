@@ -1,21 +1,22 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui;
 
-import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.jdkEx.JdkEx;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.MouseGestureManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.BooleanGetter;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.WindowStateService;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
@@ -46,7 +47,7 @@ import java.util.Map;
 
 public class FrameWrapper implements Disposable, DataProvider {
 
-  private String myDimensionKey = null;
+  private String myDimensionKey;
   private JComponent myComponent = null;
   private JComponent myPreferredFocus = null;
   private String myTitle = "";
@@ -90,7 +91,7 @@ public class FrameWrapper implements Disposable, DataProvider {
     myDataMap.put(dataId, data);
   }
 
-  public void setProject(@NotNull final Project project) {
+  public void setProject(@NotNull Project project) {
     myProject = project;
     setData(CommonDataKeys.PROJECT.getName(), project);
     ProjectManager.getInstance().addProjectManagerListener(project, myProjectListener);
@@ -107,13 +108,7 @@ public class FrameWrapper implements Disposable, DataProvider {
   }
 
   public void show(boolean restoreBounds) {
-
     final Window frame = getFrame();
-
-    if (myStatusBar != null) {
-      myStatusBar.install((IdeFrame)frame);
-    }
-
     if (frame instanceof JFrame) {
       ((JFrame)frame).setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
     }
@@ -128,6 +123,10 @@ public class FrameWrapper implements Disposable, DataProvider {
     });
 
     UIUtil.decorateWindowHeader(((RootPaneContainer)frame).getRootPane());
+
+    if (frame instanceof JFrame) {
+      UIUtil.setCustomTitleBar(frame, ((JFrame)frame).getRootPane(), runnable -> Disposer.register(this, () -> runnable.run()));
+    }
 
     final WindowAdapter focusListener = new WindowAdapter() {
       @Override
@@ -369,7 +368,7 @@ public class FrameWrapper implements Disposable, DataProvider {
       final boolean setMenuOnFrame = SystemInfo.isMac && !USE_SINGLE_SYSTEM_MENUBAR;
 
       if (setMenuOnFrame) {
-        setJMenuBar(new IdeMenuBar(ActionManagerEx.getInstanceEx(), DataManager.getInstance()));
+        setJMenuBar(IdeMenuBar.createMenuBar());
       }
 
       MouseGestureManager.getInstance().add(this);

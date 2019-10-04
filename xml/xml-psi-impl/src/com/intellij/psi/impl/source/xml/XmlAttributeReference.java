@@ -13,6 +13,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.impl.XmlAttributeDescriptorEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,8 +24,14 @@ public class XmlAttributeReference implements PsiPolyVariantReference {
       return myAttribute.getDescriptor();
     }
   };
-  private final XmlAttributeImpl myAttribute;
+  private final XmlAttribute myAttribute;
 
+  public XmlAttributeReference(@NotNull XmlAttribute attribute) {
+    myAttribute = attribute;
+  }
+  
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
+  @Deprecated
   public XmlAttributeReference(@NotNull XmlAttributeImpl attribute) {
     myAttribute = attribute;
   }
@@ -40,7 +47,8 @@ public class XmlAttributeReference implements PsiPolyVariantReference {
   public TextRange getRangeInElement() {
     final int parentOffset = myAttribute.getNameElement().getStartOffsetInParent();
     int nsLen = myAttribute.getNamespacePrefix().length();
-    nsLen += nsLen > 0 && !myAttribute.getRealLocalName().isEmpty() ? 1 : -nsLen;
+    String realName = XmlAttributeImpl.getRealName(myAttribute);
+    nsLen += nsLen > 0 && !realName.isEmpty() ? 1 : -nsLen;
     return new TextRange(parentOffset + nsLen, parentOffset + myAttribute.getNameElement().getTextLength());
   }
 

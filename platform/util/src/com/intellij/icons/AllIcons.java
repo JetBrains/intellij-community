@@ -171,12 +171,6 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon AddFacesSupport = load("/actions/addFacesSupport.png");
-
-    /** @deprecated to be removed in IDEA 2020 */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2020.1")
     public static final Icon AllLeft = load("/actions/allLeft.png");
 
     /** @deprecated to be removed in IDEA 2020 */
@@ -305,10 +299,6 @@ public class AllIcons {
     @ScheduledForRemoval(inVersion = "2020.1")
     /** 16x16 */ public static final Icon Export = load("/toolbarDecorator/export.svg");
 
-    @SuppressWarnings("unused")
-    @Deprecated
-    public static final Icon FileStatus = load("/actions/fileStatus.png");
-
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.Filter */
     @SuppressWarnings("unused")
     @Deprecated
@@ -356,12 +346,6 @@ public class AllIcons {
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
     /** 16x16 */ public static final Icon Menu_replace = load("/actions/replace.svg");
-
-    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.HideToolWindow */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2020.1")
-    /** 16x16 */ public static final Icon Minimize = load("/general/hideToolWindow.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Nodes.Module */
     @SuppressWarnings("unused")
@@ -514,13 +498,6 @@ public class AllIcons {
   }
 
   public final static class Debugger {
-
-    public final static class Actions {
-      /** 16x16 */ public static final Icon Force_run_to_cursor = load("/debugger/actions/force_run_to_cursor.svg");
-      /** 16x16 */ public static final Icon Force_step_into = load("/debugger/actions/force_step_into.svg");
-      /** 16x16 */ public static final Icon Force_step_over = load("/debugger/actions/force_step_over.svg");
-
-    }
     /** 16x16 */ public static final Icon AddToWatch = load("/debugger/addToWatch.svg");
     /** 16x16 */ public static final Icon AttachToProcess = load("/debugger/attachToProcess.svg");
     /** 16x16 */ public static final Icon ClassLevelWatch = load("/debugger/classLevelWatch.svg");
@@ -566,29 +543,6 @@ public class AllIcons {
     /** 16x16 */ public static final Icon Frame = load("/debugger/frame.svg");
     /** 16x16 */ public static final Icon KillProcess = load("/debugger/killProcess.svg");
     /** 12x12 */ public static final Icon LambdaBreakpoint = load("/debugger/LambdaBreakpoint.svg");
-
-    public final static class MemoryView {
-      /** 16x16 */ public static final Icon Active = load("/debugger/memoryView/active.svg");
-
-      /** @deprecated to be removed in IDEA 2020 - use AllIcons.Debugger.Watch */
-      @SuppressWarnings("unused")
-      @Deprecated
-      @ScheduledForRemoval(inVersion = "2020.1")
-      /** 16x16 */ public static final Icon ClassTracked = load("/debugger/watch.svg");
-
-      /** @deprecated to be removed in IDEA 2020 */
-      @SuppressWarnings("unused")
-      @Deprecated
-      @ScheduledForRemoval(inVersion = "2020.1")
-      public static final Icon ToolWindowDisabled = load("/debugger/memoryView/toolWindowDisabled.png");
-
-      /** @deprecated to be removed in IDEA 2020 */
-      @SuppressWarnings("unused")
-      @Deprecated
-      @ScheduledForRemoval(inVersion = "2020.1")
-      public static final Icon ToolWindowEnabled = load("/debugger/memoryView/toolWindowEnabled.png");
-
-    }
     /** 12x12 */ public static final Icon MultipleBreakpoints = load("/debugger/MultipleBreakpoints.svg");
     /** 16x16 */ public static final Icon MuteBreakpoints = load("/debugger/muteBreakpoints.svg");
     /** 16x16 */ public static final Icon Overhead = load("/debugger/overhead.svg");
@@ -596,12 +550,6 @@ public class AllIcons {
     /** 16x16 */ public static final Icon PromptInputHistory = load("/debugger/promptInputHistory.svg");
     /** 7x9 */ public static final Icon Question_badge = load("/debugger/question_badge.svg");
     /** 16x16 */ public static final Icon RestoreLayout = load("/debugger/restoreLayout.svg");
-
-    public final static class Reveal {
-      /** 16x16 */ public static final Icon RevealOff = load("/debugger/reveal/revealOff.svg");
-      /** 16x16 */ public static final Icon RevealOn = load("/debugger/reveal/revealOn.svg");
-
-    }
     /** 16x16 */ public static final Icon Selfreference = load("/debugger/selfreference.svg");
     /** 16x16 */ public static final Icon ShowCurrentFrame = load("/debugger/showCurrentFrame.svg");
     /** 16x16 */ public static final Icon SmartStepInto = load("/debugger/smartStepInto.svg");
@@ -1067,12 +1015,6 @@ public class AllIcons {
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
     /** 16x16 */ public static final Icon ArrowDown_white = load("/general/arrowDown.svg");
-
-    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.Pin_tab */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2020.1")
-    /** 16x16 */ public static final Icon AutohideOff = load("/general/pin_tab.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.Pin_tab */
     @SuppressWarnings("unused")
@@ -2232,6 +2174,7 @@ public class AllIcons {
     /** 16x16 */ public static final Icon Cvs_global = load("/nodes/cvs_global.svg");
     /** 16x16 */ public static final Icon Cvs_roots = load("/nodes/cvs_roots.svg");
     /** 16x16 */ public static final Icon DataColumn = load("/nodes/dataColumn.svg");
+    /** 16x16 */ public static final Icon DataSchema = load("/nodes/dataSchema.svg");
     /** 16x16 */ public static final Icon DataTables = load("/nodes/DataTables.svg");
     /** 16x16 */ public static final Icon Deploy = load("/nodes/deploy.svg");
     /** 16x16 */ public static final Icon Desktop = load("/nodes/desktop.svg");
@@ -2259,9 +2202,11 @@ public class AllIcons {
     /** 16x16 */ public static final Icon FinalMark = load("/nodes/finalMark.svg");
     /** 16x16 */ public static final Icon Folder = load("/nodes/folder.svg");
     /** 16x16 */ public static final Icon Function = load("/nodes/function.svg");
+    /** 16x16 */ public static final Icon Gvariable = load("/nodes/gvariable.svg");
     /** 16x16 */ public static final Icon HomeFolder = load("/nodes/homeFolder.svg");
     /** 16x16 */ public static final Icon IdeaModule = load("/nodes/ideaModule.svg");
     /** 16x16 */ public static final Icon IdeaProject = load("/nodes/ideaProject.svg");
+    /** 16x16 */ public static final Icon Include = load("/nodes/include.svg");
     /** 16x16 */ public static final Icon InspectionResults = load("/nodes/inspectionResults.svg");
     /** 16x16 */ public static final Icon Interface = load("/nodes/interface.svg");
     /** 16x16 */ public static final Icon J2eeParameter = load("/nodes/j2eeParameter.svg");
@@ -2365,6 +2310,7 @@ public class AllIcons {
     /** 16x16 */ public static final Icon UpLevel = load("/nodes/upLevel.svg");
     /** 16x16 */ public static final Icon Variable = load("/nodes/variable.svg");
     /** 16x16 */ public static final Icon WarningIntroduction = load("/nodes/warningIntroduction.svg");
+    /** 16x16 */ public static final Icon WarningMark = load("/nodes/warningMark.svg");
     /** 16x16 */ public static final Icon WebFolder = load("/nodes/webFolder.svg");
     /** 16x16 */ public static final Icon Weblistener = load("/nodes/weblistener.svg");
     /** 16x16 */ public static final Icon Write_access = load("/nodes/write-access.svg");
@@ -2381,12 +2327,6 @@ public class AllIcons {
     @ScheduledForRemoval(inVersion = "2020.1")
     /** 16x16 */ public static final Icon CollapseNode = load("/general/arrowDown.svg");
 
-    /** @deprecated to be removed in IDEA 2020 - see DatabaseIcons.View */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon DataSchema = load("/nodes/dataSchema.svg");
-
     /** @deprecated to be removed in IDEA 2020 - see DatabaseIcons.DatabaseGroup */
     @SuppressWarnings("unused")
     @Deprecated
@@ -2398,12 +2338,6 @@ public class AllIcons {
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
     public static final Icon DataView = load("/nodes/dataView.svg");
-
-    /** @deprecated to be removed in IDEA 2020 */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon DisabledPointcut = load("/nodes/disabledPointcut.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.ArrowRight */
     @SuppressWarnings("unused")
@@ -2440,18 +2374,6 @@ public class AllIcons {
     @Deprecated
     @ScheduledForRemoval(inVersion = "2020.1")
     /** 16x16 */ public static final Icon PinToolWindow = load("/nodes/tabPin.svg");
-
-    /** @deprecated to be removed in IDEA 2020 */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon PluginUpdate = load("/nodes/pluginUpdate.svg");
-
-    /** @deprecated to be removed in IDEA 2020 */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Pointcut = load("/nodes/pointcut.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Nodes.Folder */
     @SuppressWarnings("unused")
@@ -2527,15 +2449,10 @@ public class AllIcons {
     @ScheduledForRemoval(inVersion = "2020.1")
     /** 16x16 */ public static final Icon ShowEditorHighlighting = load("/actions/edit.svg");
 
-    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.GroupByModule */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2020.1")
-    /** 16x16 */ public static final Icon ShowModules = load("/actions/GroupByModule.svg");
-
   }
 
   public final static class Plugins {
+    /** 16x16 */ public static final Icon Disabled = load("/plugins/disabled.svg");
     /** 12x12 */ public static final Icon Downloads = load("/plugins/downloads.svg");
     /** 15x15 */ public static final Icon ModifierInvalid = load("/plugins/modifierInvalid.svg");
     /** 14x14 */ public static final Icon ModifierJBLogo = load("/plugins/modifierJBLogo.svg");
@@ -2875,6 +2792,7 @@ public class AllIcons {
     /** 16x16 */ public static final Icon InvalidConfigurationLayer = load("/runConfigurations/invalidConfigurationLayer.svg");
     /** 16x16 */ public static final Icon Junit = load("/runConfigurations/junit.svg");
     /** 16x16 */ public static final Icon Remote = load("/runConfigurations/remote.svg");
+    /** 16x16 */ public static final Icon RemoteDebug = load("/runConfigurations/remoteDebug.svg");
     /** 16x16 */ public static final Icon RerunFailedTests = load("/runConfigurations/rerunFailedTests.svg");
     /** 16x16 */ public static final Icon Scroll_down = load("/runConfigurations/scroll_down.svg");
     /** 16x16 */ public static final Icon ShowIgnored = load("/runConfigurations/showIgnored.svg");
@@ -2908,6 +2826,7 @@ public class AllIcons {
     /** 16x16 */ public static final Icon ToolbarTerminated = load("/runConfigurations/toolbarTerminated.svg");
     /** 16x16 */ public static final Icon TrackCoverage = load("/runConfigurations/trackCoverage.svg");
     /** 16x16 */ public static final Icon Web_app = load("/runConfigurations/web_app.svg");
+    /** 16x16 */ public static final Icon Wsl = load("/runConfigurations/wsl.svg");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.BalloonError */
     @SuppressWarnings("unused")
@@ -3142,6 +3061,7 @@ public class AllIcons {
     /** 16x16 */ public static final Icon Arrow_right = load("/vcs/arrow_right.svg");
     /** 16x16 */ public static final Icon Branch = load("/vcs/branch.svg");
     /** 16x16 */ public static final Icon Changelist = load("/vcs/changelist.svg");
+    /** 16x16 */ public static final Icon Clone = load("/vcs/clone.svg");
     /** 16x16 */ public static final Icon CommitNode = load("/vcs/commitNode.svg");
     /** 16x16 */ public static final Icon Equal = load("/vcs/equal.svg");
     /** 16x16 */ public static final Icon Folders = load("/vcs/folders.svg");

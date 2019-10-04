@@ -68,7 +68,7 @@
     <lang.commenter language="XPath2" implementationClass="org.intellij.lang.xpath.XPath2Language$XPath2Commenter" />
 
     <codeInsight.parameterInfo language="XPath" implementationClass="org.intellij.lang.xpath.XPathParameterInfoHandler" />
-    <fileTypeFactory implementation="org.intellij.lang.xpath.XPathSupportLoader" />
+<!--    <fileTypeFactory implementation="org.intellij.lang.xpath.XPathSupportLoader" />-->
 
     <localInspection language="XPath" shortName="CheckNodeTest" displayName="Check Node Test" groupName="XPath" enabledByDefault="true" level="WARNING"
                      implementationClass="org.intellij.lang.xpath.validation.inspections.CheckNodeTest"/>
@@ -160,6 +160,8 @@
     <implicitUsageProvider implementation="org.intellij.lang.xpath.xslt.impl.XsltImplicitUsagesProvider" />
 
     <renameInputValidator implementation="org.intellij.lang.xpath.xslt.impl.XsltRenameInputValidator"/>
+    <lang.findUsagesProvider language="$XSLT" implementationClass="org.intellij.lang.xpath.xslt.psi.impl.XsltFindUsagesProvider"/>
+    <lang.refactoringSupport language="$XSLT" implementationClass="org.intellij.lang.xpath.xslt.psi.impl.XsltRefactoringSupportProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="XPathView">

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.actions.service;
 
 import com.intellij.openapi.vfs.VirtualFile;
@@ -24,14 +10,12 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
-import com.intellij.util.xml.DomFileElement;
-import com.intellij.util.xml.DomManager;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
 import org.jetbrains.idea.devkit.dom.Extensions;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
-
-import java.util.List;
+import org.jetbrains.idea.devkit.util.DescriptorUtil;
 
 @TestDataPath("$CONTENT_ROOT/testData/actions/newService/")
 public class ServiceCreatorTest extends LightJavaCodeInsightFixtureTestCase {
@@ -94,24 +78,10 @@ public class ServiceCreatorTest extends LightJavaCodeInsightFixtureTestCase {
     PsiReferenceList implementsList = createdImplementation.getImplementsList();
     assertNotNull(implementsList);
     PsiJavaCodeReferenceElement[] elements = implementsList.getReferenceElements();
-    assertNotNull(elements);
-    PsiJavaCodeReferenceElement element = elements[0];
+    PsiJavaCodeReferenceElement element = assertOneElement(elements);
     assertEquals(interfaceFqName, element.getQualifiedName());
 
-    DomFileElement<IdeaPlugin> fileElement = DomManager.getDomManager(getProject()).getFileElement(pluginXml, IdeaPlugin.class);
-    assertNotNull(fileElement);
-    IdeaPlugin ideaPlugin = fileElement.getRootElement();
-    List<Extensions> extensionsList = ideaPlugin.getExtensions();
-    assertNotNull(extensionsList);
-    assertSize(1, extensionsList);
-
-    XmlTag extensions = extensionsList.get(0).getXmlTag();
-    assertNotNull(extensions);
-    XmlTag[] extensionTags = extensions.getSubTags();
-    assertNotNull(extensionTags);
-    assertSize(1, extensionTags);
-
-    XmlTag serviceTag = extensionTags[0];
+    XmlTag serviceTag = findServiceTag(pluginXml);
     assertEquals(tagName, serviceTag.getName());
     assertEquals(interfaceFqName, serviceTag.getAttributeValue("serviceInterface"));
     assertEquals(implementationFqName, serviceTag.getAttributeValue("serviceImplementation"));
@@ -128,27 +98,25 @@ public class ServiceCreatorTest extends LightJavaCodeInsightFixtureTestCase {
 
     PsiClass[] createdClasses = creator.getCreatedClasses();
     assertNotNull(createdClasses);
-    assertSize(1, createdClasses);
 
-    PsiClass createdImplementation = createdClasses[0];
+    PsiClass createdImplementation = assertOneElement(createdClasses);
     assertEquals(implementationFqName.substring(implementationFqName.lastIndexOf(".") + 1), createdImplementation.getName());
 
-    DomFileElement<IdeaPlugin> fileElement = DomManager.getDomManager(getProject()).getFileElement(pluginXml, IdeaPlugin.class);
-    assertNotNull(fileElement);
-    IdeaPlugin ideaPlugin = fileElement.getRootElement();
-    List<Extensions> extensionsList = ideaPlugin.getExtensions();
-    assertNotNull(extensionsList);
-    assertSize(1, extensionsList);
-
-    XmlTag extensions = extensionsList.get(0).getXmlTag();
-    assertNotNull(extensions);
-    XmlTag[] extensionTags = extensions.getSubTags();
-    assertNotNull(extensionTags);
-    assertSize(1, extensionTags);
-
-    XmlTag serviceTag = extensionTags[0];
+    XmlTag serviceTag = findServiceTag(pluginXml);
     assertEquals(tagName, serviceTag.getName());
     assertNull(serviceTag.getAttributeValue("serviceInterface"));
     assertEquals(implementationFqName, serviceTag.getAttributeValue("serviceImplementation"));
+  }
+
+  @NotNull
+  private static XmlTag findServiceTag(XmlFile pluginXml) {
+    IdeaPlugin ideaPlugin = DescriptorUtil.getIdeaPlugin(pluginXml);
+    assertNotNull(ideaPlugin);
+
+    Extensions extensions = assertOneElement(ideaPlugin.getExtensions());
+    XmlTag extensionsTag = extensions.getXmlTag();
+
+    XmlTag[] extensionTags = extensionsTag.getSubTags();
+    return assertOneElement(extensionTags);
   }
 }

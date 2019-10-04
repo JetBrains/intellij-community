@@ -167,7 +167,7 @@ public class IncProjectBuilder {
     final LowMemoryWatcher memWatcher = LowMemoryWatcher.register(() -> {
       JavacMain.clearCompilerZipFileCache();
       myProjectDescriptor.dataManager.flush(false);
-      myProjectDescriptor.timestamps.getStorage().force();
+      myProjectDescriptor.getProjectStamps().getStampStorage().force();
     });
 
     startTempDirectoryCleanupTask();
@@ -177,6 +177,7 @@ public class IncProjectBuilder {
       context = createContext(scope);
       runBuild(context, forceCleanCaches);
       myProjectDescriptor.dataManager.saveVersion();
+      myProjectDescriptor.dataManager.reportUnhandledRelativizerPaths();
       reportRebuiltModules(context);
       reportUnprocessedChanges(context);
     }
@@ -310,7 +311,7 @@ public class IncProjectBuilder {
   private static void flushContext(CompileContext context) {
     if (context != null) {
       final ProjectDescriptor pd = context.getProjectDescriptor();
-      pd.timestamps.getStorage().force();
+      pd.getProjectStamps().getStampStorage().force();
       pd.dataManager.flush(false);
     }
     final ExternalJavacManager server = ExternalJavacManager.KEY.get(context);
@@ -489,7 +490,7 @@ public class IncProjectBuilder {
     finally {
       if (cleanCaches) {
         try {
-          projectDescriptor.timestamps.getStorage().clean();
+          projectDescriptor.getProjectStamps().getStampStorage().clean();
         }
         catch (IOException e) {
           if (ex == null) {
@@ -1073,7 +1074,9 @@ public class IncProjectBuilder {
       fsState.clearContextRoundData(context);
       fsState.clearContextChunk(context);
 
-      BuildOperations.markTargetsUpToDate(context, chunk);
+      if (doneSomething) {
+        BuildOperations.markTargetsUpToDate(context, chunk);
+      }
 
       //if (doneSomething && GENERATE_CLASSPATH_INDEX) {
       //  myAsyncTasks.add(SharedThreadPool.getInstance().executeOnPooledThread(new Runnable() {

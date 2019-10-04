@@ -16,6 +16,8 @@ import com.intellij.openapi.keymap.impl.KeymapImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -64,6 +66,7 @@ public class ActionsTree {
   private static final String ROOT = "ROOT";
 
   private String myFilter = null;
+  private @Nullable Condition<AnAction> myBaseFilter;
 
   private final Map<String, String> myPluginNames = ActionsTreeUtil.createPluginActionsMap();
 
@@ -158,6 +161,8 @@ public class ActionsTree {
     myKeymap = keymap;
   }
 
+  public void setBaseFilter(@Nullable Condition<AnAction> baseFilter) { myBaseFilter = baseFilter; }
+
   public JComponent getComponent() {
     return myComponent;
   }
@@ -199,6 +204,12 @@ public class ActionsTree {
     reset(myKeymap, currentQuickListIds, filter, null);
   }
 
+  private @Nullable Condition<AnAction> combineWithBaseFilter(@Nullable Condition<AnAction> actionFilter) {
+    if (actionFilter != null)
+      return myBaseFilter != null ? Conditions.and(myBaseFilter, actionFilter) : actionFilter;
+    return myBaseFilter;
+  }
+
   private void reset(@NotNull Keymap keymap, @NotNull QuickList[] allQuickLists, String filter, @Nullable Shortcut shortcut) {
     myKeymap = keymap;
 
@@ -209,12 +220,14 @@ public class ActionsTree {
 
     ActionManager actionManager = ActionManager.getInstance();
     Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myComponent));
-    Group mainGroup = ActionsTreeUtil.createMainGroup(project, keymap, allQuickLists, filter, true,
-                                                      ActionsTreeUtil.isActionFiltered(actionManager, keymap, shortcut, filter, true));
-    if ((filter != null && filter.length() > 0 || shortcut != null) && mainGroup.initIds().isEmpty()){
-      mainGroup = ActionsTreeUtil.createMainGroup(project, keymap, allQuickLists, filter, false,
-                                                  ActionsTreeUtil.isActionFiltered(actionManager, keymap, shortcut, filter, false));
+    Condition<AnAction> condFilter = combineWithBaseFilter(ActionsTreeUtil.isActionFiltered(actionManager, keymap, shortcut, filter, true));
+    Group mainGroup = ActionsTreeUtil.createMainGroup(project, keymap, allQuickLists, filter, true, condFilter);
+
+    if ((filter != null && filter.length() > 0 || shortcut != null) && mainGroup.initIds().isEmpty()) {
+      condFilter = combineWithBaseFilter(ActionsTreeUtil.isActionFiltered(actionManager, keymap, shortcut, filter, false));
+      mainGroup = ActionsTreeUtil.createMainGroup(project, keymap, allQuickLists, filter, false, condFilter);
     }
+
     myRoot = ActionsTreeUtil.createNode(mainGroup);
     myMainGroup = mainGroup;
     MyModel model = (MyModel)myTree.getModel();

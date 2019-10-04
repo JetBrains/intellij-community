@@ -25,7 +25,6 @@ import static org.junit.Assert.*;
 /**
  * @author Dmitry Avdeev
  */
-@SuppressWarnings("SuspiciousPackagePrivateAccess")
 public class PluginDescriptorTest {
   private static String getTestDataPath() {
     return PathManagerEx.getTestDataPath() + "/ide/plugins/pluginDescriptor";

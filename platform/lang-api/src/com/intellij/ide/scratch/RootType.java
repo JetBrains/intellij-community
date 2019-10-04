@@ -41,7 +41,7 @@ public abstract class RootType {
   }
 
   @NotNull
-  public static <T extends RootType> T findByClass(Class<T> aClass) {
+  public static <T extends RootType> T findByClass(@NotNull Class<T> aClass) {
     return ROOT_EP.findExtensionOrFail(aClass);
   }
 

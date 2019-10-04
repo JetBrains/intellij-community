@@ -3,6 +3,7 @@ package com.intellij.codeInspection;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
@@ -29,7 +30,9 @@ public class RedundantComparatorComparingInspection extends AbstractBaseJavaLoca
   private static final CallMatcher COMPARATOR_REVERSED = instanceCall(JAVA_UTIL_COMPARATOR, "reversed").parameterCount(0);
   private static final CallMatcher REVERSE_ORDER_FOR_COMPARATOR = staticCall(JAVA_UTIL_COLLECTIONS, "reverseOrder")
     .parameterTypes(JAVA_UTIL_COMPARATOR);
-  private static final CallMatcher REVERSE_ORDER_FOR_NATURAL = staticCall(JAVA_UTIL_COMPARATOR, "reverseOrder").parameterCount(0);
+  private static final CallMatcher REVERSE_ORDER_FOR_NATURAL = anyOf(
+    staticCall(JAVA_UTIL_COMPARATOR, "reverseOrder").parameterCount(0),
+    staticCall(JAVA_UTIL_COLLECTIONS, "reverseOrder").parameterCount(0));
   private static final CallMatcher COMPARATOR_COMPARING_WITH_DOWNSTREAM =
     staticCall(JAVA_UTIL_COMPARATOR, "comparing").parameterTypes(JAVA_UTIL_FUNCTION_FUNCTION, JAVA_UTIL_COMPARATOR);
 
@@ -114,6 +117,10 @@ public class RedundantComparatorComparingInspection extends AbstractBaseJavaLoca
       }
     }
     if (REVERSE_ORDER_FOR_NATURAL.test(call)) {
+      if (!InheritanceUtil.isInheritor(PsiUtil.substituteTypeParameter(call.getType(), JAVA_UTIL_COMPARATOR, 0, false),
+                                       JAVA_LANG_COMPARABLE)) {
+        return null;
+      }
       PsiReferenceParameterList parameterList = call.getMethodExpression().getParameterList();
       return JAVA_UTIL_COMPARATOR + "."+(parameterList == null ? "" : ct.text(parameterList))+"naturalOrder()";
     }

@@ -1,22 +1,9 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.lang;
 
 import com.intellij.openapi.diagnostic.LoggerRt;
 import com.intellij.util.containers.Stack;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -66,7 +53,8 @@ public class ClassPath {
                    @Nullable UrlClassLoader.CachingCondition cachingCondition,
                    boolean logErrorOnMissingJar,
                    boolean lazyClassloadingCaches,
-                   Set<URL> urlsWithProtectionDomain, boolean logJarAccess) {
+                   @NotNull Set<URL> urlsWithProtectionDomain,
+                   boolean logJarAccess) {
     myLazyClassloadingCaches = lazyClassloadingCaches;
     myCanLockJars = canLockJars;
     myCanUseCache = canUseCache && !myLazyClassloadingCaches;
@@ -101,7 +89,7 @@ public class ClassPath {
   }
 
   @Nullable
-  public Resource getResource(String s) {
+  public Resource getResource(@NotNull String s) {
     final long started = startTiming();
     try {
       String shortName = ClasspathCache.transformName(s);
@@ -179,6 +167,7 @@ public class ClassPath {
     return myLoaders.get(i);
   }
 
+  @NotNull
   public List<URL> getBaseUrls() {
     List<URL> result = new ArrayList<URL>();
     for (Loader loader : myLoaders) {
@@ -187,11 +176,12 @@ public class ClassPath {
     return result;
   }
 
+  @NotNull
   public Collection<String> getJarAccessLog() {
     return myJarAccessLog;
   }
 
-  private void initLoaders(final URL url, int index) throws IOException {
+  private void initLoaders(@NotNull URL url, int index) throws IOException {
     String path;
 
     if (myAcceptUnescapedUrls) {
@@ -216,18 +206,13 @@ public class ClassPath {
     }
   }
 
-  private Loader createLoader(URL url, int index, File file, boolean processRecursively) throws IOException {
+  private Loader createLoader(@NotNull URL url, int index, @NotNull File file, boolean processRecursively) throws IOException {
     if (file.isDirectory()) {
       return new FileLoader(url, index, this);
     }
     if (file.isFile()) {
-      JarLoader loader;
-      if (myURLsWithProtectionDomain.contains(url)) {
-        loader = new SecureJarLoader(url, index, this);
-      }
-      else {
-        loader = new JarLoader(url, index, this);
-      }
+      boolean isSigned = myURLsWithProtectionDomain.contains(url);
+      JarLoader loader = isSigned ? new SecureJarLoader(url, index, this) : new JarLoader(url, index, this);
       if (processRecursively) {
         String[] referencedJars = loadManifestClasspath(loader);
         if (referencedJars != null) {
@@ -243,6 +228,7 @@ public class ClassPath {
           }
           push(urls);
           if (ourLogTiming) {
+            //noinspection UseOfSystemOutOrSystemErr
             System.out.println("Loaded all " + referencedJars.length + " urls " + (System.nanoTime() - s2) / 1000000 + "ms");
           }
         }
@@ -252,7 +238,7 @@ public class ClassPath {
     return null;
   }
 
-  private void initLoader(URL url, Loader loader) throws IOException {
+  private void initLoader(@NotNull URL url, @NotNull Loader loader) throws IOException {
     if (myCanUseCache) {
       ClasspathCache.LoaderData data = myCachePool == null ? null : myCachePool.getCachedData(url);
       if (data == null) {
@@ -277,11 +263,11 @@ public class ClassPath {
     myLastLoaderProcessed.incrementAndGet(); // volatile write
   }
 
-  Attributes getManifestData(URL url) {
+  Attributes getManifestData(@NotNull URL url) {
     return myCanUseCache && myCachePool != null ? myCachePool.getManifestData(url) : null;
   }
 
-  void cacheManifestData(URL url, Attributes manifestAttributes) {
+  void cacheManifestData(@NotNull URL url, @NotNull Attributes manifestAttributes) {
     if (myCanUseCache && myCachePool != null && myCachingCondition != null && myCachingCondition.shouldCacheData(url)) {
       myCachePool.cacheManifestData(url, manifestAttributes);
     }
@@ -290,11 +276,12 @@ public class ClassPath {
   private class MyEnumeration implements Enumeration<URL> {
     private int myIndex;
     private Resource myRes;
+    @NotNull
     private final String myName;
     private final String myShortName;
     private final List<Loader> myLoaders;
 
-    MyEnumeration(String name) {
+    MyEnumeration(@NotNull String name) {
       myName = name;
       myShortName = ClasspathCache.transformName(name);
       List<Loader> loaders = null;
@@ -305,7 +292,8 @@ public class ClassPath {
 
         if (name.endsWith("/")) {
           myCache.iterateLoaders(name.substring(0, name.length() - 1), ourLoaderCollector, loadersSet, this, myShortName);
-        } else {
+        }
+        else {
           myCache.iterateLoaders(name + "/", ourLoaderCollector, loadersSet, this, myShortName);
         }
 
@@ -367,7 +355,7 @@ public class ClassPath {
 
   private static class ResourceStringLoaderIterator extends ClasspathCache.LoaderIterator<Resource, String, ClassPath> {
     @Override
-    Resource process(Loader loader, String s, ClassPath classPath, String shortName) {
+    Resource process(@NotNull Loader loader, @NotNull String s, @NotNull ClassPath classPath, @NotNull String shortName) {
       if (!loader.containsName(s, shortName)) return null;
       Resource resource = loader.getResource(s);
       if (resource != null) {
@@ -391,7 +379,7 @@ public class ClassPath {
 
   private static class LoaderCollector extends ClasspathCache.LoaderIterator<Object, Collection<Loader>, Object> {
     @Override
-    Object process(Loader loader, Collection<Loader> parameter, Object parameter2, String shortName) {
+    Object process(@NotNull Loader loader, @NotNull Collection<Loader> parameter, @NotNull Object parameter2, @NotNull String shortName) {
       parameter.add(loader);
       return null;
     }
@@ -453,6 +441,7 @@ public class ClassPath {
       Runtime.getRuntime().addShutdownHook(new Thread("Shutdown hook for tracing classloading information") {
         @Override
         public void run() {
+          //noinspection UseOfSystemOutOrSystemErr
           System.out.println("Classloading requests:" + ClassPath.class.getClassLoader() + "," + ourTotalRequests + ", time:" + (ourTotalTime.get() / 1000000) + "ms");
         }
       });

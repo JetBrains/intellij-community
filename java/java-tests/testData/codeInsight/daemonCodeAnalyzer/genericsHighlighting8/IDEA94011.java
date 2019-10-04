@@ -10,8 +10,7 @@ class Test {
 
     public void test(Set<MyConsumer> set) {
         @SuppressWarnings("unchecked")
-        Map<Parent, MyConsumer<Parent>> map = <error descr="Incompatible types. Required Map<Parent, MyConsumer<Parent>> but 'create' was inferred to Map<S, T>:
-Incompatible equality constraint: MyConsumer<Test.Parent> and MyConsumer">create(set);</error>
+        Map<Parent, MyConsumer<Parent>> map = <error descr="Incompatible types. Found: 'java.util.Map<java.lang.Object,Test.MyConsumer>', required: 'java.util.Map<Test.Parent,Test.MyConsumer<Test.Parent>>'">create(set);</error>
 
     }
 

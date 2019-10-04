@@ -15,9 +15,10 @@ class GitIgnoredFilesHolder(val project: Project, val manager: GitRepositoryMana
 
   override fun copy() = GitIgnoredFilesHolder(project, manager)
 
-  class Provider(val project: Project, val manager: GitRepositoryManager) : VcsIgnoredFilesHolder.Provider, ChangesViewRefresher {
+  class Provider(val project: Project) : VcsIgnoredFilesHolder.Provider, ChangesViewRefresher {
 
     private val gitVcs = GitVcs.getInstance(project)
+    private val manager = GitRepositoryManager.getInstance(project)
 
     override fun getVcs() = gitVcs
 

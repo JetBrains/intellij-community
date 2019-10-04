@@ -14,7 +14,7 @@ import java.util.Map;
 /**
  * @author Konstantin Bulenkov
  */
-public class GraphicsUtil {
+public final class GraphicsUtil {
   private static final MethodInvocator ourSafelyGetGraphicsMethod = new MethodInvocator(JComponent.class, "safelyGetGraphics", Component.class);
 
   @SuppressWarnings("UndesirableClassUsage")
@@ -22,6 +22,19 @@ public class GraphicsUtil {
   static {
     setupFractionalMetrics(ourGraphics);
     setupAntialiasing(ourGraphics, true, true);
+  }
+
+  /** This method is intended to use when user settings are not accessible yet.
+   *  Use it to set up default RenderingHints.
+   */
+  public static void applyRenderingHints(@NotNull Graphics g) {
+    Graphics2D g2d = (Graphics2D)g;
+    Toolkit tk = Toolkit.getDefaultToolkit();
+    //noinspection HardCodedStringLiteral
+    Map map = (Map)tk.getDesktopProperty("awt.font.desktophints");
+    if (map != null) {
+      g2d.addRenderingHints(map);
+    }
   }
 
   public static void setupFractionalMetrics(Graphics g) {

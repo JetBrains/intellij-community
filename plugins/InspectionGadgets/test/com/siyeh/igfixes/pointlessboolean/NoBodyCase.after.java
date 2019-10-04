@@ -15,8 +15,8 @@
  */
 class C {
     {
-        while (<caret>true) {
-            if (!(true)) break;
-        }
+        while (
+                <caret>true
+          )
     }
 }

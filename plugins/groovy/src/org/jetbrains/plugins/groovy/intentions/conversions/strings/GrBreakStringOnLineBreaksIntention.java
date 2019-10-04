@@ -65,7 +65,7 @@ public class GrBreakStringOnLineBreaksIntention extends Intention {
 
     StringBuilder buffer = new StringBuilder();
     if (element instanceof GrString) {
-      processGString(element, quote, value, buffer);
+      processGString(element, quote, buffer);
     }
     else {
       processSimpleString(quote, value, buffer);
@@ -77,7 +77,7 @@ public class GrBreakStringOnLineBreaksIntention extends Intention {
     return result;
   }
 
-  private static void processGString(PsiElement element, String quote, String value, StringBuilder buffer) {
+  private static void processGString(PsiElement element, String quote, StringBuilder buffer) {
     final ASTNode node = element.getNode();
 
     for (ASTNode child = node.getFirstChildNode(); child != null; child = child.getTreeNext()) {
@@ -87,7 +87,7 @@ public class GrBreakStringOnLineBreaksIntention extends Intention {
         buffer.append(child.getText());
       }
       else {
-        value = child.getText();
+        String value = child.getText();
         int prev = 0;
         if (!isInjection(child.getTreePrev())) {
           buffer.append(quote);

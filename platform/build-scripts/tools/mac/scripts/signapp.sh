@@ -11,7 +11,7 @@ EXPLODED=$2.exploded
 USERNAME=$3
 PASSWORD=$4
 CODESIGN_STRING=$5
-HELP_DIR_NAME=$6
+JDK_ARCHIVE="$6"
 NOTARIZE=$7
 BUNDLE_ID=$8
 
@@ -36,28 +36,12 @@ log "$INPUT_FILE unzipped and removed"
 
 APPLICATION_PATH="$EXPLODED/$BUILD_NAME"
 
-if [ $# -eq 9 ] && [ -f "$9" ]; then
-  archiveJDK="$9"
-  log "Preparing jdk $archiveJDK..."
-  log "Modifying Info.plist"
-  sed -i -e 's/1.6\*/1.6\+/' "$APPLICATION_PATH/Contents/Info.plist"
-  jdk="jdk-bundled"
-  if [[ $1 == *custom-jdk-bundled* ]]; then
-    jdk="custom-$jdk"
-  fi
-  rm -f "$APPLICATION_PATH/Contents/Info.plist-e"
-  log "Info.plist has been modified"
-  log "Copying JDK: $archiveJDK to $APPLICATION_PATH/Contents"
-  tar xvf "$archiveJDK" -C "$APPLICATION_PATH/Contents" --exclude='._jdk'
+if [ "$JDK_ARCHIVE" != "no-jdk" ] && [ -f "$JDK_ARCHIVE" ]; then
+  log "Copying JDK: $JDK_ARCHIVE to $APPLICATION_PATH/Contents"
+  tar xvf "$JDK_ARCHIVE" -C "$APPLICATION_PATH/Contents" --exclude='._jdk'
   find "$APPLICATION_PATH/Contents/" -mindepth 1 -maxdepth 1 -exec chmod -R u+w '{}' \;
   log "JDK has been copied"
-  rm -f "$archiveJDK"
-fi
-
-if [ "$HELP_DIR_NAME" != "no-help" ]; then
-  HELP_DIR="$APPLICATION_PATH/Contents/Resources/$HELP_DIR_NAME/Contents/Resources/English.lproj/"
-  log "Building help indices for $HELP_DIR"
-  hiutil -Cagvf "$HELP_DIR/search.helpindex" "$HELP_DIR"
+  rm -f "$JDK_ARCHIVE"
 fi
 
 find "$APPLICATION_PATH/Contents/bin" \

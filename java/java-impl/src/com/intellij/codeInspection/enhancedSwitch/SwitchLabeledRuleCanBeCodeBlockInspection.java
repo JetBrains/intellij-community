@@ -8,10 +8,8 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.Nls;
@@ -104,7 +102,7 @@ public class SwitchLabeledRuleCanBeCodeBlockInspection extends LocalInspectionTo
 
     private static void wrapExpression(PsiExpressionStatement expressionStatement) {
       CommentTracker tracker = new CommentTracker();
-      String valueKeyword = PsiUtil.getLanguageLevel(expressionStatement) == LanguageLevel.JDK_12_PREVIEW ? PsiKeyword.BREAK : PsiKeyword.YIELD;
+      String valueKeyword = PsiKeyword.YIELD;
       tracker.replaceAndRestoreComments(expressionStatement, "{ " + valueKeyword + " " + tracker.text(expressionStatement) + " }");
     }
 

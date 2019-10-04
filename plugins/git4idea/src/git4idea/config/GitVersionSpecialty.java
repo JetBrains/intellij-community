@@ -100,6 +100,13 @@ public enum GitVersionSpecialty {
     }
   },
 
+  KNOWS_REBASE_DROP_ACTION {
+    @Override
+    public boolean existsIn(@NotNull GitVersion version) {
+      return version.isLaterOrEqual(new GitVersion(2, 6, 0, 0));
+    }
+  },
+
   CLONE_RECURSE_SUBMODULES {
     @Override
     public boolean existsIn(@NotNull GitVersion version) {

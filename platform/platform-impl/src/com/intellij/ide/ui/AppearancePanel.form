@@ -183,7 +183,6 @@ Android Studio: removed by Change I18c5f540 -->
                 </constraints>
                 <properties>
                   <horizontalAlignment value="2"/>
-                  <!-- Android Studio: modified by Change I18c5f540 -->
                   <margin top="2" left="6" bottom="2" right="6"/>
                   <text value="1500"/>
                 </properties>
@@ -282,14 +281,6 @@ Android Studio: removed by Change I18c5f540 -->
                   <text value="Allow merging buttons on dialogs"/>
                 </properties>
               </component>
-              <component id="6d38a" class="com.intellij.ui.components.JBCheckBox" binding="myUseSmallLabelsOnTabs">
-                <constraints>
-                  <grid row="3" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-                </constraints>
-                <properties>
-                  <text value="Small labels in editor tabs"/>
-                </properties>
-              </component>
               <component id="3ac95" class="com.intellij.ui.components.JBCheckBox" binding="myWidescreenLayoutCheckBox">
                 <constraints>
                   <grid row="4" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false">
@@ -320,20 +311,20 @@ Android Studio: removed by Change I18c5f540 -->
                   <text resource-bundle="messages/IdeBundle" key="checkbox.right.toolwindow.layout"/>
                 </properties>
               </component>
-              <component id="3e39" class="javax.swing.JCheckBox" binding="myNavigateToPreviewCheckBox" default-binding="true">
+              <component id="2a508" class="javax.swing.JCheckBox" binding="mySmoothScrollingCheckBox">
                 <constraints>
-                  <grid row="6" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                  <grid row="3" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
-                  <text resource-bundle="messages/IdeBundle" key="checkbox.use.preview.window"/>
+                  <text resource-bundle="messages/IdeBundle" key="checkbox.smooth.scrolling"/>
                 </properties>
               </component>
-              <component id="7190f" class="javax.swing.JCheckBox" binding="mySmoothScrollingCheckBox">
+              <component id="3e39" class="javax.swing.JCheckBox" binding="myNavigateToPreviewCheckBox" default-binding="true">
                 <constraints>
                   <grid row="6" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
-                  <text resource-bundle="messages/IdeBundle" key="checkbox.smooth.scrolling"/>
+                  <text resource-bundle="messages/IdeBundle" key="checkbox.use.preview.window"/>
                 </properties>
               </component>
             </children>
@@ -423,7 +414,7 @@ Android Studio: removed by Change I18c5f540 -->
               </component>
             </children>
           </grid>
-          <grid id="a8369" layout-manager="GridLayoutManager" row-count="3" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+          <grid id="a8369" layout-manager="GridLayoutManager" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
               <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
@@ -438,7 +429,7 @@ Android Studio: removed by Change I18c5f540 -->
             <children>
               <component id="d7d6e" class="com.intellij.ide.ui.ColorBlindnessPanel" binding="myColorBlindnessPanel">
                 <constraints>
-                  <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties/>
               </component>
@@ -448,14 +439,6 @@ Android Studio: removed by Change I18c5f540 -->
                 </constraints>
                 <properties>
                   <text resource-bundle="messages/IdeBundle" key="checkbox.support.screen.readers"/>
-                </properties>
-              </component>
-              <component id="ea796" class="com.intellij.ui.components.JBCheckBox" binding="myUseContrastScrollBarsCheckBox">
-                <constraints>
-                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-                </constraints>
-                <properties>
-                  <text resource-bundle="messages/IdeBundle" key="checkbox.acessibility.contrast.scrollbars"/>
                 </properties>
               </component>
             </children>

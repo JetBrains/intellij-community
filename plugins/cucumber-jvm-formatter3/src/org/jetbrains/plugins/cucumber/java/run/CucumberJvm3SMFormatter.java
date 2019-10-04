@@ -4,7 +4,6 @@ import cucumber.api.HookTestStep;
 import cucumber.api.PickleStepTestStep;
 import cucumber.api.TestCase;
 import cucumber.api.TestStep;
-import cucumber.api.event.TestCaseFinished;
 import cucumber.api.event.TestCaseStarted;
 import cucumber.api.event.TestStepFinished;
 import cucumber.api.event.TestStepStarted;
@@ -36,16 +35,6 @@ public class CucumberJvm3SMFormatter extends CucumberJvm2SMFormatter {
   }
 
   @Override
-  protected String getScenarioName(TestCaseStarted testCaseStarted) {
-    return getScenarioName(testCaseStarted.testCase);
-  }
-
-  @Override
-  protected String getScenarioName(TestCaseFinished testCaseFinished) {
-    return getScenarioName(testCaseFinished.testCase);
-  }
-
-  @Override
   protected String getStepLocation(TestStepStarted testStepStarted) {
     return getStepLocation(testStepStarted.testStep);
   }
@@ -65,7 +54,8 @@ public class CucumberJvm3SMFormatter extends CucumberJvm2SMFormatter {
     return getStepName(testStepFinished.testStep);
   }
 
-  private static String getScenarioName(TestCase testCase) {
+  @Override
+  protected String getScenarioNameFromTestCase(TestCase testCase) {
     return "Scenario: " + testCase.getName();
   }
 

@@ -16,6 +16,8 @@
 package com.intellij.diagnostic;
 
 import com.intellij.diagnostic.VMOptions.MemoryKind;
+import com.intellij.diagnostic.hprof.action.HeapDumpSnapshotRunnable;
+import com.intellij.diagnostic.report.MemoryReportReason;
 import com.intellij.ide.IdeBundle;
 import com.intellij.idea.Main;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -100,7 +102,7 @@ public class OutOfMemoryDialog extends DialogWrapper {
     myHeapDumpAction = !heapDump ? null : new DialogWrapperAction(DiagnosticBundle.message("diagnostic.out.of.memory.dump")) {
       @Override
       protected void doAction(ActionEvent e) {
-        snapshot();
+        new HeapDumpSnapshotRunnable(MemoryReportReason.OutOfMemory, HeapDumpSnapshotRunnable.AnalysisOption.SCHEDULE_ON_NEXT_START).run();
       }
     };
 

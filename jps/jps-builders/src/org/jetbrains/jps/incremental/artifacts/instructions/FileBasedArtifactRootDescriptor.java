@@ -14,6 +14,7 @@ import org.jetbrains.jps.incremental.artifacts.ArtifactBuildTarget;
 import org.jetbrains.jps.incremental.artifacts.ArtifactOutputToSourceMapping;
 import org.jetbrains.jps.incremental.artifacts.IncArtifactBuilder;
 import org.jetbrains.jps.incremental.artifacts.impl.JpsArtifactPathUtil;
+import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -49,8 +50,8 @@ public class FileBasedArtifactRootDescriptor extends ArtifactRootDescriptor {
   }
 
   @Override
-  public void writeConfiguration(PrintWriter out) {
-    super.writeConfiguration(out);
+  public void writeConfiguration(PrintWriter out, PathRelativizerService relativizer) {
+    super.writeConfiguration(out, relativizer);
     myCopyingHandler.writeConfiguration(out);
   }
 

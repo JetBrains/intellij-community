@@ -25,11 +25,11 @@ import com.intellij.util.containers.ConcurrentList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.concurrent.ConcurrentMap;
+import java.util.Map;
 
 public class ControlFlowFactory {
   // psiElements hold weakly, controlFlows softly
-  private final ConcurrentMap<PsiElement, ConcurrentList<ControlFlowContext>> cachedFlows = ContainerUtil.createConcurrentWeakKeySoftValueMap();
+  private final Map<PsiElement, ConcurrentList<ControlFlowContext>> cachedFlows = ContainerUtil.createConcurrentWeakKeySoftValueMap();
 
   private static final NotNullLazyKey<ControlFlowFactory, Project> INSTANCE_KEY = ServiceManager.createLazyKey(ControlFlowFactory.class);
 
@@ -157,12 +157,7 @@ public class ControlFlowFactory {
 
   @NotNull
   private ConcurrentList<ControlFlowContext> getOrCreateCachedFlowsForElement(@NotNull PsiElement element) {
-    ConcurrentList<ControlFlowContext> cached = cachedFlows.get(element);
-    if (cached == null) {
-      cached = ContainerUtil.createConcurrentList();
-      cachedFlows.put(element, cached);
-    }
-    return cached;
+    return cachedFlows.computeIfAbsent(element, __ -> ContainerUtil.createConcurrentList());
   }
 }
 

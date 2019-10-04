@@ -28,13 +28,14 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
+import static java.util.Collections.singleton;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
 
 public class SecureUrlClassLoaderTest {
   /**
    * IDEA's UrlClassLoader should verify JAR signatures and checksum if they are exists
-   * but only if JAR url specified in {@link UrlClassLoader.Builder#urlsWithProtectionDomain(URL...)}.
+   * but only if JAR url specified in {@link UrlClassLoader.Builder#urlsWithProtectionDomain}.
    */
   @Test
   public void testSignedJars() throws Exception {
@@ -66,7 +67,7 @@ public class SecureUrlClassLoaderTest {
 
     classLoader = UrlClassLoader.build()
       .urls(classUrl)
-      .urlsWithProtectionDomain(classUrl)
+      .urlsWithProtectionDomain(singleton(classUrl))
       .get();
     error = codeThatRegistersSecurityProvider(classLoader, className);
     assertNull(error);
@@ -180,7 +181,7 @@ public class SecureUrlClassLoaderTest {
 
       ClassLoader classLoader = UrlClassLoader.build()
         .urls(hackedJarUrl)
-        .urlsWithProtectionDomain(hackedJarUrl)
+        .urlsWithProtectionDomain(singleton(hackedJarUrl))
         .get();
 
       try {
@@ -201,11 +202,9 @@ public class SecureUrlClassLoaderTest {
                                       String className,
                                       boolean changeClass,
                                       boolean changeManifest,
-                                      boolean changeSignatureFile)
-    throws Exception {
+                                      boolean changeSignatureFile) throws Exception {
     String pathInJar = classNameToJarEntryName(className);
-    ZipFile sourceZipFile = new ZipFile(new File(classUrl.getFile()), ZipFile.OPEN_READ);
-    try {
+    try (ZipFile sourceZipFile = new ZipFile(new File(classUrl.getFile()), ZipFile.OPEN_READ)) {
       ByteArrayOutputStream hackedClassBytes = new ByteArrayOutputStream();
       Enumeration<? extends ZipEntry> entries = sourceZipFile.entries();
       while (entries.hasMoreElements()) {
@@ -222,8 +221,7 @@ public class SecureUrlClassLoaderTest {
       // it should not be even tried to load.
       hackedClassBytes.write(0);
 
-      ZipOutputStream zipOutputStream = new ZipOutputStream(new FileOutputStream(destination));
-      try {
+      try (ZipOutputStream zipOutputStream = new ZipOutputStream(new FileOutputStream(destination))) {
         entries = sourceZipFile.entries();
         while (entries.hasMoreElements()) {
           ZipEntry entry = entries.nextElement();
@@ -241,7 +239,10 @@ public class SecureUrlClassLoaderTest {
             // iterates over hashtable, therefore entries will be written
             // in unexpected order, that leads to false-positive
             // digital signature check failure.
-            Manifest manifest = readManifest(sourceZipFile, entry);
+            Manifest manifest;
+            try (InputStream stream = sourceZipFile.getInputStream(entry)) {
+              manifest = new Manifest(stream);
+            }
             hackManifest(manifest, pathInJar, hackedClassBytes);
             zipOutputStream.putNextEntry(new ZipEntry(entry.getName()));
             manifest.write(zipOutputStream);
@@ -257,12 +258,6 @@ public class SecureUrlClassLoaderTest {
           zipOutputStream.closeEntry();
         }
       }
-      finally {
-        zipOutputStream.close();
-      }
-    }
-    finally {
-      sourceZipFile.close();
     }
   }
 
@@ -272,18 +267,5 @@ public class SecureUrlClassLoaderTest {
     newAttributes.putValue("SHA-256-Digest", Base64.getEncoder().encodeToString(digest));
     Assume.assumeTrue(manifest.getEntries().containsKey(pathInJar));
     manifest.getEntries().put(pathInJar, newAttributes);
-  }
-
-  @NotNull
-  private static Manifest readManifest(ZipFile sourceZipFile, ZipEntry entry) throws IOException {
-    Manifest manifest;
-    InputStream manifestInputStream = sourceZipFile.getInputStream(entry);
-    try {
-      manifest = new Manifest(manifestInputStream);
-    }
-    finally {
-      manifestInputStream.close();
-    }
-    return manifest;
   }
 }

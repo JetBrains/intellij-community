@@ -21,7 +21,6 @@ import com.intellij.util.pooledThreadSingleAlarm
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.runAsync
-import java.io.Closeable
 import java.nio.file.Path
 import java.nio.file.Paths
 
@@ -61,9 +60,6 @@ open class BasePasswordSafe @JvmOverloads constructor(val settings: PasswordSafe
       catch (e: Exception) {
         LOG.warn(e)
       }
-    }
-    else if (store is Closeable) {
-      store.close()
     }
   }
 

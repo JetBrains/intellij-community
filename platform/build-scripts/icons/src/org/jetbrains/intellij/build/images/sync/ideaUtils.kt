@@ -52,6 +52,6 @@ internal fun searchTestRoots(project: String) = try {
   }.mapTo(mutableSetOf()) { it.file }
 }
 catch (e: IOException) {
-  e.printStackTrace()
+  System.err.println(e.message)
   emptySet<File>()
 }

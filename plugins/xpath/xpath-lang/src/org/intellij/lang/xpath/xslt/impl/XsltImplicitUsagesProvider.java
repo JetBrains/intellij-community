@@ -14,10 +14,11 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.Query;
 import org.intellij.lang.xpath.context.ContextProvider;
 import org.intellij.lang.xpath.xslt.XsltSupport;
+import org.jetbrains.annotations.NotNull;
 
 public final class XsltImplicitUsagesProvider implements ImplicitUsageProvider {
     @Override
-    public boolean isImplicitUsage(PsiElement element) {
+    public boolean isImplicitUsage(@NotNull PsiElement element) {
         if (!(element instanceof XmlAttribute)) {
             return false;
         }
@@ -53,12 +54,12 @@ public final class XsltImplicitUsagesProvider implements ImplicitUsageProvider {
     }
 
     @Override
-    public boolean isImplicitRead(PsiElement element) {
+    public boolean isImplicitRead(@NotNull PsiElement element) {
         return false;
     }
 
     @Override
-    public boolean isImplicitWrite(PsiElement element) {
+    public boolean isImplicitWrite(@NotNull PsiElement element) {
         return false;
     }
 }

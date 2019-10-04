@@ -3,6 +3,9 @@ package com.intellij.stats.completion
 
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
+import com.intellij.codeInsight.completion.ml.ContextFeatureProvider
+import com.intellij.completion.ml.ContextFeaturesStorage
+import com.intellij.codeInsight.completion.ml.MLFeatureValue
 import com.intellij.completion.settings.CompletionMLRankingSettings
 import com.intellij.completion.tracker.PositionTrackingListener
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
@@ -13,16 +16,20 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.reporting.isUnitTestMode
 import com.intellij.stats.experiment.WebServiceStatus
 import com.intellij.stats.personalization.UserFactorDescriptions
 import com.intellij.stats.personalization.UserFactorStorage
 import com.intellij.stats.personalization.UserFactorsManager
+import com.intellij.stats.personalization.session.SessionFactorsUtils
+import com.intellij.stats.personalization.session.SessionPrefixTracker
+import com.intellij.stats.storage.factors.MutableLookupStorage
 import java.beans.PropertyChangeListener
 import kotlin.random.Random
 
-class CompletionTrackerInitializer(experimentHelper: WebServiceStatus) : Disposable {
+class CompletionTrackerInitializer(experimentHelper: WebServiceStatus) {
   companion object {
     var isEnabledInTests: Boolean = false
     private val LOGGED_SESSIONS_RATIO: Map<String, Double> = mapOf(
@@ -42,12 +49,12 @@ class CompletionTrackerInitializer(experimentHelper: WebServiceStatus) : Disposa
     }
     else if (lookup is LookupImpl) {
       if (isUnitTestMode() && !isEnabledInTests) return@PropertyChangeListener
-      lookup.putUserData(CompletionUtil.COMPLETION_STARTING_TIME_KEY, System.currentTimeMillis())
 
-      processUserFactors(lookup)
+      val lookupStorage = MutableLookupStorage.initLookupStorage(lookup, System.currentTimeMillis())
 
-      val shownTimesTracker = PositionTrackingListener(lookup)
-      lookup.setPrefixChangeListener(shownTimesTracker)
+      processContextFactors(lookup, lookupStorage)
+      processUserFactors(lookup, lookupStorage)
+      processSessionFactors(lookup, lookupStorage)
 
       if (sessionShouldBeLogged(experimentHelper, lookup.language())) {
         val tracker = actionsTracker(lookup, experimentHelper)
@@ -74,6 +81,8 @@ class CompletionTrackerInitializer(experimentHelper: WebServiceStatus) : Disposa
 
   private fun shouldUseUserFactors() = UserFactorsManager.ENABLE_USER_FACTORS
 
+  private fun shouldUseSessionFactors(): Boolean = SessionFactorsUtils.shouldUseSessionFactors()
+
   private fun sessionShouldBeLogged(experimentHelper: WebServiceStatus, language: Language?): Boolean {
     val application = ApplicationManager.getApplication()
     if (Registry.`is`("completion.stats.show.ml.ranking.diff")) return false
@@ -87,7 +96,25 @@ class CompletionTrackerInitializer(experimentHelper: WebServiceStatus) : Disposa
     return Random.nextDouble() < logSessionChance
   }
 
-  private fun processUserFactors(lookup: LookupImpl) {
+  private fun processContextFactors(lookup: LookupImpl, lookupStorage: MutableLookupStorage) {
+    val file = lookup.psiFile
+    if (file != null) {
+      val result = mutableMapOf<String, MLFeatureValue>()
+      for (provider in ContextFeatureProvider.forLanguage(file.language)) {
+        val providerName = provider.name
+        for ((featureName, value) in provider.calculateFeatures(lookup)) {
+          result["ml_ctx_${providerName}_$featureName"] = value
+        }
+      }
+
+      ContextFeaturesStorage.setContextFeatures(file, result)
+      Disposer.register(lookup, Disposable { ContextFeaturesStorage.clear(file) })
+      lookupStorage.contextFactors = result.mapValues { it.value.toString() }
+    }
+  }
+
+  private fun processUserFactors(lookup: LookupImpl,
+                                 lookupStorage: MutableLookupStorage) {
     if (!shouldUseUserFactors()) return
 
     val userFactors = UserFactorsManager.getInstance().getAllFactors()
@@ -95,7 +122,7 @@ class CompletionTrackerInitializer(experimentHelper: WebServiceStatus) : Disposa
     userFactors.associateTo(userFactorValues) { "${it.id}:App" to it.compute(UserFactorStorage.getInstance()) }
     userFactors.associateTo(userFactorValues) { "${it.id}:Project" to it.compute(UserFactorStorage.getInstance(lookup.project)) }
 
-    lookup.putUserData(UserFactorsManager.USER_FACTORS_KEY, userFactorValues)
+    lookupStorage.userFactors = userFactorValues
 
     UserFactorStorage.applyOnBoth(lookup.project, UserFactorDescriptions.COMPLETION_USAGE) {
       it.fireCompletionUsed()
@@ -107,10 +134,22 @@ class CompletionTrackerInitializer(experimentHelper: WebServiceStatus) : Disposa
     lookup.addLookupListener(LookupStartedTracker())
   }
 
-  private fun initComponent() {
-    if (!shouldInitialize()) return
+  private fun processSessionFactors(lookup: LookupImpl, lookupStorage: MutableLookupStorage) {
+    if (!shouldUseSessionFactors()) return
 
-    val busConnection = ApplicationManager.getApplication().messageBus.connect(this)
+    lookup.setPrefixChangeListener(SessionPrefixTracker(lookupStorage.sessionFactors))
+    lookup.addLookupListener(LookupSelectionTracker(lookupStorage))
+
+    val shownTimesTracker = PositionTrackingListener(lookup)
+    lookup.setPrefixChangeListener(shownTimesTracker)
+  }
+
+  private fun initComponent() {
+    if (!shouldInitialize()) {
+      return
+    }
+
+    val busConnection = ApplicationManager.getApplication().messageBus.connect()
     busConnection.subscribe(AnActionListener.TOPIC, actionListener)
     busConnection.subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
       override fun projectOpened(project: Project) {
@@ -123,8 +162,5 @@ class CompletionTrackerInitializer(experimentHelper: WebServiceStatus) : Disposa
         lookupManager.removePropertyChangeListener(lookupTrackerInitializer)
       }
     })
-  }
-
-  override fun dispose() {
   }
 }

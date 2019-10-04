@@ -758,11 +758,6 @@ public class PyResolveTest extends PyResolveTestCase {
     assertResolvesTo(PyTargetExpression.class, "foo");
   }
 
-  public void testGlobalReassignmentNotDefinedAtTopLevel() {
-    final PyTargetExpression target = assertResolvesTo(PyTargetExpression.class, "xx");
-    assertInstanceOf(target.getParent(), PyGlobalStatement.class);
-  }
-
   // PY-13734
   public void testImplicitDunderClass() {
     assertUnresolved();

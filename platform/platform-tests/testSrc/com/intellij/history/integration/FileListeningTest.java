@@ -208,12 +208,9 @@ public class FileListeningTest extends IntegrationTestCase {
   }
 
   private static void setReadOnlyAttribute(VirtualFile f, boolean status) throws IOException {
-    ApplicationManager.getApplication().runWriteAction(new ThrowableComputable<Object, IOException>() {
-      @Override
-      public Object compute() throws IOException {
-        ReadOnlyAttributeUtil.setReadOnlyAttribute(f, status); // shouldn't throw
-        return null;
-      }
+    ApplicationManager.getApplication().runWriteAction((ThrowableComputable<Object, IOException>)() -> {
+      ReadOnlyAttributeUtil.setReadOnlyAttribute(f, status); // shouldn't throw
+      return null;
     });
   }
 

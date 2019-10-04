@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,7 +26,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   public static final String PROP_VIRTUAL_SPACE = "VirtualSpace";
 
   public static final UINumericRange BLINKING_RANGE = new UINumericRange(500, 10, 1500);
-  public static final UINumericRange QUICK_DOC_DELAY_RANGE = new UINumericRange(500, 1, 5000);
+  public static final UINumericRange TOOLTIPS_DELAY_RANGE = new UINumericRange(500, 1, 5000);
 
   private static final String SOFT_WRAP_FILE_MASKS_ENABLED_DEFAULT = "*";
   private static final String SOFT_WRAP_FILE_MASKS_DISABLED_DEFAULT = "*.md; *.txt; *.rst; *.adoc";
@@ -42,7 +43,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     @NonNls public String STRIP_TRAILING_SPACES = STRIP_TRAILING_SPACES_CHANGED;
     public boolean IS_ENSURE_NEWLINE_AT_EOF = false;
     public boolean SHOW_QUICK_DOC_ON_MOUSE_OVER_ELEMENT = false;
-    public int QUICK_DOC_ON_MOUSE_OVER_DELAY_MS = QUICK_DOC_DELAY_RANGE.initial;
+    public int TOOLTIPS_DELAY_MS = TOOLTIPS_DELAY_RANGE.initial;
     public boolean SHOW_INTENTION_BULB = true;
     public boolean IS_CARET_BLINKING = true;
     public int CARET_BLINKING_PERIOD = BLINKING_RANGE.initial;
@@ -79,8 +80,8 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
 
     public boolean REFRAIN_FROM_SCROLLING = false;
 
-    public boolean SHOW_NOTIFICATION_AFTER_REFORMAT_CODE_ACTION = true;
-    public boolean SHOW_NOTIFICATION_AFTER_OPTIMIZE_IMPORTS_ACTION = true;
+    private boolean SHOW_NOTIFICATION_AFTER_REFORMAT_CODE_ACTION = true;
+    private boolean SHOW_NOTIFICATION_AFTER_OPTIMIZE_IMPORTS_ACTION = true;
 
     public boolean ADD_CARETS_ON_DOUBLE_CTRL = true;
 
@@ -247,6 +248,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
    * @deprecated Not used, to be removed in version 2020.1.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
   @SuppressWarnings({"UnusedDeclaration", "SpellCheckingInspection"})
   public int getAdditinalColumnsCount() {
     return myAdditionalColumnsCount;
@@ -256,6 +258,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
    * @deprecated Not used, to be removed in version 2020.1.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
   public void setAdditionalColumnsCount(int value) {
     myAdditionalColumnsCount = value;
   }
@@ -264,6 +267,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
    * @deprecated Not used, to be removed in version 2020.1.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
   public boolean isLineMarkerAreaShown() {
     return myLineMarkerAreaShown;
   }
@@ -272,6 +276,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
    * @deprecated Not used, to be removed in version 2020.1.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
   public void setLineMarkerAreaShown(boolean lineMarkerAreaShown) {
     myLineMarkerAreaShown = lineMarkerAreaShown;
   }
@@ -473,12 +478,20 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     myOptions.SHOW_QUICK_DOC_ON_MOUSE_OVER_ELEMENT = show;
   }
 
+  /**
+   * @deprecated Use {@link #getTooltipsDelay()} instead
+   */
+  @Deprecated
   public int getQuickDocOnMouseOverElementDelayMillis() {
-    return QUICK_DOC_DELAY_RANGE.fit(myOptions.QUICK_DOC_ON_MOUSE_OVER_DELAY_MS);
+    return getTooltipsDelay();
   }
 
-  public void setQuickDocOnMouseOverElementDelayMillis(int delay) {
-    myOptions.QUICK_DOC_ON_MOUSE_OVER_DELAY_MS = QUICK_DOC_DELAY_RANGE.fit(delay);
+  public int getTooltipsDelay() {
+    return TOOLTIPS_DELAY_RANGE.fit(myOptions.TOOLTIPS_DELAY_MS);
+  }
+
+  public void setTooltipsDelay(int delay) {
+    myOptions.TOOLTIPS_DELAY_MS = TOOLTIPS_DELAY_RANGE.fit(delay);
   }
 
   public boolean isShowIntentionBulb() {
@@ -495,6 +508,22 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
 
   public void setRefrainFromScrolling(boolean b) {
     myOptions.REFRAIN_FROM_SCROLLING = b;
+  }
+
+  public boolean isShowNotificationAfterReformat() {
+    return myOptions.SHOW_NOTIFICATION_AFTER_REFORMAT_CODE_ACTION;
+  }
+
+  public void setShowNotificationAfterReformat(boolean b) {
+    myOptions.SHOW_NOTIFICATION_AFTER_REFORMAT_CODE_ACTION = b;
+  }
+
+  public boolean isShowNotificationAfterOptimizeImports() {
+    return myOptions.SHOW_NOTIFICATION_AFTER_OPTIMIZE_IMPORTS_ACTION;
+  }
+
+  public void setShowNotificationAfterOptimizeImports(boolean b) {
+    myOptions.SHOW_NOTIFICATION_AFTER_OPTIMIZE_IMPORTS_ACTION = b;
   }
 
   public boolean isWhitespacesShown() {
@@ -641,10 +670,18 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     myOptions.BIDI_TEXT_DIRECTION = direction;
   }
 
+  /**
+   * @deprecated use com.intellij.codeInsight.hints.HintUtilsKt#setShowParameterHintsForLanguage instead
+   */
+  @Deprecated
   public boolean isShowParameterNameHints() {
     return myOptions.SHOW_PARAMETER_NAME_HINTS;
   }
 
+  /**
+   * @deprecated use com.intellij.codeInsight.hints.HintUtilsKt#setShowParameterHintsForLanguage(boolean, com.intellij.lang.Language) instead
+   */
+  @Deprecated
   public void setShowParameterNameHints(boolean value) {
     myOptions.SHOW_PARAMETER_NAME_HINTS = value;
   }

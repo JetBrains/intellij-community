@@ -16,6 +16,8 @@
 
 package com.intellij.history.core.revisions;
 
+import com.intellij.util.text.DateFormatUtil;
+
 public class RecentChange {
   private final Revision myBefore;
   private final Revision myAfter;
@@ -39,5 +41,10 @@ public class RecentChange {
 
   public long getTimestamp() {
     return myAfter.getTimestamp();
+  }
+
+  @Override
+  public String toString() {
+    return getChangeName() + "[" + DateFormatUtil.formatDateTime(getTimestamp()) + "]";
   }
 }

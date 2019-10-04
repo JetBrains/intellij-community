@@ -86,7 +86,7 @@ class SingleChangeListCommitMessagePolicy(private val project: Project, private 
     return result
   }
 
-  private fun getCommitMessageFromVcs(vcs: AbstractVcs<*>, changes: List<Change>): String? =
+  private fun getCommitMessageFromVcs(vcs: AbstractVcs, changes: List<Change>): String? =
     vcs.checkinEnvironment?.getDefaultMessageFor(ChangesUtil.getPaths(changes).toTypedArray())
 
   private fun rememberMessage(message: String) = lastChangeListName?.let { messagesToSave[it] = message }

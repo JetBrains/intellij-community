@@ -49,7 +49,7 @@ public class XBreakpointManagerImpl implements XBreakpointManager {
   private String myDefaultGroup;
   private RemovedBreakpointData myLastRemovedBreakpoint = null;
 
-  public XBreakpointManagerImpl(final Project project, final XDebuggerManagerImpl debuggerManager) {
+  public XBreakpointManagerImpl(@NotNull Project project, @NotNull XDebuggerManagerImpl debuggerManager) {
     myProject = project;
     myDebuggerManager = debuggerManager;
     myDependentBreakpointManager = new XDependentBreakpointManager(this);
@@ -61,7 +61,7 @@ public class XBreakpointManagerImpl implements XBreakpointManager {
       XBreakpointUtil.breakpointTypes().forEach(this::addDefaultBreakpoint);
     }
 
-    myProject.getMessageBus().connect().subscribe(XBreakpointListener.TOPIC, new XBreakpointListener() {
+    project.getMessageBus().connect().subscribe(XBreakpointListener.TOPIC, new XBreakpointListener() {
       @SuppressWarnings("unchecked")
       @Override
       public void breakpointAdded(@NotNull XBreakpoint breakpoint) {

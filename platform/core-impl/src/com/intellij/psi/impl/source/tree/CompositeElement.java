@@ -233,23 +233,6 @@ public class CompositeElement extends TreeElement {
   }
 
   @Override
-  public int getNotCachedLength() {
-    final int[] result = {0};
-
-    acceptTree(new RecursiveTreeElementWalkingVisitor(false) {
-      @Override
-      protected void visitNode(final TreeElement element) {
-        if (element instanceof LeafElement || TreeUtil.isCollapsedChameleon(element)) {
-          result[0] += element.getNotCachedLength();
-        }
-        super.visitNode(element);
-      }
-    });
-
-    return result[0];
-  }
-
-  @Override
   @NotNull
   public char[] textToCharArray() {
     assertReadAccessAllowed();

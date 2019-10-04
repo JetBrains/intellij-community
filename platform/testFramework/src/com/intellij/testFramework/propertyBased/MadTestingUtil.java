@@ -369,10 +369,7 @@ public class MadTestingUtil {
 
   @NotNull
   static String getIntentionDescription(String intentionName, IntentionAction action) {
-    IntentionAction actual = action;
-    while(actual instanceof IntentionActionDelegate) {
-      actual = ((IntentionActionDelegate)actual).getDelegate();
-    }
+    IntentionAction actual = IntentionActionDelegate.unwrap(action);
     String family = actual.getFamilyName();
     Class<?> aClass = actual.getClass();
     if (actual instanceof QuickFixWrapper) {

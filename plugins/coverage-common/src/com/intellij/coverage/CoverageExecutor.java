@@ -26,11 +26,13 @@ public class CoverageExecutor extends Executor {
     return TextWithMnemonic.parse("Run%s with Co_verage").replaceFirst("%s", configName).toString();
   }
 
+  @NotNull
   @Override
   public String getToolWindowId() {
     return ToolWindowId.RUN;
   }
 
+  @NotNull
   @Override
   public Icon getToolWindowIcon() {
     return AllIcons.General.RunWithCoverage;

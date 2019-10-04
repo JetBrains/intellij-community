@@ -1,8 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.service.fus.collectors;
 
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -11,12 +11,11 @@ import java.util.Map;
 import java.util.Objects;
 
 /**
- * Use {@link com.intellij.internal.statistic.eventLog.FeatureUsageData} instead because it supports named data.
+ * @deprecated Use {@link com.intellij.internal.statistic.eventLog.FeatureUsageData} instead because it supports named data.
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
 public class FUSUsageContext {
-  public static final FUSUsageContext OS_CONTEXT = create(getOSNameContextData());
-
   private static final byte MAX_DATA_SIZE = 5; // restricted by server
   private final Map<String, String> data;
 
@@ -32,13 +31,6 @@ public class FUSUsageContext {
   @NotNull
   public Map<String, String> getData() {
     return Collections.unmodifiableMap(data);
-  }
-
-  public static String getOSNameContextData() {
-    if (SystemInfo.isWindows) return "Windows";
-    if (SystemInfo.isMac) return "Mac";
-    if (SystemInfo.isLinux) return "Linux";
-    return "Other";
   }
 
   public static FUSUsageContext create(@NotNull String... data) {

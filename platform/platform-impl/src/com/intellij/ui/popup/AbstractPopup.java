@@ -5,7 +5,8 @@ import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.*;
 import com.intellij.ide.actions.WindowAction;
-import com.intellij.ide.ui.ScreenAreaTracker;
+import com.intellij.ide.ui.PopupLocationTracker;
+import com.intellij.ide.ui.ScreenAreaConsumer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -53,7 +54,7 @@ import static java.awt.event.MouseEvent.*;
 import static java.awt.event.WindowEvent.WINDOW_ACTIVATED;
 import static java.awt.event.WindowEvent.WINDOW_GAINED_FOCUS;
 
-public class AbstractPopup implements JBPopup, ScreenAreaTracker.ScreenAreaConsumer {
+public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
   public static final String SHOW_HINTS = "ShowHints";
 
   // Popup size stored with DimensionService is null first time
@@ -272,7 +273,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaTracker.ScreenAreaConsu
         Icon icon = ToolWindowManagerEx.getInstanceEx(myProject != null ? myProject : ProjectUtil.guessCurrentProject((JComponent)myOwner))
           .getLocationIcon(ToolWindowId.FIND, AllIcons.General.Pin_tab);
         myCaption.setButtonComponent(new InplaceButton(
-          new IconButton("Open as Tool Window", icon),
+          new IconButton("Open in Find Tool Window", icon),
           e -> pinCallback.process(this)
         ), JBUI.Borders.empty(4));
       }
@@ -524,8 +525,8 @@ public class AbstractPopup implements JBPopup, ScreenAreaTracker.ScreenAreaConsu
 
   private Dimension getSizeForPositioning() {
     Dimension size = getSize();
-    if (size == null && myDimensionServiceKey != null) {
-      size = DimensionService.getInstance().getSize(myDimensionServiceKey, myProject);
+    if (size == null) {
+      size = getStoredSize();
     }
     if (size == null) {
       size = myContent.getPreferredSize();
@@ -651,10 +652,8 @@ public class AbstractPopup implements JBPopup, ScreenAreaTracker.ScreenAreaConsu
     if (myForcedSize != null) {
       return myForcedSize;
     }
-    if (myDimensionServiceKey != null) {
-      final Dimension dimension = DimensionService.getInstance().getSize(myDimensionServiceKey, myProject);
-      if (dimension != null) return dimension;
-    }
+    Dimension size = getStoredSize();
+    if (size != null) return size;
     return myComponent.getPreferredSize();
   }
 
@@ -667,7 +666,16 @@ public class AbstractPopup implements JBPopup, ScreenAreaTracker.ScreenAreaConsu
 
   @Override
   public final void cancel() {
-    cancel(null);
+    InputEvent inputEvent = null;
+    AWTEvent event = IdeEventQueue.getInstance().getTrueCurrentEvent();
+    if (event instanceof InputEvent && myPopup != null) {
+      InputEvent ie = (InputEvent)event;
+      Window window = myPopup.getWindow();
+      if (window != null && UIUtil.isDescendingFrom(ie.getComponent(), window)) {
+        inputEvent = ie;
+      }
+    }
+    cancel(inputEvent);
   }
 
   @Override
@@ -782,12 +790,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaTracker.ScreenAreaConsu
     prepareToShow();
     installWindowHook(this);
 
-    Dimension sizeToSet = null;
-
-    if (myDimensionServiceKey != null) {
-      sizeToSet = DimensionService.getInstance().getSize(myDimensionServiceKey, myProject);
-    }
-
+    Dimension sizeToSet = getStoredSize();
     if (myForcedSize != null) {
       sizeToSet = myForcedSize;
     }
@@ -826,8 +829,8 @@ public class AbstractPopup implements JBPopup, ScreenAreaTracker.ScreenAreaConsu
 
     Point xy = new Point(aScreenX, aScreenY);
     boolean adjustXY = true;
-    if (myUseDimServiceForXYLocation && myDimensionServiceKey != null) {
-      final Point storedLocation = DimensionService.getInstance().getLocation(myDimensionServiceKey, myProject);
+    if (myUseDimServiceForXYLocation) {
+      Point storedLocation = getStoredLocation();
       if (storedLocation != null) {
         xy = storedLocation;
         adjustXY = false;
@@ -1031,7 +1034,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaTracker.ScreenAreaConsu
     myPopup.show();
     Rectangle bounds = window.getBounds();
 
-    ScreenAreaTracker.register(this);
+    PopupLocationTracker.register(this);
 
     if (bounds.width > screen.width || bounds.height > screen.height) {
       ScreenUtil.fitToScreen(bounds);
@@ -1472,12 +1475,14 @@ public class AbstractPopup implements JBPopup, ScreenAreaTracker.ScreenAreaConsu
     if (myDimensionServiceKey != null) {
       Dimension size = myContent.getSize();
       JBInsets.removeFrom(size, myContent.getInsets());
+      getWindowStateService(myProject).putSize(myDimensionServiceKey, size);
       DimensionService.getInstance().setSize(myDimensionServiceKey, size, myProject);
     }
   }
 
   private void storeLocation(final Point xy) {
     if (myDimensionServiceKey != null) {
+      getWindowStateService(myProject).putLocation(myDimensionServiceKey, xy);
       DimensionService.getInstance().setLocation(myDimensionServiceKey, xy, myProject);
     }
   }
@@ -1495,6 +1500,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaTracker.ScreenAreaConsu
 
     public MyContentPanel(PopupBorder border) {
       super(new BorderLayout());
+      putClientProperty(UIUtil.TEXT_COPY_ROOT, Boolean.TRUE);
       setBorder(border);
     }
 
@@ -1980,7 +1986,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaTracker.ScreenAreaConsu
   }
 
   @Override
-  public Component getUnderlyingAreaOwner() {
+  public Window getUnderlyingWindow() {
     return myWindow.getOwner();
   }
 
@@ -1999,5 +2005,24 @@ public class AbstractPopup implements JBPopup, ScreenAreaTracker.ScreenAreaConsu
     if (window == null) return true;
     Window focused = event.getWindow();
     return focused != window && (focused == null || window != focused.getOwner());
+  }
+
+  @Nullable
+  private Point getStoredLocation() {
+    if (myDimensionServiceKey == null) return null;
+    Point location = getWindowStateService(myProject).getLocation(myDimensionServiceKey);
+    return location != null ? location : DimensionService.getInstance().getLocation(myDimensionServiceKey, myProject);
+  }
+
+  @Nullable
+  private Dimension getStoredSize() {
+    if (myDimensionServiceKey == null) return null;
+    Dimension size = getWindowStateService(myProject).getSize(myDimensionServiceKey);
+    return size != null ? size : DimensionService.getInstance().getSize(myDimensionServiceKey, myProject);
+  }
+
+  @NotNull
+  private static WindowStateService getWindowStateService(@Nullable Project project) {
+    return project == null ? WindowStateService.getInstance() : WindowStateService.getInstance(project);
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,18 +23,19 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author max
  */
-public abstract class FileTypeManagerEx extends FileTypeManager{
-  public static FileTypeManagerEx getInstanceEx(){
+public abstract class FileTypeManagerEx extends FileTypeManager {
+  public static FileTypeManagerEx getInstanceEx() {
     return (FileTypeManagerEx)getInstance();
   }
 
   /**
-   * @deprecated use {@link FileTypeFactory} instead
+   * @deprecated use {@code com.intellij.fileType} extension point or {@link FileTypeFactory} instead
    */
   @Deprecated
   public abstract void registerFileType(@NotNull FileType fileType);
+
   /**
-   * @deprecated use {@link FileTypeFactory} instead
+   * @deprecated use {@code com.intellij.fileType} extension point or {@link FileTypeFactory} instead
    */
   @Deprecated
   public abstract void unregisterFileType(@NotNull FileType fileType);

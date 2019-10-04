@@ -85,7 +85,7 @@ public class JarFileSystemImpl extends JarFileSystem {
   @Override
   protected String extractRootPath(@NotNull String path) {
     final int jarSeparatorIndex = path.indexOf(JAR_SEPARATOR);
-    assert jarSeparatorIndex >= 0 : "Path passed to JarFileSystem must have jar separator '!/': " + path;
+    assert jarSeparatorIndex >= 0 : "Path passed to JarFileSystem must have jar separator '!/' but got: " + path;
     return path.substring(0, jarSeparatorIndex + JAR_SEPARATOR.length());
   }
 
@@ -104,7 +104,7 @@ public class JarFileSystemImpl extends JarFileSystem {
   @NotNull
   @Override
   protected ArchiveHandler getHandler(@NotNull VirtualFile entryFile) {
-    boolean useNewJarHandler = Registry.is("vfs.use.new.jar.handler") && SystemInfo.isWindows;
+    boolean useNewJarHandler = SystemInfo.isWindows && Registry.is("vfs.use.new.jar.handler");
     return VfsImplUtil.getHandler(this, entryFile, useNewJarHandler ? BasicJarHandler::new : JarHandler::new);
   }
 

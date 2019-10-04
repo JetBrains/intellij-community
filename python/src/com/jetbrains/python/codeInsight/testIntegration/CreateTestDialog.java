@@ -8,6 +8,8 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.BooleanTableCellRenderer;
 import com.intellij.ui.TableUtil;
+import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -18,18 +20,25 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Vector;
 
-public class CreateTestDialog extends DialogWrapper {
+public final class CreateTestDialog extends DialogWrapper {
+  @NotNull
+  private final PyTestCreationModel myModel;
+  private final boolean myClassRequired;
   private TextFieldWithBrowseButton myTargetDir;
   private JTextField myClassName;
   private JPanel myMainPanel;
   private JTextField myFileName;
   private JTable myMethodsTable;
-  private DefaultTableModel myTableModel;
+  @NotNull
+  private final DefaultTableModel myTableModel;
 
-  protected CreateTestDialog(Project project) {
+  private CreateTestDialog(@NotNull final Project project, @NotNull final PyTestCreationModel model) {
     super(project);
     init();
+    myClassRequired = StringUtil.isNotEmpty(model.getClassName());
+    myModel = model;
     myTargetDir.addBrowseFolderListener("Select target directory", null, project,
                                         FileChooserDescriptorFactory.createSingleFolderDescriptor());
     myTargetDir.setEditable(false);
@@ -47,10 +56,21 @@ public class CreateTestDialog extends DialogWrapper {
     addUpdater(myFileName);
     addUpdater(myClassName);
 
-  }
-
-  public void methodsSize(int methods) {
-    myTableModel = new DefaultTableModel(methods, 2);
+    //Fill UI with model
+    myTargetDir.setText(model.getTargetDir());
+    myFileName.setText(model.getFileName());
+    final String clazz = model.getClassName();
+    myClassName.setText(clazz);
+    final List<String> methods = model.getMethods();
+    final String[] columnNames = new String[]{"", "Test function"};
+    myTableModel = new DefaultTableModel(
+      methods.stream().map(name -> new Object[]{Boolean.FALSE, name}).toArray(size -> new Object[size][columnNames.length]),
+      columnNames
+    );
+    // If only one method, then select it by default
+    if (methods.size() == 1) {
+      myTableModel.setValueAt(Boolean.TRUE, myTableModel.getRowCount() - 1, 0);
+    }
     myMethodsTable.setModel(myTableModel);
 
     TableColumn checkColumn = myMethodsTable.getColumnModel().getColumn(0);
@@ -58,14 +78,31 @@ public class CreateTestDialog extends DialogWrapper {
     checkColumn.setCellRenderer(new BooleanTableCellRenderer());
     checkColumn.setCellEditor(new DefaultCellEditor(new JCheckBox()));
 
-    myMethodsTable.getColumnModel().getColumn(1).setHeaderValue("Test method");
-    checkColumn.setHeaderValue("");
-    getOKAction().setEnabled(true);
+    getOKAction().setEnabled(isValid());
   }
 
-  protected void addUpdater(JTextField field) {
-      field.getDocument().addDocumentListener(new MyDocumentListener());
+  static boolean userAcceptsTestCreation(@NotNull final Project project, @NotNull final PyTestCreationModel model) {
+    final CreateTestDialog dialog = new CreateTestDialog(project, model);
+    if (!dialog.showAndGet()) {
+      return false;
+    }
+    dialog.copyToModel();
+    return true;
   }
+
+  private void copyToModel() {
+    myModel.setClassName(myClassName.getText());
+    myModel.setFileName(myFileName.getText());
+    myModel.setTargetDir(myTargetDir.getText());
+    @SuppressWarnings("unchecked")
+    StreamEx<Vector<Object>> methods = StreamEx.of(myTableModel.getDataVector().stream());
+    myModel.setMethods(new ArrayList<>(methods.map(v -> (v.get(0) == Boolean.TRUE) ? v.get(1).toString() : null).nonNull().toList()));
+  }
+
+  private void addUpdater(JTextField field) {
+    field.getDocument().addDocumentListener(new MyDocumentListener());
+  }
+
   private class MyDocumentListener implements DocumentListener {
     @Override
     public void insertUpdate(DocumentEvent documentEvent) {
@@ -84,8 +121,9 @@ public class CreateTestDialog extends DialogWrapper {
   }
 
   private boolean isValid() {
-    return !StringUtil.isEmptyOrSpaces(getTargetDir()) && !StringUtil.isEmptyOrSpaces(getClassName())
-      && !StringUtil.isEmptyOrSpaces(getFileName());
+    return !StringUtil.isEmptyOrSpaces(getTargetDir())
+           && (!myClassRequired || !StringUtil.isEmptyOrSpaces(getClassName()))
+           && !StringUtil.isEmptyOrSpaces(getFileName());
   }
 
   @Override
@@ -93,44 +131,16 @@ public class CreateTestDialog extends DialogWrapper {
     return myMainPanel;
   }
 
-  public String getTargetDir() {
+  private String getTargetDir() {
     return myTargetDir.getText().trim();
   }
 
-  public void setTargetDir(String text) {
-    myTargetDir.setText(text);
-  }
-
-  public void setClassName(String text) {
-    myClassName.setText(text);
-  }
-
-  public void setFileName(String text) {
-    myFileName.setText(text);
-  }
-
-  public String getClassName() {
+  private String getClassName() {
     return myClassName.getText().trim();
   }
 
-  public String getFileName() {
+  private String getFileName() {
     return myFileName.getText().trim();
-  }
-
-  public void addMethod(String name, int row) {
-    myTableModel.setValueAt(name, row, 1);
-    myTableModel.setValueAt(Boolean.FALSE, row, 0);
-  }
-
-  public List<String> getMethods() {
-    List<String> res = new ArrayList<>();
-
-    for (int i = 0; i != myTableModel.getRowCount(); ++i) {
-      Object val = myTableModel.getValueAt(i, 0);
-      if (val != null && (Boolean)val == true)
-        res.add((String)myTableModel.getValueAt(i, 1));
-    }
-    return res;
   }
 
   @Override

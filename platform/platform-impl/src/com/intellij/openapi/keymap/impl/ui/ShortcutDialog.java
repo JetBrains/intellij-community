@@ -34,17 +34,12 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.BorderLayout;
-import java.awt.Component;
+import javax.swing.*;
+import javax.swing.border.Border;
+import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Collection;
-import javax.swing.JComponent;
-import javax.swing.JLabel;
-import javax.swing.JScrollPane;
-import javax.swing.ScrollPaneConstants;
-import javax.swing.SwingConstants;
-import javax.swing.border.Border;
 
 /**
  * @author Sergey.Malenkov
@@ -108,18 +103,26 @@ abstract class ShortcutDialog<T extends Shortcut> extends DialogWrapper {
   }
 
   T showAndGet(String id, Keymap keymap, QuickList... lists) {
+    return showAndGet(id, keymap, null, lists);
+  }
+
+  T showAndGet(String id, Keymap keymap, @Nullable T selectedShortcut, QuickList... lists) {
     myActionId = id;
     myKeymap = keymap;
     myGroup = ActionsTreeUtil.createMainGroup(myProject, keymap, lists, null, false, null);
+    addSystemActionsIfPresented(myGroup);
     fill(myAction, id, getActionPath(id));
-    T firstShortcut = null;
-    for (Shortcut shortcut : keymap.getShortcuts(id)) {
-      firstShortcut = toShortcut(shortcut);
-      if (firstShortcut != null) break;
+    if (selectedShortcut == null) {
+      for (Shortcut shortcut : keymap.getShortcuts(id)) {
+        selectedShortcut = toShortcut(shortcut);
+        if (selectedShortcut != null) break;
+      }
     }
-    setShortcut(firstShortcut);
+    setShortcut(selectedShortcut);
     return showAndGet() ? myShortcutPanel.getShortcut() : null;
   }
+
+  protected void addSystemActionsIfPresented(Group group) {}
 
   @Nullable
   @Override

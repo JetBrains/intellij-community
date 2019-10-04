@@ -319,7 +319,7 @@ class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, Concurre
   }
 
   @NotNull
-  private Object[] createArrayAdd(@NotNull Object[] elements, E e) {
+  private static <E> Object[] createArrayAdd(@NotNull Object[] elements, E e) {
     int len = elements.length;
     Object[] newElements = new Object[len + 1];
     if (len != 0) {
@@ -345,7 +345,7 @@ class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, Concurre
   }
 
   @NotNull
-  private Object[] createArrayAdd(@NotNull Object[] elements, int index, E element) {
+  private static <E> Object[] createArrayAdd(@NotNull Object[] elements, int index, E element) {
     int len = elements.length;
     if (index > len || index < 0) {
       throw new IndexOutOfBoundsException("Index: " + index + ", Size: " + len);
@@ -449,42 +449,6 @@ class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, Concurre
       return null;
     }
     return newElements;
-  }
-
-  /**
-   * Removes from this list all of the elements whose index is between
-   * <tt>fromIndex</tt>, inclusive, and <tt>toIndex</tt>, exclusive.
-   * Shifts any succeeding elements to the left (reduces their index).
-   * This call shortens the list by <tt>(toIndex - fromIndex)</tt> elements.
-   * (If <tt>toIndex==fromIndex</tt>, this operation has no effect.)
-   *
-   * @param fromIndex index of first element to be removed
-   * @param toIndex   index after last element to be removed
-   * @throws IndexOutOfBoundsException if fromIndex or toIndex out of range
-   *                                   ({@code {fromIndex < 0 || toIndex > size() || toIndex < fromIndex})
-   */
-  private void removeRange(int fromIndex, int toIndex) {
-    Object[] elements;
-    Object[] newElements;
-    do {
-      elements = array;
-      int len = elements.length;
-
-      if (fromIndex < 0 || toIndex > len || toIndex < fromIndex) {
-        throw new IndexOutOfBoundsException();
-      }
-      int newlen = len - (toIndex - fromIndex);
-      int numMoved = len - toIndex;
-      if (numMoved == 0) {
-        newElements = Arrays.copyOf(elements, newlen, Object[].class);
-      }
-      else {
-        newElements = new Object[newlen];
-        System.arraycopy(elements, 0, newElements, 0, fromIndex);
-        System.arraycopy(elements, toIndex, newElements, fromIndex, numMoved);
-      }
-    }
-    while (!replaceArray(elements, newElements));
   }
 
   /**

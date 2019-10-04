@@ -45,7 +45,10 @@ public final class JetBrainsProtocolHandler {
     ourCommand = urlParts.get(1);
     ourMainParameter = ContainerUtil.getOrElse(urlParts, 2, null);
     Map<String, String> parameters = new THashMap<>();
-    computeParameters(uri.getRawQuery(), parameters);
+    String query = uri.getRawQuery();
+    if (query != null) {
+      computeParameters(query, parameters);
+    }
     parameters.put(FRAGMENT_PARAM_NAME, uri.getFragment());
     ourParameters = Collections.unmodifiableMap(parameters);
     initialized = true;

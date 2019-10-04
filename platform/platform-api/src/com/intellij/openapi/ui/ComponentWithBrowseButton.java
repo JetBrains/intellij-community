@@ -19,6 +19,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.Nls;
@@ -40,12 +41,12 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
   private boolean myButtonEnabled = true;
 
   public ComponentWithBrowseButton(@NotNull Comp component, @Nullable ActionListener browseActionListener) {
-    super(new BorderLayout(SystemInfo.isMac || UIUtil.isUnderDarcula() ? 0 : 2, 0));
+    super(new BorderLayout(SystemInfo.isMac || StartupUiUtil.isUnderDarcula() ? 0 : 2, 0));
 
     myComponent = component;
     // required! otherwise JPanel will occasionally gain focus instead of the component
     setFocusable(false);
-    boolean inlineBrowseButton = myComponent instanceof ExtendableTextComponent && Experiments.isFeatureEnabled("inline.browse.button");
+    boolean inlineBrowseButton = myComponent instanceof ExtendableTextComponent && Experiments.getInstance().isFeatureEnabled("inline.browse.button");
     if (inlineBrowseButton) {
       ((ExtendableTextComponent)myComponent).addExtension(ExtendableTextComponent.Extension.create(
         getDefaultIcon(), getHoveredIcon(), getIconTooltip(), this::notifyActionListeners));
@@ -109,7 +110,7 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
     comp.setPreferredSize(size);
     Dimension preferredSize = myBrowseButton.getPreferredSize();
 
-    boolean keepHeight = UIUtil.isUnderAquaLookAndFeel() || UIUtil.isUnderWin10LookAndFeel();
+    boolean keepHeight = UIUtil.isUnderWin10LookAndFeel();
     preferredSize.setSize(size.width + preferredSize.width + 2,
                           keepHeight ? preferredSize.height : preferredSize.height + 2);
 
@@ -128,7 +129,7 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
     setEnabled(isEnabled());
   }
 
-  public void setButtonIcon(Icon icon) {
+  public void setButtonIcon(@NotNull Icon icon) {
     myBrowseButton.setIcon(icon);
     myBrowseButton.setDisabledIcon(IconLoader.getDisabledIcon(icon));
   }

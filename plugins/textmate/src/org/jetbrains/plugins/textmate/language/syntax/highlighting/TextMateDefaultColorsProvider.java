@@ -28,7 +28,7 @@ public final class TextMateDefaultColorsProvider {
     "markup.heading",
     new TextAttributes(null, null, null, EffectType.BOLD_LINE_UNDERSCORE, Font.PLAIN));
 
-  private final Map<String, TextAttributesKey> DEFAULT_HIGHLIGHTING_RULES = ContainerUtil.newHashMap(
+  private final Map<CharSequence, TextAttributesKey> DEFAULT_HIGHLIGHTING_RULES = ContainerUtil.newHashMap(
     Pair.create("markup.bold", BOLD),
     Pair.create("markup.italic", ITALIC),
     Pair.create("markup.underline", UNDERLINE),
@@ -67,15 +67,15 @@ public final class TextMateDefaultColorsProvider {
     Pair.create("text source", DefaultLanguageHighlighterColors.TEMPLATE_LANGUAGE_COLOR)
   );
 
-  public Set<String> getAllDefaultKeys() {
+  public Set<CharSequence> getAllDefaultKeys() {
     return DEFAULT_HIGHLIGHTING_RULES.keySet();
   }
 
-  public TextAttributes getTextAttributes(String selector) {
+  public TextAttributes getTextAttributes(CharSequence selector) {
     return getTextAttributesKey(selector).getDefaultAttributes();
   }
 
-  public TextAttributesKey getTextAttributesKey(String selector) {
+  public TextAttributesKey getTextAttributesKey(CharSequence selector) {
     return DEFAULT_HIGHLIGHTING_RULES.getOrDefault(selector, HighlighterColors.TEXT);
   }
 }

@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.ui.Gray;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -198,7 +199,7 @@ public class DiffLineSeparatorRenderer implements LineMarkerRendererEx, LineSepa
 
     int imageWidth = step * 2;
     int imageHeight = step + height;
-    BufferedImage image = UIUtil.createImage(g, imageWidth, imageHeight, BufferedImage.TYPE_INT_ARGB);
+    BufferedImage image = ImageUtil.createImage(g, imageWidth, imageHeight, BufferedImage.TYPE_INT_ARGB);
 
     Graphics2D gg = image.createGraphics();
 

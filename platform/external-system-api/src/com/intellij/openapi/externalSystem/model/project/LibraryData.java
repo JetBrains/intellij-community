@@ -5,12 +5,16 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.serialization.PropertyMapping;
+import com.intellij.util.containers.Interner;
+import com.intellij.util.containers.WeakInterner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
 public final class LibraryData extends AbstractNamedData implements Named, ProjectCoordinate {
+  private final static Interner<String> ourPathInterner = new WeakInterner<>();
+
   private final Map<LibraryPathType, Set<String>> paths = new EnumMap<>(LibraryPathType.class);
 
   private final boolean unresolved;
@@ -81,7 +85,7 @@ public final class LibraryData extends AbstractNamedData implements Named, Proje
     if (paths == null) {
       this.paths.put(type, paths = new LinkedHashSet<>());
     }
-    paths.add(ExternalSystemApiUtil.toCanonicalPath(path));
+    paths.add(ourPathInterner.intern(ExternalSystemApiUtil.toCanonicalPath(path)));
   }
 
   public void forgetAllPaths() {

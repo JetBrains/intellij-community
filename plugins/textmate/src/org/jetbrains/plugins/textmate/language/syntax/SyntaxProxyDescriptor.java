@@ -1,10 +1,9 @@
 package org.jetbrains.plugins.textmate.language.syntax;
 
+import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.Constants;
-import org.jetbrains.plugins.textmate.plist.Plist;
-import org.jetbrains.plugins.textmate.regex.RegexFacade;
 
 import java.util.HashSet;
 import java.util.List;
@@ -17,40 +16,24 @@ import java.util.Set;
  * <p/>
  * User: zolotov
  */
-class SyntaxProxyDescriptor implements SyntaxNodeDescriptor {
-  private final String proxyName;
-
+abstract class SyntaxProxyDescriptor implements SyntaxNodeDescriptor {
   private final SyntaxNodeDescriptor myParentNode;
-  private final SyntaxNodeDescriptor myRootNode;
-  private final TextMateSyntaxTable mySyntaxTable;
   private SyntaxNodeDescriptor myTargetNode;
 
-  SyntaxProxyDescriptor(@NotNull final Plist plist,
-                        @NotNull final SyntaxNodeDescriptor parentNode,
-                        @NotNull final SyntaxNodeDescriptor rootNode,
-                        @NotNull final TextMateSyntaxTable syntaxTable) {
-    myRootNode = rootNode;
-    mySyntaxTable = syntaxTable;
-    proxyName = plist.getPlistValue(Constants.INCLUDE_KEY, "").getString();
+  SyntaxProxyDescriptor(@NotNull final SyntaxNodeDescriptor parentNode) {
     myParentNode = parentNode;
   }
 
   @Nullable
   @Override
-  public String getStringAttribute(String key) {
+  public CharSequence getStringAttribute(@NotNull Constants.StringKey key) {
     return getTargetNode().getStringAttribute(key);
   }
 
   @Nullable
   @Override
-  public Plist getPlistAttribute(String key) {
-    return getTargetNode().getPlistAttribute(key);
-  }
-
-  @Nullable
-  @Override
-  public RegexFacade getRegexAttribute(String key) {
-    return getTargetNode().getRegexAttribute(key);
+  public TIntObjectHashMap<CharSequence> getCaptures(@NotNull Constants.CaptureKey key) {
+    return getTargetNode().getCaptures(key);
   }
 
   @NotNull
@@ -67,17 +50,17 @@ class SyntaxProxyDescriptor implements SyntaxNodeDescriptor {
 
   @NotNull
   @Override
-  public SyntaxNodeDescriptor findInRepository(String key) {
-    return getTargetNode().findInRepository(key);
+  public SyntaxNodeDescriptor findInRepository(int ruleId) {
+    return getTargetNode().findInRepository(ruleId);
   }
 
   @NotNull
   @Override
-  public String getScopeName() {
+  public CharSequence getScopeName() {
     return getTargetNode().getScopeName();
   }
 
-  @Nullable
+  @NotNull
   @Override
   public SyntaxNodeDescriptor getParentNode() {
     return myParentNode;
@@ -101,23 +84,5 @@ class SyntaxProxyDescriptor implements SyntaxNodeDescriptor {
     return myTargetNode;
   }
 
-  private SyntaxNodeDescriptor computeTargetNode() {
-    if (proxyName.startsWith("#")) {
-      return myParentNode.findInRepository(proxyName.substring(1));
-    }
-    else if (Constants.INCLUDE_SELF_VALUE.equalsIgnoreCase(proxyName)) {
-      return myRootNode;
-    }
-    else if (Constants.INCLUDE_BASE_VALUE.equalsIgnoreCase(proxyName)) {
-      return myRootNode;
-    }
-    else {
-      return mySyntaxTable.getSyntax(proxyName);
-    }
-  }
-
-  @Override
-  public String toString() {
-    return "Proxy rule for '" + proxyName + "'";
-  }
+  protected abstract SyntaxNodeDescriptor computeTargetNode();
 }

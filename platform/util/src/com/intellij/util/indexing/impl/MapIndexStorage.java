@@ -17,6 +17,7 @@ package com.intellij.util.indexing.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.IntIntFunction;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.SLRUCache;
 import com.intellij.util.indexing.StorageException;
@@ -44,13 +45,14 @@ public abstract class MapIndexStorage<Key, Value> implements IndexStorage<Key, V
   private final DataExternalizer<Value> myDataExternalizer;
   private final boolean myKeyIsUniqueForIndexedFile;
   private final boolean myReadOnly;
+  @Nullable private final IntIntFunction myInputRemapping;
 
   protected MapIndexStorage(@NotNull File storageFile,
                          @NotNull KeyDescriptor<Key> keyDescriptor,
                          @NotNull DataExternalizer<Value> valueExternalizer,
                          final int cacheSize,
                          boolean keyIsUniqueForIndexedFile) throws IOException {
-    this(storageFile, keyDescriptor, valueExternalizer, cacheSize, keyIsUniqueForIndexedFile, true, false);
+    this(storageFile, keyDescriptor, valueExternalizer, cacheSize, keyIsUniqueForIndexedFile, true, false, null);
   }
 
   protected MapIndexStorage(@NotNull File storageFile,
@@ -59,13 +61,20 @@ public abstract class MapIndexStorage<Key, Value> implements IndexStorage<Key, V
                             final int cacheSize,
                             boolean keyIsUniqueForIndexedFile,
                             boolean initialize,
-                            boolean readOnly) throws IOException {
+                            boolean readOnly,
+                            @Nullable IntIntFunction inputRemapping) throws IOException {
     myBaseStorageFile = storageFile;
     myKeyDescriptor = keyDescriptor;
     myCacheSize = cacheSize;
     myDataExternalizer = valueExternalizer;
     myKeyIsUniqueForIndexedFile = keyIsUniqueForIndexedFile;
     myReadOnly = readOnly;
+    if (inputRemapping != null) {
+      LOG.assertTrue(myReadOnly, "input remapping allowed only for read-only storage");
+    } else {
+      inputRemapping = IntIntFunction.IDENTITY;
+    }
+    myInputRemapping = inputRemapping;
     if (initialize) initMapAndCache();
   }
 
@@ -83,7 +92,7 @@ public abstract class MapIndexStorage<Key, Value> implements IndexStorage<Key, V
       PersistentHashMapValueStorage.CreationTimeOptions.HAS_NO_CHUNKS.set(Boolean.TRUE);
     }
     try {
-      map = new ValueContainerMap<Key, Value>(getStorageFile(), myKeyDescriptor, myDataExternalizer, myKeyIsUniqueForIndexedFile) {
+      map = new ValueContainerMap<Key, Value>(getStorageFile(), myKeyDescriptor, myDataExternalizer, myKeyIsUniqueForIndexedFile, myInputRemapping) {
         @Override
         protected boolean isReadOnly() {
           return myReadOnly;

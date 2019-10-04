@@ -3,6 +3,7 @@ package com.intellij.openapi.fileEditor;
 
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -18,7 +19,7 @@ public class NewDocumentHistoryTest extends HeavyFileEditorManagerTestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    myHistory = new IdeDocumentHistoryImpl(getProject(), myManager);
+    myHistory = new IdeDocumentHistoryImpl(getProject(), FileEditorManagerEx.getInstanceEx(getProject()));
   }
 
   @Override
@@ -40,24 +41,26 @@ public class NewDocumentHistoryTest extends HeavyFileEditorManagerTestCase {
       .getPoint(null).registerExtension(new FileEditorManagerTest.MyFileEditorProvider(), myFixture.getTestRootDisposable());
     VirtualFile file = getFile("/src/1.txt");
     assertNotNull(file);
-    FileEditor[] editors = myManager.openFile(file, true);
+    FileEditorManagerEx manager = FileEditorManagerEx.getInstanceEx(getProject());
+    FileEditor[] editors = manager.openFile(file, true);
     assertEquals(2, editors.length);
-    assertEquals("Text", myManager.getSelectedEditor(file).getName());
-    myManager.setSelectedEditor(file, "mock");
-    assertEquals("mockEditor", myManager.getSelectedEditor(file).getName());
-    myManager.closeAllFiles();
+    assertEquals("Text", manager.getSelectedEditor(file).getName());
+    manager.setSelectedEditor(file, "mock");
+    assertEquals("mockEditor", manager.getSelectedEditor(file).getName());
+    manager.closeAllFiles();
 
     myHistory.back();
-    assertEquals("mockEditor", myManager.getSelectedEditor(file).getName());
+    assertEquals("mockEditor", manager.getSelectedEditor(file).getName());
   }
 
   public void testSelectFileOnNavigation() {
     VirtualFile file1 = getFile("/src/1.txt");
-    myManager.openFile(file1, true);
+    FileEditorManagerEx manager = FileEditorManagerEx.getInstanceEx(getProject());
+    manager.openFile(file1, true);
     VirtualFile file2 = getFile("/src/2.txt");
-    myManager.openFile(file2, true);
+    manager.openFile(file2, true);
     NavigationUtil.activateFileWithPsiElement(PsiManager.getInstance(getProject()).findFile(file1));
-    VirtualFile[] files = myManager.getSelectedFiles();
+    VirtualFile[] files = manager.getSelectedFiles();
     assertEquals(1, files.length);
     assertEquals("1.txt", files[0].getName());
   }
@@ -67,13 +70,14 @@ public class NewDocumentHistoryTest extends HeavyFileEditorManagerTestCase {
     VirtualFile file2 = getFile("/src/2.txt");
     VirtualFile file3 = getFile("/src/3.txt");
 
-    myManager.openFile(file1, true);
-    myManager.openFile(file2, true);
+    FileEditorManagerEx manager = FileEditorManagerEx.getInstanceEx(getProject());
+    manager.openFile(file1, true);
+    manager.openFile(file2, true);
     Object group = new Object();
     CommandProcessor.getInstance().executeCommand(getProject(), () -> {}, null, group);
-    CommandProcessor.getInstance().executeCommand(getProject(), () -> myManager.openFile(file3, true), null, group);
+    CommandProcessor.getInstance().executeCommand(getProject(), () -> manager.openFile(file3, true), null, group);
     myHistory.back();
-    VirtualFile[] selectedFiles = myManager.getSelectedFiles();
+    VirtualFile[] selectedFiles = manager.getSelectedFiles();
     Assert.assertArrayEquals(new VirtualFile[] {file2}, selectedFiles);
   }
 }

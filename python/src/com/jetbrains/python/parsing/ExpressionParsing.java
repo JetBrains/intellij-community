@@ -21,7 +21,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.jetbrains.python.PyElementTypes;
-import com.jetbrains.python.PyStubElementTypes;
 import com.jetbrains.python.PyTokenTypes;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,7 +41,7 @@ public class ExpressionParsing extends Parsing {
     final IElementType firstToken = myBuilder.getTokenType();
     if (isIdentifier(myBuilder)) {
       if (isTargetExpression) {
-        buildTokenElement(PyStubElementTypes.TARGET_EXPRESSION, myBuilder);
+        buildTokenElement(PyElementTypes.TARGET_EXPRESSION, myBuilder);
       }
       else {
         buildTokenElement(getReferenceType(), myBuilder);
@@ -476,7 +475,7 @@ public class ExpressionParsing extends Parsing {
           myBuilder.advanceLexer();
           checkMatches(PyTokenTypes.IDENTIFIER, message("PARSE.expected.name"));
           if (isTargetExpression && !recastQualifier && !atAnyOfTokens(PyTokenTypes.DOT, PyTokenTypes.LPAR, PyTokenTypes.LBRACKET)) {
-            expr.done(PyStubElementTypes.TARGET_EXPRESSION);
+            expr.done(PyElementTypes.TARGET_EXPRESSION);
           }
           else {
             expr.done(getReferenceType());
@@ -773,19 +772,16 @@ public class ExpressionParsing extends Parsing {
     final PsiBuilder.Marker expr = myBuilder.mark();
 
     if (isIdentifier(myBuilder) && myBuilder.lookAhead(1) == PyTokenTypes.COLONEQ) {
-      buildTokenElement(PyStubElementTypes.TARGET_EXPRESSION, myBuilder);
+      buildTokenElement(PyElementTypes.TARGET_EXPRESSION, myBuilder);
 
       myBuilder.advanceLexer();
 
-      if (parseTestExpression(stopOnIn, isTargetExpression)) {
-        expr.done(PyElementTypes.ASSIGNMENT_EXPRESSION);
-        return true;
-      }
-      else {
-        expr.drop();
+      if (!parseTestExpression(stopOnIn, false)) {
         myBuilder.error(message("PARSE.expected.expression"));
-        return false;
       }
+
+      expr.done(PyElementTypes.ASSIGNMENT_EXPRESSION);
+      return true;
     }
     else if (parseTestExpression(stopOnIn, isTargetExpression)) {
       if (!atToken(PyTokenTypes.COLONEQ)) {
@@ -793,7 +789,18 @@ public class ExpressionParsing extends Parsing {
         return true;
       }
       else {
-        expr.error(message("PARSE.expected.identifier"));
+        // we intentionally allow syntactically illegal assignment expressions like `self.attr := 42` or `xs[0] := 42` for user convenience
+        // but don't parse qualified references in LHS as target expressions (unlike in assignment statements)
+
+        myBuilder.error(message("PARSE.expected.identifier"));
+
+        myBuilder.advanceLexer();
+
+        if (!parseTestExpression(stopOnIn, false)) {
+          myBuilder.error(message("PARSE.expected.expression"));
+        }
+
+        expr.done(PyElementTypes.ASSIGNMENT_EXPRESSION);
         return false;
       }
     }

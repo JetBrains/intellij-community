@@ -15,22 +15,38 @@
  */
 package com.intellij.xml.breadcrumbs;
 
+import com.intellij.ide.IdeTooltipManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.breadcrumbs.Breadcrumbs;
 import com.intellij.ui.components.breadcrumbs.Crumb;
+import com.intellij.util.concurrency.AppExecutorUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
 
 import javax.swing.border.EmptyBorder;
-import java.awt.Color;
-import java.awt.Graphics2D;
+import java.awt.*;
+import java.awt.event.MouseEvent;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 
 /**
  * @author Sergey.Malenkov
  */
 final class PsiBreadcrumbs extends Breadcrumbs {
+  private final static Logger LOG = Logger.getInstance("#com.intellij.xml.breadcrumbs.PsiBreadcrumbs");
+  private final Map<Crumb, Promise<String>> scheduledTooltipTasks = new HashMap<>();
   boolean above = EditorSettingsExternalizable.getInstance().isBreadcrumbsAbove();
 
   void updateBorder(int offset) {
@@ -59,6 +75,59 @@ final class PsiBreadcrumbs extends Breadcrumbs {
       if (background != null) return background;
     }
     return super.getBackground();
+  }
+
+  @Nullable
+  @Override
+  public String getToolTipText(MouseEvent event) {
+    if (hovered == null) {
+      return null;
+    }
+
+    if (!(hovered instanceof LazyTooltipCrumb) || !((LazyTooltipCrumb)hovered).needCalculateTooltip()) {
+      return hovered.getTooltip();
+    }
+
+    final Crumb crumb = hovered;
+    Promise<String> tooltipLazy;
+    synchronized (scheduledTooltipTasks) {
+      tooltipLazy = scheduledTooltipTasks.get(crumb);
+      if (tooltipLazy == null) {
+        Runnable removeFinishedTask = () -> {
+          synchronized (scheduledTooltipTasks) {
+            scheduledTooltipTasks.remove(crumb);
+          }
+        };
+        final IdeTooltipManager tooltipManager = IdeTooltipManager.getInstance();
+        final Component component = event == null ? null : event.getComponent();
+        tooltipLazy = ReadAction.nonBlocking(() -> crumb.getTooltip())
+          .expireWhen(() -> !tooltipManager.isProcessing(component))
+          .finishOnUiThread(ModalityState.any(), toolTipText -> tooltipManager.updateShownTooltip(component))
+          .submit(AppExecutorUtil.getAppExecutorService())
+          .onError(throwable -> {
+            if (!(throwable instanceof CancellationException)) {
+              LOG.error("Exception in LazyTooltipCrumb", throwable);
+            }
+            removeFinishedTask.run();
+          })
+          .onSuccess(toolTipText -> removeFinishedTask.run());
+        scheduledTooltipTasks.put(crumb, tooltipLazy);
+      }
+    }
+    if (tooltipLazy.isSucceeded()) {
+      try {
+        return tooltipLazy.blockingGet(0);
+      }
+      catch (TimeoutException | ExecutionException e) {
+        LOG.error(e);
+      }
+    }
+    return getLazyTooltipProgressText();
+  }
+
+  @NotNull
+  private static String getLazyTooltipProgressText() {
+    return UIBundle.message("crumbs.calculating.tooltip");
   }
 
   @Override

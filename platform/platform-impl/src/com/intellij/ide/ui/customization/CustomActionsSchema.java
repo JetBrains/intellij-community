@@ -25,6 +25,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.util.ImageLoader;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBImageIcon;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -229,6 +230,10 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
   }
 
   public static void setCustomizationSchemaForCurrentProjects() {
+    // increment myModificationStamp clear children cache in CustomisedActionGroup
+    // as result do it *before* update all toolbars, menu bars and popups
+    getInstance().incrementModificationStamp();
+
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
       IdeFrameImpl frame = WindowManagerEx.getInstanceEx().getFrame(project);
       if (frame != null) {
@@ -240,8 +245,6 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
     if (frame != null) {
       frame.updateView();
     }
-
-    getInstance().incrementModificationStamp();
   }
 
   public void incrementModificationStamp() {
@@ -285,6 +288,25 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
       return corrected;
     }
     return null;
+  }
+
+  public void invalidateCustomizedActionGroup(String groupId) {
+    ActionGroup group = myIdToActionGroup.get(groupId);
+    if (group instanceof CustomisedActionGroup) {
+      ((CustomisedActionGroup) group).resetChildren();
+    }
+  }
+
+  public void fillCorrectedActionGroups(@NotNull DefaultMutableTreeNode root) {
+    ActionManager actionManager = ActionManager.getInstance();
+    List<String> path = ContainerUtil.newArrayList("root");
+
+    for (Map.Entry<String, String> entry : myIdToName.entrySet()) {
+      ActionGroup actionGroup = (ActionGroup)actionManager.getAction(entry.getKey());
+      if (actionGroup != null) {
+        root.add(ActionsTreeUtil.createNode(ActionsTreeUtil.createCorrectedGroup(actionGroup, entry.getValue(), path, myActions)));
+      }
+    }
   }
 
   public void fillActionGroups(DefaultMutableTreeNode root) {

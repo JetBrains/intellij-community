@@ -28,6 +28,7 @@ public class FileHistoryUiProperties implements VcsLogUiProperties, PersistentSt
     public Map<Integer, Integer> COLUMN_WIDTH = new HashMap<>();
     public List<Integer> COLUMN_ORDER = new ArrayList<>();
     public boolean SHOW_DIFF_PREVIEW = true;
+    public boolean SHOW_ROOT_NAMES = false;
   }
 
   @SuppressWarnings("unchecked")
@@ -55,6 +56,9 @@ public class FileHistoryUiProperties implements VcsLogUiProperties, PersistentSt
     else if (SHOW_DIFF_PREVIEW.equals(property)) {
       return (T)Boolean.valueOf(myState.SHOW_DIFF_PREVIEW);
     }
+    else if (SHOW_ROOT_NAMES.equals(property)) {
+      return (T)Boolean.valueOf(myState.SHOW_ROOT_NAMES);
+    }
     throw new UnsupportedOperationException("Unknown property " + property);
   }
 
@@ -76,6 +80,9 @@ public class FileHistoryUiProperties implements VcsLogUiProperties, PersistentSt
     else if (SHOW_DIFF_PREVIEW.equals(property)) {
       myState.SHOW_DIFF_PREVIEW = (Boolean)value;
     }
+    else if (SHOW_ROOT_NAMES.equals(property)) {
+      myState.SHOW_ROOT_NAMES = (Boolean)value;
+    }
     else {
       throw new UnsupportedOperationException("Unknown property " + property);
     }
@@ -88,6 +95,7 @@ public class FileHistoryUiProperties implements VcsLogUiProperties, PersistentSt
            SHOW_ALL_BRANCHES.equals(property) ||
            COLUMN_ORDER.equals(property) ||
            SHOW_DIFF_PREVIEW.equals(property) ||
+           SHOW_ROOT_NAMES.equals(property) ||
            property instanceof TableColumnProperty;
   }
 

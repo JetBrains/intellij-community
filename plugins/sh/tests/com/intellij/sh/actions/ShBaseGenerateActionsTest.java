@@ -5,10 +5,10 @@ import com.intellij.codeInsight.actions.CodeInsightAction;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.jetbrains.annotations.NotNull;
 
-public class ShBaseGenerateActionsTest extends LightJavaCodeInsightFixtureTestCase {
+public class ShBaseGenerateActionsTest extends BasePlatformTestCase {
   @Override
   protected String getTestDataPath() {
     return PluginPathManager.getPluginHomePath("sh") + "/testData/generate/";

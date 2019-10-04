@@ -43,6 +43,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -56,17 +57,15 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
 
   private boolean myPointerChangesDetected;
   private int myInsideRefresh;
-  private final BatchUpdateListener myHandler;
-  private final MessageBusConnection myConnection;
   @NotNull
   private Set<LocalFileSystem.WatchRequest> myRootsToWatch = new THashSet<>();
   private Disposable myRootPointersDisposable = Disposer.newDisposable(); // accessed in EDT
 
-  public ProjectRootManagerComponent(Project project, StartupManager startupManager) {
+  public ProjectRootManagerComponent(@NotNull Project project) {
     super(project);
 
-    myConnection = project.getMessageBus().connect(project);
-    myConnection.subscribe(FileTypeManager.TOPIC, new FileTypeListener() {
+    MessageBusConnection connection = project.getMessageBus().connect(this);
+    connection.subscribe(FileTypeManager.TOPIC, new FileTypeListener() {
       @Override
       public void beforeFileTypesChanged(@NotNull FileTypeEvent event) {
         beforeRootsChange(true);
@@ -86,10 +85,10 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
     }, project);
 
     if (!myProject.isDefault()) {
-      startupManager.registerStartupActivity(() -> myStartupActivityPerformed = true);
+      StartupManager.getInstance(project).registerStartupActivity(() -> myStartupActivityPerformed = true);
     }
 
-    myHandler = new BatchUpdateListener() {
+    connection.subscribe(BatchUpdateListener.TOPIC, new BatchUpdateListener() {
       @Override
       public void onBatchUpdateStarted() {
         myRootsChanged.levelUp();
@@ -101,12 +100,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
         myRootsChanged.levelDown();
         myFileTypesChanged.levelDown();
       }
-    };
-  }
-
-  @Override
-  public void initializeComponent() {
-    myConnection.subscribe(BatchUpdateListener.TOPIC, myHandler);
+    });
   }
 
   @Override
@@ -211,20 +205,23 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
 
     Disposable oldDisposable = myRootPointersDisposable;
     myRootPointersDisposable = Disposer.newDisposable();
-    Disposer.register(this, myRootPointersDisposable);
-    // create container with these URLs with the sole purpose to get events to getRootsValidityChangedListener() when these roots change
-    VirtualFilePointerContainer container =
-      VirtualFilePointerManager.getInstance().createContainer(myRootPointersDisposable, getRootsValidityChangedListener());
-
     List<String> recursiveUrls = ContainerUtil.map(recursivePaths, VfsUtilCore::pathToUrl);
-    ((VirtualFilePointerContainerImpl)container).addAllJarDirectories(recursiveUrls, true);
-    flatPaths.forEach(path -> container.add(VfsUtilCore.pathToUrl(path)));
-
+    Set<String> excludedUrls = new THashSet<>();
     // changes in files provided by this method should be watched manually because no-one's bothered to setup correct pointers for them
     for (DirectoryIndexExcludePolicy excludePolicy : DirectoryIndexExcludePolicy.EP_NAME.getExtensions(getProject())) {
-      for (String url : excludePolicy.getExcludeUrlsForProject()) {
-        container.add(url);
-      }
+      Collections.addAll(excludedUrls, excludePolicy.getExcludeUrlsForProject());
+    }
+
+    // avoid creating empty unnecessary container
+    if (!recursiveUrls.isEmpty() || !flatPaths.isEmpty() || !excludedUrls.isEmpty()) {
+      Disposer.register(this, myRootPointersDisposable);
+      // create container with these URLs with the sole purpose to get events to getRootsValidityChangedListener() when these roots change
+      VirtualFilePointerContainer container =
+        VirtualFilePointerManager.getInstance().createContainer(myRootPointersDisposable, getRootsValidityChangedListener());
+
+      ((VirtualFilePointerContainerImpl)container).addAllJarDirectories(recursiveUrls, true);
+      flatPaths.forEach(path -> container.add(VfsUtilCore.pathToUrl(path)));
+      ((VirtualFilePointerContainerImpl)container).addAll(excludedUrls);
     }
 
     Disposer.dispose(oldDisposable);  // dispose after the re-creating container to keep VFPs from disposing and re-creating back

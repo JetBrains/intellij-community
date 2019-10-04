@@ -108,7 +108,7 @@ class AmendCommitHandlerImpl(private val workflowHandler: AbstractCommitWorkflow
 
     override fun compute(indicator: ProgressIndicator): List<String> = roots.mapNotNull { vcsRoot ->
       val amendAware = vcsRoot.vcs?.checkinEnvironment as? AmendCommitAware ?: return@mapNotNull null
-      vcsRoot.path?.let { amendAware.getLastCommitMessage(it) }
+      amendAware.getLastCommitMessage(vcsRoot.path)
     }
   }
 }

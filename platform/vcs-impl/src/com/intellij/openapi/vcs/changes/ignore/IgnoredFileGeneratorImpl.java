@@ -68,7 +68,7 @@ public class IgnoredFileGeneratorImpl implements IgnoredFileGenerator {
   private void doGenerate(@NotNull VirtualFile ignoreFileRoot, @NotNull AbstractVcs vcs, boolean notify) {
     if (skipGeneration(ignoreFileRoot, notify)) return;
 
-    IgnoredFileContentProvider ignoredFileContentProvider = VcsImplUtil.getIgnoredFileContentProvider(myProject, vcs);
+    IgnoredFileContentProvider ignoredFileContentProvider = VcsImplUtil.findIgnoredFileContentProvider(vcs);
     if (ignoredFileContentProvider == null) {
       LOG.debug("Cannot find content provider for vcs " + vcs.getName());
       return;

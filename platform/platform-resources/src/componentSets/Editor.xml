@@ -4,9 +4,6 @@
       <implementation-class>com.intellij.ide.actionMacro.ActionMacroManager</implementation-class>
     </component>
     <component>
-      <implementation-class>com.intellij.openapi.actionSystem.ex.QuickListsManager</implementation-class>
-    </component>
-    <component>
       <implementation-class>com.intellij.openapi.editor.impl.VisibleEditorsTracker</implementation-class>
     </component>
     <component>
@@ -15,9 +12,6 @@
   </application-components>
 
   <project-components>
-    <!--<component>-->
-      <!--<implementation-class>com.intellij.jsp.impl.browserprofile.BrowserProfileProvider</implementation-class>-->
-    <!--</component>-->
     <component>
       <implementation-class>com.intellij.openapi.editor.impl.DocumentMarkupModelManager</implementation-class>
     </component>
@@ -26,9 +20,4 @@
       <implementation-class>com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl</implementation-class>
     </component>
   </project-components>
-
-  <extensions defaultExtensionNs="com.intellij">
-    <projectService serviceImplementation="com.intellij.openapi.fileEditor.impl.EditorHistoryManager"/>
-    <postStartupActivity implementation="com.intellij.openapi.fileEditor.impl.EditorHistoryManager$EditorHistoryManagerStartUpActivity"/>
-  </extensions>
 </idea-plugin>

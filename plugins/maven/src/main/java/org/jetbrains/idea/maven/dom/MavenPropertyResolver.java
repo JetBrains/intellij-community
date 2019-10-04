@@ -150,7 +150,24 @@ public class MavenPropertyResolver {
     out.append(text, last, text.length());
   }
 
+  /**
+   * Resolve properties from the string (either like {@code ${propertyName}} or like {@code @propertyName@}).
+   * @param text text string to resolve properties in
+   * @param projectDom a project dom
+   * @return string with the properties resolved
+   */
   public static String resolve(String text, MavenDomProjectModel projectDom) {
+    return resolve(PATTERN, text, projectDom);
+  }
+
+  /**
+   * Resolve properties from text using custom regexp to extract them
+   * @param pattern a regexp pattern to extract properties
+   * @param text text string to resolve properties in
+   * @param projectDom a project dom
+   * @return string with the properties resolved
+   */
+  public static String resolve(Pattern pattern, String text, MavenDomProjectModel projectDom) {
     XmlElement element = projectDom.getXmlElement();
     if (element == null) return text;
 
@@ -163,7 +180,7 @@ public class MavenPropertyResolver {
 
     StringBuilder res = new StringBuilder();
     try {
-      doFilterText(PATTERN, manager, mavenProject, text, collectPropertiesFromDOM(mavenProject, projectDom), null, false, null, res);
+      doFilterText(pattern, manager, mavenProject, text, collectPropertiesFromDOM(mavenProject, projectDom), null, false, null, res);
     }
     catch (IOException e) {
       throw new RuntimeException(e); // never thrown

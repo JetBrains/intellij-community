@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.properties.refactoring.rename;
 
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
@@ -45,11 +43,6 @@ public class ResourceBundleFromEditorRenameHandler implements RenameHandler {
     }
     final VirtualFile virtualFile = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
     return virtualFile instanceof ResourceBundleAsVirtualFile;
-  }
-
-  @Override
-  public boolean isRenaming(@NotNull DataContext dataContext) {
-    return isAvailableOnDataContext(dataContext);
   }
 
   @Override

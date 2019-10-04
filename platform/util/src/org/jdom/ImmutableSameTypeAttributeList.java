@@ -105,6 +105,7 @@ class ImmutableSameTypeAttributeList implements List<Attribute> {
   private List<Attribute> toList() {
     List<Attribute> list = new ArrayList<>(size());
     for (int i = 0; i < size(); i++) {
+      //noinspection UseBulkOperation -- ArrayList.addAll() will delegate to toArray(), but toArray() delegates to this method
       list.add(get(i));
     }
     return list;

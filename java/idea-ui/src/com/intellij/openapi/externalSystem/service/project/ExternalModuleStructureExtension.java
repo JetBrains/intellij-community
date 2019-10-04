@@ -143,7 +143,7 @@ public class ExternalModuleStructureExtension extends ModuleStructureExtension {
 
   private static Map<String, Pair<ProjectSystemId, ExternalProjectSettings>> getLinkedProjects(Project project) {
     Map<String, Pair<ProjectSystemId, ExternalProjectSettings>> result = new HashMap<>();
-    for (ExternalSystemManager<?, ?, ?, ?, ?> manager : ExternalSystemApiUtil.getAllManagers()) {
+    for (ExternalSystemManager<?, ?, ?, ?, ?> manager : ExternalSystemManager.EP_NAME.getIterable()) {
       ProjectSystemId systemId = manager.getSystemId();
       AbstractExternalSystemSettings systemSettings = ExternalSystemApiUtil.getSettings(project, systemId);
       Collection projectsSettings = systemSettings.getLinkedProjectsSettings();

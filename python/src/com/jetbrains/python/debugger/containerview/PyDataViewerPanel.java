@@ -199,6 +199,7 @@ public class PyDataViewerPanel extends JPanel {
 
     UIUtil.invokeLaterIfNeeded(() -> {
       myTable.setModel(model);
+      // Debugger generates a temporary name for every slice evaluation, so we should select a correct name for it
       String text =
         debugValue.getName().equals(originalDebugValue.getTempName()) ? originalDebugValue.getName() : chunk.getSlicePresentation();
       mySliceTextField.setText(text);

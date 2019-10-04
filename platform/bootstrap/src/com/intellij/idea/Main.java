@@ -4,7 +4,6 @@ package com.intellij.idea;
 import com.intellij.ide.Bootstrap;
 import com.intellij.internal.statistic.analytics.StudioCrashDetection;
 import com.intellij.openapi.application.JetBrainsProtocolHandler;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
 
@@ -119,13 +118,6 @@ public final class Main {
     return true;
   }
 
-  public static boolean isApplicationStarterForBuilding(final String[] args) {
-    return args.length > 0 && (Comparing.strEqual(args[0], "traverseUI") ||
-                               Comparing.strEqual(args[0], "listBundledPlugins") ||
-                               Comparing.strEqual(args[0], "buildAppcodeCache") ||
-                               Comparing.strEqual(args[0], "keymap"));
-  }
-
   // TODO: Use PlatformUtils#isAndroidStudio?
   private static boolean isStudio() {
     return "AndroidStudio".equalsIgnoreCase(System.getProperty(PLATFORM_PREFIX_PROPERTY));
@@ -200,7 +192,7 @@ public final class Main {
         JOptionPane.showMessageDialog(JOptionPane.getRootFrame(), scrollPane, title, type);
       }
       catch (Throwable t) {
-        stream.println("\nAlso, an UI exception occurred on attempt to show above message:");
+        stream.println("\nAlso, a UI exception occurred on an attempt to show the above message:");
         t.printStackTrace(stream);
       }
     }

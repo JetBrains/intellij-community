@@ -83,6 +83,7 @@ public abstract class SearchResultPanel {
 
   public void setEmpty() {
     myEmpty = true;
+    myQuery = "";
   }
 
   @NotNull

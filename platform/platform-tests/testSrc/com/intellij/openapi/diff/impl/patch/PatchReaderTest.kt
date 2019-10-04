@@ -3,7 +3,7 @@ package com.intellij.openapi.diff.impl.patch
 
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil
 import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.testFramework.PlatformTestCase
+import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TestDataFile
 import com.intellij.testFramework.TestDataPath
@@ -12,7 +12,7 @@ import junit.framework.TestCase
 import java.io.File
 
 @TestDataPath("\$CONTENT_ROOT/testData/diff/patchReader/")
-class PatchReaderTest : PlatformTestCase() {
+class PatchReaderTest : HeavyPlatformTestCase() {
   private val author = VcsUserImpl("D D", "aaaa@gmail.com")
   private val doubleSurname = VcsUserImpl("D D-D", "aaaa@gmail.com")
   private val longName = VcsUserImpl("very long author-surname", "aaaa@gmail.com")

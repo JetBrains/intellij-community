@@ -494,7 +494,7 @@ public class ToBeMergedDialog extends DialogWrapper {
         final SvnChangeList changeList = (SvnChangeList)value;
         myRenderer.renderChangeList(table, changeList);
 
-        final Color bg = selected ? UIUtil.getTableSelectionBackground() : UIUtil.getTableBackground();
+        final Color bg = selected ? UIUtil.getTableSelectionBackground(true) : UIUtil.getTableBackground();
         final Color fg = selected ? UIUtil.getTableSelectionForeground() : UIUtil.getTableForeground();
 
         myRenderer.setBackground(bg);

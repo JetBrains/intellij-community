@@ -42,7 +42,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public abstract class XmlCodeFoldingBuilder extends CustomFoldingBuilder implements DumbAware {
-  private static final TokenSet XML_ATTRIBUTE_SET = TokenSet.create(XmlElementType.XML_ATTRIBUTE);
+  private static final TokenSet XML_ATTRIBUTE_SET = TokenSet.forAllMatching(el -> el instanceof IXmlAttributeElementType);
   private static final int MIN_TEXT_RANGE_LENGTH = 3;
 
   @Override

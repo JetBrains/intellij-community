@@ -41,13 +41,13 @@ public class HighlightBreakOutsHandler extends HighlightUsagesHandlerBase<PsiEle
       }
     }
     else if (parent instanceof PsiBreakStatement) {
-      PsiElement exitedElement = ((PsiBreakStatement)parent).findExitedElement();
-      if (exitedElement instanceof PsiLoopStatement) {
-        processLoop((PsiStatement)parent, (PsiLoopStatement)exitedElement);
+      PsiStatement exitedStatement = ((PsiBreakStatement)parent).findExitedStatement();
+      if (exitedStatement instanceof PsiLoopStatement) {
+        processLoop((PsiStatement)parent, (PsiLoopStatement)exitedStatement);
       }
-      else if (exitedElement instanceof PsiSwitchBlock) {
-        addOccurrence(exitedElement.getFirstChild());
-        collectSiblings((PsiStatement)parent, exitedElement, exitedElement);
+      else if (exitedStatement instanceof PsiSwitchStatement) {
+        addOccurrence(exitedStatement.getFirstChild());
+        collectSiblings((PsiStatement)parent, exitedStatement, exitedStatement);
       }
     }
     else if (parent instanceof PsiYieldStatement) {
@@ -77,7 +77,7 @@ public class HighlightBreakOutsHandler extends HighlightUsagesHandlerBase<PsiEle
       for (PsiStatement psiStatement: statements) {
         if (currentStatement == psiStatement) continue;
         if (psiStatement instanceof PsiContinueStatement && ((PsiContinueStatement)psiStatement).findContinuedStatement() == container ||
-            psiStatement instanceof PsiBreakStatement && ((PsiBreakStatement)psiStatement).findExitedElement() == container ||
+            psiStatement instanceof PsiBreakStatement && ((PsiBreakStatement)psiStatement).findExitedStatement() == container ||
             psiStatement instanceof PsiYieldStatement && ((PsiYieldStatement)psiStatement).findEnclosingExpression() == container) {
           addOccurrence(psiStatement.getFirstChild());
         }

@@ -70,4 +70,9 @@ public abstract class CustomWhiteListRule extends PerformanceCareRule implements
     final Object id = context.eventData.get("lang");
     return id instanceof String ? Language.findLanguageByID((String)id) : null;
   }
+
+  @Nullable
+  protected String getEventDataField(@NotNull EventContext context, @NotNull String name) {
+    return context.eventData.containsKey(name) ? context.eventData.get(name).toString() : null;
+  }
 }

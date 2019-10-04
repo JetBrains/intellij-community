@@ -44,7 +44,7 @@ public class ModuleTypeEP extends AbstractExtensionPointBean {
   public ModuleType getModuleType() {
     if (myModuleType == null) {
       try {
-        myModuleType = instantiate(implementationClass, ApplicationManager.getApplication().getPicoContainer());
+        myModuleType = instantiateClass(implementationClass, ApplicationManager.getApplication().getPicoContainer());
       }
       catch(Exception e) {
         LOG.error(e);

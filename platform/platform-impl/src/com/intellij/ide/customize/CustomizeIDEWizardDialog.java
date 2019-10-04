@@ -39,19 +39,20 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
   private final CardLayout myButtonWrapperLayout = new CardLayout();
   private final JPanel myButtonWrapper = new JPanel(myButtonWrapperLayout);
   private JPanel myContentPanel;
-  private boolean myHideSkipButton;
+  private final boolean myHideSkipButton;
 
   public CustomizeIDEWizardDialog(@NotNull CustomizeIDEWizardStepsProvider stepsProvider) {
-    this(stepsProvider, null);
+    this(stepsProvider, null, true, true);
   }
 
-  public CustomizeIDEWizardDialog(@NotNull CustomizeIDEWizardStepsProvider stepsProvider, @Nullable StartupUtil.AppStarter appStarter) {
+  public CustomizeIDEWizardDialog(@NotNull CustomizeIDEWizardStepsProvider stepsProvider, @Nullable StartupUtil.AppStarter appStarter,
+                                  boolean beforeSplash, boolean afterSplash) {
     super(null, true, true);
     setTitle("Customize " + ApplicationNamesInfo.getInstance().getFullProductName());
     getPeer().setAppIcons();
 
-    myHideSkipButton = stepsProvider.hideSkipButton();
-    stepsProvider.initSteps(this, mySteps);
+    if (beforeSplash) stepsProvider.initSteps(this, mySteps);
+    if (afterSplash) stepsProvider.initStepsAfterSplash(this, mySteps);
 
     if (appStarter != null) {
       int newIndex = appStarter.customizeIdeWizardDialog(mySteps);
@@ -60,8 +61,11 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
       }
     }
 
+    myHideSkipButton = (mySteps.size() <= 1) || stepsProvider.hideSkipButton();
+
     if (mySteps.isEmpty()) {
-      throw new IllegalArgumentException(stepsProvider + " provided no steps");
+      close(CANCEL_EXIT_CODE);
+      return;
     }
 
     mySkipButton.addActionListener(this);
@@ -78,7 +82,18 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
 
   @Override
   public final void show() {
+    if (mySteps.isEmpty()) {
+      throw new IllegalStateException("no steps provided");  // use showIfNeeded() instead
+    }
     SplashManager.executeWithHiddenSplash(getWindow(), () -> super.show());
+  }
+
+  public final boolean showIfNeeded() {
+    final boolean willBeShown = !mySteps.isEmpty() && !isDisposed();
+    if (willBeShown) {
+      show();
+    }
+    return willBeShown;
   }
 
   @Override
@@ -95,7 +110,9 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
       myContentPanel.add(step, step.getTitle());
     }
     JPanel topPanel = new JPanel(new BorderLayout(5, 5));
-    topPanel.add(myNavigationLabel, BorderLayout.NORTH);
+    if (mySteps.size() > 1) {
+      topPanel.add(myNavigationLabel, BorderLayout.NORTH);
+    }
     topPanel.add(myHeaderLabel, BorderLayout.CENTER);
     result.add(topPanel, BorderLayout.NORTH);
     result.add(myContentPanel, BorderLayout.CENTER);
@@ -208,15 +225,17 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
                          : "Start using " + ApplicationNamesInfo.getInstance().getFullProductName());
     myHeaderLabel.setText(ensureHTML(myCurrentStep.getHTMLHeader()));
     myFooterLabel.setText(ensureHTML(myCurrentStep.getHTMLFooter()));
-    StringBuilder navHTML = new StringBuilder("<html><body>");
-    String arrow = myNavigationLabel.getFont().canDisplay(0x2192) ? "&#8594;" : "&gt;";
-    for (int i = 0; i < mySteps.size(); i++) {
-      if (i > 0) navHTML.append("&nbsp;").append(arrow).append("&nbsp;");
-      if (i == myIndex) navHTML.append("<b>");
-      navHTML.append(mySteps.get(i).getTitle());
-      if (i == myIndex) navHTML.append("</b>");
+    if (mySteps.size() > 1) {
+      StringBuilder navHTML = new StringBuilder("<html><body>");
+      String arrow = myNavigationLabel.getFont().canDisplay(0x2192) ? "&#8594;" : "&gt;";
+      for (int i = 0; i < mySteps.size(); i++) {
+        if (i > 0) navHTML.append("&nbsp;").append(arrow).append("&nbsp;");
+        if (i == myIndex) navHTML.append("<b>");
+        navHTML.append(mySteps.get(i).getTitle());
+        if (i == myIndex) navHTML.append("</b>");
+      }
+      myNavigationLabel.setText(navHTML.toString());
     }
-    myNavigationLabel.setText(navHTML.toString());
   }
 
   @Contract("!null->!null")

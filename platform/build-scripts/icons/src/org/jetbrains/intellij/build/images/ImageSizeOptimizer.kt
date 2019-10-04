@@ -8,10 +8,12 @@ import java.io.File
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.concurrent.atomic.AtomicLong
 import javax.imageio.ImageIO
 
 class ImageSizeOptimizer(private val projectHome: File) {
-  private var optimizedTotal: Long = 0
+  private val optimizedTotal = AtomicLong(0)
+  private val totalFiles = AtomicLong(0)
 
   fun optimizeIcons(module: JpsModule) {
     val icons = ImageCollector(projectHome.toPath()).collect(module)
@@ -38,12 +40,13 @@ class ImageSizeOptimizer(private val projectHome: File) {
 
   fun printStats() {
     println()
-    println("PNG size optimization: $optimizedTotal bytes in total")
+    println("PNG size optimization: ${optimizedTotal.get()} bytes in total in ${totalFiles.get()} files(s)")
   }
 
   private fun tryToReduceSize(file: Path): Boolean {
     val image = optimizeImage(file) ?: return false
 
+    totalFiles.incrementAndGet()
     if (image.hasOptimumSize) return true
 
     try {
@@ -51,7 +54,7 @@ class ImageSizeOptimizer(private val projectHome: File) {
       Files.newOutputStream(file).use { out ->
         out.write(image.optimizedArray.internalBuffer, 0, image.optimizedArray.size())
       }
-      optimizedTotal += image.sizeBefore - image.sizeAfter
+      optimizedTotal.getAndAdd(image.sizeBefore - image.sizeAfter)
     }
     catch (e: IOException) {
       throw Exception("Cannot optimize $file")

@@ -17,10 +17,11 @@ package com.intellij.execution.dashboard;
 
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.ide.dnd.DnDEvent;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.util.Key;
-import com.intellij.pom.Navigatable;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,12 +54,19 @@ public abstract class RunDashboardCustomizer {
   }
 
   @Nullable
-  public Navigatable getNavigatable(@NotNull RunDashboardRunConfigurationNode node) {
+  public PsiElement getPsiElement(@NotNull RunDashboardRunConfigurationNode node) {
     return null;
   }
 
   @Nullable
   public Collection<? extends AbstractTreeNode> getChildren(@NotNull RunDashboardRunConfigurationNode node) {
     return null;
+  }
+
+  public boolean canDrop(@NotNull RunDashboardRunConfigurationNode node, @NotNull DnDEvent event) {
+    return false;
+  }
+
+  public void drop(@NotNull RunDashboardRunConfigurationNode node, @NotNull DnDEvent event) {
   }
 }

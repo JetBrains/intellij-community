@@ -16,6 +16,7 @@
 package org.zmlx.hg4idea.execution;
 
 import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
@@ -99,6 +100,11 @@ public class HgCommandExecutor {
     myOutputAlwaysSuppressed = outputAlwaysSuppressed;
   }
 
+  /**
+   * @deprecated Use synchronous versions of "execute", e.g. {@link #executeInCurrentThread(VirtualFile, String, List)}.
+   * Use {@link BackgroundTaskUtil#executeOnPooledThread(Disposable, Runnable)} if need to execute on a pooled thread.
+   */
+  @Deprecated
   public void execute(@Nullable final VirtualFile repo,
                       @NotNull final String operation,
                       @Nullable final List<String> arguments,

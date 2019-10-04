@@ -17,12 +17,12 @@ import java.util.List;
 public abstract class ConfigurableVisitor {
   public static final ConfigurableVisitor ALL = new ConfigurableVisitor() {
     @Override
-    protected boolean accept(Configurable configurable) {
+    protected boolean accept(@NotNull Configurable configurable) {
       return true;
     }
   };
 
-  protected abstract boolean accept(Configurable configurable);
+  protected abstract boolean accept(@NotNull Configurable configurable);
 
   @Nullable
   public final Configurable find(@NotNull ConfigurableGroup... groups) {
@@ -92,7 +92,7 @@ public abstract class ConfigurableVisitor {
     }
 
     @Override
-    protected boolean accept(Configurable configurable) {
+    protected boolean accept(@NotNull Configurable configurable) {
       return myID.equals(getID(configurable));
     }
 
@@ -111,7 +111,7 @@ public abstract class ConfigurableVisitor {
     }
 
     @Override
-    protected boolean accept(Configurable configurable) {
+    protected boolean accept(@NotNull Configurable configurable) {
       return myName.equals(configurable.getDisplayName());
     }
   }
@@ -124,7 +124,7 @@ public abstract class ConfigurableVisitor {
     }
 
     @Override
-    protected boolean accept(Configurable configurable) {
+    protected boolean accept(@NotNull Configurable configurable) {
       return ConfigurableWrapper.cast(myType, configurable) != null;
     }
   }

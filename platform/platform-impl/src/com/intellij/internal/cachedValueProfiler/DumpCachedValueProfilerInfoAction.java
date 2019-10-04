@@ -1,8 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.cachedValueProfiler;
 
-import com.intellij.CommonBundle;
-import com.intellij.ide.actions.ShowFilePathAction;
+import com.intellij.ide.actions.RevealFileAction;
 import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
@@ -15,6 +14,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.MessageFormat;
 
 public class DumpCachedValueProfilerInfoAction extends DumbAwareAction {
   private static final NotificationGroup GROUP = new NotificationGroup("Cached value profiling", NotificationDisplayType.BALLOON, false);
@@ -31,12 +31,12 @@ public class DumpCachedValueProfilerInfoAction extends DumbAwareAction {
     try {
       File file = CachedValueProfilerDumper.dumpResults(new File(PathManager.getLogPath()));
       String url = FileUtil.getUrl(file);
-      String message = CommonBundle.message("cached.value.snapshot.success", file, url, ShowFilePathAction.getFileManagerName());
-      GROUP.createNotification("", message, NotificationType.INFORMATION, ShowFilePathAction.FILE_SELECTING_LISTENER).notify(project);
+      String message = MessageFormat.format("Cached value snapshot ''{0}'' is captured. <a href=\"{1}\">Show in {2}</a>.",
+                                            file, url, RevealFileAction.getFileManagerName());
+      GROUP.createNotification("", message, NotificationType.INFORMATION, RevealFileAction.FILE_SELECTING_LISTENER).notify(project);
     }
     catch (IOException exception) {
-      GROUP.createNotification(CommonBundle.message("cached.value.snapshot.error", exception.getMessage()),
-                               NotificationType.ERROR).notify(project);
+      GROUP.createNotification("Failed to capture snapshot: " + exception.getMessage(), NotificationType.ERROR).notify(project);
     }
   }
 }

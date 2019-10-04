@@ -11,10 +11,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.util.io.URLUtil;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 public class PathUtil {
 
@@ -37,7 +34,7 @@ public class PathUtil {
   }
 
   @NotNull
-  public static String getJarPathForClass(@NotNull Class aClass) {
+  public static String getJarPathForClass(@NotNull Class<?> aClass) {
     final String pathForClass = PathManager.getJarPathForClass(aClass);
     assert pathForClass != null : aClass;
     return pathForClass;
@@ -97,7 +94,7 @@ public class PathUtil {
 
   @NotNull
   public static String driveLetterToLowerCase(@NotNull String path) {
-    if (SystemInfo.isWindows && FileUtil.isWindowsAbsolutePath(path)) {
+    if (SystemInfo.isWindows && FileUtil.isWindowsAbsolutePath(path) && Character.isUpperCase(path.charAt(0))) {
       return Character.toLowerCase(path.charAt(0)) + path.substring(1);
     }
     return path;
@@ -110,6 +107,7 @@ public class PathUtil {
 
   //<editor-fold desc="Deprecated stuff.">
   /** @deprecated use {@link com.intellij.openapi.vfs.VfsUtil#getLocalFile(VirtualFile)} instead (to be removed in IDEA 2019) */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2019")
   @Deprecated
   @NotNull
   public static VirtualFile getLocalFile(@NotNull VirtualFile file) {

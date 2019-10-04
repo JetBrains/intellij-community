@@ -27,7 +27,6 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.List;
 
 public class PsiMethodReferenceCompatibilityConstraint implements ConstraintFormula {
@@ -170,17 +169,20 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
       //if i) the method reference elides NonWildTypeArguments, 
       //  ii) the compile-time declaration is a generic method, and 
       // iii) the return type of the compile-time declaration mentions at least one of the method's type parameters;
-      if (typeParameters.length == 0 && method.getTypeParameters().length > 0) {
-        final PsiClass interfaceClass = classResolveResult.getElement();
-        LOG.assertTrue(interfaceClass != null);
-        if (PsiTypesUtil.mentionsTypeParameters(referencedMethodReturnType,
-                                                ContainerUtil.newHashSet(method.getTypeParameters()))) {
-          session.initBounds(myExpression, psiSubstitutor, method.getTypeParameters());
-          //the constraint reduces to the bound set B3 which would be used to determine the method reference's invocation type 
-          //when targeting the return type of the function type, as defined in 18.5.2.
-          session.collectApplicabilityConstraints(myExpression, ((MethodCandidateInfo)resolve), groundTargetType);
-          session.registerReturnTypeConstraints(psiSubstitutor.substitute(referencedMethodReturnType), returnType, myExpression);
-          return true;
+      if (typeParameters.length == 0) {
+        PsiTypeParameter[] methodTypeParameters = method.isConstructor() ? containingClass.getTypeParameters() : method.getTypeParameters();
+        if (methodTypeParameters.length > 0) {
+          final PsiClass interfaceClass = classResolveResult.getElement();
+          LOG.assertTrue(interfaceClass != null);
+          if (PsiTypesUtil.mentionsTypeParameters(referencedMethodReturnType,
+                                                  ContainerUtil.newHashSet(methodTypeParameters))) {
+            session.initBounds(myExpression, psiSubstitutor, methodTypeParameters);
+            //the constraint reduces to the bound set B3 which would be used to determine the method reference's invocation type 
+            //when targeting the return type of the function type, as defined in 18.5.2.
+            session.collectApplicabilityConstraints(myExpression, ((MethodCandidateInfo)resolve), groundTargetType);
+            session.registerReturnTypeConstraints(psiSubstitutor.substitute(referencedMethodReturnType), returnType, myExpression);
+            return true;
+          }
         }
       }
 
@@ -229,30 +231,6 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
         if (parameterization != null) {
           final PsiType pType = PsiUtil.captureToplevelWildcards(parameterization, methodReferenceExpression);
           psiSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(qContainingClass, (PsiClassType)pType);
-        }
-        else if (member instanceof PsiMethod && ((PsiMethod)member).isConstructor() || member instanceof PsiClass) {
-          //15.13.1
-          //If ClassType is a raw type, but is not a non-static member type of a raw type, 
-          //the candidate notional member methods are those specified in p15.9.3 for a class instance creation expression that uses <>
-          //to elide the type arguments to a class.
-          final PsiResolveHelper helper = JavaPsiFacade.getInstance(methodReferenceExpression.getProject()).getResolveHelper();
-          final PsiType[] paramTypes =
-            member instanceof PsiMethod ? ((PsiMethod)member).getSignature(PsiSubstitutor.EMPTY).getParameterTypes() : PsiType.EMPTY_ARRAY;
-
-          if (paramTypes.length != signature.getParameterTypes().length && !(member instanceof PsiMethod && ((PsiMethod)member).isVarArgs())) {
-            //inapplicable method reference
-            return PsiSubstitutor.EMPTY;
-          }
-          if (Arrays.deepEquals(signature.getParameterTypes(), paramTypes)) {
-            return PsiSubstitutor.EMPTY;
-          }
-
-          if (paramTypes.length == signature.getParameterTypes().length) {
-            psiSubstitutor = helper.inferTypeArguments(PsiTypesUtil.filterUnusedTypeParameters(qContainingClass.getTypeParameters(), paramTypes),
-                                                       paramTypes,
-                                                       signature.getParameterTypes(),
-                                                       PsiUtil.getLanguageLevel(methodReferenceExpression));
-          }
         }
         else {
           psiSubstitutor = PsiSubstitutor.EMPTY;

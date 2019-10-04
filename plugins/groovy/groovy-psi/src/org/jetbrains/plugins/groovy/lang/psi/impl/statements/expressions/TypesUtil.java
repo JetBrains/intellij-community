@@ -5,7 +5,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiSubstitutorImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
@@ -544,7 +543,7 @@ public class TypesUtil implements TypeConstants {
         result.put(parameter, map2.get(parameter));
       }
     }
-    return PsiSubstitutorImpl.createSubstitutor(result);
+    return PsiSubstitutor.createSubstitutor(result);
   }
 
   @NotNull

@@ -15,8 +15,10 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
+import com.intellij.vcs.CacheableAnnotationProvider;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -71,10 +73,11 @@ public class AnnotationsPreloader {
             AbstractVcs vcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(file);
             if (vcs == null) return;
 
-            AnnotationProvider annotationProvider = vcs.getAnnotationProvider();
-            if (annotationProvider == null || !annotationProvider.isCaching()) return;
+            CacheableAnnotationProvider annotationProvider = ObjectUtils.tryCast(vcs.getAnnotationProvider(),
+                                                                                 CacheableAnnotationProvider.class);
+            if (annotationProvider == null) return;
 
-            annotationProvider.annotate(file);
+            annotationProvider.populateCache(file);
             if (LOG.isDebugEnabled()) {
               LOG.debug("Preloaded VCS annotations for ", file.getName(), " in ", String.valueOf(System.currentTimeMillis() - start), "ms");
             }

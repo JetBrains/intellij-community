@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -12,6 +12,7 @@ import com.intellij.openapi.vcs.changes.VcsModifiableDirtyScope;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.vcs.FileBasedTest;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
@@ -126,7 +127,7 @@ public class VcsDirtyScopeTest extends FileBasedTest {
 
   private Data createData() throws IOException {
     final Data data = new Data();
-    data.baseDir = myProjectFixture.getProject().getBaseDir();
+    data.baseDir = PlatformTestUtil.getOrCreateProjectTestBaseDir(myProjectFixture.getProject());
     final IOException[] exc = new IOException[1];
     final File ioFile = new File(data.baseDir.getPath());
     final File[] files = ioFile.listFiles();

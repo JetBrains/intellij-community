@@ -115,7 +115,8 @@ public class SelectionQuotingTypedHandlerTest extends BasePlatformTestCase {
 
   private void doTest(@NotNull final String cs, @NotNull String before, @NotNull String expected) {
     myFixture.configureByText(FileTypes.PLAIN_TEXT, before);
-    final TypedAction typedAction = EditorActionManager.getInstance().getTypedAction();
+    EditorActionManager.getInstance();
+    final TypedAction typedAction = TypedAction.getInstance();
 
     performAction(myFixture.getProject(), () -> {
       for (int i = 0, max = cs.length(); i < max; i++) {
@@ -130,7 +131,8 @@ public class SelectionQuotingTypedHandlerTest extends BasePlatformTestCase {
     myFixture.configureByText(FileTypes.PLAIN_TEXT, "\"aaa\"\nbbb\n\n");
     myFixture.getEditor().getCaretModel().moveToOffset(0);
     myFixture.getEditor().getSelectionModel().setSelection(0, 5);
-    final TypedAction typedAction = EditorActionManager.getInstance().getTypedAction();
+    EditorActionManager.getInstance();
+    final TypedAction typedAction = TypedAction.getInstance();
     performAction(myFixture.getProject(),
                   () -> typedAction.actionPerformed(myFixture.getEditor(), '\'', ((EditorEx)myFixture.getEditor()).getDataContext()));
     myFixture.getEditor().getSelectionModel().removeSelection();

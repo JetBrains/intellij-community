@@ -26,7 +26,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiSubstitutorImpl;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
 import com.intellij.psi.search.SearchScope;
@@ -675,7 +674,7 @@ class SliceUtil {
             if (paramSynthetic.equals(syntheticField)) {
               PsiSubstitutor substitutor = unify(result.getSubstitutor(), parentSubstitutor, argument.getProject());
               int nesting = calcNewIndexNesting(indexNesting, anno);
-              if (!handToProcessor(argument, processor, parent, substitutor, nesting, paramSynthetic)) return false;
+              if (substitutor != null && !handToProcessor(argument, processor, parent, substitutor, nesting, paramSynthetic)) return false;
             }
           }
         }
@@ -688,7 +687,7 @@ class SliceUtil {
             int newNesting = calcNewIndexNesting(indexNesting, sourceAnno);
             PsiExpression sourceArgument = expressions[si];
             PsiSubstitutor substitutor = unify(result.getSubstitutor(), parentSubstitutor, argument.getProject());
-            if (!handToProcessor(sourceArgument, processor, parent, substitutor, newNesting, syntheticField)) return false;
+            if (substitutor != null && !handToProcessor(sourceArgument, processor, parent, substitutor, newNesting, syntheticField)) return false;
           }
         }
       }
@@ -713,7 +712,7 @@ class SliceUtil {
     if (map == null) return substitutor;
     Map<PsiTypeParameter, PsiType> newMap = new THashMap<>(substitutor.getSubstitutionMap());
     newMap.keySet().removeAll(map.keySet());
-    return PsiSubstitutorImpl.createSubstitutor(newMap);
+    return PsiSubstitutor.createSubstitutor(newMap);
   }
 
   @Nullable

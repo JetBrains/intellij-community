@@ -26,7 +26,7 @@ public class JavaVetoRenameCondition implements Condition<PsiElement> {
   public boolean value(PsiElement element) {
     if (element instanceof LightMethod) {
       PsiClass containingClass = ((LightMethod)element).getContainingClass();
-      if (containingClass != null && containingClass.isEnum()) return true;
+      if (containingClass.isEnum()) return true;
     }
 
     if (element instanceof PsiReceiverParameter) {

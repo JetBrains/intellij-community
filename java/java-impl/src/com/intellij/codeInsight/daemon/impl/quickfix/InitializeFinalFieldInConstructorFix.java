@@ -1,12 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.generation.PsiMethodMember;
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.ide.util.MemberChooser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -15,23 +14,17 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class InitializeFinalFieldInConstructorFix implements IntentionAction {
+public class InitializeFinalFieldInConstructorFix extends LocalQuickFixAndIntentionActionOnPsiElement {
   private static final Logger LOG = Logger.getInstance(InitializeFinalFieldInConstructorFix.class);
-  private final PsiField myField;
 
   public InitializeFinalFieldInConstructorFix(@NotNull PsiField field) {
-    myField = field;
+    super(field);
   }
 
   @NotNull
@@ -47,35 +40,45 @@ public class InitializeFinalFieldInConstructorFix implements IntentionAction {
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!myField.isValid() || myField.hasModifierProperty(PsiModifier.STATIC) || myField.hasInitializer()) {
+  public boolean isAvailable(@NotNull Project project,
+                             @NotNull PsiFile file,
+                             @Nullable Editor editor,
+                             @NotNull PsiElement startElement,
+                             @NotNull PsiElement endElement) {
+    PsiField field = ObjectUtils.tryCast(startElement, PsiField.class);
+    if (field == null) return false;
+    if (!field.isValid() || field.hasModifierProperty(PsiModifier.STATIC) || field.hasInitializer()) {
       return false;
     }
 
-    final PsiClass containingClass = myField.getContainingClass();
+    final PsiClass containingClass = field.getContainingClass();
     if (containingClass == null || containingClass.getName() == null){
       return false;
     }
 
-    final PsiManager manager = myField.getManager();
-    return manager != null && BaseIntentionAction.canModify(myField);
+    final PsiManager manager = field.getManager();
+    return manager != null && BaseIntentionAction.canModify(field);
   }
 
   @Override
-  public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
-    if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
-
-    final PsiClass myClass = myField.getContainingClass();
-    if (myClass == null) {
-      return;
-    }
+  public void invoke(@NotNull Project project,
+                     @NotNull PsiFile file,
+                     @Nullable Editor editor,
+                     @NotNull PsiElement startElement,
+                     @NotNull PsiElement endElement) {
+    PsiField field = ObjectUtils.tryCast(startElement, PsiField.class);
+    if (field == null) return;
+    final PsiClass myClass = field.getContainingClass();
+    if (myClass == null) return;
     if (myClass.getConstructors().length == 0) {
       createDefaultConstructor(myClass, project, editor, file);
     }
 
-    final List<PsiMethod> constructors = choose(filterIfFieldAlreadyAssigned(myField, myClass.getConstructors()), project);
+    PsiMethod[] ctors = CreateConstructorParameterFromFieldFix.filterConstructorsIfFieldAlreadyAssigned(myClass.getConstructors(), field)
+      .toArray(PsiMethod.EMPTY_ARRAY);
+    final List<PsiMethod> constructors = choose(ctors, project);
 
-    ApplicationManager.getApplication().runWriteAction(() -> addFieldInitialization(constructors, myField, project, editor));
+    ApplicationManager.getApplication().runWriteAction(() -> addFieldInitialization(constructors, field, project, editor));
   }
 
   private static void addFieldInitialization(@NotNull List<? extends PsiMethod> constructors,
@@ -180,16 +183,10 @@ public class InitializeFinalFieldInConstructorFix implements IntentionAction {
     ApplicationManager.getApplication().runWriteAction(() -> defaultConstructorFix.invoke(project, editor, file));
   }
 
-  @NotNull
-  private static PsiMethod[] filterIfFieldAlreadyAssigned(@NotNull PsiField field, @NotNull PsiMethod[] ctors) {
-    final List<PsiMethod> result = new ArrayList<>(Arrays.asList(ctors));
-    for (PsiReference reference : ReferencesSearch.search(field, new LocalSearchScope(ctors))) {
-      final PsiElement element = reference.getElement();
-      if (element instanceof PsiReferenceExpression && PsiUtil.isOnAssignmentLeftHand((PsiExpression)element)) {
-        result.remove(PsiTreeUtil.getParentOfType(element, PsiMethod.class));
-      }
-    }
-    return result.toArray(PsiMethod.EMPTY_ARRAY);
+  @Nullable
+  @Override
+  public PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
+    return currentFile;
   }
 
   @Override

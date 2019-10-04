@@ -2,6 +2,7 @@
 package org.editorconfig.language.psi.base
 
 import com.intellij.lang.ASTNode
+import com.intellij.psi.PsiErrorElement
 import org.editorconfig.language.codeinsight.inspections.EditorConfigEmptyHeaderInspection
 import org.editorconfig.language.codeinsight.inspections.EditorConfigNumerousWildcardsInspection
 import org.editorconfig.language.codeinsight.inspections.EditorConfigPatternEnumerationRedundancyInspection
@@ -13,6 +14,8 @@ abstract class EditorConfigHeaderBase(node: ASTNode) : EditorConfigHeaderElement
   final override fun isValidGlob(): Boolean {
     if (header.textMatches("[")) return false
     if (containsErrors(header)) return false
+    // That is, if closing bracket is missing
+    if (nextSibling is PsiErrorElement) return false
     if (EditorConfigEmptyHeaderInspection.containsIssue(header)) return false
     if (EditorConfigNumerousWildcardsInspection.containsIssue(header)) return false
     if (header.patternEnumerationList.any(patternChecker)) return false

@@ -7,11 +7,11 @@ import org.jetbrains.plugins.textmate.language.TextMateScopeSelectorOwner;
 import java.util.Set;
 
 public class Preferences implements TextMateScopeSelectorOwner {
-  @NotNull private final String myScopeRule;
+  @NotNull private final CharSequence myScopeRule;
   @Nullable private final Set<TextMateBracePair> myHighlightingPairs;
   @Nullable private final Set<TextMateBracePair> mySmartTypingPairs;
 
-  public Preferences(@NotNull String scopeRule,
+  public Preferences(@NotNull CharSequence scopeRule,
                      @Nullable Set<TextMateBracePair> highlightingPairs,
                      @Nullable Set<TextMateBracePair> smartTypingPairs) {
     myScopeRule = scopeRule;
@@ -31,7 +31,7 @@ public class Preferences implements TextMateScopeSelectorOwner {
 
   @NotNull
   @Override
-  public String getScopeSelector() {
+  public CharSequence getScopeSelector() {
     return myScopeRule;
   }
 }

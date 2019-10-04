@@ -11,7 +11,9 @@ enum class UIEventId {
   LookupShowElementActions,
   LookupExecuteElementAction,
   DaemonEditorPopupInvoked,
-  HectorPopupDisplayed
+  HectorPopupDisplayed,
+  ProgressPaused,
+  ProgressResumed
 }
 
 fun logUIEvent(eventId: UIEventId) {

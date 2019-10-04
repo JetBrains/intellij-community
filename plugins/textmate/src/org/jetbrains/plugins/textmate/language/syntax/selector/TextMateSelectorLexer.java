@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class TextMateSelectorLexer {
-  public static List<TextMateSelectorToken> tokenize(@NotNull String selector) {
+  public static List<TextMateSelectorToken> tokenize(@NotNull CharSequence selector) {
     ArrayList<TextMateSelectorToken> result = new ArrayList<>();
     StringBuilder currentSelector = new StringBuilder();
     for (int i = 0; i < selector.length(); i++) {

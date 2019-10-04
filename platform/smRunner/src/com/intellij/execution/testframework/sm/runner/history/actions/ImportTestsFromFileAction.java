@@ -20,7 +20,7 @@ public class ImportTestsFromFileAction extends AbstractImportTestsAction {
 
   @Nullable
   @Override
-  public VirtualFile getFile(@NotNull Project project) {
+  protected VirtualFile getFile(@NotNull Project project) {
     final FileChooserDescriptor xmlDescriptor = FileChooserDescriptorFactory.createSingleFileDescriptor(StdFileTypes.XML);
     xmlDescriptor.setTitle("Choose a File with Tests Result");
     return FileChooser.chooseFile(xmlDescriptor, project, null);

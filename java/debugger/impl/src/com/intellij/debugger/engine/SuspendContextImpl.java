@@ -7,15 +7,18 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.impl.PrioritizedTask;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.xdebugger.frame.XExecutionStack;
 import com.intellij.xdebugger.frame.XSuspendContext;
+import com.sun.jdi.Location;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.ThreadReference;
 import com.sun.jdi.event.EventSet;
+import com.sun.jdi.event.LocatableEvent;
 import com.sun.jdi.request.EventRequest;
 import one.util.streamex.StreamEx;
 import org.intellij.lang.annotations.MagicConstant;
@@ -67,6 +70,25 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
     myThread = threadProxy;
   }
 
+  @Nullable
+  public Location getLocation() {
+    // getting location from the event set is much faster than obtaining the frame and getting it from there
+    if (myEventSet != null) {
+      LocatableEvent event = StreamEx.of(myEventSet).select(LocatableEvent.class).findFirst().orElse(null);
+      if (event != null) {
+        return event.location();
+      }
+    }
+    try {
+      StackFrameProxyImpl frameProxy = getFrameProxy();
+      return frameProxy != null ? frameProxy.location() : null;
+    }
+    catch (Throwable e) {
+      LOG.debug(e);
+    }
+    return null;
+  }
+
   protected abstract void resumeImpl();
 
   protected void resume(){
@@ -77,7 +99,10 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
     DebuggerManagerThreadImpl.assertIsManagerThread();
     try {
       if (!Patches.IBM_JDK_DISABLE_COLLECTION_BUG) {
-        myKeptReferences.forEach(DebuggerUtilsEx::enableCollection);
+        // delay enable collection to speedup the resume
+        for (ObjectReference r : myKeptReferences) {
+          myDebugProcess.getManagerThread().schedule(PrioritizedTask.Priority.LOWEST, () -> DebuggerUtilsEx.enableCollection(r));
+        }
         myKeptReferences.clear();
       }
 

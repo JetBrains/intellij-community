@@ -615,6 +615,15 @@ public final class ArrayUtil extends ArrayUtilRt {
     return 0;
   }
 
+  @Contract(pure=true)
+  public static int lexicographicCompare(@NotNull int[] obj1, @NotNull int[] obj2) {
+    for (int i = 0; i < Math.min(obj1.length, obj2.length); i++) {
+      int res = Integer.compare(obj1[i], obj2[i]);
+      if (res != 0) return res;
+    }
+    return Integer.compare(obj1.length, obj2.length);
+  }
+
   //must be Comparables
   @Contract(pure=true)
   public static <T> int lexicographicCompare(@NotNull T[] obj1, @NotNull T[] obj2) {
@@ -821,10 +830,14 @@ public final class ArrayUtil extends ArrayUtilRt {
     return array != null && array.length > 0 ? array[0] : null;
   }
 
-  @Nullable
   @Contract(value = "null -> null", pure=true)
   public static <T> T getLastElement(@Nullable T[] array) {
     return array != null && array.length > 0 ? array[array.length - 1] : null;
+  }
+
+  @Contract(pure=true)
+  public static int getLastElement(@Nullable int[] array, int defaultValue) {
+    return array == null || array.length == 0 ? defaultValue : array[array.length - 1];
   }
 
   @Contract(value = "null -> true", pure=true)

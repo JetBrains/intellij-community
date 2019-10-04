@@ -304,7 +304,7 @@ public class BoundedTaskExecutorTest extends TestCase {
     assertEquals(N - log.length(), runnables.size());
 
     try {
-      executor.submit(EmptyRunnable.getInstance());
+      executor.execute(EmptyRunnable.getInstance());
       fail("Must reject");
     }
     catch (RejectedExecutionException ignored) {
@@ -341,7 +341,7 @@ public class BoundedTaskExecutorTest extends TestCase {
     assertTrue(executor.isShutdown());
 
     try {
-      executor.submit(EmptyRunnable.getInstance());
+      executor.execute(EmptyRunnable.getInstance());
       fail("Must reject");
     }
     catch (RejectedExecutionException ignored) {
@@ -449,7 +449,7 @@ public class BoundedTaskExecutorTest extends TestCase {
 
       for (Future future : futures) {
         assertTrue(future.isDone());
-        assertTrue(!future.isCancelled());
+        assertFalse(future.isCancelled());
       }
       assertEquals(N, log.length());
     }

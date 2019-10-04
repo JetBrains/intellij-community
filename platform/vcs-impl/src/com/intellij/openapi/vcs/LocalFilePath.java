@@ -26,6 +26,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.util.PathUtil;
+import com.intellij.vcsUtil.VcsFileUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,6 +41,12 @@ public class LocalFilePath implements FilePath {
 
   public LocalFilePath(@NotNull String path, boolean isDirectory) {
     myPath = FileUtil.toCanonicalPath(path);
+    myIsDirectory = isDirectory;
+  }
+
+  private LocalFilePath(@NotNull String path, boolean isDirectory,
+                        @SuppressWarnings("unused") @Nullable Void privateConstructorMarker) {
+    myPath = path;
     myIsDirectory = isDirectory;
   }
 
@@ -85,14 +92,14 @@ public class LocalFilePath implements FilePath {
 
   @Override
   public boolean isUnder(@NotNull FilePath parent, boolean strict) {
-    return FileUtil.isAncestor(parent.getPath(), getPath(), strict);
+    return VcsFileUtil.isAncestor(parent, this, strict);
   }
 
   @Override
   @Nullable
   public FilePath getParentPath() {
     String parent = PathUtil.getParentPath(myPath);
-    return parent.isEmpty() ? null : new LocalFilePath(parent, true);
+    return parent.isEmpty() ? null : new LocalFilePath(parent, true, null);
   }
 
   @Override

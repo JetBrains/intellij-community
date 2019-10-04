@@ -306,7 +306,7 @@ class ContentTabLabel extends BaseLabel {
   @Override
   protected Color getActiveFg(boolean selected) {
     if (contentManager().getContentCount() > 1) {
-      return JBUI.CurrentTheme.Label.foreground(selected);
+      return selected ? JBUI.CurrentTheme.ToolWindow.underlinedTabForeground() : JBUI.CurrentTheme.Label.foreground(false);
     }
 
     return super.getActiveFg(selected);
@@ -315,7 +315,7 @@ class ContentTabLabel extends BaseLabel {
   @Override
   protected Color getPassiveFg(boolean selected) {
     if (contentManager().getContentCount() > 1) {
-      return JBUI.CurrentTheme.Label.foreground(selected);
+      return selected ? JBUI.CurrentTheme.ToolWindow.underlinedTabInactiveForeground() : JBUI.CurrentTheme.Label.foreground(false);
     }
 
     return super.getPassiveFg(selected);

@@ -52,8 +52,8 @@ public final class GeneralSettings implements PersistentStateComponent<GeneralSe
   private boolean mySupportScreenReaders = ObjectUtils.chooseNotNull(SUPPORT_SCREEN_READERS_OVERRIDDEN, Boolean.FALSE);
   private boolean mySyncOnFrameActivation = true;
   private boolean mySaveOnFrameDeactivation = true;
-  private boolean myAutoSaveIfInactive = false;  // If true the IDEA automatically saves files if it is inactive for some seconds
-  private int myInactiveTimeout = 15; // Number of seconds of inactivity after which IDEA automatically saves all files
+  private boolean myAutoSaveIfInactive = false;  // If true the IDE automatically saves files if it is inactive for some seconds
+  private int myInactiveTimeout = 15; // Number of seconds of inactivity after which the IDE automatically saves all files
   private boolean myUseSafeWrite = true;
   private final PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
   private boolean myUseDefaultBrowser = true;
@@ -161,7 +161,7 @@ public final class GeneralSettings implements PersistentStateComponent<GeneralSe
   }
 
   /**
-   * @return {@code true} if IDEA saves all files after "idle" timeout.
+   * @return {@code true} if IDE saves all files after "idle" timeout.
    */
   public boolean isAutoSaveIfInactive(){
     return myAutoSaveIfInactive;
@@ -172,7 +172,7 @@ public final class GeneralSettings implements PersistentStateComponent<GeneralSe
   }
 
   /**
-   * @return timeout in seconds after which IDEA saves all files if there was no user activity.
+   * @return timeout in seconds after which IDE saves all files if there was no user activity.
    * The method always return positive (more then zero) value.
    */
   public int getInactiveTimeout(){

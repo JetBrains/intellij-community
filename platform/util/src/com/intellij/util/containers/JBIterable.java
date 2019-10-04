@@ -599,7 +599,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
   }
 
   /**
-   * Returns the the first matching element.
+   * Returns the first matching element.
    */
   @Nullable
   public final E find(@NotNull Condition<? super E> condition) {

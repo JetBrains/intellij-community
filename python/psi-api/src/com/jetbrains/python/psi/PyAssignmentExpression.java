@@ -2,24 +2,22 @@
 package com.jetbrains.python.psi;
 
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * Represents assignment expressions introduced in Python 3.8 (PEP 572).
  */
 @ApiStatus.NonExtendable
-@ApiStatus.AvailableSince("2019.2")
 public interface PyAssignmentExpression extends PyExpression {
 
   /**
-   * @return LHS of an expression (before :=)
+   * @return LHS of an expression (before :=), null if underlying target is not an identifier.
    */
-  @NotNull
+  @Nullable
   PyTargetExpression getTarget();
 
   /**
-   * @return RHS of an expression (after :=)
+   * @return RHS of an expression (after :=), null if assigned value is omitted or not an expression.
    */
   @Nullable
   PyExpression getAssignedValue();

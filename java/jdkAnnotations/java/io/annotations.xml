@@ -63,7 +63,10 @@
   <item name="java.io.BufferedWriter void write(java.lang.String, int, int) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
-    <item name='java.io.DataInput int readUnsignedByte()'>
+  <item name='java.io.ByteArrayOutputStream byte[] toByteArray()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.io.DataInput int readUnsignedByte()'>
         <annotation name='org.jetbrains.annotations.Range'>
             <val name="from" val="0"/>
             <val name="to" val="255"/>

@@ -74,10 +74,11 @@ public abstract class LightVariableBase extends LightElement implements PsiVaria
   @Override
   @NotNull
   public PsiType getType() {
-    if (myType == null) {
-      myType = computeType();
+    PsiType type = myType;
+    if (type == null) {
+      myType = type = computeType();
     }
-    return myType;
+    return type;
   }
 
   @NotNull

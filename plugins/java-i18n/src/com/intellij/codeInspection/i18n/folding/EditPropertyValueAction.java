@@ -309,7 +309,7 @@ public class EditPropertyValueAction extends BaseRefactoringAction {
   }
 
   private static boolean isFeatureDisabled() {
-    return !Experiments.isFeatureEnabled("property.value.inplace.editing");
+    return !Experiments.getInstance().isFeatureEnabled("property.value.inplace.editing");
   }
 
   private static class MyEnterAction extends AnAction {
@@ -351,6 +351,7 @@ public class EditPropertyValueAction extends BaseRefactoringAction {
           int placeholderColumn = ((EditorImpl)editor).offsetToVisualColumnInFoldRegion(foldRegion, placeholderOffset, false);
           editor.getCaretModel().moveToVisualPosition(
             new VisualPosition(regionStartPosition.line, regionStartPosition.column + placeholderColumn));
+          editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
           UndoManager.getInstance(project).undoableActionPerformed(new UndoableAction() {
             @Override
             public void undo() {

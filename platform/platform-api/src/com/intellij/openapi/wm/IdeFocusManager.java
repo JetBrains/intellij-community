@@ -1,11 +1,13 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm;
 
+import com.intellij.diagnostic.LoadingPhase;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.ExpirableRunnable;
@@ -37,7 +39,6 @@ import java.awt.*;
  * {@code IdeFocusManager.getGlobalInstance()} can be used.
  */
 public abstract class IdeFocusManager implements FocusRequestor {
-
   public ActionCallback requestFocusInProject(@NotNull Component c, @Nullable Project project) {
     return requestFocus(c, false);
   }
@@ -66,7 +67,6 @@ public abstract class IdeFocusManager implements FocusRequestor {
    */
   public abstract void doWhenFocusSettlesDown(@NotNull ExpirableRunnable runnable);
 
-
   /**
    * Finds focused component among descendants of the given component. Descendants may be in child popups and windows.
    */
@@ -92,7 +92,9 @@ public abstract class IdeFocusManager implements FocusRequestor {
    * Requests default focus. The method should not be called by the user code.
    */
   @NotNull
-  public abstract ActionCallback requestDefaultFocus(boolean forced);
+  public ActionCallback requestDefaultFocus(boolean forced) {
+    return ActionCallback.DONE;
+  }
 
   /**
    * Reports of focus transfer is enabled right now. It can be disabled if the app is inactive. In this case
@@ -136,10 +138,16 @@ public abstract class IdeFocusManager implements FocusRequestor {
    */
   public abstract void toFront(JComponent c);
 
-  public static IdeFocusManager getInstance(@Nullable Project project) {
-    if (project == null || project.isDisposed() || !project.isInitialized()) return getGlobalInstance();
+  public abstract Project getProject();
 
-    return project.getComponent(IdeFocusManager.class);
+  public static IdeFocusManager getInstance(@Nullable Project project) {
+    Application app = ApplicationManager.getApplication();
+    if (app == null || app.isHeadlessEnvironment() || app.isUnitTestMode() || project == null || project.isDisposed() || !project.isInitialized()) {
+      return getGlobalInstance();
+    }
+    else {
+      return ServiceManager.getService(project, IdeFocusManager.class);
+    }
   }
 
   @NotNull
@@ -166,7 +174,6 @@ public abstract class IdeFocusManager implements FocusRequestor {
     return instance != null ? instance : findInstanceByContext(null);
   }
 
-
   @Nullable
   private static IdeFocusManager findByComponent(Component c) {
     final Component parent = UIUtil.findUltimateParent(c);
@@ -191,6 +198,7 @@ public abstract class IdeFocusManager implements FocusRequestor {
     return owner != null ? findInstanceByComponent(owner) : findInstanceByContext(null);
   }
 
+  @SuppressWarnings("MissingDeprecatedAnnotation")
   @Deprecated
   @NotNull
   public FocusRequestor getFurtherRequestor() {
@@ -208,18 +216,22 @@ public abstract class IdeFocusManager implements FocusRequestor {
 
   @NotNull
   public static IdeFocusManager getGlobalInstance() {
-    IdeFocusManager fm = null;
+    IdeFocusManager focusManager = null;
 
     Application app = ApplicationManager.getApplication();
-    if (app != null) {
-      fm = app.getComponent(IdeFocusManager.class);
+    if (app != null && LoadingPhase.COMPONENT_REGISTERED.isComplete()) {
+      focusManager = app.getComponent(IdeFocusManager.class);
     }
 
-    if (fm == null) {
+    if (focusManager == null) {
       // happens when app is semi-initialized (e.g. when IDEA server dialog is shown)
-      fm = PassThroughIdeFocusManager.getInstance();
+      focusManager = PassThroughIdeFocusManager.getInstance();
     }
 
-    return fm;
+    return focusManager;
+  }
+
+  @Override
+  public void dispose() {
   }
 }

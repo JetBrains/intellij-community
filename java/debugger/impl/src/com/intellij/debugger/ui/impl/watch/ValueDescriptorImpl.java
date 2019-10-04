@@ -229,7 +229,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   @Nullable
   protected static Value invokeExceptionGetStackTrace(ObjectReference exceptionObj, EvaluationContextImpl evaluationContext)
     throws EvaluateException {
-    Method method = ((ClassType)exceptionObj.referenceType()).concreteMethodByName("getStackTrace", "()[Ljava/lang/StackTraceElement;");
+    Method method = DebuggerUtils.findMethod(exceptionObj.referenceType(), "getStackTrace", "()[Ljava/lang/StackTraceElement;");
     if (method != null) {
       return evaluationContext.getDebugProcess().invokeMethod(evaluationContext, exceptionObj, method, Collections.emptyList());
     }

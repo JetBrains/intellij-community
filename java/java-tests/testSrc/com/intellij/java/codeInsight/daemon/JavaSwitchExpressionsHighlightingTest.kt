@@ -11,13 +11,11 @@ class JavaSwitchExpressionsHighlightingTest : LightJavaCodeInsightFixtureTestCas
   fun testEnhancedSwitchStatements() = doTest()
   fun testSwitchExpressions() = doTest()
   fun testSwitchExpressionsEnumResolve() = doTest()
-  fun testValueBreaks() = doTest()
   fun testSwitchNumericPromotion() = doTest()
   fun testSimpleInferenceCases() = doTest()
   fun testEnhancedSwitchDefinitelyAssigned() = doTest()
   fun testEnhancedSwitchUnreachable() = doTest()
   fun testSwitchExpressionHasResult() = doTest()
-
   fun testYieldStatements() = doTest()
 
   private fun doTest() {

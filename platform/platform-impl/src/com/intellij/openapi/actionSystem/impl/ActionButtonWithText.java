@@ -60,6 +60,7 @@ public class ActionButtonWithText extends ActionButton {
     UIUtil.putClientProperty(this, MnemonicHelper.MNEMONIC_CHECKER, keyCode -> getMnemonic() == keyCode);
   }
 
+  @NotNull
   @Override
   public void updateUI() {
     super.updateUI();

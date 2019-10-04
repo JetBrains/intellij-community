@@ -26,7 +26,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -174,89 +173,86 @@ public class OutputChecker {
 
     if (application == null) return buffer;
 
-    return application.runReadAction(new ThrowableComputable<String, Exception>() {
-      @Override
-      public String compute() throws UnknownHostException {
-        String result = buffer;
+    return application.runReadAction((ThrowableComputable<String, Exception>)() -> {
+      String result = buffer;
 
-        result = StringUtil.replace(result, "\r\n", "\n");
-        result = StringUtil.replace(result, "\r", "\n");
-        result = replaceAdditionalInOutput(result);
-        result = replacePath(result, myAppPath, "!APP_PATH!");
-        result = replacePath(result, myOutputPath, "!OUTPUT_PATH!");
-        result = replacePath(result, JavaSdkUtil.getIdeaRtJarPath(), "!RT_JAR!");
+      result = StringUtil.replace(result, "\r\n", "\n");
+      result = StringUtil.replace(result, "\r", "\n");
+      result = replaceAdditionalInOutput(result);
+      result = replacePath(result, myAppPath, "!APP_PATH!");
+      result = replacePath(result, myOutputPath, "!OUTPUT_PATH!");
+      result = replacePath(result, JavaSdkUtil.getIdeaRtJarPath(), "!RT_JAR!");
 
-        String junit4JarPaths = StringUtil.join(IntelliJProjectConfiguration.getProjectLibraryClassesRootPaths("JUnit4"), File.pathSeparator);
-        result = replacePath(result, junit4JarPaths, "!JUNIT4_JARS!");
+      String junit4JarPaths = StringUtil.join(IntelliJProjectConfiguration.getProjectLibraryClassesRootPaths("JUnit4"), File.pathSeparator);
+      result = replacePath(result, junit4JarPaths, "!JUNIT4_JARS!");
 
-        InetAddress localHost = InetAddress.getLocalHost();
-        result = StringUtil.replace(result, localHost.getCanonicalHostName(), "!HOST_NAME!", true);
-        result = StringUtil.replace(result, localHost.getHostName(), "!HOST_NAME!", true);
-        result = StringUtil.replace(result, "127.0.0.1", "!HOST_NAME!", false);
+      InetAddress localHost = InetAddress.getLocalHost();
+      result = StringUtil.replace(result, localHost.getCanonicalHostName(), "!HOST_NAME!", true);
+      result = StringUtil.replace(result, localHost.getHostName(), "!HOST_NAME!", true);
+      result = StringUtil.replace(result, "127.0.0.1", "!HOST_NAME!", false);
 
-        VirtualFile homeDirectory = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk().getHomeDirectory();
-        assertNotNull(homeDirectory);
-        result = replacePath(result, homeDirectory.getPath(), JDK_HOME_STR);
+      VirtualFile homeDirectory = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk().getHomeDirectory();
+      assertNotNull(homeDirectory);
+      result = replacePath(result, homeDirectory.getPath(), JDK_HOME_STR);
 
-        File productionFile = new File(PathUtil.getJarPathForClass(OutputChecker.class));
-        if (productionFile.isDirectory()) {
-          result = replacePath(result, StringUtil.trimTrailing(productionFile.getParentFile().toURI().toString(), '/'), "!PRODUCTION_PATH!");
-        }
-
-        result = replacePath(result, PathManager.getHomePath(), "!IDEA_HOME!");
-        result = StringUtil.replace(result, "Process finished with exit code 255", "Process finished with exit code -1");
-
-        result = result.replaceAll(" -javaagent:.*debugger-agent\\.jar", "");
-        result = result.replaceAll(" -agentpath:[^\\s]*memory_agent([\\w^\\s]*)?\\.[^\\s]+", "");
-        result = result.replaceAll("!HOST_NAME!:\\d*", "!HOST_NAME!:!HOST_PORT!");
-        result = result.replaceAll("at '.*?'", "at '!HOST_NAME!:PORT_NAME!'");
-        result = result.replaceAll("address: '.*?'", "address: '!HOST_NAME!:PORT_NAME!'");
-        result = result.replaceAll("\"?file:.*AppletPage.*\\.html\"?", "file:!APPLET_HTML!");
-        result = result.replaceAll("\"(!JDK_HOME!.*?)\"", "$1");
-        result = result.replaceAll("\"(!APP_PATH!.*?)\"", "$1");
-        result = result.replaceAll("\"(-D.*?)\"", "$1");  // unquote extra params
-        result = result.replaceAll("-Didea.launcher.port=\\d*", "-Didea.launcher.port=!IDEA_LAUNCHER_PORT!");
-        result = result.replaceAll("-Dfile.encoding=[\\w\\d-]*", "-Dfile.encoding=!FILE_ENCODING!");
-        result = result.replaceAll("\\((.*):\\d+\\)", "($1:!LINE_NUMBER!)");
-
-        result = fixSlashes(result, JDK_HOME_STR);
-        result = result.replaceAll("!JDK_HOME!\\\\bin\\\\java.exe", "!JDK_HOME!\\\\bin\\\\java");
-
-        result = stripQuotesAroundClasspath(result);
-
-        Matcher matcher = Pattern.compile("-classpath\\s+(\\S+)\\s+").matcher(result);
-        while (matcher.find()) {
-          String classPath = matcher.group(1);
-          String[] classPathElements = classPath.split(File.pathSeparator);
-
-          // combine all JDK .jars into one marker
-          List<String> classpathRes = new ArrayList<>();
-          boolean hasJdkJars = false;
-          for (String element : classPathElements) {
-            if (!element.startsWith(JDK_HOME_STR)) {
-              classpathRes.add(element);
-            }
-            else {
-              hasJdkJars = true;
-            }
-          }
-          if (hasJdkJars) {
-            classpathRes.add("!JDK_JARS!");
-          }
-
-          if (sortClassPath) {
-            Collections.sort(classpathRes);
-          }
-
-          String sortedPath = StringUtil.join(classpathRes, ";");
-          result = StringUtil.replace(result, classPath, sortedPath);
-        }
-
-        result = JDI_BUG_OUTPUT_PATTERN_1.matcher(result).replaceAll("");
-        result = JDI_BUG_OUTPUT_PATTERN_2.matcher(result).replaceAll("");
-
-        return result;
+      File productionFile = new File(PathUtil.getJarPathForClass(OutputChecker.class));
+      if (productionFile.isDirectory()) {
+        result = replacePath(result, StringUtil.trimTrailing(productionFile.getParentFile().toURI().toString(), '/'), "!PRODUCTION_PATH!");
       }
+
+      result = replacePath(result, PathManager.getHomePath(), "!IDEA_HOME!");
+      result = StringUtil.replace(result, "Process finished with exit code 255", "Process finished with exit code -1");
+
+      result = result.replaceAll(" -javaagent:.*debugger-agent\\.jar", "");
+      result = result.replaceAll(" -agentpath:[^\\s]*memory_agent([\\w^\\s]*)?\\.[^\\s]+", "");
+      result = result.replaceAll("!HOST_NAME!:\\d*", "!HOST_NAME!:!HOST_PORT!");
+      result = result.replaceAll("at '.*?'", "at '!HOST_NAME!:PORT_NAME!'");
+      result = result.replaceAll("address: '.*?'", "address: '!HOST_NAME!:PORT_NAME!'");
+      result = result.replaceAll("\"?file:.*AppletPage.*\\.html\"?", "file:!APPLET_HTML!");
+      result = result.replaceAll("\"(!JDK_HOME!.*?)\"", "$1");
+      result = result.replaceAll("\"(!APP_PATH!.*?)\"", "$1");
+      result = result.replaceAll("\"(-D.*?)\"", "$1");  // unquote extra params
+      result = result.replaceAll("-Didea.launcher.port=\\d*", "-Didea.launcher.port=!IDEA_LAUNCHER_PORT!");
+      result = result.replaceAll("-Dfile.encoding=[\\w\\d-]*", "-Dfile.encoding=!FILE_ENCODING!");
+      result = result.replaceAll("\\((.*):\\d+\\)", "($1:!LINE_NUMBER!)");
+
+      result = fixSlashes(result, JDK_HOME_STR);
+      result = result.replaceAll("!JDK_HOME!\\\\bin\\\\java.exe", "!JDK_HOME!\\\\bin\\\\java");
+
+      result = stripQuotesAroundClasspath(result);
+
+      Matcher matcher = Pattern.compile("-classpath\\s+(\\S+)\\s+").matcher(result);
+      while (matcher.find()) {
+        String classPath = matcher.group(1);
+        String[] classPathElements = classPath.split(File.pathSeparator);
+
+        // combine all JDK .jars into one marker
+        List<String> classpathRes = new ArrayList<>();
+        boolean hasJdkJars = false;
+        for (String element : classPathElements) {
+          if (!element.startsWith(JDK_HOME_STR)) {
+            classpathRes.add(element);
+          }
+          else {
+            hasJdkJars = true;
+          }
+        }
+        if (hasJdkJars) {
+          classpathRes.add("!JDK_JARS!");
+        }
+
+        if (sortClassPath) {
+          Collections.sort(classpathRes);
+        }
+
+        String sortedPath = StringUtil.join(classpathRes, ";");
+        result = StringUtil.replace(result, classPath, sortedPath);
+      }
+
+      result = JDI_BUG_OUTPUT_PATTERN_1.matcher(result).replaceAll("");
+      result = JDI_BUG_OUTPUT_PATTERN_2.matcher(result).replaceAll("");
+
+      return result;
     });
   }
 

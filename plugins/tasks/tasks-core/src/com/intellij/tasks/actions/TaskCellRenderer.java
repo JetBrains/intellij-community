@@ -1,3 +1,4 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tasks.actions;
 
 import com.intellij.icons.AllIcons;
@@ -42,7 +43,7 @@ public class TaskCellRenderer extends DefaultListCellRenderer {
       final boolean isLocalTask = taskManager.findTask(task.getId()) != null;
       final boolean isClosed = task.isClosed() || (task instanceof LocalTask && taskManager.isLocallyClosed((LocalTask)task));
 
-      final Color bg = sel ? UIUtil.getListSelectionBackground() : isLocalTask ? UIUtil.getListBackground() : UIUtil.getDecoratedRowColor();
+      final Color bg = sel ? UIUtil.getListSelectionBackground(true) : isLocalTask ? UIUtil.getListBackground() : UIUtil.getDecoratedRowColor();
       panel.setBackground(bg);
       SimpleTextAttributes attr = getAttributes(sel, isClosed);
 

@@ -2,8 +2,6 @@
 package com.intellij.structuralsearch.plugin.replace.ui;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInsight.template.impl.TemplateEditorUtil;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -41,7 +39,6 @@ public final class ReplacementPreviewDialog extends DialogWrapper {
   private RangeHighlighter myHighlighter;
   private Editor editor;
 
-
   public ReplacementPreviewDialog(@NotNull Project project, @NotNull UsageInfo info, String replacementString) {
     super(project, true);
 
@@ -53,23 +50,19 @@ public final class ReplacementPreviewDialog extends DialogWrapper {
     myFileType = virtualFile != null ? (LanguageFileType)virtualFile.getFileType() : FileTypes.PLAIN_TEXT;
     init();
 
-    Segment range = info.getSegment();
+    final Segment range = info.getSegment();
+    assert range != null;
     highlight(virtualFile, range.getStartOffset(), range.getEndOffset());
     UIUtil.setContent(replacement, replacementString);
-
-    final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByPsiElement(element);
-    if (profile != null) {
-      TemplateEditorUtil.setHighlighter(replacement, UIUtil.getTemplateContextType(profile));
-    }
   }
 
   private void highlight(VirtualFile file, int start, int end) {
     removeHighlighter();
 
-    editor = FileEditorManager.getInstance(project).openTextEditor(
-      new OpenFileDescriptor(project, file),
-      false
-    );
+    editor = FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, file), false);
+    if (editor == null) {
+      return;
+    }
     myHighlighter = editor.getMarkupModel().addRangeHighlighter(
       start,
       end,
@@ -94,27 +87,15 @@ public final class ReplacementPreviewDialog extends DialogWrapper {
 
   @Override
   protected JComponent createCenterPanel() {
-    final JComponent centerPanel = new JPanel(new BorderLayout() );
+    final JComponent centerPanel = new JPanel(new BorderLayout());
 
-    PsiFile file = null;
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(myFileType);
-    if (profile != null) {
-      file = profile.createCodeFragment(project, "", null);
-    }
+    assert profile != null;
+    replacement = UIUtil.createEditor(project, myFileType, null, "", false, profile);
 
-    if (file != null) {
-      final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
-      replacement = UIUtil.createEditor(document, project, true, null);
-      DaemonCodeAnalyzer.getInstance(project).setHighlightingEnabled(file, false);
-    } else {
-      final EditorFactory factory = EditorFactory.getInstance();
-      final Document document = factory.createDocument("");
-      replacement = factory.createEditor(document, project, myFileType, false);
-    }
-
-    centerPanel.add(BorderLayout.NORTH,new JLabel(SSRBundle.message("replacement.code")) );
-    centerPanel.add(BorderLayout.CENTER,replacement.getComponent() );
-    centerPanel.setMaximumSize(new Dimension(640,480));
+    centerPanel.add(BorderLayout.NORTH, new JLabel(SSRBundle.message("replacement.code")));
+    centerPanel.add(BorderLayout.CENTER, replacement.getComponent());
+    centerPanel.setMaximumSize(new Dimension(640, 480));
 
     return centerPanel;
   }

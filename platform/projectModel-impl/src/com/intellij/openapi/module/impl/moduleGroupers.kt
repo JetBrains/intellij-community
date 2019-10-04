@@ -4,13 +4,15 @@ package com.intellij.openapi.module.impl
 import com.intellij.openapi.module.*
 import com.intellij.openapi.project.Project
 import com.intellij.util.SystemProperties
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.util.*
 
 /**
  * @author nik
  */
-internal fun createGrouper(project: Project, moduleModel: ModifiableModuleModel? = null): ModuleGrouper {
+@ApiStatus.Internal
+fun createGrouper(project: Project, moduleModel: ModifiableModuleModel? = null): ModuleGrouper {
   val hasGroups = moduleModel?.hasModuleGroups() ?: ModuleManager.getInstance(project).hasModuleGroups()
   if (!isQualifiedModuleNamesEnabled(project) || hasGroups) {
     return ExplicitModuleGrouper(project, moduleModel)

@@ -18,6 +18,7 @@ package com.intellij.ide.actions;
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.navigation.GotoRelatedItem;
 import com.intellij.openapi.ui.popup.JBPopup;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.util.List;
 
@@ -26,6 +27,7 @@ import java.util.List;
  * @deprecated API compatibility. Utility methods moved to NavigationUtil.
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2015")
 public class GotoRelatedFileAction {
 
   /**

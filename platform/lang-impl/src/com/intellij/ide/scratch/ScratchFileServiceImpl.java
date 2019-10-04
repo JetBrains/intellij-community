@@ -187,7 +187,7 @@ public class ScratchFileServiceImpl extends ScratchFileService implements Persis
       Language language = rootType.substituteLanguage(project, file);
       Language adjusted = language != null ? language : getLanguageByFileName(file);
       return adjusted != null && adjusted != ScratchFileType.INSTANCE.getLanguage() ?
-             LanguageSubstitutors.INSTANCE.substituteLanguage(adjusted, file, project) : adjusted;
+             LanguageSubstitutors.getInstance().substituteLanguage(adjusted, file, project) : adjusted;
     }
   }
 
@@ -226,7 +226,7 @@ public class ScratchFileServiceImpl extends ScratchFileService implements Persis
 
     @Override
     public boolean isWritable(@NotNull VirtualFile file) {
-      return file.getFileType() == ScratchFileType.INSTANCE;
+      return FileTypeRegistry.getInstance().isFileOfType(file, ScratchFileType.INSTANCE);
     }
   }
 
@@ -318,7 +318,7 @@ public class ScratchFileServiceImpl extends ScratchFileService implements Persis
     @Override
     public UsageType getUsageType(PsiElement element) {
       VirtualFile file = PsiUtilCore.getVirtualFile(element);
-      RootType rootType = file != null && file.getFileType() == ScratchFileType.INSTANCE ?
+      RootType rootType = file != null && FileTypeRegistry.getInstance().isFileOfType(file, ScratchFileType.INSTANCE) ?
                           ScratchFileService.getInstance().getRootType(file) : null;
       return rootType == null ? null : ourUsageTypes.get(rootType);
     }

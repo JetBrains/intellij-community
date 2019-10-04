@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.impl
 
 import com.intellij.execution.*
@@ -125,7 +125,26 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
         else -> if (userObject is ConfigurationType) CONFIGURATION_TYPE else UNKNOWN
       }
     }
+
+    fun configurationTypeSorted(project: Project,
+                                showApplicableTypesOnly: Boolean,
+                                allTypes: List<ConfigurationType>): List<ConfigurationType> =
+      getTypesToShow(project, showApplicableTypesOnly, allTypes).sortedWith(kotlin.Comparator { type1, type2 -> compareTypesForUi(type1!!, type2!!) })
+
+    private fun getTypesToShow(project: Project, showApplicableTypesOnly: Boolean, allTypes: List<ConfigurationType>): List<ConfigurationType> {
+      if (showApplicableTypesOnly) {
+        val applicableTypes = allTypes.filter { configurationType -> configurationType.configurationFactories.any { it.isApplicable(project) } }
+        if (applicableTypes.size < (allTypes.size - 3)) {
+          return applicableTypes
+        }
+      }
+      return allTypes
+    }
+
   }
+
+  // https://youtrack.jetbrains.com/issue/TW-61353
+  fun getSelectedConfigurable() = selectedConfigurable
 
   override fun getDisplayName() = ExecutionBundle.message("run.configurable.display.name")
 
@@ -921,30 +940,19 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
 
     private fun showAddPopup(showApplicableTypesOnly: Boolean) {
       val allTypes = ConfigurationType.CONFIGURATION_TYPE_EP.extensionList
-      val configurationTypes: MutableList<ConfigurationType?> = getTypesToShow(showApplicableTypesOnly, allTypes).toMutableList()
-      configurationTypes.sortWith(kotlin.Comparator { type1, type2 -> compareTypesForUi(type1!!, type2!!) })
+      val configurationTypes: MutableList<ConfigurationType?> = configurationTypeSorted(project, showApplicableTypesOnly, allTypes).toMutableList()
       val hiddenCount = allTypes.size - configurationTypes.size
       if (hiddenCount > 0) {
         configurationTypes.add(null)
       }
 
-      val popup = NewRunConfigurationPopup.createAddPopup(configurationTypes,
+      val popup = NewRunConfigurationPopup.createAddPopup(project, configurationTypes,
                                                           ExecutionBundle.message("show.irrelevant.configurations.action.name",
                                                                                   hiddenCount),
                                                           { factory -> createNewConfiguration(factory) }, selectedConfigurationType,
                                                           { showAddPopup(false) }, true)
       //new TreeSpeedSearch(myTree);
       popup.showUnderneathOf(toolbarDecorator!!.actionsPanel)
-    }
-
-    private fun getTypesToShow(showApplicableTypesOnly: Boolean, allTypes: List<ConfigurationType>): List<ConfigurationType> {
-      if (showApplicableTypesOnly) {
-        val applicableTypes = allTypes.filter { configurationType -> configurationType.configurationFactories.any { it.isApplicable(project) } }
-        if (applicableTypes.size < (allTypes.size - 3)) {
-          return applicableTypes
-        }
-      }
-      return allTypes
     }
   }
 

@@ -37,13 +37,13 @@ import java.util.List;
 /**
  * @author peter
  */
-public class DomRootInvocationHandler extends DomInvocationHandler<AbstractDomChildDescriptionImpl, ElementStub> {
+public class DomRootInvocationHandler extends DomInvocationHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.DomRootInvocationHandler");
   private final DomFileElementImpl<?> myParent;
 
   public DomRootInvocationHandler(final Class aClass,
                                   final RootDomParentStrategy strategy,
-                                  @NotNull final DomFileElementImpl fileElement,
+                                  @NotNull DomFileElementImpl<?> fileElement,
                                   @NotNull final EvaluatedXmlName tagName,
                                   @Nullable ElementStub stub
   ) {
@@ -117,13 +117,13 @@ public class DomRootInvocationHandler extends DomInvocationHandler<AbstractDomCh
 
   @Override
   @NotNull
-  public DomFileElementImpl getParent() {
+  public DomFileElementImpl<?> getParent() {
     return myParent;
   }
 
   @Override
   public DomElement createPathStableCopy() {
-    final DomFileElement stableCopy = myParent.createStableCopy();
+    final DomFileElement<?> stableCopy = myParent.createStableCopy();
     return getManager().createStableValue((NullableFactory<DomElement>)() -> stableCopy.isValid() ? stableCopy.getRootElement() : null);
   }
 

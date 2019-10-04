@@ -7,6 +7,7 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.LocalChangeList
+import com.intellij.openapi.vcs.changes.ui.ChangesListView
 
 abstract class AbstractChangeListAction : DumbAwareAction() {
   protected fun updateEnabledAndVisible(e: AnActionEvent, enabled: Boolean, contextMenuVisible: Boolean = true) = with(e.presentation) {
@@ -18,10 +19,16 @@ abstract class AbstractChangeListAction : DumbAwareAction() {
     val changeListManager = ChangeListManager.getInstance(e.project ?: return emptySequence())
 
     val changeLists = e.getData(VcsDataKeys.CHANGE_LISTS)
-    if (!changeLists.isNullOrEmpty()) return changeLists.asSequence().mapNotNull { changeListManager.findChangeList(it.name) }
+    if (!changeLists.isNullOrEmpty()) return changeLists.asSequence()
+      .filterIsInstance<LocalChangeList>()
+      .mapNotNull { changeListManager.findChangeList(it.name) }
 
-    val changes = e.getData(VcsDataKeys.CHANGES)
-    return changes.orEmpty().asSequence().mapNotNull { changeListManager.getChangeList(it) }.distinct()
+    if (e.getData(ChangesListView.DATA_KEY) != null) {
+      val changes = e.getData(VcsDataKeys.CHANGES)
+      return changes.orEmpty().asSequence().mapNotNull { changeListManager.getChangeList(it) }.distinct()
+    }
+
+    return emptySequence()
   }
 
   protected fun getTargetChangeList(e: AnActionEvent): LocalChangeList? = getChangeLists(e).singleOrNull()

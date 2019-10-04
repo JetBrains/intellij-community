@@ -27,6 +27,7 @@ import com.intellij.util.io.move
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.text.nullize
 import kotlinx.coroutines.runBlocking
+import java.nio.file.Path
 import java.nio.file.Paths
 
 internal const val PROJECT_FILE = "\$PROJECT_FILE$"
@@ -73,21 +74,20 @@ abstract class ProjectStoreBase(final override val project: Project) : Component
   }
 
   private fun loadProjectFromTemplate(defaultProject: Project) {
-    runBlocking { defaultProject.stateStore.save() }
-
-    val element = (defaultProject.stateStore as DefaultProjectStoreImpl).getStateCopy() ?: return
+    val stateStore = defaultProject.stateStore as DefaultProjectStoreImpl
+    runBlocking { stateStore.save() }
+    val element = stateStore.getStateCopy() ?: return
     LOG.runAndLogException {
       if (isDirectoryBased) {
         normalizeDefaultProjectElement(defaultProject, element, Paths.get(storageManager.expandMacro(PROJECT_CONFIG_DIR)))
       }
       else {
-        moveComponentConfiguration(defaultProject, element) {
+        moveComponentConfiguration(defaultProject, element, { /* doesn't matter, any path will be resolved as projectFilePath (see fileResolver below) */ PROJECT_FILE }) {
           if (it == "workspace.xml") Paths.get(workspaceFilePath)
           else Paths.get(projectFilePath)
         }
       }
     }
-    (storageManager.getOrCreateStorage(PROJECT_FILE) as XmlElementStorage).setDefaultState(element)
   }
 
   final override fun getProjectBasePath(): String {
@@ -104,10 +104,13 @@ abstract class ProjectStoreBase(final override val project: Project) : Component
     }
   }
 
-  override fun setPath(filePath: String, isRefreshVfsNeeded: Boolean, template: Project?) {
+  override fun getProjectWorkspaceId() = ProjectIdManager.getInstance(project).state.id
+
+  override fun setPath(file: Path, isRefreshVfsNeeded: Boolean, template: Project?) {
     val storageManager = storageManager
     val fs = LocalFileSystem.getInstance()
     val isUnitTestMode = ApplicationManager.getApplication().isUnitTestMode
+    val filePath = file.systemIndependentPath
     if (filePath.endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION)) {
       scheme = StorageScheme.DEFAULT
 
@@ -122,7 +125,7 @@ abstract class ProjectStoreBase(final override val project: Project) : Component
 
       if (isUnitTestMode) {
         // load state only if there are existing files
-        isOptimiseTestLoadSpeed = !Paths.get(filePath).toFile().exists()
+        isOptimiseTestLoadSpeed = !file.exists()
 
         storageManager.addMacro(StoragePathMacros.PRODUCT_WORKSPACE_FILE, workspacePath)
       }
@@ -137,7 +140,7 @@ abstract class ProjectStoreBase(final override val project: Project) : Component
 
       if (isUnitTestMode) {
         // load state only if there are existing files
-        isOptimiseTestLoadSpeed = !Paths.get(filePath).exists()
+        isOptimiseTestLoadSpeed = !file.exists()
 
         storageManager.addMacro(StoragePathMacros.PRODUCT_WORKSPACE_FILE, "$configDir/product-workspace.xml")
       }

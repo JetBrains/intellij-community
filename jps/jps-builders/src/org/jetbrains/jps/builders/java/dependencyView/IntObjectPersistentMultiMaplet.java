@@ -4,10 +4,10 @@ package org.jetbrains.jps.builders.java.dependencyView;
 import com.intellij.util.containers.SLRUCache;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.KeyDescriptor;
-import com.intellij.util.io.PersistentHashMap;
 import gnu.trove.TIntObjectProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
+import org.jetbrains.jps.incremental.storage.JpsPersistentHashMap;
 
 import java.io.*;
 import java.util.Collection;
@@ -19,7 +19,7 @@ import java.util.Collections;
 public class IntObjectPersistentMultiMaplet<V> extends IntObjectMultiMaplet<V> {
   private static final Collection NULL_COLLECTION = Collections.emptySet();
   private static final int CACHE_SIZE = 128;
-  private final PersistentHashMap<Integer, Collection<V>> myMap;
+  private final JpsPersistentHashMap<Integer, Collection<V>> myMap;
   private final DataExternalizer<V> myValueExternalizer;
   private final SLRUCache<Integer, Collection> myCache;
 
@@ -28,7 +28,7 @@ public class IntObjectPersistentMultiMaplet<V> extends IntObjectMultiMaplet<V> {
                                         final DataExternalizer<V> valueExternalizer,
                                         final CollectionFactory<V> collectionFactory) throws IOException {
     myValueExternalizer = valueExternalizer;
-    myMap = new PersistentHashMap<>(file, keyExternalizer,
+    myMap = new JpsPersistentHashMap<>(file, keyExternalizer,
                                     new CollectionDataExternalizer<>(valueExternalizer, collectionFactory));
     myCache = new SLRUCache<Integer, Collection>(CACHE_SIZE, CACHE_SIZE) {
       @NotNull
@@ -82,14 +82,7 @@ public class IntObjectPersistentMultiMaplet<V> extends IntObjectMultiMaplet<V> {
   public void put(final int key, final Collection<V> value) {
     try {
       myCache.remove(key);
-      myMap.appendData(key, new PersistentHashMap.ValueDataAppender() {
-        @Override
-        public void append(DataOutput out) throws IOException {
-          for (V v : value) {
-            myValueExternalizer.save(out, v);
-          }
-        }
-      });
+      myMap.appendDataWithoutCache(key, value);
     }
     catch (IOException e) {
       throw new BuildDataCorruptedException(e);

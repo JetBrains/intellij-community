@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.util.Pair;
@@ -25,7 +11,8 @@ import com.intellij.openapi.vcs.impl.LocalChangesUnderRoots;
 import com.intellij.openapi.vcs.impl.projectlevelman.AllVcses;
 import com.intellij.openapi.vcs.impl.projectlevelman.AllVcsesI;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.HeavyPlatformTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.testFramework.vcs.MockChangeListManager;
 import com.intellij.testFramework.vcs.MockContentRevision;
@@ -33,7 +20,7 @@ import com.intellij.vcsUtil.VcsUtil;
 
 import java.util.*;
 
-public class LocalChangesUnderRootsTest extends PlatformTestCase {
+public class LocalChangesUnderRootsTest extends HeavyPlatformTestCase {
 
   private LocalChangesUnderRoots myLocalChangesUnderRoots;
   private MockChangeListManager myChangeListManager;
@@ -44,7 +31,7 @@ public class LocalChangesUnderRootsTest extends PlatformTestCase {
     super.setUp();
 
     myChangeListManager = new MockChangeListManager();
-    myBaseDir = myProject.getBaseDir();
+    myBaseDir = PlatformTestUtil.getOrCreateProjectTestBaseDir(myProject);
     myLocalChangesUnderRoots = new LocalChangesUnderRoots(myChangeListManager, ProjectLevelVcsManager.getInstance(myProject));
   }
 
@@ -61,7 +48,7 @@ public class LocalChangesUnderRootsTest extends PlatformTestCase {
     Change changeAfterCommunity = createChangeForPath("readme.txt");
     Change changeInCommunity = createChangeForPath("community/com.txt");
     myChangeListManager.addChanges(changeBeforeCommunity, changeAfterCommunity, changeInCommunity);
-    
+
     Map<VirtualFile, Collection<Change>> expected = new HashMap<>();
     expected.put(roots.get(0), Arrays.asList(changeBeforeCommunity, changeAfterCommunity));
     expected.put(roots.get(1), Collections.singletonList(changeInCommunity));
@@ -95,7 +82,7 @@ public class LocalChangesUnderRootsTest extends PlatformTestCase {
     for (Pair<String, String> pathAndVc : pathAndVcs) {
       String path = pathAndVc.first;
       String vcs = pathAndVc.second;
-      
+
       VirtualFile vf;
       if (path.equals(myBaseDir.getPath())) {
         vf = myBaseDir;
@@ -117,5 +104,5 @@ public class LocalChangesUnderRootsTest extends PlatformTestCase {
     ContentRevision afterRevision = new MockContentRevision(filePath, new VcsRevisionNumber.Int(2));
     return new Change(beforeRevision, afterRevision);
   }
-  
+
 }

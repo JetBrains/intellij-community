@@ -40,7 +40,7 @@
     <param name="File" value="$LOG_DIR$/idea.log"/>
     <param name="Encoding" value="UTF-8"/>
     <layout class="org.apache.log4j.PatternLayout">
-      <param name="ConversionPattern" value="%d [%10.10t] %6p - %30.30c - %m \n"/>
+      <param name="ConversionPattern" value="%d [%7r] %6p - %30.30c - %m \n"/>
     </layout>
   </appender>
 
@@ -49,7 +49,7 @@
     <param name="Encoding" value="UTF-8"/>
     <param name="append" value="false"/>
     <layout class="org.apache.log4j.PatternLayout">
-      <param name="ConversionPattern" value="%d [%10.10t] %6p - %30.30c - %m \n"/>
+      <param name="ConversionPattern" value="%d [%7r] %6p - %30.30c - %m \n"/>
     </layout>
   </appender>
 

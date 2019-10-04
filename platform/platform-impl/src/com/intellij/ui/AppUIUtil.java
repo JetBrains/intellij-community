@@ -18,7 +18,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
-import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -32,6 +31,7 @@ import com.intellij.ui.AppIcon.MacAppIcon;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
+import com.intellij.ui.scale.ScaleContextSupport;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ImageUtil;
@@ -52,7 +52,6 @@ import javax.swing.text.html.StyleSheet;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.File;
-import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -108,7 +107,7 @@ public final class AppUIUtil {
     }
 
     if (!images.isEmpty()) {
-      if (!SystemInfo.isMac) {
+      if (!SystemInfoRt.isMac) {
         window.setIconImages(images);
       }
       else if (!ourMacDocIconSet && PluginManagerCore.isRunningFromSources()) {
@@ -127,6 +126,7 @@ public final class AppUIUtil {
     return SystemInfo.isWindows && Boolean.getBoolean("ide.native.launcher") && Boolean.getBoolean("jbre.win.app.icon.supported");
   }
 
+  @SuppressWarnings("SameParameterValue")
   @NotNull
   private static Image loadSmallApplicationIconImage(@NotNull ScaleContext ctx, int size) {
     ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
@@ -136,14 +136,29 @@ public final class AppUIUtil {
 
   @NotNull
   public static Icon loadSmallApplicationIcon(@NotNull ScaleContext ctx) {
-    Image image = loadSmallApplicationIconImage(ctx, 16);
-    return new JBImageIcon(image);
+    return loadSmallApplicationIcon(ctx, 16);
   }
 
   @NotNull
   public static Icon loadSmallApplicationIcon(@NotNull ScaleContext ctx, int size) {
-    Image image = loadSmallApplicationIconImage(ctx, size);
-    return new JBImageIcon(image);
+    ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
+    String smallIconUrl = appInfo.getSmallApplicationSvgIconUrl();
+
+    Icon icon = loadApplicationIcon(smallIconUrl, ctx, size);
+    if (icon != null) return icon;
+
+    @SuppressWarnings("deprecation") String fallbackSmallIconUrl = appInfo.getSmallIconUrl();
+    Image image = ImageLoader.loadFromResource(fallbackSmallIconUrl);
+    //noinspection ConstantConditions
+    icon = new JBImageIcon(image);
+    scaleIconToSize(icon, size);
+    return icon;
+  }
+
+  @Nullable
+  public static Icon loadApplicationIcon(@NotNull ScaleContext ctx, int size) {
+    String url = ApplicationInfoImpl.getShadowInstance().getApplicationSvgIconUrl();
+    return loadApplicationIcon(url, ctx, size);
   }
 
   /**
@@ -152,15 +167,9 @@ public final class AppUIUtil {
   @Contract("_, _, _, !null -> !null")
   @Nullable
   private static Image loadApplicationIconImage(String svgPath, ScaleContext ctx, int size, String fallbackPath) {
-    if (svgPath != null) {
-      Icon icon = IconLoader.findIcon(svgPath);
-      if (icon != null) {
-        int width = icon.getIconWidth();
-        float scale = size / (float)width;
-        icon = IconUtil.scale(icon, null, scale); // performs vector scaling of a wrapped svg icon source
-        return IconUtil.toImage(icon, ctx);
-      }
-      getLogger().info("Cannot load SVG application icon from " + svgPath);
+    Icon icon = loadApplicationIcon(svgPath, ctx, size);
+    if (icon != null) {
+      return IconUtil.toImage(icon, ctx);
     }
 
     if (fallbackPath != null) {
@@ -168,6 +177,31 @@ public final class AppUIUtil {
     }
 
     return null;
+  }
+
+  @Nullable
+  private static Icon loadApplicationIcon(String svgPath, ScaleContext ctx, int size) {
+    if (svgPath == null) return null;
+
+    Icon icon = IconLoader.findIcon(svgPath);
+    if (icon == null) {
+      getLogger().info("Cannot load SVG application icon from " + svgPath);
+      return null;
+    }
+    if (icon instanceof ScaleContextSupport) {
+      ((ScaleContextSupport)icon).updateScaleContext(ctx);
+    }
+    return scaleIconToSize(icon, size);
+  }
+
+  @NotNull
+  private static Icon scaleIconToSize(Icon icon, int size) {
+    int width = icon.getIconWidth();
+    if (width == size) return icon;
+
+    float scale = size / (float)width;
+    icon = IconUtil.scale(icon, null, scale);
+    return icon;
   }
 
   public static void invokeLaterIfProjectAlive(@NotNull Project project, @NotNull Runnable runnable) {
@@ -224,30 +258,6 @@ public final class AppUIUtil {
     String wmClass = name.startsWith(VENDOR_PREFIX) ? name : VENDOR_PREFIX + name;
     if (PluginManagerCore.isRunningFromSources()) wmClass += "-debug";
     return wmClass;
-  }
-
-  private static void registerFont(@NotNull String name, @Nullable File fontDir) {
-    try {
-      Font font;
-      if (fontDir == null) {
-        URL url = AppUIUtil.class.getResource("/fonts/" + name);
-        if (url == null) {
-          getLogger().warn("Resource missing: " + name);
-          return;
-        }
-
-        try (InputStream is = url.openStream()) {
-          font = Font.createFont(Font.TRUETYPE_FONT, is);
-        }
-      }
-      else {
-        font = Font.createFont(Font.TRUETYPE_FONT, new File(fontDir, name));
-      }
-      GraphicsEnvironment.getLocalGraphicsEnvironment().registerFont(font);
-    }
-    catch (Throwable t) {
-      getLogger().warn("Cannot register font: " + name, t);
-    }
   }
 
   public static void hideToolWindowBalloon(@NotNull String id, @NotNull Project project) {
@@ -426,7 +436,7 @@ public final class AppUIUtil {
           System.exit(Main.PRIVACY_POLICY_REJECTION);
         }
         else {
-          ((ApplicationImpl)application).exit(true, true, false);
+          application.exit(true, true, false);
         }
       }
     };

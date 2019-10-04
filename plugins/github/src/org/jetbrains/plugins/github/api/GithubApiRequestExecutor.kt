@@ -69,7 +69,7 @@ sealed class GithubApiRequestExecutor {
       return createRequestBuilder(request)
         .tuner { connection ->
           request.additionalHeaders.forEach(connection::addRequestProperty)
-          connection.addRequestProperty(HttpSecurityUtil.AUTHORIZATION_HEADER_NAME, "Token $token")
+          connection.addRequestProperty(HttpSecurityUtil.AUTHORIZATION_HEADER_NAME, "${request.tokenHeaderType} $token")
         }
         .useProxy(useProxy)
         .execute(request, indicator)
@@ -234,12 +234,12 @@ sealed class GithubApiRequestExecutor {
 
     @CalledInAny
     fun create(token: String, useProxy: Boolean = true): WithTokenAuth {
-      return GithubApiRequestExecutor.WithTokenAuth(githubSettings, token, useProxy)
+      return WithTokenAuth(githubSettings, token, useProxy)
     }
 
     @CalledInAny
     internal fun create(login: String, password: CharArray, twoFactorCodeSupplier: Supplier<String?>): WithBasicAuth {
-      return GithubApiRequestExecutor.WithBasicAuth(githubSettings, login, password, twoFactorCodeSupplier)
+      return WithBasicAuth(githubSettings, login, password, twoFactorCodeSupplier)
     }
 
     companion object {
@@ -256,5 +256,9 @@ sealed class GithubApiRequestExecutor {
 
   interface AuthDataChangeListener : EventListener {
     fun authDataChanged()
+  }
+
+  enum class TokenHeaderType {
+    TOKEN, BEARER
   }
 }

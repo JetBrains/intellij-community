@@ -60,7 +60,9 @@ public class JUnit3StyleTestMethodInJUnit4ClassInspectionTest extends LightJavaI
       "import java.lang.annotation.Target;" +
       "@Retention(RetentionPolicy.RUNTIME)" +
       "@Target({ElementType.METHOD})" +
-      "public @interface Test {}"
+      "public @interface Test {}",
+      "package org.junit.platform.commons.annotation;" +
+      "public @interface Testable {}"
     };
   }
 }

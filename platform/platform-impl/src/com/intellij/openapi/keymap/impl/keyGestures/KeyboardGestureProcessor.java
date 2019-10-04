@@ -5,9 +5,8 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.keymap.impl.ActionProcessor;
 import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
 import com.intellij.openapi.keymap.impl.KeyState;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.TimerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -15,7 +14,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 
-public class KeyboardGestureProcessor {
+public final class KeyboardGestureProcessor {
   IdeKeyEventDispatcher myDispatcher;
 
   StateContext myContext = new StateContext();
@@ -29,10 +28,9 @@ public class KeyboardGestureProcessor {
 
   KeyGestureState myState = myWaitForStart;
 
+  final Timer myHoldTimer = TimerUtil.createNamedTimer("Keyboard hold", 1200, e -> { });
 
-  final Timer myHoldTimer = UIUtil.createNamedTimer("Keyboard hold", 1200, e -> { });
-
-  final Timer myDblClickTimer = UIUtil.createNamedTimer("Double click", SystemProperties.getIntProperty("actionSystem.keyGestureDblClickTime", 650), new ActionListener() {
+  final Timer myDblClickTimer = TimerUtil.createNamedTimer("Double click", SystemProperties.getIntProperty("actionSystem.keyGestureDblClickTime", 650), new ActionListener() {
     @Override
     public void actionPerformed(final ActionEvent e) {
       myState.processDblClickTimer();
@@ -47,7 +45,7 @@ public class KeyboardGestureProcessor {
   public boolean process() {
     boolean wasNotInWaitState = myState != myWaitForStart;
 
-    if (Registry.is("ide.debugMode") && wasNotInWaitState) {
+    if (Boolean.getBoolean("ide.debugMode") && wasNotInWaitState) {
       System.out.println("-- key gesture context: before process, state=" + myState);
       System.out.println(myContext);
     }
@@ -58,7 +56,7 @@ public class KeyboardGestureProcessor {
 
     boolean result = myState.process();
 
-    if (Registry.is("ide.debugMode") && (wasNotInWaitState || myState != myWaitForStart)) {
+    if (Boolean.getBoolean("ide.debugMode") && (wasNotInWaitState || myState != myWaitForStart)) {
       System.out.println("-- key gesture context: after process, state=" + myState);
       System.out.println(myContext);
     }
@@ -67,7 +65,9 @@ public class KeyboardGestureProcessor {
   }
 
   public boolean processInitState() {
-    if (!Registry.is("actionSystem.keyGestures.enabled")) return false;
+    if (!Boolean.getBoolean("actionSystem.keyGestures.enabled")) {
+      return false;
+    }
 
     myContext.focusOwner = myDispatcher.getContext().getFocusOwner();
     return process();

@@ -93,6 +93,24 @@ class VcsUserRegistryImpl internal constructor(project: Project) : Disposable, V
     }
   }
 
+  fun all(condition: (t: VcsUser) -> Boolean): Boolean {
+    return try {
+      persistentEnumerator?.iterateData(condition) ?: false
+    }
+    catch (e: IOException) {
+      LOG.warn(e)
+      rebuild()
+      false
+    }
+    catch (pce: ProcessCanceledException) {
+      throw pce
+    }
+    catch (t: Throwable) {
+      LOG.error(t)
+      false
+    }
+  }
+
   private fun rebuild() {
     if (persistentEnumerator?.isCorrupted == true) {
       _persistentEnumerator.getAndSet(null)?.let { oldEnumerator ->

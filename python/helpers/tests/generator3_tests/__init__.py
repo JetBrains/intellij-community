@@ -7,15 +7,21 @@ import unittest
 from contextlib import contextmanager
 from io import open
 
+import six
+
 from pycharm_generator_utils.constants import ENV_TEST_MODE_FLAG
 
 _test_dir = os.path.dirname(__file__)
 _test_data_root_dir = os.path.join(_test_dir, 'data')
 _override_test_data = False
 
+python3_only = unittest.skipUnless(six.PY3, 'Python 3 only test')
+python2_only = unittest.skipUnless(six.PY2, 'Python 2 only test')
+
 
 class GeneratorTestCase(unittest.TestCase):
     longMessage = True
+    maxDiff = None
 
     @classmethod
     def setUpClass(cls):

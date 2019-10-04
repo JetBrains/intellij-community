@@ -55,7 +55,7 @@ public class UnrollLoopAction extends PsiElementBaseIntentionAction {
     for (PsiStatement statement : statements) {
       if (isLoopBreak(statement)) continue;
       boolean acceptable = PsiTreeUtil.processElements(statement, e -> {
-        if (e instanceof PsiBreakStatement && ((PsiBreakStatement)e).findExitedElement() == loop) return false;
+        if (e instanceof PsiBreakStatement && ((PsiBreakStatement)e).findExitedStatement() == loop) return false;
         if (e instanceof PsiContinueStatement && ((PsiContinueStatement)e).findContinuedStatement() == loop) return false;
         return true;
       });
@@ -209,6 +209,6 @@ public class UnrollLoopAction extends PsiElementBaseIntentionAction {
     PsiIfStatement ifStatement = (PsiIfStatement)statement;
     if (ifStatement.getElseBranch() != null || ifStatement.getCondition() == null) return false;
     PsiStatement thenBranch = ControlFlowUtils.stripBraces(ifStatement.getThenBranch());
-    return thenBranch instanceof PsiBreakStatement && ((PsiBreakStatement)thenBranch).getLabelExpression() == null;
+    return thenBranch instanceof PsiBreakStatement && ((PsiBreakStatement)thenBranch).getLabelIdentifier() == null;
   }
 }

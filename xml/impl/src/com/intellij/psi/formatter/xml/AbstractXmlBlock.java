@@ -17,15 +17,14 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
-import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.xml.*;
+import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 
 
@@ -134,7 +133,18 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
   }
 
   protected boolean canWrapTagEnd(final XmlTag tag) {
-    return tag.getSubTags().length > 0;
+    return hasSubTags(tag);
+  }
+
+  static boolean hasSubTags(XmlTag tag) {
+    PsiElement child = tag.getFirstChild();
+    while (child != null) {
+      if (child instanceof XmlTag) {
+        return true;
+      }
+      child = child.getNextSibling();
+    }
+    return false;
   }
 
   protected XmlTag getTag() {
@@ -203,8 +213,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
 
   protected boolean doesNotIntersectSubTagsWith(final PsiElement tag) {
     final TextRange tagRange = tag.getTextRange();
-    final XmlTag[] subTags = getSubTags();
-    for (XmlTag subTag : subTags) {
+    for (XmlTag subTag : JBIterable.of(myNode.getPsi().getChildren()).filter(XmlTag.class)) {
       final TextRange subTagRange = subTag.getTextRange();
       if (subTagRange.getEndOffset() < tagRange.getStartOffset()) continue;
       if (subTagRange.getStartOffset() > tagRange.getEndOffset()) return true;
@@ -214,34 +223,6 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
 
     }
     return true;
-  }
-
-  private XmlTag[] getSubTags() {
-
-    if (myNode instanceof XmlTag) {
-      return ((XmlTag)myNode.getPsi()).getSubTags();
-    }
-    else if (myNode.getPsi() instanceof XmlElement) {
-      return collectSubTags((XmlElement)myNode.getPsi());
-    }
-    else {
-      return XmlTag.EMPTY;
-    }
-
-  }
-
-  private static XmlTag[] collectSubTags(final XmlElement node) {
-    final List<XmlTag> result = new ArrayList<>();
-    node.processElements(new PsiElementProcessor() {
-      @Override
-      public boolean execute(@NotNull final PsiElement element) {
-        if (element instanceof XmlTag) {
-          result.add((XmlTag)element);
-        }
-        return true;
-      }
-    }, node);
-    return result.toArray(XmlTag.EMPTY);
   }
 
   protected boolean containsTag(final PsiElement tag) {
@@ -341,7 +322,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
   }
 
   protected boolean isAttributeElementType(final IElementType elementType) {
-    return elementType == XmlElementType.XML_ATTRIBUTE;
+    return elementType instanceof IXmlAttributeElementType;
   }
 
   protected boolean isXmlTag(final ASTNode child) {

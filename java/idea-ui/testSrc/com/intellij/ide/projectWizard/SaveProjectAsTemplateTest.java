@@ -152,7 +152,7 @@ public class SaveProjectAsTemplateTest extends NewProjectWizardTestCase {
   @Override
   protected Project doCreateProject(@NotNull Path projectFile) throws Exception {
     FileUtil.ensureExists(projectFile.getParent().resolve(Project.DIRECTORY_STORE_FOLDER).toFile());
-    return createProject(projectFile.getParent().toFile(), getClass().getName() + "." + getName());
+    return createProject(projectFile.getParent());
   }
 
   @NotNull
@@ -161,7 +161,7 @@ public class SaveProjectAsTemplateTest extends NewProjectWizardTestCase {
     final Module module = super.createMainModule();
     ApplicationManager.getApplication().runWriteAction(() -> {
       ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
-      VirtualFile baseDir = module.getProject().getBaseDir();
+      VirtualFile baseDir = PlatformTestUtil.getOrCreateProjectTestBaseDir(module.getProject());
       ContentEntry entry = model.addContentEntry(baseDir);
       entry.addSourceFolder(baseDir, false);
       model.commit();

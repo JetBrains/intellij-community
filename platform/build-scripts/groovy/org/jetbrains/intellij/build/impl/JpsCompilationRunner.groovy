@@ -33,10 +33,11 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.openapi.diagnostic.CompositeLogger
 import com.intellij.openapi.diagnostic.DefaultLogger
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.Processor
 import com.intellij.util.containers.MultiMap
-import groovy.transform.CompileDynamic
+import com.intellij.util.lang.JavaVersion
 import groovy.transform.CompileStatic
 import org.apache.tools.ant.BuildException
 import org.jetbrains.annotations.NonNls
@@ -48,7 +49,6 @@ import org.jetbrains.jps.api.CmdlineRemoteProto
 import org.jetbrains.jps.api.GlobalOptions
 import org.jetbrains.jps.build.Standalone
 import org.jetbrains.jps.builders.BuildTarget
-import org.jetbrains.jps.builders.impl.BuildTargetChunk
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType
 import org.jetbrains.jps.cmdline.JpsModelLoader
 import org.jetbrains.jps.incremental.MessageHandler
@@ -63,6 +63,9 @@ import org.jetbrains.jps.model.artifact.elements.JpsPackagingElement
 import org.jetbrains.jps.model.java.JpsJavaDependenciesEnumerator
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.module.JpsModule
+
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.TimeUnit
 /**
  * @author nik
  */
@@ -152,7 +155,7 @@ class JpsCompilationRunner {
 
   private void runBuild(final Set<String> modulesSet, final boolean allModules, Collection<String> artifactNames, boolean includeTests,
                         boolean resolveProjectDependencies) {
-    if (context.options.jdkVersion < 9 && (!modulesSet.isEmpty() || allModules)) {
+    if (JavaVersion.current().feature < 9 && (!modulesSet.isEmpty() || allModules)) {
       addToolsJarToSystemClasspath(context.paths.jdkHome, context.messages)
     }
     System.setProperty(GlobalOptions.USE_DEFAULT_FILE_LOGGING_OPTION, "false")
@@ -200,7 +203,7 @@ class JpsCompilationRunner {
     String buildArtifactsMessage = !artifactsToBuild.isEmpty() ? ", ${artifactsToBuild.size()} artifacts" : ""
     String resolveDependenciesMessage = resolveProjectDependencies ? ", resolve dependencies" : ""
     context.messages.info("Build scope: ${allModules ? "all" : modulesSet.size()} modules, ${includeTests ? "including tests" : "production only"}$buildArtifactsMessage$resolveDependenciesMessage")
-    long compilationStart = System.currentTimeMillis()
+    long compilationStart = System.nanoTime()
     context.messages.block("Compilation") {
       try {
         JpsModelLoader loader = { context.projectModel }
@@ -217,7 +220,8 @@ class JpsCompilationRunner {
       context.messages.error("Compilation failed")
     }
     else if (!compilationData.statisticsReported) {
-      context.messages.reportStatisticValue("Compilation time, ms", String.valueOf(System.currentTimeMillis() - compilationStart))
+      messageHandler.printPerModuleCompilationStatistics(compilationStart)
+      context.messages.reportStatisticValue("Compilation time, ms", String.valueOf(TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - compilationStart)))
       compilationData.statisticsReported = true
     }
   }
@@ -241,6 +245,8 @@ class JpsCompilationRunner {
 
   private class AntMessageHandler implements MessageHandler {
     private MultiMap<String, String> errorMessagesByCompiler = MultiMap.createLinked()
+    private Map<String, Long> compilationStartTimeForTarget = new ConcurrentHashMap<>()
+    private Map<String, Long> compilationFinishTimeForTarget = new ConcurrentHashMap<>()
     private float progress = -1.0
 
     @Override
@@ -289,29 +295,44 @@ class JpsCompilationRunner {
         case BuildMessage.Kind.PROGRESS:
           if (msg instanceof ProgressMessage) {
             progress = ((ProgressMessage)msg).done
-            def currentTargets = getCurrentTargets(msg)
+            def currentTargets = msg.currentTargets
             if (currentTargets != null) {
               Collection<? extends BuildTarget<?>> buildTargets = currentTargets.targets as Collection
               reportProgress(buildTargets, msg.messageText)
             }
           }
-          else if (msg instanceof BuildingTargetProgressMessage && ((BuildingTargetProgressMessage)msg).eventType == BuildingTargetProgressMessage.Event.STARTED) {
+          else if (msg instanceof BuildingTargetProgressMessage) {
             def targets = ((BuildingTargetProgressMessage)msg).targets
-            reportProgress(targets, "")
+            def target = targets.first()
+            def targetId = "$target.id${targets.size() > 1 ? " and ${targets.size()} more" : ""} ($target.targetType.typeId)".toString()
+            if (((BuildingTargetProgressMessage)msg).eventType == BuildingTargetProgressMessage.Event.STARTED) {
+              reportProgress(targets, "")
+              compilationStartTimeForTarget.put(targetId, System.nanoTime())
+            }
+            else {
+              compilationFinishTimeForTarget.put(targetId, System.nanoTime())
+            }
           }
           break
       }
     }
 
-    @CompileDynamic
-    private BuildTargetChunk getCurrentTargets(ProgressMessage msg) {
-      try {
-        msg.currentTargets
+    void printPerModuleCompilationStatistics(long compilationStart) {
+      if (compilationStartTimeForTarget.isEmpty()) return
+      new File(context.paths.buildOutputRoot, "log/compilation-time.csv").withWriter { out ->
+        compilationFinishTimeForTarget.each {
+          def startTime = compilationStartTimeForTarget[it.key] - compilationStart
+          def finishTime = it.value - compilationStart
+          out.println("$it.key,$startTime,$finishTime")
+        }
       }
-      catch (MissingPropertyException ignored) {
-        //todo[nik] remove this after we update bootstrap JPS version
-        null
-      }
+      def buildMessages = context.messages
+      buildMessages.info("Compilation time per target:")
+      def compilationTimeForTarget = compilationFinishTimeForTarget.collect {new Pair<String, Long>(it.key, (it.value - compilationStartTimeForTarget[it.key]) as long)}
+      buildMessages.info(" average: ${String.format("%.2f",((compilationTimeForTarget.collect {it.second}.sum() as double) / compilationTimeForTarget.size()) / 1000000)}ms")
+      def topTargets = compilationTimeForTarget.toSorted { it.second }.reverse().take(10)
+      buildMessages.info(" top ${topTargets.size()} targets by compilation time:")
+      topTargets.each { entry -> buildMessages.info("  $entry.first: ${TimeUnit.NANOSECONDS.toMillis(entry.second)}ms") }
     }
 
     private void reportProgress(Collection<? extends BuildTarget<?>> targets, String targetSpecificMessage) {

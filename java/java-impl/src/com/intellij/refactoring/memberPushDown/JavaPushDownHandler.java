@@ -47,7 +47,7 @@ public class JavaPushDownHandler implements RefactoringActionHandler, ElementsHa
 
   @Override
   public boolean isAvailableForQuickList(@NotNull Editor editor, @NotNull PsiFile file, @NotNull DataContext dataContext) {
-    return !getElements(editor, file, Ref.create()).isEmpty();
+    return !getElements(editor, file, Ref.create(), true).isEmpty();
   }
 
   @Override
@@ -55,7 +55,7 @@ public class JavaPushDownHandler implements RefactoringActionHandler, ElementsHa
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
 
     Ref<String> errorMessage = Ref.create();
-    List<PsiElement> elements = getElements(editor, file, errorMessage);
+    List<PsiElement> elements = getElements(editor, file, errorMessage, false);
     if (elements.isEmpty()) {
       String message =
         !errorMessage.isNull() ? errorMessage.get() : RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("the.caret.should.be.positioned.inside.a.class.to.push.members.from"));
@@ -67,12 +67,12 @@ public class JavaPushDownHandler implements RefactoringActionHandler, ElementsHa
   }
 
   @NotNull
-  private static List<PsiElement> getElements(Editor editor, PsiFile file, Ref<? super String> errorMessage) {
+  private static List<PsiElement> getElements(Editor editor, PsiFile file, Ref<? super String> errorMessage, boolean stopAtCodeBlock) {
     List<PsiElement> elements = new ArrayList<>();
     for (Caret caret : editor.getCaretModel().getAllCarets()) {
       int offset = caret.getOffset();
       PsiElement element = file.findElementAt(offset);
-      String errorFromElement = collectElementsUnderCaret(element, elements);
+      String errorFromElement = collectElementsUnderCaret(element, elements, stopAtCodeBlock);
       if (errorFromElement != null) {
         errorMessage.set(errorFromElement);
       }
@@ -80,10 +80,13 @@ public class JavaPushDownHandler implements RefactoringActionHandler, ElementsHa
     return elements;
   }
 
-  private static String collectElementsUnderCaret(PsiElement element, List<? super PsiElement> elements) {
+  private static String collectElementsUnderCaret(PsiElement element, List<? super PsiElement> elements, boolean stopAtCodeBlock) {
     while (true) {
       if (element == null || element instanceof PsiFile) {
         return RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("the.caret.should.be.positioned.inside.a.class.to.push.members.from"));
+      }
+      if (stopAtCodeBlock && element instanceof PsiCodeBlock) {
+        return null;
       }
 
       if (element instanceof PsiClass && ((PsiClass)element).getQualifiedName() != null || element instanceof PsiField || element instanceof PsiMethod) {

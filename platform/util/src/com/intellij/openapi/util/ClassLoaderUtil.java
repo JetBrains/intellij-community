@@ -55,6 +55,12 @@ public class ClassLoaderUtil {
     return computeWithClassLoader(classLoader, () -> computable.compute());
   }
 
+  /** @deprecated Use {@link ClassLoaderUtil#computeWithClassLoader(ClassLoader, ThrowableComputable)} instead. */
+  @Deprecated
+  public static <T, E extends Throwable> T runWithClassLoader(ClassLoader classLoader, ThrowableComputable<T, E> computable) throws E {
+    return computeWithClassLoader(classLoader, computable);
+  }
+
   @Nullable
   public static ClassLoader getPlatformLoaderParentIfOnJdk9() {
     if (SystemInfo.IS_AT_LEAST_JAVA9) {

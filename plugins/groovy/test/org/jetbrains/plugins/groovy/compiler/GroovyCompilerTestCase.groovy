@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.compiler
 
+import com.intellij.compiler.CompilerConfiguration
 import com.intellij.compiler.server.BuildManager
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.Executor
@@ -66,6 +67,7 @@ abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestCase imp
     super.setUp()
     edt { ModuleGroupTestsKt.renameModule(module, "mainModule") }
     myCompilerTester = new CompilerTester(module)
+    CompilerConfiguration.getInstance(project).buildProcessVMOptions = "-XX:TieredStopAtLevel=1" // for faster build process startup
   }
 
   @Override

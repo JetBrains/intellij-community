@@ -22,7 +22,7 @@
             </constraints>
             <properties>
               <labelFor value="ff158"/>
-              <text value="Name:"/>
+              <text value="&amp;Name:"/>
             </properties>
           </component>
           <component id="ff158" class="com.intellij.ui.components.JBTextField" binding="myNameField">
@@ -74,7 +74,7 @@
               </grid>
             </constraints>
             <properties>
-              <focusable value="false"/>
+              <focusable value="true"/>
               <selected value="true"/>
               <text value="&amp;Clear current context"/>
             </properties>

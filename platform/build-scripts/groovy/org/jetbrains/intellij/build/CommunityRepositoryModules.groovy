@@ -190,7 +190,7 @@ class CommunityRepositoryModules {
     },
     plugin("intellij.testng") {
       mainJarName = "testng-plugin.jar"
-      withModule("intellij.testng.rt", mainJarName)
+      withModule("intellij.testng.rt", "testng-rt.jar")
       withProjectLibrary("TestNG")
     },
     plugin("intellij.devkit") {
@@ -211,7 +211,7 @@ class CommunityRepositoryModules {
       withModule("intellij.cucumber.jvmFormatter")
       withModule("intellij.cucumber.jvmFormatter3")
       withModule("intellij.cucumber.jvmFormatter4")
-      withProjectLibrary("cucumber-core")
+      withModuleLibrary("cucumber-core", "intellij.cucumber.java", "")
       doNotCreateSeparateJarForLocalizableResources()
     },
     plugin("intellij.cucumber.groovy") {
@@ -234,7 +234,6 @@ class CommunityRepositoryModules {
     },
     plugin("intellij.textmate") {
       withResource("lib/bundles", "lib/bundles")
-      withResource("lib/themes", "lib/themes")
     },
     PythonCommunityPluginModules.pythonCommunityPluginLayout(),
     // required for android plugin
@@ -266,7 +265,6 @@ class CommunityRepositoryModules {
       withModule("intellij.android.artwork")
       withModule("intellij.android.observable", "android.jar")
       withModule("intellij.android.observable.ui", "android.jar")
-      withModule("android.sdktools.flags", "android.jar")
       withModule("intellij.android.designer", "android.jar")
       withModule("intellij.android.sdkUpdates", "android.jar")
       withModule("intellij.android.wizard", "android.jar")
@@ -285,9 +283,6 @@ class CommunityRepositoryModules {
       withModule("intellij.android.adt.ui", "adt-ui.jar")
       withModule("intellij.android.adt.ui.model", "adt-ui.jar")
       withModule("intellij.android.layoutlib", "layoutlib-loader.jar")
-
-      withModule("android.sdktools.instant-run-client", "sdk-tools.jar")
-      withModule("android.sdktools.instant-run-common", "sdk-tools.jar")
 
       withModule("intellij.android.jps", "jps/android-jps-plugin.jar", null)
 

@@ -112,6 +112,8 @@ class JavaPsiTest extends LightJavaCodeInsightFixtureTestCase {
                                   
                                   
                               \"""; 
+          String escapes = \"""
+                           \\n\\t\\"\\'\\\\\""";
         }""".stripIndent())
     def values = file.classes[0].fields.collect { ((it as PsiField).initializer as PsiLiteralExpression).value }
     assert values[0] == null
@@ -124,6 +126,7 @@ class JavaPsiTest extends LightJavaCodeInsightFixtureTestCase {
     assert values[7] == "<p>\n\thello\n</p>"
     assert values[8] == ""
     assert values[9] == "test\n\n\n"
+    assert values[10] == "\n\t\"\'\\"
   }
 
   void "test IdempotenceChecker understands type equivalence"() {

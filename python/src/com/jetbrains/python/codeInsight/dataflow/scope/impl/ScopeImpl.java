@@ -136,7 +136,9 @@ public class ScopeImpl implements Scope {
     if (myNamedElements == null || myImportedNameDefiners == null) {
       collectDeclarations();
     }
-    if (isNonlocal(name) || isGlobal(name)) {
+    // Check for isGlobal is omitted intentionally, since it visits nested scopes.
+    // Thus, containsDeclaration would always return false for globals.
+    if (isNonlocal(name)) {
       return false;
     }
     if (!getNamedElements(name, true).isEmpty()) {

@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.arrangement.match.*;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementCompositeMatchCondition;
@@ -31,6 +32,20 @@ public class ArrangementUtil {
 
   private ArrangementUtil() {
   }
+
+  @Nullable
+  public static ArrangementSettings getArrangementSettings(@NotNull CodeStyleSettings settings, @NotNull Language language) {
+    ArrangementSettings arrangementSettings = settings.getCommonSettings(language).getArrangementSettings();
+    if (arrangementSettings != null) {
+      return arrangementSettings;
+    }
+    Rearranger<?> rearranger = Rearranger.EXTENSION.forLanguage(language);
+    if (rearranger instanceof ArrangementStandardSettingsAware) {
+      return ((ArrangementStandardSettingsAware)rearranger).getDefaultSettings();
+    }
+    return null;
+  }
+
 
   //region Serialization
 

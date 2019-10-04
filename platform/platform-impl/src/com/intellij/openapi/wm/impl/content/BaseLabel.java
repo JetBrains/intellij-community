@@ -39,6 +39,7 @@ public class BaseLabel extends JLabel {
         repaint();
       }
     });
+    GraphicsUtil.setAntialiasingType(this, AntialiasingType.getAAHintForSwingComponent());
   }
 
   @Override
@@ -74,7 +75,6 @@ public class BaseLabel extends JLabel {
   protected void paintComponent(final Graphics g) {
     final Color fore = myUi.myWindow.isActive() ? myActiveFg : myPassiveFg;
     setForeground(fore);
-    GraphicsUtil.setAntialiasingType(this, AntialiasingType.getAAHintForSwingComponent());
     super.paintComponent(_getGraphics((Graphics2D)g));
 
     if (isFocusOwner()) {

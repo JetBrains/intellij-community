@@ -83,7 +83,7 @@ public class IconUtil {
     final int w = Math.min(imageWidth, maxWidth);
     final int h = Math.min(imageHeight, maxHeight);
 
-    final BufferedImage img = UIUtil.createImage(g, w, h, Transparency.TRANSLUCENT);
+    final BufferedImage img = ImageUtil.createImage(g, w, h, Transparency.TRANSLUCENT);
     final int offX = imageWidth > maxWidth ? (imageWidth - maxWidth) / 2 : 0;
     final int offY = imageHeight > maxHeight ? (imageHeight - maxHeight) / 2 : 0;
     for (int col = 0; col < w; col++) {
@@ -572,8 +572,7 @@ public class IconUtil {
 
   @NotNull
   public static Icon colorize(@NotNull Icon source, @NotNull Color color, boolean keepGray) {
-    Icon icon = filterIcon(source, () -> new ColorFilter(color, keepGray), null);
-    return icon != null ? icon : getEmptyIcon(true);
+    return filterIcon(source, () -> new ColorFilter(color, keepGray), null);
   }
 
   @NotNull
@@ -581,30 +580,30 @@ public class IconUtil {
     return filterIcon(g, source, new ColorFilter(color, keepGray));
   }
 
-  @Nullable
+  @NotNull
   public static Icon desaturate(@NotNull Icon source) {
     return filterIcon(source, () -> new DesaturationFilter(), null);
   }
 
-  @Nullable
+  @NotNull
   public static Icon brighter(@NotNull Icon source, int tones) {
     return filterIcon(source, () -> new BrighterFilter(tones), null);
   }
 
-  @Nullable
+  @NotNull
   public static Icon darker(@NotNull Icon source, int tones) {
     return filterIcon(source, () -> new DarkerFilter(tones), null);
   }
 
   @NotNull
   private static Icon filterIcon(Graphics2D g, @NotNull Icon source, @NotNull ColorFilter filter) {
-    BufferedImage src = g != null ? UIUtil.createImage(g, source.getIconWidth(), source.getIconHeight(), BufferedImage.TYPE_INT_ARGB) :
-                                    UIUtil.createImage(source.getIconWidth(), source.getIconHeight(), BufferedImage.TYPE_INT_ARGB);
+    BufferedImage src = g != null ? ImageUtil.createImage(g, source.getIconWidth(), source.getIconHeight(), BufferedImage.TYPE_INT_ARGB) :
+                        ImageUtil.createImage(source.getIconWidth(), source.getIconHeight(), BufferedImage.TYPE_INT_ARGB);
     Graphics2D g2d = src.createGraphics();
     source.paintIcon(null, g2d, 0, 0);
     g2d.dispose();
-    BufferedImage img = g != null ? UIUtil.createImage(g, source.getIconWidth(), source.getIconHeight(), BufferedImage.TYPE_INT_ARGB) :
-                                    UIUtil.createImage(source.getIconWidth(), source.getIconHeight(), BufferedImage.TYPE_INT_ARGB);
+    BufferedImage img = g != null ? ImageUtil.createImage(g, source.getIconWidth(), source.getIconHeight(), BufferedImage.TYPE_INT_ARGB) :
+                        ImageUtil.createImage(source.getIconWidth(), source.getIconHeight(), BufferedImage.TYPE_INT_ARGB);
     int rgba;
     for (int y = 0; y < src.getRaster().getHeight(); y++) {
       for (int x = 0; x < src.getRaster().getWidth(); x++) {
@@ -781,7 +780,7 @@ public class IconUtil {
   /**
    * Creates new icon with the filter applied.
    */
-  @Nullable
+  @NotNull
   public static Icon filterIcon(@NotNull Icon icon, Supplier<? extends RGBImageFilter> filterSupplier, @Nullable Component ancestor) {
     return IconLoader.filterIcon(icon, filterSupplier, ancestor);
   }
@@ -818,12 +817,4 @@ public class IconUtil {
     return icon;
   }
 
-  /**
-   * Returns {@link ScaleContextSupport} which best represents this icon taking into account its compound structure,
-   * or null when not applicable.
-   */
-  @Nullable
-  public static ScaleContextSupport getScaleContextSupport(@Nullable Icon icon) {
-    return IconLoader.getScaleContextSupport(icon);
-  }
 }

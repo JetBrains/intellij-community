@@ -22,19 +22,14 @@ public abstract class SmartExtensionPoint<Extension, V> {
   protected SmartExtensionPoint(@NotNull final Collection<V> explicitExtensions) {
     myExplicitExtensions = explicitExtensions;
 
-    myExtensionPointAndAreaListener = new ExtensionPointAndAreaListener<Extension>() {
+    myExtensionPointAndAreaListener = new ExtensionPointAdapter<Extension>() {
       @Override
       public void areaReplaced(@NotNull ExtensionsArea oldArea) {
         dropCache();
       }
 
       @Override
-      public final void extensionRemoved(@NotNull final Extension extension, @Nullable final PluginDescriptor pluginDescriptor) {
-        dropCache();
-      }
-
-      @Override
-      public final void extensionAdded(@NotNull final Extension extension, @Nullable final PluginDescriptor pluginDescriptor) {
+      public void extensionListChanged() {
         dropCache();
       }
 

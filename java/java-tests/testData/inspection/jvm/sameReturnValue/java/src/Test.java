@@ -16,5 +16,6 @@ class Test {
   public static void main(String[] args) {
     System.out.println(new Test().xxx());
     new Test().test();
+    java.util.functionSupplier<String> s = () -> "test";
   }
 }

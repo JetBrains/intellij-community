@@ -552,6 +552,10 @@ public class JavaCompletionUtil {
       return JavaConstructorCallElement.wrap(classItem, reference.getElement());
     }
     if (completion instanceof PsiMethod) {
+      if (reference instanceof PsiMethodReferenceExpression) {
+        return Collections.singleton(new JavaMethodReferenceElement((PsiMethod)completion, (PsiMethodReferenceExpression)reference));
+      }
+
       JavaMethodCallElement item = new JavaMethodCallElement((PsiMethod)completion).setQualifierSubstitutor(substitutor);
       item.setForcedQualifier(completionElement.getQualifierText());
       return Collections.singletonList(item);
@@ -876,7 +880,7 @@ public class JavaCompletionUtil {
   }
 
   public static boolean isSourceLevelAccessible(PsiElement context, PsiClass psiClass, final boolean pkgContext) {
-    if (!JavaPsiFacade.getInstance(psiClass.getProject()).getResolveHelper().isAccessible(psiClass, context, null)) {
+    if (!JavaPsiFacade.getInstance(psiClass.getProject()).getResolveHelper().isAccessible(psiClass, context, psiClass.getContainingClass())) {
       return false;
     }
 

@@ -143,13 +143,18 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
     }
 
     private void setCoreAutoCrlfAttribute(@NotNull VirtualFile aRoot) {
-      try {
-        GitConfigUtil.setValue(myProject, aRoot, GitConfigUtil.CORE_AUTOCRLF, GitCrlfUtil.RECOMMENDED_VALUE, "--global");
-      }
-      catch (VcsException e) {
-        // it is not critical: the user just will get the dialog again next time
-        LOG.warn("Couldn't globally set core.autocrlf in " + aRoot, e);
-      }
+      ProgressManager.getInstance().run(new Task.Modal(myProject, "Updating Git Config...", true) {
+        @Override
+        public void run(@NotNull ProgressIndicator pi) {
+          try {
+            GitConfigUtil.setValue(myProject, aRoot, GitConfigUtil.CORE_AUTOCRLF, GitCrlfUtil.RECOMMENDED_VALUE, "--global");
+          }
+          catch (VcsException e) {
+            // it is not critical: the user just will get the dialog again next time
+            LOG.warn("Couldn't globally set core.autocrlf in " + aRoot, e);
+          }
+        }
+      });
     }
 
     private ReturnResult checkGitVersionAndEnv() {
@@ -366,7 +371,7 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
         VcsRoot vcsRoot = vcsManager.getVcsRootObjectFor(path);
         if (vcsRoot != null) {
           VirtualFile root = vcsRoot.getPath();
-          if (git.equals(vcsRoot.getVcs()) && root != null) {
+          if (git.equals(vcsRoot.getVcs())) {
             result.add(root);
           }
         }

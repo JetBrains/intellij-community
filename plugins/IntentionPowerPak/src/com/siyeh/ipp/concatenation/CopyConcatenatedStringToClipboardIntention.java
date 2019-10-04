@@ -60,7 +60,7 @@ public class CopyConcatenatedStringToClipboardIntention extends Intention {
 
   public static String buildConcatenationText(PsiPolyadicExpression polyadicExpression) {
     StringBuilder out = new StringBuilder();
-    for (PsiElement element : polyadicExpression.getChildren()) {
+    for(PsiElement element = polyadicExpression.getFirstChild(); element != null; element = element.getNextSibling()) {
       if (element instanceof PsiExpression) {
         final PsiExpression expression = (PsiExpression)element;
         final Object value = ExpressionUtils.computeConstantExpression(expression);

@@ -1,4 +1,4 @@
-def <U0 extends C<T0>, T0> void foo(C<U0> a, U0 b) {
+def <T extends C<U>, U> void foo(C<T> a, T b) {
   a.consume(b)
   b.consume(a.produce().produce())
 }

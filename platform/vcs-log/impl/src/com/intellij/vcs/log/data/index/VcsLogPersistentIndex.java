@@ -224,7 +224,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
     }
     return false;
   }
-  
+
   @Override
   public synchronized boolean isIndexed(@NotNull VirtualFile root) {
     return isIndexingEnabled(root) &&
@@ -390,7 +390,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
     @NotNull private final HeavyAwareExecutor myHeavyAwareExecutor;
 
     MySingleTaskController(@NotNull Project project, @NotNull Disposable parent) {
-      super(project, "index", EmptyConsumer.getInstance(), parent);
+      super("index", EmptyConsumer.getInstance(), parent);
       myHeavyAwareExecutor = new HeavyAwareExecutor(project, 50, 100, VcsLogPersistentIndex.this);
     }
 
@@ -476,7 +476,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
 
       myStartTime = getCurrentTimeMillis();
 
-      LOG.debug("Indexing " + (myFull ? "full repository" : myCommits.size() + " commits") + " in " + myRoot.getName());
+      LOG.info("Indexing " + (myFull ? "full repository" : myCommits.size() + " commits") + " in " + myRoot.getName());
 
       try {
         try {
@@ -527,19 +527,19 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
     private void report() {
       String formattedTime = StopWatch.formatTime(getCurrentTimeMillis() - myStartTime);
       if (myFull) {
-        LOG.debug(formattedTime +
-                  " for indexing " +
-                  myNewIndexedCommits + " commits in " + myRoot.getName());
+        LOG.info(formattedTime +
+                 " for indexing " +
+                 myNewIndexedCommits + " commits in " + myRoot.getName());
       }
       else {
         int leftCommits = myCommits.size() - myNewIndexedCommits.get() - myOldCommits.get();
         String leftCommitsMessage = (leftCommits > 0) ? ". " + leftCommits + " commits left" : "";
 
-        LOG.debug(formattedTime +
-                  " for indexing " +
-                  myNewIndexedCommits +
-                  " new commits out of " +
-                  myCommits.size() + " in " + myRoot.getName() + leftCommitsMessage);
+        LOG.info(formattedTime +
+                 " for indexing " +
+                 myNewIndexedCommits +
+                 " new commits out of " +
+                 myCommits.size() + " in " + myRoot.getName() + leftCommitsMessage);
       }
     }
 

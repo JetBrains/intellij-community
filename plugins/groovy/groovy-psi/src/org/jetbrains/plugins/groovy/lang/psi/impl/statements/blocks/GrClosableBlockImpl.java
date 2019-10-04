@@ -58,14 +58,6 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
   }
 
   @Override
-  public boolean processClosureDeclarations(@NotNull final PsiScopeProcessor plainProcessor,
-                                            @NotNull final ResolveState state,
-                                            @Nullable final PsiElement lastParent,
-                                            @NotNull final PsiElement place) {
-    return processDeclarationsWithCallsite(this, plainProcessor, state, lastParent, place);
-  }
-
-  @Override
   public boolean processDeclarations(@NotNull final PsiScopeProcessor processor,
                                      @NotNull final ResolveState state,
                                      @Nullable final PsiElement lastParent,

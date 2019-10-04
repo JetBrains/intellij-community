@@ -47,6 +47,7 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
 import one.util.streamex.StreamEx;
@@ -379,7 +380,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
   public JPanel createTopLeftPanel() {
     myTextFieldTitle = new JLabel(IdeBundle.message("run.anything.run.anything.title"));
     JPanel topPanel = new NonOpaquePanel(new BorderLayout());
-    Color foregroundColor = UIUtil.isUnderDarcula()
+    Color foregroundColor = StartupUiUtil.isUnderDarcula()
                             ? UIUtil.isUnderWin10LookAndFeel() ? JBColor.WHITE : new JBColor(Gray._240, Gray._200)
                             : UIUtil.getLabelForeground();
 
@@ -542,7 +543,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
 
       if (cmp == null) {
         if (value instanceof RunAnythingItem) {
-          cmp = ((RunAnythingItem)value).createComponent(myLastInputText, findIcon(index), isSelected, hasFocus);
+          cmp = ((RunAnythingItem)value).createComponent(myLastInputText, isSelected, hasFocus);
         }
         else {
           cmp = super.getListCellRendererComponent(list, value, index, isSelected, isSelected);
@@ -569,7 +570,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
       if (model != null) {
         String title = model.getTitle(index);
         if (title != null) {
-          myMainPanel.add(RunAnythingUtil.createTitle(" " + title), BorderLayout.NORTH);
+          myMainPanel.add(RunAnythingUtil.createTitle(" " + title, UIUtil.getListBackground(false, false)), BorderLayout.NORTH);
         }
       }
       JPanel wrapped = new JPanel(new BorderLayout());
@@ -583,19 +584,6 @@ public class RunAnythingPopupUI extends BigPopupUI {
       }
 
       return myMainPanel;
-    }
-
-    @Nullable
-    private Icon findIcon(int index) {
-      RunAnythingSearchListModel model = getSearchingModel(myResultsList);
-      Icon groupIcon = null;
-      if (model != null) {
-        RunAnythingGroup group = model.findItemGroup(index);
-        if (group != null) {
-          groupIcon = group.getIcon();
-        }
-      }
-      return groupIcon;
     }
 
     @Override

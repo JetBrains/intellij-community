@@ -16,9 +16,6 @@
               "edge": {
                 "version_added": null
               },
-              "edge_mobile": {
-                "version_added": null
-              },
               "firefox": {
                 "version_added": "1",
                 "notes": "Unlike other browsers, Firefox by default <a href='http://stackoverflow.com/questions/5985839/bug-with-firefox-disabled-attribute-of-input-not-resetting-when-refreshing'>persists the dynamic disabled state</a> of a <code>&ltbutton&gt</code> across page loads. Use the <code><a href='https://developer.mozilla.org/docs/Web/HTML/Element/button#attr-autocomplete'>autocomplete</a></code> attribute to control this feature."

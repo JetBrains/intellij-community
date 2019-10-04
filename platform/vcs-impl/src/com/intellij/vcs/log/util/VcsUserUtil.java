@@ -18,6 +18,7 @@ package com.intellij.vcs.log.util;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.vcs.log.VcsUser;
+import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -106,5 +107,17 @@ public class VcsUserUtil {
   @NotNull
   public static String emailToLowerCase(@NotNull String email) {
     return StringUtil.toLowerCase(email);
+  }
+
+  public static class VcsUserHashingStrategy implements TObjectHashingStrategy<VcsUser> {
+    @Override
+    public int computeHashCode(VcsUser user) {
+      return getNameInStandardForm(getName(user)).hashCode();
+    }
+
+    @Override
+    public boolean equals(VcsUser user1, VcsUser user2) {
+      return isSamePerson(user1, user2);
+    }
   }
 }

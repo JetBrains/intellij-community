@@ -26,7 +26,6 @@ public interface OverrideImplementsAnnotationsHandler {
    * Returns annotations which should be copied from a source to an implementation (by default, no annotations are copied).
    */
   default String[] getAnnotations(@NotNull PsiFile file) {
-    //noinspection deprecation
     return getAnnotations(file.getProject());
   }
 
@@ -36,6 +35,9 @@ public interface OverrideImplementsAnnotationsHandler {
   @Deprecated
   String[] getAnnotations(Project project);
 
+  /**
+   * @deprecated Use {@link #getAnnotations(PsiFile)}
+   */
   @Deprecated
   @NotNull
   default String[] annotationsToRemove(Project project, @NotNull String fqName) {

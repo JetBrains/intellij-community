@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.LogUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
+import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
@@ -13,7 +14,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.RecentStringInterner;
 import com.intellij.util.io.AbstractStringEnumerator;
 import com.intellij.util.io.DataInputOutputUtil;
-import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.PersistentStringEnumerator;
 import gnu.trove.*;
 import org.jetbrains.annotations.NotNull;
@@ -62,7 +62,7 @@ class StubSerializationHelper {
     if (myUnmodifiable) {
       id = myNameStorage.tryEnumerate(name);
       if (id == 0) {
-        LOG.info("serialized " + name + " is ignored in unmodifiable stub serialization manager");
+        LOG.debug("serialized " + name + " is ignored in unmodifiable stub serialization manager");
         return;
       }
     }
@@ -158,7 +158,7 @@ class StubSerializationHelper {
     FileLocalStringEnumerator storage = new FileLocalStringEnumerator(false);
     StubInputStream inputStream = new StubInputStream(stream, storage);
     IntEnumerator serializerLocalEnumerator = IntEnumerator.read(inputStream);
-    readEnumeratedStrings(storage, inputStream);
+    FileLocalStringEnumerator.readEnumeratedStrings(storage, inputStream, this::intern);
 
     final int stubFilesCount = DataInputOutputUtil.readINT(inputStream);
     if (stubFilesCount <= 0) {
@@ -308,34 +308,6 @@ class StubSerializationHelper {
     return tempBuffer.size() == 0 ? ArrayUtilRt.EMPTY_BYTE_ARRAY : tempBuffer.toByteArray();
   }
 
-  private static class ByteArrayInterner {
-    private static final TObjectHashingStrategy<byte[]> BYTE_ARRAY_STRATEGY = new TObjectHashingStrategy<byte[]>() {
-      @Override
-      public int computeHashCode(byte[] object) {
-        return Arrays.hashCode(object);
-      }
-
-      @Override
-      public boolean equals(byte[] o1, byte[] o2) {
-        return Arrays.equals(o1, o2);
-      }
-    };
-    private final TObjectIntHashMap<byte[]> arrayToStart = new TObjectIntHashMap<>(BYTE_ARRAY_STRATEGY);
-    final BufferExposingByteArrayOutputStream joinedBuffer = new BufferExposingByteArrayOutputStream();
-
-    int internBytes(byte[] bytes) {
-      if (bytes.length == 0) return 0;
-
-      int start = arrayToStart.get(bytes);
-      if (start == 0) {
-        start = joinedBuffer.size() + 1; // should be positive
-        arrayToStart.put(bytes, start);
-        joinedBuffer.write(bytes, 0, bytes.length);
-      }
-      return start;
-    }
-  }
-
   private byte[] readByteArray(StubInputStream inputStream) throws IOException {
     int length = DataInputOutputUtil.readINT(inputStream);
     if (length == 0) return ArrayUtilRt.EMPTY_BYTE_ARRAY;
@@ -355,6 +327,17 @@ class StubSerializationHelper {
 
   String intern(String str) {
     return myStringInterner.get(str);
+  }
+
+  void reSerializeStub(@NotNull DataInputStream inStub,
+                       @NotNull DataOutputStream outStub,
+                       @NotNull StubSerializationHelper newSerializationHelper) throws IOException {
+    IntEnumerator currentSerializerEnumerator = IntEnumerator.read(inStub);
+    currentSerializerEnumerator.dump(outStub, id -> {
+      String name = myIdToName.get(id);
+      return name == null ? 0 : newSerializationHelper.myNameToId.get(name);
+    });
+    StreamUtil.copyStreamContent(inStub, outStub);
   }
 
   @SuppressWarnings("unchecked")
@@ -410,72 +393,6 @@ class StubSerializationHelper {
         ((ObjectStubBase) child).markDangling();
       }
       deserializeChildren(stream, child, serializerLocalEnumerator);
-    }
-  }
-
-  private void readEnumeratedStrings(FileLocalStringEnumerator enumerator, @NotNull DataInputStream stream) throws IOException {
-    final int numberOfStrings = DataInputOutputUtil.readINT(stream);
-    byte[] buffer = IOUtil.allocReadWriteUTFBuffer();
-    enumerator.myStrings.ensureCapacity(numberOfStrings);
-
-    int i = 0;
-    while(i < numberOfStrings) {
-      String s = intern(IOUtil.readUTFFast(buffer, stream));
-      enumerator.myStrings.add(s);
-      ++i;
-    }
-  }
-
-  private static class FileLocalStringEnumerator implements AbstractStringEnumerator {
-    private final TObjectIntHashMap<String> myEnumerates;
-    private final ArrayList<String> myStrings = new ArrayList<>();
-
-    FileLocalStringEnumerator(boolean forSavingStub) {
-      myEnumerates = forSavingStub ? new TObjectIntHashMap<>() : null;
-    }
-
-    @Override
-    public int enumerate(@Nullable String value) {
-      if (value == null) return 0;
-      assert myEnumerates != null; // enumerate possible only when writing stub
-      int i = myEnumerates.get(value);
-      if (i == 0) {
-        myEnumerates.put(value, i = myStrings.size() + 1);
-        myStrings.add(value);
-      }
-      return i;
-    }
-
-    @Override
-    public String valueOf(int idx) {
-      if (idx == 0) return null;
-      return myStrings.get(idx - 1);
-    }
-
-    private void write(@NotNull DataOutputStream stream) throws IOException {
-      assert myEnumerates != null;
-      DataInputOutputUtil.writeINT(stream, myStrings.size());
-      byte[] buffer = IOUtil.allocReadWriteUTFBuffer();
-      for(String s: myStrings) {
-        IOUtil.writeUTFFast(buffer, stream, s);
-      }
-    }
-
-    @Override
-    public void markCorrupted() {
-    }
-
-    @Override
-    public void close() throws IOException {
-    }
-
-    @Override
-    public boolean isDirty() {
-      return false;
-    }
-
-    @Override
-    public void force() {
     }
   }
 }

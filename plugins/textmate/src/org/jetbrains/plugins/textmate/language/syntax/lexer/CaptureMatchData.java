@@ -19,9 +19,9 @@ class CaptureMatchData {
 
   public final TextRange offset;
   public final Integer group;
-  public final String selectorName;
+  public final CharSequence selectorName;
 
-  CaptureMatchData(@NotNull final TextRange offset, @NotNull final Integer group, @NotNull final String selectorName) {
+  CaptureMatchData(@NotNull final TextRange offset, @NotNull final Integer group, @NotNull final CharSequence selectorName) {
     this.offset = offset;
     this.group = group;
     this.selectorName = selectorName;

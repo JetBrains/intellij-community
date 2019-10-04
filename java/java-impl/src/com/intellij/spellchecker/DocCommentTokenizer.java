@@ -38,7 +38,7 @@ public class DocCommentTokenizer extends Tokenizer<PsiDocComment> {
   public void tokenize(@NotNull PsiDocComment comment, TokenConsumer consumer) {
     final CommentSplitter splitter = CommentSplitter.getInstance();
 
-    for (PsiElement el : comment.getChildren()) {
+    for (PsiElement el = comment.getFirstChild(); el != null; el = el.getNextSibling()) {
       if (el instanceof PsiDocTag) {
         PsiDocTag tag = (PsiDocTag)el;
         if (!excludedTags.contains(tag.getName())) {

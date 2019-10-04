@@ -16,24 +16,34 @@
 
 package com.intellij.codeInspection.dataFlow.instructions;
 
-import com.intellij.codeInspection.dataFlow.DataFlowRunner;
-import com.intellij.codeInspection.dataFlow.DfaInstructionState;
-import com.intellij.codeInspection.dataFlow.DfaMemoryState;
-import com.intellij.codeInspection.dataFlow.InstructionVisitor;
+import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeCastExpression;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class TypeCastInstruction extends Instruction implements ExpressionPushingInstruction {
   private final PsiTypeCastExpression myCastExpression;
   private final PsiExpression myCasted;
   private final PsiType myCastTo;
+  private final @Nullable DfaControlTransferValue myTransferValue;
 
-  public TypeCastInstruction(PsiTypeCastExpression castExpression, PsiExpression casted, PsiType castTo) {
+  public TypeCastInstruction(PsiTypeCastExpression castExpression,
+                             PsiExpression casted,
+                             PsiType castTo,
+                             @Nullable DfaControlTransferValue value) {
+    assert !(castTo instanceof PsiPrimitiveType);
     myCastExpression = castExpression;
     myCasted = casted;
     myCastTo = castTo;
+    myTransferValue = value;
+  }
+
+  @Nullable
+  public DfaControlTransferValue getCastExceptionTransfer() {
+    return myTransferValue;
   }
 
   public PsiExpression getCasted() {

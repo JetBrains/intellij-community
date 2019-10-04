@@ -36,20 +36,19 @@ public class VcsLogTabsWatcher implements Disposable {
 
   @NotNull private final ToolWindowManagerEx myToolWindowManager;
   @NotNull private final MyRefreshPostponedEventsListener myPostponedEventsListener;
+  @NotNull private final MessageBusConnection myConnection;
   @Nullable private ToolWindow myToolWindow;
   private boolean myIsVisible;
-  @Nullable private MessageBusConnection myConnection;
 
   public VcsLogTabsWatcher(@NotNull Project project, @NotNull PostponableLogRefresher refresher) {
     myRefresher = refresher;
     myToolWindowManager = ToolWindowManagerEx.getInstanceEx(project);
 
     myPostponedEventsListener = new MyRefreshPostponedEventsListener();
-    ApplicationManager.getApplication().invokeLater(() -> {
-      myConnection = project.getMessageBus().connect();
-      myConnection.subscribe(ToolWindowManagerListener.TOPIC, myPostponedEventsListener);
-      installContentListener();
-    }, project.getDisposed());
+    myConnection = project.getMessageBus().connect();
+    myConnection.subscribe(ToolWindowManagerListener.TOPIC, myPostponedEventsListener);
+
+    installContentListener();
   }
 
   @Nullable
@@ -69,6 +68,7 @@ public class VcsLogTabsWatcher implements Disposable {
   }
 
   private void installContentListener() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     ToolWindow window = myToolWindowManager.getToolWindow(TOOLWINDOW_ID);
     if (window != null) {
       myToolWindow = window;
@@ -78,10 +78,7 @@ public class VcsLogTabsWatcher implements Disposable {
   }
 
   private void removeListeners() {
-    if (myConnection != null) {
-      myConnection.disconnect();
-      myConnection = null;
-    }
+    myConnection.disconnect();
 
     if (myToolWindow != null) {
       myToolWindow.getContentManager().removeContentManagerListener(myPostponedEventsListener);
@@ -94,13 +91,14 @@ public class VcsLogTabsWatcher implements Disposable {
     }
   }
 
-  public void closeLogTabs() {
-    if (myToolWindow != null) {
+  private void closeLogTabs() {
+    ToolWindow window = (myToolWindow != null) ? myToolWindow : myToolWindowManager.getToolWindow(TOOLWINDOW_ID);
+    if (window != null) {
       Collection<String> tabs = getTabs();
       for (String tabId : tabs) {
-        boolean closed = VcsLogContentUtil.closeLogTab(myToolWindow.getContentManager(), tabId);
+        boolean closed = VcsLogContentUtil.closeLogTab(window.getContentManager(), tabId);
         LOG.assertTrue(closed, "Could not find content component for tab " + tabId + "\nExisting content: " +
-                               Arrays.toString(myToolWindow.getContentManager().getContents()) + "\nTabs to close: " + tabs);
+                               Arrays.toString(window.getContentManager().getContents()) + "\nTabs to close: " + tabs);
       }
     }
   }
@@ -116,6 +114,7 @@ public class VcsLogTabsWatcher implements Disposable {
 
   @Override
   public void dispose() {
+    closeLogTabs();
     removeListeners();
   }
 

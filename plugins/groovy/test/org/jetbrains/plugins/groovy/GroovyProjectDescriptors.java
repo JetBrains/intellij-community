@@ -39,4 +39,11 @@ public interface GroovyProjectDescriptors {
       return JavaSdk.getInstance().createJdk("TEST_JDK", IdeaTestUtil.requireRealJdkHome(), false);
     }
   };
+
+  LightProjectDescriptor GROOVY_2_5_REAL_JDK = new LibraryLightProjectDescriptor(LIB_GROOVY_2_5) {
+    @Override
+    public Sdk getSdk() {
+      return JavaSdk.getInstance().createJdk("TEST_JDK", IdeaTestUtil.requireRealJdkHome(), false);
+    }
+  };
 }

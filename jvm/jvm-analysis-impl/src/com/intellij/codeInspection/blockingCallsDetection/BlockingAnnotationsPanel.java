@@ -10,10 +10,14 @@ import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.ui.*;
+import com.intellij.ui.ColoredTableCellRenderer;
+import com.intellij.ui.CommonActionsPanel;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBDimension;
@@ -75,12 +79,19 @@ class BlockingAnnotationsPanel {
                                            boolean hasFocus,
                                            int row,
                                            int column) {
-        append((String)value, SimpleTextAttributes.REGULAR_ATTRIBUTES);
-        if (value.equals(myDefaultAnnotation)) {
-          setIcon(AllIcons.Actions.Forward);
+        if (value == null) return;
+        if (!isAnnotationAccessible((String)value)) {
+          append((String)value, SimpleTextAttributes.ERROR_ATTRIBUTES);
+          setIcon(AllIcons.General.Error);
         }
         else {
-          setIcon(EmptyIcon.ICON_16);
+          append((String)value, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+          if (value.equals(myDefaultAnnotation)) {
+            setIcon(AllIcons.Actions.Forward);
+          }
+          else {
+            setIcon(EmptyIcon.ICON_16);
+          }
         }
       }
     }, null));
@@ -90,7 +101,7 @@ class BlockingAnnotationsPanel {
       @Override
       public StatusText getEmptyText() {
         StatusText emptyText = super.getEmptyText();
-        if (myCustomEmptyText != null && myCustomAddLinkText != null) {
+        if (!myProject.isDefault() && myCustomEmptyText != null && myCustomAddLinkText != null) {
           emptyText.setText(myCustomEmptyText)
             .appendSecondaryText(myCustomAddLinkText, SimpleTextAttributes.LINK_ATTRIBUTES, e -> chooseAnnotation(name));
 
@@ -102,23 +113,19 @@ class BlockingAnnotationsPanel {
       }
     };
 
-    final ToolbarDecorator toolbarDecorator = ToolbarDecorator.createDecorator(myTable)
-      .setAddAction(b -> chooseAnnotation(name))
-      .setRemoveAction(new AnActionButtonRunnable() {
-        @Override
-        public void run(AnActionButton anActionButton) {
-          String selectedValue = getSelectedAnnotation();
-          if (selectedValue == null) return;
-          if (myDefaultAnnotation.equals(selectedValue)) myDefaultAnnotation = (String)myTable.getValueAt(0, 0);
-
-          myTableModel.removeRow(myTable.getSelectedRow());
-        }
+    final ToolbarDecorator toolbarDecorator = ToolbarDecorator.createDecorator(myTable);
+    toolbarDecorator.setAddAction(actionButton -> chooseAnnotation(name))
+      .setRemoveAction(actionButton ->  {
+        String selectedValue = getSelectedAnnotation();
+        if (selectedValue == null) return;
+        if (myDefaultAnnotation.equals(selectedValue)) myDefaultAnnotation = (String)myTable.getValueAt(0, 0);
+        myTableModel.removeRow(myTable.getSelectedRow());
       })
-      .setRemoveActionUpdater(e -> !myDefaultAnnotations.contains(getSelectedAnnotation()));
+      .setRemoveActionUpdater(e -> !myProject.isDefault() && !myDefaultAnnotations.contains(getSelectedAnnotation()))
+      .setAddActionUpdater(e -> !myProject.isDefault());
 
     final JPanel panel = toolbarDecorator.createPanel();
     myComponent = new JPanel(new BorderLayout());
-
     final BorderLayoutPanel withBorder = simplePanel()
       .addToTop(simplePanel(new JLabel(name + ":")).withBorder(empty(10, 0)))
       .addToCenter(panel);
@@ -130,6 +137,10 @@ class BlockingAnnotationsPanel {
     myTable.setShowGrid(false);
 
     selectAnnotation(myDefaultAnnotation);
+  }
+
+  private boolean isAnnotationAccessible(String annotationFqn) {
+    return JavaPsiFacade.getInstance(myProject).findClass(annotationFqn, GlobalSearchScope.allScope(myProject)) != null;
   }
 
   private void addRow(String annotation) {

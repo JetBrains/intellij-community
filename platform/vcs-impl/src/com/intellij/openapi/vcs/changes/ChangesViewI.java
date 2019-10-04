@@ -27,7 +27,6 @@ public interface ChangesViewI {
   void scheduleRefresh();
   void selectFile(VirtualFile vFile);
   void selectChanges(@NotNull List<? extends Change> changes);
-  void refreshChangesViewNodeAsync(VirtualFile file);
   void updateProgressText(final String text, final boolean isError);
   void setBusy(boolean b);
 

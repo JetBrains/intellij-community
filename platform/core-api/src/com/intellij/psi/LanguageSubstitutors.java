@@ -6,6 +6,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtension;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -24,12 +25,23 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * A utility class used to query the language for PSI from {@link LanguageSubstitutor} extensions.
  */
+@Service
 public final class LanguageSubstitutors extends LanguageExtension<LanguageSubstitutor> {
-  public static final LanguageSubstitutors INSTANCE = new LanguageSubstitutors();
+  /**
+   * @deprecated Use {@link #getInstance()}
+   */
+  @Deprecated
+  public static final LanguageSubstitutors INSTANCE = getInstance();
+
   private static final Logger LOG = Logger.getInstance(LanguageSubstitutors.class);
   private static final Key<Key<Language>> PROJECT_KEY_FOR_SUBSTITUTED_LANG_KEY = Key.create("PROJECT_KEY_FOR_SUBSTITUTED_LANG_KEY");
   private static final AtomicBoolean REQUESTS_DRAIN_NEEDED = new AtomicBoolean(true);
   private static final ConcurrentMap<VirtualFile, SubstitutionInfo> ourReparsingRequests = ContainerUtil.newConcurrentMap();
+
+  @NotNull
+  public static LanguageSubstitutors getInstance() {
+    return ApplicationManager.getApplication().getService(LanguageSubstitutors.class, true);
+  }
 
   private LanguageSubstitutors() {
     super("com.intellij.lang.substitutor");

@@ -5,7 +5,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.InstalledPluginsState;
 import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.ide.ui.LafManager;
+import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
@@ -36,7 +36,7 @@ import java.util.zip.ZipFile;
 /**
  * @author Alexander Lobas
  */
-public class PluginLogo {
+public final class PluginLogo {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.plugins.newui.PluginLogo");
 
   private static final String CACHE_DIR = "imageCache";
@@ -49,9 +49,17 @@ public class PluginLogo {
   private static PluginLogoIconProvider Default;
   private static List<Pair<IdeaPluginDescriptor, LazyPluginLogoIcon>> myPrepareToLoad;
 
-  static {
-    if (!GraphicsEnvironment.isHeadless()) {
-      LafManager.getInstance().addLafManagerListener(_0 -> {
+  private static boolean lafListenerAdded;
+
+  private static void initLafListener() {
+    if (!lafListenerAdded) {
+      lafListenerAdded = true;
+
+      if (GraphicsEnvironment.isHeadless()) {
+        return;
+      }
+
+      ApplicationManager.getApplication().getMessageBus().connect().subscribe(LafManagerListener.TOPIC, source -> {
         Default = null;
         HiDPIPluginLogoIcon.clearCache();
       });
@@ -60,6 +68,7 @@ public class PluginLogo {
 
   @NotNull
   public static Icon getIcon(@NotNull IdeaPluginDescriptor descriptor, boolean big, boolean jb, boolean error, boolean disabled) {
+    initLafListener();
     return getIcon(descriptor).getIcon(big, jb, error, disabled);
   }
 

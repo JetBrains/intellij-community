@@ -106,6 +106,27 @@ print 2; <caret>print 2
 ''')
   }
 
+  void testJoinStatements3() {
+    doTest('''\
+prin<caret>t 2
+
+print 2
+''', '''\
+print 2<caret>
+print 2
+''')
+  }
+
+  void testJoinStatements4() {
+    doTest('''\
+<selection>print 2
+
+print 2</selection>
+''', '''\
+<selection>print 2; print 2</selection>
+''')
+  }
+
   void testFor() {
     doTest('''\
 for (;a<caret>;) {

@@ -34,7 +34,7 @@ public class SettingsDialogFactory {
   }
 
   @NotNull
-  public DialogWrapper create(@NotNull Project project, @NotNull List<ConfigurableGroup> groups, @Nullable Configurable configurable, @Nullable String filter) {
+  public DialogWrapper create(@NotNull Project project, @NotNull List<? extends ConfigurableGroup> groups, @Nullable Configurable configurable, @Nullable String filter) {
     return new SettingsDialog(project, groups, configurable, filter);
   }
 }

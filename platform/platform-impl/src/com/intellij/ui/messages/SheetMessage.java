@@ -4,7 +4,6 @@ package com.intellij.ui.messages;
 import com.apple.eawt.FullScreenUtilities;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.impl.LaterInvocator;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.Gray;
@@ -14,6 +13,7 @@ import com.intellij.ui.mac.touchbar.TouchBarsManager;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ui.Animator;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -25,9 +25,7 @@ import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
 /**
  * Created by Denis Fokin
  */
-class SheetMessage implements Disposable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ui.messages.SheetMessage");
-
+final class SheetMessage implements Disposable {
   private final JDialog myWindow;
   private final Window myParent;
   private final SheetController myController;
@@ -37,7 +35,7 @@ class SheetMessage implements Disposable {
   private Image staticImage;
   private int imageHeight;
 
-  SheetMessage(final Window owner,
+  SheetMessage(@Nullable Window owner,
                final String title,
                final String message,
                final Icon icon,
@@ -56,7 +54,7 @@ class SheetMessage implements Disposable {
 
     //Sometimes we cannot find the owner from the project. For instance, WelcomeScreen could be showing without a
     // project being loaded. Let's employ the focus manager then.
-    myParent = (owner == null) ? KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow() : owner;
+    myParent = owner == null ? KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow() : owner;
 
     myWindow.setUndecorated(true);
     myWindow.setBackground(Gray.TRANSPARENT);
@@ -171,8 +169,7 @@ class SheetMessage implements Disposable {
     }
   }
 
-  private static void maximizeIfNeeded(final Window owner) {
-    if (owner == null) return;
+  private static void maximizeIfNeeded(@Nullable Window owner) {
     if (owner instanceof Frame) {
       Frame f = (Frame)owner;
       if (f.getState() == Frame.ICONIFIED) {

@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.featureStatistics;
 
+import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomWhiteListRule;
@@ -183,7 +184,10 @@ public class FeatureUsageTrackerImpl extends FeatureUsageTracker implements Pers
 
       final Class<? extends ProductivityFeaturesProvider> provider = descriptor.getProvider();
       final String id = provider == null || getPluginType(provider).isDevelopedByJetBrains() ? descriptor.getId() : "third.party";
-      FUCounterUsageLogger.getInstance().logEvent("productivity", id);
+      final String group = descriptor.getGroupId();
+      final FeatureUsageData data = new FeatureUsageData().addData("id", id).
+        addData("group", StringUtil.notNullize(group, "unknown"));
+      FUCounterUsageLogger.getInstance().logEvent("productivity", "feature.used", data);
     }
   }
 
@@ -199,7 +203,7 @@ public class FeatureUsageTrackerImpl extends FeatureUsageTracker implements Pers
 
     @Override
     public boolean acceptRuleId(@Nullable String ruleId) {
-      return "productivity".equals(ruleId);
+      return "productivity".equals(ruleId) || "productivity_group".equals(ruleId);
     }
 
     @NotNull
@@ -207,18 +211,27 @@ public class FeatureUsageTrackerImpl extends FeatureUsageTracker implements Pers
     protected ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
       if (isThirdPartyValue(data)) return ValidationResultType.ACCEPTED;
 
-      final ProductivityFeaturesRegistry registry = ProductivityFeaturesRegistry.getInstance();
-      final FeatureDescriptor descriptor = registry.getFeatureDescriptor(data);
-      if (descriptor == null) {
-        return ValidationResultType.REJECTED;
+      final String id = getEventDataField(context, "id");
+      final String group = getEventDataField(context, "group");
+      if (isValid(data, id, group)) {
+        final ProductivityFeaturesRegistry registry = ProductivityFeaturesRegistry.getInstance();
+        final FeatureDescriptor descriptor = registry.getFeatureDescriptor(id);
+        if (descriptor != null) {
+          final String actualGroup = descriptor.getGroupId();
+          if (StringUtil.equals(group, "unknown") || StringUtil.equals(group, actualGroup)) {
+            final Class<? extends ProductivityFeaturesProvider> provider = descriptor.getProvider();
+            final PluginInfo info =
+              provider == null ? PluginInfoDetectorKt.getPlatformPlugin() : PluginInfoDetectorKt.getPluginInfo(provider);
+            context.setPluginInfo(info);
+            return info.isDevelopedByJetBrains() ? ValidationResultType.ACCEPTED : ValidationResultType.THIRD_PARTY;
+          }
+        }
       }
+      return ValidationResultType.REJECTED;
+    }
 
-      final Class<? extends ProductivityFeaturesProvider> provider = descriptor.getProvider();
-      final PluginInfo info = provider == null ? PluginInfoDetectorKt.getPlatformPlugin() : PluginInfoDetectorKt.getPluginInfo(provider);
-      if (StringUtil.equals(data, context.eventId)) {
-        context.setPluginInfo(info);
-      }
-      return info.isDevelopedByJetBrains() ? ValidationResultType.ACCEPTED : ValidationResultType.THIRD_PARTY;
+    private static boolean isValid(@NotNull String data, String id, String group) {
+      return id != null && group != null && (data.equals(id) || data.equals(group));
     }
   }
 }

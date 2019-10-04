@@ -237,8 +237,7 @@ public class LinePainter2D {
                                  @NotNull double[] xPoints, @NotNull double[] yPoints,
                                  int nPoints,
                                  @NotNull StrokeType strokeType, double strokeWidth,
-                                 @NotNull Object valueAA)
-  {
+                                 @NotNull Object valueAA) {
     // [tav] todo: mind strokeWidth and strokeType
     final Path2D path = new Path2D.Double(Path2D.WIND_EVEN_ODD);
     path.moveTo(xPoints[0], yPoints[0]);
@@ -266,8 +265,7 @@ public class LinePainter2D {
                                   @NotNull double[] xPoints, @NotNull double[] yPoints,
                                   int nPoints,
                                   @NotNull StrokeType strokeType, double strokeWidth,
-                                  @NotNull Object valueAA)
-  {
+                                  @NotNull Object valueAA) {
     boolean thickPixel = JreHiDpiUtil.isJreHiDPIEnabled() && PaintUtil.devValue(strokeWidth, g) > 1;
     boolean prevStraight = nPoints <= 1 || isStraightLine(xPoints, yPoints, nPoints, nPoints);
 
@@ -322,34 +320,34 @@ public class LinePainter2D {
    * @param strokeWidth the stroke width
    * @return the line with aligned coordinates and length with adjusted parity
    */
-  public static @NotNull Line2D align(@NotNull Graphics2D g,
-                                      @NotNull EnumSet<Align> align,
-                                      double x, double y, double prefLength, boolean vertical,
-                                      @NotNull StrokeType strokeType, double strokeWidth)
-  {
-      if (align.contains(Align.CENTER_X)) {
-        if (vertical) {
-          x = alignStrokeXY(g, x, strokeType, strokeWidth);
-        }
-        else {
-          double[] p = alignSizeXY(g, x, prefLength, strokeType, strokeWidth, false);
-          x = p[0];
-          prefLength = p[1];
-        }
+  @NotNull
+  public static Line2D align(@NotNull Graphics2D g,
+                             @NotNull EnumSet<Align> align,
+                             double x, double y, double prefLength, boolean vertical,
+                             @NotNull StrokeType strokeType, double strokeWidth) {
+    if (align.contains(Align.CENTER_X)) {
+      if (vertical) {
+        x = alignStrokeXY(g, x, strokeType, strokeWidth);
       }
-      if (align.contains(Align.CENTER_Y)) {
-        if (!vertical) {
-          y = alignStrokeXY(g, y, strokeType, strokeWidth);
-        }
-        else {
-          double[] p = alignSizeXY(g, y, prefLength, strokeType, strokeWidth, false);
-          y = p[0];
-          prefLength = p[1];
-        }
+      else {
+        double[] p = alignSizeXY(g, x, prefLength, strokeType, strokeWidth, false);
+        x = p[0];
+        prefLength = p[1];
       }
-      double x2 = !vertical ? x + prefLength - 1: x;
-      double y2 = vertical ? y + prefLength - 1: y;
-      return new Line2D.Double(x, y, x2, y2);
+    }
+    if (align.contains(Align.CENTER_Y)) {
+      if (!vertical) {
+        y = alignStrokeXY(g, y, strokeType, strokeWidth);
+      }
+      else {
+        double[] p = alignSizeXY(g, y, prefLength, strokeType, strokeWidth, false);
+        y = p[0];
+        prefLength = p[1];
+      }
+    }
+    double x2 = !vertical ? x + prefLength - 1 : x;
+    double y2 = vertical ? y + prefLength - 1 : y;
+    return new Line2D.Double(x, y, x2, y2);
   }
 
   /**
@@ -407,7 +405,7 @@ public class LinePainter2D {
    * Returns the x (y) coordinate of the center of the stroke.
    *
    * @param g           the graphics
-   * @param xy       the x or y coordinate
+   * @param xy          the x or y coordinate
    * @param strokeType  the stroke type
    * @param strokeWidth the stroke width
    * @return the coordinate of the center of the stroke
@@ -427,11 +425,11 @@ public class LinePainter2D {
   /**
    * Returns left (top) and right (bottom) parts of the stroke which is to be painted along the line or rectangle side.
    *
-   * @param ctx               the scale context
-   * @param strokeType        the stroke type
-   * @param strokeWidth       the stroke width
-   * @param includeLinePixel  should the line pixel (in user space) be included in the right (bottom) part of the split
-   * @return                  tw-element array with the stroke split
+   * @param ctx              the scale context
+   * @param strokeType       the stroke type
+   * @param strokeWidth      the stroke width
+   * @param includeLinePixel should the line pixel (in user space) be included in the right (bottom) part of the split
+   * @return two-element array with the stroke split
    */
   @NotNull
   static double[] getStrokeSplit(@NotNull ScaleContext ctx, @NotNull StrokeType strokeType, double strokeWidth, boolean includeLinePixel) {

@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.ChangeListAdapter
 import com.intellij.openapi.vcs.changes.ChangeListManager
@@ -97,6 +98,8 @@ class PredictionService(val project: Project,
 
   private fun setDataManager(dataManager: VcsLogData?) {
     dataManager ?: return
+    if (predictionRequirements?.dataManager == dataManager) return
+
     dataManager.addDataPackChangeListener(dataPackChangeListener)
     dataManager.index.addListener(indexingFinishedListener)
 
@@ -118,7 +121,7 @@ class PredictionService(val project: Project,
   private fun calculatePrediction() = synchronized(LOCK) {
     setPrediction(emptyList())
     val changes = changeListManager.defaultChangeList.changes
-    if (changes.size > 25) return
+    if (changes.size > Registry.intValue("vcs.changeReminder.changes.limit")) return
     val (dataManager, filesHistoryProvider) = predictionRequirements ?: return
     if (dataManager.dataPack.isFull) {
       taskController.request(PredictionRequest(project, dataManager, filesHistoryProvider, changes))
@@ -127,7 +130,9 @@ class PredictionService(val project: Project,
 
   private fun startService() = synchronized(LOCK) {
     projectLogListenerDisposable = Disposer.newDisposable()
-    projectLog.addProjectLogListener(projectLogListener, projectLogListenerDisposable)
+    project.messageBus.connect(projectLogListenerDisposable).subscribe(VcsProjectLog.VCS_PROJECT_LOG_CHANGED, projectLogListener)
+
+    setDataManager(VcsProjectLog.getInstance(project).dataManager)
 
     changeListManager.addChangeListListener(changeListsListener)
   }

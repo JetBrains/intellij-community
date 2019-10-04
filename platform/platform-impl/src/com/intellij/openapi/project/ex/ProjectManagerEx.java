@@ -2,22 +2,22 @@
 package com.intellij.openapi.project.ex;
 
 import com.intellij.configurationStore.StoreReloadManager;
+import com.intellij.conversion.CannotConvertException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Collection;
 
 public abstract class ProjectManagerEx extends ProjectManager {
   public static ProjectManagerEx getInstanceEx() {
-    return (ProjectManagerEx)ApplicationManager.getApplication().getComponent(ProjectManager.class);
+    return (ProjectManagerEx)ApplicationManager.getApplication().getService(ProjectManager.class);
   }
 
   /**
@@ -26,17 +26,14 @@ public abstract class ProjectManagerEx extends ProjectManager {
   @Nullable
   public abstract Project newProject(@Nullable String projectName, @NotNull String filePath, boolean useDefaultProjectSettings, boolean isDummy);
 
-  @TestOnly
-  @NotNull
-  public final Project newProject(@Nullable String projectName, @NotNull String filePath) {
-    return ObjectUtils.assertNotNull(newProject(projectName, filePath, false, false));
-  }
+  @Nullable
+  public abstract Project newProject(@NotNull Path file, boolean useDefaultProjectSettings);
 
   @Nullable
   public abstract Project loadProject(@NotNull String filePath) throws IOException;
 
   @Nullable
-  public abstract Project loadProject(@NotNull String filePath, @Nullable String projectName) throws IOException;
+  public abstract Project loadProject(@NotNull Path file, @Nullable String projectName) throws IOException;
 
   public abstract boolean openProject(@NotNull Project project);
 
@@ -100,12 +97,9 @@ public abstract class ProjectManagerEx extends ProjectManager {
   public abstract Project findOpenProjectByHash(@Nullable String locationHash);
 
   @Nullable
-  public abstract Project convertAndLoadProject(@NotNull VirtualFile path) throws IOException;
+  public abstract Project convertAndLoadProject(@NotNull Path path) throws IOException, CannotConvertException;
 
   @NotNull
   @ApiStatus.Internal
   public abstract String[] getAllExcludedUrls();
-  @NotNull
-  @ApiStatus.Internal
-  public abstract String[] getAllProjectUrls();
 }

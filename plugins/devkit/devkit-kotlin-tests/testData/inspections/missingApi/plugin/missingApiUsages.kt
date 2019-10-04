@@ -89,14 +89,24 @@ class A {
   }
 }
 
-class Overrider : OldClass(42) {
+open class Overrider : OldClass(42) {
   //overrides "recent" method.
   override fun <error descr="Overrides method in 'library.OldClass' that is available only since 2.0 but the module is targeted for 1.0 - 999.0. It may lead to compatibility problems with IDEs prior to 2.0. Note that the overridden method might have had a different signature in the previous IDEs.">recentMethod</error>() { }
 }
 
-class KOverrider : OldKotlinClass(42) {
+open class KOverrider : OldKotlinClass(42) {
   //overrides "recent" method.
   override fun <error descr="Overrides method in 'library.OldKotlinClass' that is available only since 2.0 but the module is targeted for 1.0 - 999.0. It may lead to compatibility problems with IDEs prior to 2.0. Note that the overridden method might have had a different signature in the previous IDEs.">recentMethod</error>() { }
+}
+
+//No warning should be produced, because the `Overrider.recentMethod` is not "recent" on its own.
+class JavaNonDirectOverrideOfRecentMethod : Overrider() {
+  override fun recentMethod() { }
+}
+
+//No warning should be produced, because the `KOverrider.recentMethod` is not "recent" on its own.
+class KotlinNonDirectOverrideOfRecentMethod : KOverrider() {
+  override fun recentMethod() { }
 }
 
 class B {

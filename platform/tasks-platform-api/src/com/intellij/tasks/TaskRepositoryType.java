@@ -32,7 +32,7 @@ import java.util.List;
  *
  * @author Dmitry Avdeev
  */
-public abstract class TaskRepositoryType<T extends TaskRepository> implements TaskRepositorySubtype {
+public abstract class TaskRepositoryType<T extends TaskRepository> implements TaskRepositorySubtype, Comparable<TaskRepositoryType> {
 
   public static final ExtensionPointName<TaskRepositoryType> EP_NAME = new ExtensionPointName<>("com.intellij.tasks.repositoryType");
 
@@ -76,5 +76,14 @@ public abstract class TaskRepositoryType<T extends TaskRepository> implements Ta
   @Deprecated
   public EnumSet<TaskState> getPossibleTaskStates() {
     return EnumSet.noneOf(TaskState.class);
+  }
+  
+  public int getSortOrder() {
+    return 0;
+  }
+
+  @Override
+  public int compareTo(@NotNull TaskRepositoryType other) {
+    return other.getSortOrder() - this.getSortOrder();
   }
 }

@@ -4,6 +4,7 @@ package com.intellij.vcs.commit
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ui.InputException
 import com.intellij.openapi.vcs.*
 import com.intellij.openapi.vcs.VcsDataKeys.COMMIT_WORKFLOW_HANDLER
@@ -11,14 +12,19 @@ import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.ChangesUtil.getFilePath
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.ui.Refreshable
+import com.intellij.openapi.vcs.ui.RefreshableOnComponent
+import com.intellij.util.containers.forEachLoggingErrors
+import com.intellij.util.containers.mapNotNullLoggingErrors
 import com.intellij.util.ui.UIUtil.replaceMnemonicAmpersand
 import com.intellij.vcs.commit.AbstractCommitWorkflow.Companion.getCommitHandlers
 import com.intellij.vcsUtil.VcsUtil.getFilePath
 
+private val LOG = logger<AbstractCommitWorkflowHandler<*, *>>()
+
 // Need to support '_' for mnemonics as it is supported in DialogWrapper internally
 private fun String.fixUnderscoreMnemonic() = replace('_', '&')
 
-internal fun getDefaultCommitActionName(vcses: Collection<AbstractVcs<*>> = emptyList()): String =
+internal fun getDefaultCommitActionName(vcses: Collection<AbstractVcs> = emptyList()): String =
   replaceMnemonicAmpersand(
     (vcses.mapNotNull { it.checkinEnvironment?.checkinOperationName }.distinct().singleOrNull()
      ?: VcsBundle.getString("commit.dialog.default.commit.operation.name")
@@ -33,7 +39,7 @@ internal fun CommitWorkflowUi.getIncludedPaths(): List<FilePath> =
 
 internal val CheckinProjectPanel.isNonModalCommit: Boolean get() = commitWorkflowHandler is ChangesViewCommitWorkflowHandler
 
-private val VCS_COMPARATOR = compareBy<AbstractVcs<*>, String>(String.CASE_INSENSITIVE_ORDER) { it.keyInstanceMethod.name }
+private val VCS_COMPARATOR = compareBy<AbstractVcs, String>(String.CASE_INSENSITIVE_ORDER) { it.keyInstanceMethod.name }
 
 abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : CommitWorkflowUi> :
   CommitWorkflowHandler,
@@ -69,7 +75,7 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
     }
   }
 
-  protected fun initCommitHandlers() = workflow.initCommitHandlers(getCommitHandlers(commitPanel, commitContext))
+  protected fun initCommitHandlers() = workflow.initCommitHandlers(getCommitHandlers(workflow.vcses, commitPanel, commitContext))
 
   protected fun createCommitOptions(): CommitOptions = CommitOptionsImpl(
     if (workflow.isDefaultCommitEnabled) getVcsOptions(commitPanel, workflow.vcses, commitContext) else emptyMap(),
@@ -78,7 +84,7 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
     getAfterOptions(workflow.commitHandlers, this)
   )
 
-  override fun inclusionChanged() = commitHandlers.forEach { it.includedChangesChanged() }
+  override fun inclusionChanged() = commitHandlers.forEachLoggingErrors(LOG) { it.includedChangesChanged() }
 
   override fun executorCalled(executor: CommitExecutor?) = executor?.let { execute(it) } ?: executeDefault(null)
 
@@ -154,16 +160,17 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
 
   protected abstract fun saveCommitMessage(success: Boolean)
 
-  private fun getVcsOptions(commitPanel: CheckinProjectPanel, vcses: Collection<AbstractVcs<*>>, commitContext: CommitContext) =
+  private fun getVcsOptions(commitPanel: CheckinProjectPanel, vcses: Collection<AbstractVcs>, commitContext: CommitContext) =
     vcses.sortedWith(VCS_COMPARATOR)
       .associateWith { it.checkinEnvironment?.createCommitOptions(commitPanel, commitContext) }
       .filterValues { it != null }
       .mapValues { it.value!! }
 
-  private fun getBeforeOptions(handlers: Collection<CheckinHandler>) = handlers.mapNotNull { it.beforeCheckinConfigurationPanel }
+  private fun getBeforeOptions(handlers: Collection<CheckinHandler>): List<RefreshableOnComponent> =
+    handlers.mapNotNullLoggingErrors(LOG) { it.beforeCheckinConfigurationPanel }
 
-  private fun getAfterOptions(handlers: Collection<CheckinHandler>, parent: Disposable) =
-    handlers.mapNotNull { it.getAfterCheckinConfigurationPanel(parent) }
+  private fun getAfterOptions(handlers: Collection<CheckinHandler>, parent: Disposable): List<RefreshableOnComponent> =
+    handlers.mapNotNullLoggingErrors(LOG) { it.getAfterCheckinConfigurationPanel(parent) }
 
   protected fun refreshChanges(callback: () -> Unit) =
     ChangeListManager.getInstance(project).invokeAfterUpdate(

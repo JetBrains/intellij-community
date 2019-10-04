@@ -18,17 +18,21 @@ package org.zmlx.hg4idea.provider.annotate;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsKey;
-import com.intellij.openapi.vcs.annotate.*;
+import com.intellij.openapi.vcs.annotate.FileAnnotation;
+import com.intellij.openapi.vcs.annotate.LineAnnotationAspect;
+import com.intellij.openapi.vcs.annotate.LineAnnotationAspectAdapter;
+import com.intellij.openapi.vcs.annotate.ShowAllAffectedGenericAction;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
+import git4idea.annotate.AnnotationTooltipBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgFileRevision;
 import org.zmlx.hg4idea.HgVcs;
-import org.zmlx.hg4idea.HgVcsMessages;
 
 import java.util.Date;
 import java.util.LinkedList;
@@ -80,9 +84,20 @@ public class HgAnnotation extends FileAnnotation {
     };
   }
 
-  @Override
   @Nullable
+  @Override
   public String getToolTip(int lineNumber) {
+    return getToolTip(lineNumber, false);
+  }
+
+  @Nullable
+  @Override
+  public String getHtmlToolTip(int lineNumber) {
+    return getToolTip(lineNumber, true);
+  }
+
+  @Nullable
+  private String getToolTip(int lineNumber, boolean asHtml) {
     if ( myLines.size() <= lineNumber || lineNumber < 0 ) {
       return null;
     }
@@ -91,14 +106,16 @@ public class HgAnnotation extends FileAnnotation {
       return null;
     }
 
-    for (HgFileRevision revision : myFileRevisions) {
-      if (revision.getRevisionNumber().equals(info.getVcsRevisionNumber())) {
-        return HgVcsMessages.message("hg4idea.annotation.tool.tip", revision.getRevisionNumber().asString(),
-                                      revision.getAuthor(), revision.getRevisionDate(), revision.getCommitMessage());
-      }
-    }
+    HgFileRevision revision = ContainerUtil.find(myFileRevisions, it -> it.getRevisionNumber().equals(info.getVcsRevisionNumber()));
+    if (revision == null) return null;
 
-    return null;
+    AnnotationTooltipBuilder atb = new AnnotationTooltipBuilder(myProject, asHtml);
+    atb.appendRevisionLine(revision.getRevisionNumber(), null);
+    atb.appendLine("Author: " + revision.getAuthor());
+    atb.appendLine("Date: " + revision.getRevisionDate());
+    String message = revision.getCommitMessage();
+    if (message != null) atb.appendCommitMessageBlock(message);
+    return atb.toString();
   }
 
   @Override

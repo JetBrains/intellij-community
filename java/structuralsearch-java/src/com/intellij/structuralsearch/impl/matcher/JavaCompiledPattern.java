@@ -6,6 +6,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiJavaToken;
 import com.intellij.structuralsearch.impl.matcher.strategies.JavaMatchingStrategy;
+import org.jetbrains.annotations.NotNull;
 
 /**
 * @author Eugene.Kudelevsky
@@ -21,13 +22,14 @@ public class JavaCompiledPattern extends CompiledPattern {
     setStrategy(JavaMatchingStrategy.getInstance());
   }
 
+  @NotNull
   @Override
   public String[] getTypedVarPrefixes() {
     return new String[] {TYPED_VAR_PREFIX};
   }
 
   @Override
-  public boolean isTypedVar(final String str) {
+  public boolean isTypedVar(@NotNull final String str) {
     if (str.isEmpty()) return false;
     if (str.charAt(0)=='@') {
       return str.regionMatches(1,TYPED_VAR_PREFIX,0,TYPED_VAR_PREFIX.length());
@@ -37,7 +39,7 @@ public class JavaCompiledPattern extends CompiledPattern {
   }
 
   @Override
-  public boolean isToResetHandler(PsiElement element) {
+  public boolean isToResetHandler(@NotNull PsiElement element) {
     return !(element instanceof PsiJavaToken) &&
            !(element instanceof PsiJavaCodeReferenceElement && element.getParent() instanceof PsiAnnotation);
   }

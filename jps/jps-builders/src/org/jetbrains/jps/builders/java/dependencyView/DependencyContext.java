@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.builders.java.dependencyView;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.PersistentStringEnumerator;
@@ -97,7 +98,7 @@ class DependencyContext implements NamingContext {
     myEnumerator.force();
   }
 
-  public LoggerWrapper<Integer> getLogger(final com.intellij.openapi.diagnostic.Logger log) {
+  public LoggerWrapper<Integer> getLogger(final Logger log) {
     return new LoggerWrapper<Integer>() {
       @Override
       public boolean isDebugEnabled() {

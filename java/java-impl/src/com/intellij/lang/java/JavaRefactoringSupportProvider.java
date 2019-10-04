@@ -117,7 +117,7 @@ public class JavaRefactoringSupportProvider extends RefactoringSupportProvider {
   @Override
   public boolean isInplaceIntroduceAvailable(@NotNull PsiElement element, PsiElement context) {
     if (!(element instanceof PsiExpression)) return false;
-    if (context == null || context.getContainingFile() != element.getContainingFile()) return false;
+    if (context == null) return false;
     return true;
   }
 

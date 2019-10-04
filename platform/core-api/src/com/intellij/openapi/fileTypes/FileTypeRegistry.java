@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileTypes;
 
 import com.intellij.lang.Language;
@@ -43,7 +29,8 @@ public abstract class FileTypeRegistry {
    */
   public abstract boolean isFileOfType(@NotNull VirtualFile file, @NotNull FileType type);
 
-  public LanguageFileType findFileTypeByLanguage(Language language) {
+  @Nullable
+  public LanguageFileType findFileTypeByLanguage(@NotNull Language language) {
     return language.findMyFileType(getRegisteredFileTypes());
   }
 
@@ -67,6 +54,18 @@ public abstract class FileTypeRegistry {
    */
   @NotNull
   public abstract FileType getFileTypeByFile(@NotNull VirtualFile file);
+
+  /**
+   * Returns the file type for the specified file.
+   *
+   * @param file The file for which the type is requested.
+   * @param content Content of the file (if already available, to avoid reading from disk again)
+   * @return The file type instance.
+   */
+  @NotNull
+  public FileType getFileTypeByFile(@NotNull VirtualFile file, @Nullable byte[] content) {
+    return getFileTypeByFile(file);
+  }
 
   /**
    * Returns the file type for the specified file name.

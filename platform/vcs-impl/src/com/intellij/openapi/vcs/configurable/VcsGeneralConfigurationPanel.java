@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.configurable;
 
-import com.intellij.ide.actions.ShowFilePathAction;
+import com.intellij.ide.actions.RevealFileAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
@@ -57,7 +57,7 @@ public class VcsGeneralConfigurationPanel {
 
     myProject = project;
     myOnPatchCreationLabel.setText(VcsBundle.message("combobox.show.patch.in.explorer.after.creation",
-                                                     ShowFilePathAction.getFileManagerName()));
+                                                     RevealFileAction.getFileManagerName()));
 
     myOnFileAddingGroup = new JRadioButton[]{
       myShowDialogOnAddingFile,
@@ -92,7 +92,7 @@ public class VcsGeneralConfigurationPanel {
 
     myPromptsPanel.setSize(myPromptsPanel.getPreferredSize());                           // todo check text!
     myOnPatchCreation.setName((SystemInfo.isMac ? "Reveal patch in" : "Show patch in ") +
-                              ShowFilePathAction.getFileManagerName() + " after creation:");
+                              RevealFileAction.getFileManagerName() + " after creation:");
   }
 
   public void apply() {

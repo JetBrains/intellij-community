@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.html;
 
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
@@ -39,7 +25,7 @@ public class HtmlLineMarkerProvider implements LineMarkerProvider {
   private final Map<Language, List<LineMarkerProvider>> embeddedLanguagesLineMarkerProviders = ContainerUtil.newConcurrentMap();
 
   @Override
-  public LineMarkerInfo getLineMarkerInfo(@NotNull final PsiElement element) {
+  public LineMarkerInfo<?> getLineMarkerInfo(@NotNull final PsiElement element) {
     if (element instanceof PsiWhiteSpace) return null;
     final Language language = element.getLanguage();
 
@@ -47,7 +33,7 @@ public class HtmlLineMarkerProvider implements LineMarkerProvider {
       List<LineMarkerProvider> markerProviders = getAllLineMarkerProvidersForLanguage(language, embeddedLanguagesLineMarkerProviders);
       for (LineMarkerProvider provider : markerProviders) {
         if (provider instanceof HtmlLineMarkerProvider) continue;
-        LineMarkerInfo info = provider.getLineMarkerInfo(element);
+        LineMarkerInfo<?> info = provider.getLineMarkerInfo(element);
         if (info != null) {
           return info;
         }
@@ -63,7 +49,7 @@ public class HtmlLineMarkerProvider implements LineMarkerProvider {
   ) {
     List<LineMarkerProvider> markerProviders = embeddedLanguagesLineMarkerProviders.get(language);
     if (markerProviders == null) {
-      markerProviders = LineMarkerProviders.INSTANCE.allForLanguage(language);
+      markerProviders = LineMarkerProviders.getInstance().allForLanguage(language);
       embeddedLanguagesLineMarkerProviders.put(language, markerProviders);
     }
     return markerProviders;

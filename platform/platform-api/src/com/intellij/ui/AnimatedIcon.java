@@ -2,6 +2,7 @@
 package com.intellij.ui;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.concurrency.EdtScheduledExecutorService;
 import com.intellij.util.containers.SmartHashSet;
@@ -16,8 +17,6 @@ import java.awt.*;
 import java.util.List;
 import java.util.Set;
 
-import static com.intellij.openapi.util.IconLoader.getDisabledIcon;
-import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.immutableList;
 import static java.awt.AlphaComposite.SrcAtop;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -34,7 +33,7 @@ public class AnimatedIcon implements Icon {
    *
    * @see UIUtil#putClientProperty
    */
-  @ApiStatus.Experimental
+  @ApiStatus.Internal
   public static final Key<Boolean> ANIMATION_IN_RENDERER_ALLOWED = Key.create("ANIMATION_IN_RENDERER_ALLOWED");
 
   public interface Frame {
@@ -116,7 +115,7 @@ public class AnimatedIcon implements Icon {
       AllIcons.Process.State.GreyProgr_8);
   }
 
-  @ApiStatus.Experimental
+  @ApiStatus.Internal
   public static class FS extends AnimatedIcon {
     public FS() {
       super(DELAY, ICONS.toArray(new Icon[0]));
@@ -144,18 +143,18 @@ public class AnimatedIcon implements Icon {
       AllIcons.Process.FS.Step_18);
   }
 
-  @ApiStatus.Experimental
+  @ApiStatus.Internal
   public static class Blinking extends AnimatedIcon {
     public Blinking(@NotNull Icon icon) {
       this(1000, icon);
     }
 
     public Blinking(int delay, @NotNull Icon icon) {
-      super(delay, icon, notNull(getDisabledIcon(icon), icon));
+      super(delay, icon, IconLoader.getDisabledIcon(icon));
     }
   }
 
-  @ApiStatus.Experimental
+  @ApiStatus.Internal
   public static class Fading extends AnimatedIcon {
     public Fading(@NotNull Icon icon) {
       this(1000, icon);

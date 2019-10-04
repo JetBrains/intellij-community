@@ -28,15 +28,18 @@ import java.util.Map;
 
 @ApiStatus.Experimental
 public class UpdateData<Key, Value> {
+  private int myInputId;
   private final Map<Key, Value> myNewData;
   private final ThrowableComputable<InputDataDiffBuilder<Key, Value>, IOException> myCurrentDataEvaluator;
   private final IndexId<Key, Value> myIndexId;
   private final ThrowableRunnable<? extends IOException> myForwardIndexUpdate;
 
-  public UpdateData(@NotNull Map<Key, Value> newData,
+  public UpdateData(int inputId,
+                    @NotNull Map<Key, Value> newData,
                     @NotNull ThrowableComputable<InputDataDiffBuilder<Key, Value>, IOException> currentDataEvaluator,
                     @NotNull IndexId<Key, Value> indexId,
                     @Nullable ThrowableRunnable<? extends IOException> forwardIndexUpdate) {
+    myInputId = inputId;
     myNewData = newData;
     myCurrentDataEvaluator = currentDataEvaluator;
     myIndexId = indexId;
@@ -59,6 +62,10 @@ public class UpdateData<Key, Value> {
   @NotNull
   protected ThrowableComputable<InputDataDiffBuilder<Key, Value>, IOException> getCurrentDataEvaluator() {
     return myCurrentDataEvaluator;
+  }
+
+  public int getInputId() {
+    return myInputId;
   }
 
   @NotNull

@@ -42,7 +42,7 @@ public class ExtensionLocatorTest extends LightJavaCodeInsightFixtureTestCase {
     VirtualFile virtualFile = myFixture.copyFileToProject("pluginXml_locateByEp.xml");
     PsiFile psiFile = PsiManager.getInstance(getProject()).findFile(virtualFile);
     XmlFile xmlFile = assertInstanceOf(psiFile, XmlFile.class);
-    IdeaPlugin ideaPlugin = DescriptorUtil.getIdeaPlugin(xmlFile).getRootElement();
+    IdeaPlugin ideaPlugin = DescriptorUtil.getIdeaPlugin(xmlFile);
     List<ExtensionPoints> epGroups = ideaPlugin.getExtensionPoints();
     assertSize(1, epGroups);
     List<ExtensionPoint> extensionPoints = epGroups.get(0).getExtensionPoints();

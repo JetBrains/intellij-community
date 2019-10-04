@@ -16,6 +16,9 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPointListener;
+import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
@@ -45,6 +48,7 @@ import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.EdtInvocationManager;
+import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.PositionTracker;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -218,8 +222,10 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
       .handleFloating(toolWindowId -> {})
       .handleFocusLostOnPinned(toolWindowId -> {
         List<FinalizableCommand> commands = new ArrayList<>();
-        deactivateToolWindowImpl(getRegisteredInfoOrLogError(toolWindowId), true, commands);
-        execute(commands, true); // notify clients that toolwindow is deactivated
+        if (isToolWindowRegistered(toolWindowId)) {
+          deactivateToolWindowImpl(getRegisteredInfoOrLogError(toolWindowId), true, commands);
+          execute(commands, true); // notify clients that toolwindow is deactivated
+        }
       })
       .handleWindowed(toolWindowId -> {})
       .bind(myProject);
@@ -408,7 +414,6 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     }
 
     myFrame = WindowManagerEx.getInstanceEx().allocateFrame(myProject);
-    LOG.assertTrue(myFrame != null);
 
     myToolWindowsPane = new ToolWindowsPane(myFrame, this);
     Disposer.register(this, myToolWindowsPane);
@@ -492,6 +497,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
           icon = IconLoader.getIcon(bean.icon);
         }
         catch (Exception ignored) {
+          icon = EmptyIcon.ICON_13;
         }
       }
       toolWindow.setIcon(icon);
@@ -2213,6 +2219,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
         Window frame = decorator != null ? decorator.getFrame() : null;
         if (frame == null || !frame.isShowing()) return;
         info.setFloatingBounds(getRootBounds((JFrame)frame));
+        info.setMaximized(((JFrame)frame).getExtendedState() == Frame.MAXIMIZED_BOTH);
       }
       else { // docked and sliding windows
         ToolWindowAnchor anchor = info.getAnchor();
@@ -2343,6 +2350,19 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
           manager.execute(list);
           manager.flushCommands();
         });
+
+        Extensions.getRootArea().getExtensionPoint(ToolWindowEP.EP_NAME).addExtensionPointListener(
+          new ExtensionPointListener<ToolWindowEP>() {
+            @Override
+            public void extensionAdded(@NotNull ToolWindowEP extension, @NotNull PluginDescriptor pluginDescriptor) {
+              manager.initToolWindow(extension);
+            }
+
+            @Override
+            public void extensionRemoved(@NotNull ToolWindowEP extension, @NotNull PluginDescriptor pluginDescriptor) {
+              manager.unregisterToolWindow(extension.id);
+            }
+          }, false, project);
       }
     }
   }

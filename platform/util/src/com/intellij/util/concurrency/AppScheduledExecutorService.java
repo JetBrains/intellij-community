@@ -5,7 +5,6 @@ import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.LowMemoryWatcherManager;
-import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -17,22 +16,18 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.*;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Consumer;
 
 /**
  * A ThreadPoolExecutor which also implements {@link ScheduledExecutorService} by awaiting scheduled tasks in a separate thread
  * and then executing them in the owned ThreadPoolExecutor.
  * Unlike the existing {@link ScheduledThreadPoolExecutor}, this pool is unbounded.
  */
-public class AppScheduledExecutorService extends SchedulingWrapper {
+public final class AppScheduledExecutorService extends SchedulingWrapper {
   static final String POOLED_THREAD_PREFIX = "ApplicationImpl pooled thread ";
   @NotNull private final String myName;
   private final LowMemoryWatcherManager myLowMemoryWatcherManager;
   private final MyThreadFactory myCountingThreadFactory;
-
-  @NotNull
-  private static Logger getLogger() {
-    return Logger.getInstance("#org.jetbrains.ide.PooledThreadExecutor");
-  }
 
   private static class Holder {
     private static final AppScheduledExecutorService INSTANCE = new AppScheduledExecutorService("Global instance");
@@ -55,7 +50,7 @@ public class AppScheduledExecutorService extends SchedulingWrapper {
 
       Consumer<? super Thread> listener = newThreadListener;
       if (listener != null) {
-        listener.consume(thread);
+        listener.accept(thread);
       }
       return thread;
     }
@@ -134,7 +129,7 @@ public class AppScheduledExecutorService extends SchedulingWrapper {
     return ((BackendThreadPoolExecutor)backendExecutorService).getCorePoolSize();
   }
 
-  private static class BackendThreadPoolExecutor extends ThreadPoolExecutor {
+  static class BackendThreadPoolExecutor extends ThreadPoolExecutor {
     BackendThreadPoolExecutor(@NotNull ThreadFactory factory) {
       super(1, Integer.MAX_VALUE, 1, TimeUnit.MINUTES, new SynchronousQueue<>(), factory);
     }
@@ -204,7 +199,7 @@ public class AppScheduledExecutorService extends SchedulingWrapper {
       error();
     }
 
-    private void superSetKeepAliveTime(long time, TimeUnit unit) {
+    void superSetKeepAliveTime(long time, TimeUnit unit) {
       super.setKeepAliveTime(time, unit);
     }
 

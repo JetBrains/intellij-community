@@ -112,6 +112,9 @@ class ReadMostlyRWLock {
     Reader status = R.get();
     throwIfImpatient(status);
 
+    if (tryReadLock(status, true)) {
+      return;
+    }
     for (int iter = 0; ; iter++) {
       if (tryReadLock(status, true)) {
         break;

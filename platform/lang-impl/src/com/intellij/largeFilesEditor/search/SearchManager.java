@@ -2,9 +2,8 @@
 package com.intellij.largeFilesEditor.search;
 
 import com.intellij.find.SearchReplaceComponent;
-import com.intellij.largeFilesEditor.editor.EditorManager;
-import com.intellij.largeFilesEditor.search.searchTask.SearchTaskBase;
-import com.intellij.largeFilesEditor.search.searchTask.SearchTaskOptions;
+import com.intellij.largeFilesEditor.editor.LargeFileEditor;
+import com.intellij.largeFilesEditor.search.searchTask.CloseSearchTask;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.util.TextRange;
@@ -19,16 +18,14 @@ public interface SearchManager {
 
   SearchReplaceComponent getSearchManageGUI();
 
-  SearchTaskBase getLastExecutedSearchTask();
+  CloseSearchTask getLastExecutedCloseSearchTask();
 
   void onSearchActionHandlerExecuted();
 
   @NotNull
-  EditorManager getEditorManager();
+  LargeFileEditor getLargeFileEditor();
 
   void launchNewRangeSearch(long fromPageNumber, long toPageNumber, boolean forwardDirection);
-
-  void launchRangeSearch(SearchTaskOptions searchTaskOptions, boolean needToClearPrevSearchResults);
 
   void gotoNextOccurrence(boolean directionForward);
 
@@ -44,8 +41,6 @@ public interface SearchManager {
   void onCaretPositionChanged(CaretEvent e);
 
   void dispose();
-
-  void tellSearchResultsToolWindowWasClosed();
 
   List<TextRange> getAllSearchResultsInDocument(Document document);
 

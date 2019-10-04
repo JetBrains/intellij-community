@@ -28,7 +28,6 @@ public class RestJavaFxHtmlPanel extends JavaFxHtmlPanel implements RestPreviewP
 
     runInPlatformWhenAvailable(() -> {
       final WebView webView = getWebViewGuaranteed();
-      webView.fontSmoothingTypeProperty().setValue(FontSmoothingType.LCD);
 
       webView.getEngine().getLoadWorker().stateProperty().addListener(new HyperlinkRedirectListener(webView));
 

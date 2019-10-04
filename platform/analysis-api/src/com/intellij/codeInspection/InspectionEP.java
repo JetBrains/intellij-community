@@ -25,7 +25,8 @@ import java.util.ResourceBundle;
  * @author Dmitry Avdeev
  * @see LocalInspectionEP
  */
-public class InspectionEP extends LanguageExtensionPoint implements InspectionProfileEntry.DefaultNameProvider {
+public class InspectionEP extends LanguageExtensionPoint<InspectionProfileEntry> implements InspectionProfileEntry.DefaultNameProvider {
+  private static final Logger LOG = Logger.getInstance(InspectionEP.class);
 
   /**
    * @see GlobalInspectionTool
@@ -161,7 +162,7 @@ public class InspectionEP extends LanguageExtensionPoint implements InspectionPr
     HighlightDisplayLevel displayLevel = HighlightDisplayLevel.find(level);
     if (displayLevel == null) {
       LOG.error(new PluginException("Can't find highlight display level: " + level + "; registered for: " + implementationClass + "; " +
-                                    "and short name: " + shortName, getPluginId()));
+                                    "and short name: " + shortName, getPluginDescriptor().getPluginId()));
       return HighlightDisplayLevel.WARNING;
     }
     return displayLevel;
@@ -176,29 +177,23 @@ public class InspectionEP extends LanguageExtensionPoint implements InspectionPr
   @Nullable
   private String getLocalizedString(@Nullable String bundleName, String key) {
     final String baseName = bundleName != null ? bundleName :
-                            bundle == null ? ((IdeaPluginDescriptor)myPluginDescriptor).getResourceBundleBaseName() : bundle;
+                            bundle == null ? ((IdeaPluginDescriptor)getPluginDescriptor()).getResourceBundleBaseName() : bundle;
     if (baseName == null || key == null) {
       if (bundleName != null) {
         LOG.warn(implementationClass);
       }
       return null;
     }
-    final ResourceBundle resourceBundle = AbstractBundle.getResourceBundle(baseName, myPluginDescriptor.getPluginClassLoader());
+    ResourceBundle resourceBundle = AbstractBundle.getResourceBundle(baseName, getLoaderForClass());
     return CommonBundle.message(resourceBundle, key);
   }
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.InspectionEP");
-
   @NotNull
   public InspectionProfileEntry instantiateTool() {
-    try {
-      final InspectionProfileEntry entry = instantiate(implementationClass, ApplicationManager.getApplication().getPicoContainer());
-      entry.myNameProvider = this;
-      return entry;
-    }
-    catch (ClassNotFoundException e) {
-      throw new RuntimeException(e);
-    }
+    // must create a new instance for each invocation
+    InspectionProfileEntry entry = createInstance(ApplicationManager.getApplication());
+    entry.myNameProvider = this;
+    return entry;
   }
 
   @Override

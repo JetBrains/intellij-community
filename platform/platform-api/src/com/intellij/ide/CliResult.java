@@ -8,11 +8,11 @@ import org.jetbrains.annotations.Nullable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
-public class CliResult {
+public final class CliResult {
   private static final FixedFuture<CliResult> OK_FUTURE = new FixedFuture<>(new CliResult(0, null));
 
   private final int myReturnCode;
-  
+
   @Nullable
   private final String myMessage;
 
@@ -41,7 +41,7 @@ public class CliResult {
   }
 
   @NotNull
-  public static CliResult getOrWrapFailure(@NotNull Future<? extends CliResult> future, int timeoutCode) {
+  public static CliResult getOrWrapFailure(@NotNull Future<CliResult> future, int timeoutCode) {
     try {
       return future.get();
     }

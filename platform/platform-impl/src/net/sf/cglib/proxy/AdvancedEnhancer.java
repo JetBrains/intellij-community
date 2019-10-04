@@ -484,7 +484,7 @@ public class AdvancedEnhancer extends AbstractClassGenerator
         modifiers = (modifiers & ~Constants.ACC_PROTECTED) | Constants.ACC_PUBLIC;
       }
       if (covariantMethods.containsKey(method)) {
-        modifiers = modifiers | Constants.ACC_BRIDGE;
+        modifiers |= Constants.ACC_BRIDGE;
       }
       methodInfoMap.put(method, ReflectUtils.getMethodInfo(method, modifiers));
     }

@@ -81,7 +81,7 @@ public class MergePackageAccessibilityStatementsFix
   }
 
   @Nullable
-  public static MergeModuleStatementsFix createFix(@Nullable PsiPackageAccessibilityStatement statement) {
+  public static MergeModuleStatementsFix<?> createFix(@Nullable PsiPackageAccessibilityStatement statement) {
     if (statement != null) {
       final PsiElement parent = statement.getParent();
       if (parent instanceof PsiJavaModule) {

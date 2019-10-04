@@ -1,9 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui.filters;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.MatchVariableConstraint;
+import com.intellij.structuralsearch.NamedScriptableDefinition;
 import com.intellij.structuralsearch.plugin.ui.UIUtil;
 import com.intellij.ui.ContextHelpLabel;
 import com.intellij.ui.EditorTextField;
@@ -24,12 +25,21 @@ public class TypeFilter extends FilterAction {
 
   @Override
   public boolean hasFilter() {
-    return !StringUtil.isEmpty(myTable.getConstraint().getNameOfExprType());
+    final NamedScriptableDefinition variable = myTable.getVariable();
+    if (!(variable instanceof MatchVariableConstraint)) {
+      return false;
+    }
+    final MatchVariableConstraint constraint = (MatchVariableConstraint)variable;
+    return !StringUtil.isEmpty(constraint.getNameOfExprType());
   }
 
   @Override
   public void clearFilter() {
-    final MatchVariableConstraint constraint = myTable.getConstraint();
+    final NamedScriptableDefinition variable = myTable.getVariable();
+    if (!(variable instanceof MatchVariableConstraint)) {
+      return;
+    }
+    final MatchVariableConstraint constraint = (MatchVariableConstraint)variable;
     constraint.setNameOfExprType("");
     constraint.setInvertExprType(false);
     constraint.setExprTypeWithinHierarchy(false);
@@ -37,12 +47,13 @@ public class TypeFilter extends FilterAction {
 
   @Override
   public boolean isApplicable(List<? extends PsiElement> nodes, boolean completePattern, boolean target) {
-    return myTable.getProfile().isApplicableConstraint(UIUtil.TYPE, nodes, completePattern, target);
+    return myTable.getVariable() instanceof MatchVariableConstraint &&
+           myTable.getProfile().isApplicableConstraint(UIUtil.TYPE, nodes, completePattern, target);
   }
 
   @Override
   protected void setLabel(SimpleColoredComponent component) {
-    final MatchVariableConstraint constraint = myTable.getConstraint();
+    final MatchVariableConstraint constraint = (MatchVariableConstraint)myTable.getVariable();
     myLabel.append("type=");
     if (constraint.isInvertExprType()) myLabel.append("!");
     myLabel.append(constraint.getNameOfExprType());
@@ -51,7 +62,7 @@ public class TypeFilter extends FilterAction {
 
   @Override
   public FilterEditor getEditor() {
-    return new FilterEditor(myTable.getConstraint(), myTable.getConstraintChangedCallback()) {
+    return new FilterEditor<MatchVariableConstraint>(myTable.getVariable(), myTable.getConstraintChangedCallback()) {
 
       private final EditorTextField myTextField = UIUtil.createTextComponent("", myTable.getProject());
       private final JLabel myTypeLabel = new JLabel("type=");

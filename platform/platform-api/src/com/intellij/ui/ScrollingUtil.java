@@ -22,6 +22,7 @@ import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
+import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 
 /**
@@ -266,6 +267,26 @@ public class ScrollingUtil {
     if (!(focusParent instanceof JTextComponent)) {
       installMoveHomeAction(list, focusParent);
       installMoveEndAction(list, focusParent);
+    }
+  }
+
+  public static void redirectExpandSelection(final JList list, @Nullable JComponent focusParent) {
+    if (focusParent != null && focusParent != list) {
+      focusParent.addKeyListener(new KeyAdapter() {
+        @Override
+        public void keyPressed(KeyEvent e) {
+          if (e.isShiftDown()) {
+            if (e.getKeyCode() == KeyEvent.VK_DOWN) {
+              list.dispatchEvent(e);
+              e.consume();
+            }
+            if (e.getKeyCode() == KeyEvent.VK_UP) {
+              list.dispatchEvent(e);
+              e.consume();
+            }
+          }
+        }
+      });
     }
   }
 

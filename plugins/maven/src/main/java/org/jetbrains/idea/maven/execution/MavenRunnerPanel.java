@@ -103,11 +103,10 @@ public class MavenRunnerPanel {
     panel.add(jdkLabel, c);
     c.gridx = 1;
     c.weightx = 1;
-    c.fill = GridBagConstraints.NONE;
     c.insets.left = 10;
+    c.fill = GridBagConstraints.HORIZONTAL;
     panel.add(myJdkCombo, c);
     c.insets.left = 0;
-    c.fill = GridBagConstraints.HORIZONTAL;
 
     myEnvVariablesComponent = new EnvironmentVariablesComponent();
     myEnvVariablesComponent.setPassParentEnvs(true);

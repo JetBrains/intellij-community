@@ -17,11 +17,22 @@ import org.jetbrains.annotations.Nullable;
  * @author cdr
  */
 public class DefaultFileTemplateUsageInspection extends AbstractBaseJavaLocalInspectionTool {
-  // Fields are left for the compatibility
+
+  /**
+   * @deprecated unused, left for compatibility
+   */
   @Deprecated
   public boolean CHECK_FILE_HEADER = true;
+
+  /**
+   * @deprecated unused, left for compatibility
+   */
   @Deprecated
   public boolean CHECK_TRY_CATCH_SECTION = true;
+
+  /**
+   * @deprecated unused, left for compatibility
+   */
   @Deprecated
   public boolean CHECK_METHOD_BODY = true;
 

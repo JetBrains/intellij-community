@@ -16,7 +16,6 @@ import com.intellij.openapi.util.NamedRunnable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.navigation.History;
 import com.intellij.util.PairFunction;
 import com.intellij.util.containers.ContainerUtil;
@@ -83,14 +82,6 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
   @Override
   public String getId() {
     return myId;
-  }
-
-  public void requestFocus() {
-    // todo fix selection
-    VcsLogGraphTable graphTable = getTable();
-    if (graphTable.getRowCount() > 0) {
-      IdeFocusManager.getInstance(myProject).requestFocus(graphTable, true).doWhenProcessed(() -> graphTable.setRowSelectionInterval(0, 0));
-    }
   }
 
   public void setVisiblePack(@NotNull VisiblePack pack) {

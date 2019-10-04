@@ -2,6 +2,7 @@
 
 package com.intellij.ide.fileTemplates.impl;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplatesScheme;
@@ -227,7 +228,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Pers
         result.add(getInternalTemplate(bean.name));
       }
       catch (Exception e) {
-        LOG.error(e);
+        LOG.error("Can't find template " + bean.name, new PluginException(e, bean.getPluginId()));
       }
     }
     return result.toArray(FileTemplate.EMPTY_ARRAY);
@@ -290,9 +291,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Pers
       return template;
     }
 
-    String message = "Template not found: " + templateName/*ftManager.templateNotFoundMessage(templateName)*/;
-    LOG.error(message);
-    throw new IllegalStateException(message);
+    throw new IllegalStateException("Template not found: " + templateName);
   }
 
   @Override

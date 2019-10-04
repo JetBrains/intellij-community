@@ -48,12 +48,12 @@ public class ModulesOrderEnumerator extends OrderEnumeratorBase {
   }
 
   @Override
-  protected void forEach(@NotNull PairProcessor<? super OrderEntry, ? super List<OrderEnumerationHandler>> processor) {
+  protected void forEach(@NotNull PairProcessor<? super OrderEntry, ? super List<? extends OrderEnumerationHandler>> processor) {
     myRecursivelyExportedOnly = false;
 
     final THashSet<Module> processed = new THashSet<>();
     for (Module module : myModules) {
-      processEntries(getRootModel(module), processor, processed, true, getCustomHandlers(module));
+      processEntries(getRootModel(module), processed, true, getCustomHandlers(module), processor);
     }
   }
 

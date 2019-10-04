@@ -171,7 +171,7 @@ public abstract class MvcFramework {
 
   @Nullable
   public VirtualFile findAppRoot(@Nullable Module module) {
-    if (module == null) return null;
+    if (module == null || module.isDisposed()) return null;
 
     String appDirName = getApplicationDirectoryName();
 
@@ -348,8 +348,10 @@ public abstract class MvcFramework {
     return getFrameworkName();
   }
 
+  @NotNull
   public abstract Icon getIcon(); // 16*16
 
+  @NotNull
   public abstract Icon getToolWindowIcon(); // 13*13
 
   public abstract String getSdkHomePropertyName();

@@ -61,6 +61,12 @@ public abstract class QuickFixFactory {
                                                                                     boolean fixWholeHierarchy);
 
   @NotNull
+  public abstract LocalQuickFixAndIntentionActionOnPsiElement createMethodReturnFix(@NotNull PsiMethod method,
+                                                                                    @NotNull PsiType toReturn,
+                                                                                    boolean fixWholeHierarchy,
+                                                                                    boolean suggestSuperTypes);
+
+  @NotNull
   public abstract LocalQuickFixAndIntentionActionOnPsiElement createAddMethodFix(@NotNull PsiMethod method, @NotNull PsiClass toClass);
 
   @NotNull
@@ -173,6 +179,18 @@ public abstract class QuickFixFactory {
 
   @NotNull
   public abstract IntentionAction createConvertToStringLiteralAction();
+
+  /**
+   * Provides fix to remove return statement or return value in case when return statement is not last statement in block.
+   *
+   * @param method method with return statement
+   * @param returnStatement statement to remove
+   * @param returnValue statement value
+   */
+  @NotNull
+  public abstract IntentionAction createDeleteReturnFix(@NotNull PsiMethod method,
+                                                        @NotNull PsiReturnStatement returnStatement,
+                                                        @NotNull PsiExpression returnValue);
 
   @NotNull
   public abstract IntentionAction createDeleteCatchFix(@NotNull PsiParameter parameter);
@@ -421,7 +439,7 @@ public abstract class QuickFixFactory {
   public abstract void registerFixesForUnusedParameter(@NotNull PsiParameter parameter, @NotNull Object highlightInfo);
 
   /**
-   * Use {@link #createAddToDependencyInjectionAnnotationsFix(Project, String)} instead
+   * @deprecated Use {@link #createAddToDependencyInjectionAnnotationsFix(Project, String)} instead
    */
   @Deprecated
   @NotNull
@@ -508,12 +526,18 @@ public abstract class QuickFixFactory {
     throw new AbstractMethodError();
   }
 
+  @NotNull
   public abstract IntentionAction createAddMissingEnumBranchesFix(@NotNull PsiSwitchBlock switchBlock, @NotNull Set<String> missingCases);
 
+  @NotNull
   public abstract IntentionAction createAddSwitchDefaultFix(@NotNull PsiSwitchBlock switchBlock, @Nullable String message);
 
-  public abstract IntentionAction createCollapseAnnotationsFix(PsiAnnotation annotation);
+  @Nullable
+  public abstract IntentionAction createCollapseAnnotationsFix(@NotNull PsiAnnotation annotation);
 
   @NotNull
   public abstract IntentionAction createChangeModifierFix();
+
+  @NotNull
+  public abstract IntentionAction createWrapSwitchRuleStatementsIntoBlockFix(PsiSwitchLabeledRuleStatement rule);
 }

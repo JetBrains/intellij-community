@@ -34,7 +34,7 @@ private val LOG = logger<ExternallyAddedFilesProcessorImpl>()
 
 class ExternallyAddedFilesProcessorImpl(project: Project,
                                         private val parentDisposable: Disposable,
-                                        private val vcs: AbstractVcs<*>,
+                                        private val vcs: AbstractVcs,
                                         private val addChosenFiles: (Collection<VirtualFile>) -> Unit)
   : FilesProcessorWithNotificationImpl(project, parentDisposable), FilesProcessor, AsyncVfsEventsListener, ChangeListListener {
 
@@ -63,6 +63,11 @@ class ExternallyAddedFilesProcessorImpl(project: Project,
     if (!needProcessExternalFiles()) return
 
     val files = UNPROCESSED_FILES_LOCK.read { unprocessedFiles.toList() }
+
+    UNPROCESSED_FILES_LOCK.write {
+      unprocessedFiles.removeAll(files)
+    }
+
     if (files.isEmpty()) return
 
     if (needDoForCurrentProject()) {
@@ -72,10 +77,6 @@ class ExternallyAddedFilesProcessorImpl(project: Project,
     else {
       LOG.debug("Process external files and prompt to add if needed to ${vcs.displayName} ", files)
       queue.add(files)
-    }
-
-    UNPROCESSED_FILES_LOCK.write {
-      unprocessedFiles.clear()
     }
   }
 

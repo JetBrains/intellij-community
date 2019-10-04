@@ -2,8 +2,7 @@
 package com.intellij.testGuiFramework.fixtures
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor
-import com.intellij.ide.plugins.newui.CellPluginComponent
-import com.intellij.ide.plugins.newui.TabHeaderComponent
+import com.intellij.ide.plugins.newui.ListPluginComponent
 import com.intellij.openapi.fileChooser.actions.RefreshFileChooserAction
 import com.intellij.openapi.options.ex.ConfigurableCardPanel
 import com.intellij.testGuiFramework.framework.GuiTestUtil.findAndClickButtonWhenEnabled
@@ -73,7 +72,7 @@ class PluginDialogFixture(robot: Robot, pluginDialog: JDialog) : JDialogFixture(
   fun cancel() = findAndClickCancelButton(this)
 
   private fun findPluginsAppearedOnTheScreen(): List<IdeaPluginDescriptor> =
-    waitUntilFoundList(findPluginCardsPanel(), CellPluginComponent::class.java,
+    waitUntilFoundList(findPluginCardsPanel(), ListPluginComponent::class.java,
                        Timeouts.defaultTimeout) { it.isShowing }.map { it.pluginDescriptor }
 
   private fun findCheckBox(pluginName: String) =
@@ -82,8 +81,8 @@ class PluginDialogFixture(robot: Robot, pluginDialog: JDialog) : JDialogFixture(
   private fun findPluginCardsPanel(): ConfigurableCardPanel =
     waitUntilFound(target(), ConfigurableCardPanel::class.java, Timeouts.defaultTimeout) { true }
 
-  private fun findCellPluginComponent(pluginName: String): CellPluginComponent =
-    waitUntilFound(findPluginCardsPanel(), CellPluginComponent::class.java,
+  private fun findCellPluginComponent(pluginName: String): ListPluginComponent =
+    waitUntilFound(findPluginCardsPanel(), ListPluginComponent::class.java,
                    Timeouts.defaultTimeout) { it.isShowing && it.pluginDescriptor.name == pluginName }
 
   private fun findPluginDetailsLink(pluginName: String): JLabel =

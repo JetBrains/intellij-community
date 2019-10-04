@@ -556,13 +556,7 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
   }
 
   private static void collectPsiStatements(PsiElement root, Set<? super PsiStatement> collected) {
-    if (root instanceof PsiStatement){
-      collected.add((PsiStatement)root);
-    }
-
-    for (PsiElement element : root.getChildren()) {
-      collectPsiStatements(element, collected);
-    }
+    SyntaxTraverser.psiTraverser(root).filter(PsiStatement.class).addAllTo(collected);
   }
 
   private static class ParametersAndMovedFieldsUsedCollector extends JavaRecursiveElementWalkingVisitor {
@@ -651,7 +645,7 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
         // find references
         for (PsiReference reference : ReferencesSearch.search(constructor, new LocalSearchScope(mySourceClass), false)) {
           final PsiElement element = reference.getElement();
-          if (element != null && "super".equals(element.getText())) {
+          if ("super".equals(element.getText())) {
             PsiMethod parentMethod = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
             if (parentMethod != null && parentMethod.isConstructor()) {
               referencingSubConstructors.add(parentMethod);

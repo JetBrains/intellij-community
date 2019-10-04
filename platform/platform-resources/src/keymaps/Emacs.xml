@@ -172,7 +172,7 @@
   <action id="CodeCompletion">
     <keyboard-shortcut first-keystroke="alt SLASH"/>
   </action>
-  <action id="ReloadFromDisk">
+  <action id="SynchronizeCurrentFile">
     <keyboard-shortcut first-keystroke="alt U"/>
     <keyboard-shortcut first-keystroke="ESCAPE" second-keystroke="U"/>
   </action>

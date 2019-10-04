@@ -23,11 +23,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.project.IntelliJProjectConfiguration
-import com.intellij.psi.JavaPsiFacade
-import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiClassType
-import com.intellij.psi.PsiMethod
-import com.intellij.psi.PsiReferenceExpression
+import com.intellij.psi.*
 import com.intellij.psi.impl.JavaPsiFacadeEx
 import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.search.GlobalSearchScope
@@ -37,6 +33,7 @@ import com.intellij.psi.stubs.StubTreeLoader
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
+
 /**
  * @author peter
  */
@@ -192,7 +189,7 @@ class ResolveInLibrariesTest extends JavaCodeInsightFixtureTestCase {
     myFixture.configureFromExistingVirtualFile(myFixture.addFileToProject("TestCase.java", """
 class TestCase {
     public static void main( String[] args ) {
-        new B().<error descr="Cannot resolve method 'a()'">a</error>(); // should not work, because the A in lib1 has no method a
+        new B().<error descr="Cannot resolve method 'a' in 'B'">a</error>(); // should not work, because the A in lib1 has no method a
         new B().a2(); // should work, because the A with this method is in lib1
     }
 }

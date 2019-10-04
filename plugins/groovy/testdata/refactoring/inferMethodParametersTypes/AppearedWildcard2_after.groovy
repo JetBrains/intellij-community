@@ -1,4 +1,4 @@
-void foo(List<?> a) {}
+void foo(List<Object> a) {}
 
 def m() {
   foo([])

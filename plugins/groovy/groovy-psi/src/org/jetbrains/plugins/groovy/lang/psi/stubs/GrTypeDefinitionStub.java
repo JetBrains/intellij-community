@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.stubs;
 
 import com.intellij.psi.impl.PsiImplUtil;
@@ -21,10 +21,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 public class GrTypeDefinitionStub extends StubBase<GrTypeDefinition> implements NamedStub<GrTypeDefinition> {
   private static final int ANONYMOUS = 0x01;
   private static final int INTERFACE = 0x02;
-  private static final int ENUM = 0x04;
   private static final int ANNOTATION = 0x08;
   private static final int DEPRECATED_BY_DOC = 0x20;
-  private static final int TRAIT = 0x40;
 
   private final StringRef myName;
   private final @Nullable String myBaseClassName;
@@ -92,14 +90,6 @@ public class GrTypeDefinitionStub extends StubBase<GrTypeDefinition> implements 
     return (myFlags & INTERFACE) != 0;
   }
 
-  public boolean isEnum() {
-    return (myFlags & ENUM) != 0;
-  }
-
-  public boolean isTrait() {
-    return (myFlags & TRAIT) != 0;
-  }
-
   public byte getFlags() {
     return myFlags;
   }
@@ -116,10 +106,7 @@ public class GrTypeDefinitionStub extends StubBase<GrTypeDefinition> implements 
     }
     if (typeDefinition.isAnnotationType()) flags |= ANNOTATION;
     if (typeDefinition.isInterface()) flags |= INTERFACE;
-    if (typeDefinition.isEnum()) flags |= ENUM;
-    if (typeDefinition.isTrait()) flags |= TRAIT;
     if (PsiImplUtil.isDeprecatedByDocTag(typeDefinition)) flags |= DEPRECATED_BY_DOC;
     return flags;
   }
-
 }

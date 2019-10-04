@@ -3,11 +3,7 @@ package com.intellij.idea;
 
 import com.intellij.Patches;
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
-import com.intellij.concurrency.SameThreadExecutorService;
-import com.intellij.diagnostic.Activity;
-import com.intellij.diagnostic.ActivitySubNames;
-import com.intellij.diagnostic.ParallelActivity;
-import com.intellij.diagnostic.StartUpMeasurer;
+import com.intellij.diagnostic.*;
 import com.intellij.diagnostic.StartUpMeasurer.Phases;
 import com.intellij.ide.CliResult;
 import com.intellij.ide.IdeRepaintManager;
@@ -40,7 +36,6 @@ import com.intellij.ui.IconManager;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.PlatformUtils;
-import com.intellij.util.SmartList;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.ui.EdtInvocationManager;
@@ -68,9 +63,13 @@ import java.nio.file.attribute.PosixFileAttributeView;
 import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static com.intellij.diagnostic.LoadingPhase.LAF_INITIALIZED;
 import static java.nio.file.attribute.PosixFilePermission.*;
 
 /**
@@ -108,7 +107,7 @@ public class StartupUtil {
   @FunctionalInterface
   public interface AppStarter {
     // called in Idea Main thread
-    void start();
+    void start(@NotNull Future<?> initUiTask);
 
     // not called in EDT
     default void beforeImportConfigs() {}
@@ -117,7 +116,7 @@ public class StartupUtil {
     default void beforeStartupWizard() {}
 
     // called in EDT
-    default void startupWizardFinished() {}
+    default void startupWizardFinished(@NotNull CustomizeIDEWizardStepsProvider provider) {}
 
     // not called in EDT
     default void importFinished(@NotNull Path newConfigDir) {}
@@ -144,33 +143,13 @@ public class StartupUtil {
 
   static void prepareAndStart(@NotNull String[] args, @NotNull AppStarter appStarter)
     throws InvocationTargetException, InterruptedException, ExecutionException {
+    Activity fjp = StartUpMeasurer.start("setupForkJoinCommonPool");
     IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(Main.isHeadless(args));
+    fjp.end();
 
-    // Before lockDirsAndConfigureLogger can be executed only tasks that do not require log,
-    // because we don't want to complicate logging. It is ok, because lockDirsAndConfigureLogger is not so heavy-weight as UI tasks.
-    CompletableFuture<Void> initLafTask = CompletableFuture.runAsync(() -> {
-      checkHiDPISettings();
+    LoadingPhase.setStrictMode();
 
-      //noinspection SpellCheckingInspection
-      System.setProperty("sun.awt.noerasebackground", "true");
-
-      // see note about StartupUiUtil static init - it is required even if headless
-      try {
-        StartupUiUtil.initDefaultLaF();
-        if (!Main.isHeadless()) {
-          SplashManager.show(args);
-        }
-
-        // can be expensive (~200 ms), so, configure only after showing splash (not required for splash)
-        StartupUiUtil.configureHtmlKitStylesheet();
-      }
-      catch (Exception e) {
-        throw new CompletionException(e);
-      }
-    }, runnable -> {
-      installExceptionHandler();
-      EventQueue.invokeLater(runnable);
-    });
+    Future<?> initUiTask = scheduleInitUi(args);
 
     configureLogging();
 
@@ -179,13 +158,21 @@ public class StartupUtil {
     }
 
     // this check must be performed before system directories are locked
-    boolean newConfigFolder = !Main.isHeadless() && !new File(PathManager.getConfigPath()).exists();
+    boolean newConfigFolder = !Main.isHeadless() && !Files.exists(Paths.get(PathManager.getConfigPath()));
 
     Logger log = lockDirsAndConfigureLogger(args);
 
-    boolean isParallelExecution = SystemProperties.getBooleanProperty("idea.prepare.app.start.parallel", true);
-    List<Future<?>> futures = new SmartList<>();
-    ExecutorService executorService = isParallelExecution ? AppExecutorUtil.getAppExecutorService() : new SameThreadExecutorService();
+    ExecutorService executorService = AppExecutorUtil.getAppExecutorService();
+
+    // no need to wait
+    executorService.submit(() -> {
+      ApplicationInfo appInfo = ApplicationInfoImpl.getShadowInstance();
+      Activity activity = ParallelActivity.PREPARE_APP_INIT.start("log essential info about ide");
+      logEssentialInfoAboutIde(log, appInfo);
+      activity.end();
+    });
+
+    List<Future<?>> futures = new ArrayList<>();
     futures.add(executorService.submit(() -> {
       Activity activity = ParallelActivity.PREPARE_APP_INIT.start(ActivitySubNames.SETUP_SYSTEM_LIBS);
       setupSystemLibraries();
@@ -194,49 +181,115 @@ public class StartupUtil {
       activity.end();
     }));
 
-    addInitUiTasks(futures, executorService, log, initLafTask);
-
     if (!newConfigFolder) {
       installPluginUpdates();
       runPreAppClass(log);
     }
 
-    if (isParallelExecution) {
-      // no need to wait
-      executorService.submit(() -> loadSystemLibraries(log));
+    // no need to wait
+    executorService.execute(() -> loadSystemLibraries(log));
 
-      Activity activity = StartUpMeasurer.start(Phases.WAIT_TASKS);
-      for (Future<?> future : futures) {
-        future.get();
-      }
-      activity.end();
-      futures.clear();
+    Activity waitTaskActivity = StartUpMeasurer.start(Phases.WAIT_TASKS);
+    for (Future<?> future : futures) {
+      future.get();
     }
+    waitTaskActivity.end();
+    futures.clear();
 
     if (!Main.isHeadless()) {
+      Activity activity = StartUpMeasurer.start(Phases.IMPORT_CONFIGS);
       if (newConfigFolder) {
         appStarter.beforeImportConfigs();
         Path newConfigDir = Paths.get(PathManager.getConfigPath());
-        runInEdtAndWait(log, () -> ConfigImportHelper.importConfigsTo(newConfigDir, log));
+        runInEdtAndWait(log, () -> ConfigImportHelper.importConfigsTo(newConfigDir, log), initUiTask);
         runInEdtAndWait(log, DeleteOldDirectoriesHelper::run);  // Android Studio: upstream?
         appStarter.importFinished(newConfigDir);
       }
 
-      showUserAgreementAndConsentsIfNeeded(log);
+      showUserAgreementAndConsentsIfNeeded(log, initUiTask);
 
       if (newConfigFolder && !ConfigImportHelper.isConfigImported()) {
         // exception handler is already set by ConfigImportHelper
         // event queue and icons already initialized as part of old config import
         EventQueue.invokeAndWait(() -> runStartupWizard(appStarter));
       }
+      activity.end();
     }
 
     EdtInvocationManager.executeWithCustomManager(new EdtInvocationManager.SwingEdtInvocationManager() {
       @Override
       public void invokeAndWait(@NotNull Runnable task) {
-        runInEdtAndWait(log, task);
+        runInEdtAndWait(log, task, initUiTask);
       }
-    }, () -> appStarter.start());
+    }, () -> appStarter.start(initUiTask));
+  }
+
+  @NotNull
+  private static Future<?> scheduleInitUi(@NotNull String[] args) {
+    Activity initLafAsync = StartUpMeasurer.start("schedule LaF init");
+    // mainly call sun.util.logging.PlatformLogger.getLogger - it takes enormous time (up to 500 ms)
+    // Before lockDirsAndConfigureLogger can be executed only tasks that do not require log,
+    // because we don't want to complicate logging. It is ok, because lockDirsAndConfigureLogger is not so heavy-weight as UI tasks.
+    Future<?> future = AppExecutorUtil.getAppExecutorService().submit(() -> {
+      installExceptionHandler();
+
+      checkHiDPISettings();
+
+      //noinspection SpellCheckingInspection
+      System.setProperty("sun.awt.noerasebackground", "true");
+
+      try {
+        EventQueue.invokeAndWait(() -> {
+          // see note about StartupUiUtil static init - it is required even if headless
+          try {
+            StartupUiUtil.initDefaultLaF();
+            if (!Main.isHeadless()) {
+              SplashManager.show(args);
+            }
+
+            LoadingPhase.setCurrentPhase(LoadingPhase.SPLASH);
+
+            // can be expensive (~200 ms), so, configure only after showing splash (not required for splash)
+            StartupUiUtil.configureHtmlKitStylesheet();
+          }
+          catch (Exception e) {
+            throw new CompletionException(e);
+          }
+        });
+      }
+      catch (Exception e) {
+        throw new CompletionException(e);
+      }
+
+      // UIUtil.initDefaultLaF must be called before this call
+      Activity activity = ParallelActivity.PREPARE_APP_INIT.start("init system font data");
+      JBUIScale.getSystemFontData();
+      activity.end();
+
+      if (!Main.isHeadless()) {
+        // updateWindowIcon must be after UIUtil.initSystemFontData because uses computed system font data for scale context
+        if (!PluginManagerCore.isRunningFromSources() && !AppUIUtil.isWindowIconAlreadyExternallySet()) {
+          // no need to wait - doesn't affect other functionality
+          AppExecutorUtil.getAppExecutorService().execute(() -> {
+            Activity updateWindowIconActivity = ParallelActivity.PREPARE_APP_INIT.start(ActivitySubNames.UPDATE_WINDOW_ICON);
+            // most of the time consumed to load SVG - so, can be done in parallel
+            AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame());
+            updateWindowIconActivity.end();
+          });
+        }
+
+        if (System.getProperty("com.jetbrains.suppressWindowRaise") == null) {
+          System.setProperty("com.jetbrains.suppressWindowRaise", "true");
+        }
+
+        AppUIUtil.updateFrameClass(Toolkit.getDefaultToolkit());
+      }
+
+      LoadingPhase.setCurrentPhase(LAF_INITIALIZED);
+
+    });
+    initLafAsync.end();
+    return future;
   }
 
   @NotNull
@@ -268,53 +321,12 @@ public class StartupUtil {
     Logger.setFactory(new LoggerFactory());
     Logger log = Logger.getInstance(Main.class);
 
-    activity = activity.endAndStart(Phases.START_LOGGING);
-    startLogging(log);
+    log.info("------------------------------------------------------ IDE STARTED ------------------------------------------------------");
+    ShutDownTracker.getInstance().registerShutdownTask(() -> {
+      log.info("------------------------------------------------------ IDE SHUTDOWN ------------------------------------------------------");
+    });
     activity.end();
     return log;
-  }
-
-  private static void addInitUiTasks(@NotNull List<? super Future<?>> futures,
-                                     @NotNull ExecutorService executorService,
-                                     @NotNull Logger log,
-                                     @NotNull Future<?> initLafTask) {
-    futures.add(executorService.submit(() -> {
-      try {
-        try {
-          initLafTask.get();
-        }
-        catch (Exception e) {
-          log.error("Cannot initialize default LaF", e);
-        }
-
-        // UIUtil.initDefaultLaF must be called before this call
-        Activity activity = ParallelActivity.PREPARE_APP_INIT.start("init system font data");
-        JBUIScale.getSystemFontData();
-        activity.end();
-      }
-      catch (Exception e) {
-        log.error("Cannot initialize system font data", e);
-      }
-
-      // updateWindowIcon must be after UIUtil.initSystemFontData because uses computed system font data for scale context
-      if (!Main.isHeadless()) {
-        if (!PluginManagerCore.isRunningFromSources() && !AppUIUtil.isWindowIconAlreadyExternallySet()) {
-          // no need to wait - doesn't affect other functionality
-          executorService.execute(() -> {
-            Activity activity = ParallelActivity.PREPARE_APP_INIT.start(ActivitySubNames.UPDATE_WINDOW_ICON);
-            // most of the time consumed to load SVG - so, can be done in parallel
-            AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame());
-            activity.end();
-          });
-        }
-
-        if (System.getProperty("com.jetbrains.suppressWindowRaise") == null) {
-          System.setProperty("com.jetbrains.suppressWindowRaise", "true");
-        }
-
-        AppUIUtil.updateFrameClass(Toolkit.getDefaultToolkit());
-      }
-    }));
   }
 
   private static void configureLogging() {
@@ -406,7 +418,6 @@ public class StartupUtil {
            checkDirectory(tempPath, "Temp", PathManager.PROPERTY_SYSTEM_PATH, !FileUtil.isAncestor(systemPath, tempPath, true), false, SystemInfo.isXWindow);
   }
 
-  @SuppressWarnings("SSBasedInspection")
   private static boolean checkDirectory(String path, String kind, String property, boolean checkWrite, boolean checkLock, boolean checkExec) {
     String problem = null, reason = null;
     Path tempFile = null;
@@ -479,7 +490,7 @@ public class StartupUtil {
 
     SocketLock.ActivateStatusAndResponse status;
     try {
-      status = ourSocketLock.lock(args);
+      status = ourSocketLock.lockAndTryActivate(args);
     }
     catch (Exception e) {
       Main.showMessage("Cannot Lock System Folders", e);
@@ -517,6 +528,7 @@ public class StartupUtil {
     }
   }
 
+  @SuppressWarnings("SpellCheckingInspection")
   private static void setupSystemLibraries() {
     String ideTempPath = PathManager.getTempPath();
 
@@ -550,16 +562,7 @@ public class StartupUtil {
     activity.end();
   }
 
-  private static void startLogging(@NotNull Logger log) {
-    log.info("------------------------------------------------------ IDE STARTED ------------------------------------------------------");
-    AppExecutorUtil.getAppExecutorService().submit(() -> startLoggingAsync(log));
-  }
-
-  private static void startLoggingAsync(@NotNull Logger log) {
-    ShutDownTracker.getInstance().registerShutdownTask(() ->
-        log.info("------------------------------------------------------ IDE SHUTDOWN ------------------------------------------------------"));
-
-    ApplicationInfo appInfo = ApplicationInfoImpl.getShadowInstance();
+  private static void logEssentialInfoAboutIde(@NotNull Logger log, @NotNull ApplicationInfo appInfo) {
     ApplicationNamesInfo namesInfo = ApplicationNamesInfo.getInstance();
     String buildDate = new SimpleDateFormat("dd MMM yyyy HH:mm", Locale.US).format(appInfo.getBuildDate().getTime());
     log.info("IDE: " + namesInfo.getFullProductName() + " (build #" + appInfo.getBuild().asString() + ", " + buildDate + ")");
@@ -619,12 +622,13 @@ public class StartupUtil {
     }
 
     appStarter.beforeStartupWizard();
-    new CustomizeIDEWizardDialog(provider, appStarter).show();
+    new CustomizeIDEWizardDialog(provider, appStarter, true, false).showIfNeeded();
 
     PluginManagerCore.invalidatePlugins();
-    appStarter.startupWizardFinished();
+    appStarter.startupWizardFinished(provider);
   }
 
+  // must be called from EDT
   public static boolean patchSystem(@NotNull Logger log) {
     if (!ourSystemPatched.compareAndSet(false, true)) {
       return false;
@@ -640,15 +644,15 @@ public class StartupUtil {
   }
 
   private static void patchSystemForUi(@NotNull Logger log) {
-      /* Using custom RepaintManager disables BufferStrategyPaintManager (and so, true double buffering)
-         because the only non-private constructor forces RepaintManager.BUFFER_STRATEGY_TYPE = BUFFER_STRATEGY_SPECIFIED_OFF.
-
-         At the same time, http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6209673 seems to be now fixed.
-
-         This matters only if swing.bufferPerWindow = true and we don't invoke JComponent.getGraphics() directly.
-
-         True double buffering is needed to eliminate tearing on blit-accelerated scrolling and to restore
-         frame buffer content without the usual repainting, even when the EDT is blocked. */
+    // Using custom RepaintManager disables BufferStrategyPaintManager (and so, true double buffering)
+    // because the only non-private constructor forces RepaintManager.BUFFER_STRATEGY_TYPE = BUFFER_STRATEGY_SPECIFIED_OFF.
+    //
+    // At the same time, http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6209673 seems to be now fixed.
+    //
+    // This matters only if swing.bufferPerWindow = true and we don't invoke JComponent.getGraphics() directly.
+    //
+    // True double buffering is needed to eliminate tearing on blit-accelerated scrolling and to restore
+    // frame buffer content without the usual repainting, even when the EDT is blocked.
     if (Patches.REPAINT_MANAGER_LEAK) {
       RepaintManager.setCurrentManager(new IdeRepaintManager());
     }
@@ -664,7 +668,7 @@ public class StartupUtil {
     IconManager.activate();
   }
 
-  private static void showUserAgreementAndConsentsIfNeeded(@NotNull Logger log) {
+  private static void showUserAgreementAndConsentsIfNeeded(@NotNull Logger log, @NotNull Future<?> initUiTask) {
     if (!ApplicationInfoImpl.getShadowInstance().isVendorJetBrains()) {
       return;
     }
@@ -673,14 +677,17 @@ public class StartupUtil {
     EndUserAgreement.Document agreement = EndUserAgreement.getLatestDocument();
     if (!agreement.isAccepted()) {
       // todo: does not seem to request focus when shown
-      runInEdtAndWait(log, () -> AppUIUtil.showEndUserAgreementText(agreement.getText(), agreement.isPrivacyPolicy()));
+      runInEdtAndWait(log, () -> AppUIUtil.showEndUserAgreementText(agreement.getText(), agreement.isPrivacyPolicy()), initUiTask);
       EndUserAgreement.setAccepted(agreement);
     }
-    AppUIUtil.showConsentsAgreementIfNeeded(command -> runInEdtAndWait(log, command));
+
+    AppUIUtil.showConsentsAgreementIfNeeded(command -> runInEdtAndWait(log, command, initUiTask));
   }
 
-  private static void runInEdtAndWait(@NotNull Logger log, @NotNull Runnable runnable) {
+  private static void runInEdtAndWait(@NotNull Logger log, @NotNull Runnable runnable, @NotNull Future<?> initUiTask) {
     try {
+      initUiTask.get();
+
       if (!ourSystemPatched.get()) {
         EventQueue.invokeAndWait(() -> {
           if (!patchSystem(log)) {
@@ -702,7 +709,7 @@ public class StartupUtil {
       // this invokeAndWait() call is needed to place on a freshly minted IdeEventQueue instance
       EventQueue.invokeAndWait(runnable);
     }
-    catch (InterruptedException | InvocationTargetException e) {
+    catch (InterruptedException | InvocationTargetException | ExecutionException e) {
       log.warn(e);
     }
   }

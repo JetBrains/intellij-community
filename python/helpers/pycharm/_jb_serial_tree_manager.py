@@ -6,14 +6,15 @@ class SerialTreeManager(object):
     Manages output tree by building it from flat test names.
     """
 
-    def __init__(self):
+    def __init__(self, offset):
         super(SerialTreeManager, self).__init__()
         # Currently active branch as list. New nodes go to this branch
         self.current_branch = []
         # node unique name to its nodeId
         self._node_ids_dict = {}
         # Node id mast be incremented for each new branch
-        self._max_node_id = 0
+        self._max_node_id = offset
+        self.offset = offset
 
     def _calculate_relation(self, branch_as_list):
         """
@@ -108,5 +109,5 @@ class SerialTreeManager(object):
         :return: (current_node_id, parent_node_id)
         """
         current = self._get_node_id(self.current_branch)
-        parent = self._get_node_id(self.parent_branch) if self.parent_branch else "0"
+        parent = self._get_node_id(self.parent_branch) if self.parent_branch else str(self.offset)
         return str(current), str(parent)

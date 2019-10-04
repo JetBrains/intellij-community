@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.inspection.highlightTemplate;
 
 import com.intellij.codeInspection.*;
@@ -13,6 +13,7 @@ import com.intellij.structuralsearch.*;
 import com.intellij.structuralsearch.impl.matcher.MatchContext;
 import com.intellij.structuralsearch.impl.matcher.filters.LexicalNodesFilter;
 import com.intellij.structuralsearch.impl.matcher.iterators.SsrFilteringNodeIterator;
+import com.intellij.structuralsearch.impl.matcher.predicates.ScriptSupport;
 import com.intellij.structuralsearch.plugin.replace.ReplacementInfo;
 import com.intellij.structuralsearch.plugin.replace.impl.Replacer;
 import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
@@ -85,9 +86,9 @@ public class SSBasedInspection extends LocalInspectionTool {
     return new PsiElementVisitor() {
       final Matcher matcher = new Matcher(holder.getManager().getProject());
       final PairProcessor<MatchResult, Configuration> processor = (matchResult, configuration) -> {
-        PsiElement element = matchResult.getMatch();
-        String name = configuration.getName();
-        LocalQuickFix fix = createQuickFix(holder.getManager().getProject(), matchResult, configuration);
+        final PsiElement element = matchResult.getMatch();
+        final String name = configuration.getName();
+        final LocalQuickFix fix = createQuickFix(holder.getManager().getProject(), matchResult, configuration);
         holder.registerProblem(
           holder.getManager().createProblemDescriptor(element, name, fix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly)
         );
@@ -111,11 +112,9 @@ public class SSBasedInspection extends LocalInspectionTool {
               }
               catch (StructuralSearchException e) {
                 if (myProblemsReported.add(configuration.getName())) { // don't overwhelm the user with messages
-                  //noinspection InstanceofCatchParameter
+                  final String message = e.getMessage().replace(ScriptSupport.UUID, "");
                   UIUtil.SSR_NOTIFICATION_GROUP.createNotification(NotificationType.ERROR)
-                                               .setContent(e instanceof StructuralSearchScriptException
-                                                           ? SSRBundle.message("inspection.script.problem", e.getCause(), configuration.getName())
-                                                           : SSRBundle.message("inspection.template.problem", e.getMessage()))
+                                               .setContent(SSRBundle.message("inspection.script.problem", message, configuration.getName()))
                                                .setImportant(true)
                                                .notify(element.getProject());
                 }
@@ -130,7 +129,7 @@ public class SSBasedInspection extends LocalInspectionTool {
 
   static LocalQuickFix createQuickFix(final Project project, final MatchResult matchResult, final Configuration configuration) {
     if (!(configuration instanceof ReplaceConfiguration)) return null;
-    ReplaceConfiguration replaceConfiguration = (ReplaceConfiguration)configuration;
+    final ReplaceConfiguration replaceConfiguration = (ReplaceConfiguration)configuration;
     final Replacer replacer = new Replacer(project, replaceConfiguration.getReplaceOptions());
     final ReplacementInfo replacementInfo = replacer.buildReplacement(matchResult);
 
@@ -143,7 +142,7 @@ public class SSBasedInspection extends LocalInspectionTool {
 
       @Override
       public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-        PsiElement element = descriptor.getPsiElement();
+        final PsiElement element = descriptor.getPsiElement();
         if (element != null) {
           replacer.replace(replacementInfo);
         }

@@ -16,6 +16,7 @@ import com.intellij.openapi.util.BooleanGetter;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.paint.PaintUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.ObjectUtils;
@@ -119,30 +120,60 @@ public class DiffDrawUtil {
                                         int start2, int end2,
                                         @Nullable Color fillColor,
                                         @Nullable Color borderColor) {
-    Shape upperCurve = makeCurve(x1, x2, start1, start2, true);
-    Shape lowerCurve = makeCurve(x1, x2, end1 + 1, end2 + 1, false);
-    Shape lowerCurveBorder = makeCurve(x1, x2, end1, end2, false);
-    Shape middleCurve = makeCurve(x1, x2, start1 + (end1 - start1) / 2, start2 + (end2 - start2) / 2, true);
-
     if (fillColor != null) {
-      Path2D path = new Path2D.Double();
-      path.append(upperCurve, true);
-      path.append(lowerCurve, true);
-
       g.setColor(fillColor);
-      g.fill(path);
+      g.fill(makeCurvePath(x1, x2, start1, start2, end1 + 1, end2 + 1));
 
+      // 'g.fill' above draws thin line when used with high slopes. Here we ensure that background is never less than 1px thick.
       Stroke oldStroke = g.getStroke();
       g.setStroke(new BasicStroke(JBUIScale.scale(1f)));
-      g.draw(middleCurve);
+      g.draw(makeCurve(x1, x2, (start1 + end1) / 2, (start2 + end2) / 2, true));
       g.setStroke(oldStroke);
     }
 
     if (borderColor != null) {
       g.setColor(borderColor);
-      g.draw(upperCurve);
-      g.draw(lowerCurveBorder);
+      drawCurveLine(g, x1, x2, start1, start2);
+      drawCurveLine(g, x1, x2, end1, end2);
     }
+  }
+
+  /**
+   * {@link Graphics2D#fill} uses different aliasing than {@link Graphics2D#draw}.
+   * We want this curve to look similar to {@link #drawChunkBorderLine}, that is using {@link com.intellij.ui.paint.LinePainter2D}.
+   * Here we mock a hack from LinePainter2D, using 'fill' instead of 'draw' to draw a line.
+   * <p>
+   * It's hard to build 'parallel curve' for a given cubic curve.
+   * We're using a simple approach that looks OK for almost-horizontal lines,
+   * when the difference between 'draw' and 'fill' is most noticeable.
+   */
+  private static void drawCurveLine(@NotNull Graphics2D g, int x1, int x2, int y1, int y2) {
+    boolean isHighSlope = Math.abs(x2 - x1) < Math.abs(y2 - y1);
+    if (!isHighSlope && isThickSimpleStroke(g)) {
+      g.fill(makeCurvePath(x1, x2, y1, y2, y1 + 1, y2 + 1));
+    }
+    else {
+      g.draw(makeCurve(x1, x2, y1, y2, true));
+    }
+  }
+
+  private static boolean isThickSimpleStroke(@NotNull Graphics2D g) {
+    Stroke stroke = g.getStroke();
+    if (stroke instanceof BasicStroke) {
+      float strokeWidth = ((BasicStroke)stroke).getLineWidth();
+      return strokeWidth == 1.0 && PaintUtil.devValue(strokeWidth, g) > 1;
+    }
+    return false;
+  }
+
+  @NotNull
+  private static Path2D makeCurvePath(int x1, int x2,
+                                      int y11, int y12, int y21, int y22) {
+    Path2D path = new Path2D.Double();
+    path.append(makeCurve(x1, x2, y11, y12, true), true);
+    path.append(makeCurve(x1, x2, y21, y22, false), true);
+    path.closePath();
+    return path;
   }
 
   private static Shape makeCurve(int x1, int x2, int y1, int y2, boolean forward) {
@@ -268,21 +299,31 @@ public class DiffDrawUtil {
                                                                       @NotNull LineRange deleted,
                                                                       @NotNull LineRange inserted,
                                                                       @Nullable List<? extends DiffFragment> innerFragments) {
+    return createUnifiedChunkHighlighters(editor, deleted, inserted, false, false, innerFragments);
+  }
+
+  @NotNull
+  public static List<RangeHighlighter> createUnifiedChunkHighlighters(@NotNull Editor editor,
+                                                                      @NotNull LineRange deleted,
+                                                                      @NotNull LineRange inserted,
+                                                                      boolean excluded,
+                                                                      boolean skipped,
+                                                                      @Nullable List<? extends DiffFragment> innerFragments) {
     boolean ignored = innerFragments != null;
 
     List<RangeHighlighter> list = new ArrayList<>();
     if (!inserted.isEmpty() && !deleted.isEmpty()) {
-      list.addAll(createHighlighter(editor, deleted.start, deleted.end, TextDiffType.DELETED, ignored));
-      list.addAll(createHighlighter(editor, inserted.start, inserted.end, TextDiffType.INSERTED, ignored));
+      list.addAll(createHighlighter(editor, deleted.start, deleted.end, TextDiffType.DELETED, ignored, skipped, excluded));
+      list.addAll(createHighlighter(editor, inserted.start, inserted.end, TextDiffType.INSERTED, ignored, skipped, excluded));
     }
     else if (!inserted.isEmpty()) {
-      list.addAll(createHighlighter(editor, inserted.start, inserted.end, TextDiffType.INSERTED, ignored));
+      list.addAll(createHighlighter(editor, inserted.start, inserted.end, TextDiffType.INSERTED, ignored, skipped, excluded));
     }
     else if (!deleted.isEmpty()) {
-      list.addAll(createHighlighter(editor, deleted.start, deleted.end, TextDiffType.DELETED, ignored));
+      list.addAll(createHighlighter(editor, deleted.start, deleted.end, TextDiffType.DELETED, ignored, skipped, excluded));
     }
 
-    if (innerFragments != null) {
+    if (innerFragments != null && !skipped) {
       int deletedStartOffset = editor.getDocument().getLineStartOffset(deleted.start);
       int insertedStartOffset = editor.getDocument().getLineStartOffset(inserted.start);
 
@@ -298,6 +339,16 @@ public class DiffDrawUtil {
     }
 
     return list;
+  }
+
+  @NotNull
+  private static List<RangeHighlighter> createHighlighter(@NotNull Editor editor, int startLine, int endLine, @NotNull TextDiffType type,
+                                                          boolean ignored, boolean excludedInEditor, boolean excludedInGutter) {
+    return new LineHighlighterBuilder(editor, startLine, endLine, type)
+      .withIgnored(ignored)
+      .withExcludedInEditor(excludedInEditor)
+      .withExcludedInGutter(excludedInGutter)
+      .done();
   }
 
   @NotNull

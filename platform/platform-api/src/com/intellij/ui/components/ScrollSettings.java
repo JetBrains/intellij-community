@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components;
 
 import com.intellij.ide.PowerSaveMode;
@@ -6,16 +6,9 @@ import com.intellij.ide.RemoteDesktopService;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.registry.RegistryValue;
 
-import javax.swing.JDialog;
-import javax.swing.JScrollBar;
-import javax.swing.JTable;
-import javax.swing.JViewport;
-import javax.swing.RootPaneContainer;
-import java.awt.Component;
-import java.awt.Container;
-import java.awt.Window;
+import javax.swing.*;
+import java.awt.*;
 
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
 
@@ -23,15 +16,6 @@ import static com.intellij.openapi.application.ApplicationManager.getApplication
  * @author Sergey.Malenkov
  */
 final class ScrollSettings {
-  private static final RegistryValue PIXEL_PERFECT_SCROLLING = Registry.get("idea.true.smooth.scrolling.pixel.perfect");
-  private static final RegistryValue HIGH_PRECISION_SCROLLING = Registry.get("idea.true.smooth.scrolling.high.precision");
-  private static final RegistryValue DEBUG_ENABLED = Registry.get("idea.true.smooth.scrolling.debug");
-  private static final RegistryValue BACKGROUND_FROM_VIEW = Registry.get("ide.scroll.background.auto");
-  private static final RegistryValue HEADER_OVER_CORNER = Registry.get("ide.scroll.layout.header.over.corner");
-  private static final RegistryValue GAP_NEEDED_FOR_ANY_COMPONENT = Registry.get("ide.scroll.align.component");
-  private static final RegistryValue HORIZONTAL_GAP_NEEDED_ON_MAC = Registry.get("mac.scroll.horizontal.gap");
-  private static final RegistryValue THUMB_SMALL_IF_OPAQUE = Registry.get("ide.scroll.thumb.small.if.opaque");
-
   static boolean isEligibleFor(Component component) {
     if (component == null || !component.isShowing()) return false;
 
@@ -45,24 +29,24 @@ final class ScrollSettings {
   }
 
   static boolean isHighPrecisionEnabled() {
-    return HIGH_PRECISION_SCROLLING.asBoolean();
+    return Registry.is("idea.true.smooth.scrolling.high.precision", true);
   }
 
   static boolean isPixelPerfectEnabled() {
-    return PIXEL_PERFECT_SCROLLING.asBoolean();
+    return Registry.is("idea.true.smooth.scrolling.pixel.perfect", true);
   }
 
   static boolean isDebugEnabled() {
-    return DEBUG_ENABLED.asBoolean();
+    return Registry.is("idea.true.smooth.scrolling.debug", false);
   }
 
   static boolean isBackgroundFromView() {
-    return BACKGROUND_FROM_VIEW.asBoolean();
+    return Registry.is("ide.scroll.background.auto", true);
   }
 
   static boolean isHeaderOverCorner(JViewport viewport) {
     Component view = viewport == null ? null : viewport.getView();
-    return !isNotSupportedYet(view) && HEADER_OVER_CORNER.asBoolean();
+    return !isNotSupportedYet(view) && Registry.is("ide.scroll.layout.header.over.corner", true);
   }
 
   static boolean isNotSupportedYet(Component view) {
@@ -70,15 +54,15 @@ final class ScrollSettings {
   }
 
   static boolean isGapNeededForAnyComponent() {
-    return GAP_NEEDED_FOR_ANY_COMPONENT.asBoolean();
+    return Registry.is("ide.scroll.align.component", true);
   }
 
   static boolean isHorizontalGapNeededOnMac() {
-    return HORIZONTAL_GAP_NEEDED_ON_MAC.asBoolean();
+    return Registry.is("mac.scroll.horizontal.gap", false);
   }
 
   static boolean isThumbSmallIfOpaque() {
-    return THUMB_SMALL_IF_OPAQUE.asBoolean();
+    return Registry.is("ide.scroll.thumb.small.if.opaque", false);
   }
 
   /* A heuristics that disables scrolling interpolation in diff / merge windows.

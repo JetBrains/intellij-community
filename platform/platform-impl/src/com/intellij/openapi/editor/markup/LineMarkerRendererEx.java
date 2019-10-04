@@ -32,6 +32,9 @@ public interface LineMarkerRendererEx extends LineMarkerRenderer {
    * If renderer does not implement LineMarkerRendererEx the RIGHT position will be used.
    *
    * Corresponding rectangle will be passed to renderer in {@link #paint(Editor, Graphics, Rectangle)} method.
+   * <p>
+   * Returned value shouldn't change for the lifetime of {@link RangeHighlighter}. If there's a need to change the position, highlighter
+   * should be recreated.
    */
   @NotNull
   Position getPosition();

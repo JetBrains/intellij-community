@@ -223,8 +223,9 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
           icon = new PoppedIcon(icon, 16, 16);
         }
         Icon disabled = myPresentation.getDisabledIcon();
-        if (disabled == null)
-          disabled = IconLoader.getDisabledIcon(icon);
+        if (disabled == null) {
+          disabled = icon == null ? null : IconLoader.getDisabledIcon(icon);
+        }
         Icon selected = myPresentation.getSelectedIcon();
         if (selected == null)
           selected = icon;
@@ -238,7 +239,7 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
 
   @Override
   public void setIcon(Icon icon) {
-    if (SystemInfo.isMacSystemMenu && ActionPlaces.MAIN_MENU.equals(myPlace)) {
+    if (SystemInfo.isMacSystemMenu && ActionPlaces.MAIN_MENU.equals(myPlace) && icon != null) {
       // JDK can't paint correctly our HiDPI icons at the system menu bar
       icon = IconLoader.getMenuBarIcon(icon, myUseDarkIcons);
     }

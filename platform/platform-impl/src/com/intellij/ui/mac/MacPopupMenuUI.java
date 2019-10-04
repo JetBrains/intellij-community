@@ -66,23 +66,21 @@ public class MacPopupMenuUI extends BasicPopupMenuUI {
     if (rectangle1.x + rectangle1.width < rectangle.x + 10) {
       if (flag) {
         graphics2d.fillRect(-2, -2, 8, 8);
-        return;
       }
       else {
         graphics2d.fillRect(-2, rectangle.height - 6, 8, 8);
-        return;
       }
+      return;
     }
 
     if (rectangle.x + rectangle.width < rectangle1.x + 10) {
       if (flag) {
         graphics2d.fillRect(rectangle.width - 6, -2, 8, 8);
-        return;
       }
       else {
         graphics2d.fillRect(rectangle.width - 6, rectangle.height - 6, 8, 8);
-        return;
       }
+      return;
     }
 
     if (rectangle1.y + rectangle1.height < rectangle.y + 10) {

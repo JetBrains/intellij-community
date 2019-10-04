@@ -22,10 +22,7 @@ import com.intellij.openapi.ui.DialogWrapperDialog;
 import com.intellij.openapi.ui.DialogWrapperPeer;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.ui.popup.StackingPopupDispatcher;
-import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.DimensionService;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
@@ -157,7 +154,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
     if (!headless) {
       Dialog.ModalityType modalityType = DialogWrapper.IdeModalityType.IDE.toAwtModality();
-      if (Registry.is("ide.perProjectModality")) {
+      if (Registry.is("ide.perProjectModality", false)) {
         modalityType = ideModalityType.toAwtModality();
       }
       myDialog.setModalityType(modalityType);
@@ -385,9 +382,14 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     final JRootPane rootPane = getRootPane();
     UIUtil.decorateWindowHeader(rootPane);
 
+    Window window = getWindow();
+    if (window instanceof JDialog && !((JDialog)window).isUndecorated()) {
+      UIUtil.setCustomTitleBar(window, rootPane, runnable -> Disposer.register(myWrapper.getDisposable(), () -> runnable.run()));
+    }
+
     Container contentPane = getContentPane();
     if (IdeFrameDecorator.isCustomDecorationActive() && contentPane instanceof JComponent) {
-      setContentPane(CustomFrameDialogContent.getContent(getWindow(), (JComponent) contentPane));
+      setContentPane(CustomFrameDialogContent.getContent(window, (JComponent) contentPane));
     }
 
     anCancelAction.registerCustomShortcutSet(CommonShortcuts.ESCAPE, rootPane);
@@ -405,7 +407,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
                                   && !isProgressDialog(); // ProgressWindow starts a modality state itself
     Project project = myProject;
 
-    boolean perProjectModality = Registry.is("ide.perProjectModality");
+    boolean perProjectModality = Registry.is("ide.perProjectModality", false);
     if (changeModalityState) {
       commandProcessor.enterModal();
       if (perProjectModality) {
@@ -659,8 +661,10 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
         if (myDimensionServiceKey != null) {
           final Project projectGuess = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(this));
-          location = DimensionService.getInstance().getLocation(myDimensionServiceKey, projectGuess);
-          Dimension size = DimensionService.getInstance().getSize(myDimensionServiceKey, projectGuess);
+          location = getWindowStateService(projectGuess).getLocation(myDimensionServiceKey);
+          if (location == null) location = DimensionService.getInstance().getLocation(myDimensionServiceKey, projectGuess);
+          Dimension size = getWindowStateService(projectGuess).getSize(myDimensionServiceKey);
+          if (size == null) size = DimensionService.getInstance().getSize(myDimensionServiceKey, projectGuess);
           if (size != null) {
             myInitialSize = new Dimension(size);
             _setSizeForLocation(myInitialSize.width, myInitialSize.height, location);
@@ -689,7 +693,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
         setBounds(bounds);
       }
 
-      if (Registry.is("actionSystem.fixLostTyping")) {
+      if (Registry.is("actionSystem.fixLostTyping", true)) {
         final IdeEventQueue queue = IdeEventQueue.getInstance();
         if (queue != null) {
           queue.getKeyEventDispatcher().resetState();
@@ -698,7 +702,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       }
 
       // Workaround for switching workspaces on dialog show
-      if (SystemInfo.isMac && myProject != null && Registry.is("ide.mac.fix.dialog.showing") && !dialogWrapper.isModalProgress()) {
+      if (SystemInfo.isMac && myProject != null && Registry.is("ide.mac.fix.dialog.showing", false) && !dialogWrapper.isModalProgress()) {
         final IdeFrame frame = WindowManager.getInstance().getIdeFrame(myProject.get());
         AppIcon.getInstance().requestFocus(frame);
       }
@@ -741,6 +745,8 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
         removeWindowListener(myWindowListener);
         myWindowListener = null;
       }
+      DialogWrapper wrapper = getDialogWrapper();
+      if (wrapper != null) wrapper.disposeIfNeeded();
 
       DialogWrapper.cleanupWindowListeners(this);
 
@@ -772,7 +778,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
     @Override
     public void paint(Graphics g) {
-      if (!SystemInfo.isMac || UIUtil.isUnderAquaLookAndFeel()) {  // avoid rendering problems with non-aqua (alloy) LaFs under mac
+      if (!SystemInfo.isMac) {  // avoid rendering problems with non-aqua (alloy) LaFs under mac
         // actually, it's a bad idea to globally enable this for dialog graphics since renderers, for example, may not
         // inherit graphics so rendering hints won't be applied and trees or lists may render ugly.
         UISettings.setupAntialiasing(g);
@@ -804,10 +810,12 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
           // Save location
           Point location = getLocation();
+          getWindowStateService(projectGuess).putLocation(myDimensionServiceKey, location);
           DimensionService.getInstance().setLocation(myDimensionServiceKey, location, projectGuess);
           // Save size
           Dimension size = getSize();
           if (!myInitialSize.equals(size)) {
+            getWindowStateService(projectGuess).putSize(myDimensionServiceKey, size);
             DimensionService.getInstance().setSize(myDimensionServiceKey, size, projectGuess);
           }
           myOpened = false;
@@ -961,6 +969,11 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
         final DialogWrapper wrapper = myDialogWrapper.get();
         return wrapper != null && PlatformDataKeys.UI_DISPOSABLE.is(dataId) ? wrapper.getDisposable() : null;
       }
+    }
+
+    @NotNull
+    private static WindowStateService getWindowStateService(@Nullable Project project) {
+      return project == null ? WindowStateService.getInstance() : WindowStateService.getInstance(project);
     }
   }
 

@@ -156,7 +156,7 @@ public class GitLogBranchOperationsActionGroup extends GitSingleCommitActionGrou
                                          @NotNull VcsRef ref,
                                          @NotNull GitRepository repository,
                                          boolean showTagsPopup) {
-    ActionGroup singleRepoActions = createTagActions(project, Collections.singletonList(repository), ref, repository);
+    ActionGroup singleRepoActions = createTagActions(project, Collections.singletonList(repository), ref);
     singleRepoActions.setPopup(false);
 
     String text = showTagsPopup ? ref.getName() : "Tag '" + ref.getName() + "'";
@@ -183,8 +183,7 @@ public class GitLogBranchOperationsActionGroup extends GitSingleCommitActionGrou
   @NotNull
   private static ActionGroup createTagActions(@NotNull Project project,
                                               @NotNull List<? extends GitRepository> repositories,
-                                              @NotNull VcsRef ref,
-                                              @NotNull GitRepository selectedRepository) {
-    return new GitBranchPopupActions.TagActions(project, repositories, ref.getName(), selectedRepository);
+                                              @NotNull VcsRef ref) {
+    return new GitBranchPopupActions.TagActions(project, repositories, ref.getName());
   }
 }

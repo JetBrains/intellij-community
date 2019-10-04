@@ -6,7 +6,6 @@ import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
 import groovy.io.FileType
 import org.apache.tools.ant.types.FileSet
-import org.apache.tools.ant.types.ZipFileSet
 import org.apache.tools.ant.types.resources.FileProvider
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.*
@@ -161,6 +160,7 @@ class DistributionJARsBuilder {
       withModule("intellij.platform.configurationStore.impl")
 
       withModule("intellij.platform.extensions")
+      withModule("intellij.platform.serviceContainer")
       withModule("intellij.platform.bootstrap")
       withModule("intellij.java.guiForms.rt")
       withModule("intellij.platform.icons")
@@ -237,6 +237,7 @@ class DistributionJARsBuilder {
   }
 
   void buildJARs() {
+    prebuildSVG()
     buildSearchableOptions()
     buildLib()
     buildBundledPlugins()
@@ -248,6 +249,11 @@ class DistributionJARsBuilder {
     if (loadingOrderFilePath != null) {
       reorderJARs(loadingOrderFilePath)
     }
+  }
+
+  void prebuildSVG() {
+    def productLayout = buildContext.productProperties.productLayout
+    SVGPreBuilder.prebuildSVGIcons(buildContext, productLayout.mainModules + getModulesToCompile(buildContext) + modulesForPluginsToPublish)
   }
 
   /**
@@ -285,7 +291,8 @@ class DistributionJARsBuilder {
     getProductApiModules(productLayout) +
     getProductImplModules(productLayout) +
     productLayout.additionalPlatformJars.values() +
-    toolModules + buildContext.productProperties.additionalModulesToCompile
+    toolModules + buildContext.productProperties.additionalModulesToCompile +
+    SVGPreBuilder.getModulesToInclude()
   }
 
   List<String> getModulesForPluginsToPublish() {
@@ -330,17 +337,21 @@ class DistributionJARsBuilder {
                             tofile: "$buildContext.paths.artifacts/$artifactNamePrefix-third-party-libraries.json")
     }
 
-    if (productProperties.scrambleMainJar) {
+    buildInternalUtilities()
+
+    if (productProperties.buildSourcesArchive) {
+      def archiveName = "${productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)}-sources.zip"
+      BuildTasks.create(buildContext).zipSourcesOfModules(usedModules, "$buildContext.paths.artifacts/$archiveName")
+    }
+  }
+
+  void buildInternalUtilities() {
+    if (buildContext.productProperties.scrambleMainJar) {
       createLayoutBuilder().layout("$buildContext.paths.buildOutputRoot/internal") {
         jar("internalUtilities.jar") {
           module("intellij.tools.internalUtilities")
         }
       }
-    }
-
-    if (productProperties.buildSourcesArchive) {
-      def archiveName = "${productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)}-sources.zip"
-      BuildTasks.create(buildContext).zipSourcesOfModules(usedModules, "$buildContext.paths.artifacts/$archiveName")
     }
   }
 
@@ -369,6 +380,7 @@ class DistributionJARsBuilder {
     def productLayout = buildContext.productProperties.productLayout
 
     addSearchableOptions(layoutBuilder)
+    SVGPreBuilder.addGeneratedResources(buildContext, layoutBuilder)
 
     def applicationInfoFile = FileUtil.toSystemIndependentName(patchedApplicationInfo.absolutePath)
     def applicationInfoDir = "$buildContext.paths.temp/applicationInfo"
@@ -484,7 +496,10 @@ class DistributionJARsBuilder {
                                                    publishingSpec.includeInCustomPluginRepository &&
                                                    buildContext.proprietaryBuildTools.artifactsServer != null
             //plugins included into the built-in custom plugin repository should use EXACT range because such custom repositories are used for nightly builds and there may be API differences between different builds
-            compatibleBuildRange = includeInBuiltinCustomRepository ? CompatibleBuildRange.EXACT : CompatibleBuildRange.NEWER_WITH_SAME_BASELINE
+            compatibleBuildRange = includeInBuiltinCustomRepository ? CompatibleBuildRange.EXACT :
+                                   //when publishing plugins with EAP build let's use restricted range to ensure that users will update to a newer version of the plugin when they update to the next EAP or release build
+                                   buildContext.applicationInfo.isEAP ? CompatibleBuildRange.RESTRICTED_TO_SAME_RELEASE
+                                                                      : CompatibleBuildRange.NEWER_WITH_SAME_BASELINE
           }
 
           setPluginVersionAndSince(patchedPluginXmlPath, getPluginVersion(plugin),
@@ -842,13 +857,9 @@ class DistributionJARsBuilder {
   }
 
   private FileSet createFileSet(String pattern, File baseDir) {
-    def fileSet = new ZipFileSet()
-    if (baseDir.getName().endsWith(".jar")) {
-      fileSet.setSrc(baseDir)
-    } else {
-      fileSet.setDir(baseDir)
-    }
+    def fileSet = new FileSet()
     fileSet.setProject(buildContext.ant.antProject)
+    fileSet.setDir(baseDir)
     fileSet.createInclude().setName(pattern)
     return fileSet
   }

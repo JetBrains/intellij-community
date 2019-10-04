@@ -36,7 +36,7 @@
     </action>
 
     <action class="git4idea.log.GitShowCommitInLogAction" id="Git.SelectInGitLog"/>
-    <action class="git4idea.log.GitBrowseRepoAtRevisionAction" id="Git.BrowseRepoAtRevision"/>
+    <action class="git4idea.log.GitBrowseRepoAtRevisionAction" id="Git.BrowseRepoAtRevision" text="Show Repository at Revision"/>
 
     <group class="git4idea.actions.GitCheckoutActionGroup" id="Git.CheckoutGroup" text="Checkout"
            description="Checkout selected revision or a branch on selected commit"/>
@@ -65,7 +65,8 @@
 
     <group id="GitFileActions">
       <reference ref="CheckinFiles"/>
-      <action id="Git.Add" class="git4idea.actions.GitAdd" text="Add" icon="AllIcons.General.Add" use-shortcut-of="ChangesView.AddUnversioned" />
+      <action id="Git.Add" class="com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionWithIgnoredFilesConfirmationAction"
+              text="Add" icon="AllIcons.General.Add" use-shortcut-of="ChangesView.AddUnversioned"/>
       <separator/>
       <reference ref="Annotate"/>
       <reference ref="Show.Current.Revision"/>
@@ -101,6 +102,7 @@
       <action id="Git.Rebase.Abort" class="git4idea.actions.GitRebaseAbort" text="Abort Rebase"/>
       <action id="Git.Merge.Abort" class="git4idea.actions.GitAbortOperationAction$Merge" text="Abort Merge"/>
       <action id="Git.CherryPick.Abort" class="git4idea.actions.GitAbortOperationAction$CherryPick" text="Abort Cherry-Pick"/>
+      <action id="Git.Revert.Abort" class="git4idea.actions.GitAbortOperationAction$Revert" text="Abort Revert"/>
       <action id="Git.Rebase.Continue" class="git4idea.actions.GitRebaseContinue" text="Continue Rebase"/>
       <action id="Git.Rebase.Skip" class="git4idea.actions.GitRebaseSkip" text="Skip Commit"/>
       <action id="Git.Cleanup.Branches" class="git4idea.branch.GitCleanupBranchesAction" text="Cleanup Branches" internal="true"/>.
@@ -111,6 +113,7 @@
       <reference id="Git.Rebase.Abort"/>
       <reference id="Git.Merge.Abort"/>
       <reference id="Git.CherryPick.Abort"/>
+      <reference id="Git.Revert.Abort"/>
       <reference id="Git.Rebase.Continue"/>
       <reference id="Git.Rebase.Skip"/>
     </group>
@@ -171,8 +174,8 @@
     </group>
 
     <group id="Git.Log.Toolbar">
-      <action id="Git.Log.DeepCompare" class="git4idea.branch.DeepCompareAction" text="Non-Picked Commits"
-              description="Dims those commits which have equivalent changes in the current branch"/>
+      <action id="Git.Log.DeepCompare" class="git4idea.branch.DeepCompareAction" text="Not Cherry-Picked Commits"
+              description="Highlights commits which have not been cherry-picked to the current branch"/>
       <add-to-group group-id="Vcs.Log.PresentationSettings" relative-to-action="Vcs.Log.HighlightersActionGroup" anchor="after"/>
     </group>
 
@@ -182,6 +185,8 @@
       <add-to-group group-id="Unversioned.Files.Dialog.Popup" anchor="after" relative-to-action="$Delete"/>
     </group>
 
+    <action id="git4idea.commands.TestGitHttpLoginDialogAction" class="git4idea.commands.TestGitHttpLoginDialogAction"
+            text="Test Git login dialog" internal="true"/>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -210,23 +215,21 @@
         implementation="git4idea.diff.GitSubmoduleDiffRequestProvider"/>
     <vcsChangesViewRefresher implementation="git4idea.ignore.GitIgnoredFilesHolder$Provider"/>
     <vcs.ignoredFilesHolder implementation="git4idea.ignore.GitIgnoredFilesHolder$Provider"/>
-    <projectConfigurable id="vcs.Git" displayName="Git" instance="git4idea.config.GitVcsConfigurable"
+    <projectConfigurable id="vcs.Git" displayName="Git" instance="git4idea.config.GitVcsPanel"
                          parentId="project.propVCSSupport.Mappings" groupWeight="-500"/>
 
     <projectService serviceImplementation="git4idea.repo.GitRepositoryManager"/>
     <projectService serviceImplementation="git4idea.ui.branch.GitBranchManager"/>
     <projectService serviceImplementation="git4idea.branch.GitBranchIncomingOutgoingManager"/>
-    <projectService serviceImplementation="git4idea.annotate.GitAnnotationProvider"/>
-    <projectService serviceImplementation="git4idea.diff.GitDiffProvider"/>
     <projectService serviceImplementation="git4idea.checkin.GitCheckinEnvironment"/>
     <projectService serviceImplementation="git4idea.status.GitChangeProvider"/>
-    <projectService serviceImplementation="git4idea.history.GitHistoryProvider"/>
-    <projectService serviceImplementation="git4idea.rollback.GitRollbackEnvironment"/>
+    <projectService serviceImplementation="git4idea.checkin.GitCommitAndPushExecutor"/>
+    <projectService serviceImplementation="git4idea.changes.GitOutgoingChangesProvider"/>
+    <projectService serviceImplementation="git4idea.changes.GitCommittedChangeListProvider"/>
+    <projectService serviceImplementation="git4idea.update.GitUpdateEnvironment"/>
     <projectService serviceImplementation="git4idea.config.GitVcsSettings" configurationSchemaKey="versionControl.git"/>
     <projectService serviceImplementation="git4idea.config.GitRebaseSettings"/>
     <projectService serviceImplementation="git4idea.config.GitSharedSettings" />
-    <projectService serviceImplementation="git4idea.config.GitExecutableValidator"/>
-    <projectService serviceImplementation="git4idea.util.GitVcsConsoleWriter"/>
     <projectService serviceInterface="git4idea.branch.GitBrancher"
                     serviceImplementation="git4idea.branch.GitBrancherImpl"/>
     <projectService serviceImplementation="git4idea.GitUserRegistry" />
@@ -246,8 +249,6 @@
     <applicationService serviceInterface="git4idea.commands.Git"
                         serviceImplementation="git4idea.commands.GitImpl"/>
     <applicationService serviceImplementation="git4idea.config.GitExecutableManager"/>
-    <applicationService serviceInterface="git4idea.GitPlatformFacade"
-                        serviceImplementation="git4idea.GitPlatformFacadeImpl" />
     <applicationService serviceImplementation="git4idea.DialogManager" />
     <applicationService serviceImplementation="git4idea.log.GitExternalLogTabsProperties"/>
 
@@ -258,12 +259,11 @@
 
     <ignoredFileContentProvider implementation="git4idea.ignore.GitIgnoredFileContentProvider"/>
     <openapi.vcs.changes.vcsPreservingExecutor implementation="git4idea.util.GitPreservingExecutor"/>
-    <actionPromoter implementation="git4idea.actions.GitActionPromoter"/>
     <editorNotificationProvider implementation="git4idea.conflicts.MergeConflictResolveUtil$NotificationProvider"/>
+    <codeInsight.linkHandler prefix="#git_commit/" handlerClass="git4idea.log.GitCommitTooltipLinkHandler"/>
 
     <!-- Git ignore lang -->
-    <fileTypeFactory
-        implementation="git4idea.ignore.GitIgnoreFileTypeFactory"/>
+    <fileType language="GitIgnore" extensions="gitignore" fieldName="INSTANCE" name="GitIgnore file" implementationClass="git4idea.ignore.lang.GitIgnoreFileType"/>
     <lang.parserDefinition language="GitIgnore"
                            implementationClass="com.intellij.openapi.vcs.changes.ignore.lang.IgnoreParserDefinition"/>
     <codeInsight.lineMarkerProvider language="GitIgnore"
@@ -273,9 +273,12 @@
      <!--END Git ignore lang-->
 
     <postStartupActivity implementation="git4idea.conflicts.GitConflictsToolWindowManager$Starter"/>
+    <backgroundPostStartupActivity implementation="git4idea.config.GitSetupProjectConfig" />
 
     <registryKey key="git.update.incoming.info.time" defaultValue="20"
                  description="Time period (in minutes) between incoming commits checks." restartRequired="true"/>
+
+    <vcs.actions.ScheduleForAdditionActionExtension implementation="git4idea.actions.GitAdd"/>
   </extensions>
 
   <extensionPoints>

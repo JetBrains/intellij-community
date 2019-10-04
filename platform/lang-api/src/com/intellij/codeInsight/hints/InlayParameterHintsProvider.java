@@ -98,4 +98,18 @@ public interface InlayParameterHintsProvider {
    * @return text of preview, will be used in settings
    */
   default String getSettingsPreview() { return null; }
+
+  /**
+   * @return true iff set of options is complete and if all options are off, provider will collect no hints
+   */
+  default boolean isExhaustive() {
+    return false;
+  }
+
+  /**
+   * @return text of main checkbox in hints settings
+   */
+  default String getMainCheckboxText() {
+    return "Show parameter hints";
+  }
 }

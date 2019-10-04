@@ -172,13 +172,13 @@ public class Util {
         fd2.name = fd1.name + "1";
         fd2.duplicateIndex = 1;
         fdMap.put(fd2.name, fd2);
-        fd1.name = fd1.name + "2";
+        fd1.name += "2";
         fd1.duplicateIndex = 2;
       }
     } else if ((fd2 = fdMap.get(fd1.name + "1")) != null) {
       int id = 2;
       while (fdMap.containsKey(fd1.name + id)) id++;
-      fd1.name = fd1.name + id;
+      fd1.name += id;
       fd1.duplicateIndex = id;
     }
     fdMap.put(fd1.name, fd1);
@@ -186,7 +186,7 @@ public class Util {
   }
 
   public static String expandProperties(final String str, final Map<String, String> map) {
-    if (str.indexOf("${") == -1) return str;
+    if (!str.contains("${")) return str;
     int state = 0;
     final StringBuilder result = new StringBuilder();
     final StringBuilder variable = new StringBuilder();

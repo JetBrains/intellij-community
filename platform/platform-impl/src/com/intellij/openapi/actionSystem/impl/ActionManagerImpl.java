@@ -5,13 +5,14 @@ import com.intellij.AbstractBundle;
 import com.intellij.CommonBundle;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.diagnostic.StartUpMeasurer;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.ActivityTracker;
 import com.intellij.ide.AndroidStudioSystemHealthMonitorAdapter;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.ActionsCollector;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.idea.IdeaLogger;
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionIdProvider;
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl;
@@ -128,12 +129,16 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   private long myLastTimeEditorWasTypedIn;
   private boolean myTransparentOnlyUpdate;
   private final Map<OverridingAction, AnAction> myBaseActions = new HashMap<>();
-  private final AnActionListener messageBusPublisher;
   private int myAnonymousGroupIdCounter;
+  private boolean myPreloadComplete;
 
   ActionManagerImpl() {
     registerPluginActions();
-    messageBusPublisher = ApplicationManager.getApplication().getMessageBus().syncPublisher(AnActionListener.TOPIC);
+  }
+
+  @NotNull
+  private static AnActionListener publisher() {
+    return ApplicationManager.getApplication().getMessageBus().syncPublisher(AnActionListener.TOPIC);
   }
 
   @Nullable
@@ -182,7 +187,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       ClassLoader classLoader = actionClass.getClassLoader();
 
       if (stub.getPluginId() != null) {
-        final IdeaPluginDescriptor plugin = PluginManager.getPlugin(stub.getPluginId());
+        final IdeaPluginDescriptor plugin = PluginManagerCore.getPlugin(stub.getPluginId());
         if (plugin != null) {
           classLoader = plugin.getPluginClassLoader();
         }
@@ -232,7 +237,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     if (iconPath == null) return;
 
     try {
-      final Class actionClass = Class.forName(className, true, loader);
+      Class<?> actionClass = Class.forName(className, true, loader);
       setIconFromClass(actionClass, loader, iconPath, presentation, pluginId);
     }
     catch (ClassNotFoundException | NoClassDefFoundError e) {
@@ -241,15 +246,16 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     }
   }
 
-  private static void setIconFromClass(@NotNull final Class actionClass,
+  private static void setIconFromClass(@NotNull Class<?> actionClass,
                                        @NotNull final ClassLoader classLoader,
                                        @NotNull final String iconPath,
                                        @NotNull Presentation presentation,
                                        final PluginId pluginId) {
     final IconLoader.LazyIcon lazyIcon = new IconLoader.LazyIcon() {
+      @NotNull
       @Override
       protected Icon compute() {
-        //try to find icon in idea class path
+        // try to find icon in idea class path
         Icon icon = IconLoader.findIcon(iconPath, actionClass, true, false);
         if (icon == null) {
           icon = IconLoader.findIcon(iconPath, classLoader);
@@ -257,6 +263,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
 
         if (icon == null) {
           reportActionError(pluginId, "Icon cannot be found in '" + iconPath + "', action '" + actionClass + "'");
+          icon = AllIcons.Nodes.Unknown;
         }
 
         return icon;
@@ -353,7 +360,9 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     processRemoveAndReplace(element, actionId, keymap, shortcut);
   }
 
-  private static void assertActionIsGroupOrStub(final AnAction action) {
+  private void assertActionIsGroupOrStub(final AnAction action) {
+    if (myPreloadComplete) return;
+
     if (!(action instanceof ActionGroup || action instanceof ActionStub || action instanceof ChameleonAction)) {
       LOG.error("Action : " + action + "; class: " + action.getClass());
     }
@@ -386,7 +395,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
 
   private static String getPluginInfo(@Nullable PluginId id) {
     if (id != null) {
-      final IdeaPluginDescriptor plugin = PluginManager.getPlugin(id);
+      final IdeaPluginDescriptor plugin = PluginManagerCore.getPlugin(id);
       if (plugin != null) {
         String name = plugin.getName();
         if (name == null) {
@@ -474,14 +483,18 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   private void registerPluginActions() {
     final List<IdeaPluginDescriptor> plugins = PluginManagerCore.getLoadedPlugins();
     for (IdeaPluginDescriptor plugin : plugins) {
-      final List<Element> elementList = plugin.getAndClearActionDescriptionElements();
-      if (elementList != null) {
-        long startTime = StartUpMeasurer.getCurrentTime();
-        for (Element e : elementList) {
-          processActionsChildElement(plugin.getPluginClassLoader(), plugin.getPluginId(), e);
-        }
-        StartUpMeasurer.addPluginCost(plugin.getPluginId().getIdString(), "Actions", System.nanoTime() - startTime);
+      registerPluginActions(plugin);
+    }
+  }
+
+  public void registerPluginActions(IdeaPluginDescriptor plugin) {
+    final List<Element> elementList = plugin.getActionDescriptionElements();
+    if (elementList != null) {
+      long startTime = StartUpMeasurer.getCurrentTime();
+      for (Element e : elementList) {
+        processActionsChildElement(plugin.getPluginClassLoader(), plugin.getPluginId(), e);
       }
+      StartUpMeasurer.addPluginCost(plugin.getPluginId().getIdString(), "Actions", System.nanoTime() - startTime);
     }
   }
 
@@ -596,7 +609,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     String descriptionValue = element.getAttributeValue(DESCRIPTION);
 
     ActionStub stub = new ActionStub(className, id, loader, pluginId, iconPath, projectType, () -> {
-      IdeaPluginDescriptor plugin = PluginManager.getPlugin(pluginId);
+      IdeaPluginDescriptor plugin = PluginManagerCore.getPlugin(pluginId);
       ResourceBundle bundle = getActionsResourceBundle(loader, plugin);
       String text = computeActionText(bundle, id, ACTION_ELEMENT_NAME, textValue);
       if (text == null) {
@@ -667,7 +680,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   }
 
   private AnAction processGroupElement(@NotNull Element element, final ClassLoader loader, PluginId pluginId) {
-    final IdeaPluginDescriptor plugin = PluginManager.getPlugin(pluginId);
+    final IdeaPluginDescriptor plugin = PluginManagerCore.getPlugin(pluginId);
     ResourceBundle bundle = getActionsResourceBundle(loader, plugin);
 
     if (!GROUP_ELEMENT_NAME.equals(element.getName())) {
@@ -695,7 +708,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
         group = new DefaultCompactActionGroup();
       }
       else if (id == null) {
-        Class aClass = Class.forName(className, true, loader);
+        Class<?> aClass = Class.forName(className, true, loader);
         Object obj = new CachingConstructorInjectionComponentAdapter(className, aClass).getComponentInstance(ApplicationManager.getApplication().getPicoContainer());
 
         if (!(obj instanceof ActionGroup)) {
@@ -817,7 +830,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     }
   }
 
-  /**\
+  /**
    * @param element description of link
    */
   private void processAddToGroupNode(AnAction action, Element element, final PluginId pluginId, boolean secondary) {
@@ -826,9 +839,9 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       assertActionIsGroupOrStub(action);
     }
 
-    String actionName = String.format(
-      "%s (%s)", action instanceof ActionStub? ((ActionStub)action).getClassName() : action.getClass().getName(),
-      action instanceof ActionStub ? ((ActionStub)action).getId() : myAction2Id.get(action));
+    String name = action instanceof ActionStub ? ((ActionStub)action).getClassName() : action.getClass().getName();
+    String id = action instanceof ActionStub ? ((ActionStub)action).getId() : myAction2Id.get(action);
+    String actionName = name + " (" + id + ")";
 
     if (!ADD_TO_GROUP_ELEMENT_NAME.equals(element.getName())) {
       reportActionError(pluginId, "unexpected name of element \"" + element.getName() + "\"");
@@ -917,12 +930,6 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     }
 
     AbbreviationManager.getInstance().removeAllAbbreviations(id);
-    for (AnAction anAction : myId2Action.values()) {
-      if (anAction instanceof DefaultActionGroup) {
-        ((DefaultActionGroup) anAction).remove(action, id);
-      }
-    }
-
     unregisterAction(id);
   }
 
@@ -1008,7 +1015,6 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     assertActionIsGroupOrStub(action);
     return action;
   }
-
   private void processActionsChildElement(final ClassLoader loader, final PluginId pluginId, @NotNull Element child) {
     String name = child.getName();
     if (ACTION_ELEMENT_NAME.equals(name)) {
@@ -1031,6 +1037,39 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     }
     else {
       reportActionError(pluginId, "unexpected name of element \"" + name + "\n");
+    }
+  }
+
+
+  public boolean canUnloadActions(IdeaPluginDescriptor pluginDescriptor) {
+    List<Element> elements = pluginDescriptor.getActionDescriptionElements();
+    if (elements == null) return true;
+    for (Element element : elements) {
+      if (!element.getName().equals(ACTION_ELEMENT_NAME) &&
+          !(element.getName().equals(GROUP_ELEMENT_NAME) && element.getAttributeValue(ID_ATTR_NAME) != null)) {
+        LOG.info("Plugin " + pluginDescriptor.getPluginId() + " is not unload-safe because of action element " + element.getName());
+        return false;
+      }
+    }
+    return true;
+  }
+
+  public void unloadActions(IdeaPluginDescriptor pluginDescriptor) {
+    List<Element> elements = pluginDescriptor.getActionDescriptionElements();
+    if (elements == null) return;
+    for (Element element : elements) {
+      if (element.getName().equals(ACTION_ELEMENT_NAME)) {
+        String className = element.getAttributeValue(CLASS_ATTR_NAME);
+        String id = obtainActionId(element, className);
+        unregisterAction(id);
+      }
+      else if (element.getName().equals(GROUP_ELEMENT_NAME)) {
+        String id = element.getAttributeValue(ID_ATTR_NAME);
+        if (id == null) {
+          throw new IllegalStateException("Cannot unload groups with no ID");
+        }
+        unregisterAction(id);
+      }
     }
   }
 
@@ -1109,8 +1148,8 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       if (!myId2Action.containsKey(actionId)) {
         if (LOG.isDebugEnabled()) {
           LOG.debug("action with ID " + actionId + " wasn't registered");
-          return;
         }
+        return;
       }
       AnAction oldValue = myId2Action.remove(actionId);
       myAction2Id.remove(oldValue);
@@ -1122,6 +1161,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       }
       if (removeFromGroups) {
         for (String groupId : myId2GroupId.get(actionId)) {
+          CustomActionsSchema.getInstance().invalidateCustomizedActionGroup(groupId);
           DefaultActionGroup group = ObjectUtils.assertNotNull((DefaultActionGroup)getActionOrStub(groupId));
           group.remove(oldValue, actionId);
         }
@@ -1197,7 +1237,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
 
   @Override
   public void replaceAction(@NotNull String actionId, @NotNull AnAction newAction) {
-    Class callerClass = ReflectionUtil.getGrandCallerClass();
+    Class<?> callerClass = ReflectionUtil.getGrandCallerClass();
     PluginId pluginId = callerClass != null ? PluginManagerCore.getPluginByClassName(callerClass.getName()) : null;
     replaceAction(actionId, newAction, pluginId);
   }
@@ -1267,7 +1307,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     for (AnActionListener listener : myActionListeners) {
       listener.beforeActionPerformed(action, dataContext, event);
     }
-    messageBusPublisher.beforeActionPerformed(action, dataContext, event);
+    publisher().beforeActionPerformed(action, dataContext, event);
   }
 
   @Override
@@ -1282,7 +1322,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       }
       catch(AbstractMethodError ignored) { }
     }
-    messageBusPublisher.afterActionPerformed(action, dataContext, event);
+    publisher().afterActionPerformed(action, dataContext, event);
   }
 
   @Override
@@ -1310,7 +1350,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     for (AnActionListener listener : myActionListeners) {
       listener.beforeEditorTyping(c, dataContext);
     }
-    messageBusPublisher.beforeEditorTyping(c, dataContext);
+    publisher().beforeEditorTyping(c, dataContext);
   }
 
   @Override
@@ -1329,7 +1369,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     }
   }
 
-  public void preloadActions(ProgressIndicator indicator) {
+  public void preloadActions(@NotNull ProgressIndicator indicator) {
     Application application = ApplicationManager.getApplication();
 
     for (String id : getActionIds()) {
@@ -1344,6 +1384,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       // and make it impossible to replace the corresponding actions later
       // (via unregisterAction+registerAction, as some app components do)
     }
+    myPreloadComplete = true;
   }
 
   @NotNull

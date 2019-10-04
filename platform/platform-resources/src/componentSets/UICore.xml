@@ -16,14 +16,7 @@
       <headless-implementation-class>com.intellij.ide.impl.HeadlessDataManager</headless-implementation-class>
     </component>
     <component>
-      <interface-class>com.intellij.openapi.actionSystem.ActionManager</interface-class>
-      <implementation-class>com.intellij.openapi.actionSystem.impl.ActionManagerImpl</implementation-class>
-    </component>
-    <component>
       <implementation-class>com.intellij.ide.IdeTooltipManager</implementation-class>
-    </component>
-    <component>
-      <implementation-class>com.intellij.openapi.actionSystem.impl.MouseGestureManager</implementation-class>
     </component>
     <component>
       <interface-class>com.intellij.ide.SaveAndSyncHandler</interface-class>
@@ -34,6 +27,10 @@
       <interface-class>com.intellij.ide.FrameStateManager</interface-class>
       <implementation-class>com.intellij.ide.FrameStateManagerImpl</implementation-class>
     </component>
+    <component>
+      <implementation-class>com.intellij.openapi.updateSettings.impl.UpdateCheckerComponent</implementation-class>
+      <headless-implementation-class/>
+    </component>
   </application-components>
 
   <project-components>
@@ -42,15 +39,11 @@
       <implementation-class>com.intellij.openapi.wm.impl.ToolWindowManagerImpl</implementation-class>
       <headless-implementation-class>com.intellij.openapi.wm.impl.ToolWindowHeadlessManagerImpl</headless-implementation-class>
     </component>
-    <component>
-      <interface-class>com.intellij.openapi.wm.IdeFocusManager</interface-class>
-      <implementation-class>com.intellij.openapi.wm.impl.IdeFocusManagerImpl</implementation-class>
-      <headless-implementation-class>com.intellij.openapi.wm.impl.IdeFocusManagerHeadless</headless-implementation-class>
-    </component>
   </project-components>
 
   <extensions defaultExtensionNs="com.intellij">
-    <applicationInitializedListener implementation="com.intellij.openapi.wm.impl.WindowDressing"/>
+    <applicationService serviceInterface="com.intellij.openapi.actionSystem.ActionManager"
+                        serviceImplementation="com.intellij.openapi.actionSystem.impl.ActionManagerImpl"/>
     <postStartupActivity implementation="com.intellij.openapi.wm.impl.LibraryDependentToolWindowManager"/>
   </extensions>
 </idea-plugin>

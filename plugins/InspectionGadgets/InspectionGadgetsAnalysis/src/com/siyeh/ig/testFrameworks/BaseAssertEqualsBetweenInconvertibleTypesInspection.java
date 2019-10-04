@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.testFrameworks;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -18,7 +18,6 @@ public abstract class BaseAssertEqualsBetweenInconvertibleTypesInspection extend
   public String getDisplayName() {
     return InspectionGadgetsBundle.message("assertequals.between.inconvertible.types.display.name");
   }
-
   
   @Override
   @NotNull
@@ -46,16 +45,15 @@ public abstract class BaseAssertEqualsBetweenInconvertibleTypesInspection extend
       super.visitMethodCallExpression(expression);
       final AssertHint assertHint = AssertHint.createAssertEqualsHint(expression, checkTestNG());
       if (assertHint == null) return;
-      final PsiExpression[] arguments = expression.getArgumentList().getExpressions();
-      final int argIndex = assertHint.getArgIndex();
-      final PsiType type1 = arguments[argIndex].getType();
+      final PsiType type1 = assertHint.getFirstArgument().getType();
       if (type1 == null) {
         return;
       }
-      final PsiType type2 = arguments[argIndex + 1].getType();
+      final PsiType type2 = assertHint.getSecondArgument().getType();
       if (type2 == null) {
         return;
       }
+      final int argIndex = assertHint.getArgIndex();
       final PsiParameter[] parameters = assertHint.getMethod().getParameterList().getParameters();
       final PsiType parameterType1 = parameters[argIndex].getType();
       final PsiType parameterType2 = parameters[argIndex + 1].getType();

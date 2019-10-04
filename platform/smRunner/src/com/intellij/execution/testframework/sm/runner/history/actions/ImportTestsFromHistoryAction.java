@@ -50,7 +50,7 @@ public class ImportTestsFromHistoryAction extends AbstractImportTestsAction {
 
   @Nullable
   @Override
-  public VirtualFile getFile(@NotNull Project project) {
+  protected VirtualFile getFile(@NotNull Project project) {
     return LocalFileSystem.getInstance().refreshAndFindFileByPath(TestStateStorage.getTestHistoryRoot(project).getPath() + "/" + myFileName);
   }
 }

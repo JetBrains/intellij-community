@@ -24,11 +24,10 @@ import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.RefreshSession;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.testFramework.EdtTestUtil;
-import com.intellij.testFramework.PlatformLiteFixture;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.HeavyPlatformTestCase;
+import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.rules.TempDirectory;
-import com.intellij.util.ExceptionUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.StartupUiUtil;
@@ -41,6 +40,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -301,7 +301,7 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
 
   @Test(timeout = 20_000)
   public void testScanNewChildrenMustNotBeRunOutsideOfProjectRoots() throws Exception {
-    checkNewDirAndRefresh(__->{}, getAllExcludedCalled->assertFalse(getAllExcludedCalled.get()));
+    checkNewDirAndRefresh(__-> {}, getAllExcludedCalled->assertFalse(getAllExcludedCalled.get()));
   }
 
   @Test(timeout = 20_000)
@@ -309,7 +309,7 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
     AtomicReference<Project> project = new AtomicReference<>();
     checkNewDirAndRefresh(temp ->
         WriteCommandAction.runWriteCommandAction(null, ()->{
-          project.set(PlatformTestCase.createProject(temp, ExceptionUtil.currentStackTrace()));
+          project.set(HeavyPlatformTestCase.createProject(temp));
           assertTrue(ProjectManagerEx.getInstanceEx().openProject(project.get()));
           assertTrue(project.get().isOpen());
         }),
@@ -325,7 +325,7 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
     });
   }
 
-  private void checkNewDirAndRefresh(Consumer<? super File> dirCreatedCallback, Consumer<? super AtomicBoolean> getAllExcludedCalledChecker) throws IOException {
+  private void checkNewDirAndRefresh(Consumer<? super Path> dirCreatedCallback, Consumer<? super AtomicBoolean> getAllExcludedCalledChecker) throws IOException {
     AtomicBoolean getAllExcludedCalled = new AtomicBoolean();
     ProjectManagerImpl test = new ProjectManagerImpl() {
       @NotNull
@@ -336,17 +336,16 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
         return super.getAllExcludedUrls();
       }
     };
-    ProjectManager old = ProjectManager.getInstance();
-    PlatformLiteFixture.registerComponentInstance(ApplicationManager.getApplication(), ProjectManager.class, test);
-    assertSame(test, ProjectManager.getInstance());
 
+    ServiceContainerUtil.replaceService(ApplicationManager.getApplication(), ProjectManager.class, test, test);
+    assertSame(test, ProjectManager.getInstance());
 
     try {
       final File temp = myTempDir.newFolder();
       VirtualDirectoryImpl vTemp = (VirtualDirectoryImpl)LocalFileSystem.getInstance().refreshAndFindFileByIoFile(temp);
       assertNotNull(vTemp);
       vTemp.getChildren(); //to force full dir refresh?!
-      dirCreatedCallback.accept(temp);
+      dirCreatedCallback.accept(temp.toPath());
       File d = new File(temp, "d");
       assertTrue(d.mkdir());
       File d1 = new File(d, "d1");
@@ -365,10 +364,6 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
       getAllExcludedCalledChecker.accept(getAllExcludedCalled);
     }
     finally {
-      if (old != null) {
-        PlatformLiteFixture.registerComponentInstance(ApplicationManager.getApplication(), ProjectManager.class, old);
-      }
-      assertSame(old, ProjectManager.getInstance());
       WriteAction.runAndWait(() -> Disposer.dispose(test));
     }
   }
@@ -431,7 +426,7 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
       nonModalSession.launch();
 
       if (waitForDiskRefreshCompletionBeforeStartingModality) {
-        TimeoutUtil.sleep(100); // hopefully that's enough for refresh thread to ee the disk changes
+        TimeoutUtil.sleep(100);  // hopefully that's enough for refresh thread to see the disk changes
         UIUtil.dispatchAllInvocationEvents();
       }
 

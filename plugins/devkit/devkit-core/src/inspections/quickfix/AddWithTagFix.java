@@ -65,7 +65,7 @@ public class AddWithTagFix implements LocalQuickFix {
         if (attributeName == null) {
           attributeName = field.getName();
         }
-        if (attributeName.equals("forClass")) {
+        if ("forClass".equals(attributeName)) {
           continue;
         }
         with.getAttribute().setStringValue(attributeName);

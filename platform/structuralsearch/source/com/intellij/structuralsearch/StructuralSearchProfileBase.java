@@ -135,18 +135,20 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
   public CompiledPattern createCompiledPattern() {
     return new CompiledPattern() {
 
+      @NotNull
       @Override
-      protected SubstitutionHandler doCreateSubstitutionHandler(String name, boolean target, int minOccurs, int maxOccurs, boolean greedy) {
+      protected SubstitutionHandler doCreateSubstitutionHandler(@NotNull String name, boolean target, int minOccurs, int maxOccurs, boolean greedy) {
         return new MySubstitutionHandler(name, target, minOccurs, maxOccurs, greedy);
       }
 
+      @NotNull
       @Override
       public String[] getTypedVarPrefixes() {
         return getVarPrefixes();
       }
 
       @Override
-      public boolean isTypedVar(String str) {
+      public boolean isTypedVar(@NotNull String str) {
         for (String prefix : getVarPrefixes()) {
           if (str.startsWith(prefix)) {
             return true;
@@ -157,7 +159,7 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
 
       @NotNull
       @Override
-      public String getTypedVarString(PsiElement element) {
+      public String getTypedVarString(@NotNull PsiElement element) {
         final PsiElement initialElement = element;
         PsiElement child = SkippingHandler.getOnlyNonWhitespaceChild(element);
 

@@ -70,53 +70,48 @@ class VariableExtractor {
     myPosition = editor != null ? editor.getCaretModel().getLogicalPosition() : null;
   }
 
+  @NotNull
   private SmartPsiElementPointer<PsiVariable> extractVariable() {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
-    try {
-      final PsiExpression newExpr = myFieldConflictsResolver.fixInitializer(myExpression);
-      PsiExpression initializer = RefactoringUtil.unparenthesizeExpression(newExpr);
-      final SmartTypePointer selectedType = SmartTypePointerManager.getInstance(myProject).createSmartTypePointer(
-        mySettings.getSelectedType());
-      initializer = IntroduceVariableBase.simplifyVariableInitializer(initializer, selectedType.getType());
-      CommentTracker commentTracker = new CommentTracker();
-      commentTracker.markUnchanged(initializer);
-      initializer = (PsiExpression)initializer.copy();
+    final PsiExpression newExpr = myFieldConflictsResolver.fixInitializer(myExpression);
+    PsiExpression initializer = RefactoringUtil.unparenthesizeExpression(newExpr);
+    final SmartTypePointer selectedType = SmartTypePointerManager.getInstance(myProject).createSmartTypePointer(
+      mySettings.getSelectedType());
+    initializer = IntroduceVariableBase.simplifyVariableInitializer(initializer, selectedType.getType());
+    CommentTracker commentTracker = new CommentTracker();
+    commentTracker.markUnchanged(initializer);
+    initializer = (PsiExpression)initializer.copy();
 
-      PsiType type = stripNullabilityAnnotationsFromTargetType(selectedType, newExpr);
-      PsiElement declaration = createDeclaration(type, mySettings.getEnteredName(), initializer);
+    PsiType type = stripNullabilityAnnotationsFromTargetType(selectedType, newExpr);
+    PsiElement declaration = createDeclaration(type, mySettings.getEnteredName(), initializer);
 
-      replaceOccurrences(newExpr);
+    replaceOccurrences(newExpr);
 
-      ensureCodeBlock();
+    ensureCodeBlock();
 
-      PsiVariable var = addVariable(declaration, initializer);
+    PsiVariable var = addVariable(declaration, initializer);
 
-      if (myAnchor instanceof PsiExpressionStatement &&
-          ExpressionUtils.isReferenceTo(((PsiExpressionStatement)myAnchor).getExpression(), var)) {
-        commentTracker.deleteAndRestoreComments(myAnchor);
-        if (myEditor != null) {
-          myEditor.getCaretModel().moveToLogicalPosition(myPosition);
-          myEditor.getCaretModel().moveToOffset(var.getTextRange().getEndOffset());
-          myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-          myEditor.getSelectionModel().removeSelection();
-        }
+    if (myAnchor instanceof PsiExpressionStatement &&
+        ExpressionUtils.isReferenceTo(((PsiExpressionStatement)myAnchor).getExpression(), var)) {
+      commentTracker.deleteAndRestoreComments(myAnchor);
+      if (myEditor != null) {
+        myEditor.getCaretModel().moveToLogicalPosition(myPosition);
+        myEditor.getCaretModel().moveToOffset(var.getTextRange().getEndOffset());
+        myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+        myEditor.getSelectionModel().removeSelection();
       }
-
-      highlight(var);
-
-      PsiUtil.setModifierProperty(var, PsiModifier.FINAL, mySettings.isDeclareFinal());
-      if (mySettings.isDeclareVarType()) {
-        PsiTypeElement typeElement = var.getTypeElement();
-        LOG.assertTrue(typeElement != null);
-        IntroduceVariableBase.expandDiamondsAndReplaceExplicitTypeWithVar(typeElement, var);
-      }
-      myFieldConflictsResolver.fix();
-      return SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(var);
     }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
+
+    highlight(var);
+
+    PsiUtil.setModifierProperty(var, PsiModifier.FINAL, mySettings.isDeclareFinal());
+    if (mySettings.isDeclareVarType()) {
+      PsiTypeElement typeElement = var.getTypeElement();
+      LOG.assertTrue(typeElement != null);
+      IntroduceVariableBase.expandDiamondsAndReplaceExplicitTypeWithVar(typeElement, var);
     }
-    return null;
+    myFieldConflictsResolver.fix();
+    return SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(var);
   }
 
   private void ensureCodeBlock() {

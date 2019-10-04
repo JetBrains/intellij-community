@@ -7,8 +7,8 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FocusChangeListener;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,7 +34,7 @@ public class ComboboxEditorTextField extends EditorTextField {
 
   @Override
   protected boolean shouldHaveBorder() {
-    return UIManager.getBorder("ComboBox.border") == null && !UIUtil.isUnderDarcula() && !UIUtil.isUnderIntelliJLaF();
+    return UIManager.getBorder("ComboBox.border") == null && !StartupUiUtil.isUnderDarcula() && !UIUtil.isUnderIntelliJLaF();
   }
 
   @Override
@@ -64,15 +64,9 @@ public class ComboboxEditorTextField extends EditorTextField {
     return getPreferredSize();
   }
 
-  @Override
-  public Dimension getPreferredSize() {
-    Dimension preferredSize = super.getPreferredSize();
-    return new Dimension(preferredSize.width, UIUtil.fixComboBoxHeight(preferredSize.height));
-  }
-
   private void repaintComboBox() {
     // TODO:
-    if (UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF() || (SystemInfo.isMac && UIUtil.isUnderAquaLookAndFeel())) {
+    if (StartupUiUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) {
       IdeFocusManager.getInstance(getProject()).doWhenFocusSettlesDown(() -> {
         JComboBox comboBox = ComponentUtil.getParentOfType((Class<? extends JComboBox>)JComboBox.class, (Component)this);
         if (comboBox != null) {

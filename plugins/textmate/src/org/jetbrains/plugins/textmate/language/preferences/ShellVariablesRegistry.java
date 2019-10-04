@@ -14,7 +14,7 @@ public class ShellVariablesRegistry {
   /**
    * Append table with new variables
    */
-  public void fillVariablesFromPlist(@NotNull String scopeName, @NotNull Plist plist) {
+  public void fillVariablesFromPlist(@NotNull CharSequence scopeName, @NotNull Plist plist) {
     final PListValue shellVariables = plist.getPlistValue(Constants.SHELL_VARIABLES_KEY);
     if (shellVariables != null) {
       for (PListValue variable : shellVariables.getArray()) {
@@ -36,7 +36,7 @@ public class ShellVariablesRegistry {
    * of rule selector relative to scope selector.
    */
   @Nullable
-  public TextMateShellVariable getVariableValue(@NotNull String name, @Nullable String scopeSelector) {
+  public TextMateShellVariable getVariableValue(@NotNull String name, @Nullable CharSequence scopeSelector) {
     if (scopeSelector == null) {
       return null;
     }

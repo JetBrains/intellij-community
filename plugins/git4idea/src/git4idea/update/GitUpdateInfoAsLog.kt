@@ -5,7 +5,8 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.util.BackgroundTaskUtil
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vcs.VcsException
@@ -67,7 +68,7 @@ class GitUpdateInfoAsLog(private val project: Project,
       return null
     }
 
-    val logManager = VcsLogContentUtil.getOrCreateLog(project)
+    val logManager = VcsLogContentUtil.getOrCreateLog(project) ?: return null
     if (!isPathFilterSet()) {
       // if no path filters is set, we don't need the log to show the notification
       // => schedule the log tab and return the data
@@ -96,12 +97,23 @@ class GitUpdateInfoAsLog(private val project: Project,
 
     log.dataManager?.addDataPackChangeListener(listener)
 
+    val pce = Ref.create<ProcessCanceledException>()
     ApplicationManager.getApplication().invokeLater {
       // the log may be refreshed before we subscribe to the listener
-      createLogTabAndCalculateIfRangesAreReachable(logManager.dataManager.dataPack, logManager, commitsAndFiles, dataSupplier, listener)
+      try {
+        createLogTabAndCalculateIfRangesAreReachable(logManager.dataManager.dataPack, logManager, commitsAndFiles, dataSupplier, listener)
+      }
+      catch (e: ProcessCanceledException) {
+        pce.set(e)
+        dataSupplier.completeExceptionally(e)
+      }
     }
 
-    BackgroundTaskUtil.awaitWithCheckCanceled(dataSupplier)
+    ProgressIndicatorUtils.awaitWithCheckCanceled(dataSupplier)
+    if (!pce.isNull) {
+      LOG.warn("Failed to create a log tab.")
+      throw pce.get()
+    }
     return dataSupplier.get()
   }
 
@@ -135,8 +147,18 @@ class GitUpdateInfoAsLog(private val project: Project,
 
   private fun createLogTabInEdtAndWait(logManager: VcsLogManager): LogUiAndFactory {
     val logUi = Ref.create<LogUiAndFactory>()
+    val pce = Ref.create<ProcessCanceledException>()
     ApplicationManager.getApplication().invokeAndWait {
-      logUi.set(createLogTab(logManager, null))
+      try {
+        logUi.set(createLogTab(logManager, null))
+      }
+      catch (e: ProcessCanceledException) {
+        pce.set(e)
+      }
+    }
+    if (!pce.isNull) {
+      LOG.warn("Failed to create a log tab.")
+      throw pce.get()
     }
     return logUi.get()
   }

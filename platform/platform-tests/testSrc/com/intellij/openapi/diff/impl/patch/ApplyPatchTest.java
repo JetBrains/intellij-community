@@ -11,7 +11,7 @@ import com.intellij.openapi.vcs.changes.patch.ApplyPatchAction;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TestDataFile;
 import com.intellij.testFramework.TestDataPath;
@@ -22,7 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @TestDataPath("$CONTENT_ROOT/testData/diff/applyPatch/")
-public class ApplyPatchTest extends PlatformTestCase {
+public class ApplyPatchTest extends HeavyPlatformTestCase {
   public void testAddLine() throws Exception {
     doTest(1, ApplyPatchStatus.SUCCESS, null);
   }
@@ -104,12 +104,7 @@ public class ApplyPatchTest extends PlatformTestCase {
   }
 
   public void testRenameDir() throws Exception {
-    doTest(1, ApplyPatchStatus.SUCCESS, new VirtualFileFilter() {
-      @Override
-      public boolean accept(final VirtualFile file) {
-        return !"empty".equals(file.getNameWithoutExtension());
-      }
-    });
+    doTest(1, ApplyPatchStatus.SUCCESS, file -> !"empty".equals(file.getNameWithoutExtension()));
   }
 
   public void testDeleteLastLineWithLineBreak() throws Exception {
@@ -198,7 +193,7 @@ public class ApplyPatchTest extends PlatformTestCase {
     List<FilePatch> patches = new ArrayList<>(reader.readTextPatches());
 
     ApplyPatchAction.applySkipDirs(patches, skipTopDirs);
-    final PatchApplier patchApplier = new PatchApplier<BinaryFilePatch>(myProject, patchedDir, patches, null, null);
+    final PatchApplier patchApplier = new PatchApplier(myProject, patchedDir, patches, null, null);
     ApplyPatchStatus applyStatus = patchApplier.execute(false, false);
 
     assertEquals(expectedStatus, applyStatus);

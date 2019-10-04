@@ -1,15 +1,17 @@
 package org.jetbrains.plugins.textmate.language.syntax;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.ArrayUtil;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.Interner;
+import gnu.trove.THashMap;
+import gnu.trove.TIntObjectHashMap;
+import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.Constants;
 import org.jetbrains.plugins.textmate.plist.PListValue;
 import org.jetbrains.plugins.textmate.plist.Plist;
-import org.jetbrains.plugins.textmate.regex.RegexFacade;
-import org.joni.exception.JOniException;
 
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -19,24 +21,29 @@ import java.util.Map;
  * Table represents mapping from scopeNames to set of syntax rules {@link SyntaxNodeDescriptor}.
  * <p/>
  * In order to lexing some file with this rules you should retrieve syntax rule
- * by scope name of target language {@link this#getSyntax(String)}.
+ * by scope name of target language {@link this#getSyntax(CharSequence)}.
  * <p/>
  * Scope name of target language can be find in syntax files of TextMate bundles.
  */
 public class TextMateSyntaxTable {
   private static final Logger LOG = Logger.getInstance(TextMateSyntaxTable.class);
-  private final Map<String, SyntaxNodeDescriptor> rulesMap = new HashMap<>();
+  private final Map<CharSequence, SyntaxNodeDescriptor> rulesMap = new THashMap<>();
+  private TObjectIntHashMap<String> ruleIds;
+
+  public void compact() {
+    ruleIds = null;
+  }
 
   /**
    * Append table with new syntax rules in order to support new language.
    *
    * @param plist Plist represented syntax file (*.tmLanguage) of target language.
+   * @param interner
    * @return language scope root name
    */
   @NotNull
-  public String loadSyntax(Plist plist) {
-    final SyntaxNodeDescriptor rootSyntaxNode = loadRealNode(plist, null);
-    return rootSyntaxNode.getScopeName();
+  public CharSequence loadSyntax(Plist plist, @NotNull Interner<CharSequence> interner) {
+    return loadRealNode(plist, null, interner).getScopeName();
   }
 
   /**
@@ -48,7 +55,7 @@ public class TextMateSyntaxTable {
    * method returns {@link SyntaxNodeDescriptor#EMPTY_NODE}.
    */
   @NotNull
-  public SyntaxNodeDescriptor getSyntax(String scopeName) {
+  public SyntaxNodeDescriptor getSyntax(CharSequence scopeName) {
     SyntaxNodeDescriptor syntaxNodeDescriptor = rulesMap.get(scopeName);
     if (syntaxNodeDescriptor == null) {
       LOG.debug("Can't find syntax node for scope: '" + scopeName + "'");
@@ -61,88 +68,125 @@ public class TextMateSyntaxTable {
     rulesMap.clear();
   }
 
-  private SyntaxNodeDescriptor loadNestedSyntax(Plist plist, SyntaxNodeDescriptor parentNode) {
-    return plist.contains(Constants.INCLUDE_KEY) ? loadProxyNode(plist, parentNode) : loadRealNode(plist, parentNode);
+  private SyntaxNodeDescriptor loadNestedSyntax(@NotNull Plist plist,
+                                                @NotNull SyntaxNodeDescriptor parentNode,
+                                                @NotNull Interner<CharSequence> interner) {
+    return plist.contains(Constants.INCLUDE_KEY) ? loadProxyNode(plist, parentNode, interner) : loadRealNode(plist, parentNode, interner);
   }
 
   @NotNull
-  private SyntaxNodeDescriptor loadRealNode(Plist plist, SyntaxNodeDescriptor parentNode) {
+  private SyntaxNodeDescriptor loadRealNode(@NotNull Plist plist,
+                                            @Nullable SyntaxNodeDescriptor parentNode,
+                                            @NotNull Interner<CharSequence> interner) {
     MutableSyntaxNodeDescriptor result = new SyntaxNodeDescriptorImpl(parentNode);
     for (Map.Entry<String, PListValue> entry : plist.entries()) {
       PListValue pListValue = entry.getValue();
       if (pListValue != null) {
         String key = entry.getKey();
-        if (ArrayUtil.contains(key, Constants.REGEX_KEY_NAMES)) {
-          try {
-            String pattern = pListValue.getString();
-            if (pattern != null) {
-              result.setRegexAttribute(key, RegexFacade.regex(pattern));
-            }
+        Constants.StringKey stringKey = Constants.StringKey.fromName(key);
+        if (stringKey != null) {
+          String stringValue = pListValue.getString();
+          if (stringValue != null) {
+            result.setStringAttribute(stringKey, interner.intern(stringValue));
           }
-          catch (JOniException e) {
-            LOG.error("Cannot compile pattern '" + pListValue.getString() + "' for '" + key + "'", e);
-          }
+          continue;
         }
-        else if (ArrayUtil.contains(key, Constants.STRING_KEY_NAMES)) {
-          result.setStringAttribute(key, pListValue.getString());
+        Constants.CaptureKey captureKey = Constants.CaptureKey.fromName(key);
+        if (captureKey != null) {
+          result.setCaptures(captureKey, loadCaptures(pListValue.getPlist(), interner));
+          continue;
         }
-        else if (ArrayUtil.contains(key, Constants.DICT_KEY_NAMES)) {
-          result.setPlistAttribute(key, pListValue.getPlist());
-        }
-        else if (Constants.REPOSITORY_KEY.equalsIgnoreCase(key)) {
-          loadRepository(result, pListValue);
+        if (Constants.REPOSITORY_KEY.equalsIgnoreCase(key)) {
+          loadRepository(result, pListValue, interner);
         }
         else if (Constants.PATTERNS_KEY.equalsIgnoreCase(key)) {
-          loadPatterns(result, pListValue);
+          loadPatterns(result, pListValue, interner);
         }
         else if (Constants.INJECTIONS_KEY.equalsIgnoreCase(key)) {
-          loadInjections(result, pListValue);
+          loadInjections(result, pListValue, interner);
         }
       }
     }
-    if (plist.contains(Constants.SCOPE_NAME_KEY)) {
-      final String scopeName = plist.getPlistValue(Constants.SCOPE_NAME_KEY, Constants.DEFAULT_SCOPE_NAME).getString();
+    if (plist.contains(Constants.StringKey.SCOPE_NAME.value)) {
+      CharSequence scopeName = interner.intern(plist.getPlistValue(Constants.StringKey.SCOPE_NAME.value, Constants.DEFAULT_SCOPE_NAME).getString());
       result.setScopeName(scopeName);
       rulesMap.put(scopeName, result);
     }
+    result.compact();
     return result;
   }
 
-  private SyntaxNodeDescriptor loadProxyNode(@NotNull Plist plist, @NotNull SyntaxNodeDescriptor result) {
-    SyntaxNodeDescriptor rootNode = findRootNode(result);
-    return new SyntaxProxyDescriptor(plist, result, rootNode, this);
+  @Nullable
+  private static TIntObjectHashMap<CharSequence> loadCaptures(@NotNull Plist captures, @NotNull Interner<CharSequence> interner) {
+    TIntObjectHashMap<CharSequence> result = new TIntObjectHashMap<>();
+    for (Map.Entry<String, PListValue> capture : captures.entries()) {
+      try {
+        int index = Integer.parseInt(capture.getKey());
+        Plist captureDict = capture.getValue().getPlist();
+        String captureName = captureDict.getPlistValue(Constants.NAME_KEY, "").getString();
+        result.put(index, interner.intern(captureName));
+      }
+      catch (NumberFormatException ignore) {
+      }
+    }
+    if (result.isEmpty()) {
+      return null;
+    }
+    result.trimToSize();
+    return result;
   }
 
-  private void loadPatterns(MutableSyntaxNodeDescriptor result, PListValue pListValue) {
+  private SyntaxNodeDescriptor loadProxyNode(@NotNull Plist plist,
+                                             @NotNull SyntaxNodeDescriptor result,
+                                             @NotNull Interner<CharSequence> interner) {
+    String include = plist.getPlistValue(Constants.INCLUDE_KEY, "").getString();
+    if (StringUtil.startsWithChar(include, '#')) {
+      return new SyntaxRuleProxyDescriptor(getRuleId(include.substring(1)), result);
+    }
+    else if (Constants.INCLUDE_SELF_VALUE.equalsIgnoreCase(include) || Constants.INCLUDE_BASE_VALUE.equalsIgnoreCase(include)) {
+      return new SyntaxRootProxyDescriptor(result);
+    }
+    return new SyntaxScopeProxyDescriptor(interner.intern(include), this, result);
+  }
+
+  private void loadPatterns(@NotNull MutableSyntaxNodeDescriptor result,
+                            @NotNull PListValue pListValue,
+                            @NotNull Interner<CharSequence> interner) {
     for (PListValue value : pListValue.getArray()) {
-      result.addChild(loadNestedSyntax(value.getPlist(), result));
+      result.addChild(loadNestedSyntax(value.getPlist(), result, interner));
     }
   }
 
-  private void loadRepository(MutableSyntaxNodeDescriptor result, PListValue pListValue) {
+  private void loadRepository(@NotNull MutableSyntaxNodeDescriptor result,
+                              @NotNull PListValue pListValue,
+                              @NotNull Interner<CharSequence> interner) {
     for (Map.Entry<String, PListValue> repoEntry : pListValue.getPlist().entries()) {
       PListValue repoEntryValue = repoEntry.getValue();
       if (repoEntryValue != null) {
-        result.appendRepository(repoEntry.getKey(), loadNestedSyntax(repoEntryValue.getPlist(), result));
+        result.appendRepository(getRuleId(repoEntry.getKey()), loadNestedSyntax(repoEntryValue.getPlist(), result, interner));
       }
     }
   }
 
-  private void loadInjections(MutableSyntaxNodeDescriptor result, PListValue pListValue) {
-    for (Map.Entry<String, PListValue> injectionEntry : pListValue.getPlist().entries()) {
-      Plist injectionEntryValue = injectionEntry.getValue().getPlist();
-      result.addInjection(new InjectionNodeDescriptor(injectionEntry.getKey(), loadRealNode(injectionEntryValue, result)));
+  private int getRuleId(@NotNull String ruleName) {
+    if (ruleIds == null) {
+      ruleIds = new TObjectIntHashMap<>();
     }
+    int id = ruleIds.get(ruleName);
+    if (id > 0) {
+      return id;
+    }
+    int newId = ruleIds.size() + 1;
+    ruleIds.put(ruleName, newId);
+    return newId;
   }
 
-  @NotNull
-  private static SyntaxNodeDescriptor findRootNode(@NotNull SyntaxNodeDescriptor result) {
-    SyntaxNodeDescriptor rootNode = result;
-    SyntaxNodeDescriptor parentNode = result;
-    while (parentNode != null) {
-      rootNode = parentNode;
-      parentNode = rootNode.getParentNode();
+  private void loadInjections(@NotNull MutableSyntaxNodeDescriptor result,
+                              @NotNull PListValue pListValue,
+                              @NotNull Interner<CharSequence> interner) {
+    for (Map.Entry<String, PListValue> injectionEntry : pListValue.getPlist().entries()) {
+      Plist injectionEntryValue = injectionEntry.getValue().getPlist();
+      result.addInjection(new InjectionNodeDescriptor(injectionEntry.getKey(), loadRealNode(injectionEntryValue, result, interner)));
     }
-    return rootNode;
   }
 }

@@ -58,7 +58,7 @@ public final class VfsAwareMapIndexStorage<Key, Value> extends MapIndexStorage<K
                                  final int cacheSize,
                                  final boolean readOnly
   ) throws IOException {
-    super(storageFile, keyDescriptor, valueExternalizer, cacheSize, false, true, readOnly);
+    super(storageFile, keyDescriptor, valueExternalizer, cacheSize, false, true, readOnly, null);
     myBuildKeyHashToVirtualFileMapping = false;
   }
 
@@ -68,7 +68,7 @@ public final class VfsAwareMapIndexStorage<Key, Value> extends MapIndexStorage<K
                                  final int cacheSize,
                                  boolean keyIsUniqueForIndexedFile,
                                  boolean buildKeyHashToVirtualFileMapping) throws IOException {
-    super(storageFile, keyDescriptor, valueExternalizer, cacheSize, keyIsUniqueForIndexedFile, false, false);
+    super(storageFile, keyDescriptor, valueExternalizer, cacheSize, keyIsUniqueForIndexedFile, false, false, null);
     myBuildKeyHashToVirtualFileMapping = buildKeyHashToVirtualFileMapping;
     initMapAndCache();
   }
@@ -154,7 +154,8 @@ public final class VfsAwareMapIndexStorage<Key, Value> extends MapIndexStorage<K
       if (myBuildKeyHashToVirtualFileMapping && idFilter != null) {
         TIntHashSet hashMaskSet = null;
         long l = System.currentTimeMillis();
-        GlobalSearchScope effectiveFilteringScope = calculateEffectiveFilteringScope(scope, idFilter);
+        GlobalSearchScope filterScope = idFilter.getEffectiveFilteringScope();
+        GlobalSearchScope effectiveFilteringScope = filterScope != null ? filterScope : scope;
 
         File fileWithCaches = getSavedProjectFileValueIds(myLastScannedId, effectiveFilteringScope);
         final boolean useCachedHashIds = ENABLE_CACHED_HASH_IDS &&
@@ -216,21 +217,6 @@ public final class VfsAwareMapIndexStorage<Key, Value> extends MapIndexStorage<K
     finally {
       l.unlock();
     }
-  }
-
-  @NotNull
-  private static GlobalSearchScope calculateEffectiveFilteringScope(GlobalSearchScope scope, IdFilter idFilter) {
-    GlobalSearchScope effectiveFilteringScope = scope;
-    Project project = scope.getProject();
-
-    if (project != null) {
-      if(idFilter == IdFilter.getProjectIdFilter(project, true)) {
-        effectiveFilteringScope = GlobalSearchScope.allScope(project);
-      } else if (idFilter == IdFilter.getProjectIdFilter(project, false)) {
-        effectiveFilteringScope = GlobalSearchScope.projectScope(project);
-      }
-    }
-    return effectiveFilteringScope;
   }
 
   @NotNull

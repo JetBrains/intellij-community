@@ -152,7 +152,7 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
     treeFor(marker).addInterval(marker, start, end, greedyToLeft, greedyToRight, false, layer);
   }
 
-  private RangeHighlighterTree treeFor(RangeHighlighter marker) {
+  RangeHighlighterTree treeFor(RangeHighlighter marker) {
     return marker.getTargetArea() == HighlighterTargetArea.EXACT_RANGE ? myHighlighterTree : myHighlighterTreeForLines;
   }
 
@@ -269,6 +269,21 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
     return IntervalTreeImpl
       .mergingOverlappingIterator(myHighlighterTree, new TextRangeInterval(startOffset, endOffset), myHighlighterTreeForLines,
                                   roundToLineBoundaries(getDocument(), startOffset, endOffset), RangeHighlighterEx.BY_AFFECTED_START_OFFSET);
+  }
+
+  @NotNull
+  @Override
+  public MarkupIterator<RangeHighlighterEx> overlappingIterator(int startOffset,
+                                                                int endOffset,
+                                                                boolean onlyRenderedInGutter,
+                                                                boolean onlyRenderedInScrollBar) {
+    startOffset = Math.max(0,startOffset);
+    endOffset = Math.max(startOffset, endOffset);
+    MarkupIterator<RangeHighlighterEx> exact = myHighlighterTree
+      .overlappingIterator(new TextRangeInterval(startOffset, endOffset), onlyRenderedInGutter, onlyRenderedInScrollBar);
+    MarkupIterator<RangeHighlighterEx> lines = myHighlighterTreeForLines
+      .overlappingIterator(roundToLineBoundaries(getDocument(), startOffset, endOffset), onlyRenderedInGutter, onlyRenderedInScrollBar);
+    return MarkupIterator.mergeIterators(exact, lines, RangeHighlighterEx.BY_AFFECTED_START_OFFSET);
   }
 
   @NotNull

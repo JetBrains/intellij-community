@@ -5,6 +5,6 @@ import java.util.stream.*;
 
 class Test {
   public static void test(List<String> s) {
-      new TreeSet<? extends String>(s).contains("abc");
+      new TreeSet<>(s).contains("abc");
   }
 }

@@ -136,8 +136,8 @@ public class TestDataUtil {
            !StringUtil.containsAlphaCharacters(secondNameExt.replace(TESTDATA_FILE_BEFORE_MARKER, ""));
   }
 
-  static VirtualFile createFileByPath(final Project project, final String path) {
-    return ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
+  static void createFileAndNavigate(final Project project, final String path) {
+    VirtualFile file = ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
       @Override
       public VirtualFile compute() {
         try {
@@ -151,6 +151,9 @@ public class TestDataUtil {
         }
       }
     });
+    if (file != null) {
+      PsiNavigationSupport.getInstance().createNavigatable(project, file, -1).navigate(true);
+    }
   }
 
   static void openOrAskToCreateFile(@NotNull Project project, @NotNull TestDataFile testDataFile) {
@@ -163,15 +166,9 @@ public class TestDataUtil {
       int rc = Messages.showYesNoDialog(project, DevKitBundle.message("testdata.file.doesn.not.exist", displayPath),
                                         DevKitBundle.message("testdata.create.dialog.title"), Messages.getQuestionIcon());
       if (rc == Messages.YES) {
-        VirtualFile vFile = createFileByPath(project, testDataFile.getPath());
-        PsiNavigationSupport.getInstance().createNavigatable(project, vFile, -1).navigate(true);
+        createFileAndNavigate(project, testDataFile.getPath());
       }
     }
-  }
-
-  @Nullable
-  static VirtualFile getFileByPath(String path) {
-    return LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
   }
 
   @Nullable

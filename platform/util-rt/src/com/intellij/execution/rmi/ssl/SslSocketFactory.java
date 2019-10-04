@@ -3,6 +3,7 @@ package com.intellij.execution.rmi.ssl;
 
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.security.CompositeX509TrustManager;
+import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,7 +27,7 @@ public class SslSocketFactory extends SSLSocketFactory {
   private static final String END_CERTIFICATE = "-----END CERTIFICATE-----";
   private final SSLSocketFactory myFactory;
 
-  public SslSocketFactory() throws GeneralSecurityException, IOException {
+  public SslSocketFactory() throws GeneralSecurityException {
     super();
     SSLContext ctx = SSLContext.getInstance("TLS");
     TrustManager[] tms;
@@ -156,7 +157,7 @@ public class SslSocketFactory extends SSLSocketFactory {
       return ks;
     }
 
-    public void checkClientTrusted(X509Certificate[] x509Certificates, String s) throws CertificateException {
+    public void checkClientTrusted(X509Certificate[] x509Certificates, String s) {
     }
 
     public void checkServerTrusted(X509Certificate[] x509Certificates, String s) throws CertificateException {
@@ -171,10 +172,10 @@ public class SslSocketFactory extends SSLSocketFactory {
   }
 
   private static class MyTrustEverybodyManager implements X509TrustManager {
-    public void checkClientTrusted(X509Certificate[] x509Certificates, String s) throws CertificateException {
+    public void checkClientTrusted(X509Certificate[] x509Certificates, String s) {
     }
 
-    public void checkServerTrusted(X509Certificate[] x509Certificates, String s) throws CertificateException {
+    public void checkServerTrusted(X509Certificate[] x509Certificates, String s) {
     }
 
     @NotNull
@@ -195,7 +196,7 @@ public class SslSocketFactory extends SSLSocketFactory {
 
     @NotNull
     public String[] getClientAliases(String s, Principal[] principals) {
-      return new String[]{};
+      return ArrayUtilRt.EMPTY_STRING_ARRAY;
     }
 
     public String chooseClientAlias(String[] strings, Principal[] principals, Socket socket) {
@@ -204,7 +205,7 @@ public class SslSocketFactory extends SSLSocketFactory {
 
     @NotNull
     public String[] getServerAliases(String s, Principal[] principals) {
-      return new String[]{};
+      return ArrayUtilRt.EMPTY_STRING_ARRAY;
     }
 
     @Nullable

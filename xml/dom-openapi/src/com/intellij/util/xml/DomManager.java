@@ -95,7 +95,7 @@ public abstract class DomManager extends CompositeModificationTracker implements
    * @return DOM element for the given XML attribute. If DOM isn't initialized for the containing file, it will be initialized
    */
   @Nullable
-  public abstract GenericAttributeValue getDomElement(final XmlAttribute element);
+  public abstract GenericAttributeValue<?> getDomElement(final XmlAttribute element);
 
   /**
    * @param aClass Desired DOM element class
@@ -132,7 +132,7 @@ public abstract class DomManager extends CompositeModificationTracker implements
    * @deprecated Make your file description an extension (see {@link DomFileDescription#EP_NAME})
    */
   @Deprecated
-  public abstract void registerFileDescription(DomFileDescription description);
+  public abstract void registerFileDescription(DomFileDescription<?> description);
 
   /**
    * @return {@link ConverterManager} instance
@@ -151,7 +151,7 @@ public abstract class DomManager extends CompositeModificationTracker implements
    * {@link Resolve} annotation.
    */
   @NotNull
-  public abstract DomElement getResolvingScope(GenericDomValue element);
+  public abstract DomElement getResolvingScope(GenericDomValue<?> element);
 
   /**
    * @param element Named DOM element

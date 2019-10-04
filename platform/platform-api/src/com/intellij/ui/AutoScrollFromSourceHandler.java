@@ -59,6 +59,14 @@ public abstract class AutoScrollFromSourceHandler implements Disposable {
     myAlarm = new Alarm(this);
   }
 
+  protected String getActionName() {
+    return UIBundle.message("autoscroll.from.source.action.name");
+  }
+
+  protected String getActionDescription() {
+    return UIBundle.message("autoscroll.from.source.action.description");
+  }
+
   protected abstract boolean isAutoScrollEnabled();
 
   protected abstract void setAutoScrollEnabled(boolean enabled);
@@ -106,14 +114,12 @@ public abstract class AutoScrollFromSourceHandler implements Disposable {
   }
 
   public ToggleAction createToggleAction() {
-    return new AutoScrollFromSourceAction();
+    return new AutoScrollFromSourceAction(getActionName(), getActionDescription());
   }
 
   private class AutoScrollFromSourceAction extends ToggleAction implements DumbAware {
-    AutoScrollFromSourceAction() {
-      super(UIBundle.message("autoscroll.from.source.action.name"),
-            UIBundle.message("autoscroll.from.source.action.description"),
-            AllIcons.General.AutoscrollFromSource);
+    AutoScrollFromSourceAction(String actionName, String actionDescription) {
+      super(actionName, actionDescription, AllIcons.General.AutoscrollFromSource);
     }
 
     @Override

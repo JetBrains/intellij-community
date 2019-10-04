@@ -22,10 +22,8 @@ import java.util.Collections;
 import java.util.List;
 
 public class InvalidateCachesAction extends AnAction implements DumbAware {
-
-  @Override
-  public void update(@NotNull AnActionEvent e) {
-    e.getPresentation().setText(ApplicationManager.getApplication().isRestartCapable() ? "Invalidate Caches / Restart..." : "Invalidate Caches...");
+  public InvalidateCachesAction() {
+    getTemplatePresentation().setText(ApplicationManager.getApplication().isRestartCapable() ? "Invalidate Caches / Restart..." : "Invalidate Caches...");
   }
 
   @Override

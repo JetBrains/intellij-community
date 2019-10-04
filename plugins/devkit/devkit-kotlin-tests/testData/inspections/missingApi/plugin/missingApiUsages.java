@@ -97,9 +97,9 @@ class <error descr="'OldKotlinClass()' is available only since 2.0 but the modul
   //implicit call to empty "recent" constructor available in source code.
 }
 
-class C extends OldClass {
+class Overrider extends OldClass {
 
-  public C() {
+  public Overrider() {
     //call old available constructor, to not produce warning here.
     super(1);
   }
@@ -109,9 +109,9 @@ class C extends OldClass {
   public void <error descr="Overrides method in 'library.OldClass' that is available only since 2.0 but the module is targeted for 1.0 - 999.0. It may lead to compatibility problems with IDEs prior to 2.0. Note that the overridden method might have had a different signature in the previous IDEs.">recentMethod</error>() { }
 }
 
-class CK extends OldKotlinClass {
+class KOverrider extends OldKotlinClass {
 
-  public CK() {
+  public KOverrider() {
     //call old available constructor, to not produce warning here.
     super(1);
   }
@@ -119,6 +119,20 @@ class CK extends OldKotlinClass {
   //overrides "recent" method.
   @Override
   public void <error descr="Overrides method in 'library.OldKotlinClass' that is available only since 2.0 but the module is targeted for 1.0 - 999.0. It may lead to compatibility problems with IDEs prior to 2.0. Note that the overridden method might have had a different signature in the previous IDEs.">recentMethod</error>() { }
+}
+
+//No warning should be produced, because the `Overrider.recentMethod` is not "recent" on its own.
+class JavaNonDirectOverrideOfRecentMethod extends Overrider {
+  @Override
+  public void recentMethod() {
+  }
+}
+
+//No warning should be produced, because the `KOverrider.recentMethod` is not "recent" on its own.
+class KotlinNonDirectOverrideOfRecentMethod extends KOverrider {
+  @Override
+  public void recentMethod() {
+  }
 }
 
 class <error descr="Default constructor of 'library.OldClassWithDefaultConstructor' is available only since 2.0 but the module is targeted for 1.0 - 999.0. It may lead to compatibility problems with IDEs prior to 2.0.">D</error> extends OldClassWithDefaultConstructor {

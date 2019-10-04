@@ -22,7 +22,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
-import javax.swing.text.DefaultCaret;
 import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.StyleSheet;
 import java.awt.*;
@@ -123,12 +122,7 @@ public class ConsentSettingsUi extends JPanel implements ConfigurableUi<List<Con
       final JEditorPane viewer = SwingHelper.createHtmlViewer(true, null, JBColor.WHITE, JBColor.BLACK);
       viewer.setOpaque(false);
       viewer.setFocusable(false);
-      viewer.setCaret(new DefaultCaret(){
-        @Override
-        protected void adjustVisibility(Rectangle nloc) {
-          //do nothing to avoid autoscroll
-        }
-      });
+      UIUtil.doNotScrollToCaret(viewer);
       viewer.addHyperlinkListener(new HyperlinkAdapter() {
         @Override
         protected void hyperlinkActivated(HyperlinkEvent e) {

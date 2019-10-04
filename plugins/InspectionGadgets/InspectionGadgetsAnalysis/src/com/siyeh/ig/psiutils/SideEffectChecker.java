@@ -204,7 +204,7 @@ public class SideEffectChecker {
 
     @Override
     public void visitBreakStatement(PsiBreakStatement statement) {
-      PsiElement exitedStatement = statement.findExitedElement();
+      PsiStatement exitedStatement = statement.findExitedStatement();
       if (exitedStatement == null || !PsiTreeUtil.isAncestor(myStartElement, exitedStatement, false)) {
         if (addSideEffect(statement)) return;
       }

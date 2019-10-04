@@ -2,11 +2,13 @@
 package org.jetbrains.plugins.gradle.integrations.maven.codeInsight.completion
 
 import com.intellij.codeInsight.completion.*
+import com.intellij.codeInsight.completion.CompletionSorter
 import com.intellij.codeInsight.completion.CompletionUtil.DUMMY_IDENTIFIER
 import com.intellij.codeInsight.completion.CompletionUtil.DUMMY_IDENTIFIER_TRIMMED
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.patterns.PatternCondition
 import com.intellij.patterns.PlatformPatterns.psiElement
@@ -15,13 +17,11 @@ import com.intellij.util.ProcessingContext
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.idea.maven.dom.converters.MavenDependencyCompletionUtil
 import org.jetbrains.idea.maven.dom.model.completion.MavenVersionNegatingWeigher
-import org.jetbrains.idea.maven.indices.MavenArtifactSearcher
 import org.jetbrains.idea.maven.indices.MavenProjectIndicesManager
 import org.jetbrains.idea.maven.onlinecompletion.DependencySearchService
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo
 import org.jetbrains.idea.maven.onlinecompletion.model.SearchParameters
 import org.jetbrains.plugins.gradle.codeInsight.AbstractGradleCompletionContributor
-import org.jetbrains.plugins.gradle.integrations.maven.MavenRepositoriesHolder
 import org.jetbrains.plugins.groovy.lang.completion.GrDummyIdentifierProvider.DUMMY_IDENTIFIER_DECAPITALIZED
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument
@@ -102,49 +102,43 @@ class MavenDependenciesGradleCompletionContributor : AbstractGradleCompletionCon
 
         result.stopHere()
 
-        val searchText = CompletionUtil.findReferenceOrAlphanumericPrefix(params)
-        val dependencySearch = MavenProjectIndicesManager.getInstance(element.project).dependencySearchService
-        val searchParameters = createSearchParameters(params)
+        val completionPrefix = CompletionUtil.findReferenceOrAlphanumericPrefix(params)
+        val quote = params.position.text.firstOrNull() ?: '\''
+        val suffix = params.originalPosition?.text?.let { StringUtil.unquoteString(it).substring(completionPrefix.length) }
+
         val cld = ConcurrentLinkedDeque<MavenRepositoryArtifactInfo>()
-        val splitted = searchText.split(":")
-        val groupId = splitted.get(0)
+        val splitted = completionPrefix.split(":")
+        val groupId = splitted[0]
         val artifactId = splitted.getOrNull(1)
         val version = splitted.getOrNull(2)
-        val searchPromise = searchStringDependency(groupId, artifactId, dependencySearch, searchParameters) { cld.add(it) }
+        val dependencySearch = MavenProjectIndicesManager.getInstance(element.project).dependencySearchService
+        val searchPromise = searchStringDependency(groupId, artifactId, dependencySearch, createSearchParameters(params)) { cld.add(it) }
         result.restartCompletionOnAnyPrefixChange()
+        val additionalData = CompletionData(suffix, quote)
         if (version != null) {
-          val newResult = result.withRelevanceSorter(CompletionService.getCompletionService().emptySorter().weigh(
-            MavenVersionNegatingWeigher()))
-          waitAndAdd(searchPromise, cld, completeVersions(newResult))
-        }
-        else if (artifactId != null) {
-          waitAndAdd(searchPromise, cld, completeArtifacts(result))
+          val newResult = result.withRelevanceSorter(CompletionSorter.emptySorter().weigh(MavenVersionNegatingWeigher()))
+          waitAndAdd(searchPromise, cld, completeVersions(newResult, additionalData))
         }
         else {
-          waitAndAdd(searchPromise, cld, completeGroups(result))
+          waitAndAdd(searchPromise, cld, completeGroupAndArtifact(result, additionalData))
         }
       }
     })
   }
 
-  private fun completeVersions(result: CompletionResultSet): (MavenRepositoryArtifactInfo) -> Unit {
-    return { info ->
-      info.items.filter { it.version != null }.forEach { item ->
-        result.addElement(
-          LookupElementBuilder
-            .create(MavenDependencyCompletionUtil.getLookupString(item))
-            .withPresentableText(item.version!!)
-        )
-      }
-    }
+  private fun completeVersions(result: CompletionResultSet, data: CompletionData): (MavenRepositoryArtifactInfo) -> Unit = { info ->
+    result.addAllElements(info.items.filter { it.version != null }.map { item ->
+      LookupElementBuilder.create(item, MavenDependencyCompletionUtil.getLookupString(item))
+        .withPresentableText(item.version!!)
+        .withInsertHandler(GradleStringStyleVersionHandler)
+        .also { it.putUserData(COMPLETION_DATA_KEY, data) }
+    })
   }
 
-  private fun completeArtifacts(result: CompletionResultSet): (MavenRepositoryArtifactInfo) -> Unit {
-    return { result.addElement(MavenDependencyCompletionUtil.lookupElement(it).withInsertHandler(GradleStringStyleArtifactIdHandler.INSTANCE)) }
-  }
-
-  private fun completeGroups(result: CompletionResultSet): (MavenRepositoryArtifactInfo) -> Unit {
-    return { result.addElement(MavenDependencyCompletionUtil.lookupElement(it).withInsertHandler(GradleStringStyleGroupIdHandler.INSTANCE)) }
+  private fun completeGroupAndArtifact(result: CompletionResultSet, data: CompletionData): (MavenRepositoryArtifactInfo) -> Unit = { info ->
+    result.addElement(MavenDependencyCompletionUtil.lookupElement(info)
+                        .withInsertHandler(GradleStringStyleGroupAndArtifactHandler)
+                        .also { it.putUserData(COMPLETION_DATA_KEY, data) })
   }
 
   private fun searchStringDependency(groupId: String,
@@ -189,6 +183,10 @@ class MavenDependenciesGradleCompletionContributor : AbstractGradleCompletionCon
     internal const val NAME_LABEL = "name"
     internal const val VERSION_LABEL = "version"
     internal const val DEPENDENCIES_SCRIPT_BLOCK = "dependencies"
+
+    data class CompletionData(val suffix: String?, val quote: Char)
+
+    val COMPLETION_DATA_KEY = Key.create<CompletionData>("COMPLETION_DATA")
 
     private val DEPENDENCIES_CALL_PATTERN = psiElement()
       .inside(true, psiElement(GrMethodCallExpression::class.java).with(

@@ -31,7 +31,7 @@ public class ThreadDumper {
   @NotNull
   public static String dumpThreadsToString() {
     StringWriter writer = new StringWriter();
-    dumpThreadInfos(getThreadInfos(ManagementFactory.getThreadMXBean()), writer);
+    dumpThreadInfos(getThreadInfos(ManagementFactory.getThreadMXBean(), true), writer);
     return writer.toString();
   }
   
@@ -54,19 +54,22 @@ public class ThreadDumper {
   @NotNull
   public static ThreadDump getThreadDumpInfo(@NotNull final ThreadMXBean threadMXBean) {
     StringWriter writer = new StringWriter();
-    ThreadInfo[] threadInfos = getThreadInfos(threadMXBean);
+    ThreadInfo[] threadInfos = getThreadInfos(threadMXBean, true);
     StackTraceElement[] edtStack = dumpThreadInfos(threadInfos, writer);
     return new ThreadDump(writer.toString(), edtStack, threadInfos);
   }
 
   @NotNull
-  private static ThreadInfo[] getThreadInfos(@NotNull ThreadMXBean threadMXBean) {
+  public static ThreadInfo[] getThreadInfos(@NotNull ThreadMXBean threadMXBean, boolean sort) {
     ThreadInfo[] threads;
     try {
       threads = sort(threadMXBean.dumpAllThreads(false, false));
     }
     catch (Exception ignored) {
       threads = sort(threadMXBean.getThreadInfo(threadMXBean.getAllThreadIds(), Integer.MAX_VALUE));
+    }
+    if (sort) {
+      sort(threads);
     }
     return threads;
   }
@@ -93,7 +96,7 @@ public class ThreadDumper {
   }
 
   @NotNull
-  private static ThreadInfo[] sort(@NotNull ThreadInfo[] threads) {
+  public static ThreadInfo[] sort(@NotNull ThreadInfo[] threads) {
     Arrays.sort(threads, THREAD_INFO_COMPARATOR);
     return threads;
   }

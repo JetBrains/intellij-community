@@ -10,6 +10,7 @@ import com.intellij.ui.mac.foundation.FoundationLibrary;
 import com.intellij.ui.mac.foundation.ID;
 import com.intellij.ui.mac.foundation.MacUtil;
 import com.intellij.util.BitUtil;
+import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
 import com.sun.jna.Pointer;
 import org.jetbrains.annotations.NotNull;
@@ -129,7 +130,7 @@ public class MacColorPipette extends ColorPipetteBase {
   }
 
   private static void applyRenderingHints(@NotNull Graphics graphics) {
-    UIUtil.applyRenderingHints(graphics);
+    GraphicsUtil.applyRenderingHints(graphics);
     if (graphics instanceof Graphics2D) {
       ((Graphics2D)graphics).setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
       ((Graphics2D)graphics).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);

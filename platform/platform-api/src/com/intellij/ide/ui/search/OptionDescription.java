@@ -7,7 +7,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-public class OptionDescription implements Comparable {
+public class OptionDescription implements Comparable<OptionDescription> {
   private final String myOption;
   private final String myHit;
   private final String myPath;
@@ -96,13 +96,12 @@ public class OptionDescription implements Comparable {
   }
 
   @Override
-  public int compareTo(final Object o) {
-    OptionDescription description = ((OptionDescription)o);
-    if (Comparing.strEqual(myHit, description.getHit())) {
-      return myOption != null ? myOption.compareTo(description.getOption()) : 0;
+  public int compareTo(final OptionDescription o) {
+    if (Comparing.strEqual(myHit, o.getHit())) {
+      return myOption != null ? myOption.compareTo(o.getOption()) : 0;
     }
-    if (myHit != null && description.getHit() != null) {
-      return myHit.compareTo(description.getHit());
+    if (myHit != null && o.getHit() != null) {
+      return myHit.compareTo(o.getHit());
     }
     return 0;
   }

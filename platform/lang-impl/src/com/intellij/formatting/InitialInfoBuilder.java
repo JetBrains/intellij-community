@@ -148,7 +148,7 @@ public class InitialInfoBuilder {
 
     collectAlignments(rootBlock);
 
-    if (isInsideFormattingRanges(rootBlock) || shouldCollectAlignmentsAround(rootBlock)) {
+    if (isInsideFormattingRanges(textRange) || shouldCollectAlignmentsAround(textRange)) {
       final List<Block> subBlocks = rootBlock.getSubBlocks();
       if (subBlocks.isEmpty()) {
         final AbstractBlockWrapper wrapper = buildLeafBlock(rootBlock, parent, false, index, parentBlock);
@@ -164,8 +164,8 @@ public class InitialInfoBuilder {
     }
   }
 
-  private boolean shouldCollectAlignmentsAround(Block rootBlock) {
-    return myCollectAlignmentsInsideFormattingRange && isInsideExtendedAffectedRange(rootBlock);
+  private boolean shouldCollectAlignmentsAround(TextRange range) {
+    return myCollectAlignmentsInsideFormattingRange && isInsideExtendedAffectedRange(range);
   }
 
   private void collectAlignments(Block rootBlock) {
@@ -180,12 +180,11 @@ public class InitialInfoBuilder {
     }
   }
 
-  private boolean isInsideExtendedAffectedRange(Block rootBlock) {
+  private boolean isInsideExtendedAffectedRange(TextRange range) {
     if (myExtendedAffectedRanges == null) return false;
 
-    TextRange blockRange = rootBlock.getTextRange();
     for (TextRange affectedRange : myExtendedAffectedRanges) {
-      if (affectedRange.intersects(blockRange)) return true;
+      if (affectedRange.intersects(range)) return true;
     }
 
     return false;
@@ -275,14 +274,13 @@ public class InitialInfoBuilder {
     if (!INLINE_TABS_ENABLED && !myCurrentWhiteSpace.containsLineFeeds()) {
       myCurrentWhiteSpace.setForceSkipTabulationsUsage(true);
     }
-    LeafBlockWrapper info = new LeafBlockWrapper(rootBlock, parent, myCurrentWhiteSpace, myModel, myOptions, myPreviousBlock, readOnly);
+    TextRange textRange = rootBlock.getTextRange();
+    LeafBlockWrapper info = new LeafBlockWrapper(rootBlock, parent, myCurrentWhiteSpace, myModel, myOptions, myPreviousBlock, readOnly, textRange);
     if (index == 0) {
       info.arrangeParentTextRange();
     }
 
     checkInsideFormatterOffTag(rootBlock);
-
-    TextRange textRange = rootBlock.getTextRange();
 
     if (myPreviousBlock != null) {
       myPreviousBlock.setNextBlock(info);
@@ -361,9 +359,8 @@ public class InitialInfoBuilder {
     return false;
   }
 
-  private boolean isInsideFormattingRanges(final Block block) {
-    if (myAffectedRanges == null) return true;
-    return !myAffectedRanges.isReadOnly(block.getTextRange());
+  private boolean isInsideFormattingRanges(TextRange range) {
+    return myAffectedRanges == null || !myAffectedRanges.isReadOnly(range);
   }
 
   public Map<AbstractBlockWrapper, Block> getBlockToInfoMap() {

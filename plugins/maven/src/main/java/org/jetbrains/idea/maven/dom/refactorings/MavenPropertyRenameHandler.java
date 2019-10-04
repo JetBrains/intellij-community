@@ -33,7 +33,7 @@ public class MavenPropertyRenameHandler extends PsiElementRenameHandler {
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file, @NotNull DataContext dataContext) {
     invoke(project, PsiElement.EMPTY_ARRAY, dataContext);
   }
 

@@ -79,7 +79,9 @@ class InferenceCache {
         myTooComplexInstructions.addAll(interesting.first);
       }
       else {
-        cacheDfaResult(dfaResult);
+        Set<Instruction> stored = interesting.first;
+        stored.add(instruction);
+        cacheDfaResult(dfaResult, stored);
       }
     }
     DFAType dfaType = getCachedInferredType(descriptor, instruction);
@@ -90,7 +92,7 @@ class InferenceCache {
   private List<TypeDfaState> performTypeDfa(@NotNull GrControlFlowOwner owner,
                                             @NotNull Instruction[] flow,
                                             @NotNull Couple<Set<Instruction>> interesting) {
-    final TypeDfaInstance dfaInstance = new TypeDfaInstance(flow, interesting, this);
+    final TypeDfaInstance dfaInstance = new TypeDfaInstance(flow, interesting, this, new InitialTypeProvider(owner));
     final TypesSemilattice semilattice = new TypesSemilattice(owner.getManager());
     return new DFAEngine<>(flow, dfaInstance, semilattice).performDFAWithTimeout();
   }
@@ -147,15 +149,21 @@ class InferenceCache {
     return pairs;
   }
 
-  private void cacheDfaResult(@NotNull List<TypeDfaState> dfaResult) {
-    myVarTypes.accumulateAndGet(dfaResult, InferenceCache::addDfaResult);
+  private void cacheDfaResult(@NotNull List<TypeDfaState> dfaResult,
+                              Set<Instruction> storingInstructions) {
+    myVarTypes.accumulateAndGet(dfaResult, (oldState, newState) -> addDfaResult(oldState, newState, storingInstructions));
   }
 
   @NotNull
-  private static List<TypeDfaState> addDfaResult(@NotNull List<TypeDfaState> oldTypes, @NotNull List<TypeDfaState> dfaResult) {
+  private static List<TypeDfaState> addDfaResult(@NotNull List<TypeDfaState> oldTypes,
+                                                 @NotNull List<TypeDfaState> dfaResult,
+                                                 @NotNull Set<Instruction> storingInstructions) {
     List<TypeDfaState> newTypes = new ArrayList<>(oldTypes);
+    Set<Integer> interestingInstructionNums = storingInstructions.stream().map(Instruction::num).collect(Collectors.toSet());
     for (int i = 0; i < dfaResult.size(); i++) {
-      newTypes.set(i, newTypes.get(i).mergeWith(dfaResult.get(i)));
+      if (interestingInstructionNums.contains(i)) {
+        newTypes.set(i, newTypes.get(i).mergeWith(dfaResult.get(i)));
+      }
     }
     return newTypes;
   }

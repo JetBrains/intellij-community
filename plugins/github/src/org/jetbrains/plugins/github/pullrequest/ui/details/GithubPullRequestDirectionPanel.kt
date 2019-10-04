@@ -6,8 +6,7 @@ import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import org.jetbrains.plugins.github.api.data.GithubPullRequest
-import org.jetbrains.plugins.github.pullrequest.ui.WrapLayout
+import org.jetbrains.plugins.github.ui.WrapLayout
 import org.jetbrains.plugins.github.util.GithubUtil.Delegates.equalVetoingObservable
 import java.awt.FlowLayout
 import javax.swing.JLabel
@@ -16,10 +15,10 @@ internal class GithubPullRequestDirectionPanel : NonOpaquePanel(WrapLayout(FlowL
   private val from = createLabel()
   private val to = createLabel()
 
-  var direction: Pair<GithubPullRequest.Tag, GithubPullRequest.Tag>?
-    by equalVetoingObservable<Pair<GithubPullRequest.Tag, GithubPullRequest.Tag>?>(null) {
-      from.text = " ${it?.first?.label} "
-      to.text = " ${it?.second?.ref} "
+  var direction: Pair<String, String>?
+    by equalVetoingObservable<Pair<String, String>?>(null) {
+      from.text = " ${it?.first} "
+      to.text = " ${it?.second} "
       this@GithubPullRequestDirectionPanel.isVisible = it != null
     }
 

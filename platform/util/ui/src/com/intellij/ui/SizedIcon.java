@@ -7,7 +7,6 @@ import com.intellij.ui.icons.DarkIconProvider;
 import com.intellij.ui.icons.MenuBarIconProvider;
 import com.intellij.util.ui.JBCachingScalableIcon;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -18,16 +17,17 @@ import static java.lang.Math.floor;
 public class SizedIcon extends JBCachingScalableIcon implements MenuBarIconProvider, DarkIconProvider, RetrievableIcon {
   private final int myWidth;
   private final int myHeight;
+  @NotNull
   private final Icon myDelegate;
   private Icon myScaledDelegate;
 
-  public SizedIcon(Icon delegate, int width, int height) {
+  public SizedIcon(@NotNull Icon delegate, int width, int height) {
     myScaledDelegate = myDelegate = delegate;
     myWidth = width;
     myHeight = height;
   }
 
-  protected SizedIcon(SizedIcon icon) {
+  private SizedIcon(@NotNull SizedIcon icon) {
     super(icon);
     myWidth = icon.myWidth;
     myHeight = icon.myHeight;
@@ -41,30 +41,34 @@ public class SizedIcon extends JBCachingScalableIcon implements MenuBarIconProvi
     return new SizedIcon(this);
   }
 
+  @NotNull
   private Icon myScaledIcon() {
-    if (myScaledDelegate != null) {
-      return myScaledDelegate;
+    Icon scaledDelegate = myScaledDelegate;
+    if (scaledDelegate == null) {
+      if (getScale() == 1f || !(myDelegate instanceof ScalableIcon)) {
+        scaledDelegate = myDelegate;
+      }
+      else {
+        scaledDelegate = ((ScalableIcon)myDelegate).scale(getScale());
+      }
+      myScaledDelegate = scaledDelegate;
     }
-    if (getScale() == 1f) {
-      return myScaledDelegate = myDelegate;
-    }
-    if (!(myDelegate instanceof ScalableIcon)) {
-      return myScaledDelegate = myDelegate;
-    }
-    return myScaledDelegate = ((ScalableIcon)myDelegate).scale(getScale());
+    return scaledDelegate;
   }
 
+  @NotNull
   @Override
   public Icon getMenuBarIcon(boolean isDark) {
     return new SizedIcon(IconLoader.getMenuBarIcon(myDelegate, isDark), myWidth, myHeight);
   }
 
+  @NotNull
   @Override
   public Icon getDarkIcon(boolean isDark) {
     return new SizedIcon(IconLoader.getDarkIcon(myDelegate, isDark), myWidth, myHeight);
   }
 
-  @Nullable
+  @NotNull
   @Override
   public Icon retrieveIcon() { return myDelegate; }
 

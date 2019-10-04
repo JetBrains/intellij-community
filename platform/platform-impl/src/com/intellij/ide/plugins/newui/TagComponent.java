@@ -13,6 +13,8 @@ import java.awt.*;
 public class TagComponent extends LinkComponent {
   private static final Color BACKGROUND = JBColor.namedColor("Plugins.tagBackground", new JBColor(0xEAEAEC, 0x4D4D4D));
   private static final Color EAP_BACKGROUND = JBColor.namedColor("Plugins.eapTagBackground", new JBColor(0xF2D2CF, 0xF2D2CF));
+  private static final Color PAID_BACKGROUND = JBColor.namedColor("Plugins.paidTagBackground", new JBColor(0xD8EDF8, 0x3E505C));
+  private static final Color TRIAL_BACKGROUND = JBColor.namedColor("Plugins.trialTagBackground", new JBColor(0xDBE8DD, 0x345574E));
   private static final Color FOREGROUND = JBColor.namedColor("Plugins.tagForeground", new JBColor(0x787878, 0x999999));
 
   private Color myColor;
@@ -31,10 +33,23 @@ public class TagComponent extends LinkComponent {
 
   @Override
   public void setText(@NotNull String name) {
-    boolean eap = "EAP".equals(name);
-    myColor = eap ? EAP_BACKGROUND : BACKGROUND;
+    String tooltip = null;
+    myColor = BACKGROUND;
+
+    if ("EAP".equals(name)) {
+      myColor = EAP_BACKGROUND;
+      tooltip = "The EAP version does not guarantee the stability\nand availability of the plugin.";
+    }
+    else if ("Trial".equals(name) || "Purchased".equals(name)) {
+      myColor = TRIAL_BACKGROUND;
+    }
+    else if ("Paid".equals(name)) {
+      myColor = PAID_BACKGROUND;
+      tooltip = "The plugin license should be activated after\nthe plugin installation. The 30-day trial is available.";
+    }
+
     super.setText(name);
-    setToolTipText(eap ? "The EAP version does not guarantee the stability\nand availability of the plugin." : null);
+    setToolTipText(tooltip);
   }
 
   @Override

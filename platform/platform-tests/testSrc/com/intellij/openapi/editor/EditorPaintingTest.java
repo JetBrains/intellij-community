@@ -167,4 +167,12 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
     executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP_WITH_SELECTION);
     checkResult();
   }
+
+  public void testMarginIsShownOverSelectionInBlockInlayRange() throws Exception {
+    initText("  \n");
+    addBlockInlay(0);
+    executeAction(IdeActions.ACTION_SELECT_ALL);
+    getEditor().getSettings().setRightMargin(1);
+    checkResult();
+  }
 }

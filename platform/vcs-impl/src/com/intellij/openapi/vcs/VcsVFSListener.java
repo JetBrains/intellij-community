@@ -417,7 +417,7 @@ public abstract class VcsVFSListener implements Disposable {
         }
       }
       else {
-        final List<VirtualFile> list = new LinkedList<>();
+        final List<VirtualFile> list = new ArrayList<>();
         VcsUtil.collectFiles(file, list, true, isDirectoryVersioningSupported());
         for (VirtualFile child : list) {
           if (!myChangeListManager.isIgnoredFile(child)) {

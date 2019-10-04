@@ -4,10 +4,12 @@ package com.intellij.execution.process;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.util.SystemInfo;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /** @deprecated use {@link KillableColoredProcessHandler#KillableColoredProcessHandler(GeneralCommandLine, boolean)} (to be removed in IDEA 16) */
 @Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2016")
 @SuppressWarnings({"unused"})
 public class RunnerWinProcess extends ProcessWrapper {
 

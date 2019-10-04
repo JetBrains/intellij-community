@@ -48,7 +48,7 @@ class Test2 {
   {
     Class c = D.class;
 
-    D<String> d = new D<>(s -> s.<error descr="Cannot resolve method 'isEmpty()'">isEmpty</error>(), c);
-    D<String> d1 = D.create(s -> s.<error descr="Cannot resolve method 'isEmpty()'">isEmpty</error>(), c);
+    D<String> d = new D<>(s -> s.<error descr="Cannot resolve method 'isEmpty' in 'Object'">isEmpty</error>(), c);
+    D<String> d1 = D.create(s -> s.<error descr="Cannot resolve method 'isEmpty' in 'Object'">isEmpty</error>(), c);
   }
 }

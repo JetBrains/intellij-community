@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.testFrameworks;
 
 import com.intellij.psi.*;
@@ -30,12 +16,18 @@ public class AssertHint {
   private final boolean myMessageOnFirstPosition;
   private final PsiExpression myMessage;
   private final PsiMethod myMethod;
+  private final PsiExpression myOriginalExpression;
 
-  private AssertHint(int index, boolean messageOnFirstPosition, PsiExpression message, PsiMethod method) {
+  private AssertHint(int index,
+                     boolean messageOnFirstPosition,
+                     PsiExpression message,
+                     PsiMethod method,
+                     PsiExpression originalExpression) {
     myArgIndex = index;
     myMessageOnFirstPosition = messageOnFirstPosition;
     myMessage = message;
     myMethod = method;
+    myOriginalExpression = originalExpression;
   }
 
   public boolean isMessageOnFirstPosition() {
@@ -50,8 +42,24 @@ public class AssertHint {
     return myMethod;
   }
 
-  public PsiExpression getPosition(PsiExpression[] arguments) {
-    return arguments[myArgIndex];
+  public PsiExpression getFirstArgument() {
+    return ((PsiMethodCallExpression)myOriginalExpression).getArgumentList().getExpressions()[myArgIndex];
+  }
+
+  public PsiExpression getSecondArgument() {
+    return ((PsiMethodCallExpression)myOriginalExpression).getArgumentList().getExpressions()[myArgIndex + 1];
+  }
+
+  public PsiExpression getExpected(boolean checkTestNG) {
+    return checkTestNG ? getSecondArgument() : getFirstArgument();
+  }
+
+  public PsiExpression getActual(boolean checkTestNG) {
+    return checkTestNG ? getFirstArgument() : getSecondArgument();
+  }
+
+  public PsiExpression getOriginalExpression() {
+    return myOriginalExpression;
   }
 
   @Nullable
@@ -72,11 +80,11 @@ public class AssertHint {
                                   boolean checkTestNG) {
     final PsiReferenceExpression methodExpression = expression.getMethodExpression();
     @NonNls final String methodName = methodExpression.getReferenceName();
-    Integer minimumParamCount = methodNameToParamCount.apply(methodName);
+    final Integer minimumParamCount = methodNameToParamCount.apply(methodName);
     if (minimumParamCount == null) {
       return null;
     }
-    JavaResolveResult resolveResult = expression.resolveMethodGenerics();
+    final JavaResolveResult resolveResult = expression.resolveMethodGenerics();
     final PsiMethod method = (PsiMethod)resolveResult.getElement();
     if (method == null || method.hasModifierProperty(PsiModifier.PRIVATE) || !resolveResult.isValidResult()) {
       return null;
@@ -107,7 +115,7 @@ public class AssertHint {
     else {
       argumentIndex = 0;
       if (parameters.length > minimumParamCount && minimumParamCount >= 0) {
-        int lastParameterIdx = parameters.length - 1;
+        final int lastParameterIdx = parameters.length - 1;
         //check that it's not delta in assertEquals(dbl, dbl, dbl), etc
         if (parameters[lastParameterIdx].getType() instanceof PsiClassType) {
           message = arguments[lastParameterIdx];
@@ -115,19 +123,19 @@ public class AssertHint {
       }
     }
 
-    return new AssertHint(argumentIndex, messageOnFirstPosition, message, method);
+    return new AssertHint(argumentIndex, messageOnFirstPosition, message, method, expression);
   }
 
   public static AssertHint create(PsiMethodReferenceExpression methodExpression,
                                   Function<? super String, Integer> methodNameToParamCount,
                                   boolean checkTestNG) {
     @NonNls final String methodName = methodExpression.getReferenceName();
-    Integer minimumParamCount = methodNameToParamCount.apply(methodName);
+    final Integer minimumParamCount = methodNameToParamCount.apply(methodName);
     if (minimumParamCount == null) {
       return null;
     }
-    JavaResolveResult resolveResult = methodExpression.advancedResolve(false);
-    PsiElement element = resolveResult.getElement();
+    final JavaResolveResult resolveResult = methodExpression.advancedResolve(false);
+    final PsiElement element = resolveResult.getElement();
     if (!(element instanceof PsiMethod)) {
       return null;
     }
@@ -147,11 +155,14 @@ public class AssertHint {
       return null;
     }
 
-    return new AssertHint(0, messageOnFirstPosition, null, method);
+    return new AssertHint(0, messageOnFirstPosition, null, method, methodExpression);
   }
 
-  public static boolean isMessageOnFirstPosition(PsiMethod method, boolean checkTestNG) {
-    PsiClass containingClass = method.getContainingClass();
+  private static boolean isMessageOnFirstPosition(PsiMethod method, boolean checkTestNG) {
+    final PsiClass containingClass = method.getContainingClass();
+    if (containingClass == null) {
+      return false;
+    }
     final String qualifiedName = containingClass.getQualifiedName();
     if (checkTestNG) {
       return "org.testng.AssertJUnit".equals(qualifiedName) || "org.testng.Assert".equals(qualifiedName) && "fail".equals(method.getName());
@@ -162,14 +173,21 @@ public class AssertHint {
            JUnitCommonClassNames.ORG_JUNIT_ASSUME.equals(qualifiedName);
   }
 
-  public static boolean isMessageOnLastPosition(PsiMethod method, boolean checkTestNG) {
+  private static boolean isMessageOnLastPosition(PsiMethod method, boolean checkTestNG) {
     final PsiClass containingClass = method.getContainingClass();
+    if (containingClass == null) {
+      return false;
+    }
     final String qualifiedName = containingClass.getQualifiedName();
     if (checkTestNG) {
       return "org.testng.Assert".equals(qualifiedName) && !"fail".equals(method.getName());
     }
     return JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_ASSERTIONS.equals(qualifiedName) ||
           JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_ASSUMPTIONS.equals(qualifiedName);
+  }
+
+  public boolean isAssertTrue() {
+    return "assertTrue".equals(getMethod().getName());
   }
 
   public static class JUnitCommonAssertNames {

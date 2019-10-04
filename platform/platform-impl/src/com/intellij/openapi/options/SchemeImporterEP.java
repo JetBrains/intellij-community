@@ -45,8 +45,8 @@ public class SchemeImporterEP <S extends Scheme> extends AbstractExtensionPointB
 
   private final LazyInstance<SchemeImporter<S>> myImporterInstance = new LazyInstance<SchemeImporter<S>>() {
     @Override
-    protected Class<SchemeImporter<S>> getInstanceClass() throws ClassNotFoundException {
-      return findClass(implementationClass);
+    protected Class<SchemeImporter<S>> getInstanceClass() {
+      return findExtensionClass(implementationClass);
     }
   };
   

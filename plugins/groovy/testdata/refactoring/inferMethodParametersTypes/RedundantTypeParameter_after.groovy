@@ -1,4 +1,4 @@
-def <T0> Object foo(List<? extends List<T0>> a, T0 b) {
+def <T> boolean foo(List<? extends List<T>> a, T b) {
   a.get(0).add(b)
 }
 

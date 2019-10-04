@@ -127,9 +127,6 @@ class UISettingsState : BaseState() {
 
   @get:OptionTag("COLOR_BLINDNESS")
   var colorBlindness by enum<ColorBlindness>()
-  @get:OptionTag("CONTRAST_SCROLLBARS")
-  var useContrastScrollBars by property(false)
-
   @get:OptionTag("MOVE_MOUSE_ON_DEFAULT_BUTTON")
   var moveMouseOnDefaultButton by property(false)
   @get:OptionTag("ENABLE_ALPHA_MODE")
@@ -141,7 +138,7 @@ class UISettingsState : BaseState() {
   @get:OptionTag("OVERRIDE_NONIDEA_LAF_FONTS")
   var overrideLafFonts by property(false)
   @get:OptionTag("SHOW_ICONS_IN_MENUS")
-  var showIconsInMenus by property(!PlatformUtils.isAppCode())
+  var showIconsInMenus by property(true)
   // IDEADEV-33409, should be disabled by default on MacOS
   @get:OptionTag("DISABLE_MNEMONICS")
   var disableMnemonics by property(SystemInfo.isMac)
@@ -171,7 +168,7 @@ class UISettingsState : BaseState() {
   var showTabsTooltips by property(true)
   @get:OptionTag("SHOW_DIRECTORY_FOR_NON_UNIQUE_FILENAMES")
   var showDirectoryForNonUniqueFilenames by property(true)
-  var smoothScrolling by property(SystemInfo.isMac && (SystemInfo.isJetBrainsJvm || SystemInfo.IS_AT_LEAST_JAVA9))
+  var smoothScrolling by property(true)
   @get:OptionTag("NAVIGATE_TO_PREVIEW")
   var navigateToPreview by property(false)
 

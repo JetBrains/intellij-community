@@ -107,7 +107,7 @@ public class ResolveClassInModulesWithDependenciesTest extends ResolveTestCase {
   public void testNoSubpackagesAccess() throws Exception {
     PsiElementFinder mock = createMockFinder();
     ExtensionPointImpl<PsiElementFinder> point = (ExtensionPointImpl<PsiElementFinder>)PsiElementFinder.EP.getPoint(myProject);
-    point.maskAll(ContainerUtil.concat(point.getExtensionList(), Collections.singletonList(mock)), getTestRootDisposable());
+    point.maskAll(ContainerUtil.concat(point.getExtensionList(), Collections.singletonList(mock)), getTestRootDisposable(), false);
 
     PsiReference reference = configure();
     assertNull(reference.resolve());

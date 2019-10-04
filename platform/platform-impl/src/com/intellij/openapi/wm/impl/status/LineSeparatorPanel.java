@@ -16,9 +16,9 @@ import com.intellij.util.LineSeparator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class LineSeparatorPanel extends EditorBasedStatusBarPopup {
+public final class LineSeparatorPanel extends EditorBasedStatusBarPopup {
   public LineSeparatorPanel(@NotNull Project project) {
-    super(project);
+    super(project, true);
   }
 
   @NotNull
@@ -53,14 +53,9 @@ public class LineSeparatorPanel extends EditorBasedStatusBarPopup {
     );
   }
 
-  @Override
-  protected void registerCustomListeners() {
-    // nothing
-  }
-
   @NotNull
   @Override
-  protected StatusBarWidget createInstance(Project project) {
+  protected StatusBarWidget createInstance(@NotNull Project project) {
     return new LineSeparatorPanel(project);
   }
 

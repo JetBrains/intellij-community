@@ -1,16 +1,19 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.ui.tree;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.*;
+import com.intellij.ui.ColoredTreeCellRenderer;
+import com.intellij.ui.ExpandableItemsHandler;
+import com.intellij.ui.ScreenUtil;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.frame.ImmediateFullValueEvaluator;
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
+import icons.PlatformDebuggerImplIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -82,8 +85,8 @@ class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
   }
 
   private void updateIcon(XDebuggerTreeNode node) {
-    Icon icon = node instanceof XValueNodeImpl && node.getTree().getRevealManager().isItemRevealed((XValueNodeImpl)node) ?
-                AllIcons.Debugger.Reveal.RevealOn : node.getIcon();
+    Icon icon = node instanceof XValueNodeImpl && node.getTree().getPinToTopManager().isItemPinned((XValueNodeImpl)node) ?
+                PlatformDebuggerImplIcons.PinToTop.PinnedItem : node.getIcon();
     setIcon(icon);
   }
 
@@ -91,6 +94,7 @@ class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
     Dimension linkSize = myLink.getPreferredSize();
     myLinkWidth = linkSize.width;
     myLinkOffset = Math.min(super.getPreferredSize().width, treeVisibleRect.x + treeVisibleRect.width - myLinkWidth - rowX);
+    myLink.setSize(myLinkWidth, getHeight()); // actually we only set width here, height is not yet ready
   }
 
   @Override
@@ -114,7 +118,7 @@ class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
         textGraphics.dispose();
       }
       g.translate(myLinkOffset, 0);
-      myLink.setHeight(getHeight());
+      myLink.setSize(myLink.getWidth(), getHeight());
       myLink.doPaint(g);
       g.translate(-myLinkOffset, 0);
     }
@@ -153,8 +157,6 @@ class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
   }
 
   private static class MyColoredTreeCellRenderer extends ColoredTreeCellRenderer {
-    private int myHeight;
-
     @Override
     public void customizeCellRenderer(@NotNull JTree tree,
                                       Object value,
@@ -167,15 +169,6 @@ class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
     @Override
     protected void doPaint(Graphics2D g) {
       super.doPaint(g);
-    }
-
-    public void setHeight(int height) {
-      myHeight = height;
-    }
-
-    @Override
-    public int getHeight() {
-      return myHeight;
     }
   }
 

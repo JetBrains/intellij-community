@@ -4,7 +4,7 @@ package com.intellij.openapi.wm.impl;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.ide.IdeEventQueue;
-import com.intellij.ide.plugins.PluginManager;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.Disposable;
@@ -22,7 +22,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.loader.NativeLibraryLoader;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.ImageUtil;
 /* Android Studio: b/67589184
 import com.sun.javafx.application.PlatformImpl;
 Android Studio: b/67589184 */
@@ -55,7 +55,7 @@ interface GlobalMenuLib extends Library {
 
   void execOnMainLoop(JRunnable run);
 
-  Pointer registerWindow(long windowXid, EventHandler handler);
+  Pointer registerWindow(long windowXid, LinuxGlobalMenuEventHandler handler);
   void releaseWindowOnMainLoop(Pointer wi, JRunnable onReleased);
 
   void bindNewWindow(Pointer wi, long windowXid); // can be called from EDT (invokes only g_dbus_proxy_call, stateless)
@@ -79,12 +79,10 @@ interface GlobalMenuLib extends Library {
 
   void toggleItemStateChecked(Pointer item, boolean isChecked);
 
-  interface EventHandler extends Callback {
-    void handleEvent(int uid, int eventType);
-  }
   interface JLogger extends Callback {
     void log(int level, String msg);
   }
+
   interface JRunnable extends Callback {
     void run();
   }
@@ -106,7 +104,7 @@ interface GlobalMenuLib extends Library {
   int ITEM_RADIO = 3;
 }
 
-public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
+public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Disposable {
   private static final String TOGGLE_SWING_MENU_ACTION_NAME = "Toggle Global Menu integration";
   private static final String TOGGLE_SWING_MENU_ACTION_DESC = "Enable/disable global menu integration (in all frames)";
   private static final String TOGGLE_SWING_MENU_ACTION_ID = "ToggleGlobalLinuxMenu";
@@ -467,7 +465,7 @@ Android Studio: b/67589184 */
     if (icon == null || icon.getIconWidth() <= 0 || icon.getIconHeight() <= 0)
       return null;
 
-    final BufferedImage img = UIUtil.createImage(icon.getIconWidth(), icon.getIconHeight(), BufferedImage.TYPE_INT_ARGB);
+    final BufferedImage img = ImageUtil.createImage(icon.getIconWidth(), icon.getIconHeight(), BufferedImage.TYPE_INT_ARGB);
     final Graphics2D g2d = img.createGraphics();
     icon.paintIcon(null, g2d, 0, 0);
     g2d.dispose();
@@ -712,8 +710,9 @@ Android Studio: b/67589184 */
   private static GlobalMenuLib _loadLibrary() {
     if (true) return null;  // TODO(b/118514141): fix UI tests in Bazel and delete this line
     if (!SystemInfo.isLinux ||
+        ApplicationManager.getApplication() == null || ApplicationManager.getApplication().isUnitTestMode() ||
         Registry.is("linux.native.menu.force.disable") ||
-        !Experiments.isFeatureEnabled("linux.native.menu") ||
+        !Experiments.getInstance().isFeatureEnabled("linux.native.menu") ||
         !JnaLoader.isLoaded() ||
         isUnderVMWithSwiftPluginInstalled()) {
       return null;
@@ -736,7 +735,7 @@ Android Studio: b/67589184 */
 
   private static boolean isUnderVMWithSwiftPluginInstalled() {
     // Workaround OC-18001 OC-18634 CLion crashes after opening Swift project on Linux
-    if (PluginManager.isPluginInstalled(PluginId.getId("com.intellij.clion-swift"))) {
+    if (PluginManagerCore.isPluginInstalled(PluginId.getId("com.intellij.clion-swift"))) {
       try {
         String stdout = StringUtil.toLowerCase(
           ExecUtil.execAndGetOutput(new GeneralCommandLine("lspci")).getStdout());

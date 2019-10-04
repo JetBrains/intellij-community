@@ -5,11 +5,13 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ui.OrderEntryAppearanceService;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
 /** @deprecated trivial to implement; to be remove din IDEA 2019 */
+@ApiStatus.ScheduledForRemoval(inVersion = "2019")
 @Deprecated
 public class ProjectJdkListRenderer extends ColoredListCellRenderer<Object> {
   @Override

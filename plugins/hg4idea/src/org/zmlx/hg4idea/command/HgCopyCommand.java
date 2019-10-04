@@ -17,6 +17,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
+import org.zmlx.hg4idea.execution.HgCommandResult;
+import org.zmlx.hg4idea.util.HgErrorUtil;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -34,9 +36,14 @@ public class HgCopyCommand {
     VirtualFile targetRepo = VcsUtil.getVcsRootFor(myProject, target);
     HgCommandExecutor executor = new HgCommandExecutor(myProject, VcsFileUtil.relativeOrFullPath(sourceRepo, source));
     if (sourceRepo != null && targetRepo != null && sourceRepo.equals(targetRepo)) {
-      executor.executeInCurrentThread(sourceRepo, "copy", Arrays.asList("--after",
-                                                                        VcsFileUtil.relativeOrFullPath(sourceRepo, source),
-                                                                        VcsFileUtil.relativeOrFullPath(targetRepo, target)));
+      HgCommandResult result;
+      int attempt = 0;
+      do {
+        result = executor.executeInCurrentThread(sourceRepo, "copy", Arrays.asList("--after",
+                                                                                   VcsFileUtil.relativeOrFullPath(sourceRepo, source),
+                                                                                   VcsFileUtil.relativeOrFullPath(targetRepo, target)));
+      }
+      while (HgErrorUtil.isWLockError(result) && attempt++ < 2);
     }
     else {
       // copying from one repository to another => 'hg add' in new repo

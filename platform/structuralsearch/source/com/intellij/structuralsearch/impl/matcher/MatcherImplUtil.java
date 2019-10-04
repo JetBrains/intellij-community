@@ -42,7 +42,7 @@ public class MatcherImplUtil {
     }
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByLanguage(language);
     if (profile != null) {
-      final String contextId = (patternContext == null) ? null : patternContext.getId();
+      final String contextId = patternContext == null ? null : patternContext.getId();
       return profile.createPatternTree(text, context, fileType, language, contextId, project, physical);
     }
     return PsiElement.EMPTY_ARRAY;

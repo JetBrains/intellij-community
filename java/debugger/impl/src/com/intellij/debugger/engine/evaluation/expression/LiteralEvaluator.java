@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * Class LiteralEvaluator
@@ -7,6 +7,7 @@
 package com.intellij.debugger.engine.evaluation.expression;
 
 import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
@@ -54,7 +55,7 @@ class LiteralEvaluator implements Evaluator {
         StringReference str = DebuggerUtilsEx.mirrorOfString((String)myValue, vm, context);
         // intern starting from jdk 7
         if (Registry.is("debugger.intern.string.literals") && vm.versionHigher("1.7")) {
-          Method internMethod = ((ClassType)str.referenceType()).concreteMethodByName("intern", "()Ljava/lang/String;");
+          Method internMethod = DebuggerUtils.findMethod(str.referenceType(), "intern", "()Ljava/lang/String;");
           if (internMethod != null) {
             return (StringReference)context.getDebugProcess().invokeMethod(context, str, internMethod, Collections.emptyList());
           }

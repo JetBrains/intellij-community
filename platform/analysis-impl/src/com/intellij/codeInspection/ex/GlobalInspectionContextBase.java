@@ -168,10 +168,11 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
   @Override
   @NotNull
   public RefManager getRefManager() {
-    if (myRefManager == null) {
-      myRefManager = DumbService.getInstance(myProject).runReadActionInSmartMode(() -> new RefManagerImpl(myProject, myCurrentScope, this));
+    RefManager refManager = myRefManager;
+    if (refManager == null) {
+      myRefManager = refManager = DumbService.getInstance(myProject).runReadActionInSmartMode(() -> new RefManagerImpl(myProject, myCurrentScope, this));
     }
-    return myRefManager;
+    return refManager;
   }
 
   public boolean isToCheckMember(@NotNull RefElement owner, @NotNull InspectionProfileEntry tool) {
@@ -278,13 +279,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
       }
     }
     for (GlobalInspectionContextExtension extension : myExtensions.values()) {
-      try {
-        extension.performPreRunActivities(outGlobalTools, outLocalTools, this);
-      } catch (Throwable t) {
-        // Prevent plugins such as the Kotlin plugin from taking down the whole inspection
-        // run if they throw an exception here
-        LOG.error(t);
-      }
+      extension.performPreRunActivities(outGlobalTools, outLocalTools, this);
     }
   }
 

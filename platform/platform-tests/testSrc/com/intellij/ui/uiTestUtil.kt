@@ -108,7 +108,7 @@ fun getSnapshotRelativePath(lafName: String): String {
 fun validateBounds(component: Container, snapshotDir: Path, snapshotName: String) {
   val actualSerializedLayout: String
   if (component.layout is MigLayout) {
-    actualSerializedLayout = serializeLayout(component)
+    actualSerializedLayout = serializeLayout(component, isIncludeCellBounds = false, isIncludeComponentBounds = false)
   }
   else {
     val dumperOptions = DumperOptions()

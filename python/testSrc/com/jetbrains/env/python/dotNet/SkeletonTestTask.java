@@ -114,11 +114,7 @@ class SkeletonTestTask extends PyExecutionFixtureTestTask {
     ApplicationManager.getApplication().invokeAndWait(() -> {
       PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments();
       final String intentionName = PyBundle.message("sdk.gen.stubs.for.binary.modules", myUseQuickFixWithThisModuleOnly);
-      IntentionAction intention = myFixture.findSingleIntention(intentionName);
-
-      if (intention instanceof IntentionActionDelegate) {
-        intention = ((IntentionActionDelegate)intention).getDelegate();
-      }
+      IntentionAction intention = IntentionActionDelegate.unwrap(myFixture.findSingleIntention(intentionName));
 
       Assert.assertNotNull("No intention found to generate skeletons!", intention);
       Assert.assertThat("Intention should be quick fix to run", intention, Matchers.instanceOf(QuickFixWrapper.class));

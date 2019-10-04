@@ -20,8 +20,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.intellij.internal.statistic.collectors.fus.actions.persistence.ToolWindowCollector.ToolWindowActivationSource.ACTIVATION;
-import static com.intellij.internal.statistic.collectors.fus.actions.persistence.ToolWindowCollector.ToolWindowActivationSource.CLICK;
+import static com.intellij.internal.statistic.collectors.fus.actions.persistence.ToolWindowCollector.ToolWindowActivationSource.ACTIVATED;
+import static com.intellij.internal.statistic.collectors.fus.actions.persistence.ToolWindowCollector.ToolWindowActivationSource.CLICKED;
 import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.getPlatformPlugin;
 import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.getUnknownPlugin;
 import static com.intellij.openapi.wm.ToolWindowId.*;
@@ -74,21 +74,18 @@ public class ToolWindowCollector {
   }
 
   public void recordActivation(String toolWindowId) {
-    record(toolWindowId, ACTIVATION);
+    record(toolWindowId, ACTIVATED);
   }
 
   //todo[kb] provide a proper way to track activations by clicks
   public void recordClick(String toolWindowId) {
-    record(toolWindowId, CLICK);
+    record(toolWindowId, CLICKED);
   }
 
   private void record(@Nullable String toolWindowId, @NotNull ToolWindowActivationSource source) {
     if (StringUtil.isNotEmpty(toolWindowId)) {
-      final FeatureUsageData data = new FeatureUsageData().addOS();
-      if (source != ACTIVATION) {
-        data.addData("source", StringUtil.toLowerCase(source.name()));
-      }
-      FUCounterUsageLogger.getInstance().logEvent("toolwindow", toolWindowId, data);
+      final FeatureUsageData data = new FeatureUsageData().addData("id", toolWindowId);
+      FUCounterUsageLogger.getInstance().logEvent("toolwindow", StringUtil.toLowerCase(source.name()), data);
     }
   }
 
@@ -119,7 +116,7 @@ public class ToolWindowCollector {
   }
 
   enum ToolWindowActivationSource {
-    ACTIVATION, CLICK
+    ACTIVATED, CLICKED
   }
 
   public static class ToolWindowUtilValidator extends CustomWhiteListRule {
@@ -135,9 +132,7 @@ public class ToolWindowCollector {
       if ("unknown".equals(data)) return ValidationResultType.ACCEPTED;
 
       final PluginInfo info = getPluginInfo(data);
-      if (StringUtil.equals(data, context.eventId)) {
-        context.setPluginInfo(info);
-      }
+      context.setPluginInfo(info);
       return info.isDevelopedByJetBrains() ? ValidationResultType.ACCEPTED : ValidationResultType.THIRD_PARTY;
     }
   }

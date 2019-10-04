@@ -264,7 +264,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       String tooltip = KeymapUtil.createTooltipText(myTooltipText, ComboBoxAction.this);
       if (Registry.is("ide.helptooltip.enabled") && StringUtil.isNotEmpty(tooltip)) {
         HelpTooltip.dispose(this);
-        new HelpTooltip().setDescription(tooltip).setLocation(HelpTooltip.Alignment.BOTTOM).installOn(this);
+        new HelpTooltip().setDescription(tooltip).installOn(this);
       } else {
         setToolTipText(!tooltip.isEmpty() ? tooltip : null);
       }

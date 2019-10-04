@@ -5,7 +5,7 @@ import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.ImageUtil;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -32,8 +32,8 @@ public class LabelIcon implements Icon {
 
   private BufferedImage createImage(Component c, Graphics2D g) {
     BufferedImage image = c != null ?
-                          UIUtil.createImage(c.getGraphicsConfiguration(), getIconWidth(), getIconHeight(), BufferedImage.TYPE_INT_ARGB) :
-                          UIUtil.createImage(g, getIconWidth(), getIconHeight(), BufferedImage.TYPE_INT_ARGB);
+                          ImageUtil.createImage(c.getGraphicsConfiguration(), getIconWidth(), getIconHeight(), BufferedImage.TYPE_INT_ARGB)
+                                    : ImageUtil.createImage(g, getIconWidth(), getIconHeight(), BufferedImage.TYPE_INT_ARGB);
     paintIcon(image.createGraphics());
     return image;
   }
@@ -43,7 +43,7 @@ public class LabelIcon implements Icon {
     if (ImageUtil.getImageScale(myImage) != JBUIScale.sysScale((Graphics2D)g)) {
       myImage = createImage(null, (Graphics2D)g);
     }
-    UIUtil.drawImage(g, myImage, x, y, null);
+    StartupUiUtil.drawImage(g, myImage, x, y, null);
   }
 
   private void paintIcon(@NotNull Graphics2D g2) {

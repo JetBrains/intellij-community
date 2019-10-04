@@ -17,14 +17,14 @@ package com.siyeh.ipp.concatenation;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.util.SmartList;
+import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
+import java.util.Objects;
 
 public class JoinConcatenatedStringLiteralsIntention extends Intention {
 
@@ -46,48 +46,55 @@ public class JoinConcatenatedStringLiteralsIntention extends Intention {
     final PsiJavaToken token = (PsiJavaToken)element;
     final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)element.getParent();
     final StringBuilder newExpression = new StringBuilder();
-    final PsiElement[] children = polyadicExpression.getChildren();
-    final List<PsiElement> buffer = new SmartList<>();
-    for (PsiElement child : children) {
-      if (child instanceof PsiJavaToken) {
-        if (token.equals(child)) {
-          final PsiLiteralExpression literalExpression = (PsiLiteralExpression)buffer.get(0);
-          final Object value = literalExpression.getValue();
-          assert value != null;
-          newExpression.append('"').append(StringUtil.escapeStringCharacters(value.toString()));
+    PsiExpression[] operands = polyadicExpression.getOperands();
+    for (int i = 0; i < operands.length; i++) {
+      PsiExpression operand = operands[i];
+      if (polyadicExpression.getTokenBeforeOperand(operand) == token) {
+        PsiExpression prev = operands[i - 1];
+        PsiElement nextSibling = polyadicExpression.getFirstChild();
+        while (nextSibling != prev) {
+          newExpression.append(tracker.text(nextSibling));
+          nextSibling = nextSibling.getNextSibling();
         }
-        else {
-          for (PsiElement bufferedElement : buffer) {
-            newExpression.append(bufferedElement.getText());
-          }
-          buffer.clear();
-          newExpression.append(child.getText());
+        merge((PsiLiteralExpressionImpl)prev, (PsiLiteralExpressionImpl)operand, newExpression);
+        nextSibling = operand.getNextSibling();
+        while (nextSibling != null) {
+          newExpression.append(tracker.text(nextSibling));
+          nextSibling = nextSibling.getNextSibling();
         }
+        break;
       }
-      else if (child instanceof PsiLiteralExpression) {
-        if (buffer.isEmpty()) {
-          buffer.add(child);
-        }
-        else {
-          final PsiLiteralExpression literalExpression = (PsiLiteralExpression)child;
-          final Object value = literalExpression.getValue();
-          assert value != null;
-          newExpression.append(StringUtil.escapeStringCharacters(value.toString())).append('"');
-          buffer.clear();
-        }
-      }
-      else {
-        if (buffer.isEmpty()) {
-          newExpression.append(tracker.text(child));
-        }
-        else {
-          buffer.add(child);
-        }
-      }
-    }
-    for (PsiElement bufferedElement : buffer) {
-      newExpression.append(tracker.text(bufferedElement));
     }
     PsiReplacementUtil.replaceExpression(polyadicExpression, newExpression.toString(), tracker);
+  }
+
+  private static void merge(PsiLiteralExpressionImpl left, PsiLiteralExpressionImpl right, StringBuilder newExpression) {
+    String leftText = Objects.requireNonNull(left.getValue()).toString();
+    String rightText = Objects.requireNonNull(right.getValue()).toString();
+    if (left.getLiteralElementType() == JavaTokenType.TEXT_BLOCK_LITERAL) {
+      String indent = StringUtil.repeat(" ", left.getTextBlockIndent());
+      newExpression.append("\"\"\"").append('\n').append(indent);
+      newExpression.append(leftText.replaceAll("\n", "\n" + indent));
+      if (right.getLiteralElementType() == JavaTokenType.TEXT_BLOCK_LITERAL) {
+        newExpression.append(rightText.replaceAll("\n", "\n" + indent));
+      }
+      else {
+        newExpression.append(StringUtil.escapeStringCharacters(rightText));
+      }
+      newExpression.append("\"\"\"");
+    }
+    else if (right.getLiteralElementType() == JavaTokenType.TEXT_BLOCK_LITERAL) {
+      String indent = StringUtil.repeat(" ", right.getTextBlockIndent());
+      newExpression.append("\"\"\"").append('\n').append(indent);
+      newExpression.append(StringUtil.escapeStringCharacters(leftText));
+      newExpression.append(rightText.replaceAll("\n", "\n" + indent));
+      newExpression.append("\"\"\"");
+    }
+    else {
+      newExpression.append('"');
+      newExpression.append(StringUtil.escapeStringCharacters(leftText));
+      newExpression.append(StringUtil.escapeStringCharacters(rightText));
+      newExpression.append('"');
+    }
   }
 }

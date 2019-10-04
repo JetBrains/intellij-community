@@ -1,6 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.gotoByName
 
+
+import com.intellij.ide.ui.OptionsTopHitProvider
 import com.intellij.ide.ui.search.BooleanOptionDescription
 import com.intellij.ide.ui.search.OptionDescription
 import com.intellij.ide.util.gotoByName.GotoActionModel.ActionWrapper
@@ -14,10 +16,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.util.CollectConsumer
 import gnu.trove.Equality
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.NotNull
+import org.jetbrains.annotations.Nullable
 
 import java.util.concurrent.TimeUnit
 
@@ -70,10 +74,63 @@ class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   void "test match action by parent and grandparent group name"() {
-    def extractMethod = ActionManager.instance.getAction("ExtractMethod")
-    assert actionMatches('method', extractMethod) == MatchMode.NAME
-    assert actionMatches('extract method', extractMethod) == MatchMode.GROUP
-    assert actionMatches('refactor method', extractMethod) == MatchMode.GROUP
+    def extractMethod = ActionManager.instance.getAction("IntroduceVariable")
+    assert actionMatches('variable', extractMethod) == MatchMode.NAME
+    assert actionMatches('extract variable', extractMethod) == MatchMode.GROUP
+    assert actionMatches('refactor variable', extractMethod) == MatchMode.GROUP
+  }
+
+  void "test no lowercase camel-hump action description match"() {
+    def action = ActionManager.instance.getAction("InvalidateCaches")
+    assert actionMatches('invalid', action) == MatchMode.NAME
+    assert actionMatches('invalidate caches', action) == MatchMode.NAME
+    assert actionMatches('cache invalid', action) == MatchMode.NAME
+    assert actionMatches('rebuild of all caches', action) == MatchMode.DESCRIPTION
+    assert actionMatches('restart', action) == ApplicationManager.application.isRestartCapable() ? MatchMode.NAME : MatchMode.NONE
+    assert actionMatches('invcach', action) == MatchMode.NAME
+  }
+
+  void "test CamelCase text in action names"() {
+    def options = [
+      new OptionDescription("CamelCase option 1", "CamelCase option 1", null),
+      new OptionDescription("CamelCase option 1", "non camel case option 1", null),
+      new TestBooleanOption("Boolean CamelCase option 1"),
+      new TestBooleanOption("Boolean non camel case option 2"),
+    ]
+
+    OptionsTopHitProvider provider = new OptionsTopHitProvider() {
+      @NotNull
+      @Override
+      Collection<OptionDescription> getOptions(@Nullable Project project) {
+        return options
+      }
+
+      @NotNull
+      @Override
+      String getId() {
+        return "testprovider"
+      }
+    }
+
+    def consumer = new CollectConsumer<Object>()
+    provider.consumeTopHits("/testprovider CamelCase", consumer, project)
+    assert consumer.getResult() == options
+  }
+
+  private static class TestBooleanOption extends BooleanOptionDescription {
+
+    TestBooleanOption(String option) {
+      super(option, null)
+    }
+
+    @Override
+    boolean isOptionEnabled() {
+      return true
+    }
+
+    @Override
+    void setOptionState(boolean enabled) {
+    }
   }
 
   void "test matched value comparator"() {

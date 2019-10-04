@@ -11,15 +11,20 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.MutualMap;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
-import com.intellij.ui.tabs.*;
-import com.intellij.ui.tabs.newImpl.*;
-import com.intellij.ui.tabs.newImpl.singleRow.ScrollableSingleRowLayout;
-import com.intellij.ui.tabs.newImpl.singleRow.SingleRowLayout;
+import com.intellij.ui.tabs.JBTabPainter;
+import com.intellij.ui.tabs.JBTabs;
+import com.intellij.ui.tabs.TabInfo;
+import com.intellij.ui.tabs.TabsListener;
+import com.intellij.ui.tabs.impl.DefaultTabPainterAdapter;
+import com.intellij.ui.tabs.impl.SingleHeightTabs;
+import com.intellij.ui.tabs.impl.TabLabel;
+import com.intellij.ui.tabs.impl.TabPainterAdapter;
+import com.intellij.ui.tabs.impl.singleRow.ScrollableSingleRowLayout;
+import com.intellij.ui.tabs.impl.singleRow.SingleRowLayout;
 import com.intellij.util.SmartList;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -54,37 +59,23 @@ public class GridCellImpl implements GridCell {
     myPlaceInGrid = placeInGrid;
     myPlaceholder = placeholder;
     myPlaceholder.setContentProvider(() -> getContents());
-    myTabs = JBTabsFactory.getUseNewTabs() ? new GridCellTabs(context, container) : new GridCellTabsOld(context, container);
-    myTabs.setDataProvider(new DataProvider() {
-      @Override
-      @Nullable
-      public Object getData(@NotNull @NonNls final String dataId) {
-        if (ViewContext.CONTENT_KEY.is(dataId)) {
-          TabInfo target = myTabs.getTargetInfo();
-          if (target != null) {
-            return new Content[]{getContentFor(target)};
-          }
+    myTabs = new GridCellTabs(context, container);
+    myTabs.setDataProvider(dataId -> {
+      if (ViewContext.CONTENT_KEY.is(dataId)) {
+        TabInfo target = myTabs.getTargetInfo();
+        if (target != null) {
+          return new Content[]{getContentFor(target)};
         }
-        else if (ViewContext.CONTEXT_KEY.is(dataId)) {
-          return myContext;
-        }
-
-        return null;
       }
+      else if (ViewContext.CONTEXT_KEY.is(dataId)) {
+        return myContext;
+      }
+
+      return null;
     });
 
-    if(!JBTabsFactory.getUseNewTabs()) {
-      myTabs.getPresentation().setUiDecorator(new UiDecorator() {
-        @Override
-        @NotNull
-        public UiDecoration getDecoration() {
-          return new UiDecoration(null, new Insets(1, -1, 1, -1));
-        }
-      });
-    }
-
     myTabs.getPresentation().setSideComponentVertical(!context.getLayoutSettings().isToolbarHorizontal())
-      .setStealthTabMode(!JBTabsFactory.getUseNewTabs()).setFocusCycle(false).setPaintFocus(true)
+      .setFocusCycle(false).setPaintFocus(true)
       .setTabDraggingEnabled(context.isMoveToGridActionEnabled()).setSideComponentOnTabs(false);
 
     myTabs.addTabMouseListener(new MouseAdapter() {
@@ -494,7 +485,6 @@ public class GridCellImpl implements GridCell {
       ((RunnerContentUi)myContext).myTabs.resetDropOver(tabInfo);
     }
 
-    @NotNull
     @Override
     protected TabLabel createTabLabel(TabInfo info) {
       return new SingleHeightTabs.SingleHeightLabel(this, info) {
@@ -503,64 +493,6 @@ public class GridCellImpl implements GridCell {
           super.setAlignmentToCenter(false);
         }
       };
-    }
-  }
-
-  private static class GridCellTabsOld extends com.intellij.ui.tabs.impl.JBEditorTabs {
-    private final ViewContextEx myContext;
-
-    private GridCellTabsOld(ViewContextEx context, GridImpl container) {
-      super(context.getProject(), context.getActionManager(), context.getFocusManager(), container);
-      myContext = context;
-      myDefaultPainter.setDefaultTabColor(JBColor.namedColor("DebuggerTabs.selectedBackground", new JBColor(0xC6CFDF, 0x424D5F)));
-    }
-
-    @Override
-    public boolean useSmallLabels() {
-      return true;
-    }
-
-    @Override
-    protected com.intellij.ui.tabs.impl.singleRow.SingleRowLayout createSingleRowLayout() {
-      return new com.intellij.ui.tabs.impl.singleRow.ScrollableSingleRowLayout(this);
-    }
-
-    @Override
-    public int tabMSize() {
-      return 12;
-    }
-
-    @Override
-    public void processDropOver(TabInfo over, RelativePoint point) {
-      ((RunnerContentUi)myContext).myTabs.processDropOver(over, point);
-    }
-
-    @Override
-    public Image startDropOver(TabInfo tabInfo, RelativePoint point) {
-      return ((RunnerContentUi)myContext).myTabs.startDropOver(tabInfo, point);
-    }
-
-    @Override
-    public void resetDropOver(TabInfo tabInfo) {
-      ((RunnerContentUi)myContext).myTabs.resetDropOver(tabInfo);
-    }
-
-    @Override
-    protected com.intellij.ui.tabs.impl.TabLabel createTabLabel(TabInfo info) {
-      return new com.intellij.ui.tabs.impl.TabLabel(this, info) {
-        @Override
-        public void setAlignmentToCenter(boolean toCenter) {
-          super.setAlignmentToCenter(false);
-        }
-      };
-    }
-
-    @Override
-    protected void paintBorder(Graphics2D g2d, ShapeInfo shape, Color borderColor) {
-      if (UIUtil.isUnderDarcula()) {
-        return;
-      }
-      super.paintBorder(g2d, shape, borderColor);
     }
   }
 }

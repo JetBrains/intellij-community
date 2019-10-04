@@ -19,7 +19,6 @@ import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.util.ref.GCWatcher;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.inspections.PyDeprecationInspection;
-import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
 
@@ -77,17 +76,6 @@ public class PyDeprecationTest extends PyTestCase {
     myFixture.enableInspections(PyDeprecationInspection.class);
     myFixture.configureByFiles("deprecation/deprecatedImport.py", "deprecation/deprecatedModule.py");
     myFixture.checkHighlighting(true, false, false);
-  }
-
-  public void testAbcDeprecatedAbstracts() {
-    runWithLanguageLevel(
-      LanguageLevel.PYTHON34,
-      () -> {
-        myFixture.enableInspections(PyDeprecationInspection.class);
-        myFixture.configureByFile("deprecation/abcDeprecatedAbstracts.py");
-        myFixture.checkHighlighting(true, false, false);
-      }
-    );
   }
 
   public void testFileStub() {

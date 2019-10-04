@@ -15,11 +15,9 @@
  */
 package git4idea.ui.branch;
 
+import com.intellij.dvcs.push.ui.VcsPushDialog;
 import com.intellij.dvcs.repo.Repository;
-import com.intellij.dvcs.ui.BranchActionGroup;
-import com.intellij.dvcs.ui.LightActionGroup;
-import com.intellij.dvcs.ui.NewBranchAction;
-import com.intellij.dvcs.ui.PopupElementWithAdditionalInfo;
+import com.intellij.dvcs.ui.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.components.ServiceManager;
@@ -28,14 +26,13 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import git4idea.GitBranch;
 import git4idea.GitLocalBranch;
 import git4idea.GitProtectedBranchesKt;
 import git4idea.actions.GitOngoingOperationAction;
 import git4idea.branch.*;
-import git4idea.config.GitVcsSettings;
+import git4idea.push.GitPushSource;
 import git4idea.rebase.GitRebaseSpec;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
@@ -231,17 +228,15 @@ class GitBranchPopupActions {
     protected final String myBranchName;
     @NotNull private final GitRepository mySelectedRepository;
     private final GitBranchManager myGitBranchManager;
-    @NotNull private final GitVcsSettings myGitVcsSettings;
     @NotNull private final GitBranchIncomingOutgoingManager myIncomingOutgoingManager;
 
     LocalBranchActions(@NotNull Project project, @NotNull List<? extends GitRepository> repositories, @NotNull String branchName,
                        @NotNull GitRepository selectedRepository) {
       myProject = project;
-      myRepositories = ContainerUtil.immutableList(repositories);
+      myRepositories = immutableList(repositories);
       myBranchName = branchName;
       mySelectedRepository = selectedRepository;
       myGitBranchManager = ServiceManager.getService(project, GitBranchManager.class);
-      myGitVcsSettings = GitVcsSettings.getInstance(myProject);
       myIncomingOutgoingManager = GitBranchIncomingOutgoingManager.getInstance(myProject);
       getTemplatePresentation().setText(calcBranchText(), false); // no mnemonics
       getTemplatePresentation().putClientProperty(JComponent.TOOL_TIP_TEXT_KEY, constructTooltip());
@@ -295,6 +290,8 @@ class GitBranchPopupActions {
         new Separator(),
         new RebaseAction(myProject, myRepositories, myBranchName),
         new MergeAction(myProject, myRepositories, myBranchName, true),
+        new Separator(),
+        new PushBranchAction(myProject, myRepositories, myBranchName, hasOutgoingCommits()),
         new Separator(),
         new RenameBranchAction(myProject, myRepositories, myBranchName),
         new DeleteAction(myProject, myRepositories, myBranchName)
@@ -371,6 +368,37 @@ class GitBranchPopupActions {
       }
     }
 
+    private static class PushBranchAction extends DumbAwareAction implements CustomIconProvider {
+      private final Project myProject;
+      private final List<GitRepository> myRepositories;
+      private final String myBranchName;
+      private final boolean myHasCommitsToPush;
+
+      PushBranchAction(@NotNull Project project,
+                       @NotNull List<GitRepository> repositories,
+                       @NotNull String branchName,
+                       boolean hasCommitsToPush) {
+        super("Push...");
+        myProject = project;
+        myRepositories = repositories;
+        myBranchName = branchName;
+        myHasCommitsToPush = hasCommitsToPush;
+      }
+
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        GitLocalBranch localBranch = myRepositories.get(0).getBranches().findLocalBranch(myBranchName);
+        assert localBranch != null;
+        new VcsPushDialog(myProject, myRepositories, myRepositories, null, GitPushSource.create(localBranch)).show();
+      }
+
+      @Nullable
+      @Override
+      public Icon getRightIcon() {
+        return myHasCommitsToPush ? DvcsImplIcons.Outgoing : null;
+      }
+    }
+
     private static class RenameBranchAction extends DumbAwareAction {
       @NotNull private final Project myProject;
       @NotNull private final List<? extends GitRepository> myRepositories;
@@ -417,8 +445,8 @@ class GitBranchPopupActions {
 
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
-        GitBrancher brancher = GitBrancher.getInstance(myProject);
-        brancher.deleteBranch(myBranchName, myRepositories);
+        GitBrancher.getInstance(myProject)
+          .deleteBranch(myBranchName, filter(myRepositories, repository -> !myBranchName.equals(repository.getCurrentBranchName())));
       }
     }
   }
@@ -436,7 +464,9 @@ class GitBranchPopupActions {
     @NotNull
     @Override
     public AnAction[] getChildren(@Nullable AnActionEvent e) {
-      return new AnAction[]{new LocalBranchActions.RenameBranchAction(myProject, myRepositories, myBranchName)};
+      return new AnAction[]{new LocalBranchActions.RenameBranchAction(myProject, myRepositories, myBranchName),
+        new LocalBranchActions.PushBranchAction(myProject, myRepositories, myBranchName, hasOutgoingCommits())
+      };
     }
   }
 
@@ -589,7 +619,8 @@ class GitBranchPopupActions {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      GitBrancher.getInstance(myProject).showDiffWithLocal(myBranchName, myRepositories);
+      GitBrancher.getInstance(myProject)
+        .showDiffWithLocal(myBranchName, filter(myRepositories, repository -> !myBranchName.equals(repository.getCurrentBranchName())));
     }
 
     @Override
@@ -701,14 +732,11 @@ class GitBranchPopupActions {
     private final Project myProject;
     private final List<? extends GitRepository> myRepositories;
     private final String myTagName;
-    private final GitRepository mySelectedRepository;
 
-    TagActions(@NotNull Project project, @NotNull List<? extends GitRepository> repositories, @NotNull String tagName,
-               @NotNull GitRepository selectedRepository) {
+    TagActions(@NotNull Project project, @NotNull List<? extends GitRepository> repositories, @NotNull String tagName) {
       myProject = project;
       myRepositories = repositories;
       myTagName = tagName;
-      mySelectedRepository = selectedRepository;
       getTemplatePresentation().setText(tagName, false); // no mnemonics
       setIcons(EmptyIcon.ICON_16, EmptyIcon.ICON_16, EmptyIcon.ICON_16, EmptyIcon.ICON_16); // no favorites
     }

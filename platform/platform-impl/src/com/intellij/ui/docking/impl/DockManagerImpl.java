@@ -11,7 +11,6 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorProvider;
 import com.intellij.openapi.fileEditor.impl.*;
@@ -19,18 +18,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.FrameWrapper;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.IdeRootPaneNorthExtension;
-import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.VerticalBox;
 import com.intellij.ui.docking.*;
-import com.intellij.ui.tabs.newImpl.JBTabsImpl;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -144,8 +140,6 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
     }
 
     Component parent = UIUtil.findUltimateParent(c);
-    if (parent == null) return null;
-
     for (DockContainer eachContainer : myContainers) {
       if (parent == UIUtil.findUltimateParent(eachContainer.getContainerComponent())) {
         return eachContainer;
@@ -235,7 +229,7 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
 
       myWindow.getContentPane().setLayout(new BorderLayout());
       myImageContainer = new JLabel(IconUtil.createImageIcon(myDragImage));
-      myImageContainer.setBorder(new LineBorder(Color.lightGray));
+      myImageContainer.setBorder(new LineBorder(JBColor.LIGHT_GRAY));
       myWindow.getContentPane().add(myImageContainer, BorderLayout.CENTER);
 
       setLocationFrom(me);
@@ -309,12 +303,11 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
       else if (e.getID() == MouseEvent.MOUSE_RELEASED) {
         if (myCurrentOverContainer == null) {
           createNewDockContainerFor(myContent, point);
-          stopCurrentDragSession();
         }
         else {
           myCurrentOverContainer.add(myContent, point);
-          stopCurrentDragSession();
         }
+        stopCurrentDragSession();
       }
     }
 
@@ -409,8 +402,7 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
     return window;
   }
 
-  private class DockWindow extends FrameWrapper implements IdeEventQueue.EventDispatcher {
-
+  private final class DockWindow extends FrameWrapper implements IdeEventQueue.EventDispatcher {
     private final String myId;
     private final DockContainer myContainer;
 
@@ -420,24 +412,23 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
     private final NonOpaquePanel myUiContainer;
     private final NonOpaquePanel myDockContentUiContainer;
 
-    private DockWindow(String id, Project project, DockContainer container, boolean dialog) {
+    private DockWindow(String id, @NotNull Project project, DockContainer container, boolean dialog) {
       super(project, null, dialog);
       myId = id;
       myContainer = container;
       setProject(project);
 
       if (!(container instanceof DockContainer.Dialog)) {
-        setStatusBar(WindowManager.getInstance().getStatusBar(project).createChild());
+        StatusBar statusBar = WindowManager.getInstance().getStatusBar(project);
+        Window frame = getFrame();
+        if (statusBar != null && frame instanceof IdeFrame) {
+          setStatusBar(statusBar.createChild((IdeFrame)frame));
+        }
       }
 
       myUiContainer = new NonOpaquePanel(new BorderLayout());
 
       NonOpaquePanel center = new NonOpaquePanel(new BorderLayout(0, 2));
-      if (UIUtil.isUnderAquaLookAndFeel()) {
-        center.setOpaque(true);
-        center.setBackground(JBTabsImpl.MAC_AQUA_BG_COLOR);
-      }
-
       center.add(myNorthPanel, BorderLayout.NORTH);
 
       myDockContentUiContainer = new NonOpaquePanel(new BorderLayout());
@@ -482,10 +473,8 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
                               && !(myContainer instanceof DockContainer.Dialog)
                               && !UISettings.getInstance().getPresentationMode());
 
-      IdeRootPaneNorthExtension[] extensions =
-        Extensions.getArea(myProject).getExtensionPoint(IdeRootPaneNorthExtension.EP_NAME).getExtensions();
-      HashSet<String> processedKeys = new HashSet<>();
-      for (IdeRootPaneNorthExtension each : extensions) {
+      Set<String> processedKeys = new HashSet<>();
+      for (IdeRootPaneNorthExtension each : IdeRootPaneNorthExtension.EP_NAME.getExtensionList(myProject)) {
         processedKeys.add(each.getKey());
         if (myNorthExtensions.containsKey(each.getKey())) continue;
         IdeRootPaneNorthExtension toInstall = each.copy();

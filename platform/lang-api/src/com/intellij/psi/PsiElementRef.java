@@ -15,7 +15,6 @@
  */
 package com.intellij.psi;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,7 +23,6 @@ import org.jetbrains.annotations.Nullable;
  * @author peter
  */
 public final class PsiElementRef<T extends PsiElement> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.PsiElementRef");
   private volatile PsiRefColleague<T> myColleague;
 
   public PsiElementRef(PsiRefColleague<T> colleague) {
@@ -54,7 +52,7 @@ public final class PsiElementRef<T extends PsiElement> {
 
   @Override
   public boolean equals(Object o) {
-    return o instanceof PsiElementRef && myColleague.equals(((PsiElementRef) o).myColleague);
+    return o instanceof PsiElementRef && myColleague.equals(((PsiElementRef<?>) o).myColleague);
   }
 
   @Override
@@ -115,7 +113,7 @@ public final class PsiElementRef<T extends PsiElement> {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        Real real = (Real)o;
+        Real<?> real = (Real<?>)o;
 
         if (!myElement.equals(real.myElement)) return false;
 
@@ -164,7 +162,7 @@ public final class PsiElementRef<T extends PsiElement> {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        Imaginary imaginary = (Imaginary)o;
+        Imaginary<?, ?> imaginary = (Imaginary<?, ?>)o;
 
         if (!myCreator.equals(imaginary.myCreator)) return false;
         if (!myParent.equals(imaginary.myParent)) return false;
@@ -191,8 +189,5 @@ public final class PsiElementRef<T extends PsiElement> {
         return myParent.getRoot();
       }
     }
-
-
   }
-
 }

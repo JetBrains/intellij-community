@@ -3,7 +3,6 @@ package com.intellij.ide.actions;
 
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -60,7 +59,7 @@ class ActivityMonitorAction extends DumbAwareAction {
           pkg = pkg.substring(prefix.length()) + " (in " + StringUtil.trimEnd(prefix, ".") + ")";
         }
 
-        IdeaPluginDescriptor plugin = PluginManager.getPlugin(PluginManagerCore.getPluginByClassName(className));
+        IdeaPluginDescriptor plugin = PluginManagerCore.getPlugin(PluginManagerCore.getPluginByClassName(className));
         return plugin != null ? "Plugin " + plugin.getName() + ": " + pkg : pkg;
       });
 
@@ -154,6 +153,8 @@ class ActivityMonitorAction extends DumbAwareAction {
                className.startsWith("com.intellij.openapi.util.") ||
                className.startsWith("com.intellij.util.") ||
                className.startsWith("com.intellij.concurrency.") ||
+               className.startsWith("com.intellij.semantic.") ||
+               className.startsWith("com.intellij.jam.") ||
                className.startsWith("com.intellij.psi.stubs.") ||
                className.startsWith("com.intellij.ide.IdeEventQueue") ||
                className.startsWith("com.intellij.openapi.fileTypes.") ||

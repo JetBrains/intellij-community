@@ -7,7 +7,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.stubs.*;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.PyStubElementTypes;
+import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyClassImpl;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
@@ -202,7 +202,7 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass>
 
   @NotNull
   protected IStubElementType getStubElementType() {
-    return PyStubElementTypes.CLASS_DECLARATION;
+    return PyElementTypes.CLASS_DECLARATION;
   }
 
   @NotNull

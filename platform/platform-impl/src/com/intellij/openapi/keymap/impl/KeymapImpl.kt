@@ -637,7 +637,7 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
           continue
         }
 
-        result.getOrPut(id) { SmartList<KeyboardShortcut>() }.add(shortcut1)
+        result.getOrPut(id) { SmartList() }.add(shortcut1)
       }
     }
 

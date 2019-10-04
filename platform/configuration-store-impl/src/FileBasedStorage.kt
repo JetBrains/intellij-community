@@ -116,7 +116,7 @@ open class FileBasedStorage(file: Path,
           val file = storage.file
           LOG.debugOrInfoIfTestMode { "Save $file" }
           try {
-            dataWriter.writeTo(file, lineSeparator.separatorString)
+            dataWriter.writeTo(file, this, lineSeparator.separatorString)
           }
           catch (e: ReadOnlyModificationException) {
             throw e
@@ -134,11 +134,9 @@ open class FileBasedStorage(file: Path,
       var result = cachedVirtualFile
       if (result == null) {
         result = configuration.resolveVirtualFile(file.systemIndependentPath)
-        // otherwise virtualFile.contentsToByteArray() will query expensive FileTypeManager.getInstance()).getByFile()
-        result?.charset = Charsets.UTF_8
         cachedVirtualFile = result
       }
-      return cachedVirtualFile
+      return result
     }
 
   private inline fun <T> runAndHandleExceptions(task: () -> T): T? {

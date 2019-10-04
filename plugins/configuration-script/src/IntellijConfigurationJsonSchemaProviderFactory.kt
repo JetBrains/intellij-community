@@ -19,6 +19,8 @@ import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider
 import com.jetbrains.jsonSchema.extension.JsonSchemaProviderFactory
 import com.jetbrains.jsonSchema.extension.SchemaType
 import com.jetbrains.jsonSchema.impl.JsonSchemaVersion
+import org.jetbrains.io.JsonObjectBuilder
+import org.jetbrains.io.json
 
 internal val LOG = logger<IntellijConfigurationJsonSchemaProviderFactory>()
 

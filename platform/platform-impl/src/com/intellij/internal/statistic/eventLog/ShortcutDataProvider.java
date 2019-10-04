@@ -24,17 +24,20 @@ public class ShortcutDataProvider {
 
   @Nullable
   public static String getActionEventText(@Nullable AnActionEvent event) {
-   if (event != null) {
-     final InputEvent inputEvent = event.getInputEvent();
-     if (inputEvent instanceof KeyEvent) {
-       if (ActionPlaces.TOUCHBAR_GENERAL.equals(event.getPlace())) // touchbar uses KeyEvent to perform an action
-         return "Touchbar";
+    return event != null ? getInputEventText(event.getInputEvent(), event.getPlace()) : null;
+  }
 
-       return getKeyEventText((KeyEvent)inputEvent);
-     }
-     else if (inputEvent instanceof MouseEvent) {
-       return getMouseEventText((MouseEvent)inputEvent);
-     }
+  @Nullable
+  public static String getInputEventText(@Nullable InputEvent inputEvent, @Nullable String place) {
+    if (inputEvent instanceof KeyEvent) {
+      // touchbar uses KeyEvent to perform an action
+      if (ActionPlaces.TOUCHBAR_GENERAL.equals(place)) {
+        return "Touchbar";
+      }
+      return getKeyEventText((KeyEvent)inputEvent);
+    }
+    else if (inputEvent instanceof MouseEvent) {
+      return getMouseEventText((MouseEvent)inputEvent);
     }
     return null;
   }

@@ -112,12 +112,9 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
   public static boolean availableFor(@NotNull PsiFile psiFile, @NotNull Editor editor, @NotNull IntentionAction action) {
     if (!psiFile.isValid()) return false;
 
-    int offset = editor.getCaretModel().getOffset();
-    PsiElement psiElement = psiFile.findElementAt(offset);
     try {
       Project project = psiFile.getProject();
-      if (action instanceof IntentionActionDelegate) action = ((IntentionActionDelegate)action).getDelegate();
-      if (action instanceof IntentionActionDelegate) action = ((IntentionActionDelegate)action).getDelegate();
+      action = IntentionActionDelegate.unwrap(action);
       if (action instanceof SuppressIntentionActionFromFix) {
         final ThreeState shouldBeAppliedToInjectionHost = ((SuppressIntentionActionFromFix)action).isShouldBeAppliedToInjectionHost();
         if (editor instanceof EditorWindow && shouldBeAppliedToInjectionHost == ThreeState.YES) {
@@ -130,7 +127,13 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
       
       if (action instanceof PsiElementBaseIntentionAction) {
         PsiElementBaseIntentionAction psiAction = (PsiElementBaseIntentionAction)action;
-        if (psiElement == null || !psiAction.checkFile(psiFile) || !psiAction.isAvailable(project, editor, psiElement)) return false;
+        if (!psiAction.checkFile(psiFile)) {
+          return false;
+        }
+        PsiElement leaf = psiFile.findElementAt(editor.getCaretModel().getOffset());
+        if (leaf == null || !psiAction.isAvailable(project, editor, leaf)) {
+          return false;
+        }
       }
       else if (!action.isAvailable(project, editor, psiFile)) {
         return false;
@@ -143,12 +146,13 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
   }
 
   @Nullable
-  public static Pair<PsiFile,Editor> chooseBetweenHostAndInjected(@NotNull PsiFile hostFile, @NotNull Editor hostEditor, @NotNull PairProcessor<? super PsiFile, ? super Editor> predicate) {
+  public static Pair<PsiFile, Editor> chooseBetweenHostAndInjected(@NotNull PsiFile hostFile,
+                                                                   @NotNull Editor hostEditor,
+                                                                   @Nullable PsiFile injectedFile,
+                                                                   @NotNull PairProcessor<? super PsiFile, ? super Editor> predicate) {
     Editor editorToApply = null;
     PsiFile fileToApply = null;
 
-    int offset = hostEditor.getCaretModel().getOffset();
-    PsiFile injectedFile = InjectedLanguageUtil.findInjectedPsiNoCommit(hostFile, offset);
     if (injectedFile != null) {
       Editor injectedEditor = InjectedLanguageUtil.getInjectedEditorForInjectedFile(hostEditor, injectedFile);
       if (predicate.process(injectedFile, injectedEditor)) {
@@ -224,7 +228,12 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
   public static Pair<PsiFile, Editor> chooseFileForAction(@NotNull PsiFile hostFile,
                                                           @Nullable Editor hostEditor,
                                                           @NotNull IntentionAction action) {
-    return hostEditor == null ? Pair.create(hostFile, null) :
-           chooseBetweenHostAndInjected(hostFile, hostEditor, (psiFile, editor) -> availableFor(psiFile, editor, action));
+    if (hostEditor == null) {
+      return Pair.create(hostFile, null);
+    }
+
+    PsiFile injectedFile = InjectedLanguageUtil.findInjectedPsiNoCommit(hostFile, hostEditor.getCaretModel().getOffset());
+    return chooseBetweenHostAndInjected(hostFile, hostEditor, injectedFile,
+                                        (psiFile, editor) -> availableFor(psiFile, editor, action));
   }
 }

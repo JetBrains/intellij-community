@@ -28,10 +28,10 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.actions.RefactoringActionContextUtil;
 import com.intellij.refactoring.extractSuperclass.ExtractSuperClassUtil;
 import com.intellij.refactoring.lang.ElementsHandler;
 import com.intellij.refactoring.listeners.RefactoringEventListener;
@@ -57,7 +57,7 @@ public class ExtractInterfaceHandler implements RefactoringActionHandler, Elemen
 
   @Override
   public boolean isAvailableForQuickList(@NotNull Editor editor, @NotNull PsiFile file, @NotNull DataContext dataContext) {
-    return !PsiUtil.isModuleFile(file);
+    return RefactoringActionContextUtil.isOutsideModuleAndCodeBlock(editor, file);
   }
 
   @Override

@@ -48,7 +48,6 @@ import static com.intellij.util.ObjectUtils.assertNotNull;
 import static com.intellij.util.ObjectUtils.chooseNotNull;
 import static com.intellij.util.ui.UIUtil.DEFAULT_HGAP;
 import static com.intellij.util.ui.UIUtil.DEFAULT_VGAP;
-import static icons.DvcsImplIcons.*;
 
 public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
   private static final DataKey<ListPopupModel> POPUP_MODEL = DataKey.create("VcsPopupModel");
@@ -303,6 +302,11 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
 
   @Override
   protected void onSpeedSearchPatternChanged() {
+    String newFilter = mySpeedSearch.getFilter();
+    if (newFilter.endsWith(" ")) {
+      mySpeedSearch.updatePattern(newFilter.trim());
+      return;
+    }
     getList().setSelectedIndex(0);
     super.onSpeedSearchPatternChanged();
     ScrollingUtil.ensureSelectionExists(getList());
@@ -360,20 +364,13 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
         myTextLabel.setForeground(JBColor.gray);
       }
       super.customizeComponent(list, value, isSelected);
-      BranchActionGroup branchActionGroup = getSpecificAction(value, BranchActionGroup.class);
-      if (branchActionGroup != null) {
+      CustomIconProvider actionWithIconProvider = getSpecificAction(value, CustomIconProvider.class);
+      if (actionWithIconProvider != null) {
         myTextLabel.setComponentOrientation(ComponentOrientation.RIGHT_TO_LEFT);
-        myTextLabel.setIcon(chooseUpdateIndicatorIcon(branchActionGroup));
+        myTextLabel.setIcon(actionWithIconProvider.getRightIcon());
       }
       PopupElementWithAdditionalInfo additionalInfoAction = getSpecificAction(value, PopupElementWithAdditionalInfo.class);
       updateInfoComponent(myInfoLabel, additionalInfoAction != null ? additionalInfoAction.getInfoText() : null, isSelected);
-    }
-
-    private static Icon chooseUpdateIndicatorIcon(@NotNull BranchActionGroup branchActionGroup) {
-      if (branchActionGroup.hasIncomingCommits()) {
-        return branchActionGroup.hasOutgoingCommits() ? IncomingOutgoing : Incoming;
-      }
-      return branchActionGroup.hasOutgoingCommits() ? Outgoing : null;
     }
 
     private void updateInfoComponent(@NotNull ErrorLabel infoLabel, @Nullable String infoText, boolean isSelected) {

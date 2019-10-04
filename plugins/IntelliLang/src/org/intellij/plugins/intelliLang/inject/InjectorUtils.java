@@ -1,5 +1,4 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package org.intellij.plugins.intelliLang.inject;
 
 import com.intellij.codeInsight.completion.CompletionUtil;
@@ -7,7 +6,8 @@ import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.injection.MultiHostRegistrar;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
@@ -43,8 +43,7 @@ import java.util.regex.Pattern;
 /**
  * @author Gregory.Shrago
  */
-public class InjectorUtils {
-  private static final Logger LOG = Logger.getInstance(InjectorUtils.class);
+public final class InjectorUtils {
   public static final Comparator<TextRange> RANGE_COMPARATOR = (o1, o2) -> {
     if (o1.intersects(o2)) return 0;
     return o1.getStartOffset() - o2.getStartOffset();
@@ -135,38 +134,54 @@ public class InjectorUtils {
     }
   }
 
-  private static final Map<String, LanguageInjectionSupport> ourSupports;
-  static {
-    ourSupports = new LinkedHashMap<>();
-    for (LanguageInjectionSupport support : LanguageInjectionSupport.EP_NAME.getExtensionList()) {
-      ourSupports.put(support.getId(), support);
-    }
+  @NotNull
+  public static Collection<String> getActiveInjectionSupportIds() {
+    return ApplicationManager.getApplication().getService(LanguageInjectionSupportRegistry.class).ids();
   }
 
   @NotNull
-  public static Collection<String> getActiveInjectionSupportIds() {
-    return ourSupports.keySet();
-  }
-  @NotNull
   public static Collection<LanguageInjectionSupport> getActiveInjectionSupports() {
-    return ourSupports.values();
+    return LanguageInjectionSupport.EP_NAME.getExtensionList();
   }
 
   @Nullable
   public static LanguageInjectionSupport findInjectionSupport(@NotNull String id) {
-    return ourSupports.get(id);
+    return ApplicationManager.getApplication().getService(LanguageInjectionSupportRegistry.class).findInjectionSupport(id);
+  }
+
+  @Service
+  private static final class LanguageInjectionSupportRegistry {
+    private final Map<String, LanguageInjectionSupport> myMap = new LinkedHashMap<>();
+
+    private LanguageInjectionSupportRegistry() {
+      for (LanguageInjectionSupport support : LanguageInjectionSupport.EP_NAME.getExtensionList()) {
+        myMap.put(support.getId(), support);
+      }
+    }
+
+    @Nullable
+    LanguageInjectionSupport findInjectionSupport(@NotNull String id) {
+      return myMap.get(id);
+    }
+
+    @NotNull
+    public Set<String> ids() {
+      return myMap.keySet();
+    }
   }
 
   @NotNull
-  public static Class[] getPatternClasses(@NotNull String supportId) {
+  public static Class<?>[] getPatternClasses(@NotNull String supportId) {
     final LanguageInjectionSupport support = findInjectionSupport(supportId);
     return support == null ? ArrayUtil.EMPTY_CLASS_ARRAY : support.getPatternClasses();
   }
 
   @NotNull
   public static LanguageInjectionSupport findNotNullInjectionSupport(@NotNull String id) {
-    final LanguageInjectionSupport result = findInjectionSupport(id);
-    assert result != null: id+" injector not found";
+    LanguageInjectionSupport result = findInjectionSupport(id);
+    if (result == null) {
+      throw new IllegalStateException(id + " injector not found");
+    }
     return result;
   }
 
@@ -230,17 +245,6 @@ public class InjectorUtils {
     }
   }
 
-  /**
-   * @deprecated use {@link InjectorUtils#registerSupport(LanguageInjectionSupport, boolean, PsiElement, Language)} instead
-   */
-  @Deprecated
-  public static void registerSupport(@NotNull LanguageInjectionSupport support, boolean settingsAvailable, @NotNull MultiHostRegistrar registrar) {
-    LOG.warn("use {@link InjectorUtils#registerSupport(org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport, boolean, com.intellij.psi.PsiElement, com.intellij.lang.Language)} instead");
-    putInjectedFileUserData(registrar, LanguageInjectionSupport.INJECTOR_SUPPORT, support);
-    if (settingsAvailable) {
-      putInjectedFileUserData(registrar, LanguageInjectionSupport.SETTINGS_EDITOR, support);
-    }
-  }
 
   public static <T> void putInjectedFileUserData(@NotNull PsiElement element, @NotNull Language language, @NotNull Key<T> key, @Nullable T value) {
     InjectedLanguageUtil.putInjectedFileUserData(element, language, key, value);

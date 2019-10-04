@@ -16,7 +16,6 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 
 @ApiStatus.Internal
-@ApiStatus.AvailableSince("2019.2")
 public class PySlashParameterElementType extends PyStubElementType<PySlashParameterStub, PySlashParameter> {
 
   public PySlashParameterElementType() {

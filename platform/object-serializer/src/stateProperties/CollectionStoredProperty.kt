@@ -6,13 +6,12 @@ import com.intellij.openapi.components.JsonSchemaType
 import com.intellij.openapi.components.StoredProperty
 import com.intellij.openapi.components.StoredPropertyBase
 import com.intellij.util.SmartList
-import kotlin.reflect.KProperty
 
-// Technically, it is not possible to proxy write operations because collection/map can be mutated via iterator.
-// So, even if Kotlin can create delegator for us, still, to track mutations via iterator we have to reimplement collection/map.
+// Technically, it is not possible to proxy write operations because a collection can be mutated via iterator.
+// So, even if Kotlin could create a delegate for us, to track mutations via an iterator we have to re-implement collection/map.
 
 /**
- * AbstractCollectionBinding modifies collection directly, so, we cannot use null as default null and return empty list on get.
+ * `AbstractCollectionBinding` modifies collection directly, so we cannot use `null` as a default value and have to return an empty list.
  */
 open class CollectionStoredProperty<E : Any, C : MutableCollection<E>>(protected val value: C) : StoredPropertyBase<C>() {
   override val jsonType: JsonSchemaType
@@ -20,15 +19,15 @@ open class CollectionStoredProperty<E : Any, C : MutableCollection<E>>(protected
 
   override fun isEqualToDefault() = value.isEmpty()
 
-  override operator fun getValue(thisRef: BaseState, property: KProperty<*>) = value
+  override fun getValue(thisRef: BaseState) = value
 
-  override fun setValue(thisRef: BaseState, property: KProperty<*>, @Suppress("PARAMETER_NAME_CHANGED_ON_OVERRIDE") newValue: C) {
+  override fun setValue(thisRef: BaseState, @Suppress("PARAMETER_NAME_CHANGED_ON_OVERRIDE") newValue: C) {
     if (doSetValue(value, newValue)) {
       thisRef.intIncrementModificationCount()
     }
   }
 
-  protected fun doSetValue(old: C, new: C): Boolean {
+  private fun doSetValue(old: C, new: C): Boolean {
     if (old == new) {
       return false
     }

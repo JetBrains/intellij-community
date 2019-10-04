@@ -9,6 +9,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.Constants;
@@ -18,10 +19,7 @@ import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorC
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorWeigher;
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorWeigherImpl;
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateWeigh;
-import org.jetbrains.plugins.textmate.plist.PListValue;
-import org.jetbrains.plugins.textmate.plist.Plist;
 import org.jetbrains.plugins.textmate.regex.MatchData;
-import org.jetbrains.plugins.textmate.regex.RegexFacade;
 import org.jetbrains.plugins.textmate.regex.StringWithId;
 
 import java.nio.charset.StandardCharsets;
@@ -38,7 +36,7 @@ public final class SyntaxMatchUtils {
     .build(CacheLoader.from(
       key -> matchFirstUncached(Objects.requireNonNull(key).descriptor, key.string, key.byteOffset, key.priority, key.currentScope)));
   private final static Joiner MY_OPEN_TAGS_JOINER = Joiner.on(" ").skipNulls();
-  private final static Map<List<String>, String> MY_SCOPES_INTERNER = ContainerUtil.createConcurrentWeakKeyWeakValueMap();
+  private final static Map<List<CharSequence>, String> MY_SCOPES_INTERNER = ContainerUtil.createConcurrentWeakKeyWeakValueMap();
   private static final TextMateSelectorWeigher mySelectorWeigher = new TextMateSelectorCachingWeigher(new TextMateSelectorWeigherImpl());
 
   @NotNull
@@ -119,7 +117,7 @@ public final class SyntaxMatchUtils {
   }
 
   private static boolean hasBeginKey(@NotNull TextMateLexerState lexerState) {
-    return lexerState.syntaxRule.getRegexAttribute(Constants.BEGIN_KEY) != null;
+    return lexerState.syntaxRule.getStringAttribute(Constants.StringKey.BEGIN) != null;
   }
 
   private static TextMateLexerState matchFirstChild(@NotNull SyntaxNodeDescriptor syntaxNodeDescriptor,
@@ -127,43 +125,37 @@ public final class SyntaxMatchUtils {
                                                     int byteOffset,
                                                     @NotNull TextMateWeigh.Priority priority,
                                                     @NotNull String currentScope) {
-    RegexFacade matchRegex = syntaxNodeDescriptor.getRegexAttribute(Constants.MATCH_KEY);
-    if (matchRegex != null) {
-      return new TextMateLexerState(syntaxNodeDescriptor, matchRegex.match(string, byteOffset), priority, string);
+    CharSequence match = syntaxNodeDescriptor.getStringAttribute(Constants.StringKey.MATCH);
+    if (match != null) {
+      return new TextMateLexerState(syntaxNodeDescriptor, regex(match.toString()).match(string, byteOffset), priority, string);
     }
-    RegexFacade beginRegex = syntaxNodeDescriptor.getRegexAttribute(Constants.BEGIN_KEY);
-    if (beginRegex != null) {
-      return new TextMateLexerState(syntaxNodeDescriptor, beginRegex.match(string, byteOffset), priority, string);
+    CharSequence begin = syntaxNodeDescriptor.getStringAttribute(Constants.StringKey.BEGIN);
+    if (begin != null) {
+      return new TextMateLexerState(syntaxNodeDescriptor, regex(begin.toString()).match(string, byteOffset), priority, string);
     }
-    if (syntaxNodeDescriptor.getStringAttribute(Constants.END_KEY) != null) {
+    if (syntaxNodeDescriptor.getStringAttribute(Constants.StringKey.END) != null) {
       return TextMateLexerState.notMatched(syntaxNodeDescriptor);
     }
     return matchFirstUncached(syntaxNodeDescriptor, string, byteOffset, priority, currentScope);
   }
 
-  public static List<CaptureMatchData> matchCaptures(@NotNull Plist captures, @NotNull MatchData matchData, @NotNull StringWithId string) {
+  public static List<CaptureMatchData> matchCaptures(@NotNull TIntObjectHashMap<CharSequence> captures, @NotNull MatchData matchData, @NotNull StringWithId string) {
     List<CaptureMatchData> result = new ArrayList<>();
-    for (Map.Entry<String, PListValue> capture : captures.entries()) {
-      try {
-        int index = Integer.parseInt(capture.getKey());
-        Plist captureDict = capture.getValue().getPlist();
-        String captureName = captureDict.getPlistValue(Constants.NAME_KEY, "").getString();
-        TextRange offset = index < matchData.count() ? matchData.charOffset(string.bytes, index) : TextRange.EMPTY_RANGE;
-        if (!captureName.isEmpty() && !offset.isEmpty()) {
-          result.add(new CaptureMatchData(offset, index, captureName));
-        }
-      }
-      catch (NumberFormatException ignore) {
+    for (int index : captures.keys()) {
+      CharSequence captureName = captures.get(index);
+      TextRange offset = index < matchData.count() ? matchData.charOffset(string.bytes, index) : TextRange.EMPTY_RANGE;
+      if (captureName.length() > 0 && !offset.isEmpty()) {
+        result.add(new CaptureMatchData(offset, index, captureName));
       }
     }
     return result;
   }
 
-  public static MatchData matchStringRegex(@NotNull String keyName,
+  public static MatchData matchStringRegex(@NotNull Constants.StringKey keyName,
                                            @NotNull StringWithId string,
                                            int byteOffset,
                                            @NotNull TextMateLexerState lexerState) {
-    String stringRegex = lexerState.syntaxRule.getStringAttribute(keyName);
+    CharSequence stringRegex = lexerState.syntaxRule.getStringAttribute(keyName);
     return stringRegex != null ? regex(replaceGroupsWithMatchData(stringRegex, lexerState.string, lexerState.matchData)).match(string, byteOffset)
                                : MatchData.NOT_MATCHED;
   }
@@ -179,11 +171,11 @@ public final class SyntaxMatchUtils {
    * @param matchData     matched data with captured groups for replacement
    * @return patternString with replaced group-references
    */
-  public static String replaceGroupsWithMatchData(@NotNull String patternString,
+  public static String replaceGroupsWithMatchData(@NotNull CharSequence patternString,
                                                   @Nullable StringWithId string,
                                                   @NotNull MatchData matchData) {
     if (string == null || !matchData.matched()) {
-      return patternString;
+      return patternString.toString();
     }
     StringBuilder result = new StringBuilder();
     int charIndex = 0;
@@ -217,7 +209,7 @@ public final class SyntaxMatchUtils {
   }
 
   @NotNull
-  public static String selectorsToScope(@NotNull List<String> selectors) {
+  public static String selectorsToScope(@NotNull List<CharSequence> selectors) {
     return MY_SCOPES_INTERNER.computeIfAbsent(new ArrayList<>(selectors), MY_OPEN_TAGS_JOINER::join);
   }
 

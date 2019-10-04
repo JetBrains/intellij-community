@@ -775,7 +775,7 @@ public class PySkeletonRefresher {
    */
   public void generateSkeleton(@NotNull String modname, @Nullable String modfilename,
                                @Nullable List<String> assemblyRefs, Consumer<Boolean> resultConsumer) throws InvalidSdkException {
-    mySkeletonsGenerator.generateSkeleton(modname, modfilename, assemblyRefs, getExtraSyspath(), mySdk.getHomePath(), resultConsumer);
+    mySkeletonsGenerator.generateSkeleton(modname, modfilename, assemblyRefs, getExtraSyspath(), mySdk, resultConsumer);
   }
 
 

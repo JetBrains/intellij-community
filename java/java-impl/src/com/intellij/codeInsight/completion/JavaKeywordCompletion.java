@@ -379,7 +379,7 @@ public class JavaKeywordCompletion {
   }
 
   private void addThisSuper() {
-    if (SUPER_OR_THIS_PATTERN.accepts(myPosition) && LabelReferenceCompletion.isBreakValueOrLabelPosition(myPosition) != Boolean.FALSE) {
+    if (SUPER_OR_THIS_PATTERN.accepts(myPosition)) {
       final boolean afterDot = AFTER_DOT.accepts(myPosition);
       final boolean insideQualifierClass = isInsideQualifierClass();
       final boolean insideInheritorClass = PsiUtil.isLanguageLevel8OrHigher(myPosition) && isInsideInheritorClass();
@@ -602,8 +602,7 @@ public class JavaKeywordCompletion {
     PsiElement parent = position.getParent();
     return parent instanceof PsiReferenceExpression &&
            !((PsiReferenceExpression)parent).isQualified() &&
-           !JavaCompletionContributor.IN_SWITCH_LABEL.accepts(position) &&
-           LabelReferenceCompletion.isBreakValueOrLabelPosition(position) != Boolean.FALSE;
+           !JavaCompletionContributor.IN_SWITCH_LABEL.accepts(position);
   }
 
   public static boolean isInstanceofPlace(PsiElement position) {
@@ -773,13 +772,9 @@ public class JavaKeywordCompletion {
     if (psiElement().inside(PsiSwitchStatement.class).accepts(myPosition)) {
       addKeyword(br);
     }
-    else if (psiElement().inside(PsiSwitchExpression.class).accepts(myPosition)) {
-      if (PsiUtil.getLanguageLevel(myPosition) == LanguageLevel.JDK_12_PREVIEW) {
-        addKeyword(TailTypeDecorator.withTail(createKeyword(PsiKeyword.BREAK), TailType.INSERT_SPACE));
-      }
-      else if (PsiUtil.getLanguageLevel(myPosition).isAtLeast(LanguageLevel.JDK_13_PREVIEW)) {
-        addKeyword(TailTypeDecorator.withTail(createKeyword(PsiKeyword.YIELD), TailType.INSERT_SPACE));
-      }
+    else if (psiElement().inside(PsiSwitchExpression.class).accepts(myPosition) &&
+             PsiUtil.getLanguageLevel(myPosition).isAtLeast(LanguageLevel.JDK_13_PREVIEW)) {
+      addKeyword(TailTypeDecorator.withTail(createKeyword(PsiKeyword.YIELD), TailType.INSERT_SPACE));
     }
 
     for (PsiLabeledStatement labeled : psiApi().parents(myPosition).takeWhile(notInstanceOf(PsiMember.class)).filter(PsiLabeledStatement.class)) {

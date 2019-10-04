@@ -16,6 +16,7 @@
 package com.intellij.openapi.editor;
 
 import com.intellij.openapi.editor.markup.TextAttributes;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,6 +44,7 @@ public interface EditorCustomElementRenderer {
   /**
    * @deprecated Override/use {@link #calcWidthInPixels(Inlay)} instead. This method will be removed.
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
   @Deprecated
   default int calcWidthInPixels(@NotNull Editor editor) {
     throw new RuntimeException("Method not implemented");
@@ -73,6 +75,7 @@ public interface EditorCustomElementRenderer {
   /**
    * @deprecated Override/use {@link #paint(Inlay, Graphics, Rectangle, TextAttributes)} instead. This method will be removed.
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
   @Deprecated
   default void paint(@NotNull Editor editor, @NotNull Graphics g, @NotNull Rectangle targetRegion, @NotNull TextAttributes textAttributes) {
     throw new RuntimeException("Method not implemented");
@@ -84,13 +87,13 @@ public interface EditorCustomElementRenderer {
    */
   @Nullable
   default String getContextMenuGroupId(@NotNull Inlay inlay) {
-    //noinspection deprecation
     return getContextMenuGroupId();
   }
 
   /**
    * @deprecated Override/use {@link #getContextMenuGroupId(Inlay)} instead. This method will be removed.
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
   @Deprecated
   default String getContextMenuGroupId() {
     return null;

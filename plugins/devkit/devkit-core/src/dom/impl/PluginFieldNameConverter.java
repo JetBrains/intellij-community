@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.devkit.dom.impl;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.util.xml.ConvertContext;
@@ -24,6 +25,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.ExtensionPoint;
+import org.jetbrains.idea.devkit.util.PsiUtil;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -76,17 +78,18 @@ public class PluginFieldNameConverter extends ResolvingConverter<PsiField> {
     return null;
   }
 
+  @Nullable
   public static String getAttributeAnnotationValue(PsiField psiField) {
     return getAnnotationValue(psiField, Attribute.class);
   }
 
+  @Nullable
   public static String getAnnotationValue(PsiField psiField, Class annotationClass) {
-    final PsiConstantEvaluationHelper evalHelper = JavaPsiFacade.getInstance(psiField.getProject()).getConstantEvaluationHelper();
     final PsiMethod getter = PropertyUtilBase.findGetterForField(psiField);
     final PsiMethod setter = PropertyUtilBase.findSetterForField(psiField);
-    final PsiAnnotation attrAnno = ExtensionDomExtender.findAnnotation(annotationClass, psiField, getter, setter);
+    final PsiAnnotation attrAnno = PsiUtil.findAnnotation(annotationClass, psiField, getter, setter);
     if (attrAnno != null) {
-      return ExtensionDomExtender.getStringAttribute(attrAnno, "value", evalHelper, null);
+      return AnnotationUtil.getDeclaredStringAttributeValue(attrAnno, "value");
     }
     return null;
   }

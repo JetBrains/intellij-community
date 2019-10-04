@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.index
 
 import com.google.common.hash.HashCode
@@ -41,7 +41,7 @@ abstract class PrebuiltIndexProviderBase<Value> : Disposable {
     init()
   }
 
-  internal fun init() {
+  internal fun init() : Boolean {
     var indexesRoot = findPrebuiltIndicesRoot()
     try {
       if (indexesRoot != null && indexesRoot.exists()) {
@@ -51,7 +51,7 @@ abstract class PrebuiltIndexProviderBase<Value> : Disposable {
 
         myPrebuiltIndexStorage = openIndexStorage(indexesRoot)
 
-        LOG.info("Using prebuilt $indexName from " + myPrebuiltIndexStorage!!.baseFile.absolutePath)
+        LOG.info("Using prebuilt $indexName from " + myPrebuiltIndexStorage?.baseFile?.absolutePath)
       }
       else {
         LOG.info("Prebuilt $indexName indices are missing for $dirName")
@@ -61,6 +61,7 @@ abstract class PrebuiltIndexProviderBase<Value> : Disposable {
       myPrebuiltIndexStorage = null
       LOG.warn("Prebuilt indices can't be loaded at " + indexesRoot!!, e)
     }
+    return myPrebuiltIndexStorage != null
   }
 
   fun get(fileContent: FileContent): Value? {

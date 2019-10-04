@@ -9,8 +9,11 @@ import org.jetbrains.jps.util.JpsPathUtil
 import java.util.function.BiPredicate
 
 /**
- * Specifies how Maven artifacts for IDE modules should be generated. Artifacts are generated under {@link BuildPaths#artifacts artifacts}/maven-artifacts directory.
+ * Specifies how Maven artifacts for IDE modules should be generated.
+ * Public artifacts are generated under {@link BuildPaths#artifacts}/maven-artifacts directory.
+ * Proprietary artifacts are generated under {@link BuildPaths#artifacts}/proprietary-maven-artifacts directory.
  * @see ProductProperties#mavenArtifacts
+ * @see org.jetbrains.intellij.build.impl.MavenArtifactsBuilder#generateMavenArtifacts
  */
 @CompileStatic
 class MavenArtifactsProperties {
@@ -23,6 +26,15 @@ class MavenArtifactsProperties {
    * Names of additional modules for which Maven artifacts should be generated.
    */
   List<String> additionalModules = []
+
+  /**
+   * Names of proprietary modules for which Maven artifacts should be generated.
+   *
+   *  <p>
+   *  Note: Intended only for private Maven repository publication.
+   *  </p>
+   */
+  List<String> proprietaryModules = []
 
   /**
    * A predicate which returns {@code true} for modules which sources should be published as Maven artifacts.

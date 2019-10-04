@@ -13,7 +13,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.xml.TagNameReference;
 import com.intellij.psi.xml.XmlElementDecl;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.ResolveTestCase;
 import com.intellij.util.CollectConsumer;
@@ -21,7 +21,7 @@ import com.intellij.xml.util.XmlUtil;
 
 import java.io.File;
 
-@PlatformTestCase.WrapInCommand
+@HeavyPlatformTestCase.WrapInCommand
 public class XmlResolveTest extends ResolveTestCase {
   public void testDtdDescriptor1() throws Exception{
     PsiReference ref = configure();

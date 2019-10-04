@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.markup;
 
 import com.intellij.openapi.editor.RangeMarker;
@@ -20,8 +20,8 @@ public interface RangeHighlighter extends RangeMarker {
 
   /**
    * Returns the relative priority of the highlighter (higher priority highlighters can override
-   * lower priority ones; layer number values for standard IDEA highlighters are given in
-   * {@link HighlighterLayer} class).
+   * lower priority ones; layer number values for standard IDE highlighters are defined in
+   * {@link HighlighterLayer}).
    *
    * @return the highlighter priority.
    */
@@ -39,7 +39,7 @@ public interface RangeHighlighter extends RangeMarker {
   /**
    * Returns the text attributes used for highlighting.
    *
-   * @return the attributes to use for highlighting, or null if the highlighter
+   * @return the attributes to use for highlighting, or {@code null} if the highlighter
    * does not modify the text attributes.
    */
   @Nullable
@@ -51,7 +51,7 @@ public interface RangeHighlighter extends RangeMarker {
    * Line markers are drawn over the folding area and are used, for example,
    * to highlight modified lines in files under source control.
    *
-   * @return the renderer instance, or null if the highlighter does not add any line markers.
+   * @return the renderer instance, or {@code null} if the highlighter does not add any line markers.
    * @see ActiveGutterRenderer
    */
   @Nullable
@@ -63,7 +63,7 @@ public interface RangeHighlighter extends RangeMarker {
    * Line markers are drawn over the folding area and are used, for example,
    * to highlight modified lines in files under source control.
    *
-   * @param renderer the renderer instance, or null if the highlighter does not add any line markers.
+   * @param renderer the renderer instance, or {@code null} if the highlighter does not add any line markers.
    * @see ActiveGutterRenderer
    */
   void setLineMarkerRenderer(@Nullable LineMarkerRenderer renderer);
@@ -73,12 +73,13 @@ public interface RangeHighlighter extends RangeMarker {
   CustomHighlighterRenderer getCustomRenderer();
 
   void setCustomRenderer(CustomHighlighterRenderer renderer);
+
   /**
    * Returns the renderer used for drawing gutter icons in the area covered by the
    * highlighter. Gutter icons are drawn to the left of the folding area and can be used,
    * for example, to mark implemented or overridden methods.
    *
-   * @return the renderer instance, or null if the highlighter does not add any gutter icons.
+   * @return the renderer instance, or {@code null} if the highlighter does not add any gutter icons.
    */
   @Nullable
   GutterIconRenderer getGutterIconRenderer();
@@ -88,14 +89,14 @@ public interface RangeHighlighter extends RangeMarker {
    * highlighter. Gutter icons are drawn to the left of the folding area and can be used,
    * for example, to mark implemented or overridden methods.
    *
-   * @param renderer the renderer instance, or null if the highlighter does not add any gutter icons.
+   * @param renderer the renderer instance, or {@code null} if the highlighter does not add any gutter icons.
    */
   void setGutterIconRenderer(@Nullable GutterIconRenderer renderer);
 
   /**
    * Returns the color of the marker drawn in the error stripe in the area covered by the highlighter.
    *
-   * @return the error stripe marker color, or null if the highlighter does not add any
+   * @return the error stripe marker color, or {@code null} if the highlighter does not add any
    * error stripe markers.
    */
   @Nullable
@@ -104,8 +105,8 @@ public interface RangeHighlighter extends RangeMarker {
   /**
    * Sets the color of the marker drawn in the error stripe in the area covered by the highlighter.
    *
-   * @param color the error stripe marker color, or null if the highlighter does not add any
-   * error stripe markers.
+   * @param color the error stripe marker color, or {@code null} if the highlighter does not add any
+   *              error stripe markers.
    */
   void setErrorStripeMarkColor(@Nullable Color color);
 
@@ -113,7 +114,7 @@ public interface RangeHighlighter extends RangeMarker {
    * Returns the object whose {@code toString()} method is called to get the text of the tooltip
    * for the error stripe marker added by the highlighter.
    *
-   * @return the error stripe tooltip objects, or null if the highlighter does not add any error
+   * @return the error stripe tooltip objects, or {@code null} if the highlighter does not add any error
    * stripe markers or the marker has no tooltip.
    */
   @Nullable
@@ -123,8 +124,8 @@ public interface RangeHighlighter extends RangeMarker {
    * Sets the object whose {@code toString()} method is called to get the text of the tooltip
    * for the error stripe marker added by the highlighter.
    *
-   * @param tooltipObject the error stripe tooltip objects, or null if the highlighter does not
-   * add any error stripe markers or the marker has no tooltip.
+   * @param tooltipObject the error stripe tooltip objects, or {@code null} if the highlighter does not
+   *                      add any error stripe markers or the marker has no tooltip.
    */
   void setErrorStripeTooltip(@Nullable Object tooltipObject);
 
@@ -132,7 +133,7 @@ public interface RangeHighlighter extends RangeMarker {
    * Returns the value indicating whether the error stripe marker has reduced width (like
    * the markers used to highlight changed lines).
    *
-   * @return true if the marker has reduced width, false otherwise.
+   * @return {@code true} if the marker has reduced width, {@code false} otherwise.
    */
   boolean isThinErrorStripeMark();
 
@@ -140,7 +141,7 @@ public interface RangeHighlighter extends RangeMarker {
    * Sets the value indicating whether the error stripe marker has reduced width (like
    * the markers used to highlight changed lines).
    *
-   * @param value true if the marker has reduced width, false otherwise.
+   * @param value {@code true} if the marker has reduced width, {@code false} otherwise.
    */
   void setThinErrorStripeMark(boolean value);
 
@@ -148,7 +149,7 @@ public interface RangeHighlighter extends RangeMarker {
    * Returns the color of the separator drawn above or below the range covered by
    * the highlighter.
    *
-   * @return the separator color, or null if the highlighter does not add a line separator.
+   * @return the separator color, or {@code null} if the highlighter does not add a line separator.
    */
   @Nullable
   Color getLineSeparatorColor();
@@ -157,7 +158,7 @@ public interface RangeHighlighter extends RangeMarker {
    * Sets the color of the separator drawn above or below the range covered by
    * the highlighter.
    *
-   * @param color the separator color, or null if the highlighter does not add a line separator.
+   * @param color the separator color, or {@code null} if the highlighter does not add a line separator.
    */
   void setLineSeparatorColor(@Nullable Color color);
 
@@ -169,7 +170,7 @@ public interface RangeHighlighter extends RangeMarker {
    * Returns the placement of the separator drawn by the range highlighter
    * (above or below the range).
    *
-   * @return the separator placement, or null if the highlighter does not add a line separator.
+   * @return the separator placement, or {@code null} if the highlighter does not add a line separator.
    */
   @Nullable
   SeparatorPlacement getLineSeparatorPlacement();
@@ -178,22 +179,22 @@ public interface RangeHighlighter extends RangeMarker {
    * Sets the placement of the separator drawn by the range highlighter
    * (above or below the range).
    *
-   * @param placement the separator placement, or null if the highlighter does not add a line separator.
+   * @param placement the separator placement, or {@code null} if the highlighter does not add a line separator.
    */
   void setLineSeparatorPlacement(@Nullable SeparatorPlacement placement);
 
   /**
    * Sets the filter which can disable the highlighter in specific editor instances.
    *
-   * @param filter the filter controlling the highlighter availability, or MarkupEditorFilter.EMPTY if
-   * highlighter is available in all editors.
+   * @param filter the filter controlling the highlighter availability, or {@link MarkupEditorFilter#EMPTY} if
+   *               highlighter is available in all editors.
    */
   void setEditorFilter(@NotNull MarkupEditorFilter filter);
 
   /**
    * Gets the filter which can disable the highlighter in specific editor instances.
    *
-   * @return the filter controlling the highlighter availability. Default availability is controlled by MarkupEditorFilter.EMPTY
+   * @return the filter controlling the highlighter availability. Default availability is controlled by {@link MarkupEditorFilter#EMPTY}.
    */
   @NotNull
   MarkupEditorFilter getEditorFilter();

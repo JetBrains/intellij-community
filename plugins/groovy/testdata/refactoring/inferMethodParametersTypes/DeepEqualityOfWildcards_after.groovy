@@ -1,4 +1,4 @@
-def <U0 extends java.util.List<?>> Object foo(List<U0> a, List<? extends U0> b) {
+def <T extends List<?>> boolean foo(List<T> a, List<? extends T> b) {
   a.add(b.get(0))
 }
 

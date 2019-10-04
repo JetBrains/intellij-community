@@ -19,6 +19,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.Navigatable;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageView;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -29,6 +30,7 @@ public class UsageNode extends Node implements Comparable<UsageNode>, Navigatabl
    * @deprecated use {@link #UsageNode(Node, Usage)} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2018.1")
   // todo remove in 2018.1
   public UsageNode(@NotNull Usage usage, UsageViewTreeModelBuilder model) {
     this(null, usage);

@@ -1,9 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github
 
 import com.intellij.openapi.util.Pair
 import junit.framework.TestCase
-import org.jetbrains.plugins.github.api.GithubFullPath
+import org.jetbrains.plugins.github.api.GHRepositoryPath
 import org.jetbrains.plugins.github.util.GithubUrlUtil.*
 import java.util.*
 
@@ -73,22 +73,23 @@ class GithubUrlUtilTest : TestCase() {
   }
 
   fun testGetUserAndRepositoryFromRemoteUrl() {
-    val tests = TestCase<GithubFullPath?>()
+    val tests = TestCase<GHRepositoryPath?>()
 
-    tests.add("http://github.com/username/reponame/", GithubFullPath("username", "reponame"))
-    tests.add("https://github.com/username/reponame/", GithubFullPath("username", "reponame"))
-    tests.add("git://github.com/username/reponame/", GithubFullPath("username", "reponame"))
-    tests.add("git@github.com:username/reponame/", GithubFullPath("username", "reponame"))
+    tests.add("http://github.com/username/reponame/", GHRepositoryPath("username", "reponame"))
+    tests.add("https://github.com/username/reponame/", GHRepositoryPath("username", "reponame"))
+    tests.add("git://github.com/username/reponame/", GHRepositoryPath("username", "reponame"))
+    tests.add("git@github.com:username/reponame/", GHRepositoryPath("username", "reponame"))
 
-    tests.add("https://github.com/username/reponame", GithubFullPath("username", "reponame"))
-    tests.add("https://github.com/username/reponame.git", GithubFullPath("username", "reponame"))
-    tests.add("https://github.com/username/reponame.git/", GithubFullPath("username", "reponame"))
-    tests.add("git@github.com:username/reponame.git/", GithubFullPath("username", "reponame"))
+    tests.add("https://github.com/username/reponame", GHRepositoryPath("username", "reponame"))
+    tests.add("https://github.com/username/reponame.git", GHRepositoryPath("username", "reponame"))
+    tests.add("https://github.com/username/reponame.git/", GHRepositoryPath("username", "reponame"))
+    tests.add("git@github.com:username/reponame.git/", GHRepositoryPath("username", "reponame"))
 
-    tests.add("http://login:passsword@github.com/username/reponame/", GithubFullPath("username", "reponame"))
+    tests.add("http://login:passsword@github.com/username/reponame/",
+              GHRepositoryPath("username", "reponame"))
 
-    tests.add("HTTPS://GitHub.com/username/reponame/", GithubFullPath("username", "reponame"))
-    tests.add("https://github.com/UserName/RepoName/", GithubFullPath("UserName", "RepoName"))
+    tests.add("HTTPS://GitHub.com/username/reponame/", GHRepositoryPath("username", "reponame"))
+    tests.add("https://github.com/UserName/RepoName/", GHRepositoryPath("UserName", "RepoName"))
 
     tests.add("https://github.com/RepoName/", null)
     tests.add("git@github.com:user/", null)

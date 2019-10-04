@@ -4,6 +4,7 @@ import com.intellij.codeInsight.completion.JavaCompletionTestCase;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
@@ -22,6 +23,7 @@ import org.junit.Assert;
 import java.io.File;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -138,7 +140,7 @@ public class JsonSchemaReadTest extends JavaCompletionTestCase {
     final AtomicReference<Exception> error = new AtomicReference<>();
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
-    final Thread thread = new Thread(() -> {
+    Future<?> thread = ApplicationManager.getApplication().executeOnPooledThread(() -> {
       try {
         ReadAction.run(() -> getSchemaObject(file));
         done.set(true);
@@ -149,15 +151,14 @@ public class JsonSchemaReadTest extends JavaCompletionTestCase {
       finally {
         semaphore.up();
       }
-    }, getClass().getName() + ": read test json schema " + file.getName());
-    thread.setDaemon(true);
+    });
     try {
-      thread.start();
       semaphore.waitFor(TimeUnit.SECONDS.toMillis(120));
       if (error.get() != null) throw error.get();
       Assert.assertTrue("Reading test schema hung!", done.get());
-    } finally {
-      thread.interrupt();
+    }
+    finally {
+      thread.get();
     }
   }
 }

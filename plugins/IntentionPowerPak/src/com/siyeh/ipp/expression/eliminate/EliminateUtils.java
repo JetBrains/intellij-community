@@ -7,13 +7,13 @@ import com.intellij.psi.util.PsiPrecedenceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.hash.HashMap;
 import com.siyeh.ig.psiutils.SideEffectChecker;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.BiFunction;
@@ -34,6 +34,12 @@ class EliminateUtils {
     OPS.put(JavaTokenType.AND, "&");
     OPS.put(JavaTokenType.OROR, "||");
     OPS.put(JavaTokenType.ANDAND, "&&");
+    OPS.put(JavaTokenType.EQEQ, "==");
+    OPS.put(JavaTokenType.NE, "!=");
+    OPS.put(JavaTokenType.GT, ">");
+    OPS.put(JavaTokenType.LT, "<");
+    OPS.put(JavaTokenType.GE, ">=");
+    OPS.put(JavaTokenType.LE, "<=");
 
     INVERTED_OPS.put(JavaTokenType.MINUS, JavaTokenType.PLUS);
     INVERTED_OPS.put(JavaTokenType.PLUS, JavaTokenType.MINUS);

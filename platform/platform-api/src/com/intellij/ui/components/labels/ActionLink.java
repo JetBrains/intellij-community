@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components.labels;
 
 import com.intellij.openapi.actionSystem.ActionPlaces;
@@ -26,6 +12,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
@@ -37,7 +24,6 @@ import java.awt.event.InputEvent;
 public class ActionLink extends LinkLabel<Object> implements DataProvider {
   private static final EmptyIcon ICON = JBUI.scale(EmptyIcon.create(0, 12));
   private final AnAction myAction;
-  private final String myPlace = ActionPlaces.UNKNOWN;
   private InputEvent myEvent;
   private Color myVisitedColor;
   private Color myActiveColor;
@@ -48,15 +34,15 @@ public class ActionLink extends LinkLabel<Object> implements DataProvider {
   }
 
   public ActionLink(String text, Icon icon, @NotNull AnAction action) {
-    this(text, icon, action, null);
+    this(text, icon, action, null, ActionPlaces.UNKNOWN);
   }
 
-  public ActionLink(String text, Icon icon, @NotNull AnAction action, @Nullable final Runnable onDone) {
+  public ActionLink(String text, Icon icon, @NotNull AnAction action, @Nullable Runnable onDone, @NotNull String place) {
     super(text, icon);
     setListener(new LinkListener<Object>() {
       @Override
       public void linkSelected(LinkLabel aSource, Object aLinkData) {
-        ActionUtil.invokeAction(myAction, ActionLink.this, myPlace, myEvent, onDone);
+        ActionUtil.invokeAction(myAction, ActionLink.this, place, myEvent, onDone);
       }
     }, null);
     myAction = action;
@@ -66,10 +52,6 @@ public class ActionLink extends LinkLabel<Object> implements DataProvider {
   public void doClick(InputEvent e) {
     myEvent = e;
     super.doClick();
-  }
-
-  public AnAction getAction() {
-    return myAction;
   }
 
   @Override
@@ -113,5 +95,10 @@ public class ActionLink extends LinkLabel<Object> implements DataProvider {
       return SwingUtilities.convertPoint(this, 0, getHeight(), UIUtil.getRootPane(this));
     }
     return myAction instanceof DataProvider ? ((DataProvider)myAction).getData(dataId) : null;
+  }
+
+  @TestOnly
+  public AnAction getAction() {
+    return myAction;
   }
 }

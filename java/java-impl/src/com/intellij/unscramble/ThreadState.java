@@ -3,6 +3,7 @@ package com.intellij.unscramble;
 
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,6 +30,8 @@ public class ThreadState {
 
   @Nullable
   private ThreadOperation myOperation;
+  private boolean myKnownJDKThread;
+  private int myStackDepth;
 
   public ThreadState(final String name, final String state) {
     myName = name;
@@ -47,9 +50,19 @@ public class ThreadState {
     return myStackTrace;
   }
 
-  public void setStackTrace(final String stackTrace, boolean isEmpty) {
+  public void setStackTrace(@NotNull String stackTrace, boolean isEmpty) {
     myStackTrace = stackTrace;
     myEmptyStackTrace = isEmpty;
+    myKnownJDKThread = ThreadDumpParser.isKnownJdkThread(stackTrace);
+    myStackDepth = StringUtil.countNewLines(myStackTrace);
+  }
+
+  int getStackDepth() {
+    return myStackDepth;
+  }
+
+  public boolean isKnownJDKThread() {
+    return myKnownJDKThread;
   }
 
   public Collection<ThreadState> getAwaitingThreads() {

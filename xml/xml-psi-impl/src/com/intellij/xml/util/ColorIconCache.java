@@ -9,6 +9,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Arrays;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -23,19 +24,18 @@ public class ColorIconCache {
     }
   };
 
-  private ColorIconCache() {
-  }
+  private ColorIconCache() { }
 
   public static ColorIconCache getIconCache() {
     return INSTANCE;
   }
 
-  public Icon getIcon(@NotNull final Color color, final int size) {
-    return ourCache.get(color).computeIfAbsent(size, s -> new com.intellij.util.ui.ColorIcon(s, color, true));
+  public Icon getIcon(@NotNull Color color, int size) {
+    return Objects.requireNonNull(ourCache.get(color)).computeIfAbsent(size, s -> new com.intellij.util.ui.ColorIcon(s, color, true));
   }
 
   /**
-   * @deprecated use com.intellij.util.ui.ColorIcon instead
+   * @deprecated use {@link com.intellij.util.ui.ColorIcon} instead
    */
   @Deprecated
   public static class ColorIcon extends EmptyIcon {
@@ -100,6 +100,7 @@ public class ColorIconCache {
 
       final Composite old = ((Graphics2D)g).getComposite();
       ((Graphics2D)g).setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.1f));
+      //noinspection UseJBColor
       g.setColor(Color.BLACK);
       g.drawRect(i, j, iconWidth-1, iconHeight-1);
       ((Graphics2D)g).setComposite(old);

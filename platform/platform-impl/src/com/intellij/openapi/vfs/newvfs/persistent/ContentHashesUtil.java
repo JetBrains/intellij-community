@@ -4,6 +4,7 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 import com.intellij.openapi.util.ThreadLocalCachedValue;
 import com.intellij.util.io.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -34,7 +35,11 @@ public class ContentHashesUtil {
   private static final int SIGNATURE_LENGTH = 20;
 
   public static class HashEnumerator extends PersistentBTreeEnumerator<byte[]> {
-    public HashEnumerator(File contentsHashesFile, PagedFileStorage.StorageLockContext storageLockContext) throws IOException {
+    public HashEnumerator(@NotNull File contentsHashesFile) throws IOException {
+      this(contentsHashesFile, null);
+    }
+
+    public HashEnumerator(@NotNull File contentsHashesFile, @Nullable PagedFileStorage.StorageLockContext storageLockContext) throws IOException {
       super(contentsHashesFile, new ContentHashesDescriptor(), 64 * 1024, storageLockContext);
     }
 
@@ -64,6 +69,11 @@ public class ContentHashesUtil {
     public byte[] valueOf(int idx) throws IOException {
       if (myProcessingKeyAtIndex.get() == Boolean.TRUE) return super.valueOf(idx);
       return super.valueOf(addrToIndex(indexToAddr(idx)* SIGNATURE_LENGTH));
+    }
+
+    @Override
+    public int tryEnumerate(byte[] value) throws IOException {
+      return super.tryEnumerate(value);
     }
   }
 

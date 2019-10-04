@@ -2,11 +2,11 @@
 package com.theoryinpractice.testng.configuration;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.rt.testng.IDEATestNGRemoteListener;
 import com.intellij.util.ArrayUtilRt;
 import junit.framework.Assert;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
-import org.testng.IDEATestNGRemoteListener;
 import org.testng.ISuite;
 import org.testng.internal.TestResult;
 import org.testng.xml.XmlClass;

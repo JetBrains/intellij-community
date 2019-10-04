@@ -41,7 +41,7 @@ public final class FileEditorProviderManagerImpl extends FileEditorProviderManag
     boolean hideDefaultEditor = false;
     for (final FileEditorProvider provider : FileEditorProvider.EP_FILE_EDITOR_PROVIDER.getExtensionList()) {
       if (ReadAction.compute(() -> {
-        if (project.isDisposed() || (DumbService.isDumb(project) && !DumbService.isDumbAware(provider))) {
+        if (DumbService.isDumb(project) && !DumbService.isDumbAware(provider)) {
           return false;
         }
         return provider.accept(project, file);
@@ -87,11 +87,10 @@ public final class FileEditorProviderManagerImpl extends FileEditorProviderManag
   private final Map<String, String> mySelectedProviders = new HashMap<>();
 
   void providerSelected(EditorComposite composite) {
-    if (!(composite instanceof EditorWithProviderComposite)) return;
-    FileEditorProvider[] providers = ((EditorWithProviderComposite)composite).getProviders();
+    FileEditorProvider[] providers = composite.getProviders();
     if (providers.length < 2) return;
     mySelectedProviders.put(computeKey(providers),
-                            composite.getSelectedEditorWithProvider().getSecond().getEditorTypeId());
+                            composite.getSelectedWithProvider().getProvider().getEditorTypeId());
   }
 
   private static String computeKey(FileEditorProvider[] providers) {

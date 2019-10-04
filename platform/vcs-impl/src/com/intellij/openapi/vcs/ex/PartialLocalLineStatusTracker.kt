@@ -8,7 +8,6 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.Separator
-import com.intellij.openapi.application.ApplicationManager.getApplication
 import com.intellij.openapi.command.CommandEvent
 import com.intellij.openapi.command.CommandListener
 import com.intellij.openapi.command.CommandProcessor
@@ -467,8 +466,6 @@ class ChangelistsLocalLineStatusTracker(project: Project,
 
     private fun mergeExcludedFromCommitRanges(ranges: List<Block>): Boolean {
       if (ranges.isEmpty()) {
-        if (getApplication().isUnitTestMode) return false
-
         val marker = currentMarker ?: defaultMarker
         val changeListBlocks = blocks.filter { it.marker == marker }
         // only include if all changed blocks from this change list are included
@@ -719,6 +716,10 @@ class ChangelistsLocalLineStatusTracker(project: Project,
     eventDispatcher.multicaster.onExcludedFromCommitChange(this)
   }
 
+  internal fun resetExcludedFromCommitMarkers() {
+    setExcludedFromCommit(false)
+    dropExistingUndoActions()
+  }
 
   @CalledInAwt
   internal fun storeTrackerState(): FullState {
@@ -745,7 +746,7 @@ class ChangelistsLocalLineStatusTracker(project: Project,
   @CalledInAwt
   private fun collectRangeStates(): List<RangeState> {
     return documentTracker.readLock {
-      blocks.map { RangeState(it.range, it.marker.changelistId) }
+      blocks.map { RangeState(it.range, it.marker.changelistId, it.excludedFromCommit) }
     }
   }
 
@@ -795,6 +796,7 @@ class ChangelistsLocalLineStatusTracker(project: Project,
     assert(blocks.size == states.size)
     blocks.forEachIndexed { i, block ->
       block.marker = idToMarker[states[i].changelistId] ?: defaultMarker
+      states[i].excludedFromCommit?.let { block.excludedFromCommit = it }
     }
 
     updateAffectedChangeLists()
@@ -855,7 +857,8 @@ class ChangelistsLocalLineStatusTracker(project: Project,
 
   internal class RangeState(
     val range: com.intellij.diff.util.Range,
-    val changelistId: String
+    val changelistId: String,
+    val excludedFromCommit: Boolean? = null // should not be persisted
   )
 
   protected data class ChangeListMarker(val changelistId: String) {
@@ -864,7 +867,7 @@ class ChangelistsLocalLineStatusTracker(project: Project,
 
 
   protected data class MyBlockData(var marker: ChangeListMarker? = null,
-                                   var excludedFromCommit: Boolean = !getApplication().isUnitTestMode
+                                   var excludedFromCommit: Boolean = true
   ) : LineStatusTrackerBase.BlockData()
 
   override fun createBlockData(): BlockData = MyBlockData()

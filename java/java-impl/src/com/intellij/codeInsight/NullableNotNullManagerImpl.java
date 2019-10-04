@@ -308,6 +308,11 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
         return Nullability.NULLABLE;
       }
     }
+
+    // 'when' is unknown and annotation is known -> default value (for javax.annotation.Nonnull is ALWAYS)
+    if (when == null && JAVAX_ANNOTATION_NONNULL.equals(nonNull.getQualifiedName())) {
+      return Nullability.NOT_NULL;
+    }
     return Nullability.UNKNOWN;
   }
 

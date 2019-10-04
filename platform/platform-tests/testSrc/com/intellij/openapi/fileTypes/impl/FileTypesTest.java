@@ -32,7 +32,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPlainTextFile;
 import com.intellij.psi.impl.PsiManagerEx;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.util.PatternUtil;
@@ -53,7 +53,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 
 @SuppressWarnings("ConstantConditions")
-public class FileTypesTest extends PlatformTestCase {
+public class FileTypesTest extends HeavyPlatformTestCase {
   private FileTypeManagerImpl myFileTypeManager;
   private String myOldIgnoredFilesList;
 
@@ -288,8 +288,10 @@ public class FileTypesTest extends PlatformTestCase {
       @Override
       public FileType detect(@NotNull VirtualFile file, @NotNull ByteSequence firstBytes, @Nullable CharSequence firstCharsIfText) {
         detectorCalled.add(file);
-        String text = firstCharsIfText.toString();
-        FileType result = text.startsWith("TYPE:") ? fileTypeManager.findFileTypeByName(StringUtil.trimStart(text, "TYPE:")) : null;
+        String text = firstCharsIfText != null ? firstCharsIfText.toString() : null;
+        FileType result = text != null && text.startsWith("TYPE:")
+                          ? fileTypeManager.findFileTypeByName(StringUtil.trimStart(text, "TYPE:"))
+                          : null;
         log("T: my detector run for "+file.getName()+"; result: "+(result == null ? null : result.getName())+" (text="+text+")");
         return result;
       }
@@ -831,6 +833,22 @@ public class FileTypesTest extends PlatformTestCase {
     assertTrue(myFileTypeManager.isFileOfType(vFile, ArchiveFileType.INSTANCE));
     assertTrue(myFileTypeManager.isFileOfType(vFile, ArchiveFileType.INSTANCE));
     assertEquals(1, detectorCalls.get());
+  }
+
+  public void testUniqueLanguage() {
+    Map<String, LanguageFileType> map = new HashMap<>();
+    for (FileType type : FileTypeManager.getInstance().getRegisteredFileTypes()) {
+      if (!(type instanceof LanguageFileType)) continue;
+      LanguageFileType languageFileType = (LanguageFileType)type;
+      if (!languageFileType.isSecondary()) {
+        String id = languageFileType.getLanguage().getID();
+        LanguageFileType oldFileType = map.get(id);
+        if (oldFileType != null) {
+          fail("Multiple primary file types for language " + id + ": "+ oldFileType.getName() + ", " + languageFileType.getName());
+        }
+        map.put(id, languageFileType);
+      }
+    }
   }
 
   @NotNull

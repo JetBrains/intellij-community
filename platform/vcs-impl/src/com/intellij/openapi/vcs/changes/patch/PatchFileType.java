@@ -3,11 +3,9 @@
 package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.fileTypes.SyntaxHighlighter;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -64,18 +62,8 @@ public class PatchFileType implements FileType {
     return null;
   }
 
-  @Nullable
-  public SyntaxHighlighter getHighlighter(@Nullable Project project, final VirtualFile virtualFile) {
-    return null;
-  }
-
-  @Nullable
-  public StructureViewBuilder getStructureViewBuilder(@NotNull VirtualFile file, @NotNull Project project) {
-    return null;
-  }
-
   public static boolean isPatchFile(@Nullable VirtualFile vFile) {
-    return vFile != null && vFile.getFileType() == StdFileTypes.PATCH;
+    return vFile != null && FileTypeRegistry.getInstance().isFileOfType(vFile, StdFileTypes.PATCH);
   }
 
   public static boolean isPatchFile(@NotNull File file) {

@@ -16,17 +16,15 @@
 package com.intellij.util.containers;
 
 import com.intellij.reference.SoftReference;
-import com.intellij.util.DeprecatedMethodException;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.ReferenceQueue;
 
 /**
- * @deprecated use {@link ContainerUtil#createSoftValueMap()} instead
+ * Use {@link ContainerUtil#createSoftValueMap()} instead
  */
-@Deprecated
-public final class SoftValueHashMap<K,V> extends RefValueHashMap<K,V>{
+final class SoftValueHashMap<K,V> extends RefValueHashMap<K,V>{
   private static class MySoftReference<K, T> extends SoftReference<T> implements MyReference<K, T> {
     private final K key;
 
@@ -42,9 +40,6 @@ public final class SoftValueHashMap<K,V> extends RefValueHashMap<K,V>{
     }
   }
 
-  public SoftValueHashMap() {
-    DeprecatedMethodException.report("Use ContainerUtil#createSoftValueMap() instead");
-  }
 
   SoftValueHashMap(@NotNull TObjectHashingStrategy<K> strategy) {
     super(strategy);

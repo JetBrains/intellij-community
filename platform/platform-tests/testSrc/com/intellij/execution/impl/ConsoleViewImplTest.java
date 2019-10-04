@@ -25,7 +25,6 @@ import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.extensions.ExtensionPoint;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
@@ -152,14 +151,14 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
     console.clear();
     EditorActionManager actionManager = EditorActionManager.getInstance();
     DataContext dataContext = DataManager.getInstance().getDataContext(console.getComponent());
-    TypedAction action = actionManager.getTypedAction();
+    TypedAction action = TypedAction.getInstance();
     action.actionPerformed(console.getEditor(), 'h', dataContext);
     assertEquals(1, console.getContentSize());
   }
 
   public void testTypingAfterMultipleCR() {
     final EditorActionManager actionManager = EditorActionManager.getInstance();
-    final TypedAction typedAction = actionManager.getTypedAction();
+    final TypedAction typedAction = TypedAction.getInstance();
     final TestDataProvider dataContext = new TestDataProvider(getProject());
 
     final ConsoleViewImpl console = myConsole;
@@ -352,7 +351,8 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
   }
 
   private static void typeIn(Editor editor, char c) {
-    TypedAction action = EditorActionManager.getInstance().getTypedAction();
+    EditorActionManager.getInstance();
+    TypedAction action = TypedAction.getInstance();
     DataContext dataContext = ((EditorEx)editor).getDataContext();
 
     action.actionPerformed(editor, c, dataContext);
@@ -539,7 +539,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
   }
 
   public void testSubsequentFoldsAreCombined() {
-    PlatformTestUtil.registerExtension(Extensions.getRootArea(), ConsoleFolding.EP_NAME, new ConsoleFolding() {
+    ServiceContainerUtil.registerExtension(ApplicationManager.getApplication(), ConsoleFolding.EP_NAME, new ConsoleFolding() {
       @Override
       public boolean shouldFoldLine(@NotNull Project project, @NotNull String line) {
         return line.contains("FOO");

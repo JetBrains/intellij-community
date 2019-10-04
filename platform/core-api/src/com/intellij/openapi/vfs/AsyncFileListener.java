@@ -2,6 +2,7 @@
 package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -55,7 +56,7 @@ public interface AsyncFileListener {
    * <p>
    * Note that this listener can only observe the state of the system before VFS events, and so
    * it can't work with anything that would be after them, e.g. there will be no file in
-   * {@link com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent}, {@link com.intellij.openapi.roots.FileIndexFacade}
+   * {@link VFileCreateEvent}, {@link com.intellij.openapi.roots.FileIndexFacade}
    * won't know anything about the updated state after VFS change, and so on.
    * <p>
    * Note that the events posted passed might differ from the ones passed into {@link com.intellij.openapi.vfs.newvfs.BulkFileListener}.

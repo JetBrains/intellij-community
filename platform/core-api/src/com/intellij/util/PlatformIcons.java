@@ -46,7 +46,7 @@ public interface PlatformIcons {
   Icon ASPECT_ICON = AllIcons.Nodes.Aspect;
 
   /**
-   * @deprecated {@link AllIcons.Nodes#Tag}
+   * @deprecated use {@link AllIcons.Nodes#Tag}
    */
   @Deprecated
   Icon ADVICE_ICON = AllIcons.Nodes.Tag;
@@ -106,13 +106,13 @@ public interface PlatformIcons {
   Icon IMPORT_ICON = AllIcons.ToolbarDecorator.Import;
 
   /**
-   * @use {@link #FOLDER_ICON}
+   * @deprecated use {@link #FOLDER_ICON}
    */
   @Deprecated
   Icon DIRECTORY_CLOSED_ICON = FOLDER_ICON;
 
   /**
-   * @use {@link #FOLDER_ICON}
+   * @deprecated use {@link #FOLDER_ICON}
    */
   @Deprecated
   Icon DIRECTORY_OPEN_ICON = FOLDER_ICON;

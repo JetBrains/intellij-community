@@ -38,9 +38,7 @@ public class MavenAnnotationProcessorConfigurer extends MavenModuleConfigurer {
   public static final String DEFAULT_BSC_TEST_ANNOTATION_OUTPUT = "target/generated-sources/apt-test";
 
   @Override
-  public void configure(@NotNull MavenProject mavenProject, @NotNull Project project, @Nullable Module module) {
-    if (module == null) return;
-
+  public void configure(@NotNull MavenProject mavenProject, @NotNull Project project, @NotNull Module module) {
     Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
     if (sdk != null) {
       String versionString = sdk.getVersionString();

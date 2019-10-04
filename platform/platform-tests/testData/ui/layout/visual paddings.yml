@@ -1,0 +1,96 @@
+layoutConstraints:
+  fillX: true
+  gridGapX:
+    min: &id001 {horizontal: true, unit: 0, value: 0.0}
+    preferred: *id001
+  gridGapY:
+    min: &id002 {horizontal: false, value: 10.0}
+    preferred: *id002
+  hideMode: 2
+  insets:
+  - {horizontal: false, unit: 0, value: 0.0}
+  - {horizontal: true, unit: 0, value: 0.0}
+  - {horizontal: false, unit: 0, value: 0.0}
+  - {horizontal: true, unit: 0, value: 0.0}
+rowConstraints:
+  constraints:
+  - align: &id003 {horizontal: false, unit: -1, value: 0.0}
+  - align: *id003
+  - align: *id003
+  - align: *id003
+  - align: *id003
+  - align: *id003
+  - align: *id003
+  - align: *id003
+  - align: *id003
+  - align: *id003
+  - align: *id003
+  count: 11
+columnConstraints:
+  constraints:
+  - gapAfter:
+      max: &id004 {horizontal: true, value: 6.0}
+      min: *id004
+      preferred: *id004
+    grow: 0.0
+  - {}
+  count: 2
+componentConstrains:
+  Text field [label]: {}
+  'JTextField #1':
+    horizontal: {grow: 100.0}
+    spanX: INF
+    wrap: true
+  Password [label]: {}
+  'JPasswordField #3':
+    horizontal: {grow: 100.0}
+    spanX: INF
+    wrap: true
+  Combobox [label]: {}
+  'JComboBox #5':
+    horizontal: {grow: 1000.0}
+    spanX: INF
+    wrap: true
+  Combobox Editable [label]: {}
+  'JComboBox #7':
+    horizontal: {grow: 1000.0}
+    spanX: INF
+    wrap: true
+  Button [label]: {}
+  label: {spanX: INF, wrap: true}
+  CheckBox [label]: {}
+  enabled: {spanX: INF, wrap: true}
+  RadioButton [label]: {}
+  Spinner [label]: {}
+  'JBIntSpinner #15': {spanX: INF, wrap: true}
+  Text with browse [label]: {}
+  'TextFieldWithBrowseButton #17':
+    horizontal:
+      grow: 100.0
+      size:
+        min: {horizontal: true, value: 350.0}
+    spanX: INF
+    wrap: true
+  All [label]: {}
+  'JTextField #19':
+    horizontal: {grow: 100.0}
+    split: 6
+  'JPasswordField #20':
+    horizontal: {grow: 100.0}
+  'JComboBox #21':
+    horizontal: {grow: 1000.0}
+  b: {}
+  c: {}
+  rb: {spanX: INF, wrap: true}
+  Scroll pane [label]:
+    vertical:
+      align: {horizontal: false, unit: 6, value: 0.0}
+      gapBefore:
+        min: &id005 {horizontal: false, value: 1.0}
+        preferred: *id005
+  'JBScrollPane #26':
+    horizontal: {grow: 100.0}
+    pushY: 100.0
+    spanX: INF
+    vertical: {grow: 100.0}
+    wrap: true

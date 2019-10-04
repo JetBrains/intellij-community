@@ -15,19 +15,16 @@
  */
 package org.intellij.lang.xpath;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.fileTypes.FileTypeConsumer;
-import com.intellij.openapi.fileTypes.FileTypeFactory;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.fileTypes.FileTypeManager;
+import org.jetbrains.annotations.TestOnly;
 
-public class XPathSupportLoader extends FileTypeFactory {
-    private static final boolean DBG_MODE = Boolean.getBoolean("xpath-lang.register-file-type");
-
-  @Override
-  public void createFileTypes(final @NotNull FileTypeConsumer consumer) {
-        if (DBG_MODE || ApplicationManager.getApplication().isUnitTestMode()) {
-            consumer.consume(XPathFileType.XPATH, XPathFileType.XPATH.getDefaultExtension());
-            consumer.consume(XPathFileType.XPATH2, XPathFileType.XPATH2.getDefaultExtension());
-        }
+public class XPathSupportLoader {
+  @TestOnly
+  public static void createFileTypes() {
+    FileTypeManager manager = FileTypeManager.getInstance();
+    if (manager.getFileTypeByExtension(XPathFileType.XPATH.getDefaultExtension()) != XPathFileType.XPATH) {
+      manager.registerFileType(XPathFileType.XPATH, XPathFileType.XPATH.getDefaultExtension());
+      manager.registerFileType(XPathFileType.XPATH2, XPathFileType.XPATH2.getDefaultExtension());
     }
+  }
 }

@@ -58,6 +58,11 @@ export const chartDescriptors: Array<ActivityChartDescriptor> = [
     shortNameProducer: getShortName,
   },
   {
+    label: "Preload",
+    id: "preloadActivities",
+    shortNameProducer: getShortName,
+  },
+  {
     label: "Project Post-Startup",
     id: "projectPostStartupActivities",
     shortNameProducer: getShortName,

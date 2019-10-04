@@ -30,12 +30,9 @@ public class ExpandMacroToPathMap extends PathMacroMap {
     myMacroExpands.putAll(another.myMacroExpands);
   }
 
+  @NotNull
   @Override
-  public String substitute(String text, boolean caseSensitive) {
-    if (text == null) {
-      return null;
-    }
-
+  public String substitute(@NotNull String text, boolean caseSensitive) {
     if (text.indexOf('$') < 0 && text.indexOf('%') < 0) {
       return text;
     }

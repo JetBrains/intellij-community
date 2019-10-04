@@ -22,9 +22,9 @@ import com.intellij.util.ui.ComponentWithEmptyText
 import com.intellij.vcs.log.ui.frame.ProgressStripe
 import com.intellij.xml.util.XmlStringUtil
 import git4idea.GitCommit
-import org.jetbrains.plugins.github.pullrequest.comment.GithubPullRequestDiffCommentsProvider
-import org.jetbrains.plugins.github.pullrequest.comment.GithubPullRequestFilesDiffCommentsProvider
-import org.jetbrains.plugins.github.pullrequest.comment.ui.GithubPullRequestEditorCommentsThreadComponentFactory
+import org.jetbrains.plugins.github.pullrequest.comment.GHPRDiffReviewThreadsProvider
+import org.jetbrains.plugins.github.pullrequest.comment.GHPRDiffReviewThreadsProviderImpl
+import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPREditorReviewThreadComponentFactory
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestDataProvider
 import java.awt.BorderLayout
@@ -34,7 +34,7 @@ import kotlin.properties.Delegates
 
 internal class GithubPullRequestChangesComponent(private val project: Project,
                                                  private val projectUiSettings: GithubPullRequestsProjectUISettings,
-                                                 private val diffCommentComponentFactory: GithubPullRequestEditorCommentsThreadComponentFactory)
+                                                 private val diffCommentComponentFactory: GHPREditorReviewThreadComponentFactory)
   : GithubDataLoadingComponent<List<GitCommit>>(), Disposable {
 
   private val changesBrowser = PullRequestChangesBrowserWithError()
@@ -104,8 +104,8 @@ internal class GithubPullRequestChangesComponent(private val project: Project,
     override fun updateDiffContext(chain: DiffRequestChain) {
       super.updateDiffContext(chain)
       if (projectUiSettings.zipChanges) {
-        chain.putUserData(GithubPullRequestDiffCommentsProvider.KEY,
-                          GithubPullRequestFilesDiffCommentsProvider(dataProvider!!, diffCommentComponentFactory))
+        chain.putUserData(GHPRDiffReviewThreadsProvider.KEY,
+                          GHPRDiffReviewThreadsProviderImpl(dataProvider!!, diffCommentComponentFactory))
       }
       else {
         //TODO: commits comments provider

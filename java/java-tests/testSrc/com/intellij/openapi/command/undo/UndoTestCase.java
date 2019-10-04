@@ -12,6 +12,7 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.impl.UndoManagerImpl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
+import com.intellij.openapi.editor.actionSystem.TypedAction;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -75,7 +76,8 @@ public abstract class UndoTestCase extends JavaCodeInsightTestCase {
   }
 
   protected void typeInChar(Editor e, char c) {
-    getActionManager().getTypedAction().actionPerformed(e, c, createDataContextFor(e));
+    getActionManager();
+    TypedAction.getInstance().actionPerformed(e, c, createDataContextFor(e));
   }
 
   private static EditorActionManager getActionManager() {

@@ -34,8 +34,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.structuralsearch.*;
-import com.intellij.structuralsearch.plugin.StructuralReplaceAction;
 import com.intellij.structuralsearch.plugin.StructuralSearchAction;
+import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.TooltipWithClickableLinks;
 import com.intellij.util.LocalTimeCounter;
@@ -75,16 +75,7 @@ public class UIUtil {
   }
 
   @NotNull
-  public static Editor createEditor(Document doc, final Project project, boolean editable, @Nullable TemplateContextType contextType) {
-    return createEditor(doc, project, editable, false, contextType);
-  }
-
-  @NotNull
-  public static Editor createEditor(@NotNull Document doc,
-                                    final Project project,
-                                    boolean editable,
-                                    boolean addToolTipForVariableHandler,
-                                    @Nullable TemplateContextType contextType) {
+  public static Editor createEditor(@NotNull Document doc, Project project, boolean editable, @Nullable TemplateContextType contextType) {
     final Editor editor =
         editable ? EditorFactory.getInstance().createEditor(doc, project) : EditorFactory.getInstance().createViewer(doc, project);
 
@@ -111,11 +102,6 @@ public class UIUtil {
     }
 
     TemplateEditorUtil.setHighlighter(editor, contextType);
-
-    if (addToolTipForVariableHandler) {
-      SubstitutionShortInfoHandler.install(editor, null);
-    }
-
     return editor;
   }
 
@@ -149,23 +135,27 @@ public class UIUtil {
   }
 
   public static void invokeAction(Configuration config, SearchContext context) {
-    if (config instanceof SearchConfiguration) {
-      StructuralSearchAction.triggerAction(config, context);
-    }
-    else {
-      StructuralReplaceAction.triggerAction(config, context);
-    }
+    StructuralSearchAction.triggerAction(config, context, !(config instanceof SearchConfiguration));
   }
 
   public static MatchVariableConstraint getOrAddVariableConstraint(String varName, Configuration configuration) {
-    MatchVariableConstraint varInfo = configuration.getMatchOptions().getVariableConstraint(varName);
+    final MatchOptions options = configuration.getMatchOptions();
+    final MatchVariableConstraint varInfo = options.getVariableConstraint(varName);
 
-    if (varInfo == null) {
-      varInfo = new MatchVariableConstraint();
-      varInfo.setName(varName);
-      configuration.getMatchOptions().addVariableConstraint(varInfo);
+    if (varInfo != null) {
+      return varInfo;
     }
-    return varInfo;
+    return configuration.getMatchOptions().addNewVariableConstraint(varName);
+  }
+
+  public static ReplacementVariableDefinition getOrAddReplacementVariable(String varName, Configuration configuration) {
+    final ReplaceOptions replaceOptions = configuration.getReplaceOptions();
+    ReplacementVariableDefinition definition = replaceOptions.getVariableDefinition(varName);
+
+    if (definition != null) {
+      return definition;
+    }
+    return replaceOptions.addNewVariableDefinition(varName);
   }
 
   public static boolean isTarget(String varName, MatchOptions matchOptions) {
@@ -314,24 +304,22 @@ public class UIUtil {
 
   @NotNull
   public static Editor createEditor(@NotNull Project project, @NotNull LanguageFileType fileType, Language dialect, @NotNull String text,
-                                    @NotNull StructuralSearchProfile profile) {
+                                    boolean editable, @NotNull StructuralSearchProfile profile) {
     PsiFile codeFragment = profile.createCodeFragment(project, text, null);
     if (codeFragment == null) {
       codeFragment = createFileFragment(project, fileType, dialect, text);
     }
 
+    final Document doc;
     if (codeFragment != null) {
-      final Document doc = PsiDocumentManager.getInstance(project).getDocument(codeFragment);
+      doc = PsiDocumentManager.getInstance(project).getDocument(codeFragment);
       assert doc != null : "code fragment element should be physical";
       DaemonCodeAnalyzer.getInstance(project).setHighlightingEnabled(codeFragment, false);
-      return createEditor(doc, project, true, true, getTemplateContextType(profile));
     }
-
-    final EditorFactory factory = EditorFactory.getInstance();
-    final Document document = factory.createDocument(text);
-    final EditorEx editor = (EditorEx)factory.createEditor(document, project);
-    editor.getSettings().setFoldingOutlineShown(false);
-    return editor;
+    else {
+      doc = EditorFactory.getInstance().createDocument("");
+    }
+    return createEditor(doc, project, editable, getTemplateContextType(profile));
   }
 
   private static PsiFile createFileFragment(@NotNull Project project, @NotNull LanguageFileType fileType, Language dialect, @NotNull String text) {

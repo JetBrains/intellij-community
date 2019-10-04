@@ -95,19 +95,13 @@ public class RowsDnDSupport {
                   event.setHighlighting(rectangle, DnDEvent.DropTargetHighlightingType.FILLED_RECTANGLE);
                   break;
               }
-              return true;
             }
             else {
               event.hideHighlighter();
-              return true;
             }
           }
-          else {
-
-            if (oldIndex == newIndex) {  // Drag&Drop always starts with new==old and we shouldn't display 'rejecting' cursor in this case
-              return true;
-            }
-
+          else if (oldIndex != newIndex) {
+            // Drag&Drop always starts with new==old and we shouldn't display 'rejecting' cursor if they are equal
             boolean canExchange = model.canExchangeRows(oldIndex, newIndex);
             if (canExchange) {
               if (oldIndex < newIndex) {
@@ -121,8 +115,8 @@ public class RowsDnDSupport {
             else {
               event.setDropPossible(false);
             }
-            return true;
           }
+          return true;
         }
       })
       .setDropHandler(new DnDDropHandler() {

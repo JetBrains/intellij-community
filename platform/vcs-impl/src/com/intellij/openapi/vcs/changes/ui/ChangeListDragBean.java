@@ -16,8 +16,8 @@
 
 package com.intellij.openapi.vcs.changes.ui;
 
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vfs.VirtualFile;
 
 import javax.swing.*;
 import java.util.List;
@@ -28,12 +28,12 @@ import java.util.List;
 public class ChangeListDragBean {
   private final JComponent mySourceComponent;
   private final Change[] myChanges;
-  private final List<VirtualFile> myUnversionedFiles;
-  private final List<VirtualFile> myIgnoredFiles;
+  private final List<FilePath> myUnversionedFiles;
+  private final List<FilePath> myIgnoredFiles;
   private ChangesBrowserNode myTargetNode;
 
-  public ChangeListDragBean(final JComponent sourceComponent, final Change[] changes, final List<VirtualFile> unversionedFiles,
-                            final List<VirtualFile> ignoredFiles) {
+  public ChangeListDragBean(final JComponent sourceComponent, final Change[] changes, final List<FilePath> unversionedFiles,
+                            final List<FilePath> ignoredFiles) {
     mySourceComponent = sourceComponent;
     myChanges = changes;
     myUnversionedFiles = unversionedFiles;
@@ -48,11 +48,11 @@ public class ChangeListDragBean {
     return myChanges;
   }
 
-  public List<VirtualFile> getUnversionedFiles() {
+  public List<FilePath> getUnversionedFiles() {
     return myUnversionedFiles;
   }
 
-  public List<VirtualFile> getIgnoredFiles() {
+  public List<FilePath> getIgnoredFiles() {
     return myIgnoredFiles;
   }
 

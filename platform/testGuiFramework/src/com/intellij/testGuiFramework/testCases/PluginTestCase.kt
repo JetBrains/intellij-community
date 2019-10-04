@@ -73,7 +73,7 @@ open class PluginTestCase : GuiTestCase() {
         ensureButtonOkHasPressed(this@PluginTestCase)
       }
       message("IDE and Plugin Updates") {
-        button("Postpone").click()
+        button("Not Now").click()
       }
     }
   }
@@ -102,7 +102,7 @@ open class PluginTestCase : GuiTestCase() {
           button("OK").click()
           ignoreComponentLookupException {
             dialog(title = "IDE and Plugin Updates", timeout = seconds05) {
-              button("Postpone").click()
+              button("Not Now").click()
             }
           }
         }

@@ -113,7 +113,7 @@ public class VcsDirtyScopeVfsListener implements BulkFileListener, Disposable {
       }
 
       if (event instanceof VFileDeleteEvent || event instanceof VFileMoveEvent || event instanceof VFilePropertyChangeEvent) {
-        dirtyFilesAndDirs.add(file);
+        add(myVcsManager, dirtyFilesAndDirs, file);
       }
     }
     markDirtyOnPooled(dirtyFilesAndDirs);
@@ -133,21 +133,21 @@ public class VcsDirtyScopeVfsListener implements BulkFileListener, Disposable {
       }
 
       if (event instanceof VFileContentChangeEvent || event instanceof VFileCreateEvent || event instanceof VFileMoveEvent) {
-        dirtyFilesAndDirs.add(file);
+        add(myVcsManager, dirtyFilesAndDirs, file);
       }
       else if (event instanceof VFileCopyEvent) {
         VFileCopyEvent copyEvent = (VFileCopyEvent)event;
-        dirtyFilesAndDirs.add(copyEvent.getNewParent().findChild(copyEvent.getNewChildName()));
+        add(myVcsManager, dirtyFilesAndDirs, copyEvent.getNewParent().findChild(copyEvent.getNewChildName()));
       }
       else if (event instanceof VFilePropertyChangeEvent) {
         final VFilePropertyChangeEvent pce = (VFilePropertyChangeEvent)event;
         if (pce.isRename()) {
           // if a file was renamed, then the file is dirty and its parent directory is dirty too;
           // if a directory was renamed, all its children are recursively dirty, the parent dir is also dirty but not recursively.
-          dirtyFilesAndDirs.add(file);   // the file is dirty recursively
-          dirtyFilesAndDirs.addToFiles(file.getParent()); // directory is dirty alone. if parent is null - is checked in the method
+          add(myVcsManager, dirtyFilesAndDirs, file);   // the file is dirty recursively
+          addToFiles(myVcsManager, dirtyFilesAndDirs, file.getParent()); // directory is dirty alone. if parent is null - is checked in the method
         } else {
-          dirtyFilesAndDirs.addToFiles(file);
+          addToFiles(myVcsManager, dirtyFilesAndDirs, file);
         }
       }
     }
@@ -172,28 +172,37 @@ public class VcsDirtyScopeVfsListener implements BulkFileListener, Disposable {
     @NotNull HashSet<FilePath> dirtyFiles = new HashSet<>();
     @NotNull HashSet<FilePath> dirtyDirs = new HashSet<>();
 
-    private void add(@Nullable VirtualFile file, boolean addToFiles) {
-      if (file == null) return;
-      boolean isDirectory = file.isDirectory();
-      FilePath path = VcsUtil.getFilePath(file.getPath(), isDirectory);
-      if (addToFiles || !isDirectory) {
-        dirtyFiles.add(path);
-      }
-      else {
-        dirtyDirs.add(path);
-      }
-    }
-
-    private void add(@Nullable VirtualFile file) {
-      add(file, false);
-    }
-
-    private void addToFiles(@Nullable VirtualFile file) {
-      add(file, true);
-    }
-
     private boolean isEmpty() {
       return dirtyFiles.isEmpty() && dirtyDirs.isEmpty();
     }
+  }
+
+  private static void add(@NotNull ProjectLevelVcsManager vcsManager,
+                          @NotNull FilesAndDirs filesAndDirs,
+                          @Nullable VirtualFile file,
+                          boolean addToFiles) {
+    if (file == null) return;
+    if (!vcsManager.isFileInContent(file)) return;
+
+    boolean isDirectory = file.isDirectory();
+    FilePath path = VcsUtil.getFilePath(file.getPath(), isDirectory);
+    if (addToFiles || !isDirectory) {
+      filesAndDirs.dirtyFiles.add(path);
+    }
+    else {
+      filesAndDirs.dirtyDirs.add(path);
+    }
+  }
+
+  private static void add(@NotNull ProjectLevelVcsManager vcsManager,
+                          @NotNull FilesAndDirs filesAndDirs,
+                          @Nullable VirtualFile file) {
+    add(vcsManager, filesAndDirs, file, false);
+  }
+
+  private static void addToFiles(@NotNull ProjectLevelVcsManager vcsManager,
+                                 @NotNull FilesAndDirs filesAndDirs,
+                                 @Nullable VirtualFile file) {
+    add(vcsManager, filesAndDirs, file, true);
   }
 }

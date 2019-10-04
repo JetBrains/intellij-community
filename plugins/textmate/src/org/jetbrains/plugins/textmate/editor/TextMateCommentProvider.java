@@ -14,6 +14,8 @@ import org.jetbrains.plugins.textmate.TextMateService;
 import org.jetbrains.plugins.textmate.language.TextMateFileType;
 import org.jetbrains.plugins.textmate.language.preferences.TextMateShellVariable;
 
+import java.util.Objects;
+
 public class TextMateCommentProvider implements MultipleLangCommentProvider, Commenter {
   @Nullable
   @Override
@@ -135,7 +137,7 @@ public class TextMateCommentProvider implements MultipleLangCommentProvider, Com
 
       TextMateCommentPair pair = (TextMateCommentPair)o;
 
-      if (endComment != null ? !endComment.equals(pair.endComment) : pair.endComment != null) return false;
+      if (!Objects.equals(endComment, pair.endComment)) return false;
       if (!startComment.equals(pair.startComment)) return false;
 
       return true;

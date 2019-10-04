@@ -27,10 +27,11 @@ import com.intellij.openapi.command.impl.UndoManagerImpl
 import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
-import com.intellij.openapi.editor.actionSystem.EditorActionManager
+import com.intellij.openapi.editor.actionSystem.TypedAction
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.extensions.DefaultPluginDescriptor
 import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -640,7 +641,9 @@ public interface Test {
   }
 
   static def registerCompletionContributor(Class contributor, Disposable parentDisposable, LoadingOrder order) {
-    CompletionContributor.EP.getPoint(null).registerExtension(new CompletionContributorEP(language: 'JAVA', implementationClass: contributor.name), order, parentDisposable)
+    def extension = new CompletionContributorEP(language: 'JAVA', implementationClass: contributor.name)
+    extension.setPluginDescriptor(new DefaultPluginDescriptor("registerCompletionContributor"))
+    CompletionContributor.EP.getPoint(null).registerExtension(extension, order, parentDisposable)
   }
 
   void testLeftRightMovements() {
@@ -767,7 +770,7 @@ public interface Test {
 
     Editor another = null
     Runnable wca = { WriteCommandAction.writeCommandAction(getProject()).run ({
-        EditorActionManager.instance.getTypedAction().handler.execute(another, (char) 'x', DataManager.instance.dataContext)
+      TypedAction.instance.handler.execute(another, (char) 'x', DataManager.instance.dataContext)
     } as ThrowableRunnable) }
 
     try {
@@ -1428,7 +1431,7 @@ class Foo {{
     def constant = myFixture.lookupElements.find { it.lookupString == 'Util.CONSTANT' }
     LookupElementPresentation p = ApplicationManager.application.runReadAction ({ LookupElementPresentation.renderElement(constant) } as Computable<LookupElementPresentation>)
     assert p.itemText == 'Util.CONSTANT'
-    assert p.tailText == ' ( = 2) (foo)'
+    assert p.tailText == ' ( = 2) foo'
     assert p.typeText == 'int'
 
     type 'fo\n'

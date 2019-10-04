@@ -28,8 +28,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.indexing.DataIndexer;
 import com.intellij.util.indexing.FileContent;
-import com.intellij.util.indexing.SubstitutedFileType;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,15 +46,7 @@ public abstract class PlatformIdTableBuilding {
 
   @Nullable
   public static DataIndexer<TodoIndexEntry, Integer, FileContent> getTodoIndexer(FileType fileType, final VirtualFile virtualFile) {
-    final DataIndexer<TodoIndexEntry, Integer, FileContent> extIndexer;
-    if (fileType instanceof SubstitutedFileType && !((SubstitutedFileType)fileType).isSameFileType()) {
-      SubstitutedFileType sft = (SubstitutedFileType)fileType;
-      extIndexer =
-        new CompositeTodoIndexer(getTodoIndexer(sft.getOriginalFileType(), virtualFile), getTodoIndexer(sft.getFileType(), virtualFile));
-    }
-    else {
-      extIndexer = TodoIndexers.INSTANCE.forFileType(fileType);
-    }
+    final DataIndexer<TodoIndexEntry, Integer, FileContent> extIndexer = TodoIndexers.INSTANCE.forFileType(fileType);
     if (extIndexer != null) {
       return extIndexer;
     }
@@ -89,42 +79,6 @@ public abstract class PlatformIdTableBuilding {
 
   public static boolean isTodoIndexerRegistered(@NotNull FileType fileType) {
     return TodoIndexers.INSTANCE.forFileType(fileType) != null || fileType instanceof InternalFileType;
-  }
-
-  private static class CompositeTodoIndexer extends VersionedTodoIndexer {
-    private final DataIndexer<TodoIndexEntry, Integer, FileContent>[] indexers;
-
-    @SafeVarargs
-    CompositeTodoIndexer(@NotNull DataIndexer<TodoIndexEntry, Integer, FileContent>... indexers) {
-      this.indexers = indexers;
-    }
-
-    @NotNull
-    @Override
-    public Map<TodoIndexEntry, Integer> map(@NotNull FileContent inputData) {
-      Map<TodoIndexEntry, Integer> result = new THashMap<>();
-      for (DataIndexer<TodoIndexEntry, Integer, FileContent> indexer : indexers) {
-        if (indexer == null) continue;
-        for (Map.Entry<TodoIndexEntry, Integer> entry : indexer.map(inputData).entrySet()) {
-          TodoIndexEntry key = entry.getKey();
-          if (result.containsKey(key)) {
-            result.put(key, result.get(key) + entry.getValue());
-          } else {
-            result.put(key, entry.getValue());
-          }
-        }
-      }
-      return result;
-    }
-
-    @Override
-    public int getVersion() {
-      int version = super.getVersion();
-      for(DataIndexer dataIndexer:indexers) {
-        version += dataIndexer instanceof VersionedTodoIndexer ? ((VersionedTodoIndexer)dataIndexer).getVersion() : 0xFF;
-      }
-      return version;
-    }
   }
 
   private static class TokenSetTodoIndexer extends VersionedTodoIndexer {

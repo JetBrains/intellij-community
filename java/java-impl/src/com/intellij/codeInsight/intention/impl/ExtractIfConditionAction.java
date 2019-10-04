@@ -110,7 +110,8 @@ public class ExtractIfConditionAction extends PsiElementBaseIntentionAction {
       if (token != null && sb.length() != 0) {
         sb.append(token.getText()).append(" ");
       }
-      sb.append(tracker.text(ObjectUtils.notNull(PsiUtil.skipParenthesizedExprDown(e), e)));
+      tracker.markUnchanged(ObjectUtils.notNull(PsiUtil.skipParenthesizedExprDown(e), e));
+      sb.append(e.getText());
     }
     return factory.createExpressionFromText(sb.toString(), expression);
   }

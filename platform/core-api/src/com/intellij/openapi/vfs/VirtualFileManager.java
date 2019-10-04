@@ -2,12 +2,13 @@
 package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.CachedSingletonsRegistry;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,7 +35,7 @@ public abstract class VirtualFileManager implements ModificationTracker {
   public static VirtualFileManager getInstance() {
     VirtualFileManager result = ourInstance;
     if (result == null) {
-      ourInstance = result = ApplicationManager.getApplication().getComponent(VirtualFileManager.class);
+      ourInstance = result = ServiceManager.getService(VirtualFileManager.class);
     }
     return result;
   }
@@ -99,24 +100,28 @@ public abstract class VirtualFileManager implements ModificationTracker {
   public abstract VirtualFile refreshAndFindFileByUrl(@NotNull String url);
 
   /**
-   * Adds listener to the file system.
-   *
-   * @param listener the listener
-   * @see VirtualFileListener
+   * @deprecated Use {@link #VFS_CHANGES} message bus topic.
    */
+  @Deprecated
   public abstract void addVirtualFileListener(@NotNull VirtualFileListener listener);
 
+  /**
+   * @deprecated Use {@link #VFS_CHANGES} message bus topic.
+   */
+  @Deprecated
   public abstract void addVirtualFileListener(@NotNull VirtualFileListener listener, @NotNull Disposable parentDisposable);
 
   /**
-   * Removes listener form the file system.
-   *
-   * @param listener the listener
+   * @deprecated Use {@link #VFS_CHANGES} message bus topic.
    */
+  @Deprecated
   public abstract void removeVirtualFileListener(@NotNull VirtualFileListener listener);
-  
+
+  /**
+   * Consider using extension point {@code vfs.asyncListener}.
+   */
   public abstract void addAsyncFileListener(@NotNull AsyncFileListener listener, @NotNull Disposable parentDisposable);
-  
+
   /**
    * Constructs URL by specified protocol and path. URL is a string which uniquely identifies file in all
    * file systems.
@@ -186,4 +191,10 @@ public abstract class VirtualFileManager implements ModificationTracker {
   public VirtualFile findFileById(int id) {
     return null;
   }
+
+  @ApiStatus.Internal
+  public abstract int storeName(@NotNull String name);
+  @ApiStatus.Internal
+  @NotNull
+  public abstract CharSequence getVFileName(int nameId);
 }

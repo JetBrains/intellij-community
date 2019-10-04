@@ -2,18 +2,17 @@
 package com.intellij.ui.mac;
 
 import com.apple.eawt.Application;
+import com.intellij.diagnostic.LoadingPhase;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.AboutAction;
 import com.intellij.ide.actions.ShowSettingsAction;
 import com.intellij.ide.impl.ProjectUtil;
-import com.intellij.idea.IdeaApplication;
+import com.intellij.idea.ApplicationLoader;
 import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
-import com.intellij.openapi.application.ex.ApplicationEx;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
 import com.intellij.openapi.project.Project;
@@ -70,13 +69,12 @@ public final class MacOSApplicationProvider {
       application.setOpenFileHandler(event -> {
         List<File> files = event.getFiles();
         if (files.isEmpty()) return;
-        ApplicationEx app = ApplicationManagerEx.getApplicationEx();
-        if (app != null && app.isLoaded()) {
+        if (LoadingPhase.COMPONENT_LOADED.isComplete()) {
           Project project = getProject(false);
           submit("OpenFile", () -> ProjectUtil.tryOpenFileList(project, files, "MacMenu"));
         }
         else {
-          IdeaApplication.openFilesOnLoading(files);
+          ApplicationLoader.openFilesOnLoading(files);
         }
       });
 

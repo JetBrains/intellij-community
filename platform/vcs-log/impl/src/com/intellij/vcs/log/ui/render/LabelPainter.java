@@ -20,6 +20,7 @@ import com.intellij.vcs.log.RefGroup;
 import com.intellij.vcs.log.VcsLogRefManager;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.data.VcsLogData;
+import com.intellij.vcs.log.util.VcsLogUiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,7 +42,6 @@ public class LabelPainter {
   public static final JBValue MIDDLE_PADDING = JBVG.value(12);
   public static final JBValue LABEL_ARC = JBVG.value(6);
   private static final int MAX_LENGTH = 22;
-  private static final String THREE_DOTS = "...";
   private static final String TWO_DOTS = "..";
   private static final String SEPARATOR = "/";
   private static final JBColor TEXT_COLOR = CurrentBranchComponent.TEXT_COLOR;
@@ -59,28 +59,22 @@ public class LabelPainter {
 
   private boolean myCompact;
   private boolean myShowTagNames;
+  private boolean myLeftAligned;
 
   public LabelPainter(@NotNull VcsLogData data,
                       @NotNull JComponent component,
-                      @NotNull LabelIconCache iconCache,
-                      boolean compact,
-                      boolean showTagNames) {
+                      @NotNull LabelIconCache iconCache) {
     myLogData = data;
     myComponent = component;
     myIconCache = iconCache;
-    myCompact = compact;
-    myShowTagNames = showTagNames;
   }
 
   @Nullable
   public static VcsLogRefManager getRefManager(@NotNull VcsLogData logData, @NotNull Collection<? extends VcsRef> references) {
-    if (!references.isEmpty()) {
-      VirtualFile root = ObjectUtils.assertNotNull(ContainerUtil.getFirstItem(references)).getRoot();
-      return logData.getLogProvider(root).getReferenceManager();
-    }
-    else {
-      return null;
-    }
+    if (references.isEmpty()) return null;
+    
+    VirtualFile root = ObjectUtils.assertNotNull(ContainerUtil.getFirstItem(references)).getRoot();
+    return logData.getLogProvider(root).getReferenceManager();
   }
 
   public void customizePainter(@NotNull Collection<? extends VcsRef> references,
@@ -279,17 +273,10 @@ public class LabelPainter {
         refName = TWO_DOTS + refName.substring(separatorIndex);
       }
 
-      if (fontMetrics.stringWidth(refName) <= availableWidth) return refName;
-
       if (availableWidth > 0) {
-        for (int i = refName.length(); i > MAX_LENGTH; i--) {
-          String result = StringUtil.shortenTextWithEllipsis(refName, i, 0, THREE_DOTS);
-          if (fontMetrics.stringWidth(result) <= availableWidth) {
-            return result;
-          }
-        }
+        return VcsLogUiUtil.shortenTextToFit(refName, fontMetrics, availableWidth, MAX_LENGTH, StringUtil.ELLIPSIS);
       }
-      return StringUtil.shortenTextWithEllipsis(refName, MAX_LENGTH, 0, THREE_DOTS);
+      return StringUtil.shortenTextWithEllipsis(refName, MAX_LENGTH, 0, StringUtil.ELLIPSIS);
     }
     return refName;
   }
@@ -345,7 +332,7 @@ public class LabelPainter {
   }
 
   public boolean isLeftAligned() {
-    return Registry.is("vcs.log.labels.left.aligned");
+    return myLeftAligned;
   }
 
   public static Font getReferenceFont() {
@@ -363,6 +350,10 @@ public class LabelPainter {
 
   public void setCompact(boolean compact) {
     myCompact = compact;
+  }
+
+  public void setLeftAligned(boolean leftAligned) {
+    myLeftAligned = leftAligned;
   }
 }
 

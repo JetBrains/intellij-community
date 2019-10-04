@@ -12,7 +12,7 @@ public class FileHolderComposite implements FileHolder {
   private final Map<HolderType, FileHolder> myHolders = new HashMap<>();
 
   public FileHolderComposite(Project project) {
-    add(new VirtualFileHolder(project, HolderType.UNVERSIONED));
+    add(new FilePathHolder(project, HolderType.UNVERSIONED));
     add(new SwitchedFileHolder(project, HolderType.ROOT_SWITCH));
     add(new SwitchedFileHolder(project, HolderType.SWITCHED));
     add(new VirtualFileHolder(project, HolderType.MODIFIED_WITHOUT_EDITING));
@@ -63,6 +63,10 @@ public class FileHolderComposite implements FileHolder {
 
   public VirtualFileHolder getVFHolder(HolderType type) {
     return (VirtualFileHolder)myHolders.get(type);
+  }
+
+  public FilePathHolder getPathHolder(HolderType type) {
+    return (FilePathHolder)myHolders.get(type);
   }
 
   public IgnoredFilesCompositeHolder getIgnoredFileHolder() {

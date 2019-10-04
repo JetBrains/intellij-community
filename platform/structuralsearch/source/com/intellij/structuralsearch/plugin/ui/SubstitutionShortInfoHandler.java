@@ -6,6 +6,7 @@ import com.intellij.codeInsight.hint.TooltipGroup;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.TemplateImplUtil;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -42,12 +43,14 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
   private long modificationTimeStamp;
   private final List<String> variables = new SmartList<>();
   private final Editor editor;
+  private final boolean myCanBeReplace;
   @Nullable private final Consumer<? super String> myCurrentVariableCallback;
   public static final Key<Configuration> CURRENT_CONFIGURATION_KEY = Key.create("SS.CurrentConfiguration");
   private final Map<String, Inlay<FilterRenderer>> inlays = new HashMap<>();
 
-  private SubstitutionShortInfoHandler(@NotNull Editor _editor, @Nullable Consumer<? super String> currentVariableCallback) {
+  private SubstitutionShortInfoHandler(@NotNull Editor _editor, boolean canBeReplace, @Nullable Consumer<? super String> currentVariableCallback) {
     editor = _editor;
+    myCanBeReplace = canBeReplace;
     myCurrentVariableCallback = currentVariableCallback;
   }
 
@@ -90,7 +93,8 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
       filterText =  appendLinkText(filterText, variableName);
     }
     final boolean replacementVariable =
-      variable instanceof ReplacementVariableDefinition || variable == null && configuration instanceof ReplaceConfiguration;
+      variable instanceof ReplacementVariableDefinition ||
+      myCanBeReplace && variable == null && configuration instanceof ReplaceConfiguration;
     final String currentVariableName = replacementVariable
                                        ? variableName + ReplaceConfiguration.REPLACEMENT_VARIABLE_SUFFIX
                                        : variableName;
@@ -234,12 +238,23 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
     return editor == null ? null : editor.getUserData(LISTENER_KEY);
   }
 
-  static void install(Editor editor, @Nullable Consumer<? super String> currentVariableCallback) {
-    final SubstitutionShortInfoHandler handler = new SubstitutionShortInfoHandler(editor, currentVariableCallback);
-    editor.addEditorMouseMotionListener(handler);
-    editor.getDocument().addDocumentListener(handler);
-    editor.getCaretModel().addCaretListener(handler);
+  static void install(Editor editor, Disposable disposable) {
+    install(editor, null, disposable, false);
+  }
+
+  static void install(Editor editor, @Nullable Consumer<? super String> currentVariableCallback, Disposable disposable, boolean replace) {
+    final SubstitutionShortInfoHandler handler = new SubstitutionShortInfoHandler(editor, replace, currentVariableCallback);
+    editor.addEditorMouseMotionListener(handler, disposable);
+    editor.getDocument().addDocumentListener(handler, disposable);
+    editor.getCaretModel().addCaretListener(handler, disposable);
     editor.putUserData(LISTENER_KEY, handler);
+  }
+
+  static void updateEditorInlays(Editor editor) {
+    final SubstitutionShortInfoHandler handler = retrieve(editor);
+    if (handler != null) {
+      handler.updateEditorInlays();
+    }
   }
 
   void updateEditorInlays() {
@@ -263,6 +278,7 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
       if (labelText.isEmpty()) {
         continue;
       }
+      variables.remove(name);
       final Inlay<FilterRenderer> inlay = inlays.get(name);
       if (inlay == null) {
         inlays.put(name, inlayModel.addInlineElement(offset + variableNameLength, new FilterRenderer(labelText)));
@@ -271,17 +287,22 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
         final FilterRenderer renderer = inlay.getRenderer();
         renderer.setText(labelText);
         inlay.updateSize();
-        variables.remove(name);
       }
     }
-    final Inlay<FilterRenderer> inlay = inlays.get(Configuration.CONTEXT_VAR_NAME);
-    if (inlay == null) {
-      final NamedScriptableDefinition variable = configuration.findVariable(Configuration.CONTEXT_VAR_NAME);
-      final String labelText = getShortParamString(variable, false);
-      if (!labelText.isEmpty()) {
+    final NamedScriptableDefinition contextVariable = configuration.findVariable(Configuration.CONTEXT_VAR_NAME);
+    final String labelText = getShortParamString(contextVariable, false);
+    if (!labelText.isEmpty()) {
+      variables.remove(Configuration.CONTEXT_VAR_NAME);
+      final Inlay<FilterRenderer> inlay = inlays.get(Configuration.CONTEXT_VAR_NAME);
+      if (inlay == null) {
         inlays.put(Configuration.CONTEXT_VAR_NAME,
                    inlayModel.addBlockElement(text.length() + variableNameLength, true, false, 0,
-                                              new FilterRenderer("complete pattern: " + labelText)));
+                                              new FilterRenderer("whole template: " + labelText)));
+      }
+      else {
+        final FilterRenderer renderer = inlay.getRenderer();
+        renderer.setText("whole template: " + labelText);
+        inlay.updateSize();
       }
     }
     for (String variable : variables) {
@@ -334,7 +355,7 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
       if (foregroundColor != null) {
         g.setColor(foregroundColor);
         g.setFont(getFont());
-        g.drawString(myText, r.x + 6, r.y + r.height - metrics.getDescent());
+        g.drawString(myText, r.x + 6, r.y + metrics.getAscent());
       }
     }
   }

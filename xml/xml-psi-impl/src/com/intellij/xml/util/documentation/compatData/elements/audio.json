@@ -14,9 +14,6 @@
             "edge": {
               "version_added": true
             },
-            "edge_mobile": {
-              "version_added": true
-            },
             "firefox": {
               "version_added": "3.5",
               "notes": "For Firefox to play audio, the server must serve the file using the correct MIME type."
@@ -63,9 +60,6 @@
                 "version_added": "18"
               },
               "edge": {
-                "version_added": true
-              },
-              "edge_mobile": {
                 "version_added": true
               },
               "firefox": {
@@ -115,9 +109,6 @@
               "edge": {
                 "version_added": true
               },
-              "edge_mobile": {
-                "version_added": true
-              },
               "firefox": {
                 "version_added": "4"
               },
@@ -163,9 +154,6 @@
                 "version_added": "18"
               },
               "edge": {
-                "version_added": true
-              },
-              "edge_mobile": {
                 "version_added": true
               },
               "firefox": {
@@ -215,9 +203,6 @@
               "edge": {
                 "version_added": true
               },
-              "edge_mobile": {
-                "version_added": true
-              },
               "firefox": {
                 "version_added": "11"
               },
@@ -263,9 +248,6 @@
                 "version_added": false
               },
               "edge": {
-                "version_added": false
-              },
-              "edge_mobile": {
                 "version_added": false
               },
               "firefox": {
@@ -315,9 +297,6 @@
               "edge": {
                 "version_added": true
               },
-              "edge_mobile": {
-                "version_added": true
-              },
               "firefox": {
                 "version_added": "11"
               },
@@ -363,9 +342,6 @@
                 "version_added": "49"
               },
               "edge": {
-                "version_added": "14"
-              },
-              "edge_mobile": {
                 "version_added": "14"
               },
               "firefox": {
@@ -415,9 +391,6 @@
                 "notes": "Defaults to <code>metadata</code> in Chrome 64."
               },
               "edge": {
-                "version_added": true
-              },
-              "edge_mobile": {
                 "version_added": true
               },
               "firefox": [
@@ -491,9 +464,6 @@
               "edge": {
                 "version_added": true
               },
-              "edge_mobile": {
-                "version_added": true
-              },
               "firefox": {
                 "version_added": "3.5"
               },
@@ -539,9 +509,6 @@
                 "version_added": null
               },
               "edge": {
-                "version_added": true
-              },
-              "edge_mobile": {
                 "version_added": true
               },
               "firefox": {

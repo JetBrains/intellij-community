@@ -93,16 +93,6 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   /**
-   * @deprecated Use {@link LinkedHashMap#LinkedHashMap(int)}
-   */
-  @NotNull
-  @Contract(pure=true)
-  @Deprecated
-  public static <K, V> LinkedHashMap<K, V> newLinkedHashMap(int capacity) {
-    return new LinkedHashMap<>(capacity);
-  }
-
-  /**
    * @deprecated Use {@link LinkedHashMap#LinkedHashMap(Map)}
    */
   @NotNull
@@ -363,7 +353,7 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <T> Set<T> newHashOrEmptySet(@Nullable Iterable<? extends T> iterable) {
-    boolean empty = iterable == null || iterable instanceof Collection && ((Collection)iterable).isEmpty();
+    boolean empty = iterable == null || iterable instanceof Collection && ((Collection<?>)iterable).isEmpty();
     return empty ? Collections.emptySet() : ContainerUtilRt.newHashSet(iterable);
   }
 
@@ -1502,6 +1492,48 @@ public class ContainerUtil extends ContainerUtilRt {
     };
   }
 
+  @NotNull
+  @Contract(pure=true)
+  public static <T> Iterable<T> concat(@NotNull Iterable<? extends T> it1, @NotNull Iterable<? extends T> it2) {
+    return new Iterable<T>() {
+      @Override
+      public void forEach(java.util.function.Consumer<? super T> action) {
+        it1.forEach(action);
+        it2.forEach(action);
+      }
+
+      @NotNull
+      @Override
+      public Iterator<T> iterator() {
+        return new Iterator<T>() {
+          Iterator<? extends T> it = it1.iterator();
+          boolean firstFinished;
+
+          { advance(); }
+
+          @Override
+          public boolean hasNext() {
+            return !firstFinished || it.hasNext();
+          }
+
+          @Override
+          public T next() {
+            T value = it.next(); // it.next() will throw NSEE if no elements remaining
+            advance();
+            return value;
+          }
+
+          private void advance() {
+            if (!firstFinished && !it.hasNext()) {
+              it = it2.iterator();
+              firstFinished = true;
+            }
+          }
+        };
+      }
+    };
+  }
+
   @SafeVarargs
   @NotNull
   @Contract(pure=true)
@@ -1979,7 +2011,7 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <T,V> List<V> map(@NotNull Iterable<? extends T> iterable, @NotNull Function<? super T, ? extends V> mapping) {
-    List<V> result = new ArrayList<>(iterable instanceof Collection ? ((Collection)iterable).size() : 10);
+    List<V> result = new ArrayList<>(iterable instanceof Collection ? ((Collection<?>)iterable).size() : 10);
     for (T t : iterable) {
       result.add(mapping.fun(t));
     }
@@ -2413,7 +2445,7 @@ public class ContainerUtil extends ContainerUtilRt {
   public static <E> List<E> flattenIterables(@NotNull Iterable<? extends Iterable<E>> collections) {
     int totalSize = 0;
     for (Iterable<E> list : collections) {
-      totalSize += list instanceof Collection ? ((Collection)list).size() : 10;
+      totalSize += list instanceof Collection ? ((Collection<?>)list).size() : 10;
     }
     List<E> result = new ArrayList<>(totalSize);
     for (Iterable<E> list : collections) {
@@ -2514,7 +2546,7 @@ public class ContainerUtil extends ContainerUtilRt {
     if (list.isEmpty()) return emptyList();
 
     if (list instanceof ArrayList) {
-      ((ArrayList)list).trimToSize();
+      ((ArrayList<?>)list).trimToSize();
     }
 
     return list;
@@ -2616,6 +2648,12 @@ public class ContainerUtil extends ContainerUtilRt {
                                                                              @NotNull final TObjectHashingStrategy<? super K> hashingStrategy) {
     //noinspection deprecation
     return new ConcurrentWeakKeySoftValueHashMap<>(initialCapacity, loadFactor, concurrencyLevel, hashingStrategy);
+  }
+
+  @NotNull
+  @Contract(value = " -> new", pure = true)
+  public static <K,V> ConcurrentMap<K,V> createConcurrentSoftKeySoftValueMap() {
+    return createConcurrentSoftKeySoftValueMap(100, 0.75f, Runtime.getRuntime().availableProcessors(), canonicalStrategy());
   }
 
   @NotNull
@@ -2849,7 +2887,7 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   @Contract(value = "null -> true", pure = true)
-  public static boolean isEmpty(@Nullable Map map) {
+  public static boolean isEmpty(@Nullable Map<?, ?> map) {
     return map == null || map.isEmpty();
   }
 
@@ -2976,7 +3014,6 @@ public class ContainerUtil extends ContainerUtilRt {
   @Contract(value = " -> new", pure = true)
   @NotNull
   public static <K,V> Map<K,V> createSoftValueMap() {
-    //noinspection deprecation
     return new SoftValueHashMap<>(canonicalStrategy());
   }
 

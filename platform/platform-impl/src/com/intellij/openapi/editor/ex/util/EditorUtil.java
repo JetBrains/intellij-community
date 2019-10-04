@@ -16,10 +16,9 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.event.SelectionEvent;
 import com.intellij.openapi.editor.event.SelectionListener;
-import com.intellij.openapi.editor.ex.DocumentBulkUpdateListener;
-import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
 import com.intellij.openapi.editor.impl.EditorImpl;
@@ -36,10 +35,10 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.DocumentUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -300,6 +299,7 @@ public final class EditorUtil {
    * @deprecated use {@link EditorEx#setCustomCursor(Object, Cursor)} instead. To be removed in 2020.1.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
   public static void setHandCursor(@NotNull Editor view) {
     Cursor c = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR);
     // XXX: Workaround, simply view.getContentComponent().setCursor(c) doesn't work
@@ -639,6 +639,10 @@ public final class EditorUtil {
            : e.isControlDown() && !e.isMetaDown() && !e.isAltDown() && !e.isShiftDown();
   }
 
+  public static boolean isCaretInVirtualSpace(@NotNull Editor editor) {
+    return inVirtualSpace(editor, editor.getCaretModel().getLogicalPosition());
+  }
+
   public static boolean inVirtualSpace(@NotNull Editor editor, @NotNull LogicalPosition logicalPosition) {
     return !editor.offsetToLogicalPosition(editor.logicalPositionToOffset(logicalPosition)).equals(logicalPosition);
   }
@@ -763,17 +767,14 @@ public final class EditorUtil {
   }
 
   public static void runBatchFoldingOperationOutsideOfBulkUpdate(@NotNull Editor editor, @NotNull Runnable operation) {
-    DocumentEx document = ObjectUtils.tryCast(editor.getDocument(), DocumentEx.class);
-    if (document != null && document.isInBulkUpdate()) {
-      MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
-      disposeWithEditor(editor, connection);
-      connection.subscribe(DocumentBulkUpdateListener.TOPIC, new DocumentBulkUpdateListener.Adapter() {
+    if (editor.getDocument().isInBulkUpdate()) {
+      Disposable disposable = Disposer.newDisposable();
+      disposeWithEditor(editor, disposable);
+      editor.getDocument().addDocumentListener(new DocumentListener() {
         @Override
-        public void updateFinished(@NotNull Document doc) {
-          if (doc == editor.getDocument()) {
-            editor.getFoldingModel().runBatchFoldingOperation(operation);
-            connection.disconnect();
-          }
+        public void bulkUpdateFinished(@NotNull Document document) {
+          editor.getFoldingModel().runBatchFoldingOperation(operation);
+          Disposer.dispose(disposable);
         }
       });
     }
@@ -914,5 +915,28 @@ public final class EditorUtil {
     Caret caret = editor.getCaretModel().getPrimaryCaret();
     Point caretPoint = editor.visualPositionToXY(caret.getVisualPosition());
     return visibleArea.contains(caretPoint);
+  }
+
+  /**
+   * Virtual space (after line end, and after end of text), inlays and space between visual lines (where block inlays are located) is
+   * excluded
+   */
+  public static boolean isPointOverText(@NotNull Editor editor, @NotNull Point point) {
+    VisualPosition visualPosition = editor.xyToVisualPosition(point);
+    int visualLineStartY = editor.visualLineToY(visualPosition.line);
+    if (point.y < visualLineStartY || point.y >= visualLineStartY + editor.getLineHeight()) return false; // block inlay space
+    if (editor.getSoftWrapModel().isInsideOrBeforeSoftWrap(visualPosition)) return false; // soft wrap
+    LogicalPosition logicalPosition = editor.visualToLogicalPosition(visualPosition);
+    int offset = editor.logicalPositionToOffset(logicalPosition);
+    if (!logicalPosition.equals(editor.offsetToLogicalPosition(offset))) return false; // virtual space
+    List<Inlay> inlays = editor.getInlayModel().getInlineElementsInRange(offset, offset);
+    if (!inlays.isEmpty()) {
+      VisualPosition inlaysStart = editor.offsetToVisualPosition(offset);
+      if (inlaysStart.line == visualPosition.line) {
+        int relX = point.x - editor.visualPositionToXY(inlaysStart).x;
+        if (relX >= 0 && relX < inlays.stream().mapToInt(i -> i.getWidthInPixels()).sum()) return false; // inline inlay
+      }
+    }
+    return true;
   }
 }

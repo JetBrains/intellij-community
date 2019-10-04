@@ -67,7 +67,7 @@ public class MavenDependencyCompletionUtil {
     return ref.get();
   }
 
-  private static boolean isInsideManagedDependency(MavenDomArtifactCoordinates dependency) {
+  public static boolean isInsideManagedDependency(@NotNull MavenDomShortArtifactCoordinates dependency) {
     DomElement parent = dependency.getParent();
     if (!(parent instanceof MavenDomDependencies)) return false;
 
@@ -107,14 +107,13 @@ public class MavenDependencyCompletionUtil {
     return elementBuilder;
   }
 
-  private static String getPresentableText(MavenRepositoryArtifactInfo info) {
+  public static String getPresentableText(MavenRepositoryArtifactInfo info) {
     if (info.getItems().length == 1) {
       return getLookupString(info.getItems()[0]);
     }
     String key = "maven.dependency.completion.presentable";
     return IndicesBundle.message(key, info.getGroupId(), info.getArtifactId());
   }
-
 
   @Nullable
   public static Icon getIcon(@Nullable MavenDependencyCompletionItem.Type type) {

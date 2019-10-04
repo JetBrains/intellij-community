@@ -3,6 +3,7 @@
 package com.intellij.ide.ui.search;
 
 import com.intellij.codeStyle.CodeStyleFacade;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.ide.plugins.PluginManagerCore;
@@ -22,7 +23,6 @@ import com.intellij.util.CollectConsumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ResourceUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.text.ByteArrayCharSequence;
 import com.intellij.util.text.CharSequenceHashingStrategy;
@@ -50,8 +50,6 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
   private final Map<CharSequence, long[]> myStorage = new THashMap<>(20, 0.9f, CharSequenceHashingStrategy.CASE_SENSITIVE);
 
   private final Set<String> myStopWords = Collections.synchronizedSet(new THashSet<>());
-
-  private volatile MultiMap<String, String> myOptionsTopHit;
 
   @NotNull
   private volatile Map<Couple<String>, Set<String>> myHighlightOptionToSynonym = Collections.emptyMap();
@@ -108,7 +106,6 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
 
       SearchableOptionIndexLoader loader = new SearchableOptionIndexLoader(this, myStorage);
       loader.load(searchableOptions);
-      myOptionsTopHit = loader.getOptionsTopHit();
       myHighlightOptionToSynonym = loader.getHighlightOptionToSynonym();
     }
     catch (Exception e) {
@@ -126,7 +123,7 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
       if (description != null) {
         words.addAll(getProcessedWordsWithoutStemming(description));
       }
-      addOptions(words, null, pluginName, PluginManagerConfigurable.ID, PluginManagerConfigurable.DISPLAY_NAME);
+      addOptions(words, null, pluginName, PluginManagerConfigurable.ID, IdeBundle.message("title.plugins"));
     }
   }
 
@@ -237,7 +234,7 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
 
   @Override
   @NotNull
-  public ConfigurableHit getConfigurables(@NotNull List<ConfigurableGroup> groups,
+  public ConfigurableHit getConfigurables(@NotNull List<? extends ConfigurableGroup> groups,
                                           final DocumentEvent.EventType type,
                                           @Nullable Set<? extends Configurable> configurables,
                                           @NotNull String option,
@@ -247,15 +244,15 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
   }
 
   @NotNull
-  private ConfigurableHit findConfigurables(@NotNull List<ConfigurableGroup> groups,
+  private ConfigurableHit findConfigurables(@NotNull List<? extends ConfigurableGroup> groups,
                                             final DocumentEvent.EventType type,
                                             @Nullable Collection<Configurable> configurables,
                                             @NotNull String option,
                                             @Nullable Project project) {
-    Collection<Configurable> effectiveConfigurables;
     if (ContainerUtil.isEmpty(configurables)) {
       configurables = null;
     }
+    Collection<Configurable> effectiveConfigurables;
     if (configurables == null) {
       effectiveConfigurables = new LinkedHashSet<>();
       Consumer<Configurable> consumer = new CollectConsumer<>(effectiveConfigurables);
@@ -496,12 +493,5 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
       }
     }
     return result;
-  }
-
-  @Override
-  @NotNull
-  public Collection<String> getOptionsTopHit(@NotNull String configurableId) {
-    loadHugeFilesIfNecessary();
-    return Collections.unmodifiableCollection(myOptionsTopHit.get(configurableId));
   }
 }

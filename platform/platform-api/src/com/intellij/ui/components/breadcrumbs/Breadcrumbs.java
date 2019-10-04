@@ -45,8 +45,8 @@ public class Breadcrumbs extends JBPanelWithEmptyText {
 
   private final ArrayList<CrumbView> views = new ArrayList<>();
   private final Font[] cache = new Font[4];
-  private Crumb hovered;
-  private Crumb selected;
+  protected Crumb hovered;
+  protected Crumb selected;
 
   public Breadcrumbs() {
     MouseHandler handler = new MouseHandler();
@@ -231,19 +231,6 @@ public class Breadcrumbs extends JBPanelWithEmptyText {
     return null;
   }
 
-  private void layout(boolean update) {
-    Rectangle bounds = new Rectangle(getWidth(), getHeight());
-    JBInsets.removeFrom(bounds, getInsets());
-    int scale = getScale();
-    for (CrumbView view : views) {
-      if (view.crumb != null) {
-        if (update || view.font == null) view.update();
-        view.setBounds(bounds.x, bounds.y, view.preferred.width, bounds.height, scale);
-        bounds.x += view.preferred.width;
-      }
-    }
-  }
-
   private void updatePreferredSize(Dimension size, int scale) {
     for (CrumbView view : views) {
       if (view.crumb != null) {
@@ -292,7 +279,16 @@ public class Breadcrumbs extends JBPanelWithEmptyText {
     public void layoutContainer(Container container) {
       if (container instanceof Breadcrumbs) {
         Breadcrumbs breadcrumbs = (Breadcrumbs)container;
-        breadcrumbs.layout(false);
+        Rectangle bounds = new Rectangle(breadcrumbs.getWidth(), breadcrumbs.getHeight());
+        JBInsets.removeFrom(bounds, breadcrumbs.getInsets());
+        int scale = breadcrumbs.getScale();
+        for (CrumbView view : breadcrumbs.views) {
+          if (view.crumb != null) {
+            view.update();
+            view.setBounds(bounds.x, bounds.y, view.preferred.width, bounds.height, scale);
+            bounds.x += view.preferred.width;
+          }
+        }
       }
     }
   };
@@ -339,7 +335,7 @@ public class Breadcrumbs extends JBPanelWithEmptyText {
         if (consumer != null) {
           consumer.accept(crumb, event);
           event.consume();
-          layout(true);
+          revalidate();
           repaint();
         }
       }
@@ -353,6 +349,8 @@ public class Breadcrumbs extends JBPanelWithEmptyText {
     private final CrumbView parent;
     private Crumb crumb;
     private Icon icon;
+    private int crumbIconWidth;
+    private int crumbIconHeight;
     private String text;
     private Path2D path;
     private Font font;
@@ -368,6 +366,8 @@ public class Breadcrumbs extends JBPanelWithEmptyText {
 
     void initialize(Crumb crumb) {
       this.crumb = crumb;
+      crumbIconWidth = 0;
+      crumbIconHeight = 0;
       icon = null;
       text = null;
       path = null;
@@ -379,6 +379,14 @@ public class Breadcrumbs extends JBPanelWithEmptyText {
 
     private void update() {
       icon = crumb.getIcon();
+      if (icon != null) {
+        crumbIconWidth = icon.getIconWidth();
+        crumbIconHeight = icon.getIconHeight();
+      }
+      else {
+        crumbIconWidth = 0;
+        crumbIconHeight = 0;
+      }
       text = crumb.getText();
       font = getFont(crumb);
       foreground = getForeground(crumb);
@@ -413,7 +421,7 @@ public class Breadcrumbs extends JBPanelWithEmptyText {
     }
 
     private String layout(FontMetrics fm, Rectangle iconR, Rectangle textR, Rectangle viewR) {
-      int gap = icon == null ? 0 : icon.getIconWidth() / 4;
+      int gap = icon == null ? 0 : Math.min(icon.getIconHeight(), icon.getIconWidth()) / 4; // an icon can have two or more images: [][]
       return layoutCompoundLabel(fm, text, icon, CENTER, LEFT, CENTER, RIGHT, viewR, iconR, textR, gap);
     }
 
@@ -456,6 +464,14 @@ public class Breadcrumbs extends JBPanelWithEmptyText {
     }
 
     private void paint(Graphics2D g) {
+      final Icon crumbIcon = crumb.getIcon();
+      if (crumbIcon != null
+          && (crumbIcon.getIconWidth() != crumbIconWidth || crumbIcon.getIconHeight() != crumbIconHeight)) {
+        // process size change for IconDeferrer (lazy calculated on pool thread)
+        Breadcrumbs.this.revalidate();
+        Breadcrumbs.this.repaint();
+        return;
+      }
       int scale = getScale();
       if (path != null) {
         if (background != null) {

@@ -36,7 +36,7 @@ public class ExternalJavacProcess {
   private final boolean myKeepRunning;
   private volatile ChannelFuture myConnectFuture;
   private final ConcurrentMap<UUID, Boolean> myCanceled = new ConcurrentHashMap<UUID, Boolean>();
-  private final ExecutorService myThreadPool = Executors.newCachedThreadPool();
+  private final Executor myThreadPool = Executors.newCachedThreadPool();
 
   static {
     org.apache.log4j.Logger root = org.apache.log4j.Logger.getRootLogger();
@@ -248,7 +248,7 @@ public class ExternalJavacProcess {
                 }
                 outs.put(new File(outputGroup.getOutputRoot()), srcRoots);
               }
-              myThreadPool.submit(new Runnable() {
+              myThreadPool.execute(new Runnable() {
                 @Override
                 public void run() {
                   try {

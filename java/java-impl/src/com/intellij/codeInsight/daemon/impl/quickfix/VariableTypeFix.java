@@ -46,7 +46,7 @@ public class VariableTypeFix extends LocalQuickFixAndIntentionActionOnPsiElement
   private final PsiType myReturnType;
   protected final String myName;
 
-  public VariableTypeFix(@NotNull PsiVariable variable, PsiType toReturn) {
+  public VariableTypeFix(@NotNull PsiVariable variable, @NotNull PsiType toReturn) {
     super(variable);
     myReturnType = GenericsUtil.getVariableTypeByExpressionType(toReturn);
     myName = variable.getName();
@@ -59,7 +59,7 @@ public class VariableTypeFix extends LocalQuickFixAndIntentionActionOnPsiElement
     return QuickFixBundle.message("fix.variable.type.text",
                                   UsageViewUtil.getType(getStartElement()),
                                   myName,
-                                  type == null || !type.isValid() ? "???" : type.getCanonicalText());
+                                  type == null || !type.isValid() ? "???" : type.getPresentableText());
   }
 
   @Override

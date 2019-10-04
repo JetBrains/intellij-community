@@ -287,11 +287,12 @@ public class LayeredIcon extends JBCachingScalableIcon<LayeredIcon> implements D
     }
   }
 
+  @NotNull
   @Override
   public Icon getDarkIcon(boolean isDark) {
     LayeredIcon newIcon = copy();
     for (int i=0; i<newIcon.myIcons.length; i++) {
-      newIcon.myIcons[i] = IconLoader.getDarkIcon(newIcon.myIcons[i], isDark);
+      newIcon.myIcons[i] = newIcon.myIcons[i] == null ? null : IconLoader.getDarkIcon(newIcon.myIcons[i], isDark);
     }
     return newIcon;
   }

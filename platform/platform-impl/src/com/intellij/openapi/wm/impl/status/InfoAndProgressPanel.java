@@ -3,8 +3,9 @@ package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.PowerSaveMode;
-import com.intellij.ide.actions.ActionsCollector;
 import com.intellij.idea.ActionsBundle;
+import com.intellij.internal.statistic.service.fus.collectors.UIEventId;
+import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
 import com.intellij.notification.EventLog;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
@@ -181,7 +182,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
   }
 
   @Override
-  public WidgetPresentation getPresentation(@NotNull PlatformType type) {
+  public WidgetPresentation getPresentation() {
     return null;
   }
 
@@ -534,7 +535,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
         if (rootPane != null && rootPane.isShowing()) {
           final Container contentPane = rootPane.getContentPane();
           final Rectangle bounds = contentPane.getBounds();
-          final Point target = UIUtil.getCenterPoint(bounds, JBUI.size(1, 1));
+          final Point target = StartupUiUtil.getCenterPoint(bounds, JBUI.size(1, 1));
           target.y = bounds.height - 3;
           balloon.show(new RelativePoint(contentPane, target), Balloon.Position.above);
         }
@@ -720,9 +721,8 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
         } else {
           suspender.suspendProcess(null);
         }
-        ActionsCollector.getInstance().record(
-          suspender.isSuspended() ? "Progress Paused" : "Progress Resumed",
-          MyInlineProgressIndicator.class
+        UIEventLogger.logUIEvent(
+          suspender.isSuspended() ? UIEventId.ProgressPaused : UIEventId.ProgressResumed
         );
       }).setFillBg(false);
       suspendButton.setVisible(false);

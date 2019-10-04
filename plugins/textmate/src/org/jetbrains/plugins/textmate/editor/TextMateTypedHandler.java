@@ -23,7 +23,7 @@ public class TextMateTypedHandler extends TypedHandlerDelegate {
                                 @NotNull FileType fileType) {
     if (fileType == TextMateFileType.INSTANCE) {
       final int offset = editor.getCaretModel().getOffset();
-      String scopeSelector = TextMateEditorUtils.getCurrentScopeSelector((EditorEx)editor);
+      CharSequence scopeSelector = TextMateEditorUtils.getCurrentScopeSelector((EditorEx)editor);
 
       final Document document = editor.getDocument();
       final TextMateBracePair pairForRightChar = TextMateEditorUtils.getSmartTypingPairForRightChar(c, scopeSelector);

@@ -1,28 +1,33 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.mac;
 
 import com.apple.eawt.*;
-import com.intellij.ide.ActiveWindowsWatcher;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.BuildNumber;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.impl.IdeFrameDecorator;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
+import com.intellij.openapi.wm.impl.IdeRootPane;
 import com.intellij.ui.CustomProtocolHandler;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
 import com.intellij.ui.mac.foundation.MacUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.Function;
+import com.intellij.util.ui.UIUtil;
 import com.sun.jna.Callback;
 import com.sun.jna.Pointer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.concurrency.AsyncPromise;
+import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
 import java.awt.*;
@@ -31,9 +36,10 @@ import java.util.EventListener;
 import java.util.LinkedList;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static com.intellij.ide.IdeEventQueue.updateActivatedWindowSet;
 import static com.intellij.ui.mac.foundation.Foundation.invoke;
 
-public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettingsListener {
+public final class MacMainFrameDecorator extends IdeFrameDecorator implements UISettingsListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.mac.MacMainFrameDecorator");
 
   private final FullscreenQueue<Runnable> myFullscreenQueue = new FullscreenQueue<>();
@@ -47,7 +53,7 @@ public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettin
     private boolean waitingForAppKit = false;
     private final LinkedList<Runnable> queueModel = new LinkedList<>();
 
-    synchronized void runOrEnqueue (final T runnable) {
+    synchronized void runOrEnqueue(@NotNull T runnable) {
       if (waitingForAppKit) {
         enqueue(runnable);
       }
@@ -218,6 +224,14 @@ public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettin
         });
         myDispatcher.addListener(new FSAdapter() {
           @Override
+          public void windowEnteringFullScreen(AppEvent.FullScreenEvent event) {
+            JRootPane rootPane = frame.getRootPane();
+            if (rootPane != null && rootPane.getBorder() != null && Registry.is("ide.mac.transparentTitleBarAppearance")) {
+              rootPane.setBorder(null);
+            }
+          }
+
+          @Override
           public void windowEnteredFullScreen(AppEvent.FullScreenEvent event) {
             // We can get the notification when the frame has been disposed
             JRootPane rootPane = frame.getRootPane();
@@ -230,8 +244,13 @@ public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettin
           public void windowExitedFullScreen(AppEvent.FullScreenEvent event) {
             // We can get the notification when the frame has been disposed
             if (myFrame == null/* || ORACLE_BUG_ID_8003173*/) return;
+            JRootPane rootPane = frame.getRootPane();
+            if (rootPane instanceof IdeRootPane && Registry.is("ide.mac.transparentTitleBarAppearance")) {
+              IdeRootPane ideRootPane = (IdeRootPane)rootPane;
+              UIUtil.setCustomTitleBar(frame, ideRootPane, runnable -> Disposer.register(ideRootPane, () -> runnable.run()));
+            }
             exitFullscreen();
-            ActiveWindowsWatcher.addActiveWindow(frame);
+            updateActivatedWindowSet();
             myFrame.validate();
           }
         });
@@ -320,26 +339,30 @@ public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettin
     return myInFullScreen;
   }
 
+  @NotNull
   @Override
-  public ActionCallback toggleFullScreen(final boolean state) {
-    if (!SystemInfo.isMacOSLion || myFrame == null || myInFullScreen == state) return ActionCallback.REJECTED;
-    final ActionCallback callback = new ActionCallback();
+  public Promise<?> toggleFullScreen(final boolean state) {
+    if (!SystemInfo.isMacOSLion || myFrame == null || myInFullScreen == state) {
+      return Promises.rejectedPromise();
+    }
+
+    AsyncPromise<?> promise = new AsyncPromise<>();
     myDispatcher.addListener(new FSAdapter() {
       @Override
       public void windowExitedFullScreen(AppEvent.FullScreenEvent event) {
-        callback.setDone();
+        promise.setResult(null);
         myDispatcher.removeListener(this);
       }
 
       @Override
       public void windowEnteredFullScreen(AppEvent.FullScreenEvent event) {
-        callback.setDone();
+        promise.setResult(null);
         myDispatcher.removeListener(this);
       }
     });
 
     myFullscreenQueue.runOrEnqueue(() -> toggleFullScreenNow());
-    return callback;
+    return promise;
   }
 
   public void toggleFullScreenNow() {

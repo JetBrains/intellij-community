@@ -37,13 +37,13 @@ import java.awt.event.ComponentEvent;
 import java.awt.event.PaintEvent;
 import java.util.List;
 import java.util.*;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executor;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 class ActionUpdater {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.actionSystem.impl.ActionUpdater");
-  private static final ExecutorService ourExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Action Updater", 2);
+  private static final Executor ourExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Action Updater", 2);
 
   private final boolean myModalContext;
   private final PresentationFactory myFactory;
@@ -75,6 +75,7 @@ class ActionUpdater {
       action -> {
         // clone the presentation to avoid partially changing the cached one if update is interrupted
         Presentation presentation = ActionUpdateEdtExecutor.computeOnEdt(() -> myFactory.getPresentation(action).clone());
+        presentation.setEnabledAndVisible(true);
         Supplier<Boolean> doUpdate = () -> doUpdate(myModalContext, action, createActionEvent(action, presentation));
         boolean success = callAction(action, "update", doUpdate);
         return success ? presentation : null;
@@ -167,7 +168,7 @@ class ActionUpdater {
 
     cancelAndRestartOnUserActivity(promise, indicator);
 
-    ourExecutor.submit(() -> {
+    ourExecutor.execute(() -> {
       while (promise.getState() == Promise.State.PENDING) {
         try {
           boolean success = ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(() -> {
@@ -240,7 +241,7 @@ class ActionUpdater {
       if (hideDisabled && !hasEnabledChildren(actionGroup, strategy)) {
         return Collections.emptyList();
       }
-      if (actionGroup.isPopup()) { // popup menu has its own presentation
+      if (actionGroup.isPopup(myPlace)) { // popup menu has its own presentation
         if (actionGroup.disableIfNoVisibleChildren()) {
           boolean visibleChildren = hasVisibleChildren(actionGroup, strategy);
           if (actionGroup.hideIfNoVisibleChildren() && !visibleChildren) {

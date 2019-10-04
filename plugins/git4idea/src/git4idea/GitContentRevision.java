@@ -66,6 +66,7 @@ public class GitContentRevision implements ByteBackedContentRevision {
     }
   }
 
+  @NotNull
   private byte[] loadContent() throws VcsException {
     VirtualFile root = GitUtil.getRepositoryForFile(myProject, myFile).getRoot();
     return GitFileUtils.getFileContent(myProject, root, myRevision.getRev(), VcsFileUtil.relativePath(root, myFile));
@@ -83,14 +84,16 @@ public class GitContentRevision implements ByteBackedContentRevision {
     return myRevision;
   }
 
+  @Override
   public boolean equals(Object obj) {
     if (this == obj) return true;
-    if ((obj == null) || (obj.getClass() != getClass())) return false;
+    if (obj == null || obj.getClass() != getClass()) return false;
 
     GitContentRevision test = (GitContentRevision)obj;
-    return (myFile.equals(test.myFile) && myRevision.equals(test.myRevision));
+    return myFile.equals(test.myFile) && myRevision.equals(test.myRevision);
   }
 
+  @Override
   public int hashCode() {
     return myFile.hashCode() + myRevision.hashCode();
   }
@@ -127,8 +130,13 @@ public class GitContentRevision implements ByteBackedContentRevision {
 
   @NotNull
   public static FilePath createPathFromEscaped(@NotNull VirtualFile vcsRoot, @NotNull String path) throws VcsException {
+    return createPathFromEscaped(vcsRoot, path, false);
+  }
+
+  @NotNull
+  public static FilePath createPathFromEscaped(@NotNull VirtualFile vcsRoot, @NotNull String path, boolean isDirectory) throws VcsException {
     String absolutePath = makeAbsolutePath(vcsRoot, GitUtil.unescapePath(path));
-    return VcsUtil.getFilePath(absolutePath, false);
+    return VcsUtil.getFilePath(absolutePath, isDirectory);
   }
 
   @NotNull

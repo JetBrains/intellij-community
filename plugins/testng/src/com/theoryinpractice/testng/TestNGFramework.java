@@ -78,12 +78,31 @@ public class TestNGFramework extends JavaTestFramework {
 
   @Nullable
   @Override
+  protected PsiMethod findBeforeClassMethod(@NotNull PsiClass clazz) {
+    for (PsiMethod each : clazz.getMethods()) {
+      if (AnnotationUtil.isAnnotated(each, "org.testng.annotations.BeforeClass", 0)) return each;
+    }
+    return null;
+  }
+  
+  @Nullable
+  @Override
   protected PsiMethod findTearDownMethod(@NotNull PsiClass clazz) {
     for (PsiMethod each : clazz.getMethods()) {
       if (AnnotationUtil.isAnnotated(each, "org.testng.annotations.AfterMethod", 0)) return each;
     }
     return null;
   }
+
+  @Nullable
+  @Override
+  protected PsiMethod findAfterClassMethod(@NotNull PsiClass clazz) {
+    for (PsiMethod each : clazz.getMethods()) {
+      if (AnnotationUtil.isAnnotated(each, "org.testng.annotations.AfterClass", 0)) return each;
+    }
+    return null;
+  }
+
 
   @Override
   protected PsiMethod findOrCreateSetUpMethod(PsiClass clazz) throws IncorrectOperationException {
@@ -178,10 +197,20 @@ public class TestNGFramework extends JavaTestFramework {
   public FileTemplateDescriptor getSetUpMethodFileTemplateDescriptor() {
     return new FileTemplateDescriptor("TestNG SetUp Method.java");
   }
+  
+  @Override
+  public FileTemplateDescriptor getBeforeClassMethodFileTemplateDescriptor() {
+    return new FileTemplateDescriptor("TestNG BeforeClass Method.java");
+  }
 
   @Override
   public FileTemplateDescriptor getTearDownMethodFileTemplateDescriptor() {
     return new FileTemplateDescriptor("TestNG TearDown Method.java");
+  }
+  
+  @Override
+  public FileTemplateDescriptor getAfterClassMethodFileTemplateDescriptor() {
+    return new FileTemplateDescriptor("TestNG AfterClass Method.java");
   }
 
   @Override

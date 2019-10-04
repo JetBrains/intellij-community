@@ -283,7 +283,6 @@ public class Messages {
                                int focusedOptionIndex,
                                @Nullable Icon icon,
                                @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
-
     return MessagesService.getInstance()
       .showMessageDialog(null, null, message, title, options, defaultOptionIndex, focusedOptionIndex, icon, doNotAskOption, false);
   }
@@ -383,6 +382,31 @@ public class Messages {
 
   @MagicConstant(intValues = {YES, NO})
   public @interface YesNoResult {
+  }
+
+  /**
+   * Shows confirmation dialog with specified confirmation options. In MacSheet the {@param message} is shown in the title field, and title is not shown at all.
+   * @return {@link #YES} if user pressed button with {@param yesText} or {@link #NO} if user pressed button with {@param noText}.
+   */
+  public static int showConfirmationDialog(@NotNull JComponent parent,
+                                           @NotNull String message,
+                                           @NotNull String title,
+                                           @NotNull String yesText,
+                                           @NotNull String noText) {
+    try {
+      if (canShowMacSheetPanel()) {
+        return MacMessages.getInstance().showYesNoDialog(message, "", yesText, noText, SwingUtilities.getWindowAncestor(parent));
+      }
+    }
+    catch (MessageException ignored) {/*rollback the message and show a dialog*/}
+    catch (Exception reportThis) {
+      LOG.error(reportThis);
+    }
+
+    int result = showDialog(parent, message, title, new String[]{yesText, noText}, 0, getQuestionIcon()) == 0 ? YES : NO;
+    //noinspection ConstantConditions
+    LOG.assertTrue(result == YES || result == NO, result);
+    return result;
   }
 
   /**
@@ -791,21 +815,12 @@ public class Messages {
     showDialog(project, message, title, new String[]{OK_BUTTON}, 0, getErrorIcon());
   }
 
-  public static void showErrorDialog(@NotNull Component component,
+  public static void showErrorDialog(@Nullable Component component,
                                      String message,
                                      @NotNull @Nls(capitalization = Nls.Capitalization.Title) String title) {
-    try {
-      if (canShowMacSheetPanel()) {
-        MacMessages.getInstance().showErrorDialog(title, message, OK_BUTTON, SwingUtilities.getWindowAncestor(component));
-        return;
-      }
-    }
-    catch (MessageException ignored) {/*rollback the message and show a dialog*/}
-    catch (Exception reportThis) {
-      LOG.error(reportThis);
-    }
-
-    showDialog(component, message, title, new String[]{OK_BUTTON}, 0, getErrorIcon());
+    MessagesService.getInstance().showMessageDialog(null, component, message, title,
+      /* options = */ new String[]{OK_BUTTON},
+      /* defaultOptionIndex = */ 0, /* focusedOptionIndex = */ 0, getErrorIcon(), null, false);
   }
 
   public static void showErrorDialog(@NotNull Component component, String message) {
@@ -831,18 +846,7 @@ public class Messages {
    * @see #showErrorDialog(Component, String, String)
    */
   public static void showErrorDialog(String message, @NotNull @Nls(capitalization = Nls.Capitalization.Title) String title) {
-    try {
-      if (canShowMacSheetPanel()) {
-        MacMessages.getInstance().showErrorDialog(title, message, OK_BUTTON, null);
-        return;
-      }
-    }
-    catch (MessageException ignored) {/*rollback the message and show a dialog*/}
-    catch (Exception reportThis) {
-      LOG.error(reportThis);
-    }
-
-    showDialog(message, title, new String[]{OK_BUTTON}, 0, getErrorIcon());
+    showErrorDialog((Component)null, message, title);
   }
 
   public static void showWarningDialog(@Nullable Project project,

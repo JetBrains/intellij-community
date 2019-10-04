@@ -149,7 +149,7 @@ public class GoToHashOrRefPopup {
     @Override
     public LookupElementBuilder createLookupBuilder(@NotNull VcsRef item) {
       LookupElementBuilder lookupBuilder = super.createLookupBuilder(item);
-      if (myColorManager.isMultipleRoots()) {
+      if (myColorManager.hasMultiplePaths()) {
         ColorIcon icon = JBUI.scale(new ColorIcon(15, VcsLogGraphTable.getRootBackgroundColor(item.getRoot(), myColorManager)));
         lookupBuilder = lookupBuilder.withTypeText(getTypeText(item), icon, true).withTypeIconRightAligned(true);
       }
@@ -165,14 +165,14 @@ public class GoToHashOrRefPopup {
     @Nullable
     @Override
     protected String getTailText(@NotNull VcsRef item) {
-      if (!myColorManager.isMultipleRoots()) return null;
+      if (!myColorManager.hasMultiplePaths()) return null;
       return "";
     }
 
     @Nullable
     @Override
     protected String getTypeText(@NotNull VcsRef item) {
-      if (!myColorManager.isMultipleRoots()) return null;
+      if (!myColorManager.hasMultiplePaths()) return null;
       String text = myCachedRootNames.get(item.getRoot());
       if (text == null) {
         return VcsImplUtil.getShortVcsRootName(myProject, item.getRoot());

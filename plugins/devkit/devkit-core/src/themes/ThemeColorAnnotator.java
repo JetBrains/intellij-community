@@ -14,11 +14,13 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.ColorChooser;
 import com.intellij.ui.ColorLineMarkerProvider;
+import com.intellij.ui.ColorPicker;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColorIcon;
@@ -83,7 +85,7 @@ public class ThemeColorAnnotator implements Annotator {
     private static final int ICON_SIZE = 12;
 
     private final String myColorText;
-    private final JsonStringLiteral myLiteral;
+    private JsonStringLiteral myLiteral;
 
 
     private MyRenderer(@NotNull String colorText, @NotNull JsonStringLiteral literal) {
@@ -127,18 +129,29 @@ public class ThemeColorAnnotator implements Annotator {
           if (currentColor == null) return;
 
           boolean withAlpha = isRgbaColorHex(myColorText);
-          Color newColor = ColorChooser.chooseColor(editor.getProject(),
-                                                    editor.getComponent(),
-                                                    DevKitBundle.message("theme.choose.color.dialog.title"),
-                                                    currentColor,
-                                                    withAlpha);
+
+          if (Registry.is("ide.new.color.picker")) {
+            ColorPicker.showColorPickerPopup(e.getProject(), currentColor, (c, l) -> applyColor(currentColor, withAlpha, c));
+          } else {
+            Color newColor = ColorChooser.chooseColor(editor.getProject(),
+                                                      editor.getComponent(),
+                                                      DevKitBundle.message("theme.choose.color.dialog.title"),
+                                                      currentColor,
+                                                      withAlpha);
+            applyColor(currentColor, withAlpha, newColor);
+          }
+        }
+
+        private void applyColor(Color currentColor, boolean withAlpha, Color newColor) {
           if (newColor == null || newColor.equals(currentColor)) return;
 
           String newColorHex = "#" + ColorUtil.toHex(newColor, withAlpha);
           Project project = myLiteral.getProject();
           JsonStringLiteral newLiteral = new JsonElementGenerator(project).createStringLiteral(newColorHex);
 
-          WriteCommandAction.writeCommandAction(project, myLiteral.getContainingFile()).run(() -> myLiteral.replace(newLiteral));
+          WriteCommandAction.writeCommandAction(project, myLiteral.getContainingFile()).run(
+            () -> myLiteral = (JsonStringLiteral)myLiteral.replace(newLiteral)
+          );
         }
       };
     }

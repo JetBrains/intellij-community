@@ -54,8 +54,7 @@ public class ExplicitArrayFillingInspection extends AbstractBaseJavaLocalInspect
         if (!ExpressionUtils.isReferenceTo(index, loop.getCounter())) return;
         PsiExpression rValue = assignment.getRExpression();
         if (rValue == null) return;
-        if (!VariableAccessUtils.collectUsedVariables(rValue).contains(loop.getCounter()) &&
-            !SideEffectChecker.mayHaveSideEffects(rValue)) {
+        if (!isChangedInLoop(loop, rValue)) {
           Object constValue = ExpressionUtils.computeConstantExpression(rValue);
           if (constValue != null && constValue.equals(PsiTypesUtil.getDefaultValue(assignment.getType()))) {
             holder.registerProblem(statement, getRange(statement, ProblemHighlightType.WARNING),
@@ -70,6 +69,16 @@ public class ExplicitArrayFillingInspection extends AbstractBaseJavaLocalInspect
         if (!StreamApiUtil.isSupportedStreamElement(container.getElementType())) return;
         if (!LambdaGenerationUtil.canBeUncheckedLambda(rValue, Predicate.isEqual(loop.getCounter()))) return;
         registerProblem(statement, true);
+      }
+
+      private boolean isChangedInLoop(@NotNull CountingLoop loop, @NotNull PsiExpression rValue) {
+        if (VariableAccessUtils.collectUsedVariables(rValue).contains(loop.getCounter()) ||
+            SideEffectChecker.mayHaveSideEffects(rValue)) {
+          return true;
+        }
+        return ExpressionUtils.nonStructuralChildren(rValue)
+          .filter(c -> c instanceof PsiCallExpression)
+          .anyMatch(call -> !ClassUtils.isImmutable(call.getType()) && !ConstructionUtils.isEmptyArrayInitializer(call));
       }
 
       private void registerProblem(@NotNull PsiForStatement statement, boolean isSetAll) {

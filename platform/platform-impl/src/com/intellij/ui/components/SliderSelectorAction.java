@@ -92,13 +92,8 @@ public class SliderSelectorAction extends DumbAwareAction {
     slider.setPaintLabels(true);
     slider.setLabelTable(dictionary);
 
-    if (! myConfiguration.isShowOk()) {
-      result.add(wrapper, BorderLayout.WEST);
-      result.add(slider, BorderLayout.CENTER);
-    } else {
-      result.add(wrapper, BorderLayout.WEST);
-      result.add(slider, BorderLayout.CENTER);
-    }
+    result.add(wrapper, BorderLayout.WEST);
+    result.add(slider, BorderLayout.CENTER);
 
     final Runnable saveSelection = () -> {
       int value = slider.getModel().getValue();

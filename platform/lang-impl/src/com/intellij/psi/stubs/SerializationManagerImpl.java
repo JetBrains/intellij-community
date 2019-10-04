@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.stubs;
 
 import com.intellij.openapi.Disposable;
@@ -24,17 +10,14 @@ import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.PersistentStringEnumerator;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /*
  * @author max
  */
-public class SerializationManagerImpl extends SerializationManagerEx implements Disposable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.stubs.SerializationManagerImpl");
+public final class SerializationManagerImpl extends SerializationManagerEx implements Disposable {
+  private static final Logger LOG = Logger.getInstance(SerializationManagerImpl.class);
 
   private final AtomicBoolean myNameStorageCrashed = new AtomicBoolean(false);
   private final File myFile;
@@ -43,6 +26,7 @@ public class SerializationManagerImpl extends SerializationManagerEx implements 
   private PersistentStringEnumerator myNameStorage;
   private StubSerializationHelper myStubSerializationHelper;
 
+  @SuppressWarnings("unused") // used from componentSets/Lang.xml:14
   public SerializationManagerImpl() {
     this(new File(PathManager.getIndexRoot(), "rep.names"), false);
   }
@@ -177,5 +161,16 @@ public class SerializationManagerImpl extends SerializationManagerEx implements 
       LOG.info(e);
       throw new RuntimeException(e);
     }
+  }
+
+  @Override
+  public void reSerialize(@NotNull InputStream inStub,
+                          @NotNull OutputStream outStub,
+                          @NotNull SerializationManager newSerializationManager) throws IOException {
+    initSerializers();
+    newSerializationManager.initSerializers();
+    myStubSerializationHelper.reSerializeStub(new DataInputStream(inStub),
+                                              new DataOutputStream(outStub),
+                                              ((SerializationManagerImpl)newSerializationManager).myStubSerializationHelper);
   }
 }

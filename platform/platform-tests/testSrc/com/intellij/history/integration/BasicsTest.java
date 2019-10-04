@@ -123,17 +123,14 @@ public class BasicsTest extends IntegrationTestCase {
 
   public void testDoNotRegisterChangesNotInLocalFS() throws Exception {
     File f = new File(myRoot.getPath(), "f.jar");
-    ApplicationManager.getApplication().runWriteAction(new ThrowableComputable<Object, IOException>() {
-      @Override
-      public Object compute() throws IOException {
-        try (JarOutputStream jar = new JarOutputStream(new FileOutputStream(f))) {
+    ApplicationManager.getApplication().runWriteAction((ThrowableComputable<Object, IOException>)() -> {
+      try (JarOutputStream jar = new JarOutputStream(new FileOutputStream(f))) {
 
-          jar.putNextEntry(new JarEntry("file.txt"));
-          jar.write(1);
-          jar.closeEntry();
-        }
-        return null;
+        jar.putNextEntry(new JarEntry("file.txt"));
+        jar.write(1);
+        jar.closeEntry();
       }
+      return null;
     });
 
     VirtualFile vfile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(f);
@@ -144,20 +141,17 @@ public class BasicsTest extends IntegrationTestCase {
 
     assertEquals(3, getRevisionsFor(myRoot).size());
 
-    ApplicationManager.getApplication().runWriteAction(new ThrowableComputable<Object, IOException>() {
-      @Override
-      public Object compute() throws IOException {
-        try (JarOutputStream jar = new JarOutputStream(new FileOutputStream(f))) {
+    ApplicationManager.getApplication().runWriteAction((ThrowableComputable<Object, IOException>)() -> {
+      try (JarOutputStream jar = new JarOutputStream(new FileOutputStream(f))) {
 
-          JarEntry e = new JarEntry("file.txt");
-          e.setTime(f.lastModified() + 10000);
-          jar.putNextEntry(e);
-          jar.write(2);
-          jar.closeEntry();
-        }
-        f.setLastModified(f.lastModified() + 10000);
-        return null;
+        JarEntry e = new JarEntry("file.txt");
+        e.setTime(f.lastModified() + 10000);
+        jar.putNextEntry(e);
+        jar.write(2);
+        jar.closeEntry();
       }
+      f.setLastModified(f.lastModified() + 10000);
+      return null;
     });
 
 

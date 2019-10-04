@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.frame;
 
 import com.google.common.primitives.Ints;
@@ -23,7 +23,12 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.table.ComponentsListFocusTraversalPolicy;
-import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.CommitId;
+import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcs.log.VcsLogFilterCollection;
+import com.intellij.vcs.log.VcsLogFilterUi;
+import com.intellij.vcs.log.data.DataPack;
+import com.intellij.vcs.log.data.DataPackBase;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.impl.CommonUiProperties;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
@@ -75,7 +80,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
   @NotNull private final VcsLogChangeProcessor myPreviewDiff;
   @NotNull private final Splitter myPreviewDiffSplitter;
 
-  @NotNull private final DetailsPanel myDetailsPanel;
+  @NotNull private final VcsLogCommitDetailsListPanel myDetailsPanel;
   @NotNull private final Splitter myDetailsSplitter;
 
   public MainFrame(@NotNull VcsLogData logData, @NotNull VcsLogUiImpl logUi, @NotNull MainVcsLogUiProperties uiProperties,
@@ -88,8 +93,10 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     myGraphTable = new MyVcsLogGraphTable(logUi, logData, initialDataPack);
     myGraphTable.setCompactReferencesView(myUiProperties.get(MainVcsLogUiProperties.COMPACT_REFERENCES_VIEW));
     myGraphTable.setShowTagNames(myUiProperties.get(MainVcsLogUiProperties.SHOW_TAG_NAMES));
+    myGraphTable.setLabelsLeftAligned(myUiProperties.get(MainVcsLogUiProperties.LABELS_LEFT_ALIGNED));
+
     PopupHandler.installPopupHandler(myGraphTable, VcsLogActionPlaces.POPUP_ACTION_GROUP, VcsLogActionPlaces.VCS_LOG_TABLE_PLACE);
-    myDetailsPanel = new DetailsPanel(logData, logUi.getColorManager(), this) {
+    myDetailsPanel = new VcsLogCommitDetailsListPanel(logData, logUi.getColorManager(), this) {
       @Override
       protected void navigate(@NotNull CommitId commit) {
         logUi.jumpToCommit(commit.getHash(), commit.getRoot());
@@ -362,8 +369,11 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
   }
 
   private class MyVcsLogGraphTable extends VcsLogGraphTable {
+    @NotNull private final Runnable myRefresh;
+
     MyVcsLogGraphTable(@NotNull VcsLogUiImpl ui, @NotNull VcsLogData logData, @NotNull VisiblePack initialDataPack) {
       super(ui, logData, initialDataPack, ui::requestMore);
+      myRefresh = () -> ui.getRefresher().onRefresh();
     }
 
     @Override
@@ -371,24 +381,43 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
       StatusText statusText = getEmptyText();
       VisiblePack visiblePack = getModel().getVisiblePack();
 
-      if (visiblePack.getVisibleGraph().getVisibleCommitCount() == 0) {
-        if (visiblePack.getFilters().isEmpty()) {
+      DataPackBase dataPack = visiblePack.getDataPack();
+      if (dataPack instanceof DataPack.ErrorDataPack) {
+        setErrorEmptyText(((DataPack.ErrorDataPack)dataPack).getError(), "Error loading commits");
+        appendActionToEmptyText("Refresh", () -> myLogData.refresh(myLogData.getLogProviders().keySet()));
+      }
+      else if (visiblePack.getVisibleGraph().getVisibleCommitCount() == 0) {
+        if (visiblePack instanceof VisiblePack.ErrorVisiblePack) {
+          setErrorEmptyText(((VisiblePack.ErrorVisiblePack)visiblePack).getError(), "Error filtering commits");
+          if (visiblePack.getFilters().isEmpty()) {
+            appendActionToEmptyText("Refresh", myRefresh);
+          }
+          else {
+            appendResetFiltersActionToEmptyText();
+          }
+        }
+        else if (visiblePack.getFilters().isEmpty()) {
           statusText.setText("No changes committed.").
             appendSecondaryText("Commit local changes", VcsLogUiUtil.getLinkAttributes(),
-                                ActionUtil.createActionListener(VcsLogActionPlaces.CHECKIN_PROJECT_ACTION, this, ActionPlaces.UNKNOWN));
+                                ActionUtil.createActionListener(VcsLogActionPlaces.CHECKIN_PROJECT_ACTION, this,
+                                                                ActionPlaces.UNKNOWN));
           String shortcutText = KeymapUtil.getFirstKeyboardShortcutText(VcsLogActionPlaces.CHECKIN_PROJECT_ACTION);
           if (!shortcutText.isEmpty()) {
             statusText.appendSecondaryText(" (" + shortcutText + ")", StatusText.DEFAULT_ATTRIBUTES, null);
           }
         }
         else {
-          statusText.setText("No commits matching filters.").appendSecondaryText("Reset filters", VcsLogUiUtil.getLinkAttributes(),
-                                                                                 e -> myFilterUi.setFilter(null));
+          statusText.setText("No commits matching filters.");
+          appendResetFiltersActionToEmptyText();
         }
       }
       else {
         statusText.setText(CHANGES_LOG_TEXT);
       }
+    }
+
+    private void appendResetFiltersActionToEmptyText() {
+      appendActionToEmptyText("Reset filters", () -> myFilterUi.setFilter(null));
     }
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.testFramework.fixtures.impl;
 
@@ -21,9 +21,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
@@ -36,7 +34,6 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.testFramework.*;
 import com.intellij.testFramework.builders.ModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.HeavyIdeaTestFixture;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.lang.CompoundRuntimeException;
 import org.jetbrains.annotations.NonNls;
@@ -44,24 +41,23 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Creates new project for each test.
- * @author mike
  */
 @SuppressWarnings("TestOnlyProblems")
-class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixture {
+final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixture {
   private Project myProject;
-  private final Set<File> myFilesToDelete = new HashSet<>();
+  private final Set<Path> myFilesToDelete = new HashSet<>();
   private IdeaTestApplication myApplication;
-  private final Set<ModuleFixtureBuilder> myModuleFixtureBuilders = new LinkedHashSet<>();
+  private final Set<ModuleFixtureBuilder<?>> myModuleFixtureBuilders = new LinkedHashSet<>();
   private EditorListenerTracker myEditorListenerTracker;
   private ThreadTracker myThreadTracker;
   private final String myName;
@@ -73,7 +69,7 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
     myIsDirectoryBasedProject = isDirectoryBasedProject;
   }
 
-  void addModuleFixtureBuilder(ModuleFixtureBuilder builder) {
+  void addModuleFixtureBuilder(ModuleFixtureBuilder<?> builder) {
     myModuleFixtureBuilders.add(builder);
   }
 
@@ -92,40 +88,45 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
   }
 
   @Override
-  public void tearDown() throws Exception {
+  public void tearDown() {
     RunAll runAll = new RunAll();
 
     if (myProject != null) {
       runAll = runAll
         .append(() -> LightPlatformTestCase.doTearDown(getProject(), myApplication))
         .append(() -> {
-          for (ModuleFixtureBuilder moduleFixtureBuilder : myModuleFixtureBuilders) {
+          for (ModuleFixtureBuilder<?> moduleFixtureBuilder : myModuleFixtureBuilders) {
             moduleFixtureBuilder.getFixture().tearDown();
           }
         })
-        .append(() -> EdtTestUtil.runInEdtAndWait(() -> PlatformTestCase.closeAndDisposeProjectAndCheckThatNoOpenProjects(getProject())))
+        .append(() -> EdtTestUtil.runInEdtAndWait(() -> HeavyPlatformTestCase.closeAndDisposeProjectAndCheckThatNoOpenProjects(getProject())))
         .append(() -> InjectedLanguageManagerImpl.checkInjectorsAreDisposed(getProject()))
         .append(() -> myProject = null);
     }
 
     JarFileSystemImpl.cleanupForNextTest();
 
-    for (File fileToDelete : myFilesToDelete) {
+    for (Path fileToDelete : myFilesToDelete) {
       runAll = runAll.append(() -> {
-        List<IOException> errors = Files.walk(fileToDelete.toPath())
-          .sorted(Comparator.reverseOrder())
-          .map(x -> {
-            try {
-              Files.delete(x);
-              return null;
-            }
-            catch (IOException e) {
-              return e;
-            }
-          })
-          .filter(Objects::nonNull)
-          .collect(Collectors.toList());
-
+        List<IOException> errors;
+        try (Stream<Path> stream = Files.walk(fileToDelete)) {
+          errors = stream
+            .sorted(Comparator.reverseOrder())
+            .map(x -> {
+              try {
+                Files.delete(x);
+                return null;
+              }
+              catch (IOException e) {
+                return e;
+              }
+            })
+            .filter(Objects::nonNull)
+            .collect(Collectors.toList());
+        }
+        catch (NoSuchFileException ignore) {
+          errors = Collections.emptyList();
+        }
         CompoundRuntimeException.throwIfNotEmpty(errors);
      });
     }
@@ -148,25 +149,21 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
           myOldSdks.checkForJdkTableLeaks();
         }
       })
-      .append(() -> PlatformTestCase.cleanupApplicationCaches(null))  // project is disposed by now, no point in passing it
+      .append(() -> HeavyPlatformTestCase.cleanupApplicationCaches(null))  // project is disposed by now, no point in passing it
       .run();
   }
 
-  private void setUpProject() throws IOException {
-    File tempDirectory = FileUtil.createTempDirectory(myName, "");
-    PlatformTestCase
-      .synchronizeTempDirVfs(ObjectUtils.assertNotNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDirectory)));
+  private void setUpProject() {
+    Path tempDirectory = TemporaryDirectory.generateTemporaryPath(myName);
+    tempDirectory.toFile().mkdirs();
+    HeavyPlatformTestCase.synchronizeTempDirVfs(tempDirectory);
     myFilesToDelete.add(tempDirectory);
-
-    String projectPath = generateProjectPath(tempDirectory);
-    ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-    new Throwable(projectPath).printStackTrace(new PrintStream(buffer));
-    myProject = PlatformTestCase.createProject(projectPath, buffer.toString());
+    myProject = HeavyPlatformTestCase.createProject(generateProjectPath(tempDirectory));
 
     EdtTestUtil.runInEdtAndWait(() -> {
       ProjectManagerEx.getInstanceEx().openTestProject(myProject);
 
-      for (ModuleFixtureBuilder moduleFixtureBuilder : myModuleFixtureBuilders) {
+      for (ModuleFixtureBuilder<?> moduleFixtureBuilder : myModuleFixtureBuilders) {
         moduleFixtureBuilder.getFixture().setUp();
       }
 
@@ -176,9 +173,9 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
   }
 
   @NotNull
-  protected String generateProjectPath(@NotNull File tempDirectory) {
+  private Path generateProjectPath(@NotNull Path tempDirectory) {
     String suffix = myIsDirectoryBasedProject ? "" : ProjectFileType.DOT_DEFAULT_EXTENSION;
-    return FileUtil.toSystemIndependentName(tempDirectory.getPath()) + "/" + myName + suffix;
+    return tempDirectory.resolve(myName + suffix);
   }
 
   private void initApplication() {

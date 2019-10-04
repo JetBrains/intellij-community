@@ -34,6 +34,7 @@ import com.jediterm.terminal.model.TerminalTextBuffer;
 import com.jediterm.terminal.ui.settings.SettingsProvider;
 import com.jediterm.terminal.util.CharUtils;
 import com.pty4j.PtyProcess;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -113,8 +114,13 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
     return this;
   }
 
+  /**
+   * @deprecated use {{@link #addMessageFilter(Filter)}} instead
+   */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
+  @Deprecated
   public void addMessageFilter(Project project, Filter filter) {
-    myTerminalWidget.addMessageFilter(project, filter);
+    myTerminalWidget.addMessageFilter(filter);
   }
 
   @Override
@@ -245,7 +251,7 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
 
   @Override
   public void addMessageFilter(@NotNull Filter filter) {
-    addMessageFilter(myProject, filter);
+    myTerminalWidget.addMessageFilter(filter);
   }
 
   @Override
@@ -309,7 +315,7 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
 
   private class ConsoleTerminalWidget extends JBTerminalWidget implements DataProvider {
     private ConsoleTerminalWidget(@NotNull Project project, @NotNull JBTerminalSystemSettingsProviderBase provider) {
-      super(project, 200, 24, provider, TerminalExecutionConsole.this);
+      super(project, 200, 24, provider, TerminalExecutionConsole.this, TerminalExecutionConsole.this);
     }
 
     @Override

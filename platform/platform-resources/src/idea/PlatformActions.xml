@@ -704,7 +704,7 @@
       </group>
 
       <!-- Tools -->
-      <group id="ToolsMenu" popup="true" compact="true">
+      <group id="ToolsMenu" popup="true" compact="true" class="com.intellij.ide.IdeDependentActionGroup">
         <action id="PsiViewer" class="com.intellij.internal.psiView.PsiViewerAction"/>
         <action id="PsiViewerForContext" class="com.intellij.internal.psiView.PsiViewerAction$ForContext"/>
         <separator/>
@@ -802,6 +802,7 @@
         <action id="Performance.ActivityMonitor" class="com.intellij.ide.actions.ActivityMonitorAction"
                 text="Activity Monitor..." description="A tool to check which plugins and subsystems consume most resources">
         </action>
+        <action id="Performance.DumpThreads" class="com.intellij.ide.actions.DumpThreadsAction" text="Dump Threads"/>
 
         <action id="TechnicalSupport" class="com.intellij.ide.actions.TechnicalSupportAction"/>
         <action id="ReportProblem" class="com.intellij.ide.actions.ReportProblemAction"/>
@@ -999,6 +1000,7 @@
     <group id="MaintenanceGroup">
       <action id="ShowRegistry" class="com.intellij.openapi.util.registry.ShowRegistryAction"/>
       <action id="SwitchBootJdk" class="com.intellij.ide.actions.SwitchBootJdkAction"/>
+      <action id="SwitchBootRuntime" class="com.intellij.bootRuntime.SwitchBootRuntimeAction"/>
       <action id="UiDebugger" class="com.intellij.ui.debugger.ShowUiDebuggerAction"/>
       <action id="ShowExperiments" class="com.intellij.application.ShowExperimentsAction"/>
     </group>
@@ -1023,6 +1025,7 @@
       <separator/>
       <action internal="true" id="ReloadProjectAction" class="com.intellij.internal.ReloadProjectAction"/>
       <action internal="true" id="ShowMainMenu" class="com.intellij.internal.ui.ShowMainMenuAction"/>
+      <action internal="true" id="JBTabsDemo" class="com.intellij.internal.JBTabsDemoAction" text="JBTabs Demo"/>
       <action id="DumbMode" internal="true" class="com.intellij.internal.ToggleDumbModeAction" text="Dumb Mode"/>
       <action id="DisablePCE" internal="true" class="com.intellij.internal.DisablePCEAction" text="Disable ProcessCanceledException"
               description="Disable ProcessCanceledException thrown in a background thread during read action, to simplify debugging"/>
@@ -1121,11 +1124,20 @@
                 text="Send Feature Usage Event Log"/>
         <action internal="true" id="CleanupEventLogStatistics" class="com.intellij.internal.statistic.actions.CleanupEventLogAction"
                 text="Clean Up Event Log"/>
+        <action internal="true" id="OpenEventLogFileAction" class="com.intellij.internal.statistic.actions.OpenEventLogFileAction"
+                text="Open Event Log in Editor"/>
         <action internal="true" id="AddTestGroupToLocalWhitelistAction" class="com.intellij.internal.statistic.actions.AddTestGroupToLocalWhitelistAction"
-                text="Add Test Group to Local Whitestlist"/>
+                text="Add Test Group to Local Whitelist"/>
         <action internal="true" id="RecordStateCollectors"
                 class="com.intellij.internal.statistic.actions.RecordStateStatisticsEventLogAction"
                 text="Record State Collectors to Event Log"/>
+        <action internal="true" id="CleanupLocalWhitelistAction"
+                class="com.intellij.internal.statistic.actions.CleanupLocalWhitelistAction"
+                text="Clean Up Local Whitelist"/>
+        <action id="ShowStatisticsEventLogAction"
+                class="com.intellij.internal.statistic.actions.ShowStatisticsEventLogAction"
+                text="Show Statistics Event Log">
+        </action>
       </group>
 
       <group id="Internal.PMM" popup="true" text="PMM Utils">
@@ -1296,8 +1308,8 @@
       <add-to-group group-id="Internal"/>
     </group>
 
-    <action class="com.intellij.diagnostic.PluginStartupCostAction" internal="true" text="Show Plugin Startup Cost">
-      <add-to-group group-id="Internal"/>
+    <action class="com.intellij.diagnostic.PluginStartupCostAction" text="Analyze Plugin Startup Performance">
+      <add-to-group group-id="HelpMenu" anchor="after" relative-to-action="Performance.ActivityMonitor"/>
     </action>
 
     <action class="com.intellij.diagnostic.GenerateJarAccessLogAction" internal="true" text="Generate Jar Access Log"/>
@@ -1305,5 +1317,25 @@
 
     <action id="NextWindow" class="com.intellij.openapi.wm.impl.NextWindow"  text="Activate Next Window"/>
     <action id="PreviousWindow" class="com.intellij.openapi.wm.impl.PreviousWindow" text="Activate Previous Window"/>
+
+    <action id="CopyReferencePopup" class="com.intellij.ide.actions.CopyReferencePopup" text="Copy Reference...">
+      <add-to-group group-id="CutCopyPasteGroup" anchor="after" relative-to-action="CopyPaths"/>
+      <add-to-group group-id="EditorTabPopupMenu" anchor="after" relative-to-action="CopyPaths"/>
+      <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="$Copy"/>
+    </action>
+
+    <group id="CopyReferencePopupGroup">
+      <group id="CopyFileReference">
+        <action id="CopyAbsolutePath" class="com.intellij.ide.actions.CopyAbsolutePathProvider" text="Absolute Path"/>
+        <action id="CopyPathWithLineNumber" class="com.intellij.ide.actions.CopyFileWithLineNumberPathProvider" text="Path With Line Number"/>
+        <action id="CopyContentRootPath" class="com.intellij.ide.actions.CopyContentRootPathProvider" text="Content Root Path"/>
+        <action id="CopySourceRootPath" class="com.intellij.ide.actions.CopySourceRootPathProvider" text="Source Root Path"/>
+      </group>
+      <separator/>
+      <group id="CopyExternalReferenceGroup">
+        <action id="CopyTBXReference" class="com.intellij.ide.actions.CopyTBXReferenceProvider" text="Toolbox Reference"
+                icon="AllIcons.Actions.Copy"/>
+      </group>
+    </group>
   </actions>
 </idea-plugin>

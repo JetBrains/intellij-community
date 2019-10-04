@@ -18,6 +18,7 @@ import com.intellij.util.containers.DistinctRootsCollection;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.text.StringFactory;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -147,8 +148,7 @@ public class VfsUtilCore {
     char[] chars = new char[length];
     int index = chars.length;
     parent = file;
-    while (true) {
-      if (parent.equals(ancestor)) break;
+    while (!parent.equals(ancestor)) {
       if (index < length) {
         chars[--index] = separator;
       }
@@ -271,7 +271,7 @@ public class VfsUtilCore {
   public static boolean iterateChildrenRecursively(@NotNull final VirtualFile root,
                                                    @Nullable final VirtualFileFilter filter,
                                                    @NotNull final ContentIterator iterator) {
-    final VirtualFileVisitor.Result result = visitChildrenRecursively(root, new VirtualFileVisitor() {
+    final VirtualFileVisitor.Result result = visitChildrenRecursively(root, new VirtualFileVisitor<Void>() {
       @NotNull
       @Override
       public Result visitFileEx(@NotNull VirtualFile file) {
@@ -283,7 +283,7 @@ public class VfsUtilCore {
     return !Comparing.equal(result.skipToParent, root);
   }
 
-  @SuppressWarnings({"UnsafeVfsRecursion"})
+  @SuppressWarnings("UnsafeVfsRecursion")
   @NotNull
   public static VirtualFileVisitor.Result visitChildrenRecursively(@NotNull VirtualFile file,
                                                                    @NotNull VirtualFileVisitor<?> visitor) throws
@@ -341,7 +341,7 @@ public class VfsUtilCore {
   }
 
   public static <E extends Exception> VirtualFileVisitor.Result visitChildrenRecursively(@NotNull VirtualFile file,
-                                                                                         @NotNull VirtualFileVisitor visitor,
+                                                                                         @NotNull VirtualFileVisitor<?> visitor,
                                                                                          @NotNull Class<E> eClass) throws E {
     try {
       return visitChildrenRecursively(file, visitor);
@@ -607,7 +607,6 @@ public class VfsUtilCore {
       if (!base.isDirectory()) base = base.getParent();
       if (base == null) return StandardFileSystems.local().findFileByPath(uri);
       file = VirtualFileManager.getInstance().findFileByUrl(base.getUrl() + "/" + uri);
-      if (file == null) return null;
     }
 
     return file;
@@ -615,7 +614,7 @@ public class VfsUtilCore {
 
   public static boolean processFilesRecursively(@NotNull final VirtualFile root, @NotNull final Processor<? super VirtualFile> processor) {
     final Ref<Boolean> result = Ref.create(true);
-    visitChildrenRecursively(root, new VirtualFileVisitor() {
+    visitChildrenRecursively(root, new VirtualFileVisitor<Void>() {
       @NotNull
       @Override
       public Result visitFileEx(@NotNull VirtualFile file) {
@@ -719,11 +718,11 @@ public class VfsUtilCore {
   public static class DistinctVFilesRootsCollection extends DistinctRootsCollection<VirtualFile> {
     public DistinctVFilesRootsCollection() { }
 
-    public DistinctVFilesRootsCollection(Collection<? extends VirtualFile> virtualFiles) {
+    public DistinctVFilesRootsCollection(@NotNull Collection<? extends VirtualFile> virtualFiles) {
       super(virtualFiles);
     }
 
-    public DistinctVFilesRootsCollection(VirtualFile[] collection) {
+    public DistinctVFilesRootsCollection(@NotNull VirtualFile[] collection) {
       super(collection);
     }
 
@@ -745,6 +744,7 @@ public class VfsUtilCore {
 
   //<editor-fold desc="Deprecated stuff.">
   /** @deprecated does not handle recursive symlinks, use {@link #visitChildrenRecursively(VirtualFile, VirtualFileVisitor)} (to be removed in IDEA 2018) */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2018")
   @Deprecated
   public static void processFilesRecursively(@NotNull VirtualFile root,
                                              @NotNull Processor<? super VirtualFile> processor,

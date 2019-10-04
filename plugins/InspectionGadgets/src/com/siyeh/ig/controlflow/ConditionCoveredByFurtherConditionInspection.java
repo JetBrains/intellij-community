@@ -6,6 +6,7 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
+import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
@@ -76,7 +77,8 @@ public class ConditionCoveredByFurtherConditionInspection extends AbstractBaseJa
         String description = "Condition '" + operandText + "' covered by subsequent " +
                              (dependencies.size() == 1
                               ? "condition '" +
-                                PsiExpressionTrimRenderer.render(PsiUtil.skipParenthesizedExprDown(dependencies.get(0))) +
+                                PsiExpressionTrimRenderer.render(
+                                  Objects.requireNonNull(PsiUtil.skipParenthesizedExprDown(dependencies.get(0)))) +
                                 "'"
                               : "conditions");
         myHolder.registerProblem(operand, description, new RemoveRedundantPolyadicOperandFix(operandText));
@@ -132,6 +134,9 @@ public class ConditionCoveredByFurtherConditionInspection extends AbstractBaseJa
       protected boolean checkNotNullable(DfaMemoryState state,
                                          DfaValue value,
                                          @Nullable NullabilityProblemKind.NullabilityProblem<?> problem) {
+        if (value instanceof DfaVariableValue) {
+          state.forceVariableFact((DfaVariableValue)value, DfaFactType.NULLABILITY, DfaNullability.NULLABLE);
+        }
         return true;
       }
 

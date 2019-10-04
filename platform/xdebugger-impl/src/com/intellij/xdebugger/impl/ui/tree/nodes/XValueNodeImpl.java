@@ -22,8 +22,8 @@ import com.intellij.xdebugger.impl.frame.XDebugView;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
 import com.intellij.xdebugger.impl.frame.XValueWithInlinePresentation;
 import com.intellij.xdebugger.impl.frame.XVariablesView;
-import com.intellij.xdebugger.impl.reveal.RevealMemberValue;
-import com.intellij.xdebugger.impl.reveal.actions.XDebuggerRevealAction;
+import com.intellij.xdebugger.impl.pinned.items.PinToTopMemberValue;
+import com.intellij.xdebugger.impl.pinned.items.actions.XDebuggerPinToTopAction;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
@@ -92,10 +92,11 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
     if (isObsolete()) return;
 
     setIcon(icon);
+    boolean refresh = myValuePresentation != null;
     myValuePresentation = valuePresentation;
     myRawValue = XValuePresentationUtil.computeValueText(valuePresentation);
     if (XDebuggerSettingsManager.getInstance().getDataViewSettings().isShowValuesInline()) {
-      updateInlineDebuggerData();
+      updateInlineDebuggerData(refresh);
     }
     updateText();
     setLeaf(!hasChildren);
@@ -103,7 +104,7 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
     myTree.nodeLoaded(this, myName);
   }
 
-  public void updateInlineDebuggerData() {
+  public void updateInlineDebuggerData(boolean refresh) {
     try {
       XDebugSession session = XDebugView.getSession(getTree());
       final XSourcePosition debuggerPosition = session == null ? null : session.getCurrentPosition();
@@ -111,33 +112,38 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
         return;
       }
 
-      final XInlineDebuggerDataCallback callback = new XInlineDebuggerDataCallback() {
-        @Override
-        public void computed(XSourcePosition position) {
-          if (isObsolete() || position == null) return;
-          VirtualFile file = position.getFile();
-          // filter out values from other files
-          if (!Comparing.equal(debuggerPosition.getFile(), file)) {
-            return;
-          }
-          final Document document = FileDocumentManager.getInstance().getDocument(file);
-          if (document == null) return;
+      if (refresh) {
+        myTree.updateEditor();
+      }
+      else {
+        final XInlineDebuggerDataCallback callback = new XInlineDebuggerDataCallback() {
+          @Override
+          public void computed(XSourcePosition position) {
+            if (isObsolete() || position == null) return;
+            VirtualFile file = position.getFile();
+            // filter out values from other files
+            if (!Comparing.equal(debuggerPosition.getFile(), file)) {
+              return;
+            }
+            final Document document = FileDocumentManager.getInstance().getDocument(file);
+            if (document == null) return;
 
-          XVariablesView.InlineVariablesInfo data = XVariablesView.InlineVariablesInfo.get(session);
-          if (data == null) {
-            return;
-          }
+            XVariablesView.InlineVariablesInfo data = XVariablesView.InlineVariablesInfo.get(session);
+            if (data == null) {
+              return;
+            }
 
-          if (!showAsInlay(session, position, debuggerPosition)) {
-            data.put(file, position, XValueNodeImpl.this, document.getModificationStamp());
+            if (!showAsInlay(session, position, debuggerPosition)) {
+              data.put(file, position, XValueNodeImpl.this, document.getModificationStamp());
 
-            myTree.updateEditor();
+              myTree.updateEditor();
+            }
           }
+        };
+
+        if (getValueContainer().computeInlineDebuggerData(callback) == ThreeState.UNSURE) {
+          getValueContainer().computeSourcePosition(callback::computed);
         }
-      };
-
-      if (getValueContainer().computeInlineDebuggerData(callback) == ThreeState.UNSURE) {
-        getValueContainer().computeSourcePosition(callback::computed);
       }
     }
     catch (Exception ignore) {
@@ -299,18 +305,18 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
   @Nullable
   @Override
   public Object getIconTag() {
-    if (!(myValueContainer instanceof RevealMemberValue)) {
+    if (!(myValueContainer instanceof PinToTopMemberValue)) {
       return null;
     }
 
-    if (!((RevealMemberValue) myValueContainer).canBeRevealed()) {
+    if (!((PinToTopMemberValue) myValueContainer).canBePinned()) {
       return null;
     }
 
-    return new XDebuggerTreeNodeHyperlink(XDebuggerBundle.message("xdebugger.reveal.action")) {
+    return new XDebuggerTreeNodeHyperlink(XDebuggerBundle.message("xdebugger.pin.to.top.action")) {
       @Override
       public void onClick(MouseEvent event) {
-        XDebuggerRevealAction.Companion.revealField(event, XValueNodeImpl.this);
+        XDebuggerPinToTopAction.Companion.pinToTopField(event, XValueNodeImpl.this);
       }
     };
   }

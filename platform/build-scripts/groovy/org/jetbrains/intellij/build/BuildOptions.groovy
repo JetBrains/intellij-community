@@ -37,6 +37,8 @@ class BuildOptions {
   Set<String> buildStepsToSkip =
     System.getProperty("intellij.build.skip.build.steps", "mac_dmg,mac_sign,windows_exe_installer,cross_platform_dist")
       .split(",") as Set<String>
+  /** Pre-builds SVG icons for all SVG resource files into *.jpix resources to speedup icons loading at runtime */
+  static final String SVGICONS_PREBUILD_STEP = "svg_icons_prebuild"
   /** Build actual searchableOptions.xml file. If skipped; the (possibly outdated) source version of the file will be used. */
   static final String SEARCHABLE_OPTIONS_INDEX_STEP = "search_index"
   static final String PROVIDED_MODULES_LIST_STEP = "provided_modules_list"
@@ -100,26 +102,6 @@ class BuildOptions {
   String pathToCompiledClassesArchivesMetadata = System.getProperty("intellij.build.compiled.classes.archives.metadata")
 
   /**
-   * Path to a property file containing the paths of precompiled artifacts
-   */
-  String compiledArtifacts = System.getProperty("intellij.build.compiled.artifacts")
-
-  /**
-   * Path to a property file containing the module outputs as .jars and their runtime dependencies
-   */
-  String compiledModules = System.getProperty("intellij.build.compiled.modules")
-
-  /**
-   * Path to a pre-generated dependencies file
-   */
-  String dependenciesFile = System.getProperty("intellij.build.dependencies.file")
-
-  /**
-   * Path to the kotlin plugin to use
-   */
-  String kotlinPlugin = System.getProperty("intellij.build.kotlin.plugin")
-
-  /**
    * If {@code true} the project modules will be compiled incrementally
    */
   boolean incrementalCompilation = SystemProperties.getBooleanProperty("intellij.build.incremental.compilation", false)
@@ -166,10 +148,10 @@ class BuildOptions {
   String jdksTargetDir = System.getProperty(JDKS_TARGET_DIR_OPTION)
 
   /**
-   * Specifies Jetbrains JDK version to be used by build scripts, 8 by default.
+   * Specifies Jetbrains JBR version to be used by build scripts, 8 by default.
    */
   static final String JDK_VERSION_OPTION = "intellij.build.jdk.version"
-  int jdkVersion = System.getProperty(JDK_VERSION_OPTION, "8").toInteger()
+  int jbrVersion = System.getProperty(JDK_VERSION_OPTION, "8").toInteger()
 
   /**
    * Specifies an algorithm to build distribution checksums.

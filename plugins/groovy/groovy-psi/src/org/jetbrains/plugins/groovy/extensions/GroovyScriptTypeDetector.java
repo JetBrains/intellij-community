@@ -19,16 +19,8 @@ public abstract class GroovyScriptTypeDetector {
 
   private final GroovyScriptType myScriptType;
 
-  private final String[] myExtensions;
-
-  protected GroovyScriptTypeDetector(GroovyScriptType scriptType, String ... extensions) {
+  protected GroovyScriptTypeDetector(@NotNull GroovyScriptType scriptType) {
     myScriptType = scriptType;
-    myExtensions = extensions;
-  }
-
-  @NotNull
-  public final String[] getExtensions() {
-    return myExtensions;
   }
 
   @NotNull

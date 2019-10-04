@@ -36,7 +36,7 @@ public class JavaImportOptimizer implements ImportOptimizer {
 
   @Override
   @NotNull
-  public Runnable processFile(final PsiFile file) {
+  public Runnable processFile(@NotNull final PsiFile file) {
     if (!(file instanceof PsiJavaFile)) {
       return EmptyRunnable.getInstance();
     }
@@ -105,7 +105,7 @@ public class JavaImportOptimizer implements ImportOptimizer {
   }
 
   @Override
-  public boolean supports(PsiFile file) {
+  public boolean supports(@NotNull PsiFile file) {
     return file instanceof PsiJavaFile;
   }
 }

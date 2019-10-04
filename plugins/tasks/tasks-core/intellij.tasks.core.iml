@@ -69,5 +69,6 @@
       </library>
     </orderEntry>
     <orderEntry type="library" name="javax.annotation-api" level="project" />
+    <orderEntry type="module" module-name="intellij.tasks.jira" scope="RUNTIME" />
   </component>
 </module>

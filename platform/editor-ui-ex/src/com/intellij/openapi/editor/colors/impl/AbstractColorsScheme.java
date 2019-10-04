@@ -725,15 +725,6 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
   private void writeColor(@NotNull Element colorElements, @NotNull ColorKey key) {
     Color color = myColorsMap.get(key);
     if (color == INHERITED_COLOR_MARKER) {
-      ColorKey fallbackKey = key.getFallbackColorKey();
-      Color parentFallback = myParentScheme instanceof AbstractColorsScheme ?
-                             ((AbstractColorsScheme)myParentScheme).getDirectlyDefinedColor(key) : null;
-      boolean parentOverwritingInheritance = parentFallback != null && parentFallback != INHERITED_COLOR_MARKER;
-      if (fallbackKey != null && parentOverwritingInheritance) {
-        colorElements.addContent(new Element(OPTION_ELEMENT)
-                                  .setAttribute(NAME_ATTR, key.getExternalName())
-                                  .setAttribute(BASE_ATTRIBUTES_ATTR, fallbackKey.getExternalName()));
-      }
       return;
     }
 
@@ -860,17 +851,9 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
 
   @Nullable
   protected Color getFallbackColor(@NotNull ColorKey fallbackKey) {
-    ColorKey cur = fallbackKey;
-    while (true) {
-      Color color = getDirectlyDefinedColor(cur);
-      if (color == NULL_COLOR_MARKER) return null;
-      ColorKey next = cur.getFallbackColorKey();
-      if (color != null && (color != INHERITED_COLOR_MARKER || next == null)) {
-        return color;
-      }
-      if (next == null) return null;
-      cur = next;
-    }
+    Color color = getDirectlyDefinedColor(fallbackKey);
+    if (color == NULL_COLOR_MARKER) return null;
+    return color;
   }
 
   /**

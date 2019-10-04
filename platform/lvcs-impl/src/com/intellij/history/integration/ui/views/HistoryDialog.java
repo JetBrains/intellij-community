@@ -18,7 +18,7 @@ import com.intellij.history.integration.ui.models.RevisionProcessingProgress;
 import com.intellij.history.utils.LocalHistoryLog;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.actions.ContextHelpAction;
-import com.intellij.ide.actions.ShowFilePathAction;
+import com.intellij.ide.actions.RevealFileAction;
 import com.intellij.ide.ui.SplitterProportionsDataImpl;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -436,7 +436,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
       myModel.createPatch(p.getFileName(), p.getBaseDirName(), p.isReversePatch(), p.getEncoding());
 
       showNotification(LocalHistoryBundle.message("message.patch.created"));
-      ShowFilePathAction.openFile(new File(p.getFileName()));
+      RevealFileAction.openFile(new File(p.getFileName()));
     }
     catch (VcsException | IOException e) {
       showError(message("message.error.during.create.patch", e));

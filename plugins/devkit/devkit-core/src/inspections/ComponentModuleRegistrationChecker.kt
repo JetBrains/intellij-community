@@ -40,14 +40,9 @@ class ComponentModuleRegistrationChecker(private val moduleToModuleSet: AtomicCl
                                          private val annotationHolder: DomElementAnnotationHolder) {
 
   fun checkProperModule(extensionPoint: ExtensionPoint) {
-    val interfacePsiClass = extensionPoint.`interface`.value
-    if (shouldCheckExtensionPointClassAttribute(interfacePsiClass) &&
-        checkProperXmlFileForClass(extensionPoint, interfacePsiClass)) {
-      return
-    }
-    val beanClassPsiClass = extensionPoint.beanClass.value
-    if (shouldCheckExtensionPointClassAttribute(beanClassPsiClass) &&
-        checkProperXmlFileForClass(extensionPoint, beanClassPsiClass)) {
+    val effectiveEpClass = extensionPoint.effectiveClass
+    if (shouldCheckExtensionPointClassAttribute(effectiveEpClass) &&
+        checkProperXmlFileForClass(extensionPoint, effectiveEpClass)) {
       return
     }
 

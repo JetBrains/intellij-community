@@ -31,11 +31,7 @@ public abstract class MemoryAgentActionBase extends DebuggerTreeAction {
     debugProcess.getManagerThread().schedule(new SuspendContextCommandImpl(suspendContext) {
       @Override
       public void contextAction(@NotNull SuspendContextImpl suspendContext) {
-        EvaluationContextImpl evaluationContext = suspendContext.getEvaluationContext();
-        if (evaluationContext == null) {
-          LOG.error("Evaluation impossible");
-          return;
-        }
+        EvaluationContextImpl evaluationContext = new EvaluationContextImpl(suspendContext, suspendContext.getFrameProxy());
         try {
           perform(evaluationContext, reference, node);
         }
@@ -55,7 +51,7 @@ public abstract class MemoryAgentActionBase extends DebuggerTreeAction {
   protected boolean isEnabled(@NotNull XValueNodeImpl node, @NotNull AnActionEvent e) {
     if (!super.isEnabled(node, e)) return false;
     DebugProcessImpl debugProcess = JavaDebugProcess.getCurrentDebugProcess(node.getTree().getProject());
-    if (debugProcess == null || debugProcess.isEvaluationPossible() || !MemoryAgent.get(debugProcess).capabilities().isLoaded()) {
+    if (debugProcess == null || !debugProcess.isEvaluationPossible() || !MemoryAgent.get(debugProcess).capabilities().isLoaded()) {
       e.getPresentation().setVisible(false);
       return false;
     }

@@ -206,7 +206,7 @@ public class JavadocTypedHandler extends TypedHandlerDelegate {
 
   @Nullable
   private static PsiElement getDocumentingParameter(PsiDocTag tag) {
-    for (PsiElement element : tag.getChildren()) {
+    for(PsiElement element = tag.getFirstChild(); element != null; element = element.getNextSibling()) {
       if (element instanceof PsiDocParamRef) {
         return element;
       }

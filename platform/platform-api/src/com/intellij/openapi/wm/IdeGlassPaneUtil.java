@@ -34,7 +34,8 @@ public class IdeGlassPaneUtil {
   private IdeGlassPaneUtil() {
   }
 
-  public static IdeGlassPane find(Component component) {
+  @NotNull
+  public static IdeGlassPane find(@NotNull Component component) {
     if (!(component instanceof JComponent)) throw new IllegalArgumentException("Component must be instance of JComponent");
 
     final JRootPane root = ((JComponent)component).getRootPane();
@@ -47,7 +48,7 @@ public class IdeGlassPaneUtil {
     return (IdeGlassPane)gp;
   }
 
-  public static void installPainter(final JComponent target, final Painter painter, @NotNull Disposable parent) {
+  public static void installPainter(@NotNull JComponent target, @NotNull Painter painter, @NotNull Disposable parent) {
     final UiNotifyConnector connector = new UiNotifyConnector(target, new Activatable() {
       private IdeGlassPane myPane;
       private Disposable myPanePainterListeners = Disposer.newDisposable();
@@ -72,7 +73,7 @@ public class IdeGlassPaneUtil {
     Disposer.register(parent, connector);
   }
 
-  public static boolean canBePreprocessed(MouseEvent e) {
+  public static boolean canBePreprocessed(@NotNull MouseEvent e) {
     Component c = UIUtil.getDeepestComponentAt(e.getComponent(), e.getX(), e.getY());
 
     if (JBPopupFactory.getInstance().getParentBalloonFor(c) != null && e.getID() != MouseEvent.MOUSE_DRAGGED) {

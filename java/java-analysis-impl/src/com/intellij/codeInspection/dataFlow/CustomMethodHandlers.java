@@ -40,7 +40,7 @@ class CustomMethodHandlers {
     staticCall(JAVA_LANG_BYTE, "toString").parameterTypes("byte"),
     staticCall(JAVA_LANG_SHORT, "toString").parameterTypes("short")
   );
-  private static final int MAX_STRING_CONSTANT_LENGTH_TO_TRACK = 1024;
+  static final int MAX_STRING_CONSTANT_LENGTH_TO_TRACK = 256;
 
   interface CustomMethodHandler {
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs;
 
 import com.intellij.execution.ui.ConsoleViewContentType;
@@ -38,7 +38,7 @@ public abstract class ProjectLevelVcsManager {
    * @return the manager instance.
    */
   public static ProjectLevelVcsManager getInstance(Project project) {
-    return project.getComponent(ProjectLevelVcsManager.class);
+    return project.getService(ProjectLevelVcsManager.class);
   }
 
   /**
@@ -123,7 +123,7 @@ public abstract class ProjectLevelVcsManager {
 
   @Nullable
   public abstract VcsRoot getVcsRootObjectFor(final VirtualFile file);
-  
+
   @Nullable
   public abstract VcsRoot getVcsRootObjectFor(FilePath file);
 
@@ -148,6 +148,7 @@ public abstract class ProjectLevelVcsManager {
    *
    * @return the list of VCSes used in the project.
    */
+  @NotNull
   public abstract AbstractVcs[] getAllActiveVcss();
 
   public abstract boolean hasActiveVcss();
@@ -244,7 +245,7 @@ public abstract class ProjectLevelVcsManager {
   public abstract void setDirectoryMappings(final List<VcsDirectoryMapping> items);
 
   public abstract void iterateVcsRoot(final VirtualFile root, final Processor<? super FilePath> iterator);
-  
+
   public abstract void iterateVcsRoot(final VirtualFile root, final Processor<? super FilePath> iterator,
                                       @Nullable VirtualFileFilter directoryFilter);
 

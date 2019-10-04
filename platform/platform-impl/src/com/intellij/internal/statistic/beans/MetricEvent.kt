@@ -2,8 +2,7 @@
 package com.intellij.internal.statistic.beans
 
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
-
-import java.util.Objects
+import java.util.*
 
 /**
  * Used to write measurements to event log, override one of these methods to use it: <br/>
@@ -16,7 +15,8 @@ import java.util.Objects
  * @see newBooleanMetric
  * @see newCounterMetric
  */
-class MetricEvent @JvmOverloads constructor(val eventId: String, data: FeatureUsageData? = null) {
+class MetricEvent @JvmOverloads @StatisticsEventProvider(eventIdIndex = 0, dataIndex = 1) constructor(val eventId: String,
+                                                                                                      data: FeatureUsageData? = null) {
   val data: FeatureUsageData = data ?: FeatureUsageData()
 
   override fun equals(other: Any?): Boolean {

@@ -21,7 +21,10 @@ import com.intellij.psi.util.*;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import com.jetbrains.python.*;
+import com.jetbrains.python.PyElementTypes;
+import com.jetbrains.python.PyNames;
+import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
@@ -75,7 +78,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   }
 
   public PyClassImpl(@NotNull final PyClassStub stub) {
-    this(stub, PyStubElementTypes.CLASS_DECLARATION);
+    this(stub, PyElementTypes.CLASS_DECLARATION);
   }
 
   public PyClassImpl(@NotNull final PyClassStub stub, @NotNull IStubElementType nodeType) {
@@ -240,7 +243,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   @Nullable
   @Override
   public PyDecoratorList getDecoratorList() {
-    return getStubOrPsiChild(PyStubElementTypes.DECORATOR_LIST);
+    return getStubOrPsiChild(PyElementTypes.DECORATOR_LIST);
   }
 
   @Nullable
@@ -484,7 +487,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
 
   @Override
   public PyClass[] getNestedClasses() {
-    return getClassChildren(TokenSet.create(PyStubElementTypes.CLASS_DECLARATION), PyClass.class, PyClass.ARRAY_FACTORY);
+    return getClassChildren(TokenSet.create(PyElementTypes.CLASS_DECLARATION), PyClass.class, PyClass.ARRAY_FACTORY);
   }
 
   @NotNull
@@ -741,7 +744,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     final PyClassStub stub = getStub();
     if (stub != null) {
       for (StubElement subStub : stub.getChildrenStubs()) {
-        if (subStub.getStubType() == PyStubElementTypes.TARGET_EXPRESSION) {
+        if (subStub.getStubType() == PyElementTypes.TARGET_EXPRESSION) {
           final PyTargetExpressionStub targetStub = (PyTargetExpressionStub)subStub;
           final PropertyStubStorage prop = targetStub.getCustomStub(PropertyStubStorage.class);
           if (prop != null) {
@@ -1024,7 +1027,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   public List<PyTargetExpression> getClassAttributes() {
     PyClassStub stub = getStub();
     if (stub != null) {
-      final PyTargetExpression[] children = stub.getChildrenByType(PyStubElementTypes.TARGET_EXPRESSION, PyTargetExpression.EMPTY_ARRAY);
+      final PyTargetExpression[] children = stub.getChildrenByType(PyElementTypes.TARGET_EXPRESSION, PyTargetExpression.EMPTY_ARRAY);
       return Arrays.asList(children);
     }
     List<PyTargetExpression> result = new ArrayList<>();
@@ -1134,7 +1137,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   private static List<PyTargetExpression> getTargetExpressions(@NotNull PyFunction function) {
     final PyFunctionStub stub = function.getStub();
     if (stub != null) {
-      return Arrays.asList(stub.getChildrenByType(PyStubElementTypes.TARGET_EXPRESSION, PyTargetExpression.EMPTY_ARRAY));
+      return Arrays.asList(stub.getChildrenByType(PyElementTypes.TARGET_EXPRESSION, PyTargetExpression.EMPTY_ARRAY));
     }
     else {
       final PyStatementList statementList = function.getStatementList();

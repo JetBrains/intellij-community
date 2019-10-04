@@ -35,6 +35,4 @@ public interface AnnotationProvider extends VcsProviderMarker {
    * @return true if annotation it valid for the given revision.
    */
   default boolean isAnnotationValid(@NotNull VcsFileRevision rev) { return true; }
-
-  default boolean isCaching() { return false; }
 }

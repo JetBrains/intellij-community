@@ -151,7 +151,7 @@ public class EnumSwitchStatementWhichMissesCasesInspectionTest extends LightJava
            "}");
   }
 
-  public void testJava12Preview() {
+  public void testJava13Preview() {
     doTest("enum E {A, B, C}\n" +
            "\n" +
            "class X {\n" +
@@ -179,7 +179,7 @@ public class EnumSwitchStatementWhichMissesCasesInspectionTest extends LightJava
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_12;
+    return JAVA_13;
   }
 
   @Nullable

@@ -194,7 +194,12 @@ public class CloudGitDeploymentRuntime extends CloudDeploymentRuntime {
                                                                                   }
 
                                                                                   @Override
-                                                                                  public void onFailure() {
+                                                                                  public void onCancel() {
+                                                                                    commitSemaphore.up();
+                                                                                  }
+
+                                                                                  @Override
+                                                                                  public void onFailure(@NotNull List<VcsException> errors) {
                                                                                     commitSemaphore.up();
                                                                                   }
                                                                                 },

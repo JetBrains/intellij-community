@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application;
 
 import com.intellij.openapi.application.ExperimentalFeature;
@@ -59,11 +59,11 @@ public class ExperimentsDialog extends DialogWrapper {
     return "ExperimentsDialog";
   }
 
-  private TableCellRenderer getValueRenderer() {
+  private static TableCellRenderer getValueRenderer() {
     return new BooleanTableCellRenderer(SwingConstants.CENTER);
   }
 
-  private TableCellRenderer getIdRenderer() {
+  private static TableCellRenderer getIdRenderer() {
     return new ColoredTableCellRenderer() {
       @Override
       protected void customizeCellRenderer(JTable table, @Nullable Object value, boolean selected, boolean hasFocus, int row, int column) {
@@ -72,7 +72,7 @@ public class ExperimentsDialog extends DialogWrapper {
     };
   }
 
-  private TableModel createModel(ExperimentalFeature[] experimentalFeatures) {
+  private static TableModel createModel(ExperimentalFeature[] experimentalFeatures) {
     return new AbstractTableModel() {
       final ExperimentalFeature[] features = experimentalFeatures;
 
@@ -91,7 +91,7 @@ public class ExperimentsDialog extends DialogWrapper {
         String id = features[rowIndex].id;
         switch (columnIndex) {
           case 0: return id;
-          case 1: return Experiments.isFeatureEnabled(id);
+          case 1: return Experiments.getInstance().isFeatureEnabled(id);
           default: throw new IllegalArgumentException("Wrong column number");
         }
       }
@@ -113,7 +113,7 @@ public class ExperimentsDialog extends DialogWrapper {
       @Override
       public void setValueAt(Object value, int rowIndex, int columnIndex) {
         if (value instanceof Boolean) {
-          Experiments.setFeatureEnabled(features[rowIndex].id, ((Boolean)value).booleanValue());
+          Experiments.getInstance().setFeatureEnabled(features[rowIndex].id, ((Boolean)value).booleanValue());
         }
       }
     };

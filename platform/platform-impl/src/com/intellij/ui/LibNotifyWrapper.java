@@ -62,11 +62,13 @@ class LibNotifyWrapper implements SystemNotificationsImpl.Notifier {
 
   @Override
   public void notify(@NotNull String name, @NotNull String title, @NotNull String description) {
-    synchronized (myLock) {
-      if (!myDisposed) {
-        Pointer notification = myLibNotify.notify_notification_new(title, description, myIcon);
-        myLibNotify.notify_notification_show(notification, null);
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      synchronized (myLock) {
+        if (!myDisposed) {
+          Pointer notification = myLibNotify.notify_notification_new(title, description, myIcon);
+          myLibNotify.notify_notification_show(notification, null);
+        }
       }
-    }
+    });
   }
 }

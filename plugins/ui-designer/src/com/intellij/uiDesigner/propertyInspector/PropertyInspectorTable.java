@@ -6,7 +6,9 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -16,6 +18,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.psi.JavaPsiFacade;
@@ -36,10 +39,7 @@ import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.uiDesigner.propertyInspector.properties.*;
 import com.intellij.uiDesigner.radComponents.*;
-import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.IndentedIcon;
-import com.intellij.util.ui.Table;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import icons.UIDesignerIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -85,6 +85,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
   /**
    * Updates UIs of synthetic properties
    */
+  private Disposable myLafManagerDisposable;
   private final MyLafManagerListener myLafManagerListener;
   /**
    * This is property exists in this map then it's expanded.
@@ -304,12 +305,21 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
   @Override
   public void addNotify() {
     super.addNotify();
-    LafManager.getInstance().addLafManagerListener(myLafManagerListener);
+
+    if (myLafManagerDisposable != null) {
+      Disposer.dispose(myLafManagerDisposable);
+    }
+    myLafManagerDisposable = Disposer.newDisposable();
+    ApplicationManager.getApplication().getMessageBus().connect(myLafManagerDisposable).subscribe(LafManagerListener.TOPIC, myLafManagerListener);
   }
 
   @Override
   public void removeNotify() {
-    LafManager.getInstance().removeLafManagerListener(myLafManagerListener);
+    if (myLafManagerDisposable != null) {
+      Disposer.dispose(myLafManagerDisposable);
+      myLafManagerDisposable = null;
+    }
+
     super.removeNotify();
   }
 
@@ -1018,8 +1028,8 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
         }
       };
 
-      myExpandIcon = UIUtil.isUnderDarcula() ? AllIcons.Mac.Tree_white_right_arrow : UIDesignerIcons.ExpandNode;
-      myCollapseIcon = UIUtil.isUnderDarcula() ? AllIcons.Mac.Tree_white_down_arrow : UIDesignerIcons.CollapseNode;
+      myExpandIcon = StartupUiUtil.isUnderDarcula() ? AllIcons.Mac.Tree_white_right_arrow : UIDesignerIcons.ExpandNode;
+      myCollapseIcon = StartupUiUtil.isUnderDarcula() ? AllIcons.Mac.Tree_white_down_arrow : UIDesignerIcons.CollapseNode;
       for (int i = 0; i < myIndentIcons.length; i++) {
         myIndentIcons[i] = EmptyIcon.create(myExpandIcon.getIconWidth() + getPropertyIndentWidth() * i, myExpandIcon.getIconHeight());
       }
@@ -1096,10 +1106,6 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
           }
           else {
             component.setFont(table.getFont());
-          }
-
-          if (component instanceof JCheckBox) {
-            component.putClientProperty( "JComponent.sizeVariant", UIUtil.isUnderAquaLookAndFeel() ? "small" : null);
           }
 
           return component;
@@ -1201,8 +1207,6 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
         final JComponent c = myEditor.getComponent(mySelection.get(0), getSelectionValue(property), null);
         if (c instanceof JComboBox) {
           c.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
-        } else if (c instanceof JCheckBox) {
-          c.putClientProperty( "JComponent.sizeVariant", UIUtil.isUnderAquaLookAndFeel() ? "small" : null);
         }
 
         return c;

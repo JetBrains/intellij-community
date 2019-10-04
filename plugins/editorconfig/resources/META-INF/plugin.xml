@@ -34,7 +34,11 @@
     <gotoFileContributor implementation="org.editorconfig.configmanagement.finder.EditorConfigGotoFileContributor"/>
 
     <!-- Language support -->
-    <fileTypeFactory implementation="org.editorconfig.language.filetype.EditorConfigFileTypeFactory"/>
+    <fileType name="EditorConfig" 
+              language="EditorConfig" 
+              implementationClass="org.editorconfig.language.filetype.EditorConfigFileType"
+              fieldName="INSTANCE"
+              fileNames=".editorconfig"/>
     <colorSettingsPage implementation="org.editorconfig.language.highlighting.EditorConfigColorSettingsPage"/>
     <annotator
         language="EditorConfig"

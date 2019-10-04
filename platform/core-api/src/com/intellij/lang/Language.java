@@ -20,7 +20,7 @@ import java.util.concurrent.ConcurrentMap;
 /**
  * The base class for all programming language support implementations.
  * Specific language implementations should inherit from this class
- * and its registered instance wrapped with {@link LanguageFileType} via {@link com.intellij.openapi.fileTypes.FileTypeFactory} extension point.
+ * and its registered instance wrapped with {@link LanguageFileType} via {@code com.intellij.fileType} extension point.
  * There should be exactly one instance of each Language.
  * It is usually created when creating {@link LanguageFileType} and can be retrieved later with {@link #findInstance(Class)}.
  * For the list of standard languages, see {@link com.intellij.lang.StdLanguages}.<p/>
@@ -107,6 +107,18 @@ public abstract class Language extends UserDataHolderBase {
     return Collections.unmodifiableCollection(new ArrayList<>(languages));
   }
 
+  public static void unregisterLanguage(@NotNull Language language) {
+    ourRegisteredLanguages.remove(language.getClass());
+    ourRegisteredIDs.remove(language.getID());
+    for (String mimeType : language.getMimeTypes()) {
+      ourRegisteredMimeTypes.remove(mimeType);
+    }
+    final Language baseLanguage = language.getBaseLanguage();
+    if (baseLanguage != null) {
+      baseLanguage.myDialects.remove(language);
+    }
+  }
+
   /**
    * @param klass {@code java.lang.Class} of the particular language. Serves key purpose.
    * @return instance of the {@code klass} language registered if any.
@@ -161,13 +173,19 @@ public abstract class Language extends UserDataHolderBase {
   @ApiStatus.Internal
   public LanguageFileType findMyFileType(FileType[] types) {
     for (final FileType fileType : types) {
-      if (fileType instanceof LanguageFileType && ((LanguageFileType)fileType).getLanguage() == this) {
-        return (LanguageFileType)fileType;
+      if (fileType instanceof LanguageFileType) {
+        final LanguageFileType languageFileType = (LanguageFileType)fileType;
+        if (languageFileType.getLanguage() == this && !languageFileType.isSecondary()) {
+          return languageFileType;
+        }
       }
     }
     for (final FileType fileType : types) {
-      if (fileType instanceof LanguageFileType && isKindOf(((LanguageFileType)fileType).getLanguage())) {
-        return (LanguageFileType)fileType;
+      if (fileType instanceof LanguageFileType) {
+        final LanguageFileType languageFileType = (LanguageFileType)fileType;
+        if (isKindOf(languageFileType.getLanguage()) && !languageFileType.isSecondary()) {
+          return languageFileType;
+        }
       }
     }
     return null;

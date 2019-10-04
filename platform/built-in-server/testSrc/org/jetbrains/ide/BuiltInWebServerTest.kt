@@ -95,9 +95,9 @@ internal class HeavyBuiltInWebServerTest {
   @Test
   fun `path outside of project`() = runBlocking {
     val projectDir = tempDirManager.newPath().resolve("foo/bar")
-    val projectDirPath = projectDir.systemIndependentPath
-    createHeavyProject("$projectDirPath/test.ipr").use { project ->
+    createHeavyProject(projectDir.resolve("test.ipr")).use { project ->
       projectDir.createDirectories()
+      val projectDirPath = projectDir.systemIndependentPath
       LocalFileSystem.getInstance().refreshAndFindFileByPath(projectDirPath)
       createModule(projectDirPath, project)
 
@@ -111,9 +111,9 @@ internal class HeavyBuiltInWebServerTest {
   @Test
   fun `file in hidden folder`() = runBlocking {
     val projectDir = tempDirManager.newPath().resolve("foo/bar")
-    val projectDirPath = projectDir.systemIndependentPath
-    createHeavyProject("$projectDirPath/test.ipr").use { project ->
+    createHeavyProject(projectDir.resolve("test.ipr")).use { project ->
       projectDir.createDirectories()
+      val projectDirPath = projectDir.systemIndependentPath
       LocalFileSystem.getInstance().refreshAndFindFileByPath(projectDirPath)
       createModule(projectDirPath, project)
 

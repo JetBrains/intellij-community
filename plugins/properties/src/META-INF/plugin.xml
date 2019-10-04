@@ -44,6 +44,7 @@
 
     <enterHandlerDelegate implementation="com.intellij.codeInsight.editorActions.enter.EnterInPropertiesFileHandler"/>
 
+    <lang.syntaxHighlighter language="Properties" implementationClass="com.intellij.lang.properties.PropertiesHighlighter"/>
     <lang.parserDefinition language="Properties" implementationClass="com.intellij.lang.properties.parsing.PropertiesParserDefinition"/>
     <renameHandler implementation="com.intellij.lang.properties.refactoring.rename.ResourceBundleFromEditorRenameHandler"/>
     <renameHandler implementation="com.intellij.lang.properties.refactoring.rename.ResourceBundleFromProjectViewRenameHandler"/>
@@ -59,8 +60,9 @@
     <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.PropertiesColorsPage"/>
     <treeStructureProvider implementation="com.intellij.lang.properties.projectView.ResourceBundleGrouper"/>
     <elementDescriptionProvider implementation="com.intellij.lang.properties.PropertiesDescriptionProvider"/>
-    <fileTypeFactory implementation="com.intellij.lang.properties.PropertiesFileTypeFactory"/>
-    <fileTypeFactory implementation="com.intellij.lang.properties.editor.ResourceBundleEditorProvider"/>
+    <fileType name="Properties" language="Properties" extensions="properties" fieldName="INSTANCE" implementationClass="com.intellij.lang.properties.PropertiesFileType"/>
+    <fileType name="ResourceBundle" fieldName="INSTANCE" implementationClass="com.intellij.lang.properties.editor.ResourceBundleFileType"/>
+
     <favoriteNodeProvider implementation="com.intellij.ide.favoritesTreeView.ResourcesFavoriteNodeProvider"/>
 
     <localInspection language="Properties" shortName="UnusedProperty" bundle="messages.PropertiesBundle"

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.application.options.editor.WebEditorOptions;
@@ -22,7 +22,6 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.editor.event.EditorFactoryListener;
-import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
@@ -46,10 +45,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Objects;
 import java.util.Set;
 
-/**
- * @author Dennis.Ushakov
- */
-public class XmlTagNameSynchronizer implements CommandListener {
+public final class XmlTagNameSynchronizer implements CommandListener, EditorFactoryListener {
   private static final Key<Boolean> SKIP_COMMAND = Key.create("tag.name.synchronizer.skip.command");
   private static final Logger LOG = Logger.getInstance(XmlTagNameSynchronizer.class);
   private static final Set<Language> SUPPORTED_LANGUAGES = ContainerUtil.set(HTMLLanguage.INSTANCE,
@@ -57,27 +53,25 @@ public class XmlTagNameSynchronizer implements CommandListener {
                                                                              XHTMLLanguage.INSTANCE);
 
   private static final Key<TagNameSynchronizer> SYNCHRONIZER_KEY = Key.create("tag_name_synchronizer");
-  private final FileDocumentManager myFileDocumentManager;
 
-  public XmlTagNameSynchronizer(EditorFactory editorFactory, FileDocumentManager manager) {
-    myFileDocumentManager = manager;
-    editorFactory.addEditorFactoryListener(new EditorFactoryListener() {
-      @Override
-      public void editorCreated(@NotNull EditorFactoryEvent event) {
-        installSynchronizer(event.getEditor());
-      }
-    }, ApplicationManager.getApplication());
+  private XmlTagNameSynchronizer() {
     ApplicationManager.getApplication().getMessageBus().connect().subscribe(CommandListener.TOPIC, this);
   }
 
-  private void installSynchronizer(final Editor editor) {
-    final Project project = editor.getProject();
-    if (project == null || !(editor instanceof EditorImpl)) return;
+  @Override
+  public void editorCreated(@NotNull EditorFactoryEvent event) {
+    Editor editor = event.getEditor();
+    Project project = editor.getProject();
+    if (project == null || !(editor instanceof EditorImpl)) {
+      return;
+    }
 
-    final Document document = editor.getDocument();
-    final VirtualFile file = myFileDocumentManager.getFile(document);
-    final Language language = findXmlLikeLanguage(project, file);
-    if (language != null) new TagNameSynchronizer((EditorImpl)editor, project, language);
+    Document document = editor.getDocument();
+    VirtualFile file = FileDocumentManager.getInstance().getFile(document);
+    Language language = findXmlLikeLanguage(project, file);
+    if (language != null) {
+      new TagNameSynchronizer((EditorImpl)editor, project, language).listenForDocumentChanges();
+    }
   }
 
   private static Language findXmlLikeLanguage(Project project, VirtualFile file) {
@@ -130,11 +124,14 @@ public class XmlTagNameSynchronizer implements CommandListener {
     private TagNameSynchronizer(EditorImpl editor, Project project, Language language) {
       myEditor = editor;
       myLanguage = language;
-      final Disposable disposable = editor.getDisposable();
-      final Document document = editor.getDocument();
-      document.addDocumentListener(this, disposable);
-      editor.putUserData(SYNCHRONIZER_KEY, this);
       myDocumentManager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(project);
+    }
+
+    private void listenForDocumentChanges() {
+      final Disposable disposable = myEditor.getDisposable();
+      final Document document = myEditor.getDocument();
+      document.addDocumentListener(this, disposable);
+      myEditor.putUserData(SYNCHRONIZER_KEY, this);
     }
 
     @Override
@@ -143,7 +140,7 @@ public class XmlTagNameSynchronizer implements CommandListener {
 
       final Document document = event.getDocument();
       if (myApplying || UndoManager.getInstance(Objects.requireNonNull(myEditor.getProject())).isUndoInProgress() ||
-          !PomModelImpl.isAllowPsiModification() || ((DocumentEx)document).isInBulkUpdate()) {
+          !PomModelImpl.isAllowPsiModification() || document.isInBulkUpdate()) {
         return;
       }
 
@@ -215,12 +212,11 @@ public class XmlTagNameSynchronizer implements CommandListener {
       final Document document = myEditor.getDocument();
       final CharSequence sequence = document.getCharsSequence();
       int start = -1;
-      int end = -1;
       boolean seenColon = false;
       for (int i = offset - 1; i >= Math.max(0, offset - 50); i--) {
         try {
           final char c = sequence.charAt(i);
-          if (c == '<' || (c == '/' && i > 0 && sequence.charAt(i - 1) == '<')) {
+          if (c == '<' || c == '/' && i > 0 && sequence.charAt(i - 1) == '<') {
             start = i + 1;
             break;
           }
@@ -233,9 +229,10 @@ public class XmlTagNameSynchronizer implements CommandListener {
         }
       }
       if (start < 0) return null;
+      int end = -1;
       for (int i = offset; i < Math.min(document.getTextLength(), offset + 50); i++) {
         final char c = sequence.charAt(i);
-        if (!XmlUtil.isValidTagNameChar(c) || (seenColon && c == ':')) {
+        if (!XmlUtil.isValidTagNameChar(c) || seenColon && c == ':') {
           end = i;
           break;
         }
@@ -245,7 +242,7 @@ public class XmlTagNameSynchronizer implements CommandListener {
       return document.createRangeMarker(start, end, true);
     }
 
-    public void beforeCommandFinished() {
+    void beforeCommandFinished() {
       CaretAction action = caret -> {
         Couple<RangeMarker> markers = caret.getUserData(MARKERS_KEY);
         if (markers == null || !markers.first.isValid() || !markers.second.isValid()) return;

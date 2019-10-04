@@ -125,12 +125,11 @@ public class PyNumericLiteralExpressionImpl extends PyElementImpl implements PyN
     else if (text.startsWith("0")) {
       if (StringUtil.isChar(text, 1, 'o') || StringUtil.isChar(text, 1, 'O')) {
         beginIndex = 2;
-        radix = 8;
       }
       else {
         beginIndex = 1;
-        radix = 8;
       }
+      radix = 8;
     }
     else {
       beginIndex = 0;

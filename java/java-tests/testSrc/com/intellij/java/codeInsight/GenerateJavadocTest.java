@@ -21,12 +21,12 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.HeavyPlatformTestCase;
 
 /**
  * @author mike
  */
-@PlatformTestCase.WrapInCommand
+@HeavyPlatformTestCase.WrapInCommand
 public class GenerateJavadocTest extends LightJavaCodeInsightTestCase {
   public void test1() { doTest(); }
   public void test2() { doTest(); }

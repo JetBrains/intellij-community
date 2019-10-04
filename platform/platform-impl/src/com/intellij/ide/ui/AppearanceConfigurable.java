@@ -6,9 +6,6 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.QuickChangeLookAndFeel;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceKt;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -38,8 +35,6 @@ import java.util.Hashtable;
  * @author Eugene Belyaev
  */
 public class AppearanceConfigurable implements SearchableConfigurable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.ui.AppearanceConfigurable");
-
   private MyComponent myComponent;
 
   @Override
@@ -199,9 +194,6 @@ public class AppearanceConfigurable implements SearchableConfigurable {
     update |= settings.getDisableMnemonics() != myComponent.myDisableMnemonics.isSelected();
     settings.setDisableMnemonics(myComponent.myDisableMnemonics.isSelected());
 
-    update |= settings.getUseSmallLabelsOnTabs() != myComponent.myUseSmallLabelsOnTabs.isSelected();
-    settings.setUseSmallLabelsOnTabs(myComponent.myUseSmallLabelsOnTabs.isSelected());
-
     update |= settings.getWideScreenSupport() != myComponent.myWidescreenLayoutCheckBox.isSelected();
     settings.setWideScreenSupport(myComponent.myWidescreenLayoutCheckBox.isSelected());
 
@@ -227,12 +219,9 @@ public class AppearanceConfigurable implements SearchableConfigurable {
     if (settings.getColorBlindness() != blindness) {
       settings.setColorBlindness(blindness);
       update = true;
-      ServiceKt.getStateStore(ApplicationManager.getApplication()).reloadState(DefaultColorSchemesManager.class);
+      DefaultColorSchemesManager.getInstance().reload();
       updateEditorScheme = true;
     }
-
-    update |= settings.getUseContrastScrollBars() != myComponent.myUseContrastScrollBarsCheckBox.isSelected();
-    settings.setUseContrastScrollBars(myComponent.myUseContrastScrollBarsCheckBox.isSelected());
 
     update |= settings.getDisableMnemonicsInControls() != myComponent.myDisableMnemonicInControlsCheckBox.isSelected();
     settings.setDisableMnemonicsInControls(myComponent.myDisableMnemonicInControlsCheckBox.isSelected());
@@ -262,7 +251,6 @@ public class AppearanceConfigurable implements SearchableConfigurable {
     }
     // reset to default when unchecked
     if (!myComponent.myOverrideLAFFonts.isSelected()) {
-      assert !shouldUpdateUI;
       int defSize = JBFont.label().getSize();
       settingsManager.setFontSize(defSize);
       myComponent.myFontSizeCombo.getModel().setSelectedItem(String.valueOf(defSize));
@@ -364,7 +352,6 @@ public class AppearanceConfigurable implements SearchableConfigurable {
     myComponent.myDarkWindowHeaders.setSelected(Registry.is("ide.mac.allowDarkWindowDecorations"));
     myComponent.myOverrideLAFFonts.setSelected(settings.getOverrideLafFonts());
     myComponent.myDisableMnemonics.setSelected(settings.getDisableMnemonics());
-    myComponent.myUseSmallLabelsOnTabs.setSelected(settings.getUseSmallLabelsOnTabs());
     myComponent.myWidescreenLayoutCheckBox.setSelected(settings.getWideScreenSupport());
     myComponent.myLeftLayoutCheckBox.setSelected(settings.getLeftHorizontalSplit());
     myComponent.myRightLayoutCheckBox.setSelected(settings.getRightHorizontalSplit());
@@ -380,7 +367,6 @@ public class AppearanceConfigurable implements SearchableConfigurable {
       : null);
 
     myComponent.myColorBlindnessPanel.setColorBlindness(settings.getColorBlindness());
-    myComponent.myUseContrastScrollBarsCheckBox.setSelected(settings.getUseContrastScrollBars());
     myComponent.myDisableMnemonicInControlsCheckBox.setSelected(settings.getDisableMnemonicsInControls());
 
     boolean alphaModeEnabled = WindowManagerEx.getInstanceEx().isAlphaModeSupported();
@@ -399,19 +385,6 @@ public class AppearanceConfigurable implements SearchableConfigurable {
     myComponent.myAlphaModeRatioSlider.setEnabled(alphaModeEnabled && settings.getEnableAlphaMode());
     myComponent.myInitialTooltipDelaySlider.setValue(Registry.intValue("ide.tooltip.initialDelay"));
     myComponent.updateCombo();
-  }
-
-  public static String antialiasingTypeInEditorAsString (boolean antialiased, LCDRenderingScope scope) {
-    if (!antialiased) return "No antialiasing";
-    switch (scope) {
-      case IDE:
-        return "Subpixel";
-      case OFF:
-      case EXCLUDING_EDITOR:
-        return "Greyscale";
-    }
-    LOG.info("Wrong antialiasing state");
-    return "No antialiasing";
   }
 
   @Override
@@ -441,7 +414,6 @@ public class AppearanceConfigurable implements SearchableConfigurable {
     isModified |= myComponent.myDisableMnemonics.isSelected() != settings.getDisableMnemonics();
     isModified |= myComponent.myDisableMnemonicInControlsCheckBox.isSelected() != settings.getDisableMnemonicsInControls();
 
-    isModified |= myComponent.myUseSmallLabelsOnTabs.isSelected() != settings.getUseSmallLabelsOnTabs();
     isModified |= myComponent.myWidescreenLayoutCheckBox.isSelected() != settings.getWideScreenSupport();
     isModified |= myComponent.myLeftLayoutCheckBox.isSelected() != settings.getLeftHorizontalSplit();
     isModified |= myComponent.myRightLayoutCheckBox.isSelected() != settings.getRightHorizontalSplit();
@@ -449,7 +421,6 @@ public class AppearanceConfigurable implements SearchableConfigurable {
     isModified |= myComponent.myNavigateToPreviewCheckBox.isSelected() != settings.getNavigateToPreview();
     isModified |= myComponent.isSupportScreenReadersModified();
     isModified |= myComponent.myColorBlindnessPanel.getColorBlindness() != settings.getColorBlindness();
-    isModified |= myComponent.myUseContrastScrollBarsCheckBox.isSelected() != settings.getUseContrastScrollBars();
 
     isModified |= myComponent.myHideIconsInQuickNavigation.isSelected() != settings.getShowIconInQuickNavigation();
     isModified |= myComponent.myShowTreeIndentGuides.isSelected() != settings.getShowTreeIndentGuides();
@@ -520,7 +491,6 @@ public class AppearanceConfigurable implements SearchableConfigurable {
     private JCheckBox myAltDNDCheckBox;
     private JCheckBox myShowFlagsForLanguagesCheckBox;  // Android Studio: added by Change I18c5f540
     private JCheckBox myAllowMergeButtons;
-    private JBCheckBox myUseSmallLabelsOnTabs;
     private JBCheckBox myWidescreenLayoutCheckBox;
     private JCheckBox myLeftLayoutCheckBox;
     private JCheckBox myRightLayoutCheckBox;
@@ -534,7 +504,6 @@ public class AppearanceConfigurable implements SearchableConfigurable {
     private JComboBox myAntialiasingInEditor;
     private JButton myBackgroundImageButton;
     private JBCheckBox myDarkWindowHeaders;
-    private JBCheckBox myUseContrastScrollBarsCheckBox;
 
     MyComponent() {
       myOverrideLAFFonts.addActionListener(__ -> updateCombo());
@@ -573,7 +542,7 @@ public class AppearanceConfigurable implements SearchableConfigurable {
     }
 
     @Override
-    public void customize(JList<? extends AntialiasingType> list, AntialiasingType value, int index, boolean selected, boolean hasFocus) {
+    public void customize(@NotNull JList<? extends AntialiasingType> list, AntialiasingType value, int index, boolean selected, boolean hasFocus) {
       if (value == AntialiasingType.SUBPIXEL) {
         GraphicsUtil.setAntialiasingType(this, SUBPIXEL_HINT);
       }

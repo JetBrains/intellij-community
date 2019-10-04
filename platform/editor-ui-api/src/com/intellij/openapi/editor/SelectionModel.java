@@ -9,10 +9,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Provides services for selecting text in the IDEA text editor and retrieving information about the selection. 
+ * Provides services for selecting text in the IDE's text editor and retrieving information about the selection.
  * Most of the methods here exist for compatibility reasons, corresponding functionality is also provided by {@link CaretModel} now.
  * <p>
- * In editor supporting multiple carets, each caret has its own associated selection range. Unless mentioned explicitly, methods of this 
+ * In editors supporting multiple carets, each caret has its own associated selection range. Unless mentioned explicitly, methods of this
  * interface operate on the current caret (see {@link CaretModel#runForEachCaret(CaretAction)}), or 'primary' caret if current caret 
  * is not defined. 
  *
@@ -51,7 +51,7 @@ public interface SelectionModel {
   /**
    * Returns the text selected in the editor.
    *
-   * @return the selected text, or null if there is currently no selection.
+   * @return the selected text, or {@code null} if there is currently no selection.
    */
   @Nullable
   String getSelectedText();
@@ -82,7 +82,7 @@ public interface SelectionModel {
   /**
    * Checks if a range of text is currently selected.
    *
-   * @return true if a range of text is selected, false otherwise.
+   * @return {@code true} if a range of text is selected, {@code false} otherwise.
    */
   boolean hasSelection();
 
@@ -90,7 +90,7 @@ public interface SelectionModel {
    * Checks if a range of text is currently selected. If {@code anyCaret} is {@code true}, check all existing carets in
    * the document, and returns {@code true} if any of them has selection, otherwise checks only the current caret.
    *
-   * @return true if a range of text is selected, false otherwise.
+   * @return {@code true} if a range of text is selected, {@code false} otherwise.
    */
   boolean hasSelection(boolean anyCaret);
 

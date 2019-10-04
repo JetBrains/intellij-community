@@ -318,6 +318,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     return icon == null ? getFallbackIcon(enabled) : icon;
   }
 
+  @NotNull
   protected Icon getFallbackIcon(boolean enabled) {
     return EmptyIcon.ICON_18;
   }
@@ -327,7 +328,10 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     if (myPresentation.getDisabledIcon() != null) { // set disabled icon if it is specified
       myDisabledIcon = myPresentation.getDisabledIcon();
     }
-    else if (myIcon == null || IconLoader.isGoodSize(myIcon)) {
+    else if (myIcon == null) {
+      myDisabledIcon = null;
+    }
+    else if (IconLoader.isGoodSize(myIcon)) {
       myDisabledIcon = IconLoader.getDisabledIcon(myIcon);
     }
     else {
@@ -343,7 +347,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
       HelpTooltip.dispose(this);
       String shortcut = KeymapUtil.getFirstKeyboardShortcutText(myAction);
       if (StringUtil.isNotEmpty(text) || StringUtil.isNotEmpty(description)) {
-        HelpTooltip ht = new HelpTooltip().setTitle(text).setShortcut(shortcut).setLocation(getTooltipLocation());
+        HelpTooltip ht = new HelpTooltip().setTitle(text).setShortcut(shortcut);
         if (!StringUtil.equals(text, description)) {
           ht.setDescription(description);
         }
@@ -352,10 +356,6 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     } else {
       setToolTipText(text == null ? description : text);
     }
-  }
-
-  protected HelpTooltip.Alignment getTooltipLocation() {
-    return HelpTooltip.Alignment.BOTTOM;
   }
 
   @Override
@@ -394,7 +394,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
 
   protected void paintButtonLook(Graphics g) {
     ActionButtonLook look = getButtonLook();
-    if (isEnabled() || !UIUtil.isUnderDarcula()) {
+    if (isEnabled() || !StartupUiUtil.isUnderDarcula()) {
       look.paintBackground(g, this);
     }
     look.paintIcon(g, this, getIcon());

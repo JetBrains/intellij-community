@@ -4,6 +4,6 @@ class Example {
       public void run() {}
       public void m2() {}
     };
-    r.<error descr="Cannot resolve method 'm2()'">m2</error>();
+    r.<error descr="Cannot resolve method 'm2' in 'Runnable'">m2</error>();
   }
 }

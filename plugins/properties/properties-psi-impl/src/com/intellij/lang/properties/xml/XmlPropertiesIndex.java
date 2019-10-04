@@ -81,7 +81,7 @@ public class XmlPropertiesIndex extends FileBasedIndexExtension<XmlPropertiesInd
 
   @Override
   public boolean acceptInput(@NotNull VirtualFile file) {
-    return true;
+    return file.getName().endsWith(".xml");
   }
 
   @Override

@@ -1,4 +1,4 @@
-// "Change field 's' type to 'java.lang.Runnable'" "true"
+// "Change field 's' type to 'Runnable'" "true"
 
 class a {
     String s = <caret>new Runnable() {

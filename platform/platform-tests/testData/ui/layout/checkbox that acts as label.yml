@@ -1,0 +1,38 @@
+layoutConstraints:
+  fillX: true
+  gridGapX:
+    min: &id001 {horizontal: true, unit: 0, value: 0.0}
+    preferred: *id001
+  gridGapY:
+    min: &id002 {horizontal: false, value: 10.0}
+    preferred: *id002
+  hideMode: 2
+  insets:
+  - {horizontal: false, unit: 0, value: 0.0}
+  - {horizontal: true, unit: 0, value: 0.0}
+  - {horizontal: false, unit: 0, value: 0.0}
+  - {horizontal: true, unit: 0, value: 0.0}
+rowConstraints:
+  constraints:
+  - align: &id003 {horizontal: false, unit: -1, value: 0.0}
+  - align: *id003
+  count: 2
+columnConstraints:
+  constraints:
+  - gapAfter:
+      max: &id004 {horizontal: true, value: 6.0}
+      min: *id004
+      preferred: *id004
+    grow: 0.0
+  - gapAfter:
+      max: &id005 {horizontal: true, value: 8.0}
+      min: *id005
+      preferred: *id005
+  - {}
+  count: 3
+componentConstrains:
+  Thread dump capture delay (ms) [label]: {}
+  'JBIntSpinner #1': {spanX: INF, wrap: true}
+  Create: {}
+  'JBIntSpinner #3': {}
+  files to start background indexing [label]: {spanX: INF, wrap: true}

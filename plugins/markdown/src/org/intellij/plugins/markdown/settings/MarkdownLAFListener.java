@@ -1,17 +1,18 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.settings;
 
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
 class MarkdownLAFListener implements LafManagerListener {
-  private boolean isLastLAFWasDarcula = UIUtil.isUnderDarcula();
+  private boolean isLastLAFWasDarcula = StartupUiUtil.isUnderDarcula();
 
   @Override
   public void lookAndFeelChanged(@NotNull LafManager source) {

@@ -6,6 +6,7 @@ import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -28,6 +29,10 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
   @Nullable
   @Override
   protected PsiExpression getExpressionFromEditor() {
+    SelectionModel selectionModel = getEditor().getSelectionModel();
+    if (selectionModel.hasSelection()) {
+      return IntroduceVariableBase.getSelectedExpression(getProject(), getFile(), selectionModel.getSelectionStart(), selectionModel.getSelectionEnd());
+    }
     final PsiExpression expression = super.getExpressionFromEditor();
     if (expression != null) {
       return expression;
@@ -43,6 +48,10 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
 
   public void testFromExpression() {
      doTest(introducer -> type("expr"));
+  }
+
+  public void testFromSelection() {
+     doTest(introducer -> type("a"));
   }
 
   public void testConflictingInnerClassName() {

@@ -115,7 +115,7 @@ public class StringConcatenationInsideStringBufferAppendInspection extends BaseI
         return;
       }
       final PsiExpression argument = arguments[0];
-      if (!ExpressionUtils.isConcatenation(ParenthesesUtils.stripParentheses(argument)) ||
+      if (!ExpressionUtils.isStringConcatenation(ParenthesesUtils.stripParentheses(argument)) ||
           PsiUtil.isConstantExpression(argument)) {
         return;
       }

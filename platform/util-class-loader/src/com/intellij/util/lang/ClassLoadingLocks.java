@@ -17,7 +17,7 @@ class ClassLoadingLocks {
   private final ReferenceQueue<Object> myQueue = new ReferenceQueue<Object>();
 
   @NotNull
-  Object getOrCreateLock(String className) {
+  Object getOrCreateLock(@NotNull String className) {
     WeakLockReference lockReference = myMap.get(className);
     if (lockReference != null) {
       Object lock = lockReference.get();
@@ -53,7 +53,7 @@ class ClassLoadingLocks {
   private static class WeakLockReference extends WeakReference<Object> {
     final String myClassName;
 
-    private WeakLockReference(@NotNull String className, Object lock, ReferenceQueue<Object> q) {
+    private WeakLockReference(@NotNull String className, @NotNull Object lock, @NotNull ReferenceQueue<Object> q) {
       super(lock, q);
       myClassName = className;
     }

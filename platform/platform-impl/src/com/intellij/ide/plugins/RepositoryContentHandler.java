@@ -40,6 +40,7 @@ class RepositoryContentHandler extends DefaultHandler {
   private static final String DATE = "date";
   private static final String PLUGIN_UPDATED_DATE = "updatedDate";
   private static final String TAGS = "tags";
+  private static final String PRODUCT_CODE = "productCode";
 
   private final StringBuilder currentValue = new StringBuilder();
   private PluginNode currentPlugin;
@@ -144,6 +145,9 @@ class RepositoryContentHandler extends DefaultHandler {
     }
     else if (qName.equals(TAGS)) {
       currentPlugin.addTags(currentValueString);
+    }
+    else if (qName.equals(PRODUCT_CODE)) {
+      currentPlugin.setProductCode(currentValueString);
     }
   }
 

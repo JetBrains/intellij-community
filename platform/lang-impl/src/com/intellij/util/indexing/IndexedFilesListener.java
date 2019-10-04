@@ -23,23 +23,25 @@ import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.List;
 
-public abstract class IndexedFilesListener implements AsyncFileListener {
-  private final ManagingFS myManagingFS = ManagingFS.getInstance();
+abstract class IndexedFilesListener implements AsyncFileListener {
+  private final ManagingFS myManagingFS;
   private final VfsEventsMerger myEventMerger = new VfsEventsMerger();
-  @Nullable private final VirtualFile myConfig;
-  @Nullable private final VirtualFile myLog;
 
-  public IndexedFilesListener() {
-    myConfig = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(PathManager.getConfigPath()));
-    myLog = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(PathManager.getLogPath()));
+  IndexedFilesListener(@NotNull ManagingFS managingFS) {
+    myManagingFS = managingFS;
   }
 
-  protected VfsEventsMerger getEventMerger() {
+  private static class ConfigHolder {
+    private static final VirtualFile myConfig = LocalFileSystem.getInstance().findFileByIoFile(new File(PathManager.getConfigPath()));
+    private static final VirtualFile myLog = LocalFileSystem.getInstance().findFileByIoFile(new File(PathManager.getLogPath()));
+  }
+
+  @NotNull
+  VfsEventsMerger getEventMerger() {
     return myEventMerger;
   }
 
@@ -57,7 +59,7 @@ public abstract class IndexedFilesListener implements AsyncFileListener {
     }
   }
 
-  private boolean invalidateIndicesForFile(@NotNull VirtualFile file, boolean contentChange, VfsEventsMerger eventMerger) {
+  private boolean invalidateIndicesForFile(@NotNull VirtualFile file, boolean contentChange, @NotNull VfsEventsMerger eventMerger) {
     if (isUnderConfigOrSystem(file)) {
       return false;
     }
@@ -68,8 +70,8 @@ public abstract class IndexedFilesListener implements AsyncFileListener {
 
   protected abstract void iterateIndexableFiles(@NotNull VirtualFile file, @NotNull ContentIterator iterator);
 
-  void invalidateIndicesRecursively(@NotNull VirtualFile file, boolean contentChange, VfsEventsMerger eventMerger) {
-    VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor() {
+  void invalidateIndicesRecursively(@NotNull VirtualFile file, boolean contentChange, @NotNull VfsEventsMerger eventMerger) {
+    VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor<Void>() {
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {
         return invalidateIndicesForFile(file, contentChange, eventMerger);
@@ -146,15 +148,16 @@ public abstract class IndexedFilesListener implements AsyncFileListener {
         if (propertyName.equals(VirtualFile.PROP_NAME)) {
           // indexes may depend on file name
           buildIndicesForFileRecursively(pce.getFile(), false);
-        } else if (propertyName.equals(VirtualFile.PROP_ENCODING)) {
+        }
+        else if (propertyName.equals(VirtualFile.PROP_ENCODING)) {
           buildIndicesForFileRecursively(pce.getFile(), true);
         }
       }
     }
   }
 
-  private boolean isUnderConfigOrSystem(@NotNull VirtualFile file) {
-    return myConfig != null && VfsUtilCore.isAncestor(myConfig, file, false) ||
-           myLog != null && VfsUtilCore.isAncestor(myLog, file, false);
+  private static boolean isUnderConfigOrSystem(@NotNull VirtualFile file) {
+    return ConfigHolder.myConfig != null && VfsUtilCore.isAncestor(ConfigHolder.myConfig, file, false) ||
+           ConfigHolder.myLog != null && VfsUtilCore.isAncestor(ConfigHolder.myLog, file, false);
   }
 }

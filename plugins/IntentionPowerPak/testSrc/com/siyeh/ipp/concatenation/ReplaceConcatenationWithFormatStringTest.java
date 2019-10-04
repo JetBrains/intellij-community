@@ -15,8 +15,10 @@
  */
 package com.siyeh.ipp.concatenation;
 
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ipp.IPPTestCase;
+import org.jetbrains.annotations.NotNull;
 
 public class ReplaceConcatenationWithFormatStringTest extends IPPTestCase {
     public void testNumericBinaryExpression() { doTest(); }
@@ -24,6 +26,7 @@ public class ReplaceConcatenationWithFormatStringTest extends IPPTestCase {
     public void testPercentInLiteral() { doTest(); }
     public void testParameters() { doTest(); }
     public void testLineSeparator() { doTest(); }
+    public void testPreserveTextBlock() { doTest(); }
 
     @Override
     protected String getIntentionName() {
@@ -34,5 +37,11 @@ public class ReplaceConcatenationWithFormatStringTest extends IPPTestCase {
     @Override
     protected String getRelativePath() {
         return "concatenation/string_format";
+    }
+
+    @NotNull
+    @Override
+    protected LightProjectDescriptor getProjectDescriptor() {
+        return JAVA_13;
     }
 }

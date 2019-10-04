@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.credentialStore.keePass
 
 import com.intellij.credentialStore.*
@@ -8,10 +8,9 @@ import com.intellij.credentialStore.kdbx.KeePassDatabase
 import com.intellij.credentialStore.kdbx.loadKdbx
 import com.intellij.ide.passwordSafe.PasswordStorage
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.util.io.setOwnerPermissions
 import com.intellij.util.io.delete
 import com.intellij.util.io.exists
-import com.intellij.util.io.writeSafe
+import com.intellij.util.io.safeOutputStream
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -81,10 +80,9 @@ internal class KeePassCredentialStore constructor(internal val dbFile: Path, pri
         masterKey.fill(0)
       }
 
-      dbFile.writeSafe {
+      dbFile.safeOutputStream().use {
         db.save(kdbxPassword, it, secureRandom)
       }
-      dbFile.setOwnerPermissions()
     }
     catch (e: Throwable) {
       // schedule save again
@@ -137,8 +135,9 @@ internal fun generateRandomMasterKey(masterKeyEncryptionSpec: EncryptionSpec, se
 internal fun saveDatabase(dbFile: Path, db: KeePassDatabase, masterKey: MasterKey, masterKeyStorage: MasterKeyFileStorage, secureRandom: SecureRandom) {
   val kdbxPassword = KdbxPassword(masterKey.value!!)
   masterKeyStorage.save(masterKey)
-  dbFile.writeSafe { db.save(kdbxPassword, it, secureRandom) }
-  dbFile.setOwnerPermissions()
+  dbFile.safeOutputStream().use {
+    db.save(kdbxPassword, it, secureRandom)
+  }
 }
 
 internal fun copyTo(from: Map<CredentialAttributes, Credentials>, store: CredentialStore) {

@@ -53,10 +53,11 @@ abstract class LightClassReferenceBase extends LightElement implements PsiJavaCo
 
   @Override
   public PsiReferenceParameterList getParameterList() {
-    if (myParameterList == null) {
-      myParameterList = new LightReferenceParameterList(myManager, PsiTypeElement.EMPTY_ARRAY);
+    LightReferenceParameterList parameterList = myParameterList;
+    if (parameterList == null) {
+      myParameterList = parameterList = new LightReferenceParameterList(myManager, PsiTypeElement.EMPTY_ARRAY);
     }
-    return myParameterList;
+    return parameterList;
   }
 
   @Override

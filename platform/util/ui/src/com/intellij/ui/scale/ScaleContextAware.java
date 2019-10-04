@@ -8,6 +8,7 @@ import org.jetbrains.annotations.Nullable;
  * Provides ScaleContext awareness of a UI object.
  *
  * @see ScaleContextSupport
+ * @author tav
  */
 public interface ScaleContextAware {
   /**

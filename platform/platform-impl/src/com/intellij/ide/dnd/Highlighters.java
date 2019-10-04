@@ -72,9 +72,8 @@ public class Highlighters implements DnDEvent.DropTargetHighlightingType {
 
   static boolean isVisibleExcept(int type) {
     int resultType = type;
-    for (int i = 0; i < ourCurrentHighlighters.size(); i++) {
-      final DropTargetHighlighter each = ourCurrentHighlighters.get(i);
-      resultType = resultType | each.getMask();
+    for (final DropTargetHighlighter each : ourCurrentHighlighters) {
+      resultType |= each.getMask();
     }
 
     return type != resultType;

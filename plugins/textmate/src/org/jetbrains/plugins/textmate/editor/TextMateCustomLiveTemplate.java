@@ -66,7 +66,7 @@ public class TextMateCustomLiveTemplate extends CustomLiveTemplateBase {
     if (service != null) {
       SnippetsRegistry snippetsRegistry = service.getSnippetsRegistry();
       Editor editor = callback.getEditor();
-      String scopeSelector = TextMateEditorUtils.getCurrentScopeSelector(((EditorEx)editor));
+      CharSequence scopeSelector = TextMateEditorUtils.getCurrentScopeSelector(((EditorEx)editor));
       Collection<TextMateSnippet> snippets = snippetsRegistry.findSnippet(key, scopeSelector);
       if (snippets.size() > 1) {
         LookupImpl lookup = (LookupImpl)LookupManager.getInstance(callback.getProject())
@@ -153,7 +153,7 @@ public class TextMateCustomLiveTemplate extends CustomLiveTemplateBase {
     TextMateService service = TextMateService.getInstance();
     if (service != null) {
       SnippetsRegistry snippetsRegistry = service.getSnippetsRegistry();
-      String scopeSelector = TextMateEditorUtils.getCurrentScopeSelector(((EditorEx)editor));
+      CharSequence scopeSelector = TextMateEditorUtils.getCurrentScopeSelector(((EditorEx)editor));
       return snippetsRegistry.getAvailableSnippets(scopeSelector);
     }
     return Collections.emptyList();
@@ -198,7 +198,11 @@ public class TextMateCustomLiveTemplate extends CustomLiveTemplateBase {
       final LookupElement item = event.getItem();
       assert item instanceof CustomLiveTemplateLookupElement;
       if (myFile != null) {
-        WriteCommandAction.runWriteCommandAction(myProject, () -> ((CustomLiveTemplateLookupElement)item).expandTemplate(myEditor, myFile));
+        WriteCommandAction.runWriteCommandAction(myProject,
+                                                 "Expand template",
+                                                 null,
+                                                 () -> ((CustomLiveTemplateLookupElement)item).expandTemplate(myEditor, myFile),
+                                                 myFile);
       }
     }
   }

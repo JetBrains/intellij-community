@@ -26,7 +26,6 @@ import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.openapi.application.ApplicationManager;
@@ -135,7 +134,7 @@ public class XsltCommandLineState extends CommandLineState {
 
     PluginId pluginId = PluginManagerCore.getPluginByClassName(getClass().getName());
     if (pluginId != null) {
-      IdeaPluginDescriptor descriptor = PluginManager.getPlugin(pluginId);
+      IdeaPluginDescriptor descriptor = PluginManagerCore.getPlugin(pluginId);
       assert descriptor != null;
       File rtPath = new File(descriptor.getPath(), "lib/rt/xslt-rt.jar");
       if (!rtPath.exists()) {

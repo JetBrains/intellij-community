@@ -4,7 +4,9 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.hint.*;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.Disposable;
@@ -34,10 +36,7 @@ import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.ButtonlessScrollBarUI;
-import com.intellij.util.ui.GraphicsUtil;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import gnu.trove.THashSet;
 import gnu.trove.TIntIntHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -52,6 +51,7 @@ import java.awt.geom.Area;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
+import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.Queue;
 import java.util.*;
@@ -104,9 +104,13 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   private static final int myCachePreviewLines = 100;// Actually cache image has myCachePreviewLines * 2 + 1 lines (above + below + current one)
   @Nullable private LightweightHint myEditorPreviewHint;
   @NotNull private final EditorFragmentRenderer myEditorFragmentRenderer;
+  private final MouseMovementTracker myMouseMovementTracker = new MouseMovementTracker();
   private int myRowAdjuster;
   private int myWheelAccumulator;
   private int myLastVisualLine;
+  private WeakReference<LightweightHint> myCurrentHint;
+  private int myCurrentHintAnchorY;
+  private boolean myKeepHint;
 
   EditorMarkupModelImpl(@NotNull EditorImpl editor) {
     super(editor.getDocument());
@@ -172,10 +176,36 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     }
   }
 
+  private LightweightHint getCurrentHint() {
+    if (myCurrentHint == null) return null;
+    LightweightHint hint = myCurrentHint.get();
+    if (hint == null || !hint.isVisible()) {
+      myCurrentHint = null;
+      hint = null;
+    }
+    return hint;
+  }
+
+  @NotNull
+  private static Rectangle getBoundsOnScreen(@NotNull LightweightHint hint) {
+    JComponent component = hint.getComponent();
+    Point location = hint.getLocationOn(component);
+    SwingUtilities.convertPointToScreen(location, component);
+    return new Rectangle(location, hint.getSize());
+  }
+
   private boolean showToolTipByMouseMove(@NotNull final MouseEvent e) {
     if (myEditor.getVisibleLineCount() == 0) return false;
     MouseEvent me = new MouseEvent(e.getComponent(), e.getID(), e.getWhen(), e.getModifiers(), 0, e.getY() + 1, e.getClickCount(),
                                               e.isPopupTrigger());
+
+    boolean newLook = Registry.is("editor.new.mouse.hover.popups");
+    LightweightHint currentHint = getCurrentHint();
+    if (newLook && currentHint != null) {
+      if (myKeepHint || myMouseMovementTracker.isMovingTowards(e, getBoundsOnScreen(currentHint))) {
+        return true;
+      }
+    }
 
     final int visualLine = getVisualLineByEvent(e);
     myLastVisualLine = visualLine;
@@ -197,11 +227,16 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
         int eachEndY = range.getEndOffset();
         y = eachStartY + (eachEndY - eachStartY) / 2;
       }
+      if (newLook && currentHint != null && y == myCurrentHintAnchorY) return true;
       me = new MouseEvent(e.getComponent(), e.getID(), e.getWhen(), e.getModifiers(), me.getX(), y + 1, e.getClickCount(),
                           e.isPopupTrigger());
       TooltipRenderer bigRenderer = myTooltipRendererProvider.calcTooltipRenderer(highlighters);
       if (bigRenderer != null) {
-        showTooltip(me, bigRenderer, createHint(me));
+        LightweightHint hint = showTooltip(bigRenderer, createHint(me).setForcePopup(newLook));
+        myCurrentHint = new WeakReference<>(hint);
+        myCurrentHintAnchorY = y;
+        myKeepHint = false;
+        myMouseMovementTracker.reset();
         return true;
       }
       return false;
@@ -254,10 +289,13 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     final int startOffset = getOffset(fitLineToEditor(visualLine - myPreviewLines), true);
     final int endOffset = getOffset(fitLineToEditor(visualLine + myPreviewLines), false);
     markupModel.processRangeHighlightersOverlappingWith(startOffset, endOffset, highlighter -> {
-      if (highlighter.getErrorStripeMarkColor() != null) {
-        if (highlighter.getStartOffset() < endOffset && highlighter.getEndOffset() > startOffset) {
-          highlighters.add(highlighter);
-        }
+      Object tooltip = highlighter.getErrorStripeTooltip();
+      if (tooltip != null &&
+          !(tooltip instanceof HighlightInfo && ((HighlightInfo)tooltip).type == HighlightInfoType.TODO) &&
+          highlighter.getErrorStripeMarkColor() != null &&
+          highlighter.getStartOffset() < endOffset &&
+          highlighter.getEndOffset() > startOffset) {
+        highlighters.add(highlighter);
       }
       return true;
     });
@@ -684,8 +722,8 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       final int[] thinYStart = new int[1];  // in range 0..yStart all spots are drawn
       final int[] wideYStart = new int[1];  // in range 0..yStart all spots are drawn
 
-      MarkupIterator<RangeHighlighterEx> iterator1 = markup1.overlappingIterator(startOffset, endOffset);
-      MarkupIterator<RangeHighlighterEx> iterator2 = markup2.overlappingIterator(startOffset, endOffset);
+      MarkupIterator<RangeHighlighterEx> iterator1 = markup1.overlappingIterator(startOffset, endOffset, false, true);
+      MarkupIterator<RangeHighlighterEx> iterator2 = markup2.overlappingIterator(startOffset, endOffset, false, true);
       MarkupIterator<RangeHighlighterEx> iterator =
         MarkupIterator.mergeIterators(iterator1, iterator2, RangeHighlighterEx.BY_AFFECTED_START_OFFSET);
       try {
@@ -878,7 +916,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       if (myTrafficTooltipRenderer == null) {
         myTrafficTooltipRenderer = myTooltipRendererProvider.createTrafficTooltipRenderer(() -> myTrafficTooltipRenderer = null, myEditor);
       }
-      showTooltip(e, myTrafficTooltipRenderer, new HintHint(e).setAwtTooltip(true).setMayCenterPosition(true).setContentActive(false)
+      showTooltip(myTrafficTooltipRenderer, new HintHint(e).setAwtTooltip(true).setMayCenterPosition(true).setContentActive(false)
         .setPreferredPosition(Balloon.Position.atLeft));
     }
 
@@ -896,23 +934,37 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       }
     }
 
-    private void hideMyEditorPreviewHint() {
-      if (myEditorPreviewHint != null) {
-        myEditorPreviewHint.hide();
-        myEditorPreviewHint = null;
-        myRowAdjuster = 0;
-        myWheelAccumulator = 0;
-        myLastVisualLine = 0;
-      }
-    }
-
     @Override
     public void mouseEntered(@NotNull MouseEvent e) {
     }
 
     @Override
     public void mouseExited(@NotNull MouseEvent e) {
-      cancelMyToolTips(e, true);
+      if (Registry.is("editor.new.mouse.hover.popups")) {
+        hideMyEditorPreviewHint();
+        LightweightHint currentHint = getCurrentHint();
+        if (currentHint != null && !myKeepHint) {
+          closeHintOnMovingMouseAway(currentHint);
+        }
+      }
+      else {
+        cancelMyToolTips(e, true);
+      }
+    }
+
+    private void closeHintOnMovingMouseAway(LightweightHint hint) {
+      Disposable disposable = Disposer.newDisposable();
+      IdeEventQueue.getInstance().addDispatcher(e -> {
+        if (e.getID() == MouseEvent.MOUSE_PRESSED) {
+          myKeepHint = true;
+          Disposer.dispose(disposable);
+        }
+        else if (e.getID() == MouseEvent.MOUSE_MOVED && !hint.isInsideHint(new RelativePoint((MouseEvent)e))) {
+          hint.hide();
+          Disposer.dispose(disposable);
+        }
+        return false;
+      }, disposable);
     }
 
     @Override
@@ -932,11 +984,23 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     }
   }
 
-  private void showTooltip(@NotNull MouseEvent e, final TooltipRenderer tooltipObject, @NotNull HintHint hintHint) {
-    TooltipController tooltipController = TooltipController.getInstance();
-    tooltipController.showTooltipByMouseMove(myEditor, new RelativePoint(e), tooltipObject,
-                                             myEditor.getVerticalScrollbarOrientation() == EditorEx.VERTICAL_SCROLLBAR_RIGHT,
-                                             ERROR_STRIPE_TOOLTIP_GROUP, hintHint);
+  private void hideMyEditorPreviewHint() {
+    if (myEditorPreviewHint != null) {
+      myEditorPreviewHint.hide();
+      myEditorPreviewHint = null;
+      myRowAdjuster = 0;
+      myWheelAccumulator = 0;
+      myLastVisualLine = 0;
+    }
+  }
+
+  private LightweightHint showTooltip(final TooltipRenderer tooltipObject, @NotNull HintHint hintHint) {
+    if (Registry.is("editor.new.mouse.hover.popups")) {
+      hideMyEditorPreviewHint();
+    }
+    return TooltipController.getInstance().showTooltipByMouseMove(myEditor, hintHint.getTargetPoint(), tooltipObject,
+                                                                  myEditor.getVerticalScrollbarOrientation() ==
+                                                                  EditorEx.VERTICAL_SCROLLBAR_RIGHT, ERROR_STRIPE_TOOLTIP_GROUP, hintHint);
   }
 
   private void fireErrorMarkerClicked(RangeHighlighter marker, MouseEvent e) {
@@ -1196,9 +1260,9 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
               myCacheEndLine = fitLineToEditor(myCacheStartLine + 2 * myCachePreviewLines + 1);
               int cacheStartY = myEditor.visualLineToY(myCacheStartLine);
               if (myCacheLevel2 == null) {
-                myCacheLevel2 = UIUtil.createImage(g, size.width,
-                                                   myEditor.visualLineToY(myCacheEndLine) - cacheStartY + myEditor.getLineHeight(),
-                                                   BufferedImage.TYPE_INT_RGB);
+                myCacheLevel2 = ImageUtil
+                  .createImage(g, size.width, myEditor.visualLineToY(myCacheEndLine) - cacheStartY + myEditor.getLineHeight(),
+                               BufferedImage.TYPE_INT_RGB);
               }
               Graphics2D cg = myCacheLevel2.createGraphics();
               final AffineTransform t = cg.getTransform();
@@ -1227,7 +1291,8 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
             }
             if (myCacheLevel1 == null) {
-              myCacheLevel1 = UIUtil.createImage(g, size.width, myEditor.getLineHeight() * (2 * myPreviewLines + 1), BufferedImage.TYPE_INT_RGB);
+              myCacheLevel1 =
+                ImageUtil.createImage(g, size.width, myEditor.getLineHeight() * (2 * myPreviewLines + 1), BufferedImage.TYPE_INT_RGB);
               isDirty = true;
             }
             if (isDirty) {
@@ -1288,7 +1353,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
               GraphicsUtil.setupAAPainting(g2);
               g2.setClip(new RoundRectangle2D.Double(0, 0, size.width-.5, size.height-.5, 2, 2));
               UIUtil.drawImage(g2, myCacheLevel1, 0, 0, this);
-              if (UIUtil.isUnderDarcula()) {
+              if (StartupUiUtil.isUnderDarcula()) {
                 //Add glass effect
                 Shape s = new Rectangle(0, 0, size.width, size.height);
                 double cx = size.width / 2;

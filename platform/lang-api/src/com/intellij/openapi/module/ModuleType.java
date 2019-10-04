@@ -17,7 +17,7 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 import javax.swing.*;
 
 public abstract class ModuleType<T extends ModuleBuilder> {
-  public static final ModuleType EMPTY;
+  public static final ModuleType<?> EMPTY;
 
   @NotNull
   private final String myId;
@@ -39,10 +39,12 @@ public abstract class ModuleType<T extends ModuleBuilder> {
   @Nls(capitalization = Nls.Capitalization.Sentence)
   public abstract String getDescription();
 
+  @NotNull
   public Icon getIcon() {
     return getNodeIcon(false);
   }
 
+  @NotNull
   public abstract Icon getNodeIcon(@Deprecated boolean isOpened);
 
   @NotNull

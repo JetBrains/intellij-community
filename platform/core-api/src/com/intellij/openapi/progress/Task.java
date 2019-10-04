@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ExceptionUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -76,7 +77,7 @@ public abstract class Task implements TaskInfo, Progressive {
   /**
    * This callback will be invoked on AWT dispatch thread.
    * <p>
-   * Callback executed when run() throws an exception (except PCE).
+   * Callback executed when {@link #run(ProgressIndicator)} throws an exception (except {@link ProcessCanceledException}).
    *
    * @deprecated use {@link #onThrowable(Throwable)} instead
    */
@@ -89,11 +90,10 @@ public abstract class Task implements TaskInfo, Progressive {
   /**
    * This callback will be invoked on AWT dispatch thread.
    * <p>
-   * Callback executed when run() throws an exception (except PCE).
+   * Callback executed when {@link #run(ProgressIndicator)} throws an exception (except {@link ProcessCanceledException}).
    */
   public void onThrowable(@NotNull Throwable error) {
     if (error instanceof Exception) {
-      //noinspection deprecation
       onError((Exception)error);
     }
     else {
@@ -102,7 +102,7 @@ public abstract class Task implements TaskInfo, Progressive {
   }
 
   /**
-   * This callback will be invoked on AWT dispatch thread, after other specific handlers
+   * This callback will be invoked on AWT dispatch thread, after other specific handlers.
    */
   public void onFinished() {
   }
@@ -234,6 +234,7 @@ public abstract class Task implements TaskInfo, Progressive {
      * @deprecated do not implement. to remove in IDEA 16
      */
     @Deprecated
+    @ApiStatus.ScheduledForRemoval(inVersion = "2016")
     public DumbModeAction getDumbModeAction() {
       return DumbModeAction.NOTHING;
     }
