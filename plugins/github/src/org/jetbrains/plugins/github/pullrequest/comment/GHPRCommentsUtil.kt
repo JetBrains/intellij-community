@@ -111,11 +111,11 @@ object GHPRCommentsUtil {
 
         val line = hunk.lines[hunkLineIndex] ?: return null
         return when (line.type!!) {
-          PatchLine.Type.CONTEXT, PatchLine.Type.REMOVE -> {
+          PatchLine.Type.REMOVE -> {
             val addedLinesBefore = hunk.lines.subList(0, hunkLineIndex).count { it.type == PatchLine.Type.ADD }
             Side.LEFT to hunk.startLineBefore + (hunkLineIndex - addedLinesBefore)
           }
-          PatchLine.Type.ADD -> {
+          PatchLine.Type.CONTEXT, PatchLine.Type.ADD -> {
             val removedLinesBefore = hunk.lines.subList(0, hunkLineIndex).count { it.type == PatchLine.Type.REMOVE }
             Side.RIGHT to hunk.startLineAfter + (hunkLineIndex - removedLinesBefore)
           }
