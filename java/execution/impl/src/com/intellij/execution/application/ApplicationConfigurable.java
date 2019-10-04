@@ -1,13 +1,15 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.application;
 
 import com.intellij.application.options.ModuleDescriptionsComboBox;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.configurations.ConfigurationUtil;
+import com.intellij.execution.impl.SingleConfigurationConfigurable;
 import com.intellij.execution.ui.*;
 import com.intellij.execution.util.JreVersionDetector;
 import com.intellij.execution.util.ProgramParametersConfigurator;
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
@@ -71,7 +73,15 @@ public class ApplicationConfigurable extends SettingsEditor<ApplicationConfigura
     configuration.setShortenCommandLine(myShortenClasspathModeCombo.getComponent().getSelectedItem());
     configuration.setIncludeProvidedScope(myIncludeProvidedDeps.getComponent().isSelected());
 
+    hideUnsupportedFieldsIfNeeded();
     updateShowSwingInspector(configuration);
+  }
+
+  public void hideUnsupportedFieldsIfNeeded() {
+    boolean localTarget = DataManager.getInstance().getDataContext(myWholePanel)
+                            .getData(SingleConfigurationConfigurable.RUN_ON_TARGET_NAME_KEY) == null;
+    myJrePathEditor.setVisible(localTarget);
+    myShowSwingInspectorCheckbox.setVisible(localTarget);
   }
 
   @Override
@@ -84,6 +94,7 @@ public class ApplicationConfigurable extends SettingsEditor<ApplicationConfigura
     myShortenClasspathModeCombo.getComponent().setSelectedItem(configuration.getShortenCommandLine());
     myIncludeProvidedDeps.getComponent().setSelected(configuration.isProvidedScopeIncluded());
 
+    hideUnsupportedFieldsIfNeeded();
     updateShowSwingInspector(configuration);
   }
 
