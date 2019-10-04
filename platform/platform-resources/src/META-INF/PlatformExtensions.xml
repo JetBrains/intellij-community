@@ -699,6 +699,7 @@
     <tasks.contextProvider implementation="com.intellij.tasks.context.RunConfigurationsContextProvider"/>
     <tasks.contextProvider implementation="com.intellij.tasks.context.XDebuggerBreakpointsContextProvider"/>
     <tasks.contextProvider implementation="com.intellij.tasks.context.XDebuggerWatchesProvider"/>
+    <tasks.contextProvider implementation="com.intellij.tasks.context.BookmarkContextProvider"/>
 
     <actionPromoter implementation="com.intellij.execution.testframework.TestTreeViewActionsPromoter"/>
     <smartSelectProvider implementation="com.intellij.ui.tree.TreeSmartSelectProvider"/>
