@@ -5,8 +5,9 @@ import {LineChartDataManager} from "@/aggregatedStats/LineChartDataManager"
 import {AppStateModule} from "@/state/state"
 import {getModule} from "vuex-module-decorators"
 import {loadJson} from "@/httpUtil"
-import {GroupedMetricResponse, InfoResponse, Machine, Metrics} from "@/aggregatedStats/model"
+import {InfoResponse, Machine, Metrics} from "@/aggregatedStats/model"
 import {ClusteredChartManager} from "@/aggregatedStats/ClusteredChartManager"
+import {debounce} from "debounce"
 
 @Component
 export default class AggregatedStatsPage extends Vue {
@@ -14,29 +15,26 @@ export default class AggregatedStatsPage extends Vue {
   private readonly lineChartManagers: Array<LineChartManager> = []
   private readonly clusteredChartManagers: Array<ClusteredChartManager> = []
 
-  isFetching: boolean = false
-
   chartSettings = this.dataModule.chartSettings
 
   products: Array<string> = []
   machines: Array<Machine> = []
 
+  aggregationOperators: Array<string> = ["median", "min", "max"]
+
   private lastInfoResponse: InfoResponse | null = null
 
-  loadData() {
-    this.isFetching = true
-    this.doLoadData(() => {
-      this.isFetching = false
-    })
-  }
+  private loadData = debounce(() => {
+    this.doLoadData()
+  }, 300)
 
   isShowScrollbarXPreviewChanged(_value: boolean) {
     this.lineChartManagers.forEach(it => it.scrollbarXPreviewOptionChanged())
     this.dataModule.updateChartSettings(this.chartSettings)
   }
 
-  private doLoadData(processed: () => void) {
-    loadJson(new URL(`${this.chartSettings.serverUrl}/info`), processed, this.$notify)
+  private doLoadData() {
+    loadJson(new URL(`${this.chartSettings.serverUrl}/info`), null, this.$notify)
       .then((data: InfoResponse | null) => {
         if (data == null) {
           return
@@ -62,7 +60,7 @@ export default class AggregatedStatsPage extends Vue {
   }
 
   @Watch("chartSettings.selectedProduct")
-  selectedProductChanged(product: string| null, _oldV: string): void {
+  selectedProductChanged(product: string | null, _oldV: string): void {
     console.log("product changed", product, _oldV)
     const infoResponse = this.lastInfoResponse
     if (infoResponse == null) {
@@ -79,10 +77,22 @@ export default class AggregatedStatsPage extends Vue {
     let selectedMachine = this.chartSettings.selectedMachine
     const machines = this.machines
     if (machines.length === 0) {
-      this.chartSettings.selectedMachine = undefined
+      selectedMachine = null
+      this.chartSettings.selectedMachine = null
     }
     else if (selectedMachine == null || !machines.find(it => it.id === selectedMachine)) {
-      this.chartSettings.selectedMachine = machines[0].id
+      selectedMachine = machines[0].id
+    }
+
+    if (this.chartSettings.selectedMachine === selectedMachine) {
+      // data will be reloaded on machine change, but if product changed but machine remain the same, data reloading must be triggered here
+      if (product != null && selectedMachine != null) {
+        this.loadClusteredChartsData(product, selectedMachine)
+        this.loadLineChartData(product, selectedMachine)
+      }
+    }
+    else {
+      this.chartSettings.selectedMachine = selectedMachine
     }
   }
 
@@ -98,23 +108,27 @@ export default class AggregatedStatsPage extends Vue {
       return
     }
 
-    this.loadClusteredChartData(product, machine)
+    this.loadClusteredChartsData(product, machine)
     this.loadLineChartData(product, machine)
   }
 
-  loadClusteredChartData(product: string, machineId: number): void {
+  private loadClusteredChartsData(product: string, machineId: number): void {
+    const chartManagers = this.clusteredChartManagers
+    if (chartManagers.length === 0) {
+      chartManagers.push(new ClusteredChartManager(this.$refs.clusteredDurationChartContainer as HTMLElement))
+      chartManagers.push(new ClusteredChartManager(this.$refs.clusteredInstantChartContainer as HTMLElement))
+    }
+
+    chartManagers[0].setData(loadJson(this.createGroupedMetricUrl(product, machineId, false), null, this.$notify))
+    chartManagers[1].setData(loadJson(this.createGroupedMetricUrl(product, machineId, true), null, this.$notify))
+  }
+
+  createGroupedMetricUrl(product: string, machineId: number, isInstant: boolean): URL {
     const url = new URL(`${this.chartSettings.serverUrl}/groupedMetrics`)
     url.searchParams.set("product", product)
     url.searchParams.set("machine", machineId.toString())
-    loadJson(url, null, this.$notify)
-      .then(data => {
-        if (data != null) {
-          this.renderClusteredCharts(data)
-        }
-      })
-      .catch(e => {
-        console.error(e)
-      })
+    url.searchParams.set("eventType", isInstant ? "i" : "d")
+    return url
   }
 
   // noinspection DuplicatedCode
@@ -137,8 +151,8 @@ export default class AggregatedStatsPage extends Vue {
   private renderLineCharts(data: Array<Metrics>, infoResponse: InfoResponse): void {
     let chartManagers = this.lineChartManagers
     if (chartManagers.length === 0) {
-      chartManagers.push(new LineChartManager(this.$refs.durationEventChartContainer as HTMLElement, this.chartSettings, false))
-      chartManagers.push(new LineChartManager(this.$refs.instantEventChartContainer as HTMLElement, this.chartSettings, true))
+      chartManagers.push(new LineChartManager(this.$refs.lineDurationChartContainer as HTMLElement, this.chartSettings, false))
+      chartManagers.push(new LineChartManager(this.$refs.lineInstantChartContainer as HTMLElement, this.chartSettings, true))
     }
 
     const dataManager = new LineChartDataManager(data, infoResponse)
@@ -152,27 +166,15 @@ export default class AggregatedStatsPage extends Vue {
     }
   }
 
-  private renderClusteredCharts(data: GroupedMetricResponse): void {
-    let chartManagers = this.clusteredChartManagers
-    if (chartManagers.length === 0) {
-      chartManagers.push(new ClusteredChartManager(this.$refs.clusteredChartContainer as HTMLElement))
-    }
-
-    for (const chartManager of chartManagers) {
-      try {
-        chartManager.render(data)
-      }
-      catch (e) {
-        console.error(e)
-      }
+  @Watch("chartSettings.serverUrl")
+  serverUrlChanged(newV: string | null, _oldV: string) {
+    if (!isEmpty(newV)) {
+      this.loadData()
     }
   }
 
   mounted() {
-    const chartSettings = this.chartSettings
-    if (!isEmpty(chartSettings.serverUrl)) {
-      this.loadData()
-    }
+    this.serverUrlChanged(this.chartSettings.serverUrl, "")
   }
 
   beforeDestroy() {

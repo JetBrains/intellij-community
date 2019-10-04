@@ -21,6 +21,10 @@ export class ClusteredChartManager {
     categoryAxis.renderer.minGridDistance = 20
     categoryAxis.renderer.cellStartLocation = 0.1
     categoryAxis.renderer.cellEndLocation = 0.9
+    const label = categoryAxis.renderer.labels.template
+    label.truncate = true
+    label.maxWidth = 120
+    label.tooltipText = "{category}"
 
     const valueAxis = chart.yAxes.push(new am4charts.DurationAxis())
     valueAxis.durationFormatter.baseUnit = "millisecond"
@@ -35,7 +39,7 @@ export class ClusteredChartManager {
     chart.cursor = cursor
   }
 
-  render(data: GroupedMetricResponse): void {
+  private render(data: GroupedMetricResponse): void {
     const chart = this.chart
 
     const oldSeries = new Map<string, am4charts.ColumnSeries>()
@@ -57,6 +61,7 @@ export class ClusteredChartManager {
     }
 
     oldSeries.forEach(value => {
+      console.log("dispose series", value.name)
       chart.series.removeIndex(chart.series.indexOf(value))
       value.dispose()
     })
@@ -81,5 +86,14 @@ export class ClusteredChartManager {
 
   dispose(): void {
     this.chart.dispose()
+  }
+
+  setData(data: Promise<GroupedMetricResponse>) {
+    data
+      .then(data => {
+        if (data != null) {
+          this.render(data)
+        }
+      })
   }
 }

@@ -2,7 +2,7 @@
 <template>
   <div>
     <el-row>
-      <el-col :span="12">
+      <el-col :span="16">
         <el-form :inline="true" size="small">
           <el-form-item label="Server url">
             <el-input
@@ -10,12 +10,31 @@
                 v-model="chartSettings.serverUrl">
             </el-input>
           </el-form-item>
-          <el-form-item>
-            <el-button @click="loadData" :loading="isFetching">Load</el-button>
+
+          <el-form-item label="Product">
+            <el-select v-model="chartSettings.selectedProduct" filterable>
+              <el-option
+                    v-for="productId in products"
+                    :key="productId"
+                    :label="productId"
+                    :value="productId">
+                  </el-option>
+            </el-select>
           </el-form-item>
+          <el-form-item label="Machine">
+            <el-select v-model="chartSettings.selectedMachine" filterable>
+              <el-option
+                    v-for="machine in machines"
+                    :key="machine.id"
+                    :label="machine.name"
+                    :value="machine.id">
+                  </el-option>
+            </el-select>
+          </el-form-item>
+
         </el-form>
       </el-col>
-      <el-col :span="12">
+      <el-col :span="8">
         <div style="float: right">
           <el-checkbox
               size="small"
@@ -26,36 +45,36 @@
       </el-col>
     </el-row>
 
+    <h3>Aggregated</h3>
+
     <el-form :inline="true" size="small">
-      <el-form-item label="Product">
-        <el-select v-model="chartSettings.selectedProduct" filterable>
+      <el-form-item label="Operator">
+        <el-select v-model="chartSettings.aggregationOperator" filterable>
           <el-option
-                v-for="productId in products"
-                :key="productId"
-                :label="productId"
-                :value="productId">
-              </el-option>
-        </el-select>
-      </el-form-item>
-      <el-form-item label="Machine">
-        <el-select v-model="chartSettings.selectedMachine" filterable>
-          <el-option
-                v-for="machine in machines"
-                :key="machine.id"
-                :label="machine.name"
-                :value="machine.id">
-              </el-option>
+              v-for="name in aggregationOperators"
+              :key="name"
+              :label="name"
+              :value="name">
+          </el-option>
         </el-select>
       </el-form-item>
     </el-form>
 
-    <div class="aggregatedChart" ref="clusteredChartContainer"></div>
+    <el-row>
+      <!-- more space for duration events (because number of duration metrics more than instant) -->
+      <el-col :span="16">
+        <div class="aggregatedChart" ref="clusteredDurationChartContainer"></div>
+      </el-col>
+      <el-col :span="8">
+        <div class="aggregatedChart" ref="clusteredInstantChartContainer"></div>
+      </el-col>
+    </el-row>
 
     <h3>Duration Events</h3>
-    <div class="aggregatedChart" ref="durationEventChartContainer"></div>
+    <div class="aggregatedChart" ref="lineDurationChartContainer"></div>
 
     <h3>Instant Events</h3>
-    <div class="aggregatedChart" ref="instantEventChartContainer"></div>
+    <div class="aggregatedChart" ref="lineInstantChartContainer"></div>
 
     <el-row>
       <el-col>
