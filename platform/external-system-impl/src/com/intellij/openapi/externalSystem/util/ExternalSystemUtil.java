@@ -25,6 +25,7 @@ import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
@@ -498,8 +499,9 @@ public class ExternalSystemUtil {
             public void onFailure(@NotNull ExternalSystemTaskId id, @NotNull Exception e) {
               String title = ExternalSystemBundle.message("notification.project.refresh.fail.title",
                                                           externalSystemId.getReadableName(), projectName);
+              DataProvider dataProvider = BuildConsoleUtils.getDataProvider(id, syncViewManager);
               com.intellij.build.events.FailureResult failureResult =
-                createFailureResult(title, e, externalSystemId, project, syncViewManager);
+                createFailureResult(title, e, externalSystemId, project, dataProvider);
               finishSyncEventSupplier.set(() -> new FinishBuildEventImpl(id, null, System.currentTimeMillis(), "failed", failureResult));
               processHandler.notifyProcessTerminated(1);
             }
@@ -659,10 +661,10 @@ public class ExternalSystemUtil {
                                                       @NotNull Exception exception,
                                                       @NotNull ProjectSystemId externalSystemId,
                                                       @NotNull Project project,
-                                                      @NotNull BuildProgressListener progressListener) {
+                                                      @NotNull DataProvider dataProvider) {
     ExternalSystemNotificationManager notificationManager = ExternalSystemNotificationManager.getInstance(project);
     NotificationData notificationData =
-      notificationManager.createNotification(title, exception, externalSystemId, project, progressListener);
+      notificationManager.createNotification(title, exception, externalSystemId, project, dataProvider);
     if (notificationData == null) {
       return new FailureResultImpl();
     }
