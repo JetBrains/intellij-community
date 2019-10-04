@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 import {Component, Vue, Watch} from "vue-property-decorator"
 import {LineChartManager} from "./LineChartManager"
-import {AggregatedDataManager} from "@/aggregatedStats/AggregatedDataManager"
+import {LineChartDataManager} from "@/aggregatedStats/LineChartDataManager"
 import {AppStateModule} from "@/state/state"
 import {getModule} from "vuex-module-decorators"
 import {loadJson} from "@/httpUtil"
@@ -141,7 +141,7 @@ export default class AggregatedStatsPage extends Vue {
       chartManagers.push(new LineChartManager(this.$refs.instantEventChartContainer as HTMLElement, this.chartSettings, true))
     }
 
-    const dataManager = new AggregatedDataManager(data, infoResponse)
+    const dataManager = new LineChartDataManager(data, infoResponse)
     for (const chartManager of chartManagers) {
       try {
         chartManager.render(dataManager)

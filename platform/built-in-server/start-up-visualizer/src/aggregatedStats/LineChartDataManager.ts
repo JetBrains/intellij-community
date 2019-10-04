@@ -9,7 +9,7 @@ export interface MetricDescriptor {
   readonly hiddenByDefault: boolean
 }
 
-export class AggregatedDataManager {
+export class LineChartDataManager {
   readonly durationMetricDescriptors: Array<MetricDescriptor>
   readonly instantMetricDescriptors: Array<MetricDescriptor>
 
@@ -32,15 +32,6 @@ export class AggregatedDataManager {
         name: key,
         hiddenByDefault: false,
       })
-    }
-
-    // amcharts doesn't like empty or -1 values, so, filter it out
-    for (const nameToValue of metrics) {
-      for (const name of Object.keys(nameToValue)) {
-        if (nameToValue[name] <= 0) {
-          nameToValue[name] = undefined as any
-        }
-      }
     }
   }
 }

@@ -109,8 +109,7 @@ export class ActivityChartManager extends XYChartManager {
 
   protected getTooltipText() {
     let result = "{name}: {duration} ms\nrange: {start}-{end}\nthread: {thread}"
-    const descriptor = this.descriptor
-    if (descriptor.sourceHasPluginInformation !== false) {
+    if (this.descriptor.sourceHasPluginInformation !== false) {
       result += "\nplugin: {plugin}"
     }
     return result

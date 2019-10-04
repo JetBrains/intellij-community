@@ -1,9 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 import * as am4charts from "@amcharts/amcharts4/charts"
 import * as am4core from "@amcharts/amcharts4/core"
-import {AggregatedDataManager, MetricDescriptor} from "@/aggregatedStats/AggregatedDataManager"
+import {LineChartDataManager, MetricDescriptor} from "@/aggregatedStats/LineChartDataManager"
 import {ChartSettings} from "@/aggregatedStats/ChartSettings"
 import {addExportMenu} from "@/charts/ChartManager"
+import HumanizeDuration from "humanize-duration"
 
 interface ChartConfigurator {
   configureXAxis(chart: am4charts.XYChart): void
@@ -98,7 +99,7 @@ export class LineChartManager {
     }
   }
 
-  render(dataManager: AggregatedDataManager): void {
+  render(dataManager: LineChartDataManager): void {
     const chart = this.chart
 
     const scrollbarX = chart.scrollbarX as am4charts.XYChartScrollbar
@@ -142,8 +143,22 @@ export class LineChartManager {
     this.configurator.configureSeries(series)
     // duration
     series.dataFields.valueY = metric.key
-    // RFC1123
-    series.tooltipText = `${metric.name}: {${metric.name}} ms\n` + "report time: {t.formatDate('EEE, dd MMM yyyy HH:mm:ss zzz')}"
+
+    // use adapter to use HumanizeDuration
+    series.adapter.add("tooltipText", (value, target) => {
+      const dataItem = target.tooltipDataItem
+      const dataContext: any = dataItem == null ? null : dataItem.dataContext
+      if (dataContext != null) {
+        const value = dataContext[(metric.key)]
+        if (value != null) {
+          // RFC1123
+          // noinspection SpellCheckingInspection
+          return `${metric.name}: ${HumanizeDuration(value)}\nreport time: ${series.dateFormatter.format(dataContext.t, "EEE, dd MMM yyyy HH:mm:ss zzz")}`
+        }
+      }
+      return value
+    })
+
     if (metric.hiddenByDefault) {
       series.hidden = true
     }
