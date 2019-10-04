@@ -317,6 +317,12 @@ public class Runner {
 
         List<ValidationResult> problems = preparationResult.validationResults;
         Map<String, ValidationResult.Option> resolutions = problems.isEmpty() ? Collections.emptyMap() : ui.askUser(problems);
+        if (! resolutions.isEmpty()) {
+          logger().warn("Some conflicts were found: ");
+          for (Map.Entry<String, ValidationResult.Option> entry : resolutions.entrySet()) {
+            logger().warn("  " + entry.getKey());
+          }
+        }
 
         if (doBackup) {
           backupDir = Utils.getTempFile("backup");
@@ -444,6 +450,12 @@ public class Runner {
 
           List<ValidationResult> problems = preparationResult.validationResults;
           Map<String, ValidationResult.Option> resolutions = problems.isEmpty() ? Collections.emptyMap() : ui.askUser(problems);
+          if (! resolutions.isEmpty()) {
+            logger().warn("Some conflicts were found: ");
+            for (Map.Entry<String, ValidationResult.Option> entry : resolutions.entrySet()) {
+              logger().warn("  " + entry.getKey());
+            }
+          }
 
           PatchFileCreator.ApplicationResult applicationResult = PatchFileCreator.apply(preparationResult, resolutions, null, ui);
           needRestore |= !applicationResult.appliedActions.isEmpty();
