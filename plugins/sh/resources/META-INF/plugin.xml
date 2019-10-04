@@ -21,10 +21,8 @@ Adds support for working with shell script files
     <lang.commenter language="Shell Script" implementationClass="com.intellij.sh.ShCommenter"/>
     <lang.quoteHandler language="Shell Script" implementationClass="com.intellij.sh.ShQuoteHandler"/>
     <lang.findUsagesProvider language="Shell Script" implementationClass="com.intellij.sh.codeInsight.ShFindUsagesProvider"/>
-    <lang.elementManipulator forClass="com.intellij.sh.psi.ShSimpleCommandElement"
-                             implementationClass="com.intellij.sh.psi.impl.ShSimpleCommandManipulator" />
-    <lang.elementManipulator forClass="com.intellij.sh.psi.ShGenericCommandDirective"
-                             implementationClass="com.intellij.sh.psi.impl.ShGenericCommandManipulator" />
+    <lang.elementManipulator forClass="com.intellij.sh.psi.ShLiteral"
+                             implementationClass="com.intellij.sh.psi.impl.ShLiteralManipulator" />
     <editor.backspaceModeOverride language="Shell Script" implementationClass="com.intellij.sh.ShBackspaceModeOverride"/>
 
     <lang.psiStructureViewFactory language="Shell Script" implementationClass="com.intellij.sh.ShStructureViewFactory"/>

@@ -7,7 +7,7 @@ import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.sh.ShFileType;
 import com.intellij.sh.psi.ShFunctionName;
-import com.intellij.sh.psi.ShGenericCommandDirective;
+import com.intellij.sh.psi.ShLiteral;
 import com.intellij.sh.psi.ShSimpleCommandElement;
 import org.jetbrains.annotations.NotNull;
 
@@ -21,11 +21,11 @@ public class ShElementGenerator {
   }
 
   @NotNull
-  public static ShGenericCommandDirective createGenericCommand(@NotNull Project project, @NotNull String command) {
+  public static ShLiteral createLiteral(@NotNull Project project, @NotNull String command) {
     PsiFile file = createTempFile(project, command);
-    ShGenericCommandDirective genericCommand = PsiTreeUtil.findChildOfType(file, ShGenericCommandDirective.class);
-    assert genericCommand != null;
-    return genericCommand;
+    ShLiteral literal = PsiTreeUtil.findChildOfType(file, ShLiteral.class);
+    assert literal != null;
+    return literal;
   }
 
   @NotNull

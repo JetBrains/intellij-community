@@ -4,19 +4,17 @@ package com.intellij.sh.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.AbstractElementManipulator;
-import com.intellij.sh.psi.ShGenericCommandDirective;
+import com.intellij.sh.psi.ShLiteral;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ShGenericCommandManipulator extends AbstractElementManipulator<ShGenericCommandDirective> {
+public class ShLiteralManipulator extends AbstractElementManipulator<ShLiteral> {
   @Nullable
   @Override
-  public ShGenericCommandDirective handleContentChange(@NotNull ShGenericCommandDirective element,
-                                                       @NotNull TextRange range,
-                                                       String newContent) throws IncorrectOperationException {
+  public ShLiteral handleContentChange(@NotNull ShLiteral element, @NotNull TextRange range, String newContent) throws IncorrectOperationException {
     ASTNode oldNode = element.getNode();
-    ShGenericCommandDirective newElement = ShElementGenerator.createGenericCommand(element.getProject(), newContent);
+    ShLiteral newElement = ShElementGenerator.createLiteral(element.getProject(), newContent);
     oldNode.getTreeParent().replaceChild(oldNode, newElement.getNode());
     return element;
   }
