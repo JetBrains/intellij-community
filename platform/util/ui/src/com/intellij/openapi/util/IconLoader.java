@@ -106,7 +106,10 @@ public final class IconLoader {
     while (!ourTransform.compareAndSet(prev, next));
 
     if (prev != next) {
-      ourIconsCache.clear();
+      for (CachedImageIcon value : ourIconsCache.values()) {
+        value.myTransform = next;
+      }
+
       ourIcon2DisabledIcon.clear();
       //clears svg cache
       ImageDescriptor.clearCache();
