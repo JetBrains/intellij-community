@@ -22,7 +22,7 @@ class UseBundledMavenQuickFix: BuildIssueQuickFix {
 
   override fun runQuickFix(project: Project, dataProvider: DataProvider): CompletableFuture<*> {
     MavenWorkspaceSettingsComponent.getInstance(project).settings.generalSettings.mavenHome = MavenServerManager.BUNDLED_MAVEN_3
-    Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP, "", "Maven version changed to ${MavenServerManager.getInstance().currentMavenVersion}", NotificationType.INFORMATION).notify(null)
+    Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP, "", "Maven version has been changed to ${MavenServerManager.getInstance().currentMavenVersion}", NotificationType.INFORMATION).notify(null)
     return CompletableFuture.completedFuture(null)
   }
 

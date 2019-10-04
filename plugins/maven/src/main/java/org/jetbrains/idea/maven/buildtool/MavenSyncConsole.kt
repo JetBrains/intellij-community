@@ -21,6 +21,7 @@ import com.intellij.pom.Navigatable
 import org.jetbrains.idea.maven.buildtool.quickfix.OpenMavenSettingsQuickFix
 import org.jetbrains.idea.maven.buildtool.quickfix.UseBundledMavenQuickFix
 import org.jetbrains.idea.maven.execution.SyncBundle
+import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.server.MavenServerProgressIndicator
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
@@ -209,11 +210,12 @@ class MavenSyncConsole(private val myProject: Project) {
 
   @Synchronized
   fun showQuickFixBadMaven(message: String, kind: MessageEvent.Kind) {
+    val bundledVersion = MavenServerManager.getInstance().getMavenVersion(MavenServerManager.BUNDLED_MAVEN_3)
     mySyncView.onEvent(mySyncId, BuildIssueEventImpl(mySyncId, object : BuildIssue {
-      override val title = "Bad maven version"
+      override val title = "Maven version issue"
       override val description: String = "${message}\n" +
                                          "- <a href=\"${OpenMavenSettingsQuickFix.ID}\">Open Settings</a>\n" +
-                                         "- <a href=\"${UseBundledMavenQuickFix.ID}\">Use Bundled</a>\n"
+                                         "- <a href=\"${UseBundledMavenQuickFix.ID}\">Use Bundled (${bundledVersion})</a>\n"
 
       override val quickFixes: List<BuildIssueQuickFix> = listOf(OpenMavenSettingsQuickFix(), UseBundledMavenQuickFix())
       override fun getNavigatable(project: Project): Navigatable? = null
