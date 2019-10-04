@@ -115,8 +115,8 @@ class HgIgnoredFileContentProvider(private val project: Project) : IgnoredFileCo
   override fun buildIgnoreGroupDescription(ignoredFileProvider: IgnoredFileProvider) =
     prependCommentHashCharacterIfNeeded(ignoredFileProvider.ignoredGroupDescription)
 
-  override fun buildIgnoreEntryContent(ignoreFileRoot: VirtualFile, ignoredFileDescriptor: IgnoredFileDescriptor) =
-    FileUtil.getRelativePath(ignoreFileRoot.path, ignoredFileDescriptor.path!!, '/') ?: ""
+  override fun buildIgnoreEntryContent(ignoreEntryRoot: VirtualFile, ignoredFileDescriptor: IgnoredFileDescriptor) =
+    FileUtil.getRelativePath(ignoreEntryRoot.path, ignoredFileDescriptor.path!!, '/') ?: ""
 
   override fun supportIgnoreFileNotInVcsRoot() = false
 
