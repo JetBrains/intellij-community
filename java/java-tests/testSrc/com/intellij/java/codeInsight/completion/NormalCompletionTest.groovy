@@ -1533,6 +1533,9 @@ class XInternalError {}
     assert LookupElementPresentation.renderElement(lookup.items[1]).strikeout
   }
 
+  void testInvokeGenerateEqualsHashCodeOnOverrideCompletion() { doTest() }
+  void testInvokeGenerateToStringOnOverrideCompletion() { doTest() }
+
   void testAccessorViaCompletion() {
     configure()
 

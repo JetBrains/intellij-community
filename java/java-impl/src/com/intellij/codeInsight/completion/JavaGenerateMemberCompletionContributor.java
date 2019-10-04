@@ -23,9 +23,11 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
+import com.siyeh.ig.psiutils.MethodUtils;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.java.generate.GenerateToStringActionHandlerImpl;
 import org.jetbrains.java.generate.exception.GenerateCodeException;
 
 import javax.swing.*;
@@ -179,12 +181,32 @@ public class JavaGenerateMemberCompletionContributor {
         final PsiClass parent = PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), context.getStartOffset(), PsiClass.class, false);
         if (parent == null) return;
 
+        if (GenerateEqualsHandler.hasNonStaticFields(parent) && generateByWizards(context)) {
+          return;
+        }
+
         try (AccessToken ignored = generateDefaultMethods ? forceDefaultMethodsInside() : AccessToken.EMPTY_ACCESS_TOKEN) {
           List<PsiMethod> prototypes = OverrideImplementUtil.overrideOrImplementMethod(parent, baseMethod, false);
           insertGenerationInfos(context, OverrideImplementUtil.convert2GenerationInfos(prototypes));
         }
       }
 
+      private boolean generateByWizards(@NotNull InsertionContext context) {
+        PsiFile file = context.getFile();
+        if (MethodUtils.isEquals(baseMethod) || MethodUtils.isHashCode(baseMethod)) {
+          context.setAddCompletionChar(false);
+          context.setLaterRunnable(() -> new GenerateEqualsHandler().invoke(context.getProject(), context.getEditor(), file));
+          return true;
+        }
+
+        if (MethodUtils.isToString(baseMethod)) {
+          context.setAddCompletionChar(false);
+          context.setLaterRunnable(() -> new GenerateToStringActionHandlerImpl().invoke(context.getProject(), context.getEditor(), file));
+          return true;
+        }
+
+        return false;
+      }
     }, generateDefaultMethods, targetClass);
   }
 
