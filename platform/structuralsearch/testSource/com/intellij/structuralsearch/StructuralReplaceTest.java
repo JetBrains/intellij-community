@@ -2222,6 +2222,13 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                              "}";
     assertEquals(expected7, replace(in7, "@XmlAttribute(name=\"default\") @Deprecated '_Type '_field;",
                                     "@XmlAttribute(name=\"default\") $Type$ $field$;"));
+
+    final String expected7b = "class IssueLink {\n" +
+                              "    @XmlAttribute(name = \"default\", namespace = \"space\")\n" +
+                              "    @Deprecated\n" +
+                              "    public String typeInward;\n" +
+                              "}";
+    assertEquals(expected7b, replace(in7, "@'_Anno* public class '_X {}", "@$Anno$ class $X$ {}"));
   }
 
   public void testReplacePolyadicExpression() {
