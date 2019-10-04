@@ -613,9 +613,7 @@ public class NameUtilMatchingTest extends TestCase {
     assertTrue(caseInsensitiveMatcher(" EUC-").matchingDegree("x-EUC-TW") > Integer.MIN_VALUE);
   }
 
-  private static void assertPreference(@NonNls String pattern,
-                                       @NonNls String less,
-                                       @NonNls String more) {
+  static void assertPreference(@NonNls String pattern, @NonNls String less, @NonNls String more) {
     assertPreference(pattern, less, more, NameUtil.MatchingCaseSensitivity.FIRST_LETTER);
   }
 

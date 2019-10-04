@@ -15,8 +15,7 @@ import org.junit.Assert;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.intellij.psi.util.NameUtilMatchingTest.assertDoesntMatch;
-import static com.intellij.psi.util.NameUtilMatchingTest.assertMatches;
+import static com.intellij.psi.util.NameUtilMatchingTest.*;
 
 /**
  * @author peter
@@ -86,6 +85,18 @@ public class MinusculeMatcherPerformanceTest extends TestCase {
       String pattern = "*# -*- coding: utf-8 -*-$:. unshift(\"/Library/RubyMotion/lib\")require 'motion/project'Motion::Project::App. setup do |app|  # Use `rake config' to see complete project settings.   app. sdk_version = '4. 3'end";
       String name    = "# -*- coding: utf-8 -*-$:.unshift(\"/Library/RubyMotion/lib\")require 'motion/project'Motion::Project::App.setup do |app|  # Use `rake config' to see complete project settings.  app.sdk_version = '4.3'  app.frameworks -= ['UIKit']end";
       assertDoesntMatch(pattern, name);
+    }).assertTiming();
+  }
+
+  public void testLongStringMatchingWithItself() {
+    String s =
+      "the class with its attributes mapped to fields of records parsed by an {@link AbstractParser} or written by an {@link AbstractWriter}.";
+    PlatformTestUtil.startPerformanceTest(getName(), 30, () -> {
+      assertMatches(s, s);
+      assertMatches("*" + s, s);
+
+      assertPreference(s, s.substring(0, 10), s);
+      assertPreference("*" + s, s.substring(0, 10), s);
     }).assertTiming();
   }
 }

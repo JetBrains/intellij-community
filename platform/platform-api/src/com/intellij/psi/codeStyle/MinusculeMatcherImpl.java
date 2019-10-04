@@ -239,8 +239,9 @@ class MinusculeMatcherImpl extends MinusculeMatcher {
       return null;
     }
     if (infix) {
-      if (StringUtil.indexOfIgnoreCase(name, new CharArrayCharSequence(myPattern, 1, myPattern.length), 0) >= 0) {
-        return FList.<TextRange>emptyList().prepend(new TextRange(1, myPattern.length));
+      int index = StringUtil.indexOfIgnoreCase(name, new CharArrayCharSequence(myPattern, 1, myPattern.length), 0);
+      if (index >= 0) {
+        return FList.<TextRange>emptyList().prepend(TextRange.from(index, myPattern.length - 1));
       }
       return null;
     }
