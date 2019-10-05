@@ -33,7 +33,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class OpenAnotherLogTabAction extends DumbAwareAction {
   protected OpenAnotherLogTabAction() {
-    super("Open Another Log Tab", "Open Another Log Tab", AllIcons.Actions.OpenNewTab);
+    super("Open Another Log Tab", "Open another log tab", AllIcons.Actions.OpenNewTab);
   }
 
   @Override
