@@ -132,6 +132,7 @@ class AndroidStudioLibraryLicenses {
     new LibraryLicense(name: "TightVNC", libraryName: "tightvnc", license: "Commercial License"),
     new LibraryLicense(name: "Transport Pipeline", libraryName: "transport-proto", license: "Apache 2.0",
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0"),
+    new LibraryLicense(name: "Xtext", libraryName: "org.eclipse.xtext.xbase", license: "Eclipse Public License 1.0"),
     new LibraryLicense(name: "Instant App Proto Manifest", libraryName: "aia-proto",
                        license: "Apache 2.0", url: "http://source.android.com/"),
     new LibraryLicense(name: "Archive Patcher",
