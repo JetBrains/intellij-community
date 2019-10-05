@@ -144,7 +144,7 @@ object DynamicPlugins {
       }
     }
 
-    return loadedPluginDescriptor.unloadClassLoader()
+    return loadedPluginDescriptor.unloadClassLoader() || allowLoadUnloadSynchronously(loadedPluginDescriptor)
   }
 
   @JvmStatic
