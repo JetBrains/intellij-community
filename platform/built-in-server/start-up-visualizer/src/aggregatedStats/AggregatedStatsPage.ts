@@ -8,6 +8,7 @@ import {loadJson} from "@/httpUtil"
 import {InfoResponse, Machine, Metrics} from "@/aggregatedStats/model"
 import {ClusteredChartManager} from "@/aggregatedStats/ClusteredChartManager"
 import {debounce} from "debounce"
+import {DEFAULT_AGGREGATION_OPERATOR} from "@/aggregatedStats/ChartSettings"
 
 @Component
 export default class AggregatedStatsPage extends Vue {
@@ -26,7 +27,7 @@ export default class AggregatedStatsPage extends Vue {
 
   private loadData = debounce(() => {
     this.doLoadData()
-  }, 300)
+  }, 1000)
 
   isShowScrollbarXPreviewChanged(_value: boolean) {
     this.lineChartManagers.forEach(it => it.scrollbarXPreviewOptionChanged())
@@ -34,7 +35,7 @@ export default class AggregatedStatsPage extends Vue {
   }
 
   private doLoadData() {
-    loadJson(new URL(`${this.chartSettings.serverUrl}/info`), null, this.$notify)
+    loadJson(`${this.chartSettings.serverUrl}/info`, null, this.$notify)
       .then((data: InfoResponse | null) => {
         if (data == null) {
           return
@@ -87,7 +88,7 @@ export default class AggregatedStatsPage extends Vue {
     if (this.chartSettings.selectedMachine === selectedMachine) {
       // data will be reloaded on machine change, but if product changed but machine remain the same, data reloading must be triggered here
       if (product != null && selectedMachine != null) {
-        this.loadClusteredChartsData(product, selectedMachine)
+        this.loadClusteredChartsData(product)
         this.loadLineChartData(product, selectedMachine)
       }
     }
@@ -108,11 +109,16 @@ export default class AggregatedStatsPage extends Vue {
       return
     }
 
-    this.loadClusteredChartsData(product, machine)
+    this.loadClusteredChartsData(product)
     this.loadLineChartData(product, machine)
   }
 
-  private loadClusteredChartsData(product: string, machineId: number): void {
+  private loadClusteredChartsData(product: string): void {
+    const machineId = this.chartSettings.selectedMachine
+    if (machineId == null) {
+      return
+    }
+
     const chartManagers = this.clusteredChartManagers
     if (chartManagers.length === 0) {
       chartManagers.push(new ClusteredChartManager(this.$refs.clusteredDurationChartContainer as HTMLElement))
@@ -123,28 +129,25 @@ export default class AggregatedStatsPage extends Vue {
     chartManagers[1].setData(loadJson(this.createGroupedMetricUrl(product, machineId, true), null, this.$notify))
   }
 
-  createGroupedMetricUrl(product: string, machineId: number, isInstant: boolean): URL {
-    const url = new URL(`${this.chartSettings.serverUrl}/groupedMetrics`)
-    url.searchParams.set("product", product)
-    url.searchParams.set("machine", machineId.toString())
-    url.searchParams.set("eventType", isInstant ? "i" : "d")
-    return url
+  createGroupedMetricUrl(product: string, machineId: number, isInstant: boolean): string {
+    return `${this.chartSettings.serverUrl}/groupedMetrics/` +
+      `product=${encodeURIComponent(product)}` +
+      `&machine=${machineId}` +
+      `&operator=${this.chartSettings.aggregationOperator || DEFAULT_AGGREGATION_OPERATOR}` +
+      `&eventType=${isInstant ? "i" : "d"}`
   }
 
   // noinspection DuplicatedCode
   loadLineChartData(product: string, machineId: number): void {
-    const url = new URL(`${this.chartSettings.serverUrl}/metrics`)
-    url.searchParams.set("product", product)
-    url.searchParams.set("machine", machineId.toString())
+    const url = `${this.chartSettings.serverUrl}/metrics/` +
+      `product=${encodeURIComponent(product)}` +
+      `&machine=${machineId}`
     const infoResponse = this.lastInfoResponse!!
     loadJson(url, null, this.$notify)
       .then(data => {
         if (data != null) {
           this.renderLineCharts(data, infoResponse)
         }
-      })
-      .catch(e => {
-        console.error(e)
       })
   }
 
@@ -171,6 +174,19 @@ export default class AggregatedStatsPage extends Vue {
     if (!isEmpty(newV)) {
       this.loadData()
     }
+  }
+
+  @Watch("chartSettings.aggregationOperator")
+  aggregationOperatorChanged(newV: string | null, _oldV: string) {
+    if (isEmpty(newV)) {
+      return
+    }
+
+    const product = this.chartSettings.selectedProduct
+    if (product == null || product.length === 0) {
+      return
+    }
+    this.loadClusteredChartsData(product)
   }
 
   mounted() {

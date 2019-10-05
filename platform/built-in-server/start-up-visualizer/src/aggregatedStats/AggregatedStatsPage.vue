@@ -4,8 +4,9 @@
     <el-row>
       <el-col :span="16">
         <el-form :inline="true" size="small">
-          <el-form-item label="Server url">
+          <el-form-item label="Server">
             <el-input
+                data-lpignore="true"
                 placeholder="Enter the aggregated stats server URL..."
                 v-model="chartSettings.serverUrl">
             </el-input>

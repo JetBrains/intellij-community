@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-export function loadJson(url: URL, processed: (() => void) | null, notificationManager: any): Promise<any> {
-  const urlString = url.toString()
-  console.log("load", urlString)
+export function loadJson(url: string, processed: (() => void) | null, notificationManager: any): Promise<any> {
+  console.log("load", url)
 
   function showError(reason: string) {
     notificationManager.error({
@@ -19,7 +18,7 @@ export function loadJson(url: URL, processed: (() => void) | null, notificationM
     showError("8 seconds timeout")
   }, 8000)
 
-  return fetch(urlString, {credentials: "omit", signal})
+  return fetch(url, {credentials: "omit", signal})
     .then(it => it.json())
     .then(data => {
       clearTimeout(timeoutId)

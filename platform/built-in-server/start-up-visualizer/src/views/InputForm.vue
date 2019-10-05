@@ -88,7 +88,7 @@
     private doGetFromRunningInstance(port: number, processed: () => void) {
       // localhost blocked by Firefox, but 127.0.0.1 not.
       // Google Chrome correctly resolves localhost, but Firefox doesn't.
-      loadJson(new URL(`http://127.0.0.1:${port}/api/startUpMeasurement`), processed, this.$notify)
+      loadJson(`http://127.0.0.1:${port}/api/startUpMeasurement`, processed, this.$notify)
         .then(data => {
           if (data == null) {
             return
