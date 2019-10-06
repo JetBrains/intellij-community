@@ -12,11 +12,6 @@
       <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-jdk7/1.3.50-compose-20190920/kotlin-stdlib-jdk7-1.3.50-compose-20190920.jar!/" />
     </CLASSES>
     <JAVADOC />
-    <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-jdk8/1.3.50-compose-20190920/kotlin-stdlib-jdk8-1.3.50-compose-20190920-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib/1.3.50-compose-20190920/kotlin-stdlib-1.3.50-compose-20190920-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-common/1.3.50-compose-20190920/kotlin-stdlib-common-1.3.50-compose-20190920-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-jdk7/1.3.50-compose-20190920/kotlin-stdlib-jdk7-1.3.50-compose-20190920-sources.jar!/" />
-    </SOURCES>
+    <SOURCES />
   </library>
 </component>
