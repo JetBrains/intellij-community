@@ -32,9 +32,9 @@
 
 <script lang="ts">
   import {Component, Vue} from "vue-property-decorator"
-  import InputForm from "@/views/InputForm.vue"
-  import TabbedCharts from "@/views/TabbedCharts.vue"
-  import TabbedInfoCharts from "@/views/TabbedInfoCharts.vue"
+  import InputForm from "@/report/InputForm.vue"
+  import TabbedCharts from "@/report/TabbedCharts.vue"
+  import TabbedInfoCharts from "@/report/TabbedInfoCharts.vue"
 
   @Component({components: {TabbedInfoCharts, InputForm, TabbedCharts}})
   export default class Main extends Vue {

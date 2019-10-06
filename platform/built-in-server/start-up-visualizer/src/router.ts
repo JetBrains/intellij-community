@@ -6,35 +6,30 @@ import {chartDescriptors} from "@/charts/ActivityChartDescriptor"
 
 Vue.use(Router)
 
-// to simplify development
-const chartComponentRoutes: Array<RouteConfig> = chartDescriptors.map(it => {
-  return {
-    path: `/${it.id}`,
-    name: it.label,
-    component: () => import("@/views/ActivityChart.vue"),
-    props: {type: it.id},
-  }
-})
-
 const routes: Array<RouteConfig> = [
   {
-    path: "/timeline",
-    name: "Timeline",
-    component: () => import("@/timeline/TimelineChart.vue"),
+    path: "/",
+    redirect: "/report"
   },
   {
-    path: `/serviceTimeline`,
-    name: "Service Timeline",
-    component: () => import("@/timeline/ServiceTimelineChart.vue"),
+    path: "/report",
+    name: "Report Analyzer",
+    component: () => import("@/report/Report.vue"),
   },
   {
-    path: `/aggregatedStats`,
+    path: "/aggregatedStats",
     name: "Aggregated Stats",
     component: () => import("@/aggregatedStats/AggregatedStatsPage.vue"),
   },
   {
-    path: "/",
-    component: () => import("@/views/Main.vue"),
+    path: "/report/timeline",
+    name: "Timeline",
+    component: () => import("@/timeline/TimelineChart.vue"),
+  },
+  {
+    path: "/report/serviceTimeline",
+    name: "Service Timeline",
+    component: () => import("@/timeline/ServiceTimelineChart.vue"),
   },
   {
     path: "*",
@@ -44,8 +39,26 @@ const routes: Array<RouteConfig> = [
     },
   },
 ]
-routes.push(...chartComponentRoutes)
 
-export default new Router({
+// to simplify development
+for (const chartDescriptor of chartDescriptors) {
+  routes.push({
+    path: `/report/${chartDescriptor.id}`,
+    name: chartDescriptor.label,
+    component: () => import("@/report/ActivityChart.vue"),
+    props: {type: chartDescriptor.id},
+  })
+}
+
+const router = new Router({
   routes,
 })
+
+// https://github.com/vuejs/vue-router/issues/914#issuecomment-384477609
+router.afterEach((to, _from) => {
+  Vue.nextTick(() => {
+    document.title = to.name!!
+  })
+})
+
+export default router

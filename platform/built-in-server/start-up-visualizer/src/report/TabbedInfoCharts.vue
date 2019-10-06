@@ -1,10 +1,25 @@
 <!-- Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file. -->
 <template>
   <el-tabs v-model="activeName" @tab-click="navigate">
+    <el-tab-pane label="Timeline" name="timeline" lazy>
+      <keep-alive>
+        <TimelineChart/>
+      </keep-alive>
+    </el-tab-pane>
+    <el-tab-pane label="Service Timeline" name="serviceTimeline" lazy>
+      <keep-alive>
+        <ServiceTimelineChart/>
+      </keep-alive>
+    </el-tab-pane>
     <!--  use v-once because `charts` is not going to be changed  -->
     <el-tab-pane v-once v-for="item in charts" :key="item.name" :label="item.label" :name="item.id" lazy>
       <keep-alive>
         <ActivityChart :type="item.id"/>
+      </keep-alive>
+    </el-tab-pane>
+    <el-tab-pane label="Stats" name="stats" lazy>
+      <keep-alive>
+        <StatsChart/>
       </keep-alive>
     </el-tab-pane>
   </el-tabs>
@@ -12,15 +27,20 @@
 
 <script lang="ts">
   import {Component, Vue, Watch} from "vue-property-decorator"
-  import ActivityChart from "@/views/ActivityChart.vue"
   import {Location} from "vue-router"
+  import TimelineChart from "@/timeline/TimelineChart.vue"
+  import ServiceTimelineChart from "@/timeline/ServiceTimelineChart.vue"
+  import StatsChart from "@/report/StatsChart.vue"
+  import ActivityChart from "@/report/ActivityChart.vue"
   import {chartDescriptors} from "@/charts/ActivityChartDescriptor"
 
-  @Component({components: {ActivityChart}})
-  export default class TabbedCharts extends Vue {
-    charts = chartDescriptors.filter(it => it.isInfoChart !== true)
+  const DEFAULT_ACTIVE_TAB = "timeline"
 
-    activeName: string = chartDescriptors[0].id
+  @Component({components: {TimelineChart, ServiceTimelineChart, ActivityChart, StatsChart}})
+  export default class TabbedInfoCharts extends Vue {
+    activeName: string = DEFAULT_ACTIVE_TAB
+
+    charts = chartDescriptors.filter(it => it.isInfoChart === true)
 
     created() {
       this.updateLocation(this.$route)
@@ -32,22 +52,16 @@
     }
 
     private updateLocation(location: Location): void {
-      const tab = location.query == null ? null : location.query.tab
+      const tab = location.query == null ? null : location.query.infoTab
       // do not check `location.path === "/"` because if component displayed, so, active
-      if (tab == null) {
-        this.activeName = chartDescriptors[0].id
-      }
-      else {
-        const descriptor = chartDescriptors.find(it => it.id === tab)
-        this.activeName = descriptor == null ? chartDescriptors[0].id : descriptor.id
-      }
+      this.activeName = tab == null ? DEFAULT_ACTIVE_TAB : tab as string
     }
 
     navigate(): void {
       this.$router.push({
         query: {
           ...this.$route.query,
-          tab: this.activeName,
+          infoTab: this.activeName,
         },
       })
     }
