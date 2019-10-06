@@ -62,6 +62,7 @@
                 class = "com.intellij.openapi.vcs.actions.VcsQuickListPopupAction"
                 text = "VCS Operations Popup..." description="Context aware popup with list of commonly used VCS actions"/>
         <reference ref="CheckinProject"/>
+        <reference ref="ChangesView.ToggleCommitUi"/>
         <action id="Vcs.UpdateProject" class="com.intellij.openapi.vcs.update.CommonUpdateProjectAction" icon="AllIcons.Actions.CheckOut">
           <keyboard-shortcut first-keystroke="control T" keymap="$default"/>
         </action>
@@ -317,6 +318,7 @@
       <reference ref="VcsToolbarLabelAction"/>
       <reference ref="Vcs.UpdateProject"/>
       <reference ref="CheckinProject"/>
+      <reference ref="ChangesView.ToggleCommitUi"/>
       <reference ref="Compare.SameVersion"/>
       <reference ref="Vcs.ShowTabbedFileHistory"/>
       <reference ref="ChangesView.Revert"/>
@@ -328,6 +330,7 @@
       <reference ref="VcsToolbarLabelAction"/>
       <reference ref="Vcs.UpdateProject"/>
       <reference ref="CheckinProject"/>
+      <reference ref="ChangesView.ToggleCommitUi"/>
       <reference ref="Vcs.ShowTabbedFileHistory"/>
       <reference ref="ChangesView.Revert"/>
       <separator/>

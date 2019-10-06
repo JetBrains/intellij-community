@@ -990,6 +990,7 @@
         <group id="Vcs.Operations.Popup.VcsNameSeparator" class="com.intellij.openapi.vcs.actions.VcsQuickListPopupAction$VcsNameSeparator"/>
         <reference id="ChangesView.AddUnversioned"/>
         <reference id="CheckinProject"/>
+        <reference ref="ChangesView.ToggleCommitUi"/>
         <reference id="CheckinFiles"/>
         <reference id="ChangesView.Revert"/>
         <separator/>
@@ -1250,6 +1251,7 @@
         <group id="TouchBarDefaultOptionalGroup" text="Optional Actions">
           <reference ref="Vcs.UpdateProject"/>
           <reference ref="CheckinProject"/>
+          <reference ref="ChangesView.ToggleCommitUi"/>
         </group>
         <group id="TouchBarDefault_ctrl" text="Default with Ctrl Key">
           <separator/>
