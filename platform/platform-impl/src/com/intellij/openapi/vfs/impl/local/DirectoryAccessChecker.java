@@ -92,7 +92,7 @@ public class DirectoryAccessChecker {
           if (fields.size() < 4) continue;
 
           String type = fields.get(2);
-          FileSystem fs = type.startsWith("nfs") ? NFS : type.equals("cifs") ? CIFS : null;
+          FileSystem fs = type.equals("nfs") || type.equals("nfs4") ? NFS : type.equals("cifs") ? CIFS : null;
           if (fs != null) {
             Path path = Paths.get(fields.get(1));
             if (USER_HOME_DIR.equals(path)) userHomeMounted = true;
