@@ -13,6 +13,7 @@ public class ImplicitNumericConversionFixTest extends IGQuickFixesTestCase {
   public void testOperatorAssignment() { doTest(); }
   public void testOperatorAssignment2() { doTest(); }
   public void testOperatorAssignment3() { doTest(); }
+  public void testPlainAssignment() { doTest(); }
   public void testHexadecimalLiteral() { doTest(); }
   public void testParentheses() { doTest("Convert to '100L'"); }
   public void testArrayAccess() { doTest(); }

@@ -127,21 +127,24 @@ public class ImplicitNumericConversionInspection extends BaseInspection {
       else {
         final PsiElement parent = expression.getParent();
         if (parent instanceof PsiAssignmentExpression) {
-          replaceCompoundAssignment((PsiAssignmentExpression)parent);
+          final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)parent;
+          final PsiJavaToken sign = assignmentExpression.getOperationSign();
+          if (!JavaTokenType.EQ.equals(sign.getTokenType())) {
+            replaceCompoundAssignment(assignmentExpression);
+            return;
+          }
         }
-        else {
-          CommentTracker commentTracker = new CommentTracker();
-          final String castExpression =
-            '(' + expectedType.getCanonicalText() + ')' + commentTracker.text(expression, ParenthesesUtils.TYPE_CAST_PRECEDENCE);
-          PsiReplacementUtil.replaceExpression(expression, castExpression, commentTracker);
-        }
+        final CommentTracker commentTracker = new CommentTracker();
+        final String castExpression =
+          '(' + expectedType.getCanonicalText() + ')' + commentTracker.text(expression, ParenthesesUtils.TYPE_CAST_PRECEDENCE);
+        PsiReplacementUtil.replaceExpression(expression, castExpression, commentTracker);
       }
     }
 
     private void replaceCompoundAssignment(PsiAssignmentExpression assignmentExpression) {
       final PsiJavaToken sign = assignmentExpression.getOperationSign();
-      if (JavaTokenType.EQ.equals(sign.getTokenType())) return;
-      CommentTracker commentTracker = new CommentTracker();
+      if (JavaTokenType.EQ.equals(sign.getTokenType())) throw new IllegalArgumentException();
+      final CommentTracker commentTracker = new CommentTracker();
       final PsiExpression lhs = assignmentExpression.getLExpression();
       final String lhsText = commentTracker.text(lhs);
       StringBuilder builder = new StringBuilder();
