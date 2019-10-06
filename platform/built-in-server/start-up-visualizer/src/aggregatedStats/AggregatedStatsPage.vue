@@ -57,7 +57,7 @@
 
     <el-form :inline="true" size="small">
       <el-form-item label="Operator">
-        <el-select v-model="chartSettings.aggregationOperator" filterable>
+        <el-select v-model="chartSettings.aggregationOperator" data-lpignore="true" filterable>
           <el-option
               v-for="name in aggregationOperators"
               :key="name"
@@ -65,6 +65,11 @@
               :value="name">
           </el-option>
         </el-select>
+      </el-form-item>
+      <el-form-item>
+        <el-input-number v-if="chartSettings.aggregationOperator === 'quantile'"
+                         :min="0" :max="100" :step="10"
+                         v-model="chartSettings.quantile"></el-input-number>
       </el-form-item>
     </el-form>
 

@@ -21,7 +21,7 @@ export default class AggregatedStatsPage extends Vue {
   products: Array<string> = []
   machines: Array<Machine> = []
 
-  aggregationOperators: Array<string> = ["median", "min", "max"]
+  aggregationOperators: Array<string> = ["median", "min", "max", "quantile"]
 
   private lastInfoResponse: InfoResponse | null = null
 
@@ -136,11 +136,17 @@ export default class AggregatedStatsPage extends Vue {
   }
 
   createGroupedMetricUrl(product: string, machineId: number, isInstant: boolean): string {
-    return `${this.chartSettings.serverUrl}/groupedMetrics/` +
+    const chartSettings = this.chartSettings
+    const operator = chartSettings.aggregationOperator || DEFAULT_AGGREGATION_OPERATOR
+    let result = `${chartSettings.serverUrl}/groupedMetrics/` +
       `product=${encodeURIComponent(product)}` +
       `&machine=${machineId}` +
-      `&operator=${this.chartSettings.aggregationOperator || DEFAULT_AGGREGATION_OPERATOR}` +
-      `&eventType=${isInstant ? "i" : "d"}`
+      `&operator=${operator}`
+    if (operator === "quantile") {
+      result += `&operatorArg=${chartSettings.quantile}`
+    }
+    result += `&eventType=${isInstant ? "i" : "d"}`
+    return result
   }
 
   // noinspection DuplicatedCode
@@ -188,11 +194,26 @@ export default class AggregatedStatsPage extends Vue {
       return
     }
 
+    this.reloadClusteredDataIfPossible()
+  }
+
+  private reloadClusteredDataIfPossible() {
     const product = this.chartSettings.selectedProduct
     if (product == null || product.length === 0) {
       return
     }
     this.loadClusteredChartsData(product)
+  }
+
+  private reloadClusteredDataIfPossibleAfterDelay = debounce(() => {
+    this.reloadClusteredDataIfPossible()
+  }, 300)
+
+
+  @Watch("chartSettings.quantile")
+  quantileChanged(_newV: number, _oldV: number) {
+    console.log("quantile changed", _newV)
+    this.reloadClusteredDataIfPossibleAfterDelay()
   }
 
   mounted() {

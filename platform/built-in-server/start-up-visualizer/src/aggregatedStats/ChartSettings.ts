@@ -7,7 +7,8 @@ export class ChartSettings {
   selectedProduct: string = ""
   selectedMachine: number | null = null
 
-  aggregationOperator: string = DEFAULT_AGGREGATION_OPERATOR
+  aggregationOperator: "median" | "min" | "max" | "quantile" = DEFAULT_AGGREGATION_OPERATOR
+  quantile: number = 50
 
   showScrollbarXPreview: boolean = false
 }
