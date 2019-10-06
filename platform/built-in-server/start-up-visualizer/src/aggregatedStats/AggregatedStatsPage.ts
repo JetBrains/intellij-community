@@ -25,8 +25,10 @@ export default class AggregatedStatsPage extends Vue {
 
   private lastInfoResponse: InfoResponse | null = null
 
-  private loadData = debounce(() => {
-    this.doLoadData()
+  isFetching: boolean = false
+
+  private loadDataAfterDelay = debounce(() => {
+    this.loadData()
   }, 1000)
 
   isShowScrollbarXPreviewChanged(_value: boolean) {
@@ -34,7 +36,8 @@ export default class AggregatedStatsPage extends Vue {
     this.dataModule.updateChartSettings(this.chartSettings)
   }
 
-  private doLoadData() {
+  loadData() {
+    this.isFetching = true
     loadJson(`${this.chartSettings.serverUrl}/info`, null, this.$notify)
       .then((data: InfoResponse | null) => {
         if (data == null) {
@@ -54,8 +57,11 @@ export default class AggregatedStatsPage extends Vue {
         // not called by Vue for some reasons
         this.selectedProductChanged(selectedProduct, "")
         this.selectedMachineChanged(this.chartSettings.selectedMachine, "")
+
+        this.isFetching = false
       })
       .catch(e => {
+        this.isFetching = false
         console.error(e)
       })
   }
@@ -172,7 +178,7 @@ export default class AggregatedStatsPage extends Vue {
   @Watch("chartSettings.serverUrl")
   serverUrlChanged(newV: string | null, _oldV: string) {
     if (!isEmpty(newV)) {
-      this.loadData()
+      this.loadDataAfterDelay()
     }
   }
 
@@ -190,7 +196,10 @@ export default class AggregatedStatsPage extends Vue {
   }
 
   mounted() {
-    this.serverUrlChanged(this.chartSettings.serverUrl, "")
+    const serverUrl = this.chartSettings.serverUrl
+    if (!isEmpty(serverUrl)) {
+      this.loadData()
+    }
   }
 
   beforeDestroy() {

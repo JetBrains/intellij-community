@@ -2,13 +2,15 @@
 <template>
   <el-container>
     <el-header>
-      <el-menu mode="horizontal" router="true">
+      <el-menu mode="horizontal" :router=true>
         <el-menu-item index="/report">Report Analyzer</el-menu-item>
         <el-menu-item index="/aggregatedStats">Aggregated Stats</el-menu-item>
       </el-menu>
     </el-header>
     <el-main>
-      <router-view/>
+      <keep-alive>
+        <router-view/>
+      </keep-alive>
     </el-main>
   </el-container>
 </template>

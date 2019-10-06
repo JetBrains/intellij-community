@@ -33,6 +33,13 @@
             </el-select>
           </el-form-item>
 
+          <el-form-item>
+            <el-button title="Updated automatically, but you can force data reloading"
+                       type="primary"
+                       icon="el-icon-refresh"
+                       :loading="isFetching"
+                       @click="loadData"></el-button>
+          </el-form-item>
         </el-form>
       </el-col>
       <el-col :span="8">
@@ -90,3 +97,10 @@
 </template>
 
 <script lang="ts" src="./AggregatedStatsPage.ts"></script>
+
+<style>
+.aggregatedChart {
+  width: 100%;
+  height: 340px;
+}
+</style>

@@ -56,11 +56,6 @@
   height: 500px;
 }
 
-.aggregatedChart {
-  width: 100%;
-  height: 400px;
-}
-
 .timeLineChart {
   width: 100%;
   /* in any case time line chart will adjust height according to items */
