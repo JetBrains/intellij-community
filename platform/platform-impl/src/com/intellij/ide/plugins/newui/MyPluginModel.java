@@ -65,6 +65,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
 
   private final Map<PluginId, PendingDynamicPluginInstall> myDynamicPluginsToInstall = new LinkedHashMap<>();
   private final Set<IdeaPluginDescriptor> myDynamicPluginsToUninstall = new HashSet<>();
+  private final Set<IdeaPluginDescriptor> myPluginsToRemoveOnCancel = new HashSet<>();
 
   protected MyPluginModel() {
     Window window = ProjectUtil.getActiveFrameOrWelcomeScreen();
@@ -166,7 +167,13 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
       }
     }
 
+    myPluginsToRemoveOnCancel.clear();
+
     return applyEnableDisablePlugins(enabledMap) && uninstallsRequiringRestart.isEmpty();
+  }
+
+  public Set<IdeaPluginDescriptor> getPluginsToRemoveOnCancel() {
+    return myPluginsToRemoveOnCancel;
   }
 
   private boolean applyEnableDisablePlugins(Map<PluginId, Boolean> enabledMap) {
@@ -344,7 +351,6 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
       boolean showErrors = true;
       boolean restartRequired = true;
       List<PendingDynamicPluginInstall> pluginsToInstallSynchronously = new ArrayList<>();
-
       try {
         PluginInstallOperation operation = new PluginInstallOperation(pluginsToInstall, allPlugins, this, info.indicator);
         operation.setAllowInstallWithoutRestart(allowInstallWithoutRestart);
@@ -352,6 +358,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
         for (PendingDynamicPluginInstall install : operation.getPendingDynamicPluginInstalls()) {
           if (DynamicPlugins.allowLoadUnloadSynchronously(install.getPluginDescriptor())) {
             pluginsToInstallSynchronously.add(install);
+            myPluginsToRemoveOnCancel.add(install.getPluginDescriptor());
           }
           else {
             myDynamicPluginsToInstall.put(install.getPluginDescriptor().getPluginId(), install);

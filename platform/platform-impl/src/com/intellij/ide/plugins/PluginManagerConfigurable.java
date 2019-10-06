@@ -1617,6 +1617,7 @@ public class PluginManagerConfigurable
       myShutdownCallback = null;
     }
 
+    reset();
     InstalledPluginsState.getInstance().resetChangesAppliedWithoutRestart();
   }
 
@@ -1632,6 +1633,11 @@ public class PluginManagerConfigurable
     if (myShutdownCallback == null && myPluginModel.createShutdownCallback) {
       myShutdownCallback = () -> ApplicationManager.getApplication().invokeLater(() -> shutdownOrRestartApp());
     }
+  }
+
+  @Override
+  public void reset() {
+    myPluginModel.getPluginsToRemoveOnCancel().forEach(PluginInstaller::uninstallDynamicPlugin);
   }
 
   @NotNull
