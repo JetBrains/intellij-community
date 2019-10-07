@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.wizards;
 
-import com.intellij.ide.projectWizard.ProjectSettingsStep;
 import com.intellij.ide.util.projectWizard.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl;
@@ -36,7 +35,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-public class AbstractMavenModuleBuilder extends ModuleBuilder implements SourcePathsBuilder {
+public abstract class AbstractMavenModuleBuilder extends ModuleBuilder implements SourcePathsBuilder {
   private MavenProject myAggregatorProject;
   private MavenProject myParentProject;
 
@@ -116,18 +115,7 @@ public class AbstractMavenModuleBuilder extends ModuleBuilder implements SourceP
   }
 
   @Override
-  public ModuleWizardStep[] createWizardSteps(@NotNull WizardContext wizardContext, @NotNull ModulesProvider modulesProvider) {
-    return new ModuleWizardStep[]{
-      new MavenStructureWizardStep(this, wizardContext),
-      new SelectPropertiesStep(wizardContext.getProject(), this)
-    };
-  }
-
-  @NotNull
-  @Override
-  public List<Class<? extends ModuleWizardStep>> getIgnoredSteps() {
-    return Collections.singletonList(ProjectSettingsStep.class);
-  }
+  public abstract ModuleWizardStep[] createWizardSteps(@NotNull WizardContext wizardContext, @NotNull ModulesProvider modulesProvider);
 
   private VirtualFile createAndGetContentEntry() {
     String path = FileUtil.toSystemIndependentName(getContentEntryPath());
