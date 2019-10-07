@@ -137,14 +137,7 @@ fun collectClosureParamsDependencies(innerParameter: PsiParameter,
   signature ?: return
   for ((inferredType, typeParameter) in signature.zip(closureParameter.typeParameters)) {
     builder.addConstraint(TypeConstraint(typeParameter.type(), inferredType, innerParameter))
-    val inferredTypeParameter = inferredType.typeParameter()
-    if (inferredTypeParameter != null) {
-      builder.addDependentType(typeParameter)
-      builder.addDependentType(inferredTypeParameter)
-    }
-    else {
-      builder.generateRequiredTypes(typeParameter, inferredType, LOWER)
-    }
+    builder.generateRequiredTypes(typeParameter, inferredType, LOWER)
   }
 }
 

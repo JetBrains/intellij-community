@@ -173,7 +173,7 @@ class CommonDriver private constructor(private val targetParameters: Set<GrParam
           if (properType == typeParameter.type()) {
             continue
           }
-          constraintCollector.add(TypeConstraint(resolveResult.substitutor.substitute(type), typeParameter.type(), method))
+          constraintCollector.add(TypeConstraint(properType, typeParameter.type(), method))
         }
       }
     })
