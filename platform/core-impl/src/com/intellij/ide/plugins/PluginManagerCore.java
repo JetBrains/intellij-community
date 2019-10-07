@@ -739,7 +739,7 @@ public class PluginManagerCore {
     final boolean isBundled;
     final boolean isEssential;
     final boolean ignoreDisabled;
-    final List<String> visitedFiles = new ArrayList<>(3);
+    final List<Pair<String, IdeaPluginDescriptorImpl>> visitedFiles = new ArrayList<>(3);
 
     File lastZipWithDescriptor;
 
@@ -842,7 +842,7 @@ public class PluginManagerCore {
       return null;
     }
 
-    context.visitedFiles.add(pathName);
+    context.visitedFiles.add(Pair.create(pathName, descriptor));
     resolveOptionalDescriptors(descriptor, context, (@SystemIndependent String optPathName) -> {
       IdeaPluginDescriptorImpl optionalDescriptor = null;
       if (context.lastZipWithDescriptor != null) { // try last file that had the descriptor that worked
@@ -928,11 +928,11 @@ public class PluginManagerCore {
     Map<PluginId, List<IdeaPluginDescriptorImpl>> descriptors = new LinkedHashMap<>(optionalConfigs.size());
     for (Map.Entry<PluginId, List<String>> entry : optionalConfigs.entrySet()) {
       for (String configFile : entry.getValue()) {
-        int idx = context.visitedFiles.indexOf(configFile);
+        int idx = ContainerUtil.indexOf(context.visitedFiles, o -> o.getFirst().equals(configFile));
         if (idx != -1) {
-          List<String> cycle = context.visitedFiles.subList(idx, context.visitedFiles.size());
-          getLogger().info("Plugin " + toPresentableName(descriptor) + " optional descriptors form a cycle: " +
-                           StringUtil.join(cycle, ", "));
+          List<Pair<String, IdeaPluginDescriptorImpl>> cycle = context.visitedFiles.subList(idx, context.visitedFiles.size());
+          getLogger().info("Plugin " + toPresentableName(context.visitedFiles.get(0).second) + " optional descriptors form a cycle: " +
+                           StringUtil.join(cycle, o -> o.getFirst(), ", "));
           continue;
         }
 
