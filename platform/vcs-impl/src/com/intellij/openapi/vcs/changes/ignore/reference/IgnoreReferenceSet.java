@@ -24,6 +24,7 @@
 
 package com.intellij.openapi.vcs.changes.ignore.reference;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
@@ -32,6 +33,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.ignore.cache.IgnorePatternsMatchedFilesCache;
 import com.intellij.openapi.vcs.changes.ignore.cache.PatternCache;
+import com.intellij.openapi.vcs.changes.ignore.lang.IgnoreLanguage;
 import com.intellij.openapi.vcs.changes.ignore.psi.IgnoreEntry;
 import com.intellij.openapi.vcs.changes.ignore.psi.IgnoreFile;
 import com.intellij.openapi.vcs.changes.ignore.util.RegexUtil;
@@ -99,6 +101,16 @@ public class IgnoreReferenceSet extends FileReferenceSet {
     PsiFile containingFile = getElement().getContainingFile();
     PsiDirectory containingDirectory =
       containingFile.getParent() != null ? containingFile.getParent() : containingFile.getOriginalFile().getContainingDirectory();
+    if (containingDirectory == null) {
+      Language language = containingFile.getLanguage();
+      if (language instanceof IgnoreLanguage) {
+        VirtualFile affectedRoot =
+          ((IgnoreLanguage)language).getAffectedRoot(containingFile.getProject(), containingFile.getOriginalFile().getVirtualFile());
+        if (affectedRoot != null) {
+          containingDirectory = containingFile.getManager().findDirectory(affectedRoot);
+        }
+      }
+    }
     return containingDirectory != null ? Collections.singletonList(containingDirectory) :
            super.computeDefaultContexts();
   }
@@ -106,11 +118,17 @@ public class IgnoreReferenceSet extends FileReferenceSet {
   @Override
   protected Condition<PsiFileSystemItem> getReferenceCompletionFilter() {
     return item -> {
-      VirtualFile ignoreFile = getElement().getContainingFile().getOriginalFile().getVirtualFile();
-      VirtualFile ignoreFileVcsRoot = VcsUtil.getVcsRootFor(item.getProject(), ignoreFile);
+      Project project = item.getProject();
+      PsiFile originalFile = getElement().getContainingFile().getOriginalFile();
+      VirtualFile ignoreFile = originalFile.getVirtualFile();
+      Language language = originalFile.getLanguage();
+      if (!(language instanceof IgnoreLanguage)) return false;
+
+      VirtualFile ignoreFileAffectedRoot = ((IgnoreLanguage)language).getAffectedRoot(project, ignoreFile);
+      VirtualFile ignoreFileVcsRoot = VcsUtil.getVcsRootFor(project, ignoreFileAffectedRoot);
       if (ignoreFileVcsRoot == null) return false;
 
-      return isFileUnderSameVcsRoot(item.getProject(), ignoreFileVcsRoot, item.getVirtualFile());
+      return isFileUnderSameVcsRoot(project, ignoreFileVcsRoot, item.getVirtualFile());
     };
   }
 
@@ -238,7 +256,11 @@ public class IgnoreReferenceSet extends FileReferenceSet {
       if (!(containingFile instanceof IgnoreFile)) {
         return;
       }
-      VirtualFile ignoreFileVcsRoot = VcsUtil.getVcsRootFor(context.getProject(), containingFile.getVirtualFile());
+      VirtualFile ignoreFileAffectedRoot =
+        ((IgnoreLanguage)containingFile.getLanguage()).getAffectedRoot(context.getProject(), containingFile.getVirtualFile());
+      if (ignoreFileAffectedRoot == null) return;
+
+      VirtualFile ignoreFileVcsRoot = VcsUtil.getVcsRootFor(context.getProject(), ignoreFileAffectedRoot);
       if (ignoreFileVcsRoot == null) return;
 
       VirtualFile contextVirtualFile;
@@ -273,7 +295,10 @@ public class IgnoreReferenceSet extends FileReferenceSet {
               continue;
             }
 
-            String name = (root != null) ? VfsUtilCore.getRelativePath(file, root) : file.getName();
+            String relativeToIgnoreFileVcsRoot = VfsUtilCore.getRelativePath(file, ignoreFileVcsRoot);
+            String name = root != null
+                          ? VfsUtilCore.getRelativePath(file, root)
+                          : relativeToIgnoreFileVcsRoot != null ? relativeToIgnoreFileVcsRoot : file.getName();
             if (RegexUtil.match(pattern, name)) {
               PsiFileSystemItem psiFileSystemItem = getPsiFileSystemItem(psiManager, file);
               if (psiFileSystemItem == null) {
