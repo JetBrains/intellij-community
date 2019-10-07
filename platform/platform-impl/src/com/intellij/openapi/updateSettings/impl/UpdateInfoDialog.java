@@ -2,7 +2,6 @@
 package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.execution.CommandLineUtil;
-import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.util.PropertiesComponent;
@@ -17,17 +16,12 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.LicensingFacade;
-import com.intellij.ui.components.JBLabel;
-import com.intellij.ui.components.JBScrollPane;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
@@ -47,8 +41,6 @@ import java.util.*;
 
 import static com.intellij.openapi.updateSettings.impl.UpdateCheckerComponent.SELF_UPDATE_STARTED_FOR_BUILD_PROPERTY;
 import static com.intellij.openapi.util.Pair.pair;
-import static javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER;
-import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED;
 
 /**
  * @author pti
@@ -74,7 +66,6 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
     myNewBuild = newBuild;
     myPatches = patches;
     myWriteProtected = myPatches != null && !SystemInfo.isWindows && !Files.isWritable(Paths.get(PathManager.getHomePath()));
-    getCancelAction().putValue(DEFAULT_ACTION, Boolean.TRUE);
     myLicenseInfo = initLicensingInfo(myUpdatedChannel, myNewBuild);
     myTestPatch = null;
     init();
@@ -93,7 +84,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
     myNewBuild = newBuild;
     myPatches = patches;
     myWriteProtected = false;
-    myLicenseInfo = null;
+    myLicenseInfo = initLicensingInfo(myUpdatedChannel, myNewBuild);
     myTestPatch = patchFile;
     init();
     setTitle("[TEST] " + getTitle());
@@ -130,37 +121,27 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
 
   @Override
   protected JComponent createCenterPanel() {
-    return new UpdateInfoPanel().myPanel;
+    return UpdateInfoPanelUI.INSTANCE
+      .createPanel(myNewBuild, myPatches, myTestPatch, myWriteProtected, myLicenseInfo, myEnableLink, myUpdatedChannel);
   }
 
   @NotNull
   @Override
-  protected Action[] createActions() {
-    List<Action> actions = new ArrayList<>();
+  protected DialogStyle getStyle() {
+    return DialogStyle.COMPACT;
+  }
 
-    if (myPatches != null || myTestPatch != null) {
-      boolean canRestart = ApplicationManager.getApplication().isRestartCapable();
-      actions.add(new AbstractAction(IdeBundle.message(canRestart ? "updates.download.and.restart.button" : "updates.apply.manually.button")) {
-        {
-          setEnabled(!myWriteProtected);
-        }
+  @Override
+  protected JComponent createSouthPanel() {
+    JComponent component = super.createSouthPanel();
+    component.setBorder(JBUI.Borders.empty(8, 12));
+    return component;
+  }
 
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          close(OK_EXIT_CODE);
-          downloadPatchAndRestart();
-        }
-      });
-    }
-
-    List<ButtonInfo> buttons = myNewBuild.getButtons();
-    for (ButtonInfo info : buttons) {
-      if (!info.isDownload() || myPatches == null && myTestPatch == null) {
-        actions.add(new ButtonAction(info));
-      }
-    }
-
-    actions.add(new AbstractAction(IdeBundle.message("updates.ignore.update.button")) {
+  @NotNull
+  @Override
+  protected Action[] createLeftSideActions() {
+    return ContainerUtil.ar(new AbstractAction(IdeBundle.message("updates.ignore.update.button")) {
       @Override
       public void actionPerformed(ActionEvent e) {
         String build = myNewBuild.getNumber().asStringWithoutProductCode();
@@ -168,8 +149,31 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
         doCancelAction();
       }
     });
+  }
 
+  @NotNull
+  @Override
+  protected Action[] createActions() {
+    List<Action> actions = new ArrayList<>();
     actions.add(getCancelAction());
+
+    if (myPatches != null || myTestPatch != null) {
+      boolean canRestart = ApplicationManager.getApplication().isRestartCapable();
+      AbstractAction updateButton =
+        new AbstractAction(IdeBundle.message(canRestart ? "updates.download.and.restart.button" : "updates.apply.manually.button")) {
+          {
+            setEnabled(!myWriteProtected);
+          }
+
+          @Override
+          public void actionPerformed(ActionEvent e) {
+            close(OK_EXIT_CODE);
+            downloadPatchAndRestart();
+          }
+        };
+      updateButton.putValue(DEFAULT_ACTION, Boolean.TRUE);
+      actions.add(updateButton);
+    }
 
     return actions.toArray(new Action[0]);
   }
@@ -268,89 +272,5 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
     String title = IdeBundle.message("update.notifications.title"), message = IdeBundle.message("update.apply.manually.message", file);
     IdeUpdateUsageTriggerCollector.trigger( "dialog.manual.patch.prepared");
     ApplicationManager.getApplication().invokeLater(() -> Messages.showInfoMessage(message, title));
-  }
-
-  private static class ButtonAction extends AbstractAction {
-    private final ButtonInfo myInfo;
-
-    private ButtonAction(@NotNull ButtonInfo info) {
-      super(info.getName());
-      myInfo = info;
-    }
-
-    @Override
-    public void actionPerformed(ActionEvent e) {
-      if (myInfo.isDownload()) {
-        IdeUpdateUsageTriggerCollector.trigger( "dialog.download.clicked");
-      }
-      BrowserUtil.browse(IdeUrlTrackingParametersProvider.getInstance().augmentUrl(myInfo.getUrl()));
-    }
-  }
-
-  private class UpdateInfoPanel {
-    private JPanel myPanel;
-    private JEditorPane myUpdateMessage;
-    private JBLabel myCurrentVersion;
-    private JBLabel myNewVersion;
-    private JBLabel myPatchLabel;
-    private JBLabel myPatchInfo;
-    private JEditorPane myMessageArea;
-    private JEditorPane myLicenseArea;
-    private JBScrollPane myScrollPane;
-
-    UpdateInfoPanel() {
-      ApplicationInfo appInfo = ApplicationInfo.getInstance();
-      ApplicationNamesInfo appNames = ApplicationNamesInfo.getInstance();
-
-      String message = myNewBuild.getMessage();
-      if (StringUtil.isEmptyOrSpaces(message)) {
-        String url = downloadUrl();
-        message = IdeBundle.message("updates.new.version.available", appNames.getFullProductName(), url);
-      }
-      configureMessageArea(myUpdateMessage, message, null, BrowserHyperlinkListener.INSTANCE);
-
-      myCurrentVersion.setText(formatVersion(appInfo.getFullVersion(), appInfo.getBuild()));
-      myNewVersion.setText(formatVersion(myNewBuild.getVersion(), myNewBuild.getNumber()));
-
-      if (myPatches != null && !StringUtil.isEmptyOrSpaces(myPatches.getSize())) {
-        myPatchInfo.setText(myPatches.getSize() + " MB");
-      }
-      else if (myTestPatch != null) {
-        myPatchInfo.setText(Math.max(1, myTestPatch.length() >> 20) + " MB");
-      }
-      else {
-        myPatchLabel.setVisible(false);
-        myPatchInfo.setVisible(false);
-      }
-
-      if (myWriteProtected) {
-        message = IdeBundle.message("updates.write.protected", appNames.getProductName(), PathManager.getHomePath());
-        configureMessageArea(myMessageArea, message, JBColor.RED, null);
-      }
-      else {
-        configureMessageArea(myMessageArea);
-      }
-
-      if (myLicenseInfo != null) {
-        configureMessageArea(myLicenseArea, myLicenseInfo.first, myLicenseInfo.second, null);
-      }
-    }
-
-    private void createUIComponents() {
-      myUpdateMessage = new JEditorPane("text/html", "") {
-        @Override
-        public Dimension getPreferredScrollableViewportSize() {
-          Dimension size = super.getPreferredScrollableViewportSize();
-          size.height = Math.min(size.height, JBUIScale.scale(400));
-          return size;
-        }
-      };
-      myScrollPane = new JBScrollPane(myUpdateMessage, VERTICAL_SCROLLBAR_AS_NEEDED, HORIZONTAL_SCROLLBAR_NEVER);
-      myScrollPane.setBorder(JBUI.Borders.empty());
-    }
-  }
-
-  private static String formatVersion(String versionString, BuildNumber build) {
-    return IdeBundle.message("updates.version.info", versionString, build.asStringWithoutProductCode());
   }
 }
