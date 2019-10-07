@@ -3,6 +3,7 @@
  */
 package com.intellij.java.codeInsight.daemon.indentGuide
 
+import com.intellij.openapi.editor.IndentGuideDescriptor
 import com.intellij.openapi.editor.IndentsModel
 import com.intellij.openapi.editor.impl.IndentsModelImpl
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
@@ -149,6 +150,50 @@ class C {
     assert guide.toString() == "2 (1-2-4)"
   }
 
+  void testIndentModel() {
+    myFixture.configureByText("${getTestName(false)}.java", """\
+class C {
+       }""")
+
+    def model = myFixture.editor.indentsModel as IndentsModelImpl
+    def nLines = myFixture.editor.document.lineCount
+    def nCols = myFixture.editor.document.getLineEndOffset(0)
+
+    model.assumeIndents([])
+    for (int start = 0; start <= nLines; start++) {
+      for (int end = start + 1; end <= nLines; end++) {
+        def actual = model.getDescriptor(start, end)?.indentLevel
+        assertNull("Indent at lines $start-$end, level: $actual is present, but it shouldn't", actual)
+      }
+    }
+
+    for (int start = 0; start <= nLines; start++) {
+      for (int end = start + 1; end <= nLines; end++) {
+        for (int level = 0; level < nCols; level++) {
+          model.assumeIndents([new IndentGuideDescriptor(level, start, end)])
+          def actual = model.getDescriptor(start, end)?.indentLevel
+          assertNotNull("Indent at ${level} for lines ${start} - ${end} is missing", actual)
+          assertEquals("Expected indent at lines ${start} - ${end}, level: ${level}, found at ${actual}", level, actual)
+        }
+      }
+    }
+
+    model.assumeIndents([new IndentGuideDescriptor(0, 0, 1), new IndentGuideDescriptor(1, 1, 2)])
+    def actual = model.getDescriptor(0, 1)?.indentLevel
+    assertNotNull("Indent at 0 for lines 0 - 1 is missing", actual)
+    assertEquals("Expected indent at lines 0 - 1, level: 0, found at $actual", 0, actual)
+    actual = model.getDescriptor(1, 2)?.indentLevel
+    assertNotNull("Indent at 1 for lines 1 - 2 is missing", actual)
+    assertEquals("Expected indent at lines 1 - 2, level: 1, found at $actual", 1, actual)
+    for (int start = 0; start <= nLines; start++) {
+      for (int end = start + 1; end <= nLines; end++) {
+        actual = model.getDescriptor(start, end)?.indentLevel
+        if (start == 0 && end == 1 && actual == 0 || start == 1 && end == 2 && actual == 1) continue
+        assertNull("Indent at lines $start-$end, level: $actual is present, but it shouldn't", actual)
+      }
+    }
+  }
+
   private void doTest(@NotNull String text) {
     doTest(text, { IndentModelGuidesProvider.create(it) })
   }
@@ -177,11 +222,6 @@ class C {
     @Override
     List<Guide> getGuides() {
       return myGuides
-    }
-
-    @Override
-    Integer getIndentAt(int startLine, int endLine) {
-      return myIndentsModel.getDescriptor(startLine, endLine)?.indentLevel
     }
   }
 }

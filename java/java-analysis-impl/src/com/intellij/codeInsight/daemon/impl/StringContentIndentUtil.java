@@ -24,15 +24,19 @@ public class StringContentIndentUtil {
   @Contract("null -> false")
   static boolean isDocumentUpdated(@NotNull Editor editor) {
     Document document = editor.getDocument();
-    long stamp = editor.getSettings().isStringContentIndentGuideShown() ? document.getModificationStamp() : -1;
+    long stamp = getTimestamp(editor, document);
     Long prevStamp = document.getUserData(LAST_TIME_CONTENT_INDENT_CHANGED);
     return prevStamp == null || prevStamp != stamp;
   }
 
   static void updateTimestamp(@NotNull Editor editor) {
     Document document = editor.getDocument();
-    long timestamp = editor.getSettings().isStringContentIndentGuideShown() ? document.getModificationStamp() : -1;
+    long timestamp = getTimestamp(editor, document);
     document.putUserData(LAST_TIME_CONTENT_INDENT_CHANGED, timestamp);
+  }
+
+  private static long getTimestamp(@NotNull Editor editor, Document document) {
+    return editor.getSettings().isStringContentIndentGuideShown() ? document.getModificationStamp() : -1;
   }
 
   /**

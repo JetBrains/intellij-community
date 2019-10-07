@@ -5,18 +5,15 @@ import com.intellij.codeInsight.daemon.impl.StringContentIndentUtil;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 public class JavaTextBlockIndentGuideTest extends BaseIndentGuideTest {
 
@@ -104,12 +101,10 @@ public class JavaTextBlockIndentGuideTest extends BaseIndentGuideTest {
   private static class TextBlockIndentGuidesProvider implements IndentGuidesProvider {
 
     private final List<Guide> myGuides;
-    private final Map<Pair<Integer, Integer>, Integer> myGuidesByLines;
 
     @Contract(pure = true)
-    private TextBlockIndentGuidesProvider(List<Guide> guides, Map<Pair<Integer, Integer>, Integer> guidesByLines) {
+    private TextBlockIndentGuidesProvider(List<Guide> guides) {
       myGuides = guides;
-      myGuidesByLines = guidesByLines;
     }
 
     @NotNull
@@ -118,21 +113,10 @@ public class JavaTextBlockIndentGuideTest extends BaseIndentGuideTest {
       return myGuides;
     }
 
-    @Nullable
-    @Override
-    public Integer getIndentAt(int startLine, int endLine) {
-      return myGuidesByLines.get(new Pair<>(startLine + 1, endLine - 1));
-    }
-
     @NotNull
     private static TextBlockIndentGuidesProvider create(@NotNull JavaCodeInsightTestFixture fixture) {
       List<Guide> guides = extractTextBlockGuides(fixture.getEditor());
-      Map<Pair<Integer, Integer>, Integer> guidesByLines = byLines(guides);
-      return new TextBlockIndentGuidesProvider(guides, guidesByLines);
-    }
-
-    private static Map<Pair<Integer, Integer>, Integer> byLines(@NotNull List<Guide> guides) {
-      return guides.stream().collect(Collectors.toMap(i -> new Pair<>(i.getStartLine(), i.getEndLine()), i -> i.getIndent()));
+      return new TextBlockIndentGuidesProvider(guides);
     }
 
     @NotNull
@@ -145,7 +129,7 @@ public class JavaTextBlockIndentGuideTest extends BaseIndentGuideTest {
         int startLine = document.getLineNumber(range.getStartOffset());
         int endLine = document.getLineNumber(range.getEndOffset());
         int indent = StringContentIndentUtil.getIndent(entry.getValue());
-        guides.add(new Guide(startLine, endLine, indent));
+        guides.add(new Guide(startLine - 1, endLine + 1, indent));
       }
       return guides;
     }

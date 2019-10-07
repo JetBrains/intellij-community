@@ -2,16 +2,12 @@ package com.intellij.java.codeInsight.daemon.indentGuide;
 
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
 interface IndentGuidesProvider {
   @NotNull
   List<Guide> getGuides();
-
-  @Nullable
-  Integer getIndentAt(int startLine, int endLine);
 
   class Guide {
 

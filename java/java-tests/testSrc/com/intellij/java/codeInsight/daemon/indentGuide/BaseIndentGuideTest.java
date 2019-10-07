@@ -1,5 +1,7 @@
 package com.intellij.java.codeInsight.daemon.indentGuide;
 
+import com.intellij.java.codeInsight.daemon.indentGuide.IndentGuidesProvider.Guide;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
@@ -13,8 +15,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
-
-import static com.intellij.java.codeInsight.daemon.indentGuide.IndentGuidesProvider.Guide;
+import java.util.stream.Collectors;
 
 public abstract class BaseIndentGuideTest extends LightJavaCodeInsightFixtureTestCase {
 
@@ -28,11 +29,13 @@ public abstract class BaseIndentGuideTest extends LightJavaCodeInsightFixtureTes
     assertEquals("expected to find " + testData.myGuides.size() + " indent guides (" + testData.myGuides + ")" +
                  "but got " + guides.size() + " (" + guides + ")",
                  testData.myGuides.size(), guides.size());
+    Map<Pair<Integer, Integer>, Integer> guidesByLines = guides.stream()
+      .collect(Collectors.toMap(i -> new Pair<>(i.getStartLine(), i.getEndLine()), i -> i.getIndent()));
 
     for (Guide expectedGuide : testData.myGuides) {
       Integer startLine = expectedGuide.getStartLine();
       Integer endLine = expectedGuide.getEndLine();
-      Integer actualIndent = provider.getIndentAt(startLine, endLine);
+      Integer actualIndent = guidesByLines.get(new Pair<>(startLine, endLine));
       assertNotNull("expected to find an indent guide at lines " + startLine + "-" + endLine, actualIndent);
       assertEquals("expected that indent guide descriptor at lines " +
                    startLine + "-" + endLine + " has indent " + expectedGuide.getIndent() +
