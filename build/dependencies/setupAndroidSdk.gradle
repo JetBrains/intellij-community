@@ -15,6 +15,7 @@
  */
 
 repositories {
+  maven { url 'https://cache-redirector.jetbrains.com/repo.maven.apache.org/maven2/' }
   maven { url 'https://cache-redirector.jetbrains.com/jetbrains.bintray.com/intellij-third-party-dependencies/' }
   ivy {
     // TODO: re-publish android-sdk:android-sdk using maven layout and remove Ivy repository
@@ -28,14 +29,32 @@ repositories {
 configurations {
   androidOfflineRepo
   androidSdk
+  kotlinDeps
 }
 
 def currentOs = org.gradle.internal.os.OperatingSystem.current()
 def osFamily = currentOs.familyName
 
 dependencies {
-  androidOfflineRepo "org.jetbrains.intellij.deps.android.tools:android-sdk-offline-repo:26.5.0@zip"
+  ext.kotlin_version = "1.3.50"
+  androidOfflineRepo "org.jetbrains.intellij.deps.android.tools:android-sdk-offline-repo:26.5.0.1@zip"
   androidSdk "android-sdk:android-sdk:${osFamily}.3.3.3:@tar.gz"
+  kotlinDeps "org.jetbrains.kotlin:kotlin-android-extensions:${kotlin_version}"
+  kotlinDeps "org.jetbrains.kotlin:kotlin-android-extensions-runtime:${kotlin_version}"
+  kotlinDeps "org.jetbrains.kotlin:kotlin-annotation-processing-gradle:${kotlin_version}"
+  kotlinDeps "org.jetbrains.kotlin:kotlin-build-common:${kotlin_version}"
+  kotlinDeps "org.jetbrains.kotlin:kotlin-compiler-runner:${kotlin_version}"
+  kotlinDeps "org.jetbrains.kotlin:kotlin-gradle-plugin:${kotlin_version}"
+  kotlinDeps "org.jetbrains.kotlin:kotlin-gradle-plugin-api:${kotlin_version}"
+  kotlinDeps "org.jetbrains.kotlin:kotlin-gradle-plugin-model:${kotlin_version}"
+  kotlinDeps "org.jetbrains.kotlin:kotlin-scripting-common:${kotlin_version}"
+  kotlinDeps "org.jetbrains.kotlin:kotlin-scripting-compiler-embeddable:${kotlin_version}"
+  kotlinDeps "org.jetbrains.kotlin:kotlin-scripting-compiler-impl-embeddable:${kotlin_version}"
+  kotlinDeps "org.jetbrains.kotlin:kotlin-scripting-jvm:${kotlin_version}"
+  kotlinDeps "org.jetbrains.kotlin:kotlin-stdlib-jdk7:${kotlin_version}"
+  kotlinDeps "org.jetbrains.kotlin:kotlin-stdlib-jdk8:${kotlin_version}"
+  kotlinDeps "org.jetbrains.kotlin:kotlin-test:${kotlin_version}"
+  kotlinDeps "org.jetbrains.kotlin:kotlin-test-common:${kotlin_version}"
 }
 
 /* First we setup an offline-repo. This will remove all the alien files from .../android-sdk.
@@ -55,6 +74,12 @@ task syncAndroidSdk(dependsOn: [configurations.androidSdk, syncOfflineRepo], typ
   into "$buildDir/android-sdk/prebuilts/studio/sdk"
 }
 
-task setupAndroidSdk(dependsOn: [syncOfflineRepo, syncKotlinPluginForAndroid, syncAndroidSdk]) {
+task updateKotlinLibs(dependsOn: [configurations.kotlinDeps, syncOfflineRepo], type: OfflineMavenRepository) {
+  outputs.upToDateWhen { false }
+  configurationName = "kotlinDeps"
+  repoDir = file("$buildDir/android-sdk/prebuilts/tools/common/m2/repository")
+}
+
+task setupAndroidSdk(dependsOn: [syncOfflineRepo, syncKotlinPluginForAndroid, syncAndroidSdk, updateKotlinLibs]) {
   // This is entry point: invoke this task to setup android sdk and all the artifacts required to run android-plugin unit tests
 }
