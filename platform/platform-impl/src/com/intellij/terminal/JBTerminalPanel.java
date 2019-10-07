@@ -101,7 +101,6 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
   private final TerminalEventDispatcher myEventDispatcher = new TerminalEventDispatcher();
   private final JBTerminalSystemSettingsProviderBase mySettingsProvider;
   private final TerminalEscapeKeyListener myEscapeKeyListener;
-  private final List<Consumer<KeyEvent>> myPostProcessKeyEventConsumers = new CopyOnWriteArrayList<>();
   private final List<Consumer<KeyEvent>> myPreKeyEventConsumers = new CopyOnWriteArrayList<>();
 
   private List<AnAction> myActionsToSkip;
@@ -198,10 +197,6 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
 
   public void addPreKeyEventHandler(@NotNull Consumer<KeyEvent> preKeyEventHandler) {
     myPreKeyEventConsumers.add(preKeyEventHandler);
-  }
-
-  public void addPostProcessKeyEventHandler(@NotNull Consumer<KeyEvent> preKeyEventHandler) {
-    myPostProcessKeyEventConsumers.add(preKeyEventHandler);
   }
 
   @Override
@@ -368,10 +363,6 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
           processKeyEvent((KeyEvent)e);
         }
         dispatchEvent(e);
-
-        ApplicationManager.getApplication().invokeLater(() -> {
-          myPostProcessKeyEventConsumers.forEach(postProcessConsumer -> postProcessConsumer.accept(((KeyEvent)e)));
-        });
 
         return true;
       }

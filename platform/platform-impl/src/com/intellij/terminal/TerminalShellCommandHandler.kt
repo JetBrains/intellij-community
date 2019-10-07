@@ -16,7 +16,7 @@ interface TerminalShellCommandHandler {
     @JvmStatic
     val EP = ExtensionPointName.create<TerminalShellCommandHandler>("com.intellij.terminal.shellCommandHandler")
 
-    fun isAvailable(project: Project, command: String): Boolean {
+    fun matches(project: Project, command: String): Boolean {
       if (Experiments.getInstance().isFeatureEnabled("terminal.shell.command.handling")) {
         return EP.extensionList.any { it.isAvailable(project, command) }
       }
