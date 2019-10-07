@@ -6,9 +6,11 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.InstalledPluginsState;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.ui.LafManagerListener;
+import com.intellij.ide.ui.UIThemeProvider;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPointAdapter;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
@@ -59,10 +61,19 @@ public final class PluginLogo {
         return;
       }
 
-      ApplicationManager.getApplication().getMessageBus().connect().subscribe(LafManagerListener.TOPIC, source -> {
+      final Application application = ApplicationManager.getApplication();
+      application.getMessageBus().connect().subscribe(LafManagerListener.TOPIC, source -> {
         Default = null;
         HiDPIPluginLogoIcon.clearCache();
       });
+
+      UIThemeProvider.EP_NAME.addExtensionPointListener(new ExtensionPointAdapter<UIThemeProvider>() {
+        @Override
+        public void extensionListChanged() {
+          Default = null;
+          HiDPIPluginLogoIcon.clearCache();
+        }
+      }, application);
     }
   }
 
