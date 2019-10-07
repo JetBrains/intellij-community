@@ -2,6 +2,8 @@
 package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.ide.IdeBundle
+import com.intellij.internal.statistic.eventLog.FeatureUsageData
+import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.IdeUrlTrackingParametersProvider
@@ -24,6 +26,8 @@ import java.awt.FlowLayout
 import java.io.File
 import javax.swing.JEditorPane
 import javax.swing.JPanel
+import javax.swing.event.HyperlinkEvent
+import javax.swing.event.HyperlinkListener
 import kotlin.math.max
 
 object UpdateInfoPanelUI {
@@ -49,6 +53,11 @@ object UpdateInfoPanelUI {
         val cssFontDeclaration = UIUtil.getCssFontDeclaration(UIUtil.getLabelFont(), null, null, null)
         val updateHighlightsContent = updateHighlightsContent(appNames, patches, testPatch, newBuild, updatedChannel)
         it.text = """<html><head>$cssFontDeclaration</head><body>$updateHighlightsContent</body></html>"""
+        it.addHyperlinkListener(HyperlinkListener { event: HyperlinkEvent ->
+          if (event.eventType == HyperlinkEvent.EventType.ACTIVATED) {
+            FUCounterUsageLogger.getInstance().logEvent("ide.update.dialog.buttons", "url", FeatureUsageData().addValue(event.description))
+          }
+        })
       }
       .also { it.caretPosition = 0 }
       .also { it.isEditable = false }
