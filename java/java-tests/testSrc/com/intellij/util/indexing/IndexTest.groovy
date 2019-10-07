@@ -400,6 +400,34 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     assert ((PsiJavaFile)psiFile).importList.node
   }
 
+  void "test rename file with indexed associated unsaved document don't lost its data"() {
+    def level = LanguageLevel.HIGHEST
+    IdeaTestUtil.setModuleLanguageLevel(myFixture.module, level)
+    def psiFile = myFixture.addFileToProject("Foo.java", "class Foo {}")
+
+    def file = psiFile.virtualFile
+    def scope = GlobalSearchScope.allScope(project)
+
+    PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting()
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments()
+    def vp = PsiManager.getInstance(project).findViewProvider(file)
+    CodeStyleManager.getInstance(getProject()).reformat(vp.getPsi(vp.baseLanguage))
+
+    PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting()
+    FileContentUtilCore.reparseFiles(file)
+
+    vp = PsiManager.getInstance(project).findViewProvider(file)
+    ((PsiFileImpl)vp.getPsi(vp.baseLanguage)).greenStubTree
+
+    PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting()
+    FileContentUtilCore.reparseFiles(file)
+
+    PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting()
+    IdeaTestUtil.setModuleLanguageLevel(myFixture.module, level)
+
+    assert JavaPsiFacade.getInstance(project).findClass("Foo", scope)
+  }
+
   void "test language level change2"() {
     def psiFile = myFixture.addFileToProject("Foo.java", "class Foo {}")
     def vFile = psiFile.virtualFile
