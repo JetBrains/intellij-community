@@ -222,13 +222,10 @@ public class LogLoadedApplicationClassesAgent {
     }
 
     log("===================================================");
-    logger.generateReportWarnings().forEach(LogLoadedApplicationClassesAgent::log);
-    log("===================================================");
     log("Created classes list file to " + targetFile);
     log("System classes: " + withoutSource.size());
     log("Application classes: " + (libSource.size() + pluginsSource.size()));
     log("AppCDS is " + (useAppCDS ? "enabled" : "DISABLED"));
-    logger.generateReportHeader().forEach(LogLoadedApplicationClassesAgent::log);
     log("===================================================");
 
     return logger;
