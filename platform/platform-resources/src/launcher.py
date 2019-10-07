@@ -1,7 +1,6 @@
 #!/usr/bin/env $PYTHON$
+# Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
 # -*- coding: utf-8 -*-
-
-#  Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 import os
 import socket
@@ -25,24 +24,25 @@ def print_usage(cmd):
            '  {0} merge <local> <remote> [base] <merged>').format(cmd))
 
 
-def write_to_sock(sock, str):
-    if sys.version_info[0] >= 3: str = str.encode('utf-8')
-    sock.send(struct.pack('>h', len(str)) + str)
+def write_to_sock(sock, data):
+    if sys.version_info[0] >= 3:
+        data = data.encode('utf-8')
+    sock.send(struct.pack('>h', len(data)) + data)
 
 
 def read_from_sock(sock):
-    len = struct.unpack('>h', sock.recv(2))[0]
-    return sock.recv(len).decode('utf-8')
+    length = struct.unpack('>h', sock.recv(2))[0]
+    return sock.recv(length).decode('utf-8')
 
 
 def read_sequence_from_sock(sock):
     result = []
     while True:
         try:
-            str = read_from_sock(sock)
-            if str == '---':
+            data = read_from_sock(sock)
+            if data == '---':
                 break
-            result.append(str)
+            result.append(data)
 
         except (socket.error, IOError) as e:
             print("I/O error({0}): {1} ({2})".format(e.errno, e.strerror, e))
@@ -93,7 +93,7 @@ def try_activate_instance(args):
             port = int(pf.read())
         with open(token_path) as tf:
             token = tf.read()
-    except (ValueError):
+    except ValueError:
         return False
 
     s = socket.socket()
@@ -112,7 +112,7 @@ def try_activate_instance(args):
         s.settimeout(None)
         response = read_sequence_from_sock(s)
         if response[0] != 'ok':
-            print('bad response: ' + response)
+            print('bad response: ' + str(response))
             exit(1)
 
         if len(response) > 2:
