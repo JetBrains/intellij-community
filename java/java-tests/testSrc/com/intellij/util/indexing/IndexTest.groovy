@@ -1133,39 +1133,4 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     VfsUtil.saveText(vFile, "class Foo { void m() { int k = 0; } }")
     assertTrue(stamp == ((FileBasedIndexImpl)FileBasedIndex.instance).getIndexModificationStamp(StubUpdatingIndex.INDEX_ID, project))
   }
-
-  void "test index stamp update on transient data deletion"() {
-    def stamp = ((FileBasedIndexImpl)FileBasedIndex.instance).getIndexModificationStamp(StubUpdatingIndex.INDEX_ID, project)
-    def file = myFixture.addClass("class Foo {}").getContainingFile()
-    assert findClass("Foo") != null
-    PsiDocumentManager.getInstance(getProject()).commitAllDocuments()
-    assertTrue(stamp != ((FileBasedIndexImpl)FileBasedIndex.instance).getIndexModificationStamp(StubUpdatingIndex.INDEX_ID, project))
-    stamp = ((FileBasedIndexImpl)FileBasedIndex.instance).getIndexModificationStamp(StubUpdatingIndex.INDEX_ID, project)
-
-    PsiDocumentManager.getInstance(getProject()).commitAllDocuments()
-    ((PsiJavaFile)file).getImportList().add(JavaPsiFacade.getElementFactory(getProject()).createImportStatementOnDemand("java.io"))
-    assert findClass("Foo") != null
-    PsiDocumentManager.getInstance(getProject()).commitAllDocuments()
-    assertTrue(stamp != ((FileBasedIndexImpl)FileBasedIndex.instance).getIndexModificationStamp(StubUpdatingIndex.INDEX_ID, project))
-    stamp = ((FileBasedIndexImpl)FileBasedIndex.instance).getIndexModificationStamp(StubUpdatingIndex.INDEX_ID, project)
-
-    PsiDocumentManager.getInstance(getProject()).commitAllDocuments()
-    findClass("Foo").replace(findClass("Foo").copy())
-    assert findClass("Foo") != null
-    PsiDocumentManager.getInstance(getProject()).commitAllDocuments()
-    assertTrue(stamp == ((FileBasedIndexImpl)FileBasedIndex.instance).getIndexModificationStamp(StubUpdatingIndex.INDEX_ID, project))
-    stamp = ((FileBasedIndexImpl)FileBasedIndex.instance).getIndexModificationStamp(StubUpdatingIndex.INDEX_ID, project)
-
-    PsiDocumentManager.getInstance(getProject()).commitAllDocuments()
-    PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting()
-    PsiManager.getInstance(getProject()).reloadFromDisk(file)
-    assert findClass("Foo") != null
-    PsiDocumentManager.getInstance(getProject()).commitAllDocuments()
-    assertTrue(stamp != ((FileBasedIndexImpl)FileBasedIndex.instance).getIndexModificationStamp(StubUpdatingIndex.INDEX_ID, project))
-    stamp = ((FileBasedIndexImpl)FileBasedIndex.instance).getIndexModificationStamp(StubUpdatingIndex.INDEX_ID, project)
-
-    findClass("Foo").replace(findClass("Foo").copy())
-    assert findClass("Foo") != null
-    assertTrue(stamp != ((FileBasedIndexImpl)FileBasedIndex.instance).getIndexModificationStamp(StubUpdatingIndex.INDEX_ID, project))
-  }
 }
