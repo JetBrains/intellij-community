@@ -1637,7 +1637,7 @@ public class PluginManagerConfigurable
 
   @Override
   public void reset() {
-    myPluginModel.getPluginsToRemoveOnCancel().forEach(PluginInstaller::uninstallDynamicPlugin);
+    myPluginModel.removePluginsOnCancel();
   }
 
   @NotNull

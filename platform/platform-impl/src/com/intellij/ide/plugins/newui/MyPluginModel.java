@@ -172,8 +172,9 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     return applyEnableDisablePlugins(enabledMap) && uninstallsRequiringRestart.isEmpty();
   }
 
-  public Set<IdeaPluginDescriptor> getPluginsToRemoveOnCancel() {
-    return myPluginsToRemoveOnCancel;
+  public void removePluginsOnCancel() {
+    myPluginsToRemoveOnCancel.forEach(PluginInstaller::uninstallDynamicPlugin);
+    myPluginsToRemoveOnCancel.clear();
   }
 
   private boolean applyEnableDisablePlugins(Map<PluginId, Boolean> enabledMap) {
