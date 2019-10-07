@@ -102,7 +102,7 @@ object UpdateInfoPanelUI {
         .also { it.foreground = JBColor.RED }
     }
     else {
-      getConfigLink(panel, IdeBundle.message("updates.configure.label"))
+      getConfigLink(panel, IdeBundle.message("updates.configure.updates.label"))
     }
   }
 
