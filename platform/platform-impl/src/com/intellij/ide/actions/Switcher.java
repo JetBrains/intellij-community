@@ -692,13 +692,13 @@ public class Switcher extends AnAction implements DumbAware {
     }
 
     @NotNull
-    private static List<VirtualFile> collectFiles(@NotNull Project project, boolean onlyEdited) {
+    static List<VirtualFile> collectFiles(@NotNull Project project, boolean onlyEdited) {
       return onlyEdited ? Arrays.asList(IdeDocumentHistory.getInstance(project).getChangedFiles())
                         : getRecentFiles(project);
     }
 
     @NotNull
-    private static Pair<List<FileInfo>, Integer> getFilesToShowAndSelectionIndex(@NotNull Project project,
+    static Pair<List<FileInfo>, Integer> getFilesToShowAndSelectionIndex(@NotNull Project project,
                                                                                  @NotNull List<VirtualFile> filesForInit,
                                                                                  int toolWindowsCount,
                                                                                  boolean pinned) {
@@ -1360,7 +1360,7 @@ public class Switcher extends AnAction implements DumbAware {
     }
   }
 
-  private static class FileInfo extends Pair<VirtualFile, EditorWindow> {
+  static class FileInfo extends Pair<VirtualFile, EditorWindow> {
     private final Project myProject;
     private String myNameForRendering;
 
