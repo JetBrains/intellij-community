@@ -3,7 +3,6 @@ package org.jetbrains.plugins.github.pullrequest
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.fileEditor.FileEditor
@@ -23,7 +22,6 @@ import com.intellij.util.ui.UIUtil
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
-import org.jetbrains.plugins.github.pullrequest.action.GithubPullRequestKeys
 import org.jetbrains.plugins.github.pullrequest.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.data.GHPRTimelineLoader
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestDataProvider
@@ -62,7 +60,7 @@ internal class GHPRFileEditor(progressManager: ProgressManager,
                                     file.pullRequest.number, timelineModel)
     Disposer.register(this, loader)
 
-    val dataProvider = file.dataProvider
+    val dataProvider = context.pullRequestDataProvider!!
     fun handleReviewsThreads() {
       dataProvider.reviewThreadsRequest.handleOnEdt(this) { threads, _ ->
         if (threads != null) timelineModel.setReviewsThreads(threads)
@@ -115,7 +113,7 @@ internal class GHPRFileEditor(progressManager: ProgressManager,
       override fun dispose() {}
     }
 
-    val loaderPanel = object : GHListLoaderPanel<GHPRTimelineLoader>(loader, contentPanel, true), DataProvider {
+    val loaderPanel = object : GHListLoaderPanel<GHPRTimelineLoader>(loader, contentPanel, true) {
       override val loadingText = ""
 
       override fun createCenterPanel(content: JComponent) = Wrapper(content)
@@ -127,11 +125,6 @@ internal class GHPRFileEditor(progressManager: ProgressManager,
       override fun updateUI() {
         super.updateUI()
         background = EditorColorsManager.getInstance().globalScheme.defaultBackground
-      }
-
-      override fun getData(dataId: String): Any? {
-        if (GithubPullRequestKeys.ACTION_DATA_CONTEXT.`is`(dataId)) return context
-        return null
       }
     }
     Disposer.register(this, loaderPanel)

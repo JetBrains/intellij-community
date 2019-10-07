@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.action
 
+import com.intellij.openapi.Disposable
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
@@ -23,10 +24,23 @@ class GHPRActionDataContext internal constructor(private val dataContext: GHPull
     dataContext.dataLoader.invalidateAllData()
   }
 
-  private val selectedPullRequest: Long?
+  val pullRequest: Long?
     get() = selectionHolder.selectionNumber
 
-  val selectedPullRequestDataProvider: GithubPullRequestDataProvider?
-    get() = selectedPullRequest?.let { dataContext.dataLoader.getDataProvider(it) }
+  val pullRequestDataProvider: GithubPullRequestDataProvider?
+    get() = pullRequest?.let { dataContext.dataLoader.getDataProvider(it) }
 
+  companion object {
+    @JvmStatic
+    internal fun withFixedPullRequest(context: GHPRActionDataContext, pullRequest: Long): GHPRActionDataContext {
+      return GHPRActionDataContext(context.dataContext, object : GithubPullRequestsListSelectionHolder {
+        override var selectionNumber: Long?
+          get() = pullRequest
+          set(value) {}
+
+        override fun addSelectionChangeListener(disposable: Disposable, listener: () -> Unit) {
+        }
+      }, context.avatarIconsProviderFactory)
+    }
+  }
 }

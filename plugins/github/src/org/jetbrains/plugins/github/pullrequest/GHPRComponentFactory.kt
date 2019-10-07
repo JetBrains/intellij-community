@@ -121,13 +121,13 @@ internal class GHPRComponentFactory(private val project: Project) {
       addMouseListener(object : MouseAdapter() {
         override fun mouseClicked(e: MouseEvent) {
           if (SwingUtilities.isLeftMouseButton(e) && e.clickCount >= 2 && ListUtil.isPointOnSelection(this@apply, e.x, e.y)) {
-            openTimelineForSelection(dataContext, actionDataContext, this@apply)
+            openTimelineForSelection(actionDataContext, this@apply)
             e.consume()
           }
         }
       })
       registerKeyboardAction(
-        { openTimelineForSelection(dataContext, actionDataContext, this@apply) },
+        { openTimelineForSelection(actionDataContext, this@apply) },
         KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0),
         JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT)
     }.also {
@@ -206,13 +206,10 @@ internal class GHPRComponentFactory(private val project: Project) {
     }
   }
 
-  private fun openTimelineForSelection(dataContext: GHPullRequestsDataContext,
-                                       actionDataContext: GHPRActionDataContext,
+  private fun openTimelineForSelection(actionDataContext: GHPRActionDataContext,
                                        list: GithubPullRequestsList) {
     val pullRequest = list.selectedValue
-    val file = GHPRVirtualFile(actionDataContext,
-                               pullRequest,
-                               dataContext.dataLoader.getDataProvider(pullRequest.number))
+    val file = GHPRVirtualFile(actionDataContext, pullRequest)
     FileEditorManager.getInstance(project).openFile(file, true)
   }
 
