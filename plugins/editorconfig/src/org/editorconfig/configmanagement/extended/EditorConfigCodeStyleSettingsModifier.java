@@ -207,8 +207,13 @@ public class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsM
     throws EditorConfigException {
     try {
       String filePath = Utils.getFilePath(project, psiFile.getVirtualFile());
-      final Set<String> rootDirs = SettingsProviderComponent.getInstance().getRootDirs(project);
-      context.setOptions(new EditorConfig().getProperties(filePath, rootDirs, context));
+      if (filePath != null) {
+        final Set<String> rootDirs = SettingsProviderComponent.getInstance().getRootDirs(project);
+        context.setOptions(new EditorConfig().getProperties(filePath, rootDirs, context));
+      }
+      else {
+        LOG.error("No file path for " + psiFile.getName());
+      }
     }
     catch (ParsingException pe) {
       // Parsing exceptions may occur with incomplete files which is a normal case when .editorconfig is being edited.
