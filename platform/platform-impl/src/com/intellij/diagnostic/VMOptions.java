@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -90,17 +91,30 @@ public class VMOptions {
     writeGeneralOption(Pattern.compile("-D" + option + separator + "(true|false)*([a-zA-Z0-9]*)"), "-D" + option + separator + value);
   }
 
+  public static void writeEnableCDSArchiveOption(@NotNull final String archivePath) {
+    writeGeneralOptions(
+      Function.<String>identity()
+        .andThen(replaceOrAddOption(Pattern.compile("-Xshare:.*"), "-Xshare:auto"))
+        .andThen(replaceOrAddOption(Pattern.compile("-XX:\\+UnlockDiagnosticVMOptions"), "-XX:+UnlockDiagnosticVMOptions"))
+        .andThen(replaceOrAddOption(Pattern.compile("-XX:SharedArchiveFile=.*"), "-XX:SharedArchiveFile=" + archivePath))
+    );
+  }
+
+  public static void writeDisableCDSArchiveOption() {
+    writeGeneralOptions(
+      Function.<String>identity()
+        .andThen(replaceOrAddOption(Pattern.compile("-Xshare:.*\\r?\\n?"), ""))
+        .andThen(replaceOrAddOption(Pattern.compile("-XX:SharedArchiveFile=.*\\r?\\n?"), ""))
+    );
+  }
 
   private static void writeGeneralOption(@NotNull Pattern pattern, @NotNull String value) {
-    File file = getWriteFile();
-    if (file == null) {
-      LOG.warn("VM options file not configured");
-      return;
-    }
+    writeGeneralOptions(replaceOrAddOption(pattern, value));
+  }
 
-    try {
-      String content = file.exists() ? FileUtil.loadFile(file) : read();
-
+  @NotNull
+  private static Function<String, String> replaceOrAddOption(@NotNull Pattern pattern, @NotNull String value) {
+    return content -> {
       if (!StringUtil.isEmptyOrSpaces(content)) {
         Matcher m = pattern.matcher(content);
         if (m.find()) {
@@ -109,13 +123,28 @@ public class VMOptions {
           m.appendTail(b);
           content = b.toString();
         }
-        else {
+        else if (!StringUtil.isEmptyOrSpaces(value)) {
           content = StringUtil.trimTrailing(content) + SystemProperties.getLineSeparator() + value;
         }
       }
       else {
         content = value;
       }
+
+      return content;
+    };
+  }
+
+  private static void writeGeneralOptions(@NotNull Function<String, String> transformContent) {
+    File file = getWriteFile();
+    if (file == null) {
+      LOG.warn("VM options file not configured");
+      return;
+    }
+
+    try {
+      String content = file.exists() ? FileUtil.loadFile(file) : read();
+      content = transformContent.apply(content);
 
       if (file.exists()) {
         FileUtil.setReadOnlyAttribute(file.getPath(), false);
