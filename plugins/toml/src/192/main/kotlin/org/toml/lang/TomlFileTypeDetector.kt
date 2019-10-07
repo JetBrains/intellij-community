@@ -5,5 +5,4 @@
 
 package org.toml.lang
 
-class TomlFileTypeDetector : TomlFileTypeDetectorBase() {
-}
+class TomlFileTypeDetector : TomlFileTypeDetectorBase()
