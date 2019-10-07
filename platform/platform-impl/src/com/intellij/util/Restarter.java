@@ -65,14 +65,14 @@ public class Restarter {
           problem = "cannot find launcher script in " + PathManager.getBinPath();
         }
         else if (PathEnvironmentVariableUtil.findInPath("python") == null && PathEnvironmentVariableUtil.findInPath("python3") == null) {
-          problem = "cannot find neither 'python' nor 'python3' in PATH";
+          problem = "cannot find neither 'python' nor 'python3' in 'PATH'";
         }
         else {
           problem = checkRestarter("restart.py");
         }
       }
       else {
-        problem = "unknown platform: " + SystemInfo.OS_NAME;
+        problem = "Platform unsupported: " + SystemInfo.OS_NAME;
       }
 
       if (problem == null) {
@@ -147,7 +147,7 @@ public class Restarter {
 
     // Since the process ID is passed through the command line, we want to make sure that we don't exit before the "restarter"
     // process has a chance to open the handle to our process, and that it doesn't wait for the termination of an unrelated
-    // process which happened to have the same process ID.
+    // process that happened to have the same process ID.
     TimeoutUtil.sleep(500);
   }
 
@@ -208,7 +208,7 @@ public class Restarter {
 
     File python = PathEnvironmentVariableUtil.findInPath("python");
     if (python == null) python = PathEnvironmentVariableUtil.findInPath("python3");
-    if (python == null) throw new IOException("Cannot find neither 'python' nor 'python3' in PATH");
+    if (python == null) throw new IOException("Cannot find neither 'python' nor 'python3' in 'PATH'");
     File script = new File(PathManager.getBinPath(), "restart.py");
 
     List<String> args = new ArrayList<>();
@@ -239,7 +239,7 @@ public class Restarter {
   public static File createTempExecutable(@NotNull File executable) throws IOException {
     File tempDir = new File(PathManager.getSystemPath(), "restart");
     if (!FileUtilRt.createDirectory(tempDir)) {
-      throw new IOException("Cannot create directory: " + tempDir);
+      throw new IOException("Cannot create a directory: " + tempDir);
     }
 
     File copy = new File(tempDir, executable.getName());
