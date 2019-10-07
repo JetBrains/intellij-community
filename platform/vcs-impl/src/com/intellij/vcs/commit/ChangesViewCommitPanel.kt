@@ -144,6 +144,9 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView, private v
     }, this)
 
     buildLayout()
+    for (support in EditChangelistSupport.EP_NAME.getExtensions(project)) {
+      support.installSearch(commitMessage.editorField, commitMessage.editorField)
+    }
 
     with(changesView) {
       setInclusionListener { inclusionEventDispatcher.multicaster.inclusionChanged() }
