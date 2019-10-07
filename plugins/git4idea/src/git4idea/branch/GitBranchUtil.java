@@ -239,8 +239,7 @@ public class GitBranchUtil {
                                                              @NotNull Collection<? extends GitRepository> repositories,
                                                              @NotNull String dialogTitle,
                                                              @Nullable String initialName) {
-    return new GitNewBranchDialog(project, repositories, dialogTitle, initialName, true)
-      .showAndGetOptions();
+    return new GitNewBranchDialog(project, repositories, dialogTitle, initialName, true, false).showAndGetOptions();
   }
 
   /**
