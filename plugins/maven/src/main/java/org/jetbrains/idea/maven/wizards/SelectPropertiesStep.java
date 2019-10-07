@@ -40,7 +40,7 @@ import java.util.Map;
 public class SelectPropertiesStep extends ModuleWizardStep {
 
   private final Project myProjectOrNull;
-  private final MavenModuleBuilder myBuilder;
+  private final AbstractMavenModuleBuilder myBuilder;
 
   private JPanel myMainPanel;
   private JPanel myEnvironmentPanel;
@@ -51,7 +51,7 @@ public class SelectPropertiesStep extends ModuleWizardStep {
 
   private final Map<String, String> myAvailableProperties = new HashMap<>();
 
-  public SelectPropertiesStep(@Nullable Project project, MavenModuleBuilder builder) {
+  public SelectPropertiesStep(@Nullable Project project, AbstractMavenModuleBuilder builder) {
     myProjectOrNull = project;
     myBuilder = builder;
 
