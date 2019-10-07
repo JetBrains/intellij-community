@@ -61,7 +61,7 @@ public abstract class TaskRepository {
    */
   public static final int NATIVE_SEARCH = 0x0010;
 
-  public static final Pattern TIME_SPENT_PATTERN = Pattern.compile("([0-9]+)d ([0-9]+)h ([0-9]+)m");
+  public static final Pattern TIME_SPENT_PATTERN = Pattern.compile("([0-9]+)h ([0-9]+)m");
 
   /**
    * URL of the server to be used in requests. For more human-readable name of repository (e.g. some imaginary URL containing name of

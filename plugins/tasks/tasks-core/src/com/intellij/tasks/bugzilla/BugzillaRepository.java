@@ -30,12 +30,9 @@ public class BugzillaRepository extends BaseRepositoryImpl {
 
   private static final Logger LOG = Logger.getInstance(BugzillaRepository.class);
 
-  // Copied from SendTimeTrackingInformationDialog
   private Version myVersion;
-
   private boolean myAuthenticated;
   private String myAuthenticationToken;
-
   private String myProductName = "";
   private String myComponentName = "";
 
@@ -245,14 +242,13 @@ public class BugzillaRepository extends BaseRepositoryImpl {
                             task.getLastPost(), task.getTimeSpentFromLastPost(), timeSpent));
     Matcher matcher = TIME_SPENT_PATTERN.matcher(timeSpent);
     if (matcher.find()) {
-      int days = Integer.valueOf(matcher.group(1));
-      int hours = Integer.valueOf(matcher.group(2));
-      int minutes = Integer.valueOf(matcher.group(3));
+      int hours = Integer.valueOf(matcher.group(1));
+      int minutes = Integer.valueOf(matcher.group(2));
       BugzillaXmlRpcRequest request = new BugzillaXmlRpcRequest("Bug.update")
         .requireAuthentication(true)
         .withParameter("ids", newVector(task.getId()))
         // the number of hours worked on the bug as double
-        .withParameter("work_time", days * 24 + hours + minutes / 60.0);
+        .withParameter("work_time", hours + minutes / 60.0);
       if (!StringUtil.isEmptyOrSpaces(comment)) {
         request.withParameter("comment", newHashTable("body", comment, "is_private", false));
       }
