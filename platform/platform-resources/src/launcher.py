@@ -5,6 +5,7 @@ import os
 import socket
 import struct
 import sys
+import traceback
 
 # see com.intellij.idea.SocketLock for the server side of this interface
 
