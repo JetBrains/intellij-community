@@ -1,0 +1,3 @@
+Manifest-Version: 1.0
+Premain-Class: com.intellij.platform.cdsAgent.LogLoadedApplicationClassesAgent
+Agent-Class: com.intellij.platform.cdsAgent.LogLoadedApplicationClassesAgent
