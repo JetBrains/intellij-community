@@ -30,17 +30,17 @@ import org.jetbrains.idea.maven.model.MavenArchetype;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.wizards.MavenModuleBuilder;
+import org.jetbrains.idea.maven.wizards.AbstractMavenModuleBuilder;
 
 import java.util.List;
 
 public class MavenModuleBuilderTest extends MavenImportingTestCase {
-  private MavenModuleBuilder myBuilder;
+  private AbstractMavenModuleBuilder myBuilder;
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myBuilder = new MavenModuleBuilder();
+    myBuilder = new AbstractMavenModuleBuilder();
 
     createJdk();
     setModuleNameAndRoot("module", getProjectPath());

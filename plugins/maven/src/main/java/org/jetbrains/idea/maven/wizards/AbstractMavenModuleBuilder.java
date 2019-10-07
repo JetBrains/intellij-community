@@ -36,7 +36,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuilder {
+public class AbstractMavenModuleBuilder extends ModuleBuilder implements SourcePathsBuilder {
   private MavenProject myAggregatorProject;
   private MavenProject myParentProject;
 
