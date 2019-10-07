@@ -63,7 +63,12 @@ public abstract class YamlScalarType extends YamlMetaType {
   }
 
   @NotNull
-  public List<? extends LookupElement> getValueLookups(@NotNull YAMLScalar context) {
+  public List<? extends LookupElement> getValueLookups(@NotNull YAMLScalar value, @Nullable CompletionContext completionContext) {
+    return getValueLookups(value);
+  }
+
+  @NotNull
+  protected List<? extends LookupElement> getValueLookups(@NotNull YAMLScalar context) {
     return Collections.emptyList();
   }
 
