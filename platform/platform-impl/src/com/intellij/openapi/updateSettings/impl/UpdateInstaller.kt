@@ -15,7 +15,6 @@ import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.ArrayUtil
-import com.intellij.util.Restarter
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.lang.JavaVersion
 import java.io.File
@@ -171,8 +170,8 @@ object UpdateInstaller {
       val launcher = PathManager.findBinFile("launcher.exe")
       val elevator = PathManager.findBinFile("elevator.exe")  // "launcher" depends on "elevator"
       if (launcher != null && elevator != null && launcher.canExecute() && elevator.canExecute()) {
-        args += Restarter.createTempExecutable(launcher).path
-        Restarter.createTempExecutable(elevator)
+        args += launcher.copyTo(File(tempDir, launcher.name), true).path
+        elevator.copyTo(File(tempDir, elevator.name), true)
       }
     }
 

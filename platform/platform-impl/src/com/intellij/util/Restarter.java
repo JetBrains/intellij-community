@@ -12,8 +12,6 @@ import com.intellij.openapi.updateSettings.impl.UpdateInstaller;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.text.StringUtil;
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 import com.sun.jna.WString;
@@ -24,6 +22,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -228,34 +230,17 @@ public class Restarter {
   }
 
   private static void runRestarter(File restarterFile, List<String> restarterArgs) throws IOException {
-    boolean isUpdate = restarterArgs.contains(UpdateInstaller.UPDATER_MAIN_CLASS);
-    File restarter = isUpdate ? createTempExecutable(restarterFile) : restarterFile;
-    restarterArgs.add(0, restarter.getPath());
+    String restarter = restarterFile.getPath();
+    if (restarterArgs.contains(UpdateInstaller.UPDATER_MAIN_CLASS)) {
+      Path tempDir = Paths.get(PathManager.getSystemPath(), "restart");
+      Files.createDirectories(tempDir);
+      Path copy = tempDir.resolve(restarterFile.getName());
+      Files.copy(restarterFile.toPath(), copy, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES);
+      restarter = copy.toString();
+    }
+    restarterArgs.add(0, restarter);
     Logger.getInstance(Restarter.class).info("run restarter: " + restarterArgs);
-    Runtime.getRuntime().exec(ArrayUtilRt.toStringArray(restarterArgs));
-  }
-
-  @NotNull
-  public static File createTempExecutable(@NotNull File executable) throws IOException {
-    File tempDir = new File(PathManager.getSystemPath(), "restart");
-    if (!FileUtilRt.createDirectory(tempDir)) {
-      throw new IOException("Cannot create a directory: " + tempDir);
-    }
-
-    File copy = new File(tempDir, executable.getName());
-    if (!FileUtilRt.ensureCanCreateFile(copy) || (copy.exists() && !copy.delete())) {
-      String prefix = FileUtilRt.getNameWithoutExtension(copy.getName());
-      String ext = FileUtilRt.getExtension(executable.getName());
-      String suffix = StringUtil.isEmptyOrSpaces(ext) ? ".tmp" : ("." + ext);
-      copy = FileUtilRt.createTempFile(tempDir, prefix, suffix, true, false);
-    }
-    FileUtilRt.copy(executable, copy);
-
-    if (executable.canExecute() && !copy.setExecutable(true)) {
-      throw new IOException("Cannot make file executable: " + copy);
-    }
-
-    return copy;
+    Runtime.getRuntime().exec(ArrayUtil.toStringArray(restarterArgs));
   }
 
   @SuppressWarnings({"SameParameterValue", "UnusedReturnValue"})
