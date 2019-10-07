@@ -53,6 +53,7 @@ class CommunityRepositoryModules {
     "intellij.platform.analysis.impl",
     "intellij.platform.builtInServer.impl",
     "intellij.platform.core.impl",
+    "intellij.platform.cdsAgent",
     "intellij.platform.diff.impl",
     "intellij.platform.editor.ex",
     "intellij.platform.indexing.impl",
