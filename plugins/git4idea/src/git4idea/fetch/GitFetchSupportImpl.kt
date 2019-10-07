@@ -201,7 +201,7 @@ internal class GitFetchSupportImpl(git: Git,
   }
 
   private fun doFetch(repository: GitRepository, remote: GitRemote, authenticationGate: GitAuthenticationGate? = null): SingleRemoteResult {
-    val result = git.fetch(repository, remote, emptyList(), authenticationGate)
+    val result = git.fetch(repository, remote, emptyList(), authenticationGate, "--recurse-submodules=no")
     val pruned = result.output.mapNotNull { getPrunedRef(it) }
     if (result.success()) {
       BackgroundTaskUtil.syncPublisher(repository.project, GIT_AUTHENTICATION_SUCCESS).authenticationSucceeded(repository, remote)
