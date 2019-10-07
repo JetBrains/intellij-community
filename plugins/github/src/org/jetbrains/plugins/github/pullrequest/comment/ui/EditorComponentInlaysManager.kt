@@ -132,6 +132,8 @@ class EditorComponentInlaysManager(private val editor: EditorImpl) : Disposable 
     wrapper.size = Dimension(wrappersWidth, wrapper.size.height)
   }
 
+  fun findComponent(inlay: Inlay<*>): JComponent? = managedInlays.find { it == inlay }?.renderer?.wrapper
+
   private class ComponentWrapper(val component: JComponent) : JBScrollPane() {
     init {
       isOpaque = false

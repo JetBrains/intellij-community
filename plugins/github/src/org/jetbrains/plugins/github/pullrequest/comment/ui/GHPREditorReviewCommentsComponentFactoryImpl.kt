@@ -10,6 +10,7 @@ import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.plugins.github.api.data.GHUser
+import org.jetbrains.plugins.github.api.data.GithubPullRequestCommentWithHtml
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.data.GHPRReviewServiceAdapter
 import org.jetbrains.plugins.github.util.GithubUIUtil
@@ -26,7 +27,7 @@ internal constructor(private val project: Project,
                      private val currentUser: GHUser)
   : GHPREditorReviewCommentsComponentFactory {
 
-  override fun createComponent(reviewService: GHPRReviewServiceAdapter, thread: GHPRReviewThreadModel): JComponent {
+  override fun createThreadComponent(reviewService: GHPRReviewServiceAdapter, thread: GHPRReviewThreadModel): JComponent {
     val wrapper = RoundedPanel().apply {
       border = IdeBorderFactory.createRoundedBorder(10, 1)
     }
@@ -44,6 +45,25 @@ internal constructor(private val project: Project,
       .withBorder(JBUI.Borders.empty(0, UIUtil.DEFAULT_HGAP))
       .andTransparent()
     wrapper.setContent(panel)
+    return wrapper
+  }
+
+  override fun createCommentComponent(reviewService: GHPRReviewServiceAdapter, commitSha: String, path: String, diffLine: Int,
+                                      onSuccess: (GithubPullRequestCommentWithHtml) -> Unit): JComponent {
+    val wrapper = RoundedPanel().apply {
+      border = IdeBorderFactory.createRoundedBorder(10, 1)
+    }
+    val avatarIconsProvider = avatarIconsProviderFactory.create(GithubUIUtil.avatarSize, wrapper)
+
+    val commentField = GHPRCommentsUIUtil.createCommentField(project, avatarIconsProvider, currentUser, "Comment") { text ->
+      reviewService.addComment(EmptyProgressIndicator(), text, commitSha, path, diffLine).successOnEdt {
+        onSuccess(it)
+      }
+    }.apply {
+      border = JBUI.Borders.empty(10)
+    }
+
+    wrapper.setContent(commentField)
     return wrapper
   }
 

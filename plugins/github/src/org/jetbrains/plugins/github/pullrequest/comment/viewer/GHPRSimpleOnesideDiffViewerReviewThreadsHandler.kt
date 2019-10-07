@@ -2,13 +2,13 @@
 package org.jetbrains.plugins.github.pullrequest.comment.viewer
 
 import com.intellij.diff.tools.simple.SimpleOnesideDiffViewer
-import com.intellij.openapi.editor.impl.EditorImpl
-import org.jetbrains.plugins.github.pullrequest.comment.ui.EditorComponentInlaysManager
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPREditorReviewCommentsComponentFactory
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPREditorReviewThreadsController
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPREditorReviewThreadsModel
 import org.jetbrains.plugins.github.pullrequest.data.GHPRReviewServiceAdapter
+import org.jetbrains.plugins.github.pullrequest.data.model.GHPRDiffRangeMapping
 import org.jetbrains.plugins.github.pullrequest.data.model.GHPRDiffReviewThreadMapping
+import org.jetbrains.plugins.github.ui.util.SingleValueModel
 
 class GHPRSimpleOnesideDiffViewerReviewThreadsHandler(private val viewer: SimpleOnesideDiffViewer,
                                                       reviewService: GHPRReviewServiceAdapter,
@@ -16,15 +16,19 @@ class GHPRSimpleOnesideDiffViewerReviewThreadsHandler(private val viewer: Simple
   : GHPRDiffViewerBaseReviewThreadsHandler<SimpleOnesideDiffViewer>() {
 
   private val editorThreads = GHPREditorReviewThreadsModel()
+  private val editorCommentableRanges = SingleValueModel<List<GHPRDiffRangeMapping>>(emptyList())
 
   override val viewerReady: Boolean = true
 
   init {
-    val inlaysManager = EditorComponentInlaysManager(viewer.editor as EditorImpl)
-    GHPREditorReviewThreadsController(editorThreads, reviewService, componentFactory, inlaysManager)
+    GHPREditorReviewThreadsController(editorThreads, editorCommentableRanges, reviewService, componentFactory, viewer.editor)
   }
 
   override fun updateThreads(mappings: List<GHPRDiffReviewThreadMapping>) {
     editorThreads.update(mappings.filter { it.side == viewer.side }.groupBy { it.fileLineIndex })
+  }
+
+  override fun updateCommentableRanges(ranges: List<GHPRDiffRangeMapping>) {
+    editorCommentableRanges.value = ranges.filter { it.side == viewer.side }
   }
 }

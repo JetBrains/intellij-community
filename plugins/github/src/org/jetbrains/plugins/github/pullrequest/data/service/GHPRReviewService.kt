@@ -10,4 +10,12 @@ interface GHPRReviewService {
   @CalledInAny
   fun addComment(progressIndicator: ProgressIndicator, pullRequest: Long, body: String, replyToCommentId: Long)
     : CompletableFuture<GithubPullRequestCommentWithHtml>
+
+  @CalledInAny
+  fun addComment(progressIndicator: ProgressIndicator,
+                 pullRequest: Long,
+                 body: String,
+                 commitSha: String,
+                 fileName: String,
+                 diffLine: Int): CompletableFuture<GithubPullRequestCommentWithHtml>
 }

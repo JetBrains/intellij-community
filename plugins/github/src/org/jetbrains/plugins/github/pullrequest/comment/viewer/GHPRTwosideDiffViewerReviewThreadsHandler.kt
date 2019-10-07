@@ -3,13 +3,13 @@ package org.jetbrains.plugins.github.pullrequest.comment.viewer
 
 import com.intellij.diff.tools.util.side.TwosideTextDiffViewer
 import com.intellij.diff.util.Side
-import com.intellij.openapi.editor.impl.EditorImpl
-import org.jetbrains.plugins.github.pullrequest.comment.ui.EditorComponentInlaysManager
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPREditorReviewCommentsComponentFactory
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPREditorReviewThreadsController
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPREditorReviewThreadsModel
 import org.jetbrains.plugins.github.pullrequest.data.GHPRReviewServiceAdapter
+import org.jetbrains.plugins.github.pullrequest.data.model.GHPRDiffRangeMapping
 import org.jetbrains.plugins.github.pullrequest.data.model.GHPRDiffReviewThreadMapping
+import org.jetbrains.plugins.github.ui.util.SingleValueModel
 
 class GHPRTwosideDiffViewerReviewThreadsHandler(viewer: TwosideTextDiffViewer,
                                                 reviewService: GHPRReviewServiceAdapter,
@@ -17,19 +17,29 @@ class GHPRTwosideDiffViewerReviewThreadsHandler(viewer: TwosideTextDiffViewer,
   : GHPRDiffViewerBaseReviewThreadsHandler<TwosideTextDiffViewer>() {
 
   private val editorsThreads: Map<Side, GHPREditorReviewThreadsModel>
+  private val editorsCommentableRanges: Map<Side, SingleValueModel<List<GHPRDiffRangeMapping>>>
 
   override val viewerReady = true
 
   init {
     val editorThreadsLeft = GHPREditorReviewThreadsModel()
-    GHPREditorReviewThreadsController(editorThreadsLeft, reviewService, componentFactory,
-                                      EditorComponentInlaysManager(viewer.editor1 as EditorImpl))
+    val editorCommentableRangesLeft = SingleValueModel<List<GHPRDiffRangeMapping>>(emptyList())
+    GHPREditorReviewThreadsController(editorThreadsLeft, editorCommentableRangesLeft,
+                                      reviewService, componentFactory, viewer.editor1)
 
     val editorThreadsRight = GHPREditorReviewThreadsModel()
-    GHPREditorReviewThreadsController(editorThreadsRight, reviewService, componentFactory,
-                                      EditorComponentInlaysManager(viewer.editor2 as EditorImpl))
+    val editorCommentableRangesRight = SingleValueModel<List<GHPRDiffRangeMapping>>(emptyList())
+    GHPREditorReviewThreadsController(editorThreadsRight, editorCommentableRangesRight,
+                                      reviewService, componentFactory, viewer.editor2)
 
     editorsThreads = mapOf(Side.LEFT to editorThreadsLeft, Side.RIGHT to editorThreadsRight)
+    editorsCommentableRanges = mapOf(Side.LEFT to editorCommentableRangesLeft, Side.RIGHT to editorCommentableRangesRight)
+  }
+
+  override fun updateCommentableRanges(ranges: List<GHPRDiffRangeMapping>) {
+    ranges.groupBy { it.side }.forEach { (side, ranges) ->
+      editorsCommentableRanges[side]?.value = ranges
+    }
   }
 
   override fun updateThreads(mappings: List<GHPRDiffReviewThreadMapping>) {

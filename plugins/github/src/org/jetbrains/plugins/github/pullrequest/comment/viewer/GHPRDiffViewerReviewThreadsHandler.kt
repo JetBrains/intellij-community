@@ -2,8 +2,10 @@
 package org.jetbrains.plugins.github.pullrequest.comment.viewer
 
 import com.intellij.openapi.Disposable
+import org.jetbrains.plugins.github.pullrequest.data.model.GHPRDiffRangeMapping
 import org.jetbrains.plugins.github.pullrequest.data.model.GHPRDiffReviewThreadMapping
 
 interface GHPRDiffViewerReviewThreadsHandler : Disposable {
-  var mappings: List<GHPRDiffReviewThreadMapping>
+  var reviewThreadsMappings: List<GHPRDiffReviewThreadMapping>
+  var commentableRangesMappings: List<GHPRDiffRangeMapping>
 }

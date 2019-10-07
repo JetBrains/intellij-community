@@ -8,6 +8,7 @@ import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.plugins.github.api.data.GithubCommit
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
+import org.jetbrains.plugins.github.pullrequest.data.model.GHPRDiffRangeMapping
 import org.jetbrains.plugins.github.pullrequest.data.model.GHPRDiffReviewThreadMapping
 import java.util.*
 import java.util.concurrent.CompletableFuture
@@ -20,6 +21,7 @@ interface GithubPullRequestDataProvider {
   val apiCommitsRequest: CompletableFuture<List<GithubCommit>>
   val logCommitsRequest: CompletableFuture<List<GitCommit>>
   val reviewThreadsRequest: CompletableFuture<List<GHPullRequestReviewThread>>
+  val diffRangesRequest: CompletableFuture<Map<Change, List<GHPRDiffRangeMapping>>>
   val filesReviewThreadsRequest: CompletableFuture<Map<Change, List<GHPRDiffReviewThreadMapping>>>
 
   val reviewService: GHPRReviewServiceAdapter

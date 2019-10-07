@@ -39,6 +39,20 @@ class GHPRDiffReviewThreadsProviderImpl(private val dataProvider: GithubPullRequ
         loadAndShowComments(commentsHandler, change)
       }
     })
+    loadAndShowCommentableRanges(commentsHandler, change)
+  }
+
+  private fun loadAndShowCommentableRanges(handler: GHPRDiffViewerBaseReviewThreadsHandler<out ListenerDiffViewerBase>, change: Change) {
+    val disposable = Disposer.newDisposable()
+    dataProvider.diffRangesRequest.handleOnEdt(disposable) { result, error ->
+      if (result != null) {
+        handler.commentableRangesMappings = result[change].orEmpty()
+      }
+      if (error != null) {
+        LOG.info("Failed to load diff ranges", error)
+      }
+    }
+    Disposer.register(handler, disposable)
   }
 
   private fun loadAndShowComments(commentsHandler: GHPRDiffViewerBaseReviewThreadsHandler<out ListenerDiffViewerBase>,
@@ -46,7 +60,7 @@ class GHPRDiffReviewThreadsProviderImpl(private val dataProvider: GithubPullRequ
     val disposable = Disposer.newDisposable()
     dataProvider.filesReviewThreadsRequest.handleOnEdt(disposable) { result, error ->
       if (result != null) {
-        commentsHandler.mappings = result[change].orEmpty()
+        commentsHandler.reviewThreadsMappings = result[change].orEmpty()
       }
       if (error != null) {
         LOG.info("Failed to load and process file comments", error)

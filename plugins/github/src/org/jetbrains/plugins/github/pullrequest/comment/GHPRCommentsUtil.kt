@@ -3,9 +3,11 @@ package org.jetbrains.plugins.github.pullrequest.comment
 
 import com.intellij.diff.util.Side
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diff.impl.patch.PatchHunk
 import com.intellij.openapi.diff.impl.patch.PatchLine
 import com.intellij.openapi.diff.impl.patch.PatchReader
 import com.intellij.openapi.diff.impl.patch.TextFilePatch
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangesUtil
@@ -13,9 +15,12 @@ import com.intellij.openapi.vcs.changes.ContentRevision
 import com.intellij.vcsUtil.VcsFileUtil
 import com.intellij.vcsUtil.VcsUtil
 import git4idea.GitCommit
+import git4idea.GitContentRevision
+import git4idea.GitRevisionNumber
 import git4idea.GitUtil
 import git4idea.repo.GitRepository
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
+import org.jetbrains.plugins.github.pullrequest.data.model.GHPRDiffRangeMapping
 import org.jetbrains.plugins.github.pullrequest.data.model.GHPRDiffReviewThreadMapping
 
 object GHPRCommentsUtil {
@@ -101,8 +106,7 @@ object GHPRCommentsUtil {
   private fun calculateLineLocation(diff: TextFilePatch, diffLineIndex: Int): Pair<Side, Int>? {
     var diffLineCounter = 0
     for (hunk in diff.hunks) {
-      // +1 for header
-      val hunkLinesCount = hunk.lines.size + hunk.lines.count { it.isSuppressNewLine } + 1
+      val hunkLinesCount = getHunkLinesCount(hunk)
       diffLineCounter += hunkLinesCount
 
       if (diffLineIndex < diffLineCounter) {
@@ -123,6 +127,99 @@ object GHPRCommentsUtil {
       }
     }
     return null
+  }
+
+  // +1 for header
+  private fun getHunkLinesCount(hunk: PatchHunk) = hunk.lines.size + hunk.lines.count { it.isSuppressNewLine } + 1
+
+  fun getDiffRangesMapping(project: Project, repository: GitRepository, lastCommitSha: String, diffFile: String)
+    : Map<Change, List<GHPRDiffRangeMapping>> {
+
+    val patchReader = PatchReader(diffFile, true)
+    patchReader.parseAllPatches()
+
+    val map = mutableMapOf<Change, List<GHPRDiffRangeMapping>>()
+    val patches = patchReader.textPatches
+    for (diff in patches) {
+      val change = createChangeFromDiff(project, repository, diff)
+      val mappings = mutableListOf<GHPRDiffRangeMapping>()
+      val filePath = diff.afterName
+
+      //first hunk offset is 1 because comment on header is not possible
+      var hunkOffset = 1
+      for (hunk in diff.hunks) {
+        val leftSide = MappingsCollector(lastCommitSha, filePath, Side.LEFT, hunk.startLineBefore, hunkOffset)
+        val rightSide = MappingsCollector(lastCommitSha, filePath, Side.RIGHT, hunk.startLineAfter, hunkOffset)
+
+        var lastLineType: PatchLine.Type? = null
+        for (line in hunk.lines) {
+          val lineType = line.type!!
+          if (lastLineType != null && lastLineType != lineType) {
+            leftSide.saveMapping()
+            rightSide.saveMapping()
+          }
+          lastLineType = lineType
+
+          when (lineType) {
+            PatchLine.Type.CONTEXT -> {
+              leftSide.addLine()
+              rightSide.addLine()
+            }
+            PatchLine.Type.ADD -> {
+              leftSide.addOffset()
+              rightSide.addLine()
+            }
+            PatchLine.Type.REMOVE -> {
+              leftSide.addLine()
+              rightSide.addOffset()
+            }
+          }
+        }
+        leftSide.saveMapping()
+        rightSide.saveMapping()
+
+        mappings.addAll(leftSide.mappings)
+        mappings.addAll(rightSide.mappings)
+
+        hunkOffset += getHunkLinesCount(hunk)
+      }
+      map[change] = mappings
+    }
+    return map
+  }
+
+  private class MappingsCollector(private val commitSha: String, private val filePath: String, private val side: Side,
+                                  startLine: Int, hunkOffset: Int) {
+    val mappings = mutableListOf<GHPRDiffRangeMapping>()
+
+    private var start = startLine
+    private var end = start
+    private var offset = 0 - startLine + hunkOffset
+
+    fun addLine() {
+      end++
+    }
+
+    fun addOffset() {
+      offset++
+    }
+
+    fun saveMapping() {
+      if (start == end) return
+      mappings.add(GHPRDiffRangeMapping(commitSha, filePath, side, start, end, offset))
+      start = end
+    }
+  }
+
+  private fun createChangeFromDiff(project: Project, repository: GitRepository, diff: TextFilePatch): Change {
+    val beforePath = VcsUtil.getFilePath(repository.root, GitUtil.unescapePath(diff.beforeFileName))
+    val afterPath = VcsUtil.getFilePath(repository.root, GitUtil.unescapePath(diff.afterFileName))
+
+    val beforeRev = GitRevisionNumber(diff.beforeVersionId)
+    val afterRev = GitRevisionNumber(diff.afterVersionId)
+
+    return Change(if (diff.isNewFile) null else GitContentRevision.createRevision(beforePath, beforeRev, project),
+                  if (diff.isDeletedFile) null else GitContentRevision.createRevision(afterPath, afterRev, project))
   }
 
   private class FileChangesTracker(private val commits: List<GitCommit>) {

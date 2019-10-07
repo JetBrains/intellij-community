@@ -12,10 +12,22 @@ interface GHPRReviewServiceAdapter {
   fun addComment(progressIndicator: ProgressIndicator, body: String, replyToCommentId: Long)
     : CompletableFuture<GithubPullRequestCommentWithHtml>
 
+  @CalledInAny
+  fun addComment(progressIndicator: ProgressIndicator, body: String, commitSha: String, fileName: String, diffLine: Int)
+    : CompletableFuture<GithubPullRequestCommentWithHtml>
+
   companion object {
     @CalledInAny
     fun create(reviewService: GHPRReviewService, pullRequest: Long): GHPRReviewServiceAdapter {
       return object : GHPRReviewServiceAdapter {
+        override fun addComment(progressIndicator: ProgressIndicator,
+                                body: String,
+                                commitSha: String,
+                                fileName: String,
+                                diffLine: Int): CompletableFuture<GithubPullRequestCommentWithHtml> {
+          return reviewService.addComment(progressIndicator, pullRequest, body, commitSha, fileName, diffLine)
+        }
+
         override fun addComment(progressIndicator: ProgressIndicator,
                                 body: String,
                                 replyToCommentId: Long): CompletableFuture<GithubPullRequestCommentWithHtml> {

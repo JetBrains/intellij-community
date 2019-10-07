@@ -28,4 +28,18 @@ class GHPRReviewServiceImpl(private val progressManager: ProgressManager,
       comment
     }
   }
+
+  override fun addComment(progressIndicator: ProgressIndicator,
+                          pullRequest: Long,
+                          body: String,
+                          commitSha: String,
+                          fileName: String,
+                          diffLine: Int): CompletableFuture<GithubPullRequestCommentWithHtml> {
+    return progressManager.submitIOTask(progressIndicator) {
+      val comment = requestExecutor.execute(
+        GithubApiRequests.Repos.PullRequests.Comments.create(repository, pullRequest, commitSha, fileName, diffLine, body))
+      messageBus.syncPublisher(GHPullRequestsDataContext.PULL_REQUEST_EDITED_TOPIC).onPullRequestCommentsEdited(pullRequest)
+      comment
+    }
+  }
 }

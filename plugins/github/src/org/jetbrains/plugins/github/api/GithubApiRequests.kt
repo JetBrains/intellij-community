@@ -411,6 +411,18 @@ object GithubApiRequests {
             getUrl(repository, PullRequests.urlSuffix, "/$pullRequest", "/comments/$commentId/replies"),
             mapOf("body" to body),
             GithubApiContentHelper.V3_HTML_JSON_MIME_TYPE).withOperationName("reply to pull request review comment")
+
+        @JvmStatic
+        fun create(repository: GHRepositoryCoordinates, pullRequest: Long,
+                   commitSha: String, filePath: String, diffLine: Int,
+                   body: String) =
+          Post.json<GithubPullRequestCommentWithHtml>(
+            getUrl(repository, PullRequests.urlSuffix, "/$pullRequest", "/comments"),
+            mapOf("body" to body,
+                  "commit_id" to commitSha,
+                  "path" to filePath,
+                  "position" to diffLine),
+            GithubApiContentHelper.V3_HTML_JSON_MIME_TYPE).withOperationName("create pull request review comment")
       }
     }
   }

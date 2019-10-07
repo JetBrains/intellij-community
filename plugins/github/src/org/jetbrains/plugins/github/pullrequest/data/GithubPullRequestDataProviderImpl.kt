@@ -91,6 +91,14 @@ internal class GithubPullRequestDataProviderImpl(private val project: Project,
   }
   override val reviewThreadsRequest: CompletableFuture<List<GHPullRequestReviewThread>> by backgroundProcessValue(reviewThreadsRequestValue)
 
+  private val diffRangesProviderRequestValue = backingValue {
+    GHPRCommentsUtil.getDiffRangesMapping(project,
+                                          gitRemote.repository,
+                                          detailsRequestValue.value.joinCancellable().headRefOid,
+                                          diffFileRequestValue.value.joinCancellable())
+  }
+  override val diffRangesRequest by backgroundProcessValue(diffRangesProviderRequestValue)
+
   private val filesReviewThreadsRequestValue = backingValue {
     GHPRCommentsUtil.buildThreadsAndMapLines(gitRemote.repository,
                                              logCommitsRequestValue.value.joinCancellable(),
@@ -118,6 +126,7 @@ internal class GithubPullRequestDataProviderImpl(private val project: Project,
   override fun reloadComments() {
     diffFileRequestValue.drop()
     reviewThreadsRequestValue.drop()
+    diffRangesProviderRequestValue.drop()
     filesReviewThreadsRequestValue.drop()
     requestsChangesEventDispatcher.multicaster.reviewThreadsRequestChanged()
   }
