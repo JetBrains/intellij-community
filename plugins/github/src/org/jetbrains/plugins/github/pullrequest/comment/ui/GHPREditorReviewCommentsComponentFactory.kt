@@ -4,6 +4,6 @@ package org.jetbrains.plugins.github.pullrequest.comment.ui
 import org.jetbrains.plugins.github.pullrequest.data.GHPRReviewServiceAdapter
 import javax.swing.JComponent
 
-interface GHPREditorReviewThreadComponentFactory {
+interface GHPREditorReviewCommentsComponentFactory {
   fun createComponent(reviewService: GHPRReviewServiceAdapter, thread: GHPRReviewThreadModel): JComponent
 }

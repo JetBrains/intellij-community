@@ -7,7 +7,7 @@ import org.jetbrains.plugins.github.pullrequest.data.GHPRReviewServiceAdapter
 
 class GHPREditorReviewThreadsController(threadMap: GHPREditorReviewThreadsModel,
                                         private val reviewService: GHPRReviewServiceAdapter,
-                                        private val componentFactory: GHPREditorReviewThreadComponentFactory,
+                                        private val componentFactory: GHPREditorReviewCommentsComponentFactory,
                                         componentInlaysManager: EditorComponentInlaysManager) {
   private val inlayByThread = mutableMapOf<GHPRReviewThreadModel, Inlay<*>>()
 
