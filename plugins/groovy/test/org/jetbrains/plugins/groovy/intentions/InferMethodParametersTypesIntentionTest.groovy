@@ -528,4 +528,8 @@ class AA { static void fo<caret>o(Integer a) {} }
   void testUnresolvedCode3() {
     doTest(true)
   }
+
+  void testUnresolvedCode4() {
+    doTest(true)
+  }
 }

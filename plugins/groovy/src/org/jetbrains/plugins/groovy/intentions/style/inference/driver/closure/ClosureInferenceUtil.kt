@@ -9,6 +9,7 @@ import com.intellij.psi.impl.source.resolve.graphInference.constraints.Constrain
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.plugins.groovy.intentions.closure.isClosureCall
 import org.jetbrains.plugins.groovy.intentions.closure.isClosureCallMethod
+import org.jetbrains.plugins.groovy.intentions.style.inference.CollectingGroovyInferenceSession
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.BoundConstraint.ContainMarker.LOWER
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.RecursiveMethodAnalyzer
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.TypeUsageInformationBuilder
@@ -75,9 +76,7 @@ fun analyzeClosureUsages(closureParameter: ParameterizedClosure,
                          usages: List<ReadWriteVariableInstruction>,
                          builder: TypeUsageInformationBuilder) {
   val parameter = closureParameter.parameter
-  val parameterType = parameter.type
   val delegatesToCombiner = closureParameter.delegatesToCombiner
-  parameter.setType(PsiType.getTypeByName(GROOVY_LANG_CLOSURE, parameter.project, parameter.resolveScope))
   for (usage in usages) {
     val element = usage.element ?: continue
     val directMethodResult = element.parentOfType<GrAssignmentExpression>()?.properResolve() as? GroovyMethodResult
@@ -94,11 +93,11 @@ fun analyzeClosureUsages(closureParameter: ParameterizedClosure,
       val mapping = resolveResult.candidate?.argumentMapping ?: continue
       val requiredArgument = mapping.arguments.find { it.isReferenceTo(parameter) } ?: continue
       val innerParameter = mapping.targetParameter(requiredArgument) ?: continue
-      collectClosureParamsDependencies(innerParameter, resolveResult, closureParameter, builder)
+      val signature = extractSignature(innerParameter, resolveResult, nearestCall)
+      collectClosureParamsDependencies(innerParameter, closureParameter, builder, signature)
       processDelegatesToAnnotation(innerParameter, resolveResult, closureParameter.delegatesToCombiner)
     }
   }
-  parameter.setType(parameterType)
 }
 
 
@@ -117,7 +116,9 @@ fun collectClosureMethodInvocationDependencies(parameterizedClosure: Parameteriz
   }
 }
 
-fun extractSignature(innerParameter: PsiParameter, resolveResult: GroovyMethodResult): Array<PsiType>? {
+fun extractSignature(innerParameter: PsiParameter,
+                     resolveResult: GroovyMethodResult,
+                     nearestCall: GrCall): Array<PsiType>? {
   val closureParamsAnnotation = innerParameter.annotations.find { it.qualifiedName == GROOVY_TRANSFORM_STC_CLOSURE_PARAMS } ?: return null
   val valueAttribute = inferClassAttribute(closureParamsAnnotation, "value")?.qualifiedName ?: return null
   val hintProcessor = SignatureHintProcessor.getHintProcessor(valueAttribute) ?: return null
@@ -125,14 +126,15 @@ fun extractSignature(innerParameter: PsiParameter, resolveResult: GroovyMethodRe
   val arrayOptionsAttribute = AnnotationUtil.arrayAttributeValues(optionsAttribute)
   val options = arrayOptionsAttribute.mapNotNull { (it as? PsiLiteral)?.stringValue() }.toTypedArray()
   val invokedMethod = resolveResult.candidate?.method ?: return null
-  return hintProcessor.inferExpectedSignatures(invokedMethod, resolveResult.substitutor, options).singleOrNull() ?: return null
+  val collectingSubstitutor = CollectingGroovyInferenceSession.getContextSubstitutor(resolveResult, nearestCall)
+  return hintProcessor.inferExpectedSignatures(invokedMethod, collectingSubstitutor, options).singleOrNull() ?: return null
 }
 
 fun collectClosureParamsDependencies(innerParameter: PsiParameter,
-                                     resolveResult: GroovyMethodResult,
                                      closureParameter: ParameterizedClosure,
-                                     builder: TypeUsageInformationBuilder) {
-  val signature = extractSignature(innerParameter, resolveResult) ?: return
+                                     builder: TypeUsageInformationBuilder,
+                                     signature: Array<PsiType>?) {
+  signature ?: return
   for ((inferredType, typeParameter) in signature.zip(closureParameter.typeParameters)) {
     builder.addConstraint(TypeConstraint(typeParameter.type(), inferredType, innerParameter))
     val inferredTypeParameter = inferredType.typeParameter()

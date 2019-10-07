@@ -4,29 +4,45 @@ package org.jetbrains.plugins.groovy.intentions.style.inference
 import com.intellij.openapi.util.component1
 import com.intellij.openapi.util.component2
 import com.intellij.psi.*
+import com.intellij.psi.impl.source.resolve.graphInference.InferenceBound
+import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable
+import com.intellij.psi.util.parentOfType
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter.Position.METHOD_PARAMETER
 import org.jetbrains.plugins.groovy.lang.resolve.api.ArgumentMapping
 import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.*
 
 class CollectingGroovyInferenceSession(
-  typeParams: Array<PsiTypeParameter>,
+  private val typeParams: Array<PsiTypeParameter>,
   context: PsiElement,
   contextSubstitutor: PsiSubstitutor = PsiSubstitutor.EMPTY,
   private val proxyMethodMapping: Map<String, GrParameter> = emptyMap(),
   private val parent: CollectingGroovyInferenceSession? = null,
   private val ignoreClosureArguments: Set<GrParameter> = emptySet()
-) : GroovyInferenceSession(typeParams, contextSubstitutor, context, true, emptySet()) {
+) : GroovyInferenceSession(typeParams, contextSubstitutor, context, false, emptySet()) {
 
+
+  companion object {
+    fun getContextSubstitutor(resolveResult: GroovyMethodResult,
+                              nearestCall: GrCall): PsiSubstitutor {
+      val collectingSession = CollectingGroovyInferenceSession(nearestCall.parentOfType<GrMethod>()!!.typeParameters, nearestCall)
+      return buildTopLevelSession(nearestCall, collectingSession).inferSubst(resolveResult)
+
+    }
+  }
 
   private fun substituteForeignTypeParameters(type: PsiType?): PsiType? {
     return type?.accept(object : PsiTypeMapper() {
       override fun visitClassType(classType: PsiClassType?): PsiType? {
         if (classType.isTypeParameter()) {
           return myInferenceVariables.find { it.delegate.name == classType?.canonicalText }?.type() ?: classType
-        } else {
+        }
+        else {
           return classType
         }
       }
@@ -43,6 +59,15 @@ class CollectingGroovyInferenceSession(
     }
   }
 
+  override fun inferSubst(result: GroovyResolveResult): PsiSubstitutor {
+    repeatInferencePhases()
+    val nested = findSession(result) ?: return PsiSubstitutor.EMPTY
+    for (param in typeParams) {
+      nested.getInferenceVariable(substituteWithInferenceVariables(param.type())).instantiation = param.type()
+    }
+    return nested.result()
+  }
+
   override fun startNestedSession(params: Array<PsiTypeParameter>,
                                   siteSubstitutor: PsiSubstitutor,
                                   context: PsiElement,
@@ -51,12 +76,37 @@ class CollectingGroovyInferenceSession(
     val nestedSession = CollectingGroovyInferenceSession(params, context, siteSubstitutor, proxyMethodMapping, this, ignoreClosureArguments)
     nestedSession.propagateVariables(this)
     f(nestedSession)
+    mirrorInnerVariables(nestedSession)
     nestedSessions[result] = nestedSession
     this.propagateVariables(nestedSession)
     for ((vars, rightType) in nestedSession.myIncorporationPhase.captures) {
       this.myIncorporationPhase.addCapture(vars, rightType)
     }
   }
+
+  private fun mirrorInnerVariables(session: CollectingGroovyInferenceSession) {
+    for (variable in session.inferenceVariables) {
+      if (variable in this.inferenceVariables) {
+        mirrorBound(variable, InferenceBound.LOWER, session)
+        mirrorBound(variable, InferenceBound.EQ, session)
+        mirrorBound(variable, InferenceBound.UPPER, session)
+      }
+    }
+  }
+
+  private fun mirrorBound(outerVariable: InferenceVariable, bound: InferenceBound, session: CollectingGroovyInferenceSession) {
+    for (boundType in outerVariable.getBounds(bound)) {
+      val innerVariable = session.getInferenceVariable(boundType)?.takeIf { it !in this.inferenceVariables } ?: continue
+      InferenceVariable.addBound(innerVariable.type(), outerVariable.type(), negateInferenceBound(bound), session)
+    }
+  }
+
+  private fun negateInferenceBound(bound: InferenceBound): InferenceBound =
+    when (bound) {
+      InferenceBound.LOWER -> InferenceBound.UPPER
+      InferenceBound.EQ -> InferenceBound.EQ
+      InferenceBound.UPPER -> InferenceBound.LOWER
+    }
 
   override fun initArgumentConstraints(mapping: ArgumentMapping?, inferenceSubstitutor: PsiSubstitutor) {
     if (mapping == null) return
