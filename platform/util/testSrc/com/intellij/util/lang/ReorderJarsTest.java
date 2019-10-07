@@ -15,8 +15,8 @@
  */
 package com.intellij.util.lang;
 
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.io.zip.JBZipEntry;
 import com.intellij.util.io.zip.JBZipFile;
 import com.intellij.util.io.zip.ReorderJarsMain;
@@ -49,14 +49,12 @@ public class ReorderJarsTest {
   }
 
   private static String getTestDataPath() {
-    String homePath = PathManager.getHomePath().replace(File.separatorChar, '/');
-    if (new File(homePath + "/community/java/java-tests/testData").exists()) return homePath + "/community/java/java-tests/testData";
-    return homePath + "/java/java-tests/testData";
+    return PlatformTestUtil.getPlatformTestDataPath() + "plugins/reorderJars";
   }
 
   @Test
   public void testReordering() throws IOException {
-    String path = getTestDataPath() + "/ide/plugins/reorderJars";
+    String path = getTestDataPath();
 
     try (JBZipFile zipFile1 = new JBZipFile(path + "/annotations.jar")) {
       List<JBZipEntry> entries = zipFile1.getEntries();
@@ -97,7 +95,7 @@ public class ReorderJarsTest {
 
   @Test
   public void testPluginXml() throws Exception {
-    String path = getTestDataPath() + "/ide/plugins/reorderJars";
+    String path = getTestDataPath();
 
     ReorderJarsMain.main(new String[] { path + "/zkmOrder.txt", path, myTempDirectory.getPath() } );
 

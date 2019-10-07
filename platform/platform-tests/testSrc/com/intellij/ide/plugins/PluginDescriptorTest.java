@@ -1,9 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
-import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.lang.UrlClassLoader;
 import org.junit.Rule;
@@ -27,7 +27,7 @@ import static org.junit.Assert.*;
  */
 public class PluginDescriptorTest {
   private static String getTestDataPath() {
-    return PathManagerEx.getTestDataPath() + "/ide/plugins/pluginDescriptor";
+    return PlatformTestUtil.getPlatformTestDataPath() + "plugins/pluginDescriptor";
   }
 
   @Rule public TempDirectory tempDir = new TempDirectory();
