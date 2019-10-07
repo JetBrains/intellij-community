@@ -646,7 +646,7 @@ public class PluginManagerCore {
     for (List<PluginId> cycle : cycles) {
       JBIterable<String> names = JBIterable.from(cycle).map(o -> toPresentableName(idMap.get(o)));
       String cycleText = StringUtil.join(names.sort(String::compareTo), ", ");
-      errors.add("Plugins " + cycleText + " form dependency cycle");
+      errors.add("Plugins " + cycleText + " form a dependency cycle");
     }
   }
 
@@ -733,12 +733,14 @@ public class PluginManagerCore {
     }
   }
 
-  private static class LoadingContext implements AutoCloseable {
-    private final Map<File, ZipFile> myOpenedFiles = new THashMap<>();
-    final @Nullable LoadDescriptorsContext parentContext;
+  static class LoadingContext implements AutoCloseable {
+    final Map<File, ZipFile> openedFiles = new THashMap<>();
+    final LoadDescriptorsContext parentContext;
     final boolean isBundled;
     final boolean isEssential;
     final boolean ignoreDisabled;
+    final List<String> visitedFiles = new ArrayList<>(3);
+
     File lastZipWithDescriptor;
 
     /**
@@ -753,9 +755,9 @@ public class PluginManagerCore {
 
     @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
     ZipFile open(File file) throws IOException {
-      ZipFile zipFile = myOpenedFiles.get(file);
+      ZipFile zipFile = openedFiles.get(file);
       if (zipFile == null) {
-        myOpenedFiles.put(file, zipFile = new ZipFile(file));
+        openedFiles.put(file, zipFile = new ZipFile(file));
       }
       return zipFile;
     }
@@ -767,7 +769,7 @@ public class PluginManagerCore {
 
     @Override
     public void close() {
-      for (ZipFile file : myOpenedFiles.values()) {
+      for (ZipFile file : openedFiles.values()) {
         try { file.close(); }
         catch (IOException ignore) { }
       }
@@ -840,7 +842,8 @@ public class PluginManagerCore {
       return null;
     }
 
-    resolveOptionalDescriptors(pathName, descriptor, (@SystemIndependent String optPathName) -> {
+    context.visitedFiles.add(pathName);
+    resolveOptionalDescriptors(descriptor, context, (@SystemIndependent String optPathName) -> {
       IdeaPluginDescriptorImpl optionalDescriptor = null;
       if (context.lastZipWithDescriptor != null) { // try last file that had the descriptor that worked
         optionalDescriptor = loadDescriptor(context.lastZipWithDescriptor, optPathName, context);
@@ -859,6 +862,7 @@ public class PluginManagerCore {
       }
       return optionalDescriptor;
     });
+    context.visitedFiles.remove(context.visitedFiles.size() - 1);
 
     return descriptor;
   }
@@ -915,32 +919,34 @@ public class PluginManagerCore {
     return false;
   }
 
-  public static void resolveOptionalDescriptors(@NotNull String fileName,
-                                                 @NotNull IdeaPluginDescriptorImpl descriptor,
-                                                 @NotNull Function<? super String, ? extends IdeaPluginDescriptorImpl> optionalDescriptorLoader) {
+  static void resolveOptionalDescriptors(@NotNull IdeaPluginDescriptorImpl descriptor,
+                                         @NotNull LoadingContext context,
+                                         @NotNull Function<? super String, ? extends IdeaPluginDescriptorImpl> optionalDescriptorLoader) {
     Map<PluginId, List<String>> optionalConfigs = descriptor.getOptionalConfigs();
-    if (optionalConfigs != null && !optionalConfigs.isEmpty()) {
-      Map<PluginId, List<IdeaPluginDescriptorImpl>> descriptors = new LinkedHashMap<>(optionalConfigs.size());
+    if (optionalConfigs == null || optionalConfigs.isEmpty()) return;
 
-      for (Map.Entry<PluginId, List<String>> entry : optionalConfigs.entrySet()) {
-        for (String optionalDescriptorName : entry.getValue()) {
-          if (fileName.equals(optionalDescriptorName)) {
-            getLogger().info("recursive dependency (" + fileName + ") in " + descriptor);
-            continue;
-          }
+    Map<PluginId, List<IdeaPluginDescriptorImpl>> descriptors = new LinkedHashMap<>(optionalConfigs.size());
+    for (Map.Entry<PluginId, List<String>> entry : optionalConfigs.entrySet()) {
+      for (String configFile : entry.getValue()) {
+        int idx = context.visitedFiles.indexOf(configFile);
+        if (idx != -1) {
+          List<String> cycle = context.visitedFiles.subList(idx, context.visitedFiles.size());
+          getLogger().info("Plugin " + toPresentableName(descriptor) + " optional descriptors form a cycle: " +
+                           StringUtil.join(cycle, ", "));
+          continue;
+        }
 
-          IdeaPluginDescriptorImpl optionalDescriptor = optionalDescriptorLoader.fun(optionalDescriptorName);
-          if (optionalDescriptor == null) {
-            getLogger().info("Cannot find optional descriptor " + optionalDescriptorName);
-          }
-          else {
-            descriptors.computeIfAbsent(entry.getKey(), it -> new SmartList<>()).add(optionalDescriptor);
-          }
+        IdeaPluginDescriptorImpl optionalDescriptor = optionalDescriptorLoader.fun(configFile);
+        if (optionalDescriptor == null) {
+          getLogger().info("Plugin " + toPresentableName(descriptor) + " misses optional descriptor " + configFile);
+        }
+        else {
+          descriptors.computeIfAbsent(entry.getKey(), it -> new SmartList<>()).add(optionalDescriptor);
         }
       }
-
-      descriptor.setOptionalDescriptors(descriptors);
     }
+
+    descriptor.setOptionalDescriptors(descriptors);
   }
 
   private static void loadDescriptorsFromDir(@NotNull File dir,
