@@ -36,4 +36,6 @@ class VcsCloneComponentStub(private val checkoutProvider: CheckoutProvider,
     // TODO: implement obtaining focus for GitHub
     return null
   }
+
+  override fun dispose() {}
 }

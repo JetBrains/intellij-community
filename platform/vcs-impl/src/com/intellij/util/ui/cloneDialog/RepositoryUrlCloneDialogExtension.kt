@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.CheckoutProvider
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.ui.VcsCloneComponent
@@ -75,7 +76,9 @@ class RepositoryUrlCloneDialogExtension : VcsCloneDialogExtension {
         if (e.stateChange == ItemEvent.SELECTED) {
           val provider = e.item as CheckoutProvider
           centerPanel.setContent(vcsComponents.getOrPut(provider, {
-            provider.buildVcsCloneComponent(project)
+            val cloneComponent = provider.buildVcsCloneComponent(project)
+            Disposer.register(this, cloneComponent)
+            cloneComponent
           }).getView())
           centerPanel.revalidate()
           centerPanel.repaint()

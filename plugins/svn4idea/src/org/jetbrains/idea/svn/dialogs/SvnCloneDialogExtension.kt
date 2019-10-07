@@ -29,4 +29,8 @@ class SvnCloneDialogExtension(project: Project) : CheckoutDialog(project, Projec
   override fun doValidateAll(): MutableList<ValidationInfo> {
     return super.doValidateAll()
   }
+
+  override fun dispose() {
+    super.dispose()
+  }
 }
