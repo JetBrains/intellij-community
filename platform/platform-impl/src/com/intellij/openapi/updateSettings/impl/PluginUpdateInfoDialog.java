@@ -2,9 +2,10 @@
 package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerMain;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
@@ -14,6 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -69,9 +71,28 @@ class PluginUpdateInfoDialog extends AbstractUpdateDialog {
       new Task.Backgroundable(null, IdeBundle.message("update.notifications.title"), true, PerformInBackgroundOption.DEAF) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
-          boolean updated = UpdateInstaller.installPluginUpdates(myUploadedPlugins, indicator);
-          if (updated) {
-            ApplicationManager.getApplication().invokeLater(() -> PluginManagerMain.notifyPluginsUpdated(null), ModalityState.NON_MODAL);
+          final List<PluginDownloader> downloaders = UpdateInstaller.downloadPluginUpdates(myUploadedPlugins, indicator);
+          if (!downloaders.isEmpty()) {
+            ApplicationManager.getApplication().invokeLater(() -> {
+              final PluginUpdateResult result = UpdateInstaller.installDownloadedPluginUpdates(downloaders, getContentPanel(), true);
+              if (result.getPluginsInstalled().size() > 0) {
+                if (result.getRestartRequired()) {
+                  PluginManagerMain.notifyPluginsUpdated(null);
+                }
+                else {
+                  String message;
+                  if (result.getPluginsInstalled().size() == 1) {
+                    final IdeaPluginDescriptor installedPlugin = result.getPluginsInstalled().get(0);
+                    message = "Updated " + installedPlugin.getName() + " plugin to version " + installedPlugin.getVersion();
+                  }
+                  else {
+                    message = "Updated " + result.getPluginsInstalled() + " plugins";
+
+                  }
+                  UpdateChecker.NOTIFICATIONS.createNotification(message, NotificationType.INFORMATION).notify(myProject);
+                }
+              }
+            });
           }
         }
       }.queue();
