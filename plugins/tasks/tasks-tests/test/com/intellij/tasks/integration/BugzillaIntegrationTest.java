@@ -65,5 +65,4 @@ public class BugzillaIntegrationTest extends TaskManagerTestCase {
     myRepository.setUsername("buildtest");
     myRepository.setPassword("buildtest");
   }
-
 }

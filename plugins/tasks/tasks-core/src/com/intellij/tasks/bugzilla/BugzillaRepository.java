@@ -20,7 +20,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * @author Mikhail Golubev
@@ -32,8 +31,6 @@ public class BugzillaRepository extends BaseRepositoryImpl {
   private static final Logger LOG = Logger.getInstance(BugzillaRepository.class);
 
   // Copied from SendTimeTrackingInformationDialog
-  public static final Pattern TIME_SPENT_PATTERN = Pattern.compile("([0-9]+)d ([0-9]+)h ([0-9]+)m");
-
   private Version myVersion;
 
   private boolean myAuthenticated;
