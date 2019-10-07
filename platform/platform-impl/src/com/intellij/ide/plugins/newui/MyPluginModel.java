@@ -325,6 +325,11 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
       if (installedPluginDescriptor == null || !DynamicPlugins.allowLoadUnloadWithoutRestart(installedPluginDescriptor)) {
         allowUninstallWithoutRestart = false;
       }
+      else if (DynamicPlugins.allowLoadUnloadSynchronously(installedPluginDescriptor)) {
+        if (!PluginInstaller.uninstallDynamicPlugin(installedPluginDescriptor)) {
+          allowUninstallWithoutRestart = false;
+        }
+      }
       else {
         performUninstall(installedPluginDescriptor);
       }
