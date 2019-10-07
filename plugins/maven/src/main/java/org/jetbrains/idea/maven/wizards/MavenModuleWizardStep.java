@@ -92,6 +92,14 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
     loadSettings();
   }
 
+  /**
+   * @deprecated use {@link MavenModuleWizardStep#MavenModuleWizardStep(AbstractMavenModuleBuilder, WizardContext, boolean)} instead
+   */
+  @Deprecated
+  public MavenModuleWizardStep(MavenModuleBuilder builder, WizardContext context, boolean includeArtifacts) {
+    this((AbstractMavenModuleBuilder)builder, context, includeArtifacts);
+  }
+
   private void initComponents() {
 
     mySelectAggregator.addActionListener(new ActionListener() {

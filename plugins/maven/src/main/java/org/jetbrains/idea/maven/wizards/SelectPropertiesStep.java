@@ -58,6 +58,14 @@ public class SelectPropertiesStep extends ModuleWizardStep {
     initComponents();
   }
 
+  /**
+   * @deprecated use {@link SelectPropertiesStep#SelectPropertiesStep(Project, AbstractMavenModuleBuilder)} instead
+   */
+  @Deprecated
+  public SelectPropertiesStep(@Nullable Project project, MavenModuleBuilder builder) {
+    this(project, (AbstractMavenModuleBuilder)builder);
+  }
+
   private void initComponents() {
     myEnvironmentForm = new MavenEnvironmentForm();
 
