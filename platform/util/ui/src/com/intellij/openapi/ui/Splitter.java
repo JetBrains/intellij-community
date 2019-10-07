@@ -8,6 +8,7 @@ import com.intellij.openapi.wm.FocusWatcher;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.ui.EmptyIcon;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -263,14 +264,37 @@ public class Splitter extends JPanel implements Splittable {
         && ((myVerticalSplit && h > 2 * getDividerWidth()) || (!myVerticalSplit && w > 2 * getDividerWidth()))
       && ((myVerticalSplit && h != getHeight()) || (!myVerticalSplit && w != getWidth()))) {
       int total = myVerticalSplit ? h : w;
-      int s1 = myVerticalSplit ? myFirstComponent.getHeight() : myFirstComponent.getWidth();
-      int d = getDividerWidth();
-      if (myDividerPositionStrategy == DividerPositionStrategy.KEEP_SECOND_SIZE) {
-        s1 = total - d - (myVerticalSplit ? mySecondComponent.getHeight() : mySecondComponent.getWidth());
+      if (myDividerPositionStrategy == DividerPositionStrategy.KEEP_FIRST_SIZE) {
+        myProportion = getProportionForFirstSize(myVerticalSplit ? myFirstComponent.getHeight() : myFirstComponent.getWidth(), total);
       }
-      myProportion = (float)s1 / (total - d);
+      else if (myDividerPositionStrategy == DividerPositionStrategy.KEEP_SECOND_SIZE) {
+        myProportion = getProportionForSecondSize(myVerticalSplit ? mySecondComponent.getHeight() : mySecondComponent.getWidth(), total);
+      }
     }
     super.reshape(x, y, w, h);
+  }
+
+  @ApiStatus.Internal
+  protected final float getProportionForFirstSize(int firstSize, int totalSize) {
+    checkSize(firstSize);
+    checkTotalSize(totalSize);
+    return (float)firstSize / (totalSize - getDividerWidth());
+  }
+
+  @ApiStatus.Internal
+  protected final float getProportionForSecondSize(int secondSize, int totalSize) {
+    checkSize(secondSize);
+    checkTotalSize(totalSize);
+    return (float)(totalSize - getDividerWidth() - secondSize) / (totalSize - getDividerWidth());
+  }
+
+  private static void checkSize(int size) {
+    if (size < 0) throw new IllegalArgumentException("size is negative: " + size);
+  }
+
+  private void checkTotalSize(int totalSize) {
+    int d = getDividerWidth();
+    if (totalSize <= d) throw new IllegalArgumentException("divider width >= total size: " + d + " >= " + totalSize);
   }
 
   @Override

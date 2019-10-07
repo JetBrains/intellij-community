@@ -13,23 +13,40 @@ private val propertiesComponent get() = PropertiesComponent.getInstance()
 
 private class ChangesViewCommitPanelSplitter : OnePixelSplitter(true, "", DEFAULT_VERTICAL_PROPORTION) {
   private var isVerticalProportionSet = propertiesComponent.isValueSet(VERTICAL_PROPORTION_KEY)
+  private var previousHeight = 0
+  private var verticalSecondHeight = 0
 
   init {
-    dividerPositionStrategy = DividerPositionStrategy.KEEP_SECOND_SIZE
     addPropertyChangeListener(PROP_ORIENTATION) { loadProportion() }
   }
 
   override fun doLayout() {
     calculateInitialVerticalProportion()
+    doLayoutRetainingSecondHeight()
+  }
+
+  private fun doLayoutRetainingSecondHeight() {
+    if (isVerticalProportionSet && canCalculateVerticalProportion() && isSplitterHeightChanged()) {
+      if (isVertical) proportion = getProportionForSecondHeight(secondComponent.height)
+      else if (verticalSecondHeight > 0) saveVerticalProportion(getProportionForSecondHeight(verticalSecondHeight))
+    }
     super.doLayout()
+    previousHeight = height
+    if (isVerticalProportionSet && isVertical && canCalculateVerticalProportion()) verticalSecondHeight = secondComponent.height
   }
 
   private fun calculateInitialVerticalProportion() {
-    if (!isVertical || isVerticalProportionSet || height <= 0 || secondComponent == null) return
+    if (isVerticalProportionSet || !isVertical || !canCalculateVerticalProportion()) return
 
     isVerticalProportionSet = true
-    proportion = 1.0f - (secondComponent.preferredSize.getHeight().toFloat() / height).coerceIn(0.05f, 0.95f)
+    proportion = getProportionForSecondHeight(secondComponent.preferredSize.height)
   }
+
+  private fun getProportionForSecondHeight(secondHeight: Int): Float =
+    getProportionForSecondSize(secondHeight, height).coerceIn(0.05f, 0.95f)
+
+  private fun canCalculateVerticalProportion(): Boolean = secondComponent != null && height > dividerWidth
+  private fun isSplitterHeightChanged(): Boolean = previousHeight != height
 
   override fun loadProportion() {
     if (!isVertical) {
@@ -45,7 +62,10 @@ private class ChangesViewCommitPanelSplitter : OnePixelSplitter(true, "", DEFAUL
       propertiesComponent.setValue(HORIZONTAL_PROPORTION_KEY, proportion, DEFAULT_HORIZONTAL_PROPORTION)
     }
     else if (isVerticalProportionSet) {
-      propertiesComponent.setValue(VERTICAL_PROPORTION_KEY, proportion, DEFAULT_VERTICAL_PROPORTION)
+      saveVerticalProportion(proportion)
     }
   }
+
+  private fun saveVerticalProportion(value: Float) =
+    propertiesComponent.setValue(VERTICAL_PROPORTION_KEY, value, DEFAULT_VERTICAL_PROPORTION)
 }
