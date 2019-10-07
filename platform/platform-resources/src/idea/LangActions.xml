@@ -145,6 +145,11 @@
       <add-to-group group-id="EditorGutterPopupMenu" anchor="first"/>
     </group>
 
+    <group id="popup@BookmarkContextMenu">
+      <reference ref="ToggleBookmark"/>
+      <action id="EditBookmark" class="com.intellij.ide.bookmarks.actions.EditBookmarkAction"/>
+    </group>
+
     <action id="GotoDeclarationOnly" class="com.intellij.codeInsight.navigation.actions.GotoDeclarationOnlyAction"/>
 
     <group id="GoToCodeGroup">
