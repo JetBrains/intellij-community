@@ -2,6 +2,9 @@
 package com.intellij.ide.plugins
 
 import com.intellij.ide.ui.UIThemeProvider
+import com.intellij.notification.NotificationDisplayType
+import com.intellij.notification.NotificationGroup
+import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl
@@ -14,8 +17,13 @@ import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.openapi.util.IconLoader
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.util.MemoryDumpHelper
 import com.intellij.util.ReflectionUtil
+import com.intellij.util.SystemProperties
 import com.intellij.util.messages.Topic
+import java.text.SimpleDateFormat
+import java.util.*
 
 interface DynamicPluginListener {
   @JvmDefault
@@ -33,6 +41,7 @@ interface DynamicPluginListener {
 
 object DynamicPlugins {
   private val LOG = Logger.getInstance(DynamicPlugins::class.java)
+  private val GROUP = NotificationGroup("Profiling", NotificationDisplayType.BALLOON, false)
 
   @JvmStatic
   fun allowLoadUnloadWithoutRestart(pluginDescriptor: IdeaPluginDescriptorImpl): Boolean {
@@ -144,7 +153,15 @@ object DynamicPlugins {
       }
     }
 
-    return loadedPluginDescriptor.unloadClassLoader()
+    val classLoaderUnloaded = loadedPluginDescriptor.unloadClassLoader()
+    if (!classLoaderUnloaded && Registry.`is`("ide.plugins.snapshot.on.unload.fail") && MemoryDumpHelper.memoryDumpAvailable()) {
+      val snapshotFolder = System.getProperty("snapshots.path", SystemProperties.getUserHome())
+      val snapshotDate = SimpleDateFormat("dd.MM.yyyy_HH.mm.ss").format(Date())
+      val snapshotPath = "$snapshotFolder/unload-${pluginDescriptor.pluginId}-$snapshotDate.hprof"
+      MemoryDumpHelper.captureMemoryDump(snapshotPath)
+      GROUP.createNotification("Captured memory snapshot on plugin unload fail: $snapshotPath", NotificationType.WARNING).notify(null)
+    }
+    return classLoaderUnloaded
   }
 
   @JvmStatic
