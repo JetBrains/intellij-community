@@ -37,6 +37,14 @@ public interface RunDashboardGroupingRule {
   RunDashboardGroup getGroup(AbstractTreeNode<?> node);
 
   /**
+   * Returns a unique identifier for the rule.
+   *
+   * @return the rule identifier.
+   */
+  @NotNull
+  String getName();
+
+  /**
    * @deprecated not applicable for Services tool window
    * @return {@code true} if grouping rule should always be applied to dashboard nodes.
    */
@@ -80,15 +88,5 @@ public interface RunDashboardGroupingRule {
   @NotNull
   default ActionPresentation getPresentation() {
     return new ActionPresentationData("", "", null);
-  }
-
-  /**
-   * @deprecated not applicable for Services tool window
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  @NotNull
-  default String getName() {
-    return "";
   }
 }
