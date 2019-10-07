@@ -40,6 +40,7 @@ public class ModulePathTest extends BaseConfigurationTestCase {
     assertNotNull(moduleOptions);
     assertEquals("--patch-module m1=" + CompilerModuleExtension.getInstance(module).getCompilerOutputPathForTests().getPath() +
                  " --add-reads m1=ALL-UNNAMED" +
+                 " --add-opens m1/p=ALL-UNNAMED" +
                  " --add-modules m1", moduleOptions.getParametersList().getParametersString());
 
     checkLibrariesOnPathList(module, params4Tests.getClassPath());
@@ -69,6 +70,7 @@ public class ModulePathTest extends BaseConfigurationTestCase {
     assertNotNull(moduleOptions);
     assertEquals("--patch-module m1=" + CompilerModuleExtension.getInstance(module).getCompilerOutputPathForTests().getPath() +
                  " --add-reads m1=ALL-UNNAMED" +
+                 " --add-opens m1/p=ALL-UNNAMED" +
                  " --add-modules m1", moduleOptions.getParametersList().getParametersString());
 
     checkLibrariesOnPathList(module, params4Tests.getClassPath());

@@ -371,7 +371,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
       .computeWithAlternativeResolveEnabled(() -> JavaModuleGraphUtil.findDescriptorByModule(module, inTests));
   }
 
-  private static void configureModulePath(JavaParameters javaParameters, @NotNull Module module) {
+  private void configureModulePath(JavaParameters javaParameters, @NotNull Module module) {
     PsiJavaModule testModule = findJavaModule(module, true);
     if (testModule != null) {
       //adding the test module explicitly as it is unreachable from `idea.rt`
@@ -400,7 +400,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
    * Put dependencies reachable from module-info located in production sources on the module path
    * leave all other dependencies on the class path as is
    */
-  private static void splitDepsBetweenModuleAndClasspath(JavaParameters javaParameters, Module module, PsiJavaModule prodModule) {
+  private void splitDepsBetweenModuleAndClasspath(JavaParameters javaParameters, Module module, PsiJavaModule prodModule) {
     CompilerModuleExtension compilerExt = CompilerModuleExtension.getInstance(module);
     if (compilerExt == null) return;
 
@@ -412,21 +412,44 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     ParametersList vmParametersList = javaParameters.getVMParametersList()
       .addParamsGroup(JIGSAW_OPTIONS)
       .getParametersList();
+    String prodModuleName = prodModule.getName();
+
     //ensure test output is merged to the production module
     VirtualFile testOutput = compilerExt.getCompilerOutputPathForTests();
     if (testOutput != null) {
       vmParametersList.add("--patch-module");
-      vmParametersList.add(prodModule.getName() + "=" + testOutput.getPath());
+      vmParametersList.add(prodModuleName + "=" + testOutput.getPath());
     }
 
     //ensure test dependencies missing from production module descriptor are available in tests
     //todo enumerate all test dependencies explicitly
     vmParametersList.add("--add-reads");
-    vmParametersList.add(prodModule.getName() + "=ALL-UNNAMED");
+    vmParametersList.add(prodModuleName + "=ALL-UNNAMED");
+
+    //open packages with tests to test runner
+    List<String> opensOptions = new ArrayList<>();
+    collectPackagesToOpen(opensOptions);
+    for (String option : opensOptions) {
+      vmParametersList.add("--add-opens");
+      vmParametersList.add(prodModuleName + "/" + option + "=ALL-UNNAMED");
+    }
 
     //ensure production module is explicitly added as test starter in `idea-rt` doesn't depend on it
     vmParametersList.add("--add-modules");
-    vmParametersList.add(prodModule.getName());
+    vmParametersList.add(prodModuleName);
+  }
+
+  protected void collectPackagesToOpen(List<String> options) { }
+
+  /**
+   * called on EDT
+   */
+  protected static void collectSubPackages(List<String> options, PsiPackage aPackage, GlobalSearchScope globalSearchScope) {
+    options.add(aPackage.getQualifiedName());
+    PsiPackage[] subPackages = aPackage.getSubPackages(globalSearchScope);
+    for (PsiPackage subPackage : subPackages) {
+      collectSubPackages(options, subPackage, globalSearchScope);
+    }
   }
 
   protected static void putDependenciesOnModulePath(PathsList modulePath,

@@ -30,6 +30,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 
 public class TestPackage extends TestObject {
@@ -177,6 +178,20 @@ public class TestPackage extends TestObject {
 
     createServerSocket(javaParameters);
     return javaParameters;
+  }
+
+  @Override
+  protected void collectPackagesToOpen(List<String> options) {
+    try {
+      SourceScope sourceScope = getSourceScope();
+      if (sourceScope != null) {
+        collectSubPackages(options,
+                           getPackage(getConfiguration().getPersistentData()),
+                           sourceScope.getGlobalSearchScope());
+      }
+    }
+    catch (CantRunException ignored) {
+    }
   }
 
   @Override

@@ -26,19 +26,23 @@ import com.intellij.execution.process.KillableColoredProcessHandler;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.testframework.SourceScope;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiPackage;
 import com.intellij.rt.execution.testFrameworks.ForkedDebuggerHelper;
 import com.intellij.rt.testng.IDEATestNGListener;
 import com.intellij.rt.testng.RemoteTestNGStarter;
 import com.intellij.util.PathUtil;
 import com.intellij.util.net.NetUtils;
 import com.theoryinpractice.testng.model.TestData;
+import com.theoryinpractice.testng.model.TestType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.testng.CommandLineArgs;
@@ -215,6 +219,23 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState<TestNGCo
     parametersList.addAt(paramIdx, "@@@" + tempFile.getAbsolutePath());
     if (getForkSocket() != null) {
       parametersList.addAt(paramIdx, ForkedDebuggerHelper.DEBUG_SOCKET + getForkSocket().getLocalPort());
+    }
+  }
+
+  @Override
+  protected void collectPackagesToOpen(List<String> options) {
+    TestData data = getConfiguration().getPersistantData();
+    if (data.TEST_OBJECT == TestType.METHOD.getType() || data.TEST_OBJECT == TestType.CLASS.getType()) {
+      options.add(StringUtil.getPackageName(data.MAIN_CLASS_NAME));
+    }
+    else if (data.TEST_OBJECT == TestType.PACKAGE.getType()){
+      PsiPackage aPackage = JavaPsiFacade.getInstance(getConfiguration().getProject()).findPackage(data.PACKAGE_NAME);
+      if (aPackage != null) {
+        SourceScope sourceScope = data.getScope().getSourceScope(getConfiguration());
+        if (sourceScope != null) {
+          collectSubPackages(options, aPackage, sourceScope.getGlobalSearchScope());
+        }
+      }
     }
   }
 }
