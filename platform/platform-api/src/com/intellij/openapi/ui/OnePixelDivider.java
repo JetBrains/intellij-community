@@ -92,8 +92,20 @@ public class OnePixelDivider extends Divider {
     }
   }
   private class MyMouseAdapter extends MouseAdapter implements Weighted {
+    private boolean skipEventProcessing() {
+      if (isShowing()) {
+        return false;
+      }
+      setDragging(false);
+      myGlassPane.setCursor(null, this);
+      return true;
+    }
+
     @Override
     public void mousePressed(MouseEvent e) {
+      if (skipEventProcessing()) {
+        return;
+      }
       setDragging(isInDragZone(e));
       _processMouseEvent(e);
       if (myDragging) {
@@ -113,6 +125,9 @@ public class OnePixelDivider extends Divider {
 
     @Override
     public void mouseReleased(MouseEvent e) {
+      if (skipEventProcessing()) {
+        return;
+      }
       _processMouseEvent(e);
       if (myDragging) {
         e.consume();
@@ -122,6 +137,9 @@ public class OnePixelDivider extends Divider {
 
     @Override
     public void mouseMoved(MouseEvent e) {
+      if (skipEventProcessing()) {
+        return;
+      }
       final OnePixelDivider divider = OnePixelDivider.this;
       if (isInDragZone(e)) {
         myGlassPane.setCursor(divider.getCursor(), divider);
@@ -133,12 +151,17 @@ public class OnePixelDivider extends Divider {
 
     @Override
     public void mouseDragged(MouseEvent e) {
+      if (skipEventProcessing()) {
+        return;
+      }
       _processMouseMotionEvent(e);
     }
+
     @Override
     public double getWeight() {
       return 1;
     }
+
     private void _processMouseMotionEvent(MouseEvent e) {
       MouseEvent event = getTargetEvent(e);
       if (event == null) {
