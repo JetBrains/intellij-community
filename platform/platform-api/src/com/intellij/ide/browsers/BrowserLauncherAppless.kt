@@ -24,7 +24,6 @@ import java.awt.Desktop
 import java.io.File
 import java.io.IOException
 import java.net.URI
-import java.util.*
 
 private val LOG = logger<BrowserLauncherAppless>()
 
@@ -232,8 +231,8 @@ private fun addArgs(command: GeneralCommandLine, settings: BrowserSpecificSettin
         command.addParameter("--args")
       }
       else {
-        LOG.warn("'open' command doesn't allow to pass command line arguments so they will be ignored: " +
-                 StringUtil.join(specific, ", ") + " " + Arrays.toString(additional))
+        LOG.warn("'open' command doesn't allow passing command-line arguments, so they will be ignored: " +
+                 StringUtil.join(specific, ", ") + " " + additional.contentToString())
         return
       }
     }
