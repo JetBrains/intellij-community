@@ -619,6 +619,7 @@ public final class IconLoader {
         if (isLoaderDisabled()) return EMPTY_ICON;
         synchronized (myLock) {
           if (!isValid()) {
+            myTransformModCount = ourTransformModCount.get();
             myResolver.resolve();
             myRealIcon = null;
             myScaledIconsCache.clear();
