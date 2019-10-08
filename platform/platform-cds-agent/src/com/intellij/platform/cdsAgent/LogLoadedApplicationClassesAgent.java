@@ -181,16 +181,16 @@ public class LogLoadedApplicationClassesAgent {
     ClassesLogger logger = new ClassesLogger(basePath, useAppCDS);
     //first output classes without getProtectionDomain().getCodeSource().getLocation, aka likely JDK classes
 
-    List<Class<?>> withoutSource = new ArrayList<>();
-    List<Class<?>> libSource = new ArrayList<>();
-    List<Class<?>> pluginsSource = new ArrayList<>();
+    Set<Class<?>> withoutSource = new HashSet<>();
+    Set<Class<?>> libSource = new HashSet<>();
+    Set<Class<?>> pluginsSource = new HashSet<>();
 
     allClasses.stream().sorted(Comparator.comparing(clazz -> clazz.getName())).forEach(clazz -> {
       String source = getSourceForClassesList(basePath, clazz);
       if (source == null) {
         withoutSource.add(clazz);
       }
-      else if (source.startsWith("lib")) {
+      else if (!source.contains("plugins/")) {
         libSource.add(clazz);
       }
       else {
@@ -241,7 +241,7 @@ public class LogLoadedApplicationClassesAgent {
     private List<ClassInfo> interfaces = null;
 
     private ClassVersionAssertOutcome assertClassVersion;
-    private boolean hasSameNamedClasses = false;
+    private Boolean hasSameNamedClasses = null;
     private Boolean isValid = null;
     private boolean isLogged = false;
 
@@ -283,7 +283,7 @@ public class LogLoadedApplicationClassesAgent {
    */
   private static class ClassesLogger {
     private int myIdCounter = 0;
-    private final Map<Class<?>, ClassInfo> myClasses = new HashMap<>();
+    private final Map<Class<?>, ClassInfo> myClasses = new LinkedHashMap<>();
     private final List<String> myLog = new ArrayList<>();
 
     private final Path basePath;
@@ -336,20 +336,52 @@ public class LogLoadedApplicationClassesAgent {
 
       Map<String, List<ClassInfo>> classesByNames = myClasses.values().stream().collect(Collectors.groupingBy(info -> info.name));
       for (Map.Entry<String, List<ClassInfo>> entry : classesByNames.entrySet()) {
-        if (entry.getValue().size() <= 1) continue;
+        // we may discover a class that is not in classes and was not yet added via attachClasses
+        if (entry.getValue().size() <= 1) {
+          entry.getValue().forEach(info -> info.hasSameNamedClasses = false);
+          continue;
+        }
 
-        // we have same-named class from several class-paths.
+        // we have same-named class from several class loaders
         // It is only allowed (see ClassListParser::load_class_from_source function)
-        // to have one class without source and one class with source
-        // to avoid collisions, we will remove all classes with source
-        // in that case
+        // to have one class without source and one class with source.
+        //
+        // we check if there were classes from the previous call to #attachClasses
+        // next we try to leave class without source, or any other class
 
-        ClassInfo systemClass = entry.getValue().stream().filter(info -> info.source == null).findFirst().orElse(null);
+        ClassInfo classWithSource = null;
+        ClassInfo classWithoutSource = null;
 
+        //check decided classes for results
         for (ClassInfo info : entry.getValue()) {
-          if (info != systemClass) {
-            info.hasSameNamedClasses = true;
+          if (info.hasSameNamedClasses == null) continue;
+
+          if (!Boolean.TRUE.equals(info.hasSameNamedClasses)) {
+            if (info.source == null) {
+              classWithoutSource = info;
+            } else {
+              classWithSource = info;
+            }
           }
+        }
+
+        //check undecided classes and update
+        for (ClassInfo info : entry.getValue()) {
+          if (info.hasSameNamedClasses != null) continue;
+
+          if (classWithoutSource == null && info.source == null) {
+            classWithoutSource = info;
+            info.hasSameNamedClasses = false;
+            continue;
+          }
+
+          if (classWithSource == null && info.source != null) {
+            classWithSource = info;
+            info.hasSameNamedClasses = false;
+            continue;
+          }
+
+          info.hasSameNamedClasses = true;
         }
       }
 
@@ -407,7 +439,7 @@ public class LogLoadedApplicationClassesAgent {
             throw new RuntimeException("Unknown case " + info.myTooOldClassVersion + " for " + info.name);
         }
 
-        if (info.hasSameNamedClasses) {
+        if (Boolean.TRUE.equals(info.hasSameNamedClasses)) {
           warnings.add("same named class already exists");
           result = false;
         }
@@ -495,7 +527,7 @@ public class LogLoadedApplicationClassesAgent {
     }
 
     public void writeClasspath(@NotNull File file) throws IOException {
-      LinkedHashSet<String> classpath = new LinkedHashSet<>();
+      Set<String> classpath = new TreeSet<>();
       for (ClassInfo info : myClasses.values()) {
         String source = info.source;
         if (source == null) continue;
@@ -608,7 +640,7 @@ public class LogLoadedApplicationClassesAgent {
           path = basePath.relativize(resolvedPath).toString();
         }
         catch (Throwable t) {
-          //can fail because of a filysystem, e.g. java.lang.IllegalArgumentException: 'other' has different root
+          //can fail because of a file-system, e.g. java.lang.IllegalArgumentException: 'other' has different root
           path = resolvedPath.toString();
         }
       } catch (Throwable t) {
