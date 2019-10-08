@@ -264,7 +264,7 @@ public class SuspiciousMethodCallUtil {
       substitutor = TypeConversionUtil.getClassSubstitutor(patternClass, calleeClass, substitutor);
       if (substitutor == null) continue;
 
-      if (!method.getSignature(substitutor).equals(calleeMethod.getSignature(PsiSubstitutor.EMPTY))) continue;
+      if (!method.getSignature(substitutor).equals(calleeMethod.getSignature(resolveResult.getSubstitutor()))) continue;
 
       PsiTypeParameter[] typeParameters = patternClass.getTypeParameters();
       if (typeParameters.length <= patternMethod.typeParameterIdx) return null;
