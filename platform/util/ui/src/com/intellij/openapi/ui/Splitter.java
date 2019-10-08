@@ -62,7 +62,16 @@ public class Splitter extends JPanel implements Splittable {
     HONOR_THE_FIRST_MIN_SIZE,
     HONOR_THE_SECOND_MIN_SIZE
   }
+  @NotNull
   private LackOfSpaceStrategy myLackOfSpaceStrategy = LackOfSpaceStrategy.SIMPLE_RATIO;
+
+  public enum DividerPositionStrategy {
+    KEEP_PROPORTION, //default
+    KEEP_FIRST_SIZE,
+    KEEP_SECOND_SIZE
+  }
+  @NotNull
+  private DividerPositionStrategy myDividerPositionStrategy = DividerPositionStrategy.KEEP_PROPORTION;
 
 
   /**
@@ -144,12 +153,20 @@ public class Splitter extends JPanel implements Splittable {
     myHonorMinimumSize = honorMinimumSize;
   }
 
-  public void setLackOfSpaceStrategy(LackOfSpaceStrategy strategy) {
+  public void setLackOfSpaceStrategy(@NotNull LackOfSpaceStrategy strategy) {
     myLackOfSpaceStrategy = strategy;
   }
-
+  @NotNull
   public LackOfSpaceStrategy getLackOfSpaceStrategy() {
     return myLackOfSpaceStrategy;
+  }
+  public void setDividerPositionStrategy(@NotNull DividerPositionStrategy dividerPositionStrategy) {
+    myDividerPositionStrategy = dividerPositionStrategy;
+  }
+
+  @NotNull
+  public DividerPositionStrategy getDividerPositionStrategy() {
+    return myDividerPositionStrategy;
   }
 
   /**
@@ -236,6 +253,24 @@ public class Splitter extends JPanel implements Splittable {
   }
   public void skipNextLayout() {
     mySkipNextLayout = true;
+  }
+
+  @Override
+  public void reshape(int x, int y, int w, int h) {
+    if (myDividerPositionStrategy != DividerPositionStrategy.KEEP_PROPORTION
+        && !isNull(myFirstComponent) && myFirstComponent.isVisible()
+        && !isNull(mySecondComponent) && mySecondComponent.isVisible()
+      && ((myVerticalSplit && h != getHeight()) || (!myVerticalSplit && w != getWidth()))) {
+      if (myDividerPositionStrategy == DividerPositionStrategy.KEEP_FIRST_SIZE) {
+        myProportion = (float)(getDividerWidth() + (myVerticalSplit ? myFirstComponent.getHeight() : myFirstComponent.getWidth())) /
+                       (myVerticalSplit ? h : w);
+      }
+      else {
+        myProportion = (float)(myVerticalSplit ? h - mySecondComponent.getHeight() : w - mySecondComponent.getWidth()) /
+                       ((myVerticalSplit ? h : w));
+      }
+    }
+    super.reshape(x, y, w, h);
   }
 
   @Override

@@ -15,6 +15,7 @@ private class ChangesViewCommitPanelSplitter : OnePixelSplitter(true, "", DEFAUL
   private var isVerticalProportionSet = propertiesComponent.isValueSet(VERTICAL_PROPORTION_KEY)
 
   init {
+    dividerPositionStrategy = DividerPositionStrategy.KEEP_SECOND_SIZE
     addPropertyChangeListener(PROP_ORIENTATION) { loadProportion() }
   }
 
