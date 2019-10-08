@@ -110,8 +110,8 @@ class SmokeTest : BasePlatformTestCase() {
             init {
                 job("myTask") {
                     fork {
-                        run("hello-world1")
-                        run("hello-world2")
+                        container("hello-world1")
+                        container("hello-world2")
                     }
                 }
             }
