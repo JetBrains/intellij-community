@@ -96,21 +96,9 @@ public class GitRebaseProcess {
 
   private static final Logger LOG = Logger.getInstance(GitRebaseProcess.class);
 
-  private final NotificationAction ABORT_ACTION = NotificationAction.create("Abort", (event, notification) -> {
-    abort();
-    notification.expire();
-  });
-
-  private final NotificationAction CONTINUE_ACTION = NotificationAction.create("Continue", (event, notification) -> {
-    retry(GitRebaseUtils.CONTINUE_PROGRESS_TITLE);
-    notification.expire();
-  });
-
-  private final NotificationAction RETRY_ACTION = NotificationAction.create("Retry", (event, notification) -> {
-    retry("Retry Rebase Process...");
-    notification.expire();
-  });
-
+  private final NotificationAction ABORT_ACTION = NotificationAction.createSimpleExpiring("Abort", () -> abort());
+  private final NotificationAction CONTINUE_ACTION = NotificationAction.createSimpleExpiring("Continue", () -> retry(GitRebaseUtils.CONTINUE_PROGRESS_TITLE));
+  private final NotificationAction RETRY_ACTION = NotificationAction.createSimpleExpiring("Retry", () -> retry("Retry Rebase Process..."));
   private final NotificationAction VIEW_STASH_ACTION;
 
   @NotNull private final Project myProject;
