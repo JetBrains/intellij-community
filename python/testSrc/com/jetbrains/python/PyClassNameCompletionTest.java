@@ -42,11 +42,11 @@ public class PyClassNameCompletionTest extends PyTestCase {
   }
 
   public void testModule() {
-    doTest();
+    runWithAdditionalFileInLibDir("collections.py", "", (__) -> doTest());
   }
 
   public void testVariable() {
-    doTest();
+    runWithAdditionalFileInLibDir("datetime.py", "MAXYEAR = 10", (__) -> doTest());
   }
 
   public void testSubmodule() {  // PY-7887
@@ -109,7 +109,11 @@ public class PyClassNameCompletionTest extends PyTestCase {
 
   // PY-20976
   public void testOrderingLocalBeforeStdlib() {
-    doTestCompletionOrder("local_pkg.path", "local_pkg.local_module.path", "sys.path");
+    runWithAdditionalFileInLibDir(
+      "sys.py",
+      "path = 10",
+      (__) -> doTestCompletionOrder("local_pkg.path", "local_pkg.local_module.path", "sys.path")
+    );
   }
 
   // PY-20976
@@ -139,7 +143,11 @@ public class PyClassNameCompletionTest extends PyTestCase {
 
   // PY-20976
   public void testCombinedOrdering() {
-    doTestCompletionOrder("main.path", "first.foo.path", "sys.path", "_second.bar.path");
+    runWithAdditionalFileInLibDir(
+      "sys.py",
+      "path = 10",
+      (__) -> doTestCompletionOrder("main.path", "first.foo.path", "sys.path", "_second.bar.path")
+    );
   }
 
   // PY-20976

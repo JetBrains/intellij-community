@@ -122,7 +122,11 @@ class PyInlineFunctionTest : PyTestCase() {
   fun testOverridden() = doTestError("Cannot inline overridden methods")
   fun testNested() = doTestError("Cannot inline functions with another function declaration")
   fun testInterruptedFlow() = doTestError("Cannot inline functions that interrupt control flow")
-  fun testFunctionFromBinaryStub() = doTestError("Cannot inline function from binary module")
+  fun testFunctionFromBinaryStub() {
+    runWithAdditionalFileInSkeletonDir("sys.py", "def exit():\n  pass") {
+      doTestError("Cannot inline function from binary module")
+    }
+  }
   fun testUsedAsDecorator() = doTestError("Function foo is used as a decorator and cannot be inlined. Function definition will not be removed", isReferenceError = true)
   fun testUsedAsReference() = doTestError("Function foo is used as a reference and cannot be inlined. Function definition will not be removed", isReferenceError = true)
   fun testUsesArgumentUnpacking() = doTestError("Function foo uses argument unpacking and cannot be inlined. Function definition will not be removed", isReferenceError = true)

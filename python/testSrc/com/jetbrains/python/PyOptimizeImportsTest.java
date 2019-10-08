@@ -74,16 +74,43 @@ public class PyOptimizeImportsTest extends PyTestCase {
   }
 
   public void testOrderByType() {
-    doTest();
+    runWithAdditionalFileInLibDir(
+      "sys.py",
+      "",
+      (__) ->
+        runWithAdditionalFileInLibDir(
+          "datetime.py",
+          "",
+          (___) -> doTest()
+        )
+    );
   }
 
   // PY-12018
   public void testAlphabeticalOrder() {
-    doTest();
+    runWithAdditionalFileInLibDir(
+      "sys.py",
+      "",
+      (__) ->
+        runWithAdditionalFileInLibDir(
+          "datetime.py",
+          "",
+          (___) -> doTest()
+        )
+    );
   }
 
   public void testInsertBlankLines() {  // PY-8355
-    doTest();
+    runWithAdditionalFileInLibDir(
+      "sys.py",
+      "",
+      (__) ->
+        runWithAdditionalFileInLibDir(
+          "datetime.py",
+          "",
+          (___) -> doTest()
+        )
+    );
   }
 
   // PY-16351
@@ -127,7 +154,16 @@ public class PyOptimizeImportsTest extends PyTestCase {
   // PY-18792
   public void testDisableAlphabeticalOrder() {
     getPythonCodeStyleSettings().OPTIMIZE_IMPORTS_SORT_IMPORTS = false;
-    doTest();
+    runWithAdditionalFileInLibDir(
+      "sys.py",
+      "",
+      (__) ->
+        runWithAdditionalFileInLibDir(
+          "datetime.py",
+          "",
+          (___) -> doTest()
+        )
+    );
   }
 
   // PY-18792, PY-19292
@@ -233,7 +269,20 @@ public class PyOptimizeImportsTest extends PyTestCase {
 
   // PY-18972
   public void testReferencesInFStringLiterals() {
-    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () ->
+        runWithAdditionalFileInLibDir(
+          "sys.py",
+          "",
+          (__) ->
+            runWithAdditionalFileInLibDir(
+              "datetime.py",
+              "",
+              (___) -> doTest()
+            )
+        )
+    );
   }
 
   // PY-22355
