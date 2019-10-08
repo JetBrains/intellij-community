@@ -43,7 +43,8 @@
 
 
     <extensionPoint name="intentionAction"
-                    beanClass="com.intellij.codeInsight.intention.IntentionActionBean">
+                    beanClass="com.intellij.codeInsight.intention.IntentionActionBean"
+                    dynamic="true">
       <with tag="className" implements="com.intellij.codeInsight.intention.IntentionAction"/>
     </extensionPoint>
 
