@@ -231,12 +231,6 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
       }
       return newLineNeed;
     }
-
-    SortableEntry copy() {
-      List<PsiComment> afterSeparator = ContainerUtil.map(myAfterSeparator, el -> (PsiComment)el.copy());
-      List<PsiComment> beforeSeparator = ContainerUtil.map(myBeforeSeparator, el -> (PsiComment)el.copy());
-      return new SortableEntry(myElement.copy(), beforeSeparator, afterSeparator);
-    }
   }
 
   private static class SortableList {
@@ -396,7 +390,7 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
 
       ReadStateMachine(@NotNull PsiElement current,
                               @NotNull SortingStrategy strategy,
-                              @NotNull Sortable block) {
+                              @NotNull Sortable<?> block) {
         // Expect that current element is
         myCurrent = current;
         myStrategy = strategy;
@@ -655,7 +649,8 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
     }
   }
 
-  private static class AnnotationArraySortable extends ElementBasedSortable<PsiArrayInitializerMemberValue> {
+  private static class AnnotationArraySortable extends Sortable<PsiArrayInitializerMemberValue> {
+
     @Override
     boolean isEnd(@NotNull PsiElement element) {
       return element instanceof PsiJavaToken && ((PsiJavaToken)element).getTokenType() == JavaTokenType.RBRACE;
@@ -667,9 +662,39 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
       return EXPRESSION_SORTING_STRATEGIES;
     }
 
+    @Nullable
+    @Override
+    PsiArrayInitializerMemberValue getContext(@NotNull PsiElement origin) {
+      return PsiTreeUtil.getParentOfType(origin, PsiArrayInitializerMemberValue.class);
+    }
+
+    @NotNull
+    @Override
+    List<PsiElement> getElements(@NotNull PsiArrayInitializerMemberValue context) {
+      return Arrays.asList(context.getInitializers());
+    }
 
     @Override
-    String generateReplacementText(@NotNull SortableList list, @NotNull PsiArrayInitializerMemberValue elementToSort) {
+    PsiElement getFirst(PsiArrayInitializerMemberValue context) {
+      return context.getFirstChild();
+    }
+
+    @Override
+    void replaceWithSorted(PsiElement origin) {
+      PsiArrayInitializerMemberValue context = getContext(origin);
+      if (context == null) return;
+      SortableList sortableList = readEntries(context);
+      if (sortableList == null) return;
+      sortableList.sort();
+      String replacement = generateReplacementText(sortableList);
+      PsiElementFactory factory = JavaPsiFacade.getElementFactory(origin.getProject());
+      PsiAnnotation annotation = factory.createAnnotationFromText("@Ann(" + replacement + ")", null);
+      PsiAnnotationMemberValue replacementElement = annotation.getParameterList().getAttributes()[0].getValue();
+      assert replacementElement != null;
+      context.replace(replacementElement);
+    }
+
+    String generateReplacementText(@NotNull SortableList list) {
       StringBuilder sb = new StringBuilder();
       boolean newLineRequired = list.generate(sb);
       if (newLineRequired) {
@@ -677,17 +702,6 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
       }
       sb.append("}");
       return sb.toString();
-    }
-
-    @Nullable
-    @Override
-    PsiArrayInitializerMemberValue getElementToSort(@NotNull PsiElement origin) {
-      return PsiTreeUtil.getParentOfType(origin, PsiArrayInitializerMemberValue.class);
-    }
-
-    @Override
-    List<PsiElement> getElements(@NotNull PsiArrayInitializerMemberValue elementToSort) {
-      return Arrays.asList(elementToSort.getInitializers());
     }
   }
 
