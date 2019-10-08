@@ -3768,6 +3768,15 @@ public class PyTypeTest extends PyTestCase {
     );
   }
 
+  // PY-35885
+  public void testFunctionDunderDoc() {
+    doTest("str",
+           "def example():\n" +
+           "    \"\"\"Example Docstring\"\"\"\n" +
+           "    return 0\n" +
+           "expr = example.__doc__");
+  }
+
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {
     return ImmutableList.of(TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile()).withTracing(),
                             TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()).withTracing());

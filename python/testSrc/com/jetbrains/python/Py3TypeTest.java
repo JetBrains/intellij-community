@@ -1133,6 +1133,15 @@ public class Py3TypeTest extends PyTestCase {
            "expr = f'foo'");
   }
 
+  // PY-35885
+  public void testFunctionDunderDoc() {
+    doTest("str",
+           "def example():\n" +
+           "    \"\"\"Example Docstring\"\"\"\n" +
+           "    return 0\n" +
+           "expr = example.__doc__");
+  }
+
   private void doTest(final String expectedType, final String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
