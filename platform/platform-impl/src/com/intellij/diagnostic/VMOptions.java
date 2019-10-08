@@ -104,6 +104,7 @@ public class VMOptions {
     writeGeneralOptions(
       Function.<String>identity()
         .andThen(replaceOrAddOption(Pattern.compile("-Xshare:.*\\r?\\n?"), ""))
+        // we cannot remove "-XX:+UnlockDiagnosticVMOptions", we do not know the reason it was included
         .andThen(replaceOrAddOption(Pattern.compile("-XX:SharedArchiveFile=.*\\r?\\n?"), ""))
     );
   }

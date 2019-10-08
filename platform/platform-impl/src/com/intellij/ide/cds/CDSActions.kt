@@ -21,11 +21,12 @@ class CDSEnableAction : AnAction("Enable Class Data Sharing") {
     AppExecutorUtil.getAppExecutorService().execute {
       ProgressManager.getInstance().run(object : Task.Backgroundable(
         null,
-        "Configuring Class Data Sharing",
+        "Enable Class Data Sharing (AppCDS)",
         true,
         PerformInBackgroundOption.ALWAYS_BACKGROUND
       ) {
         override fun run(indicator: ProgressIndicator) {
+          indicator.isIndeterminate = true
           CDSManager.installCDS(indicator)
         }
       })
@@ -42,11 +43,12 @@ class CDSDisableAction : AnAction("Disable Class Data Sharing") {
     AppExecutorUtil.getAppExecutorService().execute {
       ProgressManager.getInstance().run(object : Task.Backgroundable(
         null,
-        "Uninstalling Class Data Sharing",
+        "Disable Class Data Sharing (AppCDS)",
         true,
         PerformInBackgroundOption.ALWAYS_BACKGROUND
       ) {
         override fun run(indicator: ProgressIndicator) {
+          indicator.isIndeterminate = true
           CDSManager.removeCDS()
         }
       })

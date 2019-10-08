@@ -823,5 +823,6 @@
     <virtualFileManagerListener implementation="com.intellij.configurationStore.StoreReloadManagerImpl$MyVirtualFileManagerListener"/>
 
     <postStartupActivity implementation="com.intellij.ide.cds.CDSStartupActivity" order="last"/>
+    <registryKey key="appcds.enabled" defaultValue="false" restartRequired="true" description="Whether IDE should use AppCDS (JRP 310) for faster startup"/>
   </extensions>
 </idea-plugin>

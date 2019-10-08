@@ -1,21 +1,21 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.cds
 
-import com.google.common.hash.Hashing
 import com.intellij.diagnostic.VMOptions
 import com.intellij.execution.process.OSProcessUtil
-import com.intellij.ide.plugins.PluginManager
-import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.sun.tools.attach.VirtualMachine
+import org.jetbrains.concurrency.Promise
+import org.jetbrains.concurrency.rejectedPromise
+import org.jetbrains.concurrency.resolvedPromise
 import java.io.File
 import java.lang.management.ManagementFactory
-import java.nio.file.Files
 import java.util.concurrent.TimeUnit
 import kotlin.system.measureTimeMillis
 
@@ -41,26 +41,17 @@ object CDSManager {
       return true
     }
 
+  val isRunningWithCDS: Boolean
+    get() {
+      return isValidEnv && currentCDSArchive != null
+    }
+
   val canBuildOrUpdateCDS: Boolean
     get() {
       if (!isValidEnv) return false
 
       val paths = CDSPaths.current()
       return !paths.isSame(currentCDSArchive)
-    }
-
-  private val agentPath: File
-    get() {
-      val libPath = File(PathManager.getLibPath()) / "cds" / "classesLogAgent.jar"
-      if (libPath.isFile) return libPath
-
-      LOG.warn("Failed to find bundled CDS classes agent in $libPath")
-
-      //consider local debug IDE case
-      val probe = File(PathManager.getHomePath()) / "out" / "classes" / "artifacts" / "classesLogAgent_jar" / "classesLogAgent.jar"
-      if (probe.isFile) return probe
-
-      error("Failed to resolve path to the CDS agent")
     }
 
   private val currentCDSArchive: File?
@@ -91,20 +82,33 @@ object CDSManager {
     }
   }
 
-  fun installCDS(indicator: ProgressIndicator) {
+  fun installCDS(indicator: ProgressIndicator?): CDSPaths? {
     val paths = CDSPaths.current()
     if (paths.isSame(currentCDSArchive)) {
       LOG.info("CDS archive is already generated. Nothing to do")
-      return
+      return null
     }
 
     LOG.info("Starting generation of CDS archive to the ${paths.classesArchiveFile} and ${paths.classesArchiveFile} files")
 
-    indicator.text2 = "Collecting classes list..."
-    indicator.checkCanceled()
+    indicator?.text2 = "Collecting classes list..."
+    indicator?.checkCanceled()
 
     val durationList = measureTimeMillis {
       try {
+        val agentPath = run {
+          val libPath = File(PathManager.getLibPath()) / "cds" / "classesLogAgent.jar"
+          if (libPath.isFile) return@run libPath
+
+          LOG.warn("Failed to find bundled CDS classes agent in $libPath")
+
+          //consider local debug IDE case
+          val probe = File(PathManager.getHomePath()) / "out" / "classes" / "artifacts" / "classesLogAgent_jar" / "classesLogAgent.jar"
+          if (probe.isFile) return@run probe
+
+          error("Failed to resolve path to the CDS agent")
+        }
+
         val vm = VirtualMachine.attach(OSProcessUtil.getApplicationPid())
         try {
           vm.loadAgent(agentPath.path, "${paths.classesListFile},${paths.classesPathFile}")
@@ -115,14 +119,14 @@ object CDSManager {
       }
       catch (t: Throwable) {
         LOG.warn("Failed to attach CDS Java Agent to the running IDE instance. ${t.message}", t)
-        return
+        return null
       }
     }
 
     LOG.info("CDS classes file is generated in ${StringUtil.formatDuration(durationList)}")
 
-    indicator.text2 = "Generating classes archive..."
-    indicator.checkCanceled()
+    indicator?.text2 = "Generating classes archive..."
+    indicator?.checkCanceled()
 
     val durationLink = measureTimeMillis {
       val ext = if (SystemInfo.isWindows) ".exe" else ""
@@ -140,12 +144,12 @@ object CDSManager {
       val cwd = File(".").canonicalFile
       LOG.info("Running CDS generation process: $args in $cwd")
 
-      indicator.checkCanceled()
+      indicator?.checkCanceled()
       val process = ProcessBuilder().command(args).inheritIO().directory(cwd).start()
       if (!process.waitFor(10, TimeUnit.MINUTES)) {
         LOG.warn("Failed to generate CDS archive, the process took too long and will be killed")
         process.destroyForcibly()
-        return
+        return null
       }
     }
 
@@ -154,12 +158,35 @@ object CDSManager {
              "in ${StringUtil.formatDuration(durationLink)}")
 
     VMOptions.writeEnableCDSArchiveOption(paths.classesArchiveFile.absolutePath)
+
+    return paths
   }
 
   fun removeCDS() {
     LOG.warn("CDS archive is disabled")
     VMOptions.writeDisableCDSArchiveOption()
   }
-}
 
-private operator fun File.div(s: String) = File(this, s)
+  /**
+   * See com.intellij.openapi.ui.playback.commands.CallCommand
+   */
+  @JvmStatic
+  @Suppress("unused")
+  fun toggleCDSForPerfTests(@Suppress("UNUSED_PARAMETER") context: PlaybackContext, enableCDS: Boolean): Promise<Any?> =
+    try {
+      if (enableCDS) {
+        val paths = installCDS(null)
+        if (paths == null) rejectedPromise("Failed to install AppCDS, see log for errors")
+        else resolvedPromise<Any?>("ok")
+      }
+      else {
+        removeCDS()
+        resolvedPromise("ok")
+      }
+    }
+    catch (t: Throwable) {
+      rejectedPromise(t)
+    }
+
+  private operator fun File.div(s: String) = File(this, s)
+}

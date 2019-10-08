@@ -18,8 +18,14 @@ class CDSStartupActivity : StartupActivity {
     if (!isExecuted.compareAndSet(false, true)) return
     if (!CDSManager.canBuildOrUpdateCDS) return
 
-    val cdsKey = "intellij.cds.enabled"
-    val cdsEnabled = (System.getProperty(cdsKey, "true")?.toBoolean() == true || Registry.`is`(cdsKey, true))
+    // 1. allow to toggle the feature via -DintelliJ.appCDS.enabled
+    // 2. if not set, use Registry to enable the feature
+    // 3. and finally, fallback to see if we already run with AppCDS
+    val cdsKey = "appcds.enabled"
+    val cdsEnabled = System.getProperty("intellij.$cdsKey")?.toBoolean()
+                     ?: runCatching {
+                       Registry.`is`(cdsKey)
+                     }.getOrElse { CDSManager.isRunningWithCDS }
 
     AppExecutorUtil.getAppExecutorService().execute {
       ProgressManager.getInstance().run(object : Task.Backgroundable(
