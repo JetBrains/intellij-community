@@ -8,5 +8,11 @@ public class SortContentTest extends LightIntentionActionTestCase {
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/sortContent";
   }
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    getCurrentCodeStyleSettings().FORMATTER_TAGS_ENABLED = true;
+  }
 }
 
