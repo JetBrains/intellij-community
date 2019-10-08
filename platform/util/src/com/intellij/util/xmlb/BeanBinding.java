@@ -23,7 +23,7 @@ import java.lang.reflect.Type;
 import java.util.*;
 
 public class BeanBinding extends NotNullDeserializeBinding {
-  private static final PropertyCollector PROPERTY_COLLECTOR = new XmlSerializerPropertyCollector();
+  private static final XmlSerializerPropertyCollector PROPERTY_COLLECTOR = new XmlSerializerPropertyCollector();
 
   private final String myTagName;
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
@@ -331,6 +331,12 @@ public class BeanBinding extends NotNullDeserializeBinding {
              element.isAnnotationPresent(XCollection.class) ||
              element.isAnnotationPresent(AbstractCollection.class);
     }
+
+    @Override
+    public void clearSerializationCaches() {
+      super.clearSerializationCaches();
+      accessorCache.clear();
+    }
   }
 
   public String toString() {
@@ -402,5 +408,9 @@ public class BeanBinding extends NotNullDeserializeBinding {
       return new AttributeBinding(accessor, null);
     }
     return new OptionTagBinding(accessor, optionTag);
+  }
+
+  public static void clearSerializationCaches() {
+    PROPERTY_COLLECTOR.clearSerializationCaches();
   }
 }

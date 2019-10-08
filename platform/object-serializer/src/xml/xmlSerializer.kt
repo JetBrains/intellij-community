@@ -97,6 +97,10 @@ internal class JdomSerializerImpl : JdomSerializer {
     }
   }
 
+  override fun clearSerializationCaches() {
+    clearBindingCache()
+  }
+
   override fun deserializeInto(obj: Any, element: Element) {
     try {
       (serializer.getRootBinding(obj.javaClass) as BeanBinding).deserializeInto(obj, element)

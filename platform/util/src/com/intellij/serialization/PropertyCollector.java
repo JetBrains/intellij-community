@@ -169,6 +169,10 @@ public class PropertyCollector {
     return candidates;
   }
 
+  protected void clearSerializationCaches() {
+    classToOwnFields.clear();
+  }
+
   @Nullable
   private static NameAndIsSetter getPropertyData(@NotNull String methodName) {
     String part = "";

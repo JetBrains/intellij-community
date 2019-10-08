@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins
 
+import com.intellij.configurationStore.jdomSerializer
 import com.intellij.ide.ui.UIThemeProvider
 import com.intellij.notification.NotificationDisplayType
 import com.intellij.notification.NotificationGroup
@@ -22,6 +23,7 @@ import com.intellij.util.MemoryDumpHelper
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.SystemProperties
 import com.intellij.util.messages.Topic
+import com.intellij.util.xmlb.BeanBinding
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -152,6 +154,9 @@ object DynamicPlugins {
         }
       }
     }
+
+    jdomSerializer.clearSerializationCaches()
+    BeanBinding.clearSerializationCaches()
 
     val classLoaderUnloaded = loadedPluginDescriptor.unloadClassLoader()
     if (!classLoaderUnloaded && Registry.`is`("ide.plugins.snapshot.on.unload.fail") && MemoryDumpHelper.memoryDumpAvailable()) {
