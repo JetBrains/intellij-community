@@ -42,7 +42,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 class BuildUtils {
   private static final Logger LOG = Logger.getInstance(Utils.class);
-  private static final boolean ALWAYS_UPDATE_SLOW_ACTIONS = Boolean.getBoolean("mac.touchbar.always.update.slow.actions");
+  private static final boolean SKIP_UPDATE_SLOW_ACTIONS = Boolean.getBoolean("mac.touchbar.skip.update.slow.actions");
   private static final boolean PERSISTENT_LIST_OF_SLOW_ACTIONS = Boolean.getBoolean("mac.touchbar.remember.slow.actions");
   private static final String DIALOG_ACTIONS_CONTEXT = "DialogWrapper.touchbar.actions";
 
@@ -104,7 +104,6 @@ class BuildUtils {
   }
 
   static void addActionGroupButtons(@NotNull TouchBar out, @NotNull ActionGroup actionGroup, @Nullable String filterGroupPrefix, @Nullable Customizer customizer) {
-    out.softClear();
     GroupVisitor visitor = new GroupVisitor(out, filterGroupPrefix, customizer, out.getStats(), false);
 
     final DataContext dctx = DataManager.getInstance().getDataContext(getCurrentFocusComponent());
@@ -410,6 +409,11 @@ class BuildUtils {
     }
 
     @Override
+    public void begin() {
+      myOut.softClear();
+    }
+
+    @Override
     public boolean enterNode(@NotNull ActionGroup groupNode) {
       final @NotNull String groupId = getActionId(groupNode);
       if (myFilterByPrefix != null && groupId.startsWith(myFilterByPrefix))
@@ -479,7 +483,7 @@ class BuildUtils {
 
     @Override
     public boolean beginUpdate(@NotNull AnAction action, AnActionEvent e) {
-      if (!ALWAYS_UPDATE_SLOW_ACTIONS && myAllowSkipSlowUpdates && isSlowUpdateAction(action)) {
+      if (SKIP_UPDATE_SLOW_ACTIONS && myAllowSkipSlowUpdates && isSlowUpdateAction(action)) {
         // make such action always enabled and visible
         e.getPresentation().setEnabledAndVisible(true);
         if (action instanceof Toggleable)
@@ -495,7 +499,7 @@ class BuildUtils {
       // check whether update is too slow
       final long updateDurationNs = System.nanoTime() - myAct2StartUpdateNs.getOrDefault(action, 0L);
       final boolean isEDT = ApplicationManager.getApplication().isDispatchThread();
-      if (isEDT && !ALWAYS_UPDATE_SLOW_ACTIONS && myAllowSkipSlowUpdates && updateDurationNs > 30 * 1000000L) { // 30 ms threshold
+      if (isEDT && SKIP_UPDATE_SLOW_ACTIONS && myAllowSkipSlowUpdates && updateDurationNs > 30 * 1000000L) { // 30 ms threshold
         // disable update for this action
         addSlowUpdateAction(action);
       }

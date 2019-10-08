@@ -350,8 +350,6 @@ class TouchBar implements NSTLibrary.ItemCreator {
     }
 
     if (myActionGroup != null) {
-      softClear();
-
       DataContext dctx = DataManager.getInstance().getDataContext(BuildUtils.getCurrentFocusComponent());
       BuildUtils.GroupVisitor visitor = new BuildUtils.GroupVisitor(this, mySkipSubgroupsPrefix, null, myStats, myAllowSkipSlowUpdates);
       if (ourAsyncUpdate) {
@@ -360,7 +358,12 @@ class TouchBar implements NSTLibrary.ItemCreator {
         myLastUpdate = Utils.expandActionGroupAsync(LaterInvocator.isInModalContext(), myActionGroup, myFactory, dctx, ActionPlaces.TOUCHBAR_GENERAL, visitor);
         myLastUpdate.onSuccess(actions -> _applyPresentationChanges(actions)).onProcessed(__ -> myLastUpdate = null);
       } else {
-        List<AnAction> actions = Utils.expandActionGroupWithTimeout(LaterInvocator.isInModalContext(), myActionGroup, myFactory, dctx, ActionPlaces.TOUCHBAR_GENERAL, visitor);
+        List<AnAction> actions = Utils.expandActionGroupWithTimeout(
+          LaterInvocator.isInModalContext(),
+          myActionGroup,
+          myFactory, dctx,
+          ActionPlaces.TOUCHBAR_GENERAL,
+          visitor, Registry.intValue("actionSystem.update.touchbar.timeout.ms"));
         _applyPresentationChanges(actions);
       }
     } else {
