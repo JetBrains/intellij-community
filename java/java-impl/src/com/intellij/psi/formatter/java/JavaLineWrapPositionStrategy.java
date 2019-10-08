@@ -22,7 +22,9 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.JavaDocTokenType;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,6 +45,9 @@ public class JavaLineWrapPositionStrategy extends PsiAwareDefaultLineWrapPositio
   public static final String A_LINK_START = "<a";
   public static final String A_LINK_END = "</a>";
 
+  public static final String PRE_TAG_START = "<pre";
+  public static final String PRE_TAG_END = "</pre>";
+
   public JavaLineWrapPositionStrategy() {
     super(true, ALLOWED_TYPES);
   }
@@ -57,6 +62,9 @@ public class JavaLineWrapPositionStrategy extends PsiAwareDefaultLineWrapPositio
                                         boolean isSoftWrap) {
     if (element.getNode().getElementType() == JavaDocTokenType.DOC_COMMENT_DATA) {
       CharSequence docChars = document.getCharsSequence();
+      if (isInsidePreTag(element, docChars, startOffset) || isInsidePreTag(element, docChars, endOffset)) {
+        return NO_LINE_WRAP;
+      }
       int refStart = CharArrayUtil.indexOf(docChars, A_LINK_START, startOffset, endOffset);
       if (refStart >= 0 && refStart < maxPreferredOffset) {
         int refEnd = CharArrayUtil.indexOf(docChars, A_LINK_END, refStart, endOffset);
@@ -75,5 +83,18 @@ public class JavaLineWrapPositionStrategy extends PsiAwareDefaultLineWrapPositio
       }
     }
     return wrapPos;
+  }
+
+  private static boolean isInsidePreTag(@NotNull PsiElement element, @NotNull CharSequence chars, int offset) {
+    PsiElement parent = PsiTreeUtil.findFirstParent(
+      element, e -> e.getNode().getElementType() == JavaDocElementType.DOC_COMMENT);
+    if (parent != null) {
+      int preStart = CharArrayUtil.lastIndexOf(chars, PRE_TAG_START, offset);
+      if (preStart >= 0) {
+        int preEnd = CharArrayUtil.indexOf(chars, PRE_TAG_END, preStart, chars.length());
+        return preEnd > offset;
+      }
+    }
+    return false;
   }
 }
