@@ -861,6 +861,10 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
 
   private String loadTestEventListenerDefinition() {
     try(InputStream stream = getClass().getResourceAsStream("/org/jetbrains/plugins/gradle/IJTestLogger.groovy")) {
+      // Android Studio: prevent NPE when stream is null (should not be necessary after cea74ff27f4435e65dea1c25c05e8cfbd3a01f97)
+      if (stream == null) {
+        return "";
+      }
       return StreamUtil.readText(stream, StandardCharsets.UTF_8);
     } catch (IOException e) {
       LOG.info(e);
