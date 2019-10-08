@@ -36,6 +36,8 @@ import java.awt.*;
 import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.Collections;
+import java.util.Set;
 
 public class ActionButton extends JComponent implements ActionButtonComponent, AnActionHolder, Accessible {
   /**
@@ -346,7 +348,9 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
       String shortcut = KeymapUtil.getFirstKeyboardShortcutText(myAction);
       if (StringUtil.isNotEmpty(text) || StringUtil.isNotEmpty(description)) {
         HelpTooltip ht = new HelpTooltip().setTitle(text).setShortcut(shortcut);
-        if (!StringUtil.equals(text, description)) {
+
+        String id = ActionManager.getInstance().getId(myAction);
+        if (!StringUtil.equals(text, description) && WHITE_LIST.contains(id)) {
           ht.setDescription(description);
         }
         ht.installOn(this);
@@ -612,4 +616,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
       return false;
     }
   }
+
+  // Contains actions IDs which descriptions are permitted for displaying in the ActionButton tooltip
+  private static final Set<String> WHITE_LIST = Collections.emptySet();
 }
