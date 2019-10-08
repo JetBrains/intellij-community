@@ -174,7 +174,7 @@ open class HintRenderer(var text: String?) : EditorCustomElementRenderer {
                          - calcHintTextWidth(text, fontMetrics))
     }
 
-    protected class MyFontMetrics constructor(editor: Editor, familyName: String, size: Int) {
+    class MyFontMetrics internal constructor(editor: Editor, familyName: String, size: Int) {
       val metrics: FontMetrics
       val lineHeight: Int
 
@@ -234,4 +234,9 @@ open class HintRenderer(var text: String?) : EditorCustomElementRenderer {
     private val HINT_FONT_METRICS = Key.create<MyFontMetrics>("ParameterHintFontMetrics")
     private const val BACKGROUND_ALPHA = 0.55f
   }
+
+  // workaround for KT-12063 "IllegalAccessError when accessing @JvmStatic protected member of a companion object from a subclass"
+  @JvmSynthetic
+  @JvmName("getFontMetrics$")
+  protected fun getFontMetrics(editor: Editor): MyFontMetrics = Companion.getFontMetrics(editor)
 }
