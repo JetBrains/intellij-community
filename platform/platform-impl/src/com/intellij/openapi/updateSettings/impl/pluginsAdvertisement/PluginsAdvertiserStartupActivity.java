@@ -5,6 +5,9 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.RepositoryHelper;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -112,30 +115,57 @@ final class PluginsAdvertiserStartupActivity implements StartupActivity.Backgrou
         return;
       }
 
+      List<NotificationAction> notificationActions = new ArrayList<>();
+
       String message = null;
       if (!plugins.isEmpty() || !disabledPlugins.isEmpty()) {
         message = getAddressedMessagePresentation(plugins, disabledPlugins, features);
         if (!disabledPlugins.isEmpty()) {
-          message += "<a href=\"enable\">Enable plugins...</a><br>";
+          notificationActions.add(NotificationAction.createSimpleExpiring(
+            "Enable Plugins...", () -> {
+              FUCounterUsageLogger.getInstance().logEvent(PluginsAdvertiser.FUS_GROUP_ID, "enable.plugins.notification");
+              PluginsAdvertiser.enablePlugins(project, disabledPlugins.values());
+            }));
         }
         else {
-          message += "<a href=\"configure\">Configure plugins...</a><br>";
+          notificationActions.add(NotificationAction.createSimpleExpiring(
+            "Configure Plugins...", () -> {
+              FUCounterUsageLogger.getInstance().logEvent(PluginsAdvertiser.FUS_GROUP_ID, "configure.plugins");
+              new PluginsAdvertiserDialog(project, plugins.toArray(new PluginDownloader[0]), allPlugins).show();
+            }));
         }
-
-        message += "<a href=\"ignore\">Ignore Unknown Features</a>";
+        notificationActions.add(NotificationAction.createSimpleExpiring(
+          "Ignore Unknown Features",
+          () -> {
+            FUCounterUsageLogger.getInstance().logEvent(PluginsAdvertiser.FUS_GROUP_ID, "ignore.unknown.features");
+            UnknownFeaturesCollector featuresCollector = UnknownFeaturesCollector.getInstance(project);
+            for (UnknownFeature feature : unknownFeatures) {
+              featuresCollector.ignoreFeature(feature);
+            }
+          }));
       }
       else if (bundledPlugin != null && !PropertiesComponent.getInstance().isTrueValue(PluginsAdvertiser.IGNORE_ULTIMATE_EDITION)) {
         message = "Features covered by " + PluginsAdvertiser.IDEA_ULTIMATE_EDITION +
-                  " (" + StringUtil.join(bundledPlugin, ", ") + ") are detected.<br>" +
-                  "<a href=\"open\">" + PluginsAdvertiser.CHECK_ULTIMATE_EDITION_TITLE + "</a><br>" +
-                  "<a href=\"ignoreUltimate\">" + PluginsAdvertiser.ULTIMATE_EDITION_SUGGESTION + "</a>";
+                  " (" + StringUtil.join(bundledPlugin, ", ") + ") are detected";
+        notificationActions.add(NotificationAction.createSimpleExpiring(
+          PluginsAdvertiser.CHECK_ULTIMATE_EDITION_TITLE, () -> {
+            FUCounterUsageLogger.getInstance().logEvent(PluginsAdvertiser.FUS_GROUP_ID, "open.download.page.notification");
+            PluginsAdvertiser.openDownloadPage();
+          }));
+        notificationActions.add(NotificationAction.createSimpleExpiring(
+          PluginsAdvertiser.ULTIMATE_EDITION_SUGGESTION, () -> {
+            FUCounterUsageLogger.getInstance().logEvent(PluginsAdvertiser.FUS_GROUP_ID, "ignore.ultimate");
+            PropertiesComponent.getInstance().setValue(PluginsAdvertiser.IGNORE_ULTIMATE_EDITION, "true");
+          }));
       }
 
       if (message != null) {
-        PluginsAdvertiser.ConfigurePluginsListener
-          notificationListener = new PluginsAdvertiser.ConfigurePluginsListener(unknownFeatures, project, allPlugins, plugins, disabledPlugins);
-        PluginsAdvertiser.NOTIFICATION_GROUP
-          .createNotification(PluginsAdvertiser.DISPLAY_ID, message, NotificationType.INFORMATION, notificationListener).notify(project);
+        Notification notification = PluginsAdvertiser.NOTIFICATION_GROUP
+          .createNotification("", message, NotificationType.INFORMATION, null);
+        for (NotificationAction action : notificationActions) {
+          notification.addAction(action);
+        }
+        notification.notify(project);
       }
     }, ModalityState.NON_MODAL);
   }
