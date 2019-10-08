@@ -56,8 +56,7 @@ public class ParametrizedDuplicates {
   private PsiMethodCallExpression myParametrizedCall;
   private VariableData[] myVariableDatum;
 
-  private ParametrizedDuplicates(@NotNull PsiElement[] pattern,
-                                 @NotNull ExtractMethodProcessor originalProcessor) {
+  private ParametrizedDuplicates(@NotNull PsiElement[] pattern, @NotNull ExtractMethodProcessor originalProcessor) {
     PsiElement[] filteredPattern = getFilteredElements(pattern);
     PsiElement firstElement = filteredPattern.length != 0 ? filteredPattern[0] : null;
     if (firstElement instanceof PsiStatement) {
@@ -209,7 +208,7 @@ public class ParametrizedDuplicates {
   }
 
   @NotNull
-  public PsiMethod replaceMethod(@NotNull PsiMethod originalMethod) {
+  PsiMethod replaceMethod(@NotNull PsiMethod originalMethod) {
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(originalMethod.getProject());
     String text = myParametrizedMethod.getText();
     PsiMethod method = factory.createMethodFromText(text, originalMethod.getParent());
@@ -217,7 +216,7 @@ public class ParametrizedDuplicates {
   }
 
   @NotNull
-  public PsiMethodCallExpression replaceCall(@NotNull PsiMethodCallExpression originalCall) {
+  PsiMethodCallExpression replaceCall(@NotNull PsiMethodCallExpression originalCall) {
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(originalCall.getProject());
     String text = myParametrizedCall.getText();
     PsiMethodCallExpression call = (PsiMethodCallExpression)factory.createExpressionFromText(text, originalCall.getParent());
@@ -424,15 +423,15 @@ public class ParametrizedDuplicates {
     }
   }
 
-  public PsiMethod getParametrizedMethod() {
+  PsiMethod getParametrizedMethod() {
     return myParametrizedMethod;
   }
 
-  public PsiMethodCallExpression getParametrizedCall() {
+  PsiMethodCallExpression getParametrizedCall() {
     return myParametrizedCall;
   }
 
-  public VariableData[] getVariableDatum() {
+  VariableData[] getVariableDatum() {
     return myVariableDatum;
   }
 

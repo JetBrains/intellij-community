@@ -7,13 +7,13 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Pavel.Dolgov
  */
-public class ReusedLocalVariable {
+class ReusedLocalVariable {
   @NotNull private final String myName;
   @Nullable private final String myTempName;
   @NotNull private final String myType;
   private final boolean myReuseValue;
 
-  public ReusedLocalVariable(@NotNull String name, @Nullable String tempName, @NotNull String type, boolean reuseValue) {
+  ReusedLocalVariable(@NotNull String name, @Nullable String tempName, @NotNull String type, boolean reuseValue) {
     assert reuseValue == (tempName != null);
     myName = name;
     myTempName = tempName;
@@ -21,20 +21,20 @@ public class ReusedLocalVariable {
     myReuseValue = reuseValue;
   }
 
-  public String getDeclarationText() {
+  String getDeclarationText() {
     String initText = myReuseValue ? " = " + myTempName : "";
     return myType + " " + myName + initText + ";";
   }
 
-  public String getAssignmentText() {
+  String getAssignmentText() {
     return myTempName + " = " + myName + ";";
   }
 
-  public String getTempDeclarationText() {
+  String getTempDeclarationText() {
     return myType + " " + myTempName + ";";
   }
 
-  public boolean reuseValue() {
+  boolean reuseValue() {
     return myReuseValue;
   }
 }
