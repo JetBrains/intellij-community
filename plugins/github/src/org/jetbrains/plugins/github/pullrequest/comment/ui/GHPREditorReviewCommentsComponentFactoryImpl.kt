@@ -33,17 +33,22 @@ internal constructor(private val project: Project,
     }
     val avatarIconsProvider = avatarIconsProviderFactory.create(GithubUIUtil.avatarSize, wrapper)
 
-    val replyField = GHPRCommentsUIUtil.createCommentField(project, avatarIconsProvider, currentUser, "Reply") { text ->
-      reviewService.addComment(EmptyProgressIndicator(), text, thread.firstCommentDatabaseId).successOnEdt {
-        thread.addComment(GHPRReviewCommentModel(it.nodeId, it.createdAt, it.bodyHtml, it.user.login, it.user.htmlUrl, it.user.avatarUrl))
-      }
-    }.apply {
-      border = JBUI.Borders.emptyBottom(10)
-    }
+
     val panel = JBUI.Panels.simplePanel(GHPRReviewThreadCommentsPanel(thread, avatarIconsProvider))
-      .addToBottom(replyField)
       .withBorder(JBUI.Borders.empty(0, UIUtil.DEFAULT_HGAP))
       .andTransparent()
+
+    if (reviewService.canComment()) {
+      val replyField = GHPRCommentsUIUtil.createCommentField(project, avatarIconsProvider, currentUser, "Reply") { text ->
+        reviewService.addComment(EmptyProgressIndicator(), text, thread.firstCommentDatabaseId).successOnEdt {
+          thread.addComment(GHPRReviewCommentModel(it.nodeId, it.createdAt, it.bodyHtml, it.user.login, it.user.htmlUrl, it.user.avatarUrl))
+        }
+      }.apply {
+        border = JBUI.Borders.emptyBottom(10)
+      }
+      panel.addToBottom(replyField)
+    }
+
     wrapper.setContent(panel)
     return wrapper
   }

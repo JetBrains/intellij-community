@@ -7,6 +7,8 @@ import org.jetbrains.plugins.github.api.data.GithubPullRequestCommentWithHtml
 import java.util.concurrent.CompletableFuture
 
 interface GHPRReviewService {
+  fun canComment(): Boolean
+
   @CalledInAny
   fun addComment(progressIndicator: ProgressIndicator, pullRequest: Long, body: String, replyToCommentId: Long)
     : CompletableFuture<GithubPullRequestCommentWithHtml>

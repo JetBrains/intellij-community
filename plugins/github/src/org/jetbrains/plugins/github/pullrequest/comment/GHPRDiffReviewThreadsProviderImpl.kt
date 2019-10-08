@@ -39,7 +39,7 @@ class GHPRDiffReviewThreadsProviderImpl(private val dataProvider: GithubPullRequ
         loadAndShowComments(commentsHandler, change)
       }
     })
-    loadAndShowCommentableRanges(commentsHandler, change)
+    if (dataProvider.reviewService.canComment()) loadAndShowCommentableRanges(commentsHandler, change)
   }
 
   private fun loadAndShowCommentableRanges(handler: GHPRDiffViewerBaseReviewThreadsHandler<out ListenerDiffViewerBase>, change: Change) {

@@ -58,16 +58,20 @@ internal class GHPullRequestsDataContextRepository(private val project: Project)
       requestExecutor.execute(indicator, GHGQLRequests.Repo.findPermission(GHRepositoryCoordinates(account.server, fullPath)))
       ?: throw IllegalArgumentException("Repository $fullPath does not exist at ${account.server} or you don't have access.")
 
+    val currentUser = GHUser(accountDetails.nodeId, accountDetails.login, accountDetails.htmlUrl, accountDetails.avatarUrl!!,
+                             accountDetails.name)
     val repositoryCoordinates = GHRepositoryCoordinates(account.server, repoWithPermissions.path)
 
     val messageBus = messageBusFactory.createMessageBus(this)
 
-    val reviewService = GHPRReviewServiceImpl(progressManager, messageBus, requestExecutor, repositoryCoordinates)
+    val securityService = GithubPullRequestsSecurityServiceImpl(sharedProjectSettings, currentUser, repoWithPermissions)
+    val reviewService = GHPRReviewServiceImpl(progressManager, messageBus, securityService, requestExecutor, repositoryCoordinates)
 
     val listModel = CollectionListModel<GHPullRequestShort>()
     val searchHolder = GithubPullRequestSearchQueryHolderImpl()
     val listLoader = GHPRListLoaderImpl(progressManager, requestExecutor, account.server, repoWithPermissions.path, listModel,
                                         searchHolder)
+
     val dataLoader = GithubPullRequestsDataLoaderImpl {
       GithubPullRequestDataProviderImpl(project, progressManager, git, requestExecutor, gitRemoteCoordinates, repositoryCoordinates,
                                         GHPRReviewServiceAdapter.create(reviewService, it), it)
@@ -87,10 +91,6 @@ internal class GHPullRequestsDataContextRepository(private val project: Project)
         }
       }
     })
-
-    val currentUser = GHUser(accountDetails.nodeId, accountDetails.login, accountDetails.htmlUrl, accountDetails.avatarUrl!!,
-                             accountDetails.name)
-    val securityService = GithubPullRequestsSecurityServiceImpl(sharedProjectSettings, currentUser, repoWithPermissions)
     val busyStateTracker = GithubPullRequestsBusyStateTrackerImpl()
     val metadataService = GithubPullRequestsMetadataServiceImpl(progressManager, messageBus, requestExecutor, account.server,
                                                                 repoWithPermissions.path)

@@ -9,6 +9,9 @@ import java.util.concurrent.CompletableFuture
 
 interface GHPRReviewServiceAdapter {
   @CalledInAny
+  fun canComment(): Boolean
+
+  @CalledInAny
   fun addComment(progressIndicator: ProgressIndicator, body: String, replyToCommentId: Long)
     : CompletableFuture<GithubPullRequestCommentWithHtml>
 
@@ -20,6 +23,8 @@ interface GHPRReviewServiceAdapter {
     @CalledInAny
     fun create(reviewService: GHPRReviewService, pullRequest: Long): GHPRReviewServiceAdapter {
       return object : GHPRReviewServiceAdapter {
+        override fun canComment() = reviewService.canComment()
+
         override fun addComment(progressIndicator: ProgressIndicator,
                                 body: String,
                                 commitSha: String,

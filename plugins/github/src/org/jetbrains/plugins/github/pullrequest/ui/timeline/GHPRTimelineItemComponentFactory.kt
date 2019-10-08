@@ -100,15 +100,20 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
     return Item(icon, actionTitle(avatarIconsProvider, review.author, actionText, review.createdAt), reviewPanel)
   }
 
-  private fun createReviewThread(thread: GHPRReviewThreadModel) =
-    JBUI.Panels.simplePanel(GHPRReviewThreadCommentsPanel(thread, avatarIconsProvider))
+  private fun createReviewThread(thread: GHPRReviewThreadModel): JComponent {
+    val panel = JBUI.Panels.simplePanel(GHPRReviewThreadCommentsPanel(thread, avatarIconsProvider))
       .addToTop(reviewDiffComponentFactory.createComponent(thread.filePath, thread.diffHunk))
-      .addToBottom(GHPRCommentsUIUtil.createCommentField(project, avatarIconsProvider, currentUser, "Reply") { text ->
+      .andTransparent()
+
+    if (reviewService.canComment()) {
+      panel.addToBottom(GHPRCommentsUIUtil.createCommentField(project, avatarIconsProvider, currentUser, "Reply") { text ->
         reviewService.addComment(EmptyProgressIndicator(), text, thread.firstCommentDatabaseId).successOnEdt {
           thread.addComment(GHPRReviewCommentModel(it.nodeId, it.createdAt, it.bodyHtml, it.user.login, it.user.htmlUrl, it.user.avatarUrl))
         }
       })
-      .andTransparent()
+    }
+    return panel
+  }
 
   private fun userAvatar(user: GHActor?): JLabel {
     return userAvatar(avatarIconsProvider, user)
