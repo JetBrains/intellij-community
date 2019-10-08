@@ -67,7 +67,7 @@ class PydevConsoleCommunicationClient(project: Project,
         clientTransport.open()
       }
       catch (e: Exception) {
-        LOG.debug(e)
+        LOG.warn(e)
 
         stateLock.withLock {
           isClosed = true
