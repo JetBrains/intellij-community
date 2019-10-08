@@ -142,7 +142,7 @@
       <reference ref="ToggleBookmarkWithMnemonic"/>
       <separator/>
 
-      <add-to-group group-id="EditorGutterPopupMenu" anchor="first"/>
+      <add-to-group group-id="EditorGutterPopupMenu" anchor="after" relative-to-action="EditorGutterVcsPopupMenu"/>
     </group>
 
     <group id="popup@BookmarkContextMenu">
