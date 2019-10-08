@@ -144,8 +144,7 @@ public abstract class EditorComposite implements Disposable {
                 "file.editor",
                 "alternative.file.editor.selected",
                 new FeatureUsageData()
-                  .addData("fileEditor", newEditor.getClass().getName())
-                  .addAnonymizedPath(newFile.getPath()));
+                  .addData("fileEditor", newEditor.getClass().getName()));
             }
             ((FileEditorProviderManagerImpl)FileEditorProviderManager.getInstance()).providerSelected(EditorComposite.this);
             ((IdeDocumentHistoryImpl)IdeDocumentHistory.getInstance(myFileEditorManager.getProject())).onSelectionChanged();
