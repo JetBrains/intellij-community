@@ -12,11 +12,11 @@ import com.intellij.util.concurrency.AppExecutorUtil
 
 class CDSEnableAction : AnAction("Enable Class Data Sharing") {
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = CDSArchiveManager.isValidEnv
+    e.presentation.isEnabledAndVisible = CDSManager.isValidEnv
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    if (!CDSArchiveManager.isValidEnv) return
+    if (!CDSManager.isValidEnv) return
 
     AppExecutorUtil.getAppExecutorService().execute {
       ProgressManager.getInstance().run(object : Task.Backgroundable(
@@ -26,7 +26,7 @@ class CDSEnableAction : AnAction("Enable Class Data Sharing") {
         PerformInBackgroundOption.ALWAYS_BACKGROUND
       ) {
         override fun run(indicator: ProgressIndicator) {
-          CDSArchiveManager.installCDS(indicator)
+          CDSManager.installCDS(indicator)
         }
       })
     }
@@ -35,7 +35,7 @@ class CDSEnableAction : AnAction("Enable Class Data Sharing") {
 
 class CDSDisableAction : AnAction("Disable Class Data Sharing") {
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = CDSArchiveManager.isValidEnv
+    e.presentation.isEnabledAndVisible = CDSManager.isValidEnv
   }
 
   override fun actionPerformed(e: AnActionEvent) {
@@ -47,7 +47,7 @@ class CDSDisableAction : AnAction("Disable Class Data Sharing") {
         PerformInBackgroundOption.ALWAYS_BACKGROUND
       ) {
         override fun run(indicator: ProgressIndicator) {
-          CDSArchiveManager.removeCDS()
+          CDSManager.removeCDS()
         }
       })
     }
