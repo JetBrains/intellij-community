@@ -66,7 +66,7 @@ public class PythonMockSdk {
 
     roots.putValues(classes, Arrays.asList(additionalRoots));
 
-    MockSdk sdk = new MockSdk(MOCK_SDK_NAME + " " + version, sdkHome, "Python " + version + " Mock SDK", roots, new PyMockSdkType());
+    MockSdk sdk = new MockSdk(MOCK_SDK_NAME + " " + version, sdkHome, "Python " + version + " Mock SDK", roots, new PyMockSdkType(version));
 
     // com.jetbrains.python.psi.resolve.PythonSdkPathCache.getInstance() corrupts SDK, so have to clone
     return sdk.clone();
@@ -74,8 +74,12 @@ public class PythonMockSdk {
 
   private static class PyMockSdkType extends SdkType {
 
-    public PyMockSdkType() {
+    @NotNull
+    private final String myVersionString;
+
+    private PyMockSdkType(@NotNull String string) {
       super(PyNames.PYTHON_SDK_ID_NAME);
+      myVersionString = string;
     }
 
     @Nullable
@@ -110,6 +114,12 @@ public class PythonMockSdk {
     @Override
     public void saveAdditionalData(@NotNull SdkAdditionalData additionalData, @NotNull Element additional) {
 
+    }
+
+    @Nullable
+    @Override
+    public String getVersionString(String sdkHome) {
+      return myVersionString;
     }
   }
 }
