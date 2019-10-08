@@ -345,9 +345,8 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     String description = myPresentation.getDescription();
     if (Registry.is("ide.helptooltip.enabled")) {
       HelpTooltip.dispose(this);
-      String shortcut = KeymapUtil.getFirstKeyboardShortcutText(myAction);
       if (StringUtil.isNotEmpty(text) || StringUtil.isNotEmpty(description)) {
-        HelpTooltip ht = new HelpTooltip().setTitle(text).setShortcut(shortcut);
+        HelpTooltip ht = new HelpTooltip().setTitle(text).setShortcut(getShortcutText());
 
         String id = ActionManager.getInstance().getId(myAction);
         if (!StringUtil.equals(text, description) && WHITE_LIST.contains(id)) {
@@ -358,6 +357,11 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     } else {
       setToolTipText(text == null ? description : text);
     }
+  }
+
+  @Nullable
+  protected String getShortcutText() {
+    return KeymapUtil.getFirstKeyboardShortcutText(myAction);
   }
 
   @Override

@@ -180,7 +180,7 @@ public class HelpTooltip {
    * @param title text for title.
    * @return {@code this}
    */
-  public HelpTooltip setTitle(String title) {
+  public HelpTooltip setTitle(@Nullable String title) {
     this.title = title;
     return this;
   }
@@ -191,7 +191,7 @@ public class HelpTooltip {
    * @param shortcut text for shortcut.
    * @return {@code this}
    */
-  public HelpTooltip setShortcut(String shortcut) {
+  public HelpTooltip setShortcut(@Nullable String shortcut) {
     this.shortcut = shortcut;
     return this;
   }
@@ -202,7 +202,7 @@ public class HelpTooltip {
    * @param description text for description.
    * @return {@code this}
    */
-  public HelpTooltip setDescription(String description) {
+  public HelpTooltip setDescription(@Nullable String description) {
     this.description = description;
     return this;
   }
