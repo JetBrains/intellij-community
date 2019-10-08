@@ -71,10 +71,10 @@ class EditorComponentInlaysManager(private val editor: EditorImpl) : Disposable 
   }
 
   @CalledInAwt
-  fun insertAfter(line: Int, component: JComponent): Inlay<*>? {
+  fun insertAfter(lineIndex: Int, component: JComponent): Inlay<*>? {
     if (Disposer.isDisposed(this)) return null
 
-    val offset = editor.document.getLineEndOffset(line - 1)
+    val offset = editor.document.getLineEndOffset(lineIndex)
     return wrapAndInsert(offset, component)
   }
 

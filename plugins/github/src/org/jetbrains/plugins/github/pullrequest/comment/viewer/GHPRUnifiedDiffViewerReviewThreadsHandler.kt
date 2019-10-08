@@ -31,7 +31,7 @@ class GHPRUnifiedDiffViewerReviewThreadsHandler(viewer: UnifiedDiffViewer,
   }
 
   override fun updateThreads(mappings: List<GHPRDiffReviewThreadMapping>) {
-    editorThreads.update(mappings.groupBy { viewer.transferLineToOneside(it.side, it.fileLine - 1) + 1 }.filter { (line, _) -> line >= 1 })
+    editorThreads.update(mappings.groupBy { viewer.transferLineToOneside(it.side, it.fileLineIndex) }.filter { (line, _) -> line >= 0 })
   }
 }
 
