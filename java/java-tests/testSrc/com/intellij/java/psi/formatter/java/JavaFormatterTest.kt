@@ -3856,4 +3856,33 @@ public enum LevelCode {
     )
   }
 
+  fun testFormatterTagsDisabled() {
+    settings.rootSettings.apply {
+      FORMATTER_TAGS_ENABLED = false
+    }
+    doTextTest(
+      """
+      package com.company;
+      
+      public class TestOne {
+          // @formatter:off
+            public   void  test   (int x)  {
+            }
+          // @formatter:on
+      }
+      """.trimIndent(),
+
+      """
+      package com.company;
+      
+      public class TestOne {
+          // @formatter:off
+          public void test(int x) {
+          }
+          // @formatter:on
+      }
+      """.trimIndent()
+    )
+  }
+
 }
