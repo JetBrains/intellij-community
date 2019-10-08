@@ -3758,6 +3758,16 @@ public class PyTypeTest extends PyTestCase {
     );
   }
 
+  // PY-35881
+  public void testResolveToAnotherFileClassWithBuiltinNameField() {
+    doMultiFileTest(
+      "int",
+      "from foo import Foo\n" +
+      "foo = Foo(0)\n" +
+      "expr = foo.id"
+    );
+  }
+
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {
     return ImmutableList.of(TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile()).withTracing(),
                             TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()).withTracing());
