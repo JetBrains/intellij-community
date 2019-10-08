@@ -1,0 +1,61 @@
+<!-- Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file. -->
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+  <!-- Components and extensions declared in this file work ONLY in PyCharm, not in Python plugin.
+       Both Community and Professional editions. -->
+  <module value="com.intellij.modules.pycharm"/>
+
+  <xi:include href="/META-INF/IdeTipsAndTricks.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/META-INF/PlatformLangXmlPlugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/META-INF/RemoteServers.xml" xpointer="xpointer(/idea-plugin/*)"/>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationInitializedListener implementation="com.intellij.internal.statistic.updater.StatisticsJobsScheduler"/>
+
+    <projectViewPane implementation="com.intellij.ide.projectView.impl.ProjectViewPane"/>
+
+    <projectAttachProcessor implementation="com.intellij.platform.ModuleAttachProcessor"/>
+
+    <hectorComponentProvider implementation="com.intellij.codeInsight.daemon.impl.ImportPopupHectorComponentProvider"/>
+
+    <usageFilteringRuleProvider implementation="com.intellij.usages.impl.ImportUsageFilteringRuleProvider"/>
+    <applicationService serviceImplementation="com.intellij.usages.impl.ImportFilteringUsageViewSetting"/>
+
+    <bundledColorScheme path="/colorSchemes/monokai"/>
+    <bundledColorScheme path="/colorSchemes/twilight"/>
+    <bundledColorScheme path="/colorSchemes/WarmNeon"/>
+    <bundledColorScheme path="/colorSchemes/github"/>
+
+    <renameHandler implementation="com.intellij.platform.renameProject.RenameProjectHandler"/>
+    <renameHandler implementation="com.intellij.platform.renameProject.ProjectFolderRenameHandler"/>
+  </extensions>
+
+  <actions>
+    <group id="PlatformOpenProjectGroup">
+      <reference ref="NewProjectOrModuleGroup"/>
+      <action id="NewElement" class="com.intellij.ide.actions.NewElementAction" />
+      <reference ref="NewScratchFile" />
+      <add-to-group group-id="FileOpenGroup" anchor="first"/>
+    </group>
+
+    <action id="SaveAs" class="com.intellij.ide.actions.SaveAsAction" text="Save As...">
+      <add-to-group group-id="FileOpenGroup" anchor="after" relative-to-action="OpenFile"/>
+    </action>
+
+    <action id="RerunFailedTests" class="com.intellij.execution.testframework.actions.RerunFailedTestsAction"
+            icon="AllIcons.RunConfigurations.RerunFailedTests"/>
+
+    <group>
+      <action id="MarkSourceRoot" class="com.intellij.ide.projectView.actions.MarkJavaSourceRootAction"/>
+      <action id="MarkExcludeRoot" class="com.intellij.ide.projectView.actions.MarkExcludeRootAction"/>
+      <action id="MarkAsContentRoot" class="com.intellij.ide.projectView.actions.MarkAsContentRootAction"/>
+      <action id="UnmarkRoot" class="com.intellij.ide.projectView.actions.UnmarkRootAction"/>
+      <add-to-group group-id="MarkRootGroup"/>
+    </group>
+
+    <action overrides="true" id="ForceStepInto" class="com.intellij.openapi.actionSystem.EmptyAction"/>
+
+    <action id="RenameProject" class="com.intellij.platform.renameProject.RenameProjectAction">
+      <add-to-group group-id="FileOpenGroup" anchor="after" relative-to-action="RenameFile"/>
+    </action>
+  </actions>
+</idea-plugin>

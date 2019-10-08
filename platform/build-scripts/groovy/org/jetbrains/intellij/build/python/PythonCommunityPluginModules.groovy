@@ -7,12 +7,6 @@ import org.jetbrains.intellij.build.impl.PluginLayout
  * @author nik
  */
 class PythonCommunityPluginModules {
-  static final List<String> PYCHARM_ONLY_PLUGIN_MODULES = [
-    "intellij.python.langInjection",
-    "intellij.python.copyright",
-    "intellij.python.terminal",
-    "intellij.python.reStructuredText",
-  ]
   static List<String> COMMUNITY_MODULES = ["intellij.python.community",
                                            "intellij.python.community.plugin",
                                            "intellij.python.community.plugin.java",
@@ -22,15 +16,12 @@ class PythonCommunityPluginModules {
                                            "intellij.python.psi.impl",
                                            "intellij.python.pydev",
                                            "intellij.python.community.impl",
-                                          ] + PYCHARM_ONLY_PLUGIN_MODULES
+                                          ]
   public static String PYTHON_COMMUNITY_PLUGIN_MODULE = "intellij.python.community.plugin.resources"
 
   static PluginLayout pythonCommunityPluginLayout(@DelegatesTo(PluginLayout.PluginLayoutSpec) Closure body = {}) {
     pythonPlugin(PYTHON_COMMUNITY_PLUGIN_MODULE, "python-ce", COMMUNITY_MODULES) {
       withProjectLibrary("markdown4j")  // Required for ipnb
-      PYCHARM_ONLY_PLUGIN_MODULES.each { module ->
-        excludeFromModule(module, "META-INF/plugin.xml")
-      }
       body.delegate = delegate
       body()
     }
