@@ -919,9 +919,9 @@ public class PluginManagerCore {
     return false;
   }
 
-  static void resolveOptionalDescriptors(@NotNull IdeaPluginDescriptorImpl descriptor,
-                                         @NotNull LoadingContext context,
-                                         @NotNull Function<? super String, ? extends IdeaPluginDescriptorImpl> optionalDescriptorLoader) {
+  private static void resolveOptionalDescriptors(@NotNull IdeaPluginDescriptorImpl descriptor,
+                                                 @NotNull LoadingContext context,
+                                                 @NotNull Function<? super String, IdeaPluginDescriptorImpl> optionalDescriptorLoader) {
     Map<PluginId, List<String>> optionalConfigs = descriptor.getOptionalConfigs();
     if (optionalConfigs == null || optionalConfigs.isEmpty()) return;
 
@@ -1160,7 +1160,7 @@ public class PluginManagerCore {
     return result.toArray(IdeaPluginDescriptorImpl.EMPTY_ARRAY);
   }
 
-  private static void mergeOptionalConfigs(@NotNull List<? extends IdeaPluginDescriptorImpl> result,
+  private static void mergeOptionalConfigs(@NotNull List<IdeaPluginDescriptorImpl> result,
                                            @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idMap) {
     Condition<PluginId> enabledCondition = depId -> {
       IdeaPluginDescriptorImpl dep = idMap.get(depId);
@@ -1496,7 +1496,7 @@ public class PluginManagerCore {
     return result;
   }
 
-  private static void fixDependencies(@NotNull List<? extends IdeaPluginDescriptorImpl> result,
+  private static void fixDependencies(@NotNull List<IdeaPluginDescriptorImpl> result,
                                       @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idMap) {
     IdeaPluginDescriptor coreDescriptor = notNull(idMap.get(PluginId.getId(CORE_PLUGIN_ID)));
     for (IdeaPluginDescriptorImpl descriptor : result) {
@@ -1509,7 +1509,7 @@ public class PluginManagerCore {
     mergeOptionalConfigs(result, idMap);
   }
 
-  private static void fixOptionalConfigs(@NotNull List<? extends IdeaPluginDescriptorImpl> result,
+  private static void fixOptionalConfigs(@NotNull List<IdeaPluginDescriptorImpl> result,
                                          @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idMap) {
     if (!isRunningFromSources()) return;
     for (IdeaPluginDescriptorImpl descriptor : result) {

@@ -102,7 +102,7 @@ public class InputVariables {
   @NotNull
   private List<VariableData> wrapInputVariables(@NotNull List<? extends PsiVariable> inputVariables) {
     UniqueNameGenerator nameGenerator = new UniqueNameGenerator();
-    final ArrayList<VariableData> inputData = new ArrayList<>(inputVariables.size());
+    List<VariableData> inputData = new ArrayList<>(inputVariables.size());
     for (PsiVariable var : inputVariables) {
       final String defaultName = getParameterName(var);
       String name = nameGenerator.generateUniqueName(defaultName);
@@ -142,7 +142,9 @@ public class InputVariables {
       data.passAsParameter = true;
       inputData.add(data);
 
-      if (myFoldingAvailable) myFolding.isParameterFoldable(data, myScope, inputVariables, nameGenerator, defaultName);
+      if (myFoldingAvailable) {
+        myFolding.isParameterFoldable(data, myScope, inputVariables, nameGenerator, defaultName);
+      }
     }
 
 
