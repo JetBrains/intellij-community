@@ -105,7 +105,7 @@ class AnalyzeUnloadablePluginsAction : AnAction() {
       }
     }
 
-    dialog("Plugin Analysis Report", panel = panel {
+    dialog("Plugin Analysis Report", project = project, panel = panel {
       row {
         JScrollPane(JTextArea(report, 20, 80))()
       }
