@@ -73,6 +73,7 @@ import org.eclipse.aether.DefaultRepositorySystemSession;
 import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.graph.Dependency;
 import org.eclipse.aether.graph.DependencyVisitor;
+import org.eclipse.aether.impl.RemoteRepositoryManager;
 import org.eclipse.aether.repository.LocalRepositoryManager;
 import org.eclipse.aether.repository.RemoteRepository;
 import org.eclipse.aether.resolution.ArtifactRequest;
@@ -1280,9 +1281,11 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
 
       // do not use request.getRemoteRepositories() here,
       // it can be broken after DefaultMaven#newRepositorySession => MavenRepositorySystem.injectMirror invocation
+      final RemoteRepositoryManager remoteRepositoryManager = getComponent(RemoteRepositoryManager.class);
       final org.eclipse.aether.RepositorySystem repositorySystem = getComponent(org.eclipse.aether.RepositorySystem.class);
       List<RemoteRepository> repositories = RepositoryUtils.toRepos(repos);
-      repositories = repositorySystem.newResolutionRepositories(repositorySystemSession, repositories);
+      repositories =
+        remoteRepositoryManager.aggregateRepositories(repositorySystemSession, new ArrayList<RemoteRepository>(), repositories, false);
 
       final ArtifactResult artifactResult = repositorySystem.resolveArtifact(
         repositorySystemSession, new ArtifactRequest(RepositoryUtils.toArtifact(artifact), repositories, null));
