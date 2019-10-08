@@ -4,12 +4,15 @@ package org.jetbrains.plugins.github.pullrequest.comment.ui
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.editor.ex.RangeHighlighterEx
 import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.openapi.editor.impl.event.MarkupModelListener
 import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.IdeFocusManager
+import gnu.trove.TIntHashSet
 import org.jetbrains.plugins.github.pullrequest.comment.viewer.GHPRCreateDiffCommentIconRenderer
 import org.jetbrains.plugins.github.pullrequest.data.GHPRReviewServiceAdapter
 import org.jetbrains.plugins.github.pullrequest.data.model.GHPRDiffRangeMapping
@@ -26,10 +29,18 @@ class GHPREditorReviewThreadsController(threadMap: GHPREditorReviewThreadsModel,
   private val inlaysManager = EditorComponentInlaysManager(editor as EditorImpl)
 
   private val inlayByThread = mutableMapOf<GHPRReviewThreadModel, Inlay<*>>()
+  private val commentableLines = TIntHashSet()
 
   init {
     commentableRanges.addValueChangedListener { updateCommentableRanges() }
     updateCommentableRanges()
+
+    editor.markupModel.addMarkupModelListener((editor as EditorImpl).disposable, object : MarkupModelListener {
+      override fun beforeRemoved(highlighter: RangeHighlighterEx) {
+        val iconRenderer = highlighter.gutterIconRenderer as? GHPRCreateDiffCommentIconRenderer ?: return
+        commentableLines.remove(iconRenderer.line)
+      }
+    })
   }
 
   private fun updateCommentableRanges() {
@@ -40,6 +51,7 @@ class GHPREditorReviewThreadsController(threadMap: GHPREditorReviewThreadsModel,
 
   private fun markCommentableLines(mapping: GHPRDiffRangeMapping) {
     for (i in mapping.start until mapping.end) {
+      if (!commentableLines.add(i)) continue
       val start = editor.document.getLineStartOffset(i)
       val end = editor.document.getLineEndOffset(i)
       editor.markupModel
