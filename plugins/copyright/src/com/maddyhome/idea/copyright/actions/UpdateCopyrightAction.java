@@ -170,9 +170,6 @@ public class UpdateCopyrightAction extends BaseAnalysisAction {
     }
 
     @Override
-    public void prepare() {}
-
-    @Override
     public boolean isDone() {
       return myIdx > mySize - 1;
     }

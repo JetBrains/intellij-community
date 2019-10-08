@@ -731,12 +731,10 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   @Override
   public boolean hasChildren(@NotNull VirtualFile file) {
     if (file.getParent() == null) {
-      // assume roots always have children
-      return true;
+      return true;  // assume roots always have children
     }
-    // make sure to not load all children
     try (DirectoryStream<Path> stream = Files.newDirectoryStream(Paths.get(file.getPath()))) {
-      return stream.iterator().hasNext();
+      return stream.iterator().hasNext();  // make sure to not load all children
     }
     catch (InvalidPathException | IOException | SecurityException e) {
       return true;

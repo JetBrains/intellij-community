@@ -111,10 +111,6 @@ public class ConvertSchemaPrefixToDefaultIntention extends PsiElementBaseIntenti
       int attrIndex = 0;
 
       @Override
-      public void prepare() {
-      }
-
-      @Override
       public boolean isDone() {
         return tagIndex + attrIndex >= totalCount;
       }
@@ -138,11 +134,6 @@ public class ConvertSchemaPrefixToDefaultIntention extends PsiElementBaseIntenti
         });
 
         return isDone();
-      }
-
-      @Override
-      public void stop() {
-
       }
     });
     ProgressManager.getInstance().run(progressTask);
