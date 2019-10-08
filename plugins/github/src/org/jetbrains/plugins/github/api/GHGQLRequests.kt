@@ -3,6 +3,7 @@ package org.jetbrains.plugins.github.api
 
 import org.jetbrains.plugins.github.api.GithubApiRequest.Post.GQLQuery
 import org.jetbrains.plugins.github.api.data.GHConnection
+import org.jetbrains.plugins.github.api.data.GHRepositoryPermission
 import org.jetbrains.plugins.github.api.data.graphql.GHGQLPageInfo
 import org.jetbrains.plugins.github.api.data.graphql.GHGQLPagedRequestResponse
 import org.jetbrains.plugins.github.api.data.graphql.GHGQLRequestPagination
@@ -13,6 +14,16 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineItem
 
 object GHGQLRequests {
+  object Repo {
+    fun findPermission(repository: GHRepositoryCoordinates): GQLQuery<GHRepositoryPermission?> {
+      return GQLQuery.OptionalTraversedParsed(repository.serverPath.toGraphQLUrl(), GHGQLQueries.findRepositoryPermission,
+                                              mapOf("repoOwner" to repository.repositoryPath.owner,
+                                                    "repoName" to repository.repositoryPath.repository),
+                                              GHRepositoryPermission::class.java,
+                                              "repository")
+    }
+  }
+
   object PullRequest {
     fun findOne(repository: GHRepositoryCoordinates, number: Long): GQLQuery<GHPullRequest?> {
       return GQLQuery.OptionalTraversedParsed(repository.serverPath.toGraphQLUrl(), GHGQLQueries.findPullRequest,

@@ -11,9 +11,9 @@ import com.intellij.ui.CollectionListModel
 import com.intellij.util.messages.MessageBusFactory
 import git4idea.commands.Git
 import org.jetbrains.annotations.CalledInBackground
+import org.jetbrains.plugins.github.api.GHGQLRequests
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
-import org.jetbrains.plugins.github.api.GithubApiRequests
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
@@ -54,11 +54,11 @@ internal class GHPullRequestsDataContextRepository(private val project: Project)
     indicator.checkCanceled()
 
     indicator.text = "Loading repository information"
-    val repoDetails = requestExecutor.execute(indicator, GithubApiRequests.Repos.get(account.server, fullPath.owner, fullPath.repository))
-                      ?: throw IllegalArgumentException(
-                        "Repository $fullPath does not exist at ${account.server} or you don't have access.")
+    val repoWithPermissions =
+      requestExecutor.execute(indicator, GHGQLRequests.Repo.findPermission(GHRepositoryCoordinates(account.server, fullPath)))
+      ?: throw IllegalArgumentException("Repository $fullPath does not exist at ${account.server} or you don't have access.")
 
-    val repositoryCoordinates = GHRepositoryCoordinates(account.server, repoDetails.fullPath)
+    val repositoryCoordinates = GHRepositoryCoordinates(account.server, repoWithPermissions.path)
 
     val messageBus = messageBusFactory.createMessageBus(this)
 
@@ -66,7 +66,8 @@ internal class GHPullRequestsDataContextRepository(private val project: Project)
 
     val listModel = CollectionListModel<GHPullRequestShort>()
     val searchHolder = GithubPullRequestSearchQueryHolderImpl()
-    val listLoader = GHPRListLoaderImpl(progressManager, requestExecutor, account.server, repoDetails.fullPath, listModel, searchHolder)
+    val listLoader = GHPRListLoaderImpl(progressManager, requestExecutor, account.server, repoWithPermissions.path, listModel,
+                                        searchHolder)
     val dataLoader = GithubPullRequestsDataLoaderImpl {
       GithubPullRequestDataProviderImpl(project, progressManager, git, requestExecutor, gitRemoteCoordinates, repositoryCoordinates,
                                         GHPRReviewServiceAdapter.create(reviewService, it), it)
@@ -89,13 +90,13 @@ internal class GHPullRequestsDataContextRepository(private val project: Project)
 
     val currentUser = GHUser(accountDetails.nodeId, accountDetails.login, accountDetails.htmlUrl, accountDetails.avatarUrl!!,
                              accountDetails.name)
-    val securityService = GithubPullRequestsSecurityServiceImpl(sharedProjectSettings, currentUser, repoDetails)
+    val securityService = GithubPullRequestsSecurityServiceImpl(sharedProjectSettings, currentUser, repoWithPermissions)
     val busyStateTracker = GithubPullRequestsBusyStateTrackerImpl()
     val metadataService = GithubPullRequestsMetadataServiceImpl(progressManager, messageBus, requestExecutor, account.server,
-                                                                repoDetails.fullPath)
+                                                                repoWithPermissions.path)
     val stateService = GithubPullRequestsStateServiceImpl(project, progressManager, messageBus, dataLoader,
                                                           busyStateTracker,
-                                                          requestExecutor, account.server, repoDetails.fullPath)
+                                                          requestExecutor, account.server, repoWithPermissions.path)
 
     return GHPullRequestsDataContext(gitRemoteCoordinates, repositoryCoordinates, account,
                                      requestExecutor, messageBus, listModel, searchHolder, listLoader, dataLoader, securityService,

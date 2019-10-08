@@ -42,7 +42,7 @@ internal abstract class LabeledListPanelHandle<T>(private val model: SingleValue
                                                       resizeSquareIcon(AllIcons.General.Inline_edit_hovered)),
                                            ActionListener { (::editList)() }).apply {
     cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
-    isVisible = securityService.isCurrentUserWithPushAccess()
+    isVisible = securityService.currentUserCanEditPullRequestsMetadata()
     isFocusable = true
     addKeyListener(object : KeyAdapter() {
       override fun keyPressed(e: KeyEvent) {
