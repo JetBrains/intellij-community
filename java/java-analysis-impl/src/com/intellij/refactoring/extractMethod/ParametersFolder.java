@@ -117,8 +117,9 @@ public class ParametersFolder {
 
   boolean isParameterFoldable(@NotNull VariableData data,
                               @NotNull LocalSearchScope scope,
-                              @NotNull final List<? extends PsiVariable> inputVariables,
-                              UniqueNameGenerator nameGenerator, String defaultName) {
+                              @NotNull List<? extends PsiVariable> inputVariables,
+                              @NotNull UniqueNameGenerator nameGenerator,
+                              String defaultName) {
     final List<PsiExpression> mentionedInExpressions = getMentionedExpressions(data.variable, scope, inputVariables);
     if (mentionedInExpressions == null) return false;
 
@@ -173,8 +174,8 @@ public class ParametersFolder {
     return false;
   }
 
-  private static void setUniqueName(VariableData data, UniqueNameGenerator nameGenerator,
-                                    LocalSearchScope scope, PsiExpression expr) {
+  private static void setUniqueName(@NotNull VariableData data, @NotNull UniqueNameGenerator nameGenerator,
+                                    @NotNull LocalSearchScope scope, @NotNull PsiExpression expr) {
     String name = data.name;
     int idx = 1;
     while (true) {

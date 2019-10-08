@@ -35,8 +35,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static com.intellij.util.TestTimeOut.setTimeout;
 import static org.hamcrest.CoreMatchers.containsString;
@@ -529,20 +527,24 @@ public class ApplicationImplTest extends LightPlatformTestCase {
     int readIterations = 200_000_000;
     ReadMostlyRWLock lock = new ReadMostlyRWLock(Thread.currentThread());
     final int numOfThreads = JobSchedulerImpl.getJobPoolParallelism();
-    final Field myThreadLocalsField = ReflectionUtil.getDeclaredField(Thread.class, "threadLocals");
-    List<Callable<Void>> callables = Stream.generate(() -> (Callable<Void>)() -> {
-      // It's critical there are no collisions in the thread-local map
-      ReflectionUtil.resetField(Thread.currentThread(), myThreadLocalsField);
-      for (int r = 0; r < readIterations; r++) {
-        try {
-          lock.readLock();
+    final Field myThreadLocalsField = ObjectUtils.notNull(ReflectionUtil.getDeclaredField(Thread.class, "threadLocals"));
+    //noinspection Convert2Lambda
+    List<Callable<Void>> callables = Collections.nCopies(numOfThreads, new Callable<Void>() {
+      @Override
+      public Void call() {
+        // It's critical there are no collisions in the thread-local map
+        ReflectionUtil.resetField(Thread.currentThread(), myThreadLocalsField);
+        for (int r = 0; r < readIterations; r++) {
+          try {
+            lock.readLock();
+          }
+          finally {
+            lock.readUnlock();
+          }
         }
-        finally {
-          lock.readUnlock();
-        }
+        return null;
       }
-      return null;
-    }).limit(numOfThreads).collect(Collectors.toList());
+    });
 
     PlatformTestUtil.startPerformanceTest("RWLock/unlock", 27_000, ()-> {
       ApplicationManager.getApplication().assertIsDispatchThread();
