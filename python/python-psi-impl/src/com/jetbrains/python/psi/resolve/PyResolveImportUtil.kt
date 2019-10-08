@@ -256,8 +256,9 @@ private fun resultsFromRoots(name: QualifiedName, context: PyQualifiedNameResolv
         effectiveSdk != null && PyTypeShed.isInside(root) && !PyTypeShed.maySearchForStubInRoot(name, root, effectiveSdk)) {
       return@RootVisitor true
     }
-    if (withoutStubs && (PyTypeShed.isInside(root) || isInStubPackage(PsiManager.getInstance(context.project).findDirectory(root)!!))) {
-        return@RootVisitor true
+    if (withoutStubs && (PyTypeShed.isInside(root) ||
+                         PsiManager.getInstance(context.project).findDirectory(root)?.let { isInStubPackage(it) } == true)) {
+      return@RootVisitor true
     }
     results.addAll(resolveInRoot(name, root, context))
     if (isAcceptRootAsTopLevelPackage(context) && name.matchesPrefix(
