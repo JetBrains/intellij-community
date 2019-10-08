@@ -260,15 +260,15 @@ public class Splitter extends JPanel implements Splittable {
     if (myDividerPositionStrategy != DividerPositionStrategy.KEEP_PROPORTION
         && !isNull(myFirstComponent) && myFirstComponent.isVisible()
         && !isNull(mySecondComponent) && mySecondComponent.isVisible()
+        && ((myVerticalSplit && h > 2 * getDividerWidth()) || (!myVerticalSplit && w > 2 * getDividerWidth()))
       && ((myVerticalSplit && h != getHeight()) || (!myVerticalSplit && w != getWidth()))) {
-      if (myDividerPositionStrategy == DividerPositionStrategy.KEEP_FIRST_SIZE) {
-        myProportion = (float)(getDividerWidth() + (myVerticalSplit ? myFirstComponent.getHeight() : myFirstComponent.getWidth())) /
-                       (myVerticalSplit ? h : w);
+      int total = myVerticalSplit ? h : w;
+      int s1 = myVerticalSplit ? myFirstComponent.getHeight() : myFirstComponent.getWidth();
+      int d = getDividerWidth();
+      if (myDividerPositionStrategy == DividerPositionStrategy.KEEP_SECOND_SIZE) {
+        s1 = total - d - (myVerticalSplit ? mySecondComponent.getHeight() : mySecondComponent.getWidth());
       }
-      else {
-        myProportion = (float)(myVerticalSplit ? h - mySecondComponent.getHeight() : w - mySecondComponent.getWidth()) /
-                       ((myVerticalSplit ? h : w));
-      }
+      myProportion = (float)s1 / (total - d);
     }
     super.reshape(x, y, w, h);
   }
@@ -333,7 +333,7 @@ public class Splitter extends JPanel implements Splittable {
         }
       }
 
-      int iSize1 = (int)Math.round(Math.floor(size1));
+      int iSize1 = (int)Math.round(size1);
       int iSize2 = total - iSize1 - d;
 
       if (isVertical()) {
