@@ -109,7 +109,7 @@ class SmokeTest : BasePlatformTestCase() {
         object : circlet.pipelines.config.dsl.api.Project(executor) {
             init {
                 job("myTask") {
-                    fork {
+                    parallel {
                         container("hello-world1")
                         container("hello-world2")
                     }
