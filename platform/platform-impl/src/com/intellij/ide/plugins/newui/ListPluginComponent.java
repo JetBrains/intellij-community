@@ -271,7 +271,7 @@ public class ListPluginComponent extends JPanel {
     }
 
     LicensingFacade instance = LicensingFacade.getInstance();
-    if (instance == null || instance.registerCallback == null) {
+    if (instance == null) {
       setTagTooltip("No license in EAP build");
       return;
     }
@@ -289,7 +289,8 @@ public class ListPluginComponent extends JPanel {
 
     if (licensePanel.isNotification()) {
       licensePanel.setBorder(JBUI.Borders.emptyTop(3));
-      licensePanel.setLink("Manage licenses", () -> LicensingFacade.getInstance().register(), false);
+      // todo
+      licensePanel.setLink("Manage licenses", () -> {/*LicensingFacade.getInstance().register()*/}, false);
       myLayout.addLineComponent(licensePanel);
     }
   }

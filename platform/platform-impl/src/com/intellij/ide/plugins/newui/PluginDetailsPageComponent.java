@@ -414,7 +414,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
     }
     else {
       LicensingFacade instance = LicensingFacade.getInstance();
-      if (instance == null || instance.registerCallback == null) {
+      if (instance == null) {
         myLicensePanel.setText("No license in EAP build.", false, false);
       }
       else {
@@ -425,7 +425,8 @@ public class PluginDetailsPageComponent extends MultiPanel {
         else {
           myLicensePanel.setTextFromStamp(stamp);
         }
-        myLicensePanel.setLink("Manage licenses", () -> LicensingFacade.getInstance().register(), false);
+        // todo
+        myLicensePanel.setLink("Manage licenses", () -> {/*LicensingFacade.getInstance().register()*/}, false);
       }
       myLicensePanel.setVisible(true);
 

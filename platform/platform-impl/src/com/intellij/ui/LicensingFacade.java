@@ -16,7 +16,6 @@ public final class LicensingFacade {
   public Date expirationDate;
   public Date perpetualFallbackDate;
   public Map<String, String> confirmationStamps;
-  public Runnable registerCallback;
 
   public volatile static LicensingFacade INSTANCE;
 
@@ -29,7 +28,7 @@ public final class LicensingFacade {
   public String getLicensedToMessage() {
     return licensedTo;
   }
-  
+
   @NotNull
   public List<String> getLicenseRestrictionsMessages() {
     return restrictions == null? Collections.emptyList() : Collections.unmodifiableList(restrictions);
@@ -55,11 +54,5 @@ public final class LicensingFacade {
   @Nullable
   public String getConfirmationStamp(String productCode) {
     return confirmationStamps == null? null : confirmationStamps.get(productCode);
-  }
-
-  public void register() {
-    if (registerCallback != null) {
-      registerCallback.run();
-    }
   }
 }
