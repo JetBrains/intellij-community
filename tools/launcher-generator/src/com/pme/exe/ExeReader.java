@@ -139,6 +139,32 @@ public class ExeReader extends Bin.Structure{
     }
   }
 
+  /**
+   * Required for cases when sections change their size due to editing: the overlapping sections should be fixed
+   * afterwards.
+   */
+  public void sectionVirtualAddressFixup() {
+    long virtualAddress = ((ImageSectionHeader)mySectionHeaders.get(0)).getValueMember("VirtualAddress").getValue();
+
+    for (Bin sectionHeader : mySectionHeaders.getArray()) {
+      Value virtualAddressMember = ((ImageSectionHeader)sectionHeader).getValueMember("VirtualAddress");
+      long sectionVirtualAddress = virtualAddressMember.getValue();
+
+      // Section always starts from an address divisible by 0x1000
+      if (virtualAddress % 0x1000 != 0)
+        virtualAddress += 0x1000 - virtualAddress % 0x1000;
+
+      if (sectionVirtualAddress < virtualAddress) {
+        virtualAddressMember.setValue(virtualAddress);
+      }
+
+      virtualAddress += ((ImageSectionHeader)sectionHeader).getValueMember("VirtualSize").getValue();
+    }
+
+    // The binary size has been changed as the result, update it in the size holders:
+    updateSizeOffsetHolders();
+  }
+
   public void write(DataOutput stream) throws IOException {
     super.write(stream);
     myBytes.write(stream);
