@@ -3,8 +3,6 @@ package com.intellij.ui.mac.touchbar;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.jna.JnaLoader;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
@@ -328,9 +326,7 @@ public class NST {
     // icons generally should not exceed 44px in height (36px for circular icons)
     // Ideal icon size	    36px X 36px (18pt X 18pt @2x)
     // Maximum icon size    44px X 44px (22pt X 22pt @2x)
-
-    final Application app = ApplicationManager.getApplication();
-    return app != null && UISettings.getInstance().getPresentationMode() ?
+    return UISettings.getInstance().getPresentationMode() ?
            40.f/icon.getIconHeight() :
            (icon.getIconHeight() < 24 ? 40.f/16 : 44.f/icon.getIconHeight());
   }

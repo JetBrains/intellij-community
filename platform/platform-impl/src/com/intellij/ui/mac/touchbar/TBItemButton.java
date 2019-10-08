@@ -9,6 +9,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.mac.foundation.ID;
 import com.sun.jna.Pointer;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -96,14 +97,11 @@ class TBItemButton extends TBItem {
         myNativeCallback = ()->{
           // NOTE: executed from AppKit thread
           if (executeOnEDT) {
-            final Application app = ApplicationManager.getApplication();
-            if (app != null) {
-              if (modality != null)
-                app.invokeLater(myAction, modality);
-              else
-                app.invokeLater(myAction);
-            } else
-              SwingUtilities.invokeLater(myAction);
+            final @NotNull Application app = ApplicationManager.getApplication();
+            if (modality != null)
+              app.invokeLater(myAction, modality);
+            else
+              app.invokeLater(myAction);
           } else {
             myAction.run();
           }

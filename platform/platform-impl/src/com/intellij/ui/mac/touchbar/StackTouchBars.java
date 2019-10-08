@@ -109,8 +109,8 @@ public class StackTouchBars {
     private TouchBar myNextBar;
 
     synchronized void setTouchBar(TouchBar bar) {
-      final Application application = ApplicationManager.getApplication();
-      if (application != null && (application.isUnitTestMode() || application.isHeadlessEnvironment())) {
+      final @NotNull Application application = ApplicationManager.getApplication();
+      if (application.isUnitTestMode() || application.isHeadlessEnvironment()) {
         // don't create swing timers when unit-test mode
         return;
       }

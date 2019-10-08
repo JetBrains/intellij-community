@@ -9,7 +9,6 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.actionSystem.impl.Utils.ActionGroupVisitor;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.impl.LaterInvocator;
@@ -93,7 +92,7 @@ class BuildUtils {
   }
 
   static void addActionGroup(@NotNull TouchBar result, @NotNull ActionGroup actions) {
-    final @Nullable ModalityState ms = getCurrentModalityState();
+    final @NotNull ModalityState ms = LaterInvocator.getCurrentModalityState();
     final @Nullable TouchbarDataKeys.ActionDesc groupDesc = actions.getTemplatePresentation().getClientProperty(TouchbarDataKeys.ACTIONS_DESCRIPTOR_KEY);
     final Customizer customizer = new Customizer(groupDesc, ms);
     addActionGroup(result, actions, customizer);
@@ -113,8 +112,6 @@ class BuildUtils {
     if (customizer != null)
       customizer.finish();
   }
-
-  static @Nullable ModalityState getCurrentModalityState() { return ApplicationManager.getApplication() != null ? LaterInvocator.getCurrentModalityState() : null; }
 
   static @Nullable Component getCurrentFocusComponent() {
     final KeyboardFocusManager focusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
@@ -161,7 +158,7 @@ class BuildUtils {
   }
 
   static void addDialogButtons(@NotNull TouchBar out, @Nullable Map<TouchbarDataKeys.DlgButtonDesc, JButton> unorderedButtons, @Nullable Map<Component, ActionGroup> actions) {
-    final ModalityState ms = getCurrentModalityState();
+    final @NotNull ModalityState ms = LaterInvocator.getCurrentModalityState();
     final boolean hasSouthPanelButtons = unorderedButtons != null && !unorderedButtons.isEmpty();
     final byte[] prio = {-1};
 
@@ -305,8 +302,7 @@ class BuildUtils {
   static TouchBar createScrubberBarFromPopup(@NotNull ListPopupImpl listPopup) {
     final TouchBar result = new TouchBar("popup_scrubber_bar" + listPopup, true, false, true, null, null);
 
-    final Application app = ApplicationManager.getApplication();
-    final ModalityState ms = app != null ? LaterInvocator.getCurrentModalityState() : null;
+    final ModalityState ms = LaterInvocator.getCurrentModalityState();
 
     final TBItemScrubber scrub = result.addScrubber();
     final @NotNull ListPopupStep<Object> listPopupStep = listPopup.getListStep();
@@ -334,10 +330,7 @@ class BuildUtils {
       };
 
       final Runnable action = () -> {
-        if (app == null)
-          SwingUtilities.invokeLater(edtAction);
-        else
-          app.invokeLater(edtAction, ms);
+          ApplicationManager.getApplication().invokeLater(edtAction, ms);
       };
       scrub.addItem(ic, txt, action);
       if (!listPopupStep.isSelectable(obj)) {
@@ -637,8 +630,6 @@ class BuildUtils {
   }
 
   static @NotNull String getActionId(@NotNull AnAction act) {
-    if (ApplicationManager.getApplication() == null)
-      return act.toString();
     final String actId = ActionManager.getInstance().getId(act instanceof CustomisedActionGroup ? ((CustomisedActionGroup)act).getOrigin() : act);
     return actId == null ? act.toString() : actId;
   }

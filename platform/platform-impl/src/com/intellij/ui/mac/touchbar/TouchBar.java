@@ -13,7 +13,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.IndexNotReadyException;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.mac.foundation.ID;
@@ -44,7 +43,7 @@ class TouchBar implements NSTLibrary.ItemCreator {
   private final TBItemButton myCustomEsc;
   private final ActionGroup myActionGroup;
   private final @Nullable String mySkipSubgroupsPrefix;
-  private final @NotNull UpdateTimerWrapper myUpdateTimer = new UpdateTimerWrapper(500);
+  private final @NotNull Updater myUpdateTimer = new Updater(500);
   private CancellablePromise<List<AnAction>> myLastUpdate;
   private String[] myVisibleIds;
   private long myStartShowNs = 0;
@@ -314,12 +313,8 @@ class TouchBar implements NSTLibrary.ItemCreator {
         toUpdate.forEach(item -> item.updateNativePeer());
       }
     };
-    final Application app = ApplicationManager.getApplication();
-    if (app != null) {
-      myLastUpdateNativePeers = app.executeOnPooledThread(() -> app.runReadAction(updateAllNativePeers));
-    } else {
-      updateAllNativePeers.run();
-    }
+    final @NotNull Application app = ApplicationManager.getApplication();
+    myLastUpdateNativePeers = app.executeOnPooledThread(() -> app.runReadAction(updateAllNativePeers));
 
     selectVisibleItemsToShow();
     if (myStats != null)
@@ -378,12 +373,6 @@ class TouchBar implements NSTLibrary.ItemCreator {
         final @NotNull Presentation presentation = myFactory.getPresentation(item.getAnAction());
 
         final Component component = item.getComponent();
-        if (ApplicationManager.getApplication() == null) {
-          if (component instanceof JButton) {
-            presentation.setEnabled(component.isEnabled());
-            presentation.setText(DialogWrapper.extractMnemonic(((JButton)component).getText()).second);
-          }
-        }
 
         final DataContext dctx = DataManager.getInstance().getDataContext(component);
         final ActionManager am = ActionManagerEx.getInstanceEx();
@@ -422,24 +411,15 @@ class TouchBar implements NSTLibrary.ItemCreator {
     TouchBarsManager.hideContainer(myBarContainer);
   }
 
-  private class UpdateTimerWrapper {
-    final int myDelay;
-    Object myTimerImpl;
+  private class Updater {
+    private final int myDelay;
+    private @Nullable TimerListener myTimerImpl;
 
-    UpdateTimerWrapper(int delay) { myDelay = delay; }
+    Updater(int delay) { myDelay = delay; }
 
     void start() {
       if (myTimerImpl != null)
         stop();
-
-      if (ApplicationManager.getApplication() == null) {
-        final Timer t = new Timer(myDelay, (event) -> updateActionItems());
-        myTimerImpl = t;
-
-        t.setRepeats(true);
-        t.start();
-        return;
-      }
 
       final TimerListener t = new TimerListener() {
         @Override
@@ -455,11 +435,7 @@ class TouchBar implements NSTLibrary.ItemCreator {
       if (myTimerImpl == null)
         return;
 
-      if (myTimerImpl instanceof Timer)
-        ((Timer)myTimerImpl).stop();
-      else if (myTimerImpl instanceof TimerListener)
-        ActionManager.getInstance().removeTransparentTimerListener((TimerListener)myTimerImpl);
-
+      ActionManager.getInstance().removeTransparentTimerListener(myTimerImpl);
       myTimerImpl = null;
     }
 

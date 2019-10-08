@@ -4,7 +4,6 @@ package com.intellij.ui.mac.touchbar;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.ui.mac.foundation.ID;
 import org.jetbrains.annotations.NotNull;
@@ -66,7 +65,7 @@ class TBItemAnActionButton extends TBItemButton {
   void setAnAction(@NotNull AnAction newAction) {
     // can be safely replaced without setAction (because _performAction will use updated reference to AnAction)
     myAnAction = newAction;
-    String newActionId = ApplicationManager.getApplication() == null ? newAction.toString() : ActionManager.getInstance().getId(newAction);
+    String newActionId = ActionManager.getInstance().getId(newAction);
     myActionId = newActionId == null ? newAction.toString() : newActionId;
   }
 
@@ -151,12 +150,6 @@ class TBItemAnActionButton extends TBItemButton {
   }
 
   private void _performAction() {
-    if (ApplicationManager.getApplication() == null) {
-      if (myComponent instanceof JButton)
-        ((JButton)myComponent).doClick();
-      return;
-    }
-
     final ActionManagerEx actionManagerEx = ActionManagerEx.getInstanceEx();
     final Component src = getComponent();
     if (src == null) // KeyEvent can't have null source object
