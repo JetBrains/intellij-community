@@ -292,7 +292,7 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler, Contex
     final List<? extends PsiVariable> inputVariables = 
       member instanceof PsiMethod ? Arrays.asList(((PsiMethod)member).getParameterList().getParameters()) : new ArrayList<>();
     return new DuplicatesFinder(pattern,
-                                new InputVariables(inputVariables, member.getProject(), new LocalSearchScope(pattern), false),
+                                new InputVariables(inputVariables, member.getProject(), new LocalSearchScope(pattern), false, Collections.emptySet()),
                                 matchedReturnValue,
                                 new ArrayList<>());
   }

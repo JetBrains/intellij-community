@@ -2033,8 +2033,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     final Set<PsiField> fields = new LinkedHashSet<>();
     myCanBeStatic = canBeStatic(myTargetClass, myCodeFragmentMember, myElements, fields);
 
-    myInputVariables = new InputVariables(inputVariables, myProject, new LocalSearchScope(myElements), isFoldingApplicable());
-    myInputVariables.setUsedInstanceFields(fields);
+    myInputVariables = new InputVariables(inputVariables, myProject, new LocalSearchScope(myElements), isFoldingApplicable(), fields);
 
     if (!checkExitPoints()){
       return false;
