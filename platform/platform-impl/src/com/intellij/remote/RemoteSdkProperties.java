@@ -20,17 +20,12 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-
 /**
  * @author traff
  */
-public interface RemoteSdkProperties {
-  String getInterpreterPath();
+public interface RemoteSdkProperties extends RemoteSdkPropertiesPaths {
 
   void setInterpreterPath(String interpreterPath);
-
-  String getHelpersPath();
 
   void setHelpersPath(String helpersPath);
 
