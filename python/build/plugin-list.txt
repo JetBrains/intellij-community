@@ -4,10 +4,6 @@ intellij.editorconfig
 intellij.markdown
 intellij.platform.langInjection
 intellij.properties
-intellij.python.copyright
-intellij.python.langInjection
-intellij.python.reStructuredText
-intellij.python.terminal
 intellij.reStructuredText
 intellij.settingsRepository
 intellij.sh

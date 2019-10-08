@@ -17,29 +17,38 @@ package org.jetbrains.intellij.build.pycharm
 
 import org.jetbrains.intellij.build.*
 
+import static org.jetbrains.intellij.build.impl.PluginLayout.plugin
+
 /**
  * @author nik
  */
 class PyCharmCommunityProperties extends PyCharmPropertiesBase {
   PyCharmCommunityProperties(String communityHome) {
     platformPrefix = "PyCharmCore"
-    applicationInfoModule = "intellij.pycharm.community.resources"
+    applicationInfoModule = "intellij.pycharm.community"
     brandingResourcePaths = ["$communityHome/python/resources"]
 
+    productLayout.mainModules = ["intellij.pycharm.community.main"]
     productLayout.productApiModules = ["intellij.xml.dom"]
     productLayout.productImplementationModules = [
       "intellij.xml.dom.impl",
-      "intellij.python.community.impl",
-      "intellij.pycharm.community.resources",
-      "intellij.pycharm.community",
-      "intellij.python.configure",
-      "intellij.python.community",
-      "intellij.python.psi",
-      "intellij.python.psi.impl",
-      "intellij.platform.main"
+      "intellij.platform.main",
+      "intellij.pycharm.community"
     ]
-    productLayout.bundledPluginModules = new File("$communityHome/python/build/plugin-list.txt").readLines()
-    productLayout.mainModules = ["intellij.pycharm.community.main"]
+    productLayout.bundledPluginModules =
+      ["intellij.python.community.plugin.resources",
+       "intellij.pycharm.community.customization"
+      ] + new File("$communityHome/python/build/plugin-list.txt").readLines()
+
+    productLayout.additionalPlatformJars.put(productLayout.mainJarName, "intellij.pycharm.community.resources")
+
+    productLayout.allNonTrivialPlugins = CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS + [
+      plugin("intellij.pycharm.community.customization") {
+        directoryName = "pythonIDE"
+        mainJarName = "python-ide.jar"
+        withModule("intellij.python.configure", mainJarName)
+      }
+    ]
   }
 
   @Override

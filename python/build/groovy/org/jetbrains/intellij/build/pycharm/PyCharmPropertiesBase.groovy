@@ -30,7 +30,6 @@ abstract class PyCharmPropertiesBase extends ProductProperties {
     baseFileName = "pycharm"
     reassignAltClickToMultipleCarets = true
     productLayout.mainJarName = "pycharm.jar"
-    productLayout.additionalPlatformJars.put("pycharm-pydev.jar", "intellij.python.pydev")
     productLayout.additionalPlatformJars.putAll("testFramework.jar",
                                                 "intellij.platform.testFramework.core",
                                                 "intellij.platform.testFramework",
@@ -43,15 +42,11 @@ abstract class PyCharmPropertiesBase extends ProductProperties {
       "intellij.platform.testFramework"
     ]
     productLayout.buildAllCompatiblePlugins = true
-    productLayout.compatiblePluginsToIgnore = [
-      "intellij.python.community.plugin.resources"
-    ]
   }
 
   @Override
   void copyAdditionalFiles(BuildContext context, String targetDirectory) {
     def tasks = BuildTasks.create(context)
-    tasks.zipSourcesOfModules(["intellij.python.pydev"], "$targetDirectory/lib/src/pycharm-pydev-src.zip")
     tasks.zipSourcesOfModules(["intellij.python.community", "intellij.python.psi"], "$targetDirectory/lib/src/pycharm-openapi-src.zip")
 
     context.ant.copy(todir: "$targetDirectory/helpers") {
