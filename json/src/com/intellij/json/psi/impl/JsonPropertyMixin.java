@@ -4,7 +4,6 @@ import com.intellij.json.psi.JsonElementGenerator;
 import com.intellij.json.psi.JsonProperty;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.ContributedReferenceHost;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
@@ -16,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Mikhail Golubev
  */
-abstract class JsonPropertyMixin extends JsonElementImpl implements ContributedReferenceHost, JsonProperty {
+abstract class JsonPropertyMixin extends JsonElementImpl implements JsonProperty {
   JsonPropertyMixin(@NotNull ASTNode node) {
     super(node);
   }
