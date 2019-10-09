@@ -911,6 +911,23 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
     );
   }
 
+  // PY-33500
+  public void testImplicitGenericDunderCallCallOnTypedElement() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> doTestByText("from typing import TypeVar, Generic\n" +
+                         "\n" +
+                         "_T = TypeVar('_T')\n" +
+                         "\n" +
+                         "class Callback(Generic[_T]):\n" +
+                         "    def __call__(self, arg: _T):\n" +
+                         "        pass\n" +
+                         "\n" +
+                         "def foo(cb: Callback[int]):\n" +
+                         "    cb(<weak_warning descr=\"Expected type 'int' (matched generic type '_T'), got 'str' instead\">\"42\"</weak_warning>)")
+    );
+  }
+
   // PY-36008
   public void testTypedDictDefinitionAlternativeSyntax() {
     doTestByText("from typing import TypedDict\n" +
