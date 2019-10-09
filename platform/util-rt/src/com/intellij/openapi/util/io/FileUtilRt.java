@@ -100,8 +100,8 @@ public class FileUtilRt {
     private static Method ourPathToFileMethod;
     private static Method ourAttributesIsOtherMethod;
     private static Object ourDeletionVisitor;
-    private static Class ourNoSuchFileExceptionClass;
-    private static Class ourAccessDeniedExceptionClass;
+    private static Class<?> ourNoSuchFileExceptionClass;
+    private static Class<?> ourAccessDeniedExceptionClass;
 
     static {
       boolean initSuccess = false;
@@ -306,6 +306,7 @@ public class FileUtilRt {
     return result.toString();
   }
 
+  @SuppressWarnings("DuplicatedCode")
   private static int processRoot(@NotNull String path, @NotNull Appendable result) {
     try {
       if (SystemInfoRt.isWindows && path.length() > 1 && path.charAt(0) == '/' && path.charAt(1) == '/') {
