@@ -2,7 +2,7 @@ class Test {
   {
     I r = (i) -> {
         if (i > 0) return "a";
-        else return "b";
+        return "b";
     };
   }
   interface I {
