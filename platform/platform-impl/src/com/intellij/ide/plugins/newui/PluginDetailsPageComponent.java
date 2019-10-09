@@ -72,6 +72,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
 
   public IdeaPluginDescriptor myPlugin;
   private IdeaPluginDescriptor myUpdateDescriptor;
+  private AbstractAction myEnableDisableAction;
 
   public PluginDetailsPageComponent(@NotNull MyPluginModel pluginModel, @NotNull LinkListener<Object> searchListener, boolean marketplace) {
     myPluginModel = pluginModel;
@@ -183,7 +184,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
     ColorButton.setWidth72(myEnableDisableButton);
     myNameAndButtons.addButtonComponent(myEnableDisableButton);
 
-    AbstractAction enableDisableAction = new AbstractAction() {
+    myEnableDisableAction = new AbstractAction() {
       @Override
       public void actionPerformed(ActionEvent e) {
         changeEnableDisable();
@@ -195,7 +196,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
         doUninstall();
       }
     };
-    myNameAndButtons.addButtonComponent(myEnableDisableUninstallButton = new MyOptionButton(enableDisableAction, uninstallAction));
+    myNameAndButtons.addButtonComponent(myEnableDisableUninstallButton = new MyOptionButton(myEnableDisableAction, uninstallAction));
 
     myUninstallButton = new JButton("Uninstall");
     myUninstallButton.addActionListener(e -> doUninstall());
@@ -516,7 +517,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
         myEnableDisableButton.setText(title);
 
         myEnableDisableUninstallButton.setVisible(!bundled && !errors);
-        myEnableDisableUninstallButton.setText(title);
+        myEnableDisableAction.putValue(Action.NAME, title);
 
         myUninstallButton.setVisible(!bundled && errors);
       }
