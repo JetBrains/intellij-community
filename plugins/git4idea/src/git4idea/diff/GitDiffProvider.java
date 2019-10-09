@@ -210,13 +210,13 @@ public final class GitDiffProvider implements DiffProvider, DiffMixin {
     new GitRevisionContentPreLoader(myProject).preload(root, revisions);
   }
 
-  public boolean hasDiffWithWorkingDirSupport() {
+  public boolean canCompareWithWorkingDir() {
     return true;
   }
 
   @NotNull
   @Override
-  public Collection<Change> getDiffWithWorkingDir(@NotNull VirtualFile fileOrDir,
+  public Collection<Change> compareWithWorkingDir(@NotNull VirtualFile fileOrDir,
                                                   @NotNull VcsRevisionNumber revNum) throws VcsException {
 
     final GitRepository repo = GitUtil.getRepositoryManager(myProject).getRepositoryForFile(fileOrDir);

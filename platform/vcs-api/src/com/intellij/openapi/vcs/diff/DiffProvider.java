@@ -57,12 +57,12 @@ public interface DiffProvider extends VcsProviderMarker {
   default void preloadBaseRevisions(@NotNull VirtualFile root, @NotNull Collection<Change> changes) {
   }
 
-  default boolean hasDiffWithWorkingDirSupport() {
+  default boolean canCompareWithWorkingDir() {
     return false;
   }
 
   @Nullable
-  default Collection<Change> getDiffWithWorkingDir(@NotNull VirtualFile fileOrDir,
+  default Collection<Change> compareWithWorkingDir(@NotNull VirtualFile fileOrDir,
                                                    @NotNull VcsRevisionNumber revNum) throws VcsException {
     return null;
   }
