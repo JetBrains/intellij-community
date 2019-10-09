@@ -17,10 +17,8 @@ class PythonCommunityPluginModules {
                                            "intellij.python.pydev",
                                            "intellij.python.community.impl",
                                           ]
-  public static String PYTHON_COMMUNITY_PLUGIN_MODULE = "intellij.python.community.plugin"
-
   static PluginLayout pythonCommunityPluginLayout(@DelegatesTo(PluginLayout.PluginLayoutSpec) Closure body = {}) {
-    pythonPlugin(PYTHON_COMMUNITY_PLUGIN_MODULE, "python-ce", COMMUNITY_MODULES) {
+    pythonPlugin("intellij.python.community.plugin", "python-ce", COMMUNITY_MODULES) {
       withProjectLibrary("markdown4j")  // Required for ipnb
       body.delegate = delegate
       body()
