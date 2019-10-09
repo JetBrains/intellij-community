@@ -40,6 +40,7 @@ class MavenStructureWizardStep(
       parentData?.mavenId?.version == version
     )
     builder.name = entityName
+    builder.contentEntryPath = location
   }
 
   override fun _init() {
