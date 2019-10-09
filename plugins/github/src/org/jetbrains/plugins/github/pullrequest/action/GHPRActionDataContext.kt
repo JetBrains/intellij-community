@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.data.GHUser
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.data.GHPullRequestsDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestDataProvider
@@ -28,6 +29,9 @@ class GHPRActionDataContext internal constructor(private val dataContext: GHPull
 
   val pullRequest: Long?
     get() = selectionHolder.selectionNumber
+
+  val pullRequestDetails: GHPullRequestShort?
+    get() = pullRequest?.let { dataContext.listLoader.findData(it) }
 
   val pullRequestDataProvider: GithubPullRequestDataProvider?
     get() = pullRequest?.let { dataContext.dataLoader.getDataProvider(it) }

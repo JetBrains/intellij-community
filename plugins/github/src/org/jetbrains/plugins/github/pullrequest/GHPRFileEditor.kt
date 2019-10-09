@@ -22,6 +22,11 @@ import com.intellij.util.ui.UIUtil
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
+import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
+import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
+import org.jetbrains.plugins.github.api.data.GHUser
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
+import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.data.GHPRReviewServiceAdapter
 import org.jetbrains.plugins.github.pullrequest.data.GHPRTimelineLoader
@@ -40,7 +45,12 @@ internal class GHPRFileEditor(progressManager: ProgressManager,
                               private val fileTypeRegistry: FileTypeRegistry,
                               private val project: Project,
                               private val editorFactory: EditorFactory,
-                              private val file: GHPRVirtualFile)
+                              private val dataProvider: GithubPullRequestDataProvider,
+                              requestExecutor: GithubApiRequestExecutor,
+                              repository: GHRepositoryCoordinates,
+                              avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory,
+                              private val currentUser: GHUser,
+                              private val pullRequestDetails: GHPullRequestShort)
   : UserDataHolderBase(), FileEditor {
 
   private val propertyChangeSupport = PropertyChangeSupport(this)
@@ -48,20 +58,16 @@ internal class GHPRFileEditor(progressManager: ProgressManager,
   private val contentPanel: JPanel
 
   init {
-    val context = file.context
-
-    val detailsModel = SingleValueModel(file.pullRequest)
+    val detailsModel = SingleValueModel(pullRequestDetails)
     val timelineModel = GHPRTimelineMergingModel()
     Disposer.register(this, Disposable {
       timelineModel.removeAll()
     })
 
-    val repository = context.repositoryCoordinates
-    val loader = GHPRTimelineLoader(progressManager, context.requestExecutor, repository.serverPath, repository.repositoryPath,
-                                    file.pullRequest.number, timelineModel)
+    val loader = GHPRTimelineLoader(progressManager, requestExecutor, repository.serverPath, repository.repositoryPath,
+                                    dataProvider.number, timelineModel)
     Disposer.register(this, loader)
 
-    val dataProvider = context.pullRequestDataProvider!!
     fun handleReviewsThreads() {
       dataProvider.reviewThreadsRequest.handleOnEdt(this) { threads, _ ->
         if (threads != null) timelineModel.setReviewsThreads(threads)
@@ -80,7 +86,7 @@ internal class GHPRFileEditor(progressManager: ProgressManager,
     handleDetails()
     handleReviewsThreads()
 
-    val avatarIconsProvider = context.avatarIconsProviderFactory.create(GithubUIUtil.avatarSize, mainPanel)
+    val avatarIconsProvider = avatarIconsProviderFactory.create(GithubUIUtil.avatarSize, mainPanel)
 
     val header = GHPRHeaderPanel(detailsModel, avatarIconsProvider)
     val timeline = GHPRTimelineComponent(timelineModel,
@@ -144,15 +150,14 @@ internal class GHPRFileEditor(progressManager: ProgressManager,
     val diffFactory = GHPRReviewThreadDiffComponentFactory(fileTypeRegistry, project, editorFactory)
     val eventsFactory = GHPRTimelineEventComponentFactoryImpl(avatarIconsProvider)
     return GHPRTimelineItemComponentFactory(project, reviewService, avatarIconsProvider, timelineModel, diffFactory, eventsFactory,
-                                            file.context.currentUser)
+                                            currentUser)
   }
 
-  override fun getName() = file.name
+  override fun getName(): String = pullRequestDetails.title
 
   override fun getComponent(): JComponent = mainPanel
   override fun getPreferredFocusedComponent(): JComponent? = contentPanel
 
-  override fun getFile() = file
   override fun isModified(): Boolean = false
   override fun isValid(): Boolean = true
 

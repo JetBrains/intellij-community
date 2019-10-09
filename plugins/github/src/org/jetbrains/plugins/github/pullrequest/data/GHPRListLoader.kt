@@ -16,6 +16,9 @@ internal interface GHPRListLoader : GHListLoader {
   fun reloadData(request: CompletableFuture<out GHPullRequestShort>)
 
   @CalledInAwt
+  fun findData(number: Long): GHPullRequestShort?
+
+  @CalledInAwt
   fun resetFilter()
 
   @CalledInAwt

@@ -5,7 +5,7 @@ import com.intellij.testFramework.LightVirtualFile
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionDataContext
 
-internal class GHPRVirtualFile(val context: GHPRActionDataContext, val pullRequest: GHPullRequestShort)
+internal class GHPRVirtualFile(val context: GHPRActionDataContext, private val pullRequest: GHPullRequestShort)
   : LightVirtualFile(pullRequest.title, GHPRFileType.INSTANCE, "") {
 
   init {

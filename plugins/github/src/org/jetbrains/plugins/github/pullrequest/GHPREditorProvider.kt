@@ -17,7 +17,8 @@ import org.jetbrains.plugins.github.pullrequest.action.GithubPullRequestKeys
 internal class GHPREditorProvider : FileEditorProvider, DumbAware {
   override fun accept(project: Project, file: VirtualFile): Boolean {
     if (file !is GHPRVirtualFile) return false
-    return file.context.pullRequestDataProvider != null
+    val context = file.context
+    return context.pullRequest != null && context.pullRequestDataProvider != null && context.pullRequestDetails != null
   }
 
   override fun createEditor(project: Project, file: VirtualFile): GHPRFileEditor {
@@ -26,11 +27,16 @@ internal class GHPREditorProvider : FileEditorProvider, DumbAware {
 
     return GHPRFileEditor(ProgressManager.getInstance(), FileTypeRegistry.getInstance(),
                           project, EditorFactory.getInstance(),
-                          file).apply {
+                          context.pullRequestDataProvider!!,
+                          context.requestExecutor,
+                          context.repositoryCoordinates,
+                          context.avatarIconsProviderFactory,
+                          context.currentUser,
+                          context.pullRequestDetails!!).apply {
 
       DataManager.registerDataProvider(component, DataProvider {
         if (GithubPullRequestKeys.ACTION_DATA_CONTEXT.`is`(it))
-          GHPRActionDataContext.withFixedPullRequest(context, file.pullRequest.number)
+          GHPRActionDataContext.withFixedPullRequest(context, context.pullRequest!!)
         else null
       })
     }
