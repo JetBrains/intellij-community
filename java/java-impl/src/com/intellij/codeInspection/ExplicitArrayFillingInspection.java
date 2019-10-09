@@ -16,6 +16,7 @@ import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -251,8 +252,9 @@ public class ExplicitArrayFillingInspection extends AbstractBaseJavaLocalInspect
       CommentTracker ct = new CommentTracker();
       PsiElement result;
       if (myIsRhsConstant) {
+        String cast = getCast(project, container.getElementType(), rValue.getType());
         String replacement = CommonClassNames.JAVA_UTIL_ARRAYS + ".fill(" +
-                             ct.text(container.getQualifier()) + ", " + ct.text(rValue) + ");";
+                             ct.text(container.getQualifier()) + ", " + cast + ct.text(rValue) + ");";
         result = ct.replaceAndRestoreComments(statement, replacement);
       }
       else {
@@ -263,6 +265,14 @@ public class ExplicitArrayFillingInspection extends AbstractBaseJavaLocalInspect
       }
       result = JavaCodeStyleManager.getInstance(project).shortenClassReferences(result);
       CodeStyleManager.getInstance(project).reformat(result);
+    }
+
+    @NotNull
+    private static String getCast(@NotNull Project project, @Nullable PsiType elementType, @Nullable PsiType rType) {
+      if (elementType == null || rType == null) return "";
+      PsiType assignTo = tryCast(elementType, PsiPrimitiveType.class);
+      if (assignTo == null) assignTo = JavaPsiFacade.getElementFactory(project).createTypeByFQClassName(CommonClassNames.JAVA_LANG_OBJECT);
+      return TypeConversionUtil.isAssignable(assignTo, rType) ? "" : "(" + elementType.getCanonicalText() + ")";
     }
   }
 }
