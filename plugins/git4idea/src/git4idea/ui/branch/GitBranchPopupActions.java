@@ -55,6 +55,7 @@ import static com.intellij.util.containers.ContainerUtil.*;
 import static git4idea.GitUtil.HEAD;
 import static git4idea.branch.GitBranchType.LOCAL;
 import static git4idea.branch.GitBranchType.REMOTE;
+import static git4idea.ui.branch.GitBranchActionsUtilKt.checkCommitsUnderProgress;
 import static java.util.Arrays.asList;
 
 class GitBranchPopupActions {
@@ -358,55 +359,6 @@ class GitBranchPopupActions {
       }
     }
 
-    private static class CheckoutAsNewBranch extends DumbAwareAction {
-      private final Project myProject;
-      private final List<? extends GitRepository> myRepositories;
-      private final String myBranchName;
-
-      CheckoutAsNewBranch(@NotNull Project project, @NotNull List<? extends GitRepository> repositories, @NotNull String branchName) {
-        super("New Branch from Selected...");
-        myProject = project;
-        myRepositories = repositories;
-        myBranchName = branchName;
-      }
-
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        GitNewBranchOptions newBranchOptions =
-          new GitNewBranchDialog(myProject, myRepositories, "Checkout New Branch From " + myBranchName, "", false, true)
-            .showAndGetOptions();
-        if (newBranchOptions != null) {
-          GitBrancher brancher = GitBrancher.getInstance(myProject);
-          String name = newBranchOptions.getName();
-          if (!newBranchOptions.shouldReset()) {
-            List<GitRepository> reposWithLocalBranch = new ArrayList<>();
-            List<GitRepository> reposWithoutLocalBranch = new ArrayList<>();
-            for (GitRepository repo : myRepositories) {
-              if (repo.getBranches().findLocalBranch(name) != null) {
-                reposWithLocalBranch.add(repo);
-              }
-              else {
-                reposWithoutLocalBranch.add(repo);
-              }
-            }
-            //checkout existing branch
-            brancher.checkout(name, false, reposWithLocalBranch, null);
-            //checkout new
-            brancher.checkoutNewBranchStartingFrom(name, myBranchName + "^0", reposWithoutLocalBranch, null);
-          }
-          else {
-            boolean hasCommits = GitBranchActionsUtilKt.checkCommitsUnderProgress(myProject, myRepositories, myBranchName + "^0", name);
-            if (hasCommits) {
-              VcsNotifier.getInstance(myProject)
-                .notifyError("Checkout Failed", "Can't overwrite " + name + " branch because some commits can be lost");
-              return;
-            }
-            brancher.checkoutNewBranchStartingFrom(name, myBranchName + "^0", true, myRepositories, null);
-          }
-        }
-      }
-    }
-
     private static class PushBranchAction extends DumbAwareAction implements CustomIconProvider {
       private final Project myProject;
       private final List<GitRepository> myRepositories;
@@ -543,6 +495,7 @@ class GitBranchPopupActions {
     public AnAction[] getChildren(@Nullable AnActionEvent e) {
       return new AnAction[]{
         new CheckoutRemoteBranchAction(myProject, myRepositories, myBranchName),
+        new CheckoutAsNewBranch(myProject, myRepositories, myBranchName),
         new Separator(),
         new CompareAction(myProject, myRepositories, myBranchName, mySelectedRepository),
         new ShowDiffWithBranchAction(myProject, myRepositories, myBranchName),
@@ -627,6 +580,60 @@ class GitBranchPopupActions {
       public void update(@NotNull AnActionEvent e) {
         e.getPresentation().setEnabled(!GitProtectedBranchesKt.isRemoteBranchProtected(myRepositories, myBranchName));
       }
+    }
+  }
+
+  private static class CheckoutAsNewBranch extends DumbAwareAction {
+    private final Project myProject;
+    private final List<? extends GitRepository> myRepositories;
+    private final String myBranchName;
+
+    CheckoutAsNewBranch(@NotNull Project project, @NotNull List<? extends GitRepository> repositories, @NotNull String branchName) {
+      super("New Branch from Selected...");
+      myProject = project;
+      myRepositories = repositories;
+      myBranchName = branchName;
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      GitNewBranchOptions newBranchOptions =
+        new GitNewBranchDialog(myProject, myRepositories, "Checkout New Branch From " + myBranchName, "", false, true)
+          .showAndGetOptions();
+      if (newBranchOptions != null) {
+        checkoutNewOrExistingBranch(myProject, myRepositories, myBranchName + "^0", newBranchOptions);
+      }
+    }
+  }
+
+  static void checkoutNewOrExistingBranch(@NotNull Project project, @NotNull List<? extends GitRepository> repositories,
+                                          @NotNull String startPoint, GitNewBranchOptions newBranchOptions) {
+    GitBrancher brancher = GitBrancher.getInstance(project);
+    String name = newBranchOptions.getName();
+    if (!newBranchOptions.shouldReset()) {
+      List<GitRepository> reposWithLocalBranch = new ArrayList<>();
+      List<GitRepository> reposWithoutLocalBranch = new ArrayList<>();
+      for (GitRepository repo : repositories) {
+        if (repo.getBranches().findLocalBranch(name) != null) {
+          reposWithLocalBranch.add(repo);
+        }
+        else {
+          reposWithoutLocalBranch.add(repo);
+        }
+      }
+      //checkout existing branch
+      brancher.checkout(name, false, reposWithLocalBranch, null);
+      //checkout new
+      brancher.checkoutNewBranchStartingFrom(name, startPoint, reposWithoutLocalBranch, null);
+    }
+    else {
+      boolean hasCommits = checkCommitsUnderProgress(project, repositories, startPoint, name);
+      if (hasCommits) {
+        VcsNotifier.getInstance(project)
+          .notifyError("Checkout Failed", "Can't overwrite " + name + " branch because some commits can be lost");
+        return;
+      }
+      brancher.checkoutNewBranchStartingFrom(name, startPoint, true, repositories, null);
     }
   }
 
