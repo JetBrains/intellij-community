@@ -77,7 +77,8 @@
     <extensionPoint name="basicWordSelectionFilter"
                     interface="com.intellij.openapi.util.Condition"/>
     <extensionPoint name="typedHandler"
-                    interface="com.intellij.codeInsight.editorActions.TypedHandlerDelegate"/>
+                    interface="com.intellij.codeInsight.editorActions.TypedHandlerDelegate"
+                    dynamic="true"/>
     <extensionPoint name="selectionDequotingFilter"
                     interface="com.intellij.codeInsight.editorActions.SelectionQuotingTypedHandler$DequotingFilter"/>
 
@@ -191,12 +192,14 @@
     </extensionPoint>
 
     <extensionPoint name="lang.braceMatcher"
-                    beanClass="com.intellij.lang.LanguageExtensionPoint">
+                    beanClass="com.intellij.lang.LanguageExtensionPoint"
+                    dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.lang.PairedBraceMatcher"/>
     </extensionPoint>
 
     <extensionPoint name="lang.quoteHandler"
-                    beanClass="com.intellij.lang.LanguageExtensionPoint">
+                    beanClass="com.intellij.lang.LanguageExtensionPoint"
+                    dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.editorActions.QuoteHandler"/>
     </extensionPoint>
 
@@ -297,9 +300,11 @@
     <extensionPoint name="gotoActionAliasMatcher"
                     interface="com.intellij.ide.util.gotoByName.GotoActionAliasMatcher"/>
     <extensionPoint name="gotoClassContributor"
-                    interface="com.intellij.navigation.ChooseByNameContributor"/>
+                    interface="com.intellij.navigation.ChooseByNameContributor"
+                    dynamic="true"/>
     <extensionPoint name="gotoSymbolContributor"
-                    interface="com.intellij.navigation.ChooseByNameContributor"/>
+                    interface="com.intellij.navigation.ChooseByNameContributor"
+                    dynamic="true"/>
     <extensionPoint name="gotoFileContributor"
                     interface="com.intellij.navigation.ChooseByNameContributor"/>
     <extensionPoint name="anonymousElementProvider"
@@ -499,7 +504,8 @@
     <extensionPoint name="configurationProducer"
                     interface="com.intellij.execution.junit.RuntimeConfigurationProducer"/>
     <extensionPoint name="runConfigurationProducer"
-                    interface="com.intellij.execution.actions.RunConfigurationProducer"/>
+                    interface="com.intellij.execution.actions.RunConfigurationProducer"
+                    dynamic="true"/>
 
     <extensionPoint name="multipleRunLocationsProvider" interface="com.intellij.execution.actions.MultipleRunLocationsProvider"/>
 
