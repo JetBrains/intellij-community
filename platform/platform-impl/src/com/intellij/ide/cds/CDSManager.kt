@@ -6,14 +6,10 @@ import com.intellij.execution.process.OSProcessUtil
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.sun.tools.attach.VirtualMachine
-import org.jetbrains.concurrency.Promise
-import org.jetbrains.concurrency.rejectedPromise
-import org.jetbrains.concurrency.resolvedPromise
 import java.io.File
 import java.lang.management.ManagementFactory
 import java.util.concurrent.TimeUnit
@@ -82,7 +78,7 @@ object CDSManager {
     }
   }
 
-  fun installCDS(indicator: ProgressIndicator?): CDSPaths? {
+  fun installCDS(indicator: ProgressIndicator): CDSPaths? {
     val paths = CDSPaths.current()
     if (paths.isSame(currentCDSArchive)) {
       LOG.info("CDS archive is already generated. Nothing to do")
@@ -91,8 +87,8 @@ object CDSManager {
 
     LOG.info("Starting generation of CDS archive to the ${paths.classesArchiveFile} and ${paths.classesArchiveFile} files")
 
-    indicator?.text2 = "Collecting classes list..."
-    indicator?.checkCanceled()
+    indicator.text2 = "Collecting classes list..."
+    indicator.checkCanceled()
 
     val durationList = measureTimeMillis {
       try {
@@ -125,8 +121,8 @@ object CDSManager {
 
     LOG.info("CDS classes file is generated in ${StringUtil.formatDuration(durationList)}")
 
-    indicator?.text2 = "Generating classes archive..."
-    indicator?.checkCanceled()
+    indicator.text2 = "Generating classes archive..."
+    indicator.checkCanceled()
 
     val durationLink = measureTimeMillis {
       val ext = if (SystemInfo.isWindows) ".exe" else ""
@@ -144,7 +140,7 @@ object CDSManager {
       val cwd = File(".").canonicalFile
       LOG.info("Running CDS generation process: $args in $cwd")
 
-      indicator?.checkCanceled()
+      indicator.checkCanceled()
       val process = ProcessBuilder().command(args).inheritIO().directory(cwd).start()
       if (!process.waitFor(10, TimeUnit.MINUTES)) {
         LOG.warn("Failed to generate CDS archive, the process took too long and will be killed")
@@ -166,27 +162,6 @@ object CDSManager {
     LOG.warn("CDS archive is disabled")
     VMOptions.writeDisableCDSArchiveOption()
   }
-
-  /**
-   * See com.intellij.openapi.ui.playback.commands.CallCommand
-   */
-  @JvmStatic
-  @Suppress("unused")
-  fun toggleCDSForPerfTests(@Suppress("UNUSED_PARAMETER") context: PlaybackContext, enableCDS: Boolean): Promise<Any?> =
-    try {
-      if (enableCDS) {
-        val paths = installCDS(null)
-        if (paths == null) rejectedPromise("Failed to install AppCDS, see log for errors")
-        else resolvedPromise<Any?>("ok")
-      }
-      else {
-        removeCDS()
-        resolvedPromise("ok")
-      }
-    }
-    catch (t: Throwable) {
-      rejectedPromise(t)
-    }
 
   private operator fun File.div(s: String) = File(this, s)
 }
