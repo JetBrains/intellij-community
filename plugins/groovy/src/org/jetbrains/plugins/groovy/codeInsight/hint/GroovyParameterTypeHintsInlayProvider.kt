@@ -44,8 +44,8 @@ class GroovyParameterTypeHintsInlayProvider : InlayHintsProvider<GroovyParameter
 
   override fun createConfigurable(settings: Settings): ImmediateConfigurable = object : ImmediateConfigurable {
     override val cases: List<ImmediateConfigurable.Case> = listOf(
-      ImmediateConfigurable.Case("Inferred parameter types", settings::showInferredParameterTypes),
-      ImmediateConfigurable.Case("Type parameter list", settings::showTypeParameterList)
+      ImmediateConfigurable.Case("Inferred parameter types", "inferred.parameter.types", settings::showInferredParameterTypes),
+      ImmediateConfigurable.Case("Type parameter list", "type.parameter.list", settings::showTypeParameterList)
     )
 
     override fun createComponent(listener: ChangeListener): JPanel = panel {}

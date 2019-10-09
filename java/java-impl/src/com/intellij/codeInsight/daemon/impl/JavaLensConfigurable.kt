@@ -12,8 +12,8 @@ class JavaLensConfigurable(val settings: JavaLensSettings) : ImmediateConfigurab
 
   override val cases: List<ImmediateConfigurable.Case>
     get() = listOf(
-      ImmediateConfigurable.Case("Usages", { settings.isShowUsages}, { settings.isShowUsages = it}),
-      ImmediateConfigurable.Case("Inheritors", { settings.isShowImplementations}, { settings.isShowImplementations = it})
+      ImmediateConfigurable.Case("Usages", "usages", { settings.isShowUsages}, { settings.isShowUsages = it}),
+      ImmediateConfigurable.Case("Inheritors", "inheritors", { settings.isShowImplementations}, { settings.isShowImplementations = it})
     )
 
   override val mainCheckboxText: String
