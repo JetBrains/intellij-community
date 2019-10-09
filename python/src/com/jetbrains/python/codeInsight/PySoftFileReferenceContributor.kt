@@ -1,0 +1,179 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.jetbrains.python.codeInsight
+
+import com.intellij.openapi.module.ModuleUtilCore
+import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.vfs.StandardFileSystems
+import com.intellij.patterns.PatternCondition
+import com.intellij.patterns.PlatformPatterns.psiElement
+import com.intellij.psi.*
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference
+import com.intellij.psi.util.QualifiedName
+import com.intellij.util.ProcessingContext
+import com.jetbrains.python.PythonRuntimeService
+import com.jetbrains.python.console.PyConsoleOptions
+import com.jetbrains.python.console.PydevConsoleRunnerFactory
+import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.resolve.PyResolveContext
+import com.jetbrains.python.psi.resolve.PyResolveUtil
+import com.jetbrains.python.psi.types.TypeEvalContext
+import java.io.File
+
+/**
+ * Contributes file path references for Python string literals where it seems appropriate based on heuristics.
+ *
+ * References are soft: used only for code completion and ignored during code inspection.
+ *
+ * @author vlan
+ */
+class PySoftFileReferenceContributor : PsiReferenceContributor() {
+  override fun registerReferenceProviders(registrar: PsiReferenceRegistrar) {
+    val stringLiteral = psiElement(PyStringLiteralExpression::class.java)
+    val pattern = psiElement()
+      .andOr(stringLiteral.with(CallArgumentMatchingParameterNamePattern),
+             stringLiteral.with(KeywordArgumentMatchingNamePattern),
+             stringLiteral.with(StringWithPathSeparatorInConsole),
+             stringLiteral.with(HardCodedCalleeName))
+    registrar.registerReferenceProvider(pattern, PySoftFileReferenceProvider)
+  }
+
+  /**
+   * Matches string literals used as function arguments where the corresponding function parameter has a name that has something about
+   * files or paths.
+   */
+  object CallArgumentMatchingParameterNamePattern : PatternCondition<PyStringLiteralExpression>("callArgumentMatchingPattern") {
+    override fun accepts(expr: PyStringLiteralExpression, context: ProcessingContext?): Boolean {
+      val argList = expr.parent as? PyArgumentList ?: return false
+      val callExpr = argList.parent as? PyCallExpression ?: return false
+      val resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(TypeEvalContext.codeInsightFallback(expr.project))
+
+      // Fail-fast check
+      val allPossibleParameters = callExpr.multiResolveCalleeFunction(resolveContext)
+        .flatMap { it.parameterList.parameters.asList() }
+        .mapNotNull { it.name }
+      if (!allPossibleParameters.any { matchesPathNamePattern(it) }) return false
+
+      val mappings = callExpr.multiMapArguments(resolveContext)
+      return mappings.any { mapping ->
+        mapping.mappedParameters[expr]?.name?.let { matchesPathNamePattern(it) } ?: false
+      }
+    }
+  }
+
+  /**
+   * Matches string literals used as function keyword arguments where the keyword has a name that has something about files or paths.
+   */
+  object KeywordArgumentMatchingNamePattern : PatternCondition<PyStringLiteralExpression>("keywordArgumentMatchingPattern") {
+    override fun accepts(expr: PyStringLiteralExpression, context: ProcessingContext?): Boolean {
+      val keywordArgument = expr.parent as? PyKeywordArgument ?: return false
+      if (keywordArgument.parent?.parent !is PyCallExpression) return false
+      return keywordArgument.keyword?.let { matchesPathNamePattern(it) } ?: return false
+    }
+  }
+
+  /**
+   * Matches string literals in a Python console that have at least one path separator in them.
+   */
+  object StringWithPathSeparatorInConsole : PatternCondition<PyStringLiteralExpression>("stringWithSeparatorInConsolePattern") {
+    override fun accepts(expr: PyStringLiteralExpression, context: ProcessingContext?): Boolean {
+      val containingFile = expr.containingFile ?: return false
+      if (!PythonRuntimeService.getInstance().isInPydevConsole(containingFile)) return false
+      return File.separator in expr.stringValue
+    }
+  }
+
+  /**
+   * Matches string literals used as function arguments for the hard-coded set of function known to work with files.
+   *
+   * It's a last resort where we cannot guess that the string literal is a file path by other means.
+   */
+  object HardCodedCalleeName : PatternCondition<PyStringLiteralExpression>("hardCodedCalleeName") {
+    private data class Pattern(private val fullName: String, val position: Int, val isBuiltin: Boolean = false) {
+      val qualifiedName: QualifiedName = QualifiedName.fromDottedString(fullName)
+    }
+
+    private val PATTERNS = listOf(
+      Pattern("open", 0, isBuiltin = true),
+      Pattern("pandas.read_csv", 0)
+    )
+    private val SIMPLE_NAMES = PATTERNS.associateBy { it.qualifiedName.lastComponent }
+    private val QUALIFIED_NAMES = PATTERNS.associateBy { it.qualifiedName }
+
+    override fun accepts(expr: PyStringLiteralExpression, context: ProcessingContext?): Boolean {
+      val argList = expr.parent as? PyArgumentList ?: return false
+      val callExpr = argList.parent as? PyCallExpression ?: return false
+      val callee = callExpr.callee as? PyReferenceExpression ?: return false
+
+      // Fail-fast check
+      val simplePattern = SIMPLE_NAMES[callee.name] ?: return false
+      if (simplePattern.isBuiltin) return true
+
+      val pattern = PyResolveUtil.resolveImportedElementQNameLocally(callee).map { QUALIFIED_NAMES[it] }.firstOrNull() ?: return false
+      return argList.arguments.getOrNull(pattern.position) == expr
+    }
+  }
+
+  companion object {
+    private val FILE_NAME_PATTERNS = linkedSetOf(
+      "path",
+      "file",
+      "filename",
+      "filepath"
+    )
+
+    private fun matchesPathNamePattern(name: String): Boolean {
+      val nameParts = name.split("_")
+      return nameParts.any { it.toLowerCase() in FILE_NAME_PATTERNS }
+    }
+  }
+
+  private object PySoftFileReferenceProvider : PsiReferenceProvider() {
+    override fun getReferencesByElement(element: PsiElement, context: ProcessingContext): Array<out PsiReference> {
+      val expr = element as? PyStringLiteralExpression ?: return emptyArray()
+      return PySoftFileReferenceSet(expr, this).allReferences
+    }
+  }
+
+  /**
+   * A soft file reference in Python string literals.
+   *
+   * * It's used only for code completion and ignored during code inspections
+   * * It understands `~` as an alias for the user home path
+   * * It provides the context for resolving paths in a Python console relative to its initial working directory
+   */
+  private class PySoftFileReferenceSet(element: PyStringLiteralExpression, provider: PsiReferenceProvider) :
+    PyStringLiteralFileReferenceSet(element.stringValue, element,
+                                    ElementManipulators.getValueTextRange(element).startOffset, provider, true, false, null) {
+
+    override fun isSoft(): Boolean = true
+
+    override fun createFileReference(range: TextRange, index: Int, text: String): FileReference? =
+      super.createFileReference(range, index, expandUserHome(text))
+
+    override fun isAbsolutePathReference(): Boolean =
+      super.isAbsolutePathReference() || pathString.startsWith("~")
+
+    override fun computeDefaultContexts(): Collection<PsiFileSystemItem> {
+      val defaultContexts = super.computeDefaultContexts()
+      val consoleDir = getConsoleWorkingDirectory() ?: return defaultContexts
+      return defaultContexts + consoleDir
+    }
+
+    private fun expandUserHome(text: String): String? =
+      when (text) {
+        "~" -> System.getProperty("user.home")
+        else -> text
+      }
+
+    private fun getConsoleWorkingDirectory(): PsiDirectory? {
+      val file = containingFile ?: return null
+      if (!PythonRuntimeService.getInstance().isInPydevConsole(file)) return null
+      val project = file.project
+      val module = ModuleUtilCore.findModuleForFile(file)
+      val settingsProvider = PyConsoleOptions.getInstance(project).pythonConsoleSettings
+      val workingDirPath = PydevConsoleRunnerFactory.getWorkingDir(project, module, null, settingsProvider) ?: return null
+      val workingDir =  StandardFileSystems.local().findFileByPath(workingDirPath) ?: return null
+      return PsiManager.getInstance(project).findDirectory(workingDir)
+    }
+  }
+}

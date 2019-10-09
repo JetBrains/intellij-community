@@ -531,6 +531,7 @@
     <editorSmartKeysConfigurable instance="com.jetbrains.python.codeInsight.PySmartKeysOptions" id="editor.preferences.pyOptions"/>
 
     <psi.referenceContributor implementation="com.jetbrains.python.codeInsight.PyStdReferenceContributor" language="Python"/>
+    <psi.referenceContributor implementation="com.jetbrains.python.codeInsight.PySoftFileReferenceContributor" language="Python" order="before filePath"/>
     <psi.referenceContributor implementation="com.jetbrains.python.testing.pyTestFixtures.PyTestFixtureReferenceContributor" language="Python"/>
 
     <applicationConfigurable groupId="tools" instance="com.jetbrains.python.documentation.PythonDocumentationConfigurable"
