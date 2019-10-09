@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.style.inference
 
+import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.util.component1
 import com.intellij.openapi.util.component2
 import com.intellij.psi.*
@@ -29,11 +30,10 @@ class CollectingGroovyInferenceSession(
 
   companion object {
     fun getContextSubstitutor(resolveResult: GroovyMethodResult,
-                              nearestCall: GrCall): PsiSubstitutor {
+                              nearestCall: GrCall): PsiSubstitutor = RecursionManager.doPreventingRecursion(resolveResult, true) {
       val collectingSession = CollectingGroovyInferenceSession(nearestCall.parentOfType<GrMethod>()!!.typeParameters, nearestCall)
-      return buildTopLevelSession(nearestCall, collectingSession).inferSubst(resolveResult)
-
-    }
+      buildTopLevelSession(nearestCall, collectingSession).inferSubst(resolveResult)
+    } ?: PsiSubstitutor.EMPTY
   }
 
   private fun substituteForeignTypeParameters(type: PsiType?): PsiType? {
