@@ -293,6 +293,24 @@ public class GitImpl extends GitImplBase {
                                    boolean force,
                                    boolean detach,
                                    @NotNull GitLineHandlerListener... listeners) {
+    return checkout(repository, reference, newBranch, force, detach, false, listeners);
+  }
+
+  /**
+   * {@code git checkout <reference>} <br/>
+   * {@code git checkout -b <newBranch> <reference>} <br/>
+   * or withReset<br/>
+   * {@code git checkout -B <newBranch> <reference>}
+   */
+  @NotNull
+  @Override
+  public GitCommandResult checkout(@NotNull GitRepository repository,
+                                   @NotNull String reference,
+                                   @Nullable String newBranch,
+                                   boolean force,
+                                   boolean detach,
+                                   boolean withReset,
+                                   @NotNull GitLineHandlerListener... listeners) {
     final GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.CHECKOUT);
     h.setSilent(false);
     h.setStdoutSuppressed(false);
@@ -303,7 +321,7 @@ public class GitImpl extends GitImplBase {
       h.addParameters(detach ? reference + "^0" : reference); // we could use `--detach` here, but it is supported only since 1.7.5.
     }
     else { // checkout reference as new branch
-      h.addParameters("-b", newBranch, reference);
+      h.addParameters(withReset ? "-B" : "-b", newBranch, reference);
     }
     h.endOptions();
     for (GitLineHandlerListener listener : listeners) {

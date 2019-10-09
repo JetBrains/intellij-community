@@ -93,9 +93,27 @@ public interface GitBrancher {
    * @param startPoint     the reference to checkout.
    * @param repositories   repositories to operate on.
    * @param callInAwtLater the Runnable that should be called after execution of the method (both successful and unsuccessful).
-*                       If given, it will be called in the EDT {@link javax.swing.SwingUtilities#invokeLater(Runnable) later}.
+   *                       If given, it will be called in the EDT {@link javax.swing.SwingUtilities#invokeLater(Runnable) later}.
    */
   void checkoutNewBranchStartingFrom(@NotNull String newBranchName, @NotNull String startPoint, @NotNull List<? extends GitRepository> repositories,
+                                     @Nullable Runnable callInAwtLater);
+
+
+  /**
+   * Creates and checks out a new local branch starting from the given reference:
+   * {@code git checkout -b <branchname> <start-point>}. <br/>
+   * Provides the "smart checkout" procedure the same as in {@link #checkout(String, boolean, List, Runnable)}.
+   *
+   * @param newBranchName     the name of the new local branch.
+   * @param startPoint        the reference to checkout.
+   * @param overwriteIfNeeded reset existing branch to {@code startPoint} if needed.
+   * @param repositories      repositories to operate on.
+   * @param callInAwtLater    the Runnable that should be called after execution of the method (both successful and unsuccessful).
+   *                          If given, it will be called in the EDT {@link javax.swing.SwingUtilities#invokeLater(Runnable) later}.
+   */
+  void checkoutNewBranchStartingFrom(@NotNull String newBranchName,
+                                     @NotNull String startPoint, boolean overwriteIfNeeded,
+                                     @NotNull List<? extends GitRepository> repositories,
                                      @Nullable Runnable callInAwtLater);
 
   /**

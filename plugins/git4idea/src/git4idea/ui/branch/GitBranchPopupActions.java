@@ -26,6 +26,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.util.ui.EmptyIcon;
 import git4idea.GitBranch;
 import git4idea.GitLocalBranch;
@@ -43,10 +44,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static com.intellij.dvcs.DvcsUtil.getShortHash;
 import static com.intellij.dvcs.ui.BranchActionGroupPopup.wrapWithMoreActionIfNeeded;
@@ -366,7 +364,7 @@ class GitBranchPopupActions {
       private final String myBranchName;
 
       CheckoutAsNewBranch(@NotNull Project project, @NotNull List<? extends GitRepository> repositories, @NotNull String branchName) {
-        super("Checkout As...");
+        super("New Branch from Selected...");
         myProject = project;
         myRepositories = repositories;
         myBranchName = branchName;
@@ -374,12 +372,37 @@ class GitBranchPopupActions {
 
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
-        final String name = Messages
-          .showInputDialog(myProject, "New branch name:", "Checkout New Branch From " + myBranchName,
-                           null, "", GitNewBranchNameValidator.newInstance(myRepositories));
-        if (name != null) {
+        GitNewBranchOptions newBranchOptions =
+          new GitNewBranchDialog(myProject, myRepositories, "Checkout New Branch From " + myBranchName, "", false, true)
+            .showAndGetOptions();
+        if (newBranchOptions != null) {
           GitBrancher brancher = GitBrancher.getInstance(myProject);
-          brancher.checkoutNewBranchStartingFrom(name, myBranchName, myRepositories, null);
+          String name = newBranchOptions.getName();
+          if (!newBranchOptions.shouldReset()) {
+            List<GitRepository> reposWithLocalBranch = new ArrayList<>();
+            List<GitRepository> reposWithoutLocalBranch = new ArrayList<>();
+            for (GitRepository repo : myRepositories) {
+              if (repo.getBranches().findLocalBranch(name) != null) {
+                reposWithLocalBranch.add(repo);
+              }
+              else {
+                reposWithoutLocalBranch.add(repo);
+              }
+            }
+            //checkout existing branch
+            brancher.checkout(name, false, reposWithLocalBranch, null);
+            //checkout new
+            brancher.checkoutNewBranchStartingFrom(name, myBranchName + "^0", reposWithoutLocalBranch, null);
+          }
+          else {
+            boolean hasCommits = GitBranchActionsUtilKt.checkCommitsUnderProgress(myProject, myRepositories, myBranchName + "^0", name);
+            if (hasCommits) {
+              VcsNotifier.getInstance(myProject)
+                .notifyError("Checkout Failed", "Can't overwrite " + name + " branch because some commits can be lost");
+              return;
+            }
+            brancher.checkoutNewBranchStartingFrom(name, myBranchName + "^0", true, myRepositories, null);
+          }
         }
       }
     }

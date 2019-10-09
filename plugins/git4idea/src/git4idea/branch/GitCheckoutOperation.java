@@ -53,13 +53,12 @@ import static git4idea.util.GitUIUtil.code;
  * Fails to checkout if there are untracked files that would be overwritten by checkout. Shows the list of files.
  * If there are local changes that would be overwritten by checkout, proposes to perform a "smart checkout" which means stashing local
  * changes, checking out, and then unstashing the changes back (possibly with showing the conflict resolving dialog). 
- *
- *  @author Kirill Likhodedov
  */
 class GitCheckoutOperation extends GitBranchOperation {
 
   @NotNull private final String myStartPointReference;
   private final boolean myDetach;
+  private final boolean myReset;
   private final boolean myRefShouldBeValid;
   @Nullable private final String myNewBranch;
 
@@ -69,11 +68,13 @@ class GitCheckoutOperation extends GitBranchOperation {
                        @NotNull Collection<? extends GitRepository> repositories,
                        @NotNull String startPointReference,
                        boolean detach,
+                       boolean withReset,
                        boolean refShouldBeValid,
                        @Nullable String newBranch) {
     super(project, git, uiHandler, repositories);
     myStartPointReference = startPointReference;
     myDetach = detach;
+    myReset = withReset;
     myRefShouldBeValid = refShouldBeValid;
     myNewBranch = newBranch;
   }
@@ -97,7 +98,7 @@ class GitCheckoutOperation extends GitBranchOperation {
         GitUntrackedFilesOverwrittenByOperationDetector untrackedOverwrittenByCheckout =
           new GitUntrackedFilesOverwrittenByOperationDetector(root);
 
-        GitCommandResult result = myGit.checkout(repository, myStartPointReference, myNewBranch, false, myDetach,
+        GitCommandResult result = myGit.checkout(repository, myStartPointReference, myNewBranch, false, myDetach, myReset,
                                                  localChangesDetector, unmergedFiles, unknownPathspec, untrackedOverwrittenByCheckout);
         if (result.success()) {
           updateAndRefreshChangedVfs(repository, startHash);
@@ -279,7 +280,7 @@ class GitCheckoutOperation extends GitBranchOperation {
                                    @NotNull String reference, @Nullable String newBranch, boolean force) {
     GitCompoundResult compoundResult = new GitCompoundResult(myProject);
     for (GitRepository repository : repositories) {
-      compoundResult.append(repository, myGit.checkout(repository, reference, newBranch, force, myDetach));
+      compoundResult.append(repository, myGit.checkout(repository, reference, newBranch, force, myDetach, myReset));
     }
     if (compoundResult.totalSuccess()) {
       return true;

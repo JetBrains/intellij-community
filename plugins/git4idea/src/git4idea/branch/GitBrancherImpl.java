@@ -94,10 +94,18 @@ class GitBrancherImpl implements GitBrancher {
                                             @NotNull String startPoint,
                                             @NotNull List<? extends GitRepository> repositories,
                                             @Nullable Runnable callInAwtLater) {
+    checkoutNewBranchStartingFrom(newBranchName, startPoint, false, repositories, callInAwtLater);
+  }
+
+  @Override
+  public void checkoutNewBranchStartingFrom(@NotNull String newBranchName,
+                                            @NotNull String startPoint, boolean overwriteIfNeeded,
+                                            @NotNull List<? extends GitRepository> repositories,
+                                            @Nullable Runnable callInAwtLater) {
     new CommonBackgroundTask(myProject, String.format("Checking out %s from %s", newBranchName, startPoint), callInAwtLater) {
       @Override
       public void execute(@NotNull ProgressIndicator indicator) {
-        newWorker(indicator).checkoutNewBranchStartingFrom(newBranchName, startPoint, repositories);
+        newWorker(indicator).checkoutNewBranchStartingFrom(newBranchName, startPoint, overwriteIfNeeded, repositories);
       }
     }.runInBackground();
   }

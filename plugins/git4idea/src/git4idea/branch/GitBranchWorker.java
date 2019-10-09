@@ -90,13 +90,18 @@ public final class GitBranchWorker {
 
   public void checkoutNewBranchStartingFrom(@NotNull String newBranchName, @NotNull String startPoint,
                                             @NotNull List<? extends GitRepository> repositories) {
+    checkoutNewBranchStartingFrom(newBranchName, startPoint, false, repositories);
+  }
+
+  public void checkoutNewBranchStartingFrom(@NotNull String newBranchName, @NotNull String startPoint, boolean overwriteIfNeeded,
+                                            @NotNull List<? extends GitRepository> repositories) {
     updateInfo(repositories);
-    new GitCheckoutOperation(myProject, myGit, myUiHandler, repositories, startPoint, false, true, newBranchName).execute();
+    new GitCheckoutOperation(myProject, myGit, myUiHandler, repositories, startPoint, false, overwriteIfNeeded, true, newBranchName).execute();
   }
 
   public void checkout(@NotNull final String reference, boolean detach, @NotNull List<? extends GitRepository> repositories) {
     updateInfo(repositories);
-    new GitCheckoutOperation(myProject, myGit, myUiHandler, repositories, reference, detach, false, null).execute();
+    new GitCheckoutOperation(myProject, myGit, myUiHandler, repositories, reference, detach, false, false, null).execute();
   }
 
 
