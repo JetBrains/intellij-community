@@ -1440,6 +1440,31 @@ public class PythonCompletionTest extends PyTestCase {
     assertContainsElements(suggested, "'k1'", "'k2'");
   }
 
+  // PY-33254
+  public void testMultipartStringPath() {
+    doMultiFileTest();
+  }
+
+  // PY-33254
+  public void testRbStringPath() {
+    doMultiFileTest();
+  }
+
+  // PY-33254
+  public void testKeywordArgumentPatternStringPath() {
+    doMultiFileTest();
+  }
+
+  // PY-33254
+  public void testBuiltinOpenStringPath() {
+    doMultiFileTest();
+  }
+
+  // PY-33254
+  public void testPandasReadCsvStringPath() {
+    doMultiFileTest();
+  }
+
   // PY-8302
   public void testUndeclaredFunction() {
     myFixture.configureByFile("uninitialized/fun.py");
