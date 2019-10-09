@@ -6,9 +6,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.JBColor;
-import org.cef.CefApp;
 import org.cef.CefClient;
-import org.cef.CefSettings;
 import org.cef.browser.CefBrowser;
 import org.cef.browser.CefFrame;
 import org.cef.handler.*;
@@ -29,7 +27,6 @@ import java.util.Map;
 public class JCEFHtmlPanel implements Disposable {
   @NotNull
   private final JPanel myPanelWrapper;
-  private static final CefApp ourCefApp;
   private static final CefClient ourCefClient;
   private static final Map<CefBrowser, JCEFHtmlPanel> ourCefBrowser2Panel = new HashMap<>();
   // browser demands some valid URL for loading html content
@@ -43,27 +40,7 @@ public class JCEFHtmlPanel implements Disposable {
   private static final boolean USE_SIZE_WORKAROUND = !SystemInfo.isMac;
 
   static {
-    CefSettings settings = new CefSettings();
-    settings.windowless_rendering_enabled = false;
-    settings.log_severity = CefSettings.LogSeverity.LOGSEVERITY_ERROR;
-    if (SystemInfo.isMac) {
-      CefApp.startup();
-      // todo: move it to jcef
-      String JCEF_FRAMEWORKS_PATH = System.getProperty("java.home") + "/Frameworks";
-      CefApp.addAppHandler(new CefAppHandlerAdapter(new String[] {
-        "--framework-dir-path=" + JCEF_FRAMEWORKS_PATH + "/Chromium Embedded Framework.framework",
-        "--browser-subprocess-path=" + JCEF_FRAMEWORKS_PATH + "/jcef Helper.app/Contents/MacOS/jcef Helper"
-      }) {});
-    }
-    else if (SystemInfo.isLinux) {
-      CefApp.startup(); // force loading libjcef.so
-      String JCEF_PATH = System.getProperty("java.home") + "/lib";
-      settings.resources_dir_path = JCEF_PATH;
-      settings.locales_dir_path = JCEF_PATH + "/locales";
-      settings.browser_subprocess_path = JCEF_PATH + "/jcef_helper";
-    }
-    ourCefApp = CefApp.getInstance(settings);
-    ourCefClient = ourCefApp.createClient();
+    ourCefClient = JBCefApp.getCefClient();
     ourCefClient.addLifeSpanHandler(new CefLifeSpanHandlerAdapter() {
       @Override
       public void onAfterCreated(CefBrowser browser) {
@@ -110,7 +87,7 @@ public class JCEFHtmlPanel implements Disposable {
     });
     Disposer.register(ApplicationManager.getApplication(), () -> {
       ourCefBrowser2Panel.clear();
-      ourCefApp.dispose();
+      ourCefClient.dispose();
     });
   }
 

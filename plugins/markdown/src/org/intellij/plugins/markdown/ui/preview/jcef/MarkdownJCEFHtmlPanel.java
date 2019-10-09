@@ -2,6 +2,7 @@
 package org.intellij.plugins.markdown.ui.preview.jcef;
 
 import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.ui.jcef.JBCefUtils;
 import com.intellij.ui.jcef.JCEFHtmlPanel;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
