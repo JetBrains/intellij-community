@@ -114,7 +114,7 @@ public abstract class AbstractLogProcessor extends AbstractClassProcessor {
 
     final PsiElementFactory psiElementFactory = JavaPsiFacade.getElementFactory(project);
     String loggerType = getLoggerType(psiClass);
-    if (loggerType == null ) {
+    if (loggerType == null) {
       throw new IllegalStateException("Invalid custom log declaration."); // validated
     }
     final PsiType psiLoggerType = psiElementFactory.createTypeFromText(loggerType, psiClass);
@@ -170,13 +170,11 @@ public abstract class AbstractLogProcessor extends AbstractClassProcessor {
     return parametersBuilder.toString();
   }
 
-  private boolean hasFieldByName(@NotNull PsiClass psiClass, String... fieldNames) {
+  private boolean hasFieldByName(@NotNull PsiClass psiClass, @NotNull String fieldName) {
     final Collection<PsiField> psiFields = PsiClassUtil.collectClassFieldsIntern(psiClass);
     for (PsiField psiField : psiFields) {
-      for (String fieldName : fieldNames) {
-        if (fieldName.equals(psiField.getName())) {
-          return true;
-        }
+      if (fieldName.equals(psiField.getName())) {
+        return true;
       }
     }
     return false;
