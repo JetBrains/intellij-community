@@ -84,7 +84,6 @@ internal class GHPRDetailsPanel(project: Project,
     })
 
     Disposer.register(this, metaPanel)
-    Disposer.register(this, descriptionPanel)
     Disposer.register(this, statePanel)
   }
 
