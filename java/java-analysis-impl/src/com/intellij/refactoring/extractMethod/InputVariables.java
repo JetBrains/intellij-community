@@ -173,13 +173,13 @@ public class InputVariables {
 
   @NotNull
   private String getParameterName(@NotNull PsiVariable var) {
-    String name = var.getName();
-    if (!(var instanceof PsiParameter)) {
-      JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(myProject);
-      VariableKind kind = codeStyleManager.getVariableKind(var);
-      name = codeStyleManager.variableNameToPropertyName(name, kind);
-      name = codeStyleManager.propertyNameToVariableName(name, VariableKind.PARAMETER);
+    if (var instanceof PsiParameter) {
+      return ((PsiParameter)var).getName();
     }
+    JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(myProject);
+    VariableKind kind = codeStyleManager.getVariableKind(var);
+    String name = codeStyleManager.variableNameToPropertyName(var.getName(), kind);
+    name = codeStyleManager.propertyNameToVariableName(name, VariableKind.PARAMETER);
     return name;
   }
 
