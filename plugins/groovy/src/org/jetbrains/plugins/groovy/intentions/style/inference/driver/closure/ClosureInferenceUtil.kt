@@ -8,7 +8,6 @@ import com.intellij.psi.*
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.ConstraintFormula
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.plugins.groovy.intentions.closure.isClosureCall
-import org.jetbrains.plugins.groovy.intentions.closure.isClosureCallMethod
 import org.jetbrains.plugins.groovy.intentions.style.inference.CollectingGroovyInferenceSession
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.BoundConstraint.ContainMarker.LOWER
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.RecursiveMethodAnalyzer
@@ -16,7 +15,6 @@ import org.jetbrains.plugins.groovy.intentions.style.inference.driver.TypeUsageI
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.closure.ClosureParametersStorageBuilder.Companion.isReferenceTo
 import org.jetbrains.plugins.groovy.intentions.style.inference.properResolve
 import org.jetbrains.plugins.groovy.intentions.style.inference.resolve
-import org.jetbrains.plugins.groovy.intentions.style.inference.typeParameter
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation
@@ -47,7 +45,7 @@ fun extractConstraintsFromClosureInvocations(closureParameter: ParameterizedClos
                                              instructions: List<ReadWriteVariableInstruction>): List<ConstraintFormula> {
   val collector = mutableListOf<ConstraintFormula>()
   for (call in instructions) {
-    val nearestCall = call.element?.parentOfType<GrCall>()?.takeIf { it.isClosureCall() } ?: continue
+    val nearestCall = call.element?.parentOfType<GrCall>()?.takeIf { it.isClosureCall(closureParameter.parameter) } ?: continue
     for (index in nearestCall.expressionArguments.indices) {
       val argumentExpression = nearestCall.expressionArguments.getOrNull(index) ?: continue
       val innerParameterType = closureParameter.typeParameters.getOrNull(index)?.type()
@@ -87,7 +85,7 @@ fun analyzeClosureUsages(closureParameter: ParameterizedClosure,
     val resolveResult = nearestCall.properResolve() as? GroovyMethodResult ?: return
     if (nearestCall.resolveMethod()?.containingClass?.qualifiedName == GROOVY_LANG_CLOSURE) {
       delegatesToCombiner.acceptResolveResult(resolveResult)
-      collectClosureMethodInvocationDependencies(closureParameter, builder, resolveResult)
+      collectClosureMethodInvocationDependencies(closureParameter, builder, resolveResult, nearestCall)
     }
     else {
       val mapping = resolveResult.candidate?.argumentMapping ?: continue
@@ -103,8 +101,9 @@ fun analyzeClosureUsages(closureParameter: ParameterizedClosure,
 
 fun collectClosureMethodInvocationDependencies(parameterizedClosure: ParameterizedClosure,
                                                builder: TypeUsageInformationBuilder,
-                                               resolveResult: GroovyMethodResult) {
-  if (resolveResult.candidate?.method.isClosureCallMethod()) {
+                                               resolveResult: GroovyMethodResult,
+                                               nearestCall: GrCall) {
+  if (nearestCall.isClosureCall(parameterizedClosure.parameter)) {
     val arguments = resolveResult.candidate?.argumentMapping?.arguments ?: return
     val expectedTypes = parameterizedClosure.types.zip(arguments)
     val method = parameterizedClosure.parameter.parentOfType<GrMethod>() ?: return

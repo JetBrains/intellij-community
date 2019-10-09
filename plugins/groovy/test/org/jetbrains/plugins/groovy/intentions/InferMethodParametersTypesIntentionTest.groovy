@@ -529,7 +529,7 @@ class AA { static void fo<caret>o(Integer a) {} }
     doTest(true)
   }
 
-  void testUnresolvedCode4() {
+  void testPassClosureInClosure() {
     doTest(true)
   }
 }
