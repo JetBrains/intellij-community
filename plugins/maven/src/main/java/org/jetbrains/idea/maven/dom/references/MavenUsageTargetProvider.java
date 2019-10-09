@@ -2,6 +2,7 @@
 package org.jetbrains.idea.maven.dom.references;
 
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
+import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -14,6 +15,7 @@ public class MavenUsageTargetProvider implements UsageTargetProvider {
   public UsageTarget[] getTargets(@NotNull Editor editor, @NotNull PsiFile file) {
     PsiElement target = MavenTargetUtil.getFindTarget(editor, file, false);
     if (target == null) return UsageTarget.EMPTY_ARRAY;
-    return new UsageTarget[]{new PsiElement2UsageTargetAdapter(target)};
+    if (target instanceof NavigationItem) return new UsageTarget[]{new PsiElement2UsageTargetAdapter(target)};
+    return UsageTarget.EMPTY_ARRAY;
   }
 }
