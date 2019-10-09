@@ -645,8 +645,6 @@
 
     <favoriteNodeProvider implementation="com.intellij.ide.favoritesTreeView.UsageFavoriteNodeProvider"/>
 
-    <configurationType implementation="com.intellij.execution.applet.AppletConfigurationType"/>
-    <configurationProducer implementation="com.intellij.execution.applet.AppletConfigurationProducer"/>
     <configurationType implementation="com.intellij.execution.application.ApplicationConfigurationType"/>
     <configurationType implementation="com.intellij.execution.jar.JarApplicationConfigurationType"/>
     <configurationType implementation="com.intellij.execution.scratch.JavaScratchConfigurationType"/>
