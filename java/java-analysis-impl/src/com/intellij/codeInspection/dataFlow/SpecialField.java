@@ -368,7 +368,29 @@ public enum SpecialField implements VariableDescriptor {
     }
     return null;
   }
-  
+
+  /**
+   * Returns a special field which corresponds to given qualifier
+   *
+   * @param value a qualifier value
+   * @return a special field; null if no special field is detected to be related to given qualifier
+   */
+  @Nullable
+  public static SpecialField fromQualifier(@NotNull DfaValue value) {
+    if (value instanceof DfaFactMapValue) {
+      DfaFactMap facts = ((DfaFactMapValue)value).getFacts();
+      SpecialFieldValue sfValue = facts.get(DfaFactType.SPECIAL_FIELD_VALUE);
+      if (sfValue != null) {
+        return sfValue.getField();
+      }
+      TypeConstraint constraint = facts.get(DfaFactType.TYPE_CONSTRAINT);
+      if (constraint != null) {
+        return fromQualifierType(constraint.getPsiType());
+      }
+    }
+    return fromQualifierType(value.getType());
+  }
+
   @Override
   public String toString() {
     return myTitle;

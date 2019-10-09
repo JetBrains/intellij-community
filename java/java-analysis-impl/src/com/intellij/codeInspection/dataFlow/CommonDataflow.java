@@ -86,7 +86,7 @@ public class CommonDataflow {
       if (myFacts == DfaFactMap.EMPTY) return;
       DfaFactMap newMap = DataflowResult.getFactMap(memState, value);
       if (value instanceof DfaVariableValue) {
-        SpecialField field = SpecialField.fromQualifierType(value.getType());
+        SpecialField field = SpecialField.fromQualifier(value);
         if (field != null) {
           DfaValue specialField = field.createValue(value.getFactory(), value);
           if (specialField instanceof DfaVariableValue) {

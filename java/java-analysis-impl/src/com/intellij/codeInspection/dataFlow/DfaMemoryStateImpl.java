@@ -1198,7 +1198,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   private Couple<DfaValue> getSpecialEquivalencePair(DfaVariableValue left, DfaValue right) {
     if (right instanceof DfaVariableValue) return null;
-    SpecialField field = SpecialField.fromQualifierType(left.getType());
+    SpecialField field = SpecialField.fromQualifier(left);
     if (field == null) return null;
     DfaValue leftValue = field.createValue(myFactory, left);
     DfaValue rightValue = field.createValue(myFactory, right);
