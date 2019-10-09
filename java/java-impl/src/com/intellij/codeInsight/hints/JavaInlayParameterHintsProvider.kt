@@ -125,7 +125,7 @@ class JavaInlayParameterHintsProvider : InlayParameterHintsProvider {
                                                            true)
 
   val isShowHintsForNewExpressions: Option = Option("java.new.expr",
-                                                    "'new' expressions",
+                                                    "'New' expressions",
                                                     true)
 
   override fun getSupportedOptions(): List<Option> {
