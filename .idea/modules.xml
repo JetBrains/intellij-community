@@ -241,7 +241,6 @@
     <module old-name="python-community-plugin-core" new-name="intellij.python.community.plugin" />
     <module old-name="python-community-plugin-java" new-name="intellij.python.community.plugin.java" />
     <module old-name="python-community-plugin-minor" new-name="intellij.python.community.plugin.minor" />
-    <module old-name="python-community-plugin-resources" new-name="intellij.python.community.plugin.resources" />
     <module old-name="python-community-tests" new-name="intellij.python.community.tests" />
     <module old-name="python-community-tools" new-name="intellij.python.tools" />
     <module old-name="python-helpers" new-name="intellij.python.helpers" />
@@ -656,7 +655,6 @@
       <module fileurl="file://$PROJECT_DIR$/python/pluginJava/intellij.python.community.plugin.java.iml" filepath="$PROJECT_DIR$/python/pluginJava/intellij.python.community.plugin.java.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/intellij.python.community.plugin.main.iml" filepath="$PROJECT_DIR$/python/intellij.python.community.plugin.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/pluginMinor/intellij.python.community.plugin.minor.iml" filepath="$PROJECT_DIR$/python/pluginMinor/intellij.python.community.plugin.minor.iml" />
-      <module fileurl="file://$PROJECT_DIR$/python/intellij.python.community.plugin.resources.iml" filepath="$PROJECT_DIR$/python/intellij.python.community.plugin.resources.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/intellij.python.community.plugin.tests.iml" filepath="$PROJECT_DIR$/python/intellij.python.community.plugin.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/testSrc/intellij.python.community.tests.iml" filepath="$PROJECT_DIR$/python/testSrc/intellij.python.community.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/python-community-configure/intellij.python.configure.iml" filepath="$PROJECT_DIR$/python/python-community-configure/intellij.python.configure.iml" />
