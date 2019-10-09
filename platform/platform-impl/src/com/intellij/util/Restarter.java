@@ -4,14 +4,16 @@ package com.intellij.util;
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.execution.process.UnixProcessManager;
 import com.intellij.execution.process.WinProcessManager;
-import com.intellij.ide.actions.CreateDesktopEntryAction;
 import com.intellij.jna.JnaLoader;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.updateSettings.impl.UpdateInstaller;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 import com.sun.jna.WString;
@@ -19,6 +21,7 @@ import com.sun.jna.platform.win32.WinDef;
 import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.win32.StdCallLibrary;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -47,12 +50,15 @@ public class Restarter {
         if (!JnaLoader.isLoaded()) {
           problem = "JNA not loaded";
         }
+        else if (ourStarter.getValue() == null) {
+          problem = "GetModuleFileName() failed";
+        }
         else {
           problem = checkRestarter("restarter.exe");
         }
       }
       else if (SystemInfo.isMac) {
-        if (getMacOsAppDir() == null) {
+        if (ourStarter.getValue() == null) {
           problem = "not a bundle: " + PathManager.getHomePath();
         }
         else {
@@ -63,7 +69,7 @@ public class Restarter {
         if (UnixProcessManager.getCurrentProcessId() <= 0) {
           problem = "cannot detect process ID";
         }
-        else if (CreateDesktopEntryAction.getLauncherScript() == null) {
+        else if (ourStarter.getValue() == null) {
           problem = "cannot find launcher script in " + PathManager.getBinPath();
         }
         else if (PathEnvironmentVariableUtil.findInPath("python") == null && PathEnvironmentVariableUtil.findInPath("python3") == null) {
@@ -107,6 +113,38 @@ public class Restarter {
     }
   }
 
+  public static @Nullable File getIdeStarter() {
+    return ourStarter.getValue();
+  }
+
+  private static final NullableLazyValue<File> ourStarter = new NullableLazyValue<File>() {
+    @Override
+    protected File compute() {
+      if (SystemInfo.isWindows && JnaLoader.isLoaded()) {
+        Kernel32 kernel32 = Native.load("kernel32", Kernel32.class);
+        char[] buffer = new char[32767];  // using 32,767 as buffer size to avoid limiting ourselves to MAX_PATH (260)
+        int result = kernel32.GetModuleFileNameW(null, buffer, new WinDef.DWORD(buffer.length)).intValue();
+        if (result != 0) return new File(Native.toString(buffer));
+      }
+      else if (SystemInfo.isMac) {
+        File appDir = new File(PathManager.getHomePath()).getParentFile();
+        if (appDir != null && appDir.getName().endsWith(".app") && appDir.isDirectory()) return appDir;
+      }
+      else if (SystemInfo.isUnix) {
+        String binPath = PathManager.getBinPath();
+        ApplicationNamesInfo names = ApplicationNamesInfo.getInstance();
+        File starter = new File(binPath, names.getProductName() + ".sh");
+        if (starter.canExecute()) return starter;
+        starter = new File(binPath, StringUtil.toLowerCase(names.getProductName()) + ".sh");
+        if (starter.canExecute()) return starter;
+        starter = new File(binPath, names.getScriptName() + ".sh");
+        if (starter.canExecute()) return starter;
+      }
+
+      return null;
+    }
+  };
+
   private static void restartOnWindows(boolean elevate, String... beforeRestart) throws IOException {
     Kernel32 kernel32 = Native.load("kernel32", Kernel32.class);
     Shell32 shell32 = Native.load("shell32", Shell32.class);
@@ -118,12 +156,10 @@ public class Restarter {
     kernel32.LocalFree(argvPtr);
 
     // See https://blogs.msdn.microsoft.com/oldnewthing/20060515-07/?p=31203
-    // argv[0] as the program name is only a convention, i.e. there is no guarantee
-    // the name is the full path to the executable.
-    final String binaryName = getCurrentProcessExecutableName();
-    if (binaryName != null) {
-      argv[0] = binaryName;
-    }
+    // argv[0] as the program name is only a convention, i.e. there is no guarantee the name is the full path to the executable
+    File starter = ourStarter.getValue();
+    if (starter == null) throw new IOException("GetModuleFileName() failed");
+    argv[0] = starter.getPath();
 
     List<String> args = new ArrayList<>();
     args.add(String.valueOf(pid));
@@ -153,20 +189,6 @@ public class Restarter {
     TimeoutUtil.sleep(500);
   }
 
-  //
-  // See https://msdn.microsoft.com/en-us/library/windows/desktop/ms683197(v=vs.85).aspx
-  // To retrieve the full path to the executable, use "GetModuleFileName(NULL, ...)".
-  //
-  // Note: We use 32,767 as buffer size to avoid limiting ourselves to MAX_PATH (260).
-  public static String getCurrentProcessExecutableName() {
-    Kernel32 kernel32 = Native.load("kernel32", Kernel32.class);
-    char[] buffer = new char[32767];
-    if (kernel32.GetModuleFileNameW(null, buffer, new WinDef.DWORD(buffer.length)).intValue() > 0) {
-      return Native.toString(buffer);
-    }
-    return null;
-  }
-
   private static String[] getRestartArgv(String[] argv) {
     String mainClass = System.getProperty("idea.main.class.name", "com.intellij.idea.Main");
 
@@ -188,7 +210,7 @@ public class Restarter {
   }
 
   private static void restartOnMac(String... beforeRestart) throws IOException {
-    File appDir = getMacOsAppDir();
+    File appDir = ourStarter.getValue();
     if (appDir == null) throw new IOException("Application bundle not found: " + PathManager.getHomePath());
     List<String> args = new ArrayList<>();
     args.add(appDir.getPath());
@@ -196,14 +218,9 @@ public class Restarter {
     runRestarter(new File(PathManager.getBinPath(), "restarter"), args);
   }
 
-  private static File getMacOsAppDir() {
-    File appDir = new File(PathManager.getHomePath()).getParentFile();
-    return appDir != null && appDir.getName().endsWith(".app") && appDir.isDirectory() ? appDir : null;
-  }
-
   private static void restartOnUnix(String... beforeRestart) throws IOException {
-    String launcherScript = CreateDesktopEntryAction.getLauncherScript();
-    if (launcherScript == null) throw new IOException("Launcher script not found in " + PathManager.getBinPath());
+    File starterScript = ourStarter.getValue();
+    if (starterScript == null) throw new IOException("Starter script not found in " + PathManager.getBinPath());
 
     int pid = UnixProcessManager.getCurrentProcessId();
     if (pid <= 0) throw new IOException("Invalid process ID: " + pid);
@@ -216,14 +233,14 @@ public class Restarter {
     List<String> args = new ArrayList<>();
     if ("python".equals(python.getName())) {
       args.add(String.valueOf(pid));
-      args.add(launcherScript);
+      args.add(starterScript.getPath());
       Collections.addAll(args, beforeRestart);
       runRestarter(script, args);
     }
     else {
       args.add(script.getPath());
       args.add(String.valueOf(pid));
-      args.add(launcherScript);
+      args.add(starterScript.getPath());
       Collections.addAll(args, beforeRestart);
       runRestarter(python, args);
     }

@@ -21,6 +21,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -74,9 +75,9 @@ public class WindowsDefenderChecker {
     RealtimeScanningStatus scanningStatus = getRealtimeScanningEnabled();
     if (scanningStatus == RealtimeScanningStatus.SCANNING_ENABLED) {
       final Collection<String> processes = getExcludedProcesses();
-      final String binaryName = Restarter.getCurrentProcessExecutableName();
-      if (binaryName != null && processes != null &&
-          processes.contains(StringUtil.substringAfterLast(binaryName.toLowerCase(), "\\")) &&
+      final File exe = Restarter.getIdeStarter();
+      if (exe != null && processes != null &&
+          processes.contains(exe.getName().toLowerCase(Locale.ENGLISH)) &&
           processes.contains("java.exe")) {
         return new CheckResult(RealtimeScanningStatus.SCANNING_DISABLED, Collections.emptyMap());
       }

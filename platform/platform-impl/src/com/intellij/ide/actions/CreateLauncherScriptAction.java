@@ -25,6 +25,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.Restarter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -160,8 +161,8 @@ public class CreateLauncherScriptAction extends DumbAwareAction {
   }
 
   private static File createLauncherScriptFile() throws IOException, ExecutionException {
-    String runPath = SystemInfo.isMac ? StringUtil.trimEnd(PathManager.getHomePath(), "/Contents") : CreateDesktopEntryAction.getLauncherScript();
-    if (runPath == null) throw new IOException(ApplicationBundle.message("desktop.entry.script.missing", PathManager.getBinPath()));
+    File starter = Restarter.getIdeStarter();
+    if (starter == null) throw new IOException(ApplicationBundle.message("desktop.entry.script.missing", PathManager.getBinPath()));
 
     ClassLoader loader = CreateLauncherScriptAction.class.getClassLoader();
     assert loader != null;
@@ -169,7 +170,7 @@ public class CreateLauncherScriptAction extends DumbAwareAction {
       pair("$PYTHON$", INTERPRETER_NAME.getValue()),
       pair("$CONFIG_PATH$", PathManager.getConfigPath()),
       pair("$SYSTEM_PATH$", PathManager.getSystemPath()),
-      pair("$RUN_PATH$", runPath));
+      pair("$RUN_PATH$", starter.getPath()));
     String launcherContents = StringUtil.convertLineSeparators(ExecUtil.loadTemplate(loader, "launcher.py", variables));
 
     return ExecUtil.createTempExecutableScript("launcher", "", launcherContents);

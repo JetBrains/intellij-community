@@ -19,12 +19,11 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.updateSettings.impl.ExternalUpdateManager;
-import com.intellij.openapi.util.AtomicNullableLazyValue;
-import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.Restarter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,26 +41,6 @@ import static com.intellij.util.containers.ContainerUtil.newHashMap;
 
 public class CreateDesktopEntryAction extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.actions.CreateDesktopEntryAction");
-
-  private static final NullableLazyValue<String> ourScript = new AtomicNullableLazyValue<String>() {
-    @Nullable
-    @Override
-    protected String compute() {
-      String binPath = PathManager.getBinPath();
-      ApplicationNamesInfo names = ApplicationNamesInfo.getInstance();
-
-      String execPath = binPath + '/' + names.getProductName() + ".sh";
-      if (new File(execPath).canExecute()) return execPath;
-
-      execPath = binPath + '/' + StringUtil.toLowerCase(names.getProductName()) + ".sh";
-      if (new File(execPath).canExecute()) return execPath;
-
-      execPath = binPath + '/' + names.getScriptName() + ".sh";
-      if (new File(execPath).canExecute()) return execPath;
-
-      return null;
-    }
-  };
 
   public static boolean isAvailable() {
     return SystemInfo.isXWindow && !ExternalUpdateManager.isRoaming() && SystemInfo.hasXdgOpen();
@@ -140,11 +119,11 @@ public class CreateDesktopEntryAction extends DumbAwareAction {
       throw new RuntimeException(ApplicationBundle.message("desktop.entry.icon.missing", binPath));
     }
 
-    String execPath = ourScript.getValue();
-    if (execPath == null) {
+    File starter = Restarter.getIdeStarter();
+    if (starter == null) {
       throw new RuntimeException(ApplicationBundle.message("desktop.entry.script.missing", binPath));
     }
-    execPath = StringUtil.wrapWithDoubleQuote(execPath);
+    String execPath = StringUtil.wrapWithDoubleQuote(starter.getPath());
 
     ApplicationNamesInfo names = ApplicationNamesInfo.getInstance();
 
@@ -209,10 +188,5 @@ public class CreateDesktopEntryAction extends DumbAwareAction {
     protected JComponent createCenterPanel() {
       return myContentPane;
     }
-  }
-
-  @Nullable
-  public static String getLauncherScript() {
-    return ourScript.getValue();
   }
 }
