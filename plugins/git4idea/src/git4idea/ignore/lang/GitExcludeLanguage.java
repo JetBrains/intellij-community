@@ -28,6 +28,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.ignore.lang.IgnoreFileType;
 import com.intellij.openapi.vcs.changes.ignore.lang.IgnoreLanguage;
 import com.intellij.openapi.vfs.VirtualFile;
+import git4idea.repo.GitRepository;
+import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,11 +65,20 @@ public class GitExcludeLanguage extends IgnoreLanguage {
   @Override
   public VirtualFile getAffectedRoot(@NotNull Project project, @NotNull VirtualFile ignoreFile) {
     //ignoreFile = .git/info/exclude
-    VirtualFile info = ignoreFile.getParent(); //.git/info/
-    if (info == null) return null;
-    VirtualFile dotGit = info.getParent(); //.git/
-    if (dotGit == null) return null;
+    GitRepository repository = findRepository(project, ignoreFile);
+    if (repository == null) return null;
 
-    return dotGit.getParent();
+    return repository.getRoot();
+  }
+
+  @Nullable
+  private static GitRepository findRepository(@NotNull Project project, @NotNull VirtualFile excludeFile) {
+    String excludeFilePath = excludeFile.getPath();
+    for (GitRepository repository : GitRepositoryManager.getInstance(project).getRepositories()) {
+      if (repository.getRepositoryFiles().isExclude(excludeFilePath)) {
+        return repository;
+      }
+    }
+    return null;
   }
 }
