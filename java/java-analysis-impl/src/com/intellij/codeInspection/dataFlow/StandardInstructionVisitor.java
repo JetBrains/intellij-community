@@ -897,10 +897,8 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       if (trueState.applyCondition(condition)) {
         states.add(makeBooleanResult(instruction, runner, trueState, unknownTargetType ? ThreeState.UNSURE : ThreeState.YES));
       }
-      if (memState.applyCondition(condition.createNegated())) {
-        if (unknownTargetType) {
-          memState.markEphemeral();
-        }
+      DfaValue negated = condition.createNegated();
+      if (unknownTargetType ? memState.applyContractCondition(negated) : memState.applyCondition(negated)) {
         states.add(makeBooleanResult(instruction, runner, memState, ThreeState.NO));
         useful |= !memState.isNull(dfaLeft);
       }
