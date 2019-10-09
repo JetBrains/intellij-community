@@ -21,6 +21,8 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection;
 import com.intellij.codeInspection.unusedImport.UnusedImportInspection;
+import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
+import com.intellij.openapi.editor.colors.EditorColorsUtil;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -1057,6 +1059,33 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
                       "<td style='padding: 0px 4px 0px 0px;'><font color='" + toolTipForeground + "'>Generic</font></td><td style='padding: 0px 0px 0px 0px;'>&lt;<font color='" + toolTipForeground + "'>Integer</font>,</td><td style='padding: 0px 0px 0px 0px;'><font color='" + red + "'>Integer</font>,</td><td style='padding: 0px 0px 0px 0px;'><font color='" + toolTipForeground + "'>Integer</font>&gt;</td></tr>" +
                       "</table>" +
                       "</body></html>";
+
+    doHighlighting()
+      .stream()
+      .filter(info -> info.type == HighlightInfoType.ERROR)
+      .forEach(info -> Assert.assertEquals(expected, info.getToolTip()));
+  }
+
+  public void testTooltipShortTypeNames() {
+    doTest();
+    String toolTipForeground = ColorUtil.toHtmlColor(UIUtil.getToolTipForeground());
+    String greyed = ColorUtil.toHtmlColor(UIUtil.getContextHelpForeground());
+    String red = ColorUtil.toHtmlColor(DialogWrapper.ERROR_FOREGROUND_COLOR);
+    String paramBgColor = ColorUtil.toHtmlColor(EditorColorsUtil.getGlobalOrDefaultColorScheme()
+      .getAttributes(DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT)
+      .getBackgroundColor());
+    String expected = "<html><body><table>" +
+                      "<tr>" +
+                      "<td/>" +
+                      "<td style='color: " + greyed + "; padding-left: 16px; padding-right: 24px;'>Required type</td>" +
+                      "<td style='color: " + greyed + "; padding-right: 28px;'>Provided</td></tr>" +
+                      "<tr>" +
+                      "<td><table><tr><td style='color: " + greyed + "; font-size:12pt; padding:1px 4px 1px 4px;background-color: " + paramBgColor + ";'>charSequences:</td></tr></table></td>" +
+                      "<td style='padding-left: 16px; padding-right: 24px;'><font color='" + toolTipForeground + "'>CharSequence...</font></td>" +
+                      "<td style='padding-right: 28px;'><font color='" + red + "'>String</font></td></tr>" +
+                      "<tr><td/><td style='padding-left: 16px; padding-right: 24px;'/><td style='padding-right: 28px;'><font color='" + red + "'>int</font></td></tr>" +
+                      "<tr><td/><td style='padding-left: 16px; padding-right: 24px;'/><td style='padding-right: 28px;'><font color='" + red + "'>String</font></td></tr>" +
+                      "</table></body></html>";
 
     doHighlighting()
       .stream()

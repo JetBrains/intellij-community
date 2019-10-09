@@ -1032,7 +1032,9 @@ public class HighlightMethodUtil {
       PsiParameter parameter = i < parameters.length ? parameters[i] : null;
       PsiExpression expression = i < expressions.length ? expressions[i] : null;
       if (assignmentCompatible(i, parameters, expressions, substitutor)) continue;
-      boolean showShortType = HighlightUtil.showShortType(parameter != null ? substitutor.substitute(parameter.getType()) : null,
+      boolean varargs = info != null && info.getApplicabilityLevel() == MethodCandidateInfo.ApplicabilityLevel.VARARGS;
+      PsiType parameterType = PsiTypesUtil.getParameterType(parameters, i, varargs);
+      boolean showShortType = HighlightUtil.showShortType(substitutor.substitute(parameterType),
                                                           expression != null ? expression.getType() : null);
       s.append("<tr>");
       if (parameter != null) {
