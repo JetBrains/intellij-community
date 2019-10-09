@@ -11,11 +11,17 @@ import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ui.componentsList.components.ScrollablePanel
+import com.intellij.openapi.ui.VerticalFlowLayout
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.*
 import com.intellij.ui.components.JBPanelWithEmptyText
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import git4idea.GitCommit
+import net.miginfocom.layout.CC
+import net.miginfocom.layout.LC
+import net.miginfocom.swing.MigLayout
 import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
@@ -34,7 +40,9 @@ import org.jetbrains.plugins.github.pullrequest.ui.*
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRChangesBrowser
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRChangesModel
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRChangesModelImpl
-import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRDetailsPanel
+import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRDescriptionPanel
+import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRMetadataPanel
+import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRStatePanel
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
 import org.jetbrains.plugins.github.util.CachingGithubUserAvatarLoader
 import org.jetbrains.plugins.github.util.GitRemoteUrlCoordinates
@@ -42,6 +50,8 @@ import org.jetbrains.plugins.github.util.GithubImageResizer
 import org.jetbrains.plugins.github.util.LazyCancellableBackgroundProcessValue
 import java.awt.BorderLayout
 import java.awt.event.ActionListener
+import java.awt.event.AdjustmentListener
+import javax.swing.BorderFactory
 import javax.swing.JComponent
 import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
@@ -185,14 +195,67 @@ internal class GHPRComponentFactory(private val project: Project) {
   private fun createDetailsPanel(dataContext: GHPullRequestsDataContext,
                                  detailsModel: SingleValueModel<GHPullRequest?>,
                                  avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory,
-                                 parentDisposable: Disposable): GHPRDetailsPanel {
-    return GHPRDetailsPanel(project, detailsModel,
-                            dataContext.securityService,
-                            dataContext.busyStateTracker,
-                            dataContext.metadataService,
-                            dataContext.stateService,
-                            avatarIconsProviderFactory).also {
+                                 parentDisposable: Disposable): JBPanelWithEmptyText {
+    val metaPanel = GHPRMetadataPanel(project, detailsModel,
+                                      dataContext.securityService,
+                                      dataContext.busyStateTracker,
+                                      dataContext.metadataService,
+                                      avatarIconsProviderFactory).apply {
+      border = JBUI.Borders.empty(4, 8, 4, 8)
+    }.also {
       Disposer.register(parentDisposable, it)
+    }
+
+    val descriptionPanel = GHPRDescriptionPanel(detailsModel).apply {
+      border = JBUI.Borders.empty(4, 8, 8, 8)
+    }
+
+    val statePanel = GHPRStatePanel(detailsModel,
+                                    dataContext.securityService,
+                                    dataContext.busyStateTracker,
+                                    dataContext.stateService).apply {
+      border = BorderFactory.createCompoundBorder(IdeBorderFactory.createBorder(SideBorder.TOP),
+                                                  JBUI.Borders.empty(8))
+    }.also {
+      Disposer.register(parentDisposable, it)
+    }
+
+    val scrollablePanel = ScrollablePanel(VerticalFlowLayout(0, 0)).apply {
+      isOpaque = false
+      add(metaPanel)
+      add(descriptionPanel)
+    }
+    val scrollPane = ScrollPaneFactory.createScrollPane(scrollablePanel, true).apply {
+      viewport.isOpaque = false
+      isOpaque = false
+
+      verticalScrollBar.addAdjustmentListener(AdjustmentListener {
+        if (verticalScrollBar.maximum - verticalScrollBar.visibleAmount >= 1) {
+          statePanel.border = BorderFactory.createCompoundBorder(IdeBorderFactory.createBorder(SideBorder.TOP),
+                                                                 JBUI.Borders.empty(8))
+        }
+        else {
+          statePanel.border = JBUI.Borders.empty(8)
+        }
+      })
+    }
+
+    scrollPane.isVisible = detailsModel.value != null
+    statePanel.isVisible = detailsModel.value != null
+
+    detailsModel.addValueChangedListener {
+      scrollPane.isVisible = detailsModel.value != null
+      statePanel.isVisible = detailsModel.value != null
+    }
+
+    return JBPanelWithEmptyText().apply {
+      layout = MigLayout(LC().flowY().fill()
+                           .gridGap("0", "0")
+                           .insets("0", "0", "0", "0"))
+      isOpaque = false
+
+      add(scrollPane, CC().minWidth("0").minHeight("0").growX().growY().growPrioY(0).shrinkPrioY(0))
+      add(statePanel, CC().growX().growY().growPrioY(1).shrinkPrioY(1).pushY())
     }
   }
 
