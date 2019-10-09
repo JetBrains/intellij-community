@@ -38,7 +38,7 @@ class JavaInlayParameterHintsProvider : InlayParameterHintsProvider {
     return true
   }
 
-  fun getMethodInfo(method: PsiMethod): MethodInfo? {
+  private fun getMethodInfo(method: PsiMethod): MethodInfo? {
     val containingClass = method.containingClass ?: return null
     val fullMethodName = StringUtil.getQualifiedName(containingClass.qualifiedName, method.name)
 
