@@ -554,7 +554,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
 
   public void showProgress() {
     myIndicator = new OneLineProgressIndicator(false);
-    myIndicator.setCancelRunnable(() -> myPluginModel.finishInstall(myPlugin, false, false, true));
+    myIndicator.setCancelRunnable(() -> myPluginModel.finishInstall(myPlugin, null, false, false, true));
     myNameAndButtons.setProgressComponent(null, myIndicator.createBaselineWrapper());
 
     MyPluginModel.addProgress(myPlugin, myIndicator);

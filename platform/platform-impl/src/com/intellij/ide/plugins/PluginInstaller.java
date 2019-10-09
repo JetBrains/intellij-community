@@ -242,16 +242,19 @@ public class PluginInstaller {
     return false;
   }
 
-  public static void installAndLoadDynamicPlugin(@NotNull File file,
-                                                 @Nullable Component parent,
-                                                 IdeaPluginDescriptorImpl pluginDescriptor) {
+  @Nullable
+  public static IdeaPluginDescriptorImpl installAndLoadDynamicPlugin(@NotNull File file,
+                                                                     @Nullable Component parent,
+                                                                     IdeaPluginDescriptorImpl pluginDescriptor) {
     File targetFile = installWithoutRestart(file, pluginDescriptor, parent);
     if (targetFile != null) {
       IdeaPluginDescriptorImpl targetDescriptor = PluginManagerCore.loadDescriptor(targetFile, PluginManagerCore.PLUGIN_XML);
       if (targetDescriptor != null) {
         DynamicPlugins.loadPlugin(targetDescriptor);
+        return targetDescriptor;
       }
     }
+    return null;
   }
 
   private static void checkInstalledPluginDependencies(@NotNull InstalledPluginsTableModel model,
