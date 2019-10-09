@@ -62,6 +62,8 @@ public class LiteralSelectioner extends BasicSelectioner {
       int start = StringUtil.indexOf(editorText, '\n', range.getStartOffset()) + 1;
       int end = range.getEndOffset() - 3;
       if (start < end) result.add(new TextRange(start, end));
+      start += literalExpression.getTextBlockIndent();
+      if (start < end) result.add(new TextRange(start, end));
     }
     else {
       result.add(new TextRange(range.getStartOffset() + 1, range.getEndOffset() - 1));
