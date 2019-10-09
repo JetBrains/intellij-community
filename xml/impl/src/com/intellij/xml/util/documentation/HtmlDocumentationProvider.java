@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.util.documentation;
 
 import com.intellij.codeInsight.lookup.LookupManager;
@@ -46,7 +46,6 @@ import static com.intellij.codeInsight.documentation.DocumentationManager.ORIGIN
 public class HtmlDocumentationProvider implements DocumentationProvider, ExternalDocumentationProvider {
   private static final ExtensionPointName<DocumentationProvider> SCRIPT_PROVIDER_EP_NAME = ExtensionPointName.create("com.intellij.html.scriptDocumentationProvider");
 
-  private DocumentationProvider myStyleProvider = null;
   private final boolean myUseStyleProvider;
 
   @NonNls public static final String ELEMENT_ELEMENT_NAME = "element";
@@ -376,13 +375,11 @@ public class HtmlDocumentationProvider implements DocumentationProvider, Externa
   @Nullable
   private DocumentationProvider getStyleProvider() {
     if (!myUseStyleProvider) return null;
-    if (myStyleProvider == null) {
-      Language cssLanguage = Language.findLanguageByID("CSS");
-      if (cssLanguage != null) {
-        myStyleProvider = LanguageDocumentation.INSTANCE.forLanguage(cssLanguage);
-      }
+    Language cssLanguage = Language.findLanguageByID("CSS");
+    if (cssLanguage != null) {
+      return LanguageDocumentation.INSTANCE.forLanguage(cssLanguage);
     }
-    return myStyleProvider;
+    return null;
   }
 
   private static class DocEntity {
