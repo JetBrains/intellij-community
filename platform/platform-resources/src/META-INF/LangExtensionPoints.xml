@@ -142,7 +142,8 @@
     </extensionPoint>
 
     <extensionPoint name="externalAnnotator"
-                    beanClass="com.intellij.lang.LanguageExtensionPoint">
+                    beanClass="com.intellij.lang.LanguageExtensionPoint"
+                    dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.lang.annotation.ExternalAnnotator"/>
     </extensionPoint>
 
@@ -163,7 +164,8 @@
     </extensionPoint>
 
     <extensionPoint name="lang.documentationProvider"
-                    beanClass="com.intellij.lang.LanguageExtensionPoint">
+                    beanClass="com.intellij.lang.LanguageExtensionPoint"
+                    dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.lang.documentation.DocumentationProvider"/>
     </extensionPoint>
 
