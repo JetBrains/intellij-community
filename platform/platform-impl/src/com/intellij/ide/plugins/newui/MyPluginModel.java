@@ -167,6 +167,8 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
       }
     }
 
+    myDynamicPluginsToInstall.clear();
+    myDynamicPluginsToUninstall.clear();
     myPluginsToRemoveOnCancel.clear();
 
     return applyEnableDisablePlugins(enabledMap) && uninstallsRequiringRestart.isEmpty();
