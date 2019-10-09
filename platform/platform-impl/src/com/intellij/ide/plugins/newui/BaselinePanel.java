@@ -1,8 +1,6 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.newui;
 
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.JBUI;
@@ -20,7 +18,6 @@ import java.util.List;
  */
 public class BaselinePanel extends NonOpaquePanel {
   private Component myBaseComponent;
-  private final List<Component> myVersionComponents = new ArrayList<>();
   private final List<Component> myButtonComponents = new ArrayList<>();
   private boolean[] myButtonEnableStates;
   private Component myProgressComponent;
@@ -29,9 +26,6 @@ public class BaselinePanel extends NonOpaquePanel {
   private final JBValue myOffset = new JBValue.Float(8);
   private final JBValue myBeforeButtonOffset = new JBValue.Float(40);
   private final JBValue myButtonOffset = new JBValue.Float(6);
-
-  private JLabel myErrorComponent;
-  private Component myErrorEnableComponent;
 
   private EventHandler myEventHandler;
 
@@ -45,21 +39,6 @@ public class BaselinePanel extends NonOpaquePanel {
         int width = baseSize.width;
 
         if (myProgressComponent == null) {
-          for (Component component : myVersionComponents) {
-            if (!component.isVisible()) {
-              break;
-            }
-            width += myOffset.get() + component.getPreferredSize().width;
-          }
-
-          if (myErrorComponent != null) {
-            width += myOffset.get() + myErrorComponent.getPreferredSize().width;
-
-            if (myErrorEnableComponent != null) {
-              width += myOffset.get() + myErrorEnableComponent.getPreferredSize().width;
-            }
-          }
-
           int size = myButtonComponents.size();
           if (size > 0) {
             int visibleCount = 0;
@@ -92,13 +71,6 @@ public class BaselinePanel extends NonOpaquePanel {
           return parentWidth - myProgressComponent.getPreferredSize().width - myOffset.get();
         }
 
-        if (!myVersionComponents.isEmpty() && myVersionComponents.get(0).isVisible()) {
-          for (Component component : myVersionComponents) {
-            parentWidth -= component.getPreferredSize().width;
-          }
-          parentWidth -= myOffset.get() * myVersionComponents.size();
-        }
-
         int visibleCount = 0;
         for (Component component : myButtonComponents) {
           if (component.isVisible()) {
@@ -109,17 +81,6 @@ public class BaselinePanel extends NonOpaquePanel {
         parentWidth -= myButtonOffset.get() * (visibleCount - 1);
         if (visibleCount > 0) {
           parentWidth -= myOffset.get();
-        }
-
-        if (myErrorComponent != null) {
-          if (myErrorEnableComponent != null) {
-            parentWidth -= (myOffset.get() + myErrorEnableComponent.getPreferredSize().width);
-          }
-
-          int errorPartWidth = myErrorComponent.getPreferredSize().width / 3;
-          if (myBaseComponent.getPreferredSize().width >= (parentWidth - errorPartWidth)) {
-            parentWidth -= errorPartWidth;
-          }
         }
 
         return parentWidth;
@@ -140,7 +101,6 @@ public class BaselinePanel extends NonOpaquePanel {
 
         baseSize.width = Math.min(baseSize.width, calcBaseWidth);
         myBaseComponent.setBounds(x, top, baseSize.width, baseSize.height);
-        x += baseSize.width;
 
         if (myProgressComponent != null) {
           Dimension size = myProgressComponent.getPreferredSize();
@@ -148,61 +108,17 @@ public class BaselinePanel extends NonOpaquePanel {
           return;
         }
 
-        for (Component component : myVersionComponents) {
-          if (!component.isVisible()) {
-            break;
-          }
-          Dimension size = component.getPreferredSize();
-          x += myOffset.get();
-          setBaselineBounds(x, y, component, size);
-          x += size.width;
-        }
-
         int lastX = parent.getWidth();
-        boolean emptyButtons = true;
 
         for (int i = myButtonComponents.size() - 1; i >= 0; i--) {
           Component component = myButtonComponents.get(i);
           if (!component.isVisible()) {
             continue;
           }
-          emptyButtons = false;
           Dimension size = component.getPreferredSize();
           lastX -= size.width;
           setBaselineBounds(lastX, y - myYOffset, component, size);
           lastX -= myButtonOffset.get();
-        }
-
-        if (myErrorComponent != null) {
-          x += myOffset.get();
-
-          if (myErrorEnableComponent != null) {
-            if (!emptyButtons) {
-              lastX -= myBeforeButtonOffset.get();
-            }
-
-            lastX -= myErrorEnableComponent.getPreferredSize().width;
-            lastX -= myOffset.get();
-          }
-
-          int errorWidth = lastX - x;
-          Dimension size = myErrorComponent.getPreferredSize();
-
-          if (errorWidth >= size.width) {
-            setBaselineBounds(x, y, myErrorComponent, size);
-            myErrorComponent.setToolTipText(null);
-            x += size.width;
-          }
-          else {
-            setBaselineBounds(x, y, myErrorComponent, size, errorWidth, size.height);
-            myErrorComponent.setToolTipText(myErrorComponent.getText());
-            x += errorWidth;
-          }
-
-          if (myErrorEnableComponent != null) {
-            x += myOffset.get();
-            setBaselineBounds(x, y, myErrorEnableComponent, myErrorEnableComponent.getPreferredSize());
-          }
         }
       }
 
@@ -231,64 +147,6 @@ public class BaselinePanel extends NonOpaquePanel {
     return super.add(component);
   }
 
-  public void addVersionComponent(@NotNull JComponent component) {
-    myVersionComponents.add(component);
-    add(component, null);
-  }
-
-  public void addErrorComponents(@NotNull String message, boolean enableAction, @NotNull Runnable enableCallback) {
-    if (myErrorComponent == null) {
-      myErrorComponent = new JLabel();
-      myErrorComponent.setForeground(DialogWrapper.ERROR_FOREGROUND_COLOR);
-      myErrorComponent.setOpaque(false);
-      add(myErrorComponent, null);
-
-      if (myEventHandler != null) {
-        myEventHandler.add(myErrorComponent);
-      }
-    }
-    myErrorComponent.setText(message);
-
-    if (enableAction) {
-      if (myErrorEnableComponent == null) {
-        LinkLabel<Object> errorAction = new LinkLabel<>("Enable", null);
-        errorAction.setOpaque(false);
-        errorAction.setListener((aSource, aLinkData) -> enableCallback.run(), null);
-        add(myErrorEnableComponent = errorAction, null);
-
-        if (myEventHandler != null) {
-          myEventHandler.add(errorAction);
-        }
-      }
-    }
-    else if (myErrorEnableComponent != null) {
-      remove(myErrorEnableComponent);
-      myErrorEnableComponent = null;
-    }
-
-    for (Component component : myVersionComponents) {
-      component.setVisible(false);
-    }
-    doLayout();
-  }
-
-  public void removeErrorComponents() {
-    if (myErrorComponent != null) {
-      remove(myErrorComponent);
-      myErrorComponent = null;
-
-      if (myErrorEnableComponent != null) {
-        remove(myErrorEnableComponent);
-        myErrorEnableComponent = null;
-      }
-
-      for (Component component : myVersionComponents) {
-        component.setVisible(true);
-      }
-      doLayout();
-    }
-  }
-
   @NotNull
   public List<Component> getButtonComponents() {
     return myButtonComponents;
@@ -297,21 +155,6 @@ public class BaselinePanel extends NonOpaquePanel {
   public void addButtonComponent(@NotNull JComponent component) {
     myButtonComponents.add(component);
     add(component, null);
-  }
-
-  public void addButtonAsFirstComponent(@NotNull JComponent component) {
-    if (myButtonComponents.isEmpty()) {
-      myButtonComponents.add(component);
-    }
-    else {
-      myButtonComponents.add(0, component);
-    }
-    add(component, null);
-  }
-
-  public void removeButtonComponent(@NotNull JComponent component) {
-    myButtonComponents.remove(component);
-    remove(component);
   }
 
   public void setProgressComponent(@Nullable ListPluginComponent pluginComponent, @NotNull JComponent progressComponent) {
@@ -338,15 +181,6 @@ public class BaselinePanel extends NonOpaquePanel {
   }
 
   private void setVisibleOther(boolean value) {
-    for (Component component : myVersionComponents) {
-      component.setVisible(value);
-    }
-    if (myErrorComponent != null) {
-      myErrorComponent.setVisible(value);
-    }
-    if (myErrorEnableComponent != null) {
-      myErrorEnableComponent.setVisible(value);
-    }
     if (myButtonComponents.isEmpty()) {
       return;
     }
