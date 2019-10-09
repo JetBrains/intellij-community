@@ -7,8 +7,10 @@ import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -99,22 +101,37 @@ public class JavaQuoteHandler extends SimpleTokenSetQuoteHandler implements Java
   public boolean hasNonClosedLiteral(Editor editor, HighlighterIterator iterator, int offset) {
     if (iterator.getTokenType() == JavaTokenType.TEXT_BLOCK_LITERAL) {
       Document document = iterator.getDocument();
-      if (document != null && StringUtil.equals(document.getCharsSequence().subSequence(iterator.getStart(), offset + 1), "\"\"\"")) {
-        return true;
+      if (document != null) {
+        String text = document.getText();
+        boolean hasOpenQuotes = StringUtil.equals(text.substring(iterator.getStart(), offset + 1), "\"\"\"");
+        if (hasOpenQuotes) {
+          boolean hasCloseQuotes = StringUtil.contains(text.substring(offset + 1, iterator.getEnd()), "\"\"\"");
+          if (!hasCloseQuotes) return true;
+          // check if parser interpreted next text block start quotes as end quotes for the current one
+          int nTextBlockQuotes = StringUtil.getOccurrenceCount(text.substring(iterator.getEnd()), "\"\"\"");
+          return nTextBlockQuotes % 2 != 0;
+        }
       }
     }
     return super.hasNonClosedLiteral(editor, iterator, offset);
   }
 
   @Override
-  public void insertClosingQuote(@NotNull Editor editor, int offset, @NotNull CharSequence closingQuote) {
-    if (closingQuote.charAt(0) == '`') {
-      editor.getDocument().insertString(offset, " " + closingQuote);
-      editor.getSelectionModel().setSelection(offset, offset + 1);
-    }
-    else {
-      editor.getDocument().insertString(offset, "\n" + closingQuote);
-      editor.getCaretModel().moveToOffset(offset + 1);
-    }
+  public boolean needSemicolonAfter(@NotNull PsiElement element) {
+    PsiLiteralExpressionImpl literal = ObjectUtils.tryCast(element.getParent(), PsiLiteralExpressionImpl.class);
+    if (literal == null || literal.getLiteralElementType() != JavaTokenType.TEXT_BLOCK_LITERAL) return false;
+    PsiJavaToken token = ObjectUtils.tryCast(literal.getNextSibling(), PsiJavaToken.class);
+    if (token != null && token.getTokenType() == JavaTokenType.SEMICOLON) return false;
+    String text = literal.getText();
+    if (text.indexOf('\n') != -1) return false;
+    PsiVariable variable = ObjectUtils.tryCast(literal.getParent(), PsiVariable.class);
+    if (variable != null && variable.getInitializer() == literal) return true;
+    PsiAssignmentExpression assignment = ObjectUtils.tryCast(literal.getParent(), PsiAssignmentExpression.class);
+    return assignment != null && assignment.getRExpression() == literal;
+  }
+
+  @Override
+  public void insertClosingQuote(@NotNull Editor editor, int offset, @NotNull PsiFile file, @NotNull CharSequence closingQuote) {
+    editor.getDocument().insertString(offset, "\"\"\"");
   }
 }
