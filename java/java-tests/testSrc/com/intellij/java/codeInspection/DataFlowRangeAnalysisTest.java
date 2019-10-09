@@ -45,6 +45,9 @@ public class DataFlowRangeAnalysisTest extends DataFlowInspectionTestCase {
   public void testLongRangeKnownMethods() {
     doTest();
   }
+  public void testStringSubstring() {
+    doTest();
+  }
 
   public void testLongRangeMod() { doTest(); }
   public void testLongRangeDivShift() { doTest(); }

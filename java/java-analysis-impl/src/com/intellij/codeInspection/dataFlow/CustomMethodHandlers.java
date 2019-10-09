@@ -3,6 +3,7 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
+import com.intellij.codeInspection.dataFlow.value.DfaRelationValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.util.OptionalUtil;
@@ -65,6 +66,8 @@ class CustomMethodHandlers {
               (args, memState, factory) -> mathAbs(args.myArguments, memState, factory, false))
     .register(staticCall(JAVA_LANG_MATH, "abs").parameterTypes("long"),
               (args, memState, factory) -> mathAbs(args.myArguments, memState, factory, true))
+    .register(exactInstanceCall(JAVA_LANG_STRING, "substring"),
+              (args, memState, factory) -> substring(args, memState, factory))
     .register(OptionalUtil.OPTIONAL_OF_NULLABLE,
               (args, memState, factory) -> ofNullable(args.myArguments[0], memState, factory))
     .register(instanceCall(JAVA_UTIL_CALENDAR, "get").parameterTypes("int"),
@@ -206,6 +209,28 @@ class CustomMethodHandlers {
     LongRangeSet range = memState.getValueFact(length, DfaFactType.RANGE);
     long maxLen = range == null || range.isEmpty() ? Integer.MAX_VALUE : range.max();
     return factory.getFactValue(DfaFactType.RANGE, LongRangeSet.range(-1, maxLen - 1));
+  }
+
+  private static DfaValue substring(DfaCallArguments args, DfaMemoryState state, DfaValueFactory factory) {
+    DfaValue qualifier = args.myQualifier;
+    DfaValue[] arguments = args.myArguments;
+    if (arguments.length < 1 || arguments.length > 2 || arguments[0] == null) return null;
+    LongRangeSet fromPos = state.getValueFact(arguments[0], DfaFactType.RANGE);
+    if (fromPos == null) return null;
+    LongRangeSet length = state.getValueFact(SpecialField.STRING_LENGTH.createValue(factory, qualifier), DfaFactType.RANGE);
+    LongRangeSet toPos = arguments.length == 1 ? length : state.getValueFact(arguments[1], DfaFactType.RANGE);
+    if (toPos == null) return null;
+    LongRangeSet resultLen = toPos.minus(fromPos, false)
+      .intersect(LongRangeSet.point(0).fromRelation(DfaRelationValue.RelationType.GE));
+    if (length != null) {
+      resultLen = resultLen.intersect(length.fromRelation(DfaRelationValue.RelationType.LT));
+    }
+    return factory.getFactFactory().createValue(
+      DfaFactMap.EMPTY
+        .with(DfaFactType.TYPE_CONSTRAINT, state.getValueFact(qualifier, DfaFactType.TYPE_CONSTRAINT))
+        .with(DfaFactType.NULLABILITY, DfaNullability.NOT_NULL)
+        .with(DfaFactType.SPECIAL_FIELD_VALUE, SpecialField.STRING_LENGTH.withValue(
+          factory.getFactValue(DfaFactType.RANGE, resultLen))));
   }
 
   private static DfaValue ofNullable(DfaValue argument, DfaMemoryState state, DfaValueFactory factory) {
