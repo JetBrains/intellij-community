@@ -27,12 +27,8 @@ private fun conflictsWithLocalOrRemote(repositories: Collection<GitRepository>,
                                        inputString: String,
                                        local: Boolean,
                                        message: String): ValidationInfo? {
-  var conflictsWithCurrentName = 0
   for (repository in repositories) {
-    if (inputString == repository.currentBranchName) {
-      conflictsWithCurrentName++
-    }
-    else if (findConflictingBranch(inputString, repository, local) != null) {
+    if (findConflictingBranch(inputString, repository, local) != null) {
       var errorText = "Branch name $inputString$message"
       if (repositories.size > 1 && !allReposHaveBranch(repositories, inputString, local)) {
         errorText += " in repository ${repository.presentableUrl}"
@@ -41,10 +37,7 @@ private fun conflictsWithLocalOrRemote(repositories: Collection<GitRepository>,
       return ValidationInfo(errorText)
     }
   }
-  return if (conflictsWithCurrentName == repositories.size) {
-    ValidationInfo("You are already on branch $inputString")
-  }
-  else null
+  return null
 }
 
 internal fun allReposHaveBranch(repositories: Collection<GitRepository>, inputString: String, local: Boolean): Boolean {
