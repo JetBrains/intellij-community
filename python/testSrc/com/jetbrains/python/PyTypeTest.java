@@ -3559,6 +3559,17 @@ public class PyTypeTest extends PyTestCase {
     );
   }
 
+  // PY-33651
+  public void testSlicingHomogeneousTuple() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> doTest("Tuple[int, ...]",
+                   "from typing import Tuple\n" +
+                   "x: Tuple[int, ...]\n" +
+                   "expr = x[0:]")
+    );
+  }
+
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {
     return ImmutableList.of(TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile()).withTracing(),
                             TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()).withTracing());
