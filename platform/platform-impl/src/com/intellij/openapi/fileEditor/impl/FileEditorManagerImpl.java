@@ -640,7 +640,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
 
     EditorWindow wndToOpenIn = null;
-    if (searchForSplitter) {
+    if (searchForSplitter && UISettings.getInstance().getEditorTabPlacement() != UISettings.TABS_NONE) {
       Set<EditorsSplitters> all = getAllSplitters();
       EditorsSplitters active = getActiveSplittersSync();
       if (active.getCurrentWindow() != null && active.getCurrentWindow().isFileOpen(file)) {
