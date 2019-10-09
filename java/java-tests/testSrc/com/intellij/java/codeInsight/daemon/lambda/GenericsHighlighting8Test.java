@@ -26,9 +26,11 @@ import com.intellij.openapi.editor.colors.EditorColorsUtil;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.ui.ColorUtil;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -1074,13 +1076,14 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
     String paramBgColor = ColorUtil.toHtmlColor(EditorColorsUtil.getGlobalOrDefaultColorScheme()
       .getAttributes(DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT)
       .getBackgroundColor());
+    int fontSize = StartupUiUtil.getLabelFont().getSize() - (SystemInfo.isWindows ? 0 : 1);
     String expected = "<html><body><table>" +
                       "<tr>" +
                       "<td/>" +
                       "<td style='color: " + greyed + "; padding-left: 16px; padding-right: 24px;'>Required type</td>" +
                       "<td style='color: " + greyed + "; padding-right: 28px;'>Provided</td></tr>" +
                       "<tr>" +
-                      "<td><table><tr><td style='color: " + greyed + "; font-size:12pt; padding:1px 4px 1px 4px;background-color: " + paramBgColor + ";'>charSequences:</td></tr></table></td>" +
+                      "<td><table><tr><td style='color: " + greyed + "; font-size:" + fontSize + "pt; padding:1px 4px 1px 4px;background-color: " + paramBgColor + ";'>charSequences:</td></tr></table></td>" +
                       "<td style='padding-left: 16px; padding-right: 24px;'><font color='" + toolTipForeground + "'>CharSequence...</font></td>" +
                       "<td style='padding-right: 28px;'><font color='" + red + "'>String</font></td></tr>" +
                       "<tr><td/><td style='padding-left: 16px; padding-right: 24px;'/><td style='padding-right: 28px;'><font color='" + red + "'>int</font></td></tr>" +
