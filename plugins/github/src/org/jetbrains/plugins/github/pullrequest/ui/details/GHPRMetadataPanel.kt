@@ -27,17 +27,17 @@ import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.SwingConstants
 
-internal class GithubPullRequestMetadataPanel(private val project: Project,
-                                              private val model: SingleValueModel<GHPullRequest?>,
-                                              private val securityService: GithubPullRequestsSecurityService,
-                                              private val busyStateTracker: GithubPullRequestsBusyStateTracker,
-                                              private val metadataService: GithubPullRequestsMetadataService,
-                                              private val avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory)
+internal class GHPRMetadataPanel(private val project: Project,
+                                 private val model: SingleValueModel<GHPullRequest?>,
+                                 private val securityService: GithubPullRequestsSecurityService,
+                                 private val busyStateTracker: GithubPullRequestsBusyStateTracker,
+                                 private val metadataService: GithubPullRequestsMetadataService,
+                                 private val avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory)
   : JPanel(), Disposable {
 
   private val avatarIconsProvider = avatarIconsProviderFactory.create(GithubUIUtil.avatarSize, this)
 
-  private val directionPanel = GithubPullRequestDirectionPanel()
+  private val directionPanel = GHPRDirectionPanel()
   private val reviewersHandle = ReviewersListPanelHandle()
   private val assigneesHandle = AssigneesListPanelHandle()
   private val labelsHandle = LabelsListPanelHandle()

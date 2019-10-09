@@ -34,7 +34,7 @@ import org.jetbrains.plugins.github.pullrequest.ui.*
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRChangesBrowser
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRChangesModel
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRChangesModelImpl
-import org.jetbrains.plugins.github.pullrequest.ui.details.GithubPullRequestDetailsPanel
+import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRDetailsPanel
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
 import org.jetbrains.plugins.github.util.CachingGithubUserAvatarLoader
 import org.jetbrains.plugins.github.util.GitRemoteUrlCoordinates
@@ -128,12 +128,12 @@ internal class GHPRComponentFactory(private val project: Project) {
     val detailsLoadingModel = createDetailsLoadingModel(dataProviderModel, disposable)
     val detailsModel = createValueModel(detailsLoadingModel)
 
-    val detailsPanel = GithubPullRequestDetailsPanel(project, detailsModel,
-                                                     dataContext.securityService,
-                                                     dataContext.busyStateTracker,
-                                                     dataContext.metadataService,
-                                                     dataContext.stateService,
-                                                     avatarIconsProviderFactory)
+    val detailsPanel = GHPRDetailsPanel(project, detailsModel,
+                                        dataContext.securityService,
+                                        dataContext.busyStateTracker,
+                                        dataContext.metadataService,
+                                        dataContext.stateService,
+                                        avatarIconsProviderFactory)
     Disposer.register(disposable, detailsPanel)
     val detailsLoadingPanel = GHLoadingPanel(detailsLoadingModel, detailsPanel, disposable,
                                              GHLoadingPanel.EmptyTextBundle.Simple("Select pull request to view details",

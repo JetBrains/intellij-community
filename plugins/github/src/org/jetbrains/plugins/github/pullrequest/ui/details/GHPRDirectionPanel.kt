@@ -11,7 +11,7 @@ import org.jetbrains.plugins.github.util.GithubUtil.Delegates.equalVetoingObserv
 import java.awt.FlowLayout
 import javax.swing.JLabel
 
-internal class GithubPullRequestDirectionPanel : NonOpaquePanel(WrapLayout(FlowLayout.LEFT, 0, UIUtil.DEFAULT_VGAP)) {
+internal class GHPRDirectionPanel : NonOpaquePanel(WrapLayout(FlowLayout.LEFT, 0, UIUtil.DEFAULT_VGAP)) {
   private val from = createLabel()
   private val to = createLabel()
 
@@ -19,7 +19,7 @@ internal class GithubPullRequestDirectionPanel : NonOpaquePanel(WrapLayout(FlowL
     by equalVetoingObservable<Pair<String, String>?>(null) {
       from.text = " ${it?.first} "
       to.text = " ${it?.second} "
-      this@GithubPullRequestDirectionPanel.isVisible = it != null
+      this@GHPRDirectionPanel.isVisible = it != null
     }
 
   init {

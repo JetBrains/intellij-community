@@ -11,7 +11,7 @@ import org.jetbrains.plugins.github.ui.util.SingleValueModel
 import org.jetbrains.plugins.github.util.GithubUtil.Delegates.equalVetoingObservable
 import java.awt.Font
 
-internal class GithubPullRequestDescriptionPanel(private val model: SingleValueModel<GHPullRequest?>) : NonOpaquePanel(), Disposable {
+internal class GHPRDescriptionPanel(private val model: SingleValueModel<GHPullRequest?>) : NonOpaquePanel(), Disposable {
 
   private var description: String? by equalVetoingObservable<String?>(null) {
     //'!it.isNullOrEmpty()' causes Kotlin compiler to fail here (KT-28847)

@@ -28,27 +28,27 @@ import javax.swing.BorderFactory
 import javax.swing.JPanel
 
 
-internal class GithubPullRequestDetailsPanel(project: Project,
-                                             model: SingleValueModel<GHPullRequest?>,
-                                             securityService: GithubPullRequestsSecurityService,
-                                             busyStateTracker: GithubPullRequestsBusyStateTracker,
-                                             metadataService: GithubPullRequestsMetadataService,
-                                             stateService: GithubPullRequestsStateService,
-                                             avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory)
+internal class GHPRDetailsPanel(project: Project,
+                                model: SingleValueModel<GHPullRequest?>,
+                                securityService: GithubPullRequestsSecurityService,
+                                busyStateTracker: GithubPullRequestsBusyStateTracker,
+                                metadataService: GithubPullRequestsMetadataService,
+                                stateService: GithubPullRequestsStateService,
+                                avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory)
   : JPanel(), ComponentWithEmptyText, Disposable {
 
   private val emptyText = object : StatusText(this) {
     override fun isStatusVisible() = model.value == null
   }
 
-  private val metaPanel = GithubPullRequestMetadataPanel(project, model, securityService, busyStateTracker, metadataService,
-                                                         avatarIconsProviderFactory).apply {
+  private val metaPanel = GHPRMetadataPanel(project, model, securityService, busyStateTracker, metadataService,
+                                            avatarIconsProviderFactory).apply {
     border = JBUI.Borders.empty(4, 8, 4, 8)
   }
-  private val descriptionPanel = GithubPullRequestDescriptionPanel(model).apply {
+  private val descriptionPanel = GHPRDescriptionPanel(model).apply {
     border = JBUI.Borders.empty(4, 8, 8, 8)
   }
-  private val statePanel = GithubPullRequestStatePanel(model, securityService, busyStateTracker, stateService).apply {
+  private val statePanel = GHPRStatePanel(model, securityService, busyStateTracker, stateService).apply {
     border = BorderFactory.createCompoundBorder(IdeBorderFactory.createBorder(SideBorder.TOP),
                                                 JBUI.Borders.empty(8))
   }

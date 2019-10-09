@@ -24,10 +24,10 @@ import java.awt.FlowLayout
 import java.awt.event.ActionEvent
 import javax.swing.*
 
-internal class GithubPullRequestStatePanel(private val model: SingleValueModel<GHPullRequest?>,
-                                           private val securityService: GithubPullRequestsSecurityService,
-                                           private val busyStateTracker: GithubPullRequestsBusyStateTracker,
-                                           private val stateService: GithubPullRequestsStateService)
+internal class GHPRStatePanel(private val model: SingleValueModel<GHPullRequest?>,
+                              private val securityService: GithubPullRequestsSecurityService,
+                              private val busyStateTracker: GithubPullRequestsBusyStateTracker,
+                              private val stateService: GithubPullRequestsStateService)
   : NonOpaquePanel(VerticalFlowLayout(0, 0)), Disposable {
 
   private val stateLabel = JLabel().apply {
