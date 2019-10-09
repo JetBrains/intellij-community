@@ -86,7 +86,7 @@ class AnalyzeUnloadablePluginsAction : AnAction() {
       if (closePlugins.isNotEmpty()) {
         appendln("Plugins closest to being unloadable:")
         for (status in closePlugins.sortedBy { it.nonDynamicEPs.size }.take(5)) {
-          appendln("${status.pluginId} - ${status.nonDynamicEPs.joinToString()})")
+          appendln("${status.pluginId} - ${status.nonDynamicEPs.joinToString()}")
         }
         appendln()
       }
