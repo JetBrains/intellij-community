@@ -56,6 +56,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
   public boolean REPORT_CONSTANT_REFERENCE_VALUES = true;
   public boolean REPORT_NULLS_PASSED_TO_NOT_NULL_PARAMETER = true;
   public boolean REPORT_NULLABLE_METHODS_RETURNING_NOT_NULL = true;
+  public boolean REPORT_UNSOUND_WARNINGS = true;
 
   @Override
   public JComponent createOptionsPanel() {
@@ -80,6 +81,9 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
     }
     if (!REPORT_NULLABLE_METHODS_RETURNING_NOT_NULL) {
       node.addContent(new Element("option").setAttribute("name", "REPORT_NULLABLE_METHODS_RETURNING_NOT_NULL").setAttribute("value", "false"));
+    }
+    if (!REPORT_UNSOUND_WARNINGS) {
+      node.addContent(new Element("option").setAttribute("name", "REPORT_UNSOUND_WARNINGS").setAttribute("value", "false"));
     }
   }
 
@@ -133,6 +137,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
       @Override
       public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
         super.visitMethodReferenceExpression(expression);
+        if (!REPORT_UNSOUND_WARNINGS) return;
         final PsiElement resolve = expression.resolve();
         if (resolve instanceof PsiMethod) {
           final PsiType methodReturnType = ((PsiMethod)resolve).getReturnType();
@@ -490,6 +495,13 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
                                          Map<PsiExpression, ConstantResult> expressions) {
     for (NullabilityProblem<?> problem : problems) {
       PsiExpression expression = problem.getDereferencedExpression();
+      if (!REPORT_UNSOUND_WARNINGS) {
+        if (expression == null) continue;
+        PsiExpression unwrapped = PsiUtil.skipParenthesizedExprDown(expression);
+        if (!ExpressionUtils.isNullLiteral(unwrapped) && expressions.get(expression) != DataFlowInstructionVisitor.ConstantResult.NULL) {
+          continue;
+        }
+      }
       NullabilityProblemKind.innerClassNPE.ifMyProblem(problem, newExpression -> {
         List<LocalQuickFix> fixes = createNPEFixes(newExpression.getQualifier(), newExpression, reporter.isOnTheFly());
         reporter
@@ -702,6 +714,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
 
   private void reportFailingCasts(ProblemReporter reporter, DataFlowInstructionVisitor visitor) {
     visitor.getFailingCastExpressions().forKeyValue((typeCast, alwaysFails) -> {
+      if (!REPORT_UNSOUND_WARNINGS && !alwaysFails) return;
       PsiExpression operand = typeCast.getOperand();
       PsiTypeElement castType = typeCast.getCastType();
       assert castType != null;
@@ -906,9 +919,11 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
       final PsiExpression anchor = problem.getAnchor();
       PsiExpression expr = problem.getDereferencedExpression();
 
+      boolean exactlyNull = isNullLiteralExpression(expr) || expressions.get(expr) == ConstantResult.NULL;
+      if (!REPORT_UNSOUND_WARNINGS && !exactlyNull) continue;
       if (nullability == Nullability.NOT_NULL) {
         String presentable = NullableStuffInspectionBase.getPresentableAnnoName(anno);
-        final String text = isNullLiteralExpression(expr) || expressions.get(expr) == ConstantResult.NULL
+        final String text = exactlyNull
                             ? InspectionsBundle.message("dataflow.message.return.null.from.notnull", presentable)
                             : InspectionsBundle.message("dataflow.message.return.nullable.from.notnull", presentable);
         reporter.registerProblem(expr, text, createNPEFixes(expr, expr, reporter.isOnTheFly()).toArray(LocalQuickFix.EMPTY_ARRAY));
@@ -916,7 +931,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
       else if (AnnotationUtil.isAnnotatingApplicable(anchor)) {
         final String defaultNullable = manager.getDefaultNullable();
         final String presentableNullable = StringUtil.getShortName(defaultNullable);
-        final String text = isNullLiteralExpression(expr) || expressions.get(expr) == ConstantResult.NULL
+        final String text = exactlyNull
                             ? InspectionsBundle.message("dataflow.message.return.null.from.notnullable", presentableNullable)
                             : InspectionsBundle.message("dataflow.message.return.nullable.from.notnullable", presentableNullable);
         final LocalQuickFix[] fixes =

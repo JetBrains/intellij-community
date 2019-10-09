@@ -251,6 +251,10 @@ public class DataFlowInspection extends DataFlowInspectionBase {
         "Report nullable methods that always return a non-null value",
         REPORT_NULLABLE_METHODS_RETURNING_NOT_NULL, box -> REPORT_NULLABLE_METHODS_RETURNING_NOT_NULL = box.isSelected());
 
+      JCheckBox reportUnsoundWarnings = createCheckBoxWithHTML(
+        "Report problems where exception occurs only for some code path",
+        REPORT_UNSOUND_WARNINGS, box -> REPORT_UNSOUND_WARNINGS = box.isSelected());
+
       gc.insets = JBUI.emptyInsets();
       gc.gridy = 0;
       add(suggestNullables, gc);
@@ -282,6 +286,9 @@ public class DataFlowInspection extends DataFlowInspectionBase {
 
       gc.gridy++;
       add(reportNullableMethodsReturningNotNull, gc);
+
+      gc.gridy++;
+      add(reportUnsoundWarnings, gc);
     }
 
     @Override
