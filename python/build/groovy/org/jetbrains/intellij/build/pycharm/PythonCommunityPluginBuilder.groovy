@@ -16,13 +16,7 @@
 package org.jetbrains.intellij.build.pycharm
 
 import groovy.io.FileType
-import org.jetbrains.intellij.build.BuildContext
-import org.jetbrains.intellij.build.BuildOptions
-import org.jetbrains.intellij.build.BuildTasks
-import org.jetbrains.intellij.build.IdeaCommunityProperties
-import org.jetbrains.intellij.build.ProprietaryBuildTools
-
-import static org.jetbrains.intellij.build.python.PythonCommunityPluginModules.PYTHON_COMMUNITY_PLUGIN_MODULE
+import org.jetbrains.intellij.build.*
 
 /**
  * @author vlan
@@ -38,7 +32,7 @@ class PythonCommunityPluginBuilder {
   def build() {
     def pluginBuildNumber = System.getProperty("build.number", "SNAPSHOT")
     def pluginsForIdeaCommunity = [
-      PYTHON_COMMUNITY_PLUGIN_MODULE,
+      "intellij.python.community.plugin",
       "intellij.reStructuredText",
     ]
 
