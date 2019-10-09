@@ -128,13 +128,7 @@ internal class GHPRComponentFactory(private val project: Project) {
     val detailsLoadingModel = createDetailsLoadingModel(dataProviderModel, disposable)
     val detailsModel = createValueModel(detailsLoadingModel)
 
-    val detailsPanel = GHPRDetailsPanel(project, detailsModel,
-                                        dataContext.securityService,
-                                        dataContext.busyStateTracker,
-                                        dataContext.metadataService,
-                                        dataContext.stateService,
-                                        avatarIconsProviderFactory)
-    Disposer.register(disposable, detailsPanel)
+    val detailsPanel = createDetailsPanel(dataContext, detailsModel, avatarIconsProviderFactory, disposable)
     val detailsLoadingPanel = GHLoadingPanel(detailsLoadingModel, detailsPanel, disposable,
                                              GHLoadingPanel.EmptyTextBundle.Simple("Select pull request to view details",
                                                                                    "Can't load details")).apply {
@@ -164,8 +158,6 @@ internal class GHPRComponentFactory(private val project: Project) {
       Disposer.dispose(list)
       Disposer.dispose(search)
       Disposer.dispose(loaderPanel)
-
-      Disposer.dispose(detailsPanel)
     })
 
     return OnePixelSplitter("Github.PullRequests.Component", 0.33f).apply {
@@ -187,6 +179,20 @@ internal class GHPRComponentFactory(private val project: Project) {
         }
 
       }
+    }
+  }
+
+  private fun createDetailsPanel(dataContext: GHPullRequestsDataContext,
+                                 detailsModel: SingleValueModel<GHPullRequest?>,
+                                 avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory,
+                                 parentDisposable: Disposable): GHPRDetailsPanel {
+    return GHPRDetailsPanel(project, detailsModel,
+                            dataContext.securityService,
+                            dataContext.busyStateTracker,
+                            dataContext.metadataService,
+                            dataContext.stateService,
+                            avatarIconsProviderFactory).also {
+      Disposer.register(parentDisposable, it)
     }
   }
 
