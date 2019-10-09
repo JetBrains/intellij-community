@@ -2,18 +2,11 @@
 package com.intellij.vcs.commit
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.AbstractVcs
-import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.changes.Change
-import com.intellij.openapi.vcs.changes.ChangeListManager
-import com.intellij.openapi.vcs.changes.ChangesUtil
-import com.intellij.openapi.vcs.changes.ChangesUtil.processChangesByVcs
 import com.intellij.openapi.vcs.changes.LocalChangeList
-import com.intellij.openapi.vcs.changes.ui.CommitMessageProvider
 
-class SingleChangeListCommitMessagePolicy(private val project: Project, private val initialCommitMessage: String?) {
-  private val vcsConfiguration = VcsConfiguration.getInstance(project)
-  private val changeListManager = ChangeListManager.getInstance(project)
+internal class SingleChangeListCommitMessagePolicy(project: Project, private val initialCommitMessage: String?) :
+  AbstractCommitMessagePolicy(project) {
 
   var defaultNameChangeListMessage: String? = null
   private var lastChangeListName: String? = null
@@ -66,33 +59,9 @@ class SingleChangeListCommitMessagePolicy(private val project: Project, private 
     saveMessages()
   }
 
-  private fun getCommitMessageFor(changeList: LocalChangeList): String? {
-    CommitMessageProvider.EXTENSION_POINT_NAME.extensionList.forEach { provider ->
-      val providerMessage = provider.getCommitMessage(changeList, project)
-      if (providerMessage != null) return providerMessage
-    }
-
-    val changeListDescription = changeList.comment
-    if (!changeListDescription.isNullOrBlank()) return changeListDescription
-
-    return if (!changeList.hasDefaultName()) changeList.name else null
-  }
-
-  private fun getCommitMessageFromVcs(changes: List<Change>): String? {
-    var result: String? = null
-    processChangesByVcs(project, changes) { vcs, vcsChanges ->
-      if (result == null) result = getCommitMessageFromVcs(vcs, vcsChanges)
-    }
-    return result
-  }
-
-  private fun getCommitMessageFromVcs(vcs: AbstractVcs, changes: List<Change>): String? =
-    vcs.checkinEnvironment?.getDefaultMessageFor(ChangesUtil.getPaths(changes).toTypedArray())
-
   private fun rememberMessage(message: String) = lastChangeListName?.let { messagesToSave[it] = message }
 
   private fun forgetMessage() = lastChangeListName?.let { messagesToSave -= it }
 
-  private fun saveMessages() =
-    messagesToSave.forEach { changeListName, commitMessage -> changeListManager.editComment(changeListName, commitMessage) }
+  private fun saveMessages() = messagesToSave.forEach { (changeListName, commitMessage) -> save(changeListName, commitMessage) }
 }

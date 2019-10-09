@@ -48,7 +48,7 @@ open class SingleChangeListCommitWorkflow(
   val isPartialCommitEnabled: Boolean =
     vcses.any { it.arePartialChangelistsSupported() } && (isDefaultCommitEnabled || commitExecutors.any { it.supportsPartialCommit() })
 
-  val commitMessagePolicy: SingleChangeListCommitMessagePolicy = SingleChangeListCommitMessagePolicy(project, initialCommitMessage)
+  internal val commitMessagePolicy: SingleChangeListCommitMessagePolicy = SingleChangeListCommitMessagePolicy(project, initialCommitMessage)
 
   internal lateinit var commitState: ChangeListCommitState
 

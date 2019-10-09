@@ -6,7 +6,6 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.FilePath
-import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.VcsDataKeys.COMMIT_WORKFLOW_HANDLER
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.*
@@ -16,6 +15,7 @@ import com.intellij.util.EventDispatcher
 import com.intellij.vcs.commit.AbstractCommitWorkflow.Companion.getCommitExecutors
 import gnu.trove.THashSet
 import java.util.*
+import kotlin.properties.Delegates.observable
 
 private fun Collection<Change>.toPartialAwareSet() = THashSet(this, ChangeListChange.HASHING_STRATEGY)
 
@@ -37,6 +37,10 @@ class ChangesViewCommitWorkflowHandler(
   private val inclusionModel = PartialCommitInclusionModel(project)
 
   private var areCommitOptionsCreated = false
+  private val commitMessagePolicy = ChangesViewCommitMessagePolicy(project)
+  private var currentChangeList by observable<LocalChangeList?>(null) { _, oldValue, newValue ->
+    if (oldValue != newValue) changeListChanged(oldValue, newValue)
+  }
 
   init {
     Disposer.register(this, Disposable { workflow.disposeCommitOptions() })
@@ -125,6 +129,8 @@ class ChangesViewCommitWorkflowHandler(
     val inclusion = inclusionModel.getInclusion()
     val isChangeListFullyIncluded = changeList.changes.run { isNotEmpty() && all { it in inclusion } }
     if (isChangeListFullyIncluded) ui.select(changeList) else ui.selectFirst(inclusion)
+
+    currentChangeList = workflow.getAffectedChangeList(inclusion.filterIsInstance<Change>())
   }
 
   private fun setInclusion(items: Collection<Any>, force: Boolean) {
@@ -164,6 +170,13 @@ class ChangesViewCommitWorkflowHandler(
   fun showCommitOptions(isFromToolbar: Boolean, dataContext: DataContext) =
     ui.showCommitOptions(ensureCommitOptions(), getCommitActionName(), isFromToolbar, dataContext)
 
+  private fun changeListChanged(oldChangeList: LocalChangeList?, newChangeList: LocalChangeList?) {
+    oldChangeList?.let { commitMessagePolicy.save(it, getCommitMessage(), false) }
+
+    val newCommitMessage = newChangeList?.let { commitMessagePolicy.getCommitMessage(it) { getIncludedChanges() } }
+    setCommitMessage(newCommitMessage)
+  }
+
   override fun inclusionChanged() {
     val inclusion = inclusionModel.getInclusion()
     val activeChanges = changeListManager.defaultChangeList.changes
@@ -192,7 +205,7 @@ class ChangesViewCommitWorkflowHandler(
     return super.saveCommitOptions()
   }
 
-  override fun saveCommitMessage(success: Boolean) = VcsConfiguration.getInstance(project).saveCommitMessage(getCommitMessage())
+  override fun saveCommitMessage(success: Boolean) = commitMessagePolicy.save(currentChangeList, getCommitMessage(), success)
 
   interface ActivityListener : EventListener {
     fun activityStateChanged()
