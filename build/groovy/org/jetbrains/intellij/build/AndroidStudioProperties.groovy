@@ -503,11 +503,6 @@ class AndroidStudioProperties extends BaseIdeaProperties {
         }
 
         def simpleperfTarget = "$targetDirectory/plugins/android/resources/simpleperf"
-        context.ant.copy(todir: "$simpleperfTarget/linux-x86") {
-          fileset(dir: "$root/prebuilts/tools/linux-x86/simpleperf")
-        }
-        extraExecutables.add("plugins/android/resources/simpleperf/linux-x86/simpleperf")
-
         context.ant.copy(todir: "$simpleperfTarget/linux-x86_64") {
           fileset(dir: "$root/prebuilts/tools/linux-x86_64/simpleperf")
         }
@@ -563,11 +558,6 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       extraExecutables.add("bin/lldb/bin/minidump_stackwalk")
 
       def simpleperfTarget = "$targetDirectory/plugins/android/resources/simpleperf"
-      context.ant.copy(todir: "$simpleperfTarget/darwin-x86") {
-        fileset(dir: "$root/prebuilts/tools/darwin-x86/simpleperf")
-      }
-      extraExecutables.add("plugins/android/resources/simpleperf/darwin-x86/simpleperf")
-
       context.ant.copy(todir: "$simpleperfTarget/darwin-x86_64") {
         fileset(dir: "$root/prebuilts/tools/darwin-x86_64/simpleperf")
       }
