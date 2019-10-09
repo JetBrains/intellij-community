@@ -24,6 +24,7 @@ import com.intellij.util.MemoryDumpHelper
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.SystemProperties
 import com.intellij.util.messages.Topic
+import com.intellij.util.ui.UIUtil
 import com.intellij.util.xmlb.BeanBinding
 import java.text.SimpleDateFormat
 import java.util.*
@@ -160,6 +161,8 @@ object DynamicPlugins {
     BeanBinding.clearSerializationCaches()
 
     PluginManagerCore.setPlugins(ArrayUtil.remove(PluginManagerCore.getPlugins(), loadedPluginDescriptor))
+
+    UIUtil.dispatchAllInvocationEvents()
 
     val classLoaderUnloaded = loadedPluginDescriptor.unloadClassLoader()
     if (!classLoaderUnloaded && Registry.`is`("ide.plugins.snapshot.on.unload.fail") && MemoryDumpHelper.memoryDumpAvailable()) {
