@@ -31,6 +31,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
+import com.intellij.psi.impl.source.PsiTypeElementImpl;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
@@ -41,6 +42,8 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.scope.processor.VariablesNotProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
@@ -451,7 +454,8 @@ public class HighlightUtil extends HighlightUtilBase {
 
         PsiType lType = variable.getType();
         if (PsiType.NULL.equals(lType)) {
-          String message = JavaErrorMessages.message("lvti.null");
+          boolean isSelfReferencing = ReferencesSearch.search(variable, new LocalSearchScope(initializer)).findFirst() != null;
+          String message = JavaErrorMessages.message(isSelfReferencing ? "lvti.selfReferenced" : "lvti.null");
           return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(message).range(typeElement).create();
         }
         if (PsiType.VOID.equals(lType)) {
@@ -497,6 +501,9 @@ public class HighlightUtil extends HighlightUtilBase {
     }
     if (rType == null) {
       rType = expression.getType();
+    }
+    if (lType == PsiType.NULL) {
+      return null;
     }
     HighlightInfo highlightInfo = createIncompatibleTypeHighlightInfo(lType, rType, textRange, navigationShift);
     if (rType != null && expression != null && isCastIntentionApplicable(expression, lType)) {

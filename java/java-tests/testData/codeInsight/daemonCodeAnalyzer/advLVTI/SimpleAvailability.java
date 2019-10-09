@@ -9,7 +9,7 @@ class Main {
         var d2 = new int[4];
         <error descr="Cannot infer type: 'var' on variable without initializer">var</error> e;
         var f = <error descr="Array initializer is not allowed here">{ 6 }</error>;
-        var g = (<error descr="Incompatible types. Found: 'int', required: 'null'">g = 7</error>);
+        <error descr="Cannot infer type: variable initializer is self-referencing">var</error> g = (g = 7);
     }
 
     private static  void localVariableType() {
