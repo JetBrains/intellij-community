@@ -24,7 +24,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Consumer;
 import com.intellij.util.io.Decompressor;
@@ -93,7 +92,6 @@ public class PluginInstaller {
     boolean uninstalledWithoutRestart = DynamicPlugins.unloadPlugin((IdeaPluginDescriptorImpl)pluginDescriptor);
     if (uninstalledWithoutRestart) {
       FileUtil.delete(pluginDescriptor.getPath());
-      PluginManagerCore.setPlugins(ArrayUtil.remove(PluginManagerCore.getPlugins(), pluginDescriptor));
     }
     else {
       try {
@@ -252,7 +250,6 @@ public class PluginInstaller {
       IdeaPluginDescriptorImpl targetDescriptor = PluginManagerCore.loadDescriptor(targetFile, PluginManagerCore.PLUGIN_XML);
       if (targetDescriptor != null) {
         DynamicPlugins.loadPlugin(targetDescriptor);
-        PluginManagerCore.setPlugins(ArrayUtil.mergeArrays(PluginManagerCore.getPlugins(), new IdeaPluginDescriptor[]{targetDescriptor}));
       }
     }
   }

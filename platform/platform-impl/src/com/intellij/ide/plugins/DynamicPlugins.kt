@@ -19,6 +19,7 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.util.ArrayUtil
 import com.intellij.util.MemoryDumpHelper
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.SystemProperties
@@ -158,6 +159,8 @@ object DynamicPlugins {
     jdomSerializer.clearSerializationCaches()
     BeanBinding.clearSerializationCaches()
 
+    PluginManagerCore.setPlugins(ArrayUtil.remove(PluginManagerCore.getPlugins(), loadedPluginDescriptor))
+
     val classLoaderUnloaded = loadedPluginDescriptor.unloadClassLoader()
     if (!classLoaderUnloaded && Registry.`is`("ide.plugins.snapshot.on.unload.fail") && MemoryDumpHelper.memoryDumpAvailable()) {
       val snapshotFolder = System.getProperty("snapshots.path", SystemProperties.getUserHome())
@@ -166,6 +169,7 @@ object DynamicPlugins {
       MemoryDumpHelper.captureMemoryDump(snapshotPath)
       GROUP.createNotification("Captured memory snapshot on plugin unload fail: $snapshotPath", NotificationType.WARNING).notify(null)
     }
+
     return classLoaderUnloaded
   }
 
@@ -184,6 +188,7 @@ object DynamicPlugins {
       (ActionManager.getInstance() as ActionManagerImpl).registerPluginActions(pluginDescriptor)
     }
 
+    PluginManagerCore.setPlugins(ArrayUtil.mergeArrays(PluginManagerCore.getPlugins(), arrayOf(pluginDescriptor)))
     application.messageBus.syncPublisher(DynamicPluginListener.TOPIC).pluginLoaded(pluginDescriptor)
   }
 
