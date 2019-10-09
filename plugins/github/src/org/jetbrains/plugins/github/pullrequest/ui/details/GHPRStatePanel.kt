@@ -12,6 +12,7 @@ import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import icons.GithubIcons
+import org.jetbrains.plugins.github.api.data.GHRepositoryPermissionLevel
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestMergeableState
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestState
@@ -19,206 +20,221 @@ import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsBusyState
 import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsSecurityService
 import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsStateService
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
-import org.jetbrains.plugins.github.util.GithubUtil.Delegates.equalVetoingObservable
 import java.awt.FlowLayout
 import java.awt.event.ActionEvent
 import javax.swing.*
 
-internal class GHPRStatePanel(private val model: SingleValueModel<GHPullRequest?>,
-                              private val securityService: GithubPullRequestsSecurityService,
-                              private val busyStateTracker: GithubPullRequestsBusyStateTracker,
-                              private val stateService: GithubPullRequestsStateService)
-  : NonOpaquePanel(VerticalFlowLayout(0, 0)), Disposable {
+object GHPRStatePanel {
+  fun create(model: SingleValueModel<out GHPullRequest?>,
+             securityService: GithubPullRequestsSecurityService,
+             busyStateTracker: GithubPullRequestsBusyStateTracker,
+             stateService: GithubPullRequestsStateService,
+             parentDisposable: Disposable): JComponent {
 
-  private val stateLabel = JLabel().apply {
-    border = JBUI.Borders.empty(UIUtil.DEFAULT_VGAP, 0)
-  }
-  private val accessDeniedPanel = JLabel("Repository write access required to merge pull requests").apply {
-    foreground = UIUtil.getContextHelpForeground()
-  }
-
-  private val closeAction = object : AbstractAction("Close") {
-    override fun actionPerformed(e: ActionEvent?) {
-      state?.run { stateService.close(number) }
+    val stateLabel = JLabel().apply {
+      border = JBUI.Borders.empty(UIUtil.DEFAULT_VGAP, 0)
     }
-  }
-  private val closeButton = JButton(closeAction)
-
-  private val reopenAction = object : AbstractAction("Reopen") {
-    override fun actionPerformed(e: ActionEvent?) {
-      state?.run { stateService.reopen(number) }
+    val accessDeniedLabel = JLabel("Repository write access required to merge pull requests").apply {
+      foreground = UIUtil.getContextHelpForeground()
     }
-  }
-  private val reopenButton = JButton(reopenAction)
-
-  private val mergeAction = object : AbstractAction("Merge...") {
-    override fun actionPerformed(e: ActionEvent?) {
-      state?.run { stateService.merge(number) }
+    val buttonsPanel = createButtons(model, securityService, busyStateTracker, stateService, parentDisposable).apply {
+      border = JBUI.Borders.empty(UIUtil.DEFAULT_VGAP, 0)
     }
-  }
-  private val rebaseMergeAction = object : AbstractAction("Rebase and Merge") {
-    override fun actionPerformed(e: ActionEvent?) {
-      state?.run { stateService.rebaseMerge(number) }
-    }
-  }
-  private val squashMergeAction = object : AbstractAction("Squash and Merge...") {
-    override fun actionPerformed(e: ActionEvent?) {
-      state?.run { stateService.squashMerge(number) }
-    }
-  }
-  private val mergeButton = JBOptionButton(null, null)
 
-  private val browseButton = LinkLabel.create("Open on GitHub") {
-    model.value?.run { BrowserUtil.browse(url) }
-  }.apply {
-    icon = AllIcons.Ide.External_link_arrow
-    setHorizontalTextPosition(SwingConstants.LEFT)
-  }
+    Controller(model, securityService, stateLabel, accessDeniedLabel)
 
-  private val buttonsPanel = NonOpaquePanel(FlowLayout(FlowLayout.LEADING, 0, 0)).apply {
-    border = JBUI.Borders.empty(UIUtil.DEFAULT_VGAP, 0)
-
-    if (Registry.`is`("github.action.pullrequest.state.useapi")) {
-      add(mergeButton)
-      add(closeButton)
-      add(reopenButton)
-    }
-    else {
-      add(browseButton)
+    return NonOpaquePanel(VerticalFlowLayout(0, 0)).apply {
+      add(stateLabel)
+      add(accessDeniedLabel)
+      add(buttonsPanel)
     }
   }
 
-  private var state: State? by equalVetoingObservable<State?>(null) {
-    updateText(it)
-    updateActions(it)
+  private fun createButtons(model: SingleValueModel<out GHPullRequest?>,
+                            securityService: GithubPullRequestsSecurityService,
+                            busyStateTracker: GithubPullRequestsBusyStateTracker,
+                            stateService: GithubPullRequestsStateService,
+                            parentDisposable: Disposable): JComponent {
+    val closeButton = JButton()
+    val reopenButton = JButton()
+
+    val mergeButton = JBOptionButton(null, null)
+
+    val browseButton = LinkLabel.create("Open on GitHub") {
+      model.value?.let { BrowserUtil.browse(it.url) }
+    }.apply {
+      icon = AllIcons.Ide.External_link_arrow
+      setHorizontalTextPosition(SwingConstants.LEFT)
+    }
+
+    ButtonsController(model, securityService, busyStateTracker, stateService, parentDisposable,
+                      closeButton, reopenButton, mergeButton)
+
+    return NonOpaquePanel(FlowLayout(FlowLayout.LEADING, 0, 0)).apply {
+      if (Registry.`is`("github.action.pullrequest.state.useapi")) {
+        add(mergeButton)
+        add(closeButton)
+        add(reopenButton)
+      }
+      else {
+        add(browseButton)
+      }
+    }
   }
 
-  init {
-    isOpaque = false
-    add(stateLabel)
-    add(accessDeniedPanel)
-    add(buttonsPanel)
+  private class Controller(private val model: SingleValueModel<out GHPullRequest?>,
+                           private val securityService: GithubPullRequestsSecurityService,
+                           private val stateLabel: JLabel,
+                           private val accessDeniedLabel: JLabel) {
 
-    fun update() {
-      state = model.value?.let {
-        State(it.number, it.state, GHPullRequestMergeableState.MERGEABLE,
-              it.viewerCanUpdate, it.viewerDidAuthor,
-              securityService.isMergeAllowed(),
-              securityService.isRebaseMergeAllowed(),
-              securityService.isSquashMergeAllowed(),
-              securityService.isMergeForbiddenForProject(),
-              busyStateTracker.isBusy(it.number))
+    init {
+      updateText()
+
+      model.addValueChangedListener {
+        updateText()
       }
     }
 
-    model.addValueChangedListener(this) {
-      update()
-    }
-    update()
+    private fun updateText() {
+      val value = model.value
+      if (value == null) {
+        stateLabel.text = ""
+        stateLabel.icon = null
 
-    busyStateTracker.addPullRequestBusyStateListener(this) {
-      if (it == state?.number)
-        state = state?.copy(busy = busyStateTracker.isBusy(it))
-    }
-  }
-
-  private fun updateText(state: State?) {
-
-    if (state == null) {
-      stateLabel.text = ""
-      stateLabel.icon = null
-
-      accessDeniedPanel.isVisible = false
-    }
-    else {
-      when (state.state) {
-        GHPullRequestState.OPEN -> {
-          when (state.mergeable) {
-            GHPullRequestMergeableState.MERGEABLE -> {
-              stateLabel.icon = AllIcons.RunConfigurations.TestPassed
-              stateLabel.text = "Branch has no conflicts with base branch"
+        accessDeniedLabel.isVisible = false
+      }
+      else {
+        when (value.state) {
+          GHPullRequestState.OPEN -> {
+            when (value.mergeable) {
+              GHPullRequestMergeableState.MERGEABLE -> {
+                stateLabel.icon = AllIcons.RunConfigurations.TestPassed
+                stateLabel.text = "Branch has no conflicts with base branch"
+              }
+              GHPullRequestMergeableState.CONFLICTING -> {
+                stateLabel.icon = AllIcons.RunConfigurations.TestFailed
+                stateLabel.text = "Branch has conflicts that must be resolved"
+              }
+              GHPullRequestMergeableState.UNKNOWN -> {
+                stateLabel.icon = AllIcons.RunConfigurations.TestNotRan
+                stateLabel.text = "Checking for ability to merge automatically..."
+              }
             }
-            GHPullRequestMergeableState.CONFLICTING -> {
-              stateLabel.icon = AllIcons.RunConfigurations.TestFailed
-              stateLabel.text = "Branch has conflicts that must be resolved"
-            }
-            GHPullRequestMergeableState.UNKNOWN -> {
-              stateLabel.icon = AllIcons.RunConfigurations.TestNotRan
-              stateLabel.text = "Checking for ability to merge automatically..."
-            }
+            accessDeniedLabel.isVisible = !securityService.currentUserHasPermissionLevel(GHRepositoryPermissionLevel.TRIAGE)
           }
-          accessDeniedPanel.isVisible = !state.editAllowed
-        }
-        GHPullRequestState.CLOSED -> {
-          stateLabel.icon = GithubIcons.PullRequestClosed
-          stateLabel.text = "Pull request is closed"
-          accessDeniedPanel.isVisible = false
-        }
-        GHPullRequestState.MERGED -> {
-          stateLabel.icon = GithubIcons.PullRequestMerged
-          stateLabel.text = "Pull request is merged"
-          accessDeniedPanel.isVisible = false
+          GHPullRequestState.CLOSED -> {
+            stateLabel.icon = GithubIcons.PullRequestClosed
+            stateLabel.text = "Pull request is closed"
+            accessDeniedLabel.isVisible = false
+          }
+          GHPullRequestState.MERGED -> {
+            stateLabel.icon = GithubIcons.PullRequestMerged
+            stateLabel.text = "Pull request is merged"
+            accessDeniedLabel.isVisible = false
+          }
         }
       }
     }
   }
 
-  private fun updateActions(state: State?) {
-    if (state == null) {
-      reopenAction.isEnabled = false
-      reopenButton.isVisible = false
+  private class ButtonsController(private val model: SingleValueModel<out GHPullRequest?>,
+                                  private val securityService: GithubPullRequestsSecurityService,
+                                  private val busyStateTracker: GithubPullRequestsBusyStateTracker,
+                                  private val stateService: GithubPullRequestsStateService,
+                                  parentDisposable: Disposable,
+                                  private val closeButton: JButton,
+                                  private val reopenButton: JButton,
+                                  private val mergeButton: JBOptionButton) {
 
-      closeAction.isEnabled = false
-      closeButton.isVisible = false
-
-      mergeAction.isEnabled = false
-      rebaseMergeAction.isEnabled = false
-      squashMergeAction.isEnabled = false
-      mergeButton.action = null
-      mergeButton.options = emptyArray()
-      mergeButton.isVisible = false
-
-      browseButton.isVisible = false
+    val closeAction = object : AbstractAction("Close") {
+      override fun actionPerformed(e: ActionEvent?) {
+        model.value?.let { stateService.close(it.number) }
+      }
     }
-    else {
-      reopenButton.isVisible = (state.editAllowed || state.currentUserIsAuthor) && state.state == GHPullRequestState.CLOSED
-      reopenAction.isEnabled = reopenButton.isVisible && !state.busy
+    val reopenAction = object : AbstractAction("Reopen") {
+      override fun actionPerformed(e: ActionEvent?) {
+        model.value?.let { stateService.reopen(it.number) }
+      }
+    }
 
-      closeButton.isVisible = (state.editAllowed || state.currentUserIsAuthor) && state.state == GHPullRequestState.OPEN
-      closeAction.isEnabled = closeButton.isVisible && !state.busy
+    val mergeAction = object : AbstractAction("Merge...") {
+      override fun actionPerformed(e: ActionEvent?) {
+        model.value?.let { stateService.merge(it.number) }
+      }
+    }
+    val rebaseMergeAction = object : AbstractAction("Rebase and Merge") {
+      override fun actionPerformed(e: ActionEvent?) {
+        model.value?.let { stateService.rebaseMerge(it.number) }
+      }
+    }
+    val squashMergeAction = object : AbstractAction("Squash and Merge...") {
+      override fun actionPerformed(e: ActionEvent?) {
+        model.value?.let { stateService.squashMerge(it.number) }
+      }
+    }
 
-      mergeButton.isVisible = state.editAllowed && state.state == GHPullRequestState.OPEN
-      val mergeable = mergeButton.isVisible && state.mergeable == GHPullRequestMergeableState.MERGEABLE && !state.busy && !state.mergeForbidden
-      mergeAction.isEnabled = mergeable
-      rebaseMergeAction.isEnabled = mergeable
-      squashMergeAction.isEnabled = mergeable
+    init {
+      updateActions()
 
-      mergeButton.optionTooltipText = if (state.mergeForbidden) "Merge actions are disabled for this project" else null
+      model.addValueChangedListener {
+        updateActions()
+      }
+      busyStateTracker.addPullRequestBusyStateListener(parentDisposable) {
+        updateActions()
+      }
+      closeButton.action = closeAction
+      reopenButton.action = reopenAction
+    }
 
-      val allowedActions = mutableListOf<Action>()
-      if (state.mergeAllowed) allowedActions.add(mergeAction)
-      if (state.rebaseMergeAllowed) allowedActions.add(rebaseMergeAction)
-      if (state.squashMergeAllowed) allowedActions.add(squashMergeAction)
+    private fun updateActions() {
+      val value = model.value
+      if (value == null) {
+        reopenAction.isEnabled = false
+        reopenButton.isVisible = false
 
-      val action = allowedActions.firstOrNull()
-      val actions = if (allowedActions.size > 1) Array(allowedActions.size - 1) { allowedActions[it + 1] } else emptyArray()
-      mergeButton.action = action
-      mergeButton.options = actions
+        closeAction.isEnabled = false
+        closeButton.isVisible = false
 
-      browseButton.isVisible = true
+        mergeAction.isEnabled = false
+        rebaseMergeAction.isEnabled = false
+        squashMergeAction.isEnabled = false
+        mergeButton.action = null
+        mergeButton.options = emptyArray()
+        mergeButton.isVisible = false
+      }
+      else {
+        val canEdit = securityService.currentUserHasPermissionLevel(GHRepositoryPermissionLevel.TRIAGE) ||
+                      securityService.currentUser == value.author
+
+        reopenButton.isVisible = canEdit && value.state == GHPullRequestState.CLOSED
+        reopenAction.isEnabled = reopenButton.isVisible && !busyStateTracker.isBusy(value.number)
+
+        closeButton.isVisible = canEdit && value.state == GHPullRequestState.OPEN
+        closeAction.isEnabled = closeButton.isVisible && !busyStateTracker.isBusy(value.number)
+
+        val canMerge = securityService.currentUserHasPermissionLevel(GHRepositoryPermissionLevel.WRITE)
+
+        mergeButton.isVisible = canMerge && value.state == GHPullRequestState.OPEN
+        val mergeable = mergeButton.isVisible && value.mergeable == GHPullRequestMergeableState.MERGEABLE &&
+                        !busyStateTracker.isBusy(value.number) &&
+                        !securityService.isMergeForbiddenForProject()
+
+        mergeAction.isEnabled = mergeable
+        rebaseMergeAction.isEnabled = mergeable
+        squashMergeAction.isEnabled = mergeable
+
+        mergeButton.optionTooltipText = if (securityService.isMergeForbiddenForProject()) "Merge actions are disabled for this project" else null
+
+        val allowedActions = mutableListOf<Action>()
+        if (securityService.isMergeAllowed()) allowedActions.add(mergeAction)
+        if (securityService.isRebaseMergeAllowed()) allowedActions.add(rebaseMergeAction)
+        if (securityService.isSquashMergeAllowed()) allowedActions.add(squashMergeAction)
+
+        val action = allowedActions.firstOrNull()
+        val actions = if (allowedActions.size > 1) Array(allowedActions.size - 1) { allowedActions[it + 1] } else emptyArray()
+        mergeButton.action = action
+        mergeButton.options = actions
+      }
     }
   }
-
-  override fun dispose() {}
-
-  private data class State(val number: Long,
-                           val state: GHPullRequestState,
-                           val mergeable: GHPullRequestMergeableState,
-                           val editAllowed: Boolean,
-                           val currentUserIsAuthor: Boolean,
-                           val mergeAllowed: Boolean,
-                           val rebaseMergeAllowed: Boolean,
-                           val squashMergeAllowed: Boolean,
-                           val mergeForbidden: Boolean,
-                           val busy: Boolean)
 }

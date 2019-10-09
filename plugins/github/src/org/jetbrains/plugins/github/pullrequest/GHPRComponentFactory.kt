@@ -210,14 +210,13 @@ internal class GHPRComponentFactory(private val project: Project) {
       border = JBUI.Borders.empty(4, 8, 8, 8)
     }
 
-    val statePanel = GHPRStatePanel(detailsModel,
-                                    dataContext.securityService,
-                                    dataContext.busyStateTracker,
-                                    dataContext.stateService).apply {
+    val statePanel = GHPRStatePanel.create(detailsModel,
+                                           dataContext.securityService,
+                                           dataContext.busyStateTracker,
+                                           dataContext.stateService,
+                                           parentDisposable).apply {
       border = BorderFactory.createCompoundBorder(IdeBorderFactory.createBorder(SideBorder.TOP),
                                                   JBUI.Borders.empty(8))
-    }.also {
-      Disposer.register(parentDisposable, it)
     }
 
     val scrollablePanel = ScrollablePanel(VerticalFlowLayout(0, 0)).apply {
