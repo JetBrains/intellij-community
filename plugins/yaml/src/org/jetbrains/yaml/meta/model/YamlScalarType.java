@@ -16,6 +16,7 @@ import org.jetbrains.yaml.psi.*;
 import javax.swing.*;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 @ApiStatus.Internal
 public abstract class YamlScalarType extends YamlMetaType {
@@ -28,6 +29,12 @@ public abstract class YamlScalarType extends YamlMetaType {
   @Override
   public Field findFeatureByName(@NotNull String name) {
     return null;
+  }
+
+  @NotNull
+  @Override
+  public List<String> computeMissingFields(Set<String> existingFields) {
+    return Collections.emptyList();
   }
 
   @NotNull

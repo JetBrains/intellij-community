@@ -12,6 +12,7 @@ import org.jetbrains.yaml.psi.YAMLScalar;
 import org.jetbrains.yaml.psi.YAMLValue;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @ApiStatus.Internal
 @SuppressWarnings("UnusedReturnValue")
@@ -40,6 +41,16 @@ public class YamlMetaClass extends YamlMetaType {
         .findAny()
         .orElse(null)
     );
+  }
+
+  @NotNull
+  @Override
+  public List<String> computeMissingFields(Set<String> existingFields) {
+    return myFeatures.stream()
+      .filter(Field::isRequired)
+      .map(Field::getName)
+      .filter(name -> !existingFields.contains(name))
+      .collect(Collectors.toList());
   }
 
   @NotNull

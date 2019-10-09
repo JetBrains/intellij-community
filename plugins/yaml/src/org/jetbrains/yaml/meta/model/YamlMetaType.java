@@ -17,6 +17,7 @@ import org.jetbrains.yaml.psi.YAMLValue;
 
 import javax.swing.*;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @ApiStatus.Internal
@@ -55,6 +56,15 @@ public abstract class YamlMetaType {
 
   @Nullable
   public abstract Field findFeatureByName(@NotNull String name);
+
+  /**
+   * Computes the set of {@link Field#getName()}s which are missing in the given set of the existing keys.
+   * Called from {@link org.jetbrains.yaml.meta.impl.YamlMissingKeysInspectionBase}
+   *
+   * @return
+   */
+  @NotNull
+  public abstract List<String> computeMissingFields(Set<String> existingFields);
 
   public void validateKey(@NotNull YAMLKeyValue keyValue, @NotNull ProblemsHolder problemsHolder) {
     //
