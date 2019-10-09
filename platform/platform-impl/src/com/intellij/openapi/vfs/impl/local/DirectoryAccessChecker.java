@@ -29,6 +29,7 @@ import java.util.concurrent.TimeoutException;
 
 import static com.intellij.openapi.util.Pair.pair;
 
+/** An experiment; please do not use (unless you're certain about what you're doing). */
 @ApiStatus.Experimental
 public class DirectoryAccessChecker {
   private DirectoryAccessChecker() { }
