@@ -125,11 +125,11 @@ public class BuildoutConfigPanel extends JPanel {
     myConfiguration.setScriptName(scriptName);
   }
 
-  BuildoutFacetConfiguration getConfiguration() {
+  public BuildoutFacetConfiguration getConfiguration() {
     return myConfiguration;
   }
 
-  void showNoticeText(boolean show) {
+  public void showNoticeText(boolean show) {
     myNoticeTextArea.setVisible(show);
   }
 
