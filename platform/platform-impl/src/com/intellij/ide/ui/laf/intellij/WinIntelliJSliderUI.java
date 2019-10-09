@@ -74,6 +74,12 @@ public class WinIntelliJSliderUI extends BasicSliderUI {
   }
 
   @Override
+  public void setThumbLocation(int x, int y) {
+    super.setThumbLocation(x, y);
+    slider.repaint();
+  }
+
+  @Override
   public void paintTrack(Graphics g) {
     Graphics2D g2 = (Graphics2D)g.create();
     try {
