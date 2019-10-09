@@ -19,6 +19,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Url;
 import com.intellij.util.Urls;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.HttpRequests;
 import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
@@ -30,8 +31,10 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -47,7 +50,7 @@ public final class PluginLogo {
   private static final int PLUGIN_ICON_SIZE = 40;
   private static final int PLUGIN_ICON_SIZE_SCALED = 80;
 
-  private static final Map<String, Pair<PluginLogoIconProvider, PluginLogoIconProvider>> ICONS = new HashMap<>();
+  private static final Map<String, Pair<PluginLogoIconProvider, PluginLogoIconProvider>> ICONS = ContainerUtil.createWeakValueMap();
   private static PluginLogoIconProvider Default;
   private static List<Pair<IdeaPluginDescriptor, LazyPluginLogoIcon>> myPrepareToLoad;
 
