@@ -384,6 +384,7 @@ public class LocalTaskImpl extends LocalTask {
   @Override
   public void setLastPost(final Date date) {
     myLastPost = date;
+    addWorkItem(new WorkItem(date)); // the last item may have pauses in its duration
   }
 
   @Override
