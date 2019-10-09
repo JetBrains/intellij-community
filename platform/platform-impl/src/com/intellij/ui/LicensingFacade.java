@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
+import com.intellij.openapi.application.PermanentInstallationID;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,6 +52,26 @@ public final class LicensingFacade {
     return expirationDate;
   }
 
+  /**
+   * @param productCode
+   * @return a "confirmation stamp" string describing the license obtained by the licensing subsystem for the product with the given productCode.
+   *  returns null, if no license is currently obtained for the product.
+   *
+   *  A confirmation stamp is structured according to the following rules:
+   *  <pre>
+   *  confirmationStamp := key:'license-key' | stamp:'license-server-stamp' | eval:'eval-key'
+   *  <br><br>
+   *  licenseKey := 'licensId'-'licenseJsonBase64'-'signatureBase64'-'certificateBase64'  <br>
+   *    the signed part is licenseJson
+   *  <br><br>
+   *  license-server-stamp := 'timestampLong':'machineId':'signatureType':'signatureBase64':'certificateBase64'[:'intermediate-certificateBase64']
+   *  <br>
+   *    the signed part is 'timestampLong':'machineId' <br>
+   *    machineId should be the same as {@link PermanentInstallationID#get()} returns
+   *   <br><br>
+   *  eval-key := 'expiration-date-long'
+   *  </pre>
+   */
   @Nullable
   public String getConfirmationStamp(String productCode) {
     return confirmationStamps == null? null : confirmationStamps.get(productCode);
