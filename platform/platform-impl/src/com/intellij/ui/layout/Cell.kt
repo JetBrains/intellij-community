@@ -81,7 +81,7 @@ inline fun <reified T : Any> KMutableProperty0<T?>.toNullableBinding(defaultValu
 
 class ValidationInfoBuilder(val component: JComponent) {
   fun error(message: String): ValidationInfo = ValidationInfo(message, component)
-  fun warning(message: String): ValidationInfo = ValidationInfo(message, component).asWarning()
+  fun warning(message: String): ValidationInfo = ValidationInfo(message, component).asWarning().withOKEnabled()
 }
 
 interface CellBuilder<T : JComponent> {
