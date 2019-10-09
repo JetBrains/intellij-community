@@ -18,7 +18,6 @@ package com.intellij.util.indexing.impl;
 
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.indexing.ValueContainer;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Flushable;

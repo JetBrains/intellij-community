@@ -145,7 +145,7 @@ public class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer
           return true;
         });
       }
-      setNeedsCompacting(((UpdatableValueContainer)fromDisk).needsCompacting());
+      setNeedsCompacting(((UpdatableValueContainer<Value>)fromDisk).needsCompacting());
 
       myMerged = newMerged;
       return newMerged;

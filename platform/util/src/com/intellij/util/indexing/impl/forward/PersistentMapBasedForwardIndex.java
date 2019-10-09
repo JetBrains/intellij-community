@@ -82,10 +82,6 @@ public class PersistentMapBasedForwardIndex implements ForwardIndex {
     myPersistentMap.close();
   }
 
-  public boolean isBusyReading() {
-    return myPersistentMap.isBusyReading();
-  }
-
   public boolean containsMapping(int key) throws IOException {
     return myPersistentMap.containsMapping(key);
   }

@@ -45,6 +45,7 @@ public class UpdateData<Key, Value> extends AbstractUpdateData<Key, Value> {
     myForwardIndexUpdate = forwardIndexUpdate;
   }
 
+  @Override
   protected boolean iterateKeys(@NotNull KeyValueUpdateProcessor<? super Key, ? super Value> addProcessor,
                                 @NotNull KeyValueUpdateProcessor<? super Key, ? super Value> updateProcessor,
                                 @NotNull RemovedKeyProcessor<? super Key> removeProcessor) throws StorageException {
@@ -66,11 +67,6 @@ public class UpdateData<Key, Value> extends AbstractUpdateData<Key, Value> {
   @NotNull
   protected ThrowableComputable<InputDataDiffBuilder<Key, Value>, IOException> getCurrentDataEvaluator() {
     return myCurrentDataEvaluator;
-  }
-
-  @NotNull
-  public Map<Key, Value> getNewData() {
-    return myNewData;
   }
 
   @Override
