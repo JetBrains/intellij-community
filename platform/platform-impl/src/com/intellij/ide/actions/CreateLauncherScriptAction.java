@@ -156,7 +156,7 @@ public class CreateLauncherScriptAction extends DumbAwareAction {
     LOG.warn(e);
     String message = ExceptionUtil.getNonEmptyMessage(e, "Internal error");
     Notifications.Bus.notify(
-      new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, "Launcher Script Creation Failed", message, NotificationType.ERROR),
+      new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, "Launcher script creation failed", message, NotificationType.ERROR),
       project);
   }
 
