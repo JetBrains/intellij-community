@@ -4,11 +4,9 @@ package org.jetbrains.plugins.github.pullrequest
 import com.intellij.codeInsight.AutoPopupController
 import com.intellij.ide.DataManager
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.ActionGroup
-import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
-import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -44,12 +42,7 @@ import org.jetbrains.plugins.github.util.GithubImageResizer
 import org.jetbrains.plugins.github.util.LazyCancellableBackgroundProcessValue
 import java.awt.BorderLayout
 import java.awt.event.ActionListener
-import java.awt.event.KeyEvent
-import java.awt.event.MouseAdapter
-import java.awt.event.MouseEvent
 import javax.swing.JComponent
-import javax.swing.KeyStroke
-import javax.swing.SwingUtilities
 import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
 import javax.swing.event.ListSelectionEvent
@@ -118,21 +111,11 @@ internal class GHPRComponentFactory(private val project: Project) {
 
     val list = GithubPullRequestsList(copyPasteManager, avatarIconsProviderFactory, dataContext.listModel).apply {
       emptyText.clear()
-      addMouseListener(object : MouseAdapter() {
-        override fun mouseClicked(e: MouseEvent) {
-          if (SwingUtilities.isLeftMouseButton(e) && e.clickCount >= 2 && ListUtil.isPointOnSelection(this@apply, e.x, e.y)) {
-            openTimelineForSelection(actionDataContext, this@apply)
-            e.consume()
-          }
-        }
-      })
-      registerKeyboardAction(
-        { openTimelineForSelection(actionDataContext, this@apply) },
-        KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0),
-        JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT)
     }.also {
       installPopup(it)
       installSelectionSaver(it, listSelectionHolder)
+      val shortcuts = CompositeShortcutSet(CommonShortcuts.ENTER, CommonShortcuts.DOUBLE_CLICK_1)
+      EmptyAction.registerWithShortcutSet("Github.PullRequest.Timeline.Show", shortcuts, it)
     }
 
     val search = GithubPullRequestSearchPanel(project, autoPopupController, dataContext.searchHolder).apply {
@@ -205,13 +188,6 @@ internal class GHPRComponentFactory(private val project: Project) {
 
       }
     }
-  }
-
-  private fun openTimelineForSelection(actionDataContext: GHPRActionDataContext,
-                                       list: GithubPullRequestsList) {
-    val pullRequest = list.selectedValue
-    val file = GHPRVirtualFile(actionDataContext, pullRequest)
-    FileEditorManager.getInstance(project).openFile(file, true)
   }
 
   private fun installPopup(list: GithubPullRequestsList) {
