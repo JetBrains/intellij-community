@@ -3,7 +3,12 @@ package org.jetbrains.plugins.github.pullrequest.ui.details
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.VerticalFlowLayout
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBOptionButton
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.util.ui.JBUI
@@ -14,16 +19,24 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestMergeableState
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestState
+import org.jetbrains.plugins.github.pullrequest.action.ui.GithubMergeCommitMessageDialog
+import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsBusyStateTracker
 import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsSecurityService
 import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsStateService
+import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
+import org.jetbrains.plugins.github.util.errorOnEdt
+import org.jetbrains.plugins.github.util.handleOnEdt
+import org.jetbrains.plugins.github.util.successOnEdt
 import java.awt.FlowLayout
 import java.awt.event.ActionEvent
 import javax.swing.*
 
 object GHPRStatePanel {
-  fun create(model: SingleValueModel<out GHPullRequestShort?>,
+  fun create(project: Project,
+             model: SingleValueModel<out GHPullRequestShort>,
+             dataProvider: GithubPullRequestDataProvider,
              securityService: GithubPullRequestsSecurityService,
              busyStateTracker: GithubPullRequestsBusyStateTracker,
              stateService: GithubPullRequestsStateService,
@@ -35,7 +48,9 @@ object GHPRStatePanel {
     val accessDeniedLabel = JLabel("Repository write access required to merge pull requests").apply {
       foreground = UIUtil.getContextHelpForeground()
     }
-    val buttonsPanel = createButtons(model, securityService, busyStateTracker, stateService, parentDisposable).apply {
+    val buttonsPanel = createButtons(project, model,
+                                     dataProvider, securityService, busyStateTracker, stateService,
+                                     parentDisposable).apply {
       border = JBUI.Borders.empty(UIUtil.DEFAULT_VGAP, 0)
     }
 
@@ -48,7 +63,9 @@ object GHPRStatePanel {
     }
   }
 
-  private fun createButtons(model: SingleValueModel<out GHPullRequestShort?>,
+  private fun createButtons(project: Project,
+                            model: SingleValueModel<out GHPullRequestShort?>,
+                            dataProvider: GithubPullRequestDataProvider,
                             securityService: GithubPullRequestsSecurityService,
                             busyStateTracker: GithubPullRequestsBusyStateTracker,
                             stateService: GithubPullRequestsStateService,
@@ -58,13 +75,18 @@ object GHPRStatePanel {
 
     val mergeButton = JBOptionButton(null, null)
 
-    ButtonsController(model, securityService, busyStateTracker, stateService, parentDisposable,
-                      closeButton, reopenButton, mergeButton)
+    val errorPanel = HtmlEditorPane().apply {
+      foreground = SimpleTextAttributes.ERROR_ATTRIBUTES.fgColor
+    }
+
+    ButtonsController(project, model, dataProvider, securityService, busyStateTracker, stateService, parentDisposable,
+                      closeButton, reopenButton, mergeButton, errorPanel)
 
     return NonOpaquePanel(FlowLayout(FlowLayout.LEADING, 0, 0)).apply {
-        add(mergeButton)
-        add(closeButton)
-        add(reopenButton)
+      add(mergeButton)
+      add(closeButton)
+      add(reopenButton)
+      add(errorPanel)
     }
   }
 
@@ -128,39 +150,123 @@ object GHPRStatePanel {
     }
   }
 
-  private class ButtonsController(private val model: SingleValueModel<out GHPullRequestShort?>,
+  private class ButtonsController(private val project: Project,
+                                  private val model: SingleValueModel<out GHPullRequestShort?>,
+                                  private val dataProvider: GithubPullRequestDataProvider,
                                   private val securityService: GithubPullRequestsSecurityService,
                                   private val busyStateTracker: GithubPullRequestsBusyStateTracker,
                                   private val stateService: GithubPullRequestsStateService,
                                   parentDisposable: Disposable,
                                   private val closeButton: JButton,
                                   private val reopenButton: JButton,
-                                  private val mergeButton: JBOptionButton) {
+                                  private val mergeButton: JBOptionButton,
+                                  private val errorPanel: HtmlEditorPane) {
 
     val closeAction = object : AbstractAction("Close") {
       override fun actionPerformed(e: ActionEvent?) {
-        model.value?.let { stateService.close(it.number) }
+        model.value?.let {
+          if (!busyStateTracker.acquire(it.number)) return
+          errorPanel.setBody("")
+          stateService.close(EmptyProgressIndicator(), it.number)
+            .errorOnEdt { error ->
+              //language=HTML
+              errorPanel.setBody("<p>Error occurred while closing pull request:</p>" + "<p>${error.message.orEmpty()}</p>")
+            }
+            .handleOnEdt { _, _ ->
+              busyStateTracker.release(it.number)
+            }
+        }
       }
     }
     val reopenAction = object : AbstractAction("Reopen") {
       override fun actionPerformed(e: ActionEvent?) {
-        model.value?.let { stateService.reopen(it.number) }
+        model.value?.let {
+          if (!busyStateTracker.acquire(it.number)) return
+          errorPanel.setBody("")
+          stateService.reopen(EmptyProgressIndicator(), it.number)
+            .errorOnEdt { error ->
+              //language=HTML
+              errorPanel.setBody("<p>Error occurred while reopening pull request:</p>" + "<p>${error.message.orEmpty()}</p>")
+            }
+            .handleOnEdt { _, _ ->
+              busyStateTracker.release(it.number)
+            }
+        }
       }
     }
 
     val mergeAction = object : AbstractAction("Merge...") {
       override fun actionPerformed(e: ActionEvent?) {
-        model.value?.let { stateService.merge(it.number) }
+        model.value?.let {
+          if (it !is GHPullRequest) return
+          if (!busyStateTracker.acquire(it.number)) return
+          errorPanel.setBody("")
+
+          val dialog = GithubMergeCommitMessageDialog(project,
+                                                      "Merge Pull Request",
+                                                      "Merge pull request #${it.number}",
+                                                      it.title)
+          if (!dialog.showAndGet()) {
+            busyStateTracker.release(it.number)
+            return
+          }
+
+          stateService.merge(EmptyProgressIndicator(), it.number, dialog.message, it.headRefOid)
+            .errorOnEdt { error ->
+              //language=HTML
+              errorPanel.setBody("<p>Error occurred while merging pull request:</p>" + "<p>${error.message.orEmpty()}</p>")
+            }
+            .handleOnEdt { _, _ ->
+              busyStateTracker.release(it.number)
+            }
+        }
       }
     }
     val rebaseMergeAction = object : AbstractAction("Rebase and Merge") {
       override fun actionPerformed(e: ActionEvent?) {
-        model.value?.let { stateService.rebaseMerge(it.number) }
+        model.value?.let {
+          if (it !is GHPullRequest) return
+          if (!busyStateTracker.acquire(it.number)) return
+          errorPanel.setBody("")
+
+          stateService.rebaseMerge(EmptyProgressIndicator(), it.number, it.headRefOid)
+            .errorOnEdt { error ->
+              //language=HTML
+              errorPanel.setBody("<p>Error occurred while merging pull request:</p>" + "<p>${error.message.orEmpty()}</p>")
+            }
+            .handleOnEdt { _, _ ->
+              busyStateTracker.release(it.number)
+            }
+        }
       }
     }
     val squashMergeAction = object : AbstractAction("Squash and Merge...") {
       override fun actionPerformed(e: ActionEvent?) {
-        model.value?.let { stateService.squashMerge(it.number) }
+        model.value?.let {
+          if (it !is GHPullRequest) return
+          if (!busyStateTracker.acquire(it.number)) return
+          errorPanel.setBody("")
+
+
+          dataProvider.apiCommitsRequest.successOnEdt { commits ->
+            val body = "* " + StringUtil.join(commits, { it.commit.message }, "\n\n* ")
+            val dialog = GithubMergeCommitMessageDialog(project,
+                                                        "Merge Pull Request",
+                                                        "Merge pull request #${it.number}",
+                                                        body)
+            if (!dialog.showAndGet()) {
+              throw ProcessCanceledException()
+            }
+            dialog.message
+          }.thenCompose { message ->
+            stateService.squashMerge(EmptyProgressIndicator(), it.number, message, it.headRefOid)
+          }.errorOnEdt { error ->
+            //language=HTML
+            errorPanel.setBody("<p>Error occurred while merging pull request:</p>" + "<p>${error.message.orEmpty()}</p>")
+          }.handleOnEdt { _, _ ->
+            busyStateTracker.release(it.number)
+          }
+        }
       }
     }
 

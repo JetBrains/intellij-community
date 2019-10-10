@@ -150,8 +150,8 @@ internal class GHPRFileEditor(progressManager: ProgressManager,
     Disposer.register(loaderPanel, timelinePanel)
     Disposer.register(timelinePanel, loadingIcon)
 
-    val statePanel = GHPRStatePanel.create(detailsModel,
-                                           securityService, busyStateTracker, stateService,
+    val statePanel = GHPRStatePanel.create(project, detailsModel,
+                                           dataProvider, securityService, busyStateTracker, stateService,
                                            this)
 
     val panel = JBUI.Panels.simplePanel(loaderPanel).addToBottom(statePanel).andTransparent()

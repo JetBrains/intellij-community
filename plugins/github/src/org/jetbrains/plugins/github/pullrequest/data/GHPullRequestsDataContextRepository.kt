@@ -94,8 +94,7 @@ internal class GHPullRequestsDataContextRepository(private val project: Project)
     val busyStateTracker = GithubPullRequestsBusyStateTrackerImpl()
     val metadataService = GithubPullRequestsMetadataServiceImpl(progressManager, messageBus, requestExecutor, account.server,
                                                                 repoWithPermissions.path)
-    val stateService = GithubPullRequestsStateServiceImpl(project, progressManager, messageBus, dataLoader,
-                                                          busyStateTracker,
+    val stateService = GithubPullRequestsStateServiceImpl(progressManager, messageBus,
                                                           requestExecutor, account.server, repoWithPermissions.path)
 
     return GHPullRequestsDataContext(gitRemoteCoordinates, repositoryCoordinates, account,

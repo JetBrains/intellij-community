@@ -11,6 +11,7 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Disposer
+import org.jetbrains.plugins.github.util.GithubAsyncUtil.isCancellation
 import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.BiFunction
@@ -110,6 +111,17 @@ fun <T, R> CompletableFuture<T>.handleOnEdt(handler: (T?, Throwable?) -> R): Com
 fun <T, R> CompletableFuture<T>.successOnEdt(handler: (T) -> R): CompletableFuture<R> =
   handleAsync(BiFunction<T?, Throwable?, R> { result: T?, error: Throwable? ->
     result?.let { handler(it) } ?: throw error?.cause ?: IllegalStateException()
+  }, EDT_EXECUTOR)
+
+fun <T> CompletableFuture<T>.errorOnEdt(handler: (Throwable) -> T): CompletableFuture<T> =
+  handleAsync(BiFunction<T?, Throwable?, T> { result: T?, error: Throwable? ->
+    if (result != null) return@BiFunction result
+    if (error != null) {
+      val actualError = if (error is CompletionException) error.cause!! else error
+      if (isCancellation(actualError)) throw ProcessCanceledException()
+      return@BiFunction handler(actualError)
+    }
+    throw IllegalStateException()
   }, EDT_EXECUTOR)
 
 val EDT_EXECUTOR = Executor { runnable -> runInEdt { runnable.run() } }
