@@ -181,12 +181,13 @@ public class PlaybackRunner implements Disposable {
             executeFrom(cmdIndex + 1, context.getBaseDir());
           }
           else {
-            myCallback.message(null, "Stopped", StatusCallback.Type.message);
+            myCallback.message(null, "Stopped: cannot go further", StatusCallback.Type.message);
             myActionCallback.setDone();
           }
         })
         .onError(error -> {
-          myCallback.message(null, "Stopped", StatusCallback.Type.message);
+          myCallback.message(null, "Stopped: " + error, StatusCallback.Type.message);
+          LOG.warn("Callback step stopped with error: " + error, error);
           myActionCallback.setRejected();
         });
     }
