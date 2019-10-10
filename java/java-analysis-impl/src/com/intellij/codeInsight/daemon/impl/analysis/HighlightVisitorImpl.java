@@ -1459,16 +1459,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     }
 
     if (!myHolder.hasErrorResults()) {
-      final String badReturnTypeMessage = PsiMethodReferenceUtil.checkReturnType(expression, result, functionalInterfaceType);
-      if (badReturnTypeMessage != null) {
-        HighlightInfo info =
-          HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(badReturnTypeMessage).create();
-        QuickFixAction.registerQuickFixAction(info, AdjustFunctionContextFix.createFix(expression));
-        myHolder.add(info);
-      }
-    }
-
-    if (!myHolder.hasErrorResults()) {
       if (results.length == 0 || results[0] instanceof MethodCandidateInfo &&
                                  !((MethodCandidateInfo)results[0]).isApplicable() &&
                                  functionalInterfaceType != null || results.length > 1) {
@@ -1500,6 +1490,16 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
           TextRange fixRange = HighlightMethodUtil.getFixRange(referenceNameElement);
           QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, QuickFixFactory.getInstance().createCreateMethodFromUsageFix(expression));
         }
+      }
+    }
+
+    if (!myHolder.hasErrorResults()) {
+      final String badReturnTypeMessage = PsiMethodReferenceUtil.checkReturnType(expression, result, functionalInterfaceType);
+      if (badReturnTypeMessage != null) {
+        HighlightInfo info =
+          HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(badReturnTypeMessage).create();
+        QuickFixAction.registerQuickFixAction(info, AdjustFunctionContextFix.createFix(expression));
+        myHolder.add(info);
       }
     }
   }
