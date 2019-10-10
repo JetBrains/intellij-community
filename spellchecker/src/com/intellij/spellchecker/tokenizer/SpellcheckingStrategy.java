@@ -17,6 +17,7 @@ import com.intellij.spellchecker.quickfixes.RenameTo;
 import com.intellij.spellchecker.quickfixes.SaveTo;
 import com.intellij.spellchecker.quickfixes.SpellCheckerQuickFix;
 import com.intellij.spellchecker.settings.SpellCheckerSettings;
+import com.intellij.util.KeyedLazyInstance;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,7 +32,7 @@ public class SpellcheckingStrategy {
   protected final Tokenizer<PsiComment> myCommentTokenizer = new CommentTokenizer();
   protected final Tokenizer<XmlAttributeValue> myXmlAttributeTokenizer = new XmlAttributeValueTokenizer();
 
-  public static final ExtensionPointName<SpellcheckingStrategy> EP_NAME = ExtensionPointName.create("com.intellij.spellchecker.support");
+  public static final ExtensionPointName<KeyedLazyInstance<SpellcheckingStrategy>> EP_NAME = ExtensionPointName.create("com.intellij.spellchecker.support");
   public static final Tokenizer EMPTY_TOKENIZER = new Tokenizer() {
     @Override
     public void tokenize(@NotNull PsiElement element, TokenConsumer consumer) {
