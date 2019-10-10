@@ -56,10 +56,15 @@ class GitBrancherImpl implements GitBrancher {
 
   @Override
   public void createBranch(@NotNull String name, @NotNull Map<GitRepository, String> startPoints) {
+    createBranch(name, startPoints, false);
+  }
+
+  @Override
+  public void createBranch(@NotNull String name, @NotNull Map<GitRepository, String> startPoints, boolean force) {
     new CommonBackgroundTask(myProject, "Creating branch " + name, null) {
       @Override
       public void execute(@NotNull ProgressIndicator indicator) {
-        newWorker(indicator).createBranch(name, startPoints);
+        newWorker(indicator).createBranch(name, startPoints, force);
       }
     }.runInBackground();
   }

@@ -33,13 +33,16 @@ data class GitNewBranchOptions(val name: String,
                                @get:JvmName("shouldCheckout") val checkout: Boolean = true,
                                @get:JvmName("shouldReset") val reset: Boolean = false)
 
-internal class GitNewBranchDialog(project: Project,
-                                  private val repositories: Collection<GitRepository>,
-                                  dialogTitle: String,
-                                  initialName: String?,
-                                  private val showCheckOutOption: Boolean,
-                                  private val showResetOption: Boolean) : DialogWrapper(project,
+
+internal class GitNewBranchDialog @JvmOverloads constructor(project: Project,
+                                                            private val repositories: Collection<GitRepository>,
+                                                            dialogTitle: String,
+                                                            initialName: String?,
+                                                            private val showCheckOutOption: Boolean,
+                                                            private val showResetOption: Boolean = false,
+                                                            private val localConflictsAllowed: Boolean = false) : DialogWrapper(project,
                                                                                                                                 true) {
+
   private var checkout = true
   private var reset = false
   private var branchName = initialName.orEmpty()
@@ -84,7 +87,7 @@ internal class GitNewBranchDialog(project: Project,
       overwriteCheckbox?.isEnabled = localBranchConflict != null
 
       if (localBranchConflict == null || overwriteCheckbox?.isSelected == true) null // no conflicts or ask to reset
-      else if (localBranchConflict.warning) warning(localBranchConflict.message + getAdditionalDescription())
+      else if (localBranchConflict.warning && localConflictsAllowed) warning(localBranchConflict.message + getAdditionalDescription())
       else error(localBranchConflict.message + if (showResetOption) ". Change the name or overwrite existing branch" else "")
     }
   }

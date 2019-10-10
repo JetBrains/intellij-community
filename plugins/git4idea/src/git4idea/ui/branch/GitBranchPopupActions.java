@@ -184,14 +184,42 @@ class GitBranchPopupActions {
                                               no commits -> OVERWRITE (git checkout -B name startPoint), create (git branch -f name startPoint)
        */
 
-      GitNewBranchOptions options = GitBranchUtil.getNewBranchNameFromUser(myProject, myRepositories, "Create New Branch", null);
+      GitNewBranchOptions options =
+        new GitNewBranchDialog(myProject, myRepositories, "Create New Branch", null, true, true, true).showAndGetOptions();
       if (options != null) {
         GitBrancher brancher = GitBrancher.getInstance(myProject);
         if (options.shouldCheckout()) {
-          brancher.checkoutNewBranch(options.getName(), myRepositories);
+          checkoutNewOrExistingBranch(myProject, myRepositories, HEAD, options);
         }
         else {
-          brancher.createBranch(options.getName(), StreamEx.of(myRepositories).toMap(position -> HEAD));
+          String name = options.getName();
+          if (options.shouldReset()) {
+            boolean hasCommits = GitBranchActionsUtilKt.checkCommitsUnderProgress(myProject, myRepositories, HEAD, name);
+            if (hasCommits) {
+              VcsNotifier.getInstance(myProject).notifyError("New Branch Creation Failed",
+                                                             "Can't overwrite " + name + " branch because some commits can be lost");
+              return;
+            }
+
+            List<GitRepository> currentBranchOfSameName = new ArrayList<>();
+            List<GitRepository> currentBranchOfDifferentName = new ArrayList<>();
+            for (GitRepository repo: myRepositories) {
+              if (StringUtil.equals(repo.getCurrentBranchName(), name)) {
+                currentBranchOfSameName.add(repo);
+              }
+              else {
+                currentBranchOfDifferentName.add(repo);
+              }
+            }
+
+            //git checkout -B for current branch conflict and execute git branch -f for others
+            brancher.checkoutNewBranchStartingFrom(name, HEAD, true, currentBranchOfSameName, null);
+            brancher.createBranch(name, StreamEx.of(currentBranchOfDifferentName).toMap(position -> HEAD), true);
+          }
+          else {
+            brancher.createBranch(name, StreamEx.of(myRepositories).filter(r -> r.getBranches().findLocalBranch(name) == null)
+              .toMap(position -> HEAD));
+          }
         }
       }
     }
@@ -598,7 +626,7 @@ class GitBranchPopupActions {
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       GitNewBranchOptions newBranchOptions =
-        new GitNewBranchDialog(myProject, myRepositories, "Checkout New Branch From " + myBranchName, "", false, true)
+        new GitNewBranchDialog(myProject, myRepositories, "Checkout New Branch From " + myBranchName, "", false, true, true)
           .showAndGetOptions();
       if (newBranchOptions != null) {
         checkoutNewOrExistingBranch(myProject, myRepositories, myBranchName + "^0", newBranchOptions);

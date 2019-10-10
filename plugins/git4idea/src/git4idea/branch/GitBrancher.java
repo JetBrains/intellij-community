@@ -59,6 +59,16 @@ public interface GitBrancher {
   void createBranch(@NotNull String name, @NotNull Map<GitRepository, String> startPoints);
 
   /**
+   * Creates new branch without checking it out.
+   *
+   * @param name        name of the new branch.
+   * @param startPoints position (commit hash) where the branch should be created, for each repository.
+   *                    Such position can be indicated by any valid Git reference (commit hash, branch name, etc.)
+   * @param force       create and overwrite existing if needed
+   */
+  void createBranch(@NotNull String name, @NotNull Map<GitRepository, String> startPoints, boolean force);
+
+  /**
    * <p>Creates new tag on the selected reference.</p>
    *  @param name           the name of new tag.
    * @param reference      the reference which tag will point to.

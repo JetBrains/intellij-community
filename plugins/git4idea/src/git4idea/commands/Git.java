@@ -155,6 +155,10 @@ public interface Git {
   @NotNull
   GitCommandResult branchCreate(@NotNull GitRepository repository, @NotNull String branchName, @NotNull String startPoint);
 
+
+  @NotNull
+  GitCommandResult branchCreate(@NotNull GitRepository repository, @NotNull String branchName, @NotNull String startPoint, boolean force);
+
   @NotNull
   GitCommandResult renameBranch(@NotNull GitRepository repository,
                                 @NotNull String currentName,

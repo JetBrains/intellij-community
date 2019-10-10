@@ -26,13 +26,14 @@ internal class GitCreateBranchOperation(
   git: Git,
   uiHandler: GitBranchUiHandler,
   private val branchName: String,
-  private val startPoints: Map<GitRepository, String>) : GitBranchOperation(project, git, uiHandler, startPoints.keys) {
+  private val startPoints: Map<GitRepository, String>,
+  private val force: Boolean) : GitBranchOperation(project, git, uiHandler, startPoints.keys) {
 
   public override fun execute() {
     var fatalErrorHappened = false
     while (hasMoreRepositories() && !fatalErrorHappened) {
       val repository = next()
-      val result = myGit.branchCreate(repository, branchName, startPoints[repository]!!)
+      val result = myGit.branchCreate(repository, branchName, startPoints[repository]!!, force);
 
       if (result.success()) {
         repository.update()

@@ -402,8 +402,20 @@ public class GitImpl extends GitImplBase {
   @Override
   @NotNull
   public GitCommandResult branchCreate(@NotNull GitRepository repository, @NotNull String branchName, @NotNull String startPoint) {
+    return branchCreate(repository, branchName, startPoint, false);
+  }
+
+  @Override
+  @NotNull
+  public GitCommandResult branchCreate(@NotNull GitRepository repository,
+                                       @NotNull String branchName,
+                                       @NotNull String startPoint,
+                                       boolean force) {
     final GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.BRANCH);
     h.setStdoutSuppressed(false);
+    if (force) {
+      h.addParameters("-f");
+    }
     h.addParameters(branchName);
     h.addParameters(startPoint);
     return runCommand(h);

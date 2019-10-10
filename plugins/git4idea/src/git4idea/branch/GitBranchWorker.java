@@ -72,8 +72,12 @@ public final class GitBranchWorker {
   }
 
   public void createBranch(@NotNull String name, @NotNull Map<GitRepository, String> startPoints) {
+    createBranch(name, startPoints, false);
+  }
+
+  public void createBranch(@NotNull String name, @NotNull Map<GitRepository, String> startPoints, boolean force) {
     updateInfo(startPoints.keySet());
-    new GitCreateBranchOperation(myProject, myGit, myUiHandler, name, startPoints).execute();
+    new GitCreateBranchOperation(myProject, myGit, myUiHandler, name, startPoints, force).execute();
   }
 
   public void createNewTag(@NotNull String name, @NotNull String reference, @NotNull List<? extends GitRepository> repositories) {
