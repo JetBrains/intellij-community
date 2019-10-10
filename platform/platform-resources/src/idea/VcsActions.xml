@@ -125,8 +125,7 @@
     </group>
 
     <group id="ChangesViewPopupMenu">
-      <reference ref="CheckinProject"/>
-      <reference ref="ChangesView.ToggleCommitUi"/>
+      <reference ref="CheckinFiles"/>
       <reference ref="ChangesView.Revert"/>
       <reference ref="ChangesView.Move"/>
       <reference ref="Diff.ShowDiff"/>
