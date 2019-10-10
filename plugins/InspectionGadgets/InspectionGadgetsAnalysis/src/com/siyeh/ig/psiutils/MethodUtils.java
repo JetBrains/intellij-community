@@ -438,16 +438,15 @@ public class MethodUtils {
     return best;
   }
 
+  /**
+   * Returns true if the supplied method is a static factory method,
+   * that is a static method which returns an instance of the containing class
+   */
   public static boolean isFactoryMethod(PsiMethod method) {
     if (!method.hasModifierProperty(PsiModifier.STATIC)) {
       return false;
     }
-    final PsiType returnType = method.getReturnType();
-    if (!(returnType instanceof PsiClassType)) {
-      return false;
-    }
-    final PsiClassType classType = (PsiClassType)returnType;
-    final PsiClass aClass = classType.resolve();
+    final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(method.getReturnType());
     return aClass != null && aClass.equals(method.getContainingClass());
   }
 }
