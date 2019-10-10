@@ -21,9 +21,9 @@ internal abstract class GHListLoaderPanel<L : GHListLoader>(protected val listLo
   : BorderLayoutPanel(), Disposable {
 
   private var userScrolled = false
-  private val scrollPane = ScrollPaneFactory.createScrollPane(contentComponent,
-                                                              ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
-                                                              ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER).apply {
+  val scrollPane = ScrollPaneFactory.createScrollPane(contentComponent,
+                                                      ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+                                                      ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER).apply {
     isOpaque = false
     viewport.isOpaque = false
     border = JBUI.Borders.empty()

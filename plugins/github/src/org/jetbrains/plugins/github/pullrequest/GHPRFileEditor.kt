@@ -14,6 +14,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.componentsList.components.ScrollablePanel
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.UserDataHolderBase
+import com.intellij.ui.IdeBorderFactory
+import com.intellij.ui.SideBorder
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.AsyncProcessIcon
 import com.intellij.util.ui.ComponentWithEmptyText
@@ -31,13 +33,19 @@ import org.jetbrains.plugins.github.pullrequest.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.data.GHPRReviewServiceAdapter
 import org.jetbrains.plugins.github.pullrequest.data.GHPRTimelineLoader
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestDataProvider
+import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsBusyStateTracker
+import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsSecurityService
+import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsStateService
+import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRStatePanel
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.*
 import org.jetbrains.plugins.github.ui.GHListLoaderPanel
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
 import org.jetbrains.plugins.github.util.GithubUIUtil
 import org.jetbrains.plugins.github.util.handleOnEdt
+import java.awt.event.AdjustmentListener
 import java.beans.PropertyChangeListener
 import java.beans.PropertyChangeSupport
+import javax.swing.BorderFactory
 import javax.swing.JComponent
 import javax.swing.JPanel
 
@@ -45,6 +53,9 @@ internal class GHPRFileEditor(progressManager: ProgressManager,
                               private val fileTypeRegistry: FileTypeRegistry,
                               private val project: Project,
                               private val editorFactory: EditorFactory,
+                              securityService: GithubPullRequestsSecurityService,
+                              busyStateTracker: GithubPullRequestsBusyStateTracker,
+                              stateService: GithubPullRequestsStateService,
                               private val dataProvider: GithubPullRequestDataProvider,
                               requestExecutor: GithubApiRequestExecutor,
                               repository: GHRepositoryCoordinates,
@@ -95,7 +106,7 @@ internal class GHPRFileEditor(progressManager: ProgressManager,
       isVisible = false
     }
 
-    contentPanel = object : ScrollablePanel(), ComponentWithEmptyText, Disposable {
+    val timelinePanel = object : ScrollablePanel(), ComponentWithEmptyText, Disposable {
       init {
         isOpaque = false
         border = JBUI.Borders.empty(UIUtil.LARGE_VGAP, UIUtil.DEFAULT_HGAP * 2)
@@ -121,7 +132,7 @@ internal class GHPRFileEditor(progressManager: ProgressManager,
       override fun dispose() {}
     }
 
-    val loaderPanel = object : GHListLoaderPanel<GHPRTimelineLoader>(loader, contentPanel, true) {
+    val loaderPanel = object : GHListLoaderPanel<GHPRTimelineLoader>(loader, timelinePanel, true) {
       override val loadingText = ""
 
       override fun createCenterPanel(content: JComponent) = Wrapper(content)
@@ -136,10 +147,30 @@ internal class GHPRFileEditor(progressManager: ProgressManager,
       }
     }
     Disposer.register(this, loaderPanel)
-    Disposer.register(loaderPanel, contentPanel)
-    Disposer.register(contentPanel, loadingIcon)
+    Disposer.register(loaderPanel, timelinePanel)
+    Disposer.register(timelinePanel, loadingIcon)
 
-    mainPanel.setContent(loaderPanel)
+    val statePanel = GHPRStatePanel.create(detailsModel,
+                                           securityService, busyStateTracker, stateService,
+                                           this)
+
+    val panel = JBUI.Panels.simplePanel(loaderPanel).addToBottom(statePanel).andTransparent()
+
+    val verticalScrollBar = loaderPanel.scrollPane.verticalScrollBar
+    verticalScrollBar.addAdjustmentListener(AdjustmentListener {
+
+      if (verticalScrollBar.maximum - verticalScrollBar.visibleAmount >= 1) {
+        statePanel.border = BorderFactory.createCompoundBorder(IdeBorderFactory.createBorder(SideBorder.TOP),
+                                                               JBUI.Borders.empty(8))
+      }
+      else {
+        statePanel.border = JBUI.Borders.empty(8)
+      }
+
+    })
+
+    mainPanel.setContent(panel)
+    contentPanel = timelinePanel
   }
 
   private fun createItemComponentFactory(reviewService: GHPRReviewServiceAdapter,

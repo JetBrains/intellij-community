@@ -27,6 +27,9 @@ internal class GHPREditorProvider : FileEditorProvider, DumbAware {
 
     return GHPRFileEditor(ProgressManager.getInstance(), FileTypeRegistry.getInstance(),
                           project, EditorFactory.getInstance(),
+                          context.dataContext.securityService,
+                          context.dataContext.busyStateTracker,
+                          context.dataContext.stateService,
                           context.pullRequestDataProvider!!,
                           context.requestExecutor,
                           context.repositoryCoordinates,

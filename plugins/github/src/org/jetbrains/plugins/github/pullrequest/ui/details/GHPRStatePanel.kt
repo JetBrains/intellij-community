@@ -2,12 +2,9 @@
 package org.jetbrains.plugins.github.pullrequest.ui.details
 
 import com.intellij.icons.AllIcons
-import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.ui.VerticalFlowLayout
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.components.JBOptionButton
-import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -15,6 +12,7 @@ import icons.GithubIcons
 import org.jetbrains.plugins.github.api.data.GHRepositoryPermissionLevel
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestMergeableState
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestState
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsBusyStateTracker
 import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsSecurityService
@@ -25,7 +23,7 @@ import java.awt.event.ActionEvent
 import javax.swing.*
 
 object GHPRStatePanel {
-  fun create(model: SingleValueModel<out GHPullRequest?>,
+  fun create(model: SingleValueModel<out GHPullRequestShort?>,
              securityService: GithubPullRequestsSecurityService,
              busyStateTracker: GithubPullRequestsBusyStateTracker,
              stateService: GithubPullRequestsStateService,
@@ -50,7 +48,7 @@ object GHPRStatePanel {
     }
   }
 
-  private fun createButtons(model: SingleValueModel<out GHPullRequest?>,
+  private fun createButtons(model: SingleValueModel<out GHPullRequestShort?>,
                             securityService: GithubPullRequestsSecurityService,
                             busyStateTracker: GithubPullRequestsBusyStateTracker,
                             stateService: GithubPullRequestsStateService,
@@ -60,29 +58,17 @@ object GHPRStatePanel {
 
     val mergeButton = JBOptionButton(null, null)
 
-    val browseButton = LinkLabel.create("Open on GitHub") {
-      model.value?.let { BrowserUtil.browse(it.url) }
-    }.apply {
-      icon = AllIcons.Ide.External_link_arrow
-      setHorizontalTextPosition(SwingConstants.LEFT)
-    }
-
     ButtonsController(model, securityService, busyStateTracker, stateService, parentDisposable,
                       closeButton, reopenButton, mergeButton)
 
     return NonOpaquePanel(FlowLayout(FlowLayout.LEADING, 0, 0)).apply {
-      if (Registry.`is`("github.action.pullrequest.state.useapi")) {
         add(mergeButton)
         add(closeButton)
         add(reopenButton)
-      }
-      else {
-        add(browseButton)
-      }
     }
   }
 
-  private class Controller(private val model: SingleValueModel<out GHPullRequest?>,
+  private class Controller(private val model: SingleValueModel<out GHPullRequestShort?>,
                            private val securityService: GithubPullRequestsSecurityService,
                            private val stateLabel: JLabel,
                            private val accessDeniedLabel: JLabel) {
@@ -106,19 +92,24 @@ object GHPRStatePanel {
       else {
         when (value.state) {
           GHPullRequestState.OPEN -> {
-            when (value.mergeable) {
-              GHPullRequestMergeableState.MERGEABLE -> {
-                stateLabel.icon = AllIcons.RunConfigurations.TestPassed
-                stateLabel.text = "Branch has no conflicts with base branch"
+            if (value is GHPullRequest)
+              when (value.mergeable) {
+                GHPullRequestMergeableState.MERGEABLE -> {
+                  stateLabel.icon = AllIcons.RunConfigurations.TestPassed
+                  stateLabel.text = "Branch has no conflicts with base branch"
+                }
+                GHPullRequestMergeableState.CONFLICTING -> {
+                  stateLabel.icon = AllIcons.RunConfigurations.TestFailed
+                  stateLabel.text = "Branch has conflicts that must be resolved"
+                }
+                GHPullRequestMergeableState.UNKNOWN -> {
+                  stateLabel.icon = AllIcons.RunConfigurations.TestNotRan
+                  stateLabel.text = "Checking for ability to merge automatically..."
+                }
               }
-              GHPullRequestMergeableState.CONFLICTING -> {
-                stateLabel.icon = AllIcons.RunConfigurations.TestFailed
-                stateLabel.text = "Branch has conflicts that must be resolved"
-              }
-              GHPullRequestMergeableState.UNKNOWN -> {
-                stateLabel.icon = AllIcons.RunConfigurations.TestNotRan
-                stateLabel.text = "Checking for ability to merge automatically..."
-              }
+            else {
+              stateLabel.icon = GithubIcons.PullRequestOpen
+              stateLabel.text = "Pull request is open"
             }
             accessDeniedLabel.isVisible = !securityService.currentUserHasPermissionLevel(GHRepositoryPermissionLevel.TRIAGE)
           }
@@ -137,7 +128,7 @@ object GHPRStatePanel {
     }
   }
 
-  private class ButtonsController(private val model: SingleValueModel<out GHPullRequest?>,
+  private class ButtonsController(private val model: SingleValueModel<out GHPullRequestShort?>,
                                   private val securityService: GithubPullRequestsSecurityService,
                                   private val busyStateTracker: GithubPullRequestsBusyStateTracker,
                                   private val stateService: GithubPullRequestsStateService,
@@ -214,8 +205,8 @@ object GHPRStatePanel {
 
         val canMerge = securityService.currentUserHasPermissionLevel(GHRepositoryPermissionLevel.WRITE)
 
-        mergeButton.isVisible = canMerge && value.state == GHPullRequestState.OPEN
-        val mergeable = mergeButton.isVisible && value.mergeable == GHPullRequestMergeableState.MERGEABLE &&
+        mergeButton.isVisible = canMerge && value.state == GHPullRequestState.OPEN && value is GHPullRequest
+        val mergeable = mergeButton.isVisible && value is GHPullRequest && value.mergeable == GHPullRequestMergeableState.MERGEABLE &&
                         !busyStateTracker.isBusy(value.number) &&
                         !securityService.isMergeForbiddenForProject()
 

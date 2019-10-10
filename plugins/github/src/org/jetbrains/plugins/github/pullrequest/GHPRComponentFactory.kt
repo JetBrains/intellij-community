@@ -19,9 +19,6 @@ import com.intellij.ui.components.JBPanelWithEmptyText
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import git4idea.GitCommit
-import net.miginfocom.layout.CC
-import net.miginfocom.layout.LC
-import net.miginfocom.swing.MigLayout
 import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
@@ -42,7 +39,6 @@ import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRChangesModel
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRChangesModelImpl
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRDescriptionPanel
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRMetadataPanel
-import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRStatePanel
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
 import org.jetbrains.plugins.github.util.CachingGithubUserAvatarLoader
 import org.jetbrains.plugins.github.util.GitRemoteUrlCoordinates
@@ -50,8 +46,6 @@ import org.jetbrains.plugins.github.util.GithubImageResizer
 import org.jetbrains.plugins.github.util.LazyCancellableBackgroundProcessValue
 import java.awt.BorderLayout
 import java.awt.event.ActionListener
-import java.awt.event.AdjustmentListener
-import javax.swing.BorderFactory
 import javax.swing.JComponent
 import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
@@ -210,15 +204,6 @@ internal class GHPRComponentFactory(private val project: Project) {
       border = JBUI.Borders.empty(4, 8, 8, 8)
     }
 
-    val statePanel = GHPRStatePanel.create(detailsModel,
-                                           dataContext.securityService,
-                                           dataContext.busyStateTracker,
-                                           dataContext.stateService,
-                                           parentDisposable).apply {
-      border = BorderFactory.createCompoundBorder(IdeBorderFactory.createBorder(SideBorder.TOP),
-                                                  JBUI.Borders.empty(8))
-    }
-
     val scrollablePanel = ScrollablePanel(VerticalFlowLayout(0, 0)).apply {
       isOpaque = false
       add(metaPanel)
@@ -227,34 +212,18 @@ internal class GHPRComponentFactory(private val project: Project) {
     val scrollPane = ScrollPaneFactory.createScrollPane(scrollablePanel, true).apply {
       viewport.isOpaque = false
       isOpaque = false
-
-      verticalScrollBar.addAdjustmentListener(AdjustmentListener {
-        if (verticalScrollBar.maximum - verticalScrollBar.visibleAmount >= 1) {
-          statePanel.border = BorderFactory.createCompoundBorder(IdeBorderFactory.createBorder(SideBorder.TOP),
-                                                                 JBUI.Borders.empty(8))
-        }
-        else {
-          statePanel.border = JBUI.Borders.empty(8)
-        }
-      })
     }
 
     scrollPane.isVisible = detailsModel.value != null
-    statePanel.isVisible = detailsModel.value != null
 
     detailsModel.addValueChangedListener {
       scrollPane.isVisible = detailsModel.value != null
-      statePanel.isVisible = detailsModel.value != null
     }
 
-    return JBPanelWithEmptyText().apply {
-      layout = MigLayout(LC().flowY().fill()
-                           .gridGap("0", "0")
-                           .insets("0", "0", "0", "0"))
+    return JBPanelWithEmptyText(BorderLayout()).apply {
       isOpaque = false
 
-      add(scrollPane, CC().minWidth("0").minHeight("0").growX().growY().growPrioY(0).shrinkPrioY(0))
-      add(statePanel, CC().growX().growY().growPrioY(1).shrinkPrioY(1).pushY())
+      add(scrollPane, BorderLayout.CENTER)
     }
   }
 

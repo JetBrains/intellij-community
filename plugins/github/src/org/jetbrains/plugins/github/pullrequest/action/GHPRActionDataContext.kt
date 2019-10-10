@@ -12,7 +12,7 @@ import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestDataProvid
 import org.jetbrains.plugins.github.pullrequest.ui.GithubPullRequestsListSelectionHolder
 import org.jetbrains.plugins.github.util.GitRemoteUrlCoordinates
 
-class GHPRActionDataContext internal constructor(private val dataContext: GHPullRequestsDataContext,
+class GHPRActionDataContext internal constructor(internal val dataContext: GHPullRequestsDataContext,
                                                  private val selectionHolder: GithubPullRequestsListSelectionHolder,
                                                  val avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory) {
 
