@@ -160,6 +160,14 @@ public class DarculaSliderUI(b: JComponent? = null) : BasicSliderUI(b as JSlider
     slider.repaint()
   }
 
+  override fun getBaseline(c: JComponent?, width: Int, height: Int): Int {
+    if(slider.orientation ==  SwingConstants.HORIZONTAL) {
+      return thumbOverhang + focusBorderThickness + slider.insets.top+borderThickness
+    } else {
+      return super.getBaseline(c, width, height)
+    }
+  }
+
   override fun paintTrack(g: Graphics) {
     val g2d = g.create() as Graphics2D
     g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
@@ -219,10 +227,10 @@ public class DarculaSliderUI(b: JComponent? = null) : BasicSliderUI(b as JSlider
       tickRect.x = trackRect.x + 1
       tickRect.y = trackRect.y + focusBorderThickness + thumbOverhang + tickTop
       tickRect.width = trackRect.width
-      tickRect.height = if (slider.paintTicks) majorTickHeight + tickBottom else 0
+      tickRect.height = if (slider.paintTicks) tickLength else 0
     }
     else {
-      tickRect.width = if (slider.paintTicks)  majorTickHeight + tickBottom else 0
+      tickRect.width = if (slider.paintTicks) tickLength else 0
       if (slider.componentOrientation.isLeftToRight) {
         tickRect.x = trackRect.x + focusBorderThickness + thumbOverhang + tickTop
       }
@@ -232,6 +240,10 @@ public class DarculaSliderUI(b: JComponent? = null) : BasicSliderUI(b as JSlider
       tickRect.y = trackRect.y + 1
       tickRect.height = trackRect.height
     }
+  }
+
+  override fun getTickLength(): Int {
+    return majorTickHeight + tickBottom
   }
 
   override fun installDefaults(slider: JSlider?) {
@@ -259,9 +271,6 @@ public class DarculaSliderUI(b: JComponent? = null) : BasicSliderUI(b as JSlider
     g.color = if(slider.isEnabled) tickColor else disabledTickColor
     g.drawLine(0, y, majorTickHeight, y)
   }
-
-
-
 
   private val thumbHalfWidth = JBUI.scale(7)
   private val focusedThumbHalfWidth = thumbHalfWidth + focusBorderThickness
