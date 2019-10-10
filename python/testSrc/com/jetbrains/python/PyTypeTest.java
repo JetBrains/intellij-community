@@ -3591,6 +3591,24 @@ public class PyTypeTest extends PyTestCase {
     );
   }
 
+  // PY-33663
+  public void testAnnotatedSelfReturnProperty() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> doTest("A",
+                   "from typing import TypeVar\n" +
+                   "\n" +
+                   "T = TypeVar(\"T\")\n" +
+                   "\n" +
+                   "class A:\n" +
+                   "    @property\n" +
+                   "    def foo(self: T) -> T:\n" +
+                   "        pass\n" +
+                   "\n" +
+                   "expr = A().foo")
+    );
+  }
+
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {
     return ImmutableList.of(TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile()).withTracing(),
                             TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()).withTracing());
