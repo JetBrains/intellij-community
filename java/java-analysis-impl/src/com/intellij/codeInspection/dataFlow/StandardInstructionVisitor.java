@@ -377,7 +377,11 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       if (paramCount == argCount || method.isVarArgs() && argCount >= paramCount - 1) {
         argValues = new DfaValue[paramCount];
         if (varargCall) {
-          argValues[paramCount - 1] = factory.createTypeValue(paramList.getParameters()[paramCount - 1].getType(), Nullability.NOT_NULL);
+          DfaFactMap facts = DfaFactMap.EMPTY
+            .with(DfaFactType.TYPE_CONSTRAINT, factory.createDfaType(paramList.getParameters()[paramCount - 1].getType()).asConstraint())
+            .with(DfaFactType.NULLABILITY, DfaNullability.NOT_NULL)
+            .with(DfaFactType.SPECIAL_FIELD_VALUE, SpecialField.ARRAY_LENGTH.withValue(factory.getInt(argCount - paramCount + 1)));
+          argValues[paramCount - 1] = factory.getFactFactory().createValue(facts);
         }
       }
     }
@@ -530,7 +534,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       if (method != null) {
         CustomMethodHandlers.CustomMethodHandler handler = CustomMethodHandlers.find(method);
         if (handler != null) {
-          DfaValue result = handler.getMethodResult(callArguments, state, factory);
+          DfaValue result = handler.getMethodResult(callArguments, state, factory, method);
           if (result != null) {
             return result;
           }
