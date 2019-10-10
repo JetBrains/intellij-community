@@ -283,7 +283,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     getRepositoryBrowser().getStatusText()
       .clear()
       .appendText(SvnBundle.message("repository.browser.no.locations.added.info"))
-      .appendSecondaryText(SvnBundle.message("repository.browser.add.location.action.description"), SimpleTextAttributes.LINK_ATTRIBUTES,
+      .appendSecondaryText(SvnBundle.message("repository.browser.add.location.action.description"), SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES,
                            e -> addLocation(getRepositoryBrowser()));
     return panel;
   }
