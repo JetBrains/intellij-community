@@ -23,7 +23,8 @@
                     beanClass="com.intellij.jps.impl.JpsPluginBean"/>
 
     <extensionPoint name="codeInsight.containerProvider"
-                    interface="com.intellij.codeInsight.ContainerProvider"/>
+                    interface="com.intellij.codeInsight.ContainerProvider"
+                    dynamic="true"/>
 
     <extensionPoint name="preloadingActivity"
                     interface="com.intellij.openapi.application.PreloadingActivity"

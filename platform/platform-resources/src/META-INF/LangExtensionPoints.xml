@@ -30,7 +30,8 @@
                     area="IDEA_PROJECT"/>
     <extensionPoint name="highlightErrorFilter"
                     interface="com.intellij.codeInsight.highlighting.HighlightErrorFilter"
-                    area="IDEA_PROJECT"/>
+                    area="IDEA_PROJECT"
+                    dynamic="true"/>
     <extensionPoint name="errorQuickFixProvider"
                     interface="com.intellij.codeInsight.daemon.impl.analysis.ErrorQuickFixProvider"/>
 
@@ -69,11 +70,13 @@
       <with attribute="implementationClass" implements="com.intellij.codeInsight.highlighting.BraceMatcher"/>
     </extensionPoint>
     <extensionPoint name="quoteHandler"
-                    beanClass="com.intellij.codeInsight.editorActions.QuoteHandlerEP">
+                    beanClass="com.intellij.codeInsight.editorActions.QuoteHandlerEP"
+                    dynamic="true">
       <with attribute="className" implements="com.intellij.codeInsight.editorActions.QuoteHandler"/>
     </extensionPoint>
     <extensionPoint name="extendWordSelectionHandler"
-                    interface="com.intellij.codeInsight.editorActions.ExtendWordSelectionHandler"/>
+                    interface="com.intellij.codeInsight.editorActions.ExtendWordSelectionHandler"
+                    dynamic="true"/>
     <extensionPoint name="basicWordSelectionFilter"
                     interface="com.intellij.openapi.util.Condition"/>
     <extensionPoint name="typedHandler"
@@ -651,7 +654,7 @@
       <with attribute="implementationClass" implements="com.intellij.refactoring.rename.ResolveSnapshotProvider"/>
     </extensionPoint>
 
-    <extensionPoint name="renameInputValidator" interface="com.intellij.refactoring.rename.RenameInputValidator"/>
+    <extensionPoint name="renameInputValidator" interface="com.intellij.refactoring.rename.RenameInputValidator" dynamic="true"/>
     <extensionPoint name="renameFileActionProvider" interface="com.intellij.refactoring.actions.RenameFileActionProvider"/>
 
     <extensionPoint name="findUsagesHandlerFactory" interface="com.intellij.find.findUsages.FindUsagesHandlerFactory" area="IDEA_PROJECT"/>
@@ -908,7 +911,7 @@
                     interface="com.intellij.refactoring.listeners.RefactoringElementListenerProvider"
                     area="IDEA_PROJECT"/>
 
-    <extensionPoint name="problemFileHighlightFilter" interface="com.intellij.openapi.util.Condition" area="IDEA_PROJECT"/>
+    <extensionPoint name="problemFileHighlightFilter" interface="com.intellij.openapi.util.Condition" area="IDEA_PROJECT" dynamic="true"/>
 
     <extensionPoint name="problemHighlightFilter" interface="com.intellij.codeInsight.daemon.ProblemHighlightFilter"/>
 
