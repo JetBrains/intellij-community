@@ -1,3 +1,4 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.remote;
 
 import com.google.common.collect.Iterables;
@@ -15,7 +16,7 @@ import java.util.List;
  * @author traff
  */
 public abstract class PathMappingProvider {
-  public static ExtensionPointName<PathMappingProvider> EP_NAME = ExtensionPointName.create("com.intellij.remote.pathMappingProvider");
+  public static final ExtensionPointName<PathMappingProvider> EP_NAME = ExtensionPointName.create("com.intellij.remote.pathMappingProvider");
 
   public static List<PathMappingProvider> getSuitableMappingProviders(final RemoteSdkAdditionalData data) {
     return Lists
