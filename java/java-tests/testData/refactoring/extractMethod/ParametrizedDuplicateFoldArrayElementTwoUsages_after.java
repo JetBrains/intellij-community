@@ -10,9 +10,9 @@ class DeclaredOutputVariable {
     }
 
     @Nullable
-    private String newMethod(String s2, int i, String x) {
-        if (s2 == null) return null;
-        String s = s2;
+    private String newMethod(String s1, int i, String x) {
+        if (s1 == null) return null;
+        String s = s1;
         System.out.println(s.charAt(i) + x);
         return s;
     }

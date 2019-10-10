@@ -147,7 +147,7 @@ class ParametersFolder {
           !Comparing.equal(nameInfo.names[0], data.name) &&
           !Comparing.equal(nameInfo.names[0], defaultName)) {
         data.name = nameInfo.names[0];
-        setUniqueName(data, nameGenerator, scope, mostRanked);
+        setUniqueName(data, nameGenerator, mostRanked, codeStyleManager);
       }
     }
 
@@ -176,17 +176,15 @@ class ParametersFolder {
   }
 
   private static void setUniqueName(@NotNull VariableData data, @NotNull UniqueNameGenerator nameGenerator,
-                                    @NotNull LocalSearchScope scope, @NotNull PsiExpression expr) {
+                                    @NotNull PsiExpression expr, @NotNull JavaCodeStyleManager codeStyleManager) {
     String name = data.name;
     int idx = 1;
     while (true) {
-      if (nameGenerator.isUnique(name, "", "")) {
-        final PsiVariable definedVariable = PsiResolveHelper.SERVICE.getInstance(expr.getProject()).resolveReferencedVariable(name, expr);
-        if (definedVariable == null || !scope.containsRange(expr.getContainingFile(), definedVariable.getTextRange())) {
-          data.name = name;
-          nameGenerator.addExistingName(name);
-          break;
-        }
+      if (nameGenerator.isUnique(name, "", "") &&
+          name.equals(codeStyleManager.suggestUniqueVariableName(name, expr, true))) {
+        data.name = name;
+        nameGenerator.addExistingName(name);
+        break;
       }
       name = data.name + idx++;
     }
