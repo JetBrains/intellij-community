@@ -117,7 +117,6 @@ public class PluginGroups {
       "com.intellij.appengine",
       "org.intellij.grails",
       "com.intellij.gwt",
-      "com.intellij.vaadin",
       "JBoss Seam:com.intellij.seam,com.intellij.seam.pages,com.intellij.seam.pageflow",
       "JBoss jBPM:JBPM",
       "Struts:com.intellij.struts2",
