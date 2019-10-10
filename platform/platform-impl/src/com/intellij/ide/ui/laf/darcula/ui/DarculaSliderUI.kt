@@ -171,7 +171,7 @@ public class DarculaSliderUI(b: JComponent? = null) : BasicSliderUI(b as JSlider
   override fun paintTrack(g: Graphics) {
     val g2d = g.create() as Graphics2D
     g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
-    g2d.paint = trackColor
+    g2d.paint = if(slider.isEnabled) trackColor else disabledTrackColor
     try {
       if (slider.orientation == SwingConstants.HORIZONTAL) {
         val y = thumbRect.y + focusBorderThickness + thumbOverhang - trackThickness
