@@ -568,13 +568,11 @@ public class LogLoadedApplicationClassesAgent {
     String resourceName = info.name + ".class";
     try (InputStream is = classLoader.getResourceAsStream(resourceName)) {
       if (is == null) {
-        log("Class " + info.name + " does not have resource in classloader!");
         return ClassVersionAssertOutcome.NOT_FOUND;
       }
 
       try (DataInputStream dis = new DataInputStream(is)) {
         if (dis.readInt() != 0xcafebabe) {
-          log("Class " + info.name + " does not look like a JVM .class file");
           return ClassVersionAssertOutcome.ERROR;
         }
 
@@ -592,7 +590,6 @@ public class LogLoadedApplicationClassesAgent {
              Java 8    52
              Java 9    53
            */
-          log("Class " + info.name + " is too old. It's version is " + major + " bust be at least 50 (aka 1.6)");
           return ClassVersionAssertOutcome.TOO_OLD;
         }
 
