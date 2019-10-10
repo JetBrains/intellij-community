@@ -62,7 +62,7 @@ open class CommonCheckinFilesAction : AbstractCommonCheckinAction() {
   }
 
   protected open fun isApplicableRoot(file: VirtualFile, status: FileStatus, dataContext: VcsContext): Boolean =
-    status != FileStatus.UNKNOWN && status != FileStatus.IGNORED
+    (file.isDirectory || status != FileStatus.NOT_CHANGED) && status != FileStatus.IGNORED
 
   override fun getRoots(dataContext: VcsContext): Array<FilePath> = dataContext.selectedFilePaths
 
