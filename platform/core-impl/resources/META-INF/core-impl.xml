@@ -1,0 +1,40 @@
+<idea-plugin>
+  <extensionPoints>
+    <extensionPoint name="virtualFileSystem" beanClass="com.intellij.openapi.vfs.impl.VirtualFileManagerImpl$VirtualFileSystemBean">
+      <with attribute="implementationClass" implements="com.intellij.openapi.vfs.VirtualFileSystem"/>
+    </extensionPoint>
+    <extensionPoint name="psi.treeChangePreprocessor"
+                    interface="com.intellij.psi.impl.PsiTreeChangePreprocessor"
+                    area="IDEA_PROJECT"/>
+  </extensionPoints>
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.intellij.diagnostic.PluginProblemReporter"
+                        serviceImplementation="com.intellij.diagnostic.PluginProblemReporterImpl"/>
+    <applicationService serviceImplementation="com.intellij.diagnostic.PerformanceWatcher" preload="true"/>
+    <applicationService serviceInterface="com.intellij.openapi.application.ApplicationInfo"
+                        serviceImplementation="com.intellij.openapi.application.impl.ApplicationInfoImpl"/>
+
+    <projectService serviceInterface="com.intellij.psi.PsiManager"
+                    serviceImplementation="com.intellij.psi.impl.PsiManagerImpl" preload="true"/>
+    <applicationService serviceInterface="com.intellij.psi.impl.DocumentCommitProcessor"
+                        serviceImplementation="com.intellij.psi.impl.DocumentCommitThread"/>
+    <projectService serviceInterface="com.intellij.psi.SmartPointerManager"
+                    serviceImplementation="com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl"/>
+    <projectService serviceInterface="com.intellij.psi.impl.file.PsiDirectoryFactory"
+                    serviceImplementation="com.intellij.psi.impl.file.PsiDirectoryFactoryImpl"/>
+    <projectService serviceInterface="com.intellij.pom.PomModel"
+                    serviceImplementation="com.intellij.pom.core.impl.PomModelImpl"/>
+
+    <projectService serviceInterface="com.intellij.psi.util.CachedValuesManager"
+                    serviceImplementation="com.intellij.util.CachedValuesManagerImpl"/>
+    <applicationService serviceInterface="com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry"
+                        serviceImplementation="com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistryImpl"/>
+    <projectService serviceInterface="com.intellij.psi.util.PsiModificationTracker"
+                    serviceImplementation="com.intellij.psi.impl.PsiModificationTrackerImpl"/>
+    <applicationService serviceInterface="com.intellij.lang.PsiBuilderFactory"
+                        serviceImplementation="com.intellij.lang.impl.PsiBuilderFactoryImpl"/>
+    <projectService serviceInterface="com.intellij.util.CachedValuesFactory"
+                    serviceImplementation="com.intellij.psi.impl.PsiCachedValuesFactory"/>
+    <projectService serviceImplementation="com.intellij.psi.impl.source.resolve.ResolveCache"/>
+  </extensions>
+</idea-plugin>

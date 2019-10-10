@@ -537,7 +537,8 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
     return build;
   }
 
-  void registerExtensionPoints(@NotNull ExtensionsAreaImpl area, @NotNull ComponentManager componentManager) {
+  @ApiStatus.Internal
+  public void registerExtensionPoints(@NotNull ExtensionsAreaImpl area, @NotNull ComponentManager componentManager) {
     ContainerDescriptor containerDescriptor;
     boolean clonePoint = true;
     if (componentManager.getPicoContainer().getParent() == null) {

@@ -1,0 +1,15 @@
+<idea-plugin>
+  <extensionPoints>
+    <extensionPoint qualifiedName="Pythonid.dialectsTokenSetContributor" interface="com.jetbrains.python.PythonDialectsTokenSetContributor"/>
+    <extensionPoint qualifiedName="Pythonid.pyReferenceResolveProvider" interface="com.jetbrains.python.psi.resolve.PyReferenceResolveProvider"/>
+  </extensionPoints>
+  <extensions defaultExtensionNs="com.intellij">
+    <fileType name="Python"
+              language="Python"
+              extensions="py;pyw;"
+              implementationClass="com.jetbrains.python.PythonFileType"
+              fieldName="INSTANCE"/>
+    <projectService serviceInterface="com.jetbrains.python.psi.types.TypeEvalContextCache"
+                    serviceImplementation="com.jetbrains.python.psi.types.TypeEvalContextCacheImpl"/>
+  </extensions>
+</idea-plugin>

@@ -1,0 +1,47 @@
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+  <id>com.intellij</id>
+  <name>IDEA CORE</name>
+
+  <xi:include href="/META-INF/python-psi-api.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/META-INF/python-psi-impl.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/META-INF/core-api.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/META-INF/core-impl.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/META-INF/projectModel-api.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/META-INF/projectModel-impl.xml" xpointer="xpointer(/idea-plugin/*)"/>
+<!--  <xi:include href="/META-INF/editor-ui-api.xml" xpointer="xpointer(/idea-plugin/*)"/>-->
+<!--  <xi:include href="/META-INF/editor-ui-ex.xml" xpointer="xpointer(/idea-plugin/*)"/>-->
+  <xi:include href="/META-INF/analysis-api.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/META-INF/analysis-impl.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/META-INF/indexing-api.xml" xpointer="xpointer(/idea-plugin/*)"/>
+
+  <extensions defaultExtensionNs="com.intellij">
+<!--    <projectService serviceInterface="com.intellij.openapi.roots.impl.ModifiableModelCommitterService"-->
+<!--                    serviceImplementation="com.intellij.openapi.roots.impl.DummyModifiableModelCommitterService"-->
+<!--                    overrides="true"/>-->
+<!--    <applicationService serviceInterface="com.jetbrains.python.module.PyModuleService"-->
+<!--                        serviceImplementation="com.jetbrains.python.module.MockPyModuleService"/>-->
+    <applicationService serviceInterface="com.intellij.openapi.components.impl.stores.IComponentStore"
+                        serviceImplementation="com.intellij.openapi.components.impl.stores.MockPsiComponentStore"/>
+    <projectService serviceInterface="com.intellij.openapi.components.impl.stores.IComponentStore"
+                        serviceImplementation="com.intellij.openapi.components.impl.stores.MockPsiComponentStore"/>
+    <applicationService serviceInterface="com.intellij.openapi.vfs.encoding.EncodingManager"
+                        serviceImplementation="com.intellij.core.CoreEncodingProjectManager"/>
+    <projectService serviceInterface="com.intellij.psi.PsiDocumentManager"
+                        serviceImplementation="com.intellij.core.CorePsiDocumentManager"/>
+    <applicationService serviceInterface="com.intellij.openapi.progress.ProgressManager"
+                        serviceImplementation="com.intellij.openapi.progress.impl.CoreProgressManager"/>
+  </extensions>
+
+  <project-components>
+    <component>
+      <interface-class>com.intellij.openapi.roots.ProjectRootManager</interface-class>
+      <implementation-class>com.intellij.openapi.roots.impl.ProjectRootManagerImpl</implementation-class>
+      <loadForDefaultProject/>
+    </component>
+    <component>
+      <interface-class>com.intellij.openapi.module.ModuleManager</interface-class>
+      <implementation-class>com.intellij.openapi.module.impl.SingleModuleManager</implementation-class>
+      <loadForDefaultProject/>
+    </component>
+  </project-components>
+</idea-plugin>

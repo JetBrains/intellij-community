@@ -6,6 +6,7 @@
 
   <module value="com.intellij.modules.python"/>
 
+  <xi:include href="/META-INF/python-psi-api.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/META-INF/python-psi-impl.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
   <!-- Enable command-line language -->
@@ -18,18 +19,12 @@
     <nameSuggestionProvider implementation="com.jetbrains.python.refactoring.PyNameSuggestionProvider"/>
     <methodNavigationOffsetProvider implementation="com.jetbrains.python.codeInsight.PyMethodNavigationOffsetProvider"/>
     <copyPastePreProcessor implementation="com.jetbrains.python.editor.PythonCopyPasteProcessor"/>
-    <fileType name="Python"
-              language="Python"
-              extensions="py;pyw;"
-              implementationClass="com.jetbrains.python.PythonFileType"
-              fieldName="INSTANCE"/>
     <fileType name="Qt UI file" extensions="ui" implementationClass="com.jetbrains.pyqt.QtUIFileType" fieldName="INSTANCE"/>
     <fileType name="XML" language="XML" extensions="qrc"/>
     <fileTypeDetector implementation="com.jetbrains.python.PyFileTypeDetector"/>
     <editorHighlighterProvider filetype="Python" implementationClass="com.jetbrains.python.PyEditorHighlighterProvider"/>
     <lang.syntaxHighlighterFactory language="Python" implementationClass="com.jetbrains.python.highlighting.PySyntaxHighlighterFactory"/>
     <lang.braceMatcher language="Python" implementationClass="com.jetbrains.python.PyBraceMatcher"/>
-    <lang.parserDefinition language="Python" implementationClass="com.jetbrains.python.PythonParserDefinition"/>
     <lang.commenter language="Python" implementationClass="com.jetbrains.python.PythonCommenter"/>
     <lang.foldingBuilder language="Python" implementationClass="com.jetbrains.python.PythonFoldingBuilder"/>
     <lang.findUsagesProvider language="Python" implementationClass="com.jetbrains.python.findUsages.PythonFindUsagesProvider"/>
@@ -106,9 +101,6 @@
     <lang.tokenSeparatorGenerator language="Python" implementationClass="com.jetbrains.python.PyTokenSeparatorGenerator"/>
 
     <projectService serviceImplementation="com.jetbrains.python.configuration.PyConfigurableInterpreterList"/>
-
-    <projectService serviceInterface="com.jetbrains.python.psi.types.TypeEvalContextCache"
-                    serviceImplementation="com.jetbrains.python.psi.types.TypeEvalContextCacheImpl"/>
 
     <projectService serviceImplementation="com.jetbrains.python.inspections.PyCompatibilityInspectionAdvertiserSettings"/>
     <projectService serviceImplementation="com.jetbrains.python.packaging.PyPackagingSettings"/>
@@ -670,7 +662,6 @@
     <extensionPoint qualifiedName="Pythonid.knownDecoratorProvider" interface="com.jetbrains.python.psi.PyKnownDecoratorProvider"/>
     <extensionPoint qualifiedName="Pythonid.documentationLinkProvider" interface="com.jetbrains.python.documentation.PythonDocumentationLinkProvider"/>
     <extensionPoint qualifiedName="Pythonid.importCandidateProvider" interface="com.jetbrains.python.codeInsight.imports.PyImportCandidateProvider"/>
-    <extensionPoint qualifiedName="Pythonid.dialectsTokenSetContributor" interface="com.jetbrains.python.PythonDialectsTokenSetContributor"/>
     <extensionPoint qualifiedName="Pythonid.runConfigurationExtension" interface="com.jetbrains.python.run.PythonRunConfigurationExtension"/>
     <extensionPoint qualifiedName="Pythonid.remoteInterpreterManager" interface="com.jetbrains.python.remote.PythonRemoteInterpreterManager"/>
     <extensionPoint qualifiedName="Pythonid.remoteSkeletonGeneratorFactory" interface="com.jetbrains.python.remote.PyRemoteSkeletonGeneratorFactory"/>
@@ -678,7 +669,6 @@
     <extensionPoint qualifiedName="Pythonid.remoteConsoleProcessCreator" interface="com.jetbrains.python.console.PythonConsoleRemoteProcessCreator"/>
     <extensionPoint qualifiedName="Pythonid.keywordArgumentProvider" interface="com.jetbrains.python.psi.impl.PyKeywordArgumentProvider"/>
     <extensionPoint qualifiedName="Pythonid.canonicalPathProvider" interface="com.jetbrains.python.psi.resolve.PyCanonicalPathProvider"/>
-    <extensionPoint qualifiedName="Pythonid.pyReferenceResolveProvider" interface="com.jetbrains.python.psi.resolve.PyReferenceResolveProvider"/>
     <extensionPoint qualifiedName="Pythonid.breakpointHandler" interface="com.jetbrains.python.debugger.PyBreakpointHandlerFactory"/>
     <extensionPoint qualifiedName="Pythonid.consoleOptionsProvider" interface="com.jetbrains.python.console.PyConsoleOptionsProvider"/>
     <extensionPoint qualifiedName="Pythonid.pyRootTypeProvider" interface="com.jetbrains.python.module.PyRootTypeProvider"/>

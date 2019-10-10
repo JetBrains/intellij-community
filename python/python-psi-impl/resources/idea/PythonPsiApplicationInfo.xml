@@ -1,0 +1,16 @@
+<component>
+  <version major="1" minor="0" eap="true"/>
+  <company name="JetBrains s.r.o." url="https://www.jetbrains.com"/>
+  <build number="__BUILD_NUMBER__" date="__BUILD_DATE__"/>
+
+  <logo url="/artwork/xxx.png" textcolor="3e506c" />
+  <about url="/artwork/xxx.png" foreground="192c40" linkColor="011b7e" logoX="300" logoY="265" logoW="75" logoH="30"/>
+  <icon size12="/artwork/xxx.png" size16="/artwork/xxx.png" size32="/artwork/xxx.png"/>
+  <names product="PythonPsi"/>
+
+  <welcome-screen logo-url="/artwork/xxx.png"/>
+
+  <plugins url="https://plugins.jetbrains.com/"/>
+  <update-urls check="https://www.jetbrains.com/updates/updates.xml"
+               patches="https://download.jetbrains.com/objc/"/>
+</component>

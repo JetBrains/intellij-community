@@ -40,6 +40,7 @@
                              implementationClass="com.jetbrains.python.psi.impl.PyStringLiteralExpressionManipulator"/>
     <lang.elementManipulator forClass="com.jetbrains.python.psi.PyKeywordArgument"
                              implementationClass="com.jetbrains.python.psi.impl.PyKeywordArgumentManipulator"/>
+    <lang.parserDefinition language="Python" implementationClass="com.jetbrains.python.PythonParserDefinition"/>
 
     <moduleService serviceInterface="com.jetbrains.python.psi.resolve.PythonPathCache"
                    serviceImplementation="com.jetbrains.python.psi.resolve.PythonModulePathCache"/>
@@ -133,8 +134,6 @@
 
     <!-- Type from ancestors -->
     <typeProvider implementation="com.jetbrains.python.codeInsight.typing.PyAncestorTypeProvider" order="last"/>
-
-
 
 
   </extensions>

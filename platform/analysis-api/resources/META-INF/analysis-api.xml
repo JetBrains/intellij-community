@@ -1,0 +1,9 @@
+<idea-plugin>
+  <extensionPoints>
+    <extensionPoint name="languageInjector"
+                    interface="com.intellij.psi.LanguageInjector"/>
+  </extensionPoints>
+  <extensions defaultExtensionNs="com.intellij">
+    <projectService serviceImplementation="com.intellij.psi.search.scope.packageSet.NamedScopeManager"/>
+  </extensions>
+</idea-plugin>
