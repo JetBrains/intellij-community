@@ -41,7 +41,7 @@ public class InferenceSessionContainer {
     final PsiSubstitutor callSession = findNestedSubstitutor(((PsiCallExpression)returnExpression).getArgumentList(), null);
     if (callSession == null) {
       final InferenceSession inferenceSession =
-        ExpressionCompatibilityConstraint.reduceExpressionCompatibilityConstraint(session, returnExpression, returnType, false);
+        ExpressionCompatibilityConstraint.reduceExpressionCompatibilityConstraint(session, returnExpression, returnType);
       if (inferenceSession != null && inferenceSession != session) {
         registerNestedSession(inferenceSession);
         session.propagateVariables(inferenceSession);

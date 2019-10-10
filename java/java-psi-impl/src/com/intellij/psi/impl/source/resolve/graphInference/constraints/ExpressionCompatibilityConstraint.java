@@ -93,7 +93,7 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
     }
 
     if (myExpression instanceof PsiCall) {
-      final InferenceSession callSession = reduceExpressionCompatibilityConstraint(session, myExpression, myT, true);
+      final InferenceSession callSession = reduceExpressionCompatibilityConstraint(session, myExpression, myT);
       if (callSession == null) {
         return false;
       }
@@ -128,8 +128,7 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
 
   public static InferenceSession reduceExpressionCompatibilityConstraint(InferenceSession session,
                                                                          PsiExpression expression,
-                                                                         PsiType targetType,
-                                                                         boolean registerErrorOnFailure) {
+                                                                         PsiType targetType) {
     if (!PsiPolyExpressionUtil.isPolyExpression(expression)) {
       return session;
     }
@@ -195,12 +194,8 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
             session.registerIncompatibleErrorMessage(message);
           }
         }
-        return null;
       }
-      else if (registerErrorOnFailure) {
-        session.registerIncompatibleErrorMessage("Failed to resolve argument");
-        return null;
-      }
+      return null;
     }
     return session;
   }

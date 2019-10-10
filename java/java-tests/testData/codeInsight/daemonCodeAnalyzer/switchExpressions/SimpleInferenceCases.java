@@ -23,7 +23,7 @@ class MyTest {
         });
     String s3 = foo(() -> switch (i) {default -> bar();});
     String s4 = foo(() -> switch (i) {default -> { yield bar();}});
-    String s5 = foo(<error descr="Incompatible types. Found: 'java.lang.Integer', required: 'java.lang.String'">() -> switch (i) {default -> { yield 1;}}</error>);
+    String s5 = <error descr="Incompatible types. Found: 'java.lang.Integer', required: 'java.lang.String'">foo(() -> switch (i) {default -> { yield 1;}});</error>
     String s6 = switch (i) {
       case 1 -> <error descr="Bad type in switch expression: int cannot be converted to java.lang.String">2</error>;
       default -> {
