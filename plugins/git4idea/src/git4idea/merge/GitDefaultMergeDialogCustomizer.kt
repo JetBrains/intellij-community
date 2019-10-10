@@ -8,6 +8,9 @@ import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.history.VcsRevisionNumber
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.ui.components.JBLabel
+import com.intellij.ui.components.labels.LinkLabel
+import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.impl.HashImpl
 import com.intellij.xml.util.XmlStringUtil
@@ -23,6 +26,7 @@ import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import java.io.File
 import java.io.IOException
+import javax.swing.JPanel
 
 open class GitDefaultMergeDialogCustomizer(
   private val project: Project
@@ -208,6 +212,11 @@ fun getSingleCurrentBranchName(roots: Collection<GitRepository>): String? {
     .distinct()
     .singleOrNull()
 }
+
+internal fun getTitleWithShowDetailsAction(title: String, action: () -> Unit): JPanel =
+  BorderLayoutPanel()
+    .addToCenter(JBLabel(title).setCopyable(true))
+    .addToRight(LinkLabel.create("Show Details", action))
 
 private data class RefInfo(val hash: Hash, val branchName: String?) {
   val presentable: String = branchName ?: hash.toShortString()
