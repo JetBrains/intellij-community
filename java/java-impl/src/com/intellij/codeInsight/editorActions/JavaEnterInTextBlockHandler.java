@@ -19,6 +19,7 @@ public class JavaEnterInTextBlockHandler extends EnterInStringLiteralHandler {
 
   @Override
   public Result postProcessEnter(@NotNull PsiFile file, @NotNull Editor editor, @NotNull DataContext dataContext) {
+    if (!(file instanceof PsiJavaFile)) return super.postProcessEnter(file, editor, dataContext);
     PsiDocumentManager.getInstance(file.getProject()).commitDocument(editor.getDocument());
     PsiLiteralExpressionImpl textBlock = getTextBlock(file, editor.getCaretModel().getOffset());
     if (textBlock == null) return super.postProcessEnter(file, editor, dataContext);
@@ -83,7 +84,6 @@ public class JavaEnterInTextBlockHandler extends EnterInStringLiteralHandler {
 
   @Nullable
   private static PsiLiteralExpressionImpl getTextBlock(@NotNull PsiFile file, int offset) {
-    if (!(file instanceof PsiJavaFile)) return null;
     PsiJavaToken token = ObjectUtils.tryCast(file.findElementAt(offset), PsiJavaToken.class);
     if (token == null || token.getTokenType() != JavaTokenType.TEXT_BLOCK_LITERAL) return null;
     return ObjectUtils.tryCast(token.getParent(), PsiLiteralExpressionImpl.class);

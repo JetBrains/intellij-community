@@ -7,10 +7,8 @@ import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.ElementType;
-import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -114,20 +112,6 @@ public class JavaQuoteHandler extends SimpleTokenSetQuoteHandler implements Java
       }
     }
     return super.hasNonClosedLiteral(editor, iterator, offset);
-  }
-
-  @Override
-  public boolean needSemicolonAfter(@NotNull PsiElement element) {
-    PsiLiteralExpressionImpl literal = ObjectUtils.tryCast(element.getParent(), PsiLiteralExpressionImpl.class);
-    if (literal == null || literal.getLiteralElementType() != JavaTokenType.TEXT_BLOCK_LITERAL) return false;
-    PsiJavaToken token = ObjectUtils.tryCast(literal.getNextSibling(), PsiJavaToken.class);
-    if (token != null && token.getTokenType() == JavaTokenType.SEMICOLON) return false;
-    String text = literal.getText();
-    if (text.indexOf('\n') != -1) return false;
-    PsiVariable variable = ObjectUtils.tryCast(literal.getParent(), PsiVariable.class);
-    if (variable != null && variable.getInitializer() == literal) return true;
-    PsiAssignmentExpression assignment = ObjectUtils.tryCast(literal.getParent(), PsiAssignmentExpression.class);
-    return assignment != null && assignment.getRExpression() == literal;
   }
 
   @Override

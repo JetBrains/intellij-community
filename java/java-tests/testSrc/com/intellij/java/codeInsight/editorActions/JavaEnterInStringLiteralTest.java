@@ -47,10 +47,6 @@ public class JavaEnterInStringLiteralTest extends LightJavaCodeInsightTestCase {
     doTest();
   }
 
-  public void testNoSemicolon() {
-    doTest();
-  }
-
   public void testEnter() {
     doTest();
   }
