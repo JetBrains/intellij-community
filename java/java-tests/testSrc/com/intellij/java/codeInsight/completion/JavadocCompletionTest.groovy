@@ -671,6 +671,13 @@ class Foo {
     assert !TemplateManagerImpl.getTemplateState(myFixture.editor)
   }
 
+  void "test insert link to method in a q-named class"() {
+    myFixture.configureByText 'a.java', "/** a. java.io.File#liFi<caret> */ interface Foo {}"
+    myFixture.completeBasic()
+    myFixture.type('\n')
+    myFixture.checkResult "import java.io.File;\n\n/** a. {@link File#listFiles()} */ interface Foo {}"
+  }
+
   void "test insert link to field"() {
     myFixture.configureByText 'a.java', "/** a. #fo<caret> */ interface Foo { int foo; }}"
     myFixture.completeBasic()
