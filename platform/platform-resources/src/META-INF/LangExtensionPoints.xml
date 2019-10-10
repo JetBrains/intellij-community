@@ -556,7 +556,7 @@
       <with attribute="implementationClass" implements="com.intellij.psi.Weigher"/>
     </extensionPoint>
 
-    <extensionPoint name="completion.contributor" beanClass="com.intellij.codeInsight.completion.CompletionContributorEP">
+    <extensionPoint name="completion.contributor" beanClass="com.intellij.codeInsight.completion.CompletionContributorEP" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.completion.CompletionContributor"/>
     </extensionPoint>
 

@@ -76,7 +76,7 @@
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.methodImplementor" interface="com.intellij.codeInsight.MethodImplementor"/>
     <extensionPoint qualifiedName="com.intellij.javaExpressionSurrounder" interface="com.intellij.codeInsight.generation.surroundWith.JavaExpressionSurrounder"/>
-    <extensionPoint qualifiedName="com.intellij.unscrambleSupport" interface="com.intellij.unscramble.UnscrambleSupport"/>
+    <extensionPoint qualifiedName="com.intellij.unscrambleSupport" interface="com.intellij.unscramble.UnscrambleSupport" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.java.refactoring.chainCallExtractor" interface="com.intellij.refactoring.chainCall.ChainCallExtractor"/>
     <extensionPoint qualifiedName="com.intellij.java.inspection.bulkMethodInfo" interface="com.intellij.codeInspection.bulkOperation.BulkMethodInfoProvider"/>
     <extensionPoint qualifiedName="com.intellij.java.externalAnnotation" interface="com.intellij.codeInsight.externalAnnotation.AnnotationProvider"/>
@@ -177,7 +177,7 @@
                     interface="com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportCommunicator"/>
 
     <!--new project wizard-->
-    <extensionPoint qualifiedName="com.intellij.projectWizard.projectCategory" interface="com.intellij.ide.projectWizard.ProjectCategory"/>
+    <extensionPoint qualifiedName="com.intellij.projectWizard.projectCategory" interface="com.intellij.ide.projectWizard.ProjectCategory" dynamic="true"/>
 
     <!-- both EP implementation classes requires constructor injection (our plugins fixed, but 3rd-party not) -->
     <extensionPoint qualifiedName="com.intellij.projectImportProvider" interface="com.intellij.projectImport.ProjectImportProvider"/>
