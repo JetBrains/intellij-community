@@ -26,12 +26,21 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.Stack;
+import com.siyeh.ig.callMatcher.CallMatcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import static com.intellij.psi.CommonClassNames.*;
+import static com.siyeh.ig.callMatcher.CallMatcher.staticCall;
+
 public class DfaPsiUtil {
+
+  private static final CallMatcher NON_NULL_VAR_ARG = CallMatcher.anyOf(
+    staticCall(JAVA_UTIL_LIST, "of"),
+    staticCall(JAVA_UTIL_SET, "of"),
+    staticCall(JAVA_UTIL_MAP, "ofEntries"));
 
   public static boolean isFinalField(PsiVariable var) {
     return var.hasModifierProperty(PsiModifier.FINAL) && !var.hasModifierProperty(PsiModifier.TRANSIENT) && var instanceof PsiField;
@@ -248,7 +257,7 @@ public class DfaPsiUtil {
   private static Nullability getLambdaParameterNullability(@NotNull PsiMethod method, int parameterIndex, int lambdaParameterIndex) {
     PsiClass type = method.getContainingClass();
     if(type != null) {
-      if(CommonClassNames.JAVA_UTIL_OPTIONAL.equals(type.getQualifiedName())) {
+      if(JAVA_UTIL_OPTIONAL.equals(type.getQualifiedName())) {
         String methodName = method.getName();
         if((methodName.equals("map") || methodName.equals("filter") || methodName.equals("ifPresent") || methodName.equals("flatMap"))
           && parameterIndex == 0 && lambdaParameterIndex == 0) {
@@ -266,7 +275,7 @@ public class DfaPsiUtil {
       if (containingClass != null && containingClass.isEnum()) {
         PsiParameter[] parameters = method.getParameterList().getParameters();
         if ("values".equals(methodName)) return parameters.length == 0;
-        return parameters.length == 1 && parameters[0].getType().equalsToText(CommonClassNames.JAVA_LANG_STRING);
+        return parameters.length == 1 && parameters[0].getType().equalsToText(JAVA_LANG_STRING);
       }
     }
     return false;
@@ -364,7 +373,7 @@ public class DfaPsiUtil {
             }
           }
         }
-        return Result.create(notNullFields, constructor, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+        return Result.create(notNullFields, constructor, PsiModificationTracker.MODIFICATION_COUNT);
       }
     });
   }
@@ -501,5 +510,27 @@ public class DfaPsiUtil {
       return true;
     }
     return false;
+  }
+
+  /**
+   * @param method method to check
+   * @return nullability of vararg parameter component; {@link Nullability#UNKNOWN} if not specified or method is not vararg method.
+   */
+  @NotNull
+  static Nullability getVarArgComponentNullability(PsiMethod method) {
+    if (method != null) {
+      if (NON_NULL_VAR_ARG.methodMatches(method)) {
+        return Nullability.NOT_NULL;
+      }
+      PsiParameter varArg = ArrayUtil.getLastElement(method.getParameterList().getParameters());
+      if (varArg != null) {
+        PsiType type = varArg.getType();
+        if (type instanceof PsiEllipsisType) {
+          PsiType componentType = ((PsiEllipsisType)type).getComponentType();
+          return getTypeNullability(componentType);
+        }
+      }
+    }
+    return Nullability.UNKNOWN;
   }
 }

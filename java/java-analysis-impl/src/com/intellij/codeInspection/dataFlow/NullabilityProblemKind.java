@@ -23,6 +23,8 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 import static com.intellij.codeInspection.InspectionsBundle.BUNDLE;
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_NULL_POINTER_EXCEPTION;
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 /**
@@ -30,9 +32,9 @@ import static com.intellij.util.ObjectUtils.tryCast;
  * @param <T> a type of anchor element which could be associated with given nullability problem kind
  */
 public class NullabilityProblemKind<T extends PsiElement> {
-  private static final String NPE = CommonClassNames.JAVA_LANG_NULL_POINTER_EXCEPTION;
-  private static final String RE = CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION;
-  
+  private static final String NPE = JAVA_LANG_NULL_POINTER_EXCEPTION;
+  private static final String RE = JAVA_LANG_RUNTIME_EXCEPTION;
+
   private final String myName;
   private final String myAlwaysNullMessage;
   private final String myNormalMessage;
@@ -247,11 +249,11 @@ public class NullabilityProblemKind<T extends PsiElement> {
       return fieldAccessNPE.problem(context, expression);
     }
     PsiParameter parameter = MethodCallUtils.getParameterForArgument(context);
+    PsiElement grandParent = expressionList.getParent();
     if (parameter != null) {
       if (parameter.getType() instanceof PsiPrimitiveType) {
         return createUnboxingProblem(context, expression);
       }
-      PsiElement grandParent = expressionList.getParent();
       if (grandParent instanceof PsiAnonymousClass) {
         grandParent = grandParent.getParent();
       }
@@ -264,6 +266,12 @@ public class NullabilityProblemKind<T extends PsiElement> {
         if (nullability == Nullability.UNKNOWN) {
           return passingToNonAnnotatedParameter.problem(context, expression);
         }
+      }
+    }
+    else if (grandParent instanceof PsiCall && MethodCallUtils.isVarArgCall((PsiCall)grandParent)) {
+      Nullability nullability = DfaPsiUtil.getVarArgComponentNullability(((PsiCall)grandParent).resolveMethod());
+      if (nullability == Nullability.NOT_NULL) {
+        return passingToNotNullParameter.problem(context, expression);
       }
     }
     return null;
