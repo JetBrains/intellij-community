@@ -392,6 +392,11 @@
       <add-to-group group-id="Internal.DevKit"/>
     </action>
 
+    <action id="AnalyzeEPUsage" internal="true" class="org.jetbrains.idea.devkit.inspections.AnalyzeEPUsageAction"
+            text="Analyze EP Usage">
+      <add-to-group group-id="Internal.DevKit"/>
+    </action>
+
     <action id="UpdateIdeFromSources" class="org.jetbrains.idea.devkit.actions.updateFromSources.UpdateIdeFromSourcesAction">
       <add-to-group group-id="BuildMenu" anchor="last"/>
     </action>
