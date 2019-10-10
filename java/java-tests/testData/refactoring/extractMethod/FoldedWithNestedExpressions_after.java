@@ -4,8 +4,8 @@ class Test {
       System.out.println(s1);
   }
 
-    private String newMethod(String s, String s11) {
-        System.out.println(s11);
+    private String newMethod(String s2, String s11) {
+        System.out.println(s2);
         return s11;
     }
 }
