@@ -36,8 +36,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBCheckBox;
-import com.intellij.ui.components.JBLabel;
-import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.MultiMap;
@@ -67,6 +65,7 @@ import git4idea.repo.GitRepositoryManager;
 import git4idea.stash.GitChangesSaver;
 import git4idea.util.GitFreezingProcess;
 import git4idea.util.GitUntrackedFilesHelper;
+import kotlin.Unit;
 import org.jetbrains.annotations.CalledInBackground;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -89,6 +88,7 @@ import static com.intellij.util.containers.ContainerUtil.*;
 import static git4idea.GitUtil.*;
 import static git4idea.history.GitLogUtil.readFullDetails;
 import static git4idea.history.GitLogUtil.readFullDetailsForHashes;
+import static git4idea.merge.GitDefaultMergeDialogCustomizerKt.getTitleWithShowDetailsAction;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singleton;
 
@@ -531,7 +531,7 @@ public class GitRebaseProcess {
       String title = String.format("<html>Rebasing %s from <b>%s</b></html>",
                                    myIngoingCommit.toShortString(),
                                    myRebasingBranch);
-      return () -> createLabelWithShowLink(title, () -> {
+      return () -> getTitleWithShowDetailsAction(title, () -> {
         ChangeListViewerDialog dlg = new ChangeListViewerDialog(project);
         dlg.loadChangesInBackground(() -> {
           GitCommittedChangeList changeList = GitChangeUtils.getRevisionChanges(project,
@@ -545,6 +545,7 @@ public class GitRebaseProcess {
         dlg.setTitle("Rebasing " + myIngoingCommit.toShortString());
         dlg.setModal(true);
         dlg.show();
+        return Unit.INSTANCE;
       });
     }
 
@@ -557,7 +558,7 @@ public class GitRebaseProcess {
       Project project = myRepository.getProject();
       VirtualFile root = myRepository.getRoot();
       String title = getRightTitle(true);
-      return () -> createLabelWithShowLink(title, () -> {
+      return () -> getTitleWithShowDetailsAction(title, () -> {
         List<VcsCommitMetadata> details = new ArrayList<>();
         Set<VcsCommitMetadata> filteredCommits = new HashSet<>();
         ProgressManager.getInstance().runProcessWithProgressSynchronously(
@@ -589,6 +590,7 @@ public class GitRebaseProcess {
                                                            find(details, (commit) -> commit.getId().asString().equals(myUpstreamHash)));
         dlg.setTitle(getRightTitle(false));
         dlg.show();
+        return Unit.INSTANCE;
       });
     }
 
@@ -598,12 +600,6 @@ public class GitRebaseProcess {
       String branchPartWithBold = myBaseBranch != null ? String.format("%s <b>%s</b>", branchPartPrefix, myBaseBranch) : "";
       String branchPart = myBaseBranch != null ? String.format("%s %s", branchPartPrefix, myBaseBranch) : "";
       return String.format("Already rebased commits %s", withBold ? branchPartWithBold : branchPart);
-    }
-
-    private static JPanel createLabelWithShowLink(@NotNull String text, @NotNull Runnable onClick) {
-      return new BorderLayoutPanel()
-        .addToCenter(new JBLabel(text).setCopyable(true))
-        .addToRight(LinkLabel.create("Show Details", onClick));
     }
 
     private static class MyMultipleCommitInfoDialog extends MultipleCommitInfoDialog {
