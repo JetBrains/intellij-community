@@ -9,7 +9,9 @@ import com.intellij.openapi.util.SystemInfo
 import java.io.File
 
 
-class CDSPaths private constructor(val baseDir: File, cdsClassesHash: String) {
+class CDSPaths private constructor(val baseDir: File,
+                                   val dumpOutputFile: File,
+                                   cdsClassesHash: String) {
   val classesMarkerFile = File(baseDir, "${cdsClassesHash}.marker")
   val classesListFile = File(baseDir, "${cdsClassesHash}.txt")
   val classesPathFile = File(baseDir, "${cdsClassesHash}.classpath")
@@ -20,7 +22,16 @@ class CDSPaths private constructor(val baseDir: File, cdsClassesHash: String) {
 
   companion object {
     fun current(): CDSPaths {
+      val baseDir = File(PathManager.getSystemPath(), "cds")
+      baseDir.mkdirs()
+
       val hasher = Hashing.sha256().newHasher()
+
+      // make sure the system folder was not moved
+      hasher.putString(baseDir.absolutePath, Charsets.UTF_8)
+
+      // make sure IDE folder was not moved
+      hasher.putString(PathManager.getHomePath(), Charsets.UTF_8)
 
       val info = ApplicationInfo.getInstance()
       //IntelliJ product
@@ -38,9 +49,10 @@ class CDSPaths private constructor(val baseDir: File, cdsClassesHash: String) {
       }
 
       val cdsClassesHash = "${info.build.asString()}-${hasher.hash()}"
-      val baseDir = File(PathManager.getSystemPath(), "cds")
-      baseDir.mkdirs()
-      return CDSPaths(baseDir, cdsClassesHash)
+
+      val dumpLog = File(PathManager.getLogPath(), "cds-dump.log")
+      dumpLog.parentFile?.mkdirs()
+      return CDSPaths(baseDir, dumpLog, cdsClassesHash)
     }
   }
 }

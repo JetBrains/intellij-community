@@ -11,6 +11,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.sun.tools.attach.VirtualMachine
 import java.io.File
+import java.io.IOException
 import java.lang.management.ManagementFactory
 import java.time.Instant
 import java.util.concurrent.TimeUnit
@@ -114,7 +115,7 @@ object CDSManager {
 
         val vm = VirtualMachine.attach(OSProcessUtil.getApplicationPid())
         try {
-          vm.loadAgent(agentPath.path, "${paths.classesListFile},${paths.classesPathFile}")
+          vm.loadAgent(agentPath.path, "${paths.classesListFile}")
         }
         finally {
           vm.detach()
@@ -131,42 +132,86 @@ object CDSManager {
     indicator.text2 = "Generating classes archive..."
     indicator.checkCanceled()
 
+    val args = ManagementFactory.getRuntimeMXBean().inputArguments
+      .filterNot {
+        it.startsWith("-Xshare:")
+        || it.startsWith("-XX:+UnlockDiagnosticVMOptions")
+        || it.startsWith("-XX:SharedClassListFile=")
+        || it.startsWith("-XX:SharedArchiveFile=")
+        || it.startsWith("-javaagent:")
+        || it.startsWith("-agentlib:")
+        || it.startsWith("-agentpath:")
+      } + listOf(
+      "-Xshare:dump",
+      "-XX:+UnlockDiagnosticVMOptions",
+      "-XX:SharedClassListFile=${paths.classesListFile}",
+      "-XX:SharedArchiveFile=${paths.classesArchiveFile}",
+      "-Djava.class.path=" + ManagementFactory.getRuntimeMXBean().classPath
+    )
+
+    //hack - use actual IJ classpath
+    paths.classesPathFile.writeText(args.joinToString("\n") { "\"$it\"" })
+
     val durationLink = measureTimeMillis {
       val ext = if (SystemInfo.isWindows) ".exe" else ""
       val javaExe = File(System.getProperty("java.home")!!) / "bin" / "java$ext"
-      val args = listOf(
+      val javaArgs = listOf(
         javaExe.path,
-        "-Xshare:dump",
-        "-XX:+UnlockDiagnosticVMOptions",
-        "-XX:SharedClassListFile=${paths.classesListFile}",
-        "-XX:SharedArchiveFile=${paths.classesArchiveFile}",
-        "-cp",
         "@${paths.classesPathFile}"
       )
 
       val cwd = File(".").canonicalFile
-      LOG.info("Running CDS generation process: $args in $cwd")
+      LOG.info("Running CDS generation process: $javaArgs in $cwd with classpath: ${args}")
 
       indicator.checkCanceled()
-      val process = ProcessBuilder().command(args).inheritIO().directory(cwd).start()
-      if (!process.waitFor(10, TimeUnit.MINUTES)) {
-        LOG.warn("Failed to generate CDS archive, the process took too long and will be killed")
+
+      //recreate logs file
+      FileUtil.delete(paths.dumpOutputFile)
+
+      val process = ProcessBuilder()
+        .directory(cwd)
+        .command(javaArgs)
+        .redirectErrorStream(true)
+        .redirectInput(ProcessBuilder.Redirect.PIPE)
+        .redirectOutput(paths.dumpOutputFile)
+        .start()
+
+      try {
+        process.outputStream.close()
+      } catch (t: IOException) {
+        //NOP
+      }
+
+      try {
+        if (!process.waitFor(10, TimeUnit.MINUTES)) {
+          LOG.warn("Failed to generate CDS archive, the process took too long and will be killed. See ${paths.dumpOutputFile} for details")
+          process.destroyForcibly()
+          return null
+        }
+      } catch (t: InterruptedException) {
+        LOG.warn("Failed to generate CDS archive, the process is interrupted")
         process.destroyForcibly()
+        return null
+      }
+
+      val exitValue = process.exitValue()
+      if (exitValue != 0) {
+        LOG.warn("Failed to generate CDS archive, the process existed with code $exitValue. See ${paths.dumpOutputFile} for details")
         return null
       }
     }
 
-    LOG.warn("Generated CDS archive to ${paths.classesArchiveFile}, " +
-             "size = ${StringUtil.formatFileSize(paths.classesArchiveFile.length())} " +
-             "in ${StringUtil.formatDuration(durationLink)}")
-
     VMOptions.writeEnableCDSArchiveOption(paths.classesArchiveFile.absolutePath)
+
+    LOG.warn("Enabled CDS archive from ${paths.classesArchiveFile}, " +
+             "size = ${StringUtil.formatFileSize(paths.classesArchiveFile.length())}, " +
+             "it took ${StringUtil.formatDuration(durationLink)} (VMOptions were updated)")
 
     return paths
   }
 
   fun removeCDS() {
-    LOG.warn("CDS archive is disabled")
+    LOG.warn("CDS archive is disabled (VMOptions were updated)")
     VMOptions.writeDisableCDSArchiveOption()
   }
 

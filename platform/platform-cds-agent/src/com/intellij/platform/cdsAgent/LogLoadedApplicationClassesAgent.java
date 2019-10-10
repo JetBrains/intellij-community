@@ -48,19 +48,9 @@ public class LogLoadedApplicationClassesAgent {
     try {
       log("Injecting LogLoadedApplicationClassesAgent: " + agentArgs);
 
-      String[] files = agentArgs.split(",");
-      if (files.length != 2) {
-        log("Invalid arguments, expected <list-file>,<classpath-file> format but was " + agentArgs);
-      }
-
-      File listFile = new File(files[0]);
-      File classspathFile = new File(files[1]);
-
       TransitiveClassesCollector myAllClasses = new TransitiveClassesCollector();
       myAllClasses.addClasses(inst);
-
-      ClassesLogger logger = logDetectedClasses(true, listFile, myAllClasses.getAllClasses());
-      logger.writeClasspath(classspathFile);
+      logDetectedClasses(true, new File(agentArgs), myAllClasses.getAllClasses());
 
       log("LogLoadedApplicationClassesAgent completed");
     }
@@ -164,10 +154,9 @@ public class LogLoadedApplicationClassesAgent {
     }
   }
 
-  @NotNull
-  private static ClassesLogger logDetectedClasses(boolean useAppCDS,
-                                                  File targetFile,
-                                                  Collection<Class<?>> allClasses) {
+  private static void logDetectedClasses(boolean useAppCDS,
+                                         File targetFile,
+                                         Collection<Class<?>> allClasses) {
     final Path basePath;
     try {
       basePath = new File(".").getCanonicalFile().toPath();
@@ -225,8 +214,6 @@ public class LogLoadedApplicationClassesAgent {
     log("Application classes: " + (libSource.size() + pluginsSource.size()));
     log("AppCDS is " + (useAppCDS ? "enabled" : "DISABLED"));
     log("===================================================");
-
-    return logger;
   }
 
   private static final class ClassInfo {
@@ -522,19 +509,6 @@ public class LogLoadedApplicationClassesAgent {
       }
 
       return lines;
-    }
-
-    public void writeClasspath(@NotNull File file) throws IOException {
-      Set<String> classpath = new TreeSet<>();
-      for (ClassInfo info : myClasses.values()) {
-        String source = info.source;
-        if (source == null) continue;
-        if (!isValid(info)) continue;
-
-        classpath.add(source);
-      }
-
-      Files.write(file.toPath(), classpath, StandardCharsets.UTF_8);
     }
 
     public void writeClassesList(@NotNull File file) throws IOException {
