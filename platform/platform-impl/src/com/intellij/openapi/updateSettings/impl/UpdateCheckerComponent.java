@@ -3,11 +3,16 @@ package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.impl.HTMLEditorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
@@ -15,11 +20,13 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.updateSettings.UpdateStrategyCustomization;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.text.DateFormatUtil;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -38,6 +45,7 @@ public final class UpdateCheckerComponent implements Runnable {
   }
 
   static final String SELF_UPDATE_STARTED_FOR_BUILD_PROPERTY = "ide.self.update.started.for.build";
+  @NonNls static final String UPDATE_WHATS_NEW_MESSAGE = "ide.update.whats.new.message";
 
   private static final Logger LOG = Logger.getInstance(UpdateCheckerComponent.class);
 
@@ -50,13 +58,22 @@ public final class UpdateCheckerComponent implements Runnable {
     Application app = ApplicationManager.getApplication();
     if (!app.isCommandLine()) {
       NonUrgentExecutor.getInstance().execute(() -> {
-        checkIfPreviousUpdateFailed();
+        boolean updateFailed = checkIfPreviousUpdateFailed();
 
         updateDefaultChannel();
         scheduleFirstCheck();
         snapPackageNotification();
 
         MessageBusConnection connection = app.getMessageBus().connect();
+        if (!updateFailed) {
+          connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
+            @Override
+            public void projectOpened(@NotNull Project project) {
+              StartupManager.getInstance(project).registerPostStartupActivity(() -> { showWhatsNewNotification(project); });
+            }
+          });
+        }
+
         connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
           @Override
           public void projectOpened(@NotNull Project project) {
@@ -82,14 +99,38 @@ public final class UpdateCheckerComponent implements Runnable {
     if (future != null) future.cancel(false);
   }
 
-  private static void checkIfPreviousUpdateFailed() {
+  private static void showWhatsNewNotification(@NotNull Project project) {
+    PropertiesComponent properties = PropertiesComponent.getInstance();
+    String updateHtmlMessage = properties.getValue(UPDATE_WHATS_NEW_MESSAGE);
+    if (updateHtmlMessage == null) {
+      LOG.warn("Cannot show what's new notification: no content found.");
+      return;
+    }
+
+    String title = IdeBundle.message("update.whats.new.notification.title", ApplicationNamesInfo.getInstance().getFullProductName());
+    UpdateChecker.NOTIFICATIONS.createNotification(title, null, null, NotificationType.INFORMATION, null)
+      .addAction(new NotificationAction(IdeBundle.message("update.whats.new.notification.action")) {
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
+          LightVirtualFile file = new LightVirtualFile(IdeBundle.message("update.whats.new.file.name", ApplicationInfo.getInstance().getFullVersion()), updateHtmlMessage);
+          file.putUserData(HTMLEditorProvider.Companion.getHTML_CONTENT_TYPE(), true);
+          FileEditorManager.getInstance(project).openFile(file, true);
+          IdeUpdateUsageTriggerCollector.trigger("update.whats.new");
+        }
+      });
+    properties.setValue(UPDATE_WHATS_NEW_MESSAGE, null);
+  }
+
+  private static boolean checkIfPreviousUpdateFailed() {
     PropertiesComponent properties = PropertiesComponent.getInstance();
     if (ApplicationInfo.getInstance().getBuild().asString().equals(properties.getValue(SELF_UPDATE_STARTED_FOR_BUILD_PROPERTY)) &&
         new File(PathManager.getLogPath(), ERROR_LOG_FILE_NAME).length() > 0) {
       IdeUpdateUsageTriggerCollector.trigger("update.failed");
       LOG.info("The previous IDE update failed");
+      return false;
     }
     properties.setValue(SELF_UPDATE_STARTED_FOR_BUILD_PROPERTY, null);
+    return true;
   }
 
   private static void updateDefaultChannel() {

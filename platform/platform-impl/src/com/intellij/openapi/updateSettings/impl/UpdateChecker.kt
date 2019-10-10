@@ -508,7 +508,7 @@ object UpdateChecker {
   }
 
   /** A helper method for manually testing platform updates (see [com.intellij.internal.ShowUpdateInfoDialogAction]). */
-  fun testPlatformUpdate(updateInfoText: String, patchFilePath: String?, forceUpdate: Boolean) {
+  fun testPlatformUpdate(project: Project?, updateInfoText: String, patchFilePath: String?, forceUpdate: Boolean) {
     if (!ApplicationManager.getApplication().isInternal) {
       throw IllegalStateException()
     }
@@ -533,7 +533,7 @@ object UpdateChecker {
 
     if (channel != null && newBuild != null) {
       val patchFile = if (patchFilePath != null) File(FileUtil.toSystemDependentName(patchFilePath)) else null
-      UpdateInfoDialog(channel, newBuild, patches, patchFile).show()
+      UpdateInfoDialog(project, channel, newBuild, patches, patchFile).show()
     }
     else {
       NoUpdatesDialog(true).show()

@@ -11,15 +11,19 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.impl.HTMLEditorProvider;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.LicensingFacade;
 import com.intellij.util.SystemProperties;
@@ -54,6 +58,8 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
   private final Pair<String, Color> myLicenseInfo;
   private final File myTestPatch;
 
+  private AbstractAction myWhatsNewAction;
+
   UpdateInfoDialog(@NotNull UpdateChannel channel,
                    @NotNull BuildInfo newBuild,
                    @Nullable UpdateChain patches,
@@ -77,7 +83,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
     IdeUpdateUsageTriggerCollector.triggerUpdateDialog(myPatches, ApplicationManager.getApplication().isRestartCapable());
   }
 
-  UpdateInfoDialog(UpdateChannel channel, BuildInfo newBuild, UpdateChain patches, @Nullable File patchFile) {
+  UpdateInfoDialog(@Nullable Project project, UpdateChannel channel, BuildInfo newBuild, UpdateChain patches, @Nullable File patchFile) {
     super(true);
     myUpdatedChannel = channel;
     myUpdatedPlugins = null;
@@ -86,6 +92,18 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
     myWriteProtected = false;
     myLicenseInfo = initLicensingInfo(myUpdatedChannel, myNewBuild);
     myTestPatch = patchFile;
+    if (project != null) {
+      myWhatsNewAction = new AbstractAction("What's new") {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          String title = IdeBundle.message("update.whats.new.file.name", ApplicationInfo.getInstance().getFullVersion());
+          LightVirtualFile file = new LightVirtualFile(title, myNewBuild.getMessage());
+          file.putUserData(HTMLEditorProvider.Companion.getHTML_CONTENT_TYPE(), true);
+          FileEditorManager.getInstance(project).openFile(file, true);
+          close(OK_EXIT_CODE);
+        }
+      };
+    }
     init();
     setTitle("[TEST] " + getTitle());
   }
@@ -173,6 +191,10 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
         };
       updateButton.putValue(DEFAULT_ACTION, Boolean.TRUE);
       actions.add(updateButton);
+    }
+
+    if (myWhatsNewAction != null) {
+      actions.add(myWhatsNewAction);
     }
 
     return actions.toArray(new Action[0]);
