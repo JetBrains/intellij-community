@@ -49,15 +49,6 @@
     <orderEntry type="module" module-name="intellij.java.uast" />
     <orderEntry type="library" name="gson" level="project" />
     <orderEntry type="module" module-name="intellij.java.compiler" />
-    <orderEntry type="module-library">
-      <library name="wadl-core">
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/../../lib/wadl-core.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
     <orderEntry type="library" name="jaxb-api" level="project" />
     <orderEntry type="library" name="javax.activation" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="jaxb-runtime" level="project" />
