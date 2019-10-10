@@ -29,10 +29,10 @@ class MavenRunAnythingProvider : RunAnythingCommandLineProvider() {
   override fun getHelpCommandPlaceholder() = "mvn <goals...> <options...>"
 
   override fun suggestCompletionVariants(dataContext: DataContext, commandLine: CommandLine): Sequence<String> {
-    val basicPhasesVariants = completeBasicPhases(commandLine)
-    val customGoalsVariants = completeCustomGoals(dataContext, commandLine)
-    val longOptionsVariants = completeOptions(commandLine, isLongOpt = true)
-    val shortOptionsVariants = completeOptions(commandLine, isLongOpt = false)
+    val basicPhasesVariants = completeBasicPhases(commandLine).sorted()
+    val customGoalsVariants = completeCustomGoals(dataContext, commandLine).sorted()
+    val longOptionsVariants = completeOptions(commandLine, isLongOpt = true).sorted()
+    val shortOptionsVariants = completeOptions(commandLine, isLongOpt = false).sorted()
     return when {
       commandLine.toComplete.startsWith("--") ->
         longOptionsVariants + shortOptionsVariants + basicPhasesVariants + customGoalsVariants
