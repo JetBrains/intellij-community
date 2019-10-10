@@ -91,7 +91,7 @@ sealed class GithubCredentialsUI {
       row("Server:") { serverTextField(pushX, growX) }
       row("Login:") { loginTextField(pushX, growX) }
       row("Password:") {
-        passwordField(comment = "Password is not saved and used only to acquire GitHub token",
+        passwordField(comment = "The password is not saved and is only used to generate a GitHub token",
                       constraints = *arrayOf(pushX, growX))
       }
       row("") {
