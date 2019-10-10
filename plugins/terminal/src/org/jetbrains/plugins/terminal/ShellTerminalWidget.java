@@ -35,7 +35,7 @@ public class ShellTerminalWidget extends JBTerminalWidget {
 
   private static final Logger LOG = Logger.getInstance(ShellTerminalWidget.class);
 
-  @NonNls String TERMINAL_CUSTOM_COMMANDS_GOT_IT = "TERMINAL_CUSTOM_COMMANDS_GOT_IT";
+  @NonNls private static final String TERMINAL_CUSTOM_COMMANDS_GOT_IT = "TERMINAL_CUSTOM_COMMANDS_GOT_IT";
   @NonNls private static final String GOT_IT = "got_it";
 
   private final Project myProject;
