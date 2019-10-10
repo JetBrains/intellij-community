@@ -6,13 +6,14 @@ import com.intellij.mock.MockFileDocumentManagerImpl
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationEx
+import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.impl.DocumentImpl
+import com.intellij.openapi.extensions.DefaultPluginDescriptor
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.*
 import com.intellij.serviceContainer.PlatformComponentManagerImpl
-import com.intellij.testFramework.registerServiceInstance
 import org.jetbrains.ide.PooledThreadExecutor
 import java.awt.Component
 import java.util.concurrent.Callable
@@ -230,4 +231,8 @@ class MockPsiApplication(parentDisposable: Disposable) : PlatformComponentManage
   override fun tryRunReadAction(action: Runnable): Boolean {
     TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
   }
+}
+
+fun <T : Any> ComponentManager.registerServiceInstance(serviceInterface: Class<T>, instance: T) {
+  (this as PlatformComponentManagerImpl).registerServiceInstance(serviceInterface, instance, DefaultPluginDescriptor("test"))
 }

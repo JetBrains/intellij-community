@@ -2,18 +2,13 @@ package com.intellij.openapi.project.impl
 
 import com.intellij.ide.plugins.ContainerDescriptor
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
-import com.intellij.mock.MockApplication
-import com.intellij.mock.MockProject
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.serviceContainer.NonInjectable
 import com.intellij.serviceContainer.PlatformComponentManagerImpl
-import com.intellij.testFramework.registerComponentInstance
 
 class MockPsiProject(application: Application, parentDisposable: Disposable = application) : PlatformComponentManagerImpl(application), Project {
   init {

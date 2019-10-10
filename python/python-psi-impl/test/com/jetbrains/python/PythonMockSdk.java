@@ -33,6 +33,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.Comparator;
 
 /**
  * @author yole
@@ -72,43 +73,27 @@ public class PythonMockSdk {
     return sdk.clone();
   }
 
-  private static class PyMockSdkType extends SdkType {
+  private static class PyMockSdkType implements SdkTypeId {
 
     @NotNull
     private final String myVersionString;
+    private final String mySdkIdName;
 
     private PyMockSdkType(@NotNull String string) {
-      super(PyNames.PYTHON_SDK_ID_NAME);
+      mySdkIdName = PyNames.PYTHON_SDK_ID_NAME;
       myVersionString = string;
     }
 
-    @Nullable
-    @Override
-    public String suggestHomePath() {
-      return null;
-    }
-
-    @Override
-    public boolean isValidSdkHome(String path) {
-      return true;
-    }
-
     @NotNull
     @Override
-    public String suggestSdkName(@Nullable String currentSdkName, String sdkHome) {
-      return "Python";
+    public String getName() {
+      return mySdkIdName;
     }
 
     @Nullable
     @Override
-    public AdditionalDataConfigurable createAdditionalDataConfigurable(@NotNull SdkModel sdkModel, @NotNull SdkModificator sdkModificator) {
-      return null;
-    }
-
-    @NotNull
-    @Override
-    public String getPresentableName() {
-      return "Python";
+    public String getVersionString(@NotNull Sdk sdk) {
+      return myVersionString;
     }
 
     @Override
@@ -118,8 +103,19 @@ public class PythonMockSdk {
 
     @Nullable
     @Override
-    public String getVersionString(String sdkHome) {
-      return myVersionString;
+    public SdkAdditionalData loadAdditionalData(@NotNull Sdk currentSdk, @NotNull Element additional) {
+      return null;
+    }
+
+    @Override
+    public boolean isLocalSdk(@NotNull Sdk sdk) {
+      return false;
+    }
+
+    @NotNull
+    @Override
+    public Comparator<Sdk> versionComparator() {
+      return null;
     }
   }
 }

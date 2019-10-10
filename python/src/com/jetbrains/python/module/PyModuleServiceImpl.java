@@ -34,7 +34,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author yole
  */
-public class PyModuleServiceImpl extends PyModuleService {
+public class PyModuleServiceImpl extends PyModuleServiceEx {
   @Override
   public ModuleBuilder createPythonModuleBuilder(DirectoryProjectGenerator generator) {
     return new PythonModuleBuilderBase(generator);
