@@ -532,4 +532,8 @@ class AA { static void fo<caret>o(Integer a) {} }
   void testPassClosureInClosure() {
     doTest(true)
   }
+
+  void testRequiredBoxingForPrimitiveType() {
+    doTest(true)
+  }
 }
