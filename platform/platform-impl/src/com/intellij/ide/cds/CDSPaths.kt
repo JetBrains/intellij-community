@@ -9,16 +9,16 @@ import com.intellij.openapi.util.SystemInfo
 import java.io.File
 
 
-class CDSPaths private constructor(baseDir: File, cdsClassesHash: String) {
+class CDSPaths private constructor(val baseDir: File, cdsClassesHash: String) {
+  val classesMarkerFile = File(baseDir, "${cdsClassesHash}.marker")
   val classesListFile = File(baseDir, "${cdsClassesHash}.txt")
   val classesPathFile = File(baseDir, "${cdsClassesHash}.classpath")
   val classesArchiveFile = File(baseDir, "${cdsClassesHash}.jsa")
 
   fun isSame(jsaFile: File?) = jsaFile == classesArchiveFile
+  fun isOurFile(file: File?) = file == classesMarkerFile || file == classesListFile || file == classesPathFile || file == classesArchiveFile
 
   companion object {
-    val baseDir: File get() = File(PathManager.getSystemPath(), "cds").also { it.mkdirs() }
-
     fun current(): CDSPaths {
       val hasher = Hashing.sha256().newHasher()
 
@@ -38,6 +38,8 @@ class CDSPaths private constructor(baseDir: File, cdsClassesHash: String) {
       }
 
       val cdsClassesHash = "${info.build.asString()}-${hasher.hash()}"
+      val baseDir = File(PathManager.getSystemPath(), "cds")
+      baseDir.mkdirs()
       return CDSPaths(baseDir, cdsClassesHash)
     }
   }

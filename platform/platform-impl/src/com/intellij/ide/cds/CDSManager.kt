@@ -12,6 +12,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.sun.tools.attach.VirtualMachine
 import java.io.File
 import java.lang.management.ManagementFactory
+import java.time.Instant
 import java.util.concurrent.TimeUnit
 import kotlin.system.measureTimeMillis
 
@@ -62,17 +63,17 @@ object CDSManager {
     }
 
   fun cleanupStaleCDSFiles(indicator: ProgressIndicator) {
-    val baseDir = CDSPaths.baseDir
+    val paths = CDSPaths.current()
     val currentCDSPath = currentCDSArchive
 
-    val files = baseDir.listFiles() ?: arrayOf()
+    val files = paths.baseDir.listFiles() ?: arrayOf()
     if (files.isEmpty()) return
 
     indicator.text2 = "Removing old Class Data Sharing files..."
     for (path in files) {
       indicator.checkCanceled()
 
-      if (path != currentCDSPath) {
+      if (path != currentCDSPath && !paths.isOurFile(path)) {
         FileUtil.delete(path)
       }
     }
@@ -81,9 +82,15 @@ object CDSManager {
   fun installCDS(indicator: ProgressIndicator): CDSPaths? {
     val paths = CDSPaths.current()
     if (paths.isSame(currentCDSArchive)) {
-      LOG.info("CDS archive is already generated. Nothing to do")
+      LOG.warn("CDS archive is already generated. Nothing to do")
       return null
     }
+
+    if (paths.classesMarkerFile.isFile) {
+      LOG.warn("CDS archive is already generated. The marker file exists")
+      return null
+    }
+    paths.classesMarkerFile.writeText(Instant.now().toString())
 
     LOG.info("Starting generation of CDS archive to the ${paths.classesArchiveFile} and ${paths.classesArchiveFile} files")
 
