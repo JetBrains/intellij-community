@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.merge
 
 import com.intellij.CommonBundle
 import com.intellij.configurationStore.StoreReloadManager
+import com.intellij.diff.DiffEditorTitleCustomizer
 import com.intellij.diff.DiffManager
 import com.intellij.diff.DiffRequestFactory
 import com.intellij.diff.InvalidDiffRequestException
@@ -376,13 +377,26 @@ open class MultipleFileMergeDialog(
       try {
         conflictData = ProgressManager.getInstance().runProcessWithProgressSynchronously(ThrowableComputable<ConflictData, VcsException> {
           val mergeData = mergeProvider.loadRevisions(file)
-
-          val leftTitle = mergeDialogCustomizer.getLeftPanelTitle(file)
-          val baseTitle = mergeDialogCustomizer.getCenterPanelTitle(file)
-          val rightTitle = mergeDialogCustomizer.getRightPanelTitle(file, mergeData.LAST_REVISION_NUMBER)
           val title = mergeDialogCustomizer.getMergeWindowTitle(file)
 
-          ConflictData(mergeData, title, listOf(leftTitle, baseTitle, rightTitle))
+          val conflictTitles = mergeDialogCustomizer.run {
+            listOf(
+              getLeftPanelTitle(file),
+              getCenterPanelTitle(file),
+              getRightPanelTitle(file, mergeData.LAST_REVISION_NUMBER)
+            )
+          }
+
+          val filePath = VcsUtil.getFilePath(file)
+          val mergeTitleCustomizers = mergeDialogCustomizer.run {
+            listOf(
+              getLeftTitleCustomizer(filePath),
+              getCenterTitleCustomizer(filePath),
+              getRightTitleCustomizer(filePath)
+            )
+          }
+
+          ConflictData(mergeData, title, conflictTitles, mergeTitleCustomizers)
         }, "Loading Revisions...", true, project)
       }
       catch (ex: VcsException) {
@@ -428,14 +442,7 @@ open class MultipleFileMergeDialog(
         }
         break
       }
-      val filePath = VcsUtil.getFilePath(file)
-      mergeDialogCustomizer.run {
-        request.putUserData(EDITORS_TITLE_CUSTOMIZER, listOf(
-          getLeftTitleCustomizer(filePath),
-          getCenterTitleCustomizer(filePath),
-          getRightTitleCustomizer(filePath)
-        ))
-      }
+      request.putUserData(EDITORS_TITLE_CUSTOMIZER, conflictData.contentTitleCustomizers)
       DiffManager.getInstance().showMerge(project, request)
     }
     updateModelFromFiles()
@@ -459,7 +466,10 @@ open class MultipleFileMergeDialog(
     private val LOG = Logger.getInstance(MultipleFileMergeDialog::class.java)
   }
 
-  private data class ConflictData(val mergeData: MergeData,
-                                  val title: String,
-                                  val contentTitles: List<String>)
+  private data class ConflictData(
+    val mergeData: MergeData,
+    val title: String,
+    val contentTitles: List<String>,
+    val contentTitleCustomizers: List<DiffEditorTitleCustomizer?>
+  )
 }
