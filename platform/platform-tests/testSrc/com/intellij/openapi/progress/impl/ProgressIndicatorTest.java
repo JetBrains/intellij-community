@@ -817,6 +817,17 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
         throw new ProcessCanceledException();
       });
     });
+
+    ProgressIndicatorBase outer = new ProgressIndicatorBase();
+    ProgressManager.getInstance().runProcess(() -> {
+      assertThrows(ProcessCanceledException.class, () -> {
+        ProgressIndicatorUtils.withTimeout(1, () -> {
+          outer.cancel();
+          ProgressManager.checkCanceled();
+          return null;
+        });
+      });
+    }, outer);
   }
 
   private static class MyAbstractProgressIndicator extends AbstractProgressIndicatorBase {
