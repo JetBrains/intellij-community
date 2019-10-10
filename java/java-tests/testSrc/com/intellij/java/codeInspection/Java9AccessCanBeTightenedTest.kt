@@ -4,23 +4,22 @@ package com.intellij.java.codeInspection
 import com.intellij.codeInspection.java19modules.Java9ModuleEntryPoint
 import com.intellij.codeInspection.visibility.VisibilityInspection
 import com.intellij.openapi.application.ex.PathManagerEx
-import com.intellij.openapi.util.io.FileUtil
-import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
 class Java9AccessCanBeTightenedTest : LightJavaCodeInsightFixtureTestCase() {
-
   override fun getTestDataPath() = PathManagerEx.getTestDataPath() + "/inspection/java9AccessCanBeTightened/"
-
-  override fun getProjectDescriptor(): LightProjectDescriptor = JAVA_9
+  override fun getProjectDescriptor() = JAVA_9
 
   private lateinit var inspection: VisibilityInspection
 
   override fun setUp() {
     super.setUp()
-    inspection = createGlobalTool()
-
-    myFixture.enableInspections(inspection.sharedLocalInspectionTool!!)
+    inspection = VisibilityInspection().apply {
+      SUGGEST_PRIVATE_FOR_INNERS = true
+      SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = true
+      SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = true
+    }
+    myFixture.enableInspections(inspection.sharedLocalInspectionTool)
   }
 
   fun testPublicClass() = doTestClass()
@@ -40,24 +39,9 @@ class Java9AccessCanBeTightenedTest : LightJavaCodeInsightFixtureTestCase() {
 
   private fun doTest(className: String) {
     val testName = getTestName(true)
-    val enabled = !testName.endsWith("Off")
-
-    inspection.setEntryPointEnabled(Java9ModuleEntryPoint.ID, enabled)
-    addModuleInfo(testDataPath + testName)
-    myFixture.configureByFiles("$testName/foo/bar/$className.java")
+    inspection.setEntryPointEnabled(Java9ModuleEntryPoint.ID, !testName.endsWith("Off"))
+    myFixture.copyFileToProject("${testName}/module-info.java", "module-info.java")
+    myFixture.configureByFile("${testName}/foo/bar/${className}.java")
     myFixture.checkHighlighting()
-  }
-
-  private fun addModuleInfo(path: String) {
-    val sourceFile = FileUtil.findFirstThatExist("$path/module-info.java")
-    val text = String(FileUtil.loadFileText(sourceFile!!))
-
-    myFixture.configureByText("module-info.java", text)
-  }
-
-  private fun createGlobalTool() = VisibilityInspection().apply {
-    SUGGEST_PRIVATE_FOR_INNERS = true
-    SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = true
-    SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = true
   }
 }
