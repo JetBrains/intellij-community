@@ -146,8 +146,6 @@ public class LogLoadedApplicationClassesAgent {
           if (className.contains(".$Proxy")) continue;
           if (className.startsWith("java.lang.invoke.BoundMethodHandle$")) continue;
 
-          //get rid of obfuscated classes
-          if (className.matches(".*[a-z]\\.[a-z]\\..*")) continue;
           if (!allMyClasses.add(next)) continue;
 
           Class<?> superclass = next.getSuperclass();
@@ -566,6 +564,7 @@ public class LogLoadedApplicationClassesAgent {
     ClassLoader classLoader = info.clazz.getClassLoader();
     if (classLoader == null) classLoader = ClassLoader.getSystemClassLoader();
 
+    //NOTE: also include the Java 9+ locations under META-INF
     String resourceName = info.name + ".class";
     try (InputStream is = classLoader.getResourceAsStream(resourceName)) {
       if (is == null) {
@@ -612,6 +611,7 @@ public class LogLoadedApplicationClassesAgent {
     if (loader == null) return null;
     if (loader == ClassLoader.getSystemClassLoader()) return null;
 
+    //NOTE: also include the Java 9+ locations under META-INF
     String resourceName = clazz.getName().replace('.', '/') + ".class";
     URL url = loader.getResource(resourceName);
     if (url == null) return null;
