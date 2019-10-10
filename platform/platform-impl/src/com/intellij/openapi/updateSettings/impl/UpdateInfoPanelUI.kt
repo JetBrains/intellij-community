@@ -58,26 +58,30 @@ object UpdateInfoPanelUI {
             FUCounterUsageLogger.getInstance().logEvent("ide.update.dialog.buttons", "url", FeatureUsageData().addValue(event.description))
           }
         })
+
+        it.caretPosition = 0
+        it.isEditable = false
+        it.border = JBUI.Borders.empty(8, 12)
+        it.addHyperlinkListener(BrowserHyperlinkListener.INSTANCE)
       }
-      .also { it.caretPosition = 0 }
-      .also { it.isEditable = false }
-      .also { it.border = JBUI.Borders.empty(8, 12) }
-      .also { it.addHyperlinkListener(BrowserHyperlinkListener.INSTANCE) }
 
     val updateHighlightsScrollPane = ScrollPaneFactory.createScrollPane(updateHighlightsComponent, true)
       .also { it.border = JBUI.Borders.customLine(DIVIDER_COLOR, 0, 0, 1, 0) }
 
     val updatingVersionAndPatches = JBLabel()
-      .also { it.border = JBUI.Borders.empty() }
-      .also { it.foreground = SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES.fgColor }
       .also {
+        it.border = JBUI.Borders.empty()
+        it.foreground = SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES.fgColor
+
         val patchSize = calculatePatchSize(patches, testPatch)
         it.text = """Updating ${appInfo.fullVersion} to ${newBuild.version} (${newBuild.number}).$patchSize"""
       }
 
     val updatingInfoPanel = JPanel(FlowLayout(FlowLayout.LEFT, 2, 0))
-      .also { it.add(updatingVersionAndPatches, BorderLayout.WEST) }
-      .also { getSettingsLink(panel, writeProtected, enableLink, appNames)?.let { link -> it.add(link) } }
+      .also {
+        it.add(updatingVersionAndPatches, BorderLayout.WEST)
+        getSettingsLink(panel, writeProtected, enableLink, appNames)?.let { link -> it.add(link) }
+      }
 
     val infoPanel = JPanel(VerticalFlowLayout(0, 0))
       .also { it.border = JBUI.Borders.empty(8, 12) }
@@ -136,7 +140,7 @@ object UpdateInfoPanelUI {
   private fun calculatePatchSize(patchesChain: UpdateChain?, testPatch: File?): String {
     val patchesSize = getPatchesText(patchesChain, testPatch)
     return FROM_TO_PATCHES_REGEXP.matchEntire(patchesSize?: return "")?.let { " $PATCH_SIZE_IS about ${it.groupValues[1]} $MB_UNITS." }
-           ?: " $PATCH_SIZE_IS $patchesSize."
+           ?: " $PATCH_SIZE_IS $patchesSize $MB_UNITS."
   }
 
   private fun downloadUrl(newBuildInfo: BuildInfo, updateChannel: UpdateChannel): String {
