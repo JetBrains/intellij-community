@@ -42,8 +42,10 @@ public class RunLineMarkerTest extends LightJavaCodeInsightFixtureTestCase {
   public void testRunLineMarker() {
     myFixture.configureByText("MainTest.java", "public class MainTest {\n" +
                                                "    public static void <caret>foo(String[] args) {\n" +
+                                               "      someCode();\n" +
                                                "    }\n " +
                                                "    public static void main(String[] args) {\n" +
+                                               "      someCode();\n" +
                                                "    }\n" +
                                                "}");
     assertEquals(0, myFixture.findGuttersAtCaret().size());
@@ -143,6 +145,7 @@ public class RunLineMarkerTest extends LightJavaCodeInsightFixtureTestCase {
   public void testTooltip() {
     myFixture.configureByText("Main.java", "public class Main {\n" +
                                            "    public static void m<caret>ain(String[] args) {\n" +
+                                           "      someCode();\n" +
                                            "    }\n" +
                                            "}");
     List<GutterMark> marks = myFixture.findGuttersAtCaret();
@@ -157,6 +160,7 @@ public class RunLineMarkerTest extends LightJavaCodeInsightFixtureTestCase {
   public void testTooltipWithUnderscores() {
     myFixture.configureByText("Main_class_test.java", "public class Main_class_test {\n" +
                                                       "    public static void m<caret>ain(String[] args) {\n" +
+                                                      "      someCode();\n" +
                                                       "    }\n" +
                                                       "}");
     List<GutterMark> marks = myFixture.findGuttersAtCaret();
@@ -171,6 +175,7 @@ public class RunLineMarkerTest extends LightJavaCodeInsightFixtureTestCase {
   public void testEditConfigurationAction() {
     myFixture.configureByText("MainTest.java", "public class MainTest {\n" +
                                                "    public static void ma<caret>in(String[] args) {\n" +
+                                               "      someCode();\n" +
                                                "    }\n" +
                                                "}");
     List<GutterMark> marks = myFixture.findGuttersAtCaret();

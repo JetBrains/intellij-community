@@ -33,7 +33,7 @@ public class GutterIntentionsTest extends LightJavaCodeInsightFixtureTestCase {
 
   public void testOptions() {
     myFixture.configureByText(JavaFileType.INSTANCE, "public class Foo {\n" +
-                                                     "  public static void <caret>main(String[] args) {}" +
+                                                     "  public static void <caret>main(String[] args) { someCode(); }" +
                                                      "}");
     assertSize(1, myFixture.findGuttersAtCaret());
 
@@ -54,7 +54,7 @@ public class GutterIntentionsTest extends LightJavaCodeInsightFixtureTestCase {
 
   public void testDoNotIncludeActionGroup() {
     myFixture.configureByText(JavaFileType.INSTANCE, "public class Foo {\n" +
-                                                     "  public static void <caret>main(String[] args) {}" +
+                                                     "  public static void <caret>main(String[] args) { someCode(); }" +
                                                      "}");
     assertSize(1, myFixture.findGuttersAtCaret());
 
