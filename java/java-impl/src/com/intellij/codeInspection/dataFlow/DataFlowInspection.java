@@ -252,7 +252,7 @@ public class DataFlowInspection extends DataFlowInspectionBase {
         REPORT_NULLABLE_METHODS_RETURNING_NOT_NULL, box -> REPORT_NULLABLE_METHODS_RETURNING_NOT_NULL = box.isSelected());
 
       JCheckBox reportUnsoundWarnings = createCheckBoxWithHTML(
-        "Report problems where exception occurs only for some code path",
+        "Report problems that happen only on some code paths",
         REPORT_UNSOUND_WARNINGS, box -> REPORT_UNSOUND_WARNINGS = box.isSelected());
 
       gc.insets = JBUI.emptyInsets();
