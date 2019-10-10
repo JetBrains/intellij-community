@@ -334,7 +334,9 @@ public abstract class NullableNotNullManager {
                                : findAnnotation(owner, qualifiedNames);
     PsiType type = getOwnerType(owner);
     if (memberAnno != null) {
-      return preferTypeAnnotation(memberAnno, type);
+      PsiAnnotation annotation = preferTypeAnnotation(memberAnno, type);
+      if (annotation != memberAnno && !qualifiedNames.contains(annotation.getQualifiedName())) return null;
+      return annotation;
     }
     if (type != null) {
       return ContainerUtil.find(type.getAnnotations(), a -> qualifiedNames.contains(a.getQualifiedName()));
