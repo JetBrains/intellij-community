@@ -2,8 +2,7 @@
 
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.diff.util.DiffPlaces;
-import com.intellij.diff.util.DiffUserDataKeysEx;
+import com.intellij.diff.impl.DiffRequestProcessor;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.TreeExpander;
@@ -18,10 +17,12 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.Disposer;
@@ -39,9 +40,6 @@ import com.intellij.ui.GuiUtils;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.content.Content;
-import com.intellij.ui.content.ContentManagerAdapter;
-import com.intellij.ui.content.ContentManagerEvent;
-import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
@@ -280,7 +278,11 @@ public class ChangesViewManager implements ChangesViewEx,
     @NotNull private ProgressIndicator myTreeUpdateIndicator = new EmptyProgressIndicator();
     private boolean myModelUpdateInProgress;
 
+    private final DiffPreviewProvider myDiffPreviewProvider;
+
     private boolean myDisposed = false;
+    private final ChangesViewDiffPreviewProcessor myChangeProcessor;
+    private PreviewDiffVirtualFile myPreviewDiffVirtualFile;
 
     private ChangesViewToolWindowPanel(@NotNull Project project, @NotNull ChangesViewManager changesViewManager) {
       super(false, true);
@@ -335,14 +337,19 @@ public class ChangesViewManager implements ChangesViewEx,
       };
       contentPanel.addToCenter(myCommitPanelSplitter);
 
-      ChangesViewDiffPreviewProcessor changeProcessor = new ChangesViewDiffPreviewProcessor(myView);
-      Disposer.register(this, changeProcessor);
+      myChangeProcessor = new ChangesViewDiffPreviewProcessor(myView);
+      Disposer.register(this, myChangeProcessor);
 
-      myDiffPreviewSplitter = new PreviewDiffSplitterComponent(contentPanel, changeProcessor, CHANGES_VIEW_PREVIEW_SPLITTER_PROPORTION,
+      myDiffPreviewSplitter = new PreviewDiffSplitterComponent(contentPanel, myChangeProcessor, CHANGES_VIEW_PREVIEW_SPLITTER_PROPORTION,
                                                                myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN);
 
       BorderLayoutPanel mainPanel = simplePanel(myDiffPreviewSplitter).addToBottom(myProgressLabel);
-      setContent(mainPanel);
+      if (Registry.is("show.diff.preview.as.editor.tab")) {
+        setContent(contentPanel);
+      }
+      else {
+        setContent(mainPanel);
+      }
 
       setCommitSplitOrientation();
       isCommitSplitHorizontal.addListener(new RegistryValueListener.Adapter() {
@@ -381,19 +388,43 @@ public class ChangesViewManager implements ChangesViewEx,
       });
       ChangeListManager.getInstance(myProject).addChangeListListener(new MyChangeListListener(), this);
 
-      if (Registry.is("show.diff.as.editor.tab")) {
-        ChangesViewContentI changesViewContentManager = ChangesViewContentManager.getInstance(project);
-        if (changesViewContentManager instanceof ChangesViewContentManager) {
-          ((ChangesViewContentManager) changesViewContentManager).adviseSelectionChanged(new ContentManagerAdapter(){
-            @Override
-            public void selectionChanged(@NotNull ContentManagerEvent event) {
-              if (event.getContent().getDisplayName().equals("Commit") && event.getOperation() == ContentManagerEvent.ContentOperation.add) {
-                updatePreview(false);
-              }
-            }
-          });
+      myDiffPreviewProvider = new DiffPreviewProvider() {
+        @NotNull
+        @Override
+        public DiffRequestProcessor createDiffRequestProcessor() {
+          return myChangeProcessor;
         }
-      }
+
+        @NotNull
+        @Override
+        public Object getOwner() {
+          return this;
+        }
+
+        @Override
+        public String getEditorTabName() {
+          return "Local Changes: " + myChangeProcessor.getCurrentChangeName();
+        }
+      };
+
+      //do not open file aggressively on start up, do it later
+      DumbService.getInstance(project).smartInvokeLater(() -> {
+        if (project.isDisposed()) return;
+
+        myView.addSelectionListener(() -> {
+          if (!Registry.is("show.diff.preview.as.editor.tab"))
+            return;
+
+          if (!myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN)
+            return;
+
+          if (myModelUpdateInProgress) return;
+
+          FileEditorManager instance = FileEditorManager.getInstance(myProject);
+          myPreviewDiffVirtualFile = new PreviewDiffVirtualFile(myDiffPreviewProvider);
+          instance.openFile(myPreviewDiffVirtualFile, false, true);
+        });
+      });
 
       scheduleRefresh();
       updatePreview(false);
@@ -458,6 +489,9 @@ public class ChangesViewManager implements ChangesViewEx,
     }
 
     private void setDiffPreviewVisible(boolean isDiffPreviewVisible) {
+      if (Registry.is("show.diff.preview.as.editor.tab") && !isDiffPreviewVisible)
+        FileEditorManager.getInstance(myProject).closeFile(myPreviewDiffVirtualFile);
+
       myDiffPreviewSplitter.setDetailsOn(isDiffPreviewVisible);
       setCommitSplitOrientation();
     }
@@ -595,7 +629,14 @@ public class ChangesViewManager implements ChangesViewEx,
     }
 
     private void updatePreview(boolean fromModelRefresh) {
-      myDiffPreviewSplitter.updatePreview(fromModelRefresh);
+      if (Registry.is("show.diff.preview.as.editor.tab")) {
+        if (myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN) {
+          myChangeProcessor.refresh(fromModelRefresh);
+        }
+      }
+      else {
+        myDiffPreviewSplitter.updatePreview(fromModelRefresh);
+      }
     }
 
     public void setGrouping(@NotNull String groupingKey) {

@@ -113,18 +113,6 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
   }
 
   public void updatePreview(boolean state, boolean fromModelRefresh) {
-    if (Registry.is("show.log.as.editor.tab") && !fromModelRefresh && hasSelection()) {
-
-      Wrapper selectedChange = ContainerUtil.getFirstItem(getSelectedChanges());
-      if (selectedChange != null) {
-        Object userObject = selectedChange.getUserObject();
-        if (userObject instanceof Change) {
-          EditorDiffsManager.getInstance(getProject()).showDiffInEditor((Change) userObject);
-        }
-      }
-      return;
-    }
-
     if (state) {
       refresh(fromModelRefresh);
     }
@@ -205,6 +193,21 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
     }
 
     setCurrentChange(selectedChange);
+  }
+
+  @Nullable
+  @CalledInAwt
+  public String getCurrentChangeName() {
+    if (myCurrentChange == null) {
+      return null;
+    }
+
+    if (myCurrentChange.getUserObject() instanceof Change) {
+      Change change = (Change)myCurrentChange.getUserObject();
+      return ChangesUtil.getFilePath(change).getName();
+    }
+
+    return null;
   }
 
   @CalledInAwt

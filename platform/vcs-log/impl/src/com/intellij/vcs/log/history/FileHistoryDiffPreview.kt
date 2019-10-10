@@ -6,6 +6,7 @@ import com.intellij.diff.util.DiffPlaces
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor
 import com.intellij.ui.IdeBorderFactory
@@ -34,9 +35,9 @@ internal class FileHistoryDiffPreview(project: Project, private val changeGetter
 
   override fun selectChange(change: Wrapper) {}
 
-  fun updatePreview(state: Boolean) {
-    updatePreview(state, false)
-  }
+    fun updatePreview(state: Boolean) {
+      updatePreview(state, false)
+    }
 
   override fun getFastLoadingTimeMillis(): Int {
     return 10

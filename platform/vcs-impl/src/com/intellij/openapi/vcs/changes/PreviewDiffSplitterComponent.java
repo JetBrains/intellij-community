@@ -25,11 +25,6 @@ public class PreviewDiffSplitterComponent extends OnePixelSplitter {
   }
 
   public void updatePreview(boolean fromModelRefresh) {
-    if (Registry.is("show.log.as.editor.tab") && myProcessor instanceof ChangeViewDiffRequestProcessor && myDetailsOn) {
-      ((ChangeViewDiffRequestProcessor) myProcessor).updatePreview(false, fromModelRefresh);
-      return;
-    }
-
     if (isDetailsOn()) {
       myProcessor.refresh(fromModelRefresh);
     }

@@ -1,11 +1,17 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.impl;
 
+import com.intellij.diff.editor.GraphViewVirtualFile;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
+import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentI;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
@@ -17,6 +23,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.vcs.log.impl.PostponableLogRefresher.VcsLogWindow;
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
+import com.intellij.vcs.log.ui.frame.MainFrame;
 import com.intellij.vcs.log.visible.VisiblePackRefresher;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -32,23 +39,28 @@ public class VcsLogTabsWatcher implements Disposable {
   private static final String TOOLWINDOW_ID = ChangesViewContentManager.TOOLWINDOW_ID;
   private static final Logger LOG = Logger.getInstance(VcsLogTabsWatcher.class);
 
+  @NotNull private final Project myProject;
   @NotNull private final PostponableLogRefresher myRefresher;
 
   @NotNull private final ToolWindowManagerEx myToolWindowManager;
   @NotNull private final MyRefreshPostponedEventsListener myPostponedEventsListener;
   @NotNull private final MessageBusConnection myConnection;
+  @NotNull private final MyLogEditorListener myLogEditorListener;
   @Nullable private ToolWindow myToolWindow;
   private boolean myIsVisible;
 
   public VcsLogTabsWatcher(@NotNull Project project, @NotNull PostponableLogRefresher refresher) {
+    myProject = project;
     myRefresher = refresher;
     myToolWindowManager = ToolWindowManagerEx.getInstanceEx(project);
 
     myPostponedEventsListener = new MyRefreshPostponedEventsListener();
+    myLogEditorListener = new MyLogEditorListener();
     myConnection = project.getMessageBus().connect();
     myConnection.subscribe(ToolWindowManagerListener.TOPIC, myPostponedEventsListener);
 
     installContentListener();
+    installLogEditorListeners(project);
   }
 
   @Nullable
@@ -77,11 +89,39 @@ public class VcsLogTabsWatcher implements Disposable {
     }
   }
 
+  private void installLogEditorListeners(Project project) {
+    if (!Registry.is("show.log.as.editor.tab")) {
+      return;
+    }
+
+    ToolWindow toolWindow = myToolWindowManager.getToolWindow(TOOLWINDOW_ID);
+    if (toolWindow != null) {
+      toolWindow.getContentManager().addContentManagerListener(myLogEditorListener);
+
+      ChangesViewContentI changesViewManager = ChangesViewContentManager.getInstance(project);
+
+      project.getMessageBus().connect(project)
+        .subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
+          @Override
+          public void selectionChanged(@NotNull FileEditorManagerEvent e) {
+            VirtualFile file = e.getNewFile();
+            if (file instanceof GraphViewVirtualFile) {
+              Content data = file.getUserData(GraphViewVirtualFile.TabContent);
+              if (data != null) {
+                changesViewManager.setSelectedContent(data);
+              }
+            }
+          }
+        });
+    }
+  }
+
   private void removeListeners() {
     myConnection.disconnect();
 
     if (myToolWindow != null) {
       myToolWindow.getContentManager().removeContentManagerListener(myPostponedEventsListener);
+      myToolWindow.getContentManager().removeContentManagerListener(myLogEditorListener);
 
       for (Content content : myToolWindow.getContentManager().getContents()) {
         if (content instanceof TabbedContent) {
@@ -212,6 +252,52 @@ public class VcsLogTabsWatcher implements Disposable {
     public void propertyChange(PropertyChangeEvent evt) {
       if (evt.getPropertyName().equals(Content.PROP_COMPONENT)) {
         selectionChanged();
+      }
+    }
+  }
+
+  private class MyLogEditorListener extends ContentManagerAdapter implements PropertyChangeListener {
+
+    @Override
+    public void selectionChanged(@NotNull ContentManagerEvent event) {
+      if (ContentManagerEvent.ContentOperation.add.equals(event.getOperation())) {
+        Content content = event.getContent();
+        selectEditorTab(content);
+      }
+    }
+
+    private void selectEditorTab(Content content) {
+      GraphViewVirtualFile file = content.getUserData(GraphViewVirtualFile.GraphVirtualFile);
+      if(file != null)
+        MainFrame.openLogEditorTab(file, myProject);
+    }
+
+    @Override
+    public void contentAdded(@NotNull ContentManagerEvent event) {
+      Content content = event.getContent();
+      if (content instanceof TabbedContent) {
+        content.addPropertyChangeListener(this);
+      }
+    }
+
+    @Override
+    public void contentRemoved(@NotNull ContentManagerEvent event) {
+      Content content = event.getContent();
+      if (content instanceof TabbedContent) {
+        content.removePropertyChangeListener(this);
+      }
+    }
+
+    @Override
+    public void propertyChange(PropertyChangeEvent evt) {
+      if (evt.getPropertyName().equals(Content.PROP_COMPONENT)) {
+
+        if (myToolWindow != null && myToolWindow.isVisible()) {
+          Content content = myToolWindow.getContentManager().getSelectedContent();
+          if (content != null) {
+            selectEditorTab(content);
+          }
+        }
       }
     }
   }

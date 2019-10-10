@@ -15,7 +15,7 @@ class GraphViewEditor(
   override fun getPreferredFocusedComponent(): JComponent? = file.toolbarsAndTable
 
   override fun dispose() { }
-  override fun isValid(): Boolean = !file.toolbarsAndTable.isValid
+  override fun isValid(): Boolean = file.isValid
   override fun getFile(): VirtualFile = file
   override fun getName(): String = "GraphView"
 

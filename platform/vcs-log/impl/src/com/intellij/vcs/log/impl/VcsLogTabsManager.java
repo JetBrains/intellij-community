@@ -79,7 +79,7 @@ public class VcsLogTabsManager {
   }
 
   @NotNull
-  private static String generateDisplayName(@NotNull VcsLogUiImpl ui) {
+  public static String generateDisplayName(@NotNull VcsLogUiImpl ui) {
     VcsLogFilterCollection filters = ui.getFilterUi().getFilters();
     if (filters.isEmpty()) return "all";
     return StringUtil.shortenTextWithEllipsis(VcsLogFiltersKt.getPresentation(filters), 150, 20);
