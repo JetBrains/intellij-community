@@ -222,8 +222,6 @@ class CommunityLibraryLicenses {
                        url: "https://github.com/tonsky/FiraCode/blob/master/LICENSE"),
     new LibraryLicense(name: "FreeMarker", attachedTo: "intellij.java.coverage", version: "2.3.15", license: "BSD",
                        url: "http://freemarker.sourceforge.net/"),
-    new LibraryLicense(name: "FreeMarker", libraryName: "freemarker", version: "2.3.20", license: "BSD",
-                       url: "http://freemarker.sourceforge.net/"),
 
     new LibraryLicense(name: "Gant", version: "1.9.8", libraryName: "gant-groovy", license: "Apache 2.0",
                        url: "https://github.com/codehaus/gant", licenseUrl: "https://github.com/codehaus/gant/blob/master/LICENCE.txt"),

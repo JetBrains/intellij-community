@@ -216,8 +216,6 @@ class AndroidStudioProperties extends BaseIdeaProperties {
 
       withModule("intellij.android.jps", "jps/android-jps-plugin.jar", null)
 
-      withProjectLibrary("freemarker") //todo[nik] move to module libraries
-
       withResourceFromModule("intellij.android.core", "lib/asm-5.0.3.jar", "lib")
       withResourceFromModule("intellij.android.core", "lib/asm-analysis-5.0.3.jar", "lib")
       withResourceFromModule("intellij.android.core", "lib/asm-tree-5.0.3.jar", "lib")

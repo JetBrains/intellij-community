@@ -794,14 +794,6 @@ java_library(
 
 # managed by go/iml_to_build
 java_library(
-    name = "freemarker",
-    visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/org/freemarker/freemarker/2.3.20:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/freemarker/freemarker/2.3.20:jar"],
-)
-
-# managed by go/iml_to_build
-java_library(
     name = "baksmali",
     visibility = ["//visibility:public"],
     exports = ["//prebuilts/tools/common/m2/repository/org/smali/baksmali/2.2.4:jar"],

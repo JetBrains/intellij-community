@@ -291,7 +291,6 @@ class CommunityRepositoryModules {
 
       withModule("intellij.android.jps", "jps/android-jps-plugin.jar", null)
 
-      withProjectLibrary("freemarker") //todo[nik] move to module libraries
       withProjectLibrary("kxml2") //todo[nik] move to module libraries
 
       withResourceFromModule("intellij.android.core","lib/asm-5.0.3.jar", "lib")

@@ -43,6 +43,8 @@ class AndroidStudioLibraryLicenses {
     new LibraryLicense(name: "Eclipse LSP4J", libraryName: "org.eclipse.lsp4j:org.eclipse.lsp4j:0.7.1", license: "Eclipse Public License 1.0"),
     new LibraryLicense(name: "Eclipse LSP4J", libraryName: "org.eclipse.lsp4j:org.eclipse.lsp4j.jsonrpc:0.7.1", license: "Eclipse Public License 1.0"),
     new LibraryLicense(name: "fetchasgoogle.jar", libraryName: "fetchasgoogle.jar", license: "Apache 2.0"),
+    // for freemarker module library in intellij.android.core
+    new LibraryLicense(name: "FreeMarker", libraryName: "freemarker", version: "2.3.20", license: "BSD", url: "https://freemarker.apache.org/"),
     new LibraryLicense(name: "Google APIs Client Library for Java", version: "min-repackaged-1.20.0",
                        libraryName: "google-api-java-client", url: "https://developers.google.com/api-client-library/java/",
                        license: "Apache 2.0", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0"),
