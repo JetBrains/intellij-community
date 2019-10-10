@@ -543,6 +543,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
     group.add(new StopAction());
     if (canHideWarnings()) {
       group.addSeparator();
+      group.add(new ShowInfosAction());
       group.add(new ShowWarningsAction());
     }
 
@@ -656,8 +657,29 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
 
     @Override
     public void setSelected(@NotNull AnActionEvent event, boolean showWarnings) {
-      if (showWarnings == isHideWarnings()) {
-        myConfiguration.setHideWarnings(!showWarnings);
+      final boolean hideWarnings = !showWarnings;
+      if (myConfiguration.isHideWarnings() != hideWarnings) {
+        myConfiguration.setHideWarnings(hideWarnings);
+        myStructureModel.invalidate();
+      }
+    }
+  }
+
+  private class ShowInfosAction extends ToggleAction implements DumbAware {
+    ShowInfosAction() {
+      super(IdeBundle.message("action.show.infos"), null, AllIcons.General.ShowInfos);
+    }
+
+    @Override
+    public boolean isSelected(@NotNull AnActionEvent event) {
+      return !isHideInfos();
+    }
+
+    @Override
+    public void setSelected(@NotNull AnActionEvent event, boolean showInfos) {
+      final boolean hideInfos = !showInfos;
+      if (myConfiguration.isHideInfoMessages() != hideInfos) {
+        myConfiguration.setHideInfoMessages(hideInfos);
         myStructureModel.invalidate();
       }
     }
@@ -665,6 +687,10 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
 
   public boolean isHideWarnings() {
     return myConfiguration.isHideWarnings();
+  }
+
+  public boolean isHideInfos() {
+    return myConfiguration.isHideInfoMessages();
   }
 
   private class MyTreeExpander implements TreeExpander {

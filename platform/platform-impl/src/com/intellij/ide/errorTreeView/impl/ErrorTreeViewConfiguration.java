@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 public class ErrorTreeViewConfiguration implements PersistentStateComponent<ErrorTreeViewConfiguration> {
   public boolean IS_AUTOSCROLL_TO_SOURCE = false;
   public boolean HIDE_WARNINGS = false;
+  public boolean HIDE_INFO_MESSAGES = false;
 
   public static ErrorTreeViewConfiguration getInstance(Project project) {
     return ServiceManager.getService(project, ErrorTreeViewConfiguration.class);
@@ -30,6 +31,14 @@ public class ErrorTreeViewConfiguration implements PersistentStateComponent<Erro
 
   public void setHideWarnings(boolean value) {
     HIDE_WARNINGS = value;
+  }
+
+  public boolean isHideInfoMessages() {
+    return HIDE_INFO_MESSAGES;
+  }
+
+  public void setHideInfoMessages(boolean value) {
+    HIDE_INFO_MESSAGES = value;
   }
 
   @Override

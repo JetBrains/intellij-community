@@ -100,12 +100,8 @@ public class ErrorViewStructure extends AbstractTreeStructure {
       // simple messages
       synchronized (myLock) {
         for (final ErrorTreeElementKind kind : ourMessagesOrder) {
-          if (myCanHideWarnings) {
-            if (ErrorTreeElementKind.WARNING.equals(kind) || ErrorTreeElementKind.NOTE.equals(kind)) {
-              if (ErrorTreeViewConfiguration.getInstance(myProject).isHideWarnings()) {
-                continue;
-              }
-            }
+          if (shouldHide(kind)) {
+            continue;
           }
           final List<ErrorTreeElement> elems = mySimpleMessages.get(kind);
           if (elems != null) {
@@ -127,14 +123,12 @@ public class ErrorViewStructure extends AbstractTreeStructure {
       synchronized (myLock) {
         final List<NavigatableMessageElement> children = myGroupNameToMessagesMap.get(((GroupingElement)element).getName());
         if (children != null && !children.isEmpty()) {
-          if (myCanHideWarnings && ErrorTreeViewConfiguration.getInstance(myProject).isHideWarnings()) {
+          if (isFilteringNeeded()) {
             final List<ErrorTreeElement> filtered = new ArrayList<>(children.size());
             for (final NavigatableMessageElement navigatableMessageElement : children) {
-              ErrorTreeElementKind kind = navigatableMessageElement.getKind();
-              if (ErrorTreeElementKind.WARNING.equals(kind) || ErrorTreeElementKind.NOTE.equals(kind)) {
-                continue;
+              if (!shouldHide(navigatableMessageElement.getKind())) {
+                filtered.add(navigatableMessageElement);
               }
-              filtered.add(navigatableMessageElement);
             }
             return filtered.toArray(ErrorTreeElement.EMPTY_ARRAY);
           }
@@ -146,16 +140,38 @@ public class ErrorViewStructure extends AbstractTreeStructure {
     return ErrorTreeElement.EMPTY_ARRAY;
   }
 
+  private boolean isFilteringNeeded() {
+    if (!myCanHideWarnings) {
+      return false;
+    }
+    final ErrorTreeViewConfiguration config = ErrorTreeViewConfiguration.getInstance(myProject);
+    return config.isHideWarnings() || config.isHideInfoMessages();
+  }
+
+  private boolean shouldHide(ErrorTreeElementKind kind) {
+    if (!myCanHideWarnings) {
+      return false;
+    }
+    switch (kind) {
+      case WARNING:
+      case NOTE:
+        return ErrorTreeViewConfiguration.getInstance(myProject).isHideWarnings();
+      case INFO:
+        return ErrorTreeViewConfiguration.getInstance(myProject).isHideInfoMessages();
+      default:
+        return false;
+    }
+  }
+
   private boolean shouldShowFileElement(GroupingElement groupingElement) {
-    if (!myCanHideWarnings || !ErrorTreeViewConfiguration.getInstance(myProject).isHideWarnings()) {
+    if (!isFilteringNeeded()) {
       return getChildCount(groupingElement) > 0;
     }
     synchronized (myLock) {
       final List<NavigatableMessageElement> children = myGroupNameToMessagesMap.get(groupingElement.getName());
       if (children != null) {
         for (final NavigatableMessageElement child : children) {
-          ErrorTreeElementKind kind = child.getKind();
-          if (!ErrorTreeElementKind.WARNING.equals(kind) && !ErrorTreeElementKind.NOTE.equals(kind)) {
+          if (!shouldHide(child.getKind())) {
             return true;
           }
         }
@@ -372,10 +388,8 @@ public class ErrorViewStructure extends AbstractTreeStructure {
 
   @Nullable
   public ErrorTreeElement getFirstMessage(@NotNull ErrorTreeElementKind kind) {
-    if (myCanHideWarnings &&
-        (ErrorTreeElementKind.WARNING.equals(kind) || ErrorTreeElementKind.NOTE.equals(kind)) &&
-        ErrorTreeViewConfiguration.getInstance(myProject).isHideWarnings()) {
-      return null; // no warnings are available
+    if (shouldHide(kind)) {
+      return null; // elements of this kind are hidden
     }
     synchronized (myLock) {
       final List<ErrorTreeElement> simpleMessages = mySimpleMessages.get(kind);
