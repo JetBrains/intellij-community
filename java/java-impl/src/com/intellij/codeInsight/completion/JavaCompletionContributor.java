@@ -113,7 +113,8 @@ public class JavaCompletionContributor extends CompletionContributor {
     if (JavaKeywordCompletion.isDeclarationStart(position) ||
         JavaKeywordCompletion.isInsideParameterList(position) ||
         isInsideAnnotationName(position) ||
-        psiElement().inside(PsiReferenceParameterList.class).accepts(position)) {
+        psiElement().inside(PsiReferenceParameterList.class).accepts(position) ||
+        isDefinitelyVariableType(position)) {
       return new OrFilter(ElementClassFilter.CLASS, ElementClassFilter.PACKAGE);
     }
 
@@ -176,6 +177,10 @@ public class JavaCompletionContributor extends CompletionContributor {
     }
 
     return TrueFilter.INSTANCE;
+  }
+
+  private static boolean isDefinitelyVariableType(PsiElement position) {
+    return psiElement().withParents(PsiJavaCodeReferenceElement.class, PsiTypeElement.class, PsiDeclarationStatement.class).afterLeaf(psiElement().inside(psiAnnotation())).accepts(position);
   }
 
   private static boolean isInExtendsOrImplementsList(PsiElement position) {
