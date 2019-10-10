@@ -167,8 +167,10 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
   public void testOpenFileInTablessSplitter() {
     VirtualFile file1 = getFile("/src/1.txt");
     assertNotNull(file1);
+    file1.putUserData(EditorWindow.INITIAL_INDEX_KEY, null);
     myManager.openFile(file1, false);
     VirtualFile file2 = getFile("/src/2.txt");
+    file2.putUserData(EditorWindow.INITIAL_INDEX_KEY, null);
     assertNotNull(file2);
     myManager.openFile(file2, true);
     EditorWindow primaryWindow = myManager.getCurrentWindow();//1.txt and selected 2.txt
@@ -180,8 +182,8 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
     myManager.openFileWithProviders(file1, true, true);//Here we have to ignore 'searchForSplitter'
     assertEquals(2, primaryWindow.getTabCount());
     assertEquals(2, secondaryWindow.getTabCount());
-       assertOrderedEquals(new VirtualFile[]{file1, file2}, primaryWindow.getFiles());
-    assertOrderedEquals(new VirtualFile[]{file2, file1}, secondaryWindow.getFiles());
+    assertOrderedEquals(primaryWindow.getFiles(), file1, file2);
+    assertOrderedEquals(secondaryWindow.getFiles(), file2, file1);
   }
 
   public void testStoringCaretStateForFileWithFoldingsWithNoTabs() {
