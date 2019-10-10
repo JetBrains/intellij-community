@@ -156,8 +156,10 @@ object UpdateInstaller {
     val jnaCopy = jna.copyTo(File(tempDir, jna.name), true)
     val jnaUtilsCopy = jnaUtils.copyTo(File(tempDir, jnaUtils.name), true)
 
+    val homePath = Paths.get(PathManager.getHomePath())
+    val path = if (Files.isSymbolicLink(homePath)) Files.readSymbolicLink(homePath).toString() else PathManager.getHomePath()
     var java = System.getProperty("java.home")
-    if (FileUtil.isAncestor(PathManager.getHomePath(), java, true)) {
+    if (FileUtil.isAncestor(path, java, true)) {
       val javaCopy = File(tempDir, "jre")
       if (javaCopy.exists()) FileUtil.delete(javaCopy)
       FileUtil.copyDir(File(java), javaCopy)
