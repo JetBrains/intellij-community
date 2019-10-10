@@ -114,7 +114,12 @@ public class FileContentImpl extends IndexedFileImpl implements PsiDependentFile
     if (project == null) {
       project = DefaultProjectFactory.getInstance().getDefaultProject();
     }
-    return createFileFromText(project, text, (LanguageFileType)getFileTypeWithoutSubstitution(), myFile, myFileName);
+    FileType fileType = getFileTypeWithoutSubstitution();
+    if (!(fileType instanceof LanguageFileType)) {
+      throw new AssertionError("PSI can be created only for a file with LanguageFileType but actual is " + fileType.getClass()  + "." +
+                               "\nPlease use a proper FileBasedIndexExtension#getInputFilter() implementation for the caller index");
+    }
+    return createFileFromText(project, text, (LanguageFileType)fileType, myFile, myFileName);
   }
 
   @NotNull
