@@ -1387,6 +1387,15 @@ public class ExtractMethodTest extends LightJavaCodeInsightTestCase {
     doTest();
   }
 
+  public void testExtractFromAnnotation() throws Exception {
+    try {
+      doTest();
+      fail("Should not work for annotations");
+    }
+    catch (PrepareFailedException ignore) {
+    }
+  }
+
   private void doTestDisabledParam() throws PrepareFailedException {
     final CommonCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
     settings.ELSE_ON_NEW_LINE = true;
