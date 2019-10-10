@@ -527,9 +527,14 @@ public class HighlightMethodUtil {
       boolean varargs = candidateInfo.getApplicabilityLevel() == MethodCandidateInfo.ApplicabilityLevel.VARARGS;
       int idx = ArrayUtil.find(expressions, wrongArg);
       PsiType paramType = candidateInfo.getSubstitutor().substitute(PsiTypesUtil.getParameterType(parameters, idx, varargs));
+      String errorMessage = candidateInfo.getInferenceErrorMessage();
+      String reason = errorMessage != null ? "<table><tr><td style='padding-left: 4px; padding-top: 10;'>" +
+                                             "reason: " + XmlStringUtil.escapeString(errorMessage).replaceAll("\n", "<br/>") +
+                                             "</td></tr></table>" 
+                                           : "";
       return HighlightUtil.createIncompatibleTypesTooltip(paramType, argType,
                                                           (lRawType, lTypeArguments, rRawType, rTypeArguments) ->
-                                                               JavaErrorMessages.message("incompatible.types.html.tooltip", lRawType, lTypeArguments, rRawType, rTypeArguments, "", "#" + ColorUtil.toHex(UIUtil.getContextHelpForeground())));
+                                                               JavaErrorMessages.message("incompatible.types.html.tooltip", lRawType, lTypeArguments, rRawType, rTypeArguments, reason, "#" + ColorUtil.toHex(UIUtil.getContextHelpForeground())));
     }
     return null;
   }
