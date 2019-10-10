@@ -63,7 +63,6 @@ public class VariableAccessFromInnerClassJava10Fix extends BaseIntentionAction {
     if (declarationStatement == null) return false;
     if (declarationStatement.getDeclaredElements().length != 1) return false;
     String name = variable.getName();
-    if (name == null) return false;
 
     PsiType type = variable.getType();
     if (!PsiTypesUtil.isDenotableType(type, variable)) {
@@ -206,7 +205,6 @@ public class VariableAccessFromInnerClassJava10Fix extends BaseIntentionAction {
       PsiLocalVariable localVariable = tryCast(declaredElements[0], PsiLocalVariable.class);
       if (localVariable == null) return null;
       String boxName = localVariable.getName();
-      if (boxName == null) return null;
       PsiNewExpression newExpression = tryCast(localVariable.getInitializer(), PsiNewExpression.class);
       if (newExpression == null) return null;
       PsiAnonymousClass anonymousClass = newExpression.getAnonymousClass();

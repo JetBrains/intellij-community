@@ -34,7 +34,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Consumer;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
@@ -124,7 +123,7 @@ public class FunctionalExpressionCompletionProvider extends CompletionProvider<C
 
   private static String getParamName(PsiParameter param, PsiElement originalPosition) {
     return JavaCodeStyleManager.getInstance(originalPosition.getProject()).suggestUniqueVariableName(
-      ObjectUtils.assertNotNull(param.getName()), originalPosition, false);
+      param.getName(), originalPosition, false);
   }
 
 }

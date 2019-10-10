@@ -83,7 +83,6 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
         final PsiIdentifier identifier = parameter.getNameIdentifier();
         if (identifier == null) return;
         final String parameterName = parameter.getName();
-        if (parameterName == null) return;
         if (PsiUtil.isIgnoredName(parameterName)) {
           if (!m_ignoreUsedIgnoredName && VariableAccessUtils.variableIsUsed(parameter, section)) {
             holder.registerProblem(identifier, InspectionGadgetsBundle.message("inspection.catch.ignores.exception.used.message"));
@@ -232,7 +231,6 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
       PsiParameter parameter = catchSection.getParameter();
       if (parameter == null) return;
       String parameterName = parameter.getName();
-      if (parameterName == null) return;
       FileTemplate template = FileTemplateManager.getInstance(project).getCodeTemplate(JavaTemplateUtil.TEMPLATE_CATCH_BODY);
 
       Properties props = FileTemplateManager.getInstance(project).getDefaultProperties();

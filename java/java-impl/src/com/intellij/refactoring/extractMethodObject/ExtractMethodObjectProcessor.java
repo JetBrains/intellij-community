@@ -608,7 +608,6 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
       final PsiModifierList parameterModifierList = parameter.getModifierList();
       LOG.assertTrue(parameterModifierList != null);
       final String parameterName = parameter.getName();
-      LOG.assertTrue(parameterName != null);
       PsiParameter parm = myElementFactory.createParameter(parameterName, parameter.getType());
       if (myStyleSettings.getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_PARAMETERS) {
         final PsiModifierList modifierList = parm.getModifierList();

@@ -232,7 +232,7 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
       if (i > 0) {
         template.addTextSegment(", ");
       }
-      String name = StringUtil.notNullize(parameters[i].getName());
+      String name = parameters[i].getName();
       Expression expression = Registry.is("java.completion.argument.live.template.completion") ? new AutoPopupCompletion() : new ConstantNode(name);
       template.addVariable(name, expression, new ConstantNode(name), true);
     }

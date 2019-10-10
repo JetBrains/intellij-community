@@ -35,7 +35,9 @@ public class ExtractChainedMapAction extends PsiElementBaseIntentionAction {
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
     PsiLocalVariable variable =
       PsiTreeUtil.getParentOfType(element, PsiLocalVariable.class, false, PsiStatement.class, PsiLambdaExpression.class);
-    if (variable == null || variable.getName() == null) return false;
+    if (variable == null) {
+      return false;
+    }
     PsiExpression initializer = variable.getInitializer();
     if (initializer == null) return false;
     PsiDeclarationStatement declaration = tryCast(variable.getParent(), PsiDeclarationStatement.class);

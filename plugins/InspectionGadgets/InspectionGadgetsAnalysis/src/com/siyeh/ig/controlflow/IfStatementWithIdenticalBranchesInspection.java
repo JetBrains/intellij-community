@@ -1133,7 +1133,7 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
       if (!firstType.equals(localVariable2.getType())) return false;
       String firstName = localVariable1.getName();
       String secondName = localVariable2.getName();
-      if (firstName == null || !firstName.equals(secondName)) {
+      if (!firstName.equals(secondName)) {
         mySubstitutionTable.put(localVariable2, firstName);
       }
       return true;
@@ -1165,11 +1165,9 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
         if (firstVar.getType().equals(secondVar.getType())) {
           String firstVarName = firstVar.getName();
           String secondVarName = secondVar.getName();
-          if (firstVarName != null && secondVarName != null) {
-            return firstVarName.equals(secondVarName) || firstVarName.equals(mySubstitutionTable.get(secondVar))
-                   ? EXACT_MATCH
-                   : EXACT_MISMATCH;
-          }
+          return firstVarName.equals(secondVarName) || firstVarName.equals(mySubstitutionTable.get(secondVar))
+                 ? EXACT_MATCH
+                 : EXACT_MISMATCH;
         }
       }
       return super.referenceExpressionsMatch(first, second);

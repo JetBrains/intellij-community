@@ -75,7 +75,7 @@ public class ParameterNamingConventionInspection extends
         return;
       }
       final String name = variable.getName();
-      if (name == null || isValid(name)) {
+      if (isValid(name)) {
         return;
       }
       registerVariableError(variable, name);

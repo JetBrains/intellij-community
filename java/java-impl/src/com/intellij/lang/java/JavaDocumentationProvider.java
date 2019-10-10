@@ -304,9 +304,7 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
       PsiParameter param = params[i];
       JavaDocInfoGenerator.generateType(buffer, substitutor.substitute(param.getType()), method, false, true);
       buffer.append(" ");
-      if (param.getName() != null) {
-        buffer.append(param.getName());
-      }
+      buffer.append(param.getName());
       if (i < params.length - 1) {
         buffer.append(", ");
       }

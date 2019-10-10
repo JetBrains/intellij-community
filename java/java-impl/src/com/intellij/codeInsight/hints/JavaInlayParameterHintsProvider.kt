@@ -42,7 +42,7 @@ class JavaInlayParameterHintsProvider : InlayParameterHintsProvider {
     val containingClass = method.containingClass ?: return null
     val fullMethodName = StringUtil.getQualifiedName(containingClass.qualifiedName, method.name)
 
-    val paramNames: List<String> = method.parameterList.parameters.map { it.name ?: "" }
+    val paramNames: List<String> = method.parameterList.parameters.map { it.name }
     return MethodInfo(fullMethodName, paramNames)
   }
 

@@ -185,7 +185,6 @@ public class TrivialFunctionalExpressionUsageInspection extends AbstractBaseJava
         boolean used = VariableAccessUtils.variableIsUsed(parameter, lambda.getBody());
         if (used) {
           String name = parameter.getName();
-          if (name == null) continue;
           statements.add(
             factory.createStatementFromText(parameter.getType().getCanonicalText() + " " + name + "=" + argument.getText()+";", lambda));
           argument.replace(factory.createExpressionFromText(name, parameter));

@@ -459,11 +459,7 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
     }
 
     private static String composeParameter(PsiParameter parameter) {
-      String parameterName = parameter.getName();
-      if (parameterName == null) {
-        parameterName = "";
-      }
-      return parameterName;
+      return parameter.getName();
     }
   }
 

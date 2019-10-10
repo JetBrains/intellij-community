@@ -44,7 +44,7 @@ internal class CreateEnumConstantAction(
     val parameters = constructor.parameterList.parameters
     if (parameters.isEmpty()) return
 
-    val paramString = parameters.joinToString(",") { it.name ?: "" }
+    val paramString = parameters.joinToString(",") { it.name }
     enumConstant = enumConstant.replace(elementFactory.createEnumConstantFromText("$name($paramString)", null)) as PsiEnumConstant
 
     val builder = TemplateBuilderImpl(enumConstant)

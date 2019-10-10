@@ -216,7 +216,7 @@ class VariableExtractor {
       PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)declaration;
       PsiLocalVariable localVariable = (PsiLocalVariable)declarationStatement.getDeclaredElements()[0];
       PsiResourceVariable resourceVariable = JavaPsiFacade.getElementFactory(anchor.getProject())
-        .createResourceVariable(Objects.requireNonNull(localVariable.getName()), localVariable.getType(), initializer, anchor);
+        .createResourceVariable(localVariable.getName(), localVariable.getType(), initializer, anchor);
       return anchor.replace(resourceVariable);
     }
     PsiElement parent = anchor.getParent();

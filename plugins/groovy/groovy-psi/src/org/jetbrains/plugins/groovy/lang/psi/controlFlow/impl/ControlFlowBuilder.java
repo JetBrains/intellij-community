@@ -99,7 +99,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     if (lbrace != null && parent instanceof GrMethod) {
       for (GrParameter parameter : ((GrMethod)parent).getParameters()) {
         String parameterName = parameter.getName();
-        if (myPolicy.isVariableInitialized(parameter) && parameterName != null) {
+        if (myPolicy.isVariableInitialized(parameter)) {
           addNode(new ReadWriteVariableInstruction(createDescriptor(parameter), parameter, ReadWriteVariableInstruction.WRITE));
         }
       }
@@ -198,7 +198,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   private void addFunctionalExpressionParameters(GrFunctionalExpression expression) {
     for (GrParameter parameter : expression.getAllParameters()) {
       String parameterName = parameter.getName();
-      if (myPolicy.isVariableInitialized(parameter) && parameterName != null) {
+      if (myPolicy.isVariableInitialized(parameter)) {
         addNode(new ReadWriteVariableInstruction(createDescriptor(parameter), parameter, ReadWriteVariableInstruction.WRITE));
       }
     }

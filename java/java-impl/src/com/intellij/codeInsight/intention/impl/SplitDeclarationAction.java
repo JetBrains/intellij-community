@@ -52,9 +52,6 @@ public class SplitDeclarationAction extends PsiElementBaseIntentionAction {
     PsiElement parent = decl.getParent();
     if (parent instanceof PsiForStatement) {
       String varName = var.getName();
-      if (varName == null) {
-        return false;
-      }
 
       parent = parent.getNextSibling();
       while (parent != null) {
@@ -101,7 +98,6 @@ public class SplitDeclarationAction extends PsiElementBaseIntentionAction {
         PsiTypesUtil.replaceWithExplicitType(typeElement);
       }
       final String name = var.getName();
-      assert name != null;
       PsiExpressionStatement statement = (PsiExpressionStatement)JavaPsiFacade.getElementFactory(psiManager.getProject())
                                                                               .createStatementFromText(name + "=xxx;", decl);
       statement = (PsiExpressionStatement)CodeStyleManager.getInstance(project).reformat(statement);

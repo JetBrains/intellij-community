@@ -272,9 +272,6 @@ class GrChageSignatureUsageSearcher {
       UsageInfo usageInfo = new ChangeSignatureParameterUsageInfo(parmRef, parameter.getName(), info.getName());
       results.add(usageInfo);
     }
-    if (info.getName() != parameter.getName()) {
-      
-    }
   }
 
   private boolean needToCatchExceptions(PsiMethod caller) {

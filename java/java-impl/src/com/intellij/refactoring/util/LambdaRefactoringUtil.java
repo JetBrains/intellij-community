@@ -132,7 +132,6 @@ public class LambdaRefactoringUtil {
         else {
           initialName = parameter.getName();
         }
-        LOG.assertTrue(initialName != null);
         if ("_".equals(initialName)) {
           SuggestedNameInfo nameInfo = codeStyleManager.suggestVariableName(VariableKind.PARAMETER, null, null, psiSubstitutor.substitute(parameter.getType()));
           if (nameInfo.names.length > 0) {
@@ -142,12 +141,9 @@ public class LambdaRefactoringUtil {
         baseName = codeStyleManager.variableNameToPropertyName(initialName, VariableKind.PARAMETER);
       }
 
-      if (baseName != null) {
-        String parameterName = nameGenerator.generateUniqueName(codeStyleManager.suggestUniqueVariableName(baseName, referenceExpression, true));
-        map.put(parameter, parameterName);
-        return parameterName;
-      }
-      return "";
+      String parameterName = nameGenerator.generateUniqueName(codeStyleManager.suggestUniqueVariableName(baseName, referenceExpression, true));
+      map.put(parameter, parameterName);
+      return parameterName;
     };
     StringBuilder buf = new StringBuilder();
     if (parameters.length == 1) {

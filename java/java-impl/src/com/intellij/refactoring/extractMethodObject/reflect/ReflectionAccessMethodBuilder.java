@@ -126,10 +126,6 @@ public class ReflectionAccessMethodBuilder {
       String jvmType = erasedType != null ? extractJvmType(erasedType) : typeName;
 
       String name = parameter.getName();
-      if (name == null) {
-        LOG.warn("Parameter name not found, index = " + i + ", type = " + typeName);
-        name = "arg" + i;
-      }
 
       PsiType accessedType = erasedType != null
                              ? PsiReflectionAccessUtil.nearestAccessibleType(erasedType)

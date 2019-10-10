@@ -239,7 +239,6 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
         PsiParameter[] params = baseConstructor.getParameterList().getParameters();
         for (PsiParameter param : params) {
           String name = param.getName();
-          assert name != null : param;
           PsiParameter newParam = factory.createParameter(name, param.getType(), aClass);
           GenerateMembersUtil.copyOrReplaceModifierList(param, aClass, newParam);
           constructor.getParameterList().add(newParam);

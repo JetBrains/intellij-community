@@ -54,9 +54,6 @@ class ReusedLocalVariablesFinder {
     Set<String> tempNames = new HashSet<>(ContainerUtil.map(inputVariables.getInputVariables(), data -> data.name));
     for (PsiLocalVariable variable : reusedVariables) {
       String name = variable.getName();
-      if (name == null) {
-        continue;
-      }
       String typeText = variable.getType().getCanonicalText();
       if (finder.isValueReused(variable)) {
         String suggestedName = finder.suggestUniqueVariableName(name);

@@ -131,7 +131,6 @@ public class WrapperTypeMayBePrimitiveInspection extends AbstractBaseJavaLocalIn
       BoxingInfo boxingInfo = new BoxingInfo(variable);
       if (initializer != null && !boxingInfo.checkExpression(initializer)) return;
       String name = variable.getName();
-      if (name == null) return;
       ArrayList<BoxingInfo> infos = new ArrayList<>();
       infos.add(boxingInfo);
       myBoxingMap.put(name, infos);

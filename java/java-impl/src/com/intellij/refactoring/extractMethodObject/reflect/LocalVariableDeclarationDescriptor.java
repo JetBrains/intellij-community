@@ -29,7 +29,7 @@ public class LocalVariableDeclarationDescriptor implements ItemToReplaceDescript
       PsiLocalVariable variable = (PsiLocalVariable)element;
       String name = variable.getName();
       PsiType variableType = variable.getType();
-      if (name != null && !PsiReflectionAccessUtil.isAccessibleType(variableType)) {
+      if (!PsiReflectionAccessUtil.isAccessibleType(variableType)) {
         variables.add(new AccessibleLocalVariable(name, PsiReflectionAccessUtil.nearestAccessibleType(variableType), variable));
       }
     }

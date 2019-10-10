@@ -106,7 +106,7 @@ public class JoinDeclarationAndAssignmentJavaInspection extends AbstractBaseJava
     if (variable != null && assignment != null) {
       String variableName = variable.getName();
       PsiExpression rExpression = assignment.getRExpression();
-      if (variableName != null && rExpression != null) {
+      if (rExpression != null) {
         for (PsiLocalVariable aVar = variable; aVar != null; aVar = getNextSiblingOfType(aVar, PsiLocalVariable.class)) {
           if (variableIsUsed(aVar, rExpression)) {
             return null;

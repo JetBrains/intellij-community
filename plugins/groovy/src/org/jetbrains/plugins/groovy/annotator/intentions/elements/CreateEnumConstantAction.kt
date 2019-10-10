@@ -63,7 +63,7 @@ internal fun renderParameters(targetClass: GrTypeDefinition): String {
   val constructor = targetClass.constructors.firstOrNull() ?: return ""
   val parameters = constructor.parameterList.parameters
 
-  return parameters.joinToString(",") { it.name ?: "" }
+  return parameters.joinToString(",") { it.name }
 }
 
 internal fun canCreateEnumConstant(targetClass: GrTypeDefinition, request: CreateFieldRequest): Boolean {
