@@ -15,13 +15,9 @@
  */
 package com.intellij.psi.search;
 
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.project.Project;
-
+/**
+ * @deprecated unused; please remove the implementation
+ */
+@Deprecated
 public abstract class SearchScopeEnlarger {
-  public static final ExtensionPointName<SearchScopeEnlarger> EXTENSION = ExtensionPointName.create("com.intellij.searchScopeEnlarger");
-
-  public boolean allScopeSearchesOutsideRootModel(Project project) {
-    return false;
-  }
 }
