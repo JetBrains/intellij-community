@@ -332,8 +332,13 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     JBScrollPane scrollPane = new JBScrollPane(component);
     scrollPane.setBorder(JBUI.Borders.empty());
     // Needed to show scroll bars in case of emergency
-    component.setPreferredSize(component.getMinimumSize());
+    bindMinimumSizeToPreferredSize(component);
     return scrollPane;
+  }
+
+  private static void bindMinimumSizeToPreferredSize(@NotNull Component component) {
+    if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
+    component.setPreferredSize(component.getMinimumSize());
   }
 
   protected String addStepComponent(final Component component) {
