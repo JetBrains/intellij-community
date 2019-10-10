@@ -27,8 +27,8 @@ private class ChangesViewCommitPanelSplitter : OnePixelSplitter(true, "", DEFAUL
 
   private fun doLayoutRetainingSecondHeight() {
     if (isVerticalProportionSet && canCalculateVerticalProportion() && isSplitterHeightChanged()) {
-      if (isVertical) proportion = getProportionForSecondHeight(secondComponent.height)
-      else if (verticalSecondHeight > 0) saveVerticalProportion(getProportionForSecondHeight(verticalSecondHeight))
+      if (isVertical && secondComponent.height > 0) proportion = getProportionForSecondHeight(secondComponent.height)
+      else if (!isVertical && verticalSecondHeight > 0) saveVerticalProportion(getProportionForSecondHeight(verticalSecondHeight))
     }
     super.doLayout()
     previousHeight = height
