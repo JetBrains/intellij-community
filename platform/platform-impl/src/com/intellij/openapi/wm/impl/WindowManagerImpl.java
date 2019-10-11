@@ -473,7 +473,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
     }
 
     Window window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
-    IdeFrame result = getIdeFrame(UIUtil.findUltimateParent(window));
+    IdeFrame result = window != null ? getIdeFrame(UIUtil.findUltimateParent(window)) : null;
     if (result != null) {
       return result;
     }
