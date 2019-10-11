@@ -43,11 +43,10 @@ def read_sequence_from_sock(sock):
             if data == '---':
                 break
             result.append(data)
-
         except (socket.error, IOError) as e:
             print("I/O error({0}): {1} ({2})".format(e.errno, e.strerror, e))
             traceback.print_exception(*sys.exc_info())
-            return result
+            break
     return result
 
 
@@ -111,7 +110,7 @@ def try_activate_instance(args):
 
         s.settimeout(None)
         response = read_sequence_from_sock(s)
-        if response[0] != 'ok':
+        if len(response) < 2 or response[0] != 'ok':
             print('bad response: ' + str(response))
             exit(1)
 
