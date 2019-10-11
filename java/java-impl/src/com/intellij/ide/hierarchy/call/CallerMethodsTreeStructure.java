@@ -70,7 +70,9 @@ public final class CallerMethodsTreeStructure extends HierarchyTreeStructure {
 
     PsiMember member = enclosingElement;
     PsiClass originalClass = member.getContainingClass();
-    assert originalClass != null;
+    
+    if (originalClass == null) return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
+    
     PsiClassType originalType = JavaPsiFacade.getElementFactory(myProject).createType(originalClass);
     Set<PsiMethod> methodsToFind = new HashSet<>();
 
