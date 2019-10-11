@@ -85,8 +85,8 @@ public class CharsetObjectCanBeUsedInspection extends AbstractBaseJavaLocalInspe
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!PsiUtil.isLanguageLevel7OrHigher(holder.getFile())) return PsiElementVisitor.EMPTY_VISITOR;
     LanguageLevel languageLevel = PsiUtil.getLanguageLevel(holder.getFile());
+    if (!languageLevel.isAtLeast(LanguageLevel.JDK_1_7)) return PsiElementVisitor.EMPTY_VISITOR;
     return new JavaElementVisitor() {
       @Override
       public void visitCallExpression(PsiCallExpression call) {
