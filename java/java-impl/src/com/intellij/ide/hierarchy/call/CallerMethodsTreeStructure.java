@@ -9,11 +9,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -98,15 +96,10 @@ public final class CallerMethodsTreeStructure extends HierarchyTreeStructure {
     
     assert enclosingElement instanceof PsiField;
 
-    Set<PsiMethod> methodsToFindForField = new HashSet<>();
-    ReferencesSearch.search(enclosingElement, enclosingElement.getUseScope()).forEach(reference -> {
-      PsiMethod method = PsiTreeUtil.getParentOfType(reference.getElement(), PsiMethod.class);
-      if (method != null) methodsToFindForField.add(method);
-    });
-
-    return JBIterable.from(methodsToFindForField)
-      .map(method -> new CallHierarchyNodeDescriptor(myProject, nodeDescriptor, method, false, false))
-      .toArray(new CallHierarchyNodeDescriptor[]{});
+    return ReferencesSearch
+      .search(enclosingElement, enclosingElement.getUseScope()).findAll().stream()
+      .map(PsiReference::getElement).distinct()
+      .map(e -> new CallHierarchyNodeDescriptor(myProject, nodeDescriptor, e, false, false)).toArray();
   }
 
   private static boolean isLocalOrAnonymousClass(PsiMember enclosingElement) {

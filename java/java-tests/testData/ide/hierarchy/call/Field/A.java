@@ -7,6 +7,7 @@ public class A {
 
   public static void main2(String[] args) {
     testField += "";
+    testField += "b";
   }
 
   public static void main3(String[] args) {
