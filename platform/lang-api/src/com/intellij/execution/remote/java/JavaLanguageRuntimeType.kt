@@ -27,6 +27,19 @@ class JavaLanguageRuntimeType : LanguageRuntimeType<JavaLanguageRuntimeConfigura
   override fun createConfigurable(project: Project, config: JavaLanguageRuntimeConfiguration): Configurable =
     ServiceManager.getService(JavaLanguageRuntimeUIFactory::class.java).create(config)
 
+  override fun createIntrospector(config: JavaLanguageRuntimeConfiguration): Introspector? {
+    if (config.homePath.isNotBlank()) return null
+
+    return object : Introspector {
+      override fun introspect(subject: Introspectable) {
+        if (config.homePath.isNotBlank()) return // don't want to override user value
+
+        val home = subject.getEnvironmentVariable("JAVA_HOME")
+        home?.let { config.homePath = home }
+      }
+    }
+  }
+
   companion object {
     @JvmStatic
     val TYPE_ID = "JavaLanguageRuntime"

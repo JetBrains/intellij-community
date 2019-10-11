@@ -22,10 +22,21 @@ abstract class LanguageRuntimeType<C : LanguageRuntimeConfiguration>(id: String)
   @get: Nls
   abstract val launchDescription: String
 
+  open fun createIntrospector(config: C): Introspector? = null
 
   companion object {
     val EXTENSION_NAME = ExtensionPointName.create<LanguageRuntimeType<*>>("com.intellij.ir.languageRuntime")
     @JvmStatic
     fun allTypes() = EXTENSION_NAME.extensionList.toArray(emptyArray<LanguageRuntimeType<*>>())
+  }
+
+  abstract class Introspectable {
+    open fun getEnvironmentVariable(varName: String): String? = null
+    // open fun executeScript(script: String): String? = null
+    // open fun getUser(): String? = null
+  }
+
+  interface Introspector {
+    fun introspect(subject: Introspectable)
   }
 }
