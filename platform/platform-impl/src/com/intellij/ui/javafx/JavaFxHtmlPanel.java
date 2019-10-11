@@ -147,10 +147,27 @@ public class JavaFxHtmlPanel implements Disposable {
     });
   }
 
+  /**
+   * @return user style, used to display HTML
+   * @see WebEngine#setUserStyleSheetLocation(String)
+   * @see #getJavaFxStyle(boolean)
+   */
   @Nullable
   protected URL getStyle(boolean isDarcula) {
     return null;
   }
+
+  /**
+   * @return java fx style, used for menus etc.
+   * See <a href="https://docs.oracle.com/javafx/2/api/javafx/scene/doc-files/cssref.html">manual</a>
+   * @see Scene#getStylesheets()
+   * @see #getStyle(boolean)
+   */
+  @Nullable
+  protected URL getJavaFxStyle(boolean isDarcula) {
+    return null;
+  }
+
 
   private class JavaFXLafManagerListener implements LafManagerListener {
     @Override
@@ -160,15 +177,23 @@ public class JavaFxHtmlPanel implements Disposable {
   }
 
   private void updateLaf(boolean isDarcula) {
-    URL styleUrl = getStyle(isDarcula);
-    if (styleUrl == null) {
+    @Nullable
+    URL userAgentStyle = getStyle(isDarcula);
+    @Nullable
+    URL javaFxStyle = getJavaFxStyle(isDarcula);
+    if (userAgentStyle == null && javaFxStyle == null) {
       return;
     }
     ApplicationManager.getApplication().invokeLater(
       () -> runInPlatformWhenAvailable(
         () -> {
           final WebView webView = getWebViewGuaranteed();
-          webView.getEngine().setUserStyleSheetLocation(styleUrl.toExternalForm());
+          if (userAgentStyle != null) {
+            webView.getEngine().setUserStyleSheetLocation(userAgentStyle.toExternalForm());
+          }
+          if (javaFxStyle != null) {
+            webView.getScene().getStylesheets().add(javaFxStyle.toExternalForm());
+          }
         }
       ));
   }
