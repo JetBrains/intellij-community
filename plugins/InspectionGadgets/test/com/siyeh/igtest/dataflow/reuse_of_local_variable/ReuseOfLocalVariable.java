@@ -97,4 +97,16 @@ class Dummy {
       System.out.println(i);
     }
   }
+
+  void y(int j) {
+    int i = 1;
+    switch (j) {
+      case 1:
+        i = 2;
+        break;
+      case 2:
+        return;
+    }
+    System.out.println(i);
+  }
 }

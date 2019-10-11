@@ -179,6 +179,7 @@ public class ReuseOfLocalVariableInspection extends BaseInspection {
         for (PsiStatement statement : block.getStatements()) {
           if (statement.equals(assignmentParent)) before = false;
           if (before) continue;
+          if (statement instanceof PsiBreakStatement) break;
           if (statement instanceof PsiReturnStatement || statement instanceof PsiThrowStatement) {
             registerError(lhs);
             return;
