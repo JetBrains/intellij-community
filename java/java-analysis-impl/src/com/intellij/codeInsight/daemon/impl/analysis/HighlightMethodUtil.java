@@ -1038,8 +1038,8 @@ public class HighlightMethodUtil {
       PsiExpression expression = i < expressions.length ? expressions[i] : null;
       if (assignmentCompatible(i, parameters, expressions, substitutor)) continue;
       boolean varargs = info != null && info.getApplicabilityLevel() == MethodCandidateInfo.ApplicabilityLevel.VARARGS;
-      PsiType parameterType = PsiTypesUtil.getParameterType(parameters, i, varargs);
-      boolean showShortType = HighlightUtil.showShortType(substitutor.substitute(parameterType),
+      PsiType parameterType = substitutor.substitute(PsiTypesUtil.getParameterType(parameters, i, varargs));
+      boolean showShortType = HighlightUtil.showShortType(parameterType,
                                                           expression != null ? expression.getType() : null);
       s.append("<tr>");
       if (parameter != null) {
@@ -1055,7 +1055,7 @@ public class HighlightMethodUtil {
 
       if (expression != null) {
         s.append("<td style='padding-right: 28px;'>")
-          .append(HighlightUtil.redIfNotMatch(expression.getType(), false, showShortType))
+          .append(mismatchedExpressionType(parameterType, expression))
           .append("</td>");
       }
       else {
@@ -1074,6 +1074,25 @@ public class HighlightMethodUtil {
     s.append("</body></html>");
 
     return s.toString();
+  }
+
+  @NotNull
+  static String mismatchedExpressionType(PsiType parameterType, PsiExpression expression) {
+    return HighlightUtil.createIncompatibleTypesTooltip(parameterType, expression.getType(), new HighlightUtil.IncompatibleTypesTooltipComposer() {
+      @NotNull
+      @Override
+      public String consume(@NotNull String lRawType,
+                            @NotNull String lTypeArguments,
+                            @NotNull String rRawType,
+                            @NotNull String rTypeArguments) {
+        return rRawType + rTypeArguments;
+      }
+
+      @Override
+      public boolean skipTypeArgsColumns() {
+        return true;
+      }
+    });
   }
 
   private static boolean assignmentCompatible(int i,

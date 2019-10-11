@@ -1096,6 +1096,36 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
       .forEach(info -> Assert.assertEquals(expected, info.getToolTip()));
   }
 
+  public void testTooltipComponents() {
+    doTest();
+    String toolTipForeground = ColorUtil.toHtmlColor(UIUtil.getToolTipForeground());
+    String greyed = ColorUtil.toHtmlColor(UIUtil.getContextHelpForeground());
+    String red = ColorUtil.toHtmlColor(DialogWrapper.ERROR_FOREGROUND_COLOR);
+    String paramBgColor = ColorUtil.toHtmlColor(EditorColorsUtil.getGlobalOrDefaultColorScheme()
+      .getAttributes(DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT)
+      .getBackgroundColor());
+    int fontSize = StartupUiUtil.getLabelFont().getSize() - (SystemInfo.isWindows ? 0 : 1);
+    String expected = "<html><body><table>" +
+                      "<tr>" +
+                      "<td/>" +
+                      "<td style='color: " + greyed + "; padding-left: 16px; padding-right: 24px;'>Required type</td>" +
+                      "<td style='color: " + greyed + "; padding-right: 28px;'>Provided</td></tr>" +
+                      "<tr>" +
+                      "<td><table><tr><td style='color: " + greyed + "; font-size:" + fontSize + "pt; padding:1px 4px 1px 4px;background-color: " + paramBgColor + ";'>integerList:</td></tr></table></td>" + 
+                      "<td style='padding-left: 16px; padding-right: 24px;'><font color='" + toolTipForeground + "'>List&lt;Integer&gt;</font></td>" +
+                      "<td style='padding-right: 28px;'><font color='" + toolTipForeground + "'>List</font>&lt;<font color='" + red + "'>String</font>&gt;</td></tr>" +
+                      "<tr>" +
+                      "<td><table><tr><td style='color: " + greyed + "; font-size:" + fontSize + "pt; padding:1px 4px 1px 4px;background-color: " + paramBgColor + ";'>stringList:</td></tr></table></td>" + 
+                      "<td style='padding-left: 16px; padding-right: 24px;'><font color='" + toolTipForeground+ "'>List&lt;String&gt;</font></td>" +
+                      "<td style='padding-right: 28px;'><font color='" + toolTipForeground + "'>List</font>&lt;<font color='" + red + "'>Integer</font>&gt;</td></tr>" +
+                      "</table></body></html>";
+
+    doHighlighting()
+      .stream()
+      .filter(info -> info.type == HighlightInfoType.ERROR)
+      .forEach(info -> Assert.assertEquals(expected, info.getToolTip()));
+  }
+
   public void testBridgeMethodOverriding() { doTest(); }
   public void testNestedWildcardsWithImplicitBounds() { doTest(); }
   public void testCallOnRawWithExplicitTypeArguments() { doTest(); }

@@ -31,7 +31,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
-import com.intellij.psi.impl.source.PsiTypeElementImpl;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
@@ -2738,6 +2737,13 @@ public class HighlightUtil extends HighlightUtilBase {
   interface IncompatibleTypesTooltipComposer {
     @NotNull
     String consume(@NotNull String lRawType, @NotNull String lTypeArguments, @NotNull String rRawType, @NotNull String rTypeArguments);
+
+    /**
+     * Override if expected/actual pair layout is a row
+     */
+    default boolean skipTypeArgsColumns() {
+      return false;
+    }
   }
 
   @NotNull
@@ -2748,6 +2754,7 @@ public class HighlightUtil extends HighlightUtilBase {
     PsiTypeParameter[] rTypeParams = rTypeData.second;
 
     int typeParamColumns = Math.max(lTypeParams.length, rTypeParams.length);
+    boolean skipColumns = consumer.skipTypeArgsColumns();
     StringBuilder requiredRow = new StringBuilder();
     StringBuilder foundRow = new StringBuilder();
     for (int i = 0; i < typeParamColumns; i++) {
@@ -2762,10 +2769,23 @@ public class HighlightUtil extends HighlightUtilBase {
       String openBrace = i == 0 ? "&lt;" : "";
       String closeBrace = i == typeParamColumns - 1 ? "&gt;" : ",";
       boolean showShortType = showShortType(lSubstitutedType, rSubstitutedType);
-      requiredRow.append("<td style='padding: 0px 0px 8px 0px;'>").append(lTypeParams.length == 0 ? "" : openBrace).append(redIfNotMatch(lSubstitutedType, true, showShortType))
-        .append(i < lTypeParams.length ? closeBrace : "").append("</td>");
-      foundRow.append("<td style='padding: 0px 0px 0px 0px;'>").append(rTypeParams.length == 0 ? "" : openBrace).append(redIfNotMatch(rSubstitutedType, matches, showShortType))
-        .append(i < rTypeParams.length ? closeBrace : "").append("</td>");
+
+      requiredRow.append(skipColumns ? "" 
+                                     : "<td style='padding: 0px 0px 8px 0px;'>")
+        .append(lTypeParams.length == 0 ? "" : openBrace)
+        .append(redIfNotMatch(lSubstitutedType, true, showShortType))
+        .append(i < lTypeParams.length ? closeBrace : "")
+        .append(skipColumns ? "" 
+                            : "</td>");
+
+      foundRow.append(skipColumns ? "" 
+                                  : "<td style='padding: 0px 0px 0px 0px;'>")
+        .append(rTypeParams.length == 0 ? "" : openBrace)
+        .append(redIfNotMatch(rSubstitutedType, matches, showShortType))
+        .append(i < rTypeParams.length ? closeBrace : "")
+        .append(skipColumns ? "" 
+                            : "</td>");
+
     }
     PsiType lRawType = lType instanceof PsiClassType ? ((PsiClassType)lType).rawType() : lType;
     PsiType rRawType = rType instanceof PsiClassType ? ((PsiClassType)rType).rawType() : rType;
