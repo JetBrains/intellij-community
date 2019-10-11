@@ -35,7 +35,7 @@ class CommonDriver private constructor(private val targetParameters: Set<GrParam
                                        searchScope: SearchScope? = null) : InferenceDriver {
   private val method = targetParameters.first().parentOfType<GrMethod>()!!
   private val scope: SearchScope = searchScope ?: with(originalMethod) { GlobalSearchScope.fileScope(project, containingFile.virtualFile) }
-  private val calls = lazy { ReferencesSearch.search(originalMethod, scope).findAll() }
+  private val calls = lazy { ReferencesSearch.search(originalMethod, scope).findAll().sortedBy { it.element.textOffset } }
 
   companion object {
 
