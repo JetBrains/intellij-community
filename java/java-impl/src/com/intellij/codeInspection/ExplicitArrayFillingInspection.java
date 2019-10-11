@@ -62,8 +62,9 @@ public class ExplicitArrayFillingInspection extends AbstractBaseJavaLocalInspect
         PsiExpression rValue = assignment.getRExpression();
         if (rValue == null) return;
         if (!isChangedInLoop(loop, rValue)) {
-          Object defaultValue = PsiTypesUtil.getDefaultValue(assignment.getType());
-          if (isDefaultValue(rValue, defaultValue) && isFilledWithDefaultValues(container.getQualifier(), statement, defaultValue)) {
+          PsiType lType = container.getElementType();
+          Object defaultValue = PsiTypesUtil.getDefaultValue(lType);
+          if (isDefaultValue(rValue, defaultValue, lType) && isFilledWithDefaultValues(container.getQualifier(), statement, defaultValue)) {
             holder.registerProblem(statement, getRange(statement, ProblemHighlightType.WARNING),
                                    InspectionsBundle.message("inspection.explicit.array.filling.redundant.loop.description"),
                                    QuickFixFactory.getInstance().createDeleteFix(statement));
@@ -88,9 +89,15 @@ public class ExplicitArrayFillingInspection extends AbstractBaseJavaLocalInspect
           .anyMatch(call -> !ClassUtils.isImmutable(call.getType()) && !ConstructionUtils.isEmptyArrayInitializer(call));
       }
 
-      private boolean isDefaultValue(@NotNull PsiExpression expression, @Nullable Object defaultValue) {
+      private boolean isDefaultValue(@NotNull PsiExpression expression, @Nullable Object defaultValue, @Nullable PsiType lType) {
         if (ExpressionUtils.isNullLiteral(expression) && defaultValue == null) return true;
         Object constantValue = ExpressionUtils.computeConstantExpression(expression);
+        PsiType rType = expression.getType();
+        if (rType instanceof PsiPrimitiveType && lType instanceof PsiPrimitiveType) {
+          if (defaultValue instanceof Number && constantValue instanceof Number) {
+            return ((Number)defaultValue).doubleValue() == ((Number)constantValue).doubleValue();
+          }
+        }
         return constantValue != null && constantValue.equals(defaultValue);
       }
 
@@ -160,11 +167,12 @@ public class ExplicitArrayFillingInspection extends AbstractBaseJavaLocalInspect
       }
 
       private boolean isNewArrayCreation(@Nullable PsiExpression expression, @Nullable Object defaultValue) {
-        PsiNewExpression newExpression = tryCast(PsiUtil.skipParenthesizedExprDown(expression), PsiNewExpression.class);
-        if (newExpression == null) return false;
-        PsiArrayInitializerExpression initializer = newExpression.getArrayInitializer();
+        PsiExpression arrInitExpr = PsiUtil.skipParenthesizedExprDown(expression);
+        PsiNewExpression newExpression = tryCast(arrInitExpr, PsiNewExpression.class);
+        PsiArrayInitializerExpression initializer =
+          newExpression == null ? tryCast(arrInitExpr, PsiArrayInitializerExpression.class) : newExpression.getArrayInitializer();
         if (initializer == null) return true;
-        return Arrays.stream(initializer.getInitializers()).allMatch(init -> isDefaultValue(init, defaultValue));
+        return Arrays.stream(initializer.getInitializers()).allMatch(init -> isDefaultValue(init, defaultValue, init.getType()));
       }
 
       @Nullable
@@ -252,7 +260,7 @@ public class ExplicitArrayFillingInspection extends AbstractBaseJavaLocalInspect
       CommentTracker ct = new CommentTracker();
       PsiElement result;
       if (myIsRhsConstant) {
-        String cast = getCast(project, container.getElementType(), rValue.getType());
+        String cast = getCast(statement, container.getElementType(), rValue.getType());
         String replacement = CommonClassNames.JAVA_UTIL_ARRAYS + ".fill(" +
                              ct.text(container.getQualifier()) + ", " + cast + ct.text(rValue) + ");";
         result = ct.replaceAndRestoreComments(statement, replacement);
@@ -268,10 +276,10 @@ public class ExplicitArrayFillingInspection extends AbstractBaseJavaLocalInspect
     }
 
     @NotNull
-    private static String getCast(@NotNull Project project, @Nullable PsiType elementType, @Nullable PsiType rType) {
+    private static String getCast(@NotNull PsiElement context, @Nullable PsiType elementType, @Nullable PsiType rType) {
       if (elementType == null || rType == null) return "";
       PsiType assignTo = tryCast(elementType, PsiPrimitiveType.class);
-      if (assignTo == null) assignTo = JavaPsiFacade.getElementFactory(project).createTypeByFQClassName(CommonClassNames.JAVA_LANG_OBJECT);
+      if (assignTo == null) assignTo = TypeUtils.getObjectType(context);
       return TypeConversionUtil.isAssignable(assignTo, rType) ? "" : "(" + elementType.getCanonicalText() + ")";
     }
   }
