@@ -298,11 +298,16 @@ public abstract class ContractValue {
 
     @Override
     public DfaCallArguments updateArguments(DfaCallArguments arguments, boolean negated) {
+      DfaNullability targetNullability = DfaNullability.NOT_NULL;
       int index = getNullCheckedArgument(negated).orElse(-1);
+      if (index == -1) {
+        index = getNullCheckedArgument(!negated).orElse(-1);
+        targetNullability = DfaNullability.NULL;
+      }
       if (index >= 0 && index < arguments.myArguments.length) {
         DfaValue arg = arguments.myArguments[index];
         if (arg instanceof DfaFactMapValue) {
-          DfaValue newArg = ((DfaFactMapValue)arg).withFact(DfaFactType.NULLABILITY, DfaNullability.NOT_NULL);
+          DfaValue newArg = ((DfaFactMapValue)arg).withFact(DfaFactType.NULLABILITY, targetNullability);
           if (newArg != arg) {
             DfaValue[] newArguments = arguments.myArguments.clone();
             newArguments[index] = newArg;
