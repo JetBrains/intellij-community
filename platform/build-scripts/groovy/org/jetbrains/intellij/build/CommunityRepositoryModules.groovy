@@ -245,6 +245,9 @@ class CommunityRepositoryModules {
       withModule("intellij.statsCollector.logEvents")
       withModule("intellij.statsCollector.completionRanker")
     },
+    plugin("intellij.jps.cache") {
+      setDefaultPublishingSpec(new PluginPublishingSpec(CompatibleBuildRange.ANY_WITH_SAME_BASELINE))
+    }
   ]
 
   static PluginLayout androidPlugin(Map<String, String> additionalModulesToJars) {
