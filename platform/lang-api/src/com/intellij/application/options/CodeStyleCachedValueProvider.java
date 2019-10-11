@@ -144,7 +144,7 @@ class CodeStyleCachedValueProvider implements CachedValueProvider<CodeStyleSetti
         notifyCachedValueComputed(myFile);
       }
       else {
-        application.invokeLater(() -> notifyCachedValueComputed(myFile));
+        application.invokeLater(() -> notifyCachedValueComputed(myFile), ModalityState.any());
       }
     }
 
