@@ -51,7 +51,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
 
   private static final Set<IdeaPluginDescriptor> myInstallingPlugins = new HashSet<>();
   private static final Set<IdeaPluginDescriptor> myInstallingWithUpdatesPlugins = new HashSet<>();
-  private static final Map<IdeaPluginDescriptor, InstallPluginInfo> myInstallingInfos = new HashMap<>();
+  private static final Map<PluginId, InstallPluginInfo> myInstallingInfos = new HashMap<>();
 
   public boolean needRestart;
   public boolean createShutdownCallback = true;
@@ -417,7 +417,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
   private InstallPluginInfo prepareToInstall(@NotNull IdeaPluginDescriptor descriptor, @Nullable IdeaPluginDescriptor updateDescriptor) {
     boolean install = updateDescriptor == null;
     InstallPluginInfo info = new InstallPluginInfo(descriptor, updateDescriptor, this, install);
-    myInstallingInfos.put(descriptor, info);
+    myInstallingInfos.put(descriptor.getPluginId(), info);
 
     if (myInstallingWithUpdatesPlugins.isEmpty()) {
       myTopController.showProgress(true);
@@ -562,7 +562,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
 
   @NotNull
   static InstallPluginInfo finishInstall(@NotNull IdeaPluginDescriptor descriptor) {
-    InstallPluginInfo info = myInstallingInfos.remove(descriptor);
+    InstallPluginInfo info = myInstallingInfos.remove(descriptor.getPluginId());
     myInstallingWithUpdatesPlugins.remove(descriptor);
     if (info.install) {
       myInstallingPlugins.remove(descriptor);
@@ -571,11 +571,11 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
   }
 
   static void addProgress(@NotNull IdeaPluginDescriptor descriptor, @NotNull ProgressIndicatorEx indicator) {
-    myInstallingInfos.get(descriptor).indicator.addStateDelegate(indicator);
+    myInstallingInfos.get(descriptor.getPluginId()).indicator.addStateDelegate(indicator);
   }
 
   static void removeProgress(@NotNull IdeaPluginDescriptor descriptor, @NotNull ProgressIndicatorEx indicator) {
-    myInstallingInfos.get(descriptor).indicator.removeStateDelegate(indicator);
+    myInstallingInfos.get(descriptor.getPluginId()).indicator.removeStateDelegate(indicator);
   }
 
   public void addEnabledGroup(@NotNull PluginsGroup group) {
