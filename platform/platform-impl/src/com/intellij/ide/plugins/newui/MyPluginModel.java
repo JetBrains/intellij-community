@@ -150,6 +150,9 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
       if (!PluginInstaller.uninstallDynamicPlugin(pluginDescriptor)) {
         uninstallsRequiringRestart.add(pluginDescriptor.getPluginId());
       }
+      else {
+        enabledMap.remove(pluginDescriptor.getPluginId());
+      }
     }
 
     for (PendingDynamicPluginInstall pendingPluginInstall : myDynamicPluginsToInstall.values()) {
