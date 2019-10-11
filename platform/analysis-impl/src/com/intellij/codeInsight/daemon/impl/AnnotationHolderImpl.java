@@ -29,6 +29,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.SmartList;
 import com.intellij.xml.util.XmlStringUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -161,4 +162,11 @@ public class AnnotationHolderImpl extends SmartList<Annotation> implements Annot
   public AnnotationSession getCurrentAnnotationSession() {
     return myAnnotationSession;
   }
+
+  // internal optimization method to reduce latency between creating Annotation and showing it on screen
+  // (Do not) call this method to
+  // 1. state that all Annotations in this holder are final (no further Annotation.setXXX() or .registerFix() are following) and
+  // 2. queue them all for converting to RangeHighlighters in EDT
+  @ApiStatus.Internal
+  void queueToUpdateIncrementally() {}
 }

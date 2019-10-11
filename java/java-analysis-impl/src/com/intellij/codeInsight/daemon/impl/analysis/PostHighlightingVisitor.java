@@ -534,8 +534,10 @@ class PostHighlightingVisitor {
     Set<String> imports = file != null ? file.getCopyableUserData(ImportsHighlightUtil.IMPORTS_FROM_TEMPLATE) : null;
     boolean predefinedImport = imports != null && imports.contains(importStatement.getText());
     String description = !predefinedImport ? InspectionsBundle.message("unused.import.statement") : "Unused import (specified in template)";
-    HighlightInfo info =
-      HighlightInfo.newHighlightInfo(JavaHighlightInfoTypes.UNUSED_IMPORT).range(importStatement).descriptionAndTooltip(description)
+    HighlightInfo info = HighlightInfo.newHighlightInfo(JavaHighlightInfoTypes.UNUSED_IMPORT)
+        .range(importStatement)
+        .descriptionAndTooltip(description)
+        .group(GeneralHighlightingPass.POST_UPDATE_ALL)
         .create();
 
     QuickFixAction.registerQuickFixAction(info, QuickFixFactory.getInstance().createOptimizeImportsFix(false), unusedImportKey);

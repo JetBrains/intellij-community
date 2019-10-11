@@ -25,6 +25,7 @@ import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspectionB
 import com.intellij.codeInspection.varScopeCanBeNarrowed.FieldCanBeLocalInspection;
 import com.intellij.configurationStore.StorageUtilKt;
 import com.intellij.configurationStore.StoreUtil;
+import com.intellij.debugger.DebugException;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.ui.ConsoleView;
@@ -117,7 +118,11 @@ import java.io.IOException;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 @SkipSlowTestLocally
@@ -2133,30 +2138,36 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
   public void testAddRemoveHighlighterRaceInIncorrectAnnotatorsWhichUseFileRecursiveVisit() {
     Annotator annotator = new MyIncorrectlyRecursiveAnnotator();
-    com.intellij.lang.Language java = StdFileTypes.JAVA.getLanguage();
-    LanguageAnnotators.INSTANCE.addExplicitExtension(java, annotator);
-    try {
-      List<Annotator> list = LanguageAnnotators.INSTANCE.allForLanguage(java);
-      assertTrue(list.toString(), list.contains(annotator));
+    useAnnotatorIn(annotator, () -> {
       @Language("JAVA")
-      String text = "class X {\n" +
-                    "  int foo(Object param) {\n" +
-                    "    if (param == this) return 1;\n" +
-                    "    return 0;\n" +
-                    "  }\n" +
-                    "}\n";
-      configureByText(StdFileTypes.JAVA, text);
+      String text1 = "class X {\n" +
+                     "  int foo(Object param) {\n" +
+                     "    if (param == this) return 1;\n" +
+                     "    return 0;\n" +
+                     "  }\n" +
+                     "}\n";
+      configureByText(StdFileTypes.JAVA, text1);
       ((EditorImpl)myEditor).getScrollPane().getViewport().setSize(1000, 1000);
       assertEquals(getFile().getTextRange(), VisibleHighlightingPassFactory.calculateVisibleRange(getEditor()));
 
       assertEquals("XXX", assertOneElement(doHighlighting(HighlightSeverity.WARNING)).getDescription());
 
-      for (int i=0; i<100; i++) {
+      for (int i = 0; i < 100; i++) {
         //System.out.println("i = " + i);
         DaemonCodeAnalyzer.getInstance(getProject()).restart();
         List<HighlightInfo> infos = doHighlighting(HighlightSeverity.WARNING);
         assertEquals("XXX", assertOneElement(infos).getDescription());
       }
+    });
+  }
+
+  private void useAnnotatorIn(Annotator annotator, Runnable runnable) {
+    com.intellij.lang.Language java = StdFileTypes.JAVA.getLanguage();
+    LanguageAnnotators.INSTANCE.addExplicitExtension(java, annotator);
+    try {
+      List<Annotator> list = LanguageAnnotators.INSTANCE.allForLanguage(java);
+      assertTrue(list.toString(), list.contains(annotator));
+      runnable.run();
     }
     finally {
       LanguageAnnotators.INSTANCE.removeExplicitExtension(java, annotator);
@@ -2365,6 +2376,79 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     doHighlighting();
     myDaemonCodeAnalyzer.restart();
     doHighlighting();
+  }
+
+  private static final AtomicInteger toSleepMs = new AtomicInteger(0);
+  public static class MySleepyAnnotator implements Annotator {
+    public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
+      if (element instanceof PsiComment) {
+        // use this contrived form to be able to bail out immediately by modifying toSleepMs in the other thread
+        while (toSleepMs.addAndGet(-100) > 0) {
+          TimeoutUtil.sleep(100);
+        }
+      }
+    };
+  }
+  public static class MyFastAnnotator implements Annotator {
+    private static final String SWEARING = "No swearing";
+
+    public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
+      if (element instanceof PsiComment && element.getText().equals("//XXX")) {
+        holder.createErrorAnnotation(element.getTextRange(), SWEARING);
+      }
+    };
+  }
+
+  public void testAddAnnotationToHolderEntailsCreatingCorrespondingRangeHighlighterMoreOrLessImmediately() {
+    if (ForkJoinPool.commonPool().getParallelism()<=2) {
+      System.err.println("Too low parallelism, I will not even bother, it's hopeless: " + ForkJoinPool.commonPool().getParallelism());
+      return;
+    }
+    useAnnotatorIn(new MySleepyAnnotator(), () -> useAnnotatorIn(new MyFastAnnotator(), () -> checkSwearingAnnotationIsVisibleImmediately()));
+    // also check in the opposite order in case the order of annotators is important
+    useAnnotatorIn(new MyFastAnnotator(), () -> useAnnotatorIn(new MySleepyAnnotator(), () -> checkSwearingAnnotationIsVisibleImmediately()));
+  }
+
+  private void checkSwearingAnnotationIsVisibleImmediately() {
+    @Language("JAVA")
+    String text = "class X {\n" +
+                  "  int foo(Object param) {//XXX\n" +
+                  "    return 0;\n" +
+                  "  }\n" +
+                  "}\n";
+    configureByText(StdFileTypes.JAVA, text);
+    ((EditorImpl)myEditor).getScrollPane().getViewport().setSize(1000, 1000);
+    assertEquals(getFile().getTextRange(), VisibleHighlightingPassFactory.calculateVisibleRange(getEditor()));
+
+    toSleepMs.set(1_000_000);
+
+    MarkupModel markupModel = DocumentMarkupModel.forDocument(getEditor().getDocument(), getProject(), true);
+    TestTimeOut n = TestTimeOut.setTimeout(100, TimeUnit.SECONDS);
+    Runnable checkHighlighted = () -> {
+      UIUtil.dispatchAllInvocationEvents();
+      boolean highlighted = Arrays.stream(markupModel.getAllHighlighters())
+        .map(highlighter -> highlighter.getErrorStripeTooltip())
+        .anyMatch(tooltip -> tooltip instanceof HighlightInfo
+                             && MyFastAnnotator.SWEARING.equals(((HighlightInfo)tooltip).getDescription()));
+      if (highlighted) {
+        toSleepMs.set(0);
+        throw new DebugException(); // sorry for that, had to differentiate from failure
+      }
+      if (n.timedOut()) {
+        toSleepMs.set(0);
+        throw new RuntimeException(new TimeoutException(ThreadDumper.dumpThreadsToString()));
+      }
+    };
+    try {
+      CodeInsightTestFixtureImpl.ensureIndexesUpToDate(getProject());
+      TextEditor textEditor = TextEditorProvider.getInstance().getTextEditor(getEditor());
+      PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+      myDaemonCodeAnalyzer
+        .runPasses(getFile(), getEditor().getDocument(), Collections.singletonList(textEditor), ArrayUtilRt.EMPTY_INT_ARRAY, false, checkHighlighted);
+      fail("should have been interrupted");
+    }
+    catch (DebugException ignored) {
+    }
   }
 }
 
