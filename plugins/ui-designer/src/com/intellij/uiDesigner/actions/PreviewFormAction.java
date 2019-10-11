@@ -32,12 +32,13 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JavaSdk;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.uiDesigner.FormEditingUtil;
@@ -137,7 +138,7 @@ public final class PreviewFormAction extends AnAction{
 
     URL[] platformUrls = null;
     Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
-    if (sdk != null && sdk.getHomePath() != null && StringUtil.compareVersionNumbers(sdk.getVersionString(), "9") >= 0) {
+    if (sdk != null && sdk.getHomePath() != null && JavaSdk.getInstance().isOfVersionOrHigher(sdk, JavaSdkVersion.JDK_1_9)) {
       try {
         platformUrls = new URL[]{InstrumentationClassFinder.createJDKPlatformUrl(sdk.getHomePath())};
       }
