@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.impl;
 
 import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPass;
@@ -13,6 +13,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiElement;
@@ -72,38 +74,41 @@ public class DebuggerContextUtil {
     }
     final DebuggerSession session = context.getDebuggerSession();
     if (session != null) {
-      try {
-        final XDebugSession debugSession = session.getXDebugSession();
-        if (debugSession != null) {
-          final XSourcePosition position = debugSession.getCurrentPosition();
-          Editor editor = ((FileEditorManagerImpl)FileEditorManager.getInstance(file.getProject())).getSelectedTextEditor(true);
+      return ProgressManager.getInstance().runProcess(() -> {
+        try {
+          final XDebugSession debugSession = session.getXDebugSession();
+          if (debugSession != null) {
+            final XSourcePosition position = debugSession.getCurrentPosition();
+            Editor editor = ((FileEditorManagerImpl)FileEditorManager.getInstance(file.getProject())).getSelectedTextEditor(true);
 
-          //final Editor editor = fileEditor instanceof TextEditorImpl ? ((TextEditorImpl)fileEditor).getEditor() : null;
-          if (editor != null && position != null && position.getFile().equals(file.getOriginalFile().getVirtualFile())) {
-            PsiMethod method = PsiTreeUtil.getParentOfType(PositionUtil.getContextElement(context), PsiMethod.class, false);
-            final Collection<TextRange> ranges =
-              IdentifierHighlighterPass.getUsages(psi, method != null ? method : file, false);
-            final int breakPointLine = position.getLine();
-            int bestLine = -1;
-            int bestOffset = -1;
-            for (TextRange range : ranges) {
-              final int line = editor.offsetToLogicalPosition(range.getStartOffset()).line;
-              if (line > bestLine && line < breakPointLine) {
-                bestLine = line;
-                bestOffset = range.getStartOffset();
-              } else if (line == breakPointLine) {
-                bestOffset = range.getStartOffset();
-                break;
+            //final Editor editor = fileEditor instanceof TextEditorImpl ? ((TextEditorImpl)fileEditor).getEditor() : null;
+            if (editor != null && position != null && position.getFile().equals(file.getOriginalFile().getVirtualFile())) {
+              PsiMethod method = PsiTreeUtil.getParentOfType(PositionUtil.getContextElement(context), PsiMethod.class, false);
+              final Collection<TextRange> ranges =
+                IdentifierHighlighterPass.getUsages(psi, method != null ? method : file, false);
+              final int breakPointLine = position.getLine();
+              int bestLine = -1;
+              int bestOffset = -1;
+              for (TextRange range : ranges) {
+                final int line = editor.offsetToLogicalPosition(range.getStartOffset()).line;
+                if (line > bestLine && line < breakPointLine) {
+                  bestLine = line;
+                  bestOffset = range.getStartOffset();
+                } else if (line == breakPointLine) {
+                  bestOffset = range.getStartOffset();
+                  break;
+                }
               }
-            }
-            if (bestOffset > -1) {
-              return SourcePosition.createFromOffset(file, bestOffset);
+              if (bestOffset > -1) {
+                return SourcePosition.createFromOffset(file, bestOffset);
+              }
             }
           }
         }
-      }
-      catch (Exception ignore) {
-      }
+        catch (Exception ignore) {
+        }
+        return null;
+      }, new EmptyProgressIndicator());
     }
     return null;
   }
