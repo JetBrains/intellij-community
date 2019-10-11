@@ -155,8 +155,8 @@ public class TestAll implements Test {
     // counting test cases involves parallel directory scan now
     IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(true);
     int count = 0;
-    for (Object aClass : myTestCaseLoader.getClasses()) {
-      Test test = getTest((Class)aClass);
+    for (Class<?> aClass : myTestCaseLoader.getClasses()) {
+      Test test = getTest(aClass);
       if (test != null) count += test.countTestCases();
     }
     return count;
@@ -183,12 +183,12 @@ public class TestAll implements Test {
       testResult.addListener(testListener);
     }
 
-    List<Class> classes = myTestCaseLoader.getClasses();
+    List<Class<?>> classes = myTestCaseLoader.getClasses();
 
     // to make it easier to reproduce order-dependent failures locally
     System.out.println("------");
     System.out.println("Running tests:");
-    for (Class aClass : classes) {
+    for (Class<?> aClass : classes) {
       System.out.println(aClass.getName());
     }
     System.out.println("------");
@@ -252,7 +252,7 @@ public class TestAll implements Test {
     }
   }
 
-  private void runNextTest(final TestResult testResult, int totalTests, Class testCaseClass) {
+  private void runNextTest(final TestResult testResult, int totalTests, Class<?> testCaseClass) {
     myRunTests++;
 
     if (testResult.errorCount() + testResult.failureCount() > MAX_FAILURE_TEST_COUNT) {

@@ -62,10 +62,10 @@ public class TestCaseLoader {
    */
   private static final boolean REVERSE_ORDER = SystemProperties.getBooleanProperty("intellij.build.test.reverse.order", false);
 
-  private final List<Class> myClassList = new ArrayList<>();
+  private final List<Class<?>> myClassList = new ArrayList<>();
   private final List<Throwable> myClassLoadingErrors = new ArrayList<>();
-  private Class myFirstTestClass;
-  private Class myLastTestClass;
+  private Class<?> myFirstTestClass;
+  private Class<?> myLastTestClass;
   private final TestClassesFilter myTestClassesFilter;
   private final boolean myForceLoadPerformanceTests;
 
@@ -149,7 +149,7 @@ public class TestCaseLoader {
     return StringUtil.split(System.getProperty("intellij.build.test.groups", System.getProperty("idea.test.group", "")).trim(), ";");
   }
 
-  void addClassIfTestCase(Class testCaseClass, String moduleName) {
+  void addClassIfTestCase(Class<?> testCaseClass, String moduleName) {
     if (shouldAddTestCase(testCaseClass, moduleName, true) &&
         testCaseClass != myFirstTestClass && testCaseClass != myLastTestClass &&
         TestFrameworkUtil.canRunTest(testCaseClass)) {
@@ -162,13 +162,13 @@ public class TestCaseLoader {
     }
   }
 
-  void addFirstTest(Class aClass) {
+  void addFirstTest(Class<?> aClass) {
     assert myFirstTestClass == null : "already added: " + aClass;
     assert shouldAddTestCase(aClass, null, false) : "not a test: " + aClass;
     myFirstTestClass = aClass;
   }
 
-  void addLastTest(Class aClass) {
+  void addLastTest(Class<?> aClass) {
     assert myLastTestClass == null : "already added: " + aClass;
     assert shouldAddTestCase(aClass, null, false) : "not a test: " + aClass;
     myLastTestClass = aClass;
@@ -198,13 +198,13 @@ public class TestCaseLoader {
     return TestFrameworkUtil.isJUnit4TestClass(testCaseClass, false);
   }
 
-  private boolean shouldExcludeTestClass(String moduleName, Class testCaseClass) {
+  private boolean shouldExcludeTestClass(String moduleName, Class<?> testCaseClass) {
     if (!myForceLoadPerformanceTests && !shouldIncludePerformanceTestCase(testCaseClass)) return true;
     String className = testCaseClass.getName();
     return !myTestClassesFilter.matches(className, moduleName) || isBombed(testCaseClass) || isExcludeFromTestDiscovery(testCaseClass);
   }
 
-  private static boolean isExcludeFromTestDiscovery(Class c) {
+  private static boolean isExcludeFromTestDiscovery(Class<?> c) {
     return RUN_WITH_TEST_DISCOVERY && getAnnotationInHierarchy(c, ExcludeFromTestDiscovery.class) != null;
   }
 
@@ -217,7 +217,7 @@ public class TestCaseLoader {
   public void loadTestCases(final String moduleName, final Collection<String> classNamesIterator) {
     for (String className : classNamesIterator) {
       try {
-        Class candidateClass = Class.forName(className, false, getClassLoader());
+        Class<?> candidateClass = Class.forName(className, false, getClassLoader());
         addClassIfTestCase(candidateClass, moduleName);
       }
       catch (Throwable e) {
@@ -236,7 +236,7 @@ public class TestCaseLoader {
     return myClassLoadingErrors;
   }
 
-  private static int getRank(Class aClass) {
+  private static int getRank(Class<?> aClass) {
     if (runFirst(aClass)) return 0;
 
     // PlatformLiteFixture is the very special test case because it doesn't load all the XMLs with component/extension declarations
@@ -253,11 +253,11 @@ public class TestCaseLoader {
     return 1;
   }
 
-  private static boolean runFirst(Class testClass) {
+  private static boolean runFirst(Class<?> testClass) {
     return getAnnotationInHierarchy(testClass, RunFirst.class) != null;
   }
 
-  private static boolean isPlatformLiteFixture(Class aClass) {
+  private static boolean isPlatformLiteFixture(Class<?> aClass) {
     while (aClass != null) {
       if (PLATFORM_LITE_FIXTURE_NAME.equals(aClass.getName())) {
         return true;
@@ -273,8 +273,8 @@ public class TestCaseLoader {
     return myClassList.size();
   }
 
-  public List<Class> getClasses() {
-    List<Class> result = new ArrayList<>(myClassList.size());
+  public List<Class<?>> getClasses() {
+    List<Class<?>> result = new ArrayList<>(myClassList.size());
 
     if (myFirstTestClass != null) {
       result.add(myFirstTestClass);
@@ -303,8 +303,8 @@ public class TestCaseLoader {
     return new TestSorter() {
       @NotNull
       @Override
-      public List<Class> sorted(@NotNull List<Class> tests, @NotNull ToIntFunction<? super Class> ranker) {
-        return ContainerUtil.sorted(tests, Comparator.<Class>comparingInt(ranker).thenComparing(Class::getName, classNameComparator));
+      public List<Class<?>> sorted(@NotNull List<Class<?>> tests, @NotNull ToIntFunction<? super Class<?>> ranker) {
+        return ContainerUtil.sorted(tests, Comparator.<Class<?>>comparingInt(ranker).thenComparing(Class::getName, classNameComparator));
       }
     };
   }
@@ -323,11 +323,11 @@ public class TestCaseLoader {
     return INCLUDE_PERFORMANCE_TESTS;
   }
 
-  static boolean shouldIncludePerformanceTestCase(Class aClass) {
+  static boolean shouldIncludePerformanceTestCase(Class<?> aClass) {
     return isIncludingPerformanceTestsRun() || isPerformanceTestsRun() || !isPerformanceTest(null, aClass);
   }
 
-  static boolean isPerformanceTest(String methodName, Class aClass) {
+  static boolean isPerformanceTest(String methodName, Class<?> aClass) {
     return TestFrameworkUtil.isPerformanceTest(methodName, aClass.getSimpleName());
   }
 
