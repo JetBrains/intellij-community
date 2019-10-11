@@ -430,6 +430,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     List<String> opensOptions = new ArrayList<>();
     collectPackagesToOpen(opensOptions);
     for (String option : opensOptions) {
+      if (option.isEmpty()) continue;
       vmParametersList.add("--add-opens");
       vmParametersList.add(prodModuleName + "/" + option + "=ALL-UNNAMED");
     }
@@ -445,7 +446,9 @@ public abstract class JavaTestFrameworkRunnableState<T extends
    * called on EDT
    */
   protected static void collectSubPackages(List<String> options, PsiPackage aPackage, GlobalSearchScope globalSearchScope) {
-    options.add(aPackage.getQualifiedName());
+    if (aPackage.getClasses(globalSearchScope).length > 0) {
+      options.add(aPackage.getQualifiedName());
+    }
     PsiPackage[] subPackages = aPackage.getSubPackages(globalSearchScope);
     for (PsiPackage subPackage : subPackages) {
       collectSubPackages(options, subPackage, globalSearchScope);
