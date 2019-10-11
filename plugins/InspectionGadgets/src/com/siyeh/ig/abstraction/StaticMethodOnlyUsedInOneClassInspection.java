@@ -342,23 +342,26 @@ public class StaticMethodOnlyUsedInOneClassInspection extends BaseGlobalInspecti
     @Override
     @Nullable
     protected InspectionGadgetsFix buildFix(Object... infos) {
+      final PsiMember member = (PsiMember)infos[0];
       final PsiClass usageClass = (PsiClass)infos[1];
-      return new StaticMethodOnlyUsedInOneClassFix(usageClass);
+      return new StaticMethodOnlyUsedInOneClassFix(usageClass, member instanceof PsiMethod);
     }
 
     private static class StaticMethodOnlyUsedInOneClassFix extends RefactoringInspectionGadgetsFix {
 
-      private final SmartPsiElementPointer<PsiClass> usageClass;
+      private final SmartPsiElementPointer<PsiClass> myUsageClass;
+      private final boolean myMethod;
 
-      StaticMethodOnlyUsedInOneClassFix(PsiClass usageClass) {
+      StaticMethodOnlyUsedInOneClassFix(PsiClass usageClass, boolean method) {
+        myMethod = method;
         final SmartPointerManager pointerManager = SmartPointerManager.getInstance(usageClass.getProject());
-        this.usageClass = pointerManager.createSmartPsiElementPointer(usageClass);
+        myUsageClass = pointerManager.createSmartPsiElementPointer(usageClass);
       }
 
       @Override
       @NotNull
       public String getFamilyName() {
-        return InspectionGadgetsBundle.message("static.method.only.used.in.one.class.quickfix");
+        return InspectionGadgetsBundle.message("static.method.only.used.in.one.class.quickfix", myMethod ? 1 : 2);
       }
 
       @NotNull
@@ -370,7 +373,7 @@ public class StaticMethodOnlyUsedInOneClassInspection extends BaseGlobalInspecti
       @NotNull
       @Override
       public DataContext enhanceDataContext(DataContext context) {
-        return SimpleDataContext.getSimpleContext(LangDataKeys.TARGET_PSI_ELEMENT.getName(), usageClass.getElement(), context);
+        return SimpleDataContext.getSimpleContext(LangDataKeys.TARGET_PSI_ELEMENT.getName(), myUsageClass.getElement(), context);
       }
     }
 
