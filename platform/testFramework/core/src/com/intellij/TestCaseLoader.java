@@ -154,7 +154,7 @@ public class TestCaseLoader {
         testCaseClass != myFirstTestClass && testCaseClass != myLastTestClass &&
         TestFrameworkUtil.canRunTest(testCaseClass)) {
 
-      int index = Math.abs(testCaseClass.getName().hashCode());
+      long index = Math.abs(((long)testCaseClass.getName().hashCode()));
 
       if (index % TEST_RUNNERS_COUNT == TEST_RUNNER_INDEX) {
         myClassList.add(testCaseClass);
