@@ -13,7 +13,7 @@ import java.util.concurrent.ConcurrentMap;
 public class CachedFileType {
   private static final ConcurrentMap<FileType, CachedFileType> ourInterner = ContainerUtil.newConcurrentMap();
 
-  private final long modCount = vfsModCount();
+  private final int modCount = vfsModCount();
   @Nullable private FileType fileType;
 
   private CachedFileType(@NotNull FileType fileType) {
