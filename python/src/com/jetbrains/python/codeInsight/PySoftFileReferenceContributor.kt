@@ -30,10 +30,10 @@ class PySoftFileReferenceContributor : PsiReferenceContributor() {
   override fun registerReferenceProviders(registrar: PsiReferenceRegistrar) {
     val stringLiteral = psiElement(PyStringLiteralExpression::class.java)
     val pattern = psiElement()
-      .andOr(stringLiteral.with(CallArgumentMatchingParameterNamePattern),
+      .andOr(stringLiteral.with(HardCodedCalleeName),
              stringLiteral.with(KeywordArgumentMatchingNamePattern),
-             stringLiteral.with(StringWithPathSeparatorInConsole),
-             stringLiteral.with(HardCodedCalleeName))
+             stringLiteral.with(CallArgumentMatchingParameterNamePattern),
+             stringLiteral.with(StringWithPathSeparatorInConsole))
     registrar.registerReferenceProvider(pattern, PySoftFileReferenceProvider)
   }
 
