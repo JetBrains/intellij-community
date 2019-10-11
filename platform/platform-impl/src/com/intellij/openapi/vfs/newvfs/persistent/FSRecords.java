@@ -13,6 +13,7 @@ import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
+import com.intellij.openapi.vfs.newvfs.impl.CachedFileType;
 import com.intellij.openapi.vfs.newvfs.impl.FileNameCache;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
@@ -1046,6 +1047,7 @@ public class FSRecords {
     DbConnection.markDirty();
     //noinspection NonAtomicOperationOnVolatileField
     ourLocalModificationCount++;
+    CachedFileType.clearCache();
   }
 
   static int getLocalModCount() {
