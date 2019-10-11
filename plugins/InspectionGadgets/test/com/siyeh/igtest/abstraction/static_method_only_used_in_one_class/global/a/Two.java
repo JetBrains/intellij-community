@@ -14,5 +14,7 @@ public class Two {
     System.out.println(Three.MEAT);
     One.build();
     One.imbibe();
+    System.out.println(One.INSTANCE);
+    System.out.println(One.Resistence.FUTILE);
   }
 }

@@ -113,6 +113,7 @@ public class StaticMethodOnlyUsedInOneClassInspection extends BaseGlobalInspecti
       return null;
     }
     if (ignoreUtilityClasses && containingClass.isUtilityClass()) {
+      // RefClass.isUtilityClass() is also true for enums
       return null;
     }
     final PsiClass psiClass = ObjectUtils.tryCast(usageClass.getPsiElement(), PsiClass.class);
@@ -135,7 +136,7 @@ public class StaticMethodOnlyUsedInOneClassInspection extends BaseGlobalInspecti
     }
     else {
       final PsiField field = ObjectUtils.tryCast(element.getPsiElement(), PsiField.class);
-      if (field == null) {
+      if (field == null || field instanceof PsiEnumConstant || isSingletonField(field)) {
         return null;
       }
       if (ignoreOnConflicts) {
@@ -213,6 +214,12 @@ public class StaticMethodOnlyUsedInOneClassInspection extends BaseGlobalInspecti
     });
 
     return false;
+  }
+
+  static boolean isSingletonField(PsiField field) {
+    return field.hasModifierProperty(PsiModifier.FINAL) &&
+           field.hasModifierProperty(PsiModifier.STATIC) &&
+           field.getContainingClass() == PsiUtil.resolveClassInClassTypeOnly(field.getType());
   }
 
   static boolean areReferenceTargetsAccessible(final PsiElement elementToCheck, final PsiElement place) {
@@ -388,6 +395,7 @@ public class StaticMethodOnlyUsedInOneClassInspection extends BaseGlobalInspecti
       public void visitField(PsiField field) {
         super.visitField(field);
         if (!field.hasModifierProperty(PsiModifier.STATIC) || field.hasModifierProperty(PsiModifier.PRIVATE)) return;
+        if (field instanceof PsiEnumConstant || isSingletonField(field)) return;
         if (DeclarationSearchUtils.isTooExpensiveToSearch(field, true)) return;
         final PsiClass usageClass = getUsageClass(field);
         if (usageClass == null) return;

@@ -24,4 +24,10 @@ public class One {
   public static int imbibe() {
     return imbibe(5);
   }
+
+  public static final One INSTANCE = build();
+
+  enum Resistence {
+    FUTILE, TRAINING, OHM
+  }
 }
