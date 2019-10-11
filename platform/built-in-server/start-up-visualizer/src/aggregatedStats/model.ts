@@ -5,8 +5,8 @@ export interface InfoResponse {
   readonly productNames: Array<string>
   readonly productToMachine: { [key: string]: Array<Machine>; }
 
-  readonly durationMetricsNames: Array<string>
-  readonly instantMetricsNames: Array<string>
+  readonly durationMetricNames: Array<string>
+  readonly instantMetricNames: Array<string>
 }
 
 export interface Machine {

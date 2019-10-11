@@ -17,7 +17,7 @@ export class LineChartDataManager {
     this.durationMetricDescriptors = []
     this.instantMetricDescriptors = []
 
-    for (const key of infoResponse.durationMetricsNames) {
+    for (const key of infoResponse.durationMetricNames) {
       const hiddenByDefault = hiddenMetricsByDefault.has(key)
       this.durationMetricDescriptors.push({
         key,
@@ -26,7 +26,7 @@ export class LineChartDataManager {
       })
     }
 
-    for (const key of infoResponse.instantMetricsNames) {
+    for (const key of infoResponse.instantMetricNames) {
       this.instantMetricDescriptors.push({
         key,
         name: key,

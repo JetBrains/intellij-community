@@ -38,7 +38,7 @@ export default class AggregatedStatsPage extends Vue {
 
   loadData() {
     this.isFetching = true
-    loadJson(`${this.chartSettings.serverUrl}/info`, null, this.$notify)
+    loadJson(`${this.chartSettings.serverUrl}/api/v1/info`, null, this.$notify)
       .then((data: InfoResponse | null) => {
         if (data == null) {
           return
@@ -138,7 +138,7 @@ export default class AggregatedStatsPage extends Vue {
   createGroupedMetricUrl(product: string, machineId: number, isInstant: boolean): string {
     const chartSettings = this.chartSettings
     const operator = chartSettings.aggregationOperator || DEFAULT_AGGREGATION_OPERATOR
-    let result = `${chartSettings.serverUrl}/groupedMetrics/` +
+    let result = `${chartSettings.serverUrl}/api/v1/groupedMetrics/` +
       `product=${encodeURIComponent(product)}` +
       `&machine=${machineId}` +
       `&operator=${operator}`
@@ -151,7 +151,7 @@ export default class AggregatedStatsPage extends Vue {
 
   // noinspection DuplicatedCode
   loadLineChartData(product: string, machineId: number): void {
-    const url = `${this.chartSettings.serverUrl}/metrics/` +
+    const url = `${this.chartSettings.serverUrl}/api/v1/metrics/` +
       `product=${encodeURIComponent(product)}` +
       `&machine=${machineId}`
     const infoResponse = this.lastInfoResponse!!
