@@ -84,8 +84,8 @@ export default class AggregatedStatsPage extends Vue {
     let selectedMachine = this.chartSettings.selectedMachine
     const machines = this.machines
     if (machines.length === 0) {
-      selectedMachine = null
-      this.chartSettings.selectedMachine = null
+      selectedMachine = ""
+      this.chartSettings.selectedMachine = selectedMachine
     }
     else if (selectedMachine == null || !machines.find(it => it.id === selectedMachine)) {
       selectedMachine = machines[0].id
@@ -104,7 +104,7 @@ export default class AggregatedStatsPage extends Vue {
   }
 
   @Watch("chartSettings.selectedMachine")
-  selectedMachineChanged(machine: number | null | undefined, _oldV: string): void {
+  selectedMachineChanged(machine: string | null | undefined, _oldV: string): void {
     console.log("machine changed", machine, _oldV)
     if (machine == null) {
       return
@@ -135,7 +135,7 @@ export default class AggregatedStatsPage extends Vue {
     chartManagers[1].setData(loadJson(this.createGroupedMetricUrl(product, machineId, true), null, this.$notify))
   }
 
-  createGroupedMetricUrl(product: string, machineId: number, isInstant: boolean): string {
+  createGroupedMetricUrl(product: string, machineId: string, isInstant: boolean): string {
     const chartSettings = this.chartSettings
     const operator = chartSettings.aggregationOperator || DEFAULT_AGGREGATION_OPERATOR
     let result = `${chartSettings.serverUrl}/api/v1/groupedMetrics/` +
@@ -150,7 +150,7 @@ export default class AggregatedStatsPage extends Vue {
   }
 
   // noinspection DuplicatedCode
-  loadLineChartData(product: string, machineId: number): void {
+  loadLineChartData(product: string, machineId: string): void {
     const url = `${this.chartSettings.serverUrl}/api/v1/metrics/` +
       `product=${encodeURIComponent(product)}` +
       `&machine=${machineId}`

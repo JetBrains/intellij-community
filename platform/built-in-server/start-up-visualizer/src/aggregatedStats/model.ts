@@ -10,7 +10,7 @@ export interface InfoResponse {
 }
 
 export interface Machine {
-  readonly id: number
+  readonly id: string
   readonly name: string
 }
 

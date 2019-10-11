@@ -5,7 +5,7 @@ export class ChartSettings {
   serverUrl: string = "https://ij-perf.labs.jb.gg"
 
   selectedProduct: string = ""
-  selectedMachine: number | null = null
+  selectedMachine: string = ""
 
   aggregationOperator: "median" | "min" | "max" | "quantile" = DEFAULT_AGGREGATION_OPERATOR
   quantile: number = 50
