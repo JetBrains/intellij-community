@@ -407,7 +407,6 @@ public class MoveClassesOrPackagesDialog extends MoveDialogBase {
     JavaRefactoringSettings refactoringSettings = JavaRefactoringSettings.getInstance();
     refactoringSettings.MOVE_SEARCH_IN_COMMENTS = isSearchInComments();
     refactoringSettings.MOVE_SEARCH_FOR_TEXT = isSearchInNonJavaFiles();
-    refactoringSettings.MOVE_PREVIEW_USAGES = isPreviewUsages();
   }
 
   @Nullable

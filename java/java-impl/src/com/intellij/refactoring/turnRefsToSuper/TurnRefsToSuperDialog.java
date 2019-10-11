@@ -94,7 +94,6 @@ public class TurnRefsToSuperDialog extends RefactoringDialog {
 
   @Override
   protected void doAction() {
-    JavaRefactoringSettings.getInstance().TURN_REFS_TO_SUPER_PREVIEW_USAGES = isPreviewUsages();
     final PsiClass superClass = getSuperClass();
     if (superClass != null) {
       invokeRefactoring(new TurnRefsToSuperProcessor(getProject(), mySubClass, superClass, isUseInInstanceOf()));

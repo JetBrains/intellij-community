@@ -55,7 +55,6 @@ public class PushDownDialog extends AbstractPushDownDialog<MemberInfo, PsiMember
 
   @Override
   protected void savePreviewOption(boolean isPreview) {
-    JavaRefactoringSettings.getInstance().PUSH_DOWN_PREVIEW_USAGES = isPreview;
   }
 
   @Nullable

@@ -258,7 +258,6 @@ public class MoveMembersDialog extends MoveDialogBase implements MoveMembersOpti
     }, isOpenInEditor()));
 
     saveOpenInEditorOption();
-    JavaRefactoringSettings.getInstance().MOVE_PREVIEW_USAGES = isPreviewUsages();
   }
 
   @Override
