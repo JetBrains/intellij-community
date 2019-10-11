@@ -8,6 +8,7 @@ import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.util.MathUtil
 import java.security.SecureRandom
 import java.util.*
 import java.util.prefs.Preferences
@@ -57,7 +58,7 @@ object EventLogConfiguration {
   }
 
   private fun String.asBucket(): Int {
-    return Math.abs(this.hashCode()) % 256
+    return MathUtil.nonNegativeAbs(this.hashCode()) % 256
   }
 
   private fun getOrGenerateSalt(): ByteArray {

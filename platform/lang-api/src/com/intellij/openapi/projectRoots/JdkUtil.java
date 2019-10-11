@@ -21,6 +21,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
+import com.intellij.util.MathUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
 import com.intellij.util.containers.ContainerUtil;
@@ -226,7 +227,7 @@ public class JdkUtil {
                                        boolean dynamicVMOptions,
                                        boolean dynamicParameters) throws CantRunException {
     try {
-      File argFile = FileUtil.createTempFile("idea_arg_file" + + Math.abs(new Random().nextInt()), null);
+      File argFile = FileUtil.createTempFile("idea_arg_file" + MathUtil.nonNegativeAbs(new Random().nextInt()), null);
 
       try (PrintWriter writer = createOutputWriter(argFile)) {
         if (dynamicVMOptions) {
@@ -307,7 +308,7 @@ public class JdkUtil {
                                                   boolean dynamicVMOptions,
                                                   boolean dynamicParameters) throws CantRunException {
     try {
-      int pseudoUniquePrefix = Math.abs(new Random().nextInt());
+      int pseudoUniquePrefix = MathUtil.nonNegativeAbs(new Random().nextInt());
       File vmParamsFile = null;
       if (dynamicVMOptions) {
         vmParamsFile = FileUtil.createTempFile("idea_vm_params" + pseudoUniquePrefix, null);

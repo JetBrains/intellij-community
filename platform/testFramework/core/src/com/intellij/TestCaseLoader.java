@@ -10,6 +10,7 @@ import com.intellij.testFramework.RunFirst;
 import com.intellij.testFramework.TeamCityLogger;
 import com.intellij.testFramework.TestFrameworkUtil;
 import com.intellij.testFramework.TestSorter;
+import com.intellij.util.MathUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -154,7 +155,7 @@ public class TestCaseLoader {
         testCaseClass != myFirstTestClass && testCaseClass != myLastTestClass &&
         TestFrameworkUtil.canRunTest(testCaseClass)) {
 
-      long index = Math.abs(((long)testCaseClass.getName().hashCode()));
+      int index = MathUtil.nonNegativeAbs(testCaseClass.getName().hashCode());
 
       if (index % TEST_RUNNERS_COUNT == TEST_RUNNER_INDEX) {
         myClassList.add(testCaseClass);

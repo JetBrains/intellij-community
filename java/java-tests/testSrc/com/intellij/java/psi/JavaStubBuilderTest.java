@@ -27,6 +27,7 @@ import com.intellij.psi.impl.source.JavaLightStubBuilder;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.testFramework.LightIdeaTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.util.MathUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -533,7 +534,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
     sb.append("class SOE_test {\n BigInteger BIG = new BigInteger(\n");
     int i;
     for (i = 0; i < 100000; i++) {
-      sb.append("  \"").append(Math.abs(random.nextInt())).append("\" +\n");
+      sb.append("  \"").append(MathUtil.nonNegativeAbs(random.nextInt())).append("\" +\n");
     }
     sb.append("  \"\");\n}");
 
