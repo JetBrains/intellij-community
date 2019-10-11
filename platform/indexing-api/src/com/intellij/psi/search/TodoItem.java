@@ -6,6 +6,7 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 public interface TodoItem {
@@ -22,4 +23,6 @@ public interface TodoItem {
   default List<TextRange> getAdditionalTextRanges() {
     return Collections.emptyList();
   }
+
+  Comparator<TodoItem> BY_START_OFFSET = Comparator.comparingInt(o -> o.getTextRange().getStartOffset());
 }
