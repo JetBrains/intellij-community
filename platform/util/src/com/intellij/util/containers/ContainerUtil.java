@@ -3175,10 +3175,14 @@ public class ContainerUtil extends ContainerUtilRt {
     return new WeakKeyIntValueHashMap<>();
   }
 
+  /**
+   * Create an immutable copy of the {@code list}.
+   * Modifications of the {@code list} have no effect on the returned copy.
+   */
   @SuppressWarnings("unchecked")
   @Contract(value = "_ -> new", pure = true)
   @NotNull
-  public static <T> List<T> optimize(@NotNull List<T> list) {
+  public static <T> List<T> freeze(@NotNull List<? extends T> list) {
     if (list.isEmpty()) {
       return Collections.emptyList();
     }
@@ -3190,4 +3194,3 @@ public class ContainerUtil extends ContainerUtilRt {
     }
   }
 }
-
