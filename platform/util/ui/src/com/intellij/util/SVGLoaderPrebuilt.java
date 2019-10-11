@@ -9,7 +9,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.image.BufferedImage;
-import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -25,9 +24,14 @@ public class SVGLoaderPrebuilt {
   }
 
   @Nullable
-  private static URL preBuiltImageURL(@Nullable URL url, double scale) {
+  public static URL preBuiltImageURL(@Nullable URL url, double scale) {
     if (url == null) return null;
     try {
+      if (!url.getFile().endsWith("svg")) return null;
+      if (url.getQuery() != null) return null;
+      if (url.getRef() != null) return null;
+      if (!url.getProtocol().equalsIgnoreCase("jar") && !url.getProtocol().equalsIgnoreCase("file")) return null;
+
       return new URL(url, url.toString() + getPreBuiltImageURLSuffix(scale));
     }
     catch (MalformedURLException e) {
@@ -50,7 +54,7 @@ public class SVGLoaderPrebuilt {
       IconLoadMeasurer.svgPreBuiltLoad.addDurationStartedAt(start);
       return result;
     }
-    catch (IOException e) {
+    catch (Exception e) {
       return null;
     }
   }
