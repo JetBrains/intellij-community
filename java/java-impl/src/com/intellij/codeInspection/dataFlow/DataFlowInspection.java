@@ -136,15 +136,36 @@ public class DataFlowInspection extends DataFlowInspectionBase {
 
   @Override
   @NotNull
-  protected List<LocalQuickFix> createCastFixes(PsiTypeCastExpression castExpression, boolean onTheFly) {
+  protected List<LocalQuickFix> createCastFixes(PsiTypeCastExpression castExpression,
+                                                PsiType realType,
+                                                boolean onTheFly,
+                                                boolean alwaysFails) {
     List<LocalQuickFix> fixes = new ArrayList<>();
     PsiExpression operand = castExpression.getOperand();
     PsiTypeElement typeElement = castExpression.getCastType();
-    if (typeElement != null && operand != null && !SideEffectChecker.mayHaveSideEffects(operand)) {
-      String suffix = " instanceof " + typeElement.getText();
-      fixes.add(new AddAssertStatementFix(ParenthesesUtils.getText(operand, PsiPrecedenceUtil.RELATIONAL_PRECEDENCE) + suffix));
-      if (onTheFly && SurroundWithIfFix.isAvailable(operand)) {
-        fixes.add(new SurroundWithIfFix(operand, suffix));
+    if (typeElement != null && operand != null) {
+      if (!alwaysFails && !SideEffectChecker.mayHaveSideEffects(operand)) {
+        String suffix = " instanceof " + typeElement.getText();
+        fixes.add(new AddAssertStatementFix(ParenthesesUtils.getText(operand, PsiPrecedenceUtil.RELATIONAL_PRECEDENCE) + suffix));
+        if (onTheFly && SurroundWithIfFix.isAvailable(operand)) {
+          fixes.add(new SurroundWithIfFix(operand, suffix));
+        }
+      }
+      if (realType != null) {
+        PsiType operandType = operand.getType();
+        if (operandType != null) {
+          PsiType type = typeElement.getType();
+          PsiType[] types = {realType};
+          if (realType instanceof PsiIntersectionType) {
+            types = ((PsiIntersectionType)realType).getConjuncts();
+          }
+          for (PsiType psiType : types) {
+            if (!psiType.isAssignableFrom(operandType)) {
+              psiType = DfaPsiUtil.tryGenerify(operand, psiType);
+              fixes.add(new ReplaceTypeInCastFix(type, psiType));
+            }
+          }
+        }
       }
     }
     return fixes;

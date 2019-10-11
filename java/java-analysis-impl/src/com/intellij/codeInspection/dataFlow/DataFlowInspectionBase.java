@@ -235,7 +235,10 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
   }
 
   @NotNull
-  protected List<LocalQuickFix> createCastFixes(PsiTypeCastExpression castExpression, boolean onTheFly) {
+  protected List<LocalQuickFix> createCastFixes(PsiTypeCastExpression castExpression,
+                                                PsiType realType,
+                                                boolean onTheFly,
+                                                boolean alwaysFails) {
     return Collections.emptyList();
   }
 
@@ -713,13 +716,15 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
   }
 
   private void reportFailingCasts(ProblemReporter reporter, DataFlowInstructionVisitor visitor) {
-    visitor.getFailingCastExpressions().forKeyValue((typeCast, alwaysFails) -> {
+    visitor.getFailingCastExpressions().forKeyValue((typeCast, info) -> {
+      boolean alwaysFails = info.getFirst();
+      PsiType realType = info.getSecond();
       if (!REPORT_UNSOUND_WARNINGS && !alwaysFails) return;
       PsiExpression operand = typeCast.getOperand();
       PsiTypeElement castType = typeCast.getCastType();
       assert castType != null;
       assert operand != null;
-      List<LocalQuickFix> fixes = new ArrayList<>(createCastFixes(typeCast, reporter.isOnTheFly()));
+      List<LocalQuickFix> fixes = new ArrayList<>(createCastFixes(typeCast, realType, reporter.isOnTheFly(), alwaysFails));
       if (reporter.isOnTheFly()) {
         fixes.add(createExplainFix(typeCast, new TrackingRunner.CastDfaProblemType()));
       }

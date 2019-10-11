@@ -16,6 +16,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
@@ -35,6 +36,7 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.DataFlowInstructionVisitor");
   private final Map<NullabilityProblemKind.NullabilityProblem<?>, StateInfo> myStateInfos = new LinkedHashMap<>();
   private final Map<PsiTypeCastExpression, StateInfo> myClassCastProblems = new HashMap<>();
+  private final Map<PsiTypeCastExpression, TypeConstraint> myRealOperandTypes = new HashMap<>();
   private final Map<PsiCallExpression, Boolean> myFailingCalls = new HashMap<>();
   private final Map<PsiExpression, ConstantResult> myConstantExpressions = new HashMap<>();
   private final Map<PsiElement, ThreeState> myOfNullableCalls = new HashMap<>();
@@ -156,8 +158,9 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
     return myMethodReferenceResults;
   }
 
-  EntryStream<PsiTypeCastExpression, Boolean> getFailingCastExpressions() {
-    return EntryStream.of(myClassCastProblems).filterValues(StateInfo::shouldReport).mapValues(StateInfo::alwaysFails);
+  EntryStream<PsiTypeCastExpression, Pair<Boolean, PsiType>> getFailingCastExpressions() {
+    return EntryStream.of(myClassCastProblems).filterValues(StateInfo::shouldReport).mapToValue(
+      (cast, info) -> Pair.create(info.alwaysFails(), myRealOperandTypes.getOrDefault(cast, TypeConstraint.empty()).getPsiType()));
   }
 
   Set<PsiElement> getMutabilityViolations(boolean receiver) {
@@ -193,6 +196,12 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
       }
     }
     expression.accept(new ExpressionVisitor(value, memState));
+    PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
+    if (parent instanceof PsiTypeCastExpression) {
+      TypeConstraint fact = memState.getValueFact(value, DfaFactType.TYPE_CONSTRAINT);
+      if (fact == null) fact = TypeConstraint.empty();
+      myRealOperandTypes.merge((PsiTypeCastExpression)parent, fact, TypeConstraint::unite);
+    }
     if (range == null) {
       reportConstantExpressionValue(value, memState, expression);
     }

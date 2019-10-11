@@ -344,7 +344,7 @@ public class GuessManagerImpl extends GuessManager {
       GuessTypeVisitor visitor = tryGuessingTypeWithoutDfa(place, honorAssignments);
       if (!visitor.isDfaNeeded()) {
         result = visitor.mySpecificType == null ?
-                 Collections.emptyList() : Collections.singletonList(tryGenerify(expr, visitor.mySpecificType));
+                 Collections.emptyList() : Collections.singletonList(DfaPsiUtil.tryGenerify(expr, visitor.mySpecificType));
       }
     }
     if (result == null) {
@@ -386,24 +386,9 @@ public class GuessManagerImpl extends GuessManager {
   private static List<PsiType> flattenConjuncts(@NotNull PsiExpression expr, Collection<PsiType> conjuncts) {
     if (!conjuncts.isEmpty()) {
       Set<PsiType> flatTypes = PsiIntersectionType.flatten(conjuncts.toArray(PsiType.EMPTY_ARRAY), new LinkedHashSet<>());
-      return ContainerUtil.mapNotNull(flatTypes, type -> tryGenerify(expr, type));
+      return ContainerUtil.mapNotNull(flatTypes, type -> DfaPsiUtil.tryGenerify(expr, type));
     }
     return Collections.emptyList();
-  }
-
-  private static PsiType tryGenerify(PsiExpression expression, PsiType type) {
-    if (!(type instanceof PsiClassType)) {
-      return type;
-    }
-    PsiClassType classType = (PsiClassType)type;
-    if (!classType.isRaw()) {
-      return classType;
-    }
-    PsiClass psiClass = classType.resolve();
-    if (psiClass == null) return classType;
-    PsiType expressionType = expression.getType();
-    if (!(expressionType instanceof PsiClassType)) return classType;
-    return GenericsUtil.getExpectedGenericType(expression, psiClass, (PsiClassType)expressionType);
   }
 
   private static class GuessTypeVisitor extends JavaElementVisitor {

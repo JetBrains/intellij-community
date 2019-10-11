@@ -533,4 +533,26 @@ public class DfaPsiUtil {
     }
     return Nullability.UNKNOWN;
   }
+
+  /**
+   * Try to restore type parameters based on the expression type
+   *
+   * @param expression expression which type is a supertype of the type to generify
+   * @param type a type to generify
+   * @return a generified type, or original type if generification is not possible
+   */
+  public static PsiType tryGenerify(PsiExpression expression, PsiType type) {
+    if (!(type instanceof PsiClassType)) {
+      return type;
+    }
+    PsiClassType classType = (PsiClassType)type;
+    if (!classType.isRaw()) {
+      return classType;
+    }
+    PsiClass psiClass = classType.resolve();
+    if (psiClass == null) return classType;
+    PsiType expressionType = expression.getType();
+    if (!(expressionType instanceof PsiClassType)) return classType;
+    return GenericsUtil.getExpectedGenericType(expression, psiClass, (PsiClassType)expressionType);
+  }
 }
