@@ -3,7 +3,7 @@ class A {
 
     }
 
-    A(int i) {
+    A(int integer) {
 
     }
 }

@@ -6,10 +6,7 @@ import com.intellij.lang.jvm.actions.CreateMethodRequest
 import com.intellij.lang.jvm.actions.ExpectedType
 import com.intellij.lang.jvm.actions.expectedType
 import com.intellij.lang.jvm.actions.expectedTypes
-import com.intellij.psi.*
-import com.intellij.psi.util.parentOfType
-import com.intellij.psi.util.parents
-import com.intellij.util.containers.withPrevious
+import com.intellij.psi.PsiType
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesProvider
@@ -33,13 +30,5 @@ internal class CreateMethodFromGroovyUsageRequest(
       return expectedTypes(PsiType.VOID)
     }
     return expected.map { expectedType(it, ExpectedType.Kind.EXACT) }
-  }
-
-  fun getAnchor(targetClass: PsiClass): PsiElement? {
-    val enclosingMember = call.parentOfType(PsiMethod::class, PsiField::class, PsiClassInitializer::class) ?: return null
-    for ((parent, lastParent) in enclosingMember.parents().withPrevious()) {
-      if (parent == targetClass) return lastParent
-    }
-    return null
   }
 }

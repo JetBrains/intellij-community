@@ -3,6 +3,7 @@ package org.jetbrains.plugins.groovy.fixes
 
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import groovy.transform.CompileStatic
+import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection
 import org.jetbrains.plugins.groovy.lang.highlighting.GrHighlightingTestBase
 import org.jetbrains.plugins.groovy.util.TestUtils
@@ -25,7 +26,7 @@ class CreateMethodFromUsageTest extends GrHighlightingTestBase {
   void setUp() {
     super.setUp()
     fixture.configureByFiles(USAGE, BEFORE)
-    fixture.enableInspections(GrUnresolvedAccessInspection)
+    fixture.enableInspections(GrUnresolvedAccessInspection, GroovyAssignabilityCheckInspection)
   }
 
   private void doTest(String action = CREATE_METHOD, int actionCount = 1) {
@@ -123,8 +124,8 @@ class CreateMethodFromUsageTest extends GrHighlightingTestBase {
     doTest()
   }
 
-  void _testUnresolvedArg() {
-    doTest(CREATE_METHOD, 0)
+  void testUnresolvedArg() {
+    doTest(CREATE_METHOD, 1)
   }
 
   void _testIntegerCast() {
@@ -135,15 +136,15 @@ class CreateMethodFromUsageTest extends GrHighlightingTestBase {
     doTest()
   }
 
-  void _testConstructor1() {
+  void testConstructor1() {
     doTest(CREATE_CONSTRUCTOR)
   }
 
-  void _testConstructor2() {
+  void testConstructor2() {
     doTest(CREATE_CONSTRUCTOR)
   }
 
-  void _testConstructorAnon() {
+  void testConstructorAnon() {
     doTest(CREATE_CONSTRUCTOR)
   }
 
