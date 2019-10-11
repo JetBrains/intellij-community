@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+
+  <problem>
+    <file>NonUtility.java</file>
+    <line>1</line>
+    <problem_class>unused declaration</problem_class>
+    <description>Class is not instantiated.</description>
+  </problem>
+
+  <problem>
+    <file>NonUtility.java</file>
+    <line>2</line>
+    <problem_class>unused declaration</problem_class>
+    <description>Field has no usages.</description>
+  </problem>
+
+  <problem>
+    <file>NonUtility.java</file>
+    <line>3</line>
+    <problem_class>unused declaration</problem_class>
+    <description>Field has no usages.</description>
+  </problem>
+
+  <problem>
+    <file>NonUtility.java</file>
+    <line>5</line>
+    <problem_class>unused declaration</problem_class>
+    <description>Method is never used.</description>
+  </problem>
+
+</problems>

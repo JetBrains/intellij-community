@@ -167,12 +167,16 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
         }
       }
     }
+    if (!isInterface()) {
+      for (int i = 0; i < uFields.length && utilityClass; i++) {
+        if (!uFields[i].isStatic()) {
+          utilityClass = false;
+        }
+      }
+    }
 
     if (!utilityClass) {
       utilityClass = ClassUtils.isSingleton(uClass.getJavaPsi());
-    }
-    if (utilityClass && !isInterface() && uMethods.length == 0 && ContainerUtil.find(uFields, UField::isStatic) == null) {
-      utilityClass = false;
     }
 
     if (varargConstructor != null && getDefaultConstructor() == null) {
