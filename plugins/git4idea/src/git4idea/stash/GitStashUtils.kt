@@ -42,7 +42,7 @@ import git4idea.util.GitUntrackedFilesHelper
 import git4idea.util.LocalChangesWouldBeOverwrittenHelper
 import java.nio.charset.Charset
 
-private val LOG : Logger = logger(::LOG)
+private val LOG : Logger = logger("#git4idea.stash.GitStashUtils")
 
 /**
  * Unstash the given roots one by one, handling common error scenarios.
