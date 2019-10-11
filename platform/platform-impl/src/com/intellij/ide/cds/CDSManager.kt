@@ -2,6 +2,7 @@
 package com.intellij.ide.cds
 
 import com.intellij.diagnostic.VMOptions
+import com.intellij.execution.CommandLineUtil
 import com.intellij.execution.process.OSProcessUtil
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
@@ -15,13 +16,10 @@ import java.io.IOException
 import java.lang.management.ManagementFactory
 import java.time.Instant
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.system.measureTimeMillis
 
 //TODO: report to FUS if we use AppCDS in the product
-//TODO:  detect currently used hash
-//TODO: compute hash sum of IDE version + plugins for AppCDS update
-//TODO: notify to regenerate AppCDS
-//TODO: cleanup stale files (Windows may lock files)
 
 object CDSManager {
   private val LOG = Logger.getInstance(javaClass)
@@ -63,7 +61,7 @@ object CDSManager {
       return arguments.firstOrNull { it.startsWith(key) }?.removePrefix(key)?.let(::File)
     }
 
-  fun cleanupStaleCDSFiles(indicator: ProgressIndicator) {
+  fun cleanupStaleCDSFiles(indicator: ProgressIndicator) = rejectIfRunning(Unit) {
     val paths = CDSPaths.current()
     val currentCDSPath = currentCDSArchive
 
@@ -80,7 +78,7 @@ object CDSManager {
     }
   }
 
-  fun installCDS(indicator: ProgressIndicator): CDSPaths? {
+  fun installCDS(indicator: ProgressIndicator): CDSPaths? = rejectIfRunning(null) {
     val paths = CDSPaths.current()
     if (paths.isSame(currentCDSArchive)) {
       LOG.warn("CDS archive is already generated. Nothing to do")
@@ -92,6 +90,12 @@ object CDSManager {
       return null
     }
     paths.classesMarkerFile.writeText(Instant.now().toString())
+
+    // we need roughly 400mb of disk space, let's avoid disk space pressure
+    if (paths.baseDir.freeSpace < 3L * 1024 * FileUtil.MEGABYTE) {
+      LOG.warn("Not enough disk space to enable CDS archive")
+      return null
+    }
 
     LOG.info("Starting generation of CDS archive to the ${paths.classesArchiveFile} and ${paths.classesArchiveFile} files")
 
@@ -132,16 +136,8 @@ object CDSManager {
     indicator.text2 = "Generating classes archive..."
     indicator.checkCanceled()
 
-    val args = ManagementFactory.getRuntimeMXBean().inputArguments
-      .filterNot {
-        it.startsWith("-Xshare:")
-        || it.startsWith("-XX:+UnlockDiagnosticVMOptions")
-        || it.startsWith("-XX:SharedClassListFile=")
-        || it.startsWith("-XX:SharedArchiveFile=")
-        || it.startsWith("-javaagent:")
-        || it.startsWith("-agentlib:")
-        || it.startsWith("-agentpath:")
-      } + listOf(
+    val args = listOf(
+      "-Xlog:cds" + (if (LOG.isDebugEnabled) "=debug" else ""),
       "-Xshare:dump",
       "-XX:+UnlockDiagnosticVMOptions",
       "-XX:SharedClassListFile=${paths.classesListFile}",
@@ -150,7 +146,7 @@ object CDSManager {
     )
 
     //hack - use actual IJ classpath
-    paths.classesPathFile.writeText(args.joinToString("\n") { "\"$it\"" })
+    paths.classesPathFile.writeText(CommandLineUtil.toCommandLine("mock-executable", args).drop(1).joinToString("\n"))
 
     val durationLink = measureTimeMillis {
       val ext = if (SystemInfo.isWindows) ".exe" else ""
@@ -210,10 +206,21 @@ object CDSManager {
     return paths
   }
 
-  fun removeCDS() {
+  fun removeCDS() = rejectIfRunning(Unit) {
     LOG.warn("CDS archive is disabled (VMOptions were updated)")
     VMOptions.writeDisableCDSArchiveOption()
   }
 
   private operator fun File.div(s: String) = File(this, s)
+
+  private val ourIsRunning = AtomicBoolean(false)
+
+  private inline fun <T> rejectIfRunning(rejected: T, action: () -> T): T {
+    if (!ourIsRunning.compareAndSet(false, true)) return rejected
+    try {
+      return action()
+    } finally {
+      ourIsRunning.set(false)
+    }
+  }
 }
