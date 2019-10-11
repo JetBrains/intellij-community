@@ -206,7 +206,7 @@ public class ConditionalExpressionInspection extends BaseInspection {
           newStatement.append('}');
         }
         PsiIfStatement result = (PsiIfStatement)PsiReplacementUtil.replaceStatement(statement, newStatement.toString(), tracker);
-        if (statement instanceof PsiReturnStatement) {
+        if (!ControlFlowUtils.statementMayCompleteNormally(result.getThenBranch())) {
           PsiStatement elseStatement = ControlFlowUtils.stripBraces(result.getElseBranch());
           if (elseStatement != null) {
             result.getParent().addAfter(elseStatement, result);
