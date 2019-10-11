@@ -10,6 +10,7 @@ import com.intellij.psi.*
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference
 import com.intellij.psi.util.QualifiedName
 import com.intellij.util.ProcessingContext
+import com.intellij.util.SystemProperties
 import com.jetbrains.python.PythonRuntimeService
 import com.jetbrains.python.console.PyConsoleOptions
 import com.jetbrains.python.console.PydevConsoleRunnerFactory
@@ -161,7 +162,7 @@ class PySoftFileReferenceContributor : PsiReferenceContributor() {
 
     private fun expandUserHome(text: String): String? =
       when (text) {
-        "~" -> System.getProperty("user.home")
+        "~" -> SystemProperties.getUserHome()
         else -> text
       }
 
