@@ -3,7 +3,6 @@ package com.intellij.execution.impl;
 
 import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -21,7 +20,7 @@ public class ProcessStreamsSynchronizerTest extends LightPlatformTestCase {
   private MockProcessStreamsSynchronizer mySynchronizer;
   
   public void testBasic() {
-    mySynchronizer = new MockProcessStreamsSynchronizer(Disposer.newDisposable());
+    mySynchronizer = new MockProcessStreamsSynchronizer(getTestRootDisposable());
     mySynchronizer.doWhenStreamsSynchronized("Hello stdout 1\n", ProcessOutputType.STDOUT, 0);
     mySynchronizer.doWhenStreamsSynchronized("Hello stdout 2\n", ProcessOutputType.STDOUT, 1);
     mySynchronizer.doWhenStreamsSynchronized("Hello stderr 1\n", ProcessOutputType.STDERR, 2);
@@ -33,7 +32,7 @@ public class ProcessStreamsSynchronizerTest extends LightPlatformTestCase {
   }
 
   public void testSimpleRun() {
-    mySynchronizer = new MockProcessStreamsSynchronizer(Disposer.newDisposable());
+    mySynchronizer = new MockProcessStreamsSynchronizer(getTestRootDisposable());
     mySynchronizer.doWhenStreamsSynchronized("java HelloWorld\n", ProcessOutputType.SYSTEM, 10);
 
     mySynchronizer.doWhenStreamsSynchronized("info:", ProcessOutputType.STDOUT, 10);
