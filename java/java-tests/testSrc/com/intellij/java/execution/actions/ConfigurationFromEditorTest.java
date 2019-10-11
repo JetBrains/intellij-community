@@ -32,7 +32,7 @@ public class ConfigurationFromEditorTest extends LightJavaCodeInsightFixtureTest
     myFixture.addClass("package org.junit.runner; public @interface RunWith{ Class<?> value();}");
   }
 
-  private JUnitConfiguration setupConfigurationContext(final String fileText) {
+  private <T> T setupConfigurationContext(final String fileText) {
     myFixture.configureByText("MyTest.java", fileText);
 
     MapDataContext dataContext = new MapDataContext();
@@ -42,7 +42,17 @@ public class ConfigurationFromEditorTest extends LightJavaCodeInsightFixtureTest
 
     ConfigurationContext context = ConfigurationContext.getFromContext(dataContext);
     RunnerAndConfigurationSettings settings = context.getConfiguration();
-    return (JUnitConfiguration)settings.getConfiguration();
+    //noinspection unchecked
+    return settings != null ? (T)settings.getConfiguration() : null;
+  }
+
+  public void testApplicationConfigurationForUnknownMethod() {
+    assertNull(setupConfigurationContext("public class Foo {\n" +
+                              "  public static void x<caret>xx(String[] args) {}\n" +
+                              "}"));
+    assertNotNull(setupConfigurationContext("public class Foo {\n" +
+                              "  public static void m<caret>ain(String[] args) {}\n" +
+                              "}"));
   }
 
   public void testPatternConfigurationFromSelection() {

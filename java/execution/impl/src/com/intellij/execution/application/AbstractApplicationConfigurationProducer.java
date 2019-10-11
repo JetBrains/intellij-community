@@ -5,7 +5,6 @@ import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.Location;
 import com.intellij.execution.actions.ConfigurationContext;
-import com.intellij.execution.configurations.ConfigurationUtil;
 import com.intellij.execution.junit.JavaRunConfigurationProducerBase;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Comparing;
@@ -16,7 +15,6 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public abstract class AbstractApplicationConfigurationProducer<T extends ApplicationConfiguration> extends JavaRunConfigurationProducerBase<T> {
   public AbstractApplicationConfigurationProducer() {
@@ -47,21 +45,17 @@ public abstract class AbstractApplicationConfigurationProducer<T extends Applica
     if (!element.isPhysical()) {
       return false;
     }
-    PsiElement currentElement = element;
-    PsiMethod method;
-    while ((method = findMain(currentElement)) != null) {
-      final PsiClass aClass = method.getContainingClass();
-      if (ConfigurationUtil.MAIN_CLASS.value(aClass)) {
-        sourceElement.set(method);
-        setupConfiguration(configuration, aClass, context);
-        return true;
-      }
-      currentElement = method.getParent();
-    }
     final PsiClass aClass = ApplicationConfigurationType.getMainClass(element);
     if (aClass == null) {
       return false;
     }
+    PsiMethod method = PsiMethodUtil.findMainInClass(aClass);
+    if (method != null && PsiTreeUtil.isAncestor(method, element, false)) {
+      sourceElement.set(method);
+      setupConfiguration(configuration, aClass, context);
+      return true;
+    }
+
     sourceElement.set(aClass);
     setupConfiguration(configuration, aClass, context);
     return true;
@@ -71,16 +65,6 @@ public abstract class AbstractApplicationConfigurationProducer<T extends Applica
     configuration.setMainClassName(JavaExecutionUtil.getRuntimeQualifiedName(aClass));
     configuration.setGeneratedName();
     setupConfigurationModule(context, configuration);
-  }
-
-  @Nullable
-  private static PsiMethod findMain(PsiElement element) {
-    PsiMethod method;
-    while ((method = PsiTreeUtil.getParentOfType(element, PsiMethod.class)) != null) {
-      if (PsiMethodUtil.isMainMethod(method)) return method;
-      else element = method.getParent();
-    }
-    return null;
   }
 
   @Override
