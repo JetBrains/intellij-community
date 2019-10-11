@@ -258,9 +258,9 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(graphics));
   }
 
-  @Nullable
-  public String getGroupId() {
-    return myActionManager.getId(myActionGroup);
+  @NotNull
+  public ActionGroup getActionGroup() {
+    return myActionGroup;
   }
 
   @Override
