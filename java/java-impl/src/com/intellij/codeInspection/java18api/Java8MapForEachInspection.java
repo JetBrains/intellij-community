@@ -25,7 +25,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Collection;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Objects;
 
 public class Java8MapForEachInspection extends AbstractBaseJavaLocalInspectionTool {
@@ -150,7 +152,8 @@ public class Java8MapForEachInspection extends AbstractBaseJavaLocalInspectionTo
       PsiType entryType = entryParameter.getType();
       ParameterCandidate key = new ParameterCandidate(entryType, true);
       ParameterCandidate value = new ParameterCandidate(entryType, false);
-      Collection<PsiReference> references = ReferencesSearch.search(entryParameter).findAll();
+      List<PsiReference> references = new ArrayList<>(ReferencesSearch.search(entryParameter).findAll());
+      references.sort(Comparator.comparingInt(ref->ref.getElement().getTextOffset()));
       for (PsiReference ref : references) {
         PsiMethodCallExpression entryCall = ExpressionUtils.getCallForQualifier(ObjectUtils.tryCast(ref.getElement(), PsiExpression.class));
         if (ENTRY_GETTER.test(entryCall)) {

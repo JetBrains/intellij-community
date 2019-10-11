@@ -25,10 +25,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.BiFunction;
 
 import static com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.isCallOf;
@@ -807,6 +804,7 @@ class CollectMigration extends BaseStreamApiMigration {
 
       List<? extends PsiExpression> usages = terminal.targetReferences().toList();
       if (usages.isEmpty()) return null;
+      usages.sort(Comparator.comparingInt(ref->ref.getTextOffset()));
       PsiMethodCallExpression toArrayCandidate = StreamEx.of(usages)
         .map(usage -> ExpressionUtils.getCallForQualifier(tryCast(usage, PsiExpression.class)))
         .nonNull().findFirst().orElse(null);

@@ -209,7 +209,8 @@ public class ReturnSeparatedFromComputationInspection extends AbstractBaseJavaLo
     }
 
     Query<PsiReference> query = ReferencesSearch.search(context.returnedVariable, new LocalSearchScope(context.variableScope));
-    Collection<PsiReference> usages = query.findAll();
+    List<PsiReference> usages = new ArrayList<>(query.findAll());
+    usages.sort(Comparator.comparingInt(ref -> ref.getElement().getTextOffset()));
     for (PsiReference usage : usages) {
       PsiElement parent = PsiTreeUtil.skipParentsOfType(usage.getElement(),
                                                         PsiParenthesizedExpression.class, PsiTypeCastExpression.class);

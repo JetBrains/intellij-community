@@ -393,7 +393,8 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
                     Predicate<? super PsiReferenceExpression> skip) {
       Query<PsiReference> query =
         scope == null ? ReferencesSearch.search(variable) : ReferencesSearch.search(variable, new LocalSearchScope(scope));
-      Collection<PsiReference> refs = query.findAll();
+      List<PsiReference> refs = new ArrayList<>(query.findAll());
+      refs.sort(Comparator.comparingInt(ref -> ref.getElement().getTextOffset()));
       if (myNullSafe) {
         fillNullables(variable, refs);
       }

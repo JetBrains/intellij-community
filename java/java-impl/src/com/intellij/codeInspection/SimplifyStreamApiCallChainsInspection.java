@@ -1149,7 +1149,9 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
         generator.byCollectionName(((PsiReferenceExpression)containerQualifier).getReferenceName());
       }
       String name = generator.byType(elementType).byName("item", "element").generate(true);
-      Collection<PsiReference> refs = ReferencesSearch.search(indexParameter, new LocalSearchScope(body)).findAll();
+      List<PsiReference> refs = new ArrayList<>(ReferencesSearch.search(indexParameter, new LocalSearchScope(body)).findAll());
+      refs.sort(Comparator.comparingInt(ref -> ref.getElement().getTextOffset()));
+
       for (PsiReference ref : refs) {
         PsiExpression getExpression = container.extractGetExpressionFromIndex(tryCast(ref, PsiExpression.class));
         if (getExpression != null) {
