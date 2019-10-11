@@ -164,7 +164,7 @@ public class PyDataView implements DumbAware {
       }
       return null;
     });
-    myTabs.getPresentation().setEmptyText("Run console or debugger to view available data");
+    myTabs.getPresentation().setEmptyText("Run Python Console or Debugger to view available data");
     myTabs.setPopupGroup(new DefaultActionGroup(new ColoredAction()), ActionPlaces.UNKNOWN, true);
     myTabs.setTabDraggingEnabled(true);
     final Content content = ContentFactory.SERVICE.getInstance().createContent(myTabs, "Data", false);
