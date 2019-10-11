@@ -121,7 +121,7 @@ public class StaticMethodOnlyUsedInOneClassInspection extends BaseGlobalInspecti
     }
     if (element instanceof RefMethod) {
       final PsiMethod method = ObjectUtils.tryCast(element.getPsiElement(), PsiMethod.class);
-      if (method == null || MethodUtils.isFactoryMethod(method)) {
+      if (method == null || MethodUtils.isFactoryMethod(method) || MethodUtils.isConvenienceOverload(method)) {
         return null;
       }
       if (ignoreOnConflicts) {
@@ -402,7 +402,7 @@ public class StaticMethodOnlyUsedInOneClassInspection extends BaseGlobalInspecti
             method.getNameIdentifier() == null) {
           return;
         }
-        if (MethodUtils.isFactoryMethod(method)) {
+        if (MethodUtils.isFactoryMethod(method) || MethodUtils.isConvenienceOverload(method)) {
           return;
         }
         if (DeclarationSearchUtils.isTooExpensiveToSearch(method, true)) return;

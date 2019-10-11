@@ -9,6 +9,11 @@ public class StaticMethodOnlyUsedInOneClass {
 
     public void noUtilityClass() {}
 
+    public static void x(int i) {}
+    public static void x() {
+        x(1);
+    }
+
 }
 class UtilityClass {
     public static void x(int i) {}
@@ -26,6 +31,8 @@ class OneClass {
         System.out.println(StaticMethodOnlyUsedInOneClass.CLOG);
         UtilityClass.x();
         UtilityClass.x(2);
+        StaticMethodOnlyUsedInOneClass.x();
+        StaticMethodOnlyUsedInOneClass.x();
     }
 }
 class Main {

@@ -13,5 +13,6 @@ public class Two {
     System.out.println(One.SAUCE);
     System.out.println(Three.MEAT);
     One.build();
+    One.imbibe();
   }
 }

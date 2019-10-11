@@ -17,4 +17,11 @@ public class One {
   public static One build() {
     return new One();
   }
+
+  public static int imbibe(int bottles) {
+    return 0;
+  }
+  public static int imbibe() {
+    return imbibe(5);
+  }
 }
