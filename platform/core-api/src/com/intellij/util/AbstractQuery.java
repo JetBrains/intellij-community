@@ -28,7 +28,7 @@ public abstract class AbstractQuery<Result> implements Query<Result> {
     List<Result> result = new ArrayList<>();
     Processor<Result> processor = Processors.cancelableCollectProcessor(result);
     forEach(processor);
-    if (RANDOMIZE) {
+    if (RANDOMIZE && result.size() > 1) {
       result.sort(CRAZY_ORDER);
     }
     return result;
