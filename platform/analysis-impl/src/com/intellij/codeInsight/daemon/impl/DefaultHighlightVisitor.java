@@ -4,11 +4,13 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.codeInsight.daemon.impl.analysis.ErrorQuickFixProvider;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.codeInsight.highlighting.HighlightErrorFilter;
+import com.intellij.diagnostic.PluginException;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageAnnotators;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.Annotator;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
@@ -33,6 +35,7 @@ import java.util.Map;
  * @author yole
  */
 final class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
+  private static final Logger LOG = Logger.getInstance(DefaultHighlightVisitor.class);
 
   private AnnotationHolderImpl myAnnotationHolder;
   private final Map<String, List<Annotator>> myAnnotators = FactoryMap.create((key) -> createAnnotators(key));
@@ -184,7 +187,15 @@ final class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
   private static List<Annotator> cloneTemplates(@NotNull Collection<? extends Annotator> templates) {
     List<Annotator> result = new ArrayList<>(templates.size());
     for (Annotator template : templates) {
-      result.add(ReflectionUtil.newInstance(template.getClass()));
+      Annotator annotator;
+      try {
+        annotator = ReflectionUtil.newInstance(template.getClass());
+      }
+      catch (Exception e) {
+        LOG.error(PluginException.createByClass(e, template.getClass()));
+        continue;
+      }
+      result.add(annotator);
     }
     return result;
   }
