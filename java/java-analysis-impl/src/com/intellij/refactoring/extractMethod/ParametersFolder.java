@@ -126,12 +126,8 @@ class ParametersFolder {
     PsiExpression mostRanked = null;
     for (int i = mentionedInExpressions.size() - 1; i >= 0; i--) {
       PsiExpression expression = mentionedInExpressions.get(i);
-      boolean arrayAccess = expression instanceof PsiArrayAccessExpression && !isConditional(expression, scope);
-      if (arrayAccess) {
-        myFoldingSelectedByDefault = true;
-      }
       final int r = findUsedVariables(data, inputVariables, expression).size();
-      if (currentRank < r || arrayAccess && currentRank == r) {
+      if (currentRank < r || expression instanceof PsiArrayAccessExpression && myFoldingSelectedByDefault && currentRank == r) {
         currentRank = r;
         mostRanked = expression;
       }
@@ -152,27 +148,6 @@ class ParametersFolder {
     }
 
     return mostRanked != null;
-  }
-
-  private static boolean isConditional(@NotNull PsiElement expr, @NotNull LocalSearchScope scope) {
-    while (true) {
-      final PsiElement parent = expr.getParent();
-      if (parent != null && scope.containsRange(parent.getContainingFile(), parent.getTextRange())) {
-        if (parent instanceof PsiIfStatement) {
-          if (((PsiIfStatement)parent).getCondition() != expr) return true;
-        }
-        else if (parent instanceof PsiConditionalExpression) {
-          if (((PsiConditionalExpression)parent).getCondition() != expr) return true;
-        }
-        else if (parent instanceof PsiSwitchStatement) {
-          if (((PsiSwitchStatement)parent).getExpression() != expr) return true;
-        }
-      }
-      else {
-        return false;
-      }
-      expr = parent;
-    }
   }
 
   private static void setUniqueName(@NotNull VariableData data, @NotNull UniqueNameGenerator nameGenerator,
@@ -218,6 +193,7 @@ class ParametersFolder {
     final PsiElement[] scopeElements = scope.getScope();
 
     List<PsiExpression> expressions = null;
+    Boolean arrayAccess = null;
     for (PsiReference reference : ReferencesSearch.search(var, scope)) {
       PsiElement expression = reference.getElement();
       if (expressions == null) {
@@ -246,19 +222,47 @@ class ParametersFolder {
           if (!isMethodNameExpression(expression)) {
             expressions.add((PsiExpression)expression);
           }
+          if (expression instanceof PsiArrayAccessExpression && (arrayAccess == null || arrayAccess)) {
+            arrayAccess = isSafeToFoldArrayAccess(scope, expression);
+          }
           expression = PsiTreeUtil.getParentOfType(expression, PsiExpression.class);
         }
       }
       else {
         for (Iterator<PsiExpression> iterator = expressions.iterator(); iterator.hasNext();) {
-          if (findEquivalent(iterator.next(), expression) == null) {
+          PsiExpression equivalent = findEquivalent(iterator.next(), expression);
+          if (equivalent == null) {
             iterator.remove();
+          }
+          else if (equivalent instanceof PsiArrayAccessExpression && (arrayAccess == null || arrayAccess)) {
+            arrayAccess = isSafeToFoldArrayAccess(scope, equivalent);
           }
         }
       }
     }
+    if (arrayAccess != null && arrayAccess) {
+      myFoldingSelectedByDefault = true;
+    }
     myMentionedInExpressions.put(var, expressions);
     return expressions;
+  }
+
+  private static boolean isSafeToFoldArrayAccess(@NotNull LocalSearchScope scope,
+                                                 PsiElement expression) {
+    while (true) {
+      final PsiElement parent = expression.getParent();
+      if (parent != null && scope.containsRange(parent.getContainingFile(), parent.getTextRange())) {
+        if (parent instanceof PsiIfStatement ||
+            parent instanceof PsiConditionalExpression ||
+            parent instanceof PsiSwitchStatement) {
+          return false;
+        }
+      }
+      else {
+        return true;
+      }
+      expression = parent;
+    }
   }
 
   private static boolean isAccessedForWriting(@NotNull PsiExpression expression) {
