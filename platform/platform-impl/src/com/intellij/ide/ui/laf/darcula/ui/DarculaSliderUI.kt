@@ -1,5 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.darcula.ui
+import com.intellij.openapi.rd.paint2DLine
 import com.intellij.ui.JBColor
 import com.intellij.ui.paint.LinePainter2D
 import com.intellij.util.ui.JBUI
@@ -164,7 +165,7 @@ public class DarculaSliderUI(b: JComponent? = null) : BasicSliderUI(b as JSlider
     if(slider.orientation ==  SwingConstants.HORIZONTAL) {
       return thumbOverhang + (2*focusBorderThickness) + slider.insets.top + borderThickness
     } else {
-      return super.getBaseline(c, width, height) + focusBorderThickness
+      return super.getBaseline(c, width, height)
     }
   }
 
@@ -253,23 +254,27 @@ public class DarculaSliderUI(b: JComponent? = null) : BasicSliderUI(b as JSlider
   }
 
   override fun paintMinorTickForHorizSlider(g: Graphics, tickBounds: Rectangle, x: Int) {
-    g.color = if(slider.isEnabled) tickColor else disabledTickColor
-    g.drawLine(x, 0, x, minorTickHeight)
+    g as Graphics2D
+    val color = if(slider.isEnabled) tickColor else disabledTickColor
+    g.paint2DLine(Point(x, 0), Point(x, minorTickHeight), LinePainter2D.StrokeType.INSIDE, borderThickness.toDouble(), color)
   }
 
   override fun paintMajorTickForHorizSlider(g: Graphics, tickBounds: Rectangle, x: Int) {
-    g.color = if(slider.isEnabled) tickColor else disabledTickColor
-    g.drawLine(x, 0, x, majorTickHeight)
+    g as Graphics2D
+    val color = if(slider.isEnabled) tickColor else disabledTickColor
+    g.paint2DLine(Point(x, 0), Point(x, majorTickHeight), LinePainter2D.StrokeType.INSIDE, borderThickness.toDouble(), color)
   }
 
   override fun paintMinorTickForVertSlider(g: Graphics, tickBounds: Rectangle, y: Int) {
-    g.color = if(slider.isEnabled) tickColor else disabledTickColor
-    g.drawLine(0, y, minorTickHeight, y)
+    g as Graphics2D
+    val color = if(slider.isEnabled) tickColor else disabledTickColor
+    g.paint2DLine(Point(0, y), Point(minorTickHeight, y), LinePainter2D.StrokeType.INSIDE, borderThickness.toDouble(), color)
   }
 
   override fun paintMajorTickForVertSlider(g: Graphics, tickBounds: Rectangle, y: Int) {
-    g.color = if(slider.isEnabled) tickColor else disabledTickColor
-    g.drawLine(0, y, majorTickHeight, y)
+    g as Graphics2D
+    val color = if(slider.isEnabled) tickColor else disabledTickColor
+    g.paint2DLine(Point(0, y), Point(majorTickHeight, y), LinePainter2D.StrokeType.INSIDE, borderThickness.toDouble(), color)
   }
 
   private val thumbHalfWidth = JBUI.scale(7)
