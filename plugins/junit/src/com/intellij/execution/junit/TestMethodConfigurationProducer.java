@@ -9,7 +9,10 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-@ApiStatus.ScheduledForRemoval(inVersion = "2018")
+/**
+ * @deprecated use {@link TestInClassConfigurationProducer} instead
+ */
+@ApiStatus.ScheduledForRemoval(inVersion = "2019.3")
 @Deprecated
 public class TestMethodConfigurationProducer extends AbstractInClassConfigurationProducer<JUnitConfiguration> {
   @NotNull
