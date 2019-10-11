@@ -136,7 +136,7 @@
     <extensionPoint name="projectTemplate"
                     beanClass="com.intellij.platform.ProjectTemplateEP"/>
 
-    <extensionPoint name="ApplicationLoadListener" interface="com.intellij.ide.ApplicationLoadListener"/>
+    <extensionPoint name="ApplicationLoadListener" interface="com.intellij.ide.ApplicationLoadListener" dynamic="false"/>
     <extensionPoint name="applicationInitializedListener" interface="com.intellij.ide.ApplicationInitializedListener"/>
 
     <extensionPoint name="editorTabTitleProvider" interface="com.intellij.openapi.fileEditor.impl.EditorTabTitleProvider"/>

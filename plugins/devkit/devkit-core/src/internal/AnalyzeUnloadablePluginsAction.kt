@@ -69,7 +69,7 @@ class AnalyzeUnloadablePluginsAction : AnAction() {
         }
       }
 
-      val unloadablePlugins = result.filter { it.componentCount == 0 && it.nonDynamicEPs.isEmpty() }
+      val unloadablePlugins = result.filter { it.componentCount == 0 && it.unspecifiedDynamicEPs.isEmpty() && it.nonDynamicEPs.isEmpty() }
       appendln("Can unload ${unloadablePlugins.size} plugins:")
       for (status in unloadablePlugins) {
         appendln(status.pluginId)
@@ -82,18 +82,22 @@ class AnalyzeUnloadablePluginsAction : AnAction() {
       }
       appendln()
 
-      val closePlugins = result.filter { it.componentCount == 0 && it.nonDynamicEPs.isNotEmpty() && it.nonDynamicEPs.size <= 5 }
+      val closePlugins = result.filter {
+        it.componentCount == 0 &&
+        it.nonDynamicEPs.isEmpty() &&
+        it.unspecifiedDynamicEPs.isNotEmpty()
+      }
       if (closePlugins.isNotEmpty()) {
         appendln("Plugins closest to being unloadable:")
-        for (status in closePlugins.sortedBy { it.nonDynamicEPs.size }.take(40)) {
-          appendln("${status.pluginId} - ${status.nonDynamicEPs.joinToString()}")
+        for (status in closePlugins.sortedBy { it.unspecifiedDynamicEPs.size }.take(40)) {
+          appendln("${status.pluginId} - ${status.unspecifiedDynamicEPs.joinToString()}")
         }
         appendln()
       }
 
       val epUsagesMap = mutableMapOf<String, Int>()
       for (pluginUnloadabilityStatus in result) {
-        for (ep in pluginUnloadabilityStatus.nonDynamicEPs) {
+        for (ep in pluginUnloadabilityStatus.unspecifiedDynamicEPs) {
           epUsagesMap[ep] = epUsagesMap.getOrDefault(ep, 0) + 1
         }
       }
@@ -113,6 +117,7 @@ class AnalyzeUnloadablePluginsAction : AnAction() {
   }
 
   private fun analyzeUnloadable(ideaPlugin: IdeaPlugin): PluginUnloadabilityStatus {
+    val unspecifiedDynamicEPs = mutableSetOf<String>()
     val nonDynamicEPs = mutableSetOf<String>()
     val analysisErrors = mutableListOf<String>()
     for (extension in ideaPlugin.extensions.flatMap { it.collectExtensions() }) {
@@ -121,19 +126,24 @@ class AnalyzeUnloadablePluginsAction : AnAction() {
         analysisErrors.add("Cannot resolve EP ${extension.xmlElementName}")
         continue
       }
-      if (ep.dynamic.value != true) {
-        nonDynamicEPs.add(ep.effectiveQualifiedName)
+      when (ep.dynamic.value) {
+        false -> nonDynamicEPs.add(ep.effectiveQualifiedName)
+        null -> unspecifiedDynamicEPs.add(ep.effectiveQualifiedName)
       }
     }
     val componentCount = ideaPlugin.applicationComponents.flatMap { it.components }.size +
                          ideaPlugin.projectComponents.flatMap { it.components }.size +
                          ideaPlugin.moduleComponents.flatMap { it.components }.size
-    return PluginUnloadabilityStatus(ideaPlugin.pluginId ?: "?", nonDynamicEPs, componentCount, analysisErrors)
+    return PluginUnloadabilityStatus(
+      ideaPlugin.pluginId ?: "?",
+      unspecifiedDynamicEPs, nonDynamicEPs, componentCount, analysisErrors
+    )
   }
 }
 
 private data class PluginUnloadabilityStatus(
   val pluginId: String,
+  val unspecifiedDynamicEPs: Set<String>,
   val nonDynamicEPs: Set<String>,
   val componentCount: Int,
   val analysisErrors: List<String>
