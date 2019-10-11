@@ -12,7 +12,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import one.util.streamex.StreamEx;
@@ -48,22 +47,21 @@ class JavaServiceUtil {
 
   @NotNull
   private static List<LineMarkerInfo<PsiElement>> createJavaServiceLineMarkerInfo(@Nullable PsiIdentifier identifier,
-                                                                      @Nullable PsiClass implementerClass,
-                                                                      @Nullable PsiClass resultClass) {
+                                                                                  @Nullable PsiClass implementerClass,
+                                                                                  @Nullable PsiClass resultClass) {
     if (identifier != null && implementerClass != null && resultClass != null) {
       String implementerClassName = implementerClass.getQualifiedName();
       if (implementerClassName != null && PsiUtil.isLanguageLevel9OrHigher(identifier)) {
         PsiJavaModule javaModule = JavaModuleGraphUtil.findDescriptorByElement(identifier);
         if (javaModule != null) {
-          Iterable<PsiProvidesStatement> provides = javaModule.getProvides();
-          for (PsiProvidesStatement providesStatement : provides) {
-            PsiJavaCodeReferenceElement interfaceReference = providesStatement.getInterfaceReference();
+          for (PsiProvidesStatement providesStatement : javaModule.getProvides()) {
+            PsiClassType interfaceType = providesStatement.getInterfaceType();
             PsiReferenceList implementationList = providesStatement.getImplementationList();
-            if (interfaceReference != null && implementationList != null) {
-              PsiReference[] implementationReferences = implementationList.getReferenceElements();
-              for (PsiReference implementationReference : implementationReferences) {
-                if (implementationReference.isReferenceTo(implementerClass)) {
-                  PsiClass interfaceClass = ObjectUtils.tryCast(interfaceReference.resolve(), PsiClass.class);
+            if (interfaceType != null && implementationList != null) {
+              PsiClassType[] implementationTypes = implementationList.getReferencedTypes();
+              for (PsiClassType implementationType : implementationTypes) {
+                if (implementerClass.equals(implementationType.resolve())) {
+                  PsiClass interfaceClass = interfaceType.resolve();
                   if (InheritanceUtil.isInheritorOrSelf(resultClass, interfaceClass, true)) {
                     String interfaceClassName = interfaceClass.getQualifiedName();
                     if (interfaceClassName != null) {
@@ -86,7 +84,7 @@ class JavaServiceUtil {
   }
 
   static List<LineMarkerInfo<PsiElement>> collectServiceLoaderLoadCall(@NotNull PsiIdentifier identifier,
-                                                           @NotNull PsiMethodCallExpression methodCall) {
+                                                                       @NotNull PsiMethodCallExpression methodCall) {
     if (PsiUtil.isLanguageLevel9OrHigher(methodCall)) {
       PsiExpression[] arguments = methodCall.getArgumentList().getExpressions();
 
@@ -103,8 +101,8 @@ class JavaServiceUtil {
             PsiJavaModule javaModule = JavaModuleGraphUtil.findDescriptorByElement(methodCall);
             if (javaModule != null) {
               for (PsiUsesStatement statement : javaModule.getUses()) {
-                PsiJavaCodeReferenceElement reference = statement.getClassReference();
-                if (reference != null && reference.isReferenceTo(psiClass)) {
+                PsiClassType usedClass = statement.getClassType();
+                if (usedClass != null && psiClass.equals(usedClass.resolve())) {
                   LineMarkerInfo<PsiElement> info =
                     new LineMarkerInfo<>(identifier, identifier.getTextRange(), AllIcons.Gutter.Java9Service,
                                          e -> DaemonBundle.message("service.uses", qualifiedName),

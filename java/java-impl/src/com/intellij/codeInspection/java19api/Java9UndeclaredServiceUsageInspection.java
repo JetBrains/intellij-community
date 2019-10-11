@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.java19api;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
@@ -77,8 +77,8 @@ public class Java9UndeclaredServiceUsageInspection extends AbstractBaseJavaLocal
 
   private static boolean isUndeclaredUsage(PsiJavaModule module, @NotNull PsiClass serviceClass) {
     for (PsiUsesStatement usesStatement : module.getUses()) {
-      PsiJavaCodeReferenceElement reference = usesStatement.getClassReference();
-      if (reference != null && reference.isReferenceTo(serviceClass)) {
+      PsiClassType usedClass = usesStatement.getClassType();
+      if (usedClass != null && serviceClass.equals(usedClass.resolve())) {
         return false;
       }
     }
