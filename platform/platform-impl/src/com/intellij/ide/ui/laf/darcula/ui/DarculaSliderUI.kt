@@ -162,9 +162,9 @@ public class DarculaSliderUI(b: JComponent? = null) : BasicSliderUI(b as JSlider
 
   override fun getBaseline(c: JComponent?, width: Int, height: Int): Int {
     if(slider.orientation ==  SwingConstants.HORIZONTAL) {
-      return thumbOverhang + focusBorderThickness + slider.insets.top+borderThickness
+      return thumbOverhang + (2*focusBorderThickness) + slider.insets.top + borderThickness
     } else {
-      return super.getBaseline(c, width, height)
+      return super.getBaseline(c, width, height) + focusBorderThickness
     }
   }
 
@@ -287,13 +287,13 @@ public class DarculaSliderUI(b: JComponent? = null) : BasicSliderUI(b as JSlider
   private val thumbOverhang: Int
     get() = JBUI.scale(10)
   private val buttonColor: Color
-    get() = JBColor(0xFFFFFF, 0x9B9E9E)
+    get() = JBColor.namedColor("Slider.buttonColor", JBColor(0xFFFFFF, 0x9B9E9E))
   private val buttonBorderColor: Color
-    get() = JBColor(0xA6A6A6, 0x393D3F)
+    get() = JBColor.namedColor("Slider.buttonBorderColor", JBColor(0xA6A6A6, 0x393D3F))
   private val trackColor: Color
-    get() = JBColor(0xC7C7C7, 0x666666)
+    get() = JBColor.namedColor("Slider.trackColor", JBColor(0xC7C7C7, 0x666666))
   private val tickColor: Color
-    get() = JBColor(0x999999, 0x808080)
+    get() = JBColor.namedColor("Slider.tickColor", JBColor(0x999999, 0x808080))
   private val focusedOuterColor: Color
     get() = JBColor.namedColor("Component.focusedBorderColor", 0x87AFDA)
   private val disabledButtonColor: Color

@@ -627,6 +627,18 @@
       "description": "Left-side tree background in the Settings and Project Structure dialogs"
     },
     {
+      "key": "Slider.buttonColor"
+    },
+    {
+      "key": "Slider.buttonBorderColor"
+    },
+    {
+      "key": "Slider.trackColor"
+    },
+    {
+      "key": "Slider.tickColor"
+    },
+    {
       "key": "SpeedSearch.background",
       "description": "A search box that appears on typing in lists, trees, and tables"
     },
