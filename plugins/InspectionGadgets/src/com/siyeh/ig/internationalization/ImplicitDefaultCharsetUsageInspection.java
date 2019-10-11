@@ -1,23 +1,11 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.internationalization;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.java15api.Java15APIUsageInspection;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.MethodSignature;
@@ -35,12 +23,18 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.stream.Stream;
 
 /**
  * @author Bas Leijdekkers
  */
 public class ImplicitDefaultCharsetUsageInspection extends BaseInspection {
+
+  private static final List<String> UTF_8_ARG = Collections.singletonList("java.nio.charset.StandardCharsets.UTF_8");
+  private static final List<String> FALSE_AND_UTF_8_ARG = Arrays.asList("false", "java.nio.charset.StandardCharsets.UTF_8");
 
   @Nls
   @NotNull
@@ -60,22 +54,25 @@ public class ImplicitDefaultCharsetUsageInspection extends BaseInspection {
     }
   }
 
-  enum CharsetOverload {
-    EXIST, EXIST_WITH_FALSE, NONE;
+  private static class CharsetOverload {
+    static final CharsetOverload NONE = new CharsetOverload(null, Collections.emptyList());
 
-    InspectionGadgetsFix createFix() {
-      return this == NONE ? null : new AddUtf8CharsetFix(this);
+    final PsiMethod myMethod;
+    final List<String> myAdditionalArguments;
+
+    private CharsetOverload(PsiMethod method, List<String> arguments) {
+      myMethod = method;
+      myAdditionalArguments = arguments;
+    }
+
+    InspectionGadgetsFix createFix(LanguageLevel level) {
+      return myMethod == null || Java15APIUsageInspection.getLastIncompatibleLanguageLevel(myMethod, level) != null
+             ? null
+             : new AddUtf8CharsetFix(this);
     }
 
     Stream<String> additionalArguments() {
-      switch (this) {
-        case EXIST:
-          return Stream.of("java.nio.charset.StandardCharsets.UTF_8");
-        case EXIST_WITH_FALSE:
-          return Stream.of("false", "java.nio.charset.StandardCharsets.UTF_8");
-        default:
-          throw new IllegalStateException(this.toString());
-      }
+      return myAdditionalArguments.stream();
     }
   }
 
@@ -89,7 +86,7 @@ public class ImplicitDefaultCharsetUsageInspection extends BaseInspection {
     if (charsetOverload == null) {
       PsiMethod methodWithCharsetArgument = null;
       PsiClass aClass = method.getContainingClass();
-      charsetOverload = CharsetOverload.EXIST;
+      List<String> args = UTF_8_ARG;
       if (aClass != null) {
         MethodSignature signature = method.getSignature(PsiSubstitutor.EMPTY);
         PsiType charsetType =
@@ -98,7 +95,7 @@ public class ImplicitDefaultCharsetUsageInspection extends BaseInspection {
         if (method.isConstructor() && "java.io.PrintWriter".equals(aClass.getQualifiedName()) && parameterTypes.length == 1 &&
             parameterTypes[0].equalsToText("java.io.OutputStream")) {
           parameterTypes = ArrayUtil.append(parameterTypes, PsiType.BOOLEAN);
-          charsetOverload = CharsetOverload.EXIST_WITH_FALSE;
+          args = FALSE_AND_UTF_8_ARG;
         }
         MethodSignature newSignature = MethodSignatureUtil
           .createMethodSignature(signature.getName(), ArrayUtil.append(parameterTypes, charsetType),
@@ -106,9 +103,7 @@ public class ImplicitDefaultCharsetUsageInspection extends BaseInspection {
           );
         methodWithCharsetArgument = MethodSignatureUtil.findMethodBySignature(aClass, newSignature, false);
       }
-      if (methodWithCharsetArgument == null) {
-        charsetOverload = CharsetOverload.NONE;
-      }
+      charsetOverload = methodWithCharsetArgument != null ? new CharsetOverload(methodWithCharsetArgument, args) : CharsetOverload.NONE;
       method.putUserData(HAS_CHARSET_OVERLOAD, charsetOverload);
     }
     return charsetOverload;
@@ -118,9 +113,10 @@ public class ImplicitDefaultCharsetUsageInspection extends BaseInspection {
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
     PsiCallExpression call = (PsiCallExpression)infos[0];
-    if (!PsiUtil.isLanguageLevel7OrHigher(call)) return null;
+    LanguageLevel level = PsiUtil.getLanguageLevel(call);
+    if (!level.isAtLeast(LanguageLevel.JDK_1_7)) return null;
     PsiMethod method = call.resolveMethod();
-    return getCharsetOverload(method).createFix();
+    return getCharsetOverload(method).createFix(level);
   }
 
   @Override
