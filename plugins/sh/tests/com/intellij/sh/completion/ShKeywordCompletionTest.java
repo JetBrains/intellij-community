@@ -211,7 +211,7 @@ public class ShKeywordCompletionTest extends BasePlatformTestCase {
     final String completionRule = "number not equal";
     myFixture.configureByText("a.sh", "[ <caret> ]");
     completeByRule(completionRule);
-    myFixture.checkResult("[ $a -nq $b ]");
+    myFixture.checkResult("[ $a -ne $b ]");
   }
 
   public void testNumberLess() {
