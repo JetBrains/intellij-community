@@ -50,7 +50,6 @@ import com.intellij.openapi.vfs.newvfs.FileSystemInterface;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.impl.StubVirtualFile;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.GuiUtils;
 import com.intellij.util.*;
@@ -301,7 +300,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
         if (fileType instanceof LanguageFileType) {
           final LanguageFileType languageFileType = (LanguageFileType)fileType;
           if (!languageFileType.isSecondary()) {
-            IElementType.unregisterElementTypes(languageFileType.getLanguage());
             Language.unregisterLanguage(languageFileType.getLanguage());
           }
         }

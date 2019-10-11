@@ -74,6 +74,10 @@ public abstract class NamedObjectProviderBinding implements ProviderBinding {
     }
   }
 
+  public boolean isEmpty() {
+    return myNamesToProvidersMap.isEmpty() && myNamesToProvidersMapInsensitive.isEmpty();
+  }
+
   @Nullable
   protected abstract String getName(@NotNull PsiElement position);
 

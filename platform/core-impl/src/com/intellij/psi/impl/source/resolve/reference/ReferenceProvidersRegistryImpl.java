@@ -1,28 +1,20 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.resolve.reference;
 
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtension;
+import com.intellij.lang.LanguageUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.extensions.ExtensionPointListener;
+import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
+import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -33,17 +25,49 @@ import java.util.*;
 
 public class ReferenceProvidersRegistryImpl extends ReferenceProvidersRegistry {
   private static final LanguageExtension<PsiReferenceContributor> CONTRIBUTOR_EXTENSION =
-    new LanguageExtension<>(PsiReferenceContributor.EP_NAME.getName());
+    new LanguageExtension<>(PsiReferenceContributor.EP_NAME);
   private static final LanguageExtension<PsiReferenceProviderBean> REFERENCE_PROVIDER_EXTENSION =
     new LanguageExtension<>(PsiReferenceProviderBean.EP_NAME.getName());
 
   private final Map<Language, PsiReferenceRegistrarImpl> myRegistrars = ContainerUtil.newConcurrentMap();
 
+  public ReferenceProvidersRegistryImpl() {
+    if (Extensions.getRootArea().hasExtensionPoint(PsiReferenceContributor.EP_NAME)) {
+      PsiReferenceContributor.EP_NAME.addExtensionPointListener(new ExtensionPointListener<KeyedLazyInstance<PsiReferenceContributor>>() {
+        @Override
+        public void extensionAdded(@NotNull KeyedLazyInstance<PsiReferenceContributor> extension,
+                                   @NotNull PluginDescriptor pluginDescriptor) {
+          Language language = Language.findLanguageByID(extension.getKey());
+          if (language == Language.ANY) {
+            for (PsiReferenceRegistrarImpl registrar : myRegistrars.values()) {
+              registerContributedReferenceProviders(registrar, extension.getInstance());
+            }
+          }
+          else if (language != null) {
+            Set<Language> languageAndDialects = LanguageUtil.getAllDerivedLanguages(language);
+            for (Language languageOrDialect : languageAndDialects) {
+              final PsiReferenceRegistrarImpl registrar = myRegistrars.get(languageOrDialect);
+              if (registrar != null) {
+                registerContributedReferenceProviders(registrar, extension.getInstance());
+              }
+            }
+          }
+        }
+
+        @Override
+        public void extensionRemoved(@NotNull KeyedLazyInstance<PsiReferenceContributor> extension,
+                                     @NotNull PluginDescriptor pluginDescriptor) {
+          Disposer.dispose(extension.getInstance());
+        }
+      }, ApplicationManager.getApplication());
+    }
+  }
+
   @NotNull
   private static PsiReferenceRegistrarImpl createRegistrar(Language language) {
     PsiReferenceRegistrarImpl registrar = new PsiReferenceRegistrarImpl();
     for (PsiReferenceContributor contributor : CONTRIBUTOR_EXTENSION.allForLanguageOrAny(language)) {
-      contributor.registerReferenceProviders(registrar);
+      registerContributedReferenceProviders(registrar, contributor);
     }
 
     List<PsiReferenceProviderBean> referenceProviderBeans = REFERENCE_PROVIDER_EXTENSION.allForLanguageOrAny(language);
@@ -75,6 +99,10 @@ public class ReferenceProvidersRegistryImpl extends ReferenceProvidersRegistry {
     return registrar;
   }
 
+  private static void registerContributedReferenceProviders(PsiReferenceRegistrarImpl registrar, PsiReferenceContributor contributor) {
+    contributor.registerReferenceProviders(new TrackingReferenceRegistrar(registrar, contributor));
+    Disposer.register(ApplicationManager.getApplication(), contributor);
+  }
 
   @NotNull
   @Override
@@ -90,6 +118,11 @@ public class ReferenceProvidersRegistryImpl extends ReferenceProvidersRegistry {
       }
     }
     return registrar;
+  }
+
+  @Override
+  public void unloadRegistrar(@NotNull Language language) {
+    myRegistrars.remove(language);
   }
 
   @NotNull

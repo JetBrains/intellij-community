@@ -49,4 +49,8 @@ class SimpleProviderBinding implements ProviderBinding {
       }
     }
   }
+
+  public boolean isEmpty() {
+    return myProviderPairs.isEmpty();
+  }
 }
