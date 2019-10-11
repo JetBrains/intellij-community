@@ -1122,7 +1122,9 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
           else {
             myUntypedFileTypeDetectors.add(detector);
             if (ApplicationManager.getApplication().isInternal()) {
-              LOG.error("File type detector " + detector + " does not implement getDetectedFileTypes(), leading to suboptimal performance. Please implement the method.");
+              LOG.error(PluginException.createByClass(
+                "File type detector " + detector + " does not implement getDetectedFileTypes(), leading to suboptimal performance. Please implement the method.",
+                null, detector.getClass()));
             }
           }
         }
