@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.ignore.actions
 
+import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
@@ -72,6 +73,14 @@ class AddToGitExcludeAction : DefaultGitExcludeAction(
 class OpenGitExcludeAction : DefaultGitExcludeAction(
   message("git.open.exclude.file.action.text"), message("git.open.exclude.file.action.description")
 ) {
+
+  override fun update(e: AnActionEvent) {
+    if (e.place == ActionPlaces.MAIN_MENU)
+      super.update(e)
+    else
+      e.presentation.isEnabledAndVisible = false
+  }
+
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.getRequiredData(CommonDataKeys.PROJECT)
     val excludeToOpen = GitUtil.getRepositories(project).map { it.repositoryFiles.excludeFile }
