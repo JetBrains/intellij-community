@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import gnu.trove.THashSet;
@@ -100,7 +101,7 @@ public final class MavenProjectIndicesManager extends MavenSimpleProjectComponen
         else {
           myProjectIndices = MavenIndicesManager.getInstance().ensureIndicesExist(myProject, remoteRepositoriesIdsAndUrls);
         }
-        myProjectIndices.add(MavenIndicesManager.getInstance().createIndexForLocalRepo(myProject, localRepository));
+        ContainerUtil.addIfNotNull(myProjectIndices, MavenIndicesManager.getInstance().createIndexForLocalRepo(myProject, localRepository));
         myDependencySearchService.reload();
 
         if (consumer != null) {
