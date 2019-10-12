@@ -1,8 +1,12 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.commit
 
+import com.intellij.application.subscribe
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.FilePath
@@ -22,7 +26,8 @@ private fun Collection<Change>.toPartialAwareSet() = THashSet(this, ChangeListCh
 class ChangesViewCommitWorkflowHandler(
   override val workflow: ChangesViewCommitWorkflow,
   override val ui: ChangesViewCommitWorkflowUi
-) : AbstractCommitWorkflowHandler<ChangesViewCommitWorkflow, ChangesViewCommitWorkflowUi>() {
+) : AbstractCommitWorkflowHandler<ChangesViewCommitWorkflow, ChangesViewCommitWorkflowUi>(),
+    ProjectManagerListener {
 
   override val commitPanel: CheckinProjectPanel = CommitProjectPanelAdapter(this)
   override val amendCommitHandler: AmendCommitHandler = AmendCommitHandlerImpl(this)
@@ -55,6 +60,8 @@ class ChangesViewCommitWorkflowHandler(
     ui.addInclusionListener(this, this)
     ui.inclusionModel = inclusionModel
     Disposer.register(inclusionModel, Disposable { ui.inclusionModel = null })
+
+    ProjectManager.TOPIC.subscribe(this, this)
 
     vcsesChanged() // as currently vcses are set before handler subscribes to corresponding event
   }
@@ -210,6 +217,17 @@ class ChangesViewCommitWorkflowHandler(
   }
 
   override fun saveCommitMessage(success: Boolean) = commitMessagePolicy.save(currentChangeList, getCommitMessage(), success)
+
+  // save state on project close - using this method ensures change list comment is updated before project state persisting
+  override fun projectClosingBeforeSave(project: Project) = saveStateBeforeDispose()
+
+  // save state on other events - like "settings changed to use commit dialog"
+  override fun dispose() = saveStateBeforeDispose()
+
+  private fun saveStateBeforeDispose() {
+    saveCommitMessage(false)
+    currentChangeList = null
+  }
 
   interface ActivityListener : EventListener {
     fun activityStateChanged()
