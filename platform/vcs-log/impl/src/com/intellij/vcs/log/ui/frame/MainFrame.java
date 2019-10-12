@@ -27,12 +27,9 @@ import com.intellij.openapi.vcs.changes.DiffPreviewProvider;
 import com.intellij.openapi.vcs.changes.PreviewDiffVirtualFile;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.components.panels.Wrapper;
-import com.intellij.ui.content.Content;
 import com.intellij.util.ContentUtilEx;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
@@ -48,7 +45,10 @@ import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.impl.CommonUiProperties;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import com.intellij.vcs.log.impl.VcsLogContentProvider;
-import com.intellij.vcs.log.ui.*;
+import com.intellij.vcs.log.ui.AbstractVcsLogUi;
+import com.intellij.vcs.log.ui.VcsLogActionPlaces;
+import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
+import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.ui.actions.IntelliSortChooserPopupAction;
 import com.intellij.vcs.log.ui.actions.ShowPreviewEditorAction;
 import com.intellij.vcs.log.ui.filter.VcsLogFilterUiEx;
@@ -164,7 +164,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     showDetails(myUiProperties.get(CommonUiProperties.SHOW_DETAILS));
 
     myChangesBrowserSplitter = new OnePixelSplitter(false, CHANGES_SPLITTER_PROPORTION, 0.7f);
-    installGraphView(toolbarsAndTable);
+    installGraphView(toolbarsAndTable, logUi);
     myChangesBrowserSplitter.setSecondComponent(myDetailsSplitter);
 
     myPreviewDiffSplitter = new OnePixelSplitter(false, DIFF_SPLITTER_PROPORTION, 0.7f);
@@ -220,12 +220,12 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     }, this);
   }
 
-  private void installGraphView(JComponent toolbarsAndTable) {
+  private void installGraphView(JComponent toolbarsAndTable, AbstractVcsLogUi logUi) {
     if (Registry.is("show.log.as.editor.tab")) {
       DataManager.registerDataProvider(toolbarsAndTable, this);
 
       ApplicationManager.getApplication().invokeLater(() -> {
-        VirtualFile file = getOrCreateGraphViewFile(toolbarsAndTable);
+        VirtualFile file = getOrCreateGraphViewFile(toolbarsAndTable, logUi);
         openLogEditorTab(file, myLogData.getProject());
       }, ModalityState.NON_MODAL);
     }
@@ -234,7 +234,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     }
   }
 
-  public static void openLogEditorTab(VirtualFile file, Project project) {
+  public static void openLogEditorTab(@NotNull VirtualFile file, @NotNull Project project) {
     FileEditor[] editors = FileEditorManager.getInstance(project).openFile(file, true);
     assert editors.length == 1 : "opened multiple log editors for " + file;
     FileEditor editor = editors[0];
@@ -248,43 +248,24 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     editorWindow.setFilePinned(file, true);
   }
 
-  public VirtualFile getOrCreateGraphViewFile(JComponent logViewComponent) {
+  public VirtualFile getOrCreateGraphViewFile(JComponent logViewComponent, AbstractVcsLogUi logUi) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     if (myGraphViewFile == null || !myGraphViewFile.isValid()) {
-      String name = getTabName();
       myGraphViewFile = new GraphViewVirtualFile(logViewComponent, () -> {
         return getTabName();
       });
 
-      Project project = myLogData.getProject();
-
-      ToolWindow window = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID);
-      if (window != null) {
-        for (Content content : window.getContentManager().getContents()) {
-          JComponent component = content.getComponent();
-          if (component instanceof VcsLogPanel) {
-            if (((VcsLogPanel)component).getUi().getMainComponent().equals(this.getMainComponent())) {
-              myGraphViewFile.putUserData(GraphViewVirtualFile.TabContent, content);
-              content.putUserData(GraphViewVirtualFile.GraphVirtualFile, myGraphViewFile);
-            }
-          }
-          else if (name.equals(VcsLogContentProvider.TAB_NAME) && name.equals(content.getDisplayName())) {
-            myGraphViewFile.putUserData(GraphViewVirtualFile.TabContent, content);
-            content.putUserData(GraphViewVirtualFile.GraphVirtualFile, myGraphViewFile);
-          }
-        }
-      }
+      myGraphViewFile.putUserData(GraphViewVirtualFile.TabContentId, logUi.getId());
     }
-
 
     Disposer.register(this, () -> myGraphViewFile = null);
 
     return myGraphViewFile;
   }
 
+  //todo move it out from MainFrame
   private String getTabName() {
-
     VcsLogContentProvider instance = VcsLogContentProvider.getInstance(myLogData.getProject());
     if (instance != null) {
       VcsLogUiImpl ui = instance.getUi();
@@ -430,6 +411,16 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
   public void showDiffPreview(boolean state) {
     myPreviewDiff.updatePreview(state);
     if (Registry.is("show.diff.preview.as.editor.tab")) {
+      if (myDiffPreviewProvider != null) {
+        if (!state) {
+          //'equals' for such files is overridden and means the equality of its owner
+          FileEditorManager.getInstance(myLogData.getProject()).closeFile(new PreviewDiffVirtualFile(myDiffPreviewProvider));
+        }
+        else {
+          FileEditorManager.getInstance(myLogData.getProject()).openFile(new PreviewDiffVirtualFile(myDiffPreviewProvider), false, true);
+        }
+      }
+
       return;
     }
 

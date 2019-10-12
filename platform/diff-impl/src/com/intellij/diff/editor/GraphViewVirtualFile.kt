@@ -10,7 +10,7 @@ class GraphViewVirtualFile(val toolbarsAndTable: JComponent, val getTabNameFunc:
     : LightVirtualFile(getTabNameFunc(), GraphViewFileType.INSTANCE, "") {
     companion object {
         @JvmField
-        val TabContent: Key<Content> = Key("TabContent")
+        val TabContentId: Key<String> = Key("TabContentId")
         @JvmField
         val GraphVirtualFile: Key<GraphViewVirtualFile> = Key("GraphVirtualFile")
     }

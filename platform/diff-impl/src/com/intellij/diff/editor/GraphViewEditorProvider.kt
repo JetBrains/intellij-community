@@ -24,5 +24,5 @@ class GraphViewEditorProvider : FileEditorProvider, DumbAware {
 
   override fun getEditorTypeId(): String = "GraphViewEditor"
   override fun getPolicy(): FileEditorPolicy =
-      FileEditorPolicy.HIDE_DEFAULT_EDITOR
+      FileEditorPolicy.PLACE_BEFORE_DEFAULT_EDITOR
 }

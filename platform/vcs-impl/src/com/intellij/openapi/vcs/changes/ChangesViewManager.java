@@ -491,6 +491,9 @@ public class ChangesViewManager implements ChangesViewEx,
     private void setDiffPreviewVisible(boolean isDiffPreviewVisible) {
       if (Registry.is("show.diff.preview.as.editor.tab") && !isDiffPreviewVisible)
         FileEditorManager.getInstance(myProject).closeFile(myPreviewDiffVirtualFile);
+      else {
+        FileEditorManager.getInstance(myProject).openFile(new PreviewDiffVirtualFile(myDiffPreviewProvider), false, true);
+      }
 
       myDiffPreviewSplitter.setDetailsOn(isDiffPreviewVisible);
       setCommitSplitOrientation();
