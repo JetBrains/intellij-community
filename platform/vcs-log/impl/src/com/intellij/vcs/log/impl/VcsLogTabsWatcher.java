@@ -195,8 +195,8 @@ public class VcsLogTabsWatcher implements Disposable {
     }
 
     @Override
-    public void stateChanged() {
-      if (myToolWindowManager.getToolWindow(TOOLWINDOW_ID) == null) {
+    public void toolWindowUnregistered(@NotNull String id, @NotNull ToolWindow toolWindow) {
+      if (id.equals(TOOLWINDOW_ID)) {
         removeListeners();
       }
     }
