@@ -262,17 +262,17 @@ java_library(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-stdlib-common/1.3.50-compose-20190920:jar",
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-stdlib-jdk7/1.3.50-compose-20190920:jar",
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-stdlib-jdk8/1.3.50-compose-20190920:jar",
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-stdlib/1.3.50-compose-20190920:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-stdlib-common/1.3.60-withExperimentalGoogleExtensions-20191014:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-stdlib-jdk7/1.3.60-withExperimentalGoogleExtensions-20191014:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-stdlib-jdk8/1.3.60-withExperimentalGoogleExtensions-20191014:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-stdlib/1.3.60-withExperimentalGoogleExtensions-20191014:jar",
     ],
     # do not sort: must match IML order
     runtime_deps = [
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-stdlib-common/1.3.50-compose-20190920:jar",
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-stdlib-jdk7/1.3.50-compose-20190920:jar",
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-stdlib-jdk8/1.3.50-compose-20190920:jar",
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-stdlib/1.3.50-compose-20190920:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-stdlib-common/1.3.60-withExperimentalGoogleExtensions-20191014:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-stdlib-jdk7/1.3.60-withExperimentalGoogleExtensions-20191014:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-stdlib-jdk8/1.3.60-withExperimentalGoogleExtensions-20191014:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-stdlib/1.3.60-withExperimentalGoogleExtensions-20191014:jar",
     ],
 )
 
@@ -280,8 +280,8 @@ java_library(
 java_library(
     name = "kotlin-reflect",
     visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-reflect/1.3.50-compose-20190920:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-reflect/1.3.50-compose-20190920:jar"],
+    exports = ["//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-reflect/1.3.60-withExperimentalGoogleExtensions-20191014:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-reflect/1.3.60-withExperimentalGoogleExtensions-20191014:jar"],
 )
 
 # managed by go/iml_to_build
@@ -742,13 +742,13 @@ java_library(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-test-common/1.3.50-compose-20190920:jar",
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-test/1.3.50-compose-20190920:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-test-common/1.3.60-withExperimentalGoogleExtensions-20191014:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-test/1.3.60-withExperimentalGoogleExtensions-20191014:jar",
     ],
     # do not sort: must match IML order
     runtime_deps = [
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-test-common/1.3.50-compose-20190920:jar",
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-test/1.3.50-compose-20190920:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-test-common/1.3.60-withExperimentalGoogleExtensions-20191014:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-test/1.3.60-withExperimentalGoogleExtensions-20191014:jar",
     ],
 )
 
@@ -1253,6 +1253,7 @@ java_library(
         "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/kotlin-stdlib",
         "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/kotlin-util-io",
         "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/kotlin-util-klib",
+        "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/kotlin-util-klib-metadata",
         "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/kotlinx-coroutines-core-1.2.1",
         "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/kotlinx-coroutines-jdk8-1.2.1",
         "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/kotlinx-serialization-compiler-plugin",
@@ -1293,6 +1294,7 @@ java_library(
         "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/kotlin-stdlib",
         "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/kotlin-util-io",
         "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/kotlin-util-klib",
+        "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/kotlin-util-klib-metadata",
         "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/kotlinx-coroutines-core-1.2.1",
         "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/kotlinx-coroutines-jdk8-1.2.1",
         "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/kotlinx-serialization-compiler-plugin",
@@ -1526,8 +1528,8 @@ java_library(
 java_library(
     name = "kotlin-gradle-plugin-model",
     visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-gradle-plugin-model/1.3.50-compose-20190920:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-gradle-plugin-model/1.3.50-compose-20190920:jar"],
+    exports = ["//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-gradle-plugin-model/1.3.60-withExperimentalGoogleExtensions-20191014:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-gradle-plugin-model/1.3.60-withExperimentalGoogleExtensions-20191014:jar"],
 )
 
 # managed by go/iml_to_build

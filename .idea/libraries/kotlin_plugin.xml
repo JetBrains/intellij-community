@@ -31,6 +31,7 @@
       <root url="jar://$PROJECT_DIR$/../../prebuilts/tools/common/kotlin-plugin/Kotlin/lib/kotlin-stdlib.jar!/" />
       <root url="jar://$PROJECT_DIR$/../../prebuilts/tools/common/kotlin-plugin/Kotlin/lib/kotlin-util-io.jar!/" />
       <root url="jar://$PROJECT_DIR$/../../prebuilts/tools/common/kotlin-plugin/Kotlin/lib/kotlin-util-klib.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../../prebuilts/tools/common/kotlin-plugin/Kotlin/lib/kotlin-util-klib-metadata.jar!/" />
       <root url="jar://$PROJECT_DIR$/../../prebuilts/tools/common/kotlin-plugin/Kotlin/lib/kotlinx-coroutines-core-1.2.1.jar!/" />
       <root url="jar://$PROJECT_DIR$/../../prebuilts/tools/common/kotlin-plugin/Kotlin/lib/kotlinx-coroutines-jdk8-1.2.1.jar!/" />
       <root url="jar://$PROJECT_DIR$/../../prebuilts/tools/common/kotlin-plugin/Kotlin/lib/kotlinx-serialization-compiler-plugin.jar!/" />
