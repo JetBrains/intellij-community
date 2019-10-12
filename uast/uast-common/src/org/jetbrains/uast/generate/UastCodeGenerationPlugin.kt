@@ -4,6 +4,7 @@ package org.jetbrains.uast.generate
 import com.intellij.lang.Language
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiType
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.*
@@ -60,7 +61,8 @@ interface UastElementFactory {
                            methodName: String,
                            parameters: List<UExpression>,
                            expectedReturnType: PsiType?,
-                           kind: UastCallKind): UCallExpression?
+                           kind: UastCallKind,
+                           context: PsiElement? = null): UCallExpression?
 
   fun createIfExpression(condition: UExpression, thenBranch: UExpression, elseBranch: UExpression? = null): UIfExpression?
 
