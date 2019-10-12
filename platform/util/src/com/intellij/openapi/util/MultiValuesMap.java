@@ -16,7 +16,7 @@ import java.util.*;
  * <li>Default implementations of {@link MultiMap} may not permit null keys and/or null values</li>
  * </ul></p>
  */
-@Debug.Renderer(text = "\"size = \" + myBaseMap.size()", hasChildren = "!isEmpty()", childrenArray = "entrySet().toArray()")
+@Debug.Renderer(text = "\"size = \" + myDelegate.size()", hasChildren = "!isEmpty()", childrenArray = "entrySet().toArray()")
 @Deprecated
 public class MultiValuesMap<K, V>{
   private final MultiMap<K, V> myDelegate;
