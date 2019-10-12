@@ -24,6 +24,10 @@ public class ValueTest extends AbstractLombokParsingTestCase {
     doTest(true);
   }
 
+  public void testValue$ValueStaticConstructor() {
+    doTest(true);
+  }
+
   public void testValue$ValueBuilder() {
     doTest(true);
   }

@@ -9,6 +9,7 @@ import com.intellij.psi.impl.light.LightTypeParameterBuilder;
 import com.intellij.psi.util.PsiTypesUtil;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigKey;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
+import de.plushnikov.intellij.plugin.problem.ProblemEmptyBuilder;
 import de.plushnikov.intellij.plugin.processor.clazz.AbstractClassProcessor;
 import de.plushnikov.intellij.plugin.processor.field.AccessorsInfo;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
@@ -106,7 +107,37 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
     return false;
   }
 
+  private boolean validateIsStaticConstructorNotDefined(@NotNull PsiClass psiClass, @Nullable String staticConstructorName, @NotNull Collection<PsiField> params, @NotNull ProblemBuilder builder) {
+    boolean result = true;
+
+    final List<PsiType> paramTypes = new ArrayList<>(params.size());
+    for (PsiField param : params) {
+      paramTypes.add(param.getType());
+    }
+
+    if (isStaticConstructor(staticConstructorName)) {
+      final Collection<PsiMethod> definedMethods = PsiClassUtil.collectClassStaticMethodsIntern(psiClass);
+
+      final PsiMethod existedStaticMethod = findExistedMethod(definedMethods, staticConstructorName, paramTypes);
+      if (null != existedStaticMethod) {
+        if (paramTypes.isEmpty()) {
+          builder.addError(String.format("Method '%s' matched staticConstructorName is already defined", staticConstructorName), new SafeDeleteFix(existedStaticMethod));
+        } else {
+          builder.addError(String.format("Method '%s' with %d parameters matched staticConstructorName is already defined", staticConstructorName, paramTypes.size()), new SafeDeleteFix(existedStaticMethod));
+        }
+        result = false;
+      }
+    }
+
+    return result;
+  }
+
   public boolean validateIsConstructorNotDefined(@NotNull PsiClass psiClass, @Nullable String staticConstructorName, @NotNull Collection<PsiField> params, @NotNull ProblemBuilder builder) {
+    // Constructor not defined or static constructor not defined
+    return validateIsConstructorNotDefined(psiClass, params,builder) || validateIsStaticConstructorNotDefined(psiClass, staticConstructorName, params, builder);
+  }
+
+  private boolean validateIsConstructorNotDefined(@NotNull PsiClass psiClass, @NotNull Collection<PsiField> params, @NotNull ProblemBuilder builder) {
     boolean result = true;
 
     final List<PsiType> paramTypes = new ArrayList<>(params.size());
@@ -125,20 +156,6 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
         builder.addError(String.format("Constructor with %d parameters is already defined", paramTypes.size()), new SafeDeleteFix(existedMethod));
       }
       result = false;
-    }
-
-    if (isStaticConstructor(staticConstructorName)) {
-      final Collection<PsiMethod> definedMethods = PsiClassUtil.collectClassStaticMethodsIntern(psiClass);
-
-      final PsiMethod existedStaticMethod = findExistedMethod(definedMethods, staticConstructorName, paramTypes);
-      if (null != existedStaticMethod) {
-        if (paramTypes.isEmpty()) {
-          builder.addError(String.format("Method '%s' matched staticConstructorName is already defined", staticConstructorName), new SafeDeleteFix(existedStaticMethod));
-        } else {
-          builder.addError(String.format("Method '%s' with %d parameters matched staticConstructorName is already defined", staticConstructorName, paramTypes.size()), new SafeDeleteFix(existedStaticMethod));
-        }
-        result = false;
-      }
     }
 
     return result;
@@ -234,16 +251,26 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
 
   @NotNull
   protected Collection<PsiMethod> createConstructorMethod(@NotNull PsiClass psiClass, @PsiModifier.ModifierConstant @NotNull String methodModifier, @NotNull PsiAnnotation psiAnnotation, boolean useJavaDefaults, @NotNull Collection<PsiField> params, @Nullable String staticName) {
+    List<PsiMethod> methods = new ArrayList<>();
+
+    boolean hasStaticConstructor = !validateIsStaticConstructorNotDefined(psiClass, staticName, params, ProblemEmptyBuilder.getInstance());
+    boolean hasConstructor = !validateIsConstructorNotDefined(psiClass, params, ProblemEmptyBuilder.getInstance());
+
     final boolean staticConstructorRequired = isStaticConstructor(staticName);
 
     final String constructorVisibility = staticConstructorRequired || psiClass.isEnum() ? PsiModifier.PRIVATE : methodModifier;
 
-    final PsiMethod constructor = createConstructor(psiClass, constructorVisibility, useJavaDefaults, params, psiAnnotation);
-    if (staticConstructorRequired) {
-      PsiMethod staticConstructor = createStaticConstructor(psiClass, methodModifier, staticName, useJavaDefaults, params, psiAnnotation);
-      return Arrays.asList(constructor, staticConstructor);
+    if (!hasConstructor) {
+      final PsiMethod constructor = createConstructor(psiClass, constructorVisibility, useJavaDefaults, params, psiAnnotation);
+      methods.add(constructor);
     }
-    return Collections.singletonList(constructor);
+
+    if (staticConstructorRequired && !hasStaticConstructor) {
+      PsiMethod staticConstructor = createStaticConstructor(psiClass, methodModifier, staticName, useJavaDefaults, params, psiAnnotation);
+      methods.add(staticConstructor);
+    }
+
+    return methods;
   }
 
   private PsiMethod createConstructor(@NotNull PsiClass psiClass, @PsiModifier.ModifierConstant @NotNull String modifier,

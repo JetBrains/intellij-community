@@ -119,13 +119,10 @@ public class DataProcessor extends AbstractClassProcessor {
       final Collection<PsiMethod> definedConstructors = PsiClassUtil.collectClassConstructorIntern(psiClass);
       filterToleratedElements(definedConstructors);
 
-      // and only if there are no any other constructors!
-      if (definedConstructors.isEmpty()) {
-        final Collection<PsiField> requiredFields = requiredArgsConstructorProcessor.getRequiredFields(psiClass);
+      final Collection<PsiField> requiredFields = requiredArgsConstructorProcessor.getRequiredFields(psiClass);
 
-        result = requiredArgsConstructorProcessor.validateIsConstructorNotDefined(
-          psiClass, staticName, requiredFields, ProblemEmptyBuilder.getInstance());
-      }
+      result = requiredArgsConstructorProcessor.validateIsConstructorNotDefined(
+        psiClass, staticName, requiredFields, ProblemEmptyBuilder.getInstance());
     }
     return result;
   }

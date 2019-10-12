@@ -87,14 +87,12 @@ public class ValueProcessor extends AbstractClassProcessor {
       lombok.Builder.class)) {
       final Collection<PsiMethod> definedConstructors = PsiClassUtil.collectClassConstructorIntern(psiClass);
       filterToleratedElements(definedConstructors);
-      // and only if there are no any other constructors!
-      if (definedConstructors.isEmpty()) {
-        final String staticName = PsiAnnotationUtil.getStringAnnotationValue(psiAnnotation, "staticConstructor");
-        final Collection<PsiField> requiredFields = allArgsConstructorProcessor.getAllFields(psiClass);
 
-        if (allArgsConstructorProcessor.validateIsConstructorNotDefined(psiClass, staticName, requiredFields, ProblemEmptyBuilder.getInstance())) {
-          target.addAll(allArgsConstructorProcessor.createAllArgsConstructor(psiClass, PsiModifier.PUBLIC, psiAnnotation, staticName, requiredFields));
-        }
+      final String staticName = PsiAnnotationUtil.getStringAnnotationValue(psiAnnotation, "staticConstructor");
+      final Collection<PsiField> requiredFields = allArgsConstructorProcessor.getAllFields(psiClass);
+
+      if (allArgsConstructorProcessor.validateIsConstructorNotDefined(psiClass, staticName, requiredFields, ProblemEmptyBuilder.getInstance())) {
+        target.addAll(allArgsConstructorProcessor.createAllArgsConstructor(psiClass, PsiModifier.PUBLIC, psiAnnotation, staticName, requiredFields));
       }
     }
 
