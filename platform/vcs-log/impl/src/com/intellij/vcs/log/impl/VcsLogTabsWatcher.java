@@ -57,8 +57,9 @@ public class VcsLogTabsWatcher implements Disposable {
 
     myPostponedEventsListener = new MyRefreshPostponedEventsListener();
     myLogEditorListener = new MyLogEditorListener();
+
     myConnection = project.getMessageBus().connect();
-    myConnection.subscribe(ToolWindowManagerListener.TOPIC, myPostponedEventsListener);
+    myConnection.subscribe(ToolWindowManagerListener.TOPIC, new MyToolWindowManagerListener());
 
     installContentListener();
     installLogEditorListeners();
@@ -86,6 +87,7 @@ public class VcsLogTabsWatcher implements Disposable {
     if (window != null) {
       myToolWindow = window;
       myIsVisible = myToolWindow.isVisible();
+      myConnection.subscribe(ToolWindowManagerListener.TOPIC, myPostponedEventsListener);
       myToolWindow.getContentManager().addContentManagerListener(myPostponedEventsListener);
     }
   }
@@ -184,6 +186,22 @@ public class VcsLogTabsWatcher implements Disposable {
     }
   }
 
+  private class MyToolWindowManagerListener implements ToolWindowManagerListener {
+    @Override
+    public void toolWindowRegistered(@NotNull String id) {
+      if (id.equals(TOOLWINDOW_ID)) {
+        installContentListener();
+      }
+    }
+
+    @Override
+    public void stateChanged() {
+      if (myToolWindowManager.getToolWindow(TOOLWINDOW_ID) == null) {
+        removeListeners();
+      }
+    }
+  }
+
   private class MyRefreshPostponedEventsListener extends ContentManagerAdapter
     implements ToolWindowManagerListener, PropertyChangeListener {
 
@@ -232,20 +250,10 @@ public class VcsLogTabsWatcher implements Disposable {
 
     @Override
     public void stateChanged() {
-      if (myToolWindow == null) return;
-      if (myToolWindowManager.getToolWindow(TOOLWINDOW_ID) == null) {
-        removeListeners();
-      }
-      else if (myIsVisible != myToolWindow.isVisible()) {
+      if (myToolWindow == null || myToolWindowManager.getToolWindow(TOOLWINDOW_ID) == null) return;
+      if (myIsVisible != myToolWindow.isVisible()) {
         myIsVisible = myToolWindow.isVisible();
         selectionChanged();
-      }
-    }
-
-    @Override
-    public void toolWindowRegistered(@NotNull String toolWindowId) {
-      if (toolWindowId.equals(TOOLWINDOW_ID)) {
-        installContentListener();
       }
     }
 
