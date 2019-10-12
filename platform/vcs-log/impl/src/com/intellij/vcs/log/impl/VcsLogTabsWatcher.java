@@ -127,7 +127,7 @@ public class VcsLogTabsWatcher implements Disposable {
     if (toolWindow != null) {
       toolWindow.getContentManager().addContentManagerListener(myLogEditorListener);
 
-      myProject.getMessageBus().connect(myProject)
+      myProject.getMessageBus().connect(this)
         .subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
           @Override
           public void selectionChanged(@NotNull FileEditorManagerEvent e) {
