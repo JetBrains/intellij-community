@@ -64,7 +64,7 @@ public class VcsLogTabsWatcher implements Disposable {
     myConnection.subscribe(ToolWindowManagerListener.TOPIC, myPostponedEventsListener);
 
     installContentListener();
-    installLogEditorListeners(project);
+    installLogEditorListeners();
   }
 
   @Nullable
@@ -118,7 +118,7 @@ public class VcsLogTabsWatcher implements Disposable {
     }
   }
 
-  private void installLogEditorListeners(Project project) {
+  private void installLogEditorListeners() {
     if (!Registry.is("show.log.as.editor.tab")) {
       return;
     }
@@ -127,7 +127,7 @@ public class VcsLogTabsWatcher implements Disposable {
     if (toolWindow != null) {
       toolWindow.getContentManager().addContentManagerListener(myLogEditorListener);
 
-      project.getMessageBus().connect(project)
+      myProject.getMessageBus().connect(myProject)
         .subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
           @Override
           public void selectionChanged(@NotNull FileEditorManagerEvent e) {
@@ -135,7 +135,7 @@ public class VcsLogTabsWatcher implements Disposable {
             if (file instanceof GraphViewVirtualFile) {
               String data = file.getUserData(GraphViewVirtualFile.TabContentId);
               if (data != null) {
-                VcsLogContentUtil.findAndSelect(project, AbstractVcsLogUi.class, ui -> {
+                VcsLogContentUtil.findAndSelect(myProject, AbstractVcsLogUi.class, ui -> {
                   return ui.getId() == data;
                 });
               }
