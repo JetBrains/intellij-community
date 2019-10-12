@@ -65,20 +65,14 @@ public final class UpdateCheckerComponent implements Runnable {
         snapPackageNotification();
 
         MessageBusConnection connection = app.getMessageBus().connect();
-        if (!updateFailed) {
-          connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
-            @Override
-            public void projectOpened(@NotNull Project project) {
-              StartupManager.getInstance(project).registerPostStartupActivity(() -> { showWhatsNewNotification(project); });
-            }
-          });
-        }
-
         connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
           @Override
           public void projectOpened(@NotNull Project project) {
             connection.disconnect();
-            StartupManager.getInstance(project).registerPostStartupActivity(() -> UpdateInstaller.cleanupPatch());
+            StartupManager.getInstance(project).registerPostStartupActivity(() -> {
+              if (!updateFailed) showWhatsNewNotification(project);
+              UpdateInstaller.cleanupPatch();
+            });
           }
         });
       });
@@ -116,6 +110,7 @@ public final class UpdateCheckerComponent implements Runnable {
           file.putUserData(HTMLEditorProvider.Companion.getHTML_CONTENT_TYPE(), true);
           FileEditorManager.getInstance(project).openFile(file, true);
           IdeUpdateUsageTriggerCollector.trigger("update.whats.new");
+          notification.expire();
         }
       });
     properties.setValue(UPDATE_WHATS_NEW_MESSAGE, null);
