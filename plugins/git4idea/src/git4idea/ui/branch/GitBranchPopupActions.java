@@ -25,19 +25,18 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.util.ui.EmptyIcon;
-import git4idea.GitBranch;
-import git4idea.GitLocalBranch;
-import git4idea.GitProtectedBranchesKt;
+import git4idea.*;
 import git4idea.actions.GitOngoingOperationAction;
 import git4idea.branch.*;
 import git4idea.push.GitPushSource;
 import git4idea.rebase.GitRebaseSpec;
+import git4idea.repo.GitBranchTrackInfo;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
-import git4idea.validators.GitNewBranchNameValidator;
 import icons.DvcsImplIcons;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -52,6 +51,7 @@ import static com.intellij.dvcs.ui.BranchActionUtil.FAVORITE_BRANCH_COMPARATOR;
 import static com.intellij.dvcs.ui.BranchActionUtil.getNumOfTopShownBranches;
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.*;
+import static git4idea.GitReference.BRANCH_NAME_HASHING_STRATEGY;
 import static git4idea.GitUtil.HEAD;
 import static git4idea.branch.GitBranchType.LOCAL;
 import static git4idea.branch.GitBranchType.REMOTE;
@@ -194,7 +194,7 @@ class GitBranchPopupActions {
         else {
           String name = options.getName();
           if (options.shouldReset()) {
-            boolean hasCommits = GitBranchActionsUtilKt.checkCommitsUnderProgress(myProject, myRepositories, HEAD, name);
+            boolean hasCommits = checkCommitsUnderProgress(myProject, myRepositories, HEAD, name);
             if (hasCommits) {
               VcsNotifier.getInstance(myProject).notifyError("New Branch Creation Failed",
                                                              "Can't overwrite " + name + " branch because some commits can be lost");
@@ -541,8 +541,8 @@ class GitBranchPopupActions {
       private final String myRemoteBranchName;
 
       CheckoutRemoteBranchAction(@NotNull Project project, @NotNull List<? extends GitRepository> repositories,
-                                        @NotNull String remoteBranchName) {
-        super("Checkout As...");
+                                 @NotNull String remoteBranchName) {
+        super("Checkout");
         myProject = project;
         myRepositories = repositories;
         myRemoteBranchName = remoteBranchName;
@@ -550,39 +550,59 @@ class GitBranchPopupActions {
 
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
-        //set tracking -> use references!
+        GitRepository repository = myRepositories.get(0);
+        GitRemoteBranch remoteBranch = Objects.requireNonNull(repository.getBranches().findRemoteBranch(myRemoteBranchName));
+        String suggestedLocalName = remoteBranch.getNameForRemoteOperations();
 
-        /* no name conflists -> checkout silently */
-
-        /* if branch exists in repos and track the same remote branch
-
-          //check commits git log remote_hash..localBranchName
-              // no commits ->  reset existing branch silently to remote
-              // commits exist -> show dialog with 2 radio buttons: reset OR checkout&rebase existing branches,
-              notes: ok cancel buttons, no default button, default focused on radio button
-        */
-
-        /* if branch exists in repos and track another remote branch
-
-          show dialog with 2 radio buttons: enter new unique!!!! name  field (ok disabled otherwise) OR  overwrite existing branches ( reset & change tracking)
-        */
-
-
-        ////modal progress and question dialog here
-
-        final String name = Messages.showInputDialog(myProject, "New branch name:", "Checkout Remote Branch", null,
-                                                     guessBranchName(), GitNewBranchNameValidator.newInstance(myRepositories));
-        if (name != null) {
-          GitBrancher brancher = GitBrancher.getInstance(myProject);
-          brancher.checkoutNewBranchStartingFrom(name, myRemoteBranchName, myRepositories, null);
+        // can have remote conflict if git-svn is used  - suggested local name will be equal to selected remote
+        if (BRANCH_NAME_HASHING_STRATEGY.equals(myRemoteBranchName, suggestedLocalName)) {
+          askNewBranchNameAndCheckout(suggestedLocalName);
+          return;
         }
+
+        Map<GitRepository, GitLocalBranch> conflictingLocalBranches = map2MapNotNull(myRepositories, r -> {
+          GitLocalBranch local = r.getBranches().findLocalBranch(suggestedLocalName);
+          return local != null ? Pair.create(r, local) : null;
+        });
+
+        if (hasTrackingConflicts(conflictingLocalBranches)) {
+          askNewBranchNameAndCheckout(suggestedLocalName);
+          return;
+        }
+        boolean hasCommits = !conflictingLocalBranches.isEmpty() &&
+                             checkCommitsUnderProgress(myProject, myRepositories, myRemoteBranchName, suggestedLocalName);
+        if (hasCommits) {
+          int result =
+            Messages.showYesNoCancelDialog(
+              "Branch " + suggestedLocalName + " already exists and has commits which do not exist in " + myRemoteBranchName
+              + ". Would you like to rebase or reset them?", "Checkout " + myRemoteBranchName, "Checkout and Rebase", "Overwrite",
+              "Cancel", null);
+          if (result == Messages.CANCEL) return;
+          if (result == Messages.YES) {
+            GitBrancher brancher = GitBrancher.getInstance(myProject);
+            brancher.rebase(myRepositories, myRemoteBranchName, suggestedLocalName);
+            return;
+          }
+        }
+        GitBrancher brancher = GitBrancher.getInstance(myProject);
+        brancher.checkoutNewBranchStartingFrom(suggestedLocalName, myRemoteBranchName, hasCommits, myRepositories, null);
       }
 
-      private String guessBranchName() {
-        // TODO: check if we already have a branch with that name; check if that branch tracks this remote branch. Show different messages
-        int slashPosition = myRemoteBranchName.indexOf("/");
-        // if no slash is found (for example, in the case of git-svn remote branches), propose the whole name.
-        return myRemoteBranchName.substring(slashPosition + 1);
+      private void askNewBranchNameAndCheckout(@NotNull String suggestedLocalName) {
+        //do not allow name conflicts
+        GitNewBranchOptions options =
+          new GitNewBranchDialog(myProject, myRepositories, "Checkout " + myRemoteBranchName, suggestedLocalName, false, true)
+            .showAndGetOptions();
+        if (options == null) return;
+        GitBrancher brancher = GitBrancher.getInstance(myProject);
+        brancher.checkoutNewBranchStartingFrom(options.getName(), myRemoteBranchName, options.shouldReset(), myRepositories, null);
+      }
+
+      private boolean hasTrackingConflicts(@NotNull Map<GitRepository, GitLocalBranch> conflictingLocalBranches) {
+        return StreamEx.of(conflictingLocalBranches.keySet()).anyMatch(r -> {
+          GitBranchTrackInfo trackInfo = GitBranchUtil.getTrackInfoForBranch(r, conflictingLocalBranches.get(r));
+          return trackInfo != null && !BRANCH_NAME_HASHING_STRATEGY.equals(myRemoteBranchName, trackInfo.getRemoteBranch().getName());
+        });
       }
     }
 

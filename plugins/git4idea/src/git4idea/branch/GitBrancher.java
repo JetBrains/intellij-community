@@ -172,6 +172,11 @@ public interface GitBrancher {
   void rebase(@NotNull List<? extends GitRepository> repositories, @NotNull String branchName);
 
   /**
+   * Call {@code git rebase <upstream> <branchName>} for each of the given repositories
+   */
+  void rebase(@NotNull List<? extends GitRepository> repositories, @NotNull String upstream, @NotNull String branchName);
+
+  /**
    * Call {@code git rebase <current branch> <branchName>} for each of the given repositories.
    */
   void rebaseOnCurrent(@NotNull List<? extends GitRepository> repositories, @NotNull String branchName);
