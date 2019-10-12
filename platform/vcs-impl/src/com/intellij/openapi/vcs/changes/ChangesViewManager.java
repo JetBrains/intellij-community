@@ -412,12 +412,8 @@ public class ChangesViewManager implements ChangesViewEx,
         if (project.isDisposed()) return;
 
         myView.addSelectionListener(() -> {
-          if (!Registry.is("show.diff.preview.as.editor.tab"))
-            return;
-
-          if (!myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN)
-            return;
-
+          if (!Registry.is("show.diff.preview.as.editor.tab")) return;
+          if (!myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN) return;
           if (myModelUpdateInProgress) return;
 
           FileEditorManager instance = FileEditorManager.getInstance(myProject);
@@ -431,10 +427,12 @@ public class ChangesViewManager implements ChangesViewEx,
     }
 
     private void triggerUpdatePreview(boolean fromModelRefresh) {
-      if (Registry.is("show.diff.as.editor.tab"))
+      if (Registry.is("show.diff.as.editor.tab")) {
         updatePreview(fromModelRefresh);
-      else
+      }
+      else {
         invokeLater(() -> updatePreview(fromModelRefresh));
+      }
     }
 
     @Override
@@ -489,8 +487,9 @@ public class ChangesViewManager implements ChangesViewEx,
     }
 
     private void setDiffPreviewVisible(boolean isDiffPreviewVisible) {
-      if (Registry.is("show.diff.preview.as.editor.tab") && !isDiffPreviewVisible)
+      if (Registry.is("show.diff.preview.as.editor.tab") && !isDiffPreviewVisible) {
         FileEditorManager.getInstance(myProject).closeFile(myPreviewDiffVirtualFile);
+      }
       else {
         FileEditorManager.getInstance(myProject).openFile(new PreviewDiffVirtualFile(myDiffPreviewProvider), false, true);
       }

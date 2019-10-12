@@ -7,12 +7,13 @@ import javax.swing.Icon
 
 class GraphViewFileIconProvider : FileIconProvider {
 
-    override fun getIcon(file: VirtualFile, flags: Int, project: Project?): Icon? {
-        if (file is GraphViewVirtualFile)
-            return AllIcons.Vcs.Branch
-
-        return null
+  override fun getIcon(file: VirtualFile, flags: Int, project: Project?): Icon? {
+    if (file is GraphViewVirtualFile) {
+      return AllIcons.Vcs.Branch
     }
+
+    return null
+  }
 
 }
 

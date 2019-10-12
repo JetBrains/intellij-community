@@ -43,8 +43,9 @@ public class PreviewDiffSplitterComponent extends OnePixelSplitter {
   }
 
   private void updateVisibility() {
-    if (Registry.is("show.log.as.editor.tab"))
+    if (Registry.is("show.log.as.editor.tab")) {
       return;
+    }
 
     setSecondComponent(myDetailsOn ? myProcessor.getComponent() : null);
     JComponent secondComponent = getSecondComponent();

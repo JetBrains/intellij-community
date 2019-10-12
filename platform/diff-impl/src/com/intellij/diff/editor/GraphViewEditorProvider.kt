@@ -1,6 +1,5 @@
 package com.intellij.diff.editor
 
-import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorPolicy
 import com.intellij.openapi.fileEditor.FileEditorProvider
@@ -19,10 +18,10 @@ class GraphViewEditorProvider : FileEditorProvider, DumbAware {
   }
 
   override fun disposeEditor(editor: FileEditor) {
-      Disposer.dispose(editor)
+    Disposer.dispose(editor)
   }
 
   override fun getEditorTypeId(): String = "GraphViewEditor"
   override fun getPolicy(): FileEditorPolicy =
-      FileEditorPolicy.PLACE_BEFORE_DEFAULT_EDITOR
+    FileEditorPolicy.PLACE_BEFORE_DEFAULT_EDITOR
 }
