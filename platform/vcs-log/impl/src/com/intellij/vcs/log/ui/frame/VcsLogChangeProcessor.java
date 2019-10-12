@@ -79,23 +79,15 @@ class VcsLogChangeProcessor extends ChangeViewDiffRequestProcessor {
     updatePreview(state, false);
   }
 
-  private class MyChangeWrapper extends Wrapper {
-    @NotNull private final Change myChange;
-
+  private class MyChangeWrapper extends ChangeWrapper {
     MyChangeWrapper(@NotNull Change change) {
-      myChange = change;
-    }
-
-    @NotNull
-    @Override
-    public Object getUserObject() {
-      return myChange;
+      super(change);
     }
 
     @Nullable
     @Override
     public DiffRequestProducer createProducer(@Nullable Project project) {
-      return myBrowser.getDiffRequestProducer(myChange, true);
+      return myBrowser.getDiffRequestProducer(change, true);
     }
   }
 }

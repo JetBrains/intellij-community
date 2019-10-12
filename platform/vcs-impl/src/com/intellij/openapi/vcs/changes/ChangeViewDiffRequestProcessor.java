@@ -33,7 +33,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.UserDataHolder;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer;
 import com.intellij.openapi.vcs.changes.actions.diff.UnversionedDiffRequestProducer;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -201,13 +200,7 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
     if (myCurrentChange == null) {
       return null;
     }
-
-    if (myCurrentChange.getUserObject() instanceof Change) {
-      Change change = (Change)myCurrentChange.getUserObject();
-      return ChangesUtil.getFilePath(change).getName();
-    }
-
-    return null;
+    return myCurrentChange.getPresentableName();
   }
 
   @CalledInAwt
@@ -317,6 +310,9 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
     public abstract Object getUserObject();
 
     @Nullable
+    public abstract String getPresentableName();
+
+    @Nullable
     public abstract DiffRequestProducer createProducer(@Nullable Project project);
 
     @Override
@@ -335,7 +331,7 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
   }
 
   protected static class ChangeWrapper extends Wrapper {
-    @NotNull private final Change change;
+    @NotNull protected final Change change;
 
     public ChangeWrapper(@NotNull Change change) {
       this.change = change;
@@ -345,6 +341,12 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
     @Override
     public Object getUserObject() {
       return change;
+    }
+
+    @Nullable
+    @Override
+    public String getPresentableName() {
+      return ChangesUtil.getFilePath(change).getName();
     }
 
     @Nullable
@@ -381,7 +383,7 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
   }
 
   protected static class UnversionedFileWrapper extends Wrapper {
-    @NotNull private final VirtualFile file;
+    @NotNull protected final VirtualFile file;
 
     public UnversionedFileWrapper(@NotNull VirtualFile file) {
       this.file = file;
@@ -391,6 +393,12 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
     @Override
     public Object getUserObject() {
       return file;
+    }
+
+    @Nullable
+    @Override
+    public String getPresentableName() {
+      return file.getName();
     }
 
     @Nullable

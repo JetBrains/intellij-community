@@ -42,12 +42,7 @@ internal class FileHistoryDiffPreview(project: Project, private val changeGetter
     return 10
   }
 
-  private inner class MyChangeWrapper internal constructor(private val change: Change) : Wrapper() {
-
-    override fun getUserObject(): Any {
-      return change
-    }
-
+  private inner class MyChangeWrapper(change: Change) : ChangeWrapper(change) {
     override fun createProducer(project: Project?): DiffRequestProducer? {
       return VcsLogChangesBrowser.createDiffRequestProducer(project!!, change, HashMap(), true)
     }
