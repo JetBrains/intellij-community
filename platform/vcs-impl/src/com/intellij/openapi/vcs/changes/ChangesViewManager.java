@@ -267,7 +267,7 @@ public class ChangesViewManager implements ChangesViewEx,
     @NotNull private final ChangesListView myView;
 
     @NotNull private final ChangesViewCommitPanelSplitter myCommitPanelSplitter;
-    @NotNull private final PreviewDiffSplitterComponent myDiffPreviewSplitter;
+    @NotNull private final ChangesViewPreview myDiffPreview;
     @NotNull private final Wrapper myProgressLabel = new Wrapper();
 
     @Nullable private ChangesViewCommitPanel myCommitPanel;
@@ -278,11 +278,7 @@ public class ChangesViewManager implements ChangesViewEx,
     @NotNull private ProgressIndicator myTreeUpdateIndicator = new EmptyProgressIndicator();
     private boolean myModelUpdateInProgress;
 
-    private final DiffPreviewProvider myDiffPreviewProvider;
-
     private boolean myDisposed = false;
-    private final ChangesViewDiffPreviewProcessor myChangeProcessor;
-    private PreviewDiffVirtualFile myPreviewDiffVirtualFile;
 
     private ChangesViewToolWindowPanel(@NotNull Project project, @NotNull ChangesViewManager changesViewManager) {
       super(false, true);
@@ -297,18 +293,11 @@ public class ChangesViewManager implements ChangesViewEx,
       myView = myChangesPanel.getChangesView();
       myView.installPopupHandler((DefaultActionGroup)ActionManager.getInstance().getAction("ChangesViewPopupMenu"));
       myView.getGroupingSupport().setGroupingKeysOrSkip(myChangesViewManager.myState.groupingKeys);
-      myView.addTreeSelectionListener(e -> {
-        boolean fromModelRefresh = myModelUpdateInProgress;
-        triggerUpdatePreview(fromModelRefresh);
-      });
       myView.addGroupingChangeListener(e -> {
         myChangesViewManager.myState.groupingKeys = myView.getGroupingSupport().getGroupingKeys();
         scheduleRefresh();
       });
       ChangesDnDSupport.install(myProject, myView);
-      if (Registry.is("show.diff.as.editor.tab")) {
-        myView.setExpandableItemsEnabled(false);
-      }
 
       myChangesPanel.getToolbarActionGroup().addAll(createChangesToolbarActions(myView.getTreeExpander()));
       myChangesPanel.setToolbarHorizontal(commitWorkflowManager.isNonModal() && isToolbarHorizontalSetting.asBoolean());
@@ -337,19 +326,31 @@ public class ChangesViewManager implements ChangesViewEx,
       };
       contentPanel.addToCenter(myCommitPanelSplitter);
 
-      myChangeProcessor = new ChangesViewDiffPreviewProcessor(myView);
-      Disposer.register(this, myChangeProcessor);
+      ChangesViewDiffPreviewProcessor changeProcessor = new ChangesViewDiffPreviewProcessor(myView);
+      Disposer.register(this, changeProcessor);
 
-      myDiffPreviewSplitter = new PreviewDiffSplitterComponent(contentPanel, myChangeProcessor, CHANGES_VIEW_PREVIEW_SPLITTER_PROPORTION,
-                                                               myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN);
-
-      BorderLayoutPanel mainPanel = simplePanel(myDiffPreviewSplitter).addToBottom(myProgressLabel);
+      JComponent mainPanel;
       if (Registry.is("show.diff.preview.as.editor.tab")) {
-        setContent(contentPanel);
+        myDiffPreview = new EditorTabPreview(changeProcessor);
+        mainPanel = contentPanel;
+
+        myView.addTreeSelectionListener(e -> myDiffPreview.updatePreview(myModelUpdateInProgress));
+        myView.setExpandableItemsEnabled(false);
       }
       else {
-        setContent(mainPanel);
+        PreviewDiffSplitterComponent splitter =
+          new PreviewDiffSplitterComponent(contentPanel, changeProcessor,
+                                           CHANGES_VIEW_PREVIEW_SPLITTER_PROPORTION,
+                                           myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN);
+        myDiffPreview = new PanelPreview(splitter);
+        mainPanel = splitter;
+
+        myView.addTreeSelectionListener(e -> {
+          boolean fromModelRefresh = myModelUpdateInProgress;
+          invokeLater(() -> myDiffPreview.updatePreview(fromModelRefresh));
+        });
       }
+      setContent(simplePanel(mainPanel).addToBottom(myProgressLabel));
 
       setCommitSplitOrientation();
       isCommitSplitHorizontal.addListener(new RegistryValueListener.Adapter() {
@@ -388,51 +389,8 @@ public class ChangesViewManager implements ChangesViewEx,
       });
       ChangeListManager.getInstance(myProject).addChangeListListener(new MyChangeListListener(), this);
 
-      myDiffPreviewProvider = new DiffPreviewProvider() {
-        @NotNull
-        @Override
-        public DiffRequestProcessor createDiffRequestProcessor() {
-          return myChangeProcessor;
-        }
-
-        @NotNull
-        @Override
-        public Object getOwner() {
-          return this;
-        }
-
-        @Override
-        public String getEditorTabName() {
-          return "Local Changes: " + myChangeProcessor.getCurrentChangeName();
-        }
-      };
-
-      //do not open file aggressively on start up, do it later
-      DumbService.getInstance(project).smartInvokeLater(() -> {
-        if (project.isDisposed()) return;
-
-        myView.addSelectionListener(() -> {
-          if (!Registry.is("show.diff.preview.as.editor.tab")) return;
-          if (!myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN) return;
-          if (myModelUpdateInProgress) return;
-
-          FileEditorManager instance = FileEditorManager.getInstance(myProject);
-          myPreviewDiffVirtualFile = new PreviewDiffVirtualFile(myDiffPreviewProvider);
-          instance.openFile(myPreviewDiffVirtualFile, false, true);
-        });
-      });
-
       scheduleRefresh();
-      updatePreview(false);
-    }
-
-    private void triggerUpdatePreview(boolean fromModelRefresh) {
-      if (Registry.is("show.diff.as.editor.tab")) {
-        updatePreview(fromModelRefresh);
-      }
-      else {
-        invokeLater(() -> updatePreview(fromModelRefresh));
-      }
+      myDiffPreview.updatePreview(false);
     }
 
     @Override
@@ -461,9 +419,9 @@ public class ChangesViewManager implements ChangesViewEx,
           Disposer.register(this, myCommitPanel);
 
           myCommitPanelSplitter.setSecondComponent(myCommitPanel);
-          myDiffPreviewSplitter.setAllowExcludeFromCommit(isAllowExcludeFromCommit());
+          myDiffPreview.setAllowExcludeFromCommit(isAllowExcludeFromCommit());
           myCommitWorkflowHandler.addActivityListener(
-            () -> myDiffPreviewSplitter.setAllowExcludeFromCommit(isAllowExcludeFromCommit()),
+            () -> myDiffPreview.setAllowExcludeFromCommit(isAllowExcludeFromCommit()),
             myCommitWorkflowHandler
           );
         }
@@ -472,7 +430,7 @@ public class ChangesViewManager implements ChangesViewEx,
         myChangesPanel.setToolbarHorizontal(false);
         if (myCommitPanel != null) {
 
-          myDiffPreviewSplitter.setAllowExcludeFromCommit(false);
+          myDiffPreview.setAllowExcludeFromCommit(false);
           myCommitPanelSplitter.setSecondComponent(null);
           Disposer.dispose(myCommitPanel);
 
@@ -486,20 +444,9 @@ public class ChangesViewManager implements ChangesViewEx,
       return myCommitWorkflowHandler != null && myCommitWorkflowHandler.isActive();
     }
 
-    private void setDiffPreviewVisible(boolean isDiffPreviewVisible) {
-      if (Registry.is("show.diff.preview.as.editor.tab") && !isDiffPreviewVisible) {
-        FileEditorManager.getInstance(myProject).closeFile(myPreviewDiffVirtualFile);
-      }
-      else {
-        FileEditorManager.getInstance(myProject).openFile(new PreviewDiffVirtualFile(myDiffPreviewProvider), false, true);
-      }
-
-      myDiffPreviewSplitter.setDetailsOn(isDiffPreviewVisible);
-      setCommitSplitOrientation();
-    }
-
     private void setCommitSplitOrientation() {
-      myCommitPanelSplitter.setOrientation(myDiffPreviewSplitter.isDetailsOn() || !isCommitSplitHorizontal.asBoolean());
+      boolean hasPreviewPanel = myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN && myDiffPreview instanceof PanelPreview;
+      myCommitPanelSplitter.setOrientation(hasPreviewPanel || !isCommitSplitHorizontal.asBoolean());
     }
 
     @NotNull
@@ -625,20 +572,9 @@ public class ChangesViewManager implements ChangesViewEx,
           finally {
             myModelUpdateInProgress = false;
           }
-          updatePreview(true);
+          myDiffPreview.updatePreview(true);
         });
       }, indicator);
-    }
-
-    private void updatePreview(boolean fromModelRefresh) {
-      if (Registry.is("show.diff.preview.as.editor.tab")) {
-        if (myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN) {
-          myChangeProcessor.refresh(fromModelRefresh);
-        }
-      }
-      else {
-        myDiffPreviewSplitter.updatePreview(fromModelRefresh);
-      }
     }
 
     public void setGrouping(@NotNull String groupingKey) {
@@ -738,16 +674,117 @@ public class ChangesViewManager implements ChangesViewEx,
     private class ToggleDetailsAction extends ShowDiffPreviewAction {
       @Override
       public void setSelected(@NotNull AnActionEvent e, boolean state) {
-        setDiffPreviewVisible(state);
-
-        updatePreview(false);
         myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN = state;
+        myDiffPreview.setDiffPreviewVisible(state);
+        setCommitSplitOrientation();
       }
 
       @Override
       public boolean isSelected(@NotNull AnActionEvent e) {
         return myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN;
       }
+    }
+
+    private class PanelPreview implements ChangesViewPreview {
+      @NotNull private final PreviewDiffSplitterComponent myPreviewSplitter;
+
+      private PanelPreview(@NotNull PreviewDiffSplitterComponent previewSplitter) {
+        myPreviewSplitter = previewSplitter;
+      }
+
+      @Override
+      public void updatePreview(boolean fromModelRefresh) {
+        myPreviewSplitter.updatePreview(fromModelRefresh);
+      }
+
+      @Override
+      public void setDiffPreviewVisible(boolean isVisible) {
+        myPreviewSplitter.setDetailsOn(isVisible);
+      }
+
+      @Override
+      public void setAllowExcludeFromCommit(boolean value) {
+        myPreviewSplitter.setAllowExcludeFromCommit(value);
+      }
+    }
+
+    private class EditorTabPreview implements ChangesViewPreview {
+      @NotNull private final ChangesViewDiffPreviewProcessor myChangeProcessor;
+      @NotNull private final PreviewDiffVirtualFile myPreviewDiffVirtualFile;
+
+      private EditorTabPreview(@NotNull ChangesViewDiffPreviewProcessor changeProcessor) {
+        myChangeProcessor = changeProcessor;
+
+        MyDiffPreviewProvider previewProvider = new MyDiffPreviewProvider(changeProcessor);
+        myPreviewDiffVirtualFile = new PreviewDiffVirtualFile(previewProvider);
+
+        //do not open file aggressively on start up, do it later
+        DumbService.getInstance(myProject).smartInvokeLater(() -> {
+          if (myProject.isDisposed()) return;
+
+          myView.addSelectionListener(() -> {
+            if (!myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN) return;
+            if (myModelUpdateInProgress) return;
+
+            setDiffPreviewVisible(true);
+          });
+        });
+      }
+
+      @Override
+      public void updatePreview(boolean fromModelRefresh) {
+        if (myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN) {
+          myChangeProcessor.refresh(fromModelRefresh);
+        }
+      }
+
+      @Override
+      public void setDiffPreviewVisible(boolean isVisible) {
+        if (!isVisible) {
+          FileEditorManager.getInstance(myProject).closeFile(myPreviewDiffVirtualFile);
+        }
+        else {
+          FileEditorManager.getInstance(myProject).openFile(myPreviewDiffVirtualFile, false, true);
+        }
+      }
+
+      @Override
+      public void setAllowExcludeFromCommit(boolean value) {
+        // FIXME [Kirill.Skrygan]
+      }
+
+      private class MyDiffPreviewProvider implements DiffPreviewProvider {
+        private final ChangesViewDiffPreviewProcessor myChangeProcessor;
+
+        private MyDiffPreviewProvider(ChangesViewDiffPreviewProcessor changeProcessor) {
+          myChangeProcessor = changeProcessor;
+        }
+
+        @NotNull
+        @Override
+        public DiffRequestProcessor createDiffRequestProcessor() {
+          return myChangeProcessor;
+        }
+
+        @NotNull
+        @Override
+        public Object getOwner() {
+          return this;
+        }
+
+        @Override
+        public String getEditorTabName() {
+          return "Local Changes: " + myChangeProcessor.getCurrentChangeName();
+        }
+      }
+    }
+
+    private interface ChangesViewPreview {
+      void updatePreview(boolean fromModelRefresh);
+
+      void setAllowExcludeFromCommit(boolean value);
+
+      void setDiffPreviewVisible(boolean isVisible);
     }
   }
 
