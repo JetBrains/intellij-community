@@ -58,7 +58,7 @@ public class VcsLogTabsWatcher implements Disposable {
 
     project.getMessageBus().connect(this).subscribe(ToolWindowManagerListener.TOPIC, new MyToolWindowManagerListener());
 
-    installContentListener();
+    installContentListeners();
     installLogEditorListeners();
   }
 
@@ -78,7 +78,7 @@ public class VcsLogTabsWatcher implements Disposable {
     return myRefresher.addLogWindow(new VcsLogTab(refresher, tabId));
   }
 
-  private void installContentListener() {
+  private void installContentListeners() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     ToolWindow window = myToolWindowManager.getToolWindow(TOOLWINDOW_ID);
     if (window != null) {
@@ -89,7 +89,7 @@ public class VcsLogTabsWatcher implements Disposable {
     }
   }
 
-  private void removeListeners() {
+  private void removeContentListeners() {
     Disposer.dispose(myListenersDisposable);
   }
 
@@ -144,7 +144,7 @@ public class VcsLogTabsWatcher implements Disposable {
   @Override
   public void dispose() {
     closeLogTabs();
-    removeListeners();
+    removeContentListeners();
   }
 
   private static void addContentManagerListener(@NotNull ToolWindow window,
@@ -187,14 +187,14 @@ public class VcsLogTabsWatcher implements Disposable {
     @Override
     public void toolWindowRegistered(@NotNull String id) {
       if (id.equals(TOOLWINDOW_ID)) {
-        installContentListener();
+        installContentListeners();
       }
     }
 
     @Override
     public void toolWindowUnregistered(@NotNull String id, @NotNull ToolWindow toolWindow) {
       if (id.equals(TOOLWINDOW_ID)) {
-        removeListeners();
+        removeContentListeners();
       }
     }
   }
