@@ -93,6 +93,20 @@ public class VcsLogTabsWatcher implements Disposable {
     }
   }
 
+  private void removeListeners() {
+    myConnection.disconnect();
+
+    if (myToolWindow != null) {
+      myToolWindow.getContentManager().removeContentManagerListener(myPostponedEventsListener);
+      myToolWindow.getContentManager().removeContentManagerListener(myLogEditorListener);
+
+      for (Content content : myToolWindow.getContentManager().getContents()) {
+        if (content instanceof TabbedContent) {
+          content.removePropertyChangeListener(myPostponedEventsListener);
+        }
+      }
+    }
+  }
 
   private void processVirtualFile(VirtualFile file) {
     if (file instanceof GraphViewVirtualFile) {
@@ -147,21 +161,6 @@ public class VcsLogTabsWatcher implements Disposable {
             processVirtualFile(file);
           }
         });
-    }
-  }
-
-  private void removeListeners() {
-    myConnection.disconnect();
-
-    if (myToolWindow != null) {
-      myToolWindow.getContentManager().removeContentManagerListener(myPostponedEventsListener);
-      myToolWindow.getContentManager().removeContentManagerListener(myLogEditorListener);
-
-      for (Content content : myToolWindow.getContentManager().getContents()) {
-        if (content instanceof TabbedContent) {
-          content.removePropertyChangeListener(myPostponedEventsListener);
-        }
-      }
     }
   }
 
