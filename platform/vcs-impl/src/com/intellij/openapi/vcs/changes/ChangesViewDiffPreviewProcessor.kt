@@ -28,10 +28,6 @@ private class ChangesViewDiffPreviewProcessor(private val changesView: ChangesLi
 
   override fun getAllChanges(): List<Wrapper> = wrap(changesView.changes, changesView.unversionedFiles)
 
-  override fun hasSelection(): Boolean {
-    return !changesView.isSelectionEmpty
-  }
-
   override fun selectChange(change: Wrapper) {
     changesView.findNodePathInTree(change.userObject)?.let { TreeUtil.selectPath(changesView, it, false) }
   }

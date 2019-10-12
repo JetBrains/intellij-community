@@ -95,10 +95,6 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
     return isRequestValid(request) ? request : null;
   }
 
-  protected boolean hasSelection() {
-    return true;
-  }
-
   private static boolean isRequestValid(@Nullable DiffRequest request) {
     if (request instanceof ErrorDiffRequest) return false;
     if (request instanceof ContentDiffRequest) {
