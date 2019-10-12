@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.history
 
-import com.intellij.openapi.util.Couple
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.LocalFilePath
@@ -440,7 +439,9 @@ private class FileNamesDataBuilder(private val path: FilePath) {
   fun build(): FileHistoryData {
     return object : FileHistoryData(path) {
       override fun findRename(parent: Int, child: Int, path: FilePath, isChildPath: Boolean): EdgeData<FilePath>? {
-        return renamesMap[EdgeData(parent, child)].find { FILE_PATH_HASHING_STRATEGY.equals(if (isChildPath) it.child else it.parent, path) }
+        return renamesMap[EdgeData(parent, child)].find {
+          FILE_PATH_HASHING_STRATEGY.equals(if (isChildPath) it.child else it.parent, path)
+        }
       }
 
       override fun getAffectedCommits(path: FilePath): TIntObjectHashMap<TIntObjectHashMap<VcsLogPathsIndex.ChangeKind>> {

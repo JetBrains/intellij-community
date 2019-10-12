@@ -109,14 +109,13 @@ public class VcsLogTabsWatcher implements Disposable {
               content.putUserData(GraphViewVirtualFile.GraphVirtualFile, (GraphViewVirtualFile)file);
             }
           }
-          else if (VcsLogContentProvider.TAB_NAME.equals(content.getDisplayName()) && VcsLogProjectTabsProperties.MAIN_LOG_ID.equals(logId)) {
+          else if (VcsLogContentProvider.TAB_NAME.equals(content.getDisplayName()) &&
+                   VcsLogProjectTabsProperties.MAIN_LOG_ID.equals(logId)) {
             content.putUserData(GraphViewVirtualFile.GraphVirtualFile, (GraphViewVirtualFile)file);
           }
         }
       }
-
     }
-
   }
 
   private void installLogEditorListeners(Project project) {
@@ -303,8 +302,9 @@ public class VcsLogTabsWatcher implements Disposable {
 
     private void selectEditorTab(Content content) {
       GraphViewVirtualFile file = content.getUserData(GraphViewVirtualFile.GraphVirtualFile);
-      if(file != null)
+      if (file != null) {
         MainFrame.openLogEditorTab(file, myProject);
+      }
     }
 
     @Override

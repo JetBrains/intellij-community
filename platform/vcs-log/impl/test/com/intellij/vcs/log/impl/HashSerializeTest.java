@@ -38,7 +38,6 @@ public class HashSerializeTest {
     File file = writeToTempFile(hash1, hash2);
     List<HashImpl> hashes = readFromFile(file);
     assertEquals(Arrays.asList(hash1, hash2), hashes);
-
   }
 
   @NotNull

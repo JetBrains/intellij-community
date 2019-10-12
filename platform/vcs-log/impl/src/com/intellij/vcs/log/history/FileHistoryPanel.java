@@ -213,7 +213,8 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
     if (Registry.is("show.diff.preview.as.editor.tab")) {
       if (!state) {
         FileEditorManager.getInstance(myLogData.getProject()).closeFile(new PreviewDiffVirtualFile(myDiffPreviewProvider));
-      } else {
+      }
+      else {
         FileEditorManager.getInstance(myLogData.getProject()).openFile(new PreviewDiffVirtualFile(myDiffPreviewProvider), false, true);
       }
       return;
@@ -228,8 +229,10 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
     FileHistoryDiffPreview diffPreview = new FileHistoryDiffPreview(myLogData.getProject(), () -> myUi.getSelectedChange(),
                                                                     isInEditor, this);
     ListSelectionListener selectionListener = e -> {
-      if (!myProperties.get(CommonUiProperties.SHOW_DIFF_PREVIEW)){
-          return;}int[] selection = myGraphTable.getSelectedRows();
+      if (!myProperties.get(CommonUiProperties.SHOW_DIFF_PREVIEW)) {
+        return;
+      }
+      int[] selection = myGraphTable.getSelectedRows();
       ApplicationManager.getApplication().invokeLater(() -> diffPreview.updatePreview(diffPreview.getComponent().isShowing()),
                                                       o -> !Arrays.equals(selection, myGraphTable.getSelectedRows()));
     };
