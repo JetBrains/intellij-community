@@ -1,11 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 import {Component, Vue, Watch} from "vue-property-decorator"
 import {LineChartManager} from "./LineChartManager"
-import {LineChartDataManager} from "@/aggregatedStats/LineChartDataManager"
 import {AppStateModule} from "@/state/state"
 import {getModule} from "vuex-module-decorators"
 import {loadJson} from "@/httpUtil"
-import {InfoResponse, Machine, Metrics} from "@/aggregatedStats/model"
+import {InfoResponse, Machine} from "@/aggregatedStats/model"
 import {ClusteredChartManager} from "@/aggregatedStats/ClusteredChartManager"
 import {debounce} from "debounce"
 import {DEFAULT_AGGREGATION_OPERATOR} from "@/aggregatedStats/ChartSettings"
@@ -75,7 +74,10 @@ export default class AggregatedStatsPage extends Vue {
     }
 
     if (product != null && product.length > 0) {
-      this.machines = infoResponse.productToMachine[product] || []
+      // later maybe will be more info for machine, so, do not use string instead of Machine
+      this.machines = infoResponse.productToMachine[product].map(name => {
+        return {id: name, name}
+      }) || []
     }
     else {
       this.machines = []
@@ -137,13 +139,21 @@ export default class AggregatedStatsPage extends Vue {
 
   createGroupedMetricUrl(product: string, machineId: string, isInstant: boolean): string {
     const chartSettings = this.chartSettings
-    const operator = chartSettings.aggregationOperator || DEFAULT_AGGREGATION_OPERATOR
+    let operator = chartSettings.aggregationOperator || DEFAULT_AGGREGATION_OPERATOR
+    let operatorArg = 0
+    if (operator === "median") {
+      operator = "quantile"
+      operatorArg = 50
+    } else if (operator === "quantile") {
+      operatorArg = chartSettings.quantile
+    }
+
     let result = `${chartSettings.serverUrl}/api/v1/groupedMetrics/` +
       `product=${encodeURIComponent(product)}` +
       `&machine=${machineId}` +
       `&operator=${operator}`
-    if (operator === "quantile") {
-      result += `&operatorArg=${chartSettings.quantile}`
+    if (operatorArg !== 0) {
+      result += `&operatorArg=${operatorArg}`
     }
     result += `&eventType=${isInstant ? "i" : "d"}`
     return result
@@ -151,34 +161,19 @@ export default class AggregatedStatsPage extends Vue {
 
   // noinspection DuplicatedCode
   loadLineChartData(product: string, machineId: string): void {
-    const url = `${this.chartSettings.serverUrl}/api/v1/metrics/` +
-      `product=${encodeURIComponent(product)}` +
-      `&machine=${machineId}`
-    const infoResponse = this.lastInfoResponse!!
-    loadJson(url, null, this.$notify)
-      .then(data => {
-        if (data != null) {
-          this.renderLineCharts(data, infoResponse)
-        }
-      })
-  }
-
-  private renderLineCharts(data: Array<Metrics>, infoResponse: InfoResponse): void {
-    let chartManagers = this.lineChartManagers
+    const chartManagers = this.lineChartManagers
     if (chartManagers.length === 0) {
       chartManagers.push(new LineChartManager(this.$refs.lineDurationChartContainer as HTMLElement, this.chartSettings, false))
       chartManagers.push(new LineChartManager(this.$refs.lineInstantChartContainer as HTMLElement, this.chartSettings, true))
     }
 
-    const dataManager = new LineChartDataManager(data, infoResponse)
-    for (const chartManager of chartManagers) {
-      try {
-        chartManager.render(dataManager)
-      }
-      catch (e) {
-        console.error(e)
-      }
-    }
+    const url = `${this.chartSettings.serverUrl}/api/v1/metrics/` +
+      `product=${encodeURIComponent(product)}` +
+      `&machine=${machineId}`
+    const infoResponse = this.lastInfoResponse!!
+
+    chartManagers[0].setData(loadJson(`${url}&eventType=d`, null, this.$notify), infoResponse)
+    chartManagers[1].setData(loadJson(`${url}&eventType=i`, null, this.$notify), infoResponse)
   }
 
   @Watch("chartSettings.serverUrl")

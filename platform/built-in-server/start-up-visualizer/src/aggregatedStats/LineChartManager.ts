@@ -5,6 +5,7 @@ import {LineChartDataManager, MetricDescriptor} from "@/aggregatedStats/LineChar
 import {ChartSettings} from "@/aggregatedStats/ChartSettings"
 import {addExportMenu} from "@/charts/ChartManager"
 import HumanizeDuration from "humanize-duration"
+import {InfoResponse, Metrics} from "@/aggregatedStats/model"
 
 interface ChartConfigurator {
   configureXAxis(chart: am4charts.XYChart): void
@@ -38,7 +39,10 @@ class SortedByCategory implements ChartConfigurator {
 export class LineChartManager {
   private readonly chart: am4charts.XYChart
 
-  constructor(container: HTMLElement, private readonly chartSettings: ChartSettings, private readonly isInstantEvents: boolean, private readonly configurator: ChartConfigurator = new SortedByCategory()) {
+  constructor(container: HTMLElement,
+              private readonly chartSettings: ChartSettings,
+              private readonly isInstantEvents: boolean,
+              private readonly configurator: ChartConfigurator = new SortedByCategory()) {
     this.chart = am4core.create(container, am4charts.XYChart)
 
     const chart = this.chart
@@ -109,7 +113,7 @@ export class LineChartManager {
       oldSeries.set(series.name, series as am4charts.LineSeries)
     }
 
-    for (const metric of (this.isInstantEvents ? dataManager.instantMetricDescriptors : dataManager.durationMetricDescriptors)) {
+    for (const metric of dataManager.metricDescriptors) {
       let series = oldSeries.get(metric.key)
       if (series == null) {
         series = new am4charts.LineSeries()
@@ -166,5 +170,14 @@ export class LineChartManager {
 
   dispose(): void {
     this.chart.dispose()
+  }
+
+  setData(data: Promise<Array<Metrics>>, info: InfoResponse) {
+    data
+      .then(data => {
+        if (data != null) {
+          this.render(new LineChartDataManager(data, info, this.isInstantEvents))
+        }
+      })
   }
 }

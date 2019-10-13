@@ -10,28 +10,29 @@ export interface MetricDescriptor {
 }
 
 export class LineChartDataManager {
-  readonly durationMetricDescriptors: Array<MetricDescriptor>
-  readonly instantMetricDescriptors: Array<MetricDescriptor>
+  readonly metricDescriptors: Array<MetricDescriptor>
 
-  constructor(readonly metrics: Array<Metrics>, infoResponse: InfoResponse) {
-    this.durationMetricDescriptors = []
-    this.instantMetricDescriptors = []
+  constructor(readonly metrics: Array<Metrics>, infoResponse: InfoResponse, isInstant: boolean) {
+    this.metricDescriptors = []
 
-    for (const key of infoResponse.durationMetricNames) {
-      const hiddenByDefault = hiddenMetricsByDefault.has(key)
-      this.durationMetricDescriptors.push({
-        key,
-        name: key,
-        hiddenByDefault,
-      })
+    if (isInstant) {
+      for (const key of infoResponse.instantMetricNames) {
+        this.metricDescriptors.push({
+          key,
+          name: key,
+          hiddenByDefault: false,
+        })
+      }
     }
-
-    for (const key of infoResponse.instantMetricNames) {
-      this.instantMetricDescriptors.push({
-        key,
-        name: key,
-        hiddenByDefault: false,
-      })
+    else {
+      for (const key of infoResponse.durationMetricNames) {
+        const hiddenByDefault = hiddenMetricsByDefault.has(key)
+        this.metricDescriptors.push({
+          key,
+          name: key,
+          hiddenByDefault,
+        })
+      }
     }
   }
 }
