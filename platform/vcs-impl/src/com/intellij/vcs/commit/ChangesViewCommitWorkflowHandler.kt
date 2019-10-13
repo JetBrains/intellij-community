@@ -73,6 +73,8 @@ class ChangesViewCommitWorkflowHandler(
 
       workflow.initCommitOptions(createCommitOptions())
       commitOptions.restoreState()
+
+      currentChangeList?.let { commitOptions.changeListChanged(it) }
     }
     return commitOptions
   }
@@ -175,6 +177,8 @@ class ChangesViewCommitWorkflowHandler(
 
     val newCommitMessage = newChangeList?.let { commitMessagePolicy.getCommitMessage(it) { getIncludedChanges() } }
     setCommitMessage(newCommitMessage)
+
+    newChangeList?.let { commitOptions.changeListChanged(it) }
   }
 
   override fun inclusionChanged() {
