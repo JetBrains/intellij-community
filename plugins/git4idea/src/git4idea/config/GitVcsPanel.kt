@@ -216,7 +216,7 @@ internal class GitVcsPanel(private val project: Project,
           EnumComboBoxModel(UpdateMethod::class.java),
           { projectSettings.updateMethod },
           { projectSettings.updateMethod = it!! },
-          renderer = SimpleListCellRenderer.create<UpdateMethod>("", UpdateMethod::asString)
+          renderer = SimpleListCellRenderer.create<UpdateMethod>("", UpdateMethod::getName)
         )
       }
     }
