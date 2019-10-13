@@ -18,7 +18,7 @@ import static org.mockito.Mockito.when;
 /**
  * @author Alexander Koshevoy
  */
-public class PythonSdkTypeTest extends PlatformLiteFixture {
+public class PythonSdkTypePlatformTest extends PlatformLiteFixture {
   @Mock private Sdk sdk;
   @Mock private PyRemoteSdkAdditionalDataBase remoteSdkAdditionalData;
   @Mock private SdkAdditionalData sdkAdditionalData;
