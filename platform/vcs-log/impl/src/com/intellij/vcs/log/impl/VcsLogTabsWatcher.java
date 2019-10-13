@@ -192,10 +192,10 @@ public class VcsLogTabsWatcher implements Disposable {
     removeListeners();
   }
 
-  public class VcsLogTab extends PostponableLogRefresher.VcsLogWindow {
+  private class VcsLogTab extends PostponableLogRefresher.VcsLogWindow {
     @NotNull private final String myTabId;
 
-    public VcsLogTab(@NotNull VisiblePackRefresher refresher, @NotNull String tabId) {
+    private VcsLogTab(@NotNull VisiblePackRefresher refresher, @NotNull String tabId) {
       super(refresher);
       myTabId = tabId;
     }
