@@ -156,7 +156,8 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
     };
 
     ListSelectionListener selectionListener = e -> {
-      if (myProperties.get(CommonUiProperties.SHOW_DIFF_PREVIEW) && !myGraphTable.getSelectionModel().isSelectionEmpty()) {
+      if (Registry.is("show.diff.preview.as.editor.tab") &&
+          myProperties.get(CommonUiProperties.SHOW_DIFF_PREVIEW) && !myGraphTable.getSelectionModel().isSelectionEmpty()) {
         FileEditorManager instance = FileEditorManager.getInstance(myLogData.getProject());
         PreviewDiffVirtualFile file = new PreviewDiffVirtualFile(myDiffPreviewProvider);
         ApplicationManager.getApplication().invokeLater(() -> {
