@@ -740,6 +740,8 @@ public class ChangesViewManager implements ChangesViewEx,
 
       @Override
       public void setDiffPreviewVisible(boolean isVisible) {
+        updatePreview(false);
+
         if (!isVisible) {
           FileEditorManager.getInstance(myProject).closeFile(myPreviewDiffVirtualFile);
         }
