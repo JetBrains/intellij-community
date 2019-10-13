@@ -13,6 +13,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.psi.YAMLKeyValue;
+import org.jetbrains.yaml.psi.YAMLMapping;
 import org.jetbrains.yaml.psi.YAMLValue;
 
 import javax.swing.*;
@@ -59,12 +60,24 @@ public abstract class YamlMetaType {
 
   /**
    * Computes the set of {@link Field#getName()}s which are missing in the given set of the existing keys.
-   * Called from {@link org.jetbrains.yaml.meta.impl.YamlMissingKeysInspectionBase}
    *
-   * @return
+   * @see org.jetbrains.yaml.meta.impl.YamlMissingKeysInspectionBase
    */
   @NotNull
-  public abstract List<String> computeMissingFields(Set<String> existingFields);
+  public abstract List<String> computeMissingFields(@NotNull Set<String> existingFields);
+
+  /**
+   * Computes the list of fields that should be included into the completion list for the key completion inside the given mapping,
+   * which is guaranteed to be typed by <code>this<code/> type.
+   * <p/>
+   * It is assumed that the list does not depend on the insertion position inside the <code>existingMapping</code>.
+   * As an optimisation, the result list may include fields which are already present in the <code>existingMapping</code>, the additional
+   * filtering will be done by the caller.
+   *
+   * @see org.jetbrains.yaml.meta.impl.YamlMetaTypeCompletionProviderBase
+   */
+  @NotNull
+  public abstract List<Field> computeKeyCompletions(@Nullable YAMLMapping existingMapping);
 
   public void validateKey(@NotNull YAMLKeyValue keyValue, @NotNull ProblemsHolder problemsHolder) {
     //

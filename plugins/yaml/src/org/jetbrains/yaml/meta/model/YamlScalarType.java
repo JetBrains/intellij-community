@@ -11,7 +11,10 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.YAMLBundle;
-import org.jetbrains.yaml.psi.*;
+import org.jetbrains.yaml.psi.YAMLCompoundValue;
+import org.jetbrains.yaml.psi.YAMLMapping;
+import org.jetbrains.yaml.psi.YAMLScalar;
+import org.jetbrains.yaml.psi.YAMLValue;
 
 import javax.swing.*;
 import java.util.Collections;
@@ -33,7 +36,13 @@ public abstract class YamlScalarType extends YamlMetaType {
 
   @NotNull
   @Override
-  public List<String> computeMissingFields(Set<String> existingFields) {
+  public List<String> computeMissingFields(@NotNull Set<String> existingFields) {
+    return Collections.emptyList();
+  }
+
+  @NotNull
+  @Override
+  public List<Field> computeKeyCompletions(@Nullable YAMLMapping existingMapping) {
     return Collections.emptyList();
   }
 

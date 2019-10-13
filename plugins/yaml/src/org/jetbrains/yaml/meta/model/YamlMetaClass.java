@@ -8,6 +8,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.YAMLBundle;
+import org.jetbrains.yaml.psi.YAMLMapping;
 import org.jetbrains.yaml.psi.YAMLScalar;
 import org.jetbrains.yaml.psi.YAMLValue;
 
@@ -45,12 +46,18 @@ public class YamlMetaClass extends YamlMetaType {
 
   @NotNull
   @Override
-  public List<String> computeMissingFields(Set<String> existingFields) {
+  public List<String> computeMissingFields(@NotNull Set<String> existingFields) {
     return myFeatures.stream()
       .filter(Field::isRequired)
       .map(Field::getName)
       .filter(name -> !existingFields.contains(name))
       .collect(Collectors.toList());
+  }
+
+  @NotNull
+  @Override
+  public List<Field> computeKeyCompletions(@Nullable YAMLMapping existingMapping) {
+    return ContainerUtil.filter(myFeatures, Field::isEditable);
   }
 
   @NotNull

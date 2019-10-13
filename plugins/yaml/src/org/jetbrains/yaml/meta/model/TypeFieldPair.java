@@ -9,9 +9,9 @@ public class TypeFieldPair {
   @NotNull
   private final Field myField;
   @NotNull
-  private final YamlMetaClass myOwnerClass;
+  private final YamlMetaType myOwnerClass;
 
-  public TypeFieldPair(@NotNull YamlMetaClass ownerClass, @NotNull Field field) {
+  public TypeFieldPair(@NotNull YamlMetaType ownerClass, @NotNull Field field) {
     myField = field;
     myOwnerClass = ownerClass;
   }
