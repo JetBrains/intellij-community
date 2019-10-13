@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.vcs.changes.InclusionModel
 import com.intellij.openapi.vcs.changes.LocalChangeList
+import com.intellij.vcs.log.VcsUser
 
 interface ChangesViewCommitWorkflowUi : CommitWorkflowUi {
   val isActive: Boolean
@@ -12,6 +13,8 @@ interface ChangesViewCommitWorkflowUi : CommitWorkflowUi {
 
   var isDefaultCommitActionEnabled: Boolean
   fun setCustomCommitActions(actions: List<AnAction>)
+
+  var commitAuthor: VcsUser?
 
   var inclusionModel: InclusionModel?
 

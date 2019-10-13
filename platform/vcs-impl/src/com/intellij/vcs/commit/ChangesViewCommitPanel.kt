@@ -36,6 +36,7 @@ import com.intellij.ui.components.JBOptionButton
 import com.intellij.ui.components.JBOptionButton.Companion.getDefaultShowPopupShortcut
 import com.intellij.ui.components.JBPanel
 import com.intellij.ui.components.panels.HorizontalLayout
+import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.util.EventDispatcher
 import com.intellij.util.IJSwingUtilities.updateComponentTreeUI
 import com.intellij.util.ui.JBUI.Borders.empty
@@ -45,6 +46,7 @@ import com.intellij.util.ui.JBUI.scale
 import com.intellij.util.ui.UIUtil.getTreeBackground
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.util.ui.tree.TreeUtil.*
+import com.intellij.vcs.log.VcsUser
 import java.awt.Point
 import java.awt.event.ActionEvent
 import java.awt.event.InputEvent
@@ -122,6 +124,7 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView, private v
 
     override fun isDefaultButton(): Boolean = IdeFocusManager.getInstance(project).getFocusedDescendantFor(rootComponent) != null
   }
+  private val commitAuthorComponent = CommitAuthorComponent()
   private val commitLegendCalculator = ChangeInfoCalculator()
   private val commitLegend = CommitLegendPanel(commitLegendCalculator)
 
@@ -169,7 +172,10 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView, private v
         createHorizontalPanel().apply {
           background = BACKGROUND_COLOR
 
-          add(commitButton)
+          add(NonOpaquePanel(HorizontalLayout(scale(4))).apply {
+            add(commitButton)
+            add(commitAuthorComponent)
+          })
           add(CurrentBranchComponent(project, changesView, this@ChangesViewCommitPanel))
           add(commitLegend.component)
           add(toolbarPanel)
@@ -241,6 +247,12 @@ class ChangesViewCommitPanel(private val changesView: ChangesListView, private v
     }
 
   override fun setCustomCommitActions(actions: List<AnAction>) = commitButton.setOptions(actions)
+
+  override var commitAuthor: VcsUser?
+    get() = commitAuthorComponent.commitAuthor
+    set(value) {
+      commitAuthorComponent.commitAuthor = value
+    }
 
   override val isActive: Boolean get() = isVisible
 

@@ -185,6 +185,7 @@ class ChangesViewCommitWorkflowHandler(
     setCommitMessage(newCommitMessage)
 
     newChangeList?.let { commitOptions.changeListChanged(it) }
+    ui.commitAuthor = (newChangeList?.data as? ChangeListData)?.author
   }
 
   override fun inclusionChanged() {
