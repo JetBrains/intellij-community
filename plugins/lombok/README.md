@@ -143,6 +143,7 @@ Developed By
 - [**@toadzky** David Harris](https://github.com/toadzky)
 - [**@twillouer** William Delanoue](https://github.com/twillouer)
 - [**@uvpoblotzki** Ulrich von Poblotzki](https://github.com/uvpoblotzki)
+- [**@vanam** Martin Váňa](https://github.com/vanam)
 - [**@yiftizur** Yiftach Tzur](https://github.com/yiftizur)
 - [**@sluongng** Son Luong Ngoc](https://github.com/sluongng)
 
