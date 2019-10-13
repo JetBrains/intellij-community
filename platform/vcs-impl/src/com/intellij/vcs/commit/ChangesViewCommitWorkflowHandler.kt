@@ -48,7 +48,6 @@ class ChangesViewCommitWorkflowHandler(
   }
 
   init {
-    Disposer.register(this, Disposable { workflow.disposeCommitOptions() })
     Disposer.register(this, inclusionModel)
     Disposer.register(ui, this)
 
@@ -211,22 +210,34 @@ class ChangesViewCommitWorkflowHandler(
 
   override fun addUnversionedFiles(): Boolean = addUnversionedFiles(workflow.getAffectedChangeList(getIncludedChanges()))
 
-  override fun saveCommitOptions(): Boolean {
-    ensureCommitOptions()
+  override fun saveCommitOptions(): Boolean = saveCommitOptions(true)
+
+  private fun saveCommitOptions(isEnsureOptionsCreated: Boolean): Boolean {
+    if (isEnsureOptionsCreated) ensureCommitOptions()
     return super.saveCommitOptions()
   }
 
   override fun saveCommitMessage(success: Boolean) = commitMessagePolicy.save(currentChangeList, getCommitMessage(), success)
 
-  // save state on project close - using this method ensures change list comment is updated before project state persisting
-  override fun projectClosingBeforeSave(project: Project) = saveStateBeforeDispose()
+  // save state on project close
+  // using this method ensures change list comment and commit options are updated before project state persisting
+  override fun projectClosingBeforeSave(project: Project) = dispose()
 
   // save state on other events - like "settings changed to use commit dialog"
-  override fun dispose() = saveStateBeforeDispose()
+  override fun dispose() {
+    saveStateBeforeDispose()
+    disposeCommitOptions()
+  }
 
   private fun saveStateBeforeDispose() {
+    saveCommitOptions(false)
     saveCommitMessage(false)
     currentChangeList = null
+  }
+
+  private fun disposeCommitOptions() {
+    workflow.disposeCommitOptions()
+    areCommitOptionsCreated = false
   }
 
   interface ActivityListener : EventListener {
@@ -239,8 +250,7 @@ class ChangesViewCommitWorkflowHandler(
     override fun onFailure(errors: List<VcsException>) = resetState()
 
     private fun resetState() {
-      workflow.disposeCommitOptions()
-      areCommitOptionsCreated = false
+      disposeCommitOptions()
 
       workflow.clearCommitContext()
       initCommitHandlers()
