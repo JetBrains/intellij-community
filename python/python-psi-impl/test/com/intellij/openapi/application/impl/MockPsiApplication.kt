@@ -82,7 +82,7 @@ class MockPsiApplication(parentDisposable: Disposable) : PlatformComponentManage
 
   override fun isWriteAccessAllowed(): Boolean = false
 
-  override fun isReadAccessAllowed(): Boolean = false
+  override fun isReadAccessAllowed(): Boolean = true
 
   override fun isDispatchThread(): Boolean = SwingUtilities.isEventDispatchThread()
 

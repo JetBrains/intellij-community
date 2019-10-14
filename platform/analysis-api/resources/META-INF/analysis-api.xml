@@ -2,6 +2,9 @@
   <extensionPoints>
     <extensionPoint name="languageInjector"
                     interface="com.intellij.psi.LanguageInjector"/>
+    <extensionPoint name="completion.contributor" beanClass="com.intellij.codeInsight.completion.CompletionContributorEP">
+      <with attribute="implementationClass" implements="com.intellij.codeInsight.completion.CompletionContributor"/>
+    </extensionPoint>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceImplementation="com.intellij.psi.search.scope.packageSet.NamedScopeManager"/>

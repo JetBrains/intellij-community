@@ -71,6 +71,8 @@ class TestLocalVirtualFileSystem: VirtualFileSystem() {
     TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
   }
 
+  fun createTextVirtualFile(name: String, text: String): VirtualFile = TextVirtualFile(name, text)
+
   private inner class TestVirtualFile(private val myDelegate: File, private val myParent: TestVirtualFile?): VirtualFile() {
 
     private val myChildren: MutableMap<String, TestVirtualFile> = mutableMapOf()
@@ -125,6 +127,44 @@ class TestLocalVirtualFileSystem: VirtualFileSystem() {
     override fun getInputStream(): InputStream = VfsUtilCore.byteStreamSkippingBOM(contentsToByteArray(), this)
 
     override fun findFileByRelativePath(relPath: String): VirtualFile? = findFileByPath("$myPath/$relPath")
+
+    override fun getCharset(): Charset = Charset.defaultCharset()
+  }
+
+  private inner class TextVirtualFile(private val myName: String, private var myText: String): VirtualFile() {
+    override fun getName(): String = myName
+
+    override fun getFileSystem(): VirtualFileSystem = this@TestLocalVirtualFileSystem
+
+    override fun getPath(): String = ""
+
+    override fun isWritable(): Boolean = true
+
+    override fun isDirectory(): Boolean = false
+
+    override fun isValid(): Boolean = true
+
+    override fun getParent(): VirtualFile? = null
+
+    override fun getChildren(): Array<VirtualFile> = emptyArray()
+
+    override fun getOutputStream(requestor: Any?, newModificationStamp: Long, newTimeStamp: Long): OutputStream =
+      VfsUtilCore.outputStreamAddingBOM(object: ByteArrayOutputStream() {
+        override fun close() {
+          myText = toString(charset.name())
+        }
+      }, this)
+
+    override fun contentsToByteArray(): ByteArray = myText.toByteArray(charset)
+
+    override fun getTimeStamp(): Long = 0
+
+    override fun getLength(): Long = myText.length.toLong()
+
+    override fun refresh(asynchronous: Boolean, recursive: Boolean, postRunnable: Runnable?) {
+    }
+
+    override fun getInputStream(): InputStream = VfsUtilCore.byteStreamSkippingBOM(contentsToByteArray(), this)
 
     override fun getCharset(): Charset = Charset.defaultCharset()
   }

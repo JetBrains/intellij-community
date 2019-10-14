@@ -30,6 +30,12 @@
                         serviceImplementation="com.intellij.core.CorePsiDocumentManager"/>
     <applicationService serviceInterface="com.intellij.openapi.progress.ProgressManager"
                         serviceImplementation="com.intellij.openapi.progress.impl.CoreProgressManager"/>
+    <projectService serviceInterface="com.intellij.lang.injection.InjectedLanguageManager"
+                    serviceImplementation="com.intellij.core.CoreInjectedLanguageManager"/>
+    <projectService serviceInterface="com.intellij.psi.search.ProjectScopeBuilder"
+                    serviceImplementation="com.intellij.psi.search.MockPsiProjectScopeBuilder"/>
+    <projectService serviceInterface="com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater"
+                    serviceImplementation="com.intellij.openapi.roots.impl.DummyPushedFilePropertiesUpdater"/>
   </extensions>
 
   <project-components>

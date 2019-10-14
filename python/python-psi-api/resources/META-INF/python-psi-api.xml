@@ -2,6 +2,10 @@
   <extensionPoints>
     <extensionPoint qualifiedName="Pythonid.dialectsTokenSetContributor" interface="com.jetbrains.python.PythonDialectsTokenSetContributor"/>
     <extensionPoint qualifiedName="Pythonid.pyReferenceResolveProvider" interface="com.jetbrains.python.psi.resolve.PyReferenceResolveProvider"/>
+    <extensionPoint qualifiedName="Pythonid.typeProvider" interface="com.jetbrains.python.psi.impl.PyTypeProvider"/>
+    <extensionPoint qualifiedName="Pythonid.pySuperMethodsSearch" interface="com.intellij.util.QueryExecutor"/>
+    <extensionPoint qualifiedName="Pythonid.pyClassMembersProvider" interface="com.jetbrains.python.psi.types.PyClassMembersProvider"/>
+    <extensionPoint qualifiedName="Pythonid.importResolver" interface="com.jetbrains.python.psi.impl.PyImportResolver"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <fileType name="Python"

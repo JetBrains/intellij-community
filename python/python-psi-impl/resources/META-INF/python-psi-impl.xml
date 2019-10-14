@@ -74,6 +74,13 @@
         serviceImplementation="com.jetbrains.python.PythonRuntimeService"/>
 
     <applicationService serviceImplementation="com.jetbrains.python.PythonCodeStyleService"/>
+
+    <completion.contributor language="Python"
+                            implementationClass="com.jetbrains.python.codeInsight.completion.PySuperMethodCompletionContributor"/>
+    <completion.contributor language="Python"
+                            implementationClass="com.jetbrains.python.codeInsight.completion.PyDocstringCompletionContributor"/>
+    <completion.contributor language="Python" implementationClass="com.jetbrains.python.documentation.docstrings.DocStringTagCompletionContributor"/>
+    <completion.contributor language="Python" implementationClass="com.jetbrains.python.documentation.docstrings.DocStringSectionHeaderCompletionContributor"/>
   </extensions>
 
   <extensionPoints>
@@ -85,6 +92,7 @@
     <extensionPoint qualifiedName="Pythonid.visitorFilter" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.jetbrains.python.psi.PythonVisitorFilter"/>
     </extensionPoint>
+    <extensionPoint qualifiedName="Pythonid.pyReferenceCustomTargetChecker" interface="com.jetbrains.python.psi.impl.references.PyReferenceCustomTargetChecker"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="Pythonid">
