@@ -8,7 +8,6 @@ import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.StreamUtil
 import com.intellij.util.io.Compressor
 import groovy.io.FileType
-import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.BuildMessages
@@ -25,7 +24,6 @@ import java.nio.file.Files
 import java.nio.file.Paths
 import java.security.MessageDigest
 import java.util.concurrent.ConcurrentHashMap
-import java.util.stream.Collectors
 import java.util.stream.Stream
 
 import static org.jetbrains.jps.model.java.JavaResourceRootType.RESOURCE
@@ -68,7 +66,7 @@ class CompilationOutputsUploader {
   def upload() {
     Map<String, String> hashes = new ConcurrentHashMap<String, String>(2048)
 
-    def start = System.currentTimeMillis()
+    def start = System.nanoTime()
     executor.submit {
       // Upload jps caches started first because of the significant size of the output
       def sourcePath = "caches/$commitHash"
@@ -104,7 +102,7 @@ class CompilationOutputsUploader {
     executor.waitForAllComplete(messages)
     executor.reportErrors(messages)
     executor.close()
-    messages.reportStatisticValue("Compilation upload time, ms", String.valueOf(System.currentTimeMillis() - start))
+    messages.reportStatisticValue("Compilation upload time, ns", String.valueOf(System.nanoTime() - start))
     StreamUtil.closeStream(uploader)
 
     // Save and publish metadata file
@@ -138,13 +136,11 @@ class CompilationOutputsUploader {
     }
   }
 
-  @CompileDynamic
   private String getSourcesHash(JpsModule module, JavaSourceRootType sourceRootType, JavaResourceRootType resourceRootType) {
     def moduleHash = new byte[HASH_SIZE_IN_BYTES];
     Stream.concat(module.getSourceRoots(sourceRootType).toList().stream().map { it.file },
                   module.getSourceRoots(resourceRootType).toList().stream().map { it.file })
-      .collect(Collectors.toList())
-      .each { folder ->
+      .each { File folder ->
         if (!folder.exists()) return
         folder.eachFileRecurse(FileType.FILES) { file ->
           if (ignoredPatterns.isIgnored(file.getName())) return
