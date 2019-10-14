@@ -24,5 +24,6 @@
   <projectListeners>
     <listener class="com.intellij.ide.bookmarks.BookmarkManager$BookmarkManagerPsiDocumentManagerListener" topic="com.intellij.psi.PsiDocumentListener" activeInTestMode="false"/>
     <listener class="com.intellij.openapi.vfs.newvfs.impl.CachedFileType$PsiListener" topic="com.intellij.psi.util.PsiModificationTracker$Listener"/>
+    <listener class="com.intellij.execution.lineMarker.RunLineMarkerProvider$RunnableStatusListener" topic="com.intellij.codeInsight.daemon.DaemonCodeAnalyzer$DaemonListener"/>
   </projectListeners>
 </idea-plugin>
