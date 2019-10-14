@@ -2,15 +2,12 @@
 package com.intellij.diagnostic;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Comparing;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @ApiStatus.Internal
 public enum LoadingState {
@@ -43,21 +40,20 @@ public enum LoadingState {
   private final static Set<Throwable> stackTraces = new THashSet<>(new TObjectHashingStrategy<Throwable>() {
     @Override
     public int computeHashCode(Throwable throwable) {
-      return getCollect(throwable).hashCode();
-    }
-
-    private String getCollect(Throwable throwable) {
-      return Arrays
-        .stream(throwable.getStackTrace())
-        .map(element -> element.getClassName() + element.getMethodName())
-        .collect(Collectors.joining());
+      return fingerprint(throwable).hashCode();
     }
 
     @Override
     public boolean equals(Throwable o1, Throwable o2) {
-      if (o1 == o2) return true;
-      if (o1 == null || o2 == null) return false;
-      return Comparing.equal(getCollect(o1), getCollect(o2));
+      return o1 == o2 || o1 != null && o2 != null && fingerprint(o1).equals(fingerprint(o2));
+    }
+
+    private String fingerprint(Throwable throwable) {
+      StringBuilder sb = new StringBuilder();
+      for (StackTraceElement traceElement : throwable.getStackTrace()) {
+        sb.append(traceElement.getClassName()).append(traceElement.getMethodName());
+      }
+      return sb.toString();
     }
   });
 
