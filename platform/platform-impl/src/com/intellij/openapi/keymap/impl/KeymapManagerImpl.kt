@@ -100,6 +100,7 @@ class KeymapManagerImpl : KeymapManagerEx(), PersistentStateComponent<Element> {
           }, DefaultKeymap.instance, ep.javaClass)
           keymap.name = ep.getKeyFromFileName(fileName)
           schemeManager.addScheme(keymap)
+          schemeManager.setCurrent(keymap, true, true)
         }
       }
 
