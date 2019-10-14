@@ -2,7 +2,6 @@
 package com.intellij.util.lang;
 
 import com.intellij.openapi.diagnostic.LoggerRt;
-import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -366,26 +365,37 @@ public class ClassPath {
   private static class ResourceStringLoaderIterator extends ClasspathCache.LoaderIterator<Resource, String, ClassPath> {
     @Override
     Resource process(@NotNull Loader loader, @NotNull String s, @NotNull ClassPath classPath, @NotNull String shortName) {
-      if (!loader.containsName(s, shortName)) return null;
+      return loader.containsName(s, shortName) ? findInLoader(loader, s, classPath) : null;
+    }
+
+    @Nullable
+    private static Resource findInLoader(@NotNull Loader loader, @NotNull String s, @NotNull ClassPath classPath) {
       Resource resource = loader.getResource(s);
       if (resource != null) {
-        if (classPath.myJarAccessLog != null) {
-          synchronized (classPath.myJarAccessLog) {
-            classPath.myJarAccessLog.add(loader.getBaseURL().toString());
-          }
-        }
-        if (ourResourceLoadingLogger != null) {
-          long resourceSize;
-          try {
-            resourceSize = resource instanceof MemoryResource ? resource.getBytes().length : -1;
-          }
-          catch (IOException e) {
-            resourceSize = -1;
-          }
-          ourResourceLoadingLogger.logResource(s, loader.getBaseURL(), resourceSize);
-        }
+        logFoundResource(loader, s, classPath, resource);
       }
       return resource;
+    }
+
+    private static void logFoundResource(@NotNull Loader loader,
+                                         @NotNull String s,
+                                         @NotNull ClassPath classPath,
+                                         @NotNull Resource resource) {
+      if (classPath.myJarAccessLog != null) {
+        synchronized (classPath.myJarAccessLog) {
+          classPath.myJarAccessLog.add(loader.getBaseURL().toString());
+        }
+      }
+      if (ourResourceLoadingLogger != null) {
+        long resourceSize;
+        try {
+          resourceSize = resource instanceof MemoryResource ? resource.getBytes().length : -1;
+        }
+        catch (IOException e) {
+          resourceSize = -1;
+        }
+        ourResourceLoadingLogger.logResource(s, loader.getBaseURL(), resourceSize);
+      }
     }
   }
 
