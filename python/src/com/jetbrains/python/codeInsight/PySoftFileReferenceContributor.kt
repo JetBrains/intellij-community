@@ -15,6 +15,7 @@ import com.jetbrains.python.PythonRuntimeService
 import com.jetbrains.python.console.PyConsoleOptions
 import com.jetbrains.python.console.PydevConsoleRunnerFactory
 import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.impl.PyCallExpressionHelper
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.resolve.PyResolveUtil
 import com.jetbrains.python.psi.types.TypeEvalContext
@@ -46,18 +47,22 @@ class PySoftFileReferenceContributor : PsiReferenceContributor() {
     override fun accepts(expr: PyStringLiteralExpression, context: ProcessingContext?): Boolean {
       val argList = expr.parent as? PyArgumentList ?: return false
       val callExpr = argList.parent as? PyCallExpression ?: return false
-      val resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(TypeEvalContext.codeInsightFallback(expr.project))
+      val typeEvalContext = TypeEvalContext.codeInsightFallback(expr.project)
+      val resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(typeEvalContext)
 
-      // Fail-fast check
-      val allPossibleParameters = callExpr.multiResolveCalleeFunction(resolveContext)
-        .flatMap { it.parameterList.parameters.asList() }
-        .mapNotNull { it.name }
-      if (!allPossibleParameters.any { matchesPathNamePattern(it) }) return false
-
-      val mappings = callExpr.multiMapArguments(resolveContext)
-      return mappings.any { mapping ->
-        mapping.mappedParameters[expr]?.name?.let { matchesPathNamePattern(it) } ?: false
-      }
+      return callExpr.multiResolveCallee(resolveContext)
+        .asSequence()
+        // Fail-fast check
+        .filter { markedCallee ->
+          val parameters = markedCallee.callableType.getParameters(typeEvalContext)
+          val parameterNames = parameters?.mapNotNull { it.name } ?: emptyList()
+          parameterNames.any(::matchesPathNamePattern)
+        }
+        .any {
+          val mapping = PyCallExpressionHelper.mapArguments(callExpr, it, typeEvalContext)
+          val parameterName = mapping.mappedParameters[expr]?.name ?: return@any false
+          matchesPathNamePattern(parameterName)
+        }
     }
   }
 
