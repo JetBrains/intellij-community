@@ -20,10 +20,10 @@ import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModule
 
 import javax.xml.bind.DatatypeConverter
-import java.nio.file.Files
 import java.nio.file.Paths
 import java.security.MessageDigest
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.TimeUnit
 import java.util.stream.Stream
 
 import static org.jetbrains.jps.model.java.JavaResourceRootType.RESOURCE
@@ -35,6 +35,7 @@ import static org.jetbrains.jps.model.java.JavaSourceRootType.TEST_SOURCE
 class CompilationOutputsUploader {
   private static final ThreadLocal<MessageDigest> MESSAGE_DIGEST_THREAD_LOCAL = new ThreadLocal<>();
   private static final byte CARRIAGE_RETURN_CODE = 13
+  private static final byte LINE_FEED_CODE = 10
   private static final int HASH_SIZE_IN_BYTES = 16
   private static final String PRODUCTION = "production"
   private static final String TEST = "test"
@@ -102,7 +103,7 @@ class CompilationOutputsUploader {
     executor.waitForAllComplete(messages)
     executor.reportErrors(messages)
     executor.close()
-    messages.reportStatisticValue("Compilation upload time, ns", String.valueOf(System.nanoTime() - start))
+    messages.reportStatisticValue("Compilation upload time, ms", String.valueOf(TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start)))
     StreamUtil.closeStream(uploader)
 
     // Save and publish metadata file
@@ -155,31 +156,31 @@ class CompilationOutputsUploader {
 
   private byte[] hashFile(File file, File rootPath) {
     try {
-      byte[] fileNameBytes = toRelative(file, rootPath).getBytes()
-      byte[] bytes = readAllBytesWithoutCarriageReturnChar(file, fileNameBytes)
-      return messageDigest.digest(bytes);
+      MessageDigest md = messageDigest
+      md.update(toRelative(file, rootPath).getBytes())
+      new FileInputStream(file).withStream { fis ->
+        new BufferedInputStream(fis).withStream { bis ->
+          byte[] buf = new byte[4096]
+          int length
+          while ((length = bis.read(buf)) != -1) {
+            byte[] res = new byte[length]
+            int copiedBytes = 0
+            for (int i = 0; i < length; i++) {
+              if (buf[i] != CARRIAGE_RETURN_CODE && ((i + 1) >= length || buf[i + 1] != LINE_FEED_CODE)) {
+                res[copiedBytes] = buf[i]
+                copiedBytes++
+              }
+            }
+            md.update(copiedBytes != res.length ? Arrays.copyOf(res, res.length - (res.length - copiedBytes)) : res)
+          }
+        }
+      }
+      return messageDigest.digest()
     }
     catch (IOException e) {
       context.messages.error("Error while hashing file $file.absolutePath", e)
       return null;
     }
-  }
-
-  private static byte[] readAllBytesWithoutCarriageReturnChar(@NotNull File file, @NotNull byte[] fileNameBytes) throws IOException {
-    byte[] fileBytes = Files.readAllBytes(file.toPath())
-    byte[] result = new byte[fileBytes.length + fileNameBytes.length]
-    int copiedBytes = 0
-    for (byte fileNameByte : fileNameBytes) {
-      result[copiedBytes] = fileNameByte
-      copiedBytes++
-    }
-    for (byte fileByte : fileBytes) {
-      if (fileByte != CARRIAGE_RETURN_CODE) {
-        result[copiedBytes] = fileByte
-        copiedBytes++
-      }
-    }
-    return copiedBytes != result.length ? Arrays.copyOf(result, result.length - (result.length - copiedBytes)) : result
   }
 
   private static void sum(byte[] firstHash, byte[] secondHash) {

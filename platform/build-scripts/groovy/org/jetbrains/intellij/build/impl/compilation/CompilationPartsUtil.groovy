@@ -12,7 +12,6 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.Compressor
 import com.intellij.util.io.Decompressor
 import groovy.transform.CompileStatic
-import groovy.transform.PackageScope
 import org.apache.http.HttpStatus
 import org.apache.http.client.config.RequestConfig
 import org.apache.http.client.methods.HttpGet
@@ -33,7 +32,9 @@ import org.jetbrains.intellij.build.impl.logging.IntelliJBuildException
 
 import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
-import java.util.concurrent.*
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentLinkedDeque
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
 
