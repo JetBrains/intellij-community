@@ -3,7 +3,7 @@
 class TextBlockMigration {
 
   void concatenationWithNonStrings() {
-    String answer = "T<caret>he answer to the meaning of life,\n" +
+    String answer = "The answer to the meaning of life,<caret>\n" +
                     "the universe,\n" +
                     "and everything\n" +
                     "is "  + 42 + '\n';

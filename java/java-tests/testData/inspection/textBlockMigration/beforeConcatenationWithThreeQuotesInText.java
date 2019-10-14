@@ -3,7 +3,7 @@
 class TextBlockMigration {
 
   void concatenationWithThreeQuotes() {
-    String quotes = "<caret>this concatenation contains\n" +
+    String quotes = "this concatenation contains<caret>\n" +
                     " three quotes\n" +
                     "one after another\n" +
                     "\"" +

@@ -3,7 +3,7 @@
 class TextBlockMigration {
 
   void literalWithNewLine() {
-    String foo = "foo\nbar<caret>";
+    String foo = "foo<caret>\nbar";
   }
 
 }
