@@ -6,6 +6,7 @@ import com.intellij.util.FieldAccessor;
 import org.cef.CefApp;
 import org.cef.CefClient;
 import org.cef.browser.CefBrowser;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import sun.awt.AWTAccessor;
@@ -29,6 +30,7 @@ import java.util.function.Consumer;
  *
  * @author tav
  */
+@ApiStatus.Experimental
 public class HwFacadeHelper {
   @SuppressWarnings("UseJBColor")
   public static final Color TRANSPARENT_COLOR = new Color(1, 1, 1, 0);

@@ -8,6 +8,7 @@ import org.cef.browser.CefFrame;
 import org.cef.browser.CefMessageRouter;
 import org.cef.callback.CefQueryCallback;
 import org.cef.handler.CefMessageRouterHandlerAdapter;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,6 +18,7 @@ import java.util.function.Function;
 /**
  * @author tav
  */
+@ApiStatus.Experimental
 public class JBCefUtils {
   private static final Map<String, CefMessageRouter> id2msgRouter = new HashMap<>();
 
