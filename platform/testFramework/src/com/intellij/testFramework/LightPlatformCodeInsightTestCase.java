@@ -55,9 +55,7 @@ import org.junit.runners.Parameterized;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTestCase {
   private Editor myEditor;
@@ -716,12 +714,23 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
       fail("Test files not found in " + testDir.getPath());
     }
 
+    final Set<String> beforeFileSuffixes = new HashSet<>();
+    final Set<String> afterFileSuffixes = new HashSet<>();
     final List<Object[]> result = new ArrayList<>();
     for (File file : files) {
       final String fileSuffix = fileBasedTestCase.getFileSuffix(file.getName());
+      String fileAfterSuffix = fileBasedTestCase.getFileAfterSuffix(file.getName());
+      if (fileAfterSuffix != null) {
+        afterFileSuffixes.add(fileAfterSuffix);
+      }
       if (fileSuffix != null) {
+        beforeFileSuffixes.add(fileSuffix);
         result.add(new Object[] {fileSuffix, testDataPath});
       }
+    }
+    afterFileSuffixes.removeAll(beforeFileSuffixes);
+    if (!afterFileSuffixes.isEmpty()) {
+      fail("'After' file has no corresponding 'before' file: " + String.join(", ", afterFileSuffixes));
     }
     return result;
   }

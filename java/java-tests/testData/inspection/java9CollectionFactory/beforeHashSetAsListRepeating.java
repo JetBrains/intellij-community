@@ -7,5 +7,5 @@ import java.util.Set;
 public class Test {
   static final String CONST = "b";
 
-  public static final Set<String> MY_SET = Set.of("a", "b", "c", CONST);
+  public static final Set<String> MY_SET = Set.o<caret>f("a", "b", "c", CONST);
 }
