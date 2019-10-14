@@ -408,4 +408,10 @@ class Test88 {
     myFixture.completeBasic()
     assert myFixture.lookupElementStrings == ['foo']
   }
+
+  void "test no overloaded method reference duplicates"() {
+    myFixture.configureByText 'a.java', 'class C { { Runnable r = this::wa<caret>x; } }'
+    myFixture.completeBasic()
+    assert myFixture.lookupElementStrings == ['wait']
+  }
 }
