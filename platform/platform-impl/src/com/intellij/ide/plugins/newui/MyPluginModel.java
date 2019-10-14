@@ -917,7 +917,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
   }
 
   public boolean hasErrors(@NotNull IdeaPluginDescriptor plugin) {
-    return PluginManagerCore.isIncompatible(plugin) || hasProblematicDependencies(plugin.getPluginId());
+    return PluginManagerCore.isIncompatible(plugin) || hasProblematicDependencies(plugin.getPluginId()) || !isLoaded(plugin.getPluginId());
   }
 
   @NotNull
