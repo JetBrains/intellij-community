@@ -10,8 +10,7 @@ class GraphViewVirtualFile(val toolbarsAndTable: JComponent, val getTabNameFunc:
   companion object {
     @JvmField
     val TabContentId: Key<String> = Key("TabContentId")
-    @JvmField
-    val GraphVirtualFile: Key<GraphViewVirtualFile> = Key("GraphVirtualFile")
+
   }
 
   init {

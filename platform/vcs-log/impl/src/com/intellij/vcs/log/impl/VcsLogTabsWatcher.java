@@ -5,7 +5,6 @@ import com.intellij.diff.editor.GraphViewVirtualFile;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
@@ -13,7 +12,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.ui.content.Content;
@@ -25,14 +23,13 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.vcs.log.impl.PostponableLogRefresher.VcsLogWindow;
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
-import com.intellij.vcs.log.ui.VcsLogPanel;
+import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.ui.frame.MainFrame;
 import com.intellij.vcs.log.visible.VisiblePackRefresher;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Arrays;
@@ -108,30 +105,6 @@ public class VcsLogTabsWatcher implements Disposable {
     }
   }
 
-  private void processVirtualFile(VirtualFile file) {
-    if (file instanceof GraphViewVirtualFile) {
-      ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID);
-
-      if (window != null) {
-        for (Content content : window.getContentManager().getContents()) {
-          JComponent component = content.getComponent();
-          String logId = file.getUserData(GraphViewVirtualFile.TabContentId);
-
-          if (component instanceof VcsLogPanel) {
-            AbstractVcsLogUi ui = ((VcsLogPanel)component).getUi();
-            if (ui.getId().equals(logId)) {
-              content.putUserData(GraphViewVirtualFile.GraphVirtualFile, (GraphViewVirtualFile)file);
-            }
-          }
-          else if (VcsLogContentProvider.TAB_NAME.equals(content.getDisplayName()) &&
-                   VcsLogProjectTabsProperties.MAIN_LOG_ID.equals(logId)) {
-            content.putUserData(GraphViewVirtualFile.GraphVirtualFile, (GraphViewVirtualFile)file);
-          }
-        }
-      }
-    }
-  }
-
   private void installLogEditorListeners() {
     if (!Registry.is("show.log.as.editor.tab")) {
       return;
@@ -154,11 +127,6 @@ public class VcsLogTabsWatcher implements Disposable {
                 });
               }
             }
-          }
-
-          @Override
-          public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-            processVirtualFile(file);
           }
         });
     }
@@ -300,9 +268,10 @@ public class VcsLogTabsWatcher implements Disposable {
     }
 
     private void selectEditorTab(Content content) {
-      GraphViewVirtualFile file = content.getUserData(GraphViewVirtualFile.GraphVirtualFile);
-      if (file != null) {
-        MainFrame.openLogEditorTab(file, myProject);
+      AbstractVcsLogUi ui = VcsLogContentUtil.getLogUi(content.getComponent());
+      if (ui instanceof VcsLogUiImpl) {
+        MainFrame frame = ((VcsLogUiImpl)ui).getMainFrame();
+        frame.openLogEditorTab();
       }
     }
 

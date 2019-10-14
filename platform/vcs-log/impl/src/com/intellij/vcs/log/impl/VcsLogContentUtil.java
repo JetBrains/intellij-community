@@ -45,7 +45,7 @@ public class VcsLogContentUtil {
   private static final Logger LOG = Logger.getInstance(VcsLogContentUtil.class);
 
   @Nullable
-  private static AbstractVcsLogUi getLogUi(@NotNull JComponent c) {
+  public static AbstractVcsLogUi getLogUi(@NotNull JComponent c) {
     VcsLogPanel vcsLogPanel = null;
     if (c instanceof VcsLogPanel) {
       vcsLogPanel = (VcsLogPanel)c;
