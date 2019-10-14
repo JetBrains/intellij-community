@@ -80,34 +80,52 @@ public class LicensePanel extends NonOpaquePanel {
   }
 
   public void setTextFromStamp(@NotNull String stamp) {
-    if (stamp.startsWith("server:")) {
-      setText("License is active.", false, false);
+    if (stamp.startsWith("eval:")) {
+      long[] expTime = parseExpTime(StringUtil.substringAfter(stamp, ":"));
+      setTextFromStamp(true, expTime[0], expTime[1]);
     }
-    else {
-      String timeValue = StringUtil.substringAfter(stamp, ":");
+    else if (stamp.startsWith("key:")) {
+      setTextFromStamp(false, 0, 0);
+      // XXX: get exp time
+    }
+    else if (stamp.startsWith("stamp:")) {
+      setTextFromStamp(false, 0, 0);
+      // XXX: get exp time
+    }
+  }
+
+  @NotNull
+  private static long[] parseExpTime(@Nullable String timeValue) {
+    try {
       long time = StringUtil.isEmpty(timeValue) ? 0 : Long.parseLong(timeValue);
       long days = time == 0 ? 0 : (time - System.currentTimeMillis()) / DateFormatUtil.DAY_FACTOR;
+      return new long[]{time, days};
+    }
+    catch (NumberFormatException e) {
+      return new long[]{0, 0};
+    }
+  }
 
-      if (stamp.startsWith("eval:")) {
-        if (days == 0) {
-          setText("Trial expired.", false, true);
-        }
-        else {
-          setText("Trial expires in " + days + " days.", days < 11, false);
-        }
-      }
-      else if (time == 0) {
-        setText("License is active.", false, false);
-      }
-      else if (days > 30) {
-        setText("License is active until " + PluginManagerConfigurable.DATE_FORMAT.format(new Date(time)) + ".", false, false);
-      }
-      else if (days == 0) {
-        setText("License expired.", false, true);
+  private void setTextFromStamp(boolean trial, long time, long days) {
+    if (trial) {
+      if (days <= 0) {
+        setText("Trial expired.", false, true);
       }
       else {
-        setText("License expires in " + days + " days.", days < 11, false);
+        setText("Trial expires in " + days + " days.", days < 11, false);
       }
+    }
+    else if (time == 0) {
+      setText("License is active.", false, false);
+    }
+    else if (days > 30) {
+      setText("License is active until " + PluginManagerConfigurable.DATE_FORMAT.format(new Date(time)) + ".", false, false);
+    }
+    else if (days <= 0) {
+      setText("License expired.", false, true);
+    }
+    else {
+      setText("License expires in " + days + " days.", days < 11, false);
     }
   }
 
@@ -118,6 +136,13 @@ public class LicensePanel extends NonOpaquePanel {
     myLink.setVisible(true);
 
     myPanel.setVisible(true);
+  }
+
+  public void updateLink(@NotNull String text, boolean async) {
+    myLink.setText(text);
+    if (async) {
+      myPanel.doLayout();
+    }
   }
 
   @Override

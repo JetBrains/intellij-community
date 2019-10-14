@@ -34,6 +34,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
+import java.util.function.Supplier;
 
 /**
  * @author Alexander Lobas
@@ -400,8 +401,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
     if (productCode == null) {
       if (myUpdateDescriptor != null && myUpdateDescriptor.getProductCode() != null) {
         myLicensePanel.setText("Next plugin version is paid.\nThe 30-day trial is available.", true, false);
-        myLicensePanel.setLink("Buy plugin", () ->
-          BrowserUtil.browse("https://plugins.jetbrains.com/purchase-link/" + myUpdateDescriptor.getProductCode()), true);
+        showBuyPlugin(() -> myUpdateDescriptor);
       }
       else {
         myLicensePanel.setVisible(false);
@@ -409,8 +409,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
     }
     else if (myMarketplace) {
       myLicensePanel.setText("The 30-day trial is available.", false, false);
-      myLicensePanel.setLink("Buy plugin", () ->
-        BrowserUtil.browse("https://plugins.jetbrains.com/purchase-link/" + myPlugin.getProductCode()), true);
+      showBuyPlugin(() -> myPlugin);
       myLicensePanel.setVisible(true);
     }
     else {
@@ -426,8 +425,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
         else {
           myLicensePanel.setTextFromStamp(stamp);
         }
-        // todo
-        myLicensePanel.setLink("Manage licenses", () -> {/*LicensingFacade.getInstance().register()*/}, false);
+        //myLicensePanel.setLink("Manage licenses", () -> { XXX }, false);
       }
       myLicensePanel.setVisible(true);
 
@@ -463,6 +461,19 @@ public class PluginDetailsPageComponent extends MultiPanel {
     else {
       fullRepaint();
     }
+  }
+
+  private void showBuyPlugin(@NotNull Supplier<IdeaPluginDescriptor> getPlugin) {
+    IdeaPluginDescriptor plugin = getPlugin.get();
+
+    myLicensePanel.setLink("Buy plugin", () ->
+      BrowserUtil.browse("https://plugins.jetbrains.com/purchase-link/" + plugin.getProductCode()), true);
+
+    PluginPriceService.getPrice(plugin, price -> myLicensePanel.updateLink("Buy plugin from " + price, false), price -> {
+      if (plugin == getPlugin.get()) {
+        myLicensePanel.updateLink("Buy plugin from " + price, true);
+      }
+    });
   }
 
   public void updateButtons() {

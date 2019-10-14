@@ -289,8 +289,7 @@ public class ListPluginComponent extends JPanel {
 
     if (licensePanel.isNotification()) {
       licensePanel.setBorder(JBUI.Borders.emptyTop(3));
-      // todo
-      licensePanel.setLink("Manage licenses", () -> {/*LicensingFacade.getInstance().register()*/}, false);
+      //licensePanel.setLink("Manage licenses", () -> { XXX }, false);
       myLayout.addLineComponent(licensePanel);
     }
   }
