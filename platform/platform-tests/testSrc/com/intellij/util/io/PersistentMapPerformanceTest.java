@@ -183,10 +183,10 @@ public class PersistentMapPerformanceTest extends PersistentMapTestBase {
       if (checkMap.size() == 0) {
         checkMap.put(r.nextInt(), 0);
         checkMap.put(r.nextInt(), 0);
-        checkMap.put(0, MathUtil.nonNegativeAbs(r.nextInt()));
+        checkMap.put(0, r.nextInt(Integer.MAX_VALUE));
       }
       else {
-        checkMap.put(r.nextInt(), MathUtil.nonNegativeAbs(r.nextInt()));
+        checkMap.put(r.nextInt(), r.nextInt(Integer.MAX_VALUE));
       }
     }
 
