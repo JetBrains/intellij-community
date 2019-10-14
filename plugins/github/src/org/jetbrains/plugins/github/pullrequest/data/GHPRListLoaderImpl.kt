@@ -126,7 +126,7 @@ internal class GHPRListLoaderImpl(progressManager: ProgressManager,
                                                                          catch (e: Exception) {
                                                                            //ignore
                                                                          }
-                                                                       }, 0, 1, TimeUnit.MINUTES)
+                                                                       }, 30, 30, TimeUnit.SECONDS)
       }
     }
 
