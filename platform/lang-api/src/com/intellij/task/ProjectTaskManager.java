@@ -48,6 +48,8 @@ public abstract class ProjectTaskManager {
     boolean contains(@NotNull BiPredicate<? super ProjectTask, ? super ProjectTaskState> predicate);
   }
 
+  public static final ProjectTask[] EMPTY_TASKS_ARRAY = new ProjectTask[0];
+
   protected final @NotNull Project myProject;
 
   public ProjectTaskManager(@NotNull Project project) {

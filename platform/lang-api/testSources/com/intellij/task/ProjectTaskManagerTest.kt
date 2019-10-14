@@ -143,7 +143,7 @@ class ProjectTaskManagerTest {
 
     companion object {
       private fun sendSuccessResult(callback: ProjectTaskNotification?) {
-        callback?.finished(ProjectTaskResult(false, 0, 0))
+        callback?.finished(ProjectTaskContext(), ProjectTaskResult(false, 0, 0))
       }
     }
   }
@@ -157,8 +157,9 @@ class ProjectTaskManagerTest {
   companion object {
     @JvmStatic
     @Throws(TimeoutException::class, ExecutionException::class)
-    fun doTestNewApi(taskManager: ProjectTaskManager, promiseHandler: (Promise<ProjectTaskManager.Result?>) -> ProjectTaskManager.Result?) {
-      val task = DummyTask()
+    fun doTestNewApi(taskManager: ProjectTaskManager,
+                     task: ProjectTask = DummyTask(),
+                     promiseHandler: (Promise<ProjectTaskManager.Result?>) -> ProjectTaskManager.Result?) {
       val context = ProjectTaskContext()
       assertNotNull(taskManager.run(task).run(promiseHandler))
       assertEquals(context, taskManager.run(context, task).run(promiseHandler)!!.context)
@@ -173,7 +174,9 @@ class ProjectTaskManagerTest {
     }
 
     @Suppress("DEPRECATION")
-    fun doTestDeprecatedApi(taskManager: ProjectTaskManager, promiseHandler: (Promise<ProjectTaskResult?>) -> ProjectTaskResult?) {
+    fun doTestDeprecatedApi(taskManager: ProjectTaskManager,
+                            task: ProjectTask = DummyTask(),
+                            promiseHandler: (Promise<ProjectTaskResult?>) -> ProjectTaskResult?) {
       fun doTest(body: (ProjectTaskNotification) -> Unit) {
         val promise1 = AsyncPromise<ProjectTaskResult?>()
         body.invoke(object : ProjectTaskNotification {
@@ -192,7 +195,6 @@ class ProjectTaskManagerTest {
         assertNotNull(promise2.run(promiseHandler))
       }
 
-      val task = DummyTask()
       val context = ProjectTaskContext()
 
       doTest { taskManager.run(task, it) }

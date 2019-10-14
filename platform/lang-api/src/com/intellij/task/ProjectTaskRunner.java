@@ -19,13 +19,18 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.KeyWithDefaultValue;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 
+import java.util.Arrays;
 import java.util.Collection;
+
+import static com.intellij.task.ProjectTaskManager.EMPTY_TASKS_ARRAY;
 
 /**
  * @author Vladislav.Soroka
@@ -37,14 +42,6 @@ public abstract class ProjectTaskRunner {
     boolean isAborted();
 
     boolean hasErrors();
-  }
-
-  public Promise<Result> run(@NotNull Project project,
-                             @NotNull ProjectTaskContext context,
-                             @NotNull Collection<? extends ProjectTask> tasks) {
-    AsyncPromise<Result> promise = new AsyncPromise<>();
-    run(project, context, new ProjectTaskNotificationAdapter(promise), tasks);
-    return promise;
   }
 
   public Promise<Result> run(@NotNull Project project,
@@ -83,8 +80,9 @@ public abstract class ProjectTaskRunner {
     return false;
   }
 
+  private static final Key<Boolean> REQ_KEY = KeyWithDefaultValue.create("req key", false);
   /**
-   * @deprecated use {@link #run(Project, ProjectTaskContext, Collection)}
+   * @deprecated use {@link #run(Project, ProjectTaskContext, ProjectTask...)}
    */
   @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
   @Deprecated
@@ -92,8 +90,15 @@ public abstract class ProjectTaskRunner {
                   @NotNull ProjectTaskContext context,
                   @Nullable ProjectTaskNotification callback,
                   @NotNull Collection<? extends ProjectTask> tasks) {
-    assertUnsupportedOperation(callback);
-    notifyIfNeeded(run(project, context, tasks), callback);
+    if (!REQ_KEY.get(context)) {
+      REQ_KEY.set(context, true);
+      run(project, context, callback, tasks.toArray(EMPTY_TASKS_ARRAY));
+      REQ_KEY.set(context, false);
+    }
+    else {
+      assertUnsupportedOperation(callback);
+      notifyIfNeeded(run(project, context, tasks.toArray(new ProjectTask[]{})), callback);
+    }
   }
 
   /**
@@ -105,8 +110,15 @@ public abstract class ProjectTaskRunner {
                   @NotNull ProjectTaskContext context,
                   @Nullable ProjectTaskNotification callback,
                   @NotNull ProjectTask... tasks) {
-    assertUnsupportedOperation(callback);
-    notifyIfNeeded(run(project, context, tasks), callback);
+    if (!REQ_KEY.get(context)) {
+      REQ_KEY.set(context, true);
+      run(project, context, callback, Arrays.asList(tasks));
+      REQ_KEY.set(context, false);
+    }
+    else {
+      assertUnsupportedOperation(callback);
+      notifyIfNeeded(run(project, context, tasks), callback);
+    }
   }
 
   @SuppressWarnings("deprecation")
