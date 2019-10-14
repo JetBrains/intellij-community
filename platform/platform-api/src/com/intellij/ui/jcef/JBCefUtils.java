@@ -47,6 +47,7 @@ public class JBCefUtils {
     CefMessageRouter r = id2msgRouter.get(jsRequestID);
     if (r != null) {
       cefClient.removeMessageRouter(r);
+      id2msgRouter.remove(r);
     }
   }
 

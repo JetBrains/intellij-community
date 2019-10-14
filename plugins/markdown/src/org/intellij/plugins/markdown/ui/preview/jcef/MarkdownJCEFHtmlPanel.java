@@ -51,6 +51,11 @@ public class MarkdownJCEFHtmlPanel extends JCEFHtmlPanel implements MarkdownHtml
         } catch (NumberFormatException ignored) {}
         return true;
       });
+    JBCefUtils.addJSHandler(getBrowser().getClient(), JS_REQ_OPEN_IN_BROWSER,
+      (link) -> {
+        MarkdownAccessor.getSafeOpenerAccessor().openLink(link);
+        return true;
+      });
   }
 
   @Override
@@ -113,14 +118,6 @@ public class MarkdownJCEFHtmlPanel extends JCEFHtmlPanel implements MarkdownHtml
   }
 
   private class BridgeSettingListener extends CefLoadHandlerAdapter  {
-    {
-      JBCefUtils.addJSHandler(getBrowser().getClient(), JS_REQ_OPEN_IN_BROWSER,
-        (link) -> {
-          MarkdownAccessor.getSafeOpenerAccessor().openLink(link);
-          return true;
-        });
-    }
-
     @Override
     public void onLoadingStateChange(CefBrowser browser, boolean isLoading, boolean canGoBack, boolean canGoForward) {
       getBrowser().executeJavaScript(
