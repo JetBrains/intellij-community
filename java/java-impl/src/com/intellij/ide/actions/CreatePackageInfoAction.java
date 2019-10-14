@@ -47,7 +47,7 @@ import static com.intellij.ide.fileTemplates.JavaTemplateUtil.INTERNAL_PACKAGE_I
 /**
  * @author Bas Leijdekkers
  */
-public class CreatePackageInfoAction extends CreateFromTemplateActionBase implements DumbAware {
+public class CreatePackageInfoAction extends CreateFromTemplateActionBase {
   public CreatePackageInfoAction() {
     super(IdeBundle.message("action.create.new.package-info.title"), IdeBundle.message("action.create.new.package-info.description"), AllIcons.FileTypes.Java);
   }
