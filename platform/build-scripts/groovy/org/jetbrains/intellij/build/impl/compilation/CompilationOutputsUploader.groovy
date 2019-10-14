@@ -39,17 +39,16 @@ class CompilationOutputsUploader {
   private static final int HASH_SIZE_IN_BYTES = 16
   private static final String PRODUCTION = "production"
   private static final String TEST = "test"
-  private final JpsCompilationPartsUploader uploader
   private final IgnoredPatternSet ignoredPatterns
-  private final NamedThreadPoolExecutor executor
   private final String agentPersistentStorage
   private final CompilationContext context
   private final BuildMessages messages
+  private final String remoteCacheUrl
   private final String commitHash
 
   CompilationOutputsUploader(CompilationContext context, String remoteCacheUrl, String commitHash, String agentPersistentStorage) {
-    this.uploader = new JpsCompilationPartsUploader(remoteCacheUrl, context.messages)
     this.agentPersistentStorage = agentPersistentStorage
+    this.remoteCacheUrl = remoteCacheUrl
     this.messages = context.messages
     this.commitHash = commitHash
     this.context = context
@@ -57,68 +56,79 @@ class CompilationOutputsUploader {
     JpsFileTypesConfigurationImpl configuration = new JpsFileTypesConfigurationImpl()
     ignoredPatterns = new IgnoredPatternSet()
     ignoredPatterns.setIgnoreMasks(configuration.getIgnoredPatternString())
-
-    int executorThreadsCount = Runtime.getRuntime().availableProcessors()
-    context.messages.info("$executorThreadsCount threads will be used for upload")
-    executor = new NamedThreadPoolExecutor("Jps Output Upload", executorThreadsCount)
-    executor.prestartAllCoreThreads()
   }
 
   def upload() {
-    Map<String, String> hashes = new ConcurrentHashMap<String, String>(2048)
+    JpsCompilationPartsUploader uploader = new JpsCompilationPartsUploader(remoteCacheUrl, context.messages)
+    int executorThreadsCount = Runtime.getRuntime().availableProcessors()
+    context.messages.info("$executorThreadsCount threads will be used for upload")
+    NamedThreadPoolExecutor executor = new NamedThreadPoolExecutor("Jps Output Upload", executorThreadsCount)
+    executor.prestartAllCoreThreads()
 
-    def start = System.nanoTime()
-    executor.submit {
-      // Upload jps caches started first because of the significant size of the output
-      def sourcePath = "caches/$commitHash"
-      if (uploader.isExist(sourcePath)) return
-      def dataStorageRoot = context.compilationData.dataStorageRoot
-      File zipFile = new File(dataStorageRoot.parent, commitHash)
-      zipBinaryData(zipFile, dataStorageRoot)
-      uploader.upload(sourcePath, zipFile)
-      FileUtil.delete(zipFile)
-      return
+    try {
+      def start = System.nanoTime()
+      executor.submit {
+        // Upload jps caches started first because of the significant size of the output
+        def sourcePath = "caches/$commitHash"
+        if (uploader.isExist(sourcePath)) return
+        def dataStorageRoot = context.compilationData.dataStorageRoot
+        File zipFile = new File(dataStorageRoot.parent, commitHash)
+        zipBinaryData(zipFile, dataStorageRoot)
+        uploader.upload(sourcePath, zipFile)
+        FileUtil.delete(zipFile)
+        return
+      }
+
+      def productionModules = new File("$context.paths.buildOutputRoot/classes/$PRODUCTION")
+      def productionFiles = productionModules.listFiles()
+
+      def testModules = new File("$context.paths.buildOutputRoot/classes/$TEST")
+      def testFiles = testModules.listFiles()
+
+      int mapCapacity = (productionFiles != null ? productionFiles.length : 0) + (testFiles != null ? testFiles.length : 0)
+      Map<String, String> hashes = new ConcurrentHashMap<String, String>(mapCapacity)
+
+      // Upload production classes output
+      if (productionFiles == null) {
+        context.messages.warning("Production output is empty")
+      }
+      else {
+        uploadCompilationOutputs(productionModules, productionFiles, PRODUCTION, hashes, uploader, executor) {
+          JpsModule module -> getSourcesHash(module, SOURCE, RESOURCE)
+        }
+      }
+
+      // Upload test classes output
+      if (testFiles == null) {
+        context.messages.warning("Test output is empty")
+      }
+      else {
+        uploadCompilationOutputs(testModules, testFiles, TEST, hashes, uploader, executor) {
+          JpsModule module -> getSourcesHash(module, TEST_SOURCE, TEST_RESOURCE)
+        }
+      }
+
+      executor.waitForAllComplete(messages)
+      executor.reportErrors(messages)
+      messages.reportStatisticValue("Compilation upload time, ms", String.valueOf(TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start)))
+
+      // Save and publish metadata file
+      JpsOutputMetadata metadata = new JpsOutputMetadata()
+      metadata.commitHash = commitHash;
+      metadata.files = new TreeMap<String, String>(hashes)
+      String metadataJson = new Gson().toJson(metadata)
+
+      def metadataFile = new File("$agentPersistentStorage/metadata.json")
+      FileUtil.writeToFile(metadataFile, metadataJson)
+      messages.artifactBuilt(metadataFile.absolutePath)
+    } finally {
+      executor.close()
+      StreamUtil.closeStream(uploader)
     }
-
-    // Upload production classes output
-    def productionModules = new File("$context.paths.buildOutputRoot/classes/$PRODUCTION")
-    def moduleFolders = productionModules.listFiles()
-    if (moduleFolders == null) {
-      context.messages.warning("Production output is empty")
-    }
-    else {
-      uploadCompilationOutputs(productionModules, moduleFolders, PRODUCTION, hashes) { JpsModule module -> getSourcesHash(module, SOURCE, RESOURCE) }
-    }
-
-    // Upload test classes output
-    def testModules = new File("$context.paths.buildOutputRoot/classes/$TEST")
-    moduleFolders = testModules.listFiles()
-    if (moduleFolders == null) {
-      context.messages.warning("Test output is empty")
-    }
-    else {
-      uploadCompilationOutputs(testModules, moduleFolders, TEST, hashes) { JpsModule module -> getSourcesHash(module, TEST_SOURCE, TEST_RESOURCE) }
-    }
-
-    executor.waitForAllComplete(messages)
-    executor.reportErrors(messages)
-    executor.close()
-    messages.reportStatisticValue("Compilation upload time, ms", String.valueOf(TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start)))
-    StreamUtil.closeStream(uploader)
-
-    // Save and publish metadata file
-    JpsOutputMetadata metadata = new JpsOutputMetadata()
-    metadata.commitHash = commitHash;
-    metadata.files = new TreeMap<String, String>(hashes)
-    String metadataJson = new Gson().toJson(metadata)
-
-    def metadataFile = new File("$agentPersistentStorage/metadata.json")
-    FileUtil.writeToFile(metadataFile, metadataJson)
-    messages.artifactBuilt(metadataFile.absolutePath)
   }
 
-  def uploadCompilationOutputs(File root, File[] moduleFolders, String prefix, Map<String, String> hashes,
-                               Closure<String> calculateModuleHash) {
+  def uploadCompilationOutputs(File root, File[] moduleFolders, String prefix, Map<String, String> hashes, JpsCompilationPartsUploader uploader,
+                               NamedThreadPoolExecutor executor, Closure<String> calculateModuleHash) {
     moduleFolders.each { File moduleFolder ->
       executor.submit {
         def module = context.findModule(moduleFolder.name)
