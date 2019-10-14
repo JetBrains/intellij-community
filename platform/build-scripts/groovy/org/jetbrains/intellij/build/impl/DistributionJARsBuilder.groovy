@@ -247,8 +247,10 @@ class DistributionJARsBuilder {
     buildOsSpecificBundledPlugins()
     buildNonBundledPlugins()
     buildThirdPartyLibrariesList()
-
-    def loadingOrderFilePath = buildContext.productProperties.productLayout.classesLoadingOrderFilePath
+    
+    def explicitOrderFile = buildContext.productProperties.productLayout.classesLoadingOrderFilePath
+    def loadingOrderFilePath = explicitOrderFile != null ? explicitOrderFile : "$buildContext.paths.temp/jarOrder/order.txt"
+    
     if (loadingOrderFilePath != null) {
       reorderJARs(loadingOrderFilePath)
     }
@@ -459,7 +461,6 @@ class DistributionJARsBuilder {
     }
     def resultFile = new File(finalOrder)
     FileUtil.writeToFile(resultFile, resultLines.join("\n"))
-    buildContext.productProperties.productLayout.classesLoadingOrderFilePath = resultFile.getPath()
     buildContext.messages.info("Completed generating classes order file. Before preparing: ${lines.size()} after: ${resultLines.size()}")
   }
 
@@ -546,7 +547,7 @@ class DistributionJARsBuilder {
   private Map<String, String> getModuleToJarMap(BaseLayout layout, Map<String, String> moduleToJar = new HashMap<>(), String jarPrefix = "") {
     for (def entry : layout.moduleJars.entrySet()) {
       def jarName = entry.key
-      def fixedJarName = getActualModuleJarPath(jarName, entry.value, platform.explicitlySetJarPaths)
+      def fixedJarName = getActualModuleJarPath(jarName, entry.value, layout.explicitlySetJarPaths)
       entry.value.forEach({ el -> moduleToJar.put(el, jarPrefix + fixedJarName) })
     }
     return moduleToJar
