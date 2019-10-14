@@ -10,7 +10,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
@@ -25,7 +24,10 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.function.BiFunction;
 
 import static com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.isCallOf;
@@ -181,7 +183,8 @@ class CollectMigration extends BaseStreamApiMigration {
     StreamEx<? extends PsiExpression> targetReferences() {
       if (myTargetVariable == null) return StreamEx.empty();
       List<PsiElement> usedElements = usedElements().toList();
-      return StreamEx.of(ReferencesSearch.search(myTargetVariable).findAll()).select(PsiReferenceExpression.class)
+      PsiElement block = PsiUtil.getVariableCodeBlock(myTargetVariable, null);
+      return StreamEx.of(VariableAccessUtils.getVariableReferences(myTargetVariable, block))
         .filter(ref -> usedElements.stream().noneMatch(allowedUsage -> PsiTreeUtil.isAncestor(allowedUsage, ref, false)));
     }
 
@@ -804,7 +807,6 @@ class CollectMigration extends BaseStreamApiMigration {
 
       List<? extends PsiExpression> usages = terminal.targetReferences().toList();
       if (usages.isEmpty()) return null;
-      usages.sort(Comparator.comparingInt(ref->ref.getTextOffset()));
       PsiMethodCallExpression toArrayCandidate = StreamEx.of(usages)
         .map(usage -> ExpressionUtils.getCallForQualifier(tryCast(usage, PsiExpression.class)))
         .nonNull().findFirst().orElse(null);

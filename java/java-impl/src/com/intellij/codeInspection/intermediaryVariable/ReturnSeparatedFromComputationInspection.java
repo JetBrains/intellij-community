@@ -7,19 +7,17 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
-import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.InlineUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.Query;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.HighlightUtils;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Contract;
@@ -208,9 +206,7 @@ public class ReturnSeparatedFromComputationInspection extends AbstractBaseJavaLo
       return;
     }
 
-    Query<PsiReference> query = ReferencesSearch.search(context.returnedVariable, new LocalSearchScope(context.variableScope));
-    List<PsiReference> usages = new ArrayList<>(query.findAll());
-    usages.sort(Comparator.comparingInt(ref -> ref.getElement().getTextOffset()));
+    List<PsiReferenceExpression> usages = VariableAccessUtils.getVariableReferences(context.returnedVariable, context.variableScope);
     for (PsiReference usage : usages) {
       PsiElement parent = PsiTreeUtil.skipParentsOfType(usage.getElement(),
                                                         PsiParenthesizedExpression.class, PsiTypeCastExpression.class);
