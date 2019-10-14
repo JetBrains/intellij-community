@@ -7,11 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
 
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
+import java.io.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -25,6 +21,7 @@ public class FileStampStorage extends AbstractStateStorage<String, HashStampPerT
   private static final ThreadLocal<MessageDigest> MESSAGE_DIGEST_THREAD_LOCAL = new ThreadLocal<>();
   private static final String HASH_FUNCTION = "MD5";
   private static final byte CARRIAGE_RETURN_CODE = 13;
+  private static final byte LINE_FEED_CODE = 10;
   private static final int HASH_FUNCTION_SIZE = 16;
   private final FileTimestampStorage myTimestampStorage;
   private final PathRelativizerService myRelativizer;
@@ -122,22 +119,23 @@ public class FileStampStorage extends AbstractStateStorage<String, HashStampPerT
   }
 
   private static byte[] getFileHash(@NotNull File file) throws IOException {
-    byte[] bytes = readAllBytesWithoutCarriageReturnChar(file);
-    return getMessageDigest().digest(bytes);
-  }
-
-  @NotNull
-  private static byte[] readAllBytesWithoutCarriageReturnChar(@NotNull File file) throws IOException {
-    byte[] fileBytes = Files.readAllBytes(file.toPath());
-    byte[] result = new byte[fileBytes.length];
-    int copiedBytes = 0;
-    for (byte fileByte : fileBytes) {
-      if (fileByte != CARRIAGE_RETURN_CODE) {
-        result[copiedBytes] = fileByte;
-        copiedBytes++;
+    MessageDigest md = getMessageDigest();
+    try (BufferedInputStream bis = new BufferedInputStream(new FileInputStream(file))) {
+      byte[] buffer = new byte[4096];
+      int length;
+      while ((length = bis.read(buffer)) != -1) {
+        byte[] result = new byte[length];
+        int copiedBytes = 0;
+        for (int i = 0; i < length; i++) {
+          if (buffer[i] != CARRIAGE_RETURN_CODE && ((i + 1) >= length || buffer[i + 1] != LINE_FEED_CODE)) {
+            result[copiedBytes] = buffer[i];
+            copiedBytes++;
+          }
+        }
+        md.update(copiedBytes != result.length ? Arrays.copyOf(result, result.length - (result.length - copiedBytes)) : result);
       }
     }
-    return copiedBytes != result.length ? Arrays.copyOf(result, result.length - (result.length - copiedBytes)) : result;
+    return md.digest();
   }
 
   @NotNull
