@@ -495,10 +495,14 @@ public final class PerformanceWatcher implements Disposable {
     private final Future<?> myFuture;
 
     FreezeCheckerTask(long start) {
-      myFuture = myExecutor.schedule(() -> edtFrozenPrecise(start), getUnresponsiveInterval(), TimeUnit.MILLISECONDS);
+      myFuture =
+        !myExecutor.isShutdown() ?
+        myExecutor.schedule(() -> edtFrozenPrecise(start), getUnresponsiveInterval(), TimeUnit.MILLISECONDS) :
+        null;
     }
 
     void stop() {
+      if (myFuture == null) return;
       myFuture.cancel(false);
       if (myState.getAndSet(CheckerState.FINISHED) == CheckerState.FREEZE) {
         long end = System.currentTimeMillis();
