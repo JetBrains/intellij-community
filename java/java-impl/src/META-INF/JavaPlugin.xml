@@ -1388,7 +1388,7 @@
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.probable.bugs" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.EndlessStreamInspection"
-                     displayName="Non-short-circuit operation consumes the infinite stream"/>
+                     bundle="messages.InspectionsBundle" key="inspection.endless.stream.description"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ExcessiveLambdaUsage"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.verbose.or.redundant.code.constructs" enabledByDefault="true" level="WARNING"
@@ -1418,7 +1418,7 @@
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids8" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.java18api.Java8MapForEachInspection"
-                     displayName="Map.forEach can be used"/>
+                     bundle="messages.InspectionsBundle" key="inspection.map.foreach.display.name"/>
     <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="Java8MapApi"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids8" enabledByDefault="true" level="WARNING"
@@ -1494,7 +1494,7 @@
                      bundle="messages.InspectionsBundle" key="inspection.fuse.stream.operations.display.name"
                      groupKey="group.names.code.style.issues" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.streamMigration.FuseStreamOperationsInspection"/>
-    <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="SimplifyForEach" displayName="forEach call can be simplified"
+    <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="SimplifyForEach" bundle="messages.InspectionsBundle" key="inspection.simplify.foreach.display.name"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids8" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.intellij.codeInspection.streamMigration.SimplifyForEachInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ComparatorResultComparison"

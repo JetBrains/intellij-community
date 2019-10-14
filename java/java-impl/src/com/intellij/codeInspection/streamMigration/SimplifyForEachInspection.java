@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.streamMigration;
 
 import com.intellij.codeInsight.daemon.GroupNames;
@@ -46,7 +46,7 @@ public class SimplifyForEachInspection extends AbstractBaseJavaLocalInspectionTo
   @NotNull
   @Override
   public String getDisplayName() {
-    return "forEach call can be simplified";
+    return InspectionsBundle.message("inspection.simplify.foreach.display.name");
   }
 
   @NotNull
