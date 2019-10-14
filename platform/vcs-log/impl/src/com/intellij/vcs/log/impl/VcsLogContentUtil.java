@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.Arrays;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -51,11 +52,24 @@ public class VcsLogContentUtil {
       vcsLogPanel = (VcsLogPanel)c;
     }
     else if (c instanceof JPanel) {
-      vcsLogPanel = ContainerUtil.findInstance(c.getComponents(), VcsLogPanel.class);
+      vcsLogPanel = recursiveFindLogPanelInstance(c);
     }
 
     if (vcsLogPanel != null) {
       return vcsLogPanel.getUi();
+    }
+    return null;
+  }
+
+  @Nullable
+  private static VcsLogPanel recursiveFindLogPanelInstance(@NotNull JComponent component) {
+    VcsLogPanel instance = ContainerUtil.findInstance(component.getComponents(), VcsLogPanel.class);
+    if (instance != null) return instance;
+    for (Component childComponent : component.getComponents()) {
+      if (childComponent instanceof JComponent) {
+        instance = recursiveFindLogPanelInstance((JComponent)childComponent);
+        if (instance != null) return instance;
+      }
     }
     return null;
   }
