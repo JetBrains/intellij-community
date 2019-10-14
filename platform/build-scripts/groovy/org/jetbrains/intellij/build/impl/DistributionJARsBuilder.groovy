@@ -247,12 +247,17 @@ class DistributionJARsBuilder {
     buildOsSpecificBundledPlugins()
     buildNonBundledPlugins()
     buildThirdPartyLibrariesList()
-    
-    def explicitOrderFile = buildContext.productProperties.productLayout.classesLoadingOrderFilePath
-    def loadingOrderFilePath = explicitOrderFile != null ? explicitOrderFile : "$buildContext.paths.temp/jarOrder/order.txt"
-    
-    if (loadingOrderFilePath != null) {
-      reorderJARs(loadingOrderFilePath)
+    reorderJARs()
+  }
+
+  void reorderJARs() {
+    if (!buildContext.options.buildStepsToSkip.contains(BuildOptions.GENERATE_JAR_ORDER_STEP)) {
+      def explicitOrderFile = buildContext.productProperties.productLayout.classesLoadingOrderFilePath
+      def loadingOrderFilePath = explicitOrderFile != null ? explicitOrderFile : "$buildContext.paths.temp/jarOrder/order.txt"
+
+      if (loadingOrderFilePath != null && new File(loadingOrderFilePath).exists()) {
+        reorderJARs(loadingOrderFilePath)
+      }
     }
   }
 
