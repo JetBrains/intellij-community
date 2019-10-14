@@ -243,10 +243,25 @@ public class RedundantComparatorComparingInspection extends AbstractBaseJavaLoca
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiMethodCallExpression call = PsiTreeUtil.getParentOfType(descriptor.getStartElement(), PsiMethodCallExpression.class);
       if (call == null) return;
+      String params = getGenericParameters(call);
       PsiExpression[] args = call.getArgumentList().getExpressions();
       CommentTracker ct = new CommentTracker();
-      String replacement = JAVA_UTIL_MAP_ENTRY + "." + myReplacementMethod + "(" + (args.length == 2 ? ct.text(args[1]) : "") + ")";
-      ct.replaceAndRestoreComments(call, replacement);
+      String replacement = JAVA_UTIL_MAP_ENTRY + "." + params + myReplacementMethod + "(" + (args.length == 2 ? ct.text(args[1]) : "") + ")";
+      PsiElement result = ct.replaceAndRestoreComments(call, replacement);
+      RemoveRedundantTypeArgumentsUtil.removeRedundantTypeArguments(result);
+    }
+
+    @NotNull
+    private static String getGenericParameters(PsiMethodCallExpression call) {
+      PsiClassType callType = tryCast(call.getType(), PsiClassType.class);
+      if (callType == null || !callType.rawType().equalsToText(JAVA_UTIL_COMPARATOR)) return "";
+      PsiType[] parameters = callType.getParameters();
+      if (parameters.length != 1) return "";
+      PsiClassType entryClass = tryCast(parameters[0], PsiClassType.class);
+      if (entryClass == null || !entryClass.rawType().equalsToText(JAVA_UTIL_MAP_ENTRY)) return "";
+      PsiType[] entryClassParameters = entryClass.getParameters();
+      if (entryClassParameters.length != 2) return "";
+      return "<" + entryClassParameters[0].getCanonicalText() + "," + entryClassParameters[1].getCanonicalText() + ">";
     }
   }
 }
