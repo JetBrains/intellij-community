@@ -2,7 +2,6 @@
 package com.intellij.ide.cds
 
 import com.intellij.diagnostic.VMOptions
-import com.intellij.execution.CommandLineUtil
 import com.intellij.execution.process.OSProcessUtil
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
@@ -141,17 +140,19 @@ object CDSManager {
     indicator.text2 = "Generating classes archive..."
     indicator.checkCanceled()
 
+    val logLevel = if (LOG.isDebugEnabled) "=debug" else ""
     val args = listOf(
-      "-Xlog:cds" + (if (LOG.isDebugEnabled) "=debug" else ""),
+      "-Djava.class.path=${ManagementFactory.getRuntimeMXBean().classPath}".quotedWithoutLastBSlash,
+      "-Xlog:cds$logLevel",
+      "-Xlog:class+path$logLevel",
+
       "-Xshare:dump",
       "-XX:+UnlockDiagnosticVMOptions",
-      "-XX:SharedClassListFile=${paths.classesListFile}",
-      "-XX:SharedArchiveFile=${paths.classesArchiveFile}",
-      "-Djava.class.path=" + ManagementFactory.getRuntimeMXBean().classPath
+      "-XX:SharedClassListFile=${paths.classesListFile}".quotedWithoutLastBSlash,
+      "-XX:SharedArchiveFile=${paths.classesArchiveFile}".quotedWithoutLastBSlash
     )
 
-    //hack - use actual IJ classpath
-    paths.classesPathFile.writeText(CommandLineUtil.toCommandLine("mock-executable", args).drop(1).joinToString("\n"))
+    paths.classesPathFile.writeText(args.joinToString("\n"))
 
     val durationLink = measureTimeMillis {
       val ext = if (SystemInfo.isWindows) ".exe" else ""
@@ -217,6 +218,11 @@ object CDSManager {
   }
 
   private operator fun File.div(s: String) = File(this, s)
+
+  private val String.quotedWithoutLastBSlash: String get() {
+    // back slash may escape double-quote ", we are save to trim it here
+    return "\"" + this.trimEnd('\\') + "\""
+  }
 
   private val ourIsRunning = AtomicBoolean(false)
 
