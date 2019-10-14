@@ -181,6 +181,8 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
       }
     }
 
+    options.isNewProject = !ProjectUtil.isValidProjectPath(baseDir);
+
     SaveAndSyncHandler saveAndSyncHandler = ApplicationManager.getApplication().getServiceIfCreated(SaveAndSyncHandler.class);
     if (saveAndSyncHandler != null) {
       saveAndSyncHandler.blockSyncOnFrameActivation();
