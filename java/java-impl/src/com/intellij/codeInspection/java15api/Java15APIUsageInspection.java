@@ -50,6 +50,7 @@ import java.util.*;
 
 /**
  * @author max
+ * To generate apiXXX.txt uncomment and run {@link com.intellij.java.codeInspection.JavaAPIUsagesInspectionTest#testCollectSinceApiUsages}
  */
 public class Java15APIUsageInspection extends AbstractBaseJavaLocalInspectionTool {
   public static final String SHORT_NAME = "Since15";
