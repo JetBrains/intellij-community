@@ -532,7 +532,7 @@ public class HelpTooltip {
 
     private String getShortcutAsHTML() {
       return StringUtil.isNotEmpty(shortcut) ?
-             String.format(" <font color=\"%s\">%s</font>", ColorUtil.toHtmlColor(SHORTCUT_COLOR), shortcut) :
+             String.format("&nbsp;&nbsp;<font color=\"%s\">%s</font>", ColorUtil.toHtmlColor(SHORTCUT_COLOR), shortcut) :
              "";
     }
   }
