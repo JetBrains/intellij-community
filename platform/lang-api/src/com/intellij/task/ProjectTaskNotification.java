@@ -6,14 +6,14 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Vladislav.Soroka
+ * @deprecated replaced in with promises of {@link ProjectTaskManager.Result} and {@link ProjectTaskRunner.Result}
  */
+@Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
 public interface ProjectTaskNotification {
   /**
    * @param executionResult provides aggregated information about the {@link ProjectTask} execution
-   * @deprecated use {@link #finished(ProjectTaskContext, ProjectTaskResult)} instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
   default void finished(@NotNull ProjectTaskResult executionResult) {}
 
   /**

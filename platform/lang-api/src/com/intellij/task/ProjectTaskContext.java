@@ -97,7 +97,7 @@ public class ProjectTaskContext extends UserDataHolderBase {
   /**
    * Returns roots of the files generated during the task session.
    * Note, generated files collecting is disabled by default.
-   * It can be requested using the {@link #enableCollectionOfGeneratedFiles()} method by the task initiator, see {@link ProjectTaskManager#run(ProjectTaskContext, ProjectTask, ProjectTaskNotification)}.
+   * It can be requested using the {@link #enableCollectionOfGeneratedFiles()} method by the task initiator, see {@link ProjectTaskManager#run(ProjectTaskContext, ProjectTask)}.
    * Or using the {@link ProjectTaskListener#started(ProjectTaskContext)} event.
    */
   @NotNull
@@ -109,7 +109,7 @@ public class ProjectTaskContext extends UserDataHolderBase {
   /**
    * Returns files generated during the task session in the specified root.
    * Note, generated files collecting is disabled by default.
-   * It can be requested using the {@link #enableCollectionOfGeneratedFiles()} method by the task initiator, see {@link ProjectTaskManager#run(ProjectTaskContext, ProjectTask, ProjectTaskNotification)}.
+   * It can be requested using the {@link #enableCollectionOfGeneratedFiles()} method by the task initiator, see {@link ProjectTaskManager#run(ProjectTaskContext, ProjectTask)}.
    * Or using the {@link ProjectTaskListener#started(ProjectTaskContext)} event.
    */
   @NotNull
@@ -137,7 +137,7 @@ public class ProjectTaskContext extends UserDataHolderBase {
    * {@link ProjectTaskRunner}s can use it to report output paths of generated files produced during some task execution.
    * <p>
    * Note, generated files collecting is disabled by default.
-   * It can be requested using the {@link #enableCollectionOfGeneratedFiles()} method by the task initiator, see {@link ProjectTaskManager#run(ProjectTaskContext, ProjectTask, ProjectTaskNotification)}.
+   * It can be requested using the {@link #enableCollectionOfGeneratedFiles()} method by the task initiator, see {@link ProjectTaskManager#run(ProjectTaskContext, ProjectTask)}.
    * Or using the {@link ProjectTaskListener#started(ProjectTaskContext)} event.
    * <p>
    * The method should be used ONLY if the {@link ProjectTaskRunner} doesn't support {@link #fileGenerated} events.

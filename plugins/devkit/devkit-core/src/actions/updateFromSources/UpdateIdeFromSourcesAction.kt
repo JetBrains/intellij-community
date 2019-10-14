@@ -28,10 +28,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.systemIndependentPath
-import com.intellij.task.ProjectTaskContext
 import com.intellij.task.ProjectTaskManager
-import com.intellij.task.ProjectTaskNotification
-import com.intellij.task.ProjectTaskResult
 import com.intellij.util.SystemProperties
 import org.jetbrains.idea.devkit.util.PsiUtil
 import java.io.File
@@ -93,13 +90,13 @@ open class UpdateIdeFromSourcesAction
     val deployDir = "$devIdeaHome/out/deploy"
     val backupDir = "$devIdeaHome/out/backup-before-update-from-sources"
     val params = createScriptJavaParameters(devIdeaHome, project, deployDir, scriptFile, bundledPluginDirsToSkip) ?: return
-    ProjectTaskManager.getInstance(project).buildAllModules(object : ProjectTaskNotification {
-      override fun finished(context: ProjectTaskContext, executionResult: ProjectTaskResult) {
-        if (!executionResult.isAborted && executionResult.errors == 0) {
+    ProjectTaskManager.getInstance(project)
+      .buildAllModules()
+      .onSuccess {
+        if (!it.isAborted && !it.hasErrors()) {
           runUpdateScript(params, project, workIdeHome, deployDir, backupDir)
         }
       }
-    })
   }
 
   private fun checkIdeHome(workIdeHome: String): String? {

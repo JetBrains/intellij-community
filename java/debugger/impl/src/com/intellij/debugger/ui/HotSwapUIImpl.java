@@ -321,7 +321,7 @@ public class HotSwapUIImpl extends HotSwapUI {
       else {
         ProjectTask buildProjectTask = projectTaskManager.createAllModulesBuildTask(true, session.getProject());
         ProjectTaskContext context = new ProjectTaskContext(callback).withUserData(HOT_SWAP_CALLBACK_KEY, callback);
-        projectTaskManager.run(context, buildProjectTask, null);
+        projectTaskManager.run(context, buildProjectTask);
       }
     }
     else {
@@ -361,18 +361,14 @@ public class HotSwapUIImpl extends HotSwapUI {
     }
 
     @Override
-    public void finished(@NotNull ProjectTaskContext context, @NotNull ProjectTaskResult executionResult) {
-      if (myProject.isDisposed()) {
-        return;
-      }
+    public void finished(@NotNull ProjectTaskManager.Result result) {
+      if (myProject.isDisposed()) return;
+      if (!hasCompilationResults(result)) return;
 
-      if (!hasCompilationResults(executionResult)) return;
-
-      int errors = executionResult.getErrors();
-      boolean aborted = executionResult.isAborted();
-      if (errors == 0 && !aborted && !SKIP_HOT_SWAP_KEY.getRequired(context)) {
+      ProjectTaskContext context = result.getContext();
+      if (!result.hasErrors() && !result.isAborted() && !SKIP_HOT_SWAP_KEY.getRequired(context)) {
         for (HotSwapVetoableListener listener : myListeners) {
-          if (!listener.shouldHotSwap(context, executionResult)) {
+          if (!listener.shouldHotSwap(context)) {
             return;
           }
         }
@@ -406,9 +402,9 @@ public class HotSwapUIImpl extends HotSwapUI {
       }
     }
 
-    private boolean hasCompilationResults(@NotNull ProjectTaskResult executionResult) {
-      return executionResult.anyMatch((task, state) -> task instanceof ModuleBuildTask &&
-                                                       !state.isFailed() && !state.isSkipped());
+    private boolean hasCompilationResults(@NotNull ProjectTaskManager.Result result) {
+      return result.contains((task, state) -> task instanceof ModuleBuildTask &&
+                                              !state.isFailed() && !state.isSkipped());
     }
   }
 
