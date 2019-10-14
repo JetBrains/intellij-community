@@ -23,6 +23,7 @@ import com.intellij.openapi.progress.ProgressIndicatorProvider
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.SmartList
+import com.intellij.util.SystemProperties
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.storage.HeavyProcessLatch
 import com.intellij.util.messages.*
@@ -299,9 +300,14 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
     }
 
     val result = getComponent(serviceClass) ?: return null
-    PluginException.logPluginError(LOG, "$key requested as a service, but it is a component - convert it to a service or " +
-                                        "change call to ${if (parent == null) "ApplicationManager.getApplication().getComponent()" else "project.getComponent()"}",
-                                   null, serviceClass)
+    val message = "$key requested as a service, but it is a component - convert it to a service or " +
+                  "change call to ${if (parent == null) "ApplicationManager.getApplication().getComponent()" else "project.getComponent()"}"
+    if (SystemProperties.`is`("idea.test.getService.assert.as.warn")) {
+      LOG.warn(message)
+    }
+    else {
+      PluginException.logPluginError(LOG, message, null, serviceClass)
+    }
     return result
   }
 
