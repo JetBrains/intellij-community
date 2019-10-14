@@ -22,7 +22,7 @@ import java.util.concurrent.Future;
  */
 public abstract class SwingWorker<T> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.concurrency.SwingWorker");
-  private final Future<?> myFuture;
+  private Future<?> myFuture;
   private volatile T value;
   // see getValue(), setValue()
   private final ModalityState myModalityState;
@@ -77,6 +77,9 @@ public abstract class SwingWorker<T> {
    * @return the value created by the {@code construct} method
    */
   public T get() {
+    if (myFuture == null) {
+      throw new IllegalStateException("The start method has not been called.");
+    }
     try {
       myFuture.get();
       return getValue();
@@ -88,16 +91,17 @@ public abstract class SwingWorker<T> {
     }
   }
 
-  /**
-   * Start a thread that will call the {@code construct} method
-   * and then exit.
-   */
   public SwingWorker() {
     myModalityState = ModalityState.current();
     if (LOG.isDebugEnabled()) {
       LOG.debug("Created SwingWorker " + this + " with modality state " + myModalityState);
     }
+  }
 
+  /**
+   * Start the worker thread.
+   */
+  public void start() {
     myFuture = ApplicationManager.getApplication().executeOnPooledThread(() -> {
       try {
         setValue(construct());
@@ -115,11 +119,5 @@ public abstract class SwingWorker<T> {
       }
       ApplicationManager.getApplication().invokeLater(() -> finished(), myModalityState);
     });
-  }
-
-  /**
-   * Start the worker thread.
-   */
-  public void start() {
   }
 }
