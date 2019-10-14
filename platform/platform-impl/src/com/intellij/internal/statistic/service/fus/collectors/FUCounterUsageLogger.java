@@ -19,6 +19,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * <p>Used to record IDE events, e.g. invoked action, opened dialog.</p><br/>
+ *
+ * <p>To record IDE/project state use {@link ApplicationUsagesCollector} or {@link ProjectUsagesCollector}<p/>
+ */
 public class FUCounterUsageLogger {
   private static final Logger LOG = Logger.getInstance(FUCounterUsageLogger.class);
 
@@ -26,7 +31,8 @@ public class FUCounterUsageLogger {
   private static final int LOG_REGISTERED_INITIAL_DELAY_MIN = 5;
 
   /**
-   * System event which indicates that the counter collector is enabled in current IDE build, can be used to calculate the base line
+   * System event which indicates that the counter collector is enabled in current IDE build.
+   * Used to calculate metric baseline.
    */
   private static final String REGISTERED = "registered";
   private static final String[] GENERAL_GROUPS = new String[]{
