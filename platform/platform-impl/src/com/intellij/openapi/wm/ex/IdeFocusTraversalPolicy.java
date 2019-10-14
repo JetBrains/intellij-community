@@ -5,11 +5,14 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.fileEditor.impl.EditorWindowHolder;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
+import java.util.Arrays;
+import java.util.List;
 
 public class IdeFocusTraversalPolicy extends LayoutFocusTraversalPolicy {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy");
@@ -24,6 +27,26 @@ public class IdeFocusTraversalPolicy extends LayoutFocusTraversalPolicy {
 
   public static JComponent getPreferredFocusedComponent(@NotNull final JComponent component) {
     return getPreferredFocusedComponent(component, null);
+  }
+
+  @Override
+  public Component getComponentAfter(Container aContainer, Component aComponent) {
+    Component after = super.getComponentAfter(aContainer, aComponent);
+    if (!after.isFocusable()) {
+      List<Component> components = UIUtil.uiTraverser(after).toList();
+      // todo substitute with a stream
+      for (int i = 0; i < components.size(); i++) {
+        Component component = components.get(i);
+        // not sure if the collection includes after
+        if (component.equals(after)) {
+          continue;
+        }
+        if (component.isFocusable()) {
+          return component;
+        }
+      }
+    }
+    return after;
   }
 
   /**

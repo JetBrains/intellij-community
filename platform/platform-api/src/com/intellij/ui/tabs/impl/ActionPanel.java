@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.ui.InplaceButton;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.tabs.TabInfo;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -27,7 +28,10 @@ public class ActionPanel extends NonOpaquePanel {
     ActionGroup group = tabInfo.getTabLabelActions() != null ? tabInfo.getTabLabelActions() : new DefaultActionGroup();
     AnAction[] children = group.getChildren(null);
 
+    setFocusable(false);
+
     final NonOpaquePanel wrapper = new NonOpaquePanel(new BorderLayout());
+    wrapper.setFocusable(false);
     wrapper.add(Box.createHorizontalStrut(2), BorderLayout.WEST);
     NonOpaquePanel inner = new NonOpaquePanel();
     inner.setLayout(new BoxLayout(inner, BoxLayout.X_AXIS));
@@ -49,10 +53,13 @@ public class ActionPanel extends NonOpaquePanel {
       
       myButtons.add(eachButton);
       InplaceButton component = eachButton.getComponent();
+      component.setFocusable(false);
       inner.add(component);
     }
 
     add(wrapper);
+
+    UIUtil.uiTraverser(wrapper).forEach(c -> c.setFocusable(false));
   }
 
   public boolean update() {

@@ -114,7 +114,6 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   public static final Key<Boolean> CLOSING_TO_REOPEN = Key.create("CLOSING_TO_REOPEN");
   public static final String FILE_EDITOR_MANAGER = "FileEditorManager";
 
-  private volatile JPanel myPanels;
   private EditorsSplitters mySplitters;
   private final Project myProject;
   private final List<Pair<VirtualFile, EditorWindow>> mySelectionHistory = new ArrayList<>();
@@ -244,7 +243,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   @Override
   public JComponent getComponent() {
     initUI();
-    return myPanels;
+    return mySplitters;
   }
 
   @NotNull
@@ -317,16 +316,14 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   private final Object myInitLock = new Object();
 
   private void initUI() {
-    if (myPanels == null) {
+    if (mySplitters == null) {
       synchronized (myInitLock) {
-        if (myPanels == null) {
+        if (mySplitters == null) {
           final JPanel panel = new JPanel(new BorderLayout());
           panel.setOpaque(false);
           panel.setBorder(new MyBorder());
           mySplitters = new EditorsSplitters(this, true);
           Disposer.register(this, mySplitters);
-          panel.add(mySplitters, BorderLayout.CENTER);
-          myPanels = panel;
         }
       }
     }
@@ -1927,7 +1924,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     }
 
     private void handleUiSettingChange(UISettings uiSettings) {
-      myPanels.revalidate();
+      mySplitters.revalidate();
       for (EditorsSplitters each : getAllSplitters()) {
         each.setTabsPlacement(uiSettings.getEditorTabPlacement());
         each.trimToSize(uiSettings.getEditorTabLimit());

@@ -24,6 +24,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.*;
+import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.openapi.wm.ex.IdeFrameEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
@@ -190,7 +191,7 @@ public final class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAc
 
     MnemonicHelper.init(myFrame);
 
-    myFrame.setFocusTraversalPolicy(new LayoutFocusTraversalPolicy());
+    myFrame.setFocusTraversalPolicy(new IdeFocusTraversalPolicy());
 
     // to show window thumbnail under Macs
     // http://lists.apple.com/archives/java-dev/2009/Dec/msg00240.html
