@@ -11,7 +11,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
-import java.util.Arrays;
 import java.util.List;
 
 public class IdeFocusTraversalPolicy extends LayoutFocusTraversalPolicy {
@@ -32,21 +31,21 @@ public class IdeFocusTraversalPolicy extends LayoutFocusTraversalPolicy {
   @Override
   public Component getComponentAfter(Container aContainer, Component aComponent) {
     Component after = super.getComponentAfter(aContainer, aComponent);
-    if (!after.isFocusable()) {
-      List<Component> components = UIUtil.uiTraverser(after).toList();
-      // todo substitute with a stream
-      for (int i = 0; i < components.size(); i++) {
-        Component component = components.get(i);
-        // not sure if the collection includes after
-        if (component.equals(after)) {
-          continue;
-        }
-        if (component.isFocusable()) {
-          return component;
-        }
+    if (after != null) return after.isFocusable() ? after : findFocusableComponentIn((JComponent)after, null);
+    return findFocusableComponentIn(aContainer, aComponent);
+  }
+
+  private static Component findFocusableComponentIn(Container searchIn, Component toSkip) {
+    List<Component> components = UIUtil.uiTraverser(searchIn).toList();
+    for (Component component : components) {
+      if (component.equals(toSkip)) {
+        continue;
+      }
+      if (component.isFocusable()) {
+        return component;
       }
     }
-    return after;
+    return searchIn;
   }
 
   /**
