@@ -36,4 +36,8 @@ public interface PsiField extends PsiJvmMember, PsiVariable, PsiDocCommentOwner,
   @NotNull
   @Override
   PsiType getType();
+
+  @NotNull
+  @Override
+  String getName();
 }

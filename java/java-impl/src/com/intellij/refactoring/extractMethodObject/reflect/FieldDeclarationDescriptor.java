@@ -21,7 +21,7 @@ public class FieldDeclarationDescriptor implements ItemToReplaceDescriptor {
   @Nullable
   public static ItemToReplaceDescriptor createIfInaccessible(@NotNull PsiField field) {
     String fieldName = field.getName();
-    if (!PsiReflectionAccessUtil.isAccessibleType(field.getType()) && fieldName != null) {
+    if (!PsiReflectionAccessUtil.isAccessibleType(field.getType())) {
       return new FieldDeclarationDescriptor(field, fieldName);
     }
 

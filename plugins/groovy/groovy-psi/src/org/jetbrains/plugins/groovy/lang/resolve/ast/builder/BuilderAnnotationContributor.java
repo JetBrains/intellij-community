@@ -60,7 +60,6 @@ public abstract class BuilderAnnotationContributor implements AstTransformationS
 
   private static PsiField[] filterFields(Collection<? extends PsiField> collectedFields) {
     return collectedFields.stream()
-      .filter(field -> field.getName() != null)
       .filter(field -> !field.hasModifierProperty(PsiModifier.STATIC))
       .filter(field -> {
         PsiClass aClass = field.getContainingClass();

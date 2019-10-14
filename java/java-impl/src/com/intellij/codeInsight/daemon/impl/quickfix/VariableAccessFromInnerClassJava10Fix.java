@@ -24,7 +24,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static com.intellij.util.ObjectUtils.tryCast;
@@ -214,7 +213,6 @@ public class VariableAccessFromInnerClassJava10Fix extends BaseIntentionAction {
       if (!TypeUtils.isJavaLangObject(anonymousClass.getBaseClassType())) return null;
       if (Arrays.stream(anonymousClass.getFields())
         .map(field -> field.getName())
-        .filter(Objects::nonNull)
         .anyMatch(name -> name.equals(variableName))) {
         return null;
       }

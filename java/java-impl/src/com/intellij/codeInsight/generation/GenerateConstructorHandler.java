@@ -253,7 +253,6 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
     List<PsiParameter> fieldParams = new ArrayList<>();
     for (PsiField field : fields) {
       String fieldName = field.getName();
-      assert fieldName != null : field;
       String name = javaStyle.variableNameToPropertyName(fieldName, VariableKind.FIELD);
       String parmName = javaStyle.propertyNameToVariableName(name, VariableKind.PARAMETER);
       parmName = javaStyle.suggestUniqueVariableName(parmName, dummyConstructor, true);

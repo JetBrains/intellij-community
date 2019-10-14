@@ -123,7 +123,7 @@ public class FormReferencesSearcher implements QueryExecutor<PsiReference, Refer
                                                         PsiManager psiManager, final PsiEnumConstant enumConstant,
                                                         GlobalSearchScope scope, final LocalSearchScope filterScope) {
     String className = ReadAction.compute(() -> enumConstant.getName());
-    return className == null || processReferencesInUIFormsInner(className, enumConstant, processor, scope, psiManager, filterScope);
+    return processReferencesInUIFormsInner(className, enumConstant, processor, scope, psiManager, filterScope);
   }
 
   private static boolean processReferencesInUIFormsInner(String name,

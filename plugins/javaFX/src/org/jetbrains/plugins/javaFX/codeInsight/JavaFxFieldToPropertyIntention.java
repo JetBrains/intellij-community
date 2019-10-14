@@ -179,7 +179,7 @@ public class JavaFxFieldToPropertyIntention extends PsiElementBaseIntentionActio
       final String fieldName = field.getName();
       final PsiClass containingClass = field.getContainingClass();
       final PsiTypeElement typeElement = field.getTypeElement();
-      if (fieldName != null && containingClass != null && typeElement != null) {
+      if (containingClass != null && typeElement != null) {
         final ObservableType observableType = ObservableType.createObservableType(field, project);
         if (observableType != null) {
           return new PropertyInfo(field, containingClass, typeElement, fieldName, observableType);

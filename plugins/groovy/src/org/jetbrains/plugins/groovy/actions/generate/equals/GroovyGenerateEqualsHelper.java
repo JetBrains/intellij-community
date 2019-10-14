@@ -449,7 +449,6 @@ public class GroovyGenerateEqualsHelper {
       if (!(f1.getType() instanceof PsiPrimitiveType) && f2.getType() instanceof PsiPrimitiveType) return 1;
       final String name1 = f1.getName();
       final String name2 = f2.getName();
-      assert name1 != null && name2 != null;
       return name1.compareTo(name2);
     }
   }
