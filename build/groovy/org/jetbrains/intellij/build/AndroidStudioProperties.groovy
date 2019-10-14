@@ -294,18 +294,6 @@ class AndroidStudioProperties extends BaseIdeaProperties {
     }
 
     // Profiler prebuilt binaries:
-    buildContext.ant.copy(todir: "$androidPluginLib") {
-      fileset(file: "$root/bazel-genfiles/tools/base/transport/proto/transport_java_proto.jar")
-    }
-    buildContext.ant.copy(todir: "$androidPluginLib") {
-      fileset(file: "$root/bazel-genfiles/tools/base/profiler/perfetto-protos.jar")
-    }
-    buildContext.ant.copy(todir: "$androidPluginLib") {
-      fileset(file: "$root/bazel-genfiles/tools/base/bazel/studio-proto.jar")
-    }
-    buildContext.ant.copy(todir: "$androidPluginLib") {
-      fileset(file: "$root/bazel-genfiles/tools/base/bazel/studio-grpc.jar")
-    }
     buildContext.ant.copy(todir: "$androidPluginLib/../resources") {
       fileset(file: "$root/bazel-genfiles/tools/base/profiler/transform/profilers-transform.jar")
     }
