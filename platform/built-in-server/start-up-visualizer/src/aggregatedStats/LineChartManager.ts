@@ -6,38 +6,31 @@ import {ChartSettings} from "@/aggregatedStats/ChartSettings"
 import {addExportMenu} from "@/charts/ChartManager"
 import HumanizeDuration from "humanize-duration"
 import {InfoResponse, Metrics} from "@/aggregatedStats/model"
-
-interface ChartConfigurator {
-  configureXAxis(chart: am4charts.XYChart): void
-
-  configureSeries(series: am4charts.LineSeries): void
-}
-
-class SortedByCategory implements ChartConfigurator {
-  configureXAxis(chart: am4charts.XYChart): void {
-    const axis = new am4charts.CategoryAxis()
-    axis.dataFields.category = "build"
-
-    chart.xAxes.push(axis)
-
-    // https://www.amcharts.com/docs/v4/tutorials/handling-repeating-categories-on-category-axis/
-    axis.renderer.labels.template.adapter.add("textOutput", (text) => {
-      if (text == null) {
-        return text
-      }
-
-      const suffixIndex = text.indexOf(" (")
-      return suffixIndex === -1 ? text : text.substring(0, suffixIndex)
-    })
-  }
-
-  configureSeries(series: am4charts.LineSeries) {
-    series.dataFields.categoryX = "build"
-  }
-}
+import {ChartConfigurator, SortedByCategory} from "@/aggregatedStats/ChartConfigurator"
 
 export class LineChartManager {
   private readonly chart: am4charts.XYChart
+
+  private dataManager: LineChartDataManager | null = null
+
+  // use adapter to use HumanizeDuration
+  private toolTipAdapter = (_value: string | undefined, target: am4charts.LineSeries) => {
+    const dataItem = target.tooltipDataItem
+    const dataContext: any = dataItem == null ? null : dataItem.dataContext
+    if (dataContext == null) {
+      return _value
+    }
+
+    // RFC1123
+    let html = `<table class="chartTooltip"><caption>${this.chart.dateFormatter.format(dataContext.t, "EEE, dd MMM yyyy HH:mm:ss zzz")}</caption>`
+
+    for (const metric of this.dataManager!!.metricDescriptors) {
+      const value = dataContext[(metric.key)]
+      html += `<tr><th>${metric.name}</th><td>${shortEnglishHumanizer(value)}</td></tr>`
+    }
+    html += `</table>`
+    return html
+  }
 
   constructor(container: HTMLElement,
               private readonly chartSettings: ChartSettings,
@@ -50,8 +43,9 @@ export class LineChartManager {
     addExportMenu(chart)
 
     // const dateAxis = chart.xAxes.push(new am4charts.DateAxis())
-    configurator.configureXAxis(chart)
     // @ts-ignore
+    const xAxis = configurator.configureXAxis(chart)
+    // xAxis.groupData = true
     // DurationAxis doesn't work due to some unclear bug
     const valueAxis = chart.yAxes.push(new am4charts.ValueAxis())
     // const durationAxis = chart.yAxes.push(new am4charts.DurationAxis())
@@ -63,9 +57,14 @@ export class LineChartManager {
 
     const cursor = new am4charts.XYCursor()
     cursor.behavior = "zoomXY"
-    // cursor.xAxis = dateAxis
+    // cursor.fullWidthLineX = true
+    // cursor.xAxis = xAxis
     // cursor.snapToSeries = series
     chart.cursor = cursor
+
+    // chart.cursor.lineX.strokeWidth = 0;
+    // chart.cursor.lineX.fill = chart.colors.getIndex(0)
+    // chart.cursor.lineX.fillOpacity = 0.1;
 
     // create vertical scrollbar and place it before the value axis
     chart.scrollbarY = new am4core.Scrollbar()
@@ -105,6 +104,7 @@ export class LineChartManager {
 
   render(dataManager: LineChartDataManager): void {
     const chart = this.chart
+    this.dataManager = dataManager
 
     const scrollbarX = chart.scrollbarX as am4charts.XYChartScrollbar
     const oldSeries = new Map<string, am4charts.LineSeries>()
@@ -129,6 +129,18 @@ export class LineChartManager {
       }
     }
 
+    const firstSeries = chart.series.getIndex(0)
+    if (firstSeries != null && !firstSeries.adapter.isEnabled("tooltipHTML")) {
+      firstSeries.adapter.add("tooltipHTML", this.toolTipAdapter as any)
+      const tooltip = firstSeries.tooltip!!
+      tooltip.pointerOrientation = "down"
+      tooltip.background.fillOpacity = 0.4
+
+      tooltip.adapter.add("y", (_x, _target) => {
+        return (this.chart.yAxesAndPlotContainer.y as number) + 20
+      })
+    }
+
     oldSeries.forEach(value => {
       chart.series.removeIndex(chart.series.indexOf(value))
       if (this.chartSettings.showScrollbarXPreview) {
@@ -148,21 +160,6 @@ export class LineChartManager {
     // duration
     series.dataFields.valueY = metric.key
 
-    // use adapter to use HumanizeDuration
-    series.adapter.add("tooltipText", (value, target) => {
-      const dataItem = target.tooltipDataItem
-      const dataContext: any = dataItem == null ? null : dataItem.dataContext
-      if (dataContext != null) {
-        const value = dataContext[(metric.key)]
-        if (value != null) {
-          // RFC1123
-          // noinspection SpellCheckingInspection
-          return `${metric.name}: ${HumanizeDuration(value)}\nreport time: ${series.dateFormatter.format(dataContext.t, "EEE, dd MMM yyyy HH:mm:ss zzz")}`
-        }
-      }
-      return value
-    })
-
     if (metric.hiddenByDefault) {
       series.hidden = true
     }
@@ -181,3 +178,22 @@ export class LineChartManager {
       })
   }
 }
+
+const shortEnglishHumanizer = HumanizeDuration.humanizer({
+  language: "shortEn",
+  maxDecimalPoints: 2,
+  // exclude "s" seconds to force using ms for consistency
+  units: ["h", "m", "ms"],
+  languages: {
+    shortEn: {
+      y: () => 'y',
+      mo: () => 'mo',
+      w: () => 'w',
+      d: () => 'd',
+      h: () => 'h',
+      m: () => 'm',
+      s: () => 's',
+      ms: () => 'ms',
+    }
+  }
+})
