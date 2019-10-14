@@ -16,8 +16,7 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.lang.management.ThreadInfo;
 import java.util.*;
 import java.util.function.Function;
@@ -49,7 +48,8 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
           File[] files = dir.listFiles();
           if (files != null) {
             List<Attachment> attachments = new ArrayList<>();
-            String message = null, throwable = null, appinfo = null;
+            String message = null, appinfo = null;
+            Throwable throwable = null;
             List<String> dumps = new ArrayList<>();
             for (File file : files) {
               String text = FileUtil.loadFile(file);
@@ -58,7 +58,11 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
                 message = text;
               }
               else if (THROWABLE_FILE_NAME.equals(name)) {
-                throwable = text;
+                try (FileInputStream fis = new FileInputStream(file); ObjectInputStream ois = new ObjectInputStream(fis)) {
+                  throwable = (Throwable)ois.readObject();
+                }
+                catch (Exception ignored) {
+                }
               }
               else if (APPINFO_FILE_NAME.equals(name)) {
                 appinfo = text;
@@ -76,7 +80,7 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
             cleanup(dir);
 
             if (message != null && throwable != null && !attachments.isEmpty()) {
-              IdeaLoggingEvent event = LogMessage.createEvent(new Freeze(throwable), message, attachments.toArray(Attachment.EMPTY_ARRAY));
+              IdeaLoggingEvent event = LogMessage.createEvent(throwable, message, attachments.toArray(Attachment.EMPTY_ARRAY));
               Object data = event.getData();
               if (data instanceof AbstractMessage) {
                 ((AbstractMessage)data).setAppInfo(appinfo);
@@ -145,7 +149,10 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
       if (event != null) {
         try {
           FileUtil.writeToFile(new File(dir, MESSAGE_FILE_NAME), event.getMessage());
-          FileUtil.writeToFile(new File(dir, THROWABLE_FILE_NAME), event.getThrowableText());
+          try (FileOutputStream fos = new FileOutputStream(new File(dir, THROWABLE_FILE_NAME));
+               ObjectOutputStream oos = new ObjectOutputStream(fos)) {
+            oos.writeObject(event.getThrowable());
+          }
           File appInfoFile = new File(dir, APPINFO_FILE_NAME);
           if (!appInfoFile.exists()) {
             String appInfo = ITNProxy.getAppInfoString();
