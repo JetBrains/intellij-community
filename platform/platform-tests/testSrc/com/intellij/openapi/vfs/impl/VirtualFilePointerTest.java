@@ -874,4 +874,12 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     final VirtualFilePointer path = createPointerByFile(new File("\\\\wsl$\\Ubuntu"), null);
     assertEquals("\\\\wsl$\\Ubuntu\\", path.getPresentableUrl());
   }
+
+  @Test
+  public void testSpacesOnlyFileNamesUnderUnixMustBeAllowed() {
+    Assume.assumeTrue("Expected unix but got: '" + SystemInfo.getOsNameAndVersion()+"'", SystemInfo.isUnix);
+    VirtualFile vDir = getVirtualTempRoot();
+    VirtualFilePointer pointer = myVirtualFilePointerManager.create(vDir.getUrl() + "/xxx/ /c.txt", disposable, null);
+    assertFalse(pointer.isValid());
+  }
 }

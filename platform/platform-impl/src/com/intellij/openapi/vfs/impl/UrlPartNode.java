@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.impl;
 
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -18,7 +19,16 @@ class UrlPartNode extends FilePointerPartNode {
   UrlPartNode(@NotNull String name, @NotNull FilePointerPartNode parent) {
     super(parent);
     this.name = name;
-    assert !StringUtil.isEmptyOrSpaces(name) : '\''+name+'\'';
+    if (SystemInfo.isUnix) {
+      if (name.isEmpty()) {
+        throw new IllegalArgumentException('\'' + name + '\'');
+      }
+    }
+    else {
+      if (StringUtil.isEmptyOrSpaces(name)) {
+        throw new IllegalArgumentException('\'' + name + '\'');
+      }
+    }
   }
 
   @Override
