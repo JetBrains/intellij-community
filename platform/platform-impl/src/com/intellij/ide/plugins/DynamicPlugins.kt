@@ -15,6 +15,7 @@ import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
+import com.intellij.openapi.keymap.impl.BundledKeymapProvider
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.openapi.util.IconLoader
@@ -79,7 +80,10 @@ object DynamicPlugins {
   @JvmStatic
   fun allowLoadUnloadSynchronously(pluginDescriptor: IdeaPluginDescriptorImpl): Boolean {
     val extensions = pluginDescriptor.extensions
-    if (extensions != null && !extensions.all { it.key == UIThemeProvider.EP_NAME.name }) {
+    if (extensions != null && !extensions.all {
+        it.key == UIThemeProvider.EP_NAME.name ||
+        it.key == BundledKeymapProvider.EP_NAME.name
+      }) {
       return false
     }
     return hasNoComponents(pluginDescriptor) && pluginDescriptor.actionDescriptionElements.isNullOrEmpty()

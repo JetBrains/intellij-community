@@ -12,12 +12,15 @@ import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.editor.actions.CtrlYActionChooser
+import com.intellij.openapi.extensions.ExtensionPointListener
+import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.keymap.KeymapManagerListener
 import com.intellij.openapi.keymap.ex.KeymapManagerEx
 import com.intellij.openapi.options.SchemeManager
 import com.intellij.openapi.options.SchemeManagerFactory
+import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.text.NaturalComparator
 import com.intellij.ui.AppUIUtil
 import com.intellij.util.containers.ContainerUtil
@@ -82,6 +85,37 @@ class KeymapManagerImpl : KeymapManagerEx(), PersistentStateComponent<Element> {
     if (ConfigImportHelper.isFirstSession() && !ConfigImportHelper.isConfigImported()) {
       CtrlYActionChooser.askAboutShortcut()
     }
+
+    BundledKeymapProvider.EP_NAME.addExtensionPointListener(object : ExtensionPointListener<BundledKeymapProvider> {
+      override fun extensionAdded(ep: BundledKeymapProvider, pluginDescriptor: PluginDescriptor) {
+        for (fileName in ep.keymapFileNames) {
+          val keymap = DefaultKeymapImpl(object : SchemeDataHolder<KeymapImpl> {
+            override fun read() = ep.load(fileName) { JDOMUtil.load(it) }
+
+            override fun updateDigest(scheme: KeymapImpl) {
+            }
+
+            override fun updateDigest(data: Element?) {
+            }
+          }, DefaultKeymap.instance, ep.javaClass)
+          keymap.name = ep.getKeyFromFileName(fileName)
+          schemeManager.addScheme(keymap)
+        }
+      }
+
+      override fun extensionRemoved(ep: BundledKeymapProvider, pluginDescriptor: PluginDescriptor) {
+        for (fileName in ep.keymapFileNames) {
+          val keymapName = ep.getKeyFromFileName(fileName)
+          if (schemeManager.activeScheme?.name.equals(keymapName)) {
+            val newKeymap = schemeManager.allSchemes.firstOrNull() { it.name.startsWith("Default") }
+            if (newKeymap != null) {
+              schemeManager.setCurrent(newKeymap, true, true)
+            }
+          }
+          schemeManager.removeScheme(keymapName)
+        }
+      }
+    }, null)
   }
 
   private fun fireActiveKeymapChanged(newScheme: Keymap?) {
