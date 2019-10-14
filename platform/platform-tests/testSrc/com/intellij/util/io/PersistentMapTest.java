@@ -17,8 +17,10 @@ package com.intellij.util.io;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.CommonProcessors;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.containers.ContainerUtil;
 import junit.framework.AssertionFailedError;
 import org.jetbrains.annotations.NotNull;
 
@@ -484,6 +486,21 @@ public class PersistentMapTest extends PersistentMapTestBase {
 
     runIteration(mapConstructorWithBrokenKeyDescriptor);
     runIteration(mapConstructorWithBrokenValueDescriptor);
+  }
+
+  public void testExistingKeys() throws IOException {
+    myMap.put("key", "_value");
+    myMap.put("key", "value");
+    myMap.put("key2", "value2");
+    myMap.remove("key2");
+
+    HashSet<String> allKeys = new HashSet<>();
+    myMap.processKeys(new CommonProcessors.CollectProcessor<>(allKeys));
+    HashSet<String> existingKeys = new HashSet<>();
+    myMap.processKeysWithExistingMapping(new CommonProcessors.CollectProcessor<>(existingKeys));
+
+    assertEquals(ContainerUtil.newHashSet("key", "key2"), allKeys);
+    assertEquals(ContainerUtil.newHashSet("key"), existingKeys);
   }
 
   private void runIteration(PersistentMapPerformanceTest.MapConstructor<String, String> brokenMapDescritor) throws IOException {
