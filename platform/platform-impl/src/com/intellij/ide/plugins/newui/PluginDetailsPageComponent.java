@@ -3,7 +3,10 @@ package com.intellij.ide.plugins.newui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.BrowserUtil;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.plugins.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -14,6 +17,7 @@ import com.intellij.ui.LicensingFacade;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBOptionButton;
 import com.intellij.ui.components.JBPanelWithEmptyText;
+import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.components.panels.NonOpaquePanel;
@@ -67,6 +71,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
   private LinkPanel myVendor;
   private final LicensePanel myLicensePanel = new LicensePanel(false);
   private LinkPanel myHomePage;
+  private JBScrollPane myBottomScrollPane;
   private JEditorPane myDescriptionComponent;
   private ChangeNotesPanel myChangeNotesPanel;
   private OneLineProgressIndicator myIndicator;
@@ -278,11 +283,11 @@ public class PluginDetailsPageComponent extends MultiPanel {
       new OpaquePanel(new VerticalLayout(PluginManagerConfigurable.offset5()), PluginManagerConfigurable.MAIN_BG_COLOR);
     bottomPanel.setBorder(JBUI.Borders.empty(0, 0, 15, 20));
 
-    JBScrollPane scrollPane = new JBScrollPane(bottomPanel);
-    scrollPane.getVerticalScrollBar().setBackground(PluginManagerConfigurable.MAIN_BG_COLOR);
-    scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-    scrollPane.setBorder(null);
-    myPanel.add(scrollPane);
+    myBottomScrollPane = new JBScrollPane(bottomPanel);
+    myBottomScrollPane.getVerticalScrollBar().setBackground(PluginManagerConfigurable.MAIN_BG_COLOR);
+    myBottomScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+    myBottomScrollPane.setBorder(null);
+    myPanel.add(myBottomScrollPane);
 
     bottomPanel.add(myLicensePanel);
     myLicensePanel.setBorder(JBUI.Borders.emptyBottom(20));
@@ -454,6 +459,11 @@ public class PluginDetailsPageComponent extends MultiPanel {
     myDescriptionComponent.setVisible(description != null);
 
     myChangeNotesPanel.show(getChangeNotes());
+
+    ApplicationManager.getApplication().invokeLater(() -> {
+      IdeEventQueue.getInstance().flushQueue();
+      ((JBScrollBar)myBottomScrollPane.getVerticalScrollBar()).setCurrentValue(0);
+    }, ModalityState.any());
 
     if (MyPluginModel.isInstallingOrUpdate(myPlugin)) {
       showProgress();
