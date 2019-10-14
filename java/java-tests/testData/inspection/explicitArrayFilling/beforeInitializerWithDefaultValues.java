@@ -1,4 +1,4 @@
-// "Delete element" "true"
+// "Remove 'for' statement" "true"
 
 class Test {
 

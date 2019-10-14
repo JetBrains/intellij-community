@@ -67,7 +67,8 @@ public class ExplicitArrayFillingInspection extends AbstractBaseJavaLocalInspect
           if (isDefaultValue(rValue, defaultValue, lType) && isFilledWithDefaultValues(container.getQualifier(), statement, defaultValue)) {
             holder.registerProblem(statement, getRange(statement, ProblemHighlightType.WARNING),
                                    InspectionsBundle.message("inspection.explicit.array.filling.redundant.loop.description"),
-                                   QuickFixFactory.getInstance().createDeleteFix(statement));
+                                   QuickFixFactory.getInstance()
+                                     .createDeleteFix(statement, CommonQuickFixBundle.message("fix.remove.statement", PsiKeyword.FOR)));
             return;
           }
           registerProblem(statement, false);
