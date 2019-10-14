@@ -33,6 +33,10 @@ internal class GHPRListLoaderPanel(listLoader: GHPRListLoader,
   }
 
   init {
+    listLoader.addOutdatedStateChangeListener(this) {
+      updateInfoPanel()
+    }
+
     addToTop(filterComponent)
     resetFilter()
   }
