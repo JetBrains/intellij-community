@@ -58,27 +58,7 @@ class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, StatusB
 
     IdeEventQueue.getInstance().addDispatcher(e -> {
       if (e instanceof MouseEvent) {
-        MouseEvent mouseEvent = (MouseEvent)e;
-        if (mouseEvent.getComponent() == null || !SwingUtilities.isDescendingFrom(mouseEvent.getComponent(), SwingUtilities.getWindowAncestor(
-          this))) {
-          return false;
-        }
-
-        if (e.getID() == MouseEvent.MOUSE_MOVED && isShowing()) {
-          Point p = mouseEvent.getLocationOnScreen();
-          Point screen = this.getLocationOnScreen();
-          if (new Rectangle(screen.x - 4, screen.y - 2, getWidth() + 4, getHeight() + 4).contains(p)) {
-            mouseEntered();
-            wasExited = false;
-          } else {
-            if (!wasExited) {
-              wasExited = mouseExited(p);
-            }
-          }
-        } else if (e.getID() == MouseEvent.MOUSE_EXITED) {
-          //mouse exits WND
-          mouseExited(mouseEvent.getLocationOnScreen());
-        }
+        dispatchMouseEvent((MouseEvent)e);
       }
       return false;
     }, parent);
@@ -88,7 +68,33 @@ class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, StatusB
     myAlarm = new Alarm(parent);
   }
 
-  public boolean mouseExited(Point currentLocationOnScreen) {
+  private void dispatchMouseEvent(MouseEvent e) {
+    Component component = e.getComponent();
+    if (component != null && SwingUtilities.isDescendingFrom(component, SwingUtilities.getWindowAncestor(this))) {
+      int id = e.getID();
+      if (id == MouseEvent.MOUSE_MOVED && isShowing()) {
+        mouseMoved(e);
+      } else if (id == MouseEvent.MOUSE_EXITED) {
+        //mouse exits WND
+        mouseExited(e.getLocationOnScreen());
+      }
+    }
+  }
+
+  private void mouseMoved(MouseEvent e) {
+    Point p = e.getLocationOnScreen();
+    Point screen = this.getLocationOnScreen();
+    if (new Rectangle(screen.x - 4, screen.y - 2, getWidth() + 4, getHeight() + 4).contains(p)) {
+      mouseEntered();
+      wasExited = false;
+    } else {
+      if (!wasExited) {
+        wasExited = mouseExited(p);
+      }
+    }
+  }
+
+  private boolean mouseExited(Point currentLocationOnScreen) {
     myAlarm.cancelAllRequests();
     if (popup != null && popup.isVisible()) {
       final Point screen = popup.getLocationOnScreen();
@@ -106,7 +112,7 @@ class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, StatusB
     return false;
   }
 
-  public void mouseEntered() {
+  private void mouseEntered() {
     final boolean active = ApplicationManager.getApplication().isActive();
     if (!active) {
       return;
@@ -126,7 +132,7 @@ class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, StatusB
         }
         Collections.sort(toolWindows, (o1, o2) -> StringUtil.naturalCompare(o1.getStripeTitle(), o2.getStripeTitle()));
 
-        final JBList<ToolWindow> list = new JBList(toolWindows);
+        JBList<ToolWindow> list = new JBList<>(toolWindows);
         list.setCellRenderer(new ListCellRenderer<ToolWindow>() {
           final JBLabel label = new JBLabel();
 
