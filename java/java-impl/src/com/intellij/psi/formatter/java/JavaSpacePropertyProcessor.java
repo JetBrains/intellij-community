@@ -3,8 +3,6 @@ package com.intellij.psi.formatter.java;
 
 import com.intellij.formatting.Block;
 import com.intellij.formatting.Spacing;
-import com.intellij.formatting.blocks.CStyleCommentBlock;
-import com.intellij.formatting.blocks.TextLineBlock;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.lang.java.JavaParserDefinition;
