@@ -35,7 +35,7 @@ internal class GHPRToolWindowTabsManager(private val project: Project) {
       contentManager.addTab(item, Disposable {
         //means that tab closed by user
         if (gitHelper.getPossibleRemoteUrlCoordinates(project).contains(item)) settings.addHiddenUrl(item.url)
-        updateRemoteUrls()
+        ApplicationManager.getApplication().invokeLater(::updateRemoteUrls) { project.isDisposedOrDisposeInProgress }
       })
     }
   }
@@ -66,9 +66,7 @@ internal class GHPRToolWindowTabsManager(private val project: Project) {
         project.service<GHPRToolWindowTabsManager>().updateRemoteUrls()
       }
       else {
-        application.invokeLater(::updateRemotes) {
-          project.isDisposed
-        }
+        application.invokeLater(::updateRemotes) { project.isDisposedOrDisposeInProgress }
       }
     }
   }
