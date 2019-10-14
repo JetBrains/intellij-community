@@ -52,7 +52,7 @@ public abstract class YamlMetaTypeCompletionProviderBase extends CompletionProvi
       return;
     }
 
-    YAMLScalar insertedScalar = (YAMLScalar)position.getParent();
+    final YAMLScalar insertedScalar = (YAMLScalar)position.getParent();
 
     /*
     trace("Position: " + getDebugInfo(position));
@@ -81,16 +81,17 @@ public abstract class YamlMetaTypeCompletionProviderBase extends CompletionProvi
       return;
     }
     YamlMetaType metaType = meta.getMetaType();
-    if (params.getCompletionType().equals(CompletionType.BASIC) && metaType instanceof YamlScalarType) {
-      YamlScalarType scalarType = (YamlScalarType)metaType;
+    if (params.getCompletionType().equals(CompletionType.BASIC)) {
       if (insertedScalar.getParent() instanceof YAMLKeyValue) {
         PsiElement prevSibling = PsiTreeUtil.skipWhitespacesBackward(insertedScalar);
         if (isOfType(prevSibling, YAMLTokenTypes.COLON)) {
           prevSibling = PsiTreeUtil.skipWhitespacesBackward(prevSibling);
         }
         if (isOfType(prevSibling, YAMLTokenTypes.SCALAR_KEY)) {
-          addValueCompletions(insertedScalar, scalarType, result, Collections.emptyMap(), params);
-          return;
+          boolean hadScalarLookups = addValueCompletions(insertedScalar, metaType, result, Collections.emptyMap(), params);
+          if (hadScalarLookups) {
+            return;
+          }
         }
       }
 
@@ -113,8 +114,10 @@ public abstract class YamlMetaTypeCompletionProviderBase extends CompletionProvi
             .map(YAMLScalar.class::cast)
             .collect(Collectors.toMap(scalar -> scalar.getText().trim(), scalar -> scalar, (oldVal, newVal) -> newVal));
 
-        addValueCompletions(insertedScalar, scalarType, result, siblingValues, params);
-        return;
+        boolean hadScalarInSequenceLookups = addValueCompletions(insertedScalar, metaType, result, siblingValues, params);
+        if (hadScalarInSequenceLookups) {
+          return;
+        }
       }
     }
     if (!(metaType instanceof YamlScalarType)) {
@@ -227,14 +230,16 @@ public abstract class YamlMetaTypeCompletionProviderBase extends CompletionProvi
       });
   }
 
-  private static void addValueCompletions(@NotNull YAMLScalar insertedScalar,
-                                          @NotNull YamlScalarType meta,
-                                          @NotNull CompletionResultSet result,
-                                          @NotNull Map<String, YAMLScalar> siblings,
-                                          @NotNull CompletionParameters completionParameters) {
-    meta.getValueLookups(insertedScalar, new CompletionContextImpl(completionParameters)).stream()
+  private static boolean addValueCompletions(@NotNull YAMLScalar insertedScalar,
+                                             @NotNull YamlMetaType meta,
+                                             @NotNull CompletionResultSet result,
+                                             @NotNull Map<String, YAMLScalar> siblings,
+                                             @NotNull CompletionParameters completionParameters) {
+    List<? extends LookupElement> lookups = meta.getValueLookups(insertedScalar, new CompletionContextImpl(completionParameters));
+    lookups.stream()
       .filter(lookup -> !siblings.containsKey(lookup.getLookupString()))
       .forEach(result::addElement);
+    return !lookups.isEmpty();
   }
 
   private static void trace(String text) {

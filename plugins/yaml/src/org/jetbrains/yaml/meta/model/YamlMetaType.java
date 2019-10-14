@@ -1,8 +1,7 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.yaml.meta.model;
 
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.editor.Editor;
@@ -14,9 +13,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.psi.YAMLKeyValue;
 import org.jetbrains.yaml.psi.YAMLMapping;
+import org.jetbrains.yaml.psi.YAMLScalar;
 import org.jetbrains.yaml.psi.YAMLValue;
 
 import javax.swing.*;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -85,6 +86,11 @@ public abstract class YamlMetaType {
 
   public void validateValue(@NotNull YAMLValue value, @NotNull ProblemsHolder problemsHolder) {
     //
+  }
+
+  @NotNull
+  public List<? extends LookupElement> getValueLookups(@NotNull YAMLScalar insertedScalar, @Nullable CompletionContext completionContext) {
+    return Collections.emptyList();
   }
 
   /**
