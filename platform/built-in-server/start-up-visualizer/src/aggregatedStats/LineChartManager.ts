@@ -24,11 +24,26 @@ export class LineChartManager {
     // RFC1123
     let html = `<table class="chartTooltip"><caption>${this.chart.dateFormatter.format(dataContext.t, "EEE, dd MMM yyyy HH:mm:ss zzz")}</caption>`
 
-    for (const metric of this.dataManager!!.metricDescriptors) {
-      const value = dataContext[(metric.key)]
-      html += `<tr><th>${metric.name}</th><td>${shortEnglishHumanizer(value)}</td></tr>`
+    const prevItem = dataItem.index == 0 ? null : this.chart.data[dataItem.index - 1]
+
+    const dataManager = this.dataManager!!
+    for (const metric of dataManager.metricDescriptors) {
+      const value = dataContext[metric.key]
+      html += `<tr><th>${metric.name}</th><td>`
+
+      const isDiffAbnormal = prevItem != null && (value - prevItem[metric.key]) >= 100
+      if (isDiffAbnormal) {
+        html += "<strong>"
+      }
+      html += shortEnglishHumanizer(value)
+      if (isDiffAbnormal) {
+        html += "</strong>"
+      }
+      html += `</td></tr>`
     }
-    html += `</table>`
+
+    const generatedTime = dataContext.t / 1000
+    html += `</table><input type="button" value="Analyze Report" style="width: 100%" onclick='window.open("/#/report?reportUrl=${encodeURIComponent(dataManager.reportUrlPrefix + "&generatedTime=" + generatedTime)}", "_blank")' />`
     return html
   }
 
@@ -62,9 +77,6 @@ export class LineChartManager {
     // cursor.snapToSeries = series
     chart.cursor = cursor
 
-    // chart.cursor.lineX.strokeWidth = 0;
-    // chart.cursor.lineX.fill = chart.colors.getIndex(0)
-    // chart.cursor.lineX.fillOpacity = 0.1;
 
     // create vertical scrollbar and place it before the value axis
     chart.scrollbarY = new am4core.Scrollbar()
@@ -135,10 +147,10 @@ export class LineChartManager {
       const tooltip = firstSeries.tooltip!!
       tooltip.pointerOrientation = "down"
       tooltip.background.fillOpacity = 0.4
-
       tooltip.adapter.add("y", (_x, _target) => {
-        return (this.chart.yAxesAndPlotContainer.y as number) + 20
+        return (this.chart.yAxesAndPlotContainer.y as number) + 40
       })
+      tooltip.label.interactionsEnabled = true
     }
 
     oldSeries.forEach(value => {
@@ -169,11 +181,13 @@ export class LineChartManager {
     this.chart.dispose()
   }
 
-  setData(data: Promise<Array<Metrics>>, info: InfoResponse) {
+  setData(data: Promise<Array<Metrics>>, info: InfoResponse, reportUrlPrefix: string) {
     data
       .then(data => {
         if (data != null) {
-          this.render(new LineChartDataManager(data, info, this.isInstantEvents))
+          // https://stackoverflow.com/questions/56996968/prevent-an-object-from-being-converted-to-a-reactive-object-when-assigned-to-a-c
+          data.map(it => Object.freeze(it))
+          this.render(new LineChartDataManager(data, info, this.isInstantEvents, reportUrlPrefix))
         }
       })
   }

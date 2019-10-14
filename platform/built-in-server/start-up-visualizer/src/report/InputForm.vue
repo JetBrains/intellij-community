@@ -30,10 +30,11 @@
 </template>
 
 <script lang="ts">
-  import {Component, Vue} from "vue-property-decorator"
+  import {Component, Vue, Watch} from "vue-property-decorator"
   import {getModule} from "vuex-module-decorators"
   import {AppStateModule} from "@/state/state"
   import {loadJson} from "@/httpUtil"
+  import {Location} from "vue-router"
 
   @Component
   export default class InputForm extends Vue {
@@ -48,6 +49,8 @@
     // so, it seems that data property it is the only recommended way
     isFetching: boolean = false
     isFetchingDev: boolean = false
+
+    private lastReportUrl = ""
 
     dataChanged() {
       const text = this.inputData
@@ -67,28 +70,39 @@
     getFromRunningInstance() {
       this.isFetching = true
 
-      // portNumber will be here as number, thanks to Vue.js, no need to validate
-      // if (!/^\d+$/.test(port)) {
-      //   throw new Error("Port number value is not numeric")
-      // }
-
       this.dataModule.updateRecentlyUsedIdePort(this.portNumber)
-      this.doGetFromRunningInstance(this.portNumber, () => {
-        this.isFetching = false
-      })
+      this.loadReport(getIdeaReportUrl(this.portNumber))
     }
 
     getFromRunningDevInstance() {
       this.isFetchingDev = true
-      this.doGetFromRunningInstance(63343, () => {
-        this.isFetchingDev = false
-      })
+      this.loadReport(getIdeaReportUrl(63343))
     }
 
-    private doGetFromRunningInstance(port: number, processed: () => void) {
+    @Watch("$route")
+    onRouteChanged(location: Location, _oldLocation: Location): void {
+      this.loadReportUrlIfSpecified(location)
+    }
+
+    created() {
+      this.loadReportUrlIfSpecified(this.$route)
+    }
+
+    loadReportUrlIfSpecified(location: Location) {
+      const reportUrl = location.query == null ? "" : location.query.reportUrl as string
+      if (reportUrl != null && reportUrl.length > 0 && this.lastReportUrl !== reportUrl) {
+        this.isFetching = true
+        this.loadReport(reportUrl)
+      }
+    }
+
+    private loadReport(reportUrl: string) {
+      this.lastReportUrl = reportUrl
       // localhost blocked by Firefox, but 127.0.0.1 not.
       // Google Chrome correctly resolves localhost, but Firefox doesn't.
-      loadJson(`http://127.0.0.1:${port}/api/startUpMeasurement`, processed, this.$notify)
+      loadJson(reportUrl, () => {
+        this.isFetchingDev = false
+      }, this.$notify)
         .then(data => {
           if (data == null) {
             return
@@ -98,5 +112,9 @@
           this.inputData = JSON.stringify(data, null, 2)
         })
     }
+  }
+
+  function getIdeaReportUrl(port: number) {
+    return `http://127.0.0.1:${port}/api/startUpMeasurement`
   }
 </script>

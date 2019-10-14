@@ -12,7 +12,7 @@ export interface MetricDescriptor {
 export class LineChartDataManager {
   readonly metricDescriptors: Array<MetricDescriptor>
 
-  constructor(readonly metrics: Array<Metrics>, infoResponse: InfoResponse, isInstant: boolean) {
+  constructor(readonly metrics: Array<Metrics>, infoResponse: InfoResponse, isInstant: boolean, readonly reportUrlPrefix: string) {
     this.metricDescriptors = []
 
     if (isInstant) {

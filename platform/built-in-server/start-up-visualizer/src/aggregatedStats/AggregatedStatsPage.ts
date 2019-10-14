@@ -167,13 +167,14 @@ export default class AggregatedStatsPage extends Vue {
       chartManagers.push(new LineChartManager(this.$refs.lineInstantChartContainer as HTMLElement, this.chartSettings, true))
     }
 
-    const url = `${this.chartSettings.serverUrl}/api/v1/metrics/` +
-      `product=${encodeURIComponent(product)}` +
-      `&machine=${machineId}`
+    const productAndMachineParams = `product=${encodeURIComponent(product)}&machine=${encodeURIComponent(machineId)}`
+    const url = `${this.chartSettings.serverUrl}/api/v1/metrics/` + productAndMachineParams
     const infoResponse = this.lastInfoResponse!!
 
-    chartManagers[0].setData(loadJson(`${url}&eventType=d`, null, this.$notify), infoResponse)
-    chartManagers[1].setData(loadJson(`${url}&eventType=i`, null, this.$notify), infoResponse)
+    const reportUrlPrefix = `${this.chartSettings.serverUrl}/api/v1/report/` + productAndMachineParams
+
+    chartManagers[0].setData(loadJson(`${url}&eventType=d`, null, this.$notify), infoResponse, reportUrlPrefix)
+    chartManagers[1].setData(loadJson(`${url}&eventType=i`, null, this.$notify), infoResponse, reportUrlPrefix)
   }
 
   @Watch("chartSettings.serverUrl")
