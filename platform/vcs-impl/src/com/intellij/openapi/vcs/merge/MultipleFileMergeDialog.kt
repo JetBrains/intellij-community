@@ -220,7 +220,7 @@ open class MultipleFileMergeDialog(
 
   private fun updateTree() {
     val factory = when {
-      project != null && groupByDirectory -> ChangesGroupingSupport.getFactory(project, ChangesGroupingSupport.DIRECTORY_GROUPING)
+      project != null && groupByDirectory -> ChangesGroupingSupport.getFactory(ChangesGroupingSupport.DIRECTORY_GROUPING)
       else -> NoneChangesGroupingFactory
     }
     val model = TreeModelBuilder.buildFromVirtualFiles(project, factory, unresolvedFiles)

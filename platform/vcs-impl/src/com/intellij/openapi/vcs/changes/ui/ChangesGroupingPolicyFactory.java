@@ -12,8 +12,8 @@ import javax.swing.tree.DefaultTreeModel;
 public abstract class ChangesGroupingPolicyFactory {
   public static final ExtensionPointName<KeyedFactoryEPBean> EP_NAME = ExtensionPointName.create("com.intellij.changesGroupingPolicy");
 
-  public static ChangesGroupingPolicyFactory getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, ChangesGroupingPolicyFactory.class);
+  public static ChangesGroupingPolicyFactory getInstance() {
+    return ServiceManager.getService(ChangesGroupingPolicyFactory.class);
   }
 
   @NotNull

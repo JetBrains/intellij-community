@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.openapi.actionSystem.DataKey
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.KeyedExtensionFactory
 import com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.Companion.DIRECTORY_GROUPING
@@ -52,7 +53,7 @@ class ChangesGroupingSupport(val project: Project, source: Any, val showConflict
       override fun createGroupingPolicy(project: Project, model: DefaultTreeModel): ChangesGroupingPolicy {
         var result = DefaultChangesGroupingPolicy.Factory(showConflictsNode).createGroupingPolicy(project, model)
         groupingConfig.filterValues { it }.keys.sortedByDescending { PREDEFINED_PRIORITIES[it] }.forEach {
-          result = findFactory(project, it)!!.createGroupingPolicy(project, model).apply { setNextGroupingPolicy(result) }
+          result = findFactory(it)!!.createGroupingPolicy(project, model).apply { setNextGroupingPolicy(result) }
         }
         return result
       }
@@ -64,7 +65,7 @@ class ChangesGroupingSupport(val project: Project, source: Any, val showConflict
   fun setGroupingKeysOrSkip(groupingKeys: Set<String>) {
     groupingConfig.entries.forEach { it.setValue(it.key in groupingKeys) }
   }
-  fun isAvailable(groupingKey: String) = findFactory(project, groupingKey) != null
+  fun isAvailable(groupingKey: String) = findFactory(groupingKey) != null
 
   fun addPropertyChangeListener(listener: PropertyChangeListener): Unit = changeSupport.addPropertyChangeListener(listener)
   fun removePropertyChangeListener(listener: PropertyChangeListener): Unit = changeSupport.removePropertyChangeListener(listener)
@@ -80,12 +81,12 @@ class ChangesGroupingSupport(val project: Project, source: Any, val showConflict
     const val NONE_GROUPING = "none"
 
     @JvmStatic
-    fun getFactory(project: Project, key: String): ChangesGroupingPolicyFactory {
-      return findFactory(project, key) ?: NoneChangesGroupingFactory
+    fun getFactory(key: String): ChangesGroupingPolicyFactory {
+      return findFactory(key) ?: NoneChangesGroupingFactory
     }
 
-    private fun findFactory(project: Project, key: String): ChangesGroupingPolicyFactory? {
-      return KeyedExtensionFactory.findByKey(key, ChangesGroupingPolicyFactory.EP_NAME, project.picoContainer)
+    private fun findFactory(key: String): ChangesGroupingPolicyFactory? {
+      return KeyedExtensionFactory.findByKey(key, ChangesGroupingPolicyFactory.EP_NAME, ApplicationManager.getApplication().picoContainer)
     }
   }
 }
