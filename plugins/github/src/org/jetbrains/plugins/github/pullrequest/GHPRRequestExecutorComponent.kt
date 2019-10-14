@@ -58,11 +58,8 @@ class GHPRRequestExecutorComponent(private val requestExecutorManager: GithubApi
   }
 
   private fun createRequestExecutorWithUserInput() {
-    val executor = requestExecutorManager.getExecutor(account, project)
-    if (executor != null) {
-      setActualContent(executor)
-      IdeFocusManager.getInstance(project).requestFocusInProject(this@GHPRRequestExecutorComponent, project)
-    }
+    requestExecutorManager.getExecutor(account, project)
+    IdeFocusManager.getInstance(project).requestFocusInProject(this@GHPRRequestExecutorComponent, project)
   }
 
   private fun setActualContent(executor: GithubApiRequestExecutor.WithTokenAuth) {
