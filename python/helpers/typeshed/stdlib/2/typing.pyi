@@ -69,7 +69,7 @@ _KT_co = TypeVar('_KT_co', covariant=True)  # Key type covariant containers.
 _VT_co = TypeVar('_VT_co', covariant=True)  # Value type covariant containers.
 _T_contra = TypeVar('_T_contra', contravariant=True)  # Ditto contravariant.
 _TC = TypeVar('_TC', bound=Type[object])
-_C = TypeVar("_C", bound=Callable)
+_C = TypeVar("_C", bound=Callable[..., Any])
 
 def runtime_checkable(cls: _TC) -> _TC: ...
 
@@ -447,8 +447,9 @@ class Pattern(Generic[AnyStr]):
 
 # Functions
 
-def get_type_hints(obj: Callable, globalns: Optional[dict[Text, Any]] = ...,
-                   localns: Optional[dict[Text, Any]] = ...) -> None: ...
+def get_type_hints(
+    obj: Callable[..., Any], globalns: Optional[Dict[Text, Any]] = ..., localns: Optional[Dict[Text, Any]] = ...,
+) -> None: ...
 
 @overload
 def cast(tp: Type[_T], obj: Any) -> _T: ...
@@ -458,16 +459,16 @@ def cast(tp: str, obj: Any) -> Any: ...
 # Type constructors
 
 # NamedTuple is special-cased in the type checker
-class NamedTuple(tuple):
+class NamedTuple(Tuple[Any, ...]):
     _fields: Tuple[str, ...]
 
-    def __init__(self, typename: Text, fields: Iterable[Tuple[Text, Any]] = ..., *,
-                 verbose: bool = ..., rename: bool = ..., **kwargs: Any) -> None: ...
+    def __init__(self, typename: Text, fields: Iterable[Tuple[Text, Any]] = ...,
+                 **kwargs: Any) -> None: ...
 
     @classmethod
     def _make(cls: Type[_T], iterable: Iterable[Any]) -> _T: ...
 
-    def _asdict(self) -> dict: ...
+    def _asdict(self) -> Dict[str, Any]: ...
     def _replace(self: _T, **kwargs: Any) -> _T: ...
 
 # Internal mypy fallback type for all typed dicts (does not exist at runtime)

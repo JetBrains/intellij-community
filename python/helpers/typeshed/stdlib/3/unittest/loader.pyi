@@ -1,4 +1,3 @@
-import sys
 import unittest.case
 import unittest.suite
 import unittest.result

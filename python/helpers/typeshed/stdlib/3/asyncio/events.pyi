@@ -10,8 +10,6 @@ from asyncio.protocols import BaseProtocol
 from asyncio.tasks import Task
 from asyncio.transports import BaseTransport
 
-__all__: List[str]
-
 _T = TypeVar('_T')
 _Context = Dict[str, Any]
 _ExceptionHandler = Callable[[AbstractEventLoop, _Context], Any]
@@ -82,8 +80,14 @@ class AbstractEventLoop(metaclass=ABCMeta):
     @abstractmethod
     def create_future(self) -> Future[Any]: ...
     # Tasks methods
-    @abstractmethod
-    def create_task(self, coro: Union[Awaitable[_T], Generator[Any, None, _T]]) -> Task[_T]: ...
+    if sys.version_info >= (3, 8):
+        @abstractmethod
+        def create_task(
+            self, coro: Union[Awaitable[_T], Generator[Any, None, _T]], *, name: Optional[str] = ...,
+        ) -> Task[_T]: ...
+    else:
+        @abstractmethod
+        def create_task(self, coro: Union[Awaitable[_T], Generator[Any, None, _T]]) -> Task[_T]: ...
     @abstractmethod
     def set_task_factory(self, factory: Optional[Callable[[AbstractEventLoop, Generator[Any, None, _T]], Future[_T]]]) -> None: ...
     @abstractmethod
@@ -107,7 +111,7 @@ class AbstractEventLoop(metaclass=ABCMeta):
                     flags: int = ...) -> Generator[Any, None, List[Tuple[int, int, int, str, Tuple[Any, ...]]]]: ...
     @abstractmethod
     @coroutine
-    def getnameinfo(self, sockaddr: tuple, flags: int = ...) -> Generator[Any, None, Tuple[str, int]]: ...
+    def getnameinfo(self, sockaddr: Tuple[Any, ...], flags: int = ...) -> Generator[Any, None, Tuple[str, int]]: ...
     if sys.version_info >= (3, 7):
         @abstractmethod
         async def sock_sendfile(self, sock: socket, file: IO[bytes], offset: int = ..., count: Optional[int] = ..., *,
@@ -139,7 +143,7 @@ class AbstractEventLoop(metaclass=ABCMeta):
         @abstractmethod
         async def create_unix_connection(self, protocol_factory: _ProtocolFactory, path: str, *, ssl: _SSLContext = ...,
                                          sock: Optional[socket] = ..., server_hostname: str = ...,
-                                         ssl_handshake_timeout: Optional[float]) -> _TransProtPair: ...
+                                         ssl_handshake_timeout: Optional[float] = ...) -> _TransProtPair: ...
         @abstractmethod
         async def create_unix_server(self, protocol_factory: _ProtocolFactory, path: str, *, sock: Optional[socket] = ...,
                                      backlog: int = ..., ssl: _SSLContext = ..., ssl_handshake_timeout: Optional[float] = ...,
@@ -303,3 +307,6 @@ def _get_running_loop() -> AbstractEventLoop: ...
 
 if sys.version_info >= (3, 7):
     def get_running_loop() -> AbstractEventLoop: ...
+
+if sys.version_info < (3, 8):
+    class SendfileNotAvailableError(RuntimeError): ...

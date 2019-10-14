@@ -40,6 +40,8 @@ LambdaType = FunctionType
 class CodeType:
     """Create a code object.  Not for the faint of heart."""
     co_argcount: int
+    if sys.version_info >= (3, 8):
+        co_posonlyargcount: int
     co_kwonlyargcount: int
     co_nlocals: int
     co_stacksize: int
@@ -54,24 +56,66 @@ class CodeType:
     co_lnotab: bytes
     co_freevars: Tuple[str, ...]
     co_cellvars: Tuple[str, ...]
-    def __init__(
-        self,
-        argcount: int,
-        kwonlyargcount: int,
-        nlocals: int,
-        stacksize: int,
-        flags: int,
-        codestring: bytes,
-        constants: Tuple[Any, ...],
-        names: Tuple[str, ...],
-        varnames: Tuple[str, ...],
-        filename: str,
-        name: str,
-        firstlineno: int,
-        lnotab: bytes,
-        freevars: Tuple[str, ...] = ...,
-        cellvars: Tuple[str, ...] = ...,
-    ) -> None: ...
+    if sys.version_info >= (3, 8):
+        def __init__(
+            self,
+            argcount: int,
+            posonlyargcount: int,
+            kwonlyargcount: int,
+            nlocals: int,
+            stacksize: int,
+            flags: int,
+            codestring: bytes,
+            constants: Tuple[Any, ...],
+            names: Tuple[str, ...],
+            varnames: Tuple[str, ...],
+            filename: str,
+            name: str,
+            firstlineno: int,
+            lnotab: bytes,
+            freevars: Tuple[str, ...] = ...,
+            cellvars: Tuple[str, ...] = ...,
+        ) -> None: ...
+    else:
+        def __init__(
+            self,
+            argcount: int,
+            kwonlyargcount: int,
+            nlocals: int,
+            stacksize: int,
+            flags: int,
+            codestring: bytes,
+            constants: Tuple[Any, ...],
+            names: Tuple[str, ...],
+            varnames: Tuple[str, ...],
+            filename: str,
+            name: str,
+            firstlineno: int,
+            lnotab: bytes,
+            freevars: Tuple[str, ...] = ...,
+            cellvars: Tuple[str, ...] = ...,
+        ) -> None: ...
+    if sys.version_info >= (3, 8):
+        def replace(
+            self,
+            *,
+            co_argcount: int = ...,
+            co_posonlyargcount: int = ...,
+            co_kwonlyargcount: int = ...,
+            co_nlocals: int = ...,
+            co_stacksize: int = ...,
+            co_flags: int = ...,
+            co_firstlineno: int = ...,
+            co_code: bytes = ...,
+            co_consts: Tuple[Any, ...] = ...,
+            co_names: Tuple[str, ...] = ...,
+            co_varnames: Tuple[str, ...] = ...,
+            co_freevars: Tuple[str, ...] = ...,
+            co_cellvars: Tuple[str, ...] = ...,
+            co_filename: str = ...,
+            co_name: str = ...,
+            co_lnotab: bytes = ...,
+        ) -> CodeType: ...
 
 class MappingProxyType(Mapping[_KT, _VT], Generic[_KT, _VT]):
     def __init__(self, mapping: Mapping[_KT, _VT]) -> None: ...
@@ -147,7 +191,7 @@ class MethodType:
     __self__: object
     __name__: str
     __qualname__: str
-    def __init__(self, func: Callable, obj: object) -> None: ...
+    def __init__(self, func: Callable[..., Any], obj: object) -> None: ...
     def __call__(self, *args: Any, **kwargs: Any) -> Any: ...
 class BuiltinFunctionType:
     __self__: Union[object, ModuleType]

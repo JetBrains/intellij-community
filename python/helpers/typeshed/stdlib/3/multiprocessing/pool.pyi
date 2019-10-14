@@ -1,8 +1,4 @@
-from typing import (
-    Any, Callable, ContextManager, Iterable, Mapping, Optional, List,
-    Type, TypeVar, Generic, Iterator
-)
-from types import TracebackType
+from typing import Any, Callable, ContextManager, Iterable, Mapping, Optional, List, TypeVar, Generic, Iterator
 
 _PT = TypeVar('_PT', bound=Pool)
 _S = TypeVar('_S')
@@ -19,14 +15,12 @@ AsyncResult = ApplyResult
 
 class MapResult(ApplyResult[List[_T]]): ...
 
-_IMIT = TypeVar('_IMIT', bound=IMapIterator)
-
 class IMapIterator(Iterator[_T]):
-    def __iter__(self: _IMIT) -> _IMIT: ...
+    def __iter__(self: _S) -> _S: ...
     def next(self, timeout: Optional[float] = ...) -> _T: ...
     def __next__(self, timeout: Optional[float] = ...) -> _T: ...
 
-class IMapUnorderedIterator(IMapIterator): ...
+class IMapUnorderedIterator(IMapIterator[_T]): ...
 
 class Pool(ContextManager[Pool]):
     def __init__(self, processes: Optional[int] = ...,

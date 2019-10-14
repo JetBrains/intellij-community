@@ -1,4 +1,4 @@
-from typing import Any, Callable, Optional, Tuple, TypeVar, Generic
+from typing import Any, Callable, Iterable, Mapping, Optional, Tuple, TypeVar, Generic
 from ._base import Executor, Future
 import sys
 
@@ -22,10 +22,9 @@ class ThreadPoolExecutor(Executor):
 
 
 class _WorkItem(Generic[_S]):
-    future: Future
-    fn: Callable[[Future[_S]], Any]
-    args: Any
-    kwargs: Any
-    def __init__(self, future: Future, fn: Callable[[Future[_S]], Any], args: Any,
-                 kwargs: Any) -> None: ...
+    future: Future[_S]
+    fn: Callable[..., _S]
+    args: Iterable[Any]
+    kwargs: Mapping[str, Any]
+    def __init__(self, future: Future[_S], fn: Callable[..., _S], args: Iterable[Any], kwargs: Mapping[str, Any]) -> None: ...
     def run(self) -> None: ...

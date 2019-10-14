@@ -1,7 +1,9 @@
 # Stubs for mock
 
 import sys
-from typing import Any, Optional, Text, Type
+from typing import Any, List, Optional, Text, Tuple, Type, TypeVar
+
+_T = TypeVar("_T")
 
 FILTER_DIR: Any
 
@@ -18,7 +20,7 @@ class _Sentinel:
 sentinel: Any
 DEFAULT: Any
 
-class _CallList(list):
+class _CallList(List[_T]):
     def __contains__(self, value: Any) -> bool: ...
 
 class _MockIter:
@@ -96,6 +98,8 @@ class MagicMixin:
 
 NonCallableMagicMock = Any
 MagicMock = Any
+if sys.version_info >= (3, 8):
+    AsyncMock = Any
 
 class MagicProxy:
     name: Any
@@ -111,7 +115,7 @@ class _ANY:
 
 ANY: Any
 
-class _Call(tuple):
+class _Call(Tuple[Any, ...]):
     def __new__(cls, value: Any = ..., name: Optional[Any] = ..., parent: Optional[Any] = ..., two: bool = ..., from_kall: bool = ...) -> Any: ...
     name: Any
     parent: Any

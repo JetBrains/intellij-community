@@ -2,7 +2,6 @@
 
 from abc import abstractmethod
 from typing import Any, List, Optional, Tuple, Union, Callable
-import sys
 from email.message import Message
 from email.errors import MessageDefect
 from email.header import Header

@@ -2,34 +2,24 @@ dist: bionic
 language: python
 python: 3.7
 
-matrix:
+jobs:
   include:
     - name: "pytype"
       python: 3.6
-      env:
-        - TEST_CMD="./tests/pytype_test.py"
-        - INSTALL="test"
+      install: pip install -r requirements-tests-py3.txt
+      script: ./tests/pytype_test.py
     - name: "mypy (typed-ast)"
-      env:
-        - TEST_CMD="./tests/mypy_test.py"
-        - INSTALL="mypy"
+      python: 3.7
+      install: pip install -U git+git://github.com/python/mypy git+git://github.com/python/typed_ast
+      script: ./tests/mypy_test.py
     - name: "mypy (ast)"
       python: 3.8-dev
-      env:
-        - TEST_CMD="./tests/mypy_test.py"
-        - INSTALL="mypy"
+      install: pip install -U git+git://github.com/python/mypy
+      script: ./tests/mypy_test.py
     - name: "mypy self test"
-      env: TEST_CMD="./tests/mypy_selftest.py"
+      script: ./tests/mypy_selftest.py
     - name: "check file consistency"
-      env: TEST_CMD="./tests/check_consistent.py"
+      script: ./tests/check_consistent.py
     - name: "flake8"
-      env:
-        - TEST_CMD="flake8"
-        - INSTALL="test"
-
-install:
-  - if [[ $INSTALL == 'test' ]]; then pip install -r requirements-tests-py3.txt; fi
-  - if [[ $INSTALL == 'mypy' ]]; then pip install -U git+git://github.com/python/mypy git+git://github.com/python/typed_ast; fi
-
-script:
-  - $TEST_CMD
+      install: pip install -r requirements-tests-py3.txt
+      script: flake8

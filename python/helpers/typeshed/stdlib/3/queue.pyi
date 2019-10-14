@@ -2,9 +2,8 @@
 
 # NOTE: These are incomplete!
 
-from collections import deque
 from threading import Condition, Lock
-from typing import Any, TypeVar, Generic, Optional
+from typing import Any, Deque, TypeVar, Generic, Optional
 import sys
 
 _T = TypeVar('_T')
@@ -21,7 +20,7 @@ class Queue(Generic[_T]):
     all_tasks_done: Condition  # undocumented
     unfinished_tasks: int  # undocumented
 
-    queue: deque  # undocumented
+    queue: Deque[Any]  # undocumented
     def __init__(self, maxsize: int = ...) -> None: ...
     def _init(self, maxsize: int) -> None: ...
     def empty(self) -> bool: ...

@@ -1,4 +1,4 @@
-from typing import Any, Callable, Generator, Iterable, Iterator, List, Type, TypeVar, Union, Optional, Awaitable
+from typing import Any, Callable, Generator, Type, TypeVar, Union, Optional, Awaitable
 
 from .coroutines import coroutine
 from .events import AbstractEventLoop
@@ -6,8 +6,6 @@ from .futures import Future
 from types import TracebackType
 
 _T = TypeVar('_T')
-
-__all__: List[str]
 
 class _ContextManager:
     def __init__(self, lock: Union[Lock, Semaphore]) -> None: ...

@@ -1,4 +1,4 @@
-from typing import Callable, ContextManager, Optional, Union
+from typing import Any, Callable, ContextManager, Optional, Union
 
 from multiprocessing.context import BaseContext
 import threading
@@ -9,7 +9,7 @@ _LockLike = Union[Lock, RLock]
 class Barrier(threading.Barrier):
     def __init__(self,
                  parties: int,
-                 action: Optional[Callable] = ...,
+                 action: Optional[Callable[..., Any]] = ...,
                  timeout: Optional[float] = ...,
                  *
                  ctx: BaseContext) -> None: ...

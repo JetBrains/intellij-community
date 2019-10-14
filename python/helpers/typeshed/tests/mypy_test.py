@@ -132,6 +132,7 @@ def main():
             flags.append('--no-site-packages')
             flags.append('--show-traceback')
             flags.append('--no-implicit-optional')
+            flags.append('--disallow-any-generics')
             if args.warn_unused_ignores:
                 flags.append('--warn-unused-ignores')
             sys.argv = ['mypy'] + flags + files

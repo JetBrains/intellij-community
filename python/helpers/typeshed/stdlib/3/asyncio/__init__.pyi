@@ -1,5 +1,5 @@
 import sys
-from typing import List, Type
+from typing import Type
 
 from asyncio.coroutines import (
     coroutine as coroutine,
@@ -18,8 +18,6 @@ from asyncio.streams import (
     StreamReaderProtocol as StreamReaderProtocol,
     open_connection as open_connection,
     start_server as start_server,
-    IncompleteReadError as IncompleteReadError,
-    LimitOverrunError as LimitOverrunError,
 )
 from asyncio.subprocess import (
     create_subprocess_exec as create_subprocess_exec,
@@ -35,9 +33,6 @@ from asyncio.transports import (
 )
 from asyncio.futures import (
     Future as Future,
-    CancelledError as CancelledError,
-    TimeoutError as TimeoutError,
-    InvalidStateError as InvalidStateError,
     wrap_future as wrap_future,
 )
 from asyncio.tasks import (
@@ -122,4 +117,25 @@ DefaultEventLoopPolicy: Type[AbstractEventLoopPolicy]
 
 # TODO: AbstractChildWatcher (UNIX only)
 
-__all__: List[str]
+if sys.version_info >= (3, 8):
+    from asyncio.exceptions import (
+        CancelledError as CancelledError,
+        IncompleteReadError as IncompleteReadError,
+        InvalidStateError as InvalidStateError,
+        LimitOverrunError as LimitOverrunError,
+        SendfileNotAvailableError as SendfileNotAvailableError,
+        TimeoutError as TimeoutError,
+    )
+else:
+    from asyncio.events import (
+        SendfileNotAvailableError as SendfileNotAvailableError
+    )
+    from asyncio.futures import (
+        CancelledError as CancelledError,
+        TimeoutError as TimeoutError,
+        InvalidStateError as InvalidStateError,
+    )
+    from asyncio.streams import (
+        IncompleteReadError as IncompleteReadError,
+        LimitOverrunError as LimitOverrunError,
+    )

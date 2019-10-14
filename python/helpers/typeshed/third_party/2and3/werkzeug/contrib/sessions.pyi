@@ -1,15 +1,18 @@
-from typing import Any, Optional, Text
+from typing import Any, Optional, Text, TypeVar
 from werkzeug.datastructures import CallbackDict
+
+_K = TypeVar("_K")
+_V = TypeVar("_V")
 
 def generate_key(salt: Optional[Any] = ...): ...
 
-class ModificationTrackingDict(CallbackDict):
+class ModificationTrackingDict(CallbackDict[_K, _V]):
     modified: Any
     def __init__(self, *args, **kwargs): ...
     def copy(self): ...
     def __copy__(self): ...
 
-class Session(ModificationTrackingDict):
+class Session(ModificationTrackingDict[_K, _V]):
     sid: Any
     new: Any
     def __init__(self, data, sid, new: bool = ...): ...

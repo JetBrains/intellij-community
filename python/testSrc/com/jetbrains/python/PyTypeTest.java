@@ -3570,6 +3570,12 @@ public class PyTypeTest extends PyTestCase {
     );
   }
 
+  public void testAnnotatedClsReturnOverloadedClassMethod() {
+    doMultiFileTest("mytime",
+                    "from mytime import mytime\n" +
+                    "expr = mytime.now()");
+  }
+
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {
     return ImmutableList.of(TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile()).withTracing(),
                             TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()).withTracing());

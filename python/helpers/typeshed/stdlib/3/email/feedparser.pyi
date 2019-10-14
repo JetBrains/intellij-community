@@ -1,7 +1,6 @@
 # Stubs for email.feedparser (Python 3.4)
 
 from typing import Callable
-import sys
 from email.message import Message
 from email.policy import Policy
 
