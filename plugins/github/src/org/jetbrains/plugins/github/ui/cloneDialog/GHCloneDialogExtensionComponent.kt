@@ -58,10 +58,7 @@ import org.jetbrains.plugins.github.authentication.accounts.*
 import org.jetbrains.plugins.github.authentication.ui.GithubLoginPanel
 import org.jetbrains.plugins.github.exceptions.GithubMissingTokenException
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
-import org.jetbrains.plugins.github.util.CachingGithubUserAvatarLoader
-import org.jetbrains.plugins.github.util.GithubImageResizer
-import org.jetbrains.plugins.github.util.GithubUrlUtil
-import org.jetbrains.plugins.github.util.handleOnEdt
+import org.jetbrains.plugins.github.util.*
 import java.awt.FlowLayout
 import java.awt.event.ActionListener
 import java.awt.event.MouseAdapter
@@ -83,6 +80,7 @@ internal class GHCloneDialogExtensionComponent(
   private val LOG = logger<GHCloneDialogExtensionComponent>()
 
   private val progressManager: ProgressVisibilityManager
+  private val githubGitHelper: GithubGitHelper = GithubGitHelper.getInstance()
 
   // UI
   private val defaultAvatar = resizeIcon(GithubIcons.DefaultAvatar, VcsCloneDialogUiSpec.Components.avatarSize)
@@ -436,13 +434,17 @@ internal class GHCloneDialogExtensionComponent(
     }
     val githubRepoPath = getGithubRepoPath(searchField.text)
     if (githubRepoPath != null) {
-      selectedUrl = githubRepoPath.toUrl()
-      repositoryList.emptyText.appendText("Clone '$githubRepoPath'")
+      selectedUrl = githubGitHelper.getRemoteUrl(githubRepoPath.serverPath,
+                                                 githubRepoPath.repositoryPath.owner,
+                                                 githubRepoPath.repositoryPath.repository)
+      repositoryList.emptyText.appendText("Clone '$selectedUrl'")
       return
     }
     val selectedValue = repositoryList.selectedValue
     if (selectedValue is GHRepositoryListItem.Repo) {
-      selectedUrl = selectedValue.repo.cloneUrl
+      selectedUrl = githubGitHelper.getRemoteUrl(selectedValue.account.server,
+                                                 selectedValue.repo.userName,
+                                                 selectedValue.repo.name)
       return
     }
     selectedUrl = null
