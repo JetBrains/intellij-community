@@ -2124,31 +2124,31 @@ public abstract class LongRangeSet {
 
     @Override
     public LongRangeSet castTo(PsiPrimitiveType type) {
-      LongRangeSet result = all();
+      LongRangeSet result = empty();
       for (int i = 0; i < myRanges.length; i += 2) {
-        result = result.subtract(range(myRanges[i], myRanges[i + 1]).castTo(type));
+        result = result.unite(range(myRanges[i], myRanges[i + 1]).castTo(type));
       }
-      return all().subtract(result);
+      return result;
     }
 
     @NotNull
     @Override
     public LongRangeSet abs(boolean isLong) {
-      LongRangeSet result = all();
+      LongRangeSet result = empty();
       for (int i = 0; i < myRanges.length; i += 2) {
-        result = result.subtract(range(myRanges[i], myRanges[i + 1]).abs(isLong));
+        result = result.unite(range(myRanges[i], myRanges[i + 1]).abs(isLong));
       }
-      return all().subtract(result);
+      return result;
     }
 
     @NotNull
     @Override
     public LongRangeSet negate(boolean isLong) {
-      LongRangeSet result = all();
+      LongRangeSet result = empty();
       for (int i = 0; i < myRanges.length; i += 2) {
-        result = result.subtract(range(myRanges[i], myRanges[i + 1]).negate(isLong));
+        result = result.unite(range(myRanges[i], myRanges[i + 1]).negate(isLong));
       }
-      return all().subtract(result);
+      return result;
     }
 
     @NotNull
