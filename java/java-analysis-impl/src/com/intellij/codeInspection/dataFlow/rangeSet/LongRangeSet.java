@@ -1493,13 +1493,19 @@ public abstract class LongRangeSet {
     public LongRangeSet castTo(PsiPrimitiveType type) {
       if (PsiType.LONG.equals(type)) return this;
       if (PsiType.BYTE.equals(type)) {
-        return mask(Byte.SIZE, type);
+        LongRangeSet result = mask(Byte.SIZE, type);
+        assert BYTE_RANGE.contains(result) : this;
+        return result;
       }
       if (PsiType.SHORT.equals(type)) {
-        return mask(Short.SIZE, type);
+        LongRangeSet result = mask(Short.SIZE, type);
+        assert SHORT_RANGE.contains(result) : this;
+        return result;
       }
       if (PsiType.INT.equals(type)) {
-        return mask(Integer.SIZE, type);
+        LongRangeSet result = mask(Integer.SIZE, type);
+        assert INT_RANGE.contains(result) : this;
+        return result;
       }
       if (PsiType.CHAR.equals(type)) {
         if (myFrom <= Character.MIN_VALUE && myTo >= Character.MAX_VALUE) return CHAR_RANGE;
@@ -1534,6 +1540,9 @@ public abstract class LongRangeSet {
       else {
         hi = Math.max(-low, hi);
         low = 0;
+      }
+      if (low > hi) {
+        return isLong ? LONG_RANGE : INT_RANGE;
       }
       if (myFrom <= minValue) {
         return new RangeSet(new long[]{minValue, minValue, low, hi});
