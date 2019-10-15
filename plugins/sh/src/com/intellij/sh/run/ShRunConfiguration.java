@@ -15,6 +15,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.listeners.RefactoringElementAdapter;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
+import com.intellij.sh.ShSupport;
 import com.intellij.sh.psi.ShFile;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -64,7 +65,7 @@ public class ShRunConfiguration extends LocatableConfigurationBase implements Re
   @Nullable
   @Override
   public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment environment) {
-    return new ShRunConfigurationProfileState(getProject(), this);
+    return ShSupport.getInstance().createRunProfileState(executor, environment, this);
   }
 
   @Override
