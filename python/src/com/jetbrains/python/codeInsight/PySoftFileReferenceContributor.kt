@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight
 
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.TextRange
 import com.intellij.patterns.PatternCondition
 import com.intellij.patterns.PlatformPatterns.psiElement
@@ -136,7 +137,8 @@ class PySoftFileReferenceContributor : PsiReferenceContributor() {
    */
   open class PySoftFileReferenceSet(element: PyStringLiteralExpression, provider: PsiReferenceProvider) :
     PyStringLiteralFileReferenceSet(element.stringValue, element,
-                                    ElementManipulators.getValueTextRange(element).startOffset, provider, true, false, null) {
+                                    ElementManipulators.getValueTextRange(element).startOffset,
+                                    provider, !SystemInfo.isWindows, false, null) {
 
     override fun isSoft(): Boolean = true
 
