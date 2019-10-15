@@ -172,7 +172,7 @@ public class DirDiffPanel implements Disposable, DataProvider {
       final String name = myModel.getColumnName(i);
       final TableColumn column = columnModel.getColumn(i);
       if (DirDiffTableModel.COLUMN_DATE.equals(name)) {
-        column.setPreferredWidth(JBUIScale.scale(90));
+        column.setPreferredWidth(JBUIScale.scale(110));
         column.setMinWidth(JBUIScale.scale(90));
       }
       else if (DirDiffTableModel.COLUMN_SIZE.equals(name)) {
