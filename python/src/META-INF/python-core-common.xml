@@ -827,6 +827,10 @@
       <add-to-group group-id="XDebugger.ValueGroup" anchor="after" relative-to-action="Debugger.AddToWatch"/>
     </action>
 
+    <action id="PyDebugger.ViewAsGroup" class="com.jetbrains.python.debugger.actions.ViewAsGroup" text="View as">
+      <add-to-group group-id="XDebugger.ValueGroup" anchor="last" />
+    </action>
+
     <action id="PyConvertModuleToPackage" class="com.jetbrains.python.refactoring.convertModulePackage.PyConvertModuleToPackageAction"
             text="Convert to Python Package"
             description="Create package with the same name and move content of the module to its __init__.py">
