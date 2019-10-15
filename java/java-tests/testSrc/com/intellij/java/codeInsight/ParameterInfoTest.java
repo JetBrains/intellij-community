@@ -514,7 +514,7 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
         return null;
       }
 
-      @Nullable
+      @NotNull
       @Override
       public Object findElementForParameterInfo(@NotNull CreateParameterInfoContext context) {
         context.setItemsToShow(new Object[]{this});
@@ -526,7 +526,7 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
         context.showHint(context.getFile(), context.getOffset(), this);
       }
 
-      @Nullable
+      @NotNull
       @Override
       public Object findElementForUpdatingParameterInfo(@NotNull UpdateParameterInfoContext context) {
         return this;

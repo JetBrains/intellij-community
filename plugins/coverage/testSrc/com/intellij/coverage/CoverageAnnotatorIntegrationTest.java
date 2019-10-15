@@ -17,7 +17,6 @@ import com.intellij.rt.coverage.data.ProjectData;
 import com.intellij.testFramework.CompilerTester;
 import com.intellij.testFramework.JavaModuleTestCase;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
 import java.util.HashMap;
@@ -64,7 +63,7 @@ public class CoverageAnnotatorIntegrationTest extends JavaModuleTestCase {
       }
     };
     CoverageSuitesBundle suite = new CoverageSuitesBundle(new JavaCoverageSuite(engine)) {
-      @Nullable
+      @NotNull
       @Override
       public ProjectData getCoverageData() {
         return new ProjectData() {
@@ -85,7 +84,7 @@ public class CoverageAnnotatorIntegrationTest extends JavaModuleTestCase {
 
   public void testMultipleSourceRoots() {
     CoverageSuitesBundle suite = new CoverageSuitesBundle(new JavaCoverageSuite(new JavaCoverageEngine())) {
-      @Nullable
+      @NotNull
       @Override
       public ProjectData getCoverageData() {
         return new ProjectData() {

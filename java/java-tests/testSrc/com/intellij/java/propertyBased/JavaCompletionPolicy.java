@@ -90,7 +90,7 @@ class JavaCompletionPolicy extends CompletionPolicy {
     if (target instanceof PsiVariable && PsiTreeUtil.isAncestor(target, ref, false)) {
       return false;
     }
-    return target != null;
+    return true;
   }
 
   private static boolean isStaticWithInstanceQualifier(PsiJavaCodeReferenceElement ref, @NotNull PsiElement target) {

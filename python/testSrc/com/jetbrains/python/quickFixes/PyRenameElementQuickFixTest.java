@@ -65,7 +65,7 @@ public class PyRenameElementQuickFixTest extends PyQuickFixTestCase {
   @NotNull
   private static NameSuggestionProvider createTestNameSuggestionProvider() {
     return new PreferrableNameSuggestionProvider() {
-      @Nullable
+      @NotNull
       @Override
       public SuggestedNameInfo getSuggestedNames(PsiElement element, @Nullable PsiElement nameSuggestionContext, Set<String> result) {
         result.add(RENAME_RESULT_BY_RENAME_HANDLER);

@@ -34,7 +34,7 @@ public final class MockRuntimeConfiguration extends LocatableConfigurationBase i
   @NotNull
   @Override
   public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
-    return null;
+    throw new UnsupportedOperationException();
   }
 
   @Override

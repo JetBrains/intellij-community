@@ -335,7 +335,7 @@ public class ExtensionPointImplTest {
     @NotNull
     @Override
     public MessageBus getMessageBus() {
-      return null;
+      throw new UnsupportedOperationException();
     }
 
     @Override
@@ -346,7 +346,7 @@ public class ExtensionPointImplTest {
     @NotNull
     @Override
     public Condition<?> getDisposed() {
-      return null;
+      throw new UnsupportedOperationException();
     }
 
     @Override

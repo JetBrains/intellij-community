@@ -554,7 +554,7 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
 
       @Override
       public boolean isImplicitlyNotNullInitialized(@NotNull PsiElement element) {
-        return element instanceof PsiField && ((PsiField)element).getName() != null && ((PsiField)element).getName().startsWith("field");
+        return element instanceof PsiField && ((PsiField)element).getName().startsWith("field");
       }
 
       @Override

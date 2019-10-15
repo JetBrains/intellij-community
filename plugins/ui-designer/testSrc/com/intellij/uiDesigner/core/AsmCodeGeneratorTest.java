@@ -174,10 +174,10 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
       assertNotNull("Class patching failed but no errors or warnings were returned", patchedData);
     }
     else if (errors.length > 0) {
-      assertTrue(errors[0].getErrorMessage(), false);
+      fail(errors[0].getErrorMessage());
     }
     else {
-      assertTrue(warnings[0].getErrorMessage(), false);
+      fail(warnings[0].getErrorMessage());
     }
     return patchedData;
   }

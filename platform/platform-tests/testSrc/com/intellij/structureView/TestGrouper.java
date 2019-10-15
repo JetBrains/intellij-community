@@ -72,7 +72,7 @@ public class TestGrouper implements Grouper {
     @NotNull
     @Override
     public ItemPresentation getPresentation() {
-      return null;
+      throw new UnsupportedOperationException();
     }
 
     public String toString() {

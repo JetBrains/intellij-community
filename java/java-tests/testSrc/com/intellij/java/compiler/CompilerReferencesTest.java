@@ -126,7 +126,6 @@ public class CompilerReferencesTest extends CompilerReferencesTestBase {
       .range(1, 7)
       .mapToObj(idx -> "Foo" + idx)
       .map(className -> myFixture.findClass(className))
-      .filter(Objects::nonNull)
       .toArray(PsiClass[]::new);
 
     assertSize(6, classes);

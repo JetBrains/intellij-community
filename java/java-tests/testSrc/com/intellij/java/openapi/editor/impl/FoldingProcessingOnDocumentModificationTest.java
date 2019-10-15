@@ -32,7 +32,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.testFramework.TestFileType;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -144,7 +143,7 @@ public class FoldingProcessingOnDocumentModificationTest extends AbstractEditorT
         return FoldingDescriptor.EMPTY;
       }
 
-      @Nullable
+      @NotNull
       @Override
       public String getPlaceholderText(@NotNull ASTNode node) {
         return Integer.toString(valuePlaceholder[0]);

@@ -213,7 +213,7 @@ public class PushDownTest extends LightRefactoringTestCase {
     for (MemberInfo member : members) {
       member.setChecked(true);
       if (toAbstract) {
-        member.setToAbstract(toAbstract);
+        member.setToAbstract(true);
       }
     }
 

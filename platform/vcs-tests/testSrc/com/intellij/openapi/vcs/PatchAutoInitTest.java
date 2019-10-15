@@ -313,8 +313,8 @@ public class PatchAutoInitTest extends HeavyPlatformTestCase {
         return;
       }
     }
-    assertTrue("Failed for (first base only shown) '" + bases.iterator().next().getPath() + " + " + path + " " + strip +
-               "'; results: " + printPatches(filePatchInProgresses), false);
+    fail("Failed for (first base only shown) '" + bases.iterator().next().getPath() + " + " + path + " " + strip +
+         "'; results: " + printPatches(filePatchInProgresses));
   }
 
   private static String printPatches(final List<AbstractFilePatchInProgress> filePatchInProgresses) {
