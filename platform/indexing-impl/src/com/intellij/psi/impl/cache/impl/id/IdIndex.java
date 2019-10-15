@@ -34,8 +34,6 @@ public class IdIndex extends FileBasedIndexExtension<IdIndexEntry, Integer> impl
 
   private final FileBasedIndex.InputFilter myInputFilter = file -> isIndexable(file.getFileType());
 
-  public static final boolean ourSnapshotMappingsEnabled = SystemProperties.getBooleanProperty("idea.index.snapshot.mappings.enabled", true);
-
   private final DataExternalizer<Integer> myValueExternalizer = new DataExternalizer<Integer>() {
     @Override
     public void save(@NotNull final DataOutput out, final Integer value) throws IOException {
@@ -75,7 +73,7 @@ public class IdIndex extends FileBasedIndexExtension<IdIndexEntry, Integer> impl
 
   @Override
   public int getVersion() {
-    return 16 + (ourSnapshotMappingsEnabled ? 0xFF:0); // TODO: version should enumerate all word scanner versions and build version upon that set
+    return 16 + (FileBasedIndex.ourSnapshotMappingsEnabled ? 0xFF:0); // TODO: version should enumerate all word scanner versions and build version upon that set
   }
 
   @Override
