@@ -1675,8 +1675,7 @@ public class PluginManagerConfigurable
   @Nullable
   @Override
   public Runnable enableSearch(String option) {
-    if (StringUtil.isEmpty(option) &&
-        (myTabHeaderComponent.getSelectionTab() == MARKETPLACE_TAB ? myMarketplaceSearchPanel : myInstalledSearchPanel).isEmpty()) {
+    if (StringUtil.isEmpty(option) && (myTabHeaderComponent.getSelectionTab() == MARKETPLACE_TAB || myInstalledSearchPanel.isEmpty())) {
       return null;
     }
 
