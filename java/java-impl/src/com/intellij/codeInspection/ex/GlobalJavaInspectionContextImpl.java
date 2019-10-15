@@ -15,6 +15,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
@@ -127,8 +128,12 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
           InspectionsBundle.message("offline.inspections.jdk.not.found", ProjectRootManager.getInstance(project).getProjectSdkName()));
         return false;
       }
+
       for (Module module : modules) {
         final ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
+        if (ModuleType.get(module) instanceof JavaModuleType && rootManager.getSourceRoots(true).length == 0) {
+          LOG.info(InspectionsBundle.message("offline.inspections.no.source.roots", module.getName()));
+        }
         final OrderEntry[] entries = rootManager.getOrderEntries();
         for (OrderEntry entry : entries) {
           if (entry instanceof JdkOrderEntry) {
