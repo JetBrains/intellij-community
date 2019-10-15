@@ -1,19 +1,23 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 import {Component, Vue, Watch} from "vue-property-decorator"
-import {LineChartManager} from "./LineChartManager"
 import {AppStateModule} from "@/state/state"
 import {getModule} from "vuex-module-decorators"
 import {loadJson} from "@/httpUtil"
 import {InfoResponse, Machine} from "@/aggregatedStats/model"
-import {ClusteredChartManager} from "@/aggregatedStats/ClusteredChartManager"
 import {debounce} from "debounce"
-import {DEFAULT_AGGREGATION_OPERATOR} from "@/aggregatedStats/ChartSettings"
+import {AggregatedStatComponent} from "@/aggregatedStats/AggregatedStatComponent"
 
 @Component
 export default class AggregatedStatsPage extends Vue {
   private readonly dataModule = getModule(AppStateModule, this.$store)
-  private readonly lineChartManagers: Array<LineChartManager> = []
-  private readonly clusteredChartManagers: Array<ClusteredChartManager> = []
+
+  private readonly helper!: AggregatedStatComponent
+
+  created() {
+    // @ts-ignore
+    // noinspection JSConstantReassignment
+    this.helper = new AggregatedStatComponent()
+  }
 
   chartSettings = this.dataModule.chartSettings
 
@@ -22,8 +26,6 @@ export default class AggregatedStatsPage extends Vue {
 
   aggregationOperators: Array<string> = ["median", "min", "max", "quantile"]
 
-  private lastInfoResponse: InfoResponse | null = null
-
   isFetching: boolean = false
 
   private loadDataAfterDelay = debounce(() => {
@@ -31,7 +33,7 @@ export default class AggregatedStatsPage extends Vue {
   }, 1000)
 
   isShowScrollbarXPreviewChanged(_value: boolean) {
-    this.lineChartManagers.forEach(it => it.scrollbarXPreviewOptionChanged())
+    this.helper.showScrollbarXPreviewChanged()
     this.dataModule.updateChartSettings(this.chartSettings)
   }
 
@@ -43,7 +45,7 @@ export default class AggregatedStatsPage extends Vue {
           return
         }
 
-        this.lastInfoResponse = data
+        this.helper.lastInfoResponse = data
         this.products = data.productNames
         let selectedProduct = this.chartSettings.selectedProduct
         if (this.products.length === 0) {
@@ -75,7 +77,7 @@ export default class AggregatedStatsPage extends Vue {
   selectedProductChanged(product: string | null, _oldV: string): void {
     console.log("product changed", product, _oldV)
 
-    const infoResponse = this.lastInfoResponse
+    const infoResponse = this.helper.lastInfoResponse
     if (infoResponse != null) {
       this.applyChangedProduct(product, infoResponse)
     }
@@ -108,7 +110,7 @@ export default class AggregatedStatsPage extends Vue {
       // data will be reloaded on machine change, but if product changed but machine remain the same, data reloading must be triggered here
       if (product != null && selectedMachine != null) {
         this.loadClusteredChartsData(product)
-        this.loadLineChartData(product, selectedMachine)
+        this.helper.loadLineChartData(product, selectedMachine, this.chartSettings, this.$refs as any, this.$notify)
       }
     }
     else {
@@ -131,63 +133,14 @@ export default class AggregatedStatsPage extends Vue {
     }
 
     this.loadClusteredChartsData(product)
-    this.loadLineChartData(product, machine)
+    this.helper.loadLineChartData(product, machine, this.chartSettings, this.$refs as any, this.$notify)
   }
 
   private loadClusteredChartsData(product: string): void {
-    const machineId = this.chartSettings.selectedMachine
-    if (machineId == null) {
-      return
+    const machine = this.chartSettings.selectedMachine
+    if (machine != null) {
+      this.helper.loadClusteredChartsData(product, machine, this.chartSettings, this.$refs as any, this.$notify)
     }
-
-    const chartManagers = this.clusteredChartManagers
-    if (chartManagers.length === 0) {
-      chartManagers.push(new ClusteredChartManager(this.$refs.clusteredDurationChartContainer as HTMLElement))
-      chartManagers.push(new ClusteredChartManager(this.$refs.clusteredInstantChartContainer as HTMLElement))
-    }
-
-    chartManagers[0].setData(loadJson(this.createGroupedMetricUrl(product, machineId, false), null, this.$notify))
-    chartManagers[1].setData(loadJson(this.createGroupedMetricUrl(product, machineId, true), null, this.$notify))
-  }
-
-  createGroupedMetricUrl(product: string, machineId: string, isInstant: boolean): string {
-    const chartSettings = this.chartSettings
-    let operator = chartSettings.aggregationOperator || DEFAULT_AGGREGATION_OPERATOR
-    let operatorArg = 0
-    if (operator === "median") {
-      operator = "quantile"
-      operatorArg = 50
-    } else if (operator === "quantile") {
-      operatorArg = chartSettings.quantile
-    }
-
-    let result = `${chartSettings.serverUrl}/api/v1/groupedMetrics/` +
-      `product=${encodeURIComponent(product)}` +
-      `&machine=${machineId}` +
-      `&operator=${operator}`
-    if (operatorArg !== 0) {
-      result += `&operatorArg=${operatorArg}`
-    }
-    result += `&eventType=${isInstant ? "i" : "d"}`
-    return result
-  }
-
-  // noinspection DuplicatedCode
-  loadLineChartData(product: string, machineId: string): void {
-    const chartManagers = this.lineChartManagers
-    if (chartManagers.length === 0) {
-      chartManagers.push(new LineChartManager(this.$refs.lineDurationChartContainer as HTMLElement, this.chartSettings, false))
-      chartManagers.push(new LineChartManager(this.$refs.lineInstantChartContainer as HTMLElement, this.chartSettings, true))
-    }
-
-    const productAndMachineParams = `product=${encodeURIComponent(product)}&machine=${encodeURIComponent(machineId)}`
-    const url = `${this.chartSettings.serverUrl}/api/v1/metrics/` + productAndMachineParams
-    const infoResponse = this.lastInfoResponse!!
-
-    const reportUrlPrefix = `${this.chartSettings.serverUrl}/api/v1/report/` + productAndMachineParams
-
-    chartManagers[0].setData(loadJson(`${url}&eventType=d`, null, this.$notify), infoResponse, reportUrlPrefix)
-    chartManagers[1].setData(loadJson(`${url}&eventType=i`, null, this.$notify), infoResponse, reportUrlPrefix)
   }
 
   @Watch("chartSettings.serverUrl")
@@ -222,7 +175,6 @@ export default class AggregatedStatsPage extends Vue {
     this.reloadClusteredDataIfPossible()
   }, 300)
 
-
   @Watch("chartSettings.quantile")
   quantileChanged(_newV: number, _oldV: number) {
     console.log("quantile changed", _newV)
@@ -239,15 +191,7 @@ export default class AggregatedStatsPage extends Vue {
   }
 
   beforeDestroy() {
-    for (const chartManager of this.clusteredChartManagers) {
-      chartManager.dispose()
-    }
-    this.clusteredChartManagers.length = 0
-
-    for (const chartManager of this.lineChartManagers) {
-      chartManager.dispose()
-    }
-    this.lineChartManagers.length = 0
+    this.helper.dispose()
   }
 }
 

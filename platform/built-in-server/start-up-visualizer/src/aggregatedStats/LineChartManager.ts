@@ -184,11 +184,18 @@ export class LineChartManager {
   setData(data: Promise<Array<Metrics>>, info: InfoResponse, reportUrlPrefix: string) {
     data
       .then(data => {
-        if (data != null) {
-          // https://stackoverflow.com/questions/56996968/prevent-an-object-from-being-converted-to-a-reactive-object-when-assigned-to-a-c
-          data.map(it => Object.freeze(it))
-          this.render(new LineChartDataManager(data, info, this.isInstantEvents, reportUrlPrefix))
+        if (data == null) {
+          return
         }
+
+        let handler = {
+          set: (target: any, prop: any, value: any) => {
+            console.log('new prop:', new Error().stack);
+            target[prop] = value;
+          }
+        };
+        let proxy = new Proxy(data, handler as any)
+        this.render(new LineChartDataManager(proxy, info, this.isInstantEvents, reportUrlPrefix))
       })
   }
 }

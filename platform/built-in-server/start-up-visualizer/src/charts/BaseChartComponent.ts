@@ -8,11 +8,15 @@ import {Notification} from "element-ui"
 // @ts-ignore
 @Component
 export abstract class BaseChartComponent<T extends ChartManager> extends Vue {
-  protected chartManager: T | null = null
+  protected chartManager!: T | null
 
   /** @final */
   get measurementData(): DataManager | null {
     return (this.$store.state[mainModuleName] as AppState).data
+  }
+
+  created() {
+    this.chartManager = null
   }
 
   mounted() {
