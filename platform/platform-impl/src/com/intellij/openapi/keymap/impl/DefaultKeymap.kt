@@ -22,10 +22,10 @@ open class DefaultKeymap {
 
   init {
     for (provider in BundledKeymapProvider.EP_NAME.extensionList) {
-      for (fileName in provider.keymapFileNames) {
+      for ((fileName, plugin) in provider.keymapFileNamesWithPlugins) {
         LOG.runAndLogException {
           loadKeymapsFromElement(object: SchemeDataHolder<KeymapImpl> {
-            override fun read() = provider.load(fileName) { JDOMUtil.load(it) }
+            override fun read() = provider.load(fileName, plugin.pluginClassLoader) { JDOMUtil.load(it) }
 
             override fun updateDigest(scheme: KeymapImpl) {
             }
