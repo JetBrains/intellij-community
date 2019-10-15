@@ -170,9 +170,10 @@ public class JdkUtil {
       if (javaConfiguration == null) {
         throw new CantRunException("Cannot find Java configuration in " + targetConfiguration.getDisplayName() + " target");
       }
-      String java = request.getRemotePlatform().getPlatform() == Platform.WINDOWS ? "java.exe" : "java";
-      //todo[remoteServers]: use path separator from remote platform
-      commandLine.setExePath(FileUtil.join(javaConfiguration.getHomePath(), "bin", java));
+      Platform platform = request.getRemotePlatform().getPlatform();
+      String java = platform == Platform.WINDOWS ? "java.exe" : "java";
+      commandLine.setExePath(StringUtil.join(new String[]{javaConfiguration.getHomePath(), "bin", java},
+                                             String.valueOf(platform.fileSeparator)));
     }
     setupCommandLine(commandLine, request, javaParameters, javaConfiguration);
     return commandLine;
@@ -634,8 +635,8 @@ public class JdkUtil {
         result.add(request.createUpload(path));
       }
       else {
-        //todo[remoteServers]: use path separator from remote platform
-        result.add(new IR.FixedValue<>(FileUtil.join(remoteJdkPath, StringUtil.trimStart(path, localJdkPath))));
+        char separator = request.getRemotePlatform().getPlatform().fileSeparator;
+        result.add(new IR.FixedValue<>(remoteJdkPath + separator + StringUtil.trimStart(path, localJdkPath)));
       }
     }
     return result;
