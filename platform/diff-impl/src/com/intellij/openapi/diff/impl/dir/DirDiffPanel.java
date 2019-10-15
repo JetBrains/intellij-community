@@ -16,9 +16,8 @@ import com.intellij.ide.diff.DiffElement;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.dir.actions.DirDiffToolbarActions;
-import com.intellij.openapi.diff.impl.dir.actions.RefreshDirDiffAction;
-import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -62,6 +61,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 @SuppressWarnings({"unchecked"})
 public class DirDiffPanel implements Disposable, DataProvider {
+  private static final Logger LOG = Logger.getInstance(DirDiffPanel.class);
+
   public static final String DIVIDER_PROPERTY = "dir.diff.panel.divider.location";
 
   private static final int DIVIDER_PROPERTY_DEFAULT_VALUE = 200;
@@ -255,77 +256,58 @@ public class DirDiffPanel implements Disposable, DataProvider {
     });
     myFilter.getTextEditor().setColumns(10);
     myFilter.setFilter(myModel.getSettings().getFilter());
-    //oldFilter = myFilter.getText();
     oldFilter = myFilter.getFilter();
     myFilterPanel.add(myFilter, BorderLayout.CENTER);
     myFilterLabel.setLabelFor(myFilter);
-    final Callable<DiffElement> srcChooser = myModel.getSourceDir().getElementChooser(project);
-    final Callable<DiffElement> trgChooser = myModel.getTargetDir().getElementChooser(project);
-    mySourceDirField.setEditable(false);
-    myTargetDirField.setEditable(false);
 
-    if (srcChooser != null && myModel.getSettings().enableChoosers) {
-      mySourceDirField.setButtonEnabled(true);
-      mySourceDirField.addActionListener(new AbstractAction() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          try {
-            final Callable<DiffElement> chooser = myModel.getSourceDir().getElementChooser(project);
-            if (chooser == null) return;
-            final DiffElement newElement = chooser.call();
-            if (newElement != null) {
-              if (!StringUtil.equals(mySourceDirField.getText(), newElement.getPath())) {
-                myModel.setSourceDir(newElement);
-                mySourceDirField.setText(newElement.getPath());
-                String shortcutsText = KeymapUtil.getShortcutsText(RefreshDirDiffAction.REFRESH_SHORTCUT.getShortcuts());
-                myModel.clearWithMessage("Source or Target has been changed." +
-                                         " Please run Refresh (" + shortcutsText + ")");
-              }
-            }
-          }
-          catch (Exception ignored) {
-          }
-        }
-      });
-    }
-    else {
-      Dimension preferredSize = mySourceDirField.getPreferredSize();
-      mySourceDirField.setButtonEnabled(false);
-      mySourceDirField.getButton().setVisible(false);
-      mySourceDirField.setPreferredSize(preferredSize);
-    }
-
-    if (trgChooser != null && myModel.getSettings().enableChoosers) {
-      myTargetDirField.setButtonEnabled(true);
-      myTargetDirField.addActionListener(new AbstractAction() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          try {
-            final Callable<DiffElement> chooser = myModel.getTargetDir().getElementChooser(project);
-            if (chooser == null) return;
-            final DiffElement newElement = chooser.call();
-            if (newElement != null) {
-              myModel.setTargetDir(newElement);
-              myTargetDirField.setText(newElement.getPath());
-            }
-          }
-          catch (Exception ignored) {
-          }
-        }
-      });
-    }
-    else {
-      Dimension preferredSize = myTargetDirField.getPreferredSize();
-      myTargetDirField.setButtonEnabled(false);
-      myTargetDirField.getButton().setVisible(false);
-      myTargetDirField.setPreferredSize(preferredSize);
-    }
+    setDirFieldChooser(myModel.getSourceDir().getElementChooser(project), false);
+    setDirFieldChooser(myModel.getTargetDir().getElementChooser(project), true);
 
     myDiffRequestProcessor = new MyDiffRequestProcessor(project);
     Disposer.register(this, myDiffRequestProcessor);
     myDiffPanel.add(myDiffRequestProcessor.getComponent(), BorderLayout.CENTER);
 
     myPrevNextDifferenceIterable = new MyPrevNextDifferenceIterable();
+  }
+
+  private void setDirFieldChooser(@Nullable Callable<DiffElement<?>> chooser, boolean isTarget) {
+    @NotNull TextFieldWithBrowseButton dirField = isTarget ? myTargetDirField : mySourceDirField;
+    dirField.setEditable(false);
+
+    if (chooser != null && myModel.getSettings().enableChoosers) {
+      dirField.setButtonEnabled(true);
+      dirField.addActionListener(new AbstractAction() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          try {
+            final DiffElement<?> newElement = chooser.call();
+            if (newElement == null) return;
+            if (StringUtil.equals(dirField.getText(), newElement.getPath())) return;
+
+            dirField.setText(newElement.getPath());
+            if (isTarget) {
+              myModel.setTargetDir(newElement);
+            }
+            else {
+              myModel.setSourceDir(newElement);
+            }
+
+            myModel.clear();
+            myModel.reloadModel(true);
+            myModel.updateFromUI();
+          }
+          catch (Exception err) {
+            LOG.warn(err);
+          }
+        }
+      });
+    }
+    else {
+      Dimension preferredSize = dirField.getPreferredSize();
+      dirField.setButtonEnabled(false);
+      dirField.getButton().setVisible(false);
+      dirField.setPreferredSize(preferredSize);
+    }
   }
 
   @NotNull

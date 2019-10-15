@@ -869,12 +869,6 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
     mySelectionConfig = new TableSelectionConfig();
   }
 
-  public void clearWithMessage(String message) {
-    myTable.getEmptyText().setText(message);
-    myElements.clear();
-    fireTableDataChanged();
-  }
-
   public class TableSelectionConfig {
     private final int selectedRow;
     private final int rowCount;
