@@ -30,7 +30,7 @@ sealed class StringEntry {
       if (sourcePsi is PsiLanguageInjectionHost) return sourcePsi to entry.range
       val parent = sourcePsi.parent
       if (parent is PsiLanguageInjectionHost) { // Kotlin interpolated string, TODO: encapsulate this logic to range retrieval
-        return parent to entry.range.shiftRight(sourcePsi.startOffsetInParent - ElementManipulators.getValueTextRange(parent).startOffset)
+        return parent to entry.range.shiftRight(sourcePsi.startOffsetInParent)
       }
       return null
     }
