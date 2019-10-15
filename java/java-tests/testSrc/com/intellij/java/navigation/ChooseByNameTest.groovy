@@ -10,12 +10,13 @@ import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.SymbolSearchEverywhereContributor
 import com.intellij.ide.util.gotoByName.ChooseByNamePopup
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor
+import com.intellij.idea.Bombed
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.mock.MockProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
-import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.util.indexing.FindSymbolParameters
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 
@@ -306,6 +307,7 @@ class Intf {
     assert gotoClass('goo.baz.Bar') == [bar2]
   }
 
+  @Bombed(user = "Mikhail.Sokolov", year=2020, month = Calendar.FEBRUARY, day = 1, description = "Should be handled by SE UI, not Contributor")
   void "test try lowercase pattern if nothing matches"() {
     def match = myFixture.addClass("class IPRoi { }")
     def nonMatch = myFixture.addClass("class InspectionProfileImpl { }")
@@ -431,6 +433,7 @@ class Intf {
     assert gotoFile('samplecontrol', false) == [enumControl, control]
   }
 
+  @Bombed(user = "Mikhail.Sokolov", year=2020, month = Calendar.FEBRUARY, day = 1, description = "Should be handled by SE UI, not Contributor")
   void "test show longer suffix matches from jdk and shorter from project"() {
     def seq = addEmptyFile("langc/Sequence.java")
     def charSeq = myFixture.findClass(CharSequence.name)
@@ -443,10 +446,10 @@ class Intf {
   }
 
   void "test fix keyboard layout"() {
-    assert (gotoClass('Ыекштп')[0] as PsiClass).name == 'String'
-    assert (gotoSymbol('Ыекштп').find { it instanceof PsiClass && it.name == 'String' })
-    assert (gotoFile('Ыекштп')[0] as PsiFile).name == 'String.class'
-    assert (gotoFile('дфтпЫекштп')[0] as PsiFile).name == 'String.class'
+    assert (gotoClass('Ыекштп', true)[0] as PsiClass).name == 'String'
+    assert (gotoSymbol('Ыекштп', true).find { it instanceof PsiClass && it.name == 'String' })
+    assert (gotoFile('Ыекштп', true)[0] as PsiFile).name == 'String.class'
+    assert (gotoFile('дфтпЫекштп', true)[0] as PsiFile).name == 'String.class'
   }
 
   void "test prefer exact case match"() {
@@ -543,9 +546,13 @@ class Intf {
   }
 
   static List<Object> calcContributorElements(SearchEverywhereContributor<?> contributor, String text) {
-    def res = new ArrayList<Object>()
-    invokeAdnWait({ -> contributor.fetchElements(text, new MockProgressIndicator(), { item -> res.add(item) }) })
-    return res
+    def res = new LinkedHashSet<Object>()
+    def consumer = { item ->
+      res.add(item)
+      return true
+    }
+    invokeAdnWait({ -> contributor.fetchElements(text, new MockProgressIndicator(), consumer) })
+    return res.collect()
   }
 
   static SearchEverywhereContributor<Object> createClassContributor(Project project, PsiElement context = null, boolean everywhere = false) {
@@ -573,10 +580,7 @@ class Intf {
     }
 
     void setEverywhere(boolean state) {
-      myScopeDescriptor = new ScopeDescriptor(state
-                                                ? GlobalSearchScope.everythingScope(myProject)
-                                                : GlobalSearchScope.projectScope(myProject)
-      )
+      myScopeDescriptor = new ScopeDescriptor(FindSymbolParameters.searchScopeFor(myProject, state))
     }
   }
 
@@ -587,10 +591,7 @@ class Intf {
     }
 
     void setEverywhere(boolean state) {
-      myScopeDescriptor = new ScopeDescriptor(state
-                                                ? GlobalSearchScope.everythingScope(myProject)
-                                                : GlobalSearchScope.projectScope(myProject)
-      )
+      myScopeDescriptor = new ScopeDescriptor(FindSymbolParameters.searchScopeFor(myProject, state))
     }
   }
 
@@ -601,10 +602,7 @@ class Intf {
     }
 
     void setEverywhere(boolean state) {
-      myScopeDescriptor = new ScopeDescriptor(state
-                                                ? GlobalSearchScope.everythingScope(myProject)
-                                                : GlobalSearchScope.projectScope(myProject)
-      )
+      myScopeDescriptor = new ScopeDescriptor(FindSymbolParameters.searchScopeFor(myProject, state))
     }
   }
 
