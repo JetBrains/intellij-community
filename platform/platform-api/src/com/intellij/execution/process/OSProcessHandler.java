@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.process;
 
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.application.Application;
@@ -39,6 +40,9 @@ public class OSProcessHandler extends BaseOSProcessHandler {
 
   public OSProcessHandler(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
     super(startProcess(commandLine), commandLine.getCommandLineString(), commandLine.getCharset());
+
+    LoadingState.CONFIGURATION_STORE_INITIALIZED.checkOccurred();
+
     setHasPty(isPtyProcess(getProcess()));
     myHasErrorStream = !commandLine.isRedirectErrorStream();
     myFilesToDelete = commandLine.getUserData(DELETE_FILES_ON_TERMINATION);
