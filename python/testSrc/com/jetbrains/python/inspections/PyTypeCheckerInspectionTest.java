@@ -765,7 +765,8 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
       () -> doTestByText("from typing_extensions import Literal\n" +
                          "\n" +
                          "a: Literal[20] = 20\n" +
-                         "b: Literal[30] = <warning descr=\"Expected type 'Literal[30]', got 'Literal[25]' instead\">25</warning>")
+                         "b: Literal[30] = <warning descr=\"Expected type 'Literal[30]', got 'Literal[25]' instead\">25</warning>\n" +
+                         "c: Literal[2, 3, 4] = 3")
     );
   }
 
