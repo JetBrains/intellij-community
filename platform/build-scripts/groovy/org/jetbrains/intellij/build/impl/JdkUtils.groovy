@@ -68,6 +68,7 @@ class JdkUtils {
    */
   static List<String> readModulesFromReleaseFile(File jbrBaseDir) {
     File releaseFile = new File(jbrBaseDir, "release")
+    if (!releaseFile.exists()) return Collections.<String>emptyList()
     new FileInputStream(releaseFile).withReader { stream ->
       Properties p = new Properties()
       p.load(stream)
