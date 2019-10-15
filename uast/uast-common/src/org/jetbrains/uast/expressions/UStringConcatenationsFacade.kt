@@ -90,7 +90,7 @@ class UStringConcatenationsFacade @ApiStatus.Experimental constructor(uContext: 
     val sourcePsi = segment.uExpression.sourcePsi ?: throw IllegalStateException("no sourcePsi for $segment")
     val sourcePsiTextRange = sourcePsi.textRange
     val range = segment.range
-    if (range.startOffset >= sourcePsiTextRange.startOffset)
+    if (range.startOffset > sourcePsiTextRange.startOffset)
       return range.shiftLeft(sourcePsiTextRange.startOffset)
     return ElementManipulators.getValueTextRange(sourcePsi)
   }
