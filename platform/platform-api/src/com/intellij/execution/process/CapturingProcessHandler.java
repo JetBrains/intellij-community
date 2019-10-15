@@ -1,10 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.process;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.util.DeprecatedMethodException;
+import com.intellij.util.io.BaseOutputReader;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -86,5 +87,17 @@ public class CapturingProcessHandler extends OSProcessHandler {
   @NotNull
   public ProcessOutput runProcessWithProgressIndicator(@NotNull ProgressIndicator indicator, int timeoutInMilliseconds, boolean destroyOnTimeout) {
     return myProcessRunner.runProcess(indicator, timeoutInMilliseconds, destroyOnTimeout);
+  }
+
+  public static class Silent extends CapturingProcessHandler {
+    public Silent(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
+      super(commandLine);
+    }
+
+    @NotNull
+    @Override
+    protected BaseOutputReader.Options readerOptions() {
+      return BaseOutputReader.Options.forMostlySilentProcess();
+    }
   }
 }
