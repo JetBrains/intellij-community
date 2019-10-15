@@ -80,18 +80,30 @@ open class DefaultKeymap {
     }
 
   open fun getKeymapPresentableName(keymap: KeymapImpl): String {
-    // Netbeans keymap is no longer for version 6.5, but we need to keep the id
-    return when (val name = keymap.name) {
-      KeymapManager.MAC_OS_X_10_5_PLUS_KEYMAP -> "Default for macOS"
-      KeymapManager.DEFAULT_IDEA_KEYMAP -> "Default for Windows"
+    val name = keymap.name
+    val os = when {
+      SystemInfo.isMac -> "macos"
+      SystemInfo.isWindows -> "windows"
+      SystemInfo.isLinux -> "linux"
+      else -> "other"
+    }
+    return when (name) {
+      KeymapManager.MAC_OS_X_10_5_PLUS_KEYMAP -> "macOS"
+      KeymapManager.DEFAULT_IDEA_KEYMAP -> "Windows"
+      KeymapManager.GNOME_KEYMAP -> "GNOME"
+      KeymapManager.KDE_KEYMAP -> "KDE"
+      KeymapManager.X_WINDOW_KEYMAP -> "XWin"
       KeymapManager.MAC_OS_X_KEYMAP -> "IntelliJ IDEA Classic" + (if (SystemInfo.isMac) "" else " (macOS)")
       "NetBeans 6.5" -> "NetBeans"
       else -> {
-        val newName = name.removeSuffix(" (Mac OS X)").removeSuffix(" OSX")
+        val newName = name
+          .removeSuffix(" (Mac OS X)")
+          .removeSuffix(" OSX")
         when {
           newName === name -> name
           else -> "$newName (macOS)"
         }
+          .removePrefix("$os/")
       }
     }
   }
