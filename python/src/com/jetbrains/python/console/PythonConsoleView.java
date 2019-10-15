@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.console;
 
+import com.google.common.collect.Maps;
 import com.intellij.execution.console.LanguageConsoleImpl;
 import com.intellij.execution.filters.OpenFileHyperlinkInfo;
 import com.intellij.execution.impl.ConsoleViewUtil;
@@ -40,6 +41,7 @@ import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.console.completion.PythonConsoleAutopopupBlockingHandler;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
 import com.jetbrains.python.console.pydev.ConsoleCommunicationListener;
+import com.jetbrains.python.debugger.PyDebugValueDescriptor;
 import com.jetbrains.python.debugger.PyDebuggerEditorsProvider;
 import com.jetbrains.python.debugger.PyStackFrame;
 import com.jetbrains.python.debugger.PyStackFrameInfo;
@@ -54,6 +56,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -76,6 +79,8 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
   private final ActionCallback myInitialized = new ActionCallback();
   private boolean isShowVars;
   @Nullable private String mySdkHomePath;
+
+  private final Map<String, Map<String, PyDebugValueDescriptor>> myDescriptorsCache = Maps.newConcurrentMap();
 
   /**
    * @param testMode this console will be used to display test output and should support TC messages
@@ -364,6 +369,7 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
 
   public void showVariables(PydevConsoleCommunication consoleCommunication) {
     PyStackFrame stackFrame = new PyStackFrame(getProject(), consoleCommunication, new PyStackFrameInfo("", "", "", null), null);
+    stackFrame.restoreChildrenDescriptors(myDescriptorsCache);
     final XStandaloneVariablesView view = new XStandaloneVariablesView(getProject(), new PyDebuggerEditorsProvider(), stackFrame);
     consoleCommunication.addCommunicationListener(new ConsoleCommunicationListener() {
       @Override

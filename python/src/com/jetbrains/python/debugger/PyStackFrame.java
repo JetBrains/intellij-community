@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.debugger;
 
+import com.google.common.collect.Maps;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -47,6 +48,8 @@ public class PyStackFrame extends XStackFrame {
   private final PyFrameAccessor myDebugProcess;
   private final PyStackFrameInfo myFrameInfo;
   private final XSourcePosition myPosition;
+
+  private @Nullable Map<String, PyDebugValueDescriptor> myChildrenDescriptors;
 
   public PyStackFrame(@NotNull Project project,
                       @NotNull final PyFrameAccessor debugProcess,
@@ -146,6 +149,9 @@ public class PyStackFrame extends XStackFrame {
       String name = children.getName(i);
       if (value instanceof PyDebugValue) {
         PyDebugValue pyValue = (PyDebugValue)value;
+
+        restoreValueDescriptor(pyValue);
+
         if (pyValue.isReturnedVal() && debuggerSettings.isWatchReturnValues()) {
           returnedValues.put(name, value);
         }
@@ -208,5 +214,27 @@ public class PyStackFrame extends XStackFrame {
 
   protected XSourcePosition getPosition() {
     return myPosition;
+  }
+
+  public void setChildrenDescriptors(@Nullable Map<String, PyDebugValueDescriptor> childrenDescriptors) {
+    myChildrenDescriptors = childrenDescriptors;
+  }
+
+  public void restoreChildrenDescriptors(@NotNull Map<String, Map<String, PyDebugValueDescriptor>> descriptorsCache) {
+    final String threadFrameId = getThreadFrameId();
+    final Map<String, PyDebugValueDescriptor> childrenDescriptors = descriptorsCache.getOrDefault(threadFrameId, Maps.newHashMap());
+    setChildrenDescriptors(childrenDescriptors);
+    descriptorsCache.put(threadFrameId, childrenDescriptors);
+  }
+
+  private void restoreValueDescriptor(PyDebugValue value) {
+    if (myChildrenDescriptors != null) {
+      PyDebugValueDescriptor descriptor = myChildrenDescriptors.getOrDefault(value.getName(), null);
+      if (descriptor == null) {
+        descriptor = new PyDebugValueDescriptor();
+        myChildrenDescriptors.put(value.getName(), descriptor);
+      }
+      value.setDescriptor(descriptor);
+    }
   }
 }

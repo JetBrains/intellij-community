@@ -111,6 +111,8 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   private boolean isCythonWarningShown = false;
   @Nullable private XCompositeNode myCurrentRootNode;
 
+  private final Map<String, Map<String, PyDebugValueDescriptor>> myDescriptorsCache = Maps.newConcurrentMap();
+
   public PyDebugProcess(@NotNull XDebugSession session,
                         @NotNull ServerSocket serverSocket,
                         @NotNull ExecutionConsole executionConsole,
@@ -1066,8 +1068,10 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   }
 
   public PyStackFrame createStackFrame(PyStackFrameInfo frameInfo) {
-    return new PyStackFrame(getSession().getProject(), this, frameInfo,
-                            getPositionConverter().convertFromPython(frameInfo.getPosition(), frameInfo.getName()));
+    final PyStackFrame frame = new PyStackFrame(getSession().getProject(), this, frameInfo,
+                                                getPositionConverter().convertFromPython(frameInfo.getPosition(), frameInfo.getName()));
+    frame.restoreChildrenDescriptors(myDescriptorsCache);
+    return frame;
   }
 
   @Override
