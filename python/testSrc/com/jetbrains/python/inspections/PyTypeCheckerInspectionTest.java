@@ -882,4 +882,15 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
                          "f(<warning descr=\"Expected type 'Literal[\\\"b\\\"]', got 'Literal['c']' instead\">a='c'</warning>)")
     );
   }
+
+  // PY-35235
+  public void testNumericMatchingAndTypingLiteral() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> doTestByText("from typing import Literal\n" +
+                         "def expects_str(x: float) -> None: ...\n" +
+                         "var: Literal[1] = 1\n" +
+                         "expects_str(var)")
+    );
+  }
 }
