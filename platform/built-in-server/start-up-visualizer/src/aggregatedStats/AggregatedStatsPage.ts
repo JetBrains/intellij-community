@@ -53,9 +53,15 @@ export default class AggregatedStatsPage extends Vue {
           selectedProduct = this.products[0]
         }
         this.chartSettings.selectedProduct = selectedProduct
+
         // not called by Vue for some reasons
-        this.selectedProductChanged(selectedProduct, "")
-        this.selectedMachineChanged(this.chartSettings.selectedMachine, "")
+        console.log("update product on info response", selectedProduct)
+        const oldSelectedMachine = this.chartSettings.selectedMachine
+        this.applyChangedProduct(selectedProduct, data)
+        const newSelectedMachine = this.chartSettings.selectedMachine
+        if (oldSelectedMachine !== newSelectedMachine) {
+          this.selectedMachineChanged(newSelectedMachine, oldSelectedMachine)
+        }
 
         this.isFetching = false
       })
@@ -68,11 +74,16 @@ export default class AggregatedStatsPage extends Vue {
   @Watch("chartSettings.selectedProduct")
   selectedProductChanged(product: string | null, _oldV: string): void {
     console.log("product changed", product, _oldV)
+
     const infoResponse = this.lastInfoResponse
-    if (infoResponse == null) {
-      return
+    if (infoResponse != null) {
+      this.applyChangedProduct(product, infoResponse)
     }
 
+    this.dataModule.updateChartSettings(this.chartSettings)
+  }
+
+  private applyChangedProduct(product: string | null, infoResponse: InfoResponse) {
     if (product != null && product.length > 0) {
       // later maybe will be more info for machine, so, do not use string instead of Machine
       this.machines = infoResponse.productToMachine[product].map(name => {
@@ -107,6 +118,8 @@ export default class AggregatedStatsPage extends Vue {
 
   @Watch("chartSettings.selectedMachine")
   selectedMachineChanged(machine: string | null | undefined, _oldV: string): void {
+    this.dataModule.updateChartSettings(this.chartSettings)
+
     console.log("machine changed", machine, _oldV)
     if (machine == null) {
       return
@@ -182,10 +195,14 @@ export default class AggregatedStatsPage extends Vue {
     if (!isEmpty(newV)) {
       this.loadDataAfterDelay()
     }
+
+    this.dataModule.updateChartSettings(this.chartSettings)
   }
 
   @Watch("chartSettings.aggregationOperator")
   aggregationOperatorChanged(newV: string | null, _oldV: string) {
+    this.dataModule.updateChartSettings(this.chartSettings)
+
     if (isEmpty(newV)) {
       return
     }
@@ -210,6 +227,8 @@ export default class AggregatedStatsPage extends Vue {
   quantileChanged(_newV: number, _oldV: number) {
     console.log("quantile changed", _newV)
     this.reloadClusteredDataIfPossibleAfterDelay()
+
+    this.dataModule.updateChartSettings(this.chartSettings)
   }
 
   mounted() {

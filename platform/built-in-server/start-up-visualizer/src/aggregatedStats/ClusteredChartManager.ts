@@ -15,16 +15,7 @@ export class ClusteredChartManager {
     chart.legend = new am4charts.Legend()
     addExportMenu(chart)
 
-    const categoryAxis = chart.xAxes.push(new am4charts.CategoryAxis())
-    categoryAxis.dataFields.category = "metric"
-    categoryAxis.renderer.grid.template.location = 0
-    categoryAxis.renderer.minGridDistance = 20
-    categoryAxis.renderer.cellStartLocation = 0.1
-    categoryAxis.renderer.cellEndLocation = 0.9
-    const label = categoryAxis.renderer.labels.template
-    label.truncate = true
-    label.maxWidth = 120
-    label.tooltipText = "{category}"
+    this.configureCategoryAxis()
 
     const valueAxis = chart.yAxes.push(new am4charts.DurationAxis())
     valueAxis.durationFormatter.baseUnit = "millisecond"
@@ -37,6 +28,20 @@ export class ClusteredChartManager {
     // cursor.xAxis = dateAxis
     // cursor.snapToSeries = series
     chart.cursor = cursor
+  }
+
+  private configureCategoryAxis() {
+    const chart = this.chart
+    const categoryAxis = chart.xAxes.push(new am4charts.CategoryAxis())
+    categoryAxis.dataFields.category = "metric"
+    categoryAxis.renderer.grid.template.location = 0
+    categoryAxis.renderer.minGridDistance = 20
+    categoryAxis.renderer.cellStartLocation = 0.1
+    categoryAxis.renderer.cellEndLocation = 0.9
+    const label = categoryAxis.renderer.labels.template
+    label.truncate = true
+    label.maxWidth = 120
+    label.tooltipText = "{category}"
   }
 
   private render(data: GroupedMetricResponse): void {
