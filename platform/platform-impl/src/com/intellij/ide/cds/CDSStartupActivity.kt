@@ -36,7 +36,7 @@ class CDSStartupActivity : StartupActivity {
     AppExecutorUtil.getAppExecutorService().execute {
       ProgressManager.getInstance().run(object : Task.Backgroundable(
         null,
-        "Class Data Sharing for faster startup",
+        "Optimizing startup performance",
         true,
         PerformInBackgroundOption.ALWAYS_BACKGROUND
       ) {
