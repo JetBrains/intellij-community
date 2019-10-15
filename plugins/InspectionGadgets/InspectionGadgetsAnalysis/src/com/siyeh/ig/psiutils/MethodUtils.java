@@ -450,6 +450,10 @@ public class MethodUtils {
     return aClass != null && aClass.equals(method.getContainingClass());
   }
 
+  /**
+   * Returns true if the only thing the supplied method does, is call a different method
+   * with the same name located in the same class, with the same number or more parameters.
+   */
   public static boolean isConvenienceOverload(PsiMethod method) {
     final PsiType returnType = method.getReturnType();
     final PsiCodeBlock body = method.getBody();
@@ -476,6 +480,7 @@ public class MethodUtils {
   }
 
   private static boolean isCallToOverloadedMethod(PsiExpression expression, PsiMethod method) {
+    expression = PsiUtil.skipParenthesizedExprDown(expression);
     if (!(expression instanceof PsiMethodCallExpression)) {
       return false;
     }
@@ -485,7 +490,7 @@ public class MethodUtils {
       return false;
     }
     final PsiMethod calledMethod = methodCallExpression.resolveMethod();
-    if (calledMethod == null || calledMethod.getParameterList().getParametersCount() <= method.getParameterList().getParametersCount()) {
+    if (calledMethod == null || calledMethod.getParameterList().getParametersCount() < method.getParameterList().getParametersCount()) {
       return false;
     }
     return calledMethod.getContainingClass() == method.getContainingClass();
