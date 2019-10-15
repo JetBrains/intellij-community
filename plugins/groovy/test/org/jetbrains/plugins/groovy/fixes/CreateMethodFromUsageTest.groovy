@@ -25,12 +25,12 @@ class CreateMethodFromUsageTest extends GrHighlightingTestBase {
   @Override
   void setUp() {
     super.setUp()
-    fixture.configureByFiles(USAGE, BEFORE)
     fixture.enableInspections(GrUnresolvedAccessInspection, GroovyAssignabilityCheckInspection)
   }
 
-  private void doTest(String action = CREATE_METHOD, int actionCount = 1) {
+  private void doTest(String action = CREATE_METHOD, int actionCount = 1, String[] files = [USAGE, BEFORE]) {
     fixture.with {
+      configureByFiles(files)
       def fixes = filterAvailableIntentions(action)
       assert fixes.size() == actionCount
       if (actionCount == 0) return
@@ -158,6 +158,14 @@ class CreateMethodFromUsageTest extends GrHighlightingTestBase {
 
   void testConstructorEnum() {
     doTest(CREATE_CONSTRUCTOR, 0)
+  }
+
+  void testConstructorInvocation() {
+    doTest(CREATE_CONSTRUCTOR, 1, BEFORE)
+  }
+
+  void testSuperConstructorInvocation() {
+    doTest(CREATE_CONSTRUCTOR, 1, BEFORE)
   }
 }
 

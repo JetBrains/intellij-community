@@ -8,7 +8,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.IncorrectOperationException
 import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil.intentionsToFixes
-import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.requests.CreateConstructorFromGroovyNewExpressionRequest
+import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.requests.CreateConstructorFromGroovyUsageRequest
 import org.jetbrains.plugins.groovy.highlighting.HighlightSink
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList
@@ -32,7 +32,7 @@ class GrNewExpressionHighlighter(val newExpression: GrNewExpression,
     val constructor = reference.advancedResolve().element
     val targetClass = PsiTreeUtil.getParentOfType(constructor, PsiClass::class.java) ?: return fixes
     if (!targetClass.manager.isInProject(targetClass)) return fixes
-    val request = CreateConstructorFromGroovyNewExpressionRequest(newExpression, emptyList())
+    val request = CreateConstructorFromGroovyUsageRequest(newExpression, emptyList())
 
     val createConstructorActions = createConstructorActions(targetClass, request)
     return fixes + intentionsToFixes(newExpression, createConstructorActions)
