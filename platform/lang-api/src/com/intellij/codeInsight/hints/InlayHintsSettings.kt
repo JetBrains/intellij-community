@@ -4,14 +4,18 @@ package com.intellij.codeInsight.hints
 import com.intellij.configurationStore.deserializeInto
 import com.intellij.configurationStore.serialize
 import com.intellij.lang.Language
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
+import com.intellij.util.messages.Topic
 import org.jdom.Element
 
 @State(name = "InlayHintsSettings", storages = [Storage("workspace.xml")])
 class InlayHintsSettings : PersistentStateComponent<InlayHintsSettings.State> {
+  private val listener = ApplicationManager.getApplication().messageBus.syncPublisher(INLAY_SETTINGS_CHANGED)
+
   private var myState = State()
   private val lock = Any()
 
@@ -21,6 +25,8 @@ class InlayHintsSettings : PersistentStateComponent<InlayHintsSettings.State> {
     var settingsMapElement = Element("settingsMapElement")
 
     var lastViewedProviderKeyId: String? = null
+
+    var isEnabled: Boolean = true
   }
 
   private val myCachedSettingsMap: MutableMap<String, Any> = hashMapOf()
@@ -35,29 +41,26 @@ class InlayHintsSettings : PersistentStateComponent<InlayHintsSettings.State> {
   }
 
   fun saveLastViewedProviderId(providerId: String) = synchronized(lock) {
-    state.lastViewedProviderKeyId = providerId
+    myState.lastViewedProviderKeyId = providerId
   }
 
   fun getLastViewedProviderId() : String? {
-    return state.lastViewedProviderKeyId
+    return myState.lastViewedProviderKeyId
   }
 
-  fun invertHintTypeStatus(key: SettingsKey<*>, language: Language) = synchronized(lock) {
-    val id = key.getFullId(language)
-    if (id in myState.disabledHintProviderIds) {
-      myState.disabledHintProviderIds.remove(id)
-    }
-    else {
-      myState.disabledHintProviderIds.add(id)
+  fun setEnabledGlobally(enabled: Boolean) = synchronized(lock) {
+    if (myState.isEnabled != enabled) {
+      myState.isEnabled = enabled
+      listener.didStatusChanged(enabled)
     }
   }
 
   /**
-   * @param uninitSettings is a setting, that was obtained from createSettings method of provider
+   * @param createSettings is a setting, that was obtained from createSettings method of provider
    */
-  fun <T: Any> findSettings(key: SettingsKey<T>, language: Language, uninitSettings: ()->T): T = synchronized(lock) {
+  fun <T: Any> findSettings(key: SettingsKey<T>, language: Language, createSettings: ()->T): T = synchronized(lock) {
     val fullId = key.getFullId(language)
-    return getSettingCached(fullId, uninitSettings)
+    return getSettingCached(fullId, createSettings)
   }
 
   fun <T: Any> storeSettings(key: SettingsKey<T>, language: Language, value: T) = synchronized(lock){
@@ -120,6 +123,16 @@ class InlayHintsSettings : PersistentStateComponent<InlayHintsSettings.State> {
     fun instance(): InlayHintsSettings {
       return ServiceManager.getService(InlayHintsSettings::class.java)
     }
+
+    @JvmStatic
+    val INLAY_SETTINGS_CHANGED: Topic<SettingsListener> = Topic.create("Inlay hints settings changed", SettingsListener::class.java)
+  }
+
+  interface SettingsListener {
+    /**
+     * @param newStatus whether inlay hints are globally switched on or off now
+     */
+    fun didStatusChanged(newStatus: Boolean)
   }
 }
 
