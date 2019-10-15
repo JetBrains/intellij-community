@@ -35,6 +35,7 @@ import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AppUIUtil;
+import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.components.BasicOptionButtonUI;
@@ -105,6 +106,8 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   public static final String WINDOW_ALPHA = "Window.alpha";
 
   private static final Map<String, String> ourLafClassesAliases = new HashMap<>();
+
+  private CollectionComboBoxModel<UIManager.LookAndFeelInfo> myLafComboBoxModel;
 
   static {
     ourLafClassesAliases.put("idea.dark.laf.classname", DarculaLookAndFeelInfo.CLASS_NAME);
@@ -227,6 +230,9 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
         newLaFs.add(newTheme);
         sortThemesIfNecessary(newLaFs);
         myLaFs.setValue(newLaFs);
+        if (myLafComboBoxModel != null) {
+          myLafComboBoxModel.replaceAll(newLaFs);
+        }
         setCurrentLookAndFeel(newTheme);
         updateUI();
       }
@@ -245,8 +251,14 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
           list.add(lookAndFeel);
         }
         myLaFs.setValue(list);
+        if (myLafComboBoxModel != null) {
+          myLafComboBoxModel.replaceAll(list);
+        }
         if (switchLafTo != null) {
           setCurrentLookAndFeel(switchLafTo, true);
+          if (myLafComboBoxModel != null) {
+            myLafComboBoxModel.setSelectedItem(switchLafTo);
+          }
           updateUI();
         }
       }
@@ -335,6 +347,13 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   @Override
   public UIManager.LookAndFeelInfo[] getInstalledLookAndFeels() {
     return myLaFs.getValue().toArray(new UIManager.LookAndFeelInfo[0]);
+  }
+
+  public CollectionComboBoxModel<UIManager.LookAndFeelInfo> getLafComboBoxModel() {
+    if (myLafComboBoxModel == null) {
+      myLafComboBoxModel = new CollectionComboBoxModel<UIManager.LookAndFeelInfo>(myLaFs.getValue());
+    }
+    return myLafComboBoxModel;
   }
 
   @Override
