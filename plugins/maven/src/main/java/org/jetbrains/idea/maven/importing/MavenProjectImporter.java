@@ -135,14 +135,18 @@ public class MavenProjectImporter {
 
 
       List<MavenModuleConfigurer> configurers = MavenModuleConfigurer.getConfigurers();
-      for (MavenProject mavenProject : myAllProjects) {
-        Module module = myMavenProjectToModule.get(mavenProject);
-        MavenUtil.runInBackground(myProject, "Configuring module " + module.getName(), false, indicator -> {
+
+      MavenUtil.runInBackground(myProject, "Configuring projects", false, indicator -> {
+        float count = 0;
+        for (MavenProject mavenProject : myAllProjects) {
+          Module module = myMavenProjectToModule.get(mavenProject);
+          indicator.setFraction(count++ / myAllProjects.size());
+          indicator.setText2("Configuring module " + module.getName());
           for (MavenModuleConfigurer configurer : configurers) {
             configurer.configure(mavenProject, myProject, module);
           }
-        });
-      }
+        }
+      });
     }
     else {
       disposeModifiableModels();

@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
@@ -29,6 +30,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
+import gnu.trove.TObjectHashingStrategy;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -55,6 +57,20 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
   public EncodingProjectManagerImpl(@NotNull Project project) {
     myProject = project;
     myIdeEncodingManager = (EncodingManagerImpl)EncodingManager.getInstance();
+    myMapping = Collections.synchronizedMap(new THashMap<>(new TObjectHashingStrategy<VirtualFile>() {
+      @Override
+      public int computeHashCode(VirtualFile object) {
+        return object.getPath().hashCode();
+      }
+
+      @Override
+      public boolean equals(VirtualFile o1, VirtualFile o2) {
+        if (o1.isValid() && o2.isValid()) {
+          return o1.equals(o2);
+        }
+        return FileUtil.pathsEqual(o1.getPath(), o2.getPath());
+      }
+    }));
   }
 
   // in EDT
@@ -65,7 +81,7 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
     }
   }
 
-  private final Map<VirtualFile, Charset> myMapping = ContainerUtil.newConcurrentMap();
+  private final Map<VirtualFile, Charset> myMapping;
   private volatile Charset myProjectCharset;
 
   @Override
