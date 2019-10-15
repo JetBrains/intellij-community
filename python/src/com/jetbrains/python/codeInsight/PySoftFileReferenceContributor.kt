@@ -36,7 +36,7 @@ class PySoftFileReferenceContributor : PsiReferenceContributor() {
    * Matches string literals used as function arguments where the corresponding function parameter has a name that has something about
    * files or paths.
    */
-  object CallArgumentMatchingParameterNamePattern : PatternCondition<PyStringLiteralExpression>("callArgumentMatchingPattern") {
+  private object CallArgumentMatchingParameterNamePattern : PatternCondition<PyStringLiteralExpression>("callArgumentMatchingPattern") {
     override fun accepts(expr: PyStringLiteralExpression, context: ProcessingContext?): Boolean {
       val argList = expr.parent as? PyArgumentList ?: return false
       val callExpr = argList.parent as? PyCallExpression ?: return false
@@ -62,7 +62,7 @@ class PySoftFileReferenceContributor : PsiReferenceContributor() {
   /**
    * Matches string literals used as function keyword arguments where the keyword has a name that has something about files or paths.
    */
-  object KeywordArgumentMatchingNamePattern : PatternCondition<PyStringLiteralExpression>("keywordArgumentMatchingPattern") {
+  private object KeywordArgumentMatchingNamePattern : PatternCondition<PyStringLiteralExpression>("keywordArgumentMatchingPattern") {
     override fun accepts(expr: PyStringLiteralExpression, context: ProcessingContext?): Boolean {
       val keywordArgument = expr.parent as? PyKeywordArgument ?: return false
       if (keywordArgument.parent?.parent !is PyCallExpression) return false
@@ -75,7 +75,7 @@ class PySoftFileReferenceContributor : PsiReferenceContributor() {
    *
    * It's a last resort where we cannot guess that the string literal is a file path by other means.
    */
-  object HardCodedCalleeName : PatternCondition<PyStringLiteralExpression>("hardCodedCalleeName") {
+  private object HardCodedCalleeName : PatternCondition<PyStringLiteralExpression>("hardCodedCalleeName") {
     private data class Pattern(private val fullName: String, val position: Int, val isBuiltin: Boolean = false) {
       val qualifiedName: QualifiedName = QualifiedName.fromDottedString(fullName)
     }
