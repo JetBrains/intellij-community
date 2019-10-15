@@ -152,14 +152,14 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
       if (myShouldKillProcessSoftlyWithWinP && !Registry.is("disable.winp")) {
         try {
           if (!myProcess.isAlive()) {
-            OSProcessUtil.logSkippedActionWithTerminatedProcess(myProcess, "destroy", getCommandLine());
+            ProcessUtil.logSkippedActionWithTerminatedProcess(myProcess, "destroy", getCommandLine());
             return true;
           }
           return OSProcessUtil.createWinProcess(myProcess).sendCtrlC();
         }
         catch (Throwable e) {
           if (!myProcess.isAlive()) {
-            OSProcessUtil.logSkippedActionWithTerminatedProcess(myProcess, "destroy", getCommandLine());
+            ProcessUtil.logSkippedActionWithTerminatedProcess(myProcess, "destroy", getCommandLine());
             return true;
           }
           LOG.error("Failed to send Ctrl+C, fallback to default termination: " + getCommandLine(), e);
