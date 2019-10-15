@@ -15,6 +15,7 @@ import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
+import com.intellij.openapi.keymap.impl.BundledKeymapBean
 import com.intellij.openapi.keymap.impl.BundledKeymapProvider
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.impl.ProjectImpl
@@ -82,8 +83,8 @@ object DynamicPlugins {
     val extensions = pluginDescriptor.extensions
     if (extensions != null && !extensions.all {
         it.key == UIThemeProvider.EP_NAME.name ||
-        it.key == BundledKeymapProvider.EP_NAME.name
-      }) {
+        it.key == BundledKeymapBean.EP_NAME.name ||
+        it.key == BundledKeymapProvider.EP_NAME.name }) {
       return false
     }
     return hasNoComponents(pluginDescriptor) && pluginDescriptor.actionDescriptionElements.isNullOrEmpty()
