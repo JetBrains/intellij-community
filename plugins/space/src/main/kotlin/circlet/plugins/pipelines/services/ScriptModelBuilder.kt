@@ -85,7 +85,8 @@ object ScriptModelBuilder : KLogging() {
                 targetJar,
                 metadataPath,
                 kotlinCompilerPath,
-                scriptDefFile.absolutePath)
+                scriptDefFile.absolutePath,
+                allowExperimentalDsl = false)
 
             val metadata = ScriptResolveResultMetadataUtil.tryReadFromFile(metadataPath) ?: ScriptResolveResultMetadataUtil.empty()
             val config = DslScriptExecutor().evaluateModel(targetJar, metadata.classpath,"", "")
