@@ -83,6 +83,11 @@ object CDSManager {
   }
 
   fun installCDS(indicator: ProgressIndicator): CDSPaths? = rejectIfRunning(null) {
+    if (VMOptions.getWriteFile() == null) {
+      LOG.warn("VMOptions.getWriteFile() == null. Are you running from an IDE run configuration?")
+      return null
+    }
+
     val paths = CDSPaths.current()
     if (paths.isSame(currentCDSArchive)) {
       LOG.warn("CDS archive is already generated. Nothing to do")
