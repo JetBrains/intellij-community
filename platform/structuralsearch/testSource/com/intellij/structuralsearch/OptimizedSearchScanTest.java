@@ -133,6 +133,11 @@ public class OptimizedSearchScanTest extends StructuralSearchTestCase {
    assertEquals("[in literals:null][in literals:is][in code:assert][in code:null][in code:true]", plan);
  }
 
+ public void testStringLiteral() {
+   final String plan = findWordsToBeUsedWhenSearchingFor("\"asd fasdf\\\\n\"");
+   assertEquals("[in literals:fasdf][in literals:asd]", plan);
+ }
+
  public void testClassObjectAccessExpression() {
     final String plan = findWordsToBeUsedWhenSearchingFor("ArrayUtil.toObjectArray($var$, $class$.class)");
     assertEquals("[in code:toObjectArray][in code:ArrayUtil][in code:class]", plan);
