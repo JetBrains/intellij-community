@@ -44,7 +44,13 @@ class ChangesViewCommitWorkflowHandler(
   private var areCommitOptionsCreated = false
   private val commitMessagePolicy = ChangesViewCommitMessagePolicy(project)
   private var currentChangeList by observable<LocalChangeList?>(null) { _, oldValue, newValue ->
-    if (oldValue != newValue) changeListChanged(oldValue, newValue)
+    if (oldValue?.id != newValue?.id) {
+      changeListChanged(oldValue, newValue)
+      changeListDataChanged()
+    }
+    else if (oldValue?.data != newValue?.data) {
+      changeListDataChanged()
+    }
   }
 
   init {
@@ -129,6 +135,7 @@ class ChangesViewCommitWorkflowHandler(
 
     inclusionModel.changeLists = changeLists
     ui.setCompletionContext(changeLists)
+    currentChangeList = currentChangeList?.run { changeLists.find { it.id == id } }
   }
 
   fun setCommitState(changeList: LocalChangeList, items: Collection<Any>, force: Boolean) {
@@ -195,7 +202,10 @@ class ChangesViewCommitWorkflowHandler(
     setCommitMessage(newCommitMessage)
 
     newChangeList?.let { commitOptions.changeListChanged(it) }
-    ui.commitAuthor = (newChangeList?.data as? ChangeListData)?.author
+  }
+
+  private fun changeListDataChanged() {
+    ui.commitAuthor = currentChangeList?.author
   }
 
   override fun inclusionChanged() {

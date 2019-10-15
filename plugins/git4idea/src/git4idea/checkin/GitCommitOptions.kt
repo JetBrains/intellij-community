@@ -10,9 +10,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil.escapeXmlEntities
 import com.intellij.openapi.vcs.CheckinProjectPanel
-import com.intellij.openapi.vcs.changes.ChangeListData
-import com.intellij.openapi.vcs.changes.CommitContext
-import com.intellij.openapi.vcs.changes.LocalChangeList
+import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.checkin.CheckinChangeListSpecificComponent
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
 import com.intellij.ui.awt.RelativePoint
@@ -20,10 +18,7 @@ import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.GridBag
 import com.intellij.util.ui.JBUI
-import com.intellij.vcs.commit.AmendCommitHandler
-import com.intellij.vcs.commit.AmendCommitModeListener
-import com.intellij.vcs.commit.ToggleAmendCommitOption
-import com.intellij.vcs.commit.commitProperty
+import com.intellij.vcs.commit.*
 import com.intellij.vcs.log.VcsUser
 import com.intellij.vcs.log.VcsUserEditor
 import com.intellij.vcs.log.VcsUserRegistry
@@ -78,6 +73,7 @@ class GitCommitOptionsUi(
   val amendHandler: AmendCommitHandler get() = commitPanel.commitWorkflowHandler.amendCommitHandler
 
   private var authorDate: Date? = null
+  private var currentChangeList: LocalChangeList? = null
 
   private val panel = JPanel(GridBagLayout())
   private val authorField = VcsUserEditor(project, getKnownCommitAuthors())
@@ -98,7 +94,10 @@ class GitCommitOptionsUi(
 
   init {
     authorField.addFocusListener(object : FocusAdapter() {
-      override fun focusLost(e: FocusEvent) = clearAuthorWarning()
+      override fun focusLost(e: FocusEvent) {
+        updateCurrentCommitAuthor()
+        clearAuthorWarning()
+      }
     })
     authorField.addHierarchyListener(object : HierarchyListener {
       override fun hierarchyChanged(e: HierarchyEvent) {
@@ -136,12 +135,7 @@ class GitCommitOptionsUi(
 
   override fun restoreState() = refresh()
 
-  override fun refresh() {
-    updateRenamesCheckboxState()
-    authorField.user = null
-    clearAuthorWarning()
-    authorDate = null
-  }
+  override fun refresh() = refresh(null)
 
   override fun saveState() {
     val author = getAuthor()
@@ -161,15 +155,19 @@ class GitCommitOptionsUi(
   }
 
   override fun onChangeListSelected(list: LocalChangeList) {
-    updateRenamesCheckboxState()
-    clearAuthorWarning()
-
-    val data = list.data as? ChangeListData
-    setAuthor(data?.author)
-    authorDate = data?.date
+    refresh(list)
 
     panel.revalidate()
     panel.repaint()
+  }
+
+  private fun refresh(changeList: LocalChangeList?) {
+    updateRenamesCheckboxState()
+    clearAuthorWarning()
+
+    currentChangeList = changeList
+    setAuthor(changeList?.author)
+    authorDate = changeList?.authorDate
   }
 
   fun getAuthor(): VcsUser? = authorField.user
@@ -182,6 +180,15 @@ class GitCommitOptionsUi(
       authorField.putClientProperty("JComponent.outline", "warning")
       if (authorField.isShowing) showAuthorWarning()
     }
+  }
+
+  private fun updateCurrentCommitAuthor() {
+    if (!commitPanel.isNonModalCommit) return
+
+    val changeListManager = ChangeListManagerImpl.getInstanceImpl(project)
+    val changeList = changeListManager.getChangeList(currentChangeList?.id) ?: return
+
+    changeListManager.editChangeListData(changeList.name, ChangeListData(getAuthor(), authorDate))
   }
 
   private fun updateRenamesCheckboxState() {

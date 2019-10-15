@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes
 
 import com.intellij.openapi.util.text.StringUtil
@@ -15,7 +15,10 @@ import kotlin.collections.ArrayList
 
 private const val CHANGELIST_DATA: String = "changelist_data"
 
-open class ChangeListData @JvmOverloads constructor(val author: VcsUser? = null, val date: Date? = null) {
+val LocalChangeList.author: VcsUser? get() = (data as? ChangeListData)?.author
+val LocalChangeList.authorDate: Date? get() = (data as? ChangeListData)?.date
+
+data class ChangeListData @JvmOverloads constructor(val author: VcsUser? = null, val date: Date? = null) {
 
   private constructor(state: State) : this(VcsUserImpl(state.name ?: "", state.email ?: ""), state.date)
 
@@ -44,8 +47,3 @@ open class ChangeListData @JvmOverloads constructor(val author: VcsUser? = null,
     }
   }
 }
-                                                              
-                                                              
-                                                              
-                                                              
-                                                              
