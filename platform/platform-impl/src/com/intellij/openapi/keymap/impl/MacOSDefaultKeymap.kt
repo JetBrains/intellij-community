@@ -19,14 +19,15 @@ import com.intellij.configurationStore.SchemeDataHolder
 import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.openapi.actionSystem.MouseShortcut
 import com.intellij.openapi.actionSystem.Shortcut
+import com.intellij.openapi.extensions.PluginId
 import org.intellij.lang.annotations.JdkConstants
 import java.awt.event.InputEvent
 import javax.swing.KeyStroke
 
 class MacOSDefaultKeymap(dataHolder: SchemeDataHolder<KeymapImpl>,
                          defaultKeymapManager: DefaultKeymap,
-                         providerClass: Class<BundledKeymapProvider>)
-  : DefaultKeymapImpl(dataHolder, defaultKeymapManager, providerClass) {
+                         pluginId: PluginId?)
+  : DefaultKeymapImpl(dataHolder, defaultKeymapManager, pluginId) {
   companion object {
     @JvmStatic
     fun convertShortcutFromParent(shortcut: Shortcut): Shortcut {

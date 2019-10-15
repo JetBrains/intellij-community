@@ -89,16 +89,9 @@ class KeymapManagerImpl : KeymapManagerEx(), PersistentStateComponent<Element> {
     BundledKeymapProvider.EP_NAME.addExtensionPointListener(object : ExtensionPointListener<BundledKeymapProvider> {
       override fun extensionAdded(ep: BundledKeymapProvider, pluginDescriptor: PluginDescriptor) {
         for (fileName in ep.keymapFileNames) {
-          val keymap = DefaultKeymapImpl(object : SchemeDataHolder<KeymapImpl> {
+          val keymap = DefaultKeymap.instance.loadKeymap(ep.getKeyFromFileName(fileName), object : SchemeDataHolder<KeymapImpl> {
             override fun read() = ep.load(fileName) { JDOMUtil.load(it) }
-
-            override fun updateDigest(scheme: KeymapImpl) {
-            }
-
-            override fun updateDigest(data: Element?) {
-            }
-          }, DefaultKeymap.instance, ep.javaClass)
-          keymap.name = ep.getKeyFromFileName(fileName)
+          }, pluginDescriptor.pluginId)
           schemeManager.addScheme(keymap)
           schemeManager.setCurrent(keymap, true, true)
         }
