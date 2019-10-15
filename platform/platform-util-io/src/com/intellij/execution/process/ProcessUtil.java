@@ -1,0 +1,143 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.execution.process;
+
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
+import com.pty4j.windows.WinPtyProcess;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jvnet.winp.WinProcess;
+
+public final class ProcessUtil {
+  private static final Logger LOG = Logger.getInstance(ProcessUtil.class);
+
+  public static boolean killProcessTree(@NotNull Process process) {
+    if (SystemInfo.isWindows) {
+      try {
+        if (process instanceof WinPtyProcess) {
+          int pid = ((WinPtyProcess)process).getChildProcessId();
+          if (pid == -1) return true;
+          boolean res = WinProcessManager.kill(pid, true);
+          process.destroy();
+          return res;
+        }
+        if (Registry.is("disable.winp", false)) {
+          return WinProcessManager.kill(process, true);
+        }
+        else {
+          if (!process.isAlive()) {
+            logSkippedActionWithTerminatedProcess(process, "killProcessTree", null);
+            return true;
+          }
+          createWinProcess(process).killRecursively();
+          return true;
+        }
+      }
+      catch (Throwable e) {
+        LOG.info("Cannot kill process tree", e);
+      }
+    }
+    else if (SystemInfo.isUnix) {
+      return UnixProcessManager.sendSigKillToProcessTree(process);
+    }
+    return false;
+  }
+
+  public static void killProcess(@NotNull Process process) {
+    killProcess(getProcessID(process));
+  }
+
+  public static void killProcess(int pid) {
+    if (SystemInfo.isWindows) {
+      try {
+        if (!Registry.is("disable.winp", false)) {
+          try {
+            createWinProcess(pid).kill();
+            return;
+          }
+          catch (Throwable e) {
+            LOG.error("Failed to kill process with winp, fallback to default logic", e);
+          }
+        }
+        WinProcessManager.kill(pid, false);
+      }
+      catch (Throwable e) {
+        LOG.info("Cannot kill process", e);
+      }
+    }
+    else if (SystemInfo.isUnix) {
+      UnixProcessManager.sendSignal(pid, UnixProcessManager.SIGKILL);
+    }
+  }
+
+  @ApiStatus.Internal
+  public static void logSkippedActionWithTerminatedProcess(@NotNull Process process, @NotNull String actionName, @Nullable String commandLine) {
+    Integer pid = null;
+    try {
+      pid = getProcessID(process);
+    }
+    catch (Throwable ignored) {
+    }
+    LOG.info("Cannot " + actionName + " already terminated process (pid: " + pid + ", command: " + commandLine + ")");
+  }
+
+  public static int getProcessID(@NotNull Process process) {
+    return getProcessID(process, Registry.is("disable.winp"));
+  }
+
+  public static int getProcessID(@NotNull Process process, Boolean disableWinp) {
+    if (SystemInfo.isWindows) {
+      try {
+        if (process instanceof WinPtyProcess) {
+          return ((WinPtyProcess)process).getChildProcessId();
+        }
+        if (!disableWinp) {
+          try {
+            return createWinProcess(process).getPid();
+          }
+          catch (Throwable e) {
+            LOG.error("Failed to get PID with winp, fallback to default logic", e);
+          }
+        }
+        return WinProcessManager.getProcessId(process);
+      }
+      catch (Throwable e) {
+        throw new IllegalStateException("Cannot get PID from an instance of " + process.getClass() + ", OS: " + SystemInfo.OS_NAME, e);
+      }
+    }
+    else if (SystemInfo.isUnix) {
+      return UnixProcessManager.getProcessId(process);
+    }
+    throw new IllegalStateException("Unknown OS: " + SystemInfo.OS_NAME);
+  }
+
+  @SuppressWarnings("deprecation")
+  @NotNull
+  static WinProcess createWinProcess(@NotNull Process process) {
+    if (process instanceof RunnerWinProcess) process = ((RunnerWinProcess)process).getOriginalProcess();
+    if (process instanceof WinPtyProcess) {
+      return new WinProcess(((WinPtyProcess)process).getPid());
+    }
+    return new WinProcess(process);
+  }
+
+  @NotNull
+  private static WinProcess createWinProcess(int pid) {
+    return new WinProcess(pid);
+  }
+
+  public static int getCurrentProcessId() {
+    int pid;
+
+    if (SystemInfo.isWindows) {
+      pid = WinProcessManager.getCurrentProcessId();
+    }
+    else {
+      pid = UnixProcessManager.getCurrentProcessId();
+    }
+
+    return pid;
+  }
+}
