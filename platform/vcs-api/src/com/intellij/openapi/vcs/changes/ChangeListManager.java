@@ -90,7 +90,7 @@ public abstract class ChangeListManager implements ChangeListModification {
   public abstract LocalChangeList findChangeList(String name);
 
   @Nullable
-  public abstract LocalChangeList getChangeList(String id);
+  public abstract LocalChangeList getChangeList(@Nullable String id);
 
 
   @NotNull
