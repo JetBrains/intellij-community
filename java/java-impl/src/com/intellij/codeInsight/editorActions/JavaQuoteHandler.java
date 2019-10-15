@@ -4,11 +4,14 @@ package com.intellij.codeInsight.editorActions;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -116,6 +119,14 @@ public class JavaQuoteHandler extends SimpleTokenSetQuoteHandler implements Java
 
   @Override
   public void insertClosingQuote(@NotNull Editor editor, int offset, @NotNull PsiFile file, @NotNull CharSequence closingQuote) {
-    editor.getDocument().insertString(offset, "\"\"\"");
+    editor.getDocument().insertString(offset, "\n\"\"\"");
+    Project project = file.getProject();
+    PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
+    PsiJavaToken token = ObjectUtils.tryCast(file.findElementAt(offset), PsiJavaToken.class);
+    if (token == null) return;
+    PsiLiteralExpression textBlock = ObjectUtils.tryCast(token.getParent(), PsiLiteralExpression.class);
+    if (textBlock == null) return;
+    CodeStyleManager.getInstance(project).reformat(textBlock);
+    editor.getCaretModel().moveToOffset(textBlock.getTextRange().getEndOffset() - 3);
   }
 }
