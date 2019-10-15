@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
-import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.*;
 import com.intellij.lang.properties.customizeActions.DissociateResourceBundleAction;
@@ -29,7 +28,7 @@ import java.awt.*;
 import java.util.List;
 import java.util.*;
 
-public class SuspiciousLocalesLanguagesInspection extends BaseLocalInspectionTool {
+public class SuspiciousLocalesLanguagesInspection extends LocalInspectionTool {
   private static final String ADDITIONAL_LANGUAGES_ATTR_NAME = "additionalLanguages";
   private final static SoftLazyValue<Set<String>> JAVA_LOCALES = new SoftLazyValue<Set<String>>() {
     @NotNull

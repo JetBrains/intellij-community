@@ -2,7 +2,6 @@
 package com.intellij.codeInspection.duplicateStringLiteral;
 
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
 import com.intellij.codeInspection.i18n.JavaI18nUtil;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.lang.java.JavaLanguage;
@@ -44,7 +43,7 @@ import javax.swing.event.DocumentEvent;
 import java.util.*;
 import java.util.stream.Stream;
 
-public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
+public class DuplicateStringLiteralInspection extends AbstractBaseJavaLocalInspectionTool {
   @SuppressWarnings("WeakerAccess") public int MIN_STRING_LENGTH = 5;
   @SuppressWarnings("WeakerAccess") public boolean IGNORE_PROPERTY_KEYS;
   @NonNls private static final String BR = "<br>";
@@ -230,11 +229,6 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
 
     if (reference.isReferenceTo(constant)) return reference;
     return null;
-  }
-
-  @Override
-  public boolean isEnabledByDefault() {
-    return false;
   }
 
   @Override
