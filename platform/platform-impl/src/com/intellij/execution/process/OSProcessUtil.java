@@ -34,7 +34,7 @@ public final class OSProcessUtil {
           process.destroy();
           return res;
         }
-        if (Registry.is("disable.winp")) {
+        if (Registry.is("disable.winp", false)) {
           return WinProcessManager.kill(process, true);
         }
         else {
@@ -63,7 +63,7 @@ public final class OSProcessUtil {
   public static void killProcess(int pid) {
     if (SystemInfo.isWindows) {
       try {
-        if (!Registry.is("disable.winp")) {
+        if (!Registry.is("disable.winp", false)) {
           try {
             createWinProcess(pid).kill();
             return;
