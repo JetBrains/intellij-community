@@ -2,6 +2,7 @@
 package com.jetbrains.python.codeInsight
 
 import com.intellij.openapi.module.ModuleUtilCore
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.patterns.PatternCondition
 import com.intellij.patterns.PlatformPatterns.psiElement
@@ -11,7 +12,6 @@ import com.jetbrains.python.PythonRuntimeService
 import com.jetbrains.python.console.PyConsoleOptions
 import com.jetbrains.python.console.PydevConsoleRunnerFactory
 import com.jetbrains.python.psi.PyStringLiteralExpression
-import java.io.File
 
 /**
  * Contributes file path references for Python string literals in the Python console.
@@ -30,10 +30,13 @@ class PyConsoleFileReferenceContributor : PsiReferenceContributor() {
    * Matches string literals in a Python console that have at least one path separator in them.
    */
   object StringWithPathSeparatorInConsole : PatternCondition<PyStringLiteralExpression>("stringWithSeparatorInConsolePattern") {
+    val separators = listOfNotNull("/", if (SystemInfo.isWindows) "\\" else null)
+
     override fun accepts(expr: PyStringLiteralExpression, context: ProcessingContext?): Boolean {
       val containingFile = expr.containingFile ?: return false
       if (!PythonRuntimeService.getInstance().isInPydevConsole(containingFile)) return false
-      return File.separator in expr.stringValue
+      val stringValue = expr.stringValue
+      return separators.any { it in stringValue }
     }
   }
 
