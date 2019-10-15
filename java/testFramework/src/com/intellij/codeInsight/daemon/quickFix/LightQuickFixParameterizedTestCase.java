@@ -38,9 +38,9 @@ public abstract class LightQuickFixParameterizedTestCase extends LightQuickFixTe
 
   @Nullable
   @Override
-  public String getFileAfterSuffix(@NotNull String fileName) {
-    if (!fileName.startsWith(AFTER_PREFIX)) return null;
-    return fileName.substring(AFTER_PREFIX.length());
+  public String getBaseName(@NotNull String fileAfterSuffix) {
+    if (!fileAfterSuffix.startsWith(AFTER_PREFIX)) return null;
+    return fileAfterSuffix.substring(AFTER_PREFIX.length());
   }
 
   @Test

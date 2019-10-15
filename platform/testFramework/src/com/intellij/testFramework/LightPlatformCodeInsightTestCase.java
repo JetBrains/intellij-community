@@ -719,7 +719,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     final List<Object[]> result = new ArrayList<>();
     for (File file : files) {
       final String fileSuffix = fileBasedTestCase.getFileSuffix(file.getName());
-      String fileAfterSuffix = fileBasedTestCase.getFileAfterSuffix(file.getName());
+      String fileAfterSuffix = fileBasedTestCase.getBaseName(file.getName());
       if (fileAfterSuffix != null) {
         afterFileSuffixes.add(fileAfterSuffix);
       }
