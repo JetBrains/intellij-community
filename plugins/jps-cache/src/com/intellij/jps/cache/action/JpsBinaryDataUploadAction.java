@@ -27,7 +27,7 @@ public class JpsBinaryDataUploadAction extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance("com.intellij.jps.cache.JpsBinaryDataSyncAction");
   private final ModuleHashingService myModuleHashingService;
 
-  public JpsBinaryDataUploadAction() throws IOException {
+  public JpsBinaryDataUploadAction() {
     myModuleHashingService = new ModuleHashingService();
   }
 
