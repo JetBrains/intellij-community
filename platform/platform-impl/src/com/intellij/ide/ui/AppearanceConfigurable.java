@@ -4,6 +4,7 @@ package com.intellij.ide.ui;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.QuickChangeLookAndFeel;
+import com.intellij.ide.ui.laf.LafManagerImpl;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.editor.EditorFactory;
@@ -28,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ItemEvent;
 import java.util.Dictionary;
 import java.util.Hashtable;
 
@@ -63,7 +65,7 @@ public class AppearanceConfigurable implements SearchableConfigurable {
     myComponent.myFontSizeCombo.setEditable(true);
     myComponent.myPresentationModeFontSize.setEditable(true);
 
-    myComponent.myLafComboBox.setModel(new DefaultComboBoxModel(LafManager.getInstance().getInstalledLookAndFeels()));
+    myComponent.myLafComboBox.setModel(((LafManagerImpl)LafManager.getInstance()).getLafComboBoxModel());
     myComponent.myLafComboBox.setRenderer(SimpleListCellRenderer.create("", UIManager.LookAndFeelInfo::getName));
 
     myComponent.myAntialiasingInIDE.setModel(new DefaultComboBoxModel(AntialiasingType.values()));
@@ -116,15 +118,18 @@ public class AppearanceConfigurable implements SearchableConfigurable {
     myComponent.myBackgroundImageButton.addActionListener(ActionUtil.createActionListener(
       "Images.SetBackgroundImage", myComponent.myPanel, ActionPlaces.UNKNOWN));
 
-    updateDarkWindowHeaderVisibility();
-    myComponent.myLafComboBox.addItemListener(x -> updateDarkWindowHeaderVisibility());
+    updateDarkWindowHeaderVisibility((UIManager.LookAndFeelInfo)myComponent.myLafComboBox.getSelectedItem());
+    myComponent.myLafComboBox.addItemListener(itemEvent -> {
+      if (itemEvent.getStateChange() == ItemEvent.SELECTED) {
+        updateDarkWindowHeaderVisibility((UIManager.LookAndFeelInfo)itemEvent.getItem());
+      }
+    });
 
     return myComponent.myPanel;
   }
 
-  private void updateDarkWindowHeaderVisibility() {
-    Object item = myComponent.myLafComboBox.getSelectedItem();
-    boolean isDarkLaf = item instanceof UIManager.LookAndFeelInfo && ((UIManager.LookAndFeelInfo)item).getClassName().endsWith("DarculaLaf");
+  private static void updateDarkWindowHeaderVisibility(UIManager.LookAndFeelInfo item) {
+    boolean isDarkLaf = item != null && item.getClassName().endsWith("DarculaLaf");
   }
 
   @Override
