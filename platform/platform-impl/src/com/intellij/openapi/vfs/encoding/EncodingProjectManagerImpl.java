@@ -65,10 +65,7 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
 
       @Override
       public boolean equals(VirtualFile o1, VirtualFile o2) {
-        if (o1.isValid() && o2.isValid()) {
-          return o1.equals(o2);
-        }
-        return FileUtil.pathsEqual(o1.getPath(), o2.getPath());
+        return o1.equals(o2) || FileUtil.pathsEqual(o1.getPath(), o2.getPath());
       }
     }));
   }
