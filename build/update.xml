@@ -21,7 +21,7 @@
           <fileset dir="${project.home}/lib/ant/lib" includes="*.jar"/>
         </classpath>
         <arg value="-f"/>
-        <arg value="gant.xml"/>
+        <arg value="${project.home}/build/gant.xml"/>
       </java>
     </sequential>
   </macrodef>
