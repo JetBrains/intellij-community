@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.hints.presentation
 
 import com.intellij.openapi.editor.markup.TextAttributes
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
 import java.awt.Graphics2D
 import java.awt.Rectangle
@@ -12,6 +13,7 @@ import java.awt.Rectangle
  * Most useful methods for presentation creation are placed in PresentationFactory
  * If you implement new presentation, consider using [BasePresentation] as base class.
  */
+@ApiStatus.Experimental
 interface InlayPresentation : InputHandler {
   val width: Int
   val height: Int
