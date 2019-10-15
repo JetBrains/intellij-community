@@ -22,6 +22,7 @@ package com.intellij.openapi.keymap.impl;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -29,18 +30,25 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.LinkedHashSet;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 
 /** @deprecated Use {@link BundledKeymapBean} instead. */
 @ApiStatus.ScheduledForRemoval
 @Deprecated
 public class DefaultBundledKeymaps implements BundledKeymapProvider {
+
   @NotNull
   @Override
   public List<String> getKeymapFileNames() {
-    Set<String> result = new LinkedHashSet<>();
+    return new ArrayList<>(getKeymapFileNamesWithPlugins().keySet());
+  }
+
+  @NotNull
+  @Override
+  public Map<String, PluginDescriptor> getKeymapFileNamesWithPlugins() {
+    Map<String, PluginDescriptor> result = new HashMap<>();
     String os = SystemInfo.isMac ? "macos" :
                 SystemInfo.isWindows ? "windows" :
                 SystemInfo.isLinux ? "linux" : "other";
@@ -50,17 +58,17 @@ public class DefaultBundledKeymaps implements BundledKeymapProvider {
       String keymapName = FileUtil.getNameWithoutExtension(bean.file);
       if (bean.file.contains("$OS$")) {
         // add all OS-specific
-        result.add(bean.file.replace("$OS$", os));
+        result.put(bean.file.replace("$OS$", os), plugin);
       }
       else if (headless ||
                plugin != null && !plugin.isBundled() && !isBundledMacOSKeymap(keymapName) ||
                !isBundledKeymapHidden(keymapName)) {
         // filter out bundled keymaps for other systems, but allow them via non-bundled plugins
         // also skip non-bundled known macOS keymaps on non-macOS systems
-        result.add(bean.file);
+        result.put(bean.file, plugin);
       }
     }
-    return new ArrayList<>(result);
+    return result;
   }
 
   public static boolean isBundledKeymapHidden(@Nullable String keymapName) {

@@ -2,13 +2,16 @@
 package com.intellij.openapi.keymap.impl;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.util.io.FileUtilRt;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Name file as "Your scheme name.xml" and put it to keymaps.
@@ -23,8 +26,16 @@ public interface BundledKeymapProvider {
   @NotNull
   List<String> getKeymapFileNames();
 
+  default Map<String, PluginDescriptor> getKeymapFileNamesWithPlugins() {
+    return getKeymapFileNames().stream().collect(Collectors.toMap(x -> x, y -> null));
+  }
+
   default <R> R load(@NotNull String key, @NotNull Function<? super InputStream, ? extends R> consumer) throws IOException {
-    try (InputStream stream = BundledKeymapProvider.class.getResourceAsStream("/keymaps/" + key)) {
+    return load(key, getClass().getClassLoader(), consumer);
+  }
+
+  default <R> R load(@NotNull String key, @NotNull ClassLoader classLoader, @NotNull Function<? super InputStream, ? extends R> consumer) throws IOException {
+    try (InputStream stream = classLoader.getResourceAsStream("/keymaps/" + key)) {
       return consumer.apply(stream);
     }
   }
