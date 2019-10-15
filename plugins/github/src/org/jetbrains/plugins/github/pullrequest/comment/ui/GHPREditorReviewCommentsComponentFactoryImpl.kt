@@ -19,6 +19,7 @@ import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.Rectangle
 import java.awt.geom.RoundRectangle2D
+import javax.swing.BorderFactory
 import javax.swing.JComponent
 
 class GHPREditorReviewCommentsComponentFactoryImpl
@@ -29,7 +30,8 @@ internal constructor(private val project: Project,
 
   override fun createThreadComponent(reviewService: GHPRReviewServiceAdapter, thread: GHPRReviewThreadModel): JComponent {
     val wrapper = RoundedPanel().apply {
-      border = IdeBorderFactory.createRoundedBorder(10, 1)
+      border = BorderFactory.createCompoundBorder(JBUI.Borders.emptyBottom(UIUtil.DEFAULT_VGAP),
+                                                  IdeBorderFactory.createRoundedBorder(10, 1))
     }
     val avatarIconsProvider = avatarIconsProviderFactory.create(GithubUIUtil.avatarSize, wrapper)
 
@@ -56,7 +58,8 @@ internal constructor(private val project: Project,
   override fun createCommentComponent(reviewService: GHPRReviewServiceAdapter, commitSha: String, path: String, diffLine: Int,
                                       onSuccess: (GithubPullRequestCommentWithHtml) -> Unit): JComponent {
     val wrapper = RoundedPanel().apply {
-      border = IdeBorderFactory.createRoundedBorder(10, 1)
+      border = BorderFactory.createCompoundBorder(JBUI.Borders.emptyBottom(UIUtil.DEFAULT_VGAP),
+                                                  IdeBorderFactory.createRoundedBorder(10, 1))
     }
     val avatarIconsProvider = avatarIconsProviderFactory.create(GithubUIUtil.avatarSize, wrapper)
 
