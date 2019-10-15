@@ -28,9 +28,21 @@ class PySoftFileReferenceContributor : PsiReferenceContributor() {
     val stringLiteral = psiElement(PyStringLiteralExpression::class.java)
     val pattern = psiElement()
       .andOr(stringLiteral.with(HardCodedCalleeName),
+             stringLiteral.with(AssignmentMatchingNamePattern),
              stringLiteral.with(KeywordArgumentMatchingNamePattern),
              stringLiteral.with(CallArgumentMatchingParameterNamePattern))
     registrar.registerReferenceProvider(pattern, PySoftFileReferenceProvider)
+  }
+
+  /**
+   * Matches string literals used in assignment statements where the assignment target has a name that has something about files or paths.
+   */
+  private object AssignmentMatchingNamePattern : PatternCondition<PyStringLiteralExpression>("assignmentMatchingPattern") {
+    override fun accepts(expr: PyStringLiteralExpression, context: ProcessingContext?): Boolean {
+      val assignment = expr.parent as? PyAssignmentStatement ?: return false
+      val targetNames = assignment.targets.filterIsInstance<PyTargetExpression>().mapNotNull { it.name }
+      return targetNames.any(::matchesPathNamePattern)
+    }
   }
 
   /**
