@@ -273,4 +273,16 @@ public class OSProcessHandler extends BaseOSProcessHandler {
     }
     set.add(fileToDelete);
   }
+
+  public static class Silent extends OSProcessHandler {
+    public Silent(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
+      super(commandLine);
+    }
+
+    @NotNull
+    @Override
+    protected BaseOutputReader.Options readerOptions() {
+      return BaseOutputReader.Options.forMostlySilentProcess();
+    }
+  }
 }

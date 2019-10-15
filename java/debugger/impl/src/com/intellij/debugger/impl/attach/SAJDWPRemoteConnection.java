@@ -12,7 +12,6 @@ import com.intellij.execution.util.ExecUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.util.io.BaseOutputReader;
 import com.sun.jdi.VirtualMachine;
 import com.sun.jdi.connect.Connector;
 import com.sun.jdi.connect.IllegalConnectorArgumentsException;
@@ -111,7 +110,7 @@ public class SAJDWPRemoteConnection extends PidRemoteConnection {
         commandLine = ExecUtil.sudoCommand(commandLine, "Please enter your password to attach with su privileges: ");
       }
       GeneralCommandLine finalCommandLine = commandLine;
-      new CapturingProcessHandler(commandLine) {
+      new CapturingProcessHandler.Silent(commandLine) {
         @Override
         protected CapturingProcessAdapter createProcessAdapter(ProcessOutput processOutput) {
           return new CapturingProcessAdapter(processOutput) {
@@ -135,12 +134,6 @@ public class SAJDWPRemoteConnection extends PidRemoteConnection {
               }
             }
           };
-        }
-
-        @NotNull
-        @Override
-        protected BaseOutputReader.Options readerOptions() {
-          return BaseOutputReader.Options.forMostlySilentProcess();
         }
       }.startNotify();
     }
