@@ -4,9 +4,11 @@ package com.jetbrains.python.psi.types
 import com.intellij.openapi.util.Ref
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PyTokenTypes
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyEvaluator
+import com.jetbrains.python.psi.resolve.PyResolveContext
 import org.jetbrains.annotations.ApiStatus
 
 
@@ -85,6 +87,19 @@ class PyLiteralType private constructor(cls: PyClass, val expression: PyExpressi
       if (index && (expression is PyReferenceExpression || expression is PySubscriptionExpression)) {
         val subLiteralType = Ref.deref(PyTypingTypeProvider.getType(expression, context))
         if (PyTypeUtil.toStream(subLiteralType).all { it is PyLiteralType }) return subLiteralType
+      }
+
+      if (expression is PyReferenceExpression && expression.isQualified) {
+        PyUtil
+          .multiResolveTopPriority(expression, PyResolveContext.noImplicits().withTypeEvalContext(context))
+          .asSequence()
+          .filterIsInstance<PyTargetExpression>()
+          .mapNotNull { ScopeUtil.getScopeOwner(it) as? PyClass }
+          .firstOrNull { owner -> owner.getAncestorTypes(context).any { it?.classQName == "enum.Enum" } }
+          ?.let {
+            val type = context.getType(it)
+            return if (type is PyInstantiableType<*>) type.toInstance() else type
+          }
       }
 
       return classOfAcceptableLiteral(expression, context)?.let { PyLiteralType(it, expression) }
