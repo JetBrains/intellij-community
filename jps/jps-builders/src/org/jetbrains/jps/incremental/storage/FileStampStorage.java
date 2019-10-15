@@ -120,10 +120,11 @@ public class FileStampStorage extends AbstractStateStorage<String, HashStampPerT
 
   private static byte[] getFileHash(@NotNull File file) throws IOException {
     MessageDigest md = getMessageDigest();
-    try (BufferedInputStream bis = new BufferedInputStream(new FileInputStream(file))) {
-      byte[] buffer = new byte[4096];
+    md.reset();
+    try (FileInputStream fis = new FileInputStream(file)) {
+      byte[] buffer = new byte[1024 * 1024];
       int length;
-      while ((length = bis.read(buffer)) != -1) {
+      while ((length = fis.read(buffer)) != -1) {
         byte[] result = new byte[length];
         int copiedBytes = 0;
         for (int i = 0; i < length; i++) {
