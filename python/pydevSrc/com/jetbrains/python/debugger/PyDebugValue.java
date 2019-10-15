@@ -2,6 +2,7 @@ package com.jetbrains.python.debugger;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -9,6 +10,7 @@ import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.frame.presentation.XRegularValuePresentation;
 import com.jetbrains.python.debugger.pydev.PyDebugCallback;
 import com.jetbrains.python.debugger.pydev.PyVariableLocator;
+import com.jetbrains.python.debugger.render.PyNodeRenderer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,6 +52,8 @@ public class PyDebugValue extends XNamedValue {
   private final boolean myErrorOnEval;
   private int myOffset;
   private int myCollectionLength = -1;
+
+  private @NotNull PyDebugValueDescriptor myDescriptor = new PyDebugValueDescriptor();
 
   public enum ValuesPolicy {
     SYNC, ASYNC, ON_DEMAND
@@ -336,6 +340,7 @@ public class PyDebugValue extends XNamedValue {
     if (value.length() >= MAX_VALUE) {
       value = value.substring(0, MAX_VALUE);
     }
+    value = applyRendererIfApplicable(value);
     setElementPresentation(node, value);
   }
 
@@ -456,6 +461,9 @@ public class PyDebugValue extends XNamedValue {
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       try {
         XValueChildrenList values = myFrameAccessor.loadVariable(this);
+
+        restoreChildrenRenderers(values);
+
         if (!node.isObsolete()) {
           updateLengthIfIsCollection(values);
 
@@ -655,4 +663,49 @@ public class PyDebugValue extends XNamedValue {
     }
   }
 
+  @NotNull
+  public PyDebugValueDescriptor getDescriptor() {
+    return myDescriptor;
+  }
+
+  public void setDescriptor(@NotNull PyDebugValueDescriptor descriptor) {
+    myDescriptor = descriptor;
+  }
+
+  private void restoreChildrenRenderers(XValueChildrenList values) {
+    PyDebugValueDescriptor descriptor = getDescriptor();
+    Map<String, PyDebugValueDescriptor> childrenDescriptors = descriptor.getChildrenDescriptors();
+
+    if (childrenDescriptors == null) {
+      childrenDescriptors = Maps.newHashMap();
+      descriptor.setChildrenDescriptors(childrenDescriptors);
+    }
+
+    if (values == null) return;
+
+    for (int i = 0; i < values.size(); i++) {
+      if (values.getValue(i) instanceof PyDebugValue) {
+        PyDebugValue value = (PyDebugValue) values.getValue(i);
+        descriptor = childrenDescriptors.getOrDefault(value.getName(), null);
+        if (descriptor == null) {
+          descriptor = new PyDebugValueDescriptor();
+          childrenDescriptors.put(value.getName(), descriptor);
+        }
+        value.setDescriptor(descriptor);
+      }
+    }
+  }
+
+  private String applyRendererIfApplicable(String value) {
+    final PyNodeRenderer renderer = getDescriptor().getRenderer();
+    final String type = getType();
+    if (renderer == null || type == null) return value;
+    if (renderer.isApplicable(type)) {
+      return renderer.render(value);
+    }
+    else {
+      getDescriptor().setRenderer(null);
+    }
+    return value;
+  }
 }
