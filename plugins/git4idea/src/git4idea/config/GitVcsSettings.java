@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
+import com.intellij.vcs.log.VcsUser;
 import git4idea.push.GitPushTagMode;
 import git4idea.reset.GitResetMode;
 import org.jetbrains.annotations.NotNull;
@@ -71,13 +72,13 @@ public final class GitVcsSettings extends SimplePersistentStateComponent<GitVcsO
    *
    * @param author an author to save
    */
-  public void saveCommitAuthor(String author) {
+  public void saveCommitAuthor(@NotNull VcsUser author) {
     List<String> previousCommitAuthors = getState().getPreviousCommitAuthors();
-    previousCommitAuthors.remove(author);
+    previousCommitAuthors.remove(author.toString());
     while (previousCommitAuthors.size() >= PREVIOUS_COMMIT_AUTHORS_LIMIT) {
       previousCommitAuthors.remove(previousCommitAuthors.size() - 1);
     }
-    previousCommitAuthors.add(0, author);
+    previousCommitAuthors.add(0, author.toString());
   }
 
   public String[] getCommitAuthors() {
