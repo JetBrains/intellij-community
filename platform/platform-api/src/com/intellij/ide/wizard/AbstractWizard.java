@@ -28,9 +28,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
+import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -332,13 +330,32 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     JBScrollPane scrollPane = new JBScrollPane(component);
     scrollPane.setBorder(JBUI.Borders.empty());
     // Needed to show scroll bars in case of emergency
-    bindMinimumSizeToPreferredSize(component);
+    bindSizeToPreferredSize(scrollPane, component);
     return scrollPane;
   }
 
-  private static void bindMinimumSizeToPreferredSize(@NotNull Component component) {
+  private static void bindSizeToPreferredSize(@NotNull Component source, @NotNull Component destination) {
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
-    component.setPreferredSize(component.getMinimumSize());
+    Dimension minimumSize = destination.getMinimumSize();
+    Dimension preferredSize = destination.getPreferredSize();
+    source.setPreferredSize(preferredSize);
+    destination.setPreferredSize(fitToBounds(source.getSize(), minimumSize, preferredSize));
+    source.addComponentListener(new ComponentAdapter() {
+      @Override
+      public void componentResized(ComponentEvent e) {
+        destination.setPreferredSize(fitToBounds(source.getSize(), minimumSize, preferredSize));
+      }
+    });
+  }
+
+  private static Dimension fitToBounds(@NotNull Dimension size, @NotNull Dimension minimumSize, @NotNull Dimension maximumSize) {
+    int width = fitToBounds(size.width, minimumSize.width, maximumSize.width);
+    int height = fitToBounds(size.height, minimumSize.height, maximumSize.height);
+    return new Dimension(width, height);
+  }
+
+  private static int fitToBounds(int size, int minimumSize, int maximumSize) {
+    return Math.min(Math.max(size, minimumSize), maximumSize);
   }
 
   protected String addStepComponent(final Component component) {
