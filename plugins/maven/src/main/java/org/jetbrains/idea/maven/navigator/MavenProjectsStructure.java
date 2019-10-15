@@ -23,6 +23,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.treeStructure.*;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -59,6 +60,7 @@ import java.io.File;
 import java.net.URL;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
 
 import static org.jetbrains.idea.maven.navigator.MavenProjectsNavigator.TOOL_WINDOW_PLACE_ID;
 import static org.jetbrains.idea.maven.project.ProjectBundle.message;
@@ -69,6 +71,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
   private static final Collection<String> PHASES = MavenConstants.PHASES;
 
   private static final Comparator<MavenSimpleNode> NODE_COMPARATOR = (o1, o2) -> StringUtil.compare(o1.getName(), o2.getName(), true);
+  private final ExecutorService boundedUpdateService;
 
   private final Project myProject;
   private final MavenProjectsManager myProjectsManager;
@@ -92,6 +95,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     myTasksManager = tasksManager;
     myShortcutsManager = shortcutsManager;
     myProjectsNavigator = projectsNavigator;
+    boundedUpdateService = AppExecutorUtil.createBoundedApplicationPoolExecutor("Maven Plugin Updater", 1);
 
     configureTree(tree);
 
@@ -1122,7 +1126,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     public void updatePlugins(MavenProject mavenProject) {
 
       List<MavenPlugin> plugins = mavenProject.getDeclaredPlugins();
-      MavenUtil.runInBackground(myProject, "Updating plugins", false, new UpdatePluginsTreeTask(this, plugins));
+      MavenUtil.runInBackground(myProject, "Updating plugins", false, new UpdatePluginsTreeTask(this, plugins), boundedUpdateService);
     }
   }
 
