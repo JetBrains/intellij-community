@@ -9,6 +9,7 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -63,7 +64,7 @@ public final class TouchBarsManager {
       return;
     }
 
-    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+    for (Project project : ProjectUtil.getOpenProjects()) {
       registerProject(project);
     }
 
@@ -157,12 +158,13 @@ public final class TouchBarsManager {
 
   public static void initialize() {
     synchronized (ourLoadNstSync) {
-      if (isInitialized)
+      if (isInitialized) {
         return;
+      }
 
       NST.initialize();
 
-      { // calculate isEnabled
+      // calculate isEnabled
         final String appId = Utils.getAppId();
         if (appId == null || appId.isEmpty()) {
           LOG.debug("can't obtain application id from NSBundle");
@@ -170,7 +172,6 @@ public final class TouchBarsManager {
           LOG.info("nst library was loaded, but user enabled fn-keys in touchbar");
           isEnabled = false;
         }
-      }
 
       isInitialized = true;
     }

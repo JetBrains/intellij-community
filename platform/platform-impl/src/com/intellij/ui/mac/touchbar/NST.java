@@ -53,7 +53,8 @@ public class NST {
       else {
         try {
           loadLibrary();
-        } catch (Throwable e) {
+        }
+        catch (Throwable e) {
           LOG.error("Failed to load nst library for touchbar: ", e);
         }
 
@@ -64,19 +65,23 @@ public class NST {
             if (test == null || test == ID.NIL) {
               LOG.error("Failed to create native touchbar object, result is null");
               ourNSTLibrary = null;
-            } else {
+            }
+            else {
               ourNSTLibrary.releaseTouchBar(test);
               LOG.info("nst library works properly, successfully created and released native touchbar object");
             }
-          } catch (Throwable e) {
+          }
+          catch (Throwable e) {
             LOG.error("nst library was loaded, but can't be used: ", e);
             ourNSTLibrary = null;
           }
-        } else {
+        }
+        else {
           LOG.error("nst library wasn't loaded");
         }
       }
-    } catch (Throwable e) {
+    }
+    catch (Throwable e) {
       LOG.error(e);
     }
   }
