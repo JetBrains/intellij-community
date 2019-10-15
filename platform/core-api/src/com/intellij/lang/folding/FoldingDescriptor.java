@@ -219,7 +219,7 @@ public class FoldingDescriptor {
   }
 
   @ApiStatus.Internal
-  public final String getCachedPlaceholderText() {
+  final String getCachedPlaceholderText() {
     return myPlaceholderText;
   }
 
@@ -227,7 +227,7 @@ public class FoldingDescriptor {
     myPlaceholderText = placeholderText;
   }
 
-  protected String calcPlaceholderText() {
+  String calcPlaceholderText() {
     PsiElement psiElement = myElement.getPsi();
     if (psiElement == null) return null;
     FoldingBuilder foldingBuilder = LanguageFolding.INSTANCE.forLanguage(psiElement.getLanguage());

@@ -49,19 +49,22 @@ public class CompositeFoldingBuilder extends FoldingBuilderEx implements Possibl
 
   @Override
   public String getPlaceholderText(@NotNull ASTNode node, @NotNull TextRange range) {
-    // We reach this when a FoldingDescriptor was created by a regular FoldingBuilder but a composite FoldingBuilder is actually registered for the language
+    // We reach this when a FoldingDescriptor was created by a regular FoldingBuilder but a composite FoldingBuilder is actually registered
+    // for the language
     return node.getText();
   }
 
   @Override
   public String getPlaceholderText(@NotNull ASTNode node) {
-    // We reach this when a FoldingDescriptor was created by a regular FoldingBuilder but a composite FoldingBuilder is actually registered for the language
+    // We reach this when a FoldingDescriptor was created by a regular FoldingBuilder but a composite FoldingBuilder is actually registered
+    // for the language
     return node.getText();
   }
 
   @Override
   public boolean isCollapsedByDefault(@NotNull ASTNode node) {
-    // We reach this when a FoldingDescriptor was created by a regular FoldingBuilder but a composite FoldingBuilder is actually registered for the language
+    // We reach this when a FoldingDescriptor was created by a regular FoldingBuilder but a composite FoldingBuilder is actually registered
+    // for the language
     return false;
   }
 
