@@ -247,7 +247,8 @@ open class UpdateIdeFromSourcesAction
       return arrayOf("cmd", "/c", updateScript.absolutePath, "com.intellij.updater.Runner", ">${restartLogFile.absolutePath}", "2>&1")
     }
     val command = arrayOf(
-      "rm -rf \"$workIdeHome\"/*",
+      "rm -rf \"$workIdeHome\"/lib",
+      "rm -rf \"$workIdeHome\"/plugins",
       "cp -r \"$builtDistPath\"/* \"$workIdeHome\""
     )
     return arrayOf("/bin/sh", "-c", command.joinToString(" && "))
