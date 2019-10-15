@@ -940,6 +940,13 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
         }
       }
     }
+    else if (t instanceof NoClassDefFoundError && t.getMessage() != null) {
+      String className = StringUtil.substringAfterLast(t.getMessage(), " ");
+      if (className == null) className = t.getMessage();
+      if (PluginManagerCore.isPluginClass(className)) {
+        return PluginManagerCore.getPluginByClassName(className);
+      }
+    }
     else if (t instanceof AbstractMethodError && t.getMessage() != null) {
       String s = t.getMessage();
       int pos = s.indexOf('(');
