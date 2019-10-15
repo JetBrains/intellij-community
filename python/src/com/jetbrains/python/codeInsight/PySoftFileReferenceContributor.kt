@@ -1,9 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight
 
-import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.patterns.PatternCondition
 import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.psi.*
@@ -11,15 +9,11 @@ import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferen
 import com.intellij.psi.util.QualifiedName
 import com.intellij.util.ProcessingContext
 import com.intellij.util.SystemProperties
-import com.jetbrains.python.PythonRuntimeService
-import com.jetbrains.python.console.PyConsoleOptions
-import com.jetbrains.python.console.PydevConsoleRunnerFactory
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.resolve.PyResolveUtil
 import com.jetbrains.python.psi.types.TypeEvalContext
-import java.io.File
 
 /**
  * Contributes file path references for Python string literals where it seems appropriate based on heuristics.
@@ -34,8 +28,7 @@ class PySoftFileReferenceContributor : PsiReferenceContributor() {
     val pattern = psiElement()
       .andOr(stringLiteral.with(HardCodedCalleeName),
              stringLiteral.with(KeywordArgumentMatchingNamePattern),
-             stringLiteral.with(CallArgumentMatchingParameterNamePattern),
-             stringLiteral.with(StringWithPathSeparatorInConsole))
+             stringLiteral.with(CallArgumentMatchingParameterNamePattern))
     registrar.registerReferenceProvider(pattern, PySoftFileReferenceProvider)
   }
 
@@ -74,17 +67,6 @@ class PySoftFileReferenceContributor : PsiReferenceContributor() {
       val keywordArgument = expr.parent as? PyKeywordArgument ?: return false
       if (keywordArgument.parent?.parent !is PyCallExpression) return false
       return keywordArgument.keyword?.let { matchesPathNamePattern(it) } ?: return false
-    }
-  }
-
-  /**
-   * Matches string literals in a Python console that have at least one path separator in them.
-   */
-  object StringWithPathSeparatorInConsole : PatternCondition<PyStringLiteralExpression>("stringWithSeparatorInConsolePattern") {
-    override fun accepts(expr: PyStringLiteralExpression, context: ProcessingContext?): Boolean {
-      val containingFile = expr.containingFile ?: return false
-      if (!PythonRuntimeService.getInstance().isInPydevConsole(containingFile)) return false
-      return File.separator in expr.stringValue
     }
   }
 
@@ -151,9 +133,8 @@ class PySoftFileReferenceContributor : PsiReferenceContributor() {
    *
    * * It's used only for code completion and ignored during code inspections
    * * It understands `~` as an alias for the user home path
-   * * It provides the context for resolving paths in a Python console relative to its initial working directory
    */
-  private class PySoftFileReferenceSet(element: PyStringLiteralExpression, provider: PsiReferenceProvider) :
+  open class PySoftFileReferenceSet(element: PyStringLiteralExpression, provider: PsiReferenceProvider) :
     PyStringLiteralFileReferenceSet(element.stringValue, element,
                                     ElementManipulators.getValueTextRange(element).startOffset, provider, true, false, null) {
 
@@ -165,27 +146,10 @@ class PySoftFileReferenceContributor : PsiReferenceContributor() {
     override fun isAbsolutePathReference(): Boolean =
       super.isAbsolutePathReference() || pathString.startsWith("~")
 
-    override fun computeDefaultContexts(): Collection<PsiFileSystemItem> {
-      val defaultContexts = super.computeDefaultContexts()
-      val consoleDir = getConsoleWorkingDirectory() ?: return defaultContexts
-      return defaultContexts + consoleDir
-    }
-
     private fun expandUserHome(text: String): String? =
       when (text) {
         "~" -> SystemProperties.getUserHome()
         else -> text
       }
-
-    private fun getConsoleWorkingDirectory(): PsiDirectory? {
-      val file = containingFile ?: return null
-      if (!PythonRuntimeService.getInstance().isInPydevConsole(file)) return null
-      val project = file.project
-      val module = ModuleUtilCore.findModuleForFile(file)
-      val settingsProvider = PyConsoleOptions.getInstance(project).pythonConsoleSettings
-      val workingDirPath = PydevConsoleRunnerFactory.getWorkingDir(project, module, null, settingsProvider) ?: return null
-      val workingDir =  StandardFileSystems.local().findFileByPath(workingDirPath) ?: return null
-      return PsiManager.getInstance(project).findDirectory(workingDir)
-    }
   }
 }
