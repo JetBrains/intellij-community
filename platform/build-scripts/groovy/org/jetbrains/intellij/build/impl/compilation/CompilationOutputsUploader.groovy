@@ -8,12 +8,11 @@ import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.StreamUtil
 import com.intellij.util.io.Compressor
 import groovy.io.FileType
+import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.CompilationContext
-import org.jetbrains.intellij.build.impl.compilation.CompilationPartsUploader
-import org.jetbrains.intellij.build.impl.compilation.NamedThreadPoolExecutor
 import org.jetbrains.jps.model.impl.JpsFileTypesConfigurationImpl
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
@@ -104,7 +103,7 @@ class CompilationOutputsUploader {
 
       // Save and publish metadata file
       JpsOutputMetadata metadata = new JpsOutputMetadata()
-      metadata.commitHash = commitHash;
+      metadata.commitHash = commitHash
       metadata.files = new TreeMap<String, String>(hashes)
       String metadataJson = new Gson().toJson(metadata)
 
@@ -130,18 +129,20 @@ class CompilationOutputsUploader {
         def sourcePath = "binaries/$module.name/$prefix/$sourcesHash"
         if (uploader.isExist(sourcePath)) return
         File zipFile = new File(root, sourcesHash)
-        zipBinaryData(zipFile, moduleFolder);
+        zipBinaryData(zipFile, moduleFolder)
         uploader.upload(sourcePath, zipFile)
         FileUtil.delete(zipFile)
       }
     }
   }
 
+  @CompileDynamic
   private String getSourcesHash(JpsModule module, JavaSourceRootType sourceRootType, JavaResourceRootType resourceRootType) {
     byte[] moduleHash = null
-    Stream.concat(module.getSourceRoots(sourceRootType).toList().stream(), module.getSourceRoots(resourceRootType).toList().stream())
+    Stream.concat(module.getSourceRoots(sourceRootType).toList().stream(),
+                  module.getSourceRoots(resourceRootType).toList().stream())
       .map { it.file }
-      .each { File folder ->
+      .forEach { File folder ->
         if (!folder.exists()) return
         folder.eachFileRecurse(FileType.FILES) { file ->
           if (ignoredPatterns.isIgnored(file.getName())) return
@@ -150,7 +151,6 @@ class CompilationOutputsUploader {
           moduleHash = sum(moduleHash, fileHash)
         }
       }
-
     return moduleHash != null ? DatatypeConverter.printHexBinary(moduleHash).toLowerCase() : ""
   }
 
@@ -178,7 +178,7 @@ class CompilationOutputsUploader {
     }
     catch (IOException e) {
       context.messages.error("Error while hashing file $file.absolutePath", e)
-      return null;
+      return null
     }
   }
 
@@ -205,11 +205,11 @@ class CompilationOutputsUploader {
   }
 
   private static MessageDigest getMessageDigest() throws IOException {
-    MessageDigest messageDigest = MESSAGE_DIGEST_THREAD_LOCAL.get();
-    if (messageDigest != null) return messageDigest;
-    messageDigest = MessageDigest.getInstance("MD5");
-    MESSAGE_DIGEST_THREAD_LOCAL.set(messageDigest);
-    return messageDigest;
+    MessageDigest messageDigest = MESSAGE_DIGEST_THREAD_LOCAL.get()
+    if (messageDigest != null) return messageDigest
+    messageDigest = MessageDigest.getInstance("MD5")
+    MESSAGE_DIGEST_THREAD_LOCAL.set(messageDigest)
+    return messageDigest
   }
 
   @CompileStatic
