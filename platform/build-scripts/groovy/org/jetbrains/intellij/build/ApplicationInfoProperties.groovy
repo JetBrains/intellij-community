@@ -42,7 +42,7 @@ class ApplicationInfoProperties {
   final String shortCompanyName
   final String svgRelativePath
   final boolean isEAP
-  final List<String> svgProductIcons = []
+  final List<String> svgProductIcons
 
   @SuppressWarnings(["GrUnresolvedAccess", "GroovyAssignabilityCheck"])
   ApplicationInfoProperties(String appInfoXmlPath) {
@@ -68,19 +68,7 @@ class ApplicationInfoProperties {
     def svgPath = root.icon.first().@svg
     svgRelativePath = isEAP && !root."icon-eap".isEmpty() ? (root."icon-eap".first().@svg ?: svgPath) : svgPath
 
-    [root.icon, root."icon-eap"].forEach { node ->
-      if (node != null) {
-        def svg = node.@"svg"
-        if (svg != null) {
-          svgProductIcons.addAll(svg)
-        }
-
-        def small = node.@"svg-small"
-        if (small != null) {
-          svgProductIcons.addAll(small)
-        }
-      }
-    }
+    svgProductIcons = (root.icon + root."icon-eap").collectMany { [it?.@"svg", it?.@"svg-small"] }.findAll { it != null }
   }
 
   String getUpperCaseProductName() { shortProductName.toUpperCase() }
