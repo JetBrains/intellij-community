@@ -121,7 +121,7 @@ public class ReferenceProvidersRegistryImpl extends ReferenceProvidersRegistry {
   }
 
   @Override
-  public void unloadRegistrar(@NotNull Language language) {
+  public void unloadProvidersFor(@NotNull Language language) {
     myRegistrars.remove(language);
   }
 

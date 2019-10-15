@@ -111,7 +111,7 @@ public abstract class Language extends UserDataHolderBase {
 
   public static void unregisterLanguage(@NotNull Language language) {
     IElementType.unregisterElementTypes(language);
-    ReferenceProvidersRegistry.getInstance().unloadRegistrar(language);
+    ReferenceProvidersRegistry.getInstance().unloadProvidersFor(language);
     ourRegisteredLanguages.remove(language.getClass());
     ourRegisteredIDs.remove(language.getID());
     for (String mimeType : language.getMimeTypes()) {

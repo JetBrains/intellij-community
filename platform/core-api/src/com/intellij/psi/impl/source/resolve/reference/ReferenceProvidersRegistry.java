@@ -10,6 +10,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.ProcessingContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class ReferenceProvidersRegistry {
@@ -46,7 +47,8 @@ public abstract class ReferenceProvidersRegistry {
     return getInstance().doGetReferencesFromProviders(context, hints);
   }
 
-  public abstract void unloadRegistrar(@NotNull Language language);
+  @ApiStatus.Internal
+  public abstract void unloadProvidersFor(@NotNull Language language);
 
   @NotNull
   protected abstract PsiReference[] doGetReferencesFromProviders(@NotNull PsiElement context, @NotNull PsiReferenceService.Hints hints);
