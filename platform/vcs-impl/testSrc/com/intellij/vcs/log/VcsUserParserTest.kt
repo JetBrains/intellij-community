@@ -1,10 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package git4idea.checkin
+package com.intellij.vcs.log
 
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
-class GitCommitAuthorCorrectorTest {
+class VcsUserParserTest {
   @Test
   fun add_space_before_email_in_brackets() {
     assertCorrection("foo<foo@email.com>", "foo <foo@email.com>")
@@ -29,6 +29,6 @@ class GitCommitAuthorCorrectorTest {
     assertDoNothing("foo bar")
   }
 
-  private fun assertCorrection(source: String, expected: String) = assertEquals(expected, GitCommitAuthorCorrector.correct(source))
+  private fun assertCorrection(source: String, expected: String) = assertEquals(expected, VcsUserParser.correct(source))
   private fun assertDoNothing(source: String) = assertCorrection(source, source)
 }
