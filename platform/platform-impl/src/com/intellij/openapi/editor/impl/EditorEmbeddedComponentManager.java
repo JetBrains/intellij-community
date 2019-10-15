@@ -404,12 +404,12 @@ public class EditorEmbeddedComponentManager {
         int inlayMaxY = inlayBounds.y + inlayBounds.height;
         JScrollBar hsb = myEditor.getScrollPane().getHorizontalScrollBar();
         JScrollBar vsb = myEditor.getScrollPane().getVerticalScrollBar();
-        int hsbNewValue = hsb.getValue() + (inlayMaxX > compMaxX ? inlayMaxX - compMaxX :
-                                            inlayMaxX < compMinX ? inlayMaxX - compMinX :
-                                            0);
-        int vsbNewValue = vsb.getValue() + (inlayMaxY > compMaxY ? inlayMaxY - compMaxY :
-                                            inlayMaxY < compMinY ? inlayMaxY - compMinY :
-                                            0);
+        int hsbNewValue = hsb.getValue() + info.direction.xMultiplier * (inlayMaxX > compMaxX ? inlayMaxX - compMaxX :
+                                                                         inlayMaxX < compMinX ? inlayMaxX - compMinX :
+                                                                         0);
+        int vsbNewValue = vsb.getValue() + info.direction.yMultiplier * (inlayMaxY > compMaxY ? inlayMaxY - compMaxY :
+                                                                         inlayMaxY < compMinY ? inlayMaxY - compMinY :
+                                                                         0);
         hsb.setValue(Math.max(0, hsbNewValue));
         vsb.setValue(Math.max(0, vsbNewValue));
       }
