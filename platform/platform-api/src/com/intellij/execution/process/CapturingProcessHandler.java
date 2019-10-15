@@ -24,16 +24,16 @@ public class CapturingProcessHandler extends OSProcessHandler {
     myProcessRunner = new CapturingProcessRunner(this, processOutput -> createProcessAdapter(processOutput));
   }
 
-  /** @deprecated Use {@link #CapturingProcessHandler(Process, Charset, String)} instead (to be removed in IDEA 17) */
+  /** @deprecated Use {@link #CapturingProcessHandler(Process, Charset, String)} instead */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2017")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
   public CapturingProcessHandler(@NotNull Process process) {
     this(process, null, "");
     DeprecatedMethodException.report("Use CapturingProcessHandler(Process, Charset, String) instead");
   }
 
   /**
-   * {@code commandLine} must not be not empty (for correct thread attribution in the stacktrace)
+   * {@code commandLine} must not be empty (for correct thread attribution in the stacktrace)
    */
   public CapturingProcessHandler(@NotNull Process process, @Nullable Charset charset, /*@NotNull*/ String commandLine) {
     super(process, commandLine, charset);
