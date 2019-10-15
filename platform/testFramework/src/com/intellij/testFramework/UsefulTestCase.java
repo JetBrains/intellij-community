@@ -281,9 +281,9 @@ public abstract class UsefulTestCase extends TestCase {
   @SuppressWarnings("ConstantConditions")
   private static void cleanupSwingDataStructures() throws Exception {
     Object manager = ReflectionUtil.getDeclaredMethod(Class.forName("javax.swing.KeyboardManager"), "getCurrentManager").invoke(null);
-    Map componentKeyStrokeMap = ReflectionUtil.getField(manager.getClass(), manager, Hashtable.class, "componentKeyStrokeMap");
+    Map<?, ?> componentKeyStrokeMap = ReflectionUtil.getField(manager.getClass(), manager, Hashtable.class, "componentKeyStrokeMap");
     componentKeyStrokeMap.clear();
-    Map containerMap = ReflectionUtil.getField(manager.getClass(), manager, Hashtable.class, "containerMap");
+    Map<?, ?> containerMap = ReflectionUtil.getField(manager.getClass(), manager, Hashtable.class, "containerMap");
     containerMap.clear();
   }
 
