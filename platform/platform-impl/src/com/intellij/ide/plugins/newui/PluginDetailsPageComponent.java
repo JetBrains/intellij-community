@@ -561,14 +561,22 @@ public class PluginDetailsPageComponent extends MultiPanel {
     boolean errors = myPluginModel.hasErrors(myPlugin);
     if (errors) {
       Ref<String> enableAction = new Ref<>();
-      String message = myPluginModel.getErrorMessage(myPlugin, enableAction);
-      ErrorComponent.show(myErrorComponent, message, enableAction.get(), enableAction.isNull() ? null : this::handleErrors);
+      Ref<String> disableAction = new Ref<>();
+      String message = myPluginModel.getErrorMessage(myPlugin, enableAction, disableAction);
+      ErrorComponent.show(myErrorComponent, message, enableAction.get(), enableAction.isNull() ? null : () -> handleErrors(true),
+                          disableAction.get(), disableAction.isNull() ? null : () -> handleErrors(false));
     }
     myErrorComponent.setVisible(errors);
   }
 
-  private void handleErrors() {
-    myPluginModel.enableRequiredPlugins(myPlugin);
+  private void handleErrors(boolean enable) {
+    if (enable) {
+      myPluginModel.enableRequiredPlugins(myPlugin);
+    }
+    else {
+      myPluginModel.disableWithRequiredPlugins(myPlugin);
+    }
+
     updateIcon();
     updateEnabledState();
     fullRepaint();

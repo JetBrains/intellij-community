@@ -416,9 +416,11 @@ public class ListPluginComponent extends JPanel {
       }
 
       Ref<String> enableAction = new Ref<>();
-      String message = myPluginModel.getErrorMessage(myPlugin, enableAction);
+      Ref<String> disableAction = new Ref<>();
+      String message = myPluginModel.getErrorMessage(myPlugin, enableAction, disableAction);
       myErrorComponent = ErrorComponent.show(myErrorPanel, BorderLayout.CENTER, myErrorComponent, message, enableAction.get(),
-                                             enableAction.isNull() ? null : () -> myPluginModel.enableRequiredPlugins(myPlugin));
+                                             enableAction.isNull() ? null : () -> handleErrors(true),
+                                             disableAction.get(), disableAction.isNull() ? null : () -> handleErrors(false));
       myErrorComponent.setBorder(JBUI.Borders.emptyTop(5));
 
       if (addListeners) {
@@ -429,6 +431,15 @@ public class ListPluginComponent extends JPanel {
       myLayout.removeLineComponent(myErrorPanel);
       myErrorPanel = null;
       myErrorComponent = null;
+    }
+  }
+
+  private void handleErrors(boolean enable) {
+    if (enable) {
+      myPluginModel.enableRequiredPlugins(myPlugin);
+    }
+    else {
+      myPluginModel.disableWithRequiredPlugins(myPlugin);
     }
   }
 
