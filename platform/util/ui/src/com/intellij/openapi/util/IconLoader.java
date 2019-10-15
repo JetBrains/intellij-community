@@ -1190,7 +1190,7 @@ public final class IconLoader {
           newPath = patcher.patchPath(path, null);
         }
         if (newPath != null) {
-          LOG.info("replace '" + path + "' with '" + newPath + "'");
+          LOG.debug("replace '" + path + "' with '" + newPath + "'");
           ClassLoader contextClassLoader = patcher.getContextClassLoader(path, classLoader);
           if (contextClassLoader == null) {
             //noinspection deprecation
