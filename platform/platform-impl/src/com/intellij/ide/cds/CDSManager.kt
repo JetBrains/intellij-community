@@ -130,7 +130,8 @@ object CDSManager {
         }
       }
       catch (t: Throwable) {
-        LOG.warn("Failed to attach CDS Java Agent to the running IDE instance. ${t.message}", t)
+        LOG.warn("Failed to attach CDS Java Agent to the running IDE instance. ${t.message}\n" +
+                 "Please check you have -Djdk.attach.allowAttachSelf=true in the VM options of the IDE", t)
         return null
       }
     }

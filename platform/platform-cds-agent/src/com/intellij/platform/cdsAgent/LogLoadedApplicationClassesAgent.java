@@ -624,7 +624,7 @@ public class LogLoadedApplicationClassesAgent {
 
   private static void log(String message) {
     //noinspection UseOfSystemOutOrSystemErr
-    System.out.println("[AGENT] " + message);
+    System.out.println("[CDS-AGENT] " + message);
   }
 
   private static void log(String message, @Nullable Throwable t) {
