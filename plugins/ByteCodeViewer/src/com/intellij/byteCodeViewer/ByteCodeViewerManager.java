@@ -123,7 +123,7 @@ public class ByteCodeViewerManager extends DockablePopupManager<ByteCodeViewerCo
   }
 
   @Override
-  protected void doUpdateComponent(PsiElement element, PsiElement originalElement, ByteCodeViewerComponent component) {
+  protected void doUpdateComponent(@NotNull PsiElement element, PsiElement originalElement, ByteCodeViewerComponent component) {
     final Content content = myToolWindow.getContentManager().getSelectedContent();
     if (content != null && element != null) {
       updateByteCode(element, component, content);
