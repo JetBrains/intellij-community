@@ -89,6 +89,10 @@ public class PluginDetailsPageComponent extends MultiPanel {
     setEmptyState(false);
   }
 
+  public boolean isShowingPlugin(@NotNull IdeaPluginDescriptor pluginDescriptor) {
+    return myPlugin != null && myPlugin.getPluginId().equals(pluginDescriptor.getPluginId());
+  }
+
   @Override
   protected JComponent create(Integer key) {
     if (key == 0) {
