@@ -1,7 +1,9 @@
 <html>
 <body>
 Reports <b>while</b> loops which iterate
-over collections, and can be replaced with the <b>foreach</b> iteration syntax. Example:
+over collections, and can be replaced with an enhanced <b>for</b> loop (i.e. foreach iteration syntax).
+<!--  'foreach' still used in this description so that the inspection continues to be found using this keyword -->
+Example:
 <pre>
   Iterator it = c.iterator();
   while(it.hasNext()) {
@@ -11,9 +13,7 @@ over collections, and can be replaced with the <b>foreach</b> iteration syntax. 
 </pre>
 Can be replaced with:
 <pre>
-  Iterator it = c.iterator();
-  while(it.hasNext()) {
-    Object obj = it.next();
+  for (Object obj : c) {
     System.out.println(obj);
   }
 </pre>
