@@ -80,32 +80,22 @@ class CompilationOutputsUploader {
       }
 
       def productionModules = new File("$context.paths.buildOutputRoot/classes/$PRODUCTION")
-      def productionFiles = productionModules.listFiles()
+      def productionFiles = productionModules.listFiles() ?: new File[0]
 
       def testModules = new File("$context.paths.buildOutputRoot/classes/$TEST")
-      def testFiles = testModules.listFiles()
+      def testFiles = testModules.listFiles() ?: new File[0]
 
-      int mapCapacity = (productionFiles != null ? productionFiles.length : 0) + (testFiles != null ? testFiles.length : 0)
+      int mapCapacity = productionFiles.length + testFiles.length
       Map<String, String> hashes = new ConcurrentHashMap<String, String>(mapCapacity)
 
       // Upload production classes output
-      if (productionFiles == null) {
-        context.messages.warning("Production output is empty")
-      }
-      else {
-        uploadCompilationOutputs(productionModules, productionFiles, PRODUCTION, hashes, uploader, executor) {
-          JpsModule module -> getSourcesHash(module, SOURCE, RESOURCE)
-        }
+      uploadCompilationOutputs(productionModules, productionFiles, PRODUCTION, hashes, uploader, executor) {
+        JpsModule module -> getSourcesHash(module, SOURCE, RESOURCE)
       }
 
       // Upload test classes output
-      if (testFiles == null) {
-        context.messages.warning("Test output is empty")
-      }
-      else {
-        uploadCompilationOutputs(testModules, testFiles, TEST, hashes, uploader, executor) {
-          JpsModule module -> getSourcesHash(module, TEST_SOURCE, TEST_RESOURCE)
-        }
+      uploadCompilationOutputs(testModules, testFiles, TEST, hashes, uploader, executor) {
+        JpsModule module -> getSourcesHash(module, TEST_SOURCE, TEST_RESOURCE)
       }
 
       executor.waitForAllComplete(messages)
@@ -148,44 +138,43 @@ class CompilationOutputsUploader {
   }
 
   private String getSourcesHash(JpsModule module, JavaSourceRootType sourceRootType, JavaResourceRootType resourceRootType) {
-    def moduleHash = new byte[HASH_SIZE_IN_BYTES];
-    Stream.concat(module.getSourceRoots(sourceRootType).toList().stream().map { it.file },
-                  module.getSourceRoots(resourceRootType).toList().stream().map { it.file })
+    byte[] moduleHash = null
+    Stream.concat(module.getSourceRoots(sourceRootType).toList().stream(), module.getSourceRoots(resourceRootType).toList().stream())
+      .map { it.file }
       .each { File folder ->
         if (!folder.exists()) return
         folder.eachFileRecurse(FileType.FILES) { file ->
           if (ignoredPatterns.isIgnored(file.getName())) return
           def fileHash = hashFile(file, folder)
           if (fileHash == null) return
-          sum(moduleHash, fileHash)
+          moduleHash = sum(moduleHash, fileHash)
         }
       }
 
-    return !Arrays.equals(moduleHash, new byte[HASH_SIZE_IN_BYTES]) ? DatatypeConverter.printHexBinary(moduleHash).toLowerCase() : ""
+    return moduleHash != null ? DatatypeConverter.printHexBinary(moduleHash).toLowerCase() : ""
   }
 
   private byte[] hashFile(File file, File rootPath) {
     try {
       MessageDigest md = messageDigest
+      md.reset()
       md.update(toRelative(file, rootPath).getBytes())
       new FileInputStream(file).withStream { fis ->
-        new BufferedInputStream(fis).withStream { bis ->
-          byte[] buf = new byte[4096]
-          int length
-          while ((length = bis.read(buf)) != -1) {
-            byte[] res = new byte[length]
-            int copiedBytes = 0
-            for (int i = 0; i < length; i++) {
-              if (buf[i] != CARRIAGE_RETURN_CODE && ((i + 1) >= length || buf[i + 1] != LINE_FEED_CODE)) {
-                res[copiedBytes] = buf[i]
-                copiedBytes++
-              }
+        byte[] buf = new byte[1024 * 1024]
+        int length
+        while ((length = fis.read(buf)) != -1) {
+          byte[] res = new byte[length]
+          int copiedBytes = 0
+          for (int i = 0; i < length; i++) {
+            if (buf[i] != CARRIAGE_RETURN_CODE && ((i + 1) >= length || buf[i + 1] != LINE_FEED_CODE)) {
+              res[copiedBytes] = buf[i]
+              copiedBytes++
             }
-            md.update(copiedBytes != res.length ? Arrays.copyOf(res, res.length - (res.length - copiedBytes)) : res)
           }
+          md.update(copiedBytes != res.length ? Arrays.copyOf(res, res.length - (res.length - copiedBytes)) : res)
         }
       }
-      return messageDigest.digest()
+      return md.digest()
     }
     catch (IOException e) {
       context.messages.error("Error while hashing file $file.absolutePath", e)
@@ -193,10 +182,12 @@ class CompilationOutputsUploader {
     }
   }
 
-  private static void sum(byte[] firstHash, byte[] secondHash) {
-    for (int i = 0; i < firstHash.length; ++i) {
-      firstHash[i] = (byte)(firstHash[i] + secondHash[i]);
+  private static byte[] sum(byte[] firstHash, byte[] secondHash) {
+    byte[] result = firstHash ?: new byte[HASH_SIZE_IN_BYTES]
+    for (int i = 0; i < result.length; ++i) {
+      result[i] = (byte)(result[i] + secondHash[i])
     }
+    return result
   }
 
   private static String toRelative(File target, File rootPath) {
