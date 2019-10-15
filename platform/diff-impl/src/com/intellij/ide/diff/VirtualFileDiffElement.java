@@ -2,6 +2,7 @@
 package com.intellij.ide.diff;
 
 import com.intellij.diff.util.DiffUtil;
+import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.ide.presentation.VirtualFilePresentation;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
@@ -126,13 +127,25 @@ public class VirtualFileDiffElement extends DiffElement<VirtualFile> {
     };
   }
 
-  @Nullable
-  protected VirtualFileDiffElement createElement(VirtualFile file) {
+  @NotNull
+  public static VirtualFileDiffElement createElement(VirtualFile file) {
+    if (file.getFileType() instanceof ArchiveFileType &&
+        file.getFileSystem() != JarFileSystem.getInstance()) {
+      VirtualFile jar = JarFileSystem.getInstance().getJarRootForLocalFile(file);
+      if (jar != null) {
+        return new VirtualFileDiffElement(jar);
+      }
+    }
     return new VirtualFileDiffElement(file);
   }
 
   protected FileChooserDescriptor getChooserDescriptor() {
-    return new FileChooserDescriptor(false, true, false, false, false, false);
+    return new FileChooserDescriptor(true, true, true, true, false, false) {
+      @Override
+      public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
+        return file.isDirectory() || file.getFileType() instanceof ArchiveFileType;
+      }
+    };
   }
 
   @Override
