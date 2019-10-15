@@ -16,6 +16,7 @@ import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -292,6 +293,7 @@ public class PythonTask {
     final ProgressManager manager = ProgressManager.getInstance();
     final Output output;
     if (SwingUtilities.isEventDispatchThread()) {
+      assert !ApplicationManager.getApplication().isWriteAccessAllowed(): "This method can't run under write action";
       output = manager.runProcessWithProgressSynchronously(() -> getOutputInternal(), myRunTabTitle, false, myModule.getProject());
     }
     else {
