@@ -27,16 +27,15 @@ class PyLiteralType private constructor(cls: PyClass, val expression: PyExpressi
   override fun hashCode(): Int = 31 * pyClass.hashCode()
 
   companion object {
-    fun newInstance(expression: PyExpression, context: TypeEvalContext): PyType? {
-      return when (expression) {
-        is PyTupleExpression -> {
-          val elements = expression.elements
-          val classes = elements.mapNotNull { toLiteralType(it, context) }
-          if (elements.size == classes.size) PyUnionType.union(classes) else null
-        }
-        else -> toLiteralType(expression, context)
-      }
-    }
+    /**
+     * Tries to construct literal type for index passed to `typing.Literal[...]`
+     */
+    fun fromLiteralParameter(expression: PyExpression, context: TypeEvalContext): PyType? = newInstance(expression, context, true)
+
+    /**
+     * Tries to construct literal type for a value that could be considered as literal and downcasted to `typing.Literal[...]` type.
+     */
+    fun fromLiteralValue(expression: PyExpression, context: TypeEvalContext): PyType? = newInstance(expression, context, false)
 
     /**
      * [actual] matches [expected] if it has the same type and its expression evaluates to the same value
@@ -47,13 +46,24 @@ class PyLiteralType private constructor(cls: PyClass, val expression: PyExpressi
              PyEvaluator.evaluateNoResolve(actual.expression, Any::class.java)
     }
 
-    private fun toLiteralType(expression: PyExpression, context: TypeEvalContext): PyType? {
+    private fun newInstance(expression: PyExpression, context: TypeEvalContext, index: Boolean): PyType? {
+      return when (expression) {
+        is PyTupleExpression -> {
+          val elements = expression.elements
+          val classes = elements.mapNotNull { toLiteralType(it, context, index) }
+          if (elements.size == classes.size) PyUnionType.union(classes) else null
+        }
+        else -> toLiteralType(expression, context, index)
+      }
+    }
+
+    private fun toLiteralType(expression: PyExpression, context: TypeEvalContext, index: Boolean): PyType? {
       if (expression is PyNoneLiteralExpression && !expression.isEllipsis ||
           expression is PyReferenceExpression &&
           expression.name == PyNames.NONE &&
           LanguageLevel.forElement(expression).isPython2) return PyNoneType.INSTANCE
 
-      if (expression is PyReferenceExpression || expression is PySubscriptionExpression) {
+      if (index && (expression is PyReferenceExpression || expression is PySubscriptionExpression)) {
         val subLiteralType = Ref.deref(PyTypingTypeProvider.getType(expression, context))
         if (PyTypeUtil.toStream(subLiteralType).all { it is PyLiteralType }) return subLiteralType
       }

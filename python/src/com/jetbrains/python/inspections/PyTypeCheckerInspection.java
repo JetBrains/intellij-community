@@ -112,7 +112,17 @@ public class PyTypeCheckerInspection extends PyInspection {
       final PyExpression value = node.findAssignedValue();
       if (value == null) return;
       final PyType expected = myTypeEvalContext.getType(node);
-      final PyType actual = myTypeEvalContext.getType(value);
+
+      final PyType actual;
+      if (expected instanceof PyLiteralType) {
+        actual = Optional
+          .ofNullable(PyLiteralType.Companion.fromLiteralValue(value, myTypeEvalContext))
+          .orElseGet(() -> myTypeEvalContext.getType(value));
+      }
+      else {
+        actual = myTypeEvalContext.getType(value);
+      }
+
       if (!PyTypeChecker.match(expected, actual, myTypeEvalContext)) {
         registerProblem(value, String.format("Expected type '%s', got '%s' instead",
                                              PythonDocumentationProvider.getTypeName(expected, myTypeEvalContext),

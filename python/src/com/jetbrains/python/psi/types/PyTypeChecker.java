@@ -269,6 +269,10 @@ public class PyTypeChecker {
       return match((PyTupleType)expected, (PyTupleType)actual, context);
     }
 
+    if (expected instanceof PyLiteralType) {
+      return Optional.of(actual instanceof PyLiteralType && PyLiteralType.Companion.match((PyLiteralType)expected, (PyLiteralType)actual));
+    }
+
     final PyClass superClass = expected.getPyClass();
     final PyClass subClass = actual.getPyClass();
     final boolean matchClasses = matchClasses(superClass, subClass, context.context);
@@ -997,7 +1001,7 @@ public class PyTypeChecker {
     private final Set<Pair<PyType, PyType>> matching; // mutable
 
     MatchContext(@NotNull TypeEvalContext context,
-                        @NotNull Map<PyGenericType, PyType> substitutions) {
+                 @NotNull Map<PyGenericType, PyType> substitutions) {
       this(context, substitutions, true, new HashSet<>());
     }
 
