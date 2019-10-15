@@ -100,6 +100,8 @@ class PySoftFileReferenceContributor : PsiReferenceContributor() {
 
     private val PATTERNS = listOf(
       Pattern("open", 0, isBuiltin = true),
+      Pattern("os.walk", 0),
+      Pattern("os.scandir", 0),
       Pattern("pandas.read_csv", 0)
     )
     private val SIMPLE_NAMES = PATTERNS.associateBy { it.qualifiedName.lastComponent }
@@ -124,7 +126,11 @@ class PySoftFileReferenceContributor : PsiReferenceContributor() {
       "path",
       "file",
       "filename",
-      "filepath"
+      "filepath",
+      "pathname",
+      "src",
+      "dst",
+      "dir"
     )
 
     private fun matchesPathNamePattern(name: String): Boolean {
