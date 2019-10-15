@@ -8,6 +8,6 @@ class CDSApplicationUsagesCollector : ApplicationUsagesCollector() {
   override fun getGroupId() = "intellij.cds"
 
   override fun getMetrics() = setOf(
-    newBooleanMetric(groupId, CDSManager.isRunningWithCDS)
+    newBooleanMetric("running.with.cds", CDSManager.isRunningWithCDS)
   )
 }
