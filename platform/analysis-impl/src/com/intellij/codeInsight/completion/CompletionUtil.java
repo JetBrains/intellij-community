@@ -9,14 +9,11 @@ import com.intellij.codeInsight.lookup.LookupValueWithPsiElement;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.lang.Language;
-import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.patterns.CharPattern;
 import com.intellij.patterns.ElementPattern;
@@ -29,7 +26,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ConcurrentModificationException;
+import java.util.Iterator;
 
 public class CompletionUtil {
 
@@ -183,7 +181,10 @@ public class CompletionUtil {
     }
 
     Object object = lookupElement.getObject();
-    if (object instanceof LookupValueWithPsiElement) {
+    if (object instanceof LookupValueWithPsiElement
+
+
+    ) {
       final PsiElement element = ((LookupValueWithPsiElement)object).getElement();
       if (element != null && element.isValid()) return getOriginalElement(element);
     }
@@ -248,6 +249,7 @@ public class CompletionUtil {
    */
   @NotNull
   public static String getActionShortcut(@NonNls @NotNull final String actionId) {
-    return KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(actionId));
+    return ""; //TODO[traff]: move to another util class
+    //return KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(actionId));
   }
 }

@@ -193,9 +193,9 @@ public class LookupItem<T> extends MutableLookupElement<T> implements Comparable
   public static TailType getDefaultTailType(final char completionChar) {
     switch(completionChar){
       case '.': return new CharTailType('.', false);
-      case ',': return CommaTailType.INSTANCE;
+      //case ',': return CommaTailType.INSTANCE; TODO[traff]: uncomment, refactor
       case ';': return TailType.SEMICOLON;
-      case '=': return EqTailType.INSTANCE;
+      //case '=': return EqTailType.INSTANCE; TODO[traff]: uncomment, refactor
       case ' ': return TailType.SPACE;
       case ':': return TailType.CASE_COLON; //?
     }

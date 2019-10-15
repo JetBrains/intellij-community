@@ -7,7 +7,6 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupValueWithUIHint;
 import com.intellij.codeInsight.lookup.PresentableLookupValue;
-import com.intellij.codeInsight.template.Template;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.paths.PsiDynaReference;
@@ -200,9 +199,9 @@ public class CompletionData {
     else if (object instanceof String) {
       s = (String)object;
     }
-    else if (object instanceof Template) {
-      s = ((Template) object).getKey();
-    }
+    //else if (object instanceof Template) { TODO[traff]: uncomment, extract interface
+    //  s = ((Template) object).getKey();
+    //}
     else if (object instanceof PresentableLookupValue) {
       s = ((PresentableLookupValue)object).getPresentation();
     }
