@@ -1465,6 +1465,16 @@ public class PythonCompletionTest extends PyTestCase {
     doMultiFileTest();
   }
 
+  // PY-33254
+  public void testAssignmentPatternStringPath() {
+    doMultiFileTest();
+  }
+
+  // PY-33254
+  public void testQualifiedAssignmentPatternStringPath() {
+    doMultiFileTest();
+  }
+
   // PY-8302
   public void testUndeclaredFunction() {
     myFixture.configureByFile("uninitialized/fun.py");
