@@ -1,6 +1,4 @@
-/*
- * Copyright 2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.process;
 
 import com.intellij.execution.CommandLineUtil;
@@ -24,7 +22,7 @@ public abstract class BaseProcessHandler<T extends Process> extends ProcessHandl
   protected final ProcessWaitFor myWaitFor;
 
   /**
-   * {@code commandLine} must not be not empty (for correct thread attribution in the stacktrace)
+   * {@code commandLine} must not be empty (for correct thread attribution in the stacktrace)
    */
   public BaseProcessHandler(@NotNull T process, /*@NotNull*/ String commandLine, @Nullable Charset charset) {
     myProcess = process;

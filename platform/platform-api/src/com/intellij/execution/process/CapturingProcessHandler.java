@@ -26,7 +26,7 @@ public class CapturingProcessHandler extends OSProcessHandler {
 
   /** @deprecated Use {@link #CapturingProcessHandler(Process, Charset, String)} instead */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public CapturingProcessHandler(@NotNull Process process) {
     this(process, null, "");
     DeprecatedMethodException.report("Use CapturingProcessHandler(Process, Charset, String) instead");

@@ -44,23 +44,23 @@ public class OSProcessHandler extends BaseOSProcessHandler {
     myFilesToDelete = commandLine.getUserData(DELETE_FILES_ON_TERMINATION);
   }
 
-  /** @deprecated use {@link #OSProcessHandler(Process, String)} or any other constructor (to be removed in IDEA 2019) */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2019")
+  /** @deprecated use {@link #OSProcessHandler(Process, String)} (or any other constructor) */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public OSProcessHandler(@NotNull Process process) {
     this(process, null);
     DeprecatedMethodException.report("Use OSProcessHandler(Process, String) instead");
   }
 
   /**
-   * {@code commandLine} must not be not empty (for correct thread attribution in the stacktrace)
+   * {@code commandLine} must not be empty (for correct thread attribution in the stacktrace)
    */
   public OSProcessHandler(@NotNull Process process, /*@NotNull*/ String commandLine) {
     this(process, commandLine, EncodingManager.getInstance().getDefaultCharset());
   }
 
   /**
-   * {@code commandLine} must not be not empty (for correct thread attribution in the stacktrace)
+   * {@code commandLine} must not be empty (for correct thread attribution in the stacktrace)
    */
   public OSProcessHandler(@NotNull Process process, /*@NotNull*/ String commandLine, @Nullable Charset charset) {
     super(process, commandLine, charset);
@@ -104,7 +104,7 @@ public class OSProcessHandler extends BaseOSProcessHandler {
    *     <li>Synchronous (you need to return execution result or derived information to the caller) - get rid the ReadAction or synchronicity.
    *    *     Move execution part out of the code executed under ReadAction, or make your execution asynchronous - execute on
    *    *     {@link Task.Backgroundable other thread} and invoke a callback.</li>
-   *     <li>Non-synchronous (you don't need to return something) - execute on other thread. E.g. using {@link Task.Backgroundable}</li>
+   *     <li>Non-synchronous (you don't need to return something) - execute on another thread. E.g. using {@link Task.Backgroundable}</li>
    * </ul>
    * </li>
    *
@@ -129,7 +129,7 @@ public class OSProcessHandler extends BaseOSProcessHandler {
    * </li>
    * </ul></li></ul>
    *
-   * @apiNote works only in internal mode with UI. Reports once per running session per stacktrace per cause.
+   * @apiNote works only in the internal non-headless mode. Reports once per running session per stacktrace per cause.
    */
   public static void checkEdtAndReadAction(@NotNull ProcessHandler processHandler) {
     Application application = ApplicationManager.getApplication();
