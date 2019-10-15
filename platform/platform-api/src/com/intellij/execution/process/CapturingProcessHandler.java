@@ -94,6 +94,10 @@ public class CapturingProcessHandler extends OSProcessHandler {
       super(commandLine);
     }
 
+    public Silent(@NotNull Process process, @Nullable Charset charset, @NotNull String commandLine) {
+      super(process, charset, commandLine);
+    }
+
     @NotNull
     @Override
     protected BaseOutputReader.Options readerOptions() {
