@@ -43,7 +43,7 @@ object CDSManager {
 
   val isRunningWithCDS: Boolean
     get() {
-      return isValidEnv && currentCDSArchive != null
+      return isValidEnv && currentCDSArchive?.isFile == true
     }
 
   val canBuildOrUpdateCDS: Boolean
@@ -213,8 +213,9 @@ object CDSManager {
   }
 
   fun removeCDS() = rejectIfRunning(Unit) {
-    LOG.warn("CDS archive is disabled (VMOptions were updated)")
+    if (!isRunningWithCDS) return
     VMOptions.writeDisableCDSArchiveOption()
+    LOG.warn("Disabled CDS")
   }
 
   private operator fun File.div(s: String) = File(this, s)
