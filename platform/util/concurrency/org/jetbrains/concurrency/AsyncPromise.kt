@@ -87,6 +87,7 @@ open class AsyncPromise<T> private constructor(private val f: CompletableFuture<
     }, hasErrorHandler)
   }
 
+  @Throws(TimeoutException::class)
   override fun blockingGet(timeout: Int, timeUnit: TimeUnit): T? {
     try {
       return get(timeout.toLong(), timeUnit)

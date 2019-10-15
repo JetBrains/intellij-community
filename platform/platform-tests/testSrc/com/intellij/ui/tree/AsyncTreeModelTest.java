@@ -442,13 +442,9 @@ public final class AsyncTreeModelTest {
       try {
         promise.blockingGet(seconds, SECONDS);
       }
-      catch (Exception exception) {
-        //noinspection InstanceofCatchParameter because of Kotlin
-        if (exception instanceof TimeoutException) {
-          System.err.println(dumpThreadsToString());
-          fail(seconds + " seconds is not enough for " + toString());
-        }
-        throw exception;
+      catch (TimeoutException exception) {
+        System.err.println(dumpThreadsToString());
+        fail(seconds + " seconds is not enough for " + toString());
       }
       finally {
         Disposer.dispose(disposable);
