@@ -148,7 +148,6 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
     if (isOnTheFly) {
       classList = StringUtil.join(tenClassesMost, aClass -> {
         final boolean thisFile = aClass.getContainingFile() == originalExpression.getContainingFile();
-        //noinspection HardCodedStringLiteral
         return "&nbsp;&nbsp;&nbsp;'<b>" + aClass.getQualifiedName() + "</b>'" +
                (thisFile ? " " + InspectionsBundle.message("inspection.duplicates.message.in.this.file") : "");
       }, ", " + BR);
@@ -417,7 +416,7 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
       UsageView view = UsageViewManager.getInstance(project).showUsages(new UsageTarget[]{new PsiElement2UsageTargetAdapter(literal) {
         @Override
         public String getPresentableText() {
-          return "String literal: \'" + literal.getValue() + "\'";
+          return "String literal: '" + literal.getValue() + "'";
         }
       }}, usages, presentation);
       view.addButtonToLowerPane(() -> {
