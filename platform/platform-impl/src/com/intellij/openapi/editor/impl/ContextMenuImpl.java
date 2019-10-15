@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.event.EditorMouseListener;
 import com.intellij.openapi.editor.event.EditorMouseMotionListener;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.JBColor;
 import com.intellij.util.ui.TimerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -24,6 +25,11 @@ import java.awt.event.ActionListener;
  * @author spleaner
  */
 public final class ContextMenuImpl extends JPanel implements Disposable {
+
+  public static final JBColor BACKGROUND = JBColor.namedColor("Toolbar.Floating.background", new JBColor(0xEDEDED, 0x454A4D));
+  private static final float BACKGROUND_ALPHA = 0.75f;
+  private static final float FOREGROUND_ALPHA = 1.0f;
+
   @NonNls
   public static final String ACTION_GROUP = "EditorContextBarMenu";
   private final JComponent myComponent;
@@ -241,7 +247,8 @@ public final class ContextMenuImpl extends JPanel implements Disposable {
     protected void paintChildren(final Graphics g) {
       Graphics2D graphics = (Graphics2D)g.create();
       try {
-        graphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_ATOP, myContextMenu.myCurrentOpacity / 100.0f));
+        float alpha = myContextMenu.myCurrentOpacity / 100.0f * FOREGROUND_ALPHA;
+        graphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_ATOP, alpha));
         super.paintChildren(graphics);
       }
       finally {
@@ -260,9 +267,10 @@ public final class ContextMenuImpl extends JPanel implements Disposable {
       Rectangle r = getBounds();
       Graphics2D graphics = (Graphics2D)g.create();
       try {
-        graphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, myContextMenu.myCurrentOpacity / 600.0f));
+        float alpha = myContextMenu.myCurrentOpacity / 100.0f * BACKGROUND_ALPHA;
+        graphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
         graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        graphics.setColor(Color.GRAY);
+        graphics.setColor(BACKGROUND);
         graphics.fillRoundRect(0, 0, r.width - 1, r.height - 1, 6, 6);
       }
       finally {
