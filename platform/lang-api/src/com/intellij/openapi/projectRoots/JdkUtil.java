@@ -228,42 +228,33 @@ public class JdkUtil {
     try {
       File argFile = FileUtil.createTempFile("idea_arg_file" + new Random().nextInt(Integer.MAX_VALUE), null);
 
-      try (PrintWriter writer = createOutputWriter(argFile)) {
-        if (dynamicVMOptions) {
-          for (String param : vmParameters.getList()) {
-            writer.print(quoteArg(param));
-            writer.print('\n');
-          }
-        }
-        else {
-          commandLine.addParameters(vmParameters.getList());
-        }
+      List<String> fileArgs = new ArrayList<>();
 
-        PathsList classPath = javaParameters.getClassPath();
-        if (!classPath.isEmpty() && !explicitClassPath(vmParameters)) {
-          writer.print("-classpath\n");
-          writer.print(quoteArg(classPath.getPathsString()));
-          writer.print('\n');
-        }
-
-        PathsList modulePath = javaParameters.getModulePath();
-        if (!modulePath.isEmpty() && !explicitModulePath(vmParameters)) {
-          writer.print("-p\n");
-          writer.print(quoteArg(modulePath.getPathsString()));
-          writer.print('\n');
-        }
-
-        if (dynamicParameters) {
-          for (String parameter : getMainClassParams(javaParameters)) {
-            writer.print(quoteArg(parameter));
-            writer.print('\n');
-          }
-          for (String parameter : javaParameters.getProgramParametersList().getList()) {
-            writer.print(quoteArg(parameter));
-            writer.print('\n');
-          }
-        }
+      if (dynamicVMOptions) {
+        fileArgs.addAll(vmParameters.getList());
       }
+      else {
+        commandLine.addParameters(vmParameters.getList());
+      }
+
+      PathsList classPath = javaParameters.getClassPath();
+      if (!classPath.isEmpty() && !explicitClassPath(vmParameters)) {
+        fileArgs.add("-classpath");
+        fileArgs.add(classPath.getPathsString());
+      }
+
+      PathsList modulePath = javaParameters.getModulePath();
+      if (!modulePath.isEmpty() && !explicitModulePath(vmParameters)) {
+        fileArgs.add("-p");
+        fileArgs.add(modulePath.getPathsString());
+      }
+
+      if (dynamicParameters) {
+        fileArgs.addAll(getMainClassParams(javaParameters));
+        fileArgs.addAll(javaParameters.getProgramParametersList().getList());
+      }
+
+      writeArgumentsToParameterFile(argFile, fileArgs);
 
       commandLine.putUserData(COMMAND_LINE_CONTENT, ContainerUtil.stringMap(argFile.getAbsolutePath(), FileUtil.loadFile(argFile)));
 
@@ -275,6 +266,23 @@ public class JdkUtil {
     }
     catch (IOException e) {
       throwUnableToCreateTempFile(e);
+    }
+  }
+
+  /**
+   * Writes list of Java arguments to the Java Command-Line Argument File
+   * See https://docs.oracle.com/javase/9/tools/java.htm, section "java Command-Line Argument Files"
+   *
+   * @param argFile file writer to write arguments
+   * @param args    arguments
+   */
+  public static void writeArgumentsToParameterFile(@NotNull File argFile,
+                                                   @NotNull List<String> args) throws IOException {
+    try (PrintWriter writer = createOutputWriter(argFile)) {
+      for (String arg : args) {
+        writer.print(quoteArg(arg));
+        writer.print("\n");
+      }
     }
   }
 

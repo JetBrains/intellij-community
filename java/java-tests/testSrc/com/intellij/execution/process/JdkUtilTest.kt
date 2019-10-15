@@ -102,6 +102,17 @@ class JdkUtilTest : BareTestFixtureTestCase() {
     assertThat(args).containsExactly("hello/hello.Main", "1\"#\"1", "\"\\\"\"2\"'\"", "line\"\\n\"-", "C:\\", "D:\\work", "E:\\work\" \"space")
   }
 
+  @Test fun javaParametersFileGeneration() {
+    val file = FileUtil.createTempFile("test", "javaParametersFileGeneration")
+    filesToDelete = setOf(file)
+
+    val args = listOf("1#1", "\"2'", "line\n-", "C:\\", "D:\\work", "E:\\work space", "unicode\u2026")
+    JdkUtil.writeArgumentsToParameterFile(file, args)
+    val actual = file.readText(Charsets.UTF_8)
+
+    assertThat(actual.split("\n")).containsExactly("1\"#\"1", "\"\\\"\"2\"'\"", "line\"\\n\"-", "C:\\", "D:\\work", "E:\\work\" \"space", "unicode\u2026", "")
+  }
+
   private fun doTest(vararg expected: String) {
     val cmd = JdkUtil.setupJVMCommandLine(parameters)
     filesToDelete = cmd.getUserData(OSProcessHandler.DELETE_FILES_ON_TERMINATION)
