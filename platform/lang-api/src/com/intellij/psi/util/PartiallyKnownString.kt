@@ -129,8 +129,8 @@ class PartiallyKnownString(val segments: List<StringEntry>) {
         is StringEntry.Known -> {
           val value = head.value
 
-          val stringPaths = splitToTextRanges(value, pattern).toList()
-          if (stringPaths.size == 1) {
+          val stringParts = splitToTextRanges(value, pattern).toList()
+          if (stringParts.size == 1) {
             return collectPaths(result, pending.apply { add(head) }, tail)
           }
           else {
@@ -138,15 +138,15 @@ class PartiallyKnownString(val segments: List<StringEntry>) {
               result.apply {
                 add(PartiallyKnownString(
                   pending.apply {
-                    add(StringEntry.Known(stringPaths.first().substring(value), head.sourcePsi,
-                                          stringPaths.first().shiftRight(head.range.startOffset)))
+                    add(StringEntry.Known(stringParts.first().substring(value), head.sourcePsi,
+                                          stringParts.first().shiftRight(head.range.startOffset)))
                   }))
-                addAll(stringPaths.subList(1, stringPaths.size - 1).map {
+                addAll(stringParts.subList(1, stringParts.size - 1).map {
                   PartiallyKnownString(it.substring(value), head.sourcePsi, it.shiftRight(head.range.startOffset))
                 })
               },
-              mutableListOf(StringEntry.Known(stringPaths.last().substring(value), head.sourcePsi,
-                                              stringPaths.last().shiftRight(head.range.startOffset))),
+              mutableListOf(StringEntry.Known(stringParts.last().substring(value), head.sourcePsi,
+                                              stringParts.last().shiftRight(head.range.startOffset))),
               tail
             )
           }
