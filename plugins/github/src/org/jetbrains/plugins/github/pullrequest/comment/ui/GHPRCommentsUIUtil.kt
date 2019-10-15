@@ -49,19 +49,19 @@ object GHPRCommentsUIUtil {
       addSettingsProvider {
         it.colorsScheme.lineSpacing = 1f
       }
-    }.also {
-      object : DumbAwareAction() {
-        override fun actionPerformed(e: AnActionEvent) = submit(project, it, request)
-      }.registerCustomShortcutSet(submitShortcut, it)
     }
 
     val button = JButton(actionName).apply {
       isOpaque = false
-      addActionListener {
-        submit(project, textField, request)
-      }
       toolTipText = KeymapUtil.getShortcutsText(submitShortcut.shortcuts)
       putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
+    }
+
+    object : DumbAwareAction() {
+      override fun actionPerformed(e: AnActionEvent) = submit(project, button, textField, request)
+    }.registerCustomShortcutSet(submitShortcut, textField)
+    button.addActionListener {
+      submit(project, button, textField, request)
     }
 
     val authorLabel = LinkLabel.create("") {
@@ -89,16 +89,20 @@ object GHPRCommentsUIUtil {
     }
   }
 
-  private fun submit(project: Project, textField: EditorTextField, request: (String) -> CompletableFuture<*>) {
+  private fun submit(project: Project, button: JButton, textField: EditorTextField,
+                     request: (String) -> CompletableFuture<*>) {
+
     val document = textField.document
-    if (document.text.isBlank()) return
+    if (!button.isEnabled || !textField.isEnabled || document.text.isBlank()) return
     textField.isEnabled = false
+    button.isEnabled = false
 
     request(document.text).handleOnEdt { _, _ ->
       executeCommand(project) {
         runWriteAction { document.setText("") }
       }
       textField.isEnabled = true
+      button.isEnabled = true
     }
   }
 }
