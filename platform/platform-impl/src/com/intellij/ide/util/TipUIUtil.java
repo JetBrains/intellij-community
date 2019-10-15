@@ -18,6 +18,7 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.impl.DefaultKeymap;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
@@ -167,86 +168,98 @@ public class TipUIUtil {
     while (index != -1) {
       final int end = text.indexOf(">", index + 1);
       if (end == -1) return;
-      final String img = text.substring(index, end + 1).replace('\r', ' ').replace('\n',' ');
+      final String img = text.substring(index, end + 1).replace('\r', ' ').replace('\n', ' ');
       int srcIndex = img.indexOf("src=\"");
       int endIndex = img.indexOf("\"", srcIndex + 6);
       if (srcIndex == -1 && endIndex == -1) {
-        srcIndex = img.indexOf("src=\'");
-        endIndex = img.indexOf("\'", srcIndex + 6);
+        srcIndex = img.indexOf("src='");
+        endIndex = img.indexOf("'", srcIndex + 6);
       }
       if (endIndex != -1) {
-        String path = img.substring(srcIndex + 5, endIndex);
-        URL url;
-        try {
-          url = tipLoader != null ? ResourceUtil.getResource(tipLoader, "/tips/", path) : new File(tipPath, path).toURI().toURL();
-        }
-        catch (MalformedURLException e) {
-          url = null;
-        }
-        if (url != null) {
-          path = url.toExternalForm();
-        }
-        int extPoint = path.lastIndexOf('.');
-        String pathWithoutExtension = extPoint != -1 ? path.substring(0, extPoint) : path;
-        String fileExtension = extPoint != -1 ? path.substring(extPoint) : "";
-        if (!pathWithoutExtension.endsWith("_dark") && !pathWithoutExtension.endsWith("@2x") || tipLoader == null) {
-          boolean hidpi =  JBUI.isPixHiDPI(component);
-          path = pathWithoutExtension + (hidpi ? "@2x" : "") + (dark ? "_dark" : "") + fileExtension;
-          if (url != null) {
-            String newImgTag = "<img src=\""+url+"\" ";//stub
+        String src = img.substring(srcIndex + 5, endIndex);
+        String srcWithoutExtension = FileUtil.getNameWithoutExtension(src);
+
+        if (!srcWithoutExtension.endsWith("_dark") && !srcWithoutExtension.endsWith("@2x") || tipLoader == null) {
+          boolean hidpi = JBUI.isPixHiDPI(component);
+          String suffix = (dark ? "_dark" : "") + "." + FileUtilRt.getExtension(src);
+          String path = srcWithoutExtension + suffix;
+          String path2x = srcWithoutExtension + "@2x" + suffix;
+          String canonicalPath = getImageCanonicalPath(hidpi ? path2x : path, tipLoader, tipPath);
+          try {
+            boolean fallbackUpscale = false;
+            boolean fallbackDownscale = false;
+
+            Trinity<String, BufferedImage, byte[]> trinity;
+            URL actualURL;
             try {
-              Trinity<String, BufferedImage, byte[]> trinity;
-              boolean fallbackUpscale = false;
-              URL actualURL;
-              try {
-                actualURL = new URL(path);
-                trinity = read(actualURL);
-              }
-              catch (IOException e) {
-                if (!path.endsWith(".svg")) {
-                  LOG.warn("Cannot find icon with path [" + path + "]");
-                }
-                fallbackUpscale = hidpi;
-                actualURL = url;
-                trinity = read(url);
-              }
-              if (Registry.is("ide.javafx.tips")) {
-                newImgTag =
-                  "<img src=\"data:image/" + trinity.first + ";base64," + Base64.getEncoder().encodeToString(trinity.third) + "\" ";
-              } else {
-                newImgTag = "<img src=\""+actualURL.toExternalForm()+"\" ";
-              }
-              BufferedImage image = trinity.second;
-              int w = image.getWidth();
-              int h = image.getHeight();
-              if (hidpi) {
-                // the expected (user space) size is @2x / 2 in either JRE-HiDPI or IDE-HiDPI mode
-                float k = 2f;
-                if (UIUtil.isJreHiDPI(component)) {
-                  // in JRE-HiDPI mode we want the image to be drawn in its original size w/h, for better quality
-                  k = JBUIScale.sysScale(component);
-                }
-                w /= k;
-                h /= k;
-              }
-              // round the user scale for better quality
-              int userScale = RoundingMode.ROUND_FLOOR_BIAS.round(JBUIScale.scale(1f));
-              w = userScale * w;
-              h = userScale * h;
-              if (fallbackUpscale) {
-                w *= 2;
-                h *= 2;
-              }
-              newImgTag += "width=\"" + w + "\" height=\"" + h + "\"";
-            } catch (Exception ignore) {
-              //newImgTag += "width=\"400\" height=\"200\"";
+              actualURL = new URL(canonicalPath);
+              trinity = read(actualURL);
             }
+            catch (IOException e) {
+              if (hidpi) {
+                fallbackUpscale = true;
+                actualURL = new URL(getImageCanonicalPath(path, tipLoader, tipPath));
+              }
+              else {
+                fallbackDownscale = true;
+                actualURL = new URL(getImageCanonicalPath(path2x, tipLoader, tipPath));
+              }
+              trinity = read(actualURL);
+            }
+
+            String newImgTag;
+            if (Registry.is("ide.javafx.tips")) {
+              newImgTag = "<img src=\"data:image/" + trinity.first + ";base64," + Base64.getEncoder().encodeToString(trinity.third) + "\" ";
+            }
+            else {
+              newImgTag = "<img src=\"" + actualURL.toExternalForm() + "\" ";
+            }
+            BufferedImage image = trinity.second;
+            int w = image.getWidth();
+            int h = image.getHeight();
+            if (hidpi) {
+              // the expected (user space) size is @2x / 2 in either JRE-HiDPI or IDE-HiDPI mode
+              float k = 2f;
+              if (StartupUiUtil.isJreHiDPI(component)) {
+                // in JRE-HiDPI mode we want the image to be drawn in its original size w/h, for better quality
+                k = JBUIScale.sysScale(component);
+              }
+              w /= k;
+              h /= k;
+            }
+            // round the user scale for better quality
+            int userScale = RoundingMode.ROUND_FLOOR_BIAS.round(JBUIScale.scale(1f));
+            w = userScale * w;
+            h = userScale * h;
+            if (fallbackUpscale) {
+              w *= 2;
+              h *= 2;
+            }
+            else if (fallbackDownscale) {
+              w /= 2;
+              h /= 2;
+            }
+            newImgTag += "width=\"" + w + "\" height=\"" + h + "\"";
             newImgTag += ">";
             text.replace(index, end + 1, newImgTag);
+          }
+          catch (Exception ignore) {
+            LOG.warn("Cannot find icon with path [" + src + "]");
           }
         }
       }
       index = text.indexOf("<img", index + 1);
+    }
+  }
+
+  @NotNull
+  private static String getImageCanonicalPath(@NotNull String path, @Nullable ClassLoader tipLoader, @NotNull String tipPath) {
+    try {
+      URL url = tipLoader != null ? ResourceUtil.getResource(tipLoader, "/tips/", path) : new File(tipPath, path).toURI().toURL();
+      return url != null ? url.toExternalForm() : path;
+    }
+    catch (MalformedURLException e) {
+      return path;
     }
   }
 
