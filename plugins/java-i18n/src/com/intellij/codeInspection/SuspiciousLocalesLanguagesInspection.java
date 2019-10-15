@@ -15,6 +15,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.reference.SoftLazyValue;
 import com.intellij.ui.AnActionButton;
 import com.intellij.ui.AnActionButtonRunnable;
+import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.containers.ContainerUtil;
@@ -129,10 +130,10 @@ public class SuspiciousLocalesLanguagesInspection extends LocalInspectionTool {
   }
 
   private class MyOptions {
-    private final JBList myAdditionalLocalesList;
+    private final JBList<String> myAdditionalLocalesList;
 
     MyOptions() {
-      myAdditionalLocalesList = new JBList(new MyListModel());
+      myAdditionalLocalesList = new JBList<>(new CollectionListModel<>(myAdditionalLanguages, true));
       myAdditionalLocalesList.setCellRenderer(new DefaultListCellRenderer());
     }
 
@@ -155,7 +156,7 @@ public class SuspiciousLocalesLanguagesInspection extends LocalInspectionTool {
                 public boolean canClose(String inputString) {
                   if (inputString != null) {
                     myAdditionalLanguages.add(inputString);
-                    ((MyListModel)myAdditionalLocalesList.getModel()).fireContentsChanged();
+                    ((CollectionListModel<String>)myAdditionalLocalesList.getModel()).allContentsChanged();
                   }
                   return true;
                 }
@@ -168,7 +169,7 @@ public class SuspiciousLocalesLanguagesInspection extends LocalInspectionTool {
               final int index = myAdditionalLocalesList.getSelectedIndex();
               if (index > -1 && index < myAdditionalLanguages.size()) {
                 myAdditionalLanguages.remove(index);
-                ((MyListModel)myAdditionalLocalesList.getModel()).fireContentsChanged();
+                ((CollectionListModel<String>)myAdditionalLocalesList.getModel()).allContentsChanged();
               }
             }
           })
@@ -177,22 +178,6 @@ public class SuspiciousLocalesLanguagesInspection extends LocalInspectionTool {
           .createPanel(),
         BorderLayout.CENTER);
       return panel;
-    }
-
-    private class MyListModel extends AbstractListModel {
-      @Override
-      public int getSize() {
-        return myAdditionalLanguages.size();
-      }
-
-      @Override
-      public Object getElementAt(int index) {
-        return myAdditionalLanguages.get(index);
-      }
-
-      public void fireContentsChanged() {
-        fireContentsChanged(myAdditionalLanguages, -1, -1);
-      }
     }
   }
 }
