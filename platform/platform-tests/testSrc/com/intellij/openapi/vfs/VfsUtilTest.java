@@ -445,10 +445,10 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
         }
       }));
 
-      int i = 0;
-      while (!semaphore.waitFor(1) & i < 10_000) {
+      for (int i = 0; i < 10_000 && !semaphore.waitFor(1); i++) {
         UIUtil.dispatchAllInvocationEvents();
       }
+      assertTrue(semaphore.waitFor(1));
 
       assertThat(vDir1.getChildren()).hasSize(1);
       assertThat(vDir2.getChildren()).hasSize(1);
