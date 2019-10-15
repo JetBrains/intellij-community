@@ -102,12 +102,15 @@ class PyLiteralType private constructor(cls: PyClass, val expression: PyExpressi
           }
       }
 
-      return classOfAcceptableLiteral(expression, context)?.let { PyLiteralType(it, expression) }
+      return classOfAcceptableLiteral(expression, context, index)?.let { PyLiteralType(it, expression) }
     }
 
-    private fun classOfAcceptableLiteral(expression: PyExpression, context: TypeEvalContext): PyClass? {
+    private fun classOfAcceptableLiteral(expression: PyExpression, context: TypeEvalContext, index: Boolean): PyClass? {
       return when {
         expression is PyNumericLiteralExpression -> if (expression.isIntegerLiteral) getPyClass(expression, context) else null
+
+        expression is PyStringLiteralExpression ->
+          if (isAcceptableStringLiteral(expression, index)) getPyClass(expression, context) else null
 
         expression is PyLiteralExpression -> getPyClass(expression, context)
 
@@ -125,5 +128,11 @@ class PyLiteralType private constructor(cls: PyClass, val expression: PyExpressi
     }
 
     private fun getPyClass(expression: PyExpression, context: TypeEvalContext) = (context.getType(expression) as? PyClassType)?.pyClass
+
+    private fun isAcceptableStringLiteral(expression: PyStringLiteralExpression, index: Boolean): Boolean {
+      val singleElement = expression.stringElements.singleOrNull() ?: return false
+      return if (!index && singleElement is PyFormattedStringElement) singleElement.fragments.isEmpty()
+      else singleElement is PyPlainStringElement
+    }
   }
 }
