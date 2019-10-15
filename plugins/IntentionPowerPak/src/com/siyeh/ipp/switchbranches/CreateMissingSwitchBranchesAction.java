@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
@@ -59,7 +60,7 @@ public class CreateMissingSwitchBranchesAction extends PsiElementBaseIntentionAc
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
     PsiSwitchBlock block = PsiTreeUtil.getParentOfType(element, PsiSwitchBlock.class, false, PsiCodeBlock.class, PsiStatement.class);
     if (block == null) return false;
-    PsiExpression expression = block.getExpression();
+    PsiExpression expression = PsiUtil.skipParenthesizedExprDown(block.getExpression());
     if (expression == null) return false;
     PsiType type = expression.getType();
     if (type == null) return false;
