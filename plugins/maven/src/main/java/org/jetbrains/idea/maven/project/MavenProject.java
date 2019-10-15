@@ -16,6 +16,7 @@
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.execution.configurations.ParametersList;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
@@ -913,7 +914,7 @@ public class MavenProject {
     }
 
     MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(project);
-    Module module = projectsManager.findModule(this);
+    Module module = ReadAction.compute(() -> projectsManager.findModule(this));
     if (module != null) {
       MavenAnnotationProcessorsModuleService apService = MavenAnnotationProcessorsModuleService.getInstance(module);
       for (String moduleName : apService.getAnnotationProcessorModules()) {
