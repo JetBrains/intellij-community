@@ -4,18 +4,24 @@ package com.intellij.psi.formatter.java
 import com.intellij.formatting.Block
 import com.intellij.formatting.Indent
 import com.intellij.formatting.Spacing
-import com.intellij.formatting.blocks.prev
 import com.intellij.lang.ASTNode
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.formatter.common.AbstractBlock
+import com.intellij.psi.impl.source.tree.TreeUtil
+import com.intellij.psi.tree.TokenSet
 
 class CStyleCommentBlock(comment: ASTNode, private val indent: Indent?): AbstractBlock(comment, null, null) {
   val spacing: Spacing?
     get() = if (ranges.isEmpty()) Spacing.getReadOnlySpacing() else null
 
   override fun getSpacing(child1: Block?, child2: Block): Spacing? =
-    if (child1 == null && node.prev() == null) Spacing.getReadOnlySpacing()  // a file header comment
+    if (child1 == null && skipBackAndUp(node) == null) Spacing.getReadOnlySpacing()  // a file header comment
     else child2.getSpacing(null, this)
+
+  private fun skipBackAndUp(node: ASTNode): ASTNode? {
+    val prev = TreeUtil.skipElementsBack(node.treePrev, TokenSet.WHITE_SPACE)
+    return if (prev == null && node.treeParent != null) skipBackAndUp(node.treeParent) else prev
+  }
 
   override fun getIndent(): Indent? = indent
 
