@@ -132,7 +132,7 @@ open class ChangesViewCommitPanel(private val changesView: ChangesListView, priv
 
     override fun isDefaultButton(): Boolean = IdeFocusManager.getInstance(project).getFocusedDescendantFor(rootComponent) != null
   }
-  private val commitAuthorComponent = CommitAuthorComponent()
+  private val commitAuthorComponent = CommitAuthorComponent(project)
   private val commitLegendCalculator = ChangeInfoCalculator()
   private val commitLegend = CommitLegendPanel(commitLegendCalculator)
 
@@ -271,6 +271,9 @@ open class ChangesViewCommitPanel(private val changesView: ChangesListView, priv
     set(value) {
       commitAuthorComponent.commitAuthor = value
     }
+
+  override fun addCommitAuthorListener(listener: CommitAuthorListener, parent: Disposable) =
+    commitAuthorComponent.addCommitAuthorListener(listener, parent)
 
   override val isActive: Boolean get() = isVisible
 
