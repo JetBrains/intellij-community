@@ -171,10 +171,11 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     }
 
     myDynamicPluginsToInstall.clear();
-    myDynamicPluginsToUninstall.clear();
     myPluginsToRemoveOnCancel.clear();
 
-    return applyEnableDisablePlugins(enabledMap) && uninstallsRequiringRestart.isEmpty();
+    boolean enableDisableAppliedWithoutRestart = applyEnableDisablePlugins(enabledMap);
+    myDynamicPluginsToUninstall.clear();
+    return enableDisableAppliedWithoutRestart && uninstallsRequiringRestart.isEmpty();
   }
 
   public void removePluginsOnCancel() {
@@ -189,6 +190,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     int rowCount = getRowCount();
     for (int i = 0; i < rowCount; i++) {
       IdeaPluginDescriptor descriptor = getObjectAt(i);
+      if (myDynamicPluginsToUninstall.contains(descriptor)) continue;
       boolean enabled = isEnabled(descriptor.getPluginId());
       if (enabled != descriptor.isEnabled()) {
         // PluginDescriptor fields are cleaned after the plugin is loaded, so we need to reload the descriptor to check if it's dynamic
@@ -498,7 +500,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
       }
     }
     for (PluginDetailsPageComponent panel : myDetailPanels) {
-      if (panel.myPlugin.getPluginId().equals(descriptor.getPluginId())) {
+      if (panel.isShowingPlugin(descriptor)) {
         if (installedDescriptor != null) {
           panel.myPlugin = installedDescriptor;
         }
