@@ -5,7 +5,6 @@ import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.keymap.Keymap;
-import com.intellij.openapi.keymap.impl.BundledKeymapProvider;
 import com.intellij.openapi.keymap.impl.DefaultKeymapImpl;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -47,8 +46,8 @@ class ActionsBuiltInWhitelist {
 
   public void addActionsLoadedFromKeymapXml(@NotNull Keymap keymap, @NotNull Set<String> actionIds) {
     if (keymap instanceof DefaultKeymapImpl) {
-      Class<BundledKeymapProvider> provider = ((DefaultKeymapImpl)keymap).getProviderClass();
-      if (PluginInfoDetectorKt.getPluginInfo(provider).isDevelopedByJetBrains()) {
+      PluginId pluginId = ((DefaultKeymapImpl)keymap).getPluginId();
+      if (PluginInfoDetectorKt.getPluginInfoById(pluginId).isDevelopedByJetBrains()) {
         ourXmlActionIds.addAll(actionIds);
       }
     }

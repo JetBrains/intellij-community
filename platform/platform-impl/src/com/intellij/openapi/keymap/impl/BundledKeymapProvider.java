@@ -2,16 +2,14 @@
 package com.intellij.openapi.keymap.impl;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.util.io.FileUtilRt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 /**
  * Name file as "Your scheme name.xml" and put it to keymaps.
@@ -19,6 +17,7 @@ import java.util.stream.Collectors;
  *
  * @deprecated Use {@link BundledKeymapBean} instead.
  */
+@ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
 @Deprecated
 public interface BundledKeymapProvider {
   ExtensionPointName<BundledKeymapProvider> EP_NAME = ExtensionPointName.create("com.intellij.bundledKeymapProvider");
@@ -26,16 +25,8 @@ public interface BundledKeymapProvider {
   @NotNull
   List<String> getKeymapFileNames();
 
-  default Map<String, PluginDescriptor> getKeymapFileNamesWithPlugins() {
-    return getKeymapFileNames().stream().collect(Collectors.toMap(x -> x, y -> null));
-  }
-
   default <R> R load(@NotNull String key, @NotNull Function<? super InputStream, ? extends R> consumer) throws IOException {
-    return load(key, getClass().getClassLoader(), consumer);
-  }
-
-  default <R> R load(@NotNull String key, @NotNull ClassLoader classLoader, @NotNull Function<? super InputStream, ? extends R> consumer) throws IOException {
-    try (InputStream stream = classLoader.getResourceAsStream("/keymaps/" + key)) {
+    try (InputStream stream = getClass().getClassLoader().getResourceAsStream("/keymaps/" + key)) {
       return consumer.apply(stream);
     }
   }

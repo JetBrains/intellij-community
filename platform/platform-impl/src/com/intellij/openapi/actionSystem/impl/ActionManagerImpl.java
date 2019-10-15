@@ -31,7 +31,7 @@ import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
-import com.intellij.openapi.keymap.impl.DefaultBundledKeymaps;
+import com.intellij.openapi.keymap.impl.DefaultKeymap;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.ProjectType;
@@ -386,7 +386,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   }
 
   private static void reportKeymapNotFoundWarning(@Nullable PluginId pluginId, @NotNull String keymapName) {
-    if (DefaultBundledKeymaps.isBundledKeymapHidden(keymapName)) return;
+    if (DefaultKeymap.isBundledKeymapHidden(keymapName)) return;
     String message = "keymap \"" + keymapName + "\" not found";
     LOG.warn(pluginId == null ? message : new PluginException(message, null, pluginId).getMessage());
   }
