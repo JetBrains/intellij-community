@@ -40,7 +40,7 @@ RMDIR /Q /S "%WORK_IDEA_HOME%\plugins"
 
 XCOPY "%DEV_IDEA_HOME%\bin\win\*.dll" "%WORK_IDEA_HOME%\bin\" /Q /E /Y
 XCOPY "%DEV_IDEA_HOME%\bin\win\*.exe" "%WORK_IDEA_HOME%\bin\" /Q /E /Y
-XCOPY "%DEV_IDEA_HOME%\out\deploy\*.*" "%WORK_IDEA_HOME%\" /Q /E /Y
+XCOPY "%DEV_IDEA_HOME%\out\deploy\dist\*.*" "%WORK_IDEA_HOME%\" /Q /E /Y
 GOTO done
 
 :failed
