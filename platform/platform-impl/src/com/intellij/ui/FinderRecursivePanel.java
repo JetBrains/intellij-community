@@ -77,7 +77,9 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
     @Override
     public void performCopy(@NotNull DataContext dataContext) {
       final T value = getSelectedValue();
-      CopyPasteManager.getInstance().setContents(new StringSelection(getItemText(value)));
+      if (value != null) {
+        CopyPasteManager.getInstance().setContents(new StringSelection(getItemText(value)));
+      }
     }
 
     @Override
@@ -338,8 +340,8 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
     return new MyListCellRenderer();
   }
 
-  protected void doCustomizeCellRenderer(SimpleColoredComponent comp, JList list, @NotNull T value, int index,
-                                         boolean selected, boolean hasFocus) {
+  protected void doCustomizeCellRenderer(@NotNull SimpleColoredComponent comp, @NotNull JList list, @NotNull T value,
+                                         int index, boolean selected, boolean hasFocus) {
   }
 
   /**
