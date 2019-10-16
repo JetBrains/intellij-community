@@ -265,7 +265,7 @@ public class EditorEmbeddedComponentManager {
         Rectangle bounds = inlay.getRenderer().getBounds();
         return bounds != null &&
                bounds.y + bounds.height >= y &&
-               bounds.intersects(myEditor.getScrollPane().getViewport().getViewRect());
+               (bounds.width == 0 || bounds.height == 0 || bounds.intersects(myEditor.getScrollPane().getViewport().getViewRect()));
       });
     }
 
