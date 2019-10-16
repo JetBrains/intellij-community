@@ -14,6 +14,7 @@ iml_project(
         "//prebuilts/studio/jdk:jdk_all",
         "//prebuilts/python/linux-x86",
         "//prebuilts/python/windows-x86",
+        "//prebuilts/tools/common/kotlin-compose",
         "//prebuilts/tools/common/kotlin-plugin-ij:kotlin_plugin",
         "//prebuilts/tools/common/m2/repository/commons-net/commons-net/3.3:jar",
         "//prebuilts/tools/common/m2/repository/com/jgoodies/jgoodies-common/1.4.0:jar",
