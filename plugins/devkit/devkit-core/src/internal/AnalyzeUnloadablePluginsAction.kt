@@ -56,7 +56,7 @@ class AnalyzeUnloadablePluginsAction : AnAction() {
     if (show) showReport(project, result)
   }
 
-  private fun showReport(project: Project, result: MutableList<PluginUnloadabilityStatus>) {
+  private fun showReport(project: Project, result: List<PluginUnloadabilityStatus>) {
     val report = buildString {
       if (result.any { it.analysisErrors.isNotEmpty() }) {
         appendln("Analysis errors:")
