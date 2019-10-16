@@ -47,46 +47,47 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
           // report deadly freeze
           File[] files = dir.listFiles();
           if (files != null) {
-            List<Attachment> attachments = new ArrayList<>();
-            String message = null, appinfo = null;
-            Throwable throwable = null;
-            List<String> dumps = new ArrayList<>();
-            for (File file : files) {
-              String text = FileUtil.loadFile(file);
-              String name = file.getName();
-              if (MESSAGE_FILE_NAME.equals(name)) {
-                message = text;
-              }
-              else if (THROWABLE_FILE_NAME.equals(name)) {
-                try (FileInputStream fis = new FileInputStream(file); ObjectInputStream ois = new ObjectInputStream(fis)) {
-                  throwable = (Throwable)ois.readObject();
+            if (duration > FREEZE_THRESHOLD) {
+              List<Attachment> attachments = new ArrayList<>();
+              String message = null, appinfo = null;
+              Throwable throwable = null;
+              List<String> dumps = new ArrayList<>();
+              for (File file : files) {
+                String text = FileUtil.loadFile(file);
+                String name = file.getName();
+                if (MESSAGE_FILE_NAME.equals(name)) {
+                  message = text;
                 }
-                catch (Exception ignored) {
+                else if (THROWABLE_FILE_NAME.equals(name)) {
+                  try (FileInputStream fis = new FileInputStream(file); ObjectInputStream ois = new ObjectInputStream(fis)) {
+                    throwable = (Throwable)ois.readObject();
+                  }
+                  catch (Exception ignored) {
+                  }
+                }
+                else if (APPINFO_FILE_NAME.equals(name)) {
+                  appinfo = text;
+                }
+                else if (name.startsWith(REPORT_PREFIX)) {
+                  attachments.add(createReportAttachment(duration, text));
+                }
+                else if (name.startsWith(PerformanceWatcher.DUMP_PREFIX)) {
+                  dumps.add(text);
                 }
               }
-              else if (APPINFO_FILE_NAME.equals(name)) {
-                appinfo = text;
-              }
-              else if (name.startsWith(REPORT_PREFIX)) {
-                attachments.add(createReportAttachment(duration, text));
-              }
-              else if (name.startsWith(PerformanceWatcher.DUMP_PREFIX)) {
-                dumps.add(text);
+
+              addDumpsAttachments(dumps, Function.identity(), attachments);
+
+              if (message != null && throwable != null && !attachments.isEmpty()) {
+                IdeaLoggingEvent event = LogMessage.createEvent(throwable, message, attachments.toArray(Attachment.EMPTY_ARRAY));
+                Object data = event.getData();
+                if (data instanceof AbstractMessage) {
+                  ((AbstractMessage)data).setAppInfo(appinfo);
+                }
+                report(event);
               }
             }
-
-            addDumpsAttachments(dumps, Function.identity(), attachments);
-
             cleanup(dir);
-
-            if (message != null && throwable != null && !attachments.isEmpty()) {
-              IdeaLoggingEvent event = LogMessage.createEvent(throwable, message, attachments.toArray(Attachment.EMPTY_ARRAY));
-              Object data = event.getData();
-              if (data instanceof AbstractMessage) {
-                ((AbstractMessage)data).setAppInfo(appinfo);
-              }
-              report(event);
-            }
           }
         }
         catch (IOException ignored) {
