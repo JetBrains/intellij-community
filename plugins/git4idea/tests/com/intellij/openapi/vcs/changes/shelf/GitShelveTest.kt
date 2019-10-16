@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.changes.shelf
 
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.text.StringUtil
 import git4idea.stash.GitShelveChangesSaver
 import git4idea.test.ChangesBuilder
 import git4idea.test.GitSingleRepoTest
@@ -54,7 +55,7 @@ abstract class GitShelveTest : GitSingleRepoTest() {
     updateChangeListManager()
 
     changeListManager.assertNoChanges()
-    assertEquals("Current file content is incorrect", initialContent, file.read())
+    assertEquals("Current file content is incorrect", initialContent, StringUtil.convertLineSeparators(file.read()))
 
     val list = `assert single shelvelist`()
     assertChanges(list) {
@@ -82,8 +83,8 @@ abstract class GitShelveTest : GitSingleRepoTest() {
     updateChangeListManager()
 
     changeListManager.assertNoChanges()
-    assertEquals("Current file content is incorrect", initialContent, afile.read())
-    assertEquals("Current file content is incorrect", initialContent, bfile.read())
+    assertEquals("Current file content is incorrect", initialContent, StringUtil.convertLineSeparators(afile.read()))
+    assertEquals("Current file content is incorrect", initialContent, StringUtil.convertLineSeparators(bfile.read()))
 
     val list = `assert single shelvelist`()
     assertChanges(list) {
